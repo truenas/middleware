@@ -28,8 +28,9 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:www/py-django110 \
 	${PYTHON_PKGNAMEPREFIX}pybonjour>0:dns/py-bonjour \
 	${PYTHON_PKGNAMEPREFIX}dnspython>0:dns/py-dnspython \
 	${PYTHON_PKGNAMEPREFIX}requests>0:www/py-requests \
+	${PYTHON_PKGNAMEPREFIX}requests-toolbelt>0:www/py-requests-toolbelt \
 	${PYTHON_PKGNAMEPREFIX}openssl>0:security/py-openssl \
-	${PYTHON_PKGNAMEPREFIX}pycrypto>0:security/py-pycrypto \
+	${PYTHON_PKGNAMEPREFIX}pycryptodome>0:security/py-pycryptodome \
 	${PYTHON_PKGNAMEPREFIX}simplejson>0:devel/py-simplejson \
 	${PYTHON_PKGNAMEPREFIX}ujson>0:devel/py-ujson \
 	${PYTHON_PKGNAMEPREFIX}oauth2>0:net/py-oauth2 \
@@ -39,11 +40,12 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:www/py-django110 \
 	${PYTHON_PKGNAMEPREFIX}bsd>0:freenas/py-bsd \
 	${PYTHON_PKGNAMEPREFIX}middlewared>0:freenas/py-middlewared \
 	${PYTHON_PKGNAMEPREFIX}ntplib>0:net/py-ntplib \
+	${PYTHON_PKGNAMEPREFIX}snmp4>0:net-mgmt/py-snmp4 \
 	pyvmomi>0:net/py-pyvmomi \
 	dmidecode>0:sysutils/dmidecode \
 	freenas-pkgtools>0:freenas/freenas-pkgtools \
 	freenas-migrate93>0:freenas/freenas-migrate93 \
-	${PYTHON_PKGNAMEPREFIX}libzfs>0:freenas/py-libzfs
+	${PYTHON_PKGNAMEPREFIX}libzfs>0:devel/py-libzfs
 
 EXTRACT_ONLY=
 WRKSRC=/usr/freenasUI

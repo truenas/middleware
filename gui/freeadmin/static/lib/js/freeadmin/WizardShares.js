@@ -203,13 +203,13 @@ define([
       });
 
       me._storeUsers = new ItemFileReadStore({
-        url: "/account/bsduser/json/?wizard=1",
+        url: "/legacy/account/bsduser/json/?wizard=1",
         clearOnClose: true
       });
       me._storeUsers.fetch();
 
       me._storeGroups = new ItemFileReadStore({
-        url: "/account/bsdgroup/json/?wizard=1",
+        url: "/legacy/account/bsdgroup/json/?wizard=1",
         clearOnClose: true
       });
       me._storeGroups.fetch();
@@ -443,6 +443,7 @@ define([
       me._store.removeSync(id);
       me._sharesList.refresh();
       if(Object.keys(me._sharesList.selection).length == 0) {
+        me._shareAdd.set("disabled", false);
         me._shareDelete.set("disabled", true);
         me._shareUpdate.set("disabled", true);
       }

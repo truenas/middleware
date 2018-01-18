@@ -1,22 +1,135 @@
-import libzfs
+import asyncio
+import errno
+import logging
+from datetime import datetime
 import os
+import shutil
+import subprocess
+import sysctl
 
-from middlewared.schema import accepts, Int
-from middlewared.service import filterable, item_method, private, CRUDService
+import bsd
+
+from middlewared.job import JobProgressBuffer
+from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
+from middlewared.service import (
+    filterable, item_method, job, private, CRUDService, ValidationErrors,
+)
+from middlewared.utils import Popen, filter_list, run
+
+logger = logging.getLogger(__name__)
+
+
+def _none(x):
+    if x is None:
+        return 'none'
+    return x
+
+
+def _null(x):
+    if x == 'none':
+        return None
+    return x
+
+
+async def is_mounted(middleware, path):
+    mounted = await middleware.run_in_thread(bsd.getmntinfo)
+    return any(fs.dest == path for fs in mounted)
+
+
+async def mount(device, path, fs_type, options=None):
+    options = options or []
+
+    if isinstance(device, str):
+        device = device.encode("utf-8")
+
+    if isinstance(path, str):
+        path = path.encode("utf-8")
+
+    if fs_type == "msdosfs":
+        options.append("large")
+
+    executable = "/sbin/mount"
+    arguments = []
+
+    if fs_type == "ntfs":
+        executable = "/usr/local/bin/ntfs-3g"
+    else:
+        arguments.extend(["-t", fs_type])
+
+    if options:
+        arguments.extend(["-o", ",".join(options)])
+
+    proc = await Popen(
+        [executable] + arguments + [device, path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        encoding="utf8",
+    )
+    output = await proc.communicate()
+
+    if proc.returncode != 0:
+        logger.debug("Mount failed (%s): %s", proc.returncode, output)
+        raise ValueError("Mount failed {0} -> {1}, {2}" .format(
+            proc.returncode,
+            output[0],
+            output[1]
+        ))
+    else:
+        return True
+
+
+class KernelModuleContextManager:
+    def __init__(self, module):
+        self.module = module
+
+    async def __aenter__(self):
+        if self.module is not None:
+            if not await self.module_loaded():
+                await run('kldload', self.module, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                if not await self.module_loaded():
+                    raise Exception('Kernel module %r failed to load', self.module)
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.module is not None:
+            try:
+                await run('kldunload', self.module, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception:
+                pass
+
+    async def module_loaded(self):
+        return (await run('kldstat', '-n', self.module, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)).returncode == 0
+
+
+class MountFsContextManager:
+    def __init__(self, middleware, device, path, *args, **kwargs):
+        self.middleware = middleware
+        self.device = device
+        self.path = path
+        self.args = args
+        self.kwargs = kwargs
+
+    async def __aenter__(self):
+        await mount(self.device, self.path, *self.args, **self.kwargs)
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if await is_mounted(self.middleware, self.path):
+            await self.middleware.run_in_thread(bsd.unmount, self.path)
 
 
 class PoolService(CRUDService):
 
+    GELI_KEYPATH = '/data/geli'
+
     @filterable
-    def query(self, filters=None, options=None):
+    async def query(self, filters=None, options=None):
         filters = filters or []
         options = options or {}
         options['extend'] = 'pool.pool_extend'
         options['prefix'] = 'vol_'
-        return self.middleware.call('datastore.query', 'storage.volume', filters, options)
+        return await self.middleware.call('datastore.query', 'storage.volume', filters, options)
 
     @private
-    def pool_extend(self, pool):
+    async def pool_extend(self, pool):
         pool.pop('fstype', None)
 
         """
@@ -24,18 +137,25 @@ class PoolService(CRUDService):
         or if all geli providers exist.
         """
         try:
-            zpool = libzfs.ZFS().get(pool['name'])
-        except libzfs.ZFSException:
+            zpool = (await self.middleware.call('zfs.pool.query', [('id', '=', pool['name'])]))[0]
+        except Exception:
             zpool = None
 
-        pool['status'] = zpool.status if zpool else 'OFFLINE'
+        if zpool:
+            pool['status'] = zpool['status']
+            pool['scan'] = zpool['scan']
+        else:
+            pool.update({
+                'status': 'OFFLINE',
+                'scan': None,
+            })
 
         if pool['encrypt'] > 0:
             if zpool:
                 pool['is_decrypted'] = True
             else:
                 decrypted = True
-                for ed in self.middleware.call('datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]):
+                for ed in await self.middleware.call('datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]):
                     if not os.path.exists(f'/dev/{ed["encrypted_provider"]}.eli'):
                         decrypted = False
                         break
@@ -45,12 +165,394 @@ class PoolService(CRUDService):
         return pool
 
     @item_method
+    @accepts(Int('id', required=False))
+    async def get_disks(self, oid=None):
+        """
+        Get all disks in use by pools.
+        If `id` is provided only the disks from the given pool `id` will be returned.
+        """
+        filters = []
+        if oid:
+            filters.append(('id', '=', oid))
+        for pool in await self.query(filters):
+            if pool['is_decrypted']:
+                async for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
+                    yield i
+            else:
+                for encrypted_disk in await self.middleware.call('datastore.query', 'storage.encrypteddisk',
+                                                                 [('encrypted_volume', '=', pool['id'])]):
+                    disk = {k[len("disk_"):]: v for k, v in encrypted_disk["encrypted_disk"].items()}
+                    name = await self.middleware.call("disk.get_name", disk)
+                    if os.path.exists(os.path.join("/dev", name)):
+                        yield name
+
+    @item_method
     @accepts(Int('id'))
-    def get_disks(self, oid):
+    async def download_encryption_key(self, oid):
         """
-        Get all disks from a given pool `id`.
+        Download encryption key for a given pool `id`.
         """
-        pool = self.query([('id', '=', oid)], {'get': True})
-        if not pool['is_decrypted']:
-            return []
-        return self.middleware.call('zfs.pool.get_disks', pool['name'])
+        pool = await self.query([('id', '=', oid)], {'get': True})
+        if not pool['encryptkey']:
+            return None
+
+        job_id, url = await self.middleware.call(
+            'core.download',
+            'pool.download_encryption_key_job',
+            [os.path.join(self.GELI_KEYPATH, f"{pool['encryptkey']}.key")],
+            'geli.key'
+        )
+        return url
+
+    @job(pipe=True)
+    @private
+    async def download_encryption_key_job(self, job, filename):
+        with open(filename, "rb") as src:
+            with os.fdopen(job.write_fd, "wb") as dst:
+                shutil.copyfileobj(src, dst)
+
+    @private
+    def configure_resilver_priority(self):
+        """
+        Configure resilver priority based on user selected off-peak hours.
+        """
+        resilver = self.middleware.call_sync('datastore.config', 'storage.resilver')
+
+        if not resilver['enabled'] or not resilver['weekday']:
+            return
+
+        higher_prio = False
+        weekdays = map(lambda x: int(x), resilver['weekday'].split(','))
+        now = datetime.now()
+        now_t = now.time()
+        # end overlaps the day
+        if resilver['begin'] > resilver['end']:
+            if now.isoweekday() in weekdays and now_t >= resilver['begin']:
+                higher_prio = True
+            else:
+                lastweekday = now.isoweekday() - 1
+                if lastweekday == 0:
+                    lastweekday = 7
+                if lastweekday in weekdays and now_t < resilver['end']:
+                    higher_prio = True
+        # end does not overlap the day
+        else:
+            if now.isoweekday() in weekdays and now_t >= resilver['begin'] and now_t < resilver['end']:
+                higher_prio = True
+
+        if higher_prio:
+            resilver_delay = 0
+            resilver_min_time_ms = 9000
+            scan_idle = 0
+        else:
+            resilver_delay = 2
+            resilver_min_time_ms = 3000
+            scan_idle = 50
+
+        sysctl.filter('vfs.zfs.resilver_delay')[0].value = resilver_delay
+        sysctl.filter('vfs.zfs.resilver_min_time_ms')[0].value = resilver_min_time_ms
+        sysctl.filter('vfs.zfs.scan_idle')[0].value = scan_idle
+
+    @accepts(Str('volume'), Str('fs_type'), Str('dst_path'))
+    @job(lock=lambda args: 'volume_import')
+    async def import_disk(self, job, volume, fs_type, dst_path):
+        job.set_progress(None, description="Mounting")
+
+        src = os.path.join('/var/run/importcopy/tmpdir', os.path.relpath(volume, '/'))
+
+        if os.path.exists(src):
+            os.rmdir(src)
+
+        try:
+            os.makedirs(src)
+
+            async with KernelModuleContextManager({"ntfs": "fuse"}.get(fs_type)):
+                async with MountFsContextManager(self.middleware, volume, src, fs_type, ["ro"]):
+                    job.set_progress(None, description="Importing")
+
+                    line = [
+                        '/usr/local/bin/rsync',
+                        '--info=progress2',
+                        '--modify-window=1',
+                        '-rltvh',
+                        '--no-perms',
+                        src + '/',
+                        dst_path
+                    ]
+                    rsync_proc = await Popen(
+                        line, stdout=subprocess.PIPE, bufsize=0, preexec_fn=os.setsid,
+                    )
+                    stdout = b""
+                    try:
+                        progress_buffer = JobProgressBuffer(job)
+                        while True:
+                            line = await rsync_proc.stdout.readline()
+                            if line:
+                                stdout += line
+                                try:
+                                    proc_output = line.decode("utf-8", "ignore").strip()
+                                    prog_out = proc_output.split(' ')
+                                    progress = [x for x in prog_out if '%' in x]
+                                    if len(progress):
+                                        progress_buffer.set_progress(int(progress[0][:-1]))
+                                    elif not proc_output.endswith('/'):
+                                        if (
+                                            proc_output not in ['sending incremental file list'] and
+                                            'xfr#' not in proc_output
+                                        ):
+                                            progress_buffer.set_progress(None, extra=proc_output)
+                                except Exception:
+                                    logger.warning('Parsing error in rsync task', exc_info=True)
+                            else:
+                                break
+
+                        progress_buffer.flush()
+                        await rsync_proc.wait()
+                        if rsync_proc.returncode != 0:
+                            raise Exception("rsync failed with exit code %r" % rsync_proc.returncode)
+                    except asyncio.CancelledError:
+                        rsync_proc.kill()
+                        raise
+
+                    job.set_progress(100, description="Done", extra="")
+                    return stdout.decode("utf-8", "ignore")
+        finally:
+            os.rmdir(src)
+
+    """
+    These methods are hacks for old UI which supports only one volume import at a time
+    """
+
+    dismissed_import_disk_jobs = set()
+
+    @private
+    async def get_current_import_disk_job(self):
+        import_jobs = await self.middleware.call('core.get_jobs', [('method', '=', 'pool.import_disk')])
+        not_dismissed_import_jobs = [job for job in import_jobs if job["id"] not in self.dismissed_import_disk_jobs]
+        if not_dismissed_import_jobs:
+            return not_dismissed_import_jobs[0]
+
+    @private
+    async def dismiss_current_import_disk_job(self):
+        current_import_job = await self.get_current_import_disk_job()
+        if current_import_job:
+            self.dismissed_import_disk_jobs.add(current_import_job["id"])
+
+
+class PoolDatasetService(CRUDService):
+
+    class Config:
+        namespace = 'pool.dataset'
+
+    @filterable
+    def query(self, filters, options):
+        # Otimization for cases in which they can be filtered at zfs.dataset.query
+        zfsfilters = []
+        for f in filters:
+            if len(f) == 3:
+                if f[0] in ('id', 'name', 'pool', 'type'):
+                    zfsfilters.append(f)
+        datasets = self.middleware.call_sync('zfs.dataset.query', zfsfilters, None)
+        return filter_list(self.__transform(datasets), filters, options)
+
+    def __transform(self, datasets):
+        """
+        We need to transform the data zfs gives us to make it consistent/user-friendly,
+        making it match whatever pool.dataset.{create,update} uses as input.
+        """
+
+        def transform(dataset):
+            for orig_name, new_name, method in (
+                ('org.freenas:description', 'comments', None),
+                ('dedup', 'deduplication', str.upper),
+                ('atime', None, str.upper),
+                ('casesensitivity', None, str.upper),
+                ('compression', None, str.upper),
+                ('quota', None, _null),
+                ('refquota', None, _null),
+                ('reservation', None, _null),
+                ('refreservation', None, _null),
+                ('copies', None, None),
+                ('snapdir', None, str.upper),
+                ('readonly', None, str.upper),
+                ('recordsize', None, None),
+                ('sparse', None, None),
+                ('volsize', None, None),
+                ('volblocksize', None, None),
+            ):
+                if orig_name not in dataset['properties']:
+                    continue
+                i = new_name or orig_name
+                dataset[i] = dataset['properties'][orig_name]
+                if method:
+                    dataset[i]['value'] = method(dataset[i]['value'])
+            del dataset['properties']
+
+            rv = []
+            for child in dataset['children']:
+                rv.append(transform(child))
+            dataset['children'] = rv
+            return dataset
+
+        rv = []
+        for dataset in datasets:
+            rv.append(transform(dataset))
+        return rv
+
+    @accepts(Dict(
+        'pool_dataset_create',
+        Str('name', required=True),
+        Str('type', enum=['FILESYSTEM', 'VOLUME'], default='FILESYSTEM'),
+        Int('volsize'),
+        Str('volblocksize', enum=[
+            '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K',
+        ]),
+        Bool('sparse'),
+        Str('comments'),
+        Str('compression', enum=[
+            'OFF', 'LZ4', 'GZIP-1', 'GZIP-6', 'GZIP-9', 'ZLE', 'LZJB',
+        ]),
+        Str('atime', enum=['ON', 'OFF']),
+        Int('quota'),
+        Int('refquota'),
+        Int('reservation'),
+        Int('refreservation'),
+        Int('copies'),
+        Str('snapdir', enum=['VISIBLE', 'HIDDEN']),
+        Str('deduplication', enum=['ON', 'VERIFY', 'OFF']),
+        Str('readonly', enum=['ON', 'OFF']),
+        Str('recordsize', enum=[
+            '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K', '256K', '512K', '1024K',
+        ]),
+        Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
+        register=True,
+    ))
+    async def do_create(self, data):
+        """
+        Creates a dataset/zvol.
+
+        `volsize` is required for type=VOLUME and is supposed to be a multiple of the block size.
+        """
+
+        verrors = ValidationErrors()
+        await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE')
+        if verrors:
+            raise verrors
+
+        props = {}
+        for i, real_name, transform in (
+            ('atime', None, str.lower),
+            ('casesensitivity', None, str.lower),
+            ('comments', 'org.freenas:description', None),
+            ('compression', None, str.lower),
+            ('deduplication', 'dedup', str.lower),
+            ('quota', None, _none),
+            ('refquota', None, _none),
+            ('reservation', None, _none),
+            ('refreservation', None, _none),
+            ('copies', None, lambda x: str(x)),
+            ('snapdir', None, str.lower),
+            ('readonly', None, str.lower),
+            ('recordsize', None, None),
+            ('sparse', None, None),
+            ('volsize', None, lambda x: str(x)),
+            ('volblocksize', None, None),
+        ):
+            if i not in data:
+                continue
+            name = real_name or i
+            props[name] = data[i] if not transform else transform(data[i])
+
+        await self.middleware.call('zfs.dataset.create', {
+            'name': data['name'],
+            'type': data['type'],
+            'properties': props,
+        })
+
+        await self.middleware.call('zfs.dataset.mount', data['name'])
+
+    def _add_inherit(name):
+        def add(attr):
+            attr.enum.append('INHERIT')
+        return {'name': name, 'method': add}
+
+    @accepts(Str('id'), Patch(
+        'pool_dataset_create', 'pool_dataset_update',
+        ('rm', {'name': 'name'}),
+        ('rm', {'name': 'type'}),
+        ('rm', {'name': 'casesensitivity'}),  # Its a readonly attribute
+        ('rm', {'name': 'sparse'}),  # Create time only attribute
+        ('rm', {'name': 'volblocksize'}),  # Create time only attribute
+        ('edit', _add_inherit('atime')),
+        ('edit', _add_inherit('compression')),
+        ('edit', _add_inherit('deduplication')),
+        ('edit', _add_inherit('readonly')),
+        ('edit', _add_inherit('recordsize')),
+        ('edit', _add_inherit('snapdir')),
+    ))
+    async def do_update(self, id, data):
+        """
+        Updates a dataset/zvol `id`.
+        """
+
+        verrors = ValidationErrors()
+
+        dataset = await self.middleware.call('pool.dataset.query', [('id', '=', id)])
+        if not dataset:
+            verrors.add('id', f'{id} does not exist', errno.ENOENT)
+        else:
+            data['type'] = dataset[0]['type']
+            await self.__common_validation(verrors, 'pool_dataset_update', data, 'UPDATE')
+        if verrors:
+            raise verrors
+
+        props = {}
+        for i, real_name, transform, inheritable in (
+            ('atime', None, str.lower, True),
+            ('comments', 'org.freenas:description', None, False),
+            ('compression', None, str.lower, True),
+            ('deduplication', 'dedup', str.lower, True),
+            ('quota', None, _none, False),
+            ('refquota', None, _none, False),
+            ('reservation', None, _none, False),
+            ('refreservation', None, _none, False),
+            ('copies', None, None, False),
+            ('snapdir', None, str.lower, True),
+            ('readonly', None, str.lower, True),
+            ('recordsize', None, None, True),
+            ('volsize', None, lambda x: str(x), False),
+        ):
+            if i not in data:
+                continue
+            name = real_name or i
+            if inheritable and data[i] == 'INHERIT':
+                props[name] = {'source': 'INHERIT'}
+            else:
+                props[name] = {'value': data[i] if not transform else transform(data[i])}
+
+        return await self.middleware.call('zfs.dataset.update', id, {'properties': props})
+
+    async def __common_validation(self, verrors, schema, data, mode):
+        assert mode in ('CREATE', 'UPDATE')
+
+        if data['type'] == 'FILESYSTEM':
+            for i in ('sparse', 'volsize', 'volblocksize'):
+                if i in data:
+                    verrors.add(f'{schema}.{i}', 'This field is not valid for FILESYSTEM')
+        elif data['type'] == 'VOLUME':
+            if mode == 'CREATE' and 'volsize' not in data:
+                verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
+
+            for i in (
+                'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize',
+            ):
+                if i in data:
+                    verrors.add(f'{schema}.{i}', 'This field is not valid for VOLUME')
+
+    @accepts(Str('id'))
+    async def do_delete(self, id):
+        return await self.middleware.call('zfs.dataset.delete', id)
+
+
+def setup(middleware):
+    asyncio.ensure_future(middleware.call('pool.configure_resilver_priority'))

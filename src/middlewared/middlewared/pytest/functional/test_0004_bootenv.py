@@ -11,16 +11,16 @@ def test_bootenv_keep(conn):
 
     keep = be['keep']
 
-    req = conn.rest.post(f'bootenv/id/{be["id"]}/set_attribute', data=[{
+    req = conn.rest.post(f'bootenv/id/{be["id"]}/set_attribute', data={
         'keep': not keep,
-    }])
+    })
     assert req.status_code == 200
     assert isinstance(req.json(), bool) is True
 
     # Return to previous state
-    req = conn.rest.post(f'bootenv/id/{be["id"]}/set_attribute', data=[{
+    req = conn.rest.post(f'bootenv/id/{be["id"]}/set_attribute', data={
         'keep': keep,
-    }])
+    })
     assert req.status_code == 200
     assert isinstance(req.json(), bool) is True
 
@@ -50,7 +50,7 @@ def test_bootenv_activate(conn):
         assert isinstance(req.json(), bool) is True
 
 
-def test_bootenv_rename(conn):
+def test_bootenv_update(conn):
     req = conn.rest.get('bootenv')
     bes = req.json()
 
@@ -64,10 +64,10 @@ def test_bootenv_rename(conn):
             break
 
     if to_rename:
-        req = conn.rest.post(f'bootenv/id/{to_rename["id"]}/rename', data=['rename_test'])
+        req = conn.rest.put(f'bootenv/id/{to_rename["id"]}', data={'name': 'rename_test'})
         assert req.status_code == 200
-        assert isinstance(req.json(), bool) is True
+        assert req.json() == 'rename_test'
 
-        req = conn.rest.post(f'bootenv/id/rename_test/rename', data=[to_rename['id']])
+        req = conn.rest.put(f'bootenv/id/rename_test', data={'name': to_rename['id']})
         assert req.status_code == 200
-        assert isinstance(req.json(), bool) is True
+        assert req.json() == to_rename['id']

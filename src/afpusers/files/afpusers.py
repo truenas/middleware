@@ -23,7 +23,7 @@ if platform.system() in ("FreeBSD", "Darwin"):
     MATCH_STR = '(\w+)\s+(\d+)\s+(\d+)\s+([\d\w:]+)'
     match_rx = re.compile(MATCH_STR)
 else:
-    print >> sys.stderr, "Unknown OS"
+    print("Unknown OS", file=sys.stderr)
     sys.exit(1)
 
 ASIP_PORT = "afpovertcp"
@@ -37,9 +37,11 @@ def AFPUsers():
     if platform.system() in ("FreeBSD"):
         rx = re.compile("^\S+\s+\S+\s+(\d+)\s+\d+\s+[\w\d]+\s+[\d\.:]+\s+([\d\.]+)")
         try:
-            p = subprocess.Popen(["/usr/bin/sockstat", "-4"], stdout=subprocess.PIPE)
+            p = subprocess.Popen(["/usr/bin/sockstat", "-4"],
+                                 stdout=subprocess.PIPE, encoding="utf8")
         except:
-            print >> sys.stderr, "Cannot popen sockstat: %s " % sys.exc_info()[0]
+            print("Cannot popen sockstat: %s " % sys.exc_info()[0],
+                  file=sys.stderr)
             sys.exit(1)
 
     for line in p.stdout:
@@ -54,9 +56,11 @@ def AFPUsers():
         p.wait()
 
     try:
-        p = subprocess.Popen(["/bin/ps", PS_STR], stdout=subprocess.PIPE)
+        p = subprocess.Popen(["/bin/ps", PS_STR], stdout=subprocess.PIPE,
+                             encoding="utf8")
     except:
-        print >> sys.stderr, "Cannot popen ps the first time: %s" % sys.exc_info()[0]
+        print("Cannot popen ps the first time: %s" % sys.exc_info()[0],
+              file=sys.stderr)
         sys.exit(1)
 
     for line in p.stdout:
@@ -68,9 +72,10 @@ def AFPUsers():
         p.wait()
 
     try:
-        p = subprocess.Popen(["/bin/ps", PS_STR], stdout=subprocess.PIPE)
+        p = subprocess.Popen(["/bin/ps", PS_STR], stdout=subprocess.PIPE,
+                             encoding="utf8")
     except:
-        print >> sys.stderr, "Cannot popen ps: %s" % sys.exc_info()[0]
+        print("Cannot popen ps: %s" % sys.exc_info()[0], file=sys.stderr)
         sys.exit(1)
 
     for line in p.stdout:
@@ -94,6 +99,6 @@ def AFPUsers():
         p.wait()
 
 if __name__ == "__main__":
-    print "PID      UID      Username         Name                 Logintime Mac"
+    print("PID      UID      Username         Name                 Logintime Mac")
     for (pid, uid, user, fname, time, mac) in AFPUsers():
-        print "%-8d %-8d %-16s %-20s %-9s %s" % (pid, uid, user, fname, time, mac)
+        print("%-8d %-8d %-16s %-20s %-9s %s" % (pid, uid, user, fname, time, mac))

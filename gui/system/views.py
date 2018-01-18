@@ -24,15 +24,17 @@
 #
 #####################################################################
 from collections import OrderedDict, namedtuple
+from datetime import date
 import pickle as pickle
+import errno
 import json
 import logging
 import os
+import pytz
 import re
 import shutil
 import socket
 import subprocess
-import sysctl
 import tarfile
 import tempfile
 import time
@@ -43,25 +45,20 @@ import sys
 
 from wsgiref.util import FileWrapper
 from django.core.urlresolvers import reverse
-from django.db import transaction
 from django.http import (
     HttpResponse,
     HttpResponseRedirect,
     StreamingHttpResponse,
 )
 from django.shortcuts import render
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ungettext
 from django.views.decorators.cache import never_cache
 
 from freenasOS import Configuration
 from freenasOS.Exceptions import UpdateManifestNotFound
 from freenasOS.Update import CheckForUpdates
 from freenasUI.account.models import bsdUsers
-from freenasUI.common.system import (
-    get_sw_name,
-    get_sw_version,
-    send_mail
-)
+from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.common.ssl import (
     export_certificate,
     export_certificate_chain,
@@ -69,8 +66,9 @@ from freenasUI.common.ssl import (
 )
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.middleware.client import client, CallTimeout, ClientException
+from freenasUI.middleware.client import client, CallTimeout, ClientException, ValidationErrors
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.zfs import zpool_list
 from freenasUI.network.models import GlobalConfiguration
@@ -97,41 +95,47 @@ PERFTEST_SIZE = 40 * 1024 * 1024 * 1024  # 40 GiB
 log = logging.getLogger('system.views')
 
 
-def _system_info(request=None):
-    # OS, hostname, release
-    __, hostname, __ = os.uname()[0:3]
-    platform = sysctl.filter('hw.model')[0].value
-    physmem = '%dMB' % (
-        sysctl.filter('hw.physmem')[0].value / 1048576,
-    )
-    # All this for a timezone, because time.asctime() doesn't add it in.
-    date = time.strftime('%a %b %d %H:%M:%S %Z %Y') + '\n'
-    uptime = subprocess.check_output(
-        "env -u TZ uptime | awk -F', load averages:' '{ print $1 }'",
-        shell=True
-    )
-    loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
-
-    try:
-        freenas_build = get_sw_version()
-    except:
-        freenas_build = "Unrecognized build"
-
-    return {
-        'hostname': hostname,
-        'platform': platform,
-        'physmem': physmem,
-        'date': date,
-        'uptime': uptime,
-        'loadavg': loadavg,
-        'freenas_build': freenas_build,
-    }
+def _info_humanize(info):
+    info['physmem'] = f'{int(info["physmem"] / 1048576)}MB'
+    info['loadavg'] = ', '.join(list(map(lambda x: f'{x:.2f}', info['loadavg'])))
+    localtz = pytz.timezone(info['timezone'])
+    info['datetime'] = info['datetime'].replace(tzinfo=None)
+    info['datetime'] = localtz.fromutc(info['datetime'])
+    return info
 
 
 def system_info(request):
-    sysinfo = _system_info(request)
-    sysinfo['info_hook'] = appPool.get_system_info(request)
-    return render(request, 'system/system_info.html', sysinfo)
+
+    with client as c:
+        local = _info_humanize(c.call('system.info'))
+
+        if local['license']:
+            if local['license']['contract_end'] > date.today():
+                days = (local['license']['contract_end'] - date.today()).days
+                local['license'] = _('%1s contract, expires at %2s, %3d %4s left' % (
+                    _(local['license']['contract_type'].title()),
+                    local['license']['contract_end'].strftime("%x"),
+                    days,
+                    ungettext('day', 'days', days),
+                ))
+            else:
+                local['license'] = _('%1s contract, expired at %2s' % (
+                    _(local['license']['contract_type'].title()),
+                    local['license']['contract_end'].strftime("%x"),
+                ))
+
+        standby = None
+        if not notifier().is_freenas() and notifier().failover_licensed():
+            try:
+                standby = _info_humanize(c.call('failover.call_remote', 'system.info', timeout=2))
+            except ClientException:
+                pass
+
+    return render(request, 'system/system_info.html', {
+        'local': local,
+        'standby': standby,
+        'is_freenas': notifier().is_freenas(),
+    })
 
 
 def bootenv_datagrid(request):
@@ -291,11 +295,14 @@ def bootenv_add(request, source=None):
     if request.method == 'POST':
         form = forms.BootEnvAddForm(request.POST, source=source)
         if form.is_valid():
-            form.save()
-            return JsonResp(
-                request,
-                message=_('Boot Environment successfully added.'),
-            )
+            try:
+                form.save()
+                return JsonResp(
+                    request,
+                    message=_('Boot Environment successfully added.'),
+                )
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
         return JsonResp(request, form=form)
     else:
         form = forms.BootEnvAddForm(source=source)
@@ -429,11 +436,14 @@ def bootenv_rename(request, name):
     if request.method == 'POST':
         form = forms.BootEnvRenameForm(request.POST, name=name)
         if form.is_valid():
-            form.save()
-            return JsonResp(
-                request,
-                message=_('Boot Environment successfully renamed.'),
-            )
+            try:
+                form.save()
+                return JsonResp(
+                    request,
+                    message=_('Boot Environment successfully renamed.'),
+                )
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
         return JsonResp(request, form=form)
     else:
         form = forms.BootEnvRenameForm(name=name)
@@ -500,7 +510,8 @@ def bootenv_pool_attach(request):
 
 def bootenv_pool_detach(request, label):
     if request.method == 'POST':
-        notifier().zfs_detach_disk('freenas-boot', label)
+        with client as c:
+            c.call('boot.detach', label)
         return JsonResp(
             request,
             message=_("Disk has been successfully detached."))
@@ -695,7 +706,7 @@ def reboot_dialog(request):
 def reboot(request):
     """ reboots the system """
     if not request.session.get("allow_reboot"):
-        return HttpResponseRedirect('/')
+        return HttpResponseRedirect('/legacy/')
     request.session.pop("allow_reboot")
     return render(request, 'system/reboot.html', {
         'sw_name': get_sw_name(),
@@ -747,7 +758,7 @@ def shutdown_dialog(request):
 def shutdown(request):
     """ shuts down the system and powers off the system """
     if not request.session.get("allow_shutdown"):
-        return HttpResponseRedirect('/')
+        return HttpResponseRedirect('/legacy/')
     request.session.pop("allow_shutdown")
     return render(request, 'system/shutdown.html', {
         'sw_name': get_sw_name(),
@@ -797,22 +808,26 @@ def testmail(request):
             form=form,
         )
 
-    sid = transaction.savepoint()
-    form.save()
-
     error = False
     if request.is_ajax():
         sw_name = get_sw_name()
-        error, errmsg = send_mail(
-            subject=_(f'Test message from your {sw_name} system hostname {socket.gethostname()}'),
-            text=_(f'This is a message test from {sw_name}'),
-            to=[email],
-            timeout=10)
+        with client as c:
+            mailconfig = form.middleware_prepare()
+            try:
+                c.call('mail.send', {
+                    'subject': f'Test message from your {sw_name} system hostname {socket.gethostname()}',
+                    'text': f'This is a message test from {sw_name}',
+                    'to': [email],
+                    'timeout': 10,
+                }, mailconfig, job=True)
+                error = False
+            except Exception as e:
+                error = True
+                errmsg = str(e)
     if error:
         errmsg = _("Your test email could not be sent: %s") % errmsg
     else:
         errmsg = _('Your test email has been sent!')
-    transaction.savepoint_rollback(sid)
 
     form.errors[allfield] = form.error_class([errmsg])
     return JsonResp(
@@ -998,7 +1013,8 @@ def debug(request):
                 with client as c:
                     c.call('failover.call_remote', 'core.ping')
             except ClientException:
-                return render(request, 'failover/failover_down.html')
+                return render(request, 'system/debug.html', {"failover_down": True})
+
         return render(request, 'system/debug.html')
     debug_generate()
     return render(request, 'system/debug_download.html')
@@ -1009,8 +1025,10 @@ def debug_download(request):
     gc = GlobalConfiguration.objects.all().order_by('-id')[0]
 
     _n = notifier()
-    if not _n.is_freenas() and _n.failover_licensed():
-        debug_file = '%s/debug.tar' % direc
+    dual_node_debug_file = debug_file = '{}/debug.tar'.format(direc)
+
+    if not _n.is_freenas() and _n.failover_licensed() and os.path.exists(dual_node_debug_file):
+        debug_file = dual_node_debug_file
         extension = 'tar'
         hostname = ''
     else:
@@ -1205,9 +1223,19 @@ def update_apply(request):
 
             # If it is HA run updated on the other node
             if not notifier().is_freenas() and notifier().failover_licensed():
-                with client as c:
-                    uuid = c.call('failover.call_remote', 'update.download')
-                request.session['failover_update_jobid'] = uuid
+                try:
+                    with client as c:
+                        uuid = c.call('failover.call_remote', 'update.download')
+                    request.session['failover_update_jobid'] = uuid
+                except ClientException as e:
+                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                        raise
+                    # If method does not exist it means we are still upgranding old
+                    # version standby node using hasyncd
+                    s = notifier().failover_rpc()
+                    uuid = s.updated(False, True)
+                    if uuid is False:
+                        raise MiddlewareError(_('Update daemon failed!'))
                 return HttpResponse(uuid, status=202)
 
             running = UpdateHandler.is_running()
@@ -1228,23 +1256,43 @@ def update_apply(request):
             # Get update handler from standby node
             if not notifier().is_freenas() and notifier().failover_licensed():
                 failover = True
+                job = None
+                if uuid.isdigit():
+                    legacy = False
+                else:
+                    legacy = True
                 try:
-                    with client as c:
-                        job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]], {'timeout': 10})[0]
+                    if not legacy:
+                        with client as c:
+                            job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]], {'timeout': 10})[0]
                 except CallTimeout:
                     return HttpResponse(uuid, status=202)
+                except ClientException as e:
+                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                        raise
+                    # If method does not exist it means we are still upgranding old
+                    # version standby node using hasyncd
+                    legacy = True
+
+                if legacy:
+                    s = notifier().failover_rpc()
+                    rv = s.updated_handler(uuid)
 
                 def exit():
                     pass
 
-                rv = {
-                    'exit': exit,
-                    'uuid': uuid,
-                    'reboot': True,
-                    'finished': True if job['state'] in ('SUCCESS', 'FAILED') else False,
-                    'error': job['error'] or False,
-                }
-                handler = namedtuple('Handler', ['uuid', 'error', 'finished', 'exit', 'reboot'])(**rv)
+                if job:
+                    rv = {
+                        'exit': exit,
+                        'uuid': uuid,
+                        'reboot': True,
+                        'finished': True if job['state'] in ('SUCCESS', 'FAILED', 'ABORTED') else False,
+                        'error': job['error'] or False,
+                    }
+                    handler = namedtuple('Handler', ['uuid', 'error', 'finished', 'exit', 'reboot'])(**rv)
+                else:
+                    rv['exit'] = exit
+                    handler = namedtuple('Handler', list(rv.keys()))(**rv)
 
             else:
                 handler = UpdateHandler(uuid=uuid)
@@ -1258,6 +1306,13 @@ def update_apply(request):
                 try:
                     with client as c:
                         c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
+                except ClientException as e:
+                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                        raise
+                    # If method does not exist it means we are still upgranding old
+                    # version standby node using hasyncd
+                    s.reboot()
+
                 except:
                     pass
                 return render(request, 'failover/update_standby.html')
@@ -1277,8 +1332,20 @@ def update_apply(request):
                 try:
                     update_check = c.call('failover.call_remote', 'update.check_available')
                 except ClientException as e:
-                    if e.trace['class'] in ('ConnectionRefusedError', 'socket.error'):
-                        return render(request, 'failover/failover_down.html')
+                    # If method does not exist it means we are still upgranding old
+                    # version standby node using hasyncd
+                    if e.errno in (ClientException.ENOMETHOD, errno.ECONNREFUSED) or e.trace['class'] in ('ConnectionRefusedError', 'KeyError'):
+                        try:
+                            s = notifier().failover_rpc()
+                            return render(
+                                request,
+                                'system/update.html',
+                                s.update_check(),
+                            )
+                        except (ConnectionRefusedError, socket.error):
+                            return render(request, 'failover/failover_down.html')
+                    else:
+                        raise
                     raise
 
             # We need to transform returned data to something the template understands
@@ -1361,10 +1428,20 @@ def update_check(request):
 
             # If it is HA run updated on the other node
             if not notifier().is_freenas() and notifier().failover_licensed():
-                with client as c:
-                    method = 'update.update' if apply_ else 'update.download'
-                    uuid = c.call('failover.call_remote', method)
-                request.session['failover_update_jobid'] = uuid
+                try:
+                    with client as c:
+                        method = 'update.update' if apply_ else 'update.download'
+                        uuid = c.call('failover.call_remote', method)
+                    request.session['failover_update_jobid'] = uuid
+                except ClientException as e:
+                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                        raise
+                    # If method does not exist it means we are still upgranding old
+                    # version standby node using hasyncd
+                    s = notifier().failover_rpc()
+                    uuid = s.updated(True, apply_)
+                    if uuid is False:
+                        raise MiddlewareError(_('Update daemon failed!'))
                 return HttpResponse(uuid, status=202)
 
             running = UpdateHandler.is_running()
@@ -1387,24 +1464,44 @@ def update_check(request):
             # Get update handler from standby node
             if not notifier().is_freenas() and notifier().failover_licensed():
                 failover = True
+                job = None
+                if uuid.isdigit():
+                    legacy = False
+                else:
+                    legacy = True
                 try:
-                    with client as c:
-                        job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]], {'timeout': 10})[0]
+                    if not legacy:
+                        with client as c:
+                            job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]], {'timeout': 10})[0]
                 except CallTimeout:
                     return HttpResponse(uuid, status=202)
+                except ClientException as e:
+                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                        raise
+                    # If method does not exist it means we are still upgranding old
+                    # version standby node using hasyncd
+                    legacy = True
+
+                if legacy:
+                    s = notifier().failover_rpc()
+                    rv = s.updated_handler(uuid)
 
                 def exit():
                     pass
 
-                rv = {
-                    'exit': exit,
-                    'uuid': uuid,
-                    'apply': True if job['method'] == 'update.update' else False,
-                    'reboot': True,
-                    'finished': True if job['state'] in ('SUCCESS', 'FAILED') else False,
-                    'error': job['error'] or False,
-                }
-                handler = namedtuple('Handler', ['uuid', 'error', 'finished', 'exit', 'reboot', 'apply'])(**rv)
+                if job:
+                    rv = {
+                        'exit': exit,
+                        'uuid': uuid,
+                        'apply': True if job['method'] == 'update.update' else False,
+                        'reboot': True,
+                        'finished': True if job['state'] in ('SUCCESS', 'FAILED', 'ABORTED') else False,
+                        'error': job['error'] or False,
+                    }
+                    handler = namedtuple('Handler', ['uuid', 'error', 'finished', 'exit', 'reboot', 'apply'])(**rv)
+                else:
+                    rv['exit'] = exit
+                    handler = namedtuple('Handler', list(rv.keys()))(**rv)
             else:
                 handler = UpdateHandler(uuid=uuid)
             if handler.error is not False:
@@ -1418,6 +1515,12 @@ def update_check(request):
                     try:
                         with client as c:
                             c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
+                    except ClientException as e:
+                        if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                            raise
+                        # If method does not exist it means we are still upgranding old
+                        # version standby node using hasyncd
+                        s.reboot()
                     except:
                         pass
                     return render(request, 'failover/update_standby.html')
@@ -1438,19 +1541,29 @@ def update_check(request):
     else:
         # If it is HA run update check on the other node
         if not notifier().is_freenas() and notifier().failover_licensed():
-            with client as c:
-                error = False
-                network = False
-                error_trace = None
-                try:
+            try:
+                with client as c:
+                    error = False
+                    network = False
+                    error_trace = None
                     update_check = c.call('failover.call_remote', 'update.check_available')
-                except Exception as e:
-                    if isinstance(e, ClientException):
-                        if e.trace['class'] in ('ConnectionRefusedError', 'socket.error'):
+            except Exception as e:
+                if isinstance(e, ClientException):
+                    if e.errno in (ClientException.ENOMETHOD, errno.ECONNREFUSED) or e.trace['class'] in ('KeyError', 'ConnectionRefusedError'):
+                        try:
+                            s = notifier().failover_rpc()
+                            return render(
+                                request,
+                                'system/update_check.html',
+                                s.update_check(),
+                            )
+                        except (ConnectionRefusedError, socket.error):
                             return render(request, 'failover/failover_down.html')
-                    error = True
-                    if sys.exc_info()[0]:
-                        error_trace = traceback.format_exc()
+                    else:
+                        raise
+                error = True
+                if sys.exc_info()[0]:
+                    error_trace = traceback.format_exc()
 
             # We need to transform returned data to something the template understands
             if not error and update_check['status'] == 'AVAILABLE':
@@ -1534,22 +1647,27 @@ def update_progress(request):
 
     # If it is HA run update handler on the other node
     if not notifier().is_freenas() and notifier().failover_licensed():
-        jobid = request.session['failover_update_jobid']
-        with client as c:
-            job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', jobid)]], {'timeout': 10})[0]
-        load = {
-            'apply': True if job['method'] == 'update.update' else False,
-            'error': job['error'],
-            'finished': job['state'] in ('SUCCESS', 'FAILED'),
-            'indeterminate': True if job['progress']['percent'] is None else False,
-            'percent': job['progress'].get('percent'),
-            'step': 1,
-            'reboot': True,
-            'uuid': jobid,
-        }
-        desc = job['progress'].get('description')
-        if desc:
-            load['details'] = desc
+        jobid = request.session.get('failover_update_jobid')
+        if jobid:
+            with client as c:
+                job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', jobid)]], {'timeout': 10})[0]
+            load = {
+                'apply': True if job['method'] == 'update.update' else False,
+                'error': job['error'],
+                'finished': job['state'] in ('SUCCESS', 'FAILED', 'ABORTED'),
+                'indeterminate': True if job['progress']['percent'] is None else False,
+                'percent': job['progress'].get('percent'),
+                'step': 1,
+                'reboot': True,
+                'uuid': jobid,
+            }
+            desc = job['progress'].get('description')
+            if desc:
+                load['details'] = desc
+        else:
+            s = notifier().failover_rpc()
+            rv = s.updated_handler(None)
+            load = rv['data']
     else:
         load = UpdateHandler().load()
     return HttpResponse(
@@ -1682,6 +1800,27 @@ def CA_edit(request, id):
 
     else:
         form = forms.CertificateAuthorityEditForm(instance=ca)
+
+    return render(request, "system/certificate/CA_edit.html", {
+        'form': form
+    })
+
+
+def CA_sign_csr(request, id):
+
+    ca = models.CertificateAuthority.objects.get(pk=id)
+
+    if request.method == 'POST':
+        form = forms.CertificateAuthoritySignCSRForm(request.POST, instance=ca)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("CSR signed successfully.")
+            )
+
+    else:
+        form = forms.CertificateAuthoritySignCSRForm(instance=ca)
 
     return render(request, "system/certificate/CA_edit.html", {
         'form': form
@@ -1930,12 +2069,6 @@ def consul_fake_alert(request):
     with client as c:
         fake_alert = c.call('consul.create_fake_alert')
     if fake_alert is True:
-        return JsonResp(
-                request,
-                message=_('Fake alert sent.'),
-        )
+        return JsonResp(request, message=_('Fake alert sent.'))
     else:
-        return JsonResp(
-                request,
-                message=_('Failed to send a fake alert.'),
-        )
+        return JsonResp(request, message=_('Failed to send a fake alert.'))

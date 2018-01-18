@@ -3,7 +3,7 @@
 # $FreeBSD: src/etc/crontab,v 1.33.2.1 2009/08/03 08:13:06 kensmith Exp $
 #
 SHELL=/bin/sh
-PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
+PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 #
 #minute	hour	mday	month	wday	who	command
 #
@@ -36,4 +36,3 @@ PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
 45	3	*	*	*	root	/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py backup_db >/dev/null 2>&1
 0	3	*	*	*	root	find /tmp/ -iname "sessionid*" -ctime +1d -delete > /dev/null 2>&1
 30	*/5	*	*	*	root	/etc/ix.rc.d/ix-kinit renew > /dev/null 2>&1
-*/10	*	*	*	*	root	[ -s /tmp/mail.queue ] && /usr/local/bin/python /usr/local/www/freenasUI/tools/mailqueue.py

@@ -12,6 +12,7 @@ from freenasUI import choices
 from freenasUI.common.forms import ModelForm, mchoicefield
 from freenasUI.freeadmin.forms import CronMultiple
 from freenasUI.middleware.client import client
+from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import CloudCredentials
 from freenasUI.tasks import models
@@ -86,13 +87,10 @@ class CloudSyncForm(ModelForm):
             raise forms.ValidationError(_('Bucket is required.'))
 
         direction = self.cleaned_data.get('direction')
-        folder = attributes.get('folder')
-        if direction == 'PULL' and folder and folder != '/':
-            if folder.startswith('/'):
-                folder = folder[1:]
+        folder = attributes.get('folder').strip('/')
+        if direction == 'PULL' and folder:
             with client as c:
-                # TODO: make it provider agnostic
-                if not c.call('backup.s3.ls', credential, attributes['bucket'], folder):
+                if not c.call('backup.is_dir', credential, attributes['bucket'], folder):
                     raise forms.ValidationError(_('Folder "%s" does not exist.') % folder)
 
         return attributes
@@ -192,7 +190,12 @@ class CronJobForm(ModelForm):
         notifier().restart("cron")
 
 
-class InitShutdownForm(ModelForm):
+class InitShutdownForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "ini_"
+    middleware_attr_schema = "init_shutdown_script"
+    middleware_plugin = "initshutdownscript"
+    is_singletone = False
 
     class Meta:
         fields = '__all__'
@@ -204,19 +207,10 @@ class InitShutdownForm(ModelForm):
             "initshutdownModeToggle();"
         )
 
-    def clean_ini_command(self):
-        _type = self.cleaned_data.get("ini_type")
-        val = self.cleaned_data.get("ini_command")
-        if _type == 'command' and not val:
-            raise forms.ValidationError(_("This field is required"))
-        return val
-
-    def clean_ini_script(self):
-        _type = self.cleaned_data.get("ini_type")
-        val = self.cleaned_data.get("ini_script")
-        if _type == 'script' and not val:
-            raise forms.ValidationError(_("This field is required"))
-        return val
+    def middleware_clean(self, data):
+        data["type"] = data["type"].upper()
+        data["when"] = data["when"].upper()
+        return data
 
 
 class RsyncForm(ModelForm):

@@ -54,7 +54,7 @@ class CIFS_Share(Model):
     )
     cifs_default_permissions = models.BooleanField(
         verbose_name=_('Apply Default Permissions'),
-        help_text=_('Recursively set sane default windows permissions on share'),
+        help_text=_('Recursively set appropriate default Windows permissions on share'),
         default=True
     )
     cifs_ro = models.BooleanField(
@@ -90,6 +90,10 @@ class CIFS_Share(Model):
         ),
         default=False,
     )
+    cifs_abe = models.BooleanField(
+        verbose_name=_('Access Based Share Enumeration'),
+        default=False
+    )
     cifs_hostsallow = models.TextField(
         blank=True,
         verbose_name=_("Hosts Allow"),
@@ -117,7 +121,7 @@ class CIFS_Share(Model):
         verbose_name=_('VFS Objects'),
         max_length=255,
         blank=True,
-        default='zfs_space,zfsacl,streams_xattr,aio_pthread',
+        default='zfs_space,zfsacl,streams_xattr',
         choices=list(choices.CIFS_VFS_OBJECTS())
     )
     cifs_storage_task = models.ForeignKey(
@@ -150,6 +154,10 @@ class CIFS_Share(Model):
 class AFP_Share(Model):
     afp_path = PathField(
         verbose_name=_("Path"),
+    )
+    afp_home = models.BooleanField(
+        verbose_name=_('Use as home share'),
+        default=False,
     )
     afp_name = models.CharField(
         max_length=120,
@@ -214,6 +222,14 @@ class AFP_Share(Model):
             'Check this to enable Time Machine backups on this share.'
         ),
         default=False,
+    )
+    afp_timemachine_quota = models.IntegerField(
+        verbose_name=_('Time Machine Quota, GiB'),
+        help_text=_(
+            'Quota for each Time Machine backup on this share (in GiB). '
+            'Please note that this change will be applied only after share re-mount.'
+        ),
+        default=0,
     )
     afp_nodev = models.BooleanField(
         verbose_name=_('Zero Device Numbers'),

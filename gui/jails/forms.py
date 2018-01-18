@@ -1067,7 +1067,7 @@ class JailTemplateCreateForm(ModelForm):
 
     class Meta:
         fields = '__all__'
-        exclude = ['jt_system']
+        exclude = ['jt_system', 'jt_readonly']
         model = JailTemplate
 
     def clean_jt_name(self):

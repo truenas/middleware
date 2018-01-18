@@ -52,6 +52,11 @@ class CloudSyncFAdmin(BaseFreeAdmin):
         'minute',
         'month',
         'attributes',
+        'transfer_mode',
+        'encryption',
+        'filename_encryption',
+        'encryption_password',
+        'encryption_salt',
     )
     menu_child_of = 'tasks'
     refresh_time = 12000

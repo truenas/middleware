@@ -6,13 +6,24 @@ from logging.config import dictConfig
 from .utils import sw_version, sw_version_is_stable
 
 from raven import Client
-from raven.transport.gevent import GeventedHTTPTransport
 from raven.transport.threaded import ThreadedHTTPTransport
 
-# geventwebsocket.server debug log is mostly useless, lets focus on INFO
-logging.getLogger('geventwebsocket.server').setLevel(logging.INFO)
 # markdown debug is also considered useless
 logging.getLogger('MARKDOWN').setLevel(logging.INFO)
+# asyncio runs in debug mode but we do not need INFO/DEBUG
+logging.getLogger('asyncio').setLevel(logging.WARN)
+
+LOGFILE = '/var/log/middlewared.log'
+logging.TRACE = 6
+
+
+def trace(self, message, *args, **kws):
+    if self.isEnabledFor(logging.TRACE):
+        self._log(logging.TRACE, message, args, **kws)
+
+
+logging.addLevelName(logging.TRACE, "TRACE")
+logging.Logger.trace = trace
 
 
 class CrashReporting(object):
@@ -20,10 +31,8 @@ class CrashReporting(object):
     Pseudo-Class for remote crash reporting
     """
 
-    def __init__(self, transport='gevent'):
-        if transport == 'gevent':
-            transport = GeventedHTTPTransport
-        elif transport == 'threaded':
+    def __init__(self, transport='threaded'):
+        if transport == 'threaded':
             transport = ThreadedHTTPTransport
         else:
             raise ValueError(f'Unknown transport: {transport}')
@@ -160,7 +169,7 @@ class Logger(object):
             'file': {
                 'level': 'DEBUG',
                 'class': 'logging.handlers.RotatingFileHandler',
-                'filename': '/var/log/middlewared.log',
+                'filename': LOGFILE,
                 'mode': 'a',
                 'maxBytes': 10485760,
                 'backupCount': 5,
@@ -176,21 +185,32 @@ class Logger(object):
         },
     }
 
-    def __init__(self, application_name):
+    def __init__(self, application_name, debug_level=None):
         self.application_name = application_name
+        self.debug_level = debug_level or 'DEBUG'
 
     def getLogger(self):
         return logging.getLogger(self.application_name)
 
+    def stream(self):
+        return logging.root.handlers[0].stream
+
     def _set_output_file(self):
         """Set the output format for file log."""
         dictConfig(self.DEFAULT_LOGGING)
+        # Make sure log file is not readable by everybody.
+        # umask could be another approach but chmod was chosen so
+        # it affects existing installs.
+        try:
+            os.chmod(LOGFILE, 0o640)
+        except OSError:
+            pass
 
     def _set_output_console(self):
         """Set the output format for console."""
 
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.DEBUG)
+        logging.root.setLevel(getattr(logging, self.debug_level))
 
         log_format = "[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s"
         time_format = "%Y/%m/%d %H:%M:%S"
@@ -210,4 +230,4 @@ class Logger(object):
         else:
             self._set_output_file()
 
-        logging.root.setLevel(logging.DEBUG)
+        logging.root.setLevel(getattr(logging, self.debug_level))

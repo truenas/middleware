@@ -1,15 +1,18 @@
-from middlewared.schema import Bool, Dict, Int, Str, accepts
-from middlewared.service import private, CallError, Service
+from middlewared.main import EventSource
+from middlewared.schema import Bool, Dict, Int, Ref, Str, accepts
+from middlewared.service import private, CallError, Service, job
+from middlewared.utils import filter_list
 
 import binascii
 import errno
 import os
+import select
 
 
 class FilesystemService(Service):
 
-    @accepts(Str('path'))
-    def listdir(self, path):
+    @accepts(Str('path', required=True), Ref('query-filters'), Ref('query-options'))
+    def listdir(self, path, filters=None, options=None):
         """
         Get the contents of a directory.
 
@@ -29,6 +32,7 @@ class FilesystemService(Service):
         if not os.path.isdir(path):
             raise CallError(f'Path {path} is not a directory', errno.ENOTDIR)
 
+        rv = []
         for entry in os.scandir(path):
             if entry.is_dir():
                 etype = 'DIRECTORY'
@@ -55,7 +59,8 @@ class FilesystemService(Service):
                 })
             except FileNotFoundError:
                 data.update({'size': None, 'mode': None, 'uid': None, 'gid': None})
-            yield data
+            rv.append(data)
+        return filter_list(rv, filters=filters or [], options=options or {})
 
     @accepts(Str('path'))
     def stat(self, path):
@@ -135,3 +140,116 @@ class FilesystemService(Service):
                 f.seek(options['offset'])
             data = binascii.b2a_base64(f.read(options.get('maxlen'))).decode().strip()
         return data
+
+    @accepts(Str('path'))
+    @job(pipe=True)
+    async def get(self, job, path):
+        """
+        Job to get contents of `path`.
+        """
+
+        if not os.path.isfile(path):
+            raise CallError(f'{path} is not a file')
+
+        def read_write():
+            with open(path, 'rb') as f:
+                f2 = os.fdopen(job.write_fd, 'wb')
+                while True:
+                    read = f.read(102400)
+                    if read == b'':
+                        break
+                    f2.write(read)
+                f2.close()
+        await self.middleware.run_in_thread(read_write)
+
+    @accepts(
+        Str('path'),
+        Dict(
+            'options',
+            Bool('append', default=False),
+            Int('mode'),
+        ),
+    )
+    @job(pipe=True)
+    async def put(self, job, path, options=None):
+        """
+        Job to put contents to `path`.
+        """
+        options = options or {}
+        dirname = os.path.dirname(path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        if options.get('append'):
+            openmode = 'ab'
+        else:
+            openmode = 'wb+'
+
+        def read_write():
+            with open(path, openmode) as f:
+                f2 = os.fdopen(job.read_fd, 'rb')
+                while True:
+                    read = f2.read(102400)
+                    if read == b'':
+                        break
+                    f.write(read)
+                f2.close()
+        await self.middleware.run_in_thread(read_write)
+
+        mode = options.get('mode')
+        if mode:
+            os.chmod(path, mode)
+        return True
+
+
+class FileFollowTailEventSource(EventSource):
+
+    def run(self):
+        if ':' in self.arg:
+            path, lines = self.arg.rsplit(':', 1)
+            lines = int(lines)
+        else:
+            path = self.arg
+            lines = 3
+        if not os.path.exists(path):
+            # FIXME: Error?
+            return
+
+        bufsize = 8192
+        fsize = os.stat(path).st_size
+        if fsize < bufsize:
+            bufsize = fsize
+        i = 0
+        with open(path) as f:
+            data = []
+            while True:
+                i += 1
+                if bufsize * i > fsize:
+                    break
+                f.seek(fsize - bufsize * i)
+                data.extend(f.readlines())
+                if len(data) >= lines or f.tell() == 0:
+                    break
+
+            self.send_event('ADDED', fields={'data': ''.join(data[-lines:])})
+            f.seek(fsize)
+
+            kqueue = select.kqueue()
+
+            ev = [select.kevent(
+                f.fileno(),
+                filter=select.KQ_FILTER_VNODE,
+                flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE | select.KQ_EV_CLEAR,
+                fflags=select.KQ_NOTE_DELETE | select.KQ_NOTE_EXTEND | select.KQ_NOTE_WRITE | select.KQ_NOTE_ATTRIB,
+            )]
+            kqueue.control(ev, 0, 0)
+
+            while not self._cancel.is_set():
+                events = kqueue.control([], 1, 1)
+                if not events:
+                    continue
+                # TODO: handle other file operations other than just extend/write
+                self.send_event('ADDED', fields={'data': f.read()})
+
+
+def setup(middleware):
+    middleware.register_event_source('filesystem.file_tail_follow', FileFollowTailEventSource)

@@ -1,4 +1,3 @@
-#
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -28,7 +27,6 @@ import base64
 import logging
 import os
 import re
-import sysctl
 import tempfile
 
 from ldap import LDAPError
@@ -43,7 +41,6 @@ from freenasUI.common.forms import ModelForm
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
     FreeNAS_LDAP,
-    FreeNAS_ActiveDirectory_Exception,
 )
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.pipesubr import run
@@ -56,7 +53,6 @@ from freenasUI.directoryservice import models, utils
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import CIFS, ServiceMonitor
 
 log = logging.getLogger('directoryservice.form')
@@ -222,96 +218,14 @@ class idmap_tdb2_Form(ModelForm):
         ]
 
 
-class NT4Form(ModelForm):
-    nt4_adminpw2 = forms.CharField(
-        max_length=50,
-        label=_("Confirm Administrator Password"),
-        widget=forms.widgets.PasswordInput(),
-        required=False,
-    )
-
-    advanced_fields = [
-        'nt4_use_default_domain',
-        'nt4_idmap_backend'
-    ]
-
+class idmap_script_Form(ModelForm):
     class Meta:
-        model = models.NT4
-        widgets = {
-            'nt4_adminpw': forms.widgets.PasswordInput(render_value=False),
-        }
-        fields = [
-            'nt4_dcname',
-            'nt4_workgroup',
-            'nt4_adminname',
-            'nt4_adminpw',
-            'nt4_adminpw2',
-            'nt4_use_default_domain',
-            'nt4_idmap_backend',
-            'nt4_enable'
+        fields = '__all__'
+        model = models.idmap_script
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
         ]
-
-    def __init__(self, *args, **kwargs):
-        super(NT4Form, self).__init__(*args, **kwargs)
-        if self.instance.nt4_adminpw:
-            self.fields['nt4_adminpw'].required = False
-        if self._api is True:
-            del self.fields['nt4_adminpw2']
-
-        self.instance._original_nt4_idmap_backend = \
-            self.instance.nt4_idmap_backend
-
-        self.fields["nt4_enable"].widget.attrs["onChange"] = (
-            "nt4_mutex_toggle();"
-        )
-
-    def clean_nt4_adminpw2(self):
-        password1 = self.cleaned_data.get("nt4_adminpw")
-        password2 = self.cleaned_data.get("nt4_adminpw2")
-        if password1 != password2:
-            raise forms.ValidationError(
-                _("The two password fields didn't match.")
-            )
-        return password2
-
-    def clean_nt4_idmap_backend(self):
-        nt4_idmap_backend = self.cleaned_data.get("nt4_idmap_backend")
-        if not nt4_idmap_backend:
-            nt4_idmap_backend = None
-        return nt4_idmap_backend
-
-    def clean_nt4_workgroup(self):
-        workgroup = self.cleaned_data.get("nt4_workgroup")
-        try:
-            validate_netbios_name(workgroup)
-        except Exception as e:
-            raise forms.ValidationError(_("workgroup: %s" % e))
-        return workgroup
-
-    def clean(self):
-        cdata = self.cleaned_data
-        if not cdata.get("nt4_adminpw"):
-            cdata['nt4_adminpw'] = self.instance.nt4_adminpw
-        return cdata
-
-    def save(self):
-        enable = self.cleaned_data.get("nt4_enable")
-        started = notifier().started("nt4")
-        if enable:
-            if started is True:
-                started = notifier().restart("nt4")
-            if started is False:
-                started = notifier().start("nt4")
-            if started is False:
-                self.instance.ad_enable = False
-                super(NT4Form, self).save()
-                raise ServiceFailed("nt4", _("NT4 failed to reload."))
-        else:
-            if started is True:
-                started = notifier().stop("nt4")
-
-        obj = super(NT4Form, self).save()
-        return obj
 
 
 class ActiveDirectoryForm(ModelForm):
@@ -608,7 +522,7 @@ class ActiveDirectoryForm(ModelForm):
             except LDAPError as e:
                 log.debug("LDAPError: type = %s", type(e))
 
-                error = [] 
+                error = []
                 try:
                     error.append(e.args[0]['info'])
                     error.append(e.args[0]['desc'])
@@ -670,14 +584,18 @@ class ActiveDirectoryForm(ModelForm):
         if self.__original_changed():
             notifier().clear_activedirectory_config()
 
-        started = notifier().started("activedirectory",
-            timeout=_fs().directoryservice.activedirectory.timeout.started)
+        started = notifier().started(
+            "activedirectory",
+            timeout=_fs().directoryservice.activedirectory.timeout.started
+        )
         obj = super(ActiveDirectoryForm, self).save()
 
         try:
             utils.get_idmap_object(obj.ds_type, obj.id, obj.ad_idmap_backend)
         except ObjectDoesNotExist:
-            log.debug('IDMAP backend {} entry does not exist, creating one.'.format(obj.ad_idmap_backend))
+            log.debug(
+                'IDMAP backend {} entry does not exist, creating one.'.format(obj.ad_idmap_backend)
+            )
             utils.get_idmap(obj.ds_type, obj.id, obj.ad_idmap_backend)
 
         self.cifs.cifs_srv_netbiosname = self.cleaned_data.get("ad_netbiosname_a")
@@ -694,7 +612,7 @@ class ActiveDirectoryForm(ModelForm):
                     raise MiddlewareError(
                         _("Active Directory restart timed out after %d seconds." % timeout),
                     )
-                
+
             if started is False:
                 timeout = _fs().directoryservice.activedirectory.timeout.start
                 try:
@@ -731,12 +649,15 @@ class ActiveDirectoryForm(ModelForm):
         # override them via SRV records. This should be fixed.
         #
         dcport = self.get_dcport()
-        gcport = self.get_gcport()
+        # gcport = self.get_gcport()
 
         if not sm:
             try:
-                log.debug("XXX: fqdn=%s dcport=%s frequency=%s retry=%s enable=%s",
-                    fqdn, dcport, monit_frequency, monit_retry, enable_monitoring)
+                log.debug(
+                    "XXX: fqdn=%s dcport=%s frequency=%s retry=%s enable=%s",
+                    fqdn, dcport, monit_frequency,
+                    monit_retry, enable_monitoring
+                )
 
                 sm = ServiceMonitor.objects.create(
                     sm_name=sm_name,
@@ -1007,7 +928,7 @@ class LDAPForm(ModelForm):
         except LDAPError as e:
             log.debug("LDAPError: type = %s", type(e))
 
-            error = [] 
+            error = []
             try:
                 error.append(e.args[0]['info'])
                 error.append(e.args[0]['desc'])

@@ -1047,7 +1047,7 @@ class FreeNAS_ActiveDirectory_Base(object):
 
         if len(srv_hosts) == 1:
             for s in srv_hosts:
-                host = s.target.to_text(True).decode('utf8')
+                host = s.target.to_text(True)
                 port = int(s.port)
                 return (host, port)
 
@@ -1059,7 +1059,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             latencies[host] += duration
 
         for srv_host in srv_hosts:
-            host = srv_host.target.to_text(True).decode('utf8')
+            host = srv_host.target.to_text(True)
             port = int(srv_host.port)
 
             try:
@@ -1080,7 +1080,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         latency_list = sorted(iter(latencies.items()), key=lambda a_b: (a_b[1], a_b[0]))
         if latency_list:
             for s in srv_hosts:
-                host = s.target.to_text(True).decode('utf8')
+                host = s.target.to_text(True)
                 port = int(s.port)
                 if host.lower() == latency_list[0][0].lower():
                     best_host = (host, port)
@@ -1747,7 +1747,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             network = site_dn = None
             if 'cn' in s[1]:
                 network = s[1]['cn'][0]
-                if isinstance(network, bytes):  
+                if isinstance(network, bytes):
                     network = network.decode('utf-8')
 
             else:
@@ -2035,9 +2035,13 @@ class FreeNAS_ActiveDirectory_Base(object):
             if results and results[0][0]:
                 r = {}
                 for k in list(results[0][1].keys()):
+                    systemFlags = int(results[0][1]['systemFlags'][0].decode('utf8', 'ignore'))
+                    if not (systemFlags & 0x2):
+                        continue
                     # FIXME: objectGUID is a binary
                     r[k] = results[0][1][k][0].decode('utf8', 'ignore')
-                result.append(r)
+                if r:
+                    result.append(r)
 
             if haskey:
                 break

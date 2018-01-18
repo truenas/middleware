@@ -91,23 +91,6 @@ def group2user_update(request, object_id):
     })
 
 
-def user2group_update(request, object_id):
-    if request.method == 'POST':
-        f = forms.bsdUserToGroupForm(object_id, request.POST)
-        if f.is_valid():
-            f.save()
-            return JsonResp(request, message=_("Groups successfully updated."))
-    else:
-        f = forms.bsdUserToGroupForm(userid=object_id)
-    return render(request, 'account/bsdgroup2user_form.html', {
-        'url': reverse(
-            'account_bsduser_groups',
-            kwargs={'object_id': object_id}
-        ),
-        'form': f,
-    })
-
-
 def json_users(request, exclude=None):
 
     query = request.GET.get("q", None)
@@ -283,7 +266,7 @@ class ExtendedAuthForm(AuthenticationForm):
     def __init__(self, request=None, *args, **kwargs):
         if request is not None:
             initial = kwargs.get('initial', {})
-            initial_default = {'username': 'root'}
+            initial_default = {}
             initial_default.update(initial)
             kwargs['initial'] = initial_default
         super(ExtendedAuthForm, self).__init__(request, *args, **kwargs)
@@ -342,7 +325,7 @@ def login_wrapper(
         reverse('system_shutdown'),
         reverse('account_logout'),
     ):
-        response._headers['location'] = ('Location', '/')
+        response._headers['location'] = ('Location', '/legacy/')
     elif request.user.is_authenticated:
-        return HttpResponseRedirect('/')
+        return HttpResponseRedirect('/legacy/')
     return response

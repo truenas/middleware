@@ -78,7 +78,7 @@ _interface_config()
 	local IFS=\|
 	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options
 	local lagg_id laggproto lagg_physnic lagg_deviceoptions
-	local vlan_vint vlan_pint vlan_tag
+	local vlan_vint vlan_pint vlan_tag vlan_pcp
 
 	if [ `${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(id) FROM network_interfaces"` = 0 ]; then
 		IFS="${saved_ifs}"
@@ -96,10 +96,14 @@ _interface_config()
 	local carp1_addr="169.254.10.20/32" carp2_addr="169.254.10.80/32"
 	local carp1_skew carp2_skew
 	local internal_ip internal_iface
+	local configure_ifaces=1
 	if ! is_freenas; then
 
 		if [ "$(ha_mode)" = "MANUAL" ]; then
-			# TODO: get from database if we are not echostream
+			if [ "$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
+				configure_ifaces=0
+				echo "# Unable to determine HA hardware and node, skipping interfaces configuration" | tee /dev/console
+			fi
 		else
 			node=$(ha_node)
 		fi
@@ -124,7 +128,7 @@ _interface_config()
                                 fi
 			elif [ "$(ha_hardware)" = "SBB" ]; then
 				internal_iface="ix0"
-			elif [ "$(ha_hardware)" = "AIC" -o "$(ha_hardware)" = "PUMA" ]; then
+			elif [ "$(ha_hardware)" = "ECHOWARP" -o "$(ha_hardware)" = "PUMA" ]; then
 				internal_iface="ntb0"
 				if [ "${node}" = "A" ]; then
 					ether="02:8c:97:2e:a5:01"
@@ -133,6 +137,8 @@ _interface_config()
 				fi
 			elif [ "$(ha_hardware)" = "ULTIMATE" ]; then
 				internal_iface="igb1"
+			elif [ "$(ha_hardware)" = "VMWARE" ]; then
+				internal_iface="em1"
 			fi
 			local a=0
 			if [ -n "${ether}" ]; then
@@ -156,6 +162,9 @@ _interface_config()
 	# configuration.
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv4address_b, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_v6netmaskbit, int_vip, int_vhid, int_pass, int_critical, int_group, int_options FROM network_interfaces ORDER BY id" | \
 	while read interface_id interface dodhcp ipv4addr ipv4addr_b ipv4netmask doipv6auto ipv6addr ipv6netmask int_vip int_vhid int_pass critical group options; do
+		if [ ${configure_ifaces} -ne 1 ]; then
+			continue;
+		fi
 		if [ "$(ha_node)" = "B" ]; then
 			ipv4addr=${ipv4addr_b}
 		fi
@@ -257,9 +266,13 @@ _interface_config()
 		echo \"
 	done
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint, vlan_tag from network_vlan" | \
-	while read vlan_vint vlan_tag; do
-		echo create_args_${vlan_vint}=\"vlan\ ${vlan_tag}\"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint, vlan_tag, vlan_pcp from network_vlan" | \
+	while read vlan_vint vlan_tag vlan_pcp; do
+		echo -n create_args_${vlan_vint}=\"vlan\ ${vlan_tag}
+		if [ -n "${vlan_pcp}" ]; then
+			echo -n " vlanpcp ${vlan_pcp}"
+		fi
+		echo \"
 	done
 }
 
@@ -434,6 +447,7 @@ _s3_config()
 		cat <<-__MINIO__
 			minio_enable="YES"
 			minio_disks="${s3_disks}"
+			minio_address="${s3_bindip}:${s3_bindport}"
 			minio_env="\\
 			MINIO_ACCESS_KEY=${s3_access_key} \\
 			MINIO_SECRET_KEY=${s3_secret_key} \\
@@ -443,6 +457,14 @@ __MINIO__
 			echo MINIO_BROWSER=off
 		fi
 	done
+}
+
+_snmp_config()
+{
+	echo "snmpd_conffile=\"/etc/local/snmpd.conf\""
+
+	local snmpd_loglevel=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_loglevel FROM services_snmp ORDER BY -id LIMIT 1")
+	echo "snmpd_flags=\"-LS${snmpd_loglevel}d\""
 }
 
 _ssl_config()
@@ -504,13 +526,15 @@ _gen_conf()
 	_bool_svcconfig rpcbind_enable nfs
 	_bool_svcconfig rsyncd_enable rsync
 	_bool_svcconfig snmpd_enable snmp
+	_bool_svcconfig snmp_agent_enable snmp
 	_bool_svcconfig openssh_enable ssh
 	_bool_svcconfig inetd_enable tftp
-	_bool_svcconfig inadynmt_enable dynamicdns
-	_bool_svcconfig smartd_enable smartd
+	_bool_svcconfig inadyn_enable dynamicdns
+	_bool_svcconfig smartd_daemon_enable smartd
 	_bool_svcconfig ladvd_enable lldp
 	_bool_svcconfig ctld_enable iscsitarget
 	_bool_svcconfig apache24_enable webdav
+	_bool_svcconfig netdata_enable netdata
 
 
 	_bool_svcconfig samba_server_enable cifs
@@ -524,10 +548,7 @@ _gen_conf()
 		_nis_config
 	fi
 
-	if srv_enabled snmp; then
-		echo "snmpd_conffile=\"/etc/local/snmpd.conf\""
-		echo "snmpd_flags=\"-Ls5d\""
-	fi
+	_snmp_config
 
 	_sssd_config
 	_nut_config
@@ -592,7 +613,6 @@ _gen_conf()
 	fi
 
 	_count_config powerd_enable system_advanced adv_powerdaemon =1
-	_count_config ix_diagnose_enable system_advanced adv_uploadcrash =1
 	if ! is_freenas; then
 		if [ "$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
 			echo "failover_enable=\"YES\""
@@ -693,7 +713,7 @@ _gen_conf()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT smart_interval FROM services_smart ORDER BY id DESC LIMIT 1" | \
 	while read smartdint; do
 		inter=$(echo "${smartdint}*60"|/usr/bin/bc)
-		echo "smartd_flags=\"-i ${inter}\""
+		echo "smartd_daemon_flags=\"-i ${inter}\""
 	done
 
 	_s3_config
@@ -736,7 +756,7 @@ _gen_conf()
 			product=`/usr/local/sbin/dmidecode -s baseboard-product-name | /usr/bin/head -n 1`
 			if [ "${product}" = "X9DR3-F" -o "${product}" = "X9DR3-LN4F+" ] ; then
 				echo "watchdogd_enable=\"NO\""
-			elif [ "${product}" = "C2750D4I" -o "${product}" = "C2550D4I" ] ; then
+			elif [ "${product}" = "C2750D4I" -o "${product}" = "C2550D4I" ] && [ "$(/usr/local/bin/ipmitool mc info 2> /dev/null | grep ^Firmware | cut -d . -f 2)" -lt 30 ] ; then
 				echo "watchdogd_flags=\"-t 30 --softtimeout --softtimeout-action log,printf --pretimeout 15 --pretimeout-action log,printf -e 'sleep 1' -w -T 3\""
 				echo "watchdogd_enable=\"YES\""
 			else
@@ -772,12 +792,17 @@ if [ ! "${_NEWSUM}" = "${_OLDSUM}" -a ! -f "${NEED_UPDATE_SENTINEL}" ]; then
 	# this script possible, e.g. devd carp script
 	# To make it atomic generate to a tmp file first then move it.
 	# See #23047
-	tmpfile=$(/usr/bin/mktemp /var/tmp/rc.conf.XXXXXXXXX)
+	tmpfile=$(/usr/bin/mktemp /var/tmp/rc.conf.tmp.XXXXXXXXX)
 	_gen_conf > ${tmpfile}
 	mv ${tmpfile} ${FREENAS_RC}
+	rm -f /var/tmp/rc.conf.tmp.*
 	echo ${_NEWSUM} > ${FREENAS_CONFIG_MD5}
 fi
 
+# Force LANG in the rc subsystem.
+# This will allow python scripts (mostly) to get correct encoding
+# while generating config files. See #24973
+export LANG=en_US.UTF-8
 if [ -f ${FREENAS_RC} ]; then
 	. ${FREENAS_RC}
 fi

@@ -39,6 +39,7 @@ from django.utils.translation import ugettext as __, ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.client import client
 from freenasUI.freeadmin.models import Model, UserField
 
 log = logging.getLogger('storage.models')
@@ -204,6 +205,7 @@ class Volume(Model):
             'iscsitarget': [],
             'jails': [],
             'collectd': [],
+            'vm': [],
         }
 
         for cifs in CIFS_Share.objects.filter(Q(cifs_path=self.vol_path) | Q(cifs_path__startswith=self.vol_path + '/')):
@@ -233,6 +235,14 @@ class Volume(Model):
                 [j.id for j in Jails.objects.all()]
             )
 
+        vms_attached = None
+        with client as c:
+            vms_attached = c.call('vm.stop_by_pool', self.vol_name)
+
+        if vms_attached:
+            for vm_attached in vms_attached:
+                attachments['vm'].append(vm_attached.get('device_id'))
+
         return attachments
 
     def delete_attachments(self):
@@ -242,6 +252,7 @@ class Volume(Model):
         """
         from freenasUI.sharing.models import CIFS_Share, AFP_Share, NFS_Share
         from freenasUI.services.models import iSCSITargetExtent
+        from freenasUI.vm.models import Device
 
         reload_cifs = False
         reload_afp = False
@@ -267,6 +278,14 @@ class Volume(Model):
                 target.delete()
             reload_iscsi = True
         reload_jails = len(attachments['jails']) > 0
+
+        # If there is any guest vm attached to this volume, we stop them.
+        with client as c:
+            c.call('vm.stop_by_pool', self.vol_name, True)
+
+        if attachments['vm']:
+            for device_id in attachments['vm']:
+                Device.objects.filter(id=device_id).delete()
 
         return (reload_cifs, reload_afp, reload_nfs, reload_iscsi,
                 reload_jails, reload_collectd)
@@ -319,6 +338,10 @@ class Volume(Model):
                 ))
             ))
 
+        # If there is any guest vm attached to this volume, we stop them.
+        with client as c:
+            c.call('vm.stop_by_pool', self.vol_name, True)
+
         # Delete scheduled snapshots for this volume
         Task.objects.filter(
             models.Q(task_filesystem=self.vol_name)
@@ -343,7 +366,7 @@ class Volume(Model):
         if ghost:
             pass
         elif destroy:
-            n.destroy("volume", self)
+            n.volume_destroy(self)
         else:
             n.volume_detach(self)
 
@@ -587,6 +610,36 @@ class Scrub(Model):
             notifier().restart("cron")
         except:
             pass
+
+
+class Resilver(Model):
+    enabled = models.BooleanField(
+        verbose_name=_('Enabled'),
+        default=False,
+    )
+    begin = models.TimeField(
+        default=time(hour=18),
+        verbose_name=_('Begin higher priority resilvering at this time'),
+    )
+    end = models.TimeField(
+        default=time(hour=9),
+        verbose_name=_('End higher priority resilvering at this time'),
+    )
+    weekday = models.CharField(
+        max_length=120,
+        default='1,2,3,4,5,6,7',
+        verbose_name=_('Weekday'),
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = _('Resilver Priority')
+
+    class FreeAdmin:
+        deletable = False
+
+    def __str__(self):
+        return '<Resilver Priority>'
 
 
 class Disk(Model):
@@ -1051,3 +1104,16 @@ class VMWarePlugin(Model):
 
     def get_password(self):
         return notifier().pwenc_decrypt(self.password)
+
+
+class QuotaExcess(Model):
+    class Meta:
+        unique_together = (("dataset_name", "quota_type"),)
+
+    dataset_name = models.CharField(max_length=256)
+    quota_type = models.CharField(max_length=32)
+    quota_value = models.IntegerField()
+    level = models.IntegerField()
+    used = models.IntegerField()
+    percent_used = models.FloatField()
+    uid = models.IntegerField()

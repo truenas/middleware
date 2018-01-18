@@ -172,9 +172,6 @@ class FreeAdminSite(object):
             url(r'^alert/status/$',
                 wrap(self.alert_status),
                 name="freeadmin_alert_status"),
-            url(r'^alert/dismiss/$',
-                wrap(self.alert_dismiss),
-                name="freeadmin_alert_dismiss"),
             url(r'^alert/$',
                 wrap(self.alert_detail),
                 name="freeadmin_alert_detail"),
@@ -299,23 +296,6 @@ class FreeAdminSite(object):
             'alerts': alerts,
             'dismisseds': dismisseds,
         })
-
-    @never_cache
-    def alert_dismiss(self, request):
-        from freenasUI.freeadmin.views import JsonResp
-        from freenasUI.system.models import Alert
-        from freenasUI.system.alert import alert_node
-        msgid = request.POST.get("msgid", None)
-        dismiss = request.POST.get("dismiss", None)
-        assert msgid is not None  # FIX ME
-        try:
-            alert = Alert.objects.get(node=alert_node(), message_id=msgid)
-            if dismiss == "0":
-                alert.delete()
-        except Alert.DoesNotExist:
-            if dismiss == "1":
-                alert = Alert.objects.create(node=alert_node(), message_id=msgid)
-        return JsonResp(request, message="OK")
 
 
 site = FreeAdminSite()

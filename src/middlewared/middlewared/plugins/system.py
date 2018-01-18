@@ -1,6 +1,6 @@
 from datetime import datetime
 from middlewared.schema import accepts, Dict, Int
-from middlewared.service import job, Service
+from middlewared.service import no_auth_required, job, Service
 from middlewared.utils import Popen, sw_version
 
 import os
@@ -11,9 +11,12 @@ import sys
 import sysctl
 import time
 
+from licenselib.license import ContractType
+
 # FIXME: Temporary imports until debug lives in middlewared
 if '/usr/local/www' not in sys.path:
     sys.path.append('/usr/local/www')
+from freenasUI.support.utils import get_license
 from freenasUI.system.utils import debug_get_settings, debug_run
 
 # Flag telling whether the system completed boot and is ready to use
@@ -22,14 +25,15 @@ SYSTEM_READY = False
 
 class SystemService(Service):
 
+    @no_auth_required
     @accepts()
-    def is_freenas(self):
+    async def is_freenas(self):
         """
         Returns `true` if running system is a FreeNAS or `false` is Something Else.
         """
         # This is a stub calling notifier until we have all infrastructure
         # to implement in middlewared
-        return self.middleware.call('notifier.is_freenas')
+        return await self.middleware.call('notifier.is_freenas')
 
     @accepts()
     def version(self):
@@ -43,30 +47,56 @@ class SystemService(Service):
         return SYSTEM_READY
 
     @accepts()
-    def info(self):
+    async def info(self):
         """
         Returns basic system information.
         """
-        uptime = Popen(
+        uptime = (await (await Popen(
             "env -u TZ uptime | awk -F', load averages:' '{ print $1 }'",
             stdout=subprocess.PIPE,
             shell=True,
-        ).communicate()[0].strip()
+        )).communicate())[0].decode().strip()
+
+        serial = (await(await Popen(
+            ['dmidecode', '-s', 'system-serial-number'],
+            stdout=subprocess.PIPE,
+        )).communicate())[0].decode().strip() or None
+
+        product = (await(await Popen(
+            ['dmidecode', '-s', 'system-product-name'],
+            stdout=subprocess.PIPE,
+        )).communicate())[0].decode().strip() or None
+
+        license = get_license()[0]
+        if license:
+            license = {
+                "system_serial": license.system_serial,
+                "system_serial_ha": license.system_serial_ha,
+                "contract_type": ContractType(license.contract_type).name.upper(),
+                "contract_end": license.contract_end,
+            }
+
         return {
             'version': self.version(),
             'hostname': socket.gethostname(),
             'physmem': sysctl.filter('hw.physmem')[0].value,
             'model': sysctl.filter('hw.model')[0].value,
+            'cores': sysctl.filter('hw.ncpu')[0].value,
             'loadavg': os.getloadavg(),
             'uptime': uptime,
+            'system_serial': serial,
+            'system_product': product,
+            'license': license,
             'boottime': datetime.fromtimestamp(
                 struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
             ),
+            'datetime': datetime.utcnow(),
+            'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
         }
 
     @accepts(Dict('system-reboot', Int('delay', required=False), required=False))
     @job()
-    def reboot(self, job, options=None):
+    async def reboot(self, job, options=None):
         """
         Reboots the operating system.
 
@@ -83,11 +113,11 @@ class SystemService(Service):
         if delay:
             time.sleep(delay)
 
-        Popen(["/sbin/reboot"])
+        await Popen(["/sbin/reboot"])
 
     @accepts(Dict('system-shutdown', Int('delay', required=False), required=False))
     @job()
-    def shutdown(self, job, options=None):
+    async def shutdown(self, job, options=None):
         """
         Shuts down the operating system.
 
@@ -104,7 +134,7 @@ class SystemService(Service):
         if delay:
             time.sleep(delay)
 
-        Popen(["/sbin/poweroff"])
+        await Popen(["/sbin/poweroff"])
 
     @accepts()
     @job(lock='systemdebug')
@@ -115,7 +145,7 @@ class SystemService(Service):
         return dump
 
 
-def _event_system_ready(middleware, event_type, args):
+async def _event_system_ready(middleware, event_type, args):
     """
     Method called when system is ready, supposed to enable the flag
     telling the system has completed boot.

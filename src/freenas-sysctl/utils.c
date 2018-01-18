@@ -45,11 +45,11 @@ freenas_sysctl_add_timeout_tree(struct sysctl_ctx_list *ctx,
 		return (-1);
 	}
 
-	st->start = 30;
-	st->stop = 30;
-	st->started = 30;
-	st->restart = 30;
-	st->reload = 30;
+	st->start = 60;
+	st->stop = 60;
+	st->started = 60;
+	st->restart = 60;
+	st->reload = 60;
 
 	SYSCTL_ADD_LONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
 		"start", CTLFLAG_RW, &st->start, "start timeout");
@@ -78,7 +78,7 @@ freenas_sysctl_add_error_tree(struct sysctl_ctx_list *ctx,
 
 	SYSCTL_ADD_STRING(ctx, SYSCTL_CHILDREN(errortree), OID_AUTO,
 		"last_error", CTLFLAG_RW, se->last_error.value,
-		se->last_error.size, "last error message");
+		0, "last error message");
 
 	return (0);
 }

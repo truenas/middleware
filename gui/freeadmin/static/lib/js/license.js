@@ -8,7 +8,7 @@ require([
 
     checkLicenseStatus = function () {
 
-      xhr.get('/support/license/status/', {
+      xhr.get('/legacy/support/license/status/', {
         preventCache: true,
         handleAs: 'text'
       }).then(function(data) {
@@ -16,7 +16,7 @@ require([
           commonDialog({
             id: "licenseDialog",
             name: 'Update License',
-            url: '/support/license/update/',
+            url: '/legacy/support/license/update/',
             nodes: [],
             style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;"
           });

@@ -31,8 +31,7 @@ from freenasUI.common.system import (
     activedirectory_enabled,
     domaincontroller_enabled,
     ldap_enabled,
-    nis_enabled,
-    nt4_enabled,
+    nis_enabled
 )
 
 from freenasUI.common.freenasldap import (
@@ -44,13 +43,6 @@ from freenasUI.common.freenasldap import (
     FreeNAS_LDAP_User,
     FreeNAS_LDAP_Groups,
     FreeNAS_LDAP_Users
-)
-
-from freenasUI.common.freenasnt4 import (
-    FreeNAS_NT4_Group,
-    FreeNAS_NT4_User,
-    FreeNAS_NT4_Groups,
-    FreeNAS_NT4_Users
 )
 
 from freenasUI.common.freenasnis import (
@@ -71,7 +63,6 @@ log = logging.getLogger("common.freenasusers")
 
 
 U_AD_ENABLED = 0x00000001
-U_NT4_ENABLED = 0x00000002
 U_NIS_ENABLED = 0x00000004
 U_LDAP_ENABLED = 0x00000008
 U_DC_ENABLED = 0x00000010
@@ -82,8 +73,6 @@ def _get_dflags():
 
     if activedirectory_enabled():
         dflags |= U_AD_ENABLED
-    elif nt4_enabled():
-        dflags |= U_NT4_ENABLED
     elif nis_enabled():
         dflags |= U_NIS_ENABLED
     elif ldap_enabled():
@@ -176,8 +165,6 @@ class FreeNAS_Group(object):
         try:
             if dflags & U_AD_ENABLED:
                 obj = FreeNAS_ActiveDirectory_Group(group, **kwargs)
-            elif dflags & U_NT4_ENABLED:
-                obj = FreeNAS_NT4_Group(group, **kwargs)
             elif dflags & U_NIS_ENABLED:
                 obj = FreeNAS_NIS_Group(group, **kwargs)
             elif dflags & U_LDAP_ENABLED:
@@ -215,8 +202,6 @@ class FreeNAS_Groups(object):
         dflags = _get_dflags()
         if dflags & U_AD_ENABLED:
             dir = FreeNAS_ActiveDirectory_Groups
-        elif dflags & U_NT4_ENABLED:
-            dir = FreeNAS_NT4_Groups
         elif dflags & U_NIS_ENABLED:
             dir = FreeNAS_NIS_Groups
         elif dflags & U_LDAP_ENABLED:
@@ -299,8 +284,6 @@ class FreeNAS_User(object):
         try:
             if dflags & U_AD_ENABLED:
                 obj = FreeNAS_ActiveDirectory_User(user, **kwargs)
-            elif dflags & U_NT4_ENABLED:
-                obj = FreeNAS_NT4_User(user, **kwargs)
             elif dflags & U_NIS_ENABLED:
                 obj = FreeNAS_NIS_User(user, **kwargs)
             elif dflags & U_LDAP_ENABLED:
@@ -337,8 +320,6 @@ class FreeNAS_Users(object):
         dflags = _get_dflags()
         if dflags & U_AD_ENABLED:
             dir = FreeNAS_ActiveDirectory_Users
-        elif dflags & U_NT4_ENABLED:
-            dir = FreeNAS_NT4_Users
         elif dflags & U_NIS_ENABLED:
             dir = FreeNAS_NIS_Users
         elif dflags & U_LDAP_ENABLED:

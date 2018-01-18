@@ -5,6 +5,16 @@
 service=/usr/sbin/service
 status_file="/var/run/directoryservice.nis"
 
+nisctl_cache_fill()
+{
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/www/freenasUI/tools/cachetool.py fill &
+}
+
+nisctl_cache_expire()
+{
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/www/freenasUI/tools/cachetool.py expire &
+}
+
 nisctl_cmd()
 {
 	local args="$*"
@@ -50,12 +60,15 @@ nisctl_start()
 		return 1
 	fi
 
+	nisctl_cache_fill
 	touch "${status_file}"
 	return 0
 }
 
 nisctl_stop()
 {
+	nisctl_cache_expire
+
 	nisctl_cmd ${service} ypbind stop
 	nisctl_cmd ${service} nisdomain stop
 	nisctl_cmd ${service} ix-nsswitch stop

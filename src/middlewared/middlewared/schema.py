@@ -1,5 +1,11 @@
+import asyncio
 import copy
 import errno
+import ipaddress
+import os
+
+from middlewared.service_exception import ValidationErrors
+from middlewared.validators import ShouldBe
 
 
 class Error(Exception):
@@ -34,9 +40,10 @@ class EnumMixin(object):
 
 class Attribute(object):
 
-    def __init__(self, name, verbose=None, required=False, validators=None, default=None, register=False):
+    def __init__(self, name, verbose=None, required=False, validators=None, register=False, **kwargs):
         self.name = name
-        self.default = default
+        self.has_default = 'default' in kwargs
+        self.default = kwargs.pop('default', None)
         self.required = required
         self.verbose = verbose or name
         self.validators = validators or []
@@ -44,6 +51,18 @@ class Attribute(object):
 
     def clean(self, value):
         return value
+
+    def validate(self, value):
+        verrors = ValidationErrors()
+
+        for validator in self.validators:
+            try:
+                validator(value)
+            except ShouldBe as e:
+                verrors.add(self.name, f"Should be {e.what}")
+
+        if verrors:
+            raise verrors
 
     def to_json_schema(self, parent=None):
         """This method should return the json-schema v4 equivalent for the
@@ -74,7 +93,16 @@ class Attribute(object):
 class Any(Attribute):
 
     def to_json_schema(self, parent=None):
-        return {'type': 'any'}
+        schema = {'anyOf': [
+            {'type': 'string'},
+            {'type': 'integer'},
+            {'type': 'boolean'},
+            {'type': 'object'},
+            {'type': 'array'},
+        ], 'title': self.verbose}
+        if not parent:
+            schema['_required_'] = self.required
+        return schema
 
 
 class Str(EnumMixin, Attribute):
@@ -91,6 +119,7 @@ class Str(EnumMixin, Attribute):
         schema = {}
         if not parent:
             schema['title'] = self.verbose
+            schema['_required_'] = self.required
         if not self.required:
             schema['type'] = ['string', 'null']
         else:
@@ -100,12 +129,52 @@ class Str(EnumMixin, Attribute):
         return schema
 
 
-class Bool(Attribute):
+class Dir(Str):
 
-    def __init__(self, *args, **kwargs):
-        if 'default' not in kwargs:
-            kwargs['default'] = False
-        super(Bool, self).__init__(*args, **kwargs)
+    def validate(self, value):
+        verrors = ValidationErrors()
+
+        if value:
+            if not os.path.exists(value):
+                verrors.add(self.name, "This path does not exist.", errno.ENOENT)
+            elif not os.path.isdir(value):
+                verrors.add(self.name, "This path is not a directory.", errno.ENOTDIR)
+
+        if verrors:
+            raise verrors
+
+        return super().validate(value)
+
+
+class File(Str):
+
+    def validate(self, value):
+        verrors = ValidationErrors()
+
+        if value:
+            if not os.path.exists(value):
+                verrors.add(self.name, "This path does not exist.", errno.ENOENT)
+            elif not os.path.isfile(value):
+                verrors.add(self.name, "This path is not a file.", errno.EISDIR)
+
+        if verrors:
+            raise verrors
+
+        return super().validate(value)
+
+
+class IPAddr(Str):
+
+    def validate(self, value):
+        if value:
+            try:
+                ipaddress.ip_address(value)
+            except ValueError:
+                raise Error(self.name, f'Not a valid IP Address: {value}')
+        return super().validate(value)
+
+
+class Bool(Attribute):
 
     def clean(self, value):
         if value is None and not self.required:
@@ -120,12 +189,15 @@ class Bool(Attribute):
         }
         if not parent:
             schema['title'] = self.verbose
+            schema['_required_'] = self.required
         return schema
 
 
 class Int(Attribute):
 
     def clean(self, value):
+        if value is None and not self.required:
+            return self.default
         if not isinstance(value, int):
             if isinstance(value, str) and value.isdigit():
                 return int(value)
@@ -138,6 +210,7 @@ class Int(Attribute):
         }
         if not parent:
             schema['title'] = self.verbose
+            schema['_required_'] = self.required
         return schema
 
 
@@ -152,7 +225,7 @@ class List(EnumMixin, Attribute):
     def clean(self, value):
         value = super(List, self).clean(value)
         if value is None and not self.required:
-            return self.default
+            return copy.copy(self.default)
         if not isinstance(value, list):
             raise Error(self.name, 'Not a list')
         if self.items:
@@ -168,10 +241,24 @@ class List(EnumMixin, Attribute):
                     raise Error(self.name, 'Item#{0} is not valid per list types: {1}'.format(index, found))
         return value
 
+    def validate(self, value):
+        verrors = ValidationErrors()
+
+        for i, v in enumerate(value):
+            for attr in self.items:
+                try:
+                    attr.validate(v)
+                except ValidationErrors as e:
+                    verrors.add_child(f"{self.name}.{i}", e)
+
+        if verrors:
+            raise verrors
+
     def to_json_schema(self, parent=None):
         schema = {'type': 'array'}
         if not parent:
             schema['title'] = self.verbose
+            schema['_required_'] = self.required
         if self.required:
             schema['type'] = ['array', 'null']
         else:
@@ -202,7 +289,7 @@ class Dict(Attribute):
 
     def clean(self, data):
         if data is None and not self.required:
-            return {}
+            data = {}
 
         self.errors = []
         if not isinstance(data, dict):
@@ -226,10 +313,23 @@ class Dict(Attribute):
                 if attr.required and attr.name not in data:
                     raise Error(attr.name, 'This field is required')
 
-                if attr.name not in data:
+                if attr.name not in data and attr.has_default:
                     data[attr.name] = attr.default
 
         return data
+
+    def validate(self, value):
+        verrors = ValidationErrors()
+
+        for attr in self.attrs.values():
+            if attr.name in value:
+                try:
+                    attr.validate(value[attr.name])
+                except ValidationErrors as e:
+                    verrors.add_child(self.name, e)
+
+        if verrors:
+            raise verrors
 
     def to_json_schema(self, parent=None):
         schema = {
@@ -239,6 +339,7 @@ class Dict(Attribute):
         }
         if not parent:
             schema['title'] = self.verbose
+            schema['_required_'] = self.required
         for name, attr in list(self.attrs.items()):
             schema['properties'][name] = attr.to_json_schema(parent=self)
         return schema
@@ -259,7 +360,9 @@ class Ref(object):
     def resolve(self, middleware):
         schema = middleware.get_schema(self.name)
         if not schema:
-            raise ValueError('Schema {0} does not exist'.format(self.name))
+            raise ResolverError('Schema {0} does not exist'.format(self.name))
+        schema = copy.deepcopy(schema)
+        schema.register = False
         return schema
 
 
@@ -297,12 +400,20 @@ class Patch(object):
                 schema.attrs[new.name] = new
             elif operation == 'rm':
                 del schema.attrs[patch['name']]
+            elif operation == 'edit':
+                attr = schema.attrs[patch['name']]
+                if 'method' in patch:
+                    patch['method'](attr)
             elif operation == 'attr':
                 for key, val in list(patch.items()):
                     setattr(schema, key, val)
         if self.register:
             middleware.add_schema(schema)
         return schema
+
+
+class ResolverError(Exception):
+    pass
 
 
 def resolver(middleware, f):
@@ -315,11 +426,10 @@ def resolver(middleware, f):
         if isinstance(p, (Patch, Ref, Attribute)):
             new_params.append(p.resolve(middleware))
         else:
-            raise ValueError('Invalid parameter definition {0}'.format(p))
+            raise ResolverError('Invalid parameter definition {0}'.format(p))
 
     # FIXME: for some reason assigning params (f.accepts = new_params) does not work
-    while f.accepts:
-        f.accepts.pop()
+    f.accepts.clear()
     f.accepts.extend(new_params)
 
 
@@ -333,22 +443,68 @@ def accepts(*schema):
             args_index += 1
         assert len(schema) == f.__code__.co_argcount - args_index  # -1 for self
 
-        def nf(*args, **kwargs):
+        def clean_and_validate_args(args, kwargs):
             args = list(args)
+            args = args[:args_index] + copy.deepcopy(args[args_index:])
+            kwargs = copy.deepcopy(kwargs)
+
+            verrors = ValidationErrors()
 
             # Iterate over positional args first, excluding self
             i = 0
-            for arg in args[args_index:]:
-                args[i + args_index] = nf.accepts[i].clean(args[i + args_index])
+            for _ in args[args_index:]:
+                attr = nf.accepts[i]
+
+                value = attr.clean(args[args_index + i])
+                args[args_index + i] = value
+
+                try:
+                    attr.validate(value)
+                except ValidationErrors as e:
+                    verrors.extend(e)
+
                 i += 1
 
             # Use i counter to map keyword argument to rpc positional
             for x in list(range(i + 1, f.__code__.co_argcount)):
                 kwarg = f.__code__.co_varnames[x]
+
                 if kwarg in kwargs:
-                    kwargs[kwarg] = nf.accepts[i].clean(kwargs[kwarg])
-                i += 1
-            return f(*args, **kwargs)
+                    attr = nf.accepts[i]
+                    i += 1
+
+                    value = kwargs[kwarg]
+                elif len(nf.accepts) >= i + args_index:
+                    attr = nf.accepts[i]
+                    i += 1
+
+                    value = None
+                else:
+                    i += 1
+                    continue
+
+                value = attr.clean(value)
+                kwargs[kwarg] = value
+
+                try:
+                    attr.validate(value)
+                except ValidationErrors as e:
+                    verrors.extend(e)
+
+            if verrors:
+                raise verrors
+
+            return args, kwargs
+
+        if asyncio.iscoroutinefunction(f):
+            async def nf(*args, **kwargs):
+                args, kwargs = clean_and_validate_args(args, kwargs)
+                return await f(*args, **kwargs)
+        else:
+            def nf(*args, **kwargs):
+                args, kwargs = clean_and_validate_args(args, kwargs)
+                return f(*args, **kwargs)
+
         nf.__name__ = f.__name__
         nf.__doc__ = f.__doc__
         # Copy private attrs to new function so decorators can work on top of it

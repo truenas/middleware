@@ -59,6 +59,7 @@ class VM(Model):
         help_text=_('Megabytes of RAM for the virtual machine.'
                     'This memory will be allocated when the VM is running '
                     'and not available to the host system or other VMs.'),
+        validators=[MinValueValidator(256)],
     )
     bootloader = models.CharField(
         verbose_name=_('Boot Method'),
@@ -66,6 +67,15 @@ class VM(Model):
         help_text=_('System boot method and architecture.'),
         choices=choices.VM_BOOTLOADER,
         default='UEFI',
+    )
+    vm_type = models.CharField(
+        verbose_name=_('VM Type'),
+        max_length=50,
+        choices=(
+            ('Bhyve', _('Virtual Machine')),
+            ('Container Provider', _('Docker VM')),
+        ),
+        default='Bhyve',
     )
     autostart = models.BooleanField(
         verbose_name=_('Autostart'),

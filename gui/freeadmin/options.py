@@ -44,7 +44,9 @@ from dojango.forms.models import BaseInlineFormSet, inlineformset_factory
 from freenasUI.api import v1_api
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.services.exceptions import ServiceFailed
+from middlewared.client import ValidationErrors
 from tastypie.validation import FormValidation
 
 log = logging.getLogger('freeadmin.options')
@@ -373,6 +375,9 @@ class BaseFreeAdmin(object):
                             m._meta.verbose_name,
                         ),
                         events=events)
+                except ValidationErrors as e:
+                    handle_middleware_validation(mf, e)
+                    return JsonResp(request, form=mf, formsets=formsets)
                 except MiddlewareError as e:
                     return JsonResp(
                         request,
@@ -586,6 +591,9 @@ class BaseFreeAdmin(object):
                                 m._meta.verbose_name,
                             ),
                             events=events)
+                except ValidationErrors as e:
+                    handle_middleware_validation(mf, e)
+                    return JsonResp(request, form=mf, formsets=formsets)
                 except ServiceFailed as e:
                     return JsonResp(
                         request,

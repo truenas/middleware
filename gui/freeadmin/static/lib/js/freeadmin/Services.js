@@ -56,6 +56,7 @@ define([
       'tftp': gettext('TFTP'),
       'ups': gettext('UPS'),
       'webdav': gettext('WebDAV'),
+      'netdata': gettext('Netdata')
     }
 
     var Service = declare("freeadmin.Service", [ _Widget, _Templated ], {
@@ -140,9 +141,11 @@ define([
       sync: function() {
         var me = this;
         if(me.state == 'RUNNING') {
-          me.dapLight.src = '/static/images/ui/misc/green_light.png';
+          me.dapLight.src = '/legacy/static/images/ui/misc/green_light.png';
+          me.dapStatus.innerHTML = 'Running';
         } else {
-          me.dapLight.src = '/static/images/ui/misc/red_light.png';
+          me.dapLight.src = '/legacy/static/images/ui/misc/red_light.png';
+          me.dapStatus.innerHTML = 'Stopped';
         }
         me.startstop.set('label', (me.state == 'RUNNING') ? gettext('Stop Now') : gettext('Start Now'));
       },

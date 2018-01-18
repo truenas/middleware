@@ -8,6 +8,7 @@ define([
   "dojo/query",
   "dojo/request/iframe",
   "dojo/request/xhr",
+  "dojo/Deferred",
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
   "dijit/Dialog",
@@ -34,6 +35,7 @@ define([
   query,
   iframe,
   xhr,
+  Deferred,
   _Widget,
   _Templated,
   Dialog,
@@ -82,7 +84,6 @@ define([
       initial: "",
       categoriesUrl: "",
       progressUrl: "",
-      url: "",
       softwareName: "",
       templateString: template,
       postCreate: function() {
@@ -357,6 +358,75 @@ define([
         domConst.empty(this.dapAttachments);
         this.AddAttachment();
       },
+      attachFiles: function(tnumber) {
+        var deferred = new Deferred();
+        var total = query("input[type=file]", this._form.domNode).length;
+        this._attach(tnumber, 0, total, deferred);
+        return deferred;
+      },
+      _attach: function(tnumber, i, total, deferred) {
+        var me = this;
+        var item = query("input[type=file]", this._form.domNode)[i];
+        if(item && item.value) {
+          tmpForm = new Form({
+            encType: "multipart/form-data"
+          });
+          var data = new TextBox({
+            name: "data",
+            value: json.stringify({"method": "support.attach_ticket", "params": [{"ticket": tnumber, "filename": item.files[0].name, "username": me._username.get('value'), "password": me._password.get('value')}]}),
+            type: "hidden"
+          });
+          file = item.cloneNode(true);
+          file.name = 'file';
+          tmpForm.domNode.appendChild(data.domNode);
+          tmpForm.domNode.appendChild(file);
+
+          Middleware.call('auth.generate_token', [], function(auth_token) {
+
+            iframe.post('/_upload/?auth_token=' + auth_token, {
+              form: tmpForm.domNode,
+              handleAs: "xml"
+            }).then(function(data) {
+              tmpForm.destroyRecursive();
+
+              try {
+                  data = json.parse(data);
+              } catch(e) {
+                deferred.reject('Failed to parse server response, please try again');
+                return;
+              }
+
+              waitAttach = function() {
+                Middleware.call('core.get_jobs', [ [['id', '=', data.job_id]] ], function(data) {
+                  if(data[0]['state'] == 'SUCCESS') {
+                    if(i == total -1) {
+                      deferred.resolve(true);
+                    } else {
+                      me._attach(tnumber, i + 1, total, deferred);
+                    }
+                  } else if(data[0]['state'] == 'FAILED') {
+                    deferred.reject(data[0]['error'])
+                  } else {
+                    setTimeout(waitAttach, 2000);
+                  }
+                });
+              }
+
+              waitAttach();
+
+            }, function(err) {
+              console.log("Failed to attach file", err);
+              tmpForm.destroyRecursive();
+              deferred.reject(err);
+            });
+          }, function(err) {
+            console.log("Failed to generate token", err);
+            deferred.reject(err);
+          });
+        } else {
+          deferred.resolve(true);
+        }
+      },
       submit: function() {
 
         var me = this;
@@ -367,25 +437,13 @@ define([
           if(item.value) fileUpload = true;
         });
 
-        if(fileUpload) {
-          steps.push({
-            label: gettext("Uploading attachments to host")
-          });
-        }
-
-        if(this._debug.get('value') == 'on') {
-          steps.push({
-            label: gettext("Generating debug info")
-          });
-        }
-
         steps.push({
           label: gettext("Submitting ticket")
         });
 
-        if(fileUpload || this._debug.get('value') == 'on') {
+        if(fileUpload) {
           steps.push({
-            label: gettext("Uploading attachments from host to the ticket")
+            label: gettext("Uploading attachments to host")
           });
         }
 
@@ -394,41 +452,61 @@ define([
         var progressbar = new Progress({
           poolUrl: this.progressUrl,
           steps: steps,
-          fileUpload: fileUpload,
           uuid: uuid
         });
 
         if(!this.validate()) return false;
 
-        this._submit.set('disabled', true);
-
         var submitting = new Dialog({});
         submitting.containerNode.appendChild(progressbar.domNode);
 
-        iframe.post(this.url + '?X-Progress-ID=' + uuid, {
-          form: this._form.id,
-          handleAs: 'json',
-          headers: {"X-CSRFToken": CSRFToken}
-        }).then(function(data) {
+        var data = {
+          title: me._subject.get('value'),
+          body: me._desc.get('value'),
+          category: me._category.get('value'),
+          attach_debug: me._debug.get('value') == 'on'
+        }
 
-          if(data.error) {
-            me.dapErrorMessage.innerHTML = data.message;
-            domStyle.set(me.dapErrorMessageRow, "display", "block");
-            submitting.destroyRecursive();
-          } else {
+        if(me.softwareName == 'freenas') {
+          data['username'] = me._username.get('value');
+          data['password'] = me._password.get('value');
+          data['type'] = me._type.get('value').toUpperCase();
+        } else {
+          data['phone'] = me._phone.get('value');
+          data['name'] = me._name.get('value');
+          data['email'] = me._email.get('value');
+          data['criticality'] = me._criticality.get('value');
+          data['environment'] = me._environment.get('value');
+        }
+
+        this._submit.set('disabled', true);
+
+        Middleware.call('support.new_ticket', [data], function(data) {
+
+
+          me.attachFiles(data.result.ticket).then(function(attach_res) {
+
             me.dapErrorMessage.innerHTML = '';
             domStyle.set(me.dapErrorMessageRow, "display", "none");
             progressbar.destroyRecursive();
-            var dom = domConst.toDom('<p>Your ticket has been successfully submitted!</p><p>URL: <a href="' + data.message + '" target="_blank">' + data.message + '</a>')
+            var dom = domConst.toDom('<p>Your ticket has been successfully submitted!</p><p>URL: <a href="' + data.result.url + '" target="_blank">' + data.result.url + '</a>')
             submitting.containerNode.appendChild(dom);
 
             me.clear();
-          }
+            me._submit.set('disabled', false);
 
-          me._submit.set('disabled', false);
+          }, function(err) {
+            me.dapErrorMessage.innerHTML = err;
+            domStyle.set(me.dapErrorMessageRow, "display", "block");
+            submitting.destroyRecursive();
+          });
 
-        }, function(evt, response) {
-           console.log("error", evt, response);
+        }, function(data) {
+            me.dapErrorMessage.innerHTML = data.error;
+            domStyle.set(me.dapErrorMessageRow, "display", "block");
+            submitting.destroyRecursive();
+        }, true, function(progress) {
+          //console.log("progress", progress);
         });
 
         progressbar.update(uuid);

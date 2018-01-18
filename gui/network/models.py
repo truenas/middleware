@@ -26,8 +26,8 @@
 import os
 import random
 import string
-
-from django.core.validators import RegexValidator
+import logging
+from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -39,6 +39,9 @@ from freenasUI.freeadmin.models import Model
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import CIFS
+
+
+log = logging.getLogger('network.models')
 
 
 class GlobalConfiguration(Model):
@@ -59,6 +62,15 @@ class GlobalConfiguration(Model):
         blank=True,
         null=True,
     )
+    gc_hostname_virtual = models.CharField(
+        max_length=120,
+        verbose_name=_("Hostname (Virtual)"),
+        validators=[RegexValidator(
+            regex=r'^[a-zA-Z\.\-\_0-9]+$',
+        )],
+        blank=True,
+        null=True,
+    )
     gc_domain = models.CharField(
         max_length=120,
         verbose_name=_("Domain"),
@@ -67,12 +79,20 @@ class GlobalConfiguration(Model):
             regex=r'^[a-zA-Z\.\-\_0-9]+$',
         )],
     )
+    gc_domains = models.TextField(
+        max_length=256,
+        verbose_name=_("Additional domains"),
+        default='',
+        blank=True,
+        help_text=_("Additional domains to be searched can be entered here, separated by spaces. Be aware that adding search domains can cause slow DNS lookups.")
+    )
     gc_ipv4gateway = IP4AddressField(
         blank=True,
         default='',
         verbose_name=_("IPv4 Default Gateway"),
     )
     gc_ipv6gateway = IP6AddressField(
+        allow_zone_index=True,
         blank=True,
         default='',
         verbose_name=_("IPv6 Default Gateway"),
@@ -133,11 +153,15 @@ class GlobalConfiguration(Model):
 
     def __init__(self, *args, **kwargs):
         super(GlobalConfiguration, self).__init__(*args, **kwargs)
+        self._n = notifier()
         for name in (
             'gc_hostname',
+            'gc_hostname_b',
+            'gc_hostname_virtual',
             'gc_ipv4gateway',
             'gc_ipv6gateway',
             'gc_domain',
+            'gc_domains',
             'gc_nameserver1',
             'gc_nameserver2',
             'gc_nameserver3',
@@ -149,24 +173,24 @@ class GlobalConfiguration(Model):
         return str(self.id)
 
     def get_hostname(self):
-        _n = notifier()
-        if not _n.is_freenas():
-            if _n.failover_node() == 'B':
-                return self.gc_hostname_b
-            else:
-                return self.gc_hostname
+        if not self._n.is_freenas() and self._n.failover_node() == 'B':
+            return self.gc_hostname_b
         else:
             return self.gc_hostname
 
     def save(self, *args, **kwargs):
         # See #3437
-        if self._orig_gc_hostname != self.gc_hostname:
+        if (
+            self._orig_gc_hostname != self.gc_hostname or
+            self._orig_gc_hostname_b != self.gc_hostname_b
+        ):
             try:
                 cifs = CIFS.objects.order_by('-id')[0]
                 cifs.cifs_srv_netbiosname = self.gc_hostname
+                cifs.cifs_srv_netbiosname_b = self.gc_hostname_b
                 cifs.save()
-            except:
-                pass
+            except Exception:
+                log.debug("Setting netbios names failed", exc_info=True)
         return super(GlobalConfiguration, self).save(*args, **kwargs)
 
     class Meta:
@@ -240,6 +264,7 @@ class Interfaces(Model):
     )
     int_vhid = models.PositiveIntegerField(
         verbose_name=_("Virtual Host ID"),
+        validators=[MinValueValidator(1), MaxValueValidator(255)],
         null=True,
         blank=True,
     )
@@ -458,6 +483,16 @@ class VLAN(Model):
     vlan_tag = models.PositiveIntegerField(
         verbose_name=_("VLAN Tag")
     )
+    vlan_pcp = models.PositiveIntegerField(
+        verbose_name=_("Priority Code Point (CoS)"),
+        help_text=_(
+            "3-bit field which refers to IEEE 802.1p class of service (CoS) "
+            "and maps to the frame priority level."
+        ),
+        choices=choices.VLAN_PCP_CHOICES,
+        null=True,
+        blank=True,
+    )
     vlan_description = models.CharField(
         max_length=120,
         verbose_name=_("Description"),
@@ -542,7 +577,8 @@ class LAGGInterfaceMembers(Model):
     )
     lagg_deviceoptions = models.CharField(
         max_length=120,
-        verbose_name=_("Options")
+        verbose_name=_("Options"),
+        default='up',
     )
 
     def __str__(self):

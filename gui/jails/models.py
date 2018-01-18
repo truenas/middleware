@@ -338,7 +338,7 @@ class Jails(Model):
         jail_dataset = jail_path.lstrip('/mnt/')
         tasks = Task.objects.filter(task_filesystem__iregex=r'^%s\b' % jail_dataset)
         for task in tasks:
-            try: 
+            try:
                 task.delete()
             except Exception as e:
                 raise MiddlewareError(

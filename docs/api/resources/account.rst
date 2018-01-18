@@ -33,6 +33,7 @@ List resource
 
       [
         {
+                "bsdusr_attributes": {},
                 "bsdusr_builtin": true,
                 "bsdusr_email": "",
                 "bsdusr_full_name": "root",
@@ -88,6 +89,7 @@ Create resource
       Content-Type: application/json
 
         {
+                "bsdusr_attributes": {},
                 "bsdusr_builtin": false,
                 "bsdusr_email": "",
                 "bsdusr_full_name": "My User",
@@ -127,7 +129,7 @@ Update resource
 
 .. http:put:: /api/v1.0/account/users/(int:id)/
 
-   Creates a new user and returns the new user object.
+   Updates a user and returns the new user object.
 
    **Example request**:
 
@@ -150,6 +152,7 @@ Update resource
       Content-Type: application/json
 
         {
+                "bsdusr_attributes": {},
                 "bsdusr_builtin": false,
                 "bsdusr_email": "",
                 "bsdusr_full_name": "My Name",
@@ -256,12 +259,12 @@ Change password
    :statuscode 200: no error
 
 
-Get user groups
-++++++++++++++++
+Get user auxiliary groups
++++++++++++++++++++++++++
 
 .. http:get:: /api/v1.0/account/users/(int:id)/groups/
 
-   Get a list of groups of user `id`.
+   Get a list of auxiliary groups of user `id`.
 
    **Example request**:
 
@@ -283,12 +286,12 @@ Get user groups
    :statuscode 200: no error
 
 
-Set user groups
-++++++++++++++++
+Set user auxiliary groups
++++++++++++++++++++++++++
 
 .. http:post:: /api/v1.0/account/users/(int:id)/groups/
 
-   Set a list of groups of user `id`.
+   Set a list of auxiliary groups of user `id`.
 
    **Example request**:
 

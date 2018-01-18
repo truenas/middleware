@@ -53,6 +53,7 @@ from freenasUI.freeadmin.forms import (
     CronMultiple, UserField, GroupField, WarningSelect,
     PathField,
 )
+from freenasUI.freeadmin.utils import key_order
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
@@ -73,9 +74,24 @@ attrs_dict = {'class': 'required', 'maxHeight': 200}
 log = logging.getLogger('storage.forms')
 
 DEDUP_WARNING = _(
-    "Enabling dedup may have drastic performance implications,"
-    "<br /> as well as impact your ability to access your data.<br /> "
-    "Consider using compression instead.")
+    "Enabling dedup can drastically reduce performance and<br />"
+    "affect the ability to access data. Compression usually<br />"
+    "offers similar space savings with much lower<br />"
+    "performance impact and overhead.<br />")
+
+RE_HOUR = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})')
+
+
+def fix_time_fields(data, names):
+    for name in names:
+        if name not in data:
+            continue
+        search = RE_HOUR.search(data[name])
+        data[name] = time(
+            hour=int(search.group("hour")),
+            minute=int(search.group("min")),
+            second=int(search.group("sec")),
+        )
 
 
 class Disk(object):
@@ -124,18 +140,19 @@ def _clean_zfssize_fields(form, attrs, prefix):
         if field not in cdata:
             cdata[field] = ''
 
-    r = re.compile(r'^(\d+(?:\.\d+)?)([BKMGTP](?:iB)?)$', re.I)
+    r = re.compile(r'^(\d+(?:\.\d+)?)([BKMGTP](?:iB)?)?$', re.I)
     msg = _("Specify the size with IEC suffixes or 0, e.g. 10 GiB")
 
     for attr in attrs:
         formfield = '%s%s' % (prefix, attr)
         match = r.match(cdata[formfield].replace(' ', ''))
+
         if not match and cdata[formfield] != "0":
             form._errors[formfield] = form.error_class([msg])
             del cdata[formfield]
         elif match:
             number, suffix = match.groups()
-            if suffix.lower().endswith('ib'):
+            if suffix and suffix.lower().endswith('ib'):
                 cdata[formfield] = '%s%s' % (number, suffix[0])
             try:
                 Decimal(number)
@@ -278,12 +295,7 @@ class VolumeManagerForm(VolumeMixin, Form):
                         group)
 
             else:
-                notifier().init(
-                    "volume",
-                    volume,
-                    groups=grouped,
-                    init_rand=init_rand,
-                )
+                notifier().create_volume(volume, groups=grouped, init_rand=init_rand)
 
                 if dedup:
                     notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
@@ -291,7 +303,7 @@ class VolumeManagerForm(VolumeMixin, Form):
                 scrub = models.Scrub.objects.create(scrub_volume=volume)
         except Exception:
             if volume:
-                volume.delete()
+                volume.delete(destroy=False, cascade=False)
             if scrub:
                 scrub.delete()
             raise
@@ -477,7 +489,7 @@ class VdevFormSet(BaseFormSet):
                         raise forms.ValidationError(errors[0])
 
 
-class ZFSVolumeWizardForm(forms.Form):
+class ZFSVolumeWizardForm(Form):
     volume_name = forms.CharField(
         max_length=30,
         label=_('Volume name'),
@@ -709,9 +721,7 @@ class ZFSVolumeWizardForm(forms.Form):
                         )
 
             else:
-                notifier().init(
-                    "volume", volume, groups=grouped, init_rand=init_rand
-                )
+                notifier().create_volume(volume, groups=grouped, init_rand=init_rand)
 
                 if dedup:
                     notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
@@ -724,7 +734,7 @@ class ZFSVolumeWizardForm(forms.Form):
                     log.error("Error syncing enclosure: %s", e)
         except Exception:
             if volume:
-                volume.delete()
+                volume.delete(destroy=False, cascade=False)
             if scrub:
                 scrub.delete()
             raise
@@ -734,6 +744,7 @@ class ZFSVolumeWizardForm(forms.Form):
         notifier().reload("disk")
         # For scrub cronjob
         notifier().restart("cron")
+        super(ZFSVolumeWizardForm, self).done(request, events)
 
 
 class VolumeImportForm(Form):
@@ -1201,10 +1212,7 @@ class DiskEditBulkForm(Form):
         return self._disks
 
 
-class ZFSDataset(Form):
-    dataset_name = forms.CharField(
-        max_length=128,
-        label=_('Dataset Name'))
+class ZFSDatasetCommonForm(Form):
     dataset_comments = forms.CharField(
         max_length=1024,
         label=_('Comments'),
@@ -1212,20 +1220,18 @@ class ZFSDataset(Form):
     dataset_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
         widget=forms.Select(attrs=attrs_dict),
-        label=_('Compression level'))
+        label=_('Compression level'),
+        initial=choices.ZFS_CompressionChoices[0][0])
     dataset_share_type = forms.ChoiceField(
         choices=choices.SHARE_TYPE_CHOICES,
         widget=forms.Select(attrs=attrs_dict),
-        label=_('Share type'))
-    dataset_case_sensitivity = forms.ChoiceField(
-        choices=choices.CASE_SENSITIVITY_CHOICES,
-        initial=choices.CASE_SENSITIVITY_CHOICES[0][0],
-        widget=forms.Select(attrs=attrs_dict),
-        label=_('Case Sensitivity'))
+        label=_('Share type'),
+        initial=choices.SHARE_TYPE_CHOICES[0][0])
     dataset_atime = forms.ChoiceField(
         choices=choices.ZFS_AtimeChoices,
         widget=forms.RadioSelect(attrs=attrs_dict),
-        label=_('Enable atime'))
+        label=_('Enable atime'),
+        initial=choices.ZFS_AtimeChoices[0][0])
     dataset_refquota = forms.CharField(
         max_length=128,
         initial=0,
@@ -1252,8 +1258,18 @@ class ZFSDataset(Form):
         widget=WarningSelect(text=DEDUP_WARNING),
         initial="inherit",
     )
+    dataset_readonly = forms.ChoiceField(
+        label=_('Read-Only'),
+        choices=choices.ZFS_ReadonlyChoices,
+        initial=choices.ZFS_ReadonlyChoices[0][0],
+    )
+    dataset_exec = forms.ChoiceField(
+        label=_('Exec'),
+        choices=choices.ZFS_ExecChoices,
+        initial=choices.ZFS_ExecChoices[0][0],
+    )
     dataset_recordsize = forms.ChoiceField(
-        choices=(('', _('Inherit')), ) + choices.ZFS_RECORDSIZE,
+        choices=(('inherit', _('Inherit')), ) + choices.ZFS_RECORDSIZE,
         label=_('Record Size'),
         initial="",
         required=False,
@@ -1267,67 +1283,42 @@ class ZFSDataset(Form):
     )
 
     advanced_fields = (
+        'dataset_readonly',
         'dataset_refquota',
         'dataset_quota',
         'dataset_refreservation',
         'dataset_reservation',
-        'dataset_recordsize'
+        'dataset_recordsize',
+        'dataset_exec',
     )
 
-    def __init__(self, *args, **kwargs):
-        self._fs = kwargs.pop('fs')
-        self._create = kwargs.pop('create', True)
-        super(ZFSDataset, self).__init__(*args, **kwargs)
-        _n = notifier()
-        parentdata = _n.zfs_get_options(self._fs)
+    zfs_size_fields = ['quota', 'refquota', 'reservation', 'refreservation']
 
-        self.fields['dataset_atime'].choices = _inherit_choices(
-            choices.ZFS_AtimeChoices,
-            parentdata['atime'][0]
-        )
-        self.fields['dataset_compression'].choices = _inherit_choices(
-            choices.ZFS_CompressionChoices,
-            parentdata['compression'][0]
-        )
-        self.fields['dataset_dedup'].choices = _inherit_choices(
-            choices.ZFS_DEDUP_INHERIT,
-            parentdata['dedup'][0]
-        )
+    def __init__(self, *args, fs=None, **kwargs):
+        self._fs = fs
+        super(ZFSDatasetCommonForm, self).__init__(*args, **kwargs)
 
-        if self._create is False:
-            del self.fields['dataset_name']
-            del self.fields['dataset_recordsize']
-            del self.fields['dataset_case_sensitivity']
-            data = _n.zfs_get_options(self._fs)
-
-            if 'org.freenas:description' in data and data['org.freenas:description'][2] == 'local':
-                self.fields['dataset_comments'].initial = data['org.freenas:description'][0]
-
-            if data['compression'][2] == 'inherit':
-                self.fields['dataset_compression'].initial = 'inherit'
-            else:
-                self.fields['dataset_compression'].initial = data['compression'][0]
-            self.fields['dataset_share_type'].initial = _n.get_dataset_share_type(self._fs)
-
-            if data['atime'][2] == 'inherit':
-                self.fields['dataset_atime'].initial = 'inherit'
-            else:
-                self.fields['dataset_atime'].initial = data['atime'][0]
-
-            for attr in ('refquota', 'quota', 'reservation', 'refreservation'):
-                formfield = 'dataset_%s' % (attr)
-                if data[attr][0] == 'none':
-                    self.fields[formfield].initial = 0
-                else:
-                    self.fields[formfield].initial = data[attr][0]
-            if data['dedup'][2] == 'inherit':
-                self.fields['dataset_dedup'].initial = 'inherit'
-            elif data['dedup'][0] in ('on', 'off', 'verify'):
-                self.fields['dataset_dedup'].initial = data['dedup'][0]
-            elif data['dedup'][0] == 'sha256,verify':
-                self.fields['dataset_dedup'].initial = 'verify'
-            else:
-                self.fields['dataset_dedup'].initial = 'off'
+        if hasattr(self, 'parentdata'):
+            self.fields['dataset_atime'].choices = _inherit_choices(
+                choices.ZFS_AtimeChoices,
+                self.parentdata['atime'][0]
+            )
+            self.fields['dataset_compression'].choices = _inherit_choices(
+                choices.ZFS_CompressionChoices,
+                self.parentdata['compression'][0]
+            )
+            self.fields['dataset_dedup'].choices = _inherit_choices(
+                choices.ZFS_DEDUP_INHERIT,
+                self.parentdata['dedup'][0]
+            )
+            self.fields['dataset_readonly'].choices = _inherit_choices(
+                choices.ZFS_ReadonlyChoices,
+                self.parentdata['readonly'][0]
+            )
+            self.fields['dataset_exec'].choices = _inherit_choices(
+                choices.ZFS_ExecChoices,
+                self.parentdata['exec'][0]
+            )
 
         if not dedup_enabled():
             self.fields['dataset_dedup'].widget.attrs['readonly'] = True
@@ -1347,49 +1338,255 @@ class ZFSDataset(Form):
                 "Dataset names must begin with an "
                 "alphanumeric character and may only contain "
                 "\"-\", \"_\", \":\", \" \" and \".\"."))
-        path = '/mnt/%s/%s' % (self._fs, name)
-        if os.path.exists(path):
-            raise forms.ValidationError(
-                _('The path %s already exists.') % path
-            )
+
         return name
+
+    def clean_data_to_props(self):
+        props = dict()
+        for prop in self.zfs_size_fields:
+            value = self.cleaned_data.get('dataset_%s' % prop)
+            if value and value == '0':
+                value = 'none'
+
+            props[prop] = value
+
+        for prop in (
+            'org.freenas:description', 'compression', 'atime', 'dedup',
+            'aclmode', 'recordsize', 'casesensitivity', 'readonly', 'exec',
+        ):
+            if prop == 'org.freenas:description':
+                value = self.cleaned_data.get('dataset_comments')
+            elif prop == 'recordsize':
+                value = self.clean_dataset_recordsize()
+            elif prop == 'casesensitivity':
+                value = self.cleaned_data.get('dataset_case_sensitivity')
+            else:
+                value = self.cleaned_data.get('dataset_%s' % prop)
+
+            if value:
+                props[prop] = value
+
+        return props
 
     def clean_dataset_recordsize(self):
         rs = self.cleaned_data.get("dataset_recordsize")
-        if not rs:
-            return rs
-        if rs[-1].lower() == 'k':
-            rs = int(rs[:-1]) * 1024
-        else:
-            rs = int(rs)
-        return rs
+        if not rs or rs == 'inherit':
+            return 'inherit'
+
+        try:
+            return int(rs)
+        except ValueError:
+            if rs[-1].lower() == 'k':
+                rs = int(rs[:-1]) * 1024
+                return rs
+
+        raise forms.ValidationError(_('invalid recordsize provided'))
+
+
+class ZFSDatasetCreateForm(ZFSDatasetCommonForm):
+    dataset_name = forms.CharField(
+        max_length=128,
+        label=_('Dataset Name'))
+    dataset_case_sensitivity = forms.ChoiceField(
+        choices=choices.CASE_SENSITIVITY_CHOICES,
+        initial=choices.CASE_SENSITIVITY_CHOICES[0][0],
+        widget=forms.Select(attrs=attrs_dict),
+        label=_('Case Sensitivity'))
+
+    field_order = ['dataset_name']
+
+    def __init__(self, *args, fs=None, **kwargs):
+        # Common form expects a parentdata
+        # We use `fs` as parent data because thats where we inherit props from
+        self.parentdata = notifier().zfs_get_options(fs)
+        super(ZFSDatasetCreateForm, self).__init__(*args, fs=fs, **kwargs)
 
     def clean(self):
         cleaned_data = _clean_zfssize_fields(
             self,
-            ('refquota', 'quota', 'reservation', 'refreservation'),
-            "dataset_")
-        if self._create is True:
-            full_dataset_name = "%s/%s" % (
-                self._fs,
-                cleaned_data.get("dataset_name"))
-            if len(zfs.list_datasets(path=full_dataset_name)) > 0:
-                msg = _("You already have a dataset with the same name")
-                self._errors["dataset_name"] = self.error_class([msg])
-                del cleaned_data["dataset_name"]
+            self.zfs_size_fields,
+            'dataset_')
+
+        full_dataset_name = "%s/%s" % (self._fs, cleaned_data.get("dataset_name"))
+
+        path = f'/mnt/{full_dataset_name}'
+        if os.path.exists(path):
+            raise forms.ValidationError(_('The path %s already exists.') % path)
+
+        if len(zfs.list_datasets(path=full_dataset_name)) > 0:
+            msg = _("You already have a dataset with the same name")
+            self._errors["dataset_name"] = self.error_class([msg])
+            del cleaned_data["dataset_name"]
+
         return cleaned_data
 
-    def set_error(self, msg):
-        msg = "%s" % msg
-        self._errors['__all__'] = self.error_class([msg])
-        del self.cleaned_data
+    def save(self):
+        props = self.clean_data_to_props()
+        path = '%s/%s' % (self._fs, self.cleaned_data.get('dataset_name'))
+
+        err, msg = notifier().create_zfs_dataset(path=path, props=props)
+        if err:
+            self._errors['__all__'] = self.error_class([msg])
+            return False
+
+        notifier().change_dataset_share_type(path, self.cleaned_data.get('dataset_share_type'))
+
+        return True
 
 
-class CommonZVol(object):
+class ZFSDatasetEditForm(ZFSDatasetCommonForm):
+
+    def __init__(self, *args, fs=None, **kwargs):
+        # Common form expects a parentdata
+        # We use parent `fs` as parent data because thats where we inherit props from
+        self.parentdata = notifier().zfs_get_options(fs.rsplit('/', 1)[0])
+        super(ZFSDatasetEditForm, self).__init__(*args, fs=fs, **kwargs)
+
+        zdata = notifier().zfs_get_options(self._fs)
+
+        if 'org.freenas:description' in zdata and zdata['org.freenas:description'][2] == 'local':
+            self.fields['dataset_comments'].initial = zdata['org.freenas:description'][0]
+
+        for k, v in self.get_initial_data(self._fs).items():
+            self.fields[k].initial = v
+
+    @classmethod
+    def get_initial_data(cls, fs):
+        """
+        Method to get initial data for the form.
+        This is a separate method to share with API code.
+        """
+        zdata = notifier().zfs_get_options(fs)
+        data = {}
+
+        if 'org.freenas:description' in zdata and zdata['org.freenas:description'][2] == 'local':
+            data['dataset_comments'] = zdata['org.freenas:description'][0]
+        for prop in cls.zfs_size_fields:
+            field_name = f'dataset_{prop}'
+            if zdata[prop][0] == '0' or zdata[prop][0] == 'none':
+                data[field_name] = 0
+            else:
+                if zdata[prop][2] == 'local':
+                    data[field_name] = zdata[prop][0]
+
+        if zdata['dedup'][2] == 'inherit':
+            data['dataset_dedup'] = 'inherit'
+        elif zdata['dedup'][0] in ('on', 'off', 'verify'):
+            data['dataset_dedup'] = zdata['dedup'][0]
+        elif zdata['dedup'][0] == 'sha256,verify':
+            data['dataset_dedup'] = 'verify'
+        else:
+            data['dataset_dedup'] = 'off'
+
+        if zdata['compression'][2] == 'inherit':
+            data['dataset_compression'] = 'inherit'
+        else:
+            data['dataset_compression'] = zdata['compression'][0]
+
+        if zdata['atime'][2] == 'inherit':
+            data['dataset_atime'] = 'inherit'
+        elif zdata['atime'][0] in ('on', 'off'):
+            data['dataset_atime'] = zdata['atime'][0]
+        else:
+            data['dataset_atime'] = 'off'
+
+        if zdata['readonly'][2] == 'inherit':
+            data['dataset_readonly'] = 'inherit'
+        elif zdata['readonly'][0] in ('on', 'off'):
+            data['dataset_readonly'] = zdata['readonly'][0]
+        else:
+            data['dataset_readonly'] = 'off'
+
+        if zdata['exec'][2] == 'inherit':
+            data['dataset_exec'] = 'inherit'
+        elif zdata['exec'][0] in ('on', 'off'):
+            data['dataset_exec'] = zdata['exec'][0]
+        else:
+            data['dataset_exec'] = 'off'
+
+        if zdata['recordsize'][2] == 'inherit':
+            data['dataset_recordsize'] = 'inherit'
+        else:
+            data['dataset_recordsize'] = zdata['recordsize'][0]
+
+        data['dataset_share_type'] = notifier().get_dataset_share_type(fs)
+
+        return data
+
+    def clean(self):
+        cleaned_data = _clean_zfssize_fields(
+            self,
+            self.zfs_size_fields,
+            'dataset_')
+
+        return cleaned_data
+
+    def save(self):
+        props = self.clean_data_to_props()
+        name = self._fs
+
+        error = False
+        errors = dict()
+
+        for item, value in props.items():
+            if value == 'inherit':
+                success, msg = notifier().zfs_inherit_option(name, item)
+            else:
+                success, msg = notifier().zfs_set_option(name, item, value)
+
+            error |= not success
+            if not success:
+                error = True
+                errors[f'dataset_{item}'] = msg
+
+        notifier().change_dataset_share_type(name, self.cleaned_data.get('dataset_share_type'))
+
+        for field, err in list(errors.items()):
+            self._errors[field] = self.error_class([err])
+
+        if error:
+            return False
+
+        return True
+
+
+class CommonZVol(Form):
+    zvol_comments = forms.CharField(max_length=120, label=_('Comments'), required=False)
+    zvol_volsize = forms.CharField(
+        max_length=128,
+        label=_('Size for this zvol'),
+        help_text=_('Example: 1 GiB'),
+    )
+    zvol_force = forms.BooleanField(
+        label=_('Force size'),
+        required=False,
+        help_text=_('Allow the zvol to consume more than 80% of available space'),
+    )
+    zvol_compression = forms.ChoiceField(
+        choices=choices.ZFS_CompressionChoices,
+        initial='inherit',
+        widget=forms.Select(attrs=attrs_dict),
+        label=_('Compression level'))
+    zvol_dedup = forms.ChoiceField(
+        label=_('ZFS Deduplication'),
+        choices=choices.ZFS_DEDUP_INHERIT,
+        initial='inherit',
+        widget=WarningSelect(text=DEDUP_WARNING),
+    )
 
     def __init__(self, *args, **kwargs):
         self._force = False
         super(CommonZVol, self).__init__(*args, **kwargs)
+
+        if hasattr(self, 'parentdata'):
+            self.fields['zvol_compression'].choices = _inherit_choices(
+                choices.ZFS_CompressionChoices,
+                self.parentdata['compression'][0]
+            )
+            self.fields['zvol_dedup'].choices = _inherit_choices(
+                choices.ZFS_DEDUP_INHERIT,
+                self.parentdata['dedup'][0]
+            )
 
     def _zvol_force(self):
         if self._force:
@@ -1398,8 +1595,6 @@ class CommonZVol(object):
                     'It is not recommended to use more than 80% of your '
                     'available space for your zvol!'
                 ])
-        #else:
-        #    self.fields['zvol_force'].widget = forms.widgets.HiddenInput()
 
     def clean_zvol_volsize(self):
         size = self.cleaned_data.get('zvol_volsize').replace(' ', '')
@@ -1413,7 +1608,7 @@ class CommonZVol(object):
         if suffix.lower().endswith('ib'):
             size = '%s%s' % (number, suffix[0])
 
-        zlist = zfs.list_datasets(path=self.parentds, include_root=True)
+        zlist = zfs.zfs_list(path=self.parentds, include_root=True, recursive=True, hierarchical=False)
         if zlist:
             dataset = zlist.get(self.parentds)
             _map = {
@@ -1437,52 +1632,23 @@ class CommonZVol(object):
         return size
 
 
-class ZVol_EditForm(CommonZVol, Form):
-    zvol_comments = forms.CharField(
-        max_length=128,
-        label=_('Comments'),
-        required=False)
-    zvol_compression = forms.ChoiceField(
-        choices=choices.ZFS_CompressionChoices,
-        widget=forms.Select(attrs=attrs_dict),
-        label=_('Compression level'))
-    zvol_dedup = forms.ChoiceField(
-        label=_('ZFS Deduplication'),
-        choices=choices.ZFS_DEDUP_INHERIT,
-        widget=WarningSelect(text=DEDUP_WARNING),
-    )
-    zvol_volsize = forms.CharField(
-        max_length=128,
-        label=_('Size'),
-        help_text=_('Example: 1 GiB'))
-    zvol_force = forms.BooleanField(
-        label=_('Force size'),
-        required=False,
-        help_text=_('Allow the zvol to consume more than 80% of available space'),
-    )
+class ZVol_EditForm(CommonZVol):
 
     def __init__(self, *args, **kwargs):
-        self.parentds = kwargs.pop('parentds')
-        self.vol_name = self.parentds.rsplit('/', 1)[0]
-        super(ZVol_EditForm, self).__init__(*args, **kwargs)
+        # parentds is required for CommonZVol
+        self.name = kwargs.pop('name')
+        self.parentds = self.name.rsplit('/', 1)[0]
         _n = notifier()
-        if '/' in self.parentds:
-            parentds = self.parentds.rsplit('/', 1)[0]
-            parentdata = _n.zfs_get_options(parentds)
+        self.parentdata = _n.zfs_get_options(self.parentds)
+        super(ZVol_EditForm, self).__init__(*args, **kwargs)
 
-            self.fields['zvol_compression'].choices = _inherit_choices(
-                choices.ZFS_CompressionChoices,
-                parentdata['compression'][0]
-            )
-            self.fields['zvol_dedup'].choices = _inherit_choices(
-                choices.ZFS_DEDUP_INHERIT,
-                parentdata['dedup'][0]
-            )
-
-        self.zdata = _n.zfs_get_options(self.parentds)
+        self.zdata = _n.zfs_get_options(self.name)
         if 'org.freenas:description' in self.zdata and self.zdata['org.freenas:description'][2] == 'local':
             self.fields['zvol_comments'].initial = self.zdata['org.freenas:description'][0]
-        self.fields['zvol_compression'].initial = self.zdata['compression'][2]
+        if self.zdata['compression'][2] == 'inherit':
+            self.fields['zvol_compression'].initial = 'inherit'
+        else:
+            self.fields['zvol_compression'].initial = self.zdata['compression'][0]
         self.fields['zvol_volsize'].initial = self.zdata['volsize'][0]
 
         if self.zdata['dedup'][2] == 'inherit':
@@ -1528,10 +1694,10 @@ class ZVol_EditForm(CommonZVol, Form):
             if not formfield:
                 formfield = f'zvol_{attr}'
             if can_inherit and self.cleaned_data[formfield] == 'inherit':
-                success, err = _n.zfs_inherit_option(self.parentds, attr)
+                success, err = _n.zfs_inherit_option(self.name, attr)
             else:
                 success, err = _n.zfs_set_option(
-                    self.parentds, attr, self.cleaned_data[formfield]
+                    self.name, attr, self.cleaned_data[formfield]
                 )
             if not success:
                 error = True
@@ -1547,24 +1713,8 @@ class ZVol_EditForm(CommonZVol, Form):
         return True
 
 
-class ZVol_CreateForm(CommonZVol, Form):
+class ZVol_CreateForm(CommonZVol):
     zvol_name = forms.CharField(max_length=128, label=_('zvol name'))
-    zvol_comments = forms.CharField(max_length=120, label=_('Comments'), required=False)
-    zvol_volsize = forms.CharField(
-        max_length=128,
-        label=_('Size for this zvol'),
-        help_text=_('Example: 1 GiB'),
-    )
-    zvol_force = forms.BooleanField(
-        label=_('Force size'),
-        required=False,
-        help_text=_('Allow the zvol to consume more than 80% of available space'),
-    )
-    zvol_compression = forms.ChoiceField(
-        choices=choices.ZFS_CompressionChoices,
-        initial='inherit',
-        widget=forms.Select(attrs=attrs_dict),
-        label=_('Compression level'))
     zvol_sparse = forms.BooleanField(
         label=_('Sparse volume'),
         help_text=_(
@@ -1592,6 +1742,7 @@ class ZVol_CreateForm(CommonZVol, Form):
 
     def __init__(self, *args, **kwargs):
         self.parentds = kwargs.pop('parentds')
+        self.parentdata = notifier().zfs_get_options(self.parentds)
         zpool = notifier().zpool_parse(self.parentds.split('/')[0])
         numdisks = 4
         for vdev in zpool.data:
@@ -1615,6 +1766,7 @@ class ZVol_CreateForm(CommonZVol, Form):
             if num > numdisks:
                 numdisks = num
         super(ZVol_CreateForm, self).__init__(*args, **kwargs)
+        key_order(self, 0, 'zvol_name', instance=True)
         size = '%dK' % 2 ** ((numdisks * 4) - 1).bit_length()
 
         if size in [y[0] for y in choices.ZFS_VOLBLOCKSIZE]:
@@ -1756,6 +1908,34 @@ class MountPointAccessForm(Form):
         )
 
 
+class ResilverForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.Resilver
+        widgets = {
+            'weekday': CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        if len(args) > 0 and isinstance(args[0], QueryDict):
+            new = args[0].copy()
+            fix_time_fields(new, ['begin', 'end'])
+            args = (new,) + args[1:]
+        super(ResilverForm, self).__init__(*args, **kwargs)
+
+    def clean_weekday(self):
+        bwd = self.data.getlist('weekday')
+        return ','.join(bwd)
+
+    def done(self, *args, **kwargs):
+        notifier().restart('cron')
+        with client as c:
+            c.call('pool.configure_resilver_priority')
+
+
 class PeriodicSnapForm(ModelForm):
 
     class Meta:
@@ -1775,26 +1955,17 @@ class PeriodicSnapForm(ModelForm):
     def __init__(self, *args, **kwargs):
         if len(args) > 0 and isinstance(args[0], QueryDict):
             new = args[0].copy()
-            HOUR = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})')
-            if "task_begin" in new:
-                search = HOUR.search(new['task_begin'])
-                new['task_begin'] = time(
-                    hour=int(search.group("hour")),
-                    minute=int(search.group("min")),
-                    second=int(search.group("sec")))
-            if "task_end" in new:
-                search = HOUR.search(new['task_end'])
-                new['task_end'] = time(
-                    hour=int(search.group("hour")),
-                    minute=int(search.group("min")),
-                    second=int(search.group("sec")))
+            fix_time_fields(new, ['task_begin', 'task_end'])
             args = (new,) + args[1:]
         super(PeriodicSnapForm, self).__init__(*args, **kwargs)
         self.fields['task_filesystem'] = forms.ChoiceField(
             label=self.fields['task_filesystem'].label,
         )
         volnames = [o.vol_name for o in models.Volume.objects.all()]
-        self.fields['task_filesystem'].choices = [y for y in list(notifier().list_zfs_fsvols().items()) if y[0].split('/')[0] in volnames]
+        choices = set([y for y in list(notifier().list_zfs_fsvols().items()) if y[0].split('/')[0] in volnames])
+        if self.instance.id:
+            choices.add((self.instance.task_filesystem, self.instance.task_filesystem))
+        self.fields['task_filesystem'].choices = list(choices)
         self.fields['task_repeat_unit'].widget = forms.HiddenInput()
 
     def clean_task_byweekday(self):
@@ -1834,11 +2005,17 @@ class ManualSnapshotForm(Form):
 
     def clean_ms_name(self):
         regex = re.compile('^[-a-zA-Z0-9_. ]+$')
-        if regex.match(self.cleaned_data['ms_name'].__str__()) is None:
+        name = self.cleaned_data.get('ms_name')
+        if regex.match(name) is None:
             raise forms.ValidationError(
                 _("Only [-a-zA-Z0-9_. ] permitted as snapshot name")
             )
-        return self.cleaned_data['ms_name']
+        snaps = notifier().zfs_snapshot_list(path=f'{self._fs}@{name}')
+        if snaps:
+            raise forms.ValidationError(
+                _('Snapshot with this name already exists')
+            )
+        return name
 
     def commit(self, fs):
         vmsnapname = str(uuid.uuid4())
@@ -2144,19 +2321,7 @@ class ReplicationForm(ModelForm):
     def __init__(self, *args, **kwargs):
         if len(args) > 0 and isinstance(args[0], QueryDict):
             new = args[0].copy()
-            HOUR = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})')
-            if "repl_begin" in new:
-                search = HOUR.search(new['repl_begin'])
-                new['repl_begin'] = time(
-                    hour=int(search.group("hour")),
-                    minute=int(search.group("min")),
-                    second=int(search.group("sec")))
-            if "repl_end" in new:
-                search = HOUR.search(new['repl_end'])
-                new['repl_end'] = time(
-                    hour=int(search.group("hour")),
-                    minute=int(search.group("min")),
-                    second=int(search.group("sec")))
+            fix_time_fields(new, ['repl_begin', 'repl_end'])
             args = (new,) + args[1:]
         repl = kwargs.get('instance', None)
         super(ReplicationForm, self).__init__(*args, **kwargs)
@@ -2632,7 +2797,7 @@ class UnlockPassphraseForm(Form):
             os.unlink(keyfile)
         else:
             raise ValueError("Need a passphrase or recovery key")
-        zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid)
+        zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid, first_time=False)
         if not zimport:
             if failed > 0:
                 msg = _(
@@ -2646,9 +2811,13 @@ class UnlockPassphraseForm(Form):
 
         _notifier = notifier()
         for svc in self.cleaned_data.get("services"):
-            _notifier.restart(svc)
+            if svc == 'jails':
+                with client as c:
+                    c.call('core.bulk', 'service.restart', [['jails']])
+            else:
+                _notifier.restart(svc)
         _notifier.start("ix-warden")
-        _notifier.restart("system_datasets", timeout=50)
+        _notifier.restart("system_datasets")
         _notifier.reload("disk")
         if not _notifier.is_freenas() and _notifier.failover_licensed():
             from freenasUI.failover.enc_helper import LocalEscrowCtl

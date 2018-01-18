@@ -1,13 +1,15 @@
 from . import ejson as json
 from .protocol import DDPProtocol
-from collections import defaultdict
-from threading import Event, Lock, Thread
+from .utils import ProgressBar
+from collections import defaultdict, namedtuple, Callable
+from threading import Event as TEvent, Lock, Thread
 from ws4py.client.threadedclient import WebSocketClient
 from ws4py.websocket import WebSocket
 
 import argparse
 from base64 import b64encode
 import ctypes
+import errno
 import os
 import socket
 import ssl
@@ -15,6 +17,31 @@ import sys
 import threading
 import time
 import uuid
+
+
+class Event(TEvent):
+
+    def wait(self, timeout=None):
+        """
+        Python currently uses sem_timedwait(3) to wait for pthread Lock
+        and that function uses CLOCK_REALTIME clock, which means a system
+        clock change would make it return before the time has actually passed.
+        The real fix would be to patch python to use pthread_cond_timedwait
+        with a CLOCK_MONOTINOC clock however this should do for now.
+        """
+        if timeout:
+            endtime = time.monotonic() + timeout
+            while True:
+                if not super(Event, self).wait(timeout):
+                    if endtime - time.monotonic() > 0:
+                        timeout = endtime - time.monotonic()
+                        if timeout > 0:
+                            continue
+                    return False
+                else:
+                    return True
+        else:
+            return super(Event, self).wait()
 
 
 CALL_TIMEOUT = int(os.environ.get('CALL_TIMEOUT', 60))
@@ -129,7 +156,19 @@ class WSClient(WebSocketClient):
 
     def connect(self):
         self.sock.settimeout(10)
-        rv = super(WSClient, self).connect()
+        max_attempts = 3
+        for i in range(max_attempts):
+            try:
+                rv = super(WSClient, self).connect()
+            except OSError as e:
+                # Lets retry a few times in case the error is
+                # [Errno 48] Address already in use
+                # which I believe may be caused by a race condition
+                if e.errno == errno.EADDRINUSE and i < max_attempts - 1:
+                    continue
+                raise
+            else:
+                break
         if self.sock:
             self.sock.settimeout(None)
         return rv
@@ -164,16 +203,50 @@ class Call(object):
         self.errno = None
         self.error = None
         self.trace = None
+        self.type = None
+        self.extra = None
 
 
-class ClientException(Exception):
-    def __init__(self, error, errno=None, trace=None):
+class ErrnoMixin:
+    ENOMETHOD = 201
+    ESERVICESTARTFAILURE = 202
+
+    @classmethod
+    def _get_errname(cls, code):
+        for k, v in cls.__dict__.items():
+            if k.startswith("E") and v == code:
+                return k
+
+
+class ClientException(ErrnoMixin, Exception):
+
+    def __init__(self, error, errno=None, trace=None, extra=None):
         self.errno = errno
         self.error = error
         self.trace = trace
+        self.extra = extra
 
     def __str__(self):
         return self.error
+
+
+Error = namedtuple('Error', ['attribute', 'errmsg', 'errcode'])
+
+
+class ValidationErrors(ClientException):
+    def __init__(self, errors):
+        self.errors = []
+        for e in errors:
+            self.errors.append(Error(e[0], e[1], e[2]))
+
+        super().__init__(str(self))
+
+    def __str__(self):
+        msgs = []
+        for e in self.errors:
+            errcode = errno.errorcode.get(e.errcode, 'EUNKNOWN')
+            msgs.append(f'[{errcode}] {e.attribute or "ALL"}: {e.errmsg}')
+        return '\n'.join(msgs)
 
 
 class CallTimeout(ClientException):
@@ -239,6 +312,8 @@ class Client(object):
                     call.errno = message['error'].get('error')
                     call.error = message['error'].get('reason')
                     call.trace = message['error'].get('trace')
+                    call.type = message['error'].get('type')
+                    call.extra = message['error'].get('extra')
                 call.returned.set()
                 self._unregister_call(call)
         elif msg in ('added', 'changed', 'removed'):
@@ -283,12 +358,11 @@ class Client(object):
         job_id = fields['id']
         with self._jobs_lock:
             if fields:
-                if mtype == 'ADDED':
-                    self._jobs[job_id].update(fields)
-                elif mtype == 'CHANGED':
-                    job = self._jobs[job_id]
-                    job.update(fields)
-                    if fields['state'] in ('SUCCESS', 'FAILED'):
+                job = self._jobs[job_id]
+                job.update(fields)
+                if isinstance(job.get('__callback'), Callable):
+                    job['__callback'](job)
+                if mtype == 'CHANGED' and job['state'] in ('SUCCESS', 'FAILED', 'ABORTED'):
                         # If an Event already exist we just set it to mark it finished.
                         # Otherwise we create a new Event.
                         # This is to prevent a race-condition of job finishing before
@@ -327,7 +401,9 @@ class Client(object):
             raise CallTimeout("Call timeout")
 
         if c.errno:
-            raise ClientException(c.error, c.errno, c.trace)
+            if c.trace and c.type == 'VALIDATION':
+                raise ValidationErrors(c.extra)
+            raise ClientException(c.error, c.errno, c.trace, c.extra)
 
         if job:
             job_id = c.result
@@ -337,14 +413,14 @@ class Client(object):
             # the job event arrives to use existing event.
             with self._jobs_lock:
                 job = self._jobs.get(job_id)
+                event = None
                 if job:
                     event = job.get('__ready')
-                    if event is None:
-                        event = job['__ready'] = Event()
-                else:
-                    event = self._jobs[job_id] = {'__ready': Event()}
+                if event is None:
+                    event = job['__ready'] = Event()
+                job['__callback'] = kwargs.pop('callback', None)
 
-            # Wait indefinitely for the job event with state SUCCESS/FAILED
+            # Wait indefinitely for the job event with state SUCCESS/FAILED/ABORTED
             event.wait()
             job = self._jobs.pop(job_id, None)
             if job is None:
@@ -398,6 +474,9 @@ def main():
 
     subparsers = parser.add_subparsers(help='sub-command help', dest='name')
     iparser = subparsers.add_parser('call', help='Call method')
+    iparser.add_argument(
+        '-j', '--job', help='Call a long running job with progress bars', type=bool, default=False
+    )
     iparser.add_argument('method', nargs='+')
 
     iparser = subparsers.add_parser('ping', help='Ping')
@@ -406,13 +485,18 @@ def main():
 
     iparser = subparsers.add_parser('sql', help='Run SQL command')
     iparser.add_argument('sql', nargs='+')
+
+    iparser = subparsers.add_parser('subscribe', help='Subscribe to event')
+    iparser.add_argument('event')
+    iparser.add_argument('-n', '--number', type=int, help='Number of events to wait before exit')
+    iparser.add_argument('-t', '--timeout', type=int)
     args = parser.parse_args()
 
     def from_json(args):
         for i in args:
             try:
                 yield json.loads(i)
-            except:
+            except Exception:
                 yield i
 
     if args.name == 'call':
@@ -428,7 +512,19 @@ def main():
                 kwargs = {}
                 if args.timeout:
                     kwargs['timeout'] = args.timeout
-                rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
+                if args.job:
+                    # display the job progress and status message while we wait
+                    with ProgressBar() as progress_bar:
+                        kwargs.update({
+                            'job': True,
+                            'callback': lambda job: progress_bar.update(
+                                job['progress']['percent'], job['progress']['description']
+                            )
+                        })
+                        rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
+                        progress_bar.finish()
+                else:
+                    rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
                 if isinstance(rv, (int, str)):
                     print(rv)
                 else:
@@ -463,6 +559,23 @@ def main():
                         else:
                             data.append(str(f))
                     print('|'.join(data))
+
+    elif args.name == 'subscribe':
+        with Client(uri=args.uri) as c:
+
+            event = Event()
+            number = 0
+
+            def cb(mtype, **message):
+                print(json.dumps(message))
+                if args.number and args.number >= number:
+                    event.set()
+
+            c.subscribe(args.event, cb)
+
+            if not event.wait(timeout=args.timeout):
+                sys.exit(1)
+            sys.exit(0)
     elif args.name == 'waitready':
         """
         This command is supposed to wait until we are able to connect

@@ -60,12 +60,12 @@ class CIFS_ShareForm(ModelForm):
         if cifs_path:
             for line in zfsout:
                 try:
-                    tasks = [] 
+                    tasks = []
                     zfs_mp, zfs_ds = line.split()
                     if cifs_path == zfs_mp or cifs_path.startswith("%s/" % zfs_mp):
                         if cifs_path == zfs_mp:
                             tasks = Task.objects.filter(task_filesystem=zfs_ds)
-                        else: 
+                        else:
                             tasks = Task.objects.filter(Q(task_filesystem=zfs_ds) & Q(task_recursive=True))
                     for t in tasks:
                         task_list.append(t)
@@ -199,8 +199,8 @@ class CIFS_ShareForm(ModelForm):
         super(CIFS_ShareForm, self).done(request, events)
         if self.instance._original_cifs_default_permissions != \
             self.instance.cifs_default_permissions and \
-            self.instance.cifs_default_permissions == True:
-            try:  
+            self.instance.cifs_default_permissions is True:
+            try:
                 (owner, group) = notifier().mp_get_owner(self.instance.cifs_path)
             except:
                 (owner, group) = ('root', 'wheel')
@@ -239,6 +239,18 @@ class AFP_ShareForm(ModelForm):
                 self.fields['afp_dperm'].widget.attrs['disabled'] = 'false'
                 self.fields['afp_umask'].widget.attrs['disabled'] = 'false'
         self.fields['afp_name'].required = False
+
+    def clean_afp_home(self):
+        home = self.cleaned_data.get('afp_home')
+        if home:
+            qs = models.AFP_Share.objects.filter(afp_home=True)
+            if self.instance.id:
+                qs = qs.exclude(id=self.instance.id)
+            if qs.exists():
+                raise forms.ValidationError(_(
+                    'Only one share is allowed to be a home share.'
+                ))
+        return home
 
     def clean_afp_hostsallow(self):
         res = self.cleaned_data['afp_hostsallow']
@@ -291,8 +303,11 @@ class AFP_ShareForm(ModelForm):
     def clean_afp_name(self):
         name = self.cleaned_data.get('afp_name')
         path = self.cleaned_data.get('afp_path')
-        if path and not name:
-            name = path.rsplit('/', 1)[-1]
+        if not name:
+            if self.cleaned_data.get('afp_home'):
+                name = 'Homes'
+            elif path:
+                name = path.rsplit('/', 1)[-1]
         qs = models.AFP_Share.objects.filter(afp_name=name)
         if self.instance.id:
             qs = qs.exclude(id=self.instance.id)
@@ -365,11 +380,21 @@ class NFS_ShareForm(ModelForm):
         net = re.sub(r'\s{2,}|\n', ' ', net).strip()
         if not net:
             return net
+        seen_networks = []
         for n in net.split(' '):
             try:
-                IPNetwork(n)
+                netobj = IPNetwork(n)
                 if n.find("/") == -1:
                     raise ValueError(n)
+                for i in seen_networks:
+                    if netobj.overlaps(i):
+                        raise forms.ValidationError(
+                            _('The following networks overlap: %(net1)s - %(net2)s') % {
+                                'net1': netobj,
+                                'net2': i,
+                            }
+                        )
+                seen_networks.append(netobj)
             except (AddressValueError, NetmaskValueError, ValueError):
                 raise forms.ValidationError(
                     _("This is not a valid network: %s") % n
@@ -506,8 +531,14 @@ class NFS_ShareForm(ModelForm):
                 break
 
         for network in networks:
+            networkobj = IPNetwork(network)
             for unetwork, ustdev in used_networks:
-                if network == unetwork and dev == ustdev:
+                try:
+                    unetworkobj = IPNetwork(unetwork)
+                except Exception:
+                    # If for some reason other values in db are not valid networks
+                    unetworkobj = IPNetwork('0.0.0.0/0')
+                if networkobj.overlaps(unetworkobj) and dev == ustdev:
                     self._errors['nfs_network'] = self.error_class([
                         _("The network %s is already being shared and cannot "
                             "be used twice for the same filesystem") % (

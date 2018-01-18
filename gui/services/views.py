@@ -39,6 +39,7 @@ from freenasUI.directoryservice.models import (
 from freenasUI.directoryservice.views import get_directoryservice_status
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
 from freenasUI.services.forms import (
@@ -47,6 +48,7 @@ from freenasUI.services.forms import (
 )
 from freenasUI.system.models import Tunable
 from freenasUI.support.utils import fc_enabled
+from middlewared.client import ValidationErrors
 
 log = logging.getLogger("services.views")
 
@@ -166,6 +168,7 @@ def core(request):
             'smartd': smart.get_edit_url(),
             'webdav': webdav.get_edit_url(),
             'domaincontroller': domaincontroller.get_edit_url(),
+            'netdata': reverse('services_netdata'),
         }),
         'disabled': json.dumps(disabled),
     })
@@ -203,10 +206,14 @@ def services_cifs(request):
         it = idmap_tdb()
 
     if request.method == "POST":
-        form = CIFSForm(request.POST, instance=cifs)
-        if form.is_valid():
-            form.save()
-        else:
+        try:
+            form = CIFSForm(request.POST, instance=cifs)
+            if form.is_valid():
+                form.save()
+            else:
+                return JsonResp(request, form=form)
+        except ValidationErrors as e:
+            handle_middleware_validation(form, e)
             return JsonResp(request, form=form)
 
         idmap_form = idmap_tdb_Form(request.POST, instance=it)
@@ -333,6 +340,7 @@ def fibrechanneltotarget(request):
         message=_('Fibre Channel Ports have been successfully changed.'),
     )
 
+
 def services_s3(request):
     try:
         s3 = models.S3.objects.all()[0]
@@ -346,7 +354,7 @@ def services_s3(request):
             return JsonResp(
                 request,
                 message=_("S3 successfully edited.")
-            ) 
+            )
         else:
             return JsonResp(request, form=form)
 
@@ -365,3 +373,12 @@ def services_s3(request):
         's3_ui_url': s3_ui_url,
         's3_started': s3_started
     })
+
+
+def services_netdata(request):
+    started = notifier().started('netdata')
+    return render(request,
+                  'services/netdata.html',
+                  {
+                      'started': started
+                  })

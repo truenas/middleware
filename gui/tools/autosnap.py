@@ -205,7 +205,7 @@ def doesVMSnapshotByNameExists(vm, snapshotName):
                 break
             tree = tree[0].childSnapshotList
     except:
-        log.debug('Exception in doesVMSnapshotByNameExists')
+        log.debug('Exception in doesVMSnapshotByNameExists', exc_info=True)
     return False
 
 
@@ -252,11 +252,12 @@ TaskObjects = Task.objects.filter(task_enabled=True)
 taskpath = {'recursive': [], 'nonrecursive': []}
 for task in TaskObjects:
     vol_name = task.task_filesystem.split('/')[0]
-    proc = pipeopen(f'/sbin/zpool list {vol_name}')
-    proc.communicate()
-    if proc.returncode != 0:
-        log.warn(f'Volume {vol_name} not imported, skipping snapshot task #{task.id}')
     if isMatchingTime(task, snaptime):
+        proc = pipeopen(f'/sbin/zpool list {vol_name}')
+        proc.communicate()
+        if proc.returncode != 0:
+            log.warn(f'Volume {vol_name} not imported, skipping snapshot task #{task.id}')
+            continue
         if task.task_recursive:
             taskpath['recursive'].append(task.task_filesystem)
         else:
@@ -279,10 +280,14 @@ if len(mp_to_task_map) > 0:
 
     # Grab all existing snapshot and filter out the expiring ones
     snapshots = {}
-    snapshots_pending_delete = set()
+    snapshots_pending_delete = []
     previous_prefix = '/'
-    zfsproc = pipeopen("/sbin/zfs list -t snapshot -H -o name", debug, logger=log)
+    # Use -s name because its faster. See #18428
+    zfsproc = pipeopen("/sbin/zfs list -t snapshot -H -o name -s name", debug, logger=log)
     lines = zfsproc.communicate()[0].split('\n')
+    # Sort it in python to behave the same way as without "-s name"
+    lines = sorted(lines, key=lambda x: x.split('@'))
+
     reg_autosnap = re.compile('^auto-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2}).'
                               '(?P<hour>\d{2})(?P<minute>\d{2})-(?P<retcount>\d+)'
                               '(?P<retunit>[hdwmy])$')
@@ -304,7 +309,7 @@ if len(mp_to_task_map) > 0:
                                     continue
                             else:
                                 previous_prefix = '%s/' % (fs)
-                            snapshots_pending_delete.add(snapshot_name)
+                            snapshots_pending_delete.append(snapshot_name)
                 else:
                     if (fs, snap_ret_policy, True) in mp_to_task_map:
                         if (fs, snap_ret_policy, True) in snapshots:

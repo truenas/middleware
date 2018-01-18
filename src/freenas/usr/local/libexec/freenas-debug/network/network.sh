@@ -53,7 +53,7 @@ network_func()
 	section_header "Interfaces"
 	for i in $(ifconfig -l)
 	do
-		ifconfig ${i}
+		ifconfig -v ${i}
 		echo
 
 		if $(ifconfig ${i}|grep -q '\bUP\b')
@@ -92,8 +92,8 @@ network_func()
 	route -n show default|grep gateway|awk '{ print $2 }'
 	section_footer
 
-	section_header "Routing tables (netstat -nr)"
-	netstat -nr
+	section_header "Routing tables (netstat -nrW)"
+	netstat -nrW
 	section_footer
 
 	section_header "ARP entries (arp -a)"
@@ -108,7 +108,7 @@ network_func()
 	netstat -i
 	section_footer
 
-	section_header "protocols"
+	section_header "protocols - 'netstat -p protocol -s'"
     for proto in ip arp udp tcp icmp ; do
 	netstat -p $proto -s
     done

@@ -10,7 +10,9 @@ if '/usr/local/www' not in sys.path:
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
 import django
-django.setup()
+from django.apps import apps
+if not apps.ready:
+    django.setup()
 
 from django.conf import settings
 from freenasUI import choices
@@ -36,8 +38,11 @@ from freenasUI.directoryservice.models import (
     IDMAP_TYPE_RID,
     IDMAP_TYPE_TDB,
     IDMAP_TYPE_TDB2,
+    IDMAP_TYPE_SCRIPT,
 )
 from freenasUI.directoryservice.utils import get_idmap_object
+
+from freenasUI.system.alert import alertPlugins
 
 from middlewared.utils import django_modelobj_serialize
 
@@ -64,10 +69,6 @@ class NotifierService(Service):
         except AttributeError:
             return getattr(_n, attr)
 
-    def system_dataset_create(self, mount=True):
-        """Make sure return value is serializable"""
-        return notifier().system_dataset_create(mount=mount) is not None
-
     def common(self, name, method, params=None):
         """Simple wrapper to access methods under freenasUI.common.*"""
         if params is None:
@@ -86,6 +87,20 @@ class NotifierService(Service):
         except:
             logger.debug(
                 'notifier.pwenc_decrypt: Failed to decrypt the pass for {0}'.format(encrypted),
+                exc_info=True
+            )
+            return ''
+
+    def pwenc_encrypt(self, decrypted=None):
+        """
+        Wrapper method to avoid traceback.
+        This is simply to keep old behavior in notifier.
+        """
+        try:
+            return notifier().pwenc_encrypt(decrypted)
+        except:
+            logger.debug(
+                'notifier.pwenc_encrypt: Failed to encrypt the pass for {0}'.format(decrypted),
                 exc_info=True
             )
             return ''
@@ -113,13 +128,15 @@ class NotifierService(Service):
                     data[k] = serialize(v)
             elif isinstance(i, (zfs.ZFSVol, zfs.ZFSDataset)):
                 data = i.__dict__
+                data.update(data.pop('_ZFSVol__props', {}))
+                data.update(data.pop('_ZFSDataset__props', {}))
                 data['children'] = [serialize(j) for j in data.get('children') or []]
             return data
 
         return serialize(rv)
 
     def directoryservice(self, name):
-        """Temporary rapper to serialize DS connectors"""
+        """Temporary wrapper to serialize DS connectors"""
         if name == 'AD':
             ds = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
             workgroups = []
@@ -168,10 +185,10 @@ class NotifierService(Service):
             pass
         return ret
 
-    def ds_get_idmap_object(self, ds_type, id, idmap_backend):
+    async def ds_get_idmap_object(self, ds_type, id, idmap_backend):
         """Temporary wrapper to serialize IDMAP objects"""
         obj = get_idmap_object(ds_type, id, idmap_backend)
-        data = django_modelobj_serialize(self.middleware, obj)
+        data = await django_modelobj_serialize(self.middleware, obj)
         data['idmap_backend_name'] = obj.idmap_backend_name
         data['idmap_backend_type'] = obj.idmap_backend_type
         # Only these types have SSL
@@ -179,7 +196,7 @@ class NotifierService(Service):
             return data
         cert = obj.get_certificate()
         if cert:
-            data['certificate'] = django_modelobj_serialize(self.middleware, cert)
+            data['certificate'] = await django_modelobj_serialize(self.middleware, cert)
         else:
             data['certificate'] = None
         data['ssl'] = obj.get_ssl()
@@ -200,6 +217,7 @@ class NotifierService(Service):
             IDMAP_TYPE_RID: 'IDMAP_TYPE_RID',
             IDMAP_TYPE_TDB: 'IDMAP_TYPE_TDB',
             IDMAP_TYPE_TDB2: 'IDMAP_TYPE_TDB2',
+            IDMAP_TYPE_SCRIPT: 'IDMAP_TYPE_SCRIPT',
         }
         if code not in mapping:
             raise ValueError('Unknown idmap code: {0}'.format(code))
@@ -210,15 +228,6 @@ class NotifierService(Service):
         if args is None:
             args = []
         return getattr(Samba4(), name)(*args)
-
-    def systemdataset_is_decrypted(self):
-        """Temporary workaround to get system dataset crypt state"""
-        systemdataset, basename = notifier().system_dataset_settings()
-        if not systemdataset:
-            return None
-        if not basename:
-            return None
-        return systemdataset.is_decrypted(), basename
 
     def choices(self, name, args=None):
         """Temporary wrapper to get to UI choices"""
@@ -244,3 +253,12 @@ class NotifierService(Service):
     def gui_languages(self):
         """Temporary wrapper to return available languages in django"""
         return settings.LANGUAGES
+
+    def get_alerts(self):
+        """
+        Temporary workaround to get alerts from legacy UI code
+        """
+        rv = []
+        for alert in alertPlugins.get_alerts():
+            rv.append(f'{alert.getLevel()} - {alert.getMessage()}')
+        return '\n'.join(rv)

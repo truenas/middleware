@@ -27,6 +27,7 @@
 
 var _webshell;
 var Middleware;
+var middlewareTokenUrl;
 
 require([
     "dojo",
@@ -224,7 +225,7 @@ require([
             }
         };
 
-        xhr.get('/system/restart-httpd/', {
+        xhr.get('/legacy/system/restart-httpd/', {
             sync: true
         }).then(handle, handle);
 
@@ -240,7 +241,7 @@ require([
             }
         };
 
-        xhr.get('/system/reload-httpd/', {
+        xhr.get('/legacy/system/reload-httpd/', {
             sync: true
         }).then(handle, handle);
 
@@ -273,7 +274,7 @@ require([
                     }
                 });
       dialog.show();
-      xhr.get('/system/restart-httpd-all/', {
+      xhr.get('/legacy/system/restart-httpd-all/', {
                 sync: true
             }).then(checkRunning(newurl));
 
@@ -299,7 +300,7 @@ require([
 
         dialog = new Dialog({
             title: gettext('Enable service'),
-            href: '/services/enable/'+srv+'/',
+            href: '/legacy/services/enable/'+srv+'/',
             parseOnLoad: true,
             closable: true,
             style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
@@ -336,16 +337,13 @@ require([
         var msgid = input.value;
         var dismiss;
         if(input.checked) {
-            dismiss = 0;
+            dismiss = 'false';
         } else {
-            dismiss = 1;
+            dismiss = 'true';
         }
-        xhr.post("/admin/alert/dismiss/", {
-            headers: {"X-CSRFToken": CSRFToken},
-            data: {
-                msgid: msgid,
-                dismiss: dismiss
-            }
+        xhr.put("/api/v1.0/system/alert/" + msgid + "/dismiss/", {
+          headers: {"X-CSRFToken": CSRFToken, "Content-Type": "application/json"},
+            data: dismiss
         }).then(function(data) {
             loadalert();
         });
@@ -454,10 +452,10 @@ require([
                 handleAs: "json"
                 }).then(function(data) {
                     if(data.status == 'RUNNING') {
-                        from.src = '/static/images/ui/buttons/on.png';
+                        from.src = '/legacy/static/images/ui/buttons/on.png';
                         domAttr.set(from, "status", "on");
                     } else if(data.status == 'STOPPED') {
-                        from.src = '/static/images/ui/buttons/off.png';
+                        from.src = '/legacy/static/images/ui/buttons/off.png';
                         domAttr.set(from, "status", "off");
                     } else {
                         setTimeout('checkStatus(name, id);', 1000);
@@ -597,7 +595,7 @@ require([
         }
 
         var is_linuxjail = false;
-        xhr.get('/jails/template/info/' + jail_type + '/', {
+        xhr.get('/legacy/jails/template/info/' + jail_type + '/', {
             sync: true
         }).then(function(data) {
             jt = JSON.parse(data);
@@ -621,7 +619,7 @@ require([
         }
 
         var is_x86 = false;
-        xhr.get('/jails/template/info/' + jail_type + '/', {
+        xhr.get('/legacy/jails/template/info/' + jail_type + '/', {
             sync: true
         }).then(function(data) {
             jt = JSON.parse(data);
@@ -883,7 +881,7 @@ require([
             return null;
         } 
 
-        xhr.get('/jails/jail/info/' + id + '/', {
+        xhr.get('/legacy/jails/jail/info/' + id + '/', {
             sync: true
         }).then(function(data) {
             jail_info = JSON.parse(data);
@@ -895,7 +893,7 @@ require([
     get_jc_info = function() {
         jc_info = null;
 
-        xhr.get('/jails/jailsconfiguration/info/', {
+        xhr.get('/legacy/jails/jailsconfiguration/info/', {
             sync: true
         }).then(function(data) {
             jc_info = JSON.parse(data);
@@ -907,7 +905,7 @@ require([
     get_jc_network_info = function()  {
         jc_network_info = null;
 
-        xhr.get('/jails/jailsconfiguration/network/info/', {
+        xhr.get('/legacy/jails/jailsconfiguration/network/info/', {
             sync: true
         }).then(function(data) {
             jc_network_info = JSON.parse(data);
@@ -1017,7 +1015,7 @@ require([
         if (cifs_home == "on" && !cifs_path) {
             console.log("XXX: cifs_home is on and no cifs_path");
 
-            xhr.get('/storage/tasks/recursive/json/', {
+            xhr.get('/legacy/storage/tasks/recursive/json/', {
                 sync: true
             }).then(function(data) {
                 var tasks = JSON.parse(data); 
@@ -1041,7 +1039,7 @@ require([
             storage_task.addOption([{ value: "", label: "-----" }]);
 
             if (cifs_path) {
-                var url = '/storage/tasks/json/' + cifs_path.replace("/mnt/", "") + '/';
+                var url = '/legacy/storage/tasks/json/' + cifs_path.replace("/mnt/", "") + '/';
                 xhr.get(url, {
                     sync: true
                 }).then(function(data) {
@@ -1105,7 +1103,7 @@ require([
     CA_autopopulate = function() {
         var signedby_id = registry.byId("id_cert_signedby").get("value");
         generic_certificate_autopopulate(
-            '/system/CA/info/' + signedby_id + '/'
+            '/legacy/system/CA/info/' + signedby_id + '/'
         );
     }
 
@@ -1114,8 +1112,7 @@ require([
             "ad_enable",
             "dc_enable",
             "ldap_enable",
-            "nis_enable",
-            "nt4_enable"
+            "nis_enable"
         ];
 
         set = []
@@ -1129,7 +1126,7 @@ require([
     }
 
     directoryservice_mutex_toggle = function(ds_enable, ds_obj) {
-        xhr.get('/directoryservice/status/', {
+        xhr.get('/legacy/directoryservice/status/', {
             sync: true 
         }). then(function(data) {
             s = JSON.parse(data);
@@ -1152,7 +1149,7 @@ require([
     activedirectory_idmap_check = function() {
         idmap = registry.byId("id_ad_idmap_backend");
 
-        ad_idmap = idmap.get("value"); 
+        ad_idmap = idmap.get("value");
         if (ad_idmap != "rid") {
             var dialog = new Dialog({
                 title: gettext("Active Directory IDMAP change!"),
@@ -1187,7 +1184,7 @@ require([
             dialog.cancelButton.on('click', function(e){
                 idmap.set('value', 'rid', false);
                 dialog.destroy();
-            });   
+            });
             dialog.startup();
             dialog.show();
         }
@@ -1195,13 +1192,13 @@ require([
 
     domaincontroller_mutex_toggle = function() {
         var node = query("#domaincontroller_table");
-        xhr.get('/directoryservice/status/', {
-            sync: true 
-        }). then(function(data) {
+        xhr.get('/legacy/directoryservice/status/', {
+            sync: true
+        }).then(function(data) {
             s = JSON.parse(data);
             set = get_directoryservice_set('dc_enable');
             for (index in set) {
-                key = set[index]; 
+                key = set[index];
                 if (s[key] == true) {
                     node.onclick = null;
                     break;
@@ -1220,56 +1217,47 @@ require([
         directoryservice_mutex_toggle('nis_enable', nis);
     }
 
-    nt4_mutex_toggle = function() {
-        nt4 = registry.byId("id_nt4_enable");
-        directoryservice_mutex_toggle('nt4_enable', nt4);
-    }
-
-    directoryservice_idmap_get_edit_url = function(eid, ds_type, ds_id) {
+    directoryservice_idmap_onclick = function(eid, ds_type, ds_id) {
         var widget = registry.byId(eid);
-        var idmap_backend = widget.get("value");
-        var idmap_url = "/directoryservice/idmap_backend/" +
-            ds_type + "/" + ds_id + "/" + idmap_backend + "/";
-        var edit_url = null;
+        var idmap_type = widget.get("value");
+        var idmap_url = "/legacy/directoryservice/idmap_backend/" +
+            ds_type + "/" + ds_id + "/" + idmap_type + "/";
+        var idmap_name = null;
         var id = -1;
 
-        //console.log(idmap_url);
+        //console.log("Idmap URL:", idmap_url);
 
         xhr.get(idmap_url, {
-            sync: true
+            sync: true,
+            handleAs: 'json'
         }).then(function(data) {
-            obj = JSON.parse(data);
-            id = obj.idmap_id;
-        });
+                id = data.idmap_id;
+                idmap_type = data.idmap_type;
+                idmap_name = data.idmap_name;
+            }
+        );
 
         if (id > 0) {
-            edit_url = "/directoryservice/" + "idmap_" + idmap_backend + "/" + id + "/";
+            var edit_url = "/legacy/directoryservice/idmap_" + idmap_name + "/" + id + "/";
+
+            //console.log("Edit URL:", edit_url, "ID:", id);
+
+            editObject("Edit Idmap", edit_url, [this,]);
         }
-
-        //console.log(edit_url);
-
-        return (edit_url);
-    }
-
-    directoryservice_idmap_onclick = function(eid, ds_type, ds_id) {
-        var edit_url = directoryservice_idmap_get_edit_url(eid, ds_type, ds_id);
-
-        editObject("Edit Idmap", edit_url, [this,]);
     }
 
     directoryservice_idmap_onload = function(eid, ds_type, ds_id) {
-        var edit_url = directoryservice_idmap_get_edit_url(eid, ds_type, ds_id);
-
         var table = query("#" + eid)[0];
         var td = table.parentNode;
-        var node = domConstruct.create("a", {
-            "href": "#",
-            "title": gettext("Edit"),
-            "innerHTML": gettext("Edit"),
-            "onClick": "directoryservice_idmap_onclick('" + eid + "'," + ds_type + "," + ds_id + ");"
-        });
 
-        td.appendChild(node);
+        var editbtn = new Button({
+            label: gettext("Edit"),
+            style: "float: right; margin-left: 20px",
+            onClick: function() {
+                directoryservice_idmap_onclick(eid, ds_type, ds_id);
+            }
+        });
+        editbtn.placeAt(td);
     }
 
     mpAclChange = function(acl) {
@@ -1341,39 +1329,66 @@ require([
         var disk_mode = registry.byId("id_DISK_mode").domNode.parentNode.parentNode;
         var disk_zvol = registry.byId("id_DISK_zvol").domNode.parentNode.parentNode;
         var disk_raw = registry.byId("id_DISK_raw").domNode.parentNode.parentNode;
+        var disk_sectorsize = registry.byId("id_DISK_sectorsize").domNode.parentNode.parentNode;
         var nic_type = registry.byId("id_NIC_type").domNode.parentNode.parentNode;
         var nic_mac = registry.byId("id_NIC_mac").domNode.parentNode.parentNode;
+        var nic_attach = registry.byId("id_NIC_attach").domNode.parentNode.parentNode;
         var vnc_wait = registry.byId("id_VNC_wait").domNode.parentNode.parentNode;
         var vnc_port = registry.byId("id_VNC_port").domNode.parentNode.parentNode;
         var vnc_resolution = registry.byId("id_VNC_resolution").domNode.parentNode.parentNode;
+        var vnc_bind = registry.byId("id_VNC_bind").domNode.parentNode.parentNode;
+        var vnc_password = registry.byId("id_VNC_password").domNode.parentNode.parentNode;
+        var vnc_web = registry.byId("id_VNC_web").domNode.parentNode.parentNode;
 
         domStyle.set(cdrom_path, "display", "none");
         domStyle.set(disk_mode, "display", "none");
         domStyle.set(disk_zvol, "display", "none");
         domStyle.set(disk_raw, "display", "none");
+        domStyle.set(disk_sectorsize, "display", "none");
         domStyle.set(nic_type, "display", "none");
         domStyle.set(nic_mac, "display", "none");
+        domStyle.set(nic_attach, "display", "none");
         domStyle.set(vnc_wait, "display", "none");
         domStyle.set(vnc_port, "display", "none");
         domStyle.set(vnc_resolution, "display", "none");
+        domStyle.set(vnc_bind, "display", "none");
+        domStyle.set(vnc_password, "display", "none");
+        domStyle.set(vnc_web, "display", "none");
 
         if(dtype.get('value') == 'DISK') {
           domStyle.set(disk_mode, "display", "");
           domStyle.set(disk_zvol, "display", "");
+          domStyle.set(disk_sectorsize, "display", "");
         } else if(dtype.get('value') == 'RAW') {
           domStyle.set(disk_raw, "display", "");
           domStyle.set(disk_mode, "display", "");
+          domStyle.set(disk_sectorsize, "display", "");
         } else if(dtype.get('value') == 'CDROM') {
           domStyle.set(cdrom_path, "display", "");
         } else if(dtype.get('value') == 'NIC') {
           domStyle.set(nic_type, "display", "");
           domStyle.set(nic_mac, "display", "");
+          domStyle.set(nic_attach, "display", "");
         } else if(dtype.get('value') == 'VNC') {
           domStyle.set(vnc_resolution, "display", "");
           domStyle.set(vnc_port, "display", "");
           domStyle.set(vnc_wait, "display", "");
+          domStyle.set(vnc_bind, "display", "");
+          domStyle.set(vnc_password, "display", "");
+          domStyle.set(vnc_web, "display", "");
         }
 
+    }
+
+    vmTypeToggle = function() {
+        var vm_type = registry.byId("id_vm_type");
+        var bootloader = registry.byId("id_bootloader").domNode.parentNode.parentNode;
+
+        if (vm_type.get('value') == 'Container Provider') {
+            domStyle.set(bootloader, "display", "none");
+        } else if (vm_type.get('value') == 'Bhyve') {
+            domStyle.set(bootloader, "display", "");
+        }
     }
 
     consulTypeToggle = function() {
@@ -1416,6 +1431,8 @@ require([
         // AWS SNS
         var region = registry.byId("id_region").domNode.parentNode.parentNode;
         var topic_arn = registry.byId("id_topic_arn").domNode.parentNode.parentNode;
+        var aws_access_key_id = registry.byId("id_aws_access_key_id").domNode.parentNode.parentNode;
+        var aws_secret_access_key = registry.byId("id_aws_secret_access_key").domNode.parentNode.parentNode;
 
         // VictorOps
         var routing_key = registry.byId("id_routing_key").domNode.parentNode.parentNode;
@@ -1441,6 +1458,8 @@ require([
         domStyle.set(api_key, "display", "none");
         domStyle.set(region, "display", "none");
         domStyle.set(topic_arn, "display", "none");
+        domStyle.set(aws_access_key_id, "display", "none");
+        domStyle.set(aws_secret_access_key, "display", "none");
         domStyle.set(routing_key, "display", "none");
 
         if(consulalert_type.get('value') == 'InfluxDB') {
@@ -1481,9 +1500,11 @@ require([
             domStyle.set(cluster_name, "display", "table-row");
             domStyle.set(api_key, "display", "table-row");
             domStyle.set(enabled, "display", "table-row");
-        } else if(consulalert_type.get('value') == 'AWS-SNS') {
+        } else if(consulalert_type.get('value') == 'AWSSNS') {
             domStyle.set(region, "display", "table-row");
             domStyle.set(topic_arn, "display", "table-row");
+            domStyle.set(aws_access_key_id, "display", "table-row");
+            domStyle.set(aws_secret_access_key, "display", "table-row");
             domStyle.set(enabled, "display", "table-row");
         } else if(consulalert_type.get('value') == 'VictorOps') {
             domStyle.set(api_key, "display", "table-row");
@@ -1533,19 +1554,47 @@ require([
 
     cloudCredentialsProvider = function() {
 
-        var provider = registry.byId("id_provider");
-        var trp = provider.domNode.parentNode.parentNode;
+        var provider = registry.byId("id_provider").get('value');
 
-        var access_key = registry.byId("id_access_key");
-        var secret_key = registry.byId("id_secret_key");
-        var tra = access_key.domNode.parentNode.parentNode;
-        var trs = secret_key.domNode.parentNode.parentNode;
-        if(provider.get('value') == 'AMAZON') {
-            domStyle.set(tra, "display", "table-row");
-            domStyle.set(trs, "display", "table-row");
+        var PROVIDER_MAP = {
+          'AMAZON': ['access_key', 'secret_key'],
+          'AZURE': ['account_name', 'account_key'],
+          'BACKBLAZE': ['account_id', 'app_key'],
+          'GCLOUD': ['keyfile']
+        };
+
+        for(var k in PROVIDER_MAP) {
+          for(var i=0;i<PROVIDER_MAP[k].length;i++) {
+            var tr = query(dom.byId("id_" + k + "_" + PROVIDER_MAP[k][i])).closest("tr")[0];
+            if(provider == k) {
+              domStyle.set(tr, "display", "table-row");
+            } else {
+              domStyle.set(tr, "display", "none");
+            }
+          }
+        }
+
+    }
+
+    cloudSyncEncryptionToggle = function() {
+
+        var checkbox = registry.byId("id_encryption");
+
+        var filename_encryption = registry.byId("id_filename_encryption");
+        var tr_filename_encryption = filename_encryption.domNode.parentNode.parentNode;
+        var encryption_password = registry.byId("id_encryption_password");
+        var tr_encryption_password = encryption_password.domNode.parentNode.parentNode;
+        var encryption_salt = registry.byId("id_encryption_salt");
+        var tr_encryption_salt = encryption_salt.domNode.parentNode.parentNode;
+
+        if (checkbox.checked) {
+            domStyle.set(tr_filename_encryption, "display", "");
+            domStyle.set(tr_encryption_password, "display", "");
+            domStyle.set(tr_encryption_salt, "display", "");
         } else {
-            domStyle.set(tra, "display", "none");
-            domStyle.set(trs, "display", "none");
+            domStyle.set(tr_filename_encryption, "display", "none");
+            domStyle.set(tr_encryption_password, "display", "none");
+            domStyle.set(tr_encryption_salt, "display", "none");
         }
 
     }
@@ -1581,6 +1630,21 @@ require([
             });
             dialog.startup();
             dialog.show();
+        }
+    }
+
+    ddnsCustomProviderToggle = function() {
+        var dropdown = document.querySelector("input[name=ddns_provider]");
+        var custom_ddns_server = registry.byId("id_ddns_custom_ddns_server");
+        var tr_custom_ddns_server = custom_ddns_server.domNode.parentNode.parentNode;
+        var custom_ddns_path = registry.byId("id_ddns_custom_ddns_path");
+        var tr_custom_ddns_path = custom_ddns_path.domNode.parentNode.parentNode;
+        if (dropdown.value == "custom") {
+            domStyle.set(tr_custom_ddns_server, "display", "");
+            domStyle.set(tr_custom_ddns_path, "display", "");
+        } else {
+            domStyle.set(tr_custom_ddns_server, "display", "none");
+            domStyle.set(tr_custom_ddns_path, "display", "none");
         }
     }
 
@@ -1624,6 +1688,36 @@ require([
             domStyle.set(trpocert,"display","");
         }
       
+    }
+
+    webdavhtauthToggle = function() {
+
+        var select = registry.byId("id_webdav_htauth");
+        var password = registry.byId("id_webdav_password");
+        var trpassword = password.domNode.parentNode.parentNode;
+        var password2 = registry.byId("id_webdav_password2");
+        var trpassword2 = password2.domNode.parentNode.parentNode;
+        if (select.get('value') == 'none') {
+            domStyle.set(trpassword,"display","none");
+            domStyle.set(trpassword2,"display","none");
+        } else {
+            domStyle.set(trpassword,"display","");
+            domStyle.set(trpassword2,"display","");
+        }
+
+    }
+
+    afpTimemachineToggle = function() {
+
+        var checkbox = registry.byId("id_afp_timemachine");
+        var quota = registry.byId("id_afp_timemachine_quota");
+        var trquota = quota.domNode.parentNode.parentNode;
+        if (checkbox.checked) {
+            domStyle.set(trquota, "display", "");
+        } else {
+            domStyle.set(trquota, "display", "none");
+        }
+
     }
 
     upsModeToggle = function() {
@@ -1814,8 +1908,10 @@ require([
         });
         footer.appendChild(suc);
         domClass.add(suc, css);
-        html.set(suc, "<p>"+msg+"</p>");
-        setTimeout(function() { if(suc) dFx.fadeOut({node: suc}).play();}, 7000);
+        html.set(suc, "<p>"+msg+"</p><a style='position: absolute; bottom: 0; right:0; color: white;' href='#'>Dismiss</a>");
+        if(css != "error") {
+          setTimeout(function() { if(suc) dFx.fadeOut({node: suc}).play();}, 7000);
+        }
 
     };
 
@@ -2190,7 +2286,15 @@ require([
                 form: attrs.form.id,
                 handleAs: 'text',
                 headers: {"X-CSRFToken": CSRFToken}
-                }).then(handleReq, function(evt) {
+                }).then(function(response) {
+                    try {
+                        JSON.parse(response);
+                    }
+                    catch (e) {
+                        response = "<pre>" + response + "</pre>";
+                    }
+                    handleReq(response);
+                }, function(evt) {
                     handleReq(evt.response.data, evt.response, true);
                 });
 
@@ -2615,7 +2719,7 @@ require([
     dojo._contentHandlers.text = (function(old){
       return function(xhr){
         if(xhr.responseText.match("<!-- THIS IS A LOGIN WEBPAGE -->")){
-          window.location='/';
+          window.location='/legacy/';
           return '';
         }
         var text = old(xhr);

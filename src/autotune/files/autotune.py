@@ -135,7 +135,6 @@ HW_PHYSMEM_GB = HW_PHYSMEM / GB
 DEF_KNOBS = {
     'loader': {
         'vm.kmem_size',
-        'vfs.zfs.arc_max',
     },
     'sysctl': {
         'kern.ipc.maxsockbuf',
@@ -143,6 +142,7 @@ DEF_KNOBS = {
         'net.inet.tcp.delayed_ack',
         'net.inet.tcp.recvbuf_max',
         'net.inet.tcp.sendbuf_max',
+        'vfs.zfs.arc_max',
         'vfs.zfs.l2arc_headroom',
         'vfs.zfs.l2arc_noprefetch',
         'vfs.zfs.l2arc_norw',
@@ -435,7 +435,7 @@ def main(argv):
             # We bail out here because if we set a value to what the database
             # already has we'll set changed_values = True which will
             # cause ix-loader to reboot the system.
-            if obj.tun_value == value:
+            if obj.tun_type == args.conf and obj.tun_value == value:
                 continue
         else:
             obj = Tunable()

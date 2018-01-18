@@ -116,20 +116,20 @@ smb_func()
 	net getdomainsid
 	section_footer
 	section_header "net usersidlist"
-	net usersidlist
+	net usersidlist | head -200
 	section_footer
 	section_header "net groupmap list"
-	net groupmap list
+	net groupmap list | head -200
 	section_footer
 
 	section_header "net status sessions"
-	net status sessions
+	net status sessions | head -200
 	section_footer
 	section_header "net status shares"
 	net status shares
 	section_footer
 
-	section_header "ACLs"
+	section_header "ACLs - 'sharesec --view-all'"
 	sharesec --view-all
 	section_footer
 
@@ -137,9 +137,9 @@ smb_func()
 	#	Dump SMB users and groups
 	#
 	section_header "Users and Groups"
-	section_header "Users"
-	wbinfo -u
-	section_header "Groups"
-	wbinfo -g
+	section_header "Users - 'wbinfo -u'"
+	wbinfo -u | head -200
+	section_header "Groups - 'wbinfo -g'"
+	wbinfo -g | head -200
 	section_footer
 }

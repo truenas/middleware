@@ -9,9 +9,6 @@
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "NIS" %}', refreshOnShow:true, doLayout:false {% if focus_form == "directoryservice.NIS" %},selected: true{% endif %}, href: '{{ nis.get_edit_url }}?inline=true'" tab="directoryservice.NIS" class="objrefresh data_directoryservice_NIS" onLoad="nis_mutex_toggle();" id="tab_NIS">
     </div>
 
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "NT4" %}', refreshOnShow:true, doLayout:false {% if focus_form == "directoryservice.NT4" %},selected: true{% endif %}, href: '{{ nt4.get_edit_url }}?inline=true'" tab="directoryservice.NT4" class="objrefresh data_directoryservice_NT4" onLoad="{ nt4_mutex_toggle(); directoryservice_idmap_onload('id_nt4_idmap_backend', '{{ nt4.ds_type }}', {{ nt4.id }}); }" id="tab_NT4">
-    </div>
-
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Kerberos Realms" %}', refreshOnShow:true, doLayout:false {% if focus_form == "directoryservice.KerberosRealm" %},selected: true{% endif %}, href: '{% url "freeadmin_directoryservice_kerberosrealm_datagrid" %}?inline=true'" tab="directoryservice.KerberosRealm" class="objrefresh data_directoryservice_KerberosRealm" id="tab_KerberosRealm">
     </div>
 

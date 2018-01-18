@@ -32,7 +32,6 @@ import logging
 import logging.config
 import os
 import pwd
-import subprocess
 import sys
 
 from setproctitle import setproctitle
@@ -83,34 +82,28 @@ def main(args):
         ctypes.c_void_p
     )
     lc = libutil.login_getpwclass(pwnam)
+    os.setgid(passwd.pw_gid)
     if lc and lc[0]:
         libutil.setusercontext(
-            lc, pwnam, passwd.pw_uid, ctypes.c_uint(0x07ff)
+            lc, pwnam, passwd.pw_uid, ctypes.c_uint(0x07ff)  # 0x07ff LOGIN_SETALL
         )
-
-    os.setgid(passwd.pw_gid)
-    libc.setlogin(user)
-    libc.initgroups(user, passwd.pw_gid)
-    os.setuid(passwd.pw_uid)
-
-    if lc and lc[0]:
         libutil.login_close(lc)
+    else:
+        os.setgid(passwd.pw_gid)
+        libc.setlogin(user)
+        libc.initgroups(user, passwd.pw_gid)
+        os.setuid(passwd.pw_uid)
 
     try:
         os.chdir(passwd.pw_dir)
     except:
         os.chdir('/')
-    proc = subprocess.Popen(
-        '%s | logger -t %s' % (obj.commandline(), args.type),
-        shell=True,
-        env={
-            'PATH': (
-                '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:'
-                '/usr/local/sbin:/root/bin'
-            ),
-        },
+
+    os.environ['PATH'] = (
+        '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:'
+        '/usr/local/sbin:/root/bin'
     )
-    proc.communicate()
+    os.popen(f'{obj.commandline()} | logger -t {args.type}')
 
 
 if __name__ == '__main__':

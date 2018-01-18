@@ -4,7 +4,7 @@ from middlewared.utils import Popen
 from middlewared.client import ejson as json
 
 import middlewared.logger
-import consul
+import consul.aio
 import subprocess
 import random
 import os
@@ -21,64 +21,98 @@ class ConsulService(Service):
     PAGERDUTY_API = ['service-key', 'client-name', 'enabled']
     HIPCHAT_API = ['from', 'cluster-name', 'base-url', 'room-id', 'auth-token', 'enabled']
     OPSGENIE_API = ['cluster-name', 'api-key', 'enabled']
-    AWSSNS_API = ['reigion', 'topic-arn', 'enabled']
+    AWSSNS_API = ['region', 'topic-arn', 'enabled']
     VICTOROPS_API = ['api-key', 'routing-key', 'enabled']
 
     @accepts(Str('key'), Any('value'))
-    def set_kv(self, key, value):
+    async def set_kv(self, key, value):
         """
         Sets `key` with `value` in Consul KV.
 
         Returns:
                     bool: True if it added successful the value or otherwise False.
         """
-        c = consul.Consul()
+        c = consul.aio.Consul()
         try:
-            return c.kv.put(str(key), str(value))
+            logger.info('===> Add Key: {} Value: {}'.format(str(key), str(value)))
+            return await c.kv.put(str(key), str(value))
         except Exception as err:
             logger.error('===> Consul set_kv error: %s' % (err))
             return False
 
     @accepts(Str('key'))
-    def get_kv(self, key):
+    async def get_kv(self, key):
         """
         Gets value of `key` in Consul KV.
 
         Returns:
                     str: Return the value or an empty string.
         """
-        c = consul.Consul()
+        c = consul.aio.Consul()
         index = None
-        index, data = c.kv.get(key, index=index)
+        index, data = await c.kv.get(key, index=index)
         if data is not None:
             return data['Value'].decode("utf-8")
         else:
             return ""
 
     @accepts(Str('key'))
-    def delete_kv(self, key):
+    async def delete_kv(self, key):
         """
         Delete a `key` in Consul KV.
 
         Returns:
                     bool: True if it could delete the data or otherwise False.
         """
-        c = consul.Consul()
+        c = consul.aio.Consul()
         try:
-            return c.kv.delete(str(key))
+            return await c.kv.delete(str(key))
         except Exception as err:
             logger.error('===> Consul delete_kv error: %s' % (err))
             return False
 
+    @accepts(Str('region'))
+    async def aws_region(self, region):
+        """
+        Create an aws config file with region.
+
+        Returns:
+                    None
+        """
+        return self._aws_config_file(region, None, None)
+
+    @accepts(Str('key_id'), Str('access_key'))
+    async def aws_credentials(self, key_id, access_key):
+        """
+        Create an aws config file with key_id and access_key.
+
+        Returns:
+                    None
+        """
+        return self._aws_config_file(None, key_id, access_key)
+
     @accepts()
-    def reload(self):
+    async def reload(self):
         """
         Reload consul agent.
 
         Returns:
                     bool: True if it could reload, otherwise False.
         """
-        consul_error = Popen(['consul', 'reload'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+        consul_error = await (await Popen(['consul', 'reload'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+        if consul_error == 0:
+            logger.info("===> Reload Consul: {0}".format(consul_error))
+            consul_alert_error = await (await Popen(['/usr/local/etc/rc.d/consul-alerts', 'restart'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+            if consul_alert_error == 0:
+                logger.info("===> Restart Consul-Alerts: {0}".format(consul_alert_error))
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    async def __reload_consul(self):
+        consul_error = await (await Popen(['consul', 'reload'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         if consul_error == 0:
             logger.info("===> Reload Consul: {0}".format(consul_error))
             return True
@@ -86,7 +120,7 @@ class ConsulService(Service):
             return False
 
     @accepts()
-    def create_fake_alert(self):
+    async def create_fake_alert(self):
         seed = random.randrange(100000)
         fake_fd = "/usr/local/etc/consul.d/fake.json"
         fake_alert = {"service": {"name": "fake-" + str(seed), "tags": ["primary"],
@@ -99,10 +133,10 @@ class ConsulService(Service):
         with open(fake_fd, 'w') as fd:
             fd.write(json.dumps(fake_alert))
 
-        return self.reload()
+        return await self.__reload_consul()
 
     @accepts()
-    def remove_fake_alert(self):
+    async def remove_fake_alert(self):
         fake_fd = "/usr/local/etc/consul.d/fake.json"
         try:
             os.remove(fake_fd)
@@ -110,7 +144,30 @@ class ConsulService(Service):
             if e.errno != errno.ENOENT:
                 raise
 
-        return self.reload()
+        return await self.__reload_consul()
+
+    def _aws_config_file(self, region=None, key_id=None, access_key=None):
+        config_path = '/root/.aws/config'
+        credentials_path = '/root/.aws/credentials'
+        aws_vault = '/root/.aws/'
+
+        if not os.path.exists(aws_vault):
+            try:
+                os.makedirs(aws_vault)
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
+
+        if region:
+            with open(config_path, 'w') as config:
+                config.write('[default]\n')
+                config.write('region = {}\n'.format(region))
+
+        if key_id and access_key:
+            with open(credentials_path, 'w') as credentials:
+                credentials.write('[default]\n')
+                credentials.write('aws_access_key_id = {}\n'.format(key_id))
+                credentials.write('aws_secret_access_key = {}\n'.format(access_key))
 
     def _convert_keys(self, data):
         """
@@ -138,7 +195,7 @@ class ConsulService(Service):
 
         return new_dict
 
-    def _insert_keys(self, prefix, data, api_keywords):
+    async def _insert_keys(self, prefix, data, api_keywords):
         """
         Helper to insert keys into consul.
 
@@ -150,9 +207,9 @@ class ConsulService(Service):
         for k, v in list(new_dict.items()):
             if k == 'hfrom':
                 k = 'from'
-            self.set_kv(prefix + k, v)
+            await self.set_kv(prefix + k, v)
 
-    def _delete_keys(self, prefix, data, api_keywords):
+    async def _delete_keys(self, prefix, data, api_keywords):
         """
         Helper to delete keys into consul.
 
@@ -163,9 +220,9 @@ class ConsulService(Service):
         for k in list(new_dict.keys()):
             if k == 'hfrom':
                 k = 'from'
-            self.delete_kv(prefix + k)
+            await self.delete_kv(prefix + k)
 
-    def do_create(self, data):
+    async def do_create(self, data):
         """
         Helper to insert keys into consul based on the service API.
         """
@@ -176,23 +233,27 @@ class ConsulService(Service):
         consul_prefix = consul_prefix + alert_service.lower() + '/'
 
         if alert_service == 'InfluxDB':
-            self._insert_keys(consul_prefix, cdata, self.INFLUXDB_API)
+            await self._insert_keys(consul_prefix, cdata, self.INFLUXDB_API)
         elif alert_service == 'Slack':
-            self._insert_keys(consul_prefix, cdata, self.SLACK_API)
+            await self._insert_keys(consul_prefix, cdata, self.SLACK_API)
         elif alert_service == 'Mattermost':
-            self._insert_keys(consul_prefix, cdata, self.MATTERMOST_API)
+            await self._insert_keys(consul_prefix, cdata, self.MATTERMOST_API)
         elif alert_service == 'PagerDuty':
-            self._insert_keys(consul_prefix, cdata, self.PAGERDUTY_API)
+            await self._insert_keys(consul_prefix, cdata, self.PAGERDUTY_API)
         elif alert_service == 'HipChat':
-            self._insert_keys(consul_prefix, cdata, self.HIPCHAT_API)
+            await self._insert_keys(consul_prefix, cdata, self.HIPCHAT_API)
         elif alert_service == 'OpsGenie':
-            self._insert_keys(consul_prefix, cdata, self.OPSGENIE_API)
-        elif alert_service == 'AWS-SNS':
-            self._insert_keys(consul_prefix, cdata, self.AWSSNS_API)
+            await self._insert_keys(consul_prefix, cdata, self.OPSGENIE_API)
+        elif alert_service == 'AWSSNS':
+            await self._insert_keys(consul_prefix, cdata, self.AWSSNS_API)
+            aws_region = cdata.get('region', None)
+            aws_access_key_id = cdata.get('aws-access-key-id', None)
+            aws_secret_access_key = cdata.get('aws-secret-access-key', None)
+            self._aws_config_file(aws_region, aws_access_key_id, aws_secret_access_key)
         elif alert_service == 'VictorOps':
-            self._insert_keys(consul_prefix, cdata, self.VICTOROPS_API)
+            await self._insert_keys(consul_prefix, cdata, self.VICTOROPS_API)
 
-    def do_delete(self, alert_service, data):
+    async def do_delete(self, alert_service, data):
         """
         Helper to delete the keys from consul based on the service API.
         """
@@ -200,18 +261,18 @@ class ConsulService(Service):
         cdata = self._convert_keys(data)
 
         if alert_service == 'InfluxDB':
-            self._delete_keys(consul_prefix, cdata, self.INFLUXDB_API)
+            await self._delete_keys(consul_prefix, cdata, self.INFLUXDB_API)
         elif alert_service == 'Slack':
-            self._delete_keys(consul_prefix, cdata, self.SLACK_API)
+            await self._delete_keys(consul_prefix, cdata, self.SLACK_API)
         elif alert_service == 'Mattermost':
-            self._delete_keys(consul_prefix, cdata, self.MATTERMOST_API)
+            await self._delete_keys(consul_prefix, cdata, self.MATTERMOST_API)
         elif alert_service == 'PagerDuty':
-            self._delete_keys(consul_prefix, cdata, self.PAGERDUTY_API)
+            await self._delete_keys(consul_prefix, cdata, self.PAGERDUTY_API)
         elif alert_service == 'HipChat':
-            self._delete_keys(consul_prefix, cdata, self.HIPCHAT_API)
+            await self._delete_keys(consul_prefix, cdata, self.HIPCHAT_API)
         elif alert_service == 'OpsGenie':
-            self._delete_keys(consul_prefix, cdata, self.OPSGENIE_API)
-        elif alert_service == 'AWS-SNS':
-            self._delete_keys(consul_prefix, cdata, self.AWSSNS_API)
+            await self._delete_keys(consul_prefix, cdata, self.OPSGENIE_API)
+        elif alert_service == 'AWSSNS':
+            await self._delete_keys(consul_prefix, cdata, self.AWSSNS_API)
         elif alert_service == 'VictorOps':
-            self._delete_keys(consul_prefix, cdata, self.VICTOROPS_API)
+            await self._delete_keys(consul_prefix, cdata, self.VICTOROPS_API)

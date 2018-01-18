@@ -199,7 +199,7 @@ define([
         var send = "";
         while(this.kb.length > 0)
           send += this.kb.pop();
-        var req = xhr.post("/system/terminal/", {
+        var req = xhr.post("/legacy/system/terminal/", {
           data: {
             s: this.sid,
             jid: this.jid,
@@ -218,7 +218,7 @@ define([
         }).then(function(data) {
 
           if(data.match("<!-- THIS IS A LOGIN WEBPAGE -->")) {
-            window.location = '/';
+            window.location = '/legacy/';
             return;
           }
 

@@ -22,14 +22,13 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-#####################################################################
+######################################################################
 import dateutil
 import logging
 import os
 import re
 import signal
 import time
-import uuid
 
 from dateutil import parser as dtparser
 
@@ -43,11 +42,18 @@ from OpenSSL import crypto
 from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, Model, UserField
 from freenasUI.middleware.notifier import notifier
-from freenasUI.storage.models import Volume
 from freenasUI.support.utils import get_license
 from licenselib.license import ContractType
 
 log = logging.getLogger('system.models')
+
+
+CA_TYPE_EXISTING = 0x00000001
+CA_TYPE_INTERNAL = 0x00000002
+CA_TYPE_INTERMEDIATE = 0x00000004
+CERT_TYPE_EXISTING = 0x00000008
+CERT_TYPE_INTERNAL = 0x00000010
+CERT_TYPE_CSR = 0x00000020
 
 
 def time_now():
@@ -79,7 +85,7 @@ class Settings(Model):
     stg_guicertificate = models.ForeignKey(
         "Certificate",
         verbose_name=_("Certificate"),
-        limit_choices_to={'cert_CSR__isnull': True},
+        limit_choices_to={'cert_type__in': [CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL]},
         on_delete=models.SET_NULL,
         blank=True,
         null=True
@@ -242,7 +248,7 @@ class NTPServer(Model):
 
 class Advanced(Model):
     adv_consolemenu = models.BooleanField(
-        verbose_name=_("Enable Console Menu"),
+        verbose_name=_("Show Text Console without Password Prompt"),
         default=False,
     )
     adv_serialconsole = models.BooleanField(
@@ -330,9 +336,10 @@ class Advanced(Model):
         max_length=1024,
         verbose_name=_("MOTD banner"),
         default='Welcome',
+        blank=True,
     )
     adv_boot_scrub = models.IntegerField(
-        default=35,
+        default=7,
         editable=False,
     )
     adv_periodic_notifyuser = UserField(
@@ -341,6 +348,12 @@ class Advanced(Model):
         help_text=_("If you wish periodic emails to be sent to a different email address than "
                     "the alert emails are set to (root) set an email address for a user and "
                     "select that user in the dropdown.")
+    )
+    adv_cpu_in_percentage = models.BooleanField(
+        default=False,
+        verbose_name=_("Report CPU usage in percentage"),
+        help_text=_("collectd will report CPU usage in percentage instead of \"jiffies\" "
+                    "if this is checked."),
     )
     adv_graphite = models.CharField(
         max_length=120,
@@ -441,7 +454,7 @@ class Email(Model):
 
 class Tunable(Model):
     tun_var = models.CharField(
-        max_length=50,
+        max_length=128,
         unique=True,
         verbose_name=_("Variable"),
     )
@@ -486,6 +499,7 @@ class Tunable(Model):
         icon_add = "AddTunableIcon"
         icon_view = "ViewTunableIcon"
 
+
 class ConsulAlerts(Model):
 
     consulalert_type = models.CharField(
@@ -507,7 +521,6 @@ class ConsulAlerts(Model):
         verbose_name = _("Alert Service")
         verbose_name_plural = _("Alert Services")
         ordering = ["consulalert_type"]
-
 
     class FreeAdmin:
         icon_model = "ConsulAlertsIcon"
@@ -564,36 +577,6 @@ class SystemDataset(Model):
         icon_view = "SystemDatasetIcon"
         icon_add = "SystemDatasetIcon"
 
-    def __init__(self, *args, **kwargs):
-        super(SystemDataset, self).__init__(*args, **kwargs)
-        self.__sys_uuid_field = None
-
-    @property
-    def usedataset(self):
-        return self.sys_syslog_usedataset
-
-    def is_decrypted(self):
-        if self.sys_pool == 'freenas-boot':
-            return True
-        volume = Volume.objects.filter(vol_name=self.sys_pool)
-        if not volume.exists():
-            return False
-        return volume[0].is_decrypted()
-
-    def get_sys_uuid(self):
-        if not self.__sys_uuid_field:
-            if (
-                not notifier().is_freenas() and
-                notifier().failover_node() == 'B'
-            ):
-                self.__sys_uuid_field = 'sys_uuid_b'
-            else:
-                self.__sys_uuid_field = 'sys_uuid'
-        return getattr(self, self.__sys_uuid_field)
-
-    def new_uuid(self):
-        setattr(self, self.__sys_uuid_field, uuid.uuid4().hex)
-
 
 class Update(Model):
     upd_autocheck = models.BooleanField(
@@ -625,14 +608,6 @@ class Update(Model):
         conf = Configuration.Configuration()
         conf.LoadTrainsConfig()
         return conf.CurrentTrain()
-
-
-CA_TYPE_EXISTING = 0x00000001
-CA_TYPE_INTERNAL = 0x00000002
-CA_TYPE_INTERMEDIATE = 0x00000004
-CERT_TYPE_EXISTING = 0x00000008
-CERT_TYPE_INTERNAL = 0x00000010
-CERT_TYPE_CSR = 0x00000020
 
 
 class CertificateBase(Model):
@@ -723,6 +698,12 @@ class CertificateBase(Model):
         max_length=120,
         verbose_name=_("Common Name"),
         help_text=_("Common Name (eg, FQDN of FreeNAS server or service)"),
+    )
+    cert_san = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Subject Alternate Names"),
+        help_text=_("Multi-domain support. Enter additional space separated domains")
     )
     cert_serial = models.IntegerField(
         blank=True,

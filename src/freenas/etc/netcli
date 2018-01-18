@@ -65,6 +65,7 @@ _ = lambda s: s
 
 from freenasUI.choices import NICChoices, LAGGType
 from freenasUI.common import i18n
+from freenasUI.common.system import get_sw_version
 from freenasUI.network.models import GlobalConfiguration, Interfaces, \
 	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
 from freenasUI.system.models import Settings, Support
@@ -178,20 +179,20 @@ def get_lagg_proto():
     return proto
 
 
-def get_lagg_nics(nics=None):
+def get_lagg_nics():
+    nics = list(NICChoices(nolagg=True))
+    if not nics:
+        print("All interfaces are already allocated to LAGG or VLAN, cannot proceed.")
+        return []
 
-    group = [ ]
-
-    if nics is None:
-        nics = NICChoices(nolagg=True)
-
-    while True:
+    group = []
+    while nics:
         nic = get_nic(nics)
         if not nic:
             break
-
-        nics.remove(nic)
         group.append(nic)
+
+        nics = [n for n in nics if n[0] != nic]
 
     return group
 
@@ -486,17 +487,36 @@ Acceptable formats are 255.255.255.0,
         yes = input(_("Configure failover settings? (y/n) "))
         if yes.lower().startswith("y"):
 
-            vip_prompt = prompt("Virtual IP", iface.int_vip)
-            vip = input(vip_prompt)
-            if not vip and iface.int_vip:
-                vip = iface.int_vip
-            iface.int_vip = vip
+            while True:
+                vip_prompt = prompt("Virtual IP", iface.int_vip)
+                vip = input(vip_prompt)
+                if not vip and iface.int_vip:
+                    vip = iface.int_vip
+                elif vip:
+                    try:
+                        ipaddr.IPAddress(vip)
+                    except ValueError:
+                        print('Invalid Virtual IP')
+                        continue
+                iface.int_vip = vip
+                break
 
-            vhid_prompt = prompt("VHID", iface.int_vhid)
-            vhid = input(vhid_prompt)
-            if not vhid and iface.int_vhid:
-                vhid = iface.int_vhid
-            iface.int_vhid = vhid
+            while True:
+                vhid_prompt = prompt("VHID", iface.int_vhid)
+                vhid = input(vhid_prompt)
+                if not vhid and iface.int_vhid:
+                    vhid = iface.int_vhid
+                elif vhid:
+                    try:
+                        vhid = int(vhid)
+                    except ValueError:
+                        print('VHID should be an integer')
+                        continue
+                    if vhid < 1 or vhid > 255:
+                        print('VHID should be between 1 and 255')
+                        continue
+                iface.int_vhid = vhid
+                break
 
             pwd_prompt = prompt("Password", iface.int_pass)
             passwd = input(pwd_prompt)
@@ -536,6 +556,7 @@ Acceptable formats are 255.255.255.0,
 
 def reset_root_pw(*args):
     from freenasUI.account.models import bsdUsers
+    from middlewared.plugins.account import crypted_password
     qs = bsdUsers.objects.filter(bsdusr_uid=0)
     if not qs.exists():
         return None
@@ -560,7 +581,7 @@ def reset_root_pw(*args):
         waituser = False
 
     if p1:
-        user.set_password(p1)
+        user.bsdusr_unixhash = crypted_password(p1)
         user.save()
         print()
         print(_('Password successfully changed.'))
@@ -577,14 +598,14 @@ def reset_root_pw(*args):
 
 
 def reset_factory_defaults(*args):
-    a = input(_('Are you sure you want to reset to factory defaults? ')
+    a = input(_('The configuration will be erased and reset to defaults. Are you sure?')
                   + '(yes/no): ')
     if a.lower().startswith('y'):
         try:
             notifier().config_restore()
             os.system("/sbin/shutdown -r now")
         except Exception as e:
-            print("Failed to reset to factory: {}".format(str(e)))
+            print("Failed to reset configuration: {}".format(str(e)))
 
 
 def configure_lagg_interface(*args):
@@ -787,12 +808,14 @@ def create_vlan():
     # Get interface name
     while True:
         vlan_vint = input(_("Enter an interface name ")
-                              + _("(vlanXX) or a to abort: "))
+                              + _("(vlanX) or a to abort: "))
         if vlan_vint == "a":
             return
-        if not re.match(r'vlan\d+', vlan_vint):
-            print(_("Interface name must be vlanXX where XX is a number"))
+        reg = re.search(r'vlan(\d+)', vlan_vint)
+        if not reg:
+            print(_("Interface name must be vlanX where X is a number"))
             continue
+        vlan_vint = f'vlan{int(reg.group(1))}'
         break
     # Get vlan tag
     while True:
@@ -1139,6 +1162,9 @@ def get_urls(addrs, ipv6=False):
             ):
                 continue
 
+            if ipv6 and '%' in o:
+                o = o.split('%')[0]
+
             try:
                 if ipv6:
                     url = 'http://[%s]' % o
@@ -1204,13 +1230,55 @@ def show_ip():
 def system_update():
     import freenasOS.Update as Update
     import freenasOS.Configuration as Configuration
-
+    import freenasOS.Exceptions as Exceptions
+    from freenasOS.Installer import ProgressHandler
+    
+    def CheckHandler(index, pkg, pkgList):
+        print("Downloading package {0}".format(pkg.Name()))
+    def InstallHandler(index, name, packages):
+        print("Installing package {0}".format(name))
+        
     update_dir = notifier().get_update_location()
-    rv = Update.DownloadUpdate(None, directory = update_dir)
+    try:
+        rv = Update.DownloadUpdate(None, directory=update_dir, check_handler=CheckHandler)
+    except Exceptions.UpdateBusyCacheException:
+        print("Update cache busy, cannot update")
+        return False
+    except Exceptions.UpdateInvalidUpdateException as e:
+        print("Invalid update: {0}".format(str(e)))
+        return False
+    except Exceptions.UpdateException as e:
+        print("Downloading update failed: {0}".format(str(e)))
+        return False
+    except KeyboardInterrupt:
+        raise
+    except Exception as e:
+        print("Got exception {0}".format(str(e)))
+        raise
+    
     if rv is True:
-        diffs = Update.PendingUpdates(update_dir)
+        try:
+            diffs = Update.PendingUpdatesChanges(update_dir)
+        except Exceptions.UpdateException as e:
+            print("Comparing update failed: {0}".format(str(e)))
+            return False
+        except Exception as e:
+            print("Comparing update got exception {0}".format(str(e)))
+            raise
+
         if diffs and len(diffs) != 0:
-            rv = Update.ApplyUpdate(directory = update_dir)
+            print("Installing update")
+            with ProgressHandler() as pf:
+                try:
+                    rv = Update.ApplyUpdate(directory=update_dir,
+                                            install_handler=InstallHandler,
+                                            progressFunc=pf.update)
+                except Exceptions.UpdateException as e:
+                    print("Update failed: {0}".format(str(e)))
+                    return False
+                except Exception as e:
+                    print("Applying update got exception {0}".format(str(e)))
+                    raise
             if rv is True:
                 os.system("/sbin/shutdown -r now")
                 time.sleep(60)
@@ -1223,6 +1291,15 @@ def system_update():
         print("No update available", file=sys.stderr)
     return True
 
+
+def netcli_title():
+    proc = subprocess.Popen(['dmidecode', '-s', 'system-product-name'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
+    product = proc.communicate()[0].strip()
+    proc = subprocess.Popen(['dmidecode', '-s', 'system-serial-number'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
+    serial = proc.communicate()[0].strip()
+    return f'{product} | {get_sw_version(True)} | {serial}'
+
+
 def main_menu():
     menu = [
         [ _("Configure Network Interfaces"), configure_interface_stub ],
@@ -1232,7 +1309,7 @@ def main_menu():
         [ _("Configure Static Routes"), configure_static_routes ],
         [ _("Configure DNS"), configure_dns ],
         [ _("Reset Root Password"), reset_root_pw ],
-        [ _("Reset to Factory Defaults"), reset_factory_defaults ],
+        [ _("Reset Configuration to Defaults"), reset_factory_defaults ],
         [ _("Shell"), shell ],
         [ _("System Update (requires networking)"), system_update ],
         [ _("Reboot"), reboot ],
@@ -1262,6 +1339,9 @@ def main_menu():
                  os.system("/usr/local/sbin/enc_helper interactive")
                  time.sleep(5)
                  continue
+
+        if is_truenas:
+            print(netcli_title())
 
         print()
         print(_("Console setup"))

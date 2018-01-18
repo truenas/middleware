@@ -72,8 +72,8 @@ system_func()
 	vmstat -ia
 	section_footer
 
-	section_header "top -SHIz -d 1"
-	top -SHIz -d 1
+	section_header "top -SHIz -d 2"
+	top -SHIz -d 2
 	section_footer
 
 	section_header "procstat -akk"
@@ -88,8 +88,16 @@ system_func()
 	vmstat -z
 	section_footer
 
-	section_header "Alert System"
+	section_header "beadm list"
+	beadm list
+	section_footer
+
+	section_header "Alert System - 'alertcli.py'"
 	/usr/local/bin/alertcli.py
+	section_footer
+
+	section_header "Middleware jobs - 'midclt call core.get_jobs'"
+	midclt call core.get_jobs
 	section_footer
 
 	if [ -f /data/license ]; then

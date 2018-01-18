@@ -38,9 +38,9 @@ DEBUG = False
 #DEBUG = True
 #TASTYPIE_FULL_DEBUG = True
 TEMPLATE_DEBUG = DEBUG
-LOGIN_REDIRECT_URL = '/'
-LOGIN_URL = '/account/login/'
-LOGOUT_URL = '/account/logout/'
+LOGIN_REDIRECT_URL = '/legacy/'
+LOGIN_URL = '/legacy/account/login/'
+LOGOUT_URL = '/legacy/account/logout/'
 
 ADMINS = (
 )
@@ -99,7 +99,7 @@ USE_L10N = True
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
 MEDIA_ROOT = os.path.join(HERE, 'media')
-MEDIA_URL = '/media/'
+MEDIA_URL = '/legacy/media/'
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
@@ -109,7 +109,7 @@ STATIC_ROOT = os.path.join(HERE, "static")
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
-STATIC_URL = '/static/'
+STATIC_URL = '/legacy/static/'
 
 STATICFILES_DIRS = (
     os.path.join(HERE, "fnstatic"),
@@ -157,8 +157,9 @@ MIDDLEWARE_CLASSES = (
     'freenasUI.freeadmin.middleware.RequireLoginMiddleware',
 )
 
+DOJANGO_BASE_MEDIA_URL = '/legacy/dojango/dojo-media'
 DOJANGO_DOJO_PROFILE = 'local_release'
-DOJANGO_DOJO_VERSION = '1.11.1'
+DOJANGO_DOJO_VERSION = '1.12.2'
 #DOJANGO_DOJO_BUILD_VERSION = '1.6.0b1'
 DOJANGO_DOJO_DEBUG = True
 

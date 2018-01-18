@@ -1,15 +1,17 @@
+import asyncio
 from collections import defaultdict
 from datetime import datetime, timedelta
-import errno
+import glob
 import os
 import re
+import signal
 import subprocess
 import sys
 import sysctl
 
 from bsd import geom
-from middlewared.schema import accepts, Str
-from middlewared.service import filterable, private, CallError, CRUDService
+from middlewared.schema import accepts, Bool, Str
+from middlewared.service import filterable, job, private, CRUDService
 from middlewared.utils import Popen, run
 
 # FIXME: temporary import of SmartAlert until alert is implemented
@@ -21,15 +23,16 @@ from freenasUI.services.utils import SmartAlert
 DISK_EXPIRECACHE_DAYS = 7
 MIRROR_MAX = 5
 RE_DA = re.compile('^da[0-9]+$')
+RE_DD = re.compile(r'^(\d+) bytes transferred .*\((\d+) bytes')
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
-RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd)[0-9]+$')
+RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd|pmem)[0-9]+$')
 RE_MPATH_NAME = re.compile(r'[a-z]+(\d+)')
 
 
 class DiskService(CRUDService):
 
     @filterable
-    def query(self, filters=None, options=None):
+    async def query(self, filters=None, options=None):
         if filters is None:
             filters = []
         if options is None:
@@ -37,14 +40,64 @@ class DiskService(CRUDService):
         options['prefix'] = 'disk_'
         filters.append(('expiretime', '=', None))
         options['extend'] = 'disk.disk_extend'
-        return self.middleware.call('datastore.query', 'storage.disk', filters, options)
+        return await self.middleware.call('datastore.query', 'storage.disk', filters, options)
 
     @private
     def disk_extend(self, disk):
         disk.pop('enabled', None)
         return disk
 
-    def __camcontrol_list(self):
+    @private
+    def get_name(self, disk):
+        if disk["multipath_name"]:
+            return f"multipath/{disk['multipath_name']}"
+        else:
+            return disk["name"]
+
+    @accepts(Bool("join_partitions"))
+    async def get_unused(self, join_partitions=False):
+        """
+        Helper method to get all disks that are not in use, either by the boot
+        pool or the user pools.
+        """
+        disks = await self.query([('name', 'nin', await self.__get_reserved())])
+
+        if join_partitions:
+            for disk in disks:
+                disk["partitions"] = await self.__get_partitions(disk)
+
+        return disks
+
+    async def __get_reserved(self):
+        reserved = [i async for i in await self.middleware.call('boot.get_disks')]
+        reserved += [i async for i in await self.middleware.call('pool.get_disks')]
+        reserved += [i async for i in self.__get_iscsi_targets()]
+        return reserved
+
+    async def __get_iscsi_targets(self):
+        iscsi_target_extent_paths = [
+            extent["iscsi_target_extent_path"]
+            for extent in await self.middleware.call('datastore.query', 'services.iscsitargetextent',
+                                                     [('iscsi_target_extent_type', '=', 'Disk')])
+        ]
+        for disk in await self.middleware.call('datastore.query', 'storage.disk',
+                                               [('disk_identifier', 'in', iscsi_target_extent_paths)]):
+            yield disk["disk_name"]
+
+    async def __get_partitions(self, disk):
+        partitions = []
+        name = await self.middleware.call("disk.get_name", disk)
+        for path in glob.glob(f"/dev/%s[a-fps]*" % name) or [f"/dev/{name}"]:
+            info = (await run("/usr/sbin/diskinfo", path)).stdout.decode("utf-8").split("\t")
+            if len(info) > 3:
+                partitions.append({
+                    "path": path,
+                    "capacity": int(info[2]),
+                })
+
+        return partitions
+
+    async def __camcontrol_list(self):
         """
         Parse camcontrol devlist -v output to gather
         controller id, channel no and driver from a device
@@ -71,8 +124,9 @@ class DiskService(CRUDService):
         drv, cid, tgt, lun, dev, devtmp = (None, ) * 6
 
         camcontrol = {}
-        proc = Popen(['camcontrol', 'devlist', '-v'], stdout=subprocess.PIPE)
-        for line in proc.communicate()[0].splitlines():
+        proc = await Popen(['camcontrol', 'devlist', '-v'], stdout=subprocess.PIPE)
+        for line in (await proc.communicate())[0].splitlines():
+            line = line.decode()
             if not line.startswith('<'):
                 reg = re_drv_cid.search(line)
                 if not reg:
@@ -101,20 +155,20 @@ class DiskService(CRUDService):
                 }
         return camcontrol
 
-    def __get_twcli(self, controller):
+    async def __get_twcli(self, controller):
 
         re_port = re.compile(r'^p(?P<port>\d+).*?\bu(?P<unit>\d+)\b', re.S | re.M)
-        proc = Popen(['/usr/local/sbin/tw_cli', f'/c{controller}', 'show'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        output = proc.communicate()[0]
+        proc = await Popen(['/usr/local/sbin/tw_cli', f'/c{controller}', 'show'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output = (await proc.communicate())[0].decode()
 
         units = {}
         for port, unit in re_port.findall(output):
             units[int(unit)] = int(port)
         return units
 
-    def __get_smartctl_args(self, devname):
+    async def __get_smartctl_args(self, devname):
         args = [f'/dev/{devname}']
-        camcontrol = self.__camcontrol_list()
+        camcontrol = await self.__camcontrol_list()
         info = camcontrol.get(devname)
         if info is not None:
             if info.get('drv') == 'rr274x_3x':
@@ -147,7 +201,7 @@ class DiskService(CRUDService):
                     'cciss,%d' % (info['channel'], )
                 ]
             elif info.get('drv') == 'twa':
-                twcli = self.__get_twcli(info['controller'])
+                twcli = await self.__get_twcli(info['controller'])
                 args = [
                     '/dev/%s%d' % (info['drv'], info['controller']),
                     '-d',
@@ -156,20 +210,20 @@ class DiskService(CRUDService):
         return args
 
     @private
-    def toggle_smart_off(self, devname):
-        args = self.__get_smartctl_args(devname)
-        run('/usr/local/sbin/smartctl', '--smart=off', *args, check=False)
+    async def toggle_smart_off(self, devname):
+        args = await self.__get_smartctl_args(devname)
+        await run('/usr/local/sbin/smartctl', '--smart=off', *args, check=False)
 
     @private
-    def toggle_smart_on(self, devname):
-        args = self.__get_smartctl_args(devname)
-        run('/usr/local/sbin/smartctl', '--smart=on', *args, check=False)
+    async def toggle_smart_on(self, devname):
+        args = await self.__get_smartctl_args(devname)
+        await run('/usr/local/sbin/smartctl', '--smart=on', *args, check=False)
 
     @private
-    def serial_from_device(self, name):
-        args = self.__get_smartctl_args(name)
-        p1 = Popen(['smartctl', '-i'] + args, stdout=subprocess.PIPE)
-        output = p1.communicate()[0]
+    async def serial_from_device(self, name):
+        args = await self.__get_smartctl_args(name)
+        p1 = await Popen(['smartctl', '-i'] + args, stdout=subprocess.PIPE)
+        output = (await p1.communicate())[0].decode()
         search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
         if search:
             return search.group('serial')
@@ -177,7 +231,7 @@ class DiskService(CRUDService):
 
     @private
     @accepts(Str('name'))
-    def device_to_identifier(self, name):
+    async def device_to_identifier(self, name):
         """
         Given a device `name` (e.g. da0) returns an unique identifier string
         for this device.
@@ -192,7 +246,7 @@ class DiskService(CRUDService):
         Returns:
             str - identifier
         """
-        self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
 
         g = geom.geom_by_name('DISK', name)
         if g and g.provider.config.get('ident'):
@@ -202,7 +256,7 @@ class DiskService(CRUDService):
                 return f'{{serial_lunid}}{serial}_{lunid}'
             return f'{{serial}}{serial}'
 
-        serial = self.serial_from_device(name)
+        serial = await self.serial_from_device(name)
         if serial:
             return f'{{serial}}{serial}'
 
@@ -227,15 +281,15 @@ class DiskService(CRUDService):
 
     @private
     @accepts(Str('name'))
-    def sync(self, name):
+    async def sync(self, name):
         """
         Syncs a disk `name` with the database cache.
         """
         # Skip sync disks on backup node
         if (
-            not self.middleware.call('system.is_freenas') and
-            self.middleware.call('notifier.failover_licensed') and
-            self.middleware.call('notifier.failover_status') == 'BACKUP'
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('notifier.failover_licensed') and
+            await self.middleware.call('notifier.failover_status') == 'BACKUP'
         ):
             return
 
@@ -243,26 +297,26 @@ class DiskService(CRUDService):
         if name.find("/") != -1:
             return
 
-        disks = list(self.middleware.call('device.get_info', 'DISK').keys())
+        disks = list((await self.middleware.call('device.get_info', 'DISK')).keys())
 
         # Abort if the disk is not recognized as an available disk
         if name not in disks:
             return
-        ident = self.device_to_identifier(name)
-        qs = self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', '=', ident)], {'order_by': ['disk_expiretime']})
+        ident = await self.device_to_identifier(name)
+        qs = await self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', '=', ident)], {'order_by': ['disk_expiretime']})
         if ident and qs:
             disk = qs[0]
             new = False
         else:
             new = True
-            qs = self.middleware.call('datastore.query', 'storage.disk', [('disk_name', '=', name)])
+            qs = await self.middleware.call('datastore.query', 'storage.disk', [('disk_name', '=', name)])
             for i in qs:
                 i['disk_expiretime'] = datetime.utcnow() + timedelta(days=DISK_EXPIRECACHE_DAYS)
-                self.middleware.call('datastore.update', 'storage.disk', i['disk_identifier'], i)
+                await self.middleware.call('datastore.update', 'storage.disk', i['disk_identifier'], i)
             disk = {'disk_identifier': ident}
         disk.update({'disk_name': name, 'disk_expiretime': None})
 
-        self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
         g = geom.geom_by_name('DISK', name)
         if g:
             if g.provider.config['ident']:
@@ -270,51 +324,51 @@ class DiskService(CRUDService):
             if g.provider.mediasize:
                 disk['disk_size'] = g.provider.mediasize
         if not disk.get('disk_serial'):
-            disk['disk_serial'] = self.serial_from_device(name) or ''
+            disk['disk_serial'] = await self.serial_from_device(name) or ''
         reg = RE_DSKNAME.search(name)
         if reg:
             disk['disk_subsystem'] = reg.group(1)
             disk['disk_number'] = int(reg.group(2))
         if not new:
-            self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+            await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
         else:
-            disk['disk_identifier'] = self.middleware.call('datastore.insert', 'storage.disk', disk)
+            disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
 
         # FIXME: use a truenas middleware plugin
-        self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], False)
+        await self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], False)
 
     @private
     @accepts()
-    def sync_all(self):
+    async def sync_all(self):
         """
         Synchronyze all disks with the cache in database.
         """
         # Skip sync disks on backup node
         if (
-            not self.middleware.call('system.is_freenas') and
-            self.middleware.call('notifier.failover_licensed') and
-            self.middleware.call('notifier.failover_status') == 'BACKUP'
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('notifier.failover_licensed') and
+            await self.middleware.call('notifier.failover_status') == 'BACKUP'
         ):
             return
 
-        sys_disks = list(self.middleware.call('device.get_info', 'DISK').keys())
+        sys_disks = list((await self.middleware.call('device.get_info', 'DISK')).keys())
 
         seen_disks = {}
         serials = []
-        self.middleware.threaded(geom.scan)
-        for disk in self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']}):
+        await self.middleware.run_in_thread(geom.scan)
+        for disk in (await self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})):
 
-            name = self.middleware.call('notifier.identifier_to_device', disk['disk_identifier'])
+            name = await self.middleware.call('notifier.identifier_to_device', disk['disk_identifier'])
             if not name or name in seen_disks:
                 # If we cant translate the indentifier to a device, give up
                 # If name has already been seen once then we are probably
                 # dealing with with multipath here
                 if not disk['disk_expiretime']:
                     disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=DISK_EXPIRECACHE_DAYS)
-                    self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                    await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                 elif disk['disk_expiretime'] < datetime.utcnow():
                     # Disk expire time has surpassed, go ahead and remove it
-                    self.middleware.call('datastore.delete', 'storage.disk', disk['disk_identifier'])
+                    await self.middleware.call('datastore.delete', 'storage.disk', disk['disk_identifier'])
                 continue
             else:
                 disk['disk_expiretime'] = None
@@ -333,7 +387,7 @@ class DiskService(CRUDService):
                 if g.provider.mediasize:
                     disk['disk_size'] = g.provider.mediasize
             if not disk.get('disk_serial'):
-                serial = disk['disk_serial'] = self.serial_from_device(name) or ''
+                serial = disk['disk_serial'] = await self.serial_from_device(name) or ''
 
             if serial:
                 serials.append(serial)
@@ -342,16 +396,16 @@ class DiskService(CRUDService):
             # mark it to expire.
             if name not in sys_disks and not disk['disk_expiretime']:
                     disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=DISK_EXPIRECACHE_DAYS)
-            self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+            await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
 
             # FIXME: use a truenas middleware plugin
-            self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], False)
+            await self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], False)
             seen_disks[name] = disk
 
         for name in sys_disks:
             if name not in seen_disks:
-                disk_identifier = self.device_to_identifier(name)
-                qs = self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', '=', disk_identifier)])
+                disk_identifier = await self.device_to_identifier(name)
+                qs = await self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', '=', disk_identifier)])
                 if qs:
                     new = False
                     disk = qs[0]
@@ -368,7 +422,7 @@ class DiskService(CRUDService):
                     if g.provider.mediasize:
                         disk['disk_size'] = g.provider.mediasize
                 if not disk.get('disk_serial'):
-                    serial = disk['disk_serial'] = self.serial_from_device(name) or ''
+                    serial = disk['disk_serial'] = await self.serial_from_device(name) or ''
                 if serial:
                     if serial in serials:
                         # Probably dealing with multipath here, do not add another
@@ -381,13 +435,13 @@ class DiskService(CRUDService):
                     disk['disk_number'] = int(reg.group(2))
 
                 if not new:
-                    self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                    await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                 else:
-                    disk['disk_identifier'] = self.middleware.call('datastore.insert', 'storage.disk', disk)
+                    disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
                 # FIXME: use a truenas middleware plugin
-                self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], True)
+                await self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], True)
 
-    def __multipath_create(self, name, consumers, mode=None):
+    async def __multipath_create(self, name, consumers, mode=None):
         """
         Create an Active/Passive GEOM_MULTIPATH provider
         with name ``name`` using ``consumers`` as the consumers for it
@@ -403,12 +457,12 @@ class DiskService(CRUDService):
         cmd = ["/sbin/gmultipath", "label", name] + consumers
         if mode:
             cmd.insert(2, f'-{mode}')
-        p1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        if p1.wait() != 0:
+        p1 = await Popen(cmd, stdout=subprocess.PIPE)
+        if (await p1.wait()) != 0:
             return False
         return True
 
-    def __multipath_next(self):
+    async def __multipath_next(self):
         """
         Find out the next available name for a multipath named diskX
         where X is a crescenting value starting from 1
@@ -416,7 +470,7 @@ class DiskService(CRUDService):
         Returns:
             The string of the multipath name to be created
         """
-        self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
         numbers = sorted([
             int(RE_MPATH_NAME.search(g.name).group(1))
             for g in geom.class_by_name('MULTIPATH').geoms if RE_MPATH_NAME.match(g.name)
@@ -432,7 +486,7 @@ class DiskService(CRUDService):
 
     @private
     @accepts()
-    def multipath_sync(self):
+    async def multipath_sync(self):
         """
         Synchronize multipath disks
 
@@ -444,7 +498,7 @@ class DiskService(CRUDService):
         then a gmultipath is automatically created and will be available for use.
         """
 
-        self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
 
         mp_disks = []
         for g in geom.class_by_name('MULTIPATH').geoms:
@@ -460,18 +514,9 @@ class DiskService(CRUDService):
                     continue
                 mp_disks.append(p_geom.name)
 
-        reserved = list(self.middleware.call('boot.get_disks'))
-        # disks already in use count as reserved as well
-        for pool in self.middleware.call('pool.query'):
-            try:
-                if pool['is_decrypted']:
-                    reserved += list(self.middleware.call('pool.get_disks', pool['id']))
-            except CallError as e:
-                # pool could not be available for some reason
-                if e.errno != errno.ENOENT:
-                    raise
+        reserved = await self.__get_reserved()
 
-        is_freenas = self.middleware.call('system.is_freenas')
+        is_freenas = await self.middleware.call('system.is_freenas')
 
         serials = defaultdict(list)
         active_active = []
@@ -507,11 +552,11 @@ class DiskService(CRUDService):
         for disks in disks_pairs:
             if not len(disks) > 1:
                 continue
-            name = self.__multipath_next()
-            self.__multipath_create(name, disks, 'A' if disks[0] in active_active else mode)
+            name = await self.__multipath_next()
+            await self.__multipath_create(name, disks, 'A' if disks[0] in active_active else mode)
 
         # Scan again to take new multipaths into account
-        self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
         mp_ids = []
         for g in geom.class_by_name('MULTIPATH').geoms:
             _disks = []
@@ -522,7 +567,7 @@ class DiskService(CRUDService):
                     continue
                 _disks.append(p_geom.name)
 
-            qs = self.middleware.call('datastore.query', 'storage.disk', [
+            qs = await self.middleware.call('datastore.query', 'storage.disk', [
                 ['OR', [
                     ['disk_name', 'in', _disks],
                     ['disk_multipath_member', 'in', _disks],
@@ -541,23 +586,23 @@ class DiskService(CRUDService):
                     update = True
                     diskobj['disk_multipath_member'] = _disks.pop()
                 if update:
-                    self.middleware.call('datastore.update', 'storage.disk', diskobj['disk_identifier'], diskobj)
+                    await self.middleware.call('datastore.update', 'storage.disk', diskobj['disk_identifier'], diskobj)
 
         # Update all disks which were not identified as MULTIPATH, resetting attributes
-        for disk in self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', 'nin', mp_ids)]):
+        for disk in (await self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', 'nin', mp_ids)])):
             if disk['disk_multipath_name'] or disk['disk_multipath_member']:
                 disk['disk_multipath_name'] = ''
                 disk['disk_multipath_member'] = ''
-                self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
 
     @private
-    def swaps_configure(self):
+    async def swaps_configure(self):
         """
         Configures swap partitions in the system.
         We try to mirror all available swap partitions to avoid a system
         crash in case one of them dies.
         """
-        self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
 
         used_partitions = set()
         swap_devices = []
@@ -571,7 +616,7 @@ class DiskService(CRUDService):
                 # If the mirror is degraded lets remove it and make a new pair
                 if len(consumers) == 1:
                     c = consumers[0]
-                    self.swaps_remove_disks([c.provider.geom.name])
+                    await self.swaps_remove_disks([c.provider.geom.name])
                 else:
                     swap_devices.append(f'mirror/{g.name}')
                     for c in consumers:
@@ -589,7 +634,7 @@ class DiskService(CRUDService):
                 # if swap partition
                 if p.config['rawtype'] == '516e7cb5-6ecf-11d6-8ff8-00022d09712b':
                     # Try to save a core dump from that
-                    run('savecore', '/data/crash/', f'/dev/{p.name}', check=False)
+                    await run('savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{p.name}', check=False)
                     if p.name not in used_partitions:
                         swap_partitions_by_size[p.mediasize].append(p.name)
 
@@ -602,10 +647,13 @@ class DiskService(CRUDService):
                 part_a, part_b = partitions[0:2]
                 partitions = partitions[2:]
                 if not dumpdev:
-                    dumpdev = dempdev_configure(part_a)
+                    dumpdev = await dempdev_configure(part_a)
                 try:
                     name = new_swap_name()
-                    run('gmirror', 'create', '-b', 'prefer', name, part_a, part_b)
+                    if name is None:
+                        # Which means maximum has been reached and we can stop
+                        break
+                    await run('gmirror', 'create', '-b', 'prefer', name, part_a, part_b)
                 except Exception:
                     self.logger.warn(f'Failed to create gmirror {name}', exc_info=True)
                     continue
@@ -617,24 +665,24 @@ class DiskService(CRUDService):
         # partition as a swap device
         if not swap_devices and unused_partitions:
             if not dumpdev:
-                dumpdev = dempdev_configure(unused_partitions[0])
+                dumpdev = await dempdev_configure(unused_partitions[0])
             swap_devices.append(unused_partitions[0])
 
         for name in swap_devices:
             if not os.path.exists(f'/dev/{name}.eli'):
-                run('geli', 'onetime', name)
-            run('swapon', f'/dev/{name}.eli', check=False)
+                await run('geli', 'onetime', name)
+            await run('swapon', f'/dev/{name}.eli', check=False)
 
         return swap_devices
 
     @private
-    def swaps_remove_disks(self, disks):
+    async def swaps_remove_disks(self, disks):
         """
         Remove a given disk (e.g. ["da0", "da1"]) from swap.
         it will offline if from swap, remove it from the gmirror (if exists)
         and detach the geli.
         """
-        self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
         providers = {}
         for disk in disks:
             partgeom = geom.geom_by_name('PART', disk)
@@ -660,13 +708,98 @@ class DiskService(CRUDService):
                     del providers[c.provider.id]
 
         for name in mirrors:
-            run('swapoff', f'/dev/mirror/{name}.eli', check=False)
+            await run('swapoff', f'/dev/mirror/{name}.eli', check=False)
             if os.path.exists(f'/dev/mirror/{name}.eli'):
-                run('geli', 'detach', f'mirror/{name}.eli', check=False)
-            run('gmirror', 'destroy', name, check=False)
+                await run('geli', 'detach', f'mirror/{name}.eli', check=False)
+            await run('gmirror', 'destroy', name, check=False)
 
         for p in providers.values():
-            run('swapoff', f'/dev/{p.name}.eli', check=False)
+            await run('swapoff', f'/dev/{p.name}.eli', check=False)
+
+    @private
+    async def wipe_quick(self, dev, size=None):
+        """
+        Perform a quick wipe of a disk `dev` by the first few and last few megabytes
+        """
+        # If the size is too small, lets just skip it for now.
+        # In the future we can adjust dd size
+        if size and size < 33554432:
+            return
+        await run('dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1m', 'count=32')
+        try:
+            cp = await run('diskinfo', dev)
+            size = int(int(re.sub(r'\s+', ' ', cp.stdout.decode()).split()[2]) / (1024))
+        except subprocess.CalledProcessError:
+            self.logger.error(f'Unable to determine size of {dev}')
+        else:
+            # This will fail when EOL is reached
+            await run('dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1m', f'oseek={int(size / 1024) - 32}', check=False)
+
+    @accepts(Str('dev'), Str('mode', enum=['QUICK', 'FULL', 'FULL_RANDOM']))
+    @job(lock=lambda args: args[0])
+    async def wipe(self, job, dev, mode):
+        """
+        Performs a wipe of a disk `dev`.
+        It can be of the following modes:
+          - QUICK: clean the first few and last megabytes of every partition and disk
+          - FULL: write whole disk with zero's
+          - FULL_RANDOM: write whole disk with random bytes
+        """
+        await self.swaps_remove_disks([dev])
+
+        # First do a quick wipe of every partition to clean things like zfs labels
+        if mode == 'QUICK':
+            await self.middleware.run_in_thread(geom.scan)
+            klass = geom.class_by_name('PART')
+            for g in klass.xml.findall(f'./geom[name=\'{dev}\']'):
+                for p in g.findall('./provider'):
+                    size = p.find('./mediasize')
+                    if size is not None:
+                        try:
+                            size = int(size.text)
+                        except ValueError:
+                            size = None
+                    name = p.find('./name')
+                    await self.wipe_quick(name.text, size=size)
+
+        await run('gpart', 'destroy', '-F', f'/dev/{dev}', check=False)
+
+        # Wipe out the partition table by doing an additional iterate of create/destroy
+        await run('gpart', 'create', '-s', 'gpt', f'/dev/{dev}')
+        await run('gpart', 'destroy', '-F', f'/dev/{dev}')
+
+        if mode == 'QUICK':
+            await self.wipe_quick(dev)
+        else:
+            cp = await run('diskinfo', dev)
+            size = int(re.sub(r'\s+', ' ', cp.stdout.decode()).split()[2])
+
+            proc = await Popen([
+                'dd',
+                'if=/dev/{}'.format('zero' if mode == 'FULL' else 'random'),
+                f'of=/dev/{dev}',
+                'bs=1m',
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+            async def dd_wait():
+                while True:
+                    if proc.returncode is not None:
+                        break
+                    os.kill(proc.pid, signal.SIGINFO)
+                    await asyncio.sleep(1)
+
+            asyncio.ensure_future(dd_wait())
+
+            while True:
+                line = await proc.stderr.readline()
+                if line == b'':
+                    break
+                line = line.decode()
+                reg = RE_DD.search(line)
+                if reg:
+                    job.set_progress(int(reg.group(1)) / size, extra={'speed': int(reg.group(2))})
+
+        await self.sync(dev)
 
 
 def new_swap_name():
@@ -680,10 +813,9 @@ def new_swap_name():
         name = f'swap{i}'
         if not os.path.exists(f'/dev/mirror/{name}'):
             return name
-    raise RuntimeError('All mirror names are taken')
 
 
-def dempdev_configure(name):
+async def dempdev_configure(name):
     # Configure dumpdev on first swap device
     if not os.path.exists('/dev/dumpdev'):
         try:
@@ -691,24 +823,25 @@ def dempdev_configure(name):
         except OSError:
             pass
         os.symlink(f'/dev/{name}', '/dev/dumpdev')
-        run('dumpon', f'/dev/{name}')
+        await run('dumpon', f'/dev/{name}')
     return True
 
 
-def _event_devfs(middleware, event_type, args):
+async def _event_devfs(middleware, event_type, args):
     data = args['data']
     if data.get('subsystem') != 'CDEV':
         return
 
     if data['type'] == 'CREATE':
-        disks = middleware.threaded(lambda: sysctl.filter('kern.disks')[0].value.split())
+        disks = await middleware.run_in_thread(lambda: sysctl.filter('kern.disks')[0].value.split())
         # Device notified about is not a disk
         if data['cdev'] not in disks:
             return
         # TODO: hack so every disk is not synced independently during boot
         # This is a performance issue
         if os.path.exists('/tmp/.sync_disk_done'):
-            middleware.call('disk.sync', data['cdev'])
+            await middleware.call('disk.sync', data['cdev'])
+            await middleware.call('disk.multipath_sync')
             try:
                 with SmartAlert() as sa:
                     sa.device_delete(data['cdev'])
@@ -721,8 +854,8 @@ def _event_devfs(middleware, event_type, args):
         # TODO: hack so every disk is not synced independently during boot
         # This is a performance issue
         if os.path.exists('/tmp/.sync_disk_done'):
-            middleware.call('disk.sync_all')
-            middleware.call('disk.multipath_sync')
+            await middleware.call('disk.sync_all')
+            await middleware.call('disk.multipath_sync')
             try:
                 with SmartAlert() as sa:
                     sa.device_delete(data['cdev'])

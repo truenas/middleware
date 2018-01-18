@@ -39,11 +39,6 @@ class CloudCredentials(TreeNode):
     replace_only = True
     append_to = 'system'
 
-    def pre_build_options(self):
-        if not notifier().is_freenas():
-            return
-        raise ValueError
-
 
 class Email(TreeNode):
 
@@ -146,4 +141,17 @@ class ProactiveSupport(TreeNode):
 
     def pre_build_options(self):
         if not Support.is_available()[0]:
+            raise ValueError
+
+
+class ViewEnclosure(TreeNode):
+
+    gname = 'ViewEnclosure'
+    name = _(u'View Enclosure')
+    icon = u"ViewAllVolumesIcon"
+    type = 'opensystem'
+    order = 30
+
+    def pre_build_options(self):
+        if notifier().is_freenas():
             raise ValueError

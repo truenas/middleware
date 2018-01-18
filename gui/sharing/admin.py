@@ -51,6 +51,7 @@ class CIFSShareFAdmin(BaseFreeAdmin):
         'cifs_browsable',
         'cifs_comment',
         'cifs_guestonly',
+        'cifs_abe',
         'cifs_hostsallow',
         'cifs_hostsdeny',
         'cifs_recyclebin',
@@ -122,8 +123,9 @@ class NFSShareFAdmin(BaseFreeAdmin):
         })
         return columns
 
+
 class WebDAVShareFAdmin(BaseFreeAdmin):
-  
+
     icon_model = "WebDAVShareIcon"
     icon_add = "AddWebDAVShareIcon"
     icon_view = "ViewAllWebDAVSharesIcon"

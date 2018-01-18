@@ -49,7 +49,7 @@ require([
 
     loadalert = function() {
 
-        var url = '/admin/alert/status/?' + new Date().getTime();
+        var url = '/legacy/admin/alert/status/?' + new Date().getTime();
         xhr.get(url, {
             handleAs: "text"
             }).then(function(data) {
@@ -81,7 +81,7 @@ require([
             title: gettext("Alert System"),
             style: "width: 600px",
             id: "alert_dialog",
-            href: "/admin/alert/",
+            href: "/legacy/admin/alert/",
             onHide: function() {
                 setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
             }

@@ -207,6 +207,7 @@ def server_error(request, *args, **kwargs):
     if issubclass(exc_info[0], (ClientException, socket.timeout)):
         extra_log_files.insert(0, ('/var/log/middlewared.log', 'middlewared_log'))
 
+    log.debug('UI crash exception', exc_info=exc_info)
     crash_reporting.report(exc_info, request2crashreporting(request), extra_log_files)
 
     try:
@@ -223,4 +224,4 @@ def server_error(request, *args, **kwargs):
 def page_not_found(request, *args, **kwargs):
     if request.path.startswith('/api/'):
         return HttpResponse('Endpoint not found', status=404)
-    return HttpResponseRedirect('/')
+    return HttpResponseRedirect('/legacy/')

@@ -1,16 +1,17 @@
+import asyncio
 from collections import OrderedDict
+import copy
 from datetime import datetime
-from gevent.event import Event
-from gevent.lock import Semaphore
-from middlewared.utils import Popen
-
 import enum
-import gevent
 import json
 import os
 import subprocess
 import sys
+import time
 import traceback
+import threading
+
+from middlewared.utils import Popen
 
 
 class State(enum.Enum):
@@ -18,6 +19,7 @@ class State(enum.Enum):
     RUNNING = 2
     SUCCESS = 3
     FAILED = 4
+    ABORTED = 5
 
 
 class JobSharedLock(object):
@@ -32,7 +34,7 @@ class JobSharedLock(object):
         self.queue = queue
         self.name = name
         self.jobs = []
-        self.semaphore = Semaphore()
+        self.semaphore = asyncio.Semaphore()
 
     def add_job(self, job):
         self.jobs.append(job)
@@ -46,8 +48,8 @@ class JobSharedLock(object):
     def locked(self):
         return self.semaphore.locked()
 
-    def acquire(self):
-        return self.semaphore.acquire()
+    async def acquire(self):
+        return await self.semaphore.acquire()
 
     def release(self):
         return self.semaphore.release()
@@ -62,7 +64,7 @@ class JobsQueue(object):
 
         # Event responsible for the job queue schedule loop.
         # This event is set and a new job is potentially ready to run
-        self.queue_event = Event()
+        self.queue_event = asyncio.Event()
 
         # Shared lock (JobSharedLock) dict
         self.job_locks = {}
@@ -71,6 +73,12 @@ class JobsQueue(object):
         return self.deque.all()
 
     def add(self, job):
+        if job.options["lock_queue_size"] is not None:
+            lock = self.get_lock(job)
+            queued_jobs = [another_job for another_job in self.queue if self.get_lock(another_job) is lock]
+            if len(queued_jobs) >= job.options["lock_queue_size"]:
+                return queued_jobs[-1]
+
         self.deque.add(job)
         self.queue.append(job)
 
@@ -78,6 +86,8 @@ class JobsQueue(object):
 
         # A job has been added to the queue, let the queue scheduler run
         self.queue_event.set()
+
+        return job
 
     def get_lock(self, job):
         """
@@ -109,14 +119,14 @@ class JobsQueue(object):
         # waiting for the same lock
         self.queue_event.set()
 
-    def __next__(self):
+    async def __next__(self):
         """
         This is a blocking method.
         Returns when there is a new job ready to run.
         """
         while True:
             # Awaits a new event to look for a job
-            self.queue_event.wait()
+            await self.queue_event.wait()
             found = None
             for job in self.queue:
                 lock = self.get_lock(job)
@@ -124,7 +134,7 @@ class JobsQueue(object):
                 if lock is None or not lock.locked():
                     found = job
                     if lock:
-                        job.set_lock(lock)
+                        await job.set_lock(lock)
                     break
             if found:
                 # Unlocked job found to run
@@ -137,10 +147,10 @@ class JobsQueue(object):
                 # No jobs available to run, clear the event
                 self.queue_event.clear()
 
-    def run(self):
+    async def run(self):
         while True:
-            job = next(self)
-            gevent.spawn(job.run, self)
+            job = await self.__next__()
+            asyncio.ensure_future(job.run(self))
 
 
 class JobsDeque(object):
@@ -171,7 +181,7 @@ class Job(object):
     """
 
     def __init__(self, middleware, method_name, method, args, options):
-        self._finished = Event()
+        self._finished = asyncio.Event()
         self.middleware = middleware
         self.method_name = method_name
         self.method = method
@@ -191,6 +201,8 @@ class Job(object):
         }
         self.time_started = datetime.now()
         self.time_finished = None
+        self.loop = None
+        self.future = None
 
         # If Job is marked as pipe we open a pipe()
         # so the job can read/write and the other end can read/write it
@@ -212,9 +224,9 @@ class Job(object):
     def get_lock(self):
         return self.lock
 
-    def set_lock(self, lock):
+    async def set_lock(self, lock):
         self.lock = lock
-        self.lock.acquire()
+        await self.lock.acquire()
 
     def set_result(self, result):
         self.result = result
@@ -228,9 +240,9 @@ class Job(object):
             assert state not in ('WAITING', 'SUCCESS')
         if self.state == State.RUNNING:
             assert state not in ('WAITING', 'RUNNING')
-        assert self.state not in (State.SUCCESS, State.FAILED)
+        assert self.state not in (State.SUCCESS, State.FAILED, State.ABORTED)
         self.state = State.__members__[state]
-        if self.state in (State.SUCCESS, State.FAILED):
+        if self.state in (State.SUCCESS, State.FAILED, State.ABORTED):
             self.time_finished = datetime.now()
 
     def set_progress(self, percent, description=None, extra=None):
@@ -243,58 +255,44 @@ class Job(object):
             self.progress['extra'] = extra
         self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
-    def wait(self):
-        self._finished.wait()
+    async def wait(self, timeout=None):
+        if timeout is None:
+            await self._finished.wait()
+        else:
+            await asyncio.wait_for(asyncio.shield(self._finished.wait()), timeout)
         return self.result
 
-    def run(self, queue):
+    def wait_sync(self):
+        """
+        Synchronous method to wait for a job in another thread.
+        """
+        fut = asyncio.run_coroutine_threadsafe(self._finished.wait(), self.loop)
+        event = threading.Event()
+
+        def done(_):
+            event.set()
+
+        fut.add_done_callback(done)
+        event.wait()
+        return self.result
+
+    def abort(self):
+        if self.loop is not None and self.future is not None:
+            self.loop.call_soon_threadsafe(self.future.cancel)
+
+    async def run(self, queue):
         """
         Run a Job and set state/result accordingly.
         This method is supposed to run in a greenlet.
         """
 
+        self.set_state('RUNNING')
         try:
-            self.set_state('RUNNING')
-            """
-            If job is flagged as process a new process is spawned
-            with the job id which will in turn run the method
-            and return the result as a json
-            """
-            if self.options.get('process'):
-                proc = Popen([
-                    '/usr/bin/env',
-                    'python3',
-                    os.path.join(
-                        os.path.dirname(os.path.realpath(__file__)),
-                        'job_process.py',
-                    ),
-                    str(self.id),
-                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True,
-                    env={
-                    'LOGNAME': 'root',
-                    'USER': 'root',
-                    'GROUP': 'wheel',
-                    'HOME': '/root',
-                    'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin',
-                    'TERM': 'xterm',
-                })
-                output = proc.communicate()
-                try:
-                    data = json.loads(output[0])
-                except ValueError:
-                    self.set_state('FAILED')
-                    self.error = 'Running job has failed.\nSTDOUT: {}\nSTDERR: {}'.format(output[0], output[1])
-                else:
-                    if proc.returncode != 0:
-                        self.set_state('FAILED')
-                        self.error = data['error']
-                        self.exception = data['exception']
-                    else:
-                        self.set_result(data)
-                        self.set_state('SUCCESS')
-            else:
-                self.set_result(self.method(*([self] + self.args)))
-                self.set_state('SUCCESS')
+            self.loop = asyncio.get_event_loop()
+            self.future = asyncio.ensure_future(self.__run_body())
+            await self.future
+        except asyncio.CancelledError:
+            self.set_state('ABORTED')
         except:
             self.set_state('FAILED')
             self.set_exception(sys.exc_info())
@@ -303,6 +301,53 @@ class Job(object):
             queue.release_lock(self)
             self._finished.set()
             self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
+
+    async def __run_body(self):
+        """
+        If job is flagged as process a new process is spawned
+        with the job id which will in turn run the method
+        and return the result as a json
+        """
+        if self.options.get('process'):
+            proc = await Popen([
+                '/usr/bin/env',
+                'python3',
+                os.path.join(
+                    os.path.dirname(os.path.realpath(__file__)),
+                    'job_process.py',
+                ),
+                str(self.id),
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True, env={
+                'LOGNAME': 'root',
+                'USER': 'root',
+                'GROUP': 'wheel',
+                'HOME': '/root',
+                'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin',
+                'TERM': 'xterm',
+            })
+            output = await proc.communicate()
+            try:
+                data = json.loads(output[0].decode())
+            except ValueError:
+                self.set_state('FAILED')
+                self.error = 'Running job has failed.\nSTDOUT: {}\nSTDERR: {}'.format(output[0], output[1])
+            else:
+                if proc.returncode != 0:
+                    self.set_state('FAILED')
+                    self.error = data['error']
+                    self.exception = data['exception']
+                else:
+                    self.set_result(data)
+                    self.set_state('SUCCESS')
+        else:
+            # Make sure args are not altered during job run
+            args = copy.deepcopy(self.args)
+            if asyncio.iscoroutinefunction(self.method):
+                rv = await self.method(*([self] + args))
+            else:
+                rv = await self.middleware.run_in_thread(self.method, *([self] + args))
+            self.set_result(rv)
+            self.set_state('SUCCESS')
 
     def __encode__(self):
         return {
@@ -317,3 +362,74 @@ class Job(object):
             'time_started': self.time_started,
             'time_finished': self.time_finished,
         }
+
+    async def wrap(self, subjob):
+        """
+        Wrap a job in another job, proxying progress and result/error.
+        This is useful when we want to run a job inside a job.
+        """
+        while not subjob.time_finished:
+            try:
+                await subjob.wait(1)
+            except asyncio.TimeoutError:
+                pass
+            self.set_progress(**subjob.progress)
+        if subjob.exception:
+            raise subjob.exception
+        return subjob.result
+
+
+class JobProgressBuffer:
+    """
+    This wrapper for `job.set_progress` strips too frequent progress updated
+    (more frequent than `interval` seconds) so they don't spam websocket
+    connections.
+    """
+
+    def __init__(self, job, interval=1):
+        self.job = job
+
+        self.interval = interval
+
+        self.last_update_at = 0
+
+        self.pending_update_body = None
+        self.pending_update = None
+
+    def set_progress(self, *args, **kwargs):
+        t = time.monotonic()
+
+        if t - self.last_update_at >= self.interval:
+            if self.pending_update is not None:
+                self.pending_update.cancel()
+
+                self.pending_update_body = None
+                self.pending_update = None
+
+            self.last_update_at = t
+            self.job.set_progress(*args, **kwargs)
+        else:
+            self.pending_update_body = args, kwargs
+
+            if self.pending_update is None:
+                self.pending_update = asyncio.get_event_loop().call_later(self.interval, self._do_pending_update)
+
+    def cancel(self):
+        if self.pending_update is not None:
+            self.pending_update.cancel()
+
+            self.pending_update_body = None
+            self.pending_update = None
+
+    def flush(self):
+        if self.pending_update is not None:
+            self.pending_update.cancel()
+
+            self._do_pending_update()
+
+    def _do_pending_update(self):
+        self.last_update_at = time.monotonic()
+        self.job.set_progress(*self.pending_update_body[0], **self.pending_update_body[1])
+
+        self.pending_update_body = None
+        self.pending_update = None

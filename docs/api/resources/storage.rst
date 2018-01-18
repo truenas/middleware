@@ -107,7 +107,10 @@ Create resource
                 "total_si": "4.9 GiB"
         }
 
-   :json string volume_name: name of the volume
+   :json string volume_name: name of the new volume
+   :json string volume_add: name of the volume to extend
+   :json boolean encryption: encrypted volume or not
+   :json boolean encryption_inirand: initialize disks with random data (slow)
    :json list layout: list of vdevs composed of "vdevtype" (stripe, mirror, raidz, raidz2, raidz3) and disks (list of disk names)
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
@@ -162,7 +165,7 @@ Datasets
       Content-Type: application/json
 
       {
-        "name": "foo"
+        "name": "myds"
       }
 
    **Example response**:
@@ -174,14 +177,105 @@ Datasets
       Content-Type: application/json
 
       {
-        "avail": 3514769408,
-        "mountpoint": "/mnt/tank/foo",
-        "name": "foo",
+        "atime": "on",
+        "avail": 3848491008,
+        "comments": "Test",
+        "compression": "lz4",
+        "dedup": "off",
+        "inherit_props": [
+          "compression",
+          "aclinherit"
+        ],
+        "mountpoint": "/mnt/tank/myds",
+        "name": "tank/myds",
         "pool": "tank",
-        "refer": 73728,
-        "used": 73728
+        "quota": 0,
+        "readonly": "off",
+        "recordsize": 131072,
+        "refer": 90112,
+        "refquota": 0,
+        "refreservation": 0,
+        "reservation": 0,
+        "used": 90112
       }
 
+
+   :json string name: name of the dataset
+   :json string comments: user comments for the dataset
+   :json string compression: compression level (lz4, gzip-[1-9], zle, lzjb)
+   :json string dedup: dedup (on, off, inherit)
+   :json string atime: access time (on, off, inherit)
+   :json string readonly: read only (on, off, inherit)
+   :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
+   :json string case_sensitivity: files case sensitivity (on, off, inherit)
+   :json string quota: quota for this dataset and all children
+   :json string refquota: quota for this dataset
+   :json string reservation: reserved space for this dataset and all children
+   :json string refreservation: reserved space for this dataset
+   :json string readonly: read only (on, off, inherit)
+   :resheader Content-Type: content type of the response
+   :statuscode 201: no error
+
+.. http:put:: /api/v1.0/storage/volume/(int:id|string:name)/datasets/myds/
+
+   Create dataset for volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume/tank/datasets/myds/ HTTP/1.1
+      Content-Type: application/json
+
+      {
+        "comments": "Test DS"
+      }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      {
+        "atime": "on",
+        "avail": 3848491008,
+        "comments": "Test DS",
+        "compression": "lz4",
+        "dedup": "off",
+        "inherit_props": [
+          "compression",
+          "aclinherit"
+        ],
+        "mountpoint": "/mnt/tank/myds",
+        "name": "tank/myds",
+        "pool": "tank",
+        "quota": 0,
+        "readonly": "off",
+        "recordsize": 131072,
+        "refer": 90112,
+        "refquota": 0,
+        "refreservation": 0,
+        "reservation": 0,
+        "used": 90112
+      }
+
+
+   :json string name: name of the dataset
+   :json string comments: user comments for the dataset
+   :json string compression: compression level (lz4, gzip-[1-9], zle, lzjb)
+   :json string dedup: dedup (on, off, inherit)
+   :json string atime: access time (on, off, inherit)
+   :json string readonly: read only (on, off, inherit)
+   :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
+   :json string case_sensitivity: files case sensitivity (on, off, inherit)
+   :json string quota: quota for this dataset and all children
+   :json string refquota: quota for this dataset
+   :json string reservation: reserved space for this dataset and all children
+   :json string refreservation: reserved space for this dataset
+   :json string readonly: read only (on, off, inherit)
    :resheader Content-Type: content type of the response
    :statuscode 201: no error
 
@@ -200,18 +294,34 @@ Datasets
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
-      [{
-        "avail": 3514769408,
-        "mountpoint": "/mnt/tank/foo",
-        "name": "foo",
-        "pool": "tank",
-        "refer": 73728,
-        "used": 73728
-      }]
+      [
+        {
+          "atime": "on",
+          "avail": 3850371072,
+          "comments": "Test DS",
+          "compression": "lz4",
+          "dedup": "off",
+          "inherit_props": [
+            "compression",
+            "aclinherit"
+          ],
+          "mountpoint": "/mnt/tank/myds",
+          "name": "tank/myds",
+          "pool": "tank",
+          "quota": 0,
+          "readonly": "off",
+          "recordsize": 131072,
+          "refer": 90112,
+          "refquota": 0,
+          "refreservation": 0,
+          "reservation": 0,
+          "used": 90112
+        }
+      ]
 
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
@@ -339,13 +449,13 @@ ZFS Volumes
       Content-Type: application/json
 
       {
-        "name": "myzvol",
-        "avail": 7286996992,
-        "compression": "lz4",
-        "dedup": "off",
-        "refer": 57344,
-        "used": 57344,
-        "volsize": 10485760
+        "comments": "FreeNAS ZVOL",
+        "name": "fnzvol",
+        "volsize": "10M",
+        "compression": "gzip-9",
+        "sparse": true,
+        "force": true,
+        "blocksize": "4K"
       }
 
    **Example response**:
@@ -357,10 +467,11 @@ ZFS Volumes
       Content-Type: application/json
 
       {
-        "name": "myzvol",
-        "avail": 7286996992,
-        "compression": "lz4",
+        "avail": 4059471872,
+        "comments": "FreeNAS ZVOL",
+        "compression": "gzip-9",
         "dedup": "off",
+        "name": "fnzvol",
         "refer": 57344,
         "used": 57344,
         "volsize": 10485760
@@ -389,9 +500,10 @@ ZFS Volumes
       Content-Type: application/json
 
       [{
-        "name": "myzvol",
+        "name": "fnzvol",
+        "comments": "FreeNAS ZVOL",
         "avail": 7286996992,
-        "compression": "lz4",
+        "compression": "gzip-9",
         "dedup": "off",
         "refer": 57344,
         "used": 57344,
@@ -409,7 +521,7 @@ ZFS Volumes
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/storage/volume/tank/zvols/ HTTP/1.1
+      PUT /api/v1.0/storage/volume/tank/zvols/fnzvol/ HTTP/1.1
       Content-Type: application/json
 
       {
@@ -425,7 +537,13 @@ ZFS Volumes
       Content-Type: application/json
 
       {
-        "name": "myzvol",
+        "name": "fnzvol",
+        "comments": "FreeNAS ZVOL",
+        "avail": 7286996992,
+        "compression": "gzip-9",
+        "dedup": "off",
+        "refer": 57344,
+        "used": 57344,
         "volsize": 20971520
       }
 
@@ -747,6 +865,34 @@ Recovery Key
    :statuscode 204: no error
 
 
+Re-Key
+++++++++++++
+
+.. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/rekey/
+
+   Re-key volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume/tank/rekey/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        Volume has been rekeyed.
+
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
+
+
 Status
 ++++++
 
@@ -822,6 +968,247 @@ Status
 
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
+
+
+Dataset
+-------
+
+The Dataset resource represents ZFS datasets.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/storage/dataset/
+
+   Returns a list of all datasets.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/storage/dataset/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      [
+        {
+          "atime": "on",
+          "avail": 3850321920,
+          "comments": "Test",
+          "compression": "lz4",
+          "dedup": "off",
+          "inherit_props": [],
+          "mountpoint": "/mnt/tank",
+          "name": "tank",
+          "pool": "tank",
+          "quota": 0,
+          "readonly": "off",
+          "recordsize": 131072,
+          "refer": 90112,
+          "refquota": 0,
+          "refreservation": 0,
+          "reservation": 0,
+          "used": 2358296576
+        },
+        {
+          "atime": "on",
+          "avail": 3850715136,
+          "comments": null,
+          "compression": "lz4",
+          "dedup": "off",
+          "inherit_props": [
+            "compression",
+            "aclinherit"
+          ],
+          "mountpoint": "/mnt/tank/myds",
+          "name": "tank/myds",
+          "pool": "tank",
+          "quota": 0,
+          "readonly": "off",
+          "recordsize": 131072,
+          "refer": 90112,
+          "refquota": 0,
+          "refreservation": 0,
+          "reservation": 0,
+          "used": 90112
+        }
+      ]
+
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 20
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Create resource
++++++++++++++++
+
+.. http:post:: /api/v1.0/storage/dataset/(string:parent)/
+
+   Creates a dataset and returns the new object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/dataset/tank/ HTTP/1.1
+      Content-Type: application/json
+
+      {
+        "name": "myds",
+        "comment": "Test",
+      }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+      {
+        "atime": "on",
+        "avail": 3848491008,
+        "comments": "Test",
+        "compression": "lz4",
+        "dedup": "off",
+        "inherit_props": [
+          "compression",
+          "aclinherit"
+        ],
+        "mountpoint": "/mnt/tank/myds",
+        "name": "tank/myds",
+        "pool": "tank",
+        "quota": 0,
+        "readonly": "off",
+        "recordsize": 131072,
+        "refer": 90112,
+        "refquota": 0,
+        "refreservation": 0,
+        "reservation": 0,
+        "used": 90112
+      }
+
+
+   :json string name: name of the dataset
+   :json string comments: user comments for the dataset
+   :json string compression: compression level (lz4, gzip-[1-9], zle, lzjb)
+   :json string dedup: dedup (on, off, inherit)
+   :json string atime: access time (on, off, inherit)
+   :json string readonly: read only (on, off, inherit)
+   :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
+   :json string case_sensitivity: files case sensitivity (on, off, inherit)
+   :json string quota: quota for this dataset and all children
+   :json string refquota: quota for this dataset
+   :json string reservation: reserved space for this dataset and all children
+   :json string refreservation: reserved space for this dataset
+   :json string readonly: read only (on, off, inherit)
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 201: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:post:: /api/v1.0/storage/dataset/(string:parent)/
+
+   Updates a dataset and returns the object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/dataset/tank/myds/ HTTP/1.1
+      Content-Type: application/json
+
+      {
+        "comment": "Test DS",
+      }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      {
+        "atime": "on",
+        "avail": 3848491008,
+        "comments": "Test DS",
+        "compression": "lz4",
+        "dedup": "off",
+        "inherit_props": [
+          "compression",
+          "aclinherit"
+        ],
+        "mountpoint": "/mnt/tank/myds",
+        "name": "tank/myds",
+        "pool": "tank",
+        "quota": 0,
+        "readonly": "off",
+        "recordsize": 131072,
+        "refer": 90112,
+        "refquota": 0,
+        "refreservation": 0,
+        "reservation": 0,
+        "used": 90112
+      }
+
+
+   :json string name: name of the dataset
+   :json string comments: user comments for the dataset
+   :json string compression: compression level (lz4, gzip-[1-9], zle, lzjb)
+   :json string dedup: dedup (on, off, inherit)
+   :json string atime: access time (on, off, inherit)
+   :json string readonly: read only (on, off, inherit)
+   :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
+   :json string case_sensitivity: files case sensitivity (on, off, inherit)
+   :json string quota: quota for this dataset and all children
+   :json string refquota: quota for this dataset
+   :json string reservation: reserved space for this dataset and all children
+   :json string refreservation: reserved space for this dataset
+   :json string readonly: read only (on, off, inherit)
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
+Delete resource
++++++++++++++++
+
+.. http:delete:: /api/v1.0/storage/dataset/(string:name)/
+
+   Delete dataset `name`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/storage/dataset/tank/myds/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 204 No Response
+      Vary: Accept
+      Content-Type: application/json
+
+   :resheader Content-Type: content type of the response
+   :statuscode 204: no error
 
 
 Snapshot

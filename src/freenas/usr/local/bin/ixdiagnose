@@ -4,8 +4,6 @@
 # Script to capture debug for system crash reporting.
 # This script will make a temp directory and copy diagnostic information
 # to it.
-# When invoked with -b, it will assume you want to ONLY send textdumps
-# that are in 'dumpdir' set by /etc/rc.conf.
 #
 
 # If there is a system dataset use it
@@ -85,23 +83,13 @@ truncate_files ()
 test -e /etc/rc.conf && . /etc/rc.conf
 [ "$dumpdir" = "" ] && dumpdir="$dumpdir"
 
-boot_time=false
-force_upload=false
 has_ticket_info=false
 dont_delete=false
 limit=10000
 textdump=$(get_textdump)
 
-while getopts "bFt:d:sl:" opt ; do
+while getopts "Fd:sl:" opt ; do
 	case "${opt}" in
-	b)
-		boot_time=true
-		;;
-	F)	force_upload=true
-		;;
-	t)	has_ticket_info=true
-		ticket_info=$OPTARG
-		;;
 	d)	topdir=$OPTARG
 		;;
 	s)	dont_delete=true
@@ -112,47 +100,6 @@ while getopts "bFt:d:sl:" opt ; do
 		;;
 	esac
 done
-
-if [ -t 1 ] && ! $boot_time && ! $force_upload ; then
-	cat <<END_TEXT
-Welcome to ixdiagnose.
-
-ixdiagnose sends iXsystems the debugging information of your
-computer.  In this mode we will send your logs and the
-contents of your diagnostics to iXsystems.
-
-Press 'Enter' to continue or ^C (control+C) to abort.
-END_TEXT
-	read dummy
-fi
-
-# If this file doesn't exist then we are booting
-# the first time and we should execute as if sending
-# textdump but instead send the hardware config.
-if [ ! -e '/data/.hwconfig_sent' ] ; then
-	sendhw=true
-else
-	sendhw=false
-fi
-
-# We only send the data at boot time if the user
-# opts in.  The installer and/or gui should 
-# ask the user and then touch/rm this file to
-# let ixdiagnose know to send the hardware config
-# at next boot.
-if [ ! -e '/data/config/.sendhw' ] ; then
-	sendhw=false
-fi
-
-
-# during boot ix-diagnose will call us with --boot
-# if there is no crashdump, AND we've already sent
-# the hardware profile then just exit.
-if ! $sendhw && $boot_time ; then
-	if ! dumpfile_to_submit_exists $dumpdir ; then
-		exit 0
-	fi
-fi
 
 # Make our staging directory.
 # We will then make a directory called ixdiagnose under it
@@ -182,21 +129,11 @@ if [ $? -gt 0 ] ; then
 	exit 1
 fi
 
-#
-# We can send some more detailed information here if
-# the user has opted in by running it from the command
-# line.
-#
-# We ONLY send this more detailed information if the
-# user specifically requests that we do.
-#
-if ! $boot_time ; then
-	$mydir/freenas-debug -A >/dev/null
-	tar -cHf - -C /var log | tar -C $dir -xf -
-	tar -cHf - -C /var/tmp fndebug | tar -C $dir -xf -
-	if [ "${limit}" != "-1" ] ; then
-		truncate_files "${limit}"
-	fi
+$mydir/freenas-debug -A > /tmp/ixdiagnose.diagnose
+tar -cHf - -C /var log | tar -C $dir -xf -
+tar -cHf - -C /var/tmp fndebug | tar -C $dir -xf -
+if [ "${limit}" != "-1" ] ; then
+	truncate_files "${limit}"
 fi
 
 if ! dumpfile_to_submit_exists $dumpdir ; then
@@ -207,11 +144,6 @@ else
 	mkdir "$dir/textdump"
 	tar -xvf $textdump -C "$dir/textdump"
 	cp $dumpdir/info.last "$dir/textdump"
-fi
-
-if $has_ticket_info ; then
-	TICKET_ARG="-t $ticket_info"
-	cp $ticket_info "$dir/ticket_info.json"
 fi
 
 set +e
@@ -232,10 +164,6 @@ if [ -f /etc/version ] ; then
 	cp /etc/version "$dir/version"
 fi
 
-if [ -f /usr/local/etc/registration ] ; then
-	cp /usr/local/etc/registration "$dir/registration.json"
-fi
-
 set +e
 ls /dev/ses* 2> /dev/null | while read -r ses; do
 	name=$(echo ${ses}|cut -d "/" -f 3)
@@ -250,10 +178,6 @@ done
 set -e
 
 tar -C $dir/.. -cHzf $dir/../ixdiagnose.tgz ixdiagnose
-$mydir/crashuploader $topdir/ixdiagnose.tgz
 if [ "$actualdump" != "" ] ; then
 	touch $actualdump.submitted
-fi
-if $sendhw ; then
-    touch "/data/.hwconfig_sent"
 fi

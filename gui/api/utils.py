@@ -291,7 +291,9 @@ class DojoModelResource(ResourceMixin, ModelResource):
                 if f.startswith('-'):
                     reverse = True
                     f = f[1:]
-                obj_list = sorted(obj_list, key=lambda x: getattr(x, f), reverse=reverse)
+                sorting_map = getattr(self, 'SORTING_MAP', {})
+                key = sorting_map.get(f, lambda x: getattr(x, f))
+                obj_list = sorted(obj_list, key=key, reverse=reverse)
 
         return obj_list
 
@@ -433,6 +435,14 @@ class DojoModelResource(ResourceMixin, ModelResource):
         return bundle
 
 
+class DojoModelFormResourceMixin:
+    def dehydrate(self, bundle):
+        form = self._meta.validation.form_class(instance=bundle.obj)
+        bundle.data.update(**{field_name: form[field_name].initial
+                              for field_name, field in form.fields.items()})
+        return bundle
+
+
 class DojoResource(ResourceMixin, Resource, metaclass=DjangoDeclarativeMetaclass):
 
     def _apply_sorting(self, options=None):
@@ -447,9 +457,13 @@ class DojoResource(ResourceMixin, Resource, metaclass=DjangoDeclarativeMetaclass
                 break
         return fields
 
-    def _get_form_initial(self, form):
+    def _get_form_initial(self, form, instance=False):
         initial = {}
-        for k, v in form.base_fields.items():
+        if instance:
+            fields = form.fields
+        else:
+            fields = form.base_fields
+        for k, v in fields.items():
             initial[k] = v.initial
         return initial
 

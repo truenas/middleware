@@ -31,7 +31,8 @@ class BsdUserFAdmin(BaseFreeAdmin):
         'id',
         'bsdusr_unixhash',
         'bsdusr_smbhash',
-        )
+        'bsdusr_attributes',
+    )
 
     def _action_builder(self, name, label=None, url=None, builtin=None):
         func = "editObject"
@@ -83,10 +84,6 @@ class BsdUserFAdmin(BaseFreeAdmin):
     def get_actions(self):
 
         actions = OrderedDict()
-        #actions['Changewd'] = self._action_builder(
-        #    "passwd",
-        #    label=_('Change Password'),
-        #)
         actions['Edit'] = self._action_builder(
             "edit",
             label=_('Modify User'),
@@ -95,15 +92,6 @@ class BsdUserFAdmin(BaseFreeAdmin):
             "delete",
             label=_('Remove User'),
             builtin=False,
-        )
-        #actions['Auxiliary'] = self._action_builder(
-        #    "auxiliary",
-        #    label=_('Auxiliary Groups'),
-        #)
-        actions['E-mail'] = self._action_builder(
-            "email",
-            label=_('Change E-mail'),
-            builtin=True,
         )
         return actions
 

@@ -1,5 +1,3 @@
-import subprocess
-
 from django.core.urlresolvers import reverse
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
@@ -30,17 +28,6 @@ class SystemHook(AppHook):
             },
         ]
 
-    def system_info(self, request):
-        arr = []
-        serial = subprocess.Popen(
-            ['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'],
-            stdout=subprocess.PIPE,
-            encoding='utf8',
-        ).communicate()[0].split('\n')[0].upper()
-        if serial.startswith('A1-') or serial.startswith('R1-'):
-            arr.append({'name': _('Serial Number'), 'value': serial})
-        return arr
-
     def hook_app_tabs_system(self, request):
         from freenasUI.freeadmin.sqlite3_ha.base import NO_SYNC_MAP
         from freenasUI.middleware.notifier import notifier
@@ -52,15 +39,11 @@ class SystemHook(AppHook):
             models.Email,
             models.SystemDataset,
             models.Tunable,
+            models.CloudCredentials,
             models.ConsulAlerts,
             models.CertificateAuthority,
             models.Certificate,
         ]
-
-        idx_skip = 0
-        if not notifier().is_freenas():
-            idx_skip += 1
-            tabmodels.insert(5, models.CloudCredentials)
 
         tabs = []
         if (
@@ -119,7 +102,7 @@ class SystemHook(AppHook):
             'url': reverse('system_update_index'),
         })
 
-        tabs.insert(11 + idx_skip, {
+        tabs.insert(12, {
             'name': 'Support',
             'focus': 'system.Support',
             'verbose_name': _('Support'),
@@ -129,11 +112,18 @@ class SystemHook(AppHook):
         license = get_license()[0]
         if license is not None and not notifier().is_freenas():
             support = models.Support.objects.order_by('-id')[0]
-            tabs.insert(12 + idx_skip, {
+            tabs.insert(13, {
                 'name': 'Proactive Support',
                 'focus': 'system.ProactiveSupport',
                 'verbose_name': _('Proactive Support'),
                 'url': support.get_edit_url() + '?inline=true',
+            })
+
+            tabs.insert(14, {
+                'name': 'ViewEnclosure',
+                'focus': 'storage.ViewEnclosure',
+                'verbose_name': _('View Enclosure'),
+                'url': reverse('storage_enclosure_status'),
             })
 
         return tabs

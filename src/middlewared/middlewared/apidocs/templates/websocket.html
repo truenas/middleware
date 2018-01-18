@@ -181,7 +181,9 @@
                      Arguments:
                      <div>
                      {% for accept in method.accepts %}
-                     <div style="background-color: #ddd; white-space: pre; float: left; margin-right: 10px; font-family: Courier;">{{ accept|json }}</div>
+                     <div style="float: left; margin-right: 10px;">
+                       <div style="background-color: #ddd; white-space: pre; font-family: Courier;">{{ accept|json }}</div>
+                     </div>
                      {% endfor %}
                      <div style="clear: both;"></div>
                      </div>
@@ -189,7 +191,13 @@
                    {% endif %}
                  </thead>
                  <tbody>
-                   <tr><td>{{ method.description|markdown|safe }}</td></tr>
+                   <tr><td>
+                     {% if method.description %}
+                       {{ method.description|markdown|safe }}
+                     {% else %}
+                       -
+                     {% endif %}
+                   </td></tr>
                    {% for example in method.examples.get('__all__', []) %}
                    <tr><td>{{ example|markdown|safe }}</td></tr>
                    {% endfor %}

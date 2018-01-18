@@ -1,11 +1,13 @@
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 
 import json
 
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, obj):
-        if type(obj) is datetime:
+        if type(obj) is date:
+            return {'$type': 'date', '$value': obj.isoformat()}
+        elif type(obj) is datetime:
             if obj.tzinfo:
                 obj += obj.utcoffset()
                 obj = obj.replace(tzinfo=None)
@@ -19,9 +21,12 @@ class JSONEncoder(json.JSONEncoder):
 def object_hook(obj):
     if len(obj) == 1:
         if '$date' in obj:
-            return datetime.utcfromtimestamp(obj['$date'] / 1000) + timedelta(milliseconds=obj['$date'] % 1000)
+            return datetime.fromtimestamp(obj['$date'] / 1000, tz=timezone.utc) + timedelta(milliseconds=obj['$date'] % 1000)
         if '$time' in obj:
             return time(*[int(i) for i in obj['$time'].split(':')])
+    if len(obj) == 2 and '$type' in obj and '$value' in obj:
+        if obj['$type'] == 'date':
+            return date(*[int(i) for i in obj['$value'].split('-')])
     return obj
 
 

@@ -1444,7 +1444,7 @@ class Multiplex:
         term = self.session[sid]['term']
         term.write(d)
         # Read terminal response
-        d = term.read()
+        d = term.read().encode()
         if d:
             try:
                 os.write(fd, d)

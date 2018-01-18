@@ -1,13 +1,19 @@
-from middlewared.service import Service, private
-from middlewared.utils import Popen
+from middlewared.service import Service, filterable, private
+from middlewared.utils import Popen, filter_list, run
+from middlewared.schema import accepts, Str
 
-import gevent
+import asyncio
+from collections import defaultdict
+import ipaddr
 import ipaddress
 import netif
 import os
 import re
 import signal
 import subprocess
+import urllib.request
+
+RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 
 
 def dhclient_status(interface):
@@ -58,19 +64,72 @@ def dhclient_leases(interface):
 
 class InterfacesService(Service):
 
+    @filterable
+    def query(self, filters, options):
+        data = []
+        for name, iface in netif.list_interfaces().items():
+            if name in ('lo0', 'pfsync0', 'pflog0'):
+                continue
+            data.append(self.iface_extend(iface.__getstate__()))
+        return filter_list(data, filters, options)
+
     @private
-    def sync(self):
+    def iface_extend(self, iface):
+        iface.update({
+            'configured_aliases': [],
+            'dhcp': False,
+        })
+        config = self.middleware.call_sync('datastore.query', 'network.interfaces', [('int_interface', '=', iface['name'])])
+        if not config:
+            return iface
+        config = config[0]
+
+        if config['int_dhcp']:
+            iface['dhcp'] = True
+        else:
+            if config['int_ipv4address']:
+                iface['configured_aliases'].append({
+                    'type': 'INET',
+                    'address': config['int_ipv4address'],
+                    'netmask': int(config['int_v4netmaskbit']),
+                })
+            if config['int_ipv6address']:
+                iface['configured_aliases'].append({
+                    'type': 'INET6',
+                    'address': config['int_ipv6address'],
+                    'netmask': int(config['int_v6netmaskbit']),
+                })
+
+        for alias in self.middleware.call_sync('datastore.query', 'network.alias', [('alias_interface', '=', config['id'])]):
+
+            if alias['alias_v4address']:
+                iface['configured_aliases'].append({
+                    'type': 'INET',
+                    'address': alias['alias_v4address'],
+                    'netmask': int(alias['alias_v4netmaskbit']),
+                })
+            if alias['alias_v6address']:
+                iface['configured_aliases'].append({
+                    'type': 'INET6',
+                    'address': alias['alias_v6address'],
+                    'netmask': int(alias['alias_v6netmaskbit']),
+                })
+
+        return iface
+
+    @private
+    async def sync(self):
         """
         Sync interfaces configured in database to the OS.
         """
 
-        interfaces = [i['int_interface'] for i in self.middleware.call('datastore.query', 'network.interfaces')]
+        interfaces = [i['int_interface'] for i in (await self.middleware.call('datastore.query', 'network.interfaces'))]
         cloned_interfaces = []
         parent_interfaces = []
 
         # First of all we need to create the virtual interfaces
         # LAGG comes first and then VLAN
-        laggs = self.middleware.call('datastore.query', 'network.lagginterface')
+        laggs = await self.middleware.call('datastore.query', 'network.lagginterface')
         for lagg in laggs:
             name = lagg['lagg_interface']['int_interface']
             cloned_interfaces.append(name)
@@ -88,7 +147,7 @@ class InterfacesService(Service):
 
             members_configured = set(p[0] for p in iface.ports)
             members_database = set()
-            for member in self.middleware.call('datastore.query', 'network.lagginterfacemembers', [('lagg_interfacegroup_id', '=', lagg['id'])]):
+            for member in (await self.middleware.call('datastore.query', 'network.lagginterfacemembers', [('lagg_interfacegroup_id', '=', lagg['id'])])):
                 members_database.add(member['lagg_physnic'])
 
             # Remeve member configured but not in database
@@ -108,7 +167,7 @@ class InterfacesService(Service):
                 parent_interfaces.append(port[0])
                 port_iface.up()
 
-        vlans = self.middleware.call('datastore.query', 'network.vlan')
+        vlans = await self.middleware.call('datastore.query', 'network.vlan')
         for vlan in vlans:
             cloned_interfaces.append(vlan['vlan_vint'])
             self.logger.info('Setting up {}'.format(vlan['vlan_vint']))
@@ -118,9 +177,9 @@ class InterfacesService(Service):
                 netif.create_interface(vlan['vlan_vint'])
                 iface = netif.get_interface(vlan['vlan_vint'])
 
-            if iface.parent != vlan['vlan_pint'] or iface.tag != vlan['vlan_tag']:
+            if iface.parent != vlan['vlan_pint'] or iface.tag != vlan['vlan_tag'] or iface.pcp != vlan['vlan_pcp']:
                 iface.unconfigure()
-                iface.configure(vlan['vlan_pint'], vlan['vlan_tag'])
+                iface.configure(vlan['vlan_pint'], vlan['vlan_tag'], vlan['vlan_pcp'])
 
             try:
                 parent_iface = netif.get_interface(iface.parent)
@@ -133,13 +192,13 @@ class InterfacesService(Service):
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
         for interface in interfaces:
             try:
-                self.sync_interface(interface)
+                await self.sync_interface(interface)
             except:
                 self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
 
         internal_interfaces = ['lo', 'pflog', 'pfsync', 'tun', 'tap', 'bridge', 'epair']
-        if not self.middleware.call('system.is_freenas'):
-            internal_interfaces.extend(self.middleware.call('notifier.failover_internal_interfaces') or [])
+        if not await self.middleware.call('system.is_freenas'):
+            internal_interfaces.extend(await self.middleware.call('notifier.failover_internal_interfaces') or [])
         internal_interfaces = tuple(internal_interfaces)
 
         # Destroy interfaces which are not in database
@@ -180,14 +239,14 @@ class InterfacesService(Service):
         return addr
 
     @private
-    def sync_interface(self, name):
+    async def sync_interface(self, name):
         try:
-            data = self.middleware.call('datastore.query', 'network.interfaces', [('int_interface', '=', name)], {'get': True})
+            data = await self.middleware.call('datastore.query', 'network.interfaces', [('int_interface', '=', name)], {'get': True})
         except IndexError:
             self.logger.info('{} is not in interfaces database'.format(name))
             return
 
-        aliases = self.middleware.call('datastore.query', 'network.alias', [('alias_interface_id', '=', data['id'])])
+        aliases = await self.middleware.call('datastore.query', 'network.alias', [('alias_interface_id', '=', data['id'])])
 
         iface = netif.get_interface(name)
 
@@ -200,8 +259,8 @@ class InterfacesService(Service):
         has_ipv6 = data['int_ipv6auto'] or False
 
         if (
-            not self.middleware.call('system.is_freenas') and
-            self.middleware.call('notifier.failover_node') == 'B'
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('notifier.failover_node') == 'B'
         ):
             ipv4_field = 'int_ipv4address_b'
             ipv6_field = 'int_ipv6address'
@@ -297,8 +356,8 @@ class InterfacesService(Service):
         # carp must be configured after removing addresses
         # in case removing the address removes the carp
         if carp_vhid:
-            if not self.middleware.call('system.is_freenas') and not advskew:
-                if self.middleware.call('notifier.failover_node') == 'A':
+            if not await self.middleware.call('system.is_freenas') and not advskew:
+                if await self.middleware.call('notifier.failover_node') == 'A':
                     advskew = 20
                 else:
                     advskew = 80
@@ -313,8 +372,8 @@ class InterfacesService(Service):
         # Apply interface options specified in GUI
         if data['int_options']:
             self.logger.info('{}: applying {}'.format(name, data['int_options']))
-            proc = Popen('/sbin/ifconfig {} {}'.format(name, data['int_options']), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-            err = proc.communicate()[1]
+            proc = await Popen('/sbin/ifconfig {} {}'.format(name, data['int_options']), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+            err = (await proc.communicate())[1].decode()
             if err:
                 self.logger.info('{}: error applying: {}'.format(name, err))
 
@@ -329,47 +388,74 @@ class InterfacesService(Service):
         # If dhclient is not running and dhcp is configured, lets start it
         if not dhclient_running and data['int_dhcp']:
             self.logger.debug('Starting dhclient for {}'.format(name))
-            gevent.spawn(self.dhclient_start, data['int_interface'])
+            asyncio.ensure_future(self.dhclient_start(data['int_interface']))
         elif dhclient_running and not data['int_dhcp']:
             self.logger.debug('Killing dhclient for {}'.format(name))
             os.kill(dhclient_pid, signal.SIGTERM)
 
         if data['int_ipv6auto']:
             iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
-            Popen(
+            await (await Popen(
                 ['/etc/rc.d/rtsold', 'onestart'],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 close_fds=True,
-            ).wait()
+            )).wait()
         else:
             iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
 
     @private
-    def dhclient_start(self, interface):
-        proc = Popen([
+    async def dhclient_start(self, interface):
+        proc = await Popen([
             '/sbin/dhclient', '-b', interface,
         ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
-        output = proc.communicate()[0]
+        output = (await proc.communicate())[0].decode()
         if proc.returncode != 0:
             self.logger.error('Failed to run dhclient on {}: {}'.format(
                 interface, output,
             ))
 
+    @accepts()
+    def ipv4_in_use(self):
+        """
+        Get all IPv4 from all valid interfaces, excluding lo0, bridge* and tap*.
+
+        Returns:
+            list: A list with all IPv4 in use, or an empty list.
+        """
+        list_of_ipv4 = []
+        ignore_nics = ('lo', 'bridge', 'tap', 'epair')
+        for if_name, iface in list(netif.list_interfaces().items()):
+            if not if_name.startswith(ignore_nics):
+                for nic_address in iface.addresses:
+                    if nic_address.af == netif.AddressFamily.INET:
+                        ipv4_address = nic_address.address.exploded
+                        list_of_ipv4.append(str(ipv4_address))
+
+        return list_of_ipv4
+
 
 class RoutesService(Service):
 
+    @filterable
+    def system_routes(self, filters, options):
+        """
+        Get current/applied network routes.
+        """
+        rtable = netif.RoutingTable()
+        return filter_list([r.__getstate__() for r in rtable.routes], filters, options)
+
     @private
-    def sync(self):
-        config = self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
+    async def sync(self):
+        config = await self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
 
         # Generate dhclient.conf so we can ignore routes (def gw) option
         # in case there is one explictly set in network config
-        self.middleware.call('etc.generate', 'network')
+        await self.middleware.call('etc.generate', 'network')
 
         ipv4_gateway = config['gc_ipv4gateway'] or None
         if not ipv4_gateway:
-            interface = self.middleware.call('datastore.query', 'network.interfaces', [('int_dhcp', '=', True)])
+            interface = await self.middleware.call('datastore.query', 'network.interfaces', [('int_dhcp', '=', True)])
             if interface:
                 interface = interface[0]
                 dhclient_running, dhclient_pid = dhclient_status(interface['int_interface'])
@@ -400,7 +486,11 @@ class RoutesService(Service):
 
         ipv6_gateway = config['gc_ipv6gateway'] or None
         if ipv6_gateway:
-            ipv6_gateway = netif.Route('::', '::', ipaddress.ip_address(str(ipv6_gateway)))
+            if ipv6_gateway.count("%") == 1:
+                ipv6_gateway, ipv6_gateway_interface = ipv6_gateway.split("%")
+            else:
+                ipv6_gateway_interface = None
+            ipv6_gateway = netif.Route('::', '::', ipaddress.ip_address(str(ipv6_gateway)), ipv6_gateway_interface)
             ipv6_gateway.flags.add(netif.RouteFlags.STATIC)
             ipv6_gateway.flags.add(netif.RouteFlags.GATEWAY)
             # If there is a gateway but there is none configured, add it
@@ -417,27 +507,58 @@ class RoutesService(Service):
             self.logger.info('Removing IPv6 default route')
             routing_table.delete(routing_table.default_route_ipv6)
 
+    @accepts(Str('ipv4_gateway'))
+    def ipv4gw_reachable(self, ipv4_gateway):
+        """
+            Get the IPv4 gateway and verify if it is reachable by any interface.
+
+            Returns:
+                bool: True if the gateway is reachable or otherwise False.
+        """
+        ignore_nics = ('lo', 'bridge', 'tap', 'epair')
+        for if_name, iface in list(netif.list_interfaces().items()):
+            if not if_name.startswith(ignore_nics):
+                for nic_address in iface.addresses:
+                    if nic_address.af == netif.AddressFamily.INET:
+                        ipv4_nic = ipaddress.IPv4Interface(nic_address)
+                        nic_network = ipaddr.IPv4Network(ipv4_nic)
+                        nic_prefixlen = nic_network.prefixlen
+                        nic_result = str(nic_network.network) + '/' + str(nic_prefixlen)
+                        if ipaddress.ip_address(ipv4_gateway) in ipaddress.ip_network(nic_result):
+                            return True
+        return False
+
 
 class DNSService(Service):
 
+    @filterable
+    async def query(self, filters, options):
+        data = []
+        resolvconf = (await run('resolvconf', '-l')).stdout.decode()
+        for nameserver in RE_NAMESERVER.findall(resolvconf):
+            data.append({'nameserver': nameserver})
+        return filter_list(data, filters, options)
+
     @private
-    def sync(self):
-        domain = None
+    async def sync(self):
+        domains = []
         nameservers = []
 
-        if self.middleware.call('notifier.common', 'system', 'domaincontroller_enabled'):
-            cifs = self.middleware.call('datastore.query', 'services.cifs', None, {'get': True})
-            dc = self.middleware.call('datastore.query', 'services.DomainController', None, {'get': True})
-            domain = dc['dc_realm']
+        if await self.middleware.call('notifier.common', 'system', 'domaincontroller_enabled'):
+            cifs = await self.middleware.call('datastore.query', 'services.cifs', None, {'get': True})
+            dc = await self.middleware.call('datastore.query', 'services.DomainController', None, {'get': True})
+            domains.append(dc['dc_realm'])
             if cifs['cifs_srv_bindip']:
                 for ip in cifs['cifs_srv_bindip']:
                     nameservers.append(ip)
             else:
                 nameservers.append('127.0.0.1')
         else:
-            gc = self.middleware.call('datastore.query', 'network.globalconfiguration', None, {'get': True})
+            gc = await self.middleware.call('datastore.query', 'network.globalconfiguration', None, {'get': True})
             if gc['gc_domain']:
-                domain = gc['gc_domain']
+                domains.append(gc['gc_domain'])
+            if gc['gc_domains']:
+                domains += gc['gc_domains'].split()
             if gc['gc_nameserver1']:
                 nameservers.append(gc['gc_nameserver1'])
             if gc['gc_nameserver2']:
@@ -446,12 +567,68 @@ class DNSService(Service):
                 nameservers.append(gc['gc_nameserver3'])
 
         resolvconf = ''
-        if domain:
-            resolvconf += 'search {}\n'.format(domain)
+        if domains:
+            resolvconf += 'search {}\n'.format(' '.join(domains))
         for ns in nameservers:
             resolvconf += 'nameserver {}\n'.format(ns)
 
-        proc = Popen([
+        proc = await Popen([
             '/sbin/resolvconf', '-a', 'lo0'
         ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        proc.communicate(input=resolvconf)
+        data = await proc.communicate(input=resolvconf.encode())
+        if proc.returncode != 0:
+            self.logger.warn(f'Failed to run resolvconf: {data[1].decode()}')
+
+
+class NetworkGeneralService(Service):
+
+    class Config:
+        namespace = 'network.general'
+
+    @accepts()
+    async def summary(self):
+        ips = defaultdict(lambda: defaultdict(list))
+        for iface in await self.middleware.call('interfaces.query'):
+            for alias in iface['aliases']:
+                if alias['type'] == 'INET':
+                    ips[iface['name']]['IPV4'].append(f'{alias["address"]}/{alias["netmask"]}')
+
+        default_routes = []
+        for route in await self.middleware.call('routes.system_routes', [('netmask', 'in', ['0.0.0.0', '::'])]):
+            default_routes.append(route['gateway'])
+
+        nameservers = []
+        for ns in await self.middleware.call('dns.query'):
+            nameservers.append(ns['nameserver'])
+
+        return {
+            'ips': ips,
+            'default_routes': default_routes,
+            'nameservers': nameservers,
+        }
+
+
+async def configure_http_proxy(middleware, *args, **kwargs):
+    """
+    Configure the `http_proxy` and `https_proxy` environment vars
+    from the database.
+    """
+    gc = await middleware.call('datastore.config', 'network.globalconfiguration')
+    http_proxy = gc['gc_httpproxy']
+    if http_proxy:
+        os.environ['http_proxy'] = http_proxy
+        os.environ['https_proxy'] = http_proxy
+    elif not http_proxy:
+        if 'http_proxy' in os.environ:
+            del os.environ['http_proxy']
+        if 'https_proxy' in os.environ:
+            del os.environ['https_proxy']
+
+    # Reset global opener so ProxyHandler can be recalculated
+    urllib.request.install_opener(None)
+
+
+async def setup(middleware):
+    # Configure http proxy on startup and on network.config events
+    asyncio.ensure_future(configure_http_proxy(middleware))
+    middleware.event_subscribe('network.config', configure_http_proxy)

@@ -25,7 +25,6 @@
 #
 #####################################################################
 
-import json
 import freenasUI.vcp.utils as utils
 
 from django.shortcuts import render
@@ -33,7 +32,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.vcp.forms import VcenterConfigurationForm, VcenterAuxSettingsForm
 from freenasUI.vcp import models
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 
 from freenasUI.system.models import (
     Settings,
@@ -115,7 +114,7 @@ def vcp_upgrade(request):
                     request, error=True, message=_(
                         "There are No updates available at this time."))
             if form.upgrade_plugin():
-                return HttpResponseRedirect("/vcp/home")
+                return HttpResponseRedirect("/legacy/vcp/home")
             else:
                 return JsonResp(
                     request, error=True, message=_(
@@ -131,7 +130,7 @@ def vcp_uninstall(request):
         form = VcenterConfigurationForm(request.POST)
         if form.is_valid():
             if form.uninstall_plugin():
-                return HttpResponseRedirect("/vcp/home")
+                return HttpResponseRedirect("/legacy/vcp/home")
             else:
                 return JsonResp(
                     request, error=True, message=_(
@@ -147,7 +146,7 @@ def vcp_repair(request):
         form = VcenterConfigurationForm(request.POST)
         if form.is_valid():
             if form.repair_plugin():
-                return HttpResponseRedirect("/vcp/home")
+                return HttpResponseRedirect("/legacy/vcp/home")
             else:
                 return JsonResp(
                     request, error=True, message=_(

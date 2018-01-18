@@ -92,7 +92,7 @@ class TreeType(object):
             if order1 == order2:
                 if self.name and other.name:
                     return self.name.lower() < other.name.lower()
-                return self.gname.lower() < other.gname.lower()
+                return str(self.gname).lower() < str(other.gname).lower()
             return order1 < order2
         except (AttributeError, ValueError):
             log.warn("Failed to get item order", exc_info=True)

@@ -9,13 +9,16 @@ import subprocess
 import time
 
 from django.utils.translation import ugettext_lazy as _
+import pysnmp.hlapi
+import pysnmp.smi
 
 from freenasUI.common.locks import lock
-from freenasUI.common.system import send_mail, get_sw_version
+from freenasUI.common.system import send_mail, get_sw_version, service_enabled
 from freenasUI.freeadmin.hook import HookMetaclass
+from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import Alert as mAlert, Support
-from freenasUI.support.utils import get_license, new_ticket
+from freenasUI.support.utils import get_license
 
 from lxml import etree
 
@@ -67,11 +70,12 @@ class Alert(object):
     CRIT = 'CRIT'
     WARN = 'WARN'
 
-    def __init__(self, level, message, id=None, dismiss=False, hardware=False):
+    def __init__(self, level, message, id=None, dismiss=False, hardware=False, mail=None):
         self._level = level
         self._message = message
         self._dismiss = dismiss
         self._hardware = hardware
+        self._mail = mail
         if id is None:
             self._id = hashlib.md5(message.encode('utf8')).hexdigest()
         else:
@@ -135,6 +139,77 @@ class Alert(object):
     def getDatetime(self):
         return datetime.datetime.fromtimestamp(self._timestamp)
 
+    def getMail(self):
+        return self._mail
+
+
+class SnmpTrapSender:
+    def __init__(self):
+        self.snmp_engine = pysnmp.hlapi.SnmpEngine()
+        self.auth_data = pysnmp.hlapi.CommunityData("public")
+        self.transport_target = pysnmp.hlapi.UdpTransportTarget(("localhost", 162))
+        self.context_data = pysnmp.hlapi.ContextData()
+
+        mib_builder = pysnmp.smi.builder.MibBuilder()
+        mib_sources = mib_builder.getMibSources() + (pysnmp.smi.builder.DirMibSource("/usr/local/share/pysnmp/mibs"),)
+        mib_builder.setMibSources(*mib_sources)
+        mib_builder.loadModules("FREENAS-MIB")
+        self.snmp_alert_level_type = mib_builder.importSymbols("FREENAS-MIB", "AlertLevelType")[0]
+        mib_view_controller = pysnmp.smi.view.MibViewController(mib_builder)
+        self.snmp_alert = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alert"). \
+            resolveWithMib(mib_view_controller)
+        self.snmp_alert_id = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertId"). \
+            resolveWithMib(mib_view_controller)
+        self.snmp_alert_level = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertLevel"). \
+            resolveWithMib(mib_view_controller)
+        self.snmp_alert_message = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertMessage"). \
+            resolveWithMib(mib_view_controller)
+        self.snmp_alert_cancellation = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertCancellation"). \
+            resolveWithMib(mib_view_controller)
+
+    def send_alert(self, alert):
+        error_indication, error_status, error_index, var_binds = next(
+            pysnmp.hlapi.sendNotification(
+                self.snmp_engine,
+                self.auth_data,
+                self.transport_target,
+                self.context_data,
+                "trap",
+                pysnmp.hlapi.NotificationType(self.snmp_alert).addVarBinds(
+                    (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_id), pysnmp.hlapi.OctetString(alert.getId())),
+                    (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_level),
+                     self.snmp_alert_level_type(self.snmp_alert_level_type.namedValues.getValue(alert.getLevel().lower()))),
+                    (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_message), pysnmp.hlapi.OctetString(alert.getMessage()))
+                )
+            )
+        )
+
+        if error_indication:
+            log.error(f'Failed to send SNMP trap: {error_indication}')
+            return False
+
+        return True
+
+    def cancel_alert(self, alert):
+        error_indication, error_status, error_index, var_binds = next(
+            pysnmp.hlapi.sendNotification(
+                self.snmp_engine,
+                self.auth_data,
+                self.transport_target,
+                self.context_data,
+                "trap",
+                pysnmp.hlapi.NotificationType(self.snmp_alert_cancellation).addVarBinds(
+                    (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_id), pysnmp.hlapi.OctetString(alert.getId()))
+                )
+            )
+        )
+
+        if error_indication:
+            log.error(f'Failed to send SNMP trap: {error_indication}')
+            return False
+
+        return True
+
 
 class AlertPlugins(metaclass=HookMetaclass):
 
@@ -146,6 +221,8 @@ class AlertPlugins(metaclass=HookMetaclass):
         )
         self.modspath = os.path.join(self.basepath, 'alertmods/')
         self.mods = []
+
+        self.snmp_trap_sender = SnmpTrapSender()
 
     def rescan(self):
         self.mods = []
@@ -206,7 +283,7 @@ class AlertPlugins(metaclass=HookMetaclass):
         msgs = []
         for alert in alerts:
             if alert.getId() not in dismisseds:
-                msgs.append(str(alert).encode('utf8'))
+                msgs.append(str(alert))
         if len(msgs) == 0:
             return
 
@@ -218,7 +295,7 @@ class AlertPlugins(metaclass=HookMetaclass):
 
         license, reason = get_license()
         if license:
-            company = license.customer_name
+            company = license.customer_name.decode()
         else:
             company = 'Unknown'
 
@@ -236,25 +313,26 @@ class AlertPlugins(metaclass=HookMetaclass):
             if value:
                 msgs += ['', '{}: {}'.format(verbose_name, value)]
 
-        success, msg, ticketnum = new_ticket({
-            'title': 'Automatic alert (%s)' % serial,
-            'body': '\n'.join(msgs),
-            'version': get_sw_version().split('-', 1)[-1],
-            'debug': False,
-            'company': company,
-            'serial': serial,
-            'department': 20,
-            'category': 'Hardware',
-            'criticality': 'Loss of Functionality',
-            'environment': 'Production',
-            'name': 'Automatic Alert',
-            'email': 'auto-support@ixsystems.com',
-            'phone': '-',
-        })
-        if not success:
-            log.error("Failed to create a support ticket: %s", msg)
-        else:
-            log.debug("Automatic alert ticket successfully created: %s", msg)
+        with client as c:
+            try:
+                rv = c.call('support.new_ticket', {
+                    'title': 'Automatic alert (%s)' % serial,
+                    'body': '\n'.join(msgs),
+                    'version': get_sw_version().split('-', 1)[-1],
+                    'debug': False,
+                    'company': company,
+                    'serial': serial,
+                    'department': 20,
+                    'category': 'Hardware',
+                    'criticality': 'Loss of Functionality',
+                    'environment': 'Production',
+                    'name': 'Automatic Alert',
+                    'email': 'auto-support@ixsystems.com',
+                    'phone': '-',
+                }, job=True)
+                log.debug(f'Automatic alert ticket successfully created: {rv["url"]}')
+            except ClientException as e:
+                log.error(f'Failed to create a support ticket: {e.error}')
 
     @lock('/tmp/.alertrun')
     def run(self):
@@ -263,7 +341,7 @@ class AlertPlugins(metaclass=HookMetaclass):
         # Skip for standby node
         if (
             not _n.is_freenas() and _n.failover_licensed() and
-            _n.failover_status() != 'MASTER'
+            _n.failover_status() == 'BACKUP'
         ):
             return []
 
@@ -282,6 +360,7 @@ class AlertPlugins(metaclass=HookMetaclass):
         rvs = []
         node = alert_node()
         dismisseds = [a.message_id for a in mAlert.objects.filter(node=node)]
+        cancelled_alerts = sum([v["alerts"] or [] for v in results.values()], [])
         ids = []
         for instance in self.mods:
             try:
@@ -295,6 +374,7 @@ class AlertPlugins(metaclass=HookMetaclass):
                             for alert in results.get(instance.name).get('alerts'):
                                 ids.append(alert.getId())
                                 rvs.append(alert)
+                                cancelled_alerts.remove(alert)
                         continue
                 rv = instance.run()
                 if rv:
@@ -309,6 +389,7 @@ class AlertPlugins(metaclass=HookMetaclass):
                                     break
                             if found is not False:
                                 alert.setTimestamp(found.getTimestamp())
+                                cancelled_alerts.remove(found)
 
                         if alert.getId() in dismisseds:
                             alert.setDismiss(True)
@@ -325,16 +406,37 @@ class AlertPlugins(metaclass=HookMetaclass):
         qs = mAlert.objects.exclude(message_id__in=ids, node=node)
         if qs.exists():
             qs.delete()
-        crits = sorted([a for a in rvs if a and a.getLevel() == Alert.CRIT])
-        if obj and crits:
-            lastcrits = sorted([
-                a for a in obj['alerts'] if a and a.getLevel() == Alert.CRIT
-            ])
-            if crits == lastcrits:
-                crits = []
 
-        if crits:
-            self.email(crits)
+        new_alerts = sorted([
+            a
+            for a in rvs
+            if a and (not obj or a not in obj['alerts'])
+        ])
+
+        critical_alerts = sorted([
+            a
+            for a in rvs
+            if a.getLevel() == Alert.CRIT
+        ])
+        new_critical_alerts_worth_emailing = [
+            a
+            for a in critical_alerts
+            if a in new_alerts and a.getMail() is None
+        ]
+        if new_critical_alerts_worth_emailing:
+            self.email(critical_alerts)
+
+        if service_enabled("snmp"):
+            for a in cancelled_alerts:
+                self.snmp_trap_sender.cancel_alert(a)
+            for a in new_alerts:
+                self.snmp_trap_sender.send_alert(a)
+
+        for a in new_alerts:
+            mail = a.getMail()
+            if mail:
+                with client as c:
+                    c.call('mail.send', mail, job=True)
 
         if not notifier().is_freenas():
             # Automatically create ticket for new alerts tagged as possible

@@ -77,36 +77,42 @@ class UpdateHandler(object):
         self.service = service
         self.job = job
 
+        self._current_package_index = None
+        self._packages_count = None
+
     def check_handler(self, index, pkg, pkgList):
+        self._current_package_index = index - 1
+        self._packages_count = len(pkgList)
+
         pkgname = '%s-%s' % (
             pkg.Name(),
             pkg.Version(),
         )
-        step_progress = int((1.0 / len(pkgList)) * 100.0)
-        self._baseprogress = index * step_progress
 
-        self.job.set_progress((index - 1) * step_progress, 'Downloading {}'.format(pkgname))
+        self.job.set_progress((self._current_package_index / self._packages_count) * 50,
+                              'Downloading {}'.format(pkgname))
 
     def get_handler(
         self, method, filename, size=None, progress=None, download_rate=None
     ):
-        filename = filename.rsplit('/', 1)[-1]
-        if not progress:
+        if self._current_package_index is None or self._packages_count is None or not progress:
             return
-        progress = (progress * self._baseprogress) / 100
-        if progress == 0:
-            progress = 1
-        self.job.set_progress(progress, 'Downloading {} {} ({}%) {}/s'.format(
-            filename,
-            size if size else '',
-            progress,
-            download_rate if download_rate else '',
-        ))
+
+        filename = filename.rsplit('/', 1)[-1]
+        self.job.set_progress(
+            ((self._current_package_index + progress / 100) / self._packages_count) * 50,
+            'Downloading {} {} ({}%) {}/s'.format(
+                filename,
+                size if size else '',
+                progress,
+                download_rate if download_rate else '',
+            )
+        )
 
     def install_handler(self, index, name, packages):
         total = len(packages)
         self.job.set_progress(
-            int((float(index) / float(total)) * 100.0),
+            50 + (index / total) * 50,
             'Installing {} ({}/{})'.format(name, index, total),
         )
 
@@ -149,7 +155,7 @@ class UpdateService(Service):
         Returns available trains dict and the currently configured train as well as the
         train of currently booted environment.
         """
-        data = self.middleware.call('datastore.config', 'system.update')
+        data = self.middleware.call_sync('datastore.config', 'system.update')
         conf = Configuration.Configuration()
         conf.LoadTrainsConfig()
 
@@ -200,13 +206,13 @@ class UpdateService(Service):
         """
 
         try:
-            applied = self.middleware.call('cache.get', 'update.applied')
+            applied = self.middleware.call_sync('cache.get', 'update.applied')
         except Exception:
             applied = False
         if applied is True:
             return {'status': 'REBOOT_REQUIRED'}
 
-        train = (attrs or {}).get('train') or self.get_trains()['selected']
+        train = (attrs or {}).get('train') or self.middleware.call_sync('update.get_trains')['selected']
 
         handler = CheckUpdateHandler()
         manifest = CheckForUpdates(
@@ -241,7 +247,7 @@ class UpdateService(Service):
         return data
 
     @accepts(Str('path'))
-    def get_pending(self, path=None):
+    async def get_pending(self, path=None):
         """
         Gets a list of packages already downloaded and ready to be applied.
         Each entry of the lists consists of type of operation and name of it, e.g.
@@ -252,10 +258,10 @@ class UpdateService(Service):
           }
         """
         if path is None:
-            path = self.middleware.call('notifier.get_update_location')
+            path = await self.middleware.call('notifier.get_update_location')
         data = []
         try:
-            changes = self.middleware.threaded(Update.PendingUpdatesChanges, path)
+            changes = await self.middleware.run_in_thread(Update.PendingUpdatesChanges, path)
         except (
             UpdateIncompleteCacheException, UpdateInvalidCacheException,
             UpdateBusyCacheException,
@@ -299,13 +305,15 @@ class UpdateService(Service):
         required=False,
     ))
     @job(lock='update', process=True)
-    def update(self, job, attrs=None):
+    async def update(self, job, attrs=None):
         """
         Downloads (if not already in cache) and apply an update.
         """
         attrs = attrs or {}
-        train = attrs.get('train') or self.get_trains()['selected']
-        location = self.middleware.call('notifier.get_update_location')
+        train = attrs.get('train') or (await self.middleware.call('update.get_trains'))['selected']
+        location = await self.middleware.call('notifier.get_update_location')
+
+        job.set_progress(0, 'Retrieving update manifest')
 
         handler = UpdateHandler(self, job)
 
@@ -325,17 +333,17 @@ class UpdateService(Service):
             location,
             install_handler=handler.install_handler,
         )
-        self.middleware.call('cache.put', 'update.applied', True)
+        await self.middleware.call('cache.put', 'update.applied', True)
 
         if attrs.get('reboot'):
-            self.middleware.call('system.reboot', {'delay': 10})
+            await self.middleware.call('system.reboot', {'delay': 10})
         return True
 
     @accepts()
     @job(lock='updatedownload', process=True)
-    def download(self, job):
-        train = self.get_trains()['selected']
-        location = self.middleware.call('notifier.get_update_location')
+    async def download(self, job):
+        train = (await self.middleware.call('update.get_trains'))['selected']
+        location = await self.middleware.call('notifier.get_update_location')
 
         Update.DownloadUpdate(
             train,
@@ -348,13 +356,13 @@ class UpdateService(Service):
 
         notified = False
         try:
-            if self.middleware.call('cache.has_key', 'update.notified'):
-                notified = self.middleware.call('cache.get', 'update.notified')
+            if await self.middleware.call('cache.has_key', 'update.notified'):
+                notified = await self.middleware.call('cache.get', 'update.notified')
         except Exception:
             pass
 
         if not notified:
-            self.middleware.call('cache.put', 'update.notified', True)
+            await self.middleware.call('cache.put', 'update.notified', True)
             conf = Configuration.Configuration()
             sys_mani = conf.SystemManifest()
             if sys_mani:
@@ -367,7 +375,7 @@ class UpdateService(Service):
 
             try:
                 # FIXME: Translation
-                self.middleware.call('mail.send', {
+                await (await self.middleware.call('mail.send', {
                     'subject': '{}: {}'.format(hostname, 'Update Available'),
                     'text': '''A new update is available for the %(train)s train.
 Version: %(version)s
@@ -378,22 +386,22 @@ Changelog:
                         'version': update.Version(),
                         'changelog': changelog,
                     },
-                })
+                })).wait()
             except Exception:
                 self.logger.warn('Failed to send email about new update', exc_info=True)
         return True
 
     @accepts(Str('path'))
     @job(lock='updatemanual', process=True)
-    def manual(self, job, path):
+    async def manual(self, job, path):
         """
         Apply manual update of file `path`.
         """
-        rv = self.middleware.call('notifier.validate_update', path)
+        rv = await self.middleware.call('notifier.validate_update', path)
         if not rv:
             raise CallError('Invalid update file', errno.EINVAL)
-        self.middleware.call('notifier.apply_update', path)
+        await self.middleware.call('notifier.apply_update', path, timeout=None)
         try:
-            self.middleware.call('notifier.destroy_upload_location')
+            await self.middleware.call('notifier.destroy_upload_location')
         except Exception:
             self.logger.warn('Failed to destroy upload location', exc_info=True)

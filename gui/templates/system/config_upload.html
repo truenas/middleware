@@ -3,7 +3,7 @@
 <tr>
   <td colspan="2">
    <p>{% trans "The system will reboot to perform this operation!" %}<p/>
-   <p style="color: red;">{% trans "All password will be reset in case your configuration bundle does not include the password secret seed." %}</p>
+   <p style="color: red;">{% trans "If the uploaded configuration database file was saved without the Password Secret Seed, all passwords will be reset." %}</p>
   </td>
 </tr>
 {{ block.super }}

@@ -5,7 +5,7 @@
 
 # PROVIDE: ix-smartd
 # REQUIRE: FILESYSTEMS ix-syncdisks
-# BEFORE: smartd
+# BEFORE: smartd-daemon
 
 . /etc/rc.subr
 
@@ -81,6 +81,11 @@ parse_devlist()
 			propdev="/dev/${DRIVER}${CONTROLLER_ID} -d 3ware,${port}"
 			break
 			;;
+		# LSI MegaRAID 6Gb/s and 12Gb/s SAS+SATA RAID controller (not supported)
+		${disk}:mrsas)
+			propdev=
+			break
+			;;
 		# Common device
 		${disk}:* )
 			propdev=/dev/$disk
@@ -89,9 +94,11 @@ parse_devlist()
 		esac
 	done
 
-	local IFS=" "
-	if ! /usr/local/sbin/smartctl -i ${propdev} | egrep -i "^.*SMART.*abled" > /dev/null 2>&1; then
-		propdev=/dev/$disk
+	if [ "$propdev" != "" ]; then
+		local IFS=" "
+		if ! /usr/local/sbin/smartctl -i ${propdev} | egrep -i "^.*SMART.*abled" > /dev/null 2>&1; then
+			propdev=/dev/$disk
+		fi
 	fi
 
 	echo -n $propdev
@@ -134,6 +141,9 @@ EOF
 				;;
 			esac
 			prop_dev=`get_prop_dev ${disk_name} ${TMPFILE}`
+			if [ "$prop_dev" == "" ]; then
+				continue
+			fi
 			/usr/local/sbin/smartctl -i ${prop_dev} > /dev/null 2>&1
 			if [ $? -eq 0 ]; then
 				if ! /usr/local/sbin/smartctl -i ${prop_dev} | egrep -i "^.*SMART.*Enabled" > /dev/null 2>&1; then
@@ -197,7 +207,8 @@ EOF
 				printf ")"
 			} else printf $0 }')
 
-			echo -n " -s ${smarttest_type}/${nmonth}/${ndaymonth}/${ndayweek}/${nhour}"
+			echo "\\"
+			echo "-s ${smarttest_type}/${nmonth}/${ndaymonth}/${ndayweek}/${nhour}\\"
 			fi
 			echo " $disk_smartoptions"
 		done

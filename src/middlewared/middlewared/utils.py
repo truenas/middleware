@@ -1,5 +1,11 @@
+import asyncio
 import sys
 import subprocess
+import threading
+from datetime import datetime, timedelta
+from functools import wraps
+from threading import Lock
+
 
 if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
@@ -8,7 +14,7 @@ from freenasOS import Configuration
 VERSION = None
 
 
-def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
+async def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
     from django.db.models.fields.related import ForeignKey
     from freenasUI.contrib.IPAddressField import (
         IPAddressField, IP4AddressField, IP6AddressField
@@ -31,25 +37,69 @@ def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
         )):
             data[name] = str(value)
         elif isinstance(field, ForeignKey):
-            data[name] = django_modelobj_serialize(middleware, value) if value is not None else value
+            data[name] = await django_modelobj_serialize(middleware, value) if value is not None else value
         else:
             data[name] = value
     if extend:
-        data = middleware.call(extend, data)
+        data = await middleware.call(extend, data)
     return data
 
 
-def Popen(*args, **kwargs):
+def Popen(args, **kwargs):
     kwargs.setdefault('encoding', 'utf8')
-    return subprocess.Popen(*args, **kwargs)
+    shell = kwargs.pop('shell', None)
+    if shell:
+        return asyncio.create_subprocess_shell(args, **kwargs)
+    else:
+        return asyncio.create_subprocess_exec(*args, **kwargs)
 
 
-def run(*args, **kwargs):
-    kwargs.setdefault('encoding', 'utf8')
-    kwargs.setdefault('check', True)
+async def run(*args, **kwargs):
     kwargs.setdefault('stdout', subprocess.PIPE)
     kwargs.setdefault('stderr', subprocess.PIPE)
-    return subprocess.run(args, **kwargs)
+    check = kwargs.pop('check', True)
+    proc = await asyncio.create_subprocess_exec(*args, **kwargs)
+    stdout, stderr = await proc.communicate()
+    cp = subprocess.CompletedProcess(args, proc.returncode, stdout=stdout, stderr=stderr)
+    if check:
+        cp.check_returncode()
+    return cp
+
+
+def partition(s):
+    rv = ''
+    while True:
+        left, sep, right = s.partition('.')
+        if not sep:
+            return rv + left, right
+        if left[-1] == '\\':
+            rv += left[:-1] + sep
+            s = right
+        else:
+            return rv + left, right
+
+
+def get(obj, path):
+    """
+    Get a path in obj using dot notation
+
+    e.g.
+        obj = {'foo': {'bar': '1'}, 'foo.bar': '2', 'foobar': ['first', 'second', 'third']}
+
+        path = 'foo.bar' returns '1'
+        path = 'foo\.bar' returns '2'
+        path = 'foobar.0' returns 'first'
+    """
+    right = path
+    cur = obj
+    while right:
+        left, right = partition(right)
+        if isinstance(cur, dict):
+            cur = cur.get(left)
+        elif isinstance(cur, (list, tuple)):
+            left = int(left)
+            cur = cur[left] if left < len(cur) else None
+    return cur
 
 
 def filter_list(_list, filters=None, options=None):
@@ -57,6 +107,7 @@ def filter_list(_list, filters=None, options=None):
     opmap = {
         '=': lambda x, y: x == y,
         '!=': lambda x, y: x != y,
+        'in': lambda x, y: x in y,
     }
 
     if filters is None:
@@ -74,7 +125,7 @@ def filter_list(_list, filters=None, options=None):
                     if op not in opmap:
                         raise ValueError('Invalid operation: {}'.format(op))
                     if isinstance(i, dict):
-                        source = i[name]
+                        source = get(i, name)
                     else:
                         source = getattr(i, name)
                     if not opmap[op](source, value):
@@ -125,6 +176,20 @@ def sw_version_is_stable():
         return False
 
 
+def is_empty(val):
+    """
+    A small utility function that check if the provided string is either None, '',
+    or just a string containing only spaces
+    """
+    return val in [None, ''] or val.isspace()
+
+
+def start_daemon_thread(*args, daemon=True, **kwargs):
+    t = threading.Thread(*args, daemon=daemon, **kwargs)
+    t.start()
+    return t
+
+
 class Nid(object):
 
     def __init__(self, _id):
@@ -134,3 +199,36 @@ class Nid(object):
         num = self._id
         self._id += 1
         return num
+
+
+class cache_with_autorefresh(object):
+    """
+    A decorator which caches the result of a function (with no arguments as yet)
+    and returns the cache untill the autorefresh timeout is hit, upon which it
+    call the function again and caches the result for future calls.
+    """
+
+    def __init__(self, seconds=0, minutes=0, hours=0):
+        self.refresh_period = timedelta(
+            seconds=seconds, minutes=minutes, hours=hours
+        )
+        self.cached_return = None
+        self.first = True
+        self.time_of_last_call = datetime.min
+        self.lock = Lock()
+
+    def __call__(self, fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            now = datetime.now()
+            time_since_last_call = now - self.time_of_last_call
+
+            with self.lock:
+                if time_since_last_call > self.refresh_period or self.first:
+                    self.first = False
+                    self.time_of_last_call = now
+                    self.cached_return = fn(*args, **kwargs)
+
+            return self.cached_return
+
+        return wrapper

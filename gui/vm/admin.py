@@ -106,6 +106,27 @@ class VMFAdmin(BaseFreeAdmin):
                 }
             }""",
         }
+        actions['PowerOff'] = {
+            'button_name': _('Power off'),
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('Power Off', data._poweroff_url, [mybtn,]);
+                }
+            }""",
+            'on_select_after': """function(evt, actionName, action) {
+                for(var i=0;i < evt.rows.length;i++) {
+                    var row = evt.rows[i];
+                    if (row.data.state == 'STOPPED') {
+                        query(".grid" + actionName).forEach(function(item, idx) {
+                            domStyle.set(item, "display", "none");
+                        });
+                        break;
+                    }
+                }
+            }""",
+        }
         actions['Restart'] = {
             'button_name': _('Restart'),
             'on_click': """function() {
@@ -113,6 +134,48 @@ class VMFAdmin(BaseFreeAdmin):
                 for (var i in grid.selection) {
                     var data = grid.row(i).data;
                     editObject('Restart', data._restart_url, [mybtn,]);
+                }
+            }""",
+            'on_select_after': """function(evt, actionName, action) {
+                for(var i=0;i < evt.rows.length;i++) {
+                    var row = evt.rows[i];
+                    if (row.data.state == 'STOPPED') {
+                        query(".grid" + actionName).forEach(function(item, idx) {
+                            domStyle.set(item, "display", "none");
+                        });
+                        break;
+                    }
+                }
+            }""",
+        }
+        actions['Clone'] = {
+            'button_name': _('Clone'),
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('Clone', data._clone_url, [mybtn,]);
+                }
+            }""",
+            'on_select_after': """function(evt, actionName, action) {
+                for(var i=0;i < evt.rows.length;i++) {
+                    var row = evt.rows[i];
+                    if (row.data.state == 'RUNNING') {
+                        query(".grid" + actionName).forEach(function(item, idx) {
+                            domStyle.set(item, "display", "none");
+                        });
+                        break;
+                    }
+                }
+            }""",
+        }
+        actions['VNCWEB'] = {
+            'button_name': _('Vnc via Web'),
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('VNC WEB', data._vncweb_url, [mybtn,]);
                 }
             }""",
             'on_select_after': """function(evt, actionName, action) {

@@ -39,6 +39,17 @@ class DiskFAdmin(BaseFreeAdmin):
                     editScaryObject('Wipe', data._wipe_url, [mybtn,]);
                 }
             }""",
+            'on_select_after': """function(evt, actionName, action) {
+  for(var i=0;i < evt.rows.length;i++) {
+    var row = evt.rows[i];
+    if(!row.data._wipe_url) {
+      query(".grid" + actionName).forEach(function(item, idx) {
+        domStyle.set(item, "display", "none");
+      });
+      break;
+    }
+  }
+}"""
         }
 
         actions['EditBulk'] = {
@@ -341,6 +352,12 @@ class VolumeFAdmin(BaseFreeAdmin):
             label=_('Upgrade'),
             func="editScaryObject",
             icon="upgrade",
+        )
+        actions['PromoteZFS_dataset'] = self._action_builder(
+            'promote_dataset',
+            label=_('Promote Dataset'),
+            icon="promote_zfs",
+            show="ALL",
         )
 
         # Dataset actions

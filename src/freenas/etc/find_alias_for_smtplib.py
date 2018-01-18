@@ -43,21 +43,26 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
     if not to_addrs or not to_addrs[0]:
         to_addrs = ['root']
 
+    to_addrs_repl = []
     if to_addrs:
         aliases = get_aliases()
-        to_addrs_repl = []
         for to_addr in to_addrs:
             for to_addr in to_addr.split(','):
-                if to_addr.find('@') == -1 and to_addr in aliases:
-                    to_addr = aliases[to_addr]
-                to_addrs_repl.append(to_addr)
+                if to_addr.find('@') != -1:
+                    to_addrs_repl.append(to_addr)
+                elif to_addr.find('@') == -1 and to_addr in aliases:
+                    to_addrs_repl.append(aliases[to_addr])
+
+    if not to_addrs_repl:
+        syslog.syslog(f'No aliases found to send email to {", ".join(to_addrs)}')
+        sys.exit(1)
 
     margs = {}
     margs['extra_headers'] = dict(em)
     margs['extra_headers'].update({
         'X-Mailer': get_sw_name(),
         'X-%s-Host' % get_sw_name(): socket.gethostname(),
-        'To': to_addr,
+        'To': ', '.join(to_addrs_repl),
     })
     margs['subject'] = em.get('Subject')
 
@@ -66,7 +71,7 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
     for obj in lemail:
         if obj.em_fromemail != '':
             margs['extra_headers'].update({
-               'From': obj.em_fromemail
+                'From': obj.em_fromemail
             })
 
     if em.is_multipart():
@@ -78,8 +83,7 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
     else:
         margs['text'] = ''.join(email.iterators.body_line_iterator(em))
 
-    if to_addrs_repl:
-        margs['to'] = to_addrs_repl
+    margs['to'] = to_addrs_repl
 
     send_mail(**margs)
 
@@ -121,8 +125,9 @@ def main():
     if not to and not args.parse_recipients:
         parser.exit(message=parser.format_usage())
     msg = sys.stdin.read()
-    syslog.syslog("sending mail to " + ','.join(to) + msg[0:140])
+    syslog.syslog("sending mail to " + ', '.join(to) + '\n' + msg[0:140])
     do_sendmail(msg, to_addrs=to, parse_recipients=args.parse_recipients)
+
 
 if __name__ == "__main__":
     main()

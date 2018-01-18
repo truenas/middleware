@@ -31,6 +31,10 @@ import tempfile
 import subprocess
 
 from freenasUI.common.pipesubr import pipeopen
+from freenasUI.middleware.client import client
+from freenasUI.system.models import Advanced
+from middlewared.utils import cache_with_autorefresh, filter_list
+
 
 log = logging.getLogger('reporting.rrd')
 
@@ -167,83 +171,212 @@ class CPUPlugin(RRDBase):
     vertical_label = "%CPU"
 
     def graph(self):
-        cpu_idle = os.path.join(self.base_path, "cpu-idle.rrd")
-        cpu_nice = os.path.join(self.base_path, "cpu-nice.rrd")
-        cpu_user = os.path.join(self.base_path, "cpu-user.rrd")
-        cpu_system = os.path.join(self.base_path, "cpu-system.rrd")
-        cpu_interrupt = os.path.join(self.base_path, "cpu-interrupt.rrd")
+        if Advanced.objects.latest('id').adv_cpu_in_percentage:
+            cpu_idle = os.path.join(self.base_path, "percent-idle.rrd")
+            cpu_nice = os.path.join(self.base_path, "percent-nice.rrd")
+            cpu_user = os.path.join(self.base_path, "percent-user.rrd")
+            cpu_system = os.path.join(self.base_path, "percent-system.rrd")
+            cpu_interrupt = os.path.join(self.base_path, "percent-interrupt.rrd")
 
-        args = [
-            'DEF:min0_raw=%s:value:MIN' % cpu_idle,
-            'DEF:avg0_raw=%s:value:AVERAGE' % cpu_idle,
-            'DEF:max0_raw=%s:value:MAX' % cpu_idle,
-            'DEF:min1_raw=%s:value:MIN' % cpu_nice,
-            'DEF:avg1_raw=%s:value:AVERAGE' % cpu_nice,
-            'DEF:max1_raw=%s:value:MAX' % cpu_nice,
-            'DEF:min2_raw=%s:value:MIN' % cpu_user,
-            'DEF:avg2_raw=%s:value:AVERAGE' % cpu_user,
-            'DEF:max2_raw=%s:value:MAX' % cpu_user,
-            'DEF:min3_raw=%s:value:MIN' % cpu_system,
-            'DEF:avg3_raw=%s:value:AVERAGE' % cpu_system,
-            'DEF:max3_raw=%s:value:MAX' % cpu_system,
-            'DEF:min4_raw=%s:value:MIN' % cpu_interrupt,
-            'DEF:avg4_raw=%s:value:AVERAGE' % cpu_interrupt,
-            'DEF:max4_raw=%s:value:MAX' % cpu_interrupt,
-            'CDEF:min_total=min0_raw,min1_raw,min2_raw,min3_raw,min4_raw,+,+,+,+',
-            'CDEF:avg_total=avg0_raw,avg1_raw,avg2_raw,avg3_raw,avg4_raw,+,+,+,+',
-            'CDEF:max_total=max0_raw,max1_raw,max2_raw,max3_raw,max4_raw,+,+,+,+',
-            'CDEF:min0=min0_raw,min_total,/,100,*',
-            'CDEF:avg0=avg0_raw,avg_total,/,100,*',
-            'CDEF:max0=max0_raw,max_total,/,100,*',
-            'CDEF:min1=min1_raw,min_total,/,100,*',
-            'CDEF:avg1=avg1_raw,avg_total,/,100,*',
-            'CDEF:max1=max1_raw,max_total,/,100,*',
-            'CDEF:min2=min2_raw,min_total,/,100,*',
-            'CDEF:avg2=avg2_raw,avg_total,/,100,*',
-            'CDEF:max2=max2_raw,max_total,/,100,*',
-            'CDEF:min3=min3_raw,min_total,/,100,*',
-            'CDEF:avg3=avg3_raw,avg_total,/,100,*',
-            'CDEF:max3=max3_raw,max_total,/,100,*',
-            'CDEF:min4=min4_raw,min_total,/,100,*',
-            'CDEF:avg4=avg4_raw,avg_total,/,100,*',
-            'CDEF:max4=max4_raw,max_total,/,100,*',
-            'CDEF:cdef4=avg4,UN,0,avg4,IF',
-            'CDEF:cdef3=avg3,UN,0,avg3,IF,cdef4,+',
-            'CDEF:cdef2=avg2,UN,0,avg2,IF,cdef3,+',
-            'CDEF:cdef1=avg1,UN,0,avg1,IF,cdef2,+',
-            'CDEF:cdef0=avg0,UN,0,avg0,IF,cdef1,+',
-            'AREA:cdef0#f9f9f9',
-            'AREA:cdef1#bff7bf',
-            'AREA:cdef2#bfbfff',
-            'AREA:cdef3#ffbfbf',
-            'AREA:cdef4#e7bfe7',
-            'LINE1:cdef0#e8e8e8:Idle  ',
-            'GPRINT:min0:MIN:%5.2lf%% Min,',
-            'GPRINT:avg0:AVERAGE:%5.2lf%% Avg,',
-            'GPRINT:max0:MAX:%5.2lf%% Max,',
-            'GPRINT:avg0:LAST:%5.2lf%% Last\l',
-            'LINE1:cdef1#00e000:Nice  ',
-            'GPRINT:min1:MIN:%5.2lf%% Min,',
-            'GPRINT:avg1:AVERAGE:%5.2lf%% Avg,',
-            'GPRINT:max1:MAX:%5.2lf%% Max,',
-            'GPRINT:avg1:LAST:%5.2lf%% Last\l',
-            'LINE1:cdef2#0000ff:User  ',
-            'GPRINT:min2:MIN:%5.2lf%% Min,',
-            'GPRINT:avg2:AVERAGE:%5.2lf%% Avg,',
-            'GPRINT:max2:MAX:%5.2lf%% Max,',
-            'GPRINT:avg2:LAST:%5.2lf%% Last\l',
-            'LINE1:cdef3#ff0000:System',
-            'GPRINT:min3:MIN:%5.2lf%% Min,',
-            'GPRINT:avg3:AVERAGE:%5.2lf%% Avg,',
-            'GPRINT:max3:MAX:%5.2lf%% Max,',
-            'GPRINT:avg3:LAST:%5.2lf%% Last\l',
-            'LINE1:cdef4#a000a0:IRQ   ',
-            'GPRINT:min4:MIN:%5.2lf%% Min,',
-            'GPRINT:avg4:AVERAGE:%5.2lf%% Avg,',
-            'GPRINT:max4:MAX:%5.2lf%% Max,',
-            'GPRINT:avg4:LAST:%5.2lf%% Last\l',
+            args = [
+                'DEF:min0=%s:value:MIN' % cpu_idle,
+                'DEF:avg0=%s:value:AVERAGE' % cpu_idle,
+                'DEF:max0=%s:value:MAX' % cpu_idle,
+                'DEF:min1=%s:value:MIN' % cpu_nice,
+                'DEF:avg1=%s:value:AVERAGE' % cpu_nice,
+                'DEF:max1=%s:value:MAX' % cpu_nice,
+                'DEF:min2=%s:value:MIN' % cpu_user,
+                'DEF:avg2=%s:value:AVERAGE' % cpu_user,
+                'DEF:max2=%s:value:MAX' % cpu_user,
+                'DEF:min3=%s:value:MIN' % cpu_system,
+                'DEF:avg3=%s:value:AVERAGE' % cpu_system,
+                'DEF:max3=%s:value:MAX' % cpu_system,
+                'DEF:min4=%s:value:MIN' % cpu_interrupt,
+                'DEF:avg4=%s:value:AVERAGE' % cpu_interrupt,
+                'DEF:max4=%s:value:MAX' % cpu_interrupt,
+                'CDEF:cdef4=avg4,UN,0,avg4,IF',
+                'CDEF:cdef3=avg3,UN,0,avg3,IF,cdef4,+',
+                'CDEF:cdef2=avg2,UN,0,avg2,IF,cdef3,+',
+                'CDEF:cdef1=avg1,UN,0,avg1,IF,cdef2,+',
+                'CDEF:cdef0=avg0,UN,0,avg0,IF,cdef1,+',
+                'AREA:cdef0#f9f9f9',
+                'AREA:cdef1#bff7bf',
+                'AREA:cdef2#bfbfff',
+                'AREA:cdef3#ffbfbf',
+                'AREA:cdef4#e7bfe7',
+                'LINE1:cdef0#e8e8e8:Idle  ',
+                'GPRINT:min0:MIN:%5.2lf%% Min,',
+                'GPRINT:avg0:AVERAGE:%5.2lf%% Avg,',
+                'GPRINT:max0:MAX:%5.2lf%% Max,',
+                'GPRINT:avg0:LAST:%5.2lf%% Last\l',
+                'LINE1:cdef1#00e000:Nice  ',
+                'GPRINT:min1:MIN:%5.2lf%% Min,',
+                'GPRINT:avg1:AVERAGE:%5.2lf%% Avg,',
+                'GPRINT:max1:MAX:%5.2lf%% Max,',
+                'GPRINT:avg1:LAST:%5.2lf%% Last\l',
+                'LINE1:cdef2#0000ff:User  ',
+                'GPRINT:min2:MIN:%5.2lf%% Min,',
+                'GPRINT:avg2:AVERAGE:%5.2lf%% Avg,',
+                'GPRINT:max2:MAX:%5.2lf%% Max,',
+                'GPRINT:avg2:LAST:%5.2lf%% Last\l',
+                'LINE1:cdef3#ff0000:System',
+                'GPRINT:min3:MIN:%5.2lf%% Min,',
+                'GPRINT:avg3:AVERAGE:%5.2lf%% Avg,',
+                'GPRINT:max3:MAX:%5.2lf%% Max,',
+                'GPRINT:avg3:LAST:%5.2lf%% Last\l',
+                'LINE1:cdef4#a000a0:IRQ   ',
+                'GPRINT:min4:MIN:%5.2lf%% Min,',
+                'GPRINT:avg4:AVERAGE:%5.2lf%% Avg,',
+                'GPRINT:max4:MAX:%5.2lf%% Max,',
+                'GPRINT:avg4:LAST:%5.2lf%% Last\l',
+            ]
+
+            return args
+
+        else:
+            cpu_idle = os.path.join(self.base_path, "cpu-idle.rrd")
+            cpu_nice = os.path.join(self.base_path, "cpu-nice.rrd")
+            cpu_user = os.path.join(self.base_path, "cpu-user.rrd")
+            cpu_system = os.path.join(self.base_path, "cpu-system.rrd")
+            cpu_interrupt = os.path.join(self.base_path, "cpu-interrupt.rrd")
+
+            args = [
+                'DEF:min0_raw=%s:value:MIN' % cpu_idle,
+                'DEF:avg0_raw=%s:value:AVERAGE' % cpu_idle,
+                'DEF:max0_raw=%s:value:MAX' % cpu_idle,
+                'DEF:min1_raw=%s:value:MIN' % cpu_nice,
+                'DEF:avg1_raw=%s:value:AVERAGE' % cpu_nice,
+                'DEF:max1_raw=%s:value:MAX' % cpu_nice,
+                'DEF:min2_raw=%s:value:MIN' % cpu_user,
+                'DEF:avg2_raw=%s:value:AVERAGE' % cpu_user,
+                'DEF:max2_raw=%s:value:MAX' % cpu_user,
+                'DEF:min3_raw=%s:value:MIN' % cpu_system,
+                'DEF:avg3_raw=%s:value:AVERAGE' % cpu_system,
+                'DEF:max3_raw=%s:value:MAX' % cpu_system,
+                'DEF:min4_raw=%s:value:MIN' % cpu_interrupt,
+                'DEF:avg4_raw=%s:value:AVERAGE' % cpu_interrupt,
+                'DEF:max4_raw=%s:value:MAX' % cpu_interrupt,
+                'CDEF:min_total=min0_raw,min1_raw,min2_raw,min3_raw,min4_raw,+,+,+,+',
+                'CDEF:avg_total=avg0_raw,avg1_raw,avg2_raw,avg3_raw,avg4_raw,+,+,+,+',
+                'CDEF:max_total=max0_raw,max1_raw,max2_raw,max3_raw,max4_raw,+,+,+,+',
+                'CDEF:min0=min0_raw,min_total,/,100,*',
+                'CDEF:avg0=avg0_raw,avg_total,/,100,*',
+                'CDEF:max0=max0_raw,max_total,/,100,*',
+                'CDEF:min1=min1_raw,min_total,/,100,*',
+                'CDEF:avg1=avg1_raw,avg_total,/,100,*',
+                'CDEF:max1=max1_raw,max_total,/,100,*',
+                'CDEF:min2=min2_raw,min_total,/,100,*',
+                'CDEF:avg2=avg2_raw,avg_total,/,100,*',
+                'CDEF:max2=max2_raw,max_total,/,100,*',
+                'CDEF:min3=min3_raw,min_total,/,100,*',
+                'CDEF:avg3=avg3_raw,avg_total,/,100,*',
+                'CDEF:max3=max3_raw,max_total,/,100,*',
+                'CDEF:min4=min4_raw,min_total,/,100,*',
+                'CDEF:avg4=avg4_raw,avg_total,/,100,*',
+                'CDEF:max4=max4_raw,max_total,/,100,*',
+                'CDEF:cdef4=avg4,UN,0,avg4,IF',
+                'CDEF:cdef3=avg3,UN,0,avg3,IF,cdef4,+',
+                'CDEF:cdef2=avg2,UN,0,avg2,IF,cdef3,+',
+                'CDEF:cdef1=avg1,UN,0,avg1,IF,cdef2,+',
+                'CDEF:cdef0=avg0,UN,0,avg0,IF,cdef1,+',
+                'AREA:cdef0#f9f9f9',
+                'AREA:cdef1#bff7bf',
+                'AREA:cdef2#bfbfff',
+                'AREA:cdef3#ffbfbf',
+                'AREA:cdef4#e7bfe7',
+                'LINE1:cdef0#e8e8e8:Idle  ',
+                'GPRINT:min0:MIN:%5.2lf%% Min,',
+                'GPRINT:avg0:AVERAGE:%5.2lf%% Avg,',
+                'GPRINT:max0:MAX:%5.2lf%% Max,',
+                'GPRINT:avg0:LAST:%5.2lf%% Last\l',
+                'LINE1:cdef1#00e000:Nice  ',
+                'GPRINT:min1:MIN:%5.2lf%% Min,',
+                'GPRINT:avg1:AVERAGE:%5.2lf%% Avg,',
+                'GPRINT:max1:MAX:%5.2lf%% Max,',
+                'GPRINT:avg1:LAST:%5.2lf%% Last\l',
+                'LINE1:cdef2#0000ff:User  ',
+                'GPRINT:min2:MIN:%5.2lf%% Min,',
+                'GPRINT:avg2:AVERAGE:%5.2lf%% Avg,',
+                'GPRINT:max2:MAX:%5.2lf%% Max,',
+                'GPRINT:avg2:LAST:%5.2lf%% Last\l',
+                'LINE1:cdef3#ff0000:System',
+                'GPRINT:min3:MIN:%5.2lf%% Min,',
+                'GPRINT:avg3:AVERAGE:%5.2lf%% Avg,',
+                'GPRINT:max3:MAX:%5.2lf%% Max,',
+                'GPRINT:avg3:LAST:%5.2lf%% Last\l',
+                'LINE1:cdef4#a000a0:IRQ   ',
+                'GPRINT:min4:MIN:%5.2lf%% Min,',
+                'GPRINT:avg4:AVERAGE:%5.2lf%% Avg,',
+                'GPRINT:max4:MAX:%5.2lf%% Max,',
+                'GPRINT:avg4:LAST:%5.2lf%% Last\l',
+            ]
+
+            return args
+
+
+class CPUTempPlugin(RRDBase):
+
+    title = "CPU Temperature"
+    vertical_label = "\u00b0C"
+
+    def __get_cputemp_file__(self, n):
+        cputemp_file = os.path.join(
+            "%s/cputemp-%s" % (self._base_path, n),
+            "temperature.rrd")
+        if os.path.isfile(cputemp_file):
+            return cputemp_file
+        else:
+            return None
+
+    def __get_number_of_cores__(self):
+        proc = pipeopen('/sbin/sysctl -n kern.smp.cpus', important=False, logger=log)
+        proc_out = proc.communicate()[0]
+        try:
+            return int(proc_out)
+        except:
+            return 0
+
+    def __check_cputemp_avail__(self):
+        n_cores = self.__get_number_of_cores__()
+        if n_cores > 0:
+            for n in range(0, n_cores):
+                if self.__get_cputemp_file__(n) is None:
+                    return False
+        else:
+            return False
+        return True
+
+    def get_identifiers(self):
+        if not self.__check_cputemp_avail__():
+            return []
+        return None
+
+    def graph(self):
+        args = []
+        colors = [
+            '#00ff00', '#0000ff', '#ff0000', '#ff00ff',
+            '#ffff00', '#00ffff', '#800000', '#008000',
+            '#000080', '#008080', '#808000', '#800080',
+            '#808080', '#C0C0C0', '#654321', '#123456'
         ]
-
+        for n in range(0, self.__get_number_of_cores__()):
+            cputemp_file = self.__get_cputemp_file__(n)
+            a = [
+                'DEF:s_min{0}={1}:value:MIN'.format(n, cputemp_file),
+                'DEF:s_avg{0}={1}:value:AVERAGE'.format(n, cputemp_file),
+                'DEF:s_max{0}={1}:value:MAX'.format(n, cputemp_file),
+                'CDEF:min{0}=s_min{0},10,/,273.15,-'.format(n),
+                'CDEF:avg{0}=s_avg{0},10,/,273.15,-'.format(n),
+                'CDEF:max{0}=s_max{0},10,/,273.15,-'.format(n),
+                'AREA:max{0}#bfffbf'.format(n),
+                'AREA:min{0}#FFFFFF'.format(n),
+                'LINE1:avg{0}{1}: Core {2}'.format(n, colors[n % len(colors)], n + 1),
+                'GPRINT:min{0}:MIN:%.1lf\u00b0 Min,'.format(n),
+                'GPRINT:avg{0}:AVERAGE:%.1lf\u00b0 Avg,'.format(n),
+                'GPRINT:max{0}:MAX:%.1lf\u00b0 Max,'.format(n),
+                'GPRINT:avg{0}:LAST:%.1lf\u00b0 Last\l'.format(n)
+            ]
+            args.extend(a)
         return args
 
 
@@ -325,7 +458,7 @@ class MemoryPlugin(RRDBase):
 
         memory_free = os.path.join(self.base_path, "memory-free.rrd")
         memory_active = os.path.join(self.base_path, "memory-active.rrd")
-        memory_cache = os.path.join(self.base_path, "memory-cache.rrd")
+        memory_laundry = os.path.join(self.base_path, "memory-laundry.rrd")
         memory_inactive = os.path.join(self.base_path, "memory-inactive.rrd")
         memory_wired = os.path.join(self.base_path, "memory-wired.rrd")
 
@@ -336,9 +469,9 @@ class MemoryPlugin(RRDBase):
             'DEF:min1=%s:value:MIN' % memory_active,
             'DEF:avg1=%s:value:AVERAGE' % memory_active,
             'DEF:max1=%s:value:MAX' % memory_active,
-            'DEF:min2=%s:value:MIN' % memory_cache,
-            'DEF:avg2=%s:value:AVERAGE' % memory_cache,
-            'DEF:max2=%s:value:MAX' % memory_cache,
+            'DEF:min2=%s:value:MIN' % memory_laundry,
+            'DEF:avg2=%s:value:AVERAGE' % memory_laundry,
+            'DEF:max2=%s:value:MAX' % memory_laundry,
             'DEF:min3=%s:value:MIN' % memory_inactive,
             'DEF:avg3=%s:value:AVERAGE' % memory_inactive,
             'DEF:max3=%s:value:MAX' % memory_inactive,
@@ -355,7 +488,7 @@ class MemoryPlugin(RRDBase):
             'AREA:cdef2#bfbfe040',
             'AREA:cdef3#bfe0e030',
             'AREA:cdef4#e0bfe020',
-            'LINE1:cdef0#00a000:Free  ',
+            'LINE1:cdef0#00a000:Free    ',
             'GPRINT:min0:MIN:%5.1lf%s Min,',
             'GPRINT:avg0:AVERAGE:%5.1lf%s Avg,',
             'GPRINT:max0:MAX:%5.1lf%s Max,',
@@ -365,7 +498,7 @@ class MemoryPlugin(RRDBase):
             'GPRINT:avg1:AVERAGE:%5.1lf%s Avg,',
             'GPRINT:max1:MAX:%5.1lf%s Max,',
             'GPRINT:avg1:LAST:%5.1lf%s Last\l',
-            'LINE1:cdef2#0000a0:Cache   ',
+            'LINE1:cdef2#0000a0:Laundry ',
             'GPRINT:min2:MIN:%5.1lf%s Min,',
             'GPRINT:avg2:AVERAGE:%5.1lf%s Avg,',
             'GPRINT:max2:MAX:%5.1lf%s Max,',
@@ -571,7 +704,7 @@ class DFPlugin(RRDBase):
         ids = []
         proc = pipeopen("/bin/df -t zfs", important=False, logger=log)
         for line in proc.communicate()[0].strip().split('\n'):
-            entry = re.split(r'\s{2,}', line)[-1];
+            entry = re.split(r'\s{2,}', line)[-1]
             if entry != "/" and not entry.startswith("/mnt"):
                 continue
             path = os.path.join(self._base_path, "df-" + self.encode(entry), 'df_complex-free.rrd')
@@ -771,13 +904,31 @@ class CTLPlugin(RRDBase):
         return args
 
 
-class DiskPlugin(RRDBase):
+@cache_with_autorefresh(0, 5)
+def get_disks():
+    with client as c:
+        return c.call('disk.query')
+
+
+class DiskBase():
+    def get_disk_description(self, name):
+        disk_desc = ''
+        try:
+            disk_desc = filter_list(get_disks(), [('name', '=', name)], {'get': True})['description']
+        except BaseException as error:
+            # it would be lame to fail just coz we could not get disk description
+            # but lets log it
+            log.debug(f'Failed to get disk description of disk: {name}', exc_info=True)
+        return f'Disk description: {disk_desc}' if disk_desc else ''
+
+
+class DiskPlugin(RRDBase, DiskBase):
 
     vertical_label = "Bytes/s"
 
     def get_title(self):
         title = self.identifier.replace("disk-", "")
-        return 'Disk I/O (%s)' % title
+        return f'Disk I/O ({title}) Description: {self.get_disk_description(title)}'
 
     def get_identifiers(self):
         ids = []
@@ -825,13 +976,13 @@ class DiskPlugin(RRDBase):
         return args
 
 
-class DiskGeomBusyPlugin(RRDBase):
+class DiskGeomBusyPlugin(RRDBase, DiskBase):
 
     vertical_label = "Percent"
 
     def get_title(self):
         title = self.identifier.replace("geom_stat/geom_busy_percent-", "")
-        return 'Disk Busy (%s)' % title
+        return f'Disk Busy ({title}) {self.get_disk_description(title)}'
 
     def get_identifiers(self):
         ids = []
@@ -870,13 +1021,13 @@ class DiskGeomBusyPlugin(RRDBase):
         return args
 
 
-class DiskGeomLatencyPlugin(RRDBase):
+class DiskGeomLatencyPlugin(RRDBase, DiskBase):
 
     vertical_label = "Time,msec"
 
     def get_title(self):
         title = self.identifier.replace("geom_stat/geom_latency-", "")
-        return 'Disk Latency (%s)' % title
+        return f'Disk Latency ({title}) {self.get_disk_description(title)}'
 
     def get_identifiers(self):
         ids = []
@@ -937,13 +1088,13 @@ class DiskGeomLatencyPlugin(RRDBase):
         return args
 
 
-class DiskGeomOpsRWDPlugin(RRDBase):
+class DiskGeomOpsRWDPlugin(RRDBase, DiskBase):
 
     vertical_label = "Operations/s"
 
     def get_title(self):
         title = self.identifier.replace("geom_stat/geom_ops_rwd-", "")
-        return 'Disk Operations detailed (%s)' % title
+        return f'Disk Operations detailed ({title}) {self.get_disk_description(title)}'
 
     def get_identifiers(self):
         ids = []
@@ -1004,13 +1155,13 @@ class DiskGeomOpsRWDPlugin(RRDBase):
         return args
 
 
-class DiskGeomQueuePlugin(RRDBase):
+class DiskGeomQueuePlugin(RRDBase, DiskBase):
 
     vertical_label = "Requests"
 
     def get_title(self):
         title = self.identifier.replace("geom_stat/geom_queue-", "")
-        return 'Pending I/O requests on (%s)' % title
+        return f'Pending I/O requests on ({title}) {self.get_disk_description(title)}'
 
     def get_identifiers(self):
         ids = []

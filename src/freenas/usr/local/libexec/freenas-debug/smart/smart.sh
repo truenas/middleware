@@ -32,11 +32,14 @@ smart_help() { echo "Dump SMART Information"; }
 smart_directory() { echo "SMART"; }
 smart_func()
 {
-	section_header "SMART"
+	section_header "SMART - 'smartctl -x'"
+	rm /tmp/smart.out
 	for i in `sysctl -n kern.disks`
 	do
 	    echo /dev/$i
-	    smartctl -x /dev/$i
+	    smartctl -a /dev/$i >> /tmp/smart.out
 	done
+	cat /tmp/smart.out
+	${FREENAS_DEBUG_MODULEDIR}/smart/normalize_smart.nawk < /tmp/smart.out
 	section_footer
 }

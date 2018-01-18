@@ -48,14 +48,15 @@ get_image_name()
 # This does memory size only for now.
 pre_install_check()
 {
-    # We need at least 4 GB of RAM
-    local readonly minmemgb=4
-    local readonly minmem=$(expr ${minmemgb} \* 1024 \* 1024 \* 1024)
+    # We need at least this many GB of RAM
+    local readonly minmemgb=8
+    # subtract 1GB to allow for reserved memory
+    local readonly minmem=$(expr \( ${minmemgb} \- 1 \) \* 1024 \* 1024 \* 1024)
     local memsize=$(sysctl -n hw.physmem)
 
     if [ ${memsize} -lt ${minmem} ]; then
 	dialog --clear --title "${AVATAR_PROJECT}" --defaultno \
-	--yesno "This computer has less than the recommended ${minmemgb} GB of RAM.\n\nPerformance might be very slow.  Continue installation?" 7 74 || return 1
+	--yesno "This computer has less than the recommended ${minmemgb} GB of RAM.\n\nOperation without enough RAM is not recommended.  Continue anyway?" 7 74 || return 1
     fi
     return 0
 }
@@ -296,11 +297,6 @@ EOD
 
 ask_boot_method()
 {
-    # TrueNAS is BIOS only for now
-    if [ "${AVATAR_PROJECT}" = "TrueNAS" -a "$(sysctl -n kern.vm_guest)" != "bhyve" ]; then
-      return 1
-    fi
-
     # If we are not on efi, set BIOS as the default selected option
     dlgflags=""
     if [ "$BOOTMODE" != "efi" ] ; then
@@ -326,12 +322,25 @@ install_loader() {
 
     _mnt="$1"
     shift
+    disks="$*"
 
-    _disks="$*"
+
+    # When doing inplace upgrades, its entirely possible we've
+    # booted in the wrong mode (I.E. bios/efi)
+    # Default to re-stamping what was already used on the current install
+    _boottype="$BOOTMODE"
+    if [ "${_upgrade_type}" = "inplace" ] ; then
+       glabel list | grep -q 'efibsd'
+      if [ $? -eq 0 ] ; then
+         _boottype="efi"
+      else
+         _boottype="bios"
+      fi
+    fi
 
     for _disk in $_disks
     do
-	if [ "$BOOTMODE" = "efi" ] ; then
+	if [ "$_boottype" = "efi" ] ; then
 	    echo "Stamping EFI loader on: ${_disk}"
 	    mkdir -p /tmp/efi
 	    mount -t msdosfs /dev/${_disk}p1 /tmp/efi
@@ -394,7 +403,7 @@ create_partitions() {
 	  # EFI Mode
 	  sysctl kern.geom.debugflags=16
 	  sysctl kern.geom.label.disk_ident.enable=0
-	  if gpart add -s 100m -t efi ${_disk}; then
+	  if gpart add -s 260m -t efi ${_disk}; then
 	    if ! newfs_msdos -F 16 /dev/${_disk}p1 ; then
 	      return 1
 	    fi
@@ -435,7 +444,7 @@ get_minimum_size() {
     do
 	_size=""
 	if create_partitions ${_disk} 1>&2; then
-	    _size=$(gpart show ${_disk} | awk '/freebsd-zfs/ { print $2 * 512; }')
+	    _size=$(diskinfo /dev/${_disk}p2 | awk '{print $3;}')
 	    gpart destroy -F ${_disk} 1>&2
 	fi
 	if [ -z "${_size}" ]; then
@@ -507,8 +516,12 @@ make_swap()
 {
     local _swapparts
 
-    _swapparts=$(for _disk in $*; do echo ${_disk}p3; done)
-    gmirror label -b prefer swap ${_swapparts}
+    # Skip the swap creation if installing into a BE (Swap already exists in that case)
+    if [ "${_upgrade_type}" != "inplace" ] ; then
+      _swapparts=$(for _disk in $*; do echo ${_disk}p3; done)
+      gmirror destroy -f swap || true
+      gmirror label -b prefer swap ${_swapparts}
+    fi
     echo "/dev/mirror/swap.eli		none			swap		sw		0	0" > /tmp/data/data/fstab.swap
 }
 
@@ -964,7 +977,7 @@ menu_install()
     if ${INTERACTIVE} && [ "${_do_upgrade}" -eq 0 ]; then
 	prompt_password 2> /tmp/password
 	if [ $? -eq 0 ]; then
-	    _password=$(cat /tmp/password 2> /dev/null)
+	    _password="$(cat /tmp/password 2> /dev/null)"
 	fi
     fi
 
@@ -1170,7 +1183,7 @@ menu_install()
     elif [ "${_do_upgrade}" -eq 0 ]; then
 	if [ -n "${_password}" ]; then
 		# Set the root password
-		chroot /tmp/data /etc/netcli reset_root_pw ${_password}
+		chroot /tmp/data /etc/netcli reset_root_pw "${_password}"
 	fi
     fi
     : > /tmp/data/${FIRST_INSTALL_SENTINEL}
@@ -1442,7 +1455,7 @@ parse_config() {
     fi
     if [ -n "${password}" ]; then
 	# Set the root password
-	_output="${_output} -P ${password}"
+	_output="${_output} -P \"${password}\""
     fi
     if [ -n "${whenDone}" ]; then
 	# What to do when finished installing

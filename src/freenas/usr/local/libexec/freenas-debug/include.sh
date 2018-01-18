@@ -127,8 +127,17 @@ section_footer()
 {
 	if [ $fnd_section_start_time ]; then
 		fnd_section_end_time=`date +"%s"`  #get epoch time at end of routine
-		fnd_section_elapsed_time=$(($fnd_section_end_time - $fnd_section_start_time))  #subtract to find elapsed time
+		#subtract to find elapsed time
+		fnd_section_elapsed_time=$(($fnd_section_end_time - $fnd_section_start_time))  
 		echo "debug finished in $fnd_section_elapsed_time seconds for $name"
+		#$dirfunc is the module named used passed in to us by the debug toture suite
+		if [ $dirfunc ]; then
+			echo "command used:"
+			modname=`echo -n "$dirfunc" | sed -e 's/_directory//'`
+			echo  ${FREENAS_DEBUG_MODULEDIR}/$modname.sh
+		fi
+
+
 	fi
 	echo
 	echo

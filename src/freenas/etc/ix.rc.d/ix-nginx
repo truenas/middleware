@@ -151,6 +151,7 @@ generate_nginx_conf()
 	local httpsredirect="${6}"
 	local vcenter_https="${7}"
 	local working_ssl=false
+	local default_ui="ui"
 	local dhparams_file="/data/dhparam.pem"
 	local dojo=$(env PYTHONPATH=/usr/local/www/freenasUI/ /usr/local/bin/python -B -S -c 'import settings; print(settings.DOJANGO_DOJO_VERSION)')
 
@@ -197,6 +198,13 @@ http {
 
     error_log /var/log/nginx/error.log error;
     access_log /var/log/nginx/access.log combined;
+
+    upstream netdata {
+        # the netdata server
+        server 127.0.0.1:19999;
+        keepalive 64;
+    }
+
     
     server {
         server_name  localhost;
@@ -258,9 +266,17 @@ __EOF__
 		echo "        listen       [${addr6}]:${port};"
 	fi
 
+	if ! is_freenas; then
+		default_ui="legacy"
+	fi
+
 	cat << __EOF__
 
         location / {
+            rewrite ^.* /${default_ui}/;
+        }
+
+        location ~ /(legacy|plugins|api/v1.0)/ {
             include fastcgi_params;
             fastcgi_pass 127.0.0.1:9042;
             fastcgi_pass_header Authorization;
@@ -279,39 +295,57 @@ __EOF__
             report_uploads proxied;
         }
 
-        location /dojango {
-            alias /usr/local/www/freenasUI/dojango;
-        }
-
-        location /static {
+        location ^~ /legacy/static {
             alias /usr/local/www/freenasUI/static;
             add_header Cache-Control "must-revalidate";
             add_header Etag "$(cat /etc/version)";
         }
 
-        location /reporting/graphs {
-            alias /var/db/graphs;
-        }
-
-        location /dojango/dojo-media/release/${dojo} {
+        location ^~ /legacy/dojango/dojo-media/release/${dojo} {
             alias /usr/local/www/dojo;
         }
 
         location /api/docs {
-            proxy_pass http://localhost:8001;
+            proxy_pass http://127.0.0.1:6000/api/docs;
             proxy_set_header Host \$host;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Scheme \$scheme;
             proxy_set_header X-Script-Name /api/docs;
         }
 
+        location /api/docs/restful/static {
+            alias /usr/local/www/swagger-ui/node_modules/swagger-ui-dist;
+        }
 
         location /docs {
             alias /usr/local/www/data/docs;
         }
 
         location /ui {
+            try_files \$uri \$uri/ /index.html =404;
             alias /usr/local/www/webui;
+        }
+
+        location /netdata {
+            return 301 /netdata/;
+        }
+
+       location ~ ^/netdata/(?<ndpath>.*) {
+            proxy_redirect off;
+            proxy_set_header Host \$host;
+
+            proxy_set_header X-Forwarded-Host \$host;
+            proxy_set_header X-Forwarded-Server \$host;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_http_version 1.1;
+            proxy_pass_request_headers on;
+            proxy_set_header Connection "keep-alive";
+            proxy_store off;
+            proxy_pass http://netdata/\$ndpath\$is_args\$args;
+
+            gzip on;
+            gzip_proxied any;
+            gzip_types *;
         }
 
         location /websocket {
@@ -323,22 +357,35 @@ __EOF__
             proxy_set_header Connection "upgrade";
         }
 
-        location /api/v2.0 {
-            proxy_pass http://127.0.0.1:8002/api/v2.0;
+        location /websocket/shell {
+            proxy_pass http://127.0.0.1:6000/_shell;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr \$remote_addr;
             proxy_set_header X-Real-Remote-Port \$remote_port;
+            proxy_set_header Upgrade \$http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_send_timeout 7d;
+            proxy_read_timeout 7d;
+        }
+
+        location /api/v2.0 {
+            proxy_pass http://127.0.0.1:6000/api/v2.0;
+            proxy_http_version 1.1;
+            proxy_set_header X-Real-Remote-Addr \$remote_addr;
+            proxy_set_header X-Real-Remote-Port \$remote_port;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Forwarded-For \$remote_addr;
         }
 
         location /_download {
-            proxy_pass http://127.0.0.1:8003;
+            proxy_pass http://127.0.0.1:6000;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr \$remote_addr;
             proxy_set_header X-Real-Remote-Port \$remote_port;
         }
 
         location /_upload {
-            proxy_pass http://127.0.0.1:8003;
+            proxy_pass http://127.0.0.1:6000;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr \$remote_addr;
             proxy_set_header X-Real-Remote-Port \$remote_port;

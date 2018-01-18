@@ -106,13 +106,13 @@ class CIFS(Model):
     )
     cifs_srv_doscharset = models.CharField(
         max_length=120,
-        choices=choices.DOSCHARSET_CHOICES,
+        choices=choices.CHARSET(choices.DOSCHARSET_CHOICES),
         default="CP437",
         verbose_name=_("DOS charset"),
     )
     cifs_srv_unixcharset = models.CharField(
         max_length=120,
-        choices=choices.UNIXCHARSET_CHOICES,
+        choices=choices.CHARSET(choices.UNIXCHARSET_CHOICES),
         default="UTF-8",
         verbose_name=_("UNIX charset"),
     )
@@ -219,22 +219,6 @@ class CIFS(Model):
                     "example place where hostname lookups are currently used "
                     "is when checking the hosts deny and hosts allow."),
     )
-    cifs_srv_min_protocol = models.CharField(
-        max_length=120,
-        verbose_name=_("Server minimum protocol"),
-        choices=choices.CIFS_SMB_PROTO_CHOICES,
-        help_text=_("The minimum protocol version that will be supported by "
-                    "the server"),
-        blank=True,
-    )
-    cifs_srv_max_protocol = models.CharField(
-        max_length=120,
-        verbose_name=_("Server maximum protocol"),
-        default='SMB3',
-        choices=choices.CIFS_SMB_PROTO_CHOICES,
-        help_text=_("The highest protocol version that will be supported by "
-                    "the server"),
-    )
     cifs_srv_allow_execute_always = models.BooleanField(
         verbose_name=_("Allow execute always"),
         default=True,
@@ -330,21 +314,6 @@ class AFP(Model):
                     "default limit is 50."),
         default=50,
     )
-    afp_srv_homedir_enable = models.BooleanField(
-        verbose_name=_("Enable home directories"),
-        help_text=_("Enable/disable home directories for AFP user."),
-        default=False,
-    )
-    afp_srv_homedir = PathField(
-        verbose_name=_("Home directories"),
-        blank=True,
-    )
-    afp_srv_homename = models.CharField(
-        verbose_name=_("Home share name"),
-        blank=True,
-        help_text=_("When set, overrides the default Home Share Name."),
-        max_length=50,
-    )
     afp_srv_dbpath = PathField(
         verbose_name=_('Database Path'),
         blank=True,
@@ -432,10 +401,11 @@ class NFS(Model):
         default=False,
         verbose_name=_("Require Kerberos for NFSv4"),
     )
-    nfs_srv_bindip = models.CharField(
+    nfs_srv_bindip = MultiSelectField(
         blank=True,
         max_length=250,
         verbose_name=_("Bind IP Addresses"),
+        choices=choices.IPChoices(),
         help_text=_("Select the IP addresses to listen to for NFS requests. "
                     "If left unchecked, NFS will listen on all available "
                     "addresses."),
@@ -1095,73 +1065,86 @@ class DynamicDNS(Model):
         blank=True,
         verbose_name=_("Provider"),
     )
-    ddns_ipserver = models.CharField(
+    ddns_checkip_ssl = models.BooleanField(
+        verbose_name=_("CheckIP Server SSL"),
+    )
+    ddns_checkip_server = models.CharField(
         max_length=150,
-        verbose_name=_('IP Server'),
-        # todo: fix default not showing up in the form
-        default='checkip.dyndns.org:80 /.',
+        blank=True,
+        verbose_name=_('CheckIP Server'),
         help_text=_(
             'The client IP is detected by calling \'url\' from this '
             '\'ip_server_name:port /.\'. Leaving this field blank causes '
             'the service to use its built in default: '
             'checkip.dyndns.org:80 /.'),
+    )
+    ddns_checkip_path = models.CharField(
+        max_length=150,
         blank=True,
+        verbose_name=_('CheckIP Path'),
+        help_text=_(
+            'The client IP is detected by calling \'url\' from this '
+            '\'ip_server_name:port /.\'. Leaving this field blank causes '
+            'the service to use its built in default: '
+            'checkip.dyndns.org:80 /.'),
+    )
+    ddns_ssl = models.BooleanField(
+        verbose_name=_("Use SSL"),
+    )
+    ddns_custom_ddns_server = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name=_("Custom Server"),
+        help_text=_(
+            "Hostname for your custom DDNS provider."),
+    )
+    ddns_custom_ddns_path = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name=_("Custom Path"),
+        help_text=_(
+            "\'%h\' will be replaced with your hostname and \'%i\' will be "
+            "replaced with your IP address"),
     )
     ddns_domain = models.CharField(
         max_length=120,
-        verbose_name=_("Domain name"),
         blank=True,
+        verbose_name=_("Domain name"),
         help_text=_("A host name alias. This option can appear multiple "
                     "times, for each domain that has the same IP. Use a comma "
-                    "to separate multiple alias names.  Some Dynamic DNS "
-                    "providers " "require a hash after the host name, for "
-                    "these providers use a # sign in the between the hostname "
-                    "and hash in the format hostname#hash.  You may also use "
-                    "multiple hostname and hash " "combinations in the format "
-                    "host1#hash1,host2#hash2."),
+                    "to separate multiple alias names."),
     )
     ddns_username = models.CharField(
         max_length=120,
+        blank=True,
         verbose_name=_("Username"),
     )
     ddns_password = models.CharField(
         max_length=120,
         verbose_name=_("Password"),
     )
-    ddns_updateperiod = models.CharField(
-        max_length=120,
-        verbose_name=_("Update period"),
-        blank=True,
-        help_text=_("Time in seconds. Default is about 1 min."),
-    )
-    ddns_fupdateperiod = models.CharField(
-        max_length=120,
-        verbose_name=_("Forced update period"),
-        blank=True,
-    )
-    ddns_options = models.TextField(
-        verbose_name=_("Auxiliary parameters"),
-        blank=True,
-        help_text=_(
-            "These parameters will be added to global settings in "
-            "inadyn-mt.conf."),
+    ddns_period = models.IntegerField(
+        verbose_name=_("Update Period"),
+        help_text=_("Time in seconds."),
     )
 
     def __init__(self, *args, **kwargs):
         super(DynamicDNS, self).__init__(*args, **kwargs)
+        self._decrypt_password()
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        instance._decrypt_password()
+        return instance
+
+    def _decrypt_password(self):
         if self.ddns_password:
             try:
                 self.ddns_password = notifier().pwenc_decrypt(self.ddns_password)
             except:
                 log.debug('Failed to decrypt DDNS password', exc_info=True)
                 self.ddns_password = ''
-        self._ddns_password_encrypted = False
-
-    def save(self, *args, **kwargs):
-        if self.ddns_password and not self._ddns_password_encrypted:
-            self.ddns_password = notifier().pwenc_encrypt(self.ddns_password)
-            self._ddns_password_encrypted = True
-        return super(DynamicDNS, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = _("Dynamic DNS")
@@ -1240,6 +1223,11 @@ class SNMP(Model):
         max_length=100,
         null=True,
         verbose_name=_('Privacy Passphrase'),
+    )
+    snmp_loglevel = models.IntegerField(
+        default=3,
+        choices=choices.SNMP_LOGLEVEL,
+        verbose_name=_('Log Level'),
     )
     snmp_options = models.TextField(
         verbose_name=_("Auxiliary parameters"),
@@ -1336,6 +1324,16 @@ class UPS(Model):
             "The command used to shutdown the server. You can use "
             "a custom command here to perform other tasks before shutdown."
             "default: /sbin/shutdown -p now"),
+    )
+    ups_nocommwarntime = models.IntegerField(
+        verbose_name=_('No Communication Warning Time'),
+        help_text=_(
+            'Notify after this many seconds if it can’t reach any of the '
+            'UPS. It keeps warning you until the situation is fixed. '
+            'Default is 300 seconds.'
+        ),
+        null=True,
+        blank=True,
     )
     ups_monuser = models.CharField(
         max_length=50,
@@ -1623,7 +1621,6 @@ class FTP(Model):
         null=True,
     )
     ftp_options = models.TextField(
-        max_length=120,
         verbose_name=_("Auxiliary parameters"),
         blank=True,
         help_text=_("These parameters are added to proftpd.conf."),
@@ -1751,7 +1748,6 @@ class SSH(Model):
                     "logging messages from sftp-server."),
     )
     ssh_options = models.TextField(
-        max_length=120,
         verbose_name=_("Extra options"),
         blank=True,
         help_text=_("Extra options to /usr/local/etc/ssh/sshd_config (usually "
@@ -1991,9 +1987,9 @@ class RsyncMod(Model):
     rsyncmod_hostsallow = models.TextField(
         verbose_name=_("Hosts allow"),
         help_text=_("This option is a comma, space, or tab delimited set "
-                    "of hosts which are permitted to access this module. You "
-                    "can " "specify the hosts by name or IP number. Leave "
-                    "this field empty to use default settings."),
+                    "of hosts which are permitted to access this module. Hosts "
+                    "can " "be specified by name or IP address. Leave "
+                    "this field empty to use default of all allowed."),
         blank=True,
     )
     rsyncmod_hostsdeny = models.TextField(
@@ -2002,10 +1998,11 @@ class RsyncMod(Model):
                     "of hosts which are NOT permitted to access this module. "
                     "Where " "the lists conflict, the allow list takes "
                     "precedence. In the event that it is necessary to deny "
-                    "all by default, use the " "keyword ALL (or the netmask "
-                    "0.0.0.0/0) and then explicitly specify in the hosts "
+                    "all by default, set hosts deny to "
+                    "0.0.0.0/0 and explicitly specify in the hosts "
                     "allow parameter those hosts that should be permitted "
-                    "access. Leave this field empty to use default settings."),
+                    "access. Leave this field empty to use the default "
+                    "of none denied."),
         blank=True,
     )
     rsyncmod_auxiliary = models.TextField(
@@ -2283,7 +2280,7 @@ class S3(Model):
         max_length=128,
         blank=True,
         help_text=_("Select the IP address to listen to for S3 requests. "
-            "If left unchecked, S3 will listen on all available addresses"),
+                    "If left unchecked, S3 will listen on all available addresses"),
     )
     s3_bindport = models.SmallIntegerField(
         verbose_name=_("Port"),
@@ -2323,6 +2320,14 @@ class S3(Model):
         blank=True,
         null=True,
         help_text=_("S3 filesystem directory")
+    )
+    s3_certificate = models.ForeignKey(
+        Certificate,
+        verbose_name=_("Certificate"),
+        limit_choices_to={'cert_CSR__isnull': True},
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
     )
 
     class Meta:

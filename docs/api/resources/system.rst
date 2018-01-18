@@ -159,6 +159,34 @@ List resource
    :statuscode 200: no error
 
 
+Dismiss alert
++++++++++++++
+
+.. http:get:: /api/v1.0/system/alert/(string:id)/dismiss/
+
+   Dismiss an alert.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/system/alert/256ad2f48e5e541e28388701e34409cc/dismiss/ HTTP/1.1
+      Content-Type: application/json
+
+        true
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
+
+
 BootEnv
 -------
 
@@ -698,11 +726,13 @@ Update resource
                 "stg_language": "en",
                 "stg_directoryservice": "",
                 "stg_guiaddress": "0.0.0.0",
+                "stg_guicertificate": 1,
                 "stg_kbdmap": "",
                 "id": 1
         }
 
    :json string stg_guiprotocol: http, https
+   :json integer stg_guicertificate: Certificate ID
    :json string stg_guiaddress: WebGUI IPv4 Address
    :json string stg_guiv6address: WebGUI IPv6 Address
    :json integer stg_guiport: WebGUI Port for HTTP
@@ -1405,7 +1435,8 @@ Factory Restore
 
 .. http:post:: /api/v1.0/system/config/factory_restore/
 
-   Perform a factory restore. A reboot is necessary after this operation.
+   Reset configuration to defaults. A reboot is necessary after this
+   operation.
 
    **Example request**:
 
@@ -1422,7 +1453,7 @@ Factory Restore
       Vary: Accept
       Content-Type: application/json
 
-        Factory restore completed. Reboot is required.
+        Configuration restored to defaults. Reboot required.
 
    :resheader Content-Type: content type of the response
    :statuscode 202: no error
@@ -1455,7 +1486,29 @@ Check pending updates
       Vary: Accept
       Content-Type: application/json
 
-        []
+        [
+          {
+            "name": "base-os-11-MASTER-201712151613-aa5c2f225ea6653d010fbd107df26ef4 -> base-os-11-MASTER-201712152007-11a21e5c40d240c042c4e27bc5c261b7",
+            "operation": "upgrade"
+          },
+          {
+            "name": "docs-11-MASTER-201712151613-aa5c2f225ea6653d010fbd107df26ef4 -> docs-11-MASTER-201712152007-11a21e5c40d240c042c4e27bc5c261b7",
+            "operation": "upgrade"
+          },
+          {
+            "name": "freebsd-pkgdb-11-MASTER-201712151613-aa5c2f225ea6653d010fbd107df26ef4 -> freebsd-pkgdb-11-MASTER-201712152007-11a21e5c40d240c042c4e27bc5c261b7",
+            "operation": "upgrade"
+          },
+          {
+            "name": "freenas-pkg-tools-11-MASTER-201712151613-aa5c2f225ea6653d010fbd107df26ef4 -> freenas-pkg-tools-11-MASTER-201712152007-11a21e5c40d240c042c4e27bc5c261b7",
+            "operation": "upgrade"
+          },
+          {
+            "name": "FreeNASUI-11-MASTER-201712151613-aa5c2f225ea6653d010fbd107df26ef4 -> FreeNASUI-11-MASTER-201712152007-11a21e5c40d240c042c4e27bc5c261b7",
+            "operation": "upgrade"
+          }
+        ]
+
 
    :resheader Content-Type: content type of the response
    :statuscode 200: no error

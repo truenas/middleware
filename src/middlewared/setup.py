@@ -10,7 +10,7 @@ from setuptools import setup
 install_requires = [
     'ws4py',
     'python-dateutil',
-    'falcon',
+    'aiohttp_wsgi',
     'markdown',
     'Flask',
     'setproctitle',
@@ -67,6 +67,7 @@ setup(
         'console_scripts': [
             'middlewared = middlewared.main:main',
             'midclt = middlewared.client.client:main',
+            'midgdb = middlewared.gdb:main',
         ],
     },
 )

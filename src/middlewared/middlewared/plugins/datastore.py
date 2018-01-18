@@ -1,5 +1,5 @@
-from middlewared.service import Service, private
-from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Ref, Str
+from middlewared.service import Service
+from middlewared.schema import accepts, Any, Bool, Dict, List, Ref, Str
 
 import os
 import sys
@@ -8,7 +8,9 @@ sys.path.append('/usr/local/www')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
 import django
-django.setup()
+from django.apps import apps
+if not apps.ready:
+    django.setup()
 
 from django.apps import apps
 from django.db import connection
@@ -25,6 +27,9 @@ from middlewared.utils import django_modelobj_serialize
 
 
 class DatastoreService(Service):
+
+    class Config:
+        private = True
 
     def _filters_to_queryset(self, filters, field_prefix=None):
         opmap = {
@@ -77,9 +82,10 @@ class DatastoreService(Service):
         app, model = name.split('.', 1)
         return apps.get_model(app, model)
 
-    def __queryset_serialize(self, qs, extend=None, field_prefix=None):
-        for i in self.middleware.threaded(lambda: list(qs)):
-            yield django_modelobj_serialize(self.middleware, i, extend=extend, field_prefix=field_prefix)
+    async def __queryset_serialize(self, qs, extend=None, field_prefix=None):
+        result = await self.middleware.run_in_thread(lambda: list(qs))
+        for i in result:
+            yield await django_modelobj_serialize(self.middleware, i, extend=extend, field_prefix=field_prefix)
 
     @accepts(
         Str('name'),
@@ -95,7 +101,7 @@ class DatastoreService(Service):
             register=True,
         ),
     )
-    def query(self, name, filters=None, options=None):
+    async def query(self, name, filters=None, options=None):
         """Query for items in a given collection `name`.
 
         `filters` is a list which each entry can be in one of the following formats:
@@ -159,16 +165,19 @@ class DatastoreService(Service):
         if options.get('count') is True:
             return qs.count()
 
-        result = list(self.__queryset_serialize(
+        result = []
+        async for i in self.__queryset_serialize(
             qs, extend=options.get('extend'), field_prefix=options.get('prefix')
-        ))
+        ):
+            result.append(i)
 
         if options.get('get') is True:
             return result[0]
+
         return result
 
     @accepts(Str('name'), Ref('query-options'))
-    def config(self, name, options=None):
+    async def config(self, name, options=None):
         """
         Get configuration settings object for a given `name`.
 
@@ -177,50 +186,69 @@ class DatastoreService(Service):
         if options is None:
             options = {}
         options['get'] = True
-        return self.query(name, None, options)
+        return await self.query(name, None, options)
 
-    @accepts(Str('name'), Dict('data', additional_attrs=True))
-    def insert(self, name, data):
+    @accepts(Str('name'), Dict('data', additional_attrs=True), Dict('options', Str('prefix')))
+    async def insert(self, name, data, options=None):
         """
         Insert a new entry to `name`.
         """
+        data = data.copy()
+        options = options or {}
+        prefix = options.get('prefix')
         model = self.__get_model(name)
         for field in model._meta.fields:
-            if field.name not in data:
+            if prefix:
+                name = field.name.replace(prefix, '')
+            else:
+                name = field.name
+            if name not in data:
                 continue
             if isinstance(field, ForeignKey):
-                data[field.name] = field.rel.to.objects.get(pk=data[field.name])
+                data[name] = field.rel.to.objects.get(pk=data[name])
+        if prefix:
+            for k, v in list(data.items()):
+                k_new = f'{prefix}{k}'
+                data[k_new] = data.pop(k)
         obj = model(**data)
-        self.middleware.threaded(obj.save)
+        await self.middleware.run_in_thread(obj.save)
         return obj.pk
 
-    @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True))
-    def update(self, name, id, data):
+    @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix')))
+    async def update(self, name, id, data, options=None):
         """
         Update an entry `id` in `name`.
         """
+        data = data.copy()
+        options = options or {}
+        prefix = options.get('prefix')
         model = self.__get_model(name)
-        obj = self.middleware.threaded(lambda oid: model.objects.get(pk=oid), id)
+        obj = await self.middleware.run_in_thread(lambda oid: model.objects.get(pk=oid), id)
         for field in model._meta.fields:
-            if field.name not in data:
+            if prefix:
+                name = field.name.replace(prefix, '')
+            else:
+                name = field.name
+            if name not in data:
                 continue
             if isinstance(field, ForeignKey):
-                data[field.name] = field.rel.to.objects.get(pk=data[field.name])
+                data[name] = field.rel.to.objects.get(pk=data[name]) if data[name] is not None else None
         for k, v in list(data.items()):
+            if prefix:
+                k = f'{prefix}{k}'
             setattr(obj, k, v)
-        self.middleware.threaded(obj.save)
+        await self.middleware.run_in_thread(obj.save)
         return obj.pk
 
     @accepts(Str('name'), Any('id'))
-    def delete(self, name, id):
+    async def delete(self, name, id):
         """
         Delete an entry `id` in `name`.
         """
         model = self.__get_model(name)
-        self.middleware.threaded(lambda oid: model.objects.get(pk=oid).delete(), id)
+        await self.middleware.run_in_thread(lambda oid: model.objects.get(pk=oid).delete(), id)
         return True
 
-    @private
     def sql(self, query, params=None):
         cursor = connection.cursor()
         rv = None
@@ -234,7 +262,6 @@ class DatastoreService(Service):
             cursor.close()
         return rv
 
-    @private
     @accepts(List('queries'))
     def restore(self, queries):
         """
@@ -243,7 +270,6 @@ class DatastoreService(Service):
         """
         return connection.dump_recv(queries)
 
-    @private
     @accepts()
     def dump(self):
         """

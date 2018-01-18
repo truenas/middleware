@@ -34,9 +34,9 @@ define([
             }
             var target;
             if(this.dirsonly) {
-                target = '/system/lsdir/';
+                target = '/legacy/system/lsdir/';
             } else {
-                target = '/system/lsfiles/';
+                target = '/legacy/system/lsfiles/';
             }
 
             var store = new JsonRestStore({

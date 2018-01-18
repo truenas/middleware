@@ -153,7 +153,7 @@ class MultiSelectField(models.Field):
             'required': not self.blank,
             'label': capfirst(self.verbose_name),
             'help_text': self.help_text,
-            'choices': self.get_choices(include_blank=False),
+            'choices': self.choices or [],
         }
         if self.has_default():
             if isinstance(self.default, list):

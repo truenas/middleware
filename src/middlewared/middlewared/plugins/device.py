@@ -1,10 +1,8 @@
-import gevent
+import asyncio
 import os
 import shlex
 import socket
-import time
 
-from gevent.socket import wait_read
 from middlewared.schema import accepts, Str
 from middlewared.service import Service
 
@@ -16,15 +14,15 @@ DEVD_SOCKETFILE = '/var/run/devd.seqpacket.pipe'
 class DeviceService(Service):
 
     @accepts(Str('type', enum=['SERIAL', 'DISK']))
-    def get_info(self, _type):
+    async def get_info(self, _type):
         """
         Get info for certain device types.
 
         Currently only SERIAL is supported.
         """
-        return getattr(self, f'_get_{_type.lower()}')()
+        return await getattr(self, f'_get_{_type.lower()}')()
 
-    def _get_serial(self):
+    async def _get_serial(self):
         ports = []
         for devices in devinfo.DevInfo().resource_managers['I/O ports'].values():
             for dev in devices:
@@ -40,8 +38,8 @@ class DeviceService(Service):
                 })
         return ports
 
-    def _get_disk(self):
-        self.middleware.threaded(geom.scan)
+    async def _get_disk(self):
+        await self.middleware.run_in_thread(geom.scan)
         disks = {}
         klass = geom.class_by_name('DISK')
         if not klass:
@@ -61,50 +59,54 @@ class DeviceService(Service):
         return disks
 
 
-def devd_loop(middleware):
+async def devd_loop(middleware):
     while True:
         try:
             if not os.path.exists(DEVD_SOCKETFILE):
-                time.sleep(1)
+                await asyncio.sleep(1)
                 continue
-            devd_listen(middleware)
+            await devd_listen(middleware)
         except OSError:
             middleware.logger.warn('devd pipe error, retrying...', exc_info=True)
-            time.sleep(1)
+            await asyncio.sleep(1)
 
 
-def devd_listen(middleware):
+async def devd_listen(middleware):
     s = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
     s.connect(DEVD_SOCKETFILE)
+    reader, writer = await asyncio.open_unix_connection(sock=s)
+
     while True:
-        wait_read(s.fileno())
-        line = s.recv(8192)
-        if line is None:
+        read = await reader.read(8192)
+        read = read.decode(errors='ignore')
+        if read == "":
             break
-        line = line.decode(errors='ignore')
-        if not line.startswith('!'):
-            # TODO: its not a complete message, ignore for now
-            continue
 
-        try:
-            parsed = middleware.threaded(lambda l: dict(t.split('=') for t in shlex.split(l)), line[1:])
-        except ValueError:
-            middleware.logger.warn(f'Failed to parse devd message: {line}')
-            continue
+        for line in read.split('\n'):
 
-        if 'system' not in parsed:
-            continue
+            if not line.startswith('!'):
+                # TODO: its not a complete message, ignore for now
+                continue
 
-        # Lets ignore CAM messages for now
-        if parsed['system'] in ('CAM', 'ACPI'):
-            continue
+            try:
+                parsed = await middleware.run_in_thread(lambda l: dict(t.split('=') for t in shlex.split(l)), line[1:])
+            except ValueError:
+                middleware.logger.warn(f'Failed to parse devd message: {line}')
+                continue
 
-        middleware.send_event(
-            f'devd.{parsed["system"]}'.lower(),
-            'ADDED',
-            data=parsed,
-        )
+            if 'system' not in parsed:
+                continue
+
+            # Lets ignore CAM messages for now
+            if parsed['system'] in ('CAM', 'ACPI'):
+                continue
+
+            middleware.send_event(
+                f'devd.{parsed["system"]}'.lower(),
+                'ADDED',
+                data=parsed,
+            )
 
 
 def setup(middleware):
-    gevent.spawn(devd_loop, middleware)
+    asyncio.ensure_future(devd_loop(middleware))

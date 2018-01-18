@@ -40,8 +40,8 @@ zfs_func()
 	zpool status
 	section_footer
 
-	section_header "ZFS Pools History"
-	zpool history
+	section_header "ZFS Pools History - excepting replication"
+	zpool history |  egrep -v "zfs.*(snapshot|destroy|recv).*"
 	section_footer
 
 	section_header "ZFS Pools Properties"
@@ -69,5 +69,19 @@ zfs_func()
 		zfs get all "${s}"
 		section_footer
 	done
+	section_footer
+
+	glabel status > /tmp/glabel.out 
+	section_header  "zpool disk membership normal form"
+		zpool status |  ${FREENAS_DEBUG_MODULEDIR}/zfs/normalize_pool.nawk  | tee /tmp/pool.normal
+	section_footer
+	section_header  "enclosure use normal form"
+		sesutil map  |  ${FREENAS_DEBUG_MODULEDIR}/zfs/normalize_ses.nawk  | tee /tmp/ses.normal
+	section_footer
+	section_header  "pool joined to storage"
+		cat  /tmp/pool.normal  |   ${FREENAS_DEBUG_MODULEDIR}/zfs/join_pool.nawk
+	section_footer
+	section_header  "enclusure data joined to pool"
+		cat  /tmp/ses.normal  |   ${FREENAS_DEBUG_MODULEDIR}/zfs/join_ses.nawk
 	section_footer
 }

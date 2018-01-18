@@ -1,4 +1,3 @@
-# +
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -25,14 +24,16 @@
 #
 #####################################################################
 
+import freenasUI.settings
 import csv
 import io
-import freenasUI.settings
 import logging
 import os
 import re
 import sqlite3
 import copy
+import subprocess
+import codecs
 
 from os import popen
 from django.utils.translation import ugettext_lazy as _
@@ -40,6 +41,7 @@ from django.utils.translation import ugettext_lazy as _
 log = logging.getLogger('choices')
 
 HTAUTH_CHOICES = (
+    ('none', _('No Authentication')),
     ('basic', _('Basic Authentication')),
     ('digest', _('Digest Authentication')),
 )
@@ -92,13 +94,14 @@ HDDSTANDBY_CHOICES = (
 
 ADVPOWERMGMT_CHOICES = (
     ('Disabled', _('Disabled')),
-    ('1',   _('Level 1 - Minimum power usage with Standby (spindown)')),
+    ('1',  _('Level 1 - Minimum power usage with Standby (spindown)')),
     ('64',  _('Level 64 - Intermediate power usage with Standby')),
     ('127', _('Level 127 - Maximum power usage with Standby')),
     ('128', _('Level 128 - Minimum power usage without Standby (no spindown)')),
     ('192', _('Level 192 - Intermediate power usage without Standby')),
     ('254', _('Level 254 - Maximum performance, maximum power usage')),
-    )
+)
+
 ACOUSTICLVL_CHOICES = (
     ('Disabled', _('Disabled')),
     ('Minimum', _('Minimum')),
@@ -106,35 +109,26 @@ ACOUSTICLVL_CHOICES = (
     ('Maximum', _('Maximum')),
 )
 
-temp = [str(x) for x in range(0, 12)]
-MINUTES1_CHOICES = tuple(zip(temp, temp))
+MINUTES1_CHOICES = tuple([(str(x), str(x)) for x in range(0, 12)])
 
-temp = [str(x) for x in range(12, 24)]
-MINUTES2_CHOICES = tuple(zip(temp, temp))
+MINUTES2_CHOICES = tuple([(str(x), str(x)) for x in range(12, 24)])
 
-temp = [str(x) for x in range(24, 36)]
-MINUTES3_CHOICES = tuple(zip(temp, temp))
+MINUTES3_CHOICES = tuple([(str(x), str(x)) for x in range(24, 36)])
 
-temp = [str(x) for x in range(36, 48)]
-MINUTES4_CHOICES = tuple(zip(temp, temp))
+MINUTES4_CHOICES = tuple([(str(x), str(x)) for x in range(36, 48)])
 
-temp = [str(x) for x in range(48, 60)]
-MINUTES5_CHOICES = tuple(zip(temp, temp))
+MINUTES5_CHOICES = tuple([(str(x), str(x)) for x in range(48, 60)])
 
-temp = [str(x) for x in range(0, 12)]
-HOURS1_CHOICES = tuple(zip(temp, temp))
+HOURS1_CHOICES = tuple([(str(x), str(x)) for x in range(0, 12)])
 
-temp = [str(x) for x in range(12, 24)]
-HOURS2_CHOICES = tuple(zip(temp, temp))
+HOURS2_CHOICES = tuple([(str(x), str(x)) for x in range(12, 24)])
 
-temp = [str(x) for x in range(1, 13)]
-DAYS1_CHOICES = tuple(zip(temp, temp))
+DAYS1_CHOICES = tuple([(str(x), str(x)) for x in range(1, 13)])
 
-temp = [str(x) for x in range(13, 25)]
-DAYS2_CHOICES = tuple(zip(temp, temp))
+DAYS2_CHOICES = tuple([(str(x), str(x)) for x in range(13, 25)])
 
-temp = [str(x) for x in range(25, 32)]
-DAYS3_CHOICES = tuple(zip(temp, temp))
+DAYS3_CHOICES = tuple([(str(x), str(x)) for x in range(25, 32)])
+
 
 MONTHS_CHOICES = (
     ('1', _('January')),
@@ -183,39 +177,94 @@ CIFS_SMB_PROTO_CHOICES = (
 )
 
 DOSCHARSET_CHOICES = (
-    ('CP437', 'CP437'),
-    ('CP850', 'CP850'),
-    ('CP852', 'CP852'),
-    ('CP866', 'CP866'),
-    ('CP932', 'CP932'),
-    ('CP949', 'CP949'),
-    ('CP950', 'CP950'),
-    ('CP1026', 'CP1026'),
-    ('CP1251', 'CP1251'),
-    ('ASCII', 'ASCII'),
+    'CP437',
+    'CP850',
+    'CP852',
+    'CP866',
+    'CP932',
+    'CP949',
+    'CP950',
+    'CP1026',
+    'CP1251',
+    'ASCII',
 )
 
 UNIXCHARSET_CHOICES = (
-    ('UTF-8', 'UTF-8'),
-    ('iso-8859-1', 'iso-8859-1'),
-    ('iso-8859-15', 'iso-8859-15'),
-    ('gb2312', 'gb2312'),
-    ('EUC-JP', 'EUC-JP'),
-    ('ASCII', 'ASCII'),
+    'UTF-8',
+    'ISO-8859-1',
+    'ISO-8859-15',
+    'GB2312',
+    'EUC-JP',
+    'ASCII',
 )
 
+
+class CHARSET(object):
+
+    __CODEPAGE = re.compile("(?P<name>CP|GB|ISO-8859-|UTF-)(?P<num>\d+)").match
+
+    __canonical = { 'UTF-8', 'ASCII', 'GB2312', 'HZ-GB-2312', 'CP1361' }
+
+    def __check_codec(self, encoding):
+        try:
+            if codecs.lookup(encoding):
+                return encoding.upper()
+        except LookupError:
+            pass
+        return
+
+
+    def __key_cp(self, encoding):
+        cp = CHARSET.__CODEPAGE(encoding)
+        if cp:
+            return tuple((cp.group('name'), int(cp.group('num'), 10)))
+        return tuple((encoding, float('inf')))
+
+
+    def __init__(self, popular=[]):
+
+        self.__popular = popular
+
+        out = subprocess.Popen(['/usr/bin/iconv', '-l'],
+                stdout=subprocess.PIPE,
+                encoding='utf8'
+            ).communicate()[0]
+
+        encodings = set()
+        for line in out.splitlines():
+            enc = [ e for e in line.split() if self.__check_codec(e) ]
+            if enc:
+                cp = enc[0]
+                for e in enc:
+                    if e in CHARSET.__canonical:
+                        cp = e
+                        break
+                encodings.add(cp)
+
+        self.__charsets = [ c for c in sorted(encodings, key=self.__key_cp) if c not in self.__popular ]
+
+    def __iter__(self):
+        if self.__popular:
+            for c in self.__popular:
+                yield(c, c)
+            yield('', '-----')
+
+        for c in self.__charsets:
+            yield(c, c)
+
+
 LOGLEVEL_CHOICES = (
-    ('0',  _('None')),
-    ('1',  _('Minimum')),
-    ('2',  _('Normal')),
-    ('3',  _('Full')),
+    ('0', _('None')),
+    ('1', _('Minimum')),
+    ('2', _('Normal')),
+    ('3', _('Full')),
     ('10', _('Debug')),
 )
 
 CASEFOLDING_CHOICES = (
-    ('none',            _('No case folding')),
-    ('lowercaseboth',   _('Lowercase names in both directions')),
-    ('uppercaseboth',   _('Lowercase names in both directions')),
+    ('none', _('No case folding')),
+    ('lowercaseboth', _('Lowercase names in both directions')),
+    ('uppercaseboth', _('Lowercase names in both directions')),
     ('lowercaseclient', _('Client sees lowercase, server sees uppercase')),
     ('uppercaseclient', _('Client sees uppercase, server sees lowercase')),
 )
@@ -237,8 +286,8 @@ EXTENT_RPM_CHOICES = (
 )
 
 AUTHMETHOD_CHOICES = (
-    ('None',  _('None')),
-    ('CHAP',  _('CHAP')),
+    ('None', _('None')),
+    ('CHAP', _('CHAP')),
     ('CHAP Mutual', _('Mutual CHAP')),
 )
 
@@ -246,22 +295,40 @@ AUTHGROUP_CHOICES = (
     ('None', _('None')),
 )
 
-
 DYNDNSPROVIDER_CHOICES = (
-    ('dyndns@dyndns.org', 'dyndns.org'),
-    ('default@freedns.afraid.org', 'freedns.afraid.org'),
-    ('default@zoneedit.com', 'zoneedit.com'),
-    ('default@no-ip.com', 'no-ip.com'),
-    ('default@easydns.com', 'easydns.com'),
     ('dyndns@3322.org', '3322.org'),
-    ('default@sitelutions.com', 'sitelutions.com'),
-    ('default@dnsomatic.com', 'dnsomatic.com'),
-    ('default@he.net', 'he.net'),
-    ('default@tzo.com', 'tzo.com'),
-    ('default@dynsip.org', 'dynsip.org'),
+    ('default@changeip.com', 'changeip.com'),
+    ('default@cloudxns.net', 'cloudxns.net'),
+    ('default@ddnss.de', 'ddnss.de'),
     ('default@dhis.org', 'dhis.org'),
-    ('default@majimoto.net', 'majimoto.net'),
+    ('default@dnsexit.com', 'dnsexit.com'),
+    ('default@dnsomatic.com', 'dnsomatic.com'),
+    ('default@dnspod.cn', 'dnspod.cn'),
+    ('default@domains.google.com', 'domains.google.com'),
+    ('default@dtdns.com', 'dtdns.com'),
+    ('default@duckdns.org', 'duckdns.org'),
+    ('default@duiadns.net', 'duiadns.net'),
+    ('default@dyndns.org', 'dyndns.org'),
+    ('default@dynsip.org', 'dynsip.org'),
+    ('default@dynv6.com', 'dynv6.com'),
+    ('default@easydns.com', 'easydns.com'),
+    ('default@freedns.afraid.org', 'freedns.afraid.org'),
+    ('default@freemyip.com', 'freemyip.com'),
+    ('default@gira.de', 'gira.de'),
+    ('ipv6tb@he.net', 'he.net'),
+    ('default@ipv4.dynv6.com', 'ipv4.dynv6.com'),
+    ('default@loopia.com', 'loopia.com'),
+    ('default@no-ip.com', 'no-ip.com'),
+    ('ipv4@nsupdate.info', 'nsupdate.info'),
+    ('default@ovh.com', 'ovh.com'),
+    ('default@sitelutions.com', 'sitelutions.com'),
+    ('default@spdyn.de', 'spdyn.de'),
+    ('default@strato.com', 'strato.com'),
+    ('default@tunnelbroker.net', 'tunnelbroker.net'),
+    ('default@tzo.com', 'tzo.com'),
     ('default@zerigo.com', 'zerigo.com'),
+    ('default@zoneedit.com', 'zoneedit.com'),
+    ('custom', 'Custom Provider')
 )
 
 SNMP_CHOICES = (
@@ -269,6 +336,17 @@ SNMP_CHOICES = (
     ('netgraph', 'Netgraph'),
     ('hostresources', 'Host resources'),
     ('UCD-SNMP-MIB ', 'UCD-SNMP-MIB'),
+)
+
+SNMP_LOGLEVEL = (
+    (0, _('Emergency')),
+    (1, _('Alert')),
+    (2, _('Critical')),
+    (3, _('Error')),
+    (4, _('Warning')),
+    (5, _('Notice')),
+    (6, _('Info')),
+    (7, _('Debug')),
 )
 
 UPS_CHOICES = (
@@ -300,28 +378,52 @@ LAGGType = (
     ('none',        'None'),
 )
 
+VLAN_PCP_CHOICES = (
+    (0, _('Best effort (default)')),
+    (1, _('Background (lowest)')),
+    (2, _('Excellent effort')),
+    (3, _('Critical applications')),
+    (4, _('Video, < 100ms latency')),
+    (5, _('Video, < 10ms latency')),
+    (6, _('Internetwork control')),
+    (7, _('Network control (highest)')),
+)
+
 ZFS_AtimeChoices = (
     ('inherit', _('Inherit')),
-    ('on',      _('On')),
-    ('off',     _('Off')),
+    ('on', _('On')),
+    ('off', _('Off')),
+)
+
+ZFS_ReadonlyChoices = (
+    ('inherit', _('Inherit')),
+    ('on', _('On')),
+    ('off', _('Off')),
+)
+
+
+ZFS_ExecChoices = (
+    ('inherit', _('Inherit')),
+    ('on', _('On')),
+    ('off', _('Off')),
 )
 
 ZFS_CompressionChoices = (
     ('inherit', _('Inherit')),
-    ('off',     _('Off')),
-    ('lz4',     _('lz4 (recommended)')),
-    ('gzip',    _('gzip (default level, 6)')),
-    ('gzip-1',  _('gzip (fastest)')),
-    ('gzip-9',  _('gzip (maximum, slow)')),
-    ('zle',     _('zle (runs of zeros)')),
-    ('lzjb',    _('lzjb (legacy, not recommended)')),
+    ('off', _('Off')),
+    ('lz4', _('lz4 (recommended)')),
+    ('gzip', _('gzip (default level, 6)')),
+    ('gzip-1', _('gzip (fastest)')),
+    ('gzip-9', _('gzip (maximum, slow)')),
+    ('zle', _('zle (runs of zeros)')),
+    ('lzjb', _('lzjb (legacy, not recommended)')),
 )
 
 Repl_CompressionChoices = (
-    ('off',     _('Off')),
-    ('lz4',     _('lz4 (fastest)')),
-    ('pigz',    _('pigz (all rounder)')),
-    ('plzip',   _('plzip (best compression)')),
+    ('off', _('Off')),
+    ('lz4', _('lz4 (fastest)')),
+    ('pigz', _('pigz (all rounder)')),
+    ('plzip', _('plzip (best compression)')),
 )
 
 
@@ -340,10 +442,22 @@ class whoChoices:
 # Network|Interface Management
 class NICChoices(object):
     """Populate a list of NIC choices"""
-    def __init__(self, nolagg=False, novlan=False,
+    def __init__(self, nolagg=False, novlan=False, notap=True,
                  exclude_configured=True, include_vlan_parent=False,
                  exclude_unconfigured_vlan_parent=False,
                  with_alias=False, nobridge=True, noepair=True):
+
+        self.nolagg = nolagg
+        self.novlan = novlan
+        self.notap = notap
+        self.exclude_configured = exclude_configured
+        self.include_vlan_parent = include_vlan_parent
+        self.exclude_unconfigured_vlan_parent = exclude_unconfigured_vlan_parent
+        self.with_alias = with_alias
+        self.nobridge = noepair
+        self.noepair = noepair
+
+    def __iter__(self):
         pipe = popen("/sbin/ifconfig -l")
         self._NIClist = pipe.read().strip().split(' ')
         # Remove lo0 from choices
@@ -374,11 +488,11 @@ class NICChoices(object):
                 if interface[0] in self._NIClist:
                     self._NIClist.remove(interface[0])
 
-        if nolagg:
+        if self.nolagg:
             # vlan devices are not valid parents of laggs
             self._NIClist = [nic for nic in self._NIClist if not nic.startswith("lagg")]
             self._NIClist = [nic for nic in self._NIClist if not nic.startswith("vlan")]
-        if novlan:
+        if self.novlan:
             self._NIClist = [nic for nic in self._NIClist if not nic.startswith("vlan")]
         else:
             # This removes devices that are parents of vlans.  We don't
@@ -387,7 +501,7 @@ class NICChoices(object):
             # The exception to this case is when we are getting the NIC
             # list for the GUI, in which case we want the vlan parents
             # as they may have a valid config on them.
-            if not include_vlan_parent or exclude_unconfigured_vlan_parent:
+            if not self.include_vlan_parent or self.exclude_unconfigured_vlan_parent:
                 try:
                     c.execute("SELECT vlan_pint FROM network_vlan")
                 except sqlite3.OperationalError:
@@ -397,7 +511,7 @@ class NICChoices(object):
                         if interface[0] in self._NIClist:
                             self._NIClist.remove(interface[0])
 
-            if exclude_unconfigured_vlan_parent:
+            if self.exclude_unconfigured_vlan_parent:
                 # Add the configured VLAN parents back in
                 try:
                     c.execute("SELECT vlan_pint FROM network_vlan "
@@ -414,7 +528,7 @@ class NICChoices(object):
                         if interface[0] not in self._NIClist:
                             self._NIClist.append(interface[0])
 
-        if with_alias:
+        if self.with_alias:
             try:
                 sql = """
                     SELECT
@@ -440,12 +554,10 @@ class NICChoices(object):
                     if interface not in aliased_nics:
                         self._NIClist.remove(interface)
 
-        if exclude_configured:
+        if self.exclude_configured:
             try:
                 # Exclude any configured interfaces
-                c.execute("SELECT int_interface FROM network_interfaces "
-                          "WHERE int_ipv4address != '' OR int_dhcp != '0' "
-                          "OR int_ipv6auto != '0' OR int_ipv6address != ''")
+                c.execute("SELECT int_interface FROM network_interfaces")
             except sqlite3.OperationalError:
                 pass
             else:
@@ -453,21 +565,23 @@ class NICChoices(object):
                     if interface[0] in self._NIClist:
                         self._NIClist.remove(interface[0])
 
-        if nobridge:
+        if self.nobridge:
             self._NIClist = [nic for nic in self._NIClist if not nic.startswith("bridge")]
 
-        if noepair:
+        if self.noepair:
             niclist = copy.deepcopy(self._NIClist)
             for nic in niclist:
                 if nic.startswith('epair'):
                     self._NIClist.remove(nic)
 
+        if self.notap:
+            taplist = copy.deepcopy(self._NIClist)
+            for nic in taplist:
+                if nic.startswith('tap'):
+                    self._NIClist.remove(nic)
+
         self.max_choices = len(self._NIClist)
 
-    def remove(self, nic):
-        return self._NIClist.remove(nic)
-
-    def __iter__(self):
         return iter((i, i) for i in self._NIClist)
 
 
@@ -488,6 +602,11 @@ class IPChoices(NICChoices):
             exclude_configured=exclude_configured,
             include_vlan_parent=include_vlan_parent
         )
+        self.ipv4 = ipv4
+        self.ipv6 = ipv6
+
+    def __iter__(self):
+        self._NIClist = list(super(IPChoices, self).__iter__())
 
         from freenasUI.middleware.notifier import notifier
         _n = notifier()
@@ -501,7 +620,7 @@ class IPChoices(NICChoices):
 
         self._IPlist = []
         for iface in self._NIClist:
-            pipe = popen("/sbin/ifconfig %s" % iface)
+            pipe = popen("/sbin/ifconfig %s" % iface[0])
             lines = pipe.read().strip().split('\n')
             for line in lines:
                 if carp:
@@ -509,18 +628,14 @@ class IPChoices(NICChoices):
                     if not reg:
                         continue
                 if line.startswith('\tinet6'):
-                    if ipv6 is True:
+                    if self.ipv6 is True:
                         self._IPlist.append(line.split(' ')[1].split('%')[0])
                 elif line.startswith('\tinet'):
-                    if ipv4 is True:
+                    if self.ipv4 is True:
                         self._IPlist.append(line.split(' ')[1])
             pipe.close()
             self._IPlist.sort()
 
-    def remove(self, addr):
-        return self._IPlist.remove(addr)
-
-    def __iter__(self):
         if not self._IPlist:
             return iter([('0.0.0.0', '0.0.0.0')])
         return iter((i, i) for i in self._IPlist)
@@ -538,6 +653,7 @@ class TimeZoneChoices:
 
     def __iter__(self):
         return iter((i, i) for i in self._TimeZoneList)
+
 
 v4NetmaskBitList = (
     ('32', '/32 (255.255.255.255)'),
@@ -693,8 +809,8 @@ RSYNC_DIRECTION = (
 
 
 class KBDMAP_CHOICES(object):
-    """Populate choices from /usr/share/syscons/keymaps/INDEX.keymaps"""
-    INDEX = "/usr/share/syscons/keymaps/INDEX.keymaps"
+    """Populate choices from /usr/share/vt/keymaps/INDEX.keymaps"""
+    INDEX = "/usr/share/vt/keymaps/INDEX.keymaps"
 
     def __iter__(self):
         if not os.path.exists(self.INDEX):
@@ -736,7 +852,6 @@ DIRECTORY_SERVICE_CHOICES = (
     ('activedirectory', _('Active Directory')),
     ('domaincontroller', _('Domain Controller')),
     ('ldap', _('LDAP')),
-    ('nt4', _('NT4')),
     ('nis', _('NIS')),
     )
 
@@ -814,6 +929,7 @@ class JAIL_TEMPLATE_CHOICES(object):
         for jt in JailTemplate.objects.exclude(jt_system=True):
             yield (jt.jt_name, jt.jt_name)
 
+
 REPL_CIPHER = (
     ('standard', _('Standard')),
     ('fast', _('Fast')),
@@ -866,7 +982,7 @@ class SERIAL_CHOICES(object):
             yield ('0x3f8', '0x3f8')
         else:
             pipe = popen("/usr/sbin/devinfo -u | "
-                         "awk '/^I\/O ports:/, /^I\/O memory addresses:/' | "
+                         "grep -A 99999 '^I/O ports:' | "
                          "sed -En 's/ *([0-9a-fA-Fx]+).*\(uart[0-9]+\)/\\1/p'")
             ports = [y for y in pipe.read().strip().strip('\n').split('\n') if y]
             if not ports:
@@ -882,7 +998,7 @@ TUNABLE_TYPES = (
 )
 
 CONSULALERTS_TYPES = (
-    ('AWS-SNS', _('AWS-SNS')),
+    ('AWSSNS', _('AWS-SNS')),
     ('HipChat', _('HipChat')),
     ('InfluxDB', _('InfluxDB')),
     ('Mattermost', _('Mattermost')),
@@ -890,20 +1006,6 @@ CONSULALERTS_TYPES = (
     ('PagerDuty', _('PagerDuty')),
     ('Slack', _('Slack')),
     ('VictorOps', _('VictorOps')),
-)
-
-IDMAP_CHOICES = (
-    ('ad', _('ad')),
-    ('adex', _('adex')),
-    ('autorid', _('autorid')),
-    ('fruit', _('fruit')),
-    ('hash', _('hash')),
-    ('ldap', _('ldap')),
-    ('nss', _('nss')),
-    ('rfc2307', _('rfc2307')),
-    ('rid', _('rid')),
-    ('tdb', _('tdb')),
-    ('tdb2', _('tdb2'))
 )
 
 CERT_TYPE_CA_CHOICES = (
@@ -923,7 +1025,6 @@ CERT_KEY_LENGTH_CHOICES = (
     (2048, '2048'),
     (4096, '4096')
 )
-
 
 CERT_DIGEST_ALGORITHM_CHOICES = (
     ('SHA1', _('SHA1')),
@@ -1036,25 +1137,52 @@ LDAP_SCHEMA_CHOICES = (
 )
 
 
+class IDMAP_CHOICES(object):
+
+    def __init__(self):
+        from freenasUI.directoryservice.models import idmap_to_enum
+
+        self.__idmap_modules_path = '/usr/local/lib/shared-modules/idmap'
+        self.__idmap_modules = []
+        self.__idmap_exclude = {'passdb', 'hash'}
+
+        if os.path.exists(self.__idmap_modules_path):
+            self.__idmap_modules.extend(
+                filter(
+                    lambda m: idmap_to_enum(m) and m not in self.__idmap_exclude,
+                    map(
+                        lambda f: f.rpartition('.')[0],
+                        os.listdir(self.__idmap_modules_path)
+                    )
+                )
+            )
+
+    def __iter__(self):
+        return iter((m, m) for m in sorted(self.__idmap_modules))
+
+
 class CIFS_VFS_OBJECTS(object):
     def __init__(self):
-        self.__vfs_module_path = '/usr/local/lib/shared-modules/vfs'
+        self.__vfs_modules_path = '/usr/local/lib/shared-modules/vfs'
         self.__vfs_modules = []
-        self.__vfs_exclude = [
-            'shadow_copy2',
-            'recycle',
-        ]
+        self.__vfs_exclude = {'shadow_copy2', 'recycle', 'aio_pthread'}
 
-        if os.path.exists(self.__vfs_module_path):
-            for f in os.listdir(self.__vfs_module_path):
-                f = f.replace('.so', '')
-                if f not in self.__vfs_exclude:
-                    self.__vfs_modules.append(f)
+        if os.path.exists(self.__vfs_modules_path):
+            self.__vfs_modules.extend(
+                filter(
+                    lambda m: m not in self.__vfs_exclude,
+                    map(
+                        lambda f: f.rpartition('.')[0],
+                        os.listdir(self.__vfs_modules_path)
+                    )
+                )
+            )
         else:
-            self.__vfs_modules += ['streams_xattr', 'aio_pthread']
+            self.__vfs_modules.extend(['streams_xattr'])
 
     def __iter__(self):
         return iter((m, m) for m in sorted(self.__vfs_modules))
+
 
 AFP_MAP_ACLS_CHOICES = (
     ('none', _('None')),
@@ -1072,14 +1200,17 @@ AFP_CHMOD_REQUEST_CHOICES = (
 
 CLOUD_PROVIDERS = (
     ('AMAZON', _('Amazon S3')),
+    ('AZURE', _('Azure Blob Storage')),
+    ('BACKBLAZE', _('Backblaze B2')),
+    ('GCLOUD', _('Google Cloud Storage')),
 )
 
 
 VM_BOOTLOADER = (
-    #('BHYVELOAD', _('Bhyve Load')),
+    # ('BHYVELOAD', _('Bhyve Load')),
     ('UEFI', _('UEFI')),
     ('UEFI_CSM', _('UEFI-CSM')),
-    #('GRUB', _('Grub')),
+    # ('GRUB', _('Grub')),
 )
 
 
@@ -1095,6 +1226,7 @@ VM_NICTYPES = (
     ('E1000', _('Intel e82545 (e1000)')),
     ('VIRTIO', _('VirtIO')),
 )
+
 VNC_RESOLUTION = (
     ('1920x1080', _('1920x1080')),
     ('1400x1050', _('1400x1050')),
@@ -1113,4 +1245,15 @@ VM_DISKMODETYPES = (
 S3_MODES = (
     ('local', _('local')),
     ('distributed', _('distributed'))
+)
+
+IPMI_IDENTIFY_PERIOD = (
+    ('force', _('Indefinitely')),
+    ('15', _('15 seconds')),
+    ('30', _('30 seconds')),
+    ('60', _('1 minute')),
+    ('120', _('2 minutes')),
+    ('180', _('3 minutes')),
+    ('240', _('4 minutes')),
+    ('0', _('Turn off')),
 )

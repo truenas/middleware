@@ -728,7 +728,7 @@ def add_ldap_section(client, sc):
     if ldap.ldap_auxiliary_parameters:
         path = tempfile.mktemp(dir='/tmp')
         with open(path, 'wb+') as f:
-            f.write(ldap.ldap_auxiliary_parameters)
+            f.write(ldap.ldap_auxiliary_parameters.encode('utf-8'))
 
         aux_sc = SSSDConf(path=path, cookie=sc.cookie)
         os.unlink(path)
@@ -843,8 +843,8 @@ def get_activedirectory_cookie(client):
     cookie = ''
 
     if client.call('notifier.common', 'system', 'activedirectory_enabled'):
-        cifs = Struct(client.call('cifs.config'))
-        cookie = cifs.netbiosname.upper()
+        smb = Struct(client.call('smb.config'))
+        cookie = smb.netbiosname.upper()
         parts = cookie.split('.')
         cookie = parts[0]
 

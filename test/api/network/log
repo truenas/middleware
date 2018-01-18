@@ -1,7 +1,0 @@
-Global Configure: Done *GET PUT
-Interface: Done *GET PUT DELETE
-           Report: POST int_interface: [u'Select a valid choice. em0 is not one of the available choices.']
-VLAN: Done *GET POST PUT DELETE
-Lagg: On Process
-Static Route: Done *GET POST PUT DELETE
-              Report: status_code is 500 when DELETE succeed

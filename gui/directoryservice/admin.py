@@ -31,8 +31,10 @@ from django.utils.translation import ugettext as _
 from freenasUI.api.resources import (
     KerberosRealmResourceMixin,
     KerberosKeytabResourceMixin,
+    KerberosPrincipalResourceMixin,
     KerberosSettingsResourceMixin
 )
+from freenasUI.api.utils import DojoModelFormResourceMixin
 from freenasUI.directoryservice import models
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
@@ -48,6 +50,7 @@ class ActiveDirectoryFAdmin(BaseFreeAdmin):
     icon_model = "ActiveDirectoryIcon"
     icon_add = "ActiveDirectoryIcon"
     icon_view = "ActiveDirectoryIcon"
+    resource_mixin = DojoModelFormResourceMixin
 
 
 class LDAPFAdmin(BaseFreeAdmin):
@@ -58,6 +61,7 @@ class LDAPFAdmin(BaseFreeAdmin):
     icon_model = "LDAPIcon"
     icon_add = "LDAPIcon"
     icon_view = "LDAPIcon"
+    resource_mixin = DojoModelFormResourceMixin
 
 
 class NISFAdmin(BaseFreeAdmin):
@@ -70,16 +74,6 @@ class NISFAdmin(BaseFreeAdmin):
     icon_view = "NISIcon"
 
 
-class NT4FAdmin(BaseFreeAdmin):
-    create_modelform = "NT4Form"
-    deletable = False
-    edit_modelform = "NT4Form"
-    icon_object = "NT4Icon"
-    icon_model = "NT4Icon"
-    icon_add = "NT4Icon"
-    icon_view = "NT4Icon"
-
-
 class KerberosRealmFAdmin(BaseFreeAdmin):
     create_modelform = "KerberosRealmForm"
     edit_modelform = "KerberosRealmForm"
@@ -87,7 +81,6 @@ class KerberosRealmFAdmin(BaseFreeAdmin):
     icon_model = "KerberosRealmIcon"
     icon_add = "KerberosRealmIcon"
     icon_view = "KerberosRealmIcon"
-
     resource_mixin = KerberosRealmResourceMixin
 
 
@@ -113,8 +106,14 @@ class KerberosKeytabFAdmin(BaseFreeAdmin):
 
     def get_datagrid_context(self, request):
         context = super(KerberosKeytabFAdmin, self).get_datagrid_context(request)
-        context.update({'add_url': reverse('directoryservice_kerberoskeytab_add')})
+        context.update({
+            'add_url': reverse('directoryservice_kerberoskeytab_add')
+        })
         return context
+
+
+class KerberosPrincipalFAdmin(BaseFreeAdmin):
+    resource_mixin = KerberosPrincipalResourceMixin
 
 
 class KerberosSettingsFAdmin(BaseFreeAdmin):
@@ -125,13 +124,13 @@ class KerberosSettingsFAdmin(BaseFreeAdmin):
     icon_add = "SettingsIcon"
     icon_view = "SettingsIcon"
     deletable = False
-
     resource_mixin = KerberosSettingsResourceMixin
+
 
 site.register(models.ActiveDirectory, ActiveDirectoryFAdmin)
 site.register(models.LDAP, LDAPFAdmin)
 site.register(models.NIS, NISFAdmin)
-site.register(models.NT4, NT4FAdmin)
 site.register(models.KerberosRealm, KerberosRealmFAdmin)
 site.register(models.KerberosKeytab, KerberosKeytabFAdmin)
+site.register(models.KerberosPrincipal, KerberosPrincipalFAdmin)
 site.register(models.KerberosSettings, KerberosSettingsFAdmin)

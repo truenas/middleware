@@ -295,7 +295,6 @@ dirsrv_enabled()
 		domaincontroller) domaincontroller_enabled; return $? ;;
 		ldap) ldap_enabled; return $? ;;
 		nis) nis_enabled; return $? ;;
-		nt4) nt4_enabled; return $? ;;
 	esac
 
 	return 2
@@ -316,7 +315,6 @@ dirsrv_set()
 		domaincontroller) domaincontroller_set "${enable}"; return $? ;;
 		ldap) ldap_enabled "${enable}"; return $? ;;
 		nis) nis_enabled "${enable}"; return $? ;;
-		nt4) nt4_enabled "${enable}"; return $? ;;
 	esac
 
 	return 2

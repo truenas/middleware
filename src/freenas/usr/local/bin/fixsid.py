@@ -39,14 +39,12 @@ if sanity:
     from freenasUI.common.system import (
         activedirectory_enabled,
         domaincontroller_enabled,
-        ldap_enabled,
-        nt4_enabled
+        ldap_enabled
     )
 
     if (activedirectory_enabled() or
             domaincontroller_enabled() or
-            ldap_enabled() or
-            nt4_enabled()):
+            ldap_enabled()):
         print("A directory service is enabled, aborting without making changes.")
         exit(1)
 
