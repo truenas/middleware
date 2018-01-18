@@ -893,6 +893,33 @@ Re-Key
    :statuscode 202: no error
 
 
+Key Passphrase
+++++++++++++
+
+.. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/keypassphrase/
+
+   Creatre key passphrase for volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume/tank/keypassphrase/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        Volume passphrase has been set.
+
+   :resheader Content-Type: content type of the response
+   :statuscode 201: no error
+
 Status
 ++++++
 
