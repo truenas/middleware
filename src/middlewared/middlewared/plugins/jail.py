@@ -288,6 +288,12 @@ class JailService(CRUDService):
 
         return True
 
+    @accepts(Str("jail"))
+    def console(self, jail):
+        """Start an interactive console inside the jail"""
+        _, _, iocage = self.check_jail_existence(jail)
+        return iocage.exec("", console=True)
+
     @accepts(Str("ds_type", enum=["ALL", "JAIL", "TEMPLATE", "RELEASE"]))
     def clean(self, ds_type):
         """Cleans all iocage datasets of ds_type"""
