@@ -827,6 +827,11 @@ class ServiceService(CRUDService):
         await self._service("inadyn", "stop", force=True, **kwargs)
         await self._service("inadyn", "restart", **kwargs)
 
+    async def _reload_dynamicdns(self, **kwargs):
+        await self._service("ix-inadyn", "start", quiet=True, **kwargs)
+        await self._service("inadyn", "stop", force=True, **kwargs)
+        await self._service("inadyn", "restart", **kwargs)
+
     async def _restart_system(self, **kwargs):
         asyncio.ensure_future(self._system("/bin/sleep 3 && /sbin/shutdown -r now"))
 
