@@ -1,12 +1,12 @@
 throttle(['FreeNAS']) {
   node('FreeNAS-ISO') {
-      checkout([
-        $class: 'GitSCM',
-        branches: scm.branches,
-        extensions: scm.extensions + [[$class: 'CloneOption', timeout: 1200]],
-        userRemoteConfigs: scm.userRemoteConfigs
-      ])
       stage('Checkout') {
+        checkout([
+          $class: 'GitSCM',
+          branches: scm.branches,
+          extensions: scm.extensions + [[$class: 'CloneOption', timeout: 1200]],
+          userRemoteConfigs: scm.userRemoteConfigs
+        ])
         checkout scm
       }
       stage('ixbuild') {
