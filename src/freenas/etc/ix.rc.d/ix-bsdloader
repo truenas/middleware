@@ -1,0 +1,60 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-bsdloader
+# BEFORE: ix-fstab
+
+. /etc/rc.freenas
+
+migrate_bsd_loader()
+{
+	grep -q "grub" /etc/fstab
+	if [ $? -ne 0 ] ; then
+		# Nothing to do
+		return 0
+	fi
+
+	echo "Removing GRUB dataset"
+	zfs destroy -R -f freenas-boot/grub
+
+	# Thow the new boot-loader on each disk
+        for disk in $(sysctl -n kern.disks); do
+        	if gpart show ${disk} | grep -q bios-boot; then
+			gpart modify -i 1 -t freebsd-boot /dev/${disk}
+			gpart bootcode -b /boot/pmbr -p /boot/gptzfsboot -i 1 /dev/${disk}
+		elif sysctl -n machdep.bootmethod | fgrep -q "EFI" && gpart show ${disk} | grep -q efi; then
+			if mount -t msdosfs /dev/${disk}p1 /boot/efi; then
+				cp /boot/boot1.efi /boot/efi/efi/boot/BOOTx64.efi
+				umount -f /boot/efi
+	                fi
+		fi
+	done
+
+	# Sanitize the old BE's by removing grub fstab entries
+	_cDir="/tmp/_beClean"
+	if [ ! -d "${_cDir}" ] ; then
+	 	mkdir ${_cDir}
+	fi
+
+	# Sanitize the old BE's by removing grub fstab entries
+	for _be in `zfs list -H -d 1 freenas-boot/ROOT | awk '{print $1}' | cut -d '/' -f 3`
+	do
+		zfs mount -t zfs freenas-boot/ROOT/${_be} ${_cDir}
+		if [ -e ${_cDir}/etc/fstab ] ; then
+			cp ${_cDir}/etc/fstab ${_cDir}/etc/fstab.oldGRUB
+			cat ${_cDir}/etc/fstab.oldGRUB | grep -v "^freenas-boot/grub" > ${_cDir}/etc/fstab
+			rm ${_cDir}/etc/fstab.oldGRUB
+		fi
+		umount -f ${_cDir}
+	done
+	rmdir ${_cDir}
+}
+
+name="ix-bsdloader"
+start_cmd='migrate_bsd_loader'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
