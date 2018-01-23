@@ -5,7 +5,7 @@ throttle(['FreeNAS']) {
       }
       stage('ixbuild') {
         echo 'Starting iXBuild Framework pipeline'
-	sh '/ixbuild/jenkins.sh freenas pipeline'
+	sh '/ixbuild/jenkins.sh freenas freenas-pipeline'
       }
       post {
         always {
