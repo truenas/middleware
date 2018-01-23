@@ -1,0 +1,15 @@
+#!/usr/bin/env expect
+
+set vm [lindex $argv 0];
+set logfilepath [lindex $argv 1];
+log_file "$logfilepath"
+set timeout 1800
+set PID [spawn vm console "$vm"]
+send_user "Spawned PID: $PID \n"
+
+expect {
+  "Enter an option from 1-12:" {
+    sleep .5
+    exit
+  }
+}
