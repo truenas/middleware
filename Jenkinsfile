@@ -1,7 +1,7 @@
 throttle(['FreeNAS']) {
   node('FreeNAS-ISO') {
       stage('Checkout') {
-	checkout([$class: 'GitSCM', branches: scm.branches, doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 60]], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/freenas/freenas.git']]])
+	checkout scm
       }
       stage('ixbuild') {
         echo 'Starting iXBuild Framework pipeline'
