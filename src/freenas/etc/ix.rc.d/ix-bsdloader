@@ -32,15 +32,21 @@ migrate_bsd_loader()
 		fi
 	done
 
-	# Sanitize the old BE's by removing grub fstab entries
 	_cDir="/tmp/_beClean"
 	if [ ! -d "${_cDir}" ] ; then
 	 	mkdir ${_cDir}
 	fi
 
+	# Get the current BE
+	curBE=$(mount | grep 'on / ' | awk '{print $1}' | cut -d '/' -f 3)
+
 	# Sanitize the old BE's by removing grub fstab entries
 	for _be in `zfs list -H -d 1 freenas-boot/ROOT | awk '{print $1}' | cut -d '/' -f 3`
 	do
+		# Skip the currently mounted BE
+		if [ "$curBE" = "${_be}" ] ; then continue ; fi
+
+		# Mount the old BE and start cleaning
 		zfs mount -t zfs freenas-boot/ROOT/${_be} ${_cDir}
 		if [ -e ${_cDir}/etc/fstab ] ; then
 			cp ${_cDir}/etc/fstab ${_cDir}/etc/fstab.oldGRUB
@@ -50,6 +56,11 @@ migrate_bsd_loader()
 		umount -f ${_cDir}
 	done
 	rmdir ${_cDir}
+
+	# Cleanup current BE environment
+	cp /etc/fstab /etc/fstab.oldGRUB
+	cat /etc/fstab.oldGRUB | grep -v "^freenas-boot/grub" > /etc/fstab
+	rm /etc/fstab.oldGRUB
 }
 
 name="ix-bsdloader"
