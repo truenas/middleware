@@ -3,9 +3,11 @@ throttle(['FreeNAS']) {
       stage('Checkout') {
 	checkout scm
       }
-      stage('ixbuild') {
-        echo 'Starting iXBuild Framework pipeline'
-	sh '/ixbuild/jenkins.sh freenas freenas-pipeline'
+      withEnv(['GH_ORG=freenas','GH_REPO=freenas']) {
+        stage('ixbuild') {
+          echo 'Starting iXBuild Framework pipeline'
+	  sh '/ixbuild/jenkins.sh freenas freenas-pipeline'
+        }
       }
       post {
         always {
