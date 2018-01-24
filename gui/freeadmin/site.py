@@ -13,7 +13,7 @@ from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 
-from freenasUI.common.system import get_sw_name, get_sw_version
+from freenasUI.common.system import get_sw_name, get_sw_year, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.options import BaseFreeAdmin
 
@@ -227,6 +227,7 @@ class FreeAdminSite(object):
             'consolemsg': console,
             'hostname': hostname,
             'sw_name': get_sw_name(),
+            'sw_year': get_sw_year(),
             'sw_version': sw_version,
             'sw_version_footer': sw_version_footer,
             'cache_hash': hashlib.md5(sw_version.encode('utf8')).hexdigest(),
