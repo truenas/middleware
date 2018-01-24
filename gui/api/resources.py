@@ -85,6 +85,7 @@ from freenasUI.storage.forms import (
     CloneSnapshotForm,
     MountPointAccessForm,
     ReKeyForm,
+    CreatePassphraseForm,
     UnlockPassphraseForm,
     VolumeAutoImportForm,
     VolumeManagerForm,
@@ -738,6 +739,12 @@ class VolumeResourceMixin(NestedMixin):
                 ),
                 self.wrap_view('rekey')
             ),
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/keypassphrase%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('keypassphrase')
+            ),
         ]
 
     def replace_disk(self, request, **kwargs):
@@ -893,7 +900,26 @@ class VolumeResourceMixin(NestedMixin):
             )
         else:
             form.done()
-        return HttpResponse('Volume key has been recreated.', status=202)
+        return HttpResponse('Volume has been rekeyed.', status=202)
+
+    def keypassphrase(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        form = CreatePassphraseForm(deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.done(obj)
+        return HttpResponse('Volume passphrase has been set.', status=201)
 
     def status(self, request, **kwargs):
         self.method_check(request, allowed=['get'])

@@ -427,13 +427,19 @@ class ServiceService(CRUDService):
 
     async def _stop_jails(self, **kwargs):
         for jail in await self.middleware.call('datastore.query', 'jails.jails'):
-            await self.middleware.call('notifier.warden', 'stop', [], {'jail': jail['jail_host']})
+            try:
+                await self.middleware.call('notifier.warden', 'stop', [], {'jail': jail['jail_host']})
+            except Exception as e:
+                self.logger.debug(f'Failed to stop jail {jail["jail_host"]}', exc_info=True)
 
     async def _start_jails(self, **kwargs):
         await self._service("ix-warden", "start", **kwargs)
         for jail in await self.middleware.call('datastore.query', 'jails.jails'):
             if jail['jail_autostart']:
-                await self.middleware.call('notifier.warden', 'start', [], {'jail': jail['jail_host']})
+                try:
+                    await self.middleware.call('notifier.warden', 'start', [], {'jail': jail['jail_host']})
+                except Exception as e:
+                    self.logger.debug(f'Failed to start jail {jail["jail_host"]}', exc_info=True)
         await self._service("ix-plugins", "start", **kwargs)
         await self.reload("http", kwargs)
 
@@ -821,6 +827,11 @@ class ServiceService(CRUDService):
         return res, []
 
     async def _restart_dynamicdns(self, **kwargs):
+        await self._service("ix-inadyn", "start", quiet=True, **kwargs)
+        await self._service("inadyn", "stop", force=True, **kwargs)
+        await self._service("inadyn", "restart", **kwargs)
+
+    async def _reload_dynamicdns(self, **kwargs):
         await self._service("ix-inadyn", "start", quiet=True, **kwargs)
         await self._service("inadyn", "stop", force=True, **kwargs)
         await self._service("inadyn", "restart", **kwargs)
