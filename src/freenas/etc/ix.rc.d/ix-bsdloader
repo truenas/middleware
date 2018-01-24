@@ -21,6 +21,15 @@ migrate_bsd_loader()
 
 	# Thow the new boot-loader on each disk
         for disk in $(sysctl -n kern.disks); do
+		# Check if the disk has a gptid on the second "p2" partition
+		gptid=$(gpart list $disk | grep rawuuid | sed -n 2p | awk '{print $2}')
+		# If we didn't find a gptid for this disk / partition, set to a bogus name so we dont match
+		if [ -z "$gptid" ] ; then gptid="bogusdisknamenotused" ; fi
+
+		# Does this disk exist in freenas-boot?
+		zpool status freenas-boot | grep -q -e " ${disk}p2 " -e " gptid/$gptid "
+		if [ $? -ne 0 ] ; then continue ; fi
+
         	if gpart show ${disk} | grep -q bios-boot; then
 			gpart modify -i 1 -t freebsd-boot /dev/${disk}
 			gpart bootcode -b /boot/pmbr -p /boot/gptzfsboot -i 1 /dev/${disk}
