@@ -1,0 +1,84 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-bsdloader
+# BEFORE: ix-fstab
+
+. /etc/rc.freenas
+
+migrate_bsd_loader()
+{
+	grep -q "grub" /etc/fstab
+	if [ $? -ne 0 ] ; then
+		# Nothing to do
+		return 0
+	fi
+
+	echo "Removing GRUB dataset"
+	zfs destroy -R -f freenas-boot/grub
+
+	# Thow the new boot-loader on each disk
+        for disk in $(sysctl -n kern.disks); do
+		# Check if the disk has a gptid on the second "p2" partition
+		gptid=$(gpart list $disk | grep rawuuid | sed -n 2p | awk '{print $2}')
+		# If we didn't find a gptid for this disk / partition, set to a bogus name so we dont match
+		if [ -z "$gptid" ] ; then gptid="bogusdisknamenotused" ; fi
+
+		# Does this disk exist in freenas-boot?
+		zpool status freenas-boot | grep -q -e " ${disk}p2 " -e " gptid/$gptid "
+		if [ $? -ne 0 ] ; then continue ; fi
+
+        	if gpart show ${disk} | grep -q bios-boot; then
+			gpart modify -i 1 -t freebsd-boot /dev/${disk}
+			gpart bootcode -b /boot/pmbr -p /boot/gptzfsboot -i 1 /dev/${disk}
+		elif sysctl -n machdep.bootmethod | fgrep -q "EFI" && gpart show ${disk} | grep -q efi; then
+			if mount -t msdosfs /dev/${disk}p1 /boot/efi; then
+				cp /boot/boot1.efi /boot/efi/efi/boot/BOOTx64.efi
+				umount -f /boot/efi
+	                fi
+		fi
+	done
+
+	_cDir="/tmp/_beClean"
+	if [ ! -d "${_cDir}" ] ; then
+	 	mkdir ${_cDir}
+	fi
+
+	# Get the current BE
+	curBE=$(mount | grep 'on / ' | awk '{print $1}' | cut -d '/' -f 3)
+
+	# Sanitize the old BE's by removing grub fstab entries
+	for _be in `zfs list -H -d 1 freenas-boot/ROOT | awk '{print $1}' | cut -d '/' -f 3`
+	do
+		# Skip the currently mounted BE
+		if [ "$curBE" = "${_be}" ] ; then continue ; fi
+
+		# Mount the old BE and start cleaning
+		zfs mount -t zfs freenas-boot/ROOT/${_be} ${_cDir}
+		if [ -e ${_cDir}/etc/fstab ] ; then
+			ed ${_cDir}/etc/fstab << EOF
+g#^freenas-boot/grub#d
+w
+q
+EOF
+		fi
+		umount -f ${_cDir}
+	done
+	rmdir ${_cDir}
+
+	# Cleanup current BE environment
+	ed /etc/fstab << EOF
+g#^freenas-boot/grub#d
+w
+q
+EOF
+}
+
+name="ix-bsdloader"
+start_cmd='migrate_bsd_loader'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
