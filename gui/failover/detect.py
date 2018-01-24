@@ -102,7 +102,7 @@ def ha_mode():
                         break
             else:
                 # Identify ECHOWARP platform by one of enclosure names.
-                reg = re.search("Enclosure Name: IN WIN RS-424-03([ps])", encstat, re.M)
+                reg = re.search("Enclosure Name: ECStream 4024S([ps])", encstat, re.M)
                 if reg:
                     hardware = 'ECHOWARP'
                     # Identify node by the last symbol of the model name
