@@ -100,7 +100,7 @@ _interface_config()
 	if ! is_freenas; then
 
 		if [ "$(ha_mode)" = "MANUAL" ]; then
-			if [ "$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
+			if [ "$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
 				configure_ifaces=0
 				echo "# Unable to determine HA hardware and node, skipping interfaces configuration" | tee /dev/console
 			fi
@@ -195,10 +195,8 @@ _interface_config()
 			else
 				int_passopt=""
 			fi
-			if [ -f /usr/local/www/freenasUI/failover/notifier.py ]; then
-				if [ $(LD_LIBRARY=/usr/local/lib /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status) = "MASTER" ]; then
-					carp1_skew="1"
-				fi
+			if [ $(ulimit -n 1000; LD_LIBRARY=/usr/local/lib /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status) = "MASTER" ]; then
+				carp1_skew="1"
 			fi
 			echo -n "ifconfig_${interface}_alias0=\"inet vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${int_vip}/32"
 			if [ -n "${critical}" ]; then
@@ -615,13 +613,13 @@ _gen_conf()
 	_count_config powerd_enable system_advanced adv_powerdaemon =1
 	_count_config ix_diagnose_enable system_advanced adv_uploadcrash =1
 	if ! is_freenas; then
-		if [ "$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
+		if [ "$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
 			echo "failover_enable=\"YES\""
 			echo "pf_enable=\"YES\""
 		else
 			echo "failover_enable=\"NO\""
 		fi
-		local failover="$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status 2> /dev/null)"
+		local failover="$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status 2> /dev/null)"
 		if [ "${failover}" != "BACKUP" ]; then
 			echo "collectd_enable=\"YES\""
 		fi
