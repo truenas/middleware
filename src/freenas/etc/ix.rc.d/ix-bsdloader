@@ -16,8 +16,8 @@ migrate_bsd_loader()
 		return 0
 	fi
 
-	echo "Removing GRUB dataset"
-	zfs destroy -R -f freenas-boot/grub
+	#echo "Removing GRUB dataset"
+	#zfs destroy -R -f freenas-boot/grub
 
 	# Thow the new boot-loader on each disk
         for disk in $(sysctl -n kern.disks); do
