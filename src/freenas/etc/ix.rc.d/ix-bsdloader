@@ -46,14 +46,6 @@ migrate_bsd_loader()
 		fi
 	done
 
-	_cDir="/tmp/_beClean"
-	if [ ! -d "${_cDir}" ] ; then
-	 	mkdir ${_cDir}
-	fi
-
-	# Get the current BE
-	curBE=$(mount | grep 'on / ' | awk '{print $1}' | cut -d '/' -f 3)
-
 	# Cleanup current BE environment
 	ed /conf/base/etc/fstab << EOF
 g#^freenas-boot/grub#d
