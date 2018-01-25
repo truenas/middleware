@@ -439,22 +439,15 @@ class SSHForm(ModelForm):
         return obj
 
 
-class RsyncdForm(ModelForm):
+class RsyncdForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "rsyncd_"
+    middleware_attr_schema = "rsyncd"
+    middleware_plugin = "rsyncd"
 
     class Meta:
         fields = '__all__'
         model = models.Rsyncd
-
-    def save(self):
-        super(RsyncdForm, self).save()
-        started = notifier().reload("rsync")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='rsync').srv_enable
-        ):
-            raise ServiceFailed(
-                "rsync", _("The Rsync service failed to reload.")
-            )
 
 
 class RsyncModForm(ModelForm):
@@ -462,6 +455,18 @@ class RsyncModForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.RsyncMod
+
+    def save(self):
+        with client as c:
+            cdata = self.cleaned_data
+
+            if self.instance.id:
+                c.call('rsyncdmod.do_update', self.instance.id, cdata)
+            else:
+                c.call('rsyncdmod.do_create', cdata)
+            c.call('service.reload', 'rsync')
+
+        return self.instance
 
     def clean_rsyncmod_name(self):
         name = self.cleaned_data['rsyncmod_name']
@@ -481,17 +486,6 @@ class RsyncModForm(ModelForm):
         hosts = self.cleaned_data['rsyncmod_hostsdeny']
         hosts = hosts.replace("\n", " ").strip()
         return hosts
-
-    def save(self):
-        super(RsyncModForm, self).save()
-        started = notifier().reload("rsync")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='rsync').srv_enable
-        ):
-            raise ServiceFailed(
-                "rsync", _("The Rsync service failed to reload.")
-            )
 
 
 class DynamicDNSForm(MiddlewareModelForm, ModelForm):
