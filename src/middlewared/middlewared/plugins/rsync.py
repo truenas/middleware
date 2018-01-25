@@ -32,8 +32,9 @@ import subprocess
 import threading
 import shutil
 from collections import defaultdict
-from middlewared.schema import accepts, Bool, Dict, Str, Int
-from middlewared.service import Service, job, CallError
+from middlewared.schema import accepts, Bool, Dict, Str, Int, Ref
+from middlewared.validators import Range
+from middlewared.service import Service, job, CallError, CRUDService, SystemServiceService
 from middlewared.logger import Logger
 
 
@@ -248,3 +249,53 @@ class RsyncService(Service):
                 password_file.close()
 
         job.set_progress(100, 'Rsync copy job successfully completed')
+
+
+class RsyncdService(SystemServiceService):
+
+    class Config:
+        service = "rsync"
+        service_model = 'rsyncd'
+        datastore_prefix = "rsyncd_"
+
+    @accepts(Dict(
+        'rsyncd_update',
+        Int('port', validators=[Range(min=1, max=65535)]),
+        Str('auxiliary')
+    ))
+    async def update(self, data):
+        old = await self.config()
+
+        new = old.copy()
+        new.update(data)
+
+        await self._update_service(old, new)
+
+        return new
+
+
+class RsyncdModService(CRUDService):
+
+    class Config:
+        datastore = 'services.rsyncmod'
+
+    @accepts(Dict(
+        'rsyncmod',
+        Str('rsyncmod_name'),
+        Str('rsyncmod_comment'),
+        Str('rsyncmod_path'),
+        Str('rsyncmod_mode'),
+        Int('rsyncmod_maxconn'),
+        Str('rsyncmod_user'),
+        Str('rsyncmod_group'),
+        Str('rsyncmod_hostsallow'),
+        Str('rsyncmod_hostsdeny'),
+        Str('rsyncmod_auxiliary'),
+        register=True,
+    ))
+    async def do_create(self, data):
+        return await self.middleware.call('datastore.insert', 'services.rsyncmod', data)
+
+    @accepts(Int('id'), Ref('rsyncmod'))
+    async def do_update(self, id, data):
+        return await self.middleware.call('datastore.update', 'services.rsyncmod', id, data)
