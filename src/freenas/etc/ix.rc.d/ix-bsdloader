@@ -61,7 +61,7 @@ migrate_bsd_loader()
 		if [ "$curBE" = "${_be}" ] ; then continue ; fi
 
 		# Mount the old BE and start cleaning
-		zfs mount -t zfs freenas-boot/ROOT/${_be} ${_cDir}
+		mount -t zfs freenas-boot/ROOT/${_be} ${_cDir}
 		if [ -e ${_cDir}/conf/base/etc/fstab ] ; then
 			ed ${_cDir}/conf/base/etc/fstab << EOF
 g#^freenas-boot/grub#d
