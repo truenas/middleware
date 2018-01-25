@@ -1,0 +1,95 @@
+#!/usr/bin/env expect
+
+set vm [lindex $argv 0];
+set logfilepath [lindex $argv 1];
+log_file -noappend "$logfilepath"
+set timeout 1800
+set PID [spawn vm console "$vm"]
+send_user "Spawned PID: $PID \n"
+
+# Grub2 menu item selection - second entry enables Serial Output for the installer
+expect {
+  "The highlighted entry will be executed automatically" {
+    # Sending down-arrow key with "send {^[[B}" does not work, so instead fall back to the
+    # emacs-like key bindings that grub allows: Ctrl+P = Up, Ctrl+N = Down (mnemonic: up/down)
+    sleep .5
+    # Ctrl+N
+    send \003N
+    send "\r"
+  }
+}
+
+expect {
+  "Press any key to continue..." {
+    sleep .5
+    send "\r"
+  }
+}
+
+# Install menu, options being:
+# 1) Install, 2) Shell, 3) Reboot, 4) Shutdown
+# Options: [O]K, [C]ancel
+expect {
+  "Console Setup" {
+    sleep .5
+    send "1"
+    send "O"
+    send "\r"
+  }
+}
+
+# Choose destination media
+# Select a target drive with the spacebar (\040)
+# Options: [O]K, [C]ancel
+expect {
+  "Choose destination media" {
+    sleep .5
+    send \040
+    send "\r"
+  }
+}
+
+# WARNING: This will erase ALL paritions and data, proceed?
+# Options: [Y]es, [N]o
+expect {
+  "Proceed with the installation?" {
+    sleep .5
+    send "Y"
+    send "\r"
+  }
+}
+
+# Set the default root account password:
+# Options: [O]K, [C]ancel
+expect {
+  "Password" {
+    sleep .5
+    send "testing"
+    # Tab to next field
+    send \011
+    send "testing"
+    # Tab to submit/OK button
+    send \011
+    # Submit/confirm password dialog
+    send "O"
+    send "\r"
+  }
+}
+
+# Select Boot via UEFI
+# Options: [B]oot via UEFI, Boot via B[I]OS
+expect {
+  "BIOS mode is recommended for legacy and enterprise hardware," {
+    sleep .5
+    send "B"
+  }
+}
+
+# Installation complete!
+expect {
+  "Installation finished. No error reported." {
+    send_user "Bhyve installation finished."
+    sleep 5
+    exit 0
+  }
+}
