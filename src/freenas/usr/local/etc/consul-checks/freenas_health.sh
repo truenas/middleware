@@ -12,9 +12,12 @@ have_alert=0
 
 while read line
 do
+  if [ -z $line ] ; then
+    continue
+  fi
   echo $line | grep -q "^OK"
   if [ $? -eq 0 ] ; then
-	continue
+    continue
   fi
   echo "$line"
   have_alert=1
