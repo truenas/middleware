@@ -16,8 +16,8 @@ migrate_bsd_loader()
 		return 0
 	fi
 
-	echo "Removing GRUB dataset"
-	zfs destroy -R -f freenas-boot/grub
+	#echo "Removing GRUB dataset"
+	#zfs destroy -R -f freenas-boot/grub
 
 	# Thow the new boot-loader on each disk
         for disk in $(sysctl -n kern.disks); do
@@ -45,33 +45,6 @@ migrate_bsd_loader()
 	                fi
 		fi
 	done
-
-	_cDir="/tmp/_beClean"
-	if [ ! -d "${_cDir}" ] ; then
-	 	mkdir ${_cDir}
-	fi
-
-	# Get the current BE
-	curBE=$(mount | grep 'on / ' | awk '{print $1}' | cut -d '/' -f 3)
-
-	# Sanitize the old BE's by removing grub fstab entries
-	for _be in `zfs list -H -d 1 freenas-boot/ROOT | awk '{print $1}' | cut -d '/' -f 3`
-	do
-		# Skip the currently mounted BE
-		if [ "$curBE" = "${_be}" ] ; then continue ; fi
-
-		# Mount the old BE and start cleaning
-		mount -t zfs freenas-boot/ROOT/${_be} ${_cDir}
-		if [ -e ${_cDir}/conf/base/etc/fstab ] ; then
-			ed ${_cDir}/conf/base/etc/fstab << EOF
-g#^freenas-boot/grub#d
-w
-q
-EOF
-		fi
-		umount -f ${_cDir}
-	done
-	rmdir ${_cDir}
 
 	# Cleanup current BE environment
 	ed /conf/base/etc/fstab << EOF
