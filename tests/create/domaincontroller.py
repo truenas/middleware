@@ -41,7 +41,7 @@ class domaincontroller_test(unittest.TestCase):
 
     def test_05_Setting_the_Forest_level(self):
         payload = {"dc_forest_level": FORESTLEVEL}
-        PUT("/services/services/domaincontroller/", payload) == 200
+        assert PUT("/services/services/domaincontroller/", payload) == 200
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

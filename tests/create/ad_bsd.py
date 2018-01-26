@@ -9,16 +9,15 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
-from functions import BSD_TEST, return_output
+from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, BSD_TEST
 from auto_config import ip
-
 
 try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
     from config import LDAPBASEDN, LDAPBINDDN, LDAPHOSTNAME, LDAPBINDPASSWORD
 except ImportError:
-    exit
+    exit()
+
 
 DATASET = "ad-bsd"
 SMB_NAME = "TestShare"

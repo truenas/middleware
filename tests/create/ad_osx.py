@@ -9,7 +9,6 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET_OUTPUT, PUT, DELETE, DELETE_ALL, OSX_TEST
-from functions import SSH_TEST, return_output
 from auto_config import ip
 
 try:

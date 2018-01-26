@@ -10,7 +10,10 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import interface
 from functions import POST, PUT
-from config import BRIDGEDOMAIN, BRIDGEHOST, BRIDGEDNS, BRIDGEGW
+try:
+    from config import BRIDGEDOMAIN, BRIDGEHOST, BRIDGEDNS, BRIDGEGW
+except ImportError:
+    exit()
 
 
 class network(unittest.TestCase):

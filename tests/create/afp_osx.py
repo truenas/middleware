@@ -10,7 +10,6 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, OSX_TEST
-from functions import return_output
 from auto_config import ip
 try:
     from config import BRIDGEHOST

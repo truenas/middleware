@@ -10,12 +10,6 @@ import os
 from subprocess import run, Popen, PIPE
 import re
 
-try:
-    from config import BSD_HOST, BSD_USERNAME, BSD_PASSWORD
-    from config import OSX_HOST, OSX_USERNAME, OSX_PASSWORD
-except ImportError:
-    exit()
-
 global header
 header = {'Content-Type': 'application/json', 'Vary': 'accept'}
 global authentification
@@ -75,6 +69,7 @@ def DELETE_ALL(testpath, payload):
 
 
 def SSH_TEST(command):
+
     teststdout = "/tmp/.sshCmdTestStdOut"
     cmd = "sshpass -p %s " % password
     cmd += "ssh -o StrictHostKeyChecking=no "
@@ -90,14 +85,12 @@ def SSH_TEST(command):
 
 
 def BSD_TEST(command):
-    teststdout = "/tmp/.bsdCmdTestStdOut"
     try:
-        BSD_PASSWORD
-        BSD_USERNAME
-        BSD_HOST
-    except NameError:
+        from config import BSD_HOST, BSD_USERNAME, BSD_PASSWORD
+    except ImportError:
         return False
     else:
+        teststdout = "/tmp/.bsdCmdTestStdOut"
         cmd = "sshpass -p %s " % BSD_PASSWORD
         cmd += "ssh -o StrictHostKeyChecking=no "
         cmd += "-o UserKnownHostsFile=/dev/null "
@@ -114,12 +107,11 @@ def BSD_TEST(command):
 def OSX_TEST(command):
     teststdout = "/tmp/.osxCmdTestStdOut"
     try:
-        OSX_PASSWORD
-        OSX_USERNAME
-        OSX_HOST
-    except NameError:
+        from config import OSX_HOST, OSX_USERNAME, OSX_PASSWORD
+    except ImportError:
         return False
     else:
+        teststdout = "/tmp/.osxCmdTestStdOut"
         cmd = "sshpass -p %s " % OSX_PASSWORD
         cmd += "ssh -o StrictHostKeyChecking=no "
         cmd += "-o UserKnownHostsFile=/dev/null "

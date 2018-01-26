@@ -10,6 +10,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
+
 try:
     from config import BRIDGEHOST
 except ImportError:
