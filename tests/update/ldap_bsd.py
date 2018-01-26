@@ -17,7 +17,9 @@ try:
     from config import LDAPBASEDN, LDAPHOSTNAME, LDAPHOSTNAME2
     from config import LDAPBASEDN2, LDAPBINDDN2, LDAPBINDPASSWORD2
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    RunTest = True
 
 DATASET = "ldap-bsd"
 SMB_NAME = "TestShare"
@@ -186,5 +188,5 @@ class ldap_bsd_test(unittest.TestCase):
         assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
 
 
-if __name__ == "__main__":
+if RunTest is True:
     unittest.main(verbosity=2)

@@ -13,7 +13,9 @@ from functions import POST, PUT
 try:
     from config import BRIDGEDOMAIN, BRIDGEHOST, BRIDGEDNS, BRIDGEGW
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    RunTest = True
 
 
 class network(unittest.TestCase):
@@ -32,5 +34,5 @@ class network(unittest.TestCase):
         assert PUT("/network/globalconfiguration/", payload) == 200
 
 
-if __name__ == "__main__":
+if RunTest is True:
     unittest.main(verbosity=2)

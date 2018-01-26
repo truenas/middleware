@@ -14,7 +14,9 @@ from functions import DELETE, PUT, BSD_TEST
 try:
     from config import BRIDGEHOST
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    RunTest = True
 
 MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
 DEVICE_NAME_PATH = "/tmp/iscsi_dev_name"
@@ -40,5 +42,5 @@ class iscsi_test(unittest.TestCase):
     def test_02_Delete_iSCSI_extent(self):
         assert DELETE("/services/iscsi/extent/1/") == 204
 
-if __name__ == "__main__":
+if RunTest is True:
     unittest.main(verbosity=2)

@@ -14,7 +14,9 @@ from functions import PUT
 try:
     from config import NOIPUSERNAME, NOIPPASSWORD, NOIPHOST
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    RunTest = True
 
 
 class dyndns_test(unittest.TestCase):
@@ -26,5 +28,5 @@ class dyndns_test(unittest.TestCase):
                    "ddns_domain": NOIPHOST}
         assert PUT("/services/dynamicdns/", payload) == 200
 
-if __name__ == "__main__":
+if RunTest is True:
     unittest.main(verbosity=2)

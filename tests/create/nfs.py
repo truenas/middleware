@@ -14,7 +14,9 @@ from auto_config import ip
 try:
     from config import BRIDGEHOST
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    RunTest = True
 
 NFS_PATH = "/mnt/tank/share"
 MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
@@ -84,5 +86,5 @@ class nfs_test(unittest.TestCase):
         assert BSD_TEST(cmd) is True
 
 
-if __name__ == "__main__":
+if RunTest is True:
     unittest.main(verbosity=2)

@@ -16,7 +16,9 @@ try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
     from config import LDAPBASEDN, LDAPHOSTNAME
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    RunTest = True
 
 DATASET = "ldap-osx"
 SMB_NAME = "TestShare"
@@ -174,5 +176,5 @@ class ldap_osx_test(unittest.TestCase):
     def test_22_Destroying_SMB_dataset(self):
         assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
 
-if __name__ == "__main__":
+if RunTest is True:
     unittest.main(verbosity=2)

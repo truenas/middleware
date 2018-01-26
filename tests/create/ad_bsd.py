@@ -16,7 +16,9 @@ try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
     from config import LDAPBASEDN, LDAPBINDDN, LDAPHOSTNAME, LDAPBINDPASSWORD
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    RunTest = True
 
 
 DATASET = "ad-bsd"
@@ -118,12 +120,6 @@ class ad_bsd_test(unittest.TestCase):
         cmd += '"//aduser@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
         assert BSD_TEST(cmd) is True
 
-    # def test_12_Checking_permissions_on_MOUNTPOINT(self):
-    #     device_name = return_output('dirname "%s"' % MOUNTPOINT)
-    #     cmd = 'ls -la %s | ' % device_name
-    #     cmd += 'awk \'$4 == "%s" && $9 == "%s"\'' % (VOL_GROUP, DATASET)
-    #     assert BSD_TEST(cmd) is True
-
     def test_13_Creating_SMB_file(self):
         assert BSD_TEST('touch "%s/testfile"' % MOUNTPOINT) is True
 
@@ -170,5 +166,5 @@ class ad_bsd_test(unittest.TestCase):
     def test_23_Destroying_SMB_dataset(self):
         assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
 
-if __name__ == "__main__":
+if RunTest is True:
     unittest.main(verbosity=2)

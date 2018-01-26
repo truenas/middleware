@@ -15,7 +15,9 @@ from time import sleep
 try:
     from config import BRIDGEHOST
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    RunTest = True
 
 MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
 global DEVICE_NAME
@@ -98,5 +100,5 @@ class iscsi_test(unittest.TestCase):
         assert GET_OUTPUT("/services/services/iscsitarget/",
                           "srv_state") == "STOPPED"
 
-if __name__ == "__main__":
+if RunTest is True:
     unittest.main(verbosity=2)

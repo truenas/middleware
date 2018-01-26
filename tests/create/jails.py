@@ -14,7 +14,9 @@ from functions import PUT, POST
 try:
     from config import JAILIP, JAILGW, JAILNETMASK
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    RunTest = True
 
 
 class jails_test(unittest.TestCase):
@@ -49,5 +51,5 @@ class jails_test(unittest.TestCase):
     def test_06_Stopping_jail(self):
         assert POST("/jails/jails/1/stop/", "") == 202
 
-if __name__ == "__main__":
+if RunTest is True:
     unittest.main(verbosity=2)

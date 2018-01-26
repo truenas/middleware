@@ -14,7 +14,9 @@ from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
 try:
     from config import BRIDGEHOST
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    RunTest = True
 
 
 DATASET = "webdavshare"
@@ -68,5 +70,5 @@ class webdav_bsd_test(unittest.TestCase):
         assert GET_OUTPUT("/services/services/webdav",
                           "srv_state") == "STOPPED"
 
-if __name__ == "__main__":
+if RunTest is True:
     unittest.main(verbosity=2)

@@ -9,14 +9,15 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
-from functions import OSX_TEST, return_output
+from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, OSX_TEST
 from auto_config import ip
 try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
     from config import LDAPBASEDN, LDAPBINDDN, LDAPBINDPASSWORD, LDAPHOSTNAME
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    RunTest = True
 
 DATASET = "smb-osx"
 SMB_NAME = "TestShare"
@@ -142,5 +143,5 @@ class smb_osx_test(unittest.TestCase):
         assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
 
 
-if __name__ == "__main__":
+if RunTest is True:
     unittest.main(verbosity=2)

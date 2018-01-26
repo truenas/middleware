@@ -14,7 +14,9 @@ from functions import PUT
 try:
     from config import ADPASSWORD
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    RunTest = True
 
 REALM = "samdom.local"
 DOMAIN = "samdom"
@@ -43,5 +45,5 @@ class domaincontroller_test(unittest.TestCase):
         payload = {"dc_forest_level": FORESTLEVEL}
         assert PUT("/services/services/domaincontroller/", payload) == 200
 
-if __name__ == "__main__":
+if RunTest is True:
     unittest.main(verbosity=2)

@@ -14,7 +14,9 @@ from functions import PUT, POST, GET_OUTPUT
 try:
     from config import NISSERVER, NISDOMAIN
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    RunTest = True
 
 # define variables
 SERVER = NISSERVER
