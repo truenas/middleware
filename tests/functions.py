@@ -69,7 +69,6 @@ def DELETE_ALL(testpath, payload):
 
 
 def SSH_TEST(command):
-
     teststdout = "/tmp/.sshCmdTestStdOut"
     cmd = "sshpass -p %s " % password
     cmd += "ssh -o StrictHostKeyChecking=no "
@@ -105,7 +104,6 @@ def BSD_TEST(command):
 
 
 def OSX_TEST(command):
-    teststdout = "/tmp/.osxCmdTestStdOut"
     try:
         from config import OSX_HOST, OSX_USERNAME, OSX_PASSWORD
     except ImportError:
