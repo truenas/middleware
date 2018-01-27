@@ -298,7 +298,6 @@ class RsyncModService(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
-        #import pudb; pu.db
         if re.search(r'[/\]]', data.get('name')):
             raise ValidationError(
                 "name",
