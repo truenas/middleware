@@ -27,14 +27,17 @@
 import os
 import errno
 import pwd
+import re
 import tempfile
 import subprocess
 import threading
 import shutil
 from collections import defaultdict
-from middlewared.schema import accepts, Bool, Dict, Str, Int, Ref
+from middlewared.schema import accepts, Bool, Dict, Str, Int, Ref, List
 from middlewared.validators import Range
-from middlewared.service import Service, job, CallError, CRUDService, SystemServiceService
+from middlewared.service import (
+    Service, job, CallError, CRUDService, SystemServiceService, ValidationError
+)
 from middlewared.logger import Logger
 
 
@@ -289,15 +292,31 @@ class RsyncModService(CRUDService):
         Int('maxconn'),
         Str('user'),
         Str('group'),
-        Str('hostsallow'),
-        Str('hostsdeny'),
+        List('hostsallow', items=[Str('hostsallow')]),
+        List('hostsdeny', items=[Str('hostdeny')]),
         Str('auxiliary'),
         register=True,
     ))
     async def do_create(self, data):
+        if re.search(r'[/\]]', data.get('name')):
+            raise ValidationError(
+                "name",
+                "The name cannot contain slash or a closing square backet."
+            )
+
+        if data.get("hostsallow"):
+            data["hostsallow"] = " ".join(data["hostsallow"])
+        else:
+            data["hostsallow"] = ''
+
+        if data.get("hostsdeny"):
+            data["hostsdeny"] = " ".join(data["hostsdeny"])
+        else:
+            data["hostsdeny"] = ''
+
         data['id'] = await self.middleware.call(
             'datastore.insert',
-            'services.rsyncmod',
+            self._config.datastore,
             data,
             {'prefix': self._config.datastore_prefix}
         )
@@ -312,18 +331,29 @@ class RsyncModService(CRUDService):
             [('id', '=', id)],
             {'prefix': self._config.datastore_prefix, 'get': True}
         )
+        module.update(data)
+
+        module["hostsallow"] = " ".join(module["hostsallow"])
+        module["hostsdeny"] = " ".join(module["hostsdeny"])
+
+        if re.search(r'[/\]]', module['name']):
+            raise ValidationError(
+                "name",
+                "The name cannot contain slash or a closing square backet."
+            )
+
         await self.middleware.call(
             'datastore.update',
-            'services.rsyncmod',
+            self._config.datastore,
             id,
             data,
             {'prefix': self._config.datastore_prefix}
         )
         await self.middleware.call('service.reload', 'rsync')
 
-        module.update(data)
         return module
 
     @accepts(Int('id'))
     async def do_delete(self, id):
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
+    
