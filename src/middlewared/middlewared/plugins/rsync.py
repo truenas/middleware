@@ -274,28 +274,56 @@ class RsyncdService(SystemServiceService):
         return new
 
 
-class RsyncdModService(CRUDService):
+class RsyncModService(CRUDService):
 
     class Config:
         datastore = 'services.rsyncmod'
+        datastore_prefix = 'rsyncmod_'
 
     @accepts(Dict(
         'rsyncmod',
-        Str('rsyncmod_name'),
-        Str('rsyncmod_comment'),
-        Str('rsyncmod_path'),
-        Str('rsyncmod_mode'),
-        Int('rsyncmod_maxconn'),
-        Str('rsyncmod_user'),
-        Str('rsyncmod_group'),
-        Str('rsyncmod_hostsallow'),
-        Str('rsyncmod_hostsdeny'),
-        Str('rsyncmod_auxiliary'),
+        Str('name'),
+        Str('comment'),
+        Str('path'),
+        Str('mode'),
+        Int('maxconn'),
+        Str('user'),
+        Str('group'),
+        Str('hostsallow'),
+        Str('hostsdeny'),
+        Str('auxiliary'),
         register=True,
     ))
     async def do_create(self, data):
-        return await self.middleware.call('datastore.insert', 'services.rsyncmod', data)
+        data['id'] = await self.middleware.call(
+            'datastore.insert',
+            'services.rsyncmod',
+            data,
+            {'prefix': self._config.datastore_prefix}
+        )
+        await self.middleware.call('service.reload', 'rsync')
+        return data
 
     @accepts(Int('id'), Ref('rsyncmod'))
     async def do_update(self, id, data):
-        return await self.middleware.call('datastore.update', 'services.rsyncmod', id, data)
+        module = await self.middleware.call(
+            'datastore.query',
+            self._config.datastore,
+            [('id', '=', id)],
+            {'prefix': self._config.datastore_prefix, 'get': True}
+        )
+        await self.middleware.call(
+            'datastore.update',
+            'services.rsyncmod',
+            id,
+            data,
+            {'prefix': self._config.datastore_prefix}
+        )
+        await self.middleware.call('service.reload', 'rsync')
+
+        module.update(data)
+        return module
+
+    @accepts(Int('id'))
+    async def do_delete(self, id):
+        return await self.middleware.call('datastore.delete', self._config.datastore, id)
