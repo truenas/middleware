@@ -461,16 +461,6 @@ class RsyncModForm(MiddlewareModelForm, ModelForm):
         fields = '__all__'
         model = models.RsyncMod
 
-    def clean_rsyncmod_hostsallow(self):
-        hosts = self.cleaned_data['rsyncmod_hostsallow']
-        hosts = hosts.replace("\n", " ").strip()
-        return hosts
-
-    def clean_rsyncmod_hostsdeny(self):
-        hosts = self.cleaned_data['rsyncmod_hostsdeny']
-        hosts = hosts.replace("\n", " ").strip()
-        return hosts
-
     def middleware_clean(self, update):
         update['hostsallow'] = list(filter(None, re.split(r"\s+", update["hostsallow"])))
         update['hostsdeny'] = list(filter(None, re.split(r"\s+", update["hostsdeny"])))

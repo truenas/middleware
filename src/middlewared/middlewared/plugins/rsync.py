@@ -298,6 +298,7 @@ class RsyncModService(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
+        #import pudb; pu.db
         if re.search(r'[/\]]', data.get('name')):
             raise ValidationError(
                 "name",
@@ -356,4 +357,3 @@ class RsyncModService(CRUDService):
     @accepts(Int('id'))
     async def do_delete(self, id):
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
-    
