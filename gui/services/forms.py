@@ -461,15 +461,6 @@ class RsyncModForm(MiddlewareModelForm, ModelForm):
         fields = '__all__'
         model = models.RsyncMod
 
-    def clean_rsyncmod_name(self):
-        name = self.cleaned_data['rsyncmod_name']
-        if re.search(r'[/\]]', name):
-            raise forms.ValidationError(
-                _("The name cannot contain slash or a closing square backet.")
-            )
-        name = name.strip()
-        return name
-
     def clean_rsyncmod_hostsallow(self):
         hosts = self.cleaned_data['rsyncmod_hostsallow']
         hosts = hosts.replace("\n", " ").strip()
@@ -479,6 +470,11 @@ class RsyncModForm(MiddlewareModelForm, ModelForm):
         hosts = self.cleaned_data['rsyncmod_hostsdeny']
         hosts = hosts.replace("\n", " ").strip()
         return hosts
+
+    def middleware_clean(self, update):
+        update['hostsallow'] = list(filter(None, re.split(r"\s+", update["hostsallow"])))
+        update['hostsdeny'] = list(filter(None, re.split(r"\s+", update["hostsdeny"])))
+        return update
 
 
 class DynamicDNSForm(MiddlewareModelForm, ModelForm):
