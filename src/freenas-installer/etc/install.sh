@@ -9,8 +9,6 @@ HOME=/root
 export HOME
 TERM=${TERM:-xterm}
 export TERM
-GRUB_TERMINAL_OUTPUT="console serial"
-export GRUB_TERMINAL_OUTPUT
 
 . /etc/avatar.conf
 
@@ -368,10 +366,13 @@ save_serial_settings() {
 
     # Enable serial/internal for BSD loader
     echo 'boot_multicons="YES"' >> ${_mnt}/boot/loader.conf
+    echo 'boot_serial="YES"' >> ${_mnt}/boot/loader.conf
+    echo 'console="comconsole,vidconsole"' >> ${_mnt}/boot/loader.conf
 
     chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialconsole = 1"
     SERIALSPEED=`kenv hw.uart.console | sed -En 's/.*br:([0-9]+).*/\1/p'`
     if [ -n "$SERIALSPEED" ] ; then
+       echo "comconsole_speed=\"$SERIALSPEED\"" >> ${_mnt}/boot/loader.conf
        chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialspeed = $SERIALSPEED"
     fi
     SERIALPORT=`kenv hw.uart.console | sed -En 's/.*io:([0-9a-fx]+).*/\1/p'`
