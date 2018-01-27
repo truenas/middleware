@@ -450,23 +450,16 @@ class RsyncdForm(MiddlewareModelForm, ModelForm):
         model = models.Rsyncd
 
 
-class RsyncModForm(ModelForm):
+class RsyncModForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "rsyncmod_"
+    middleware_attr_schema = "rsyncmod"
+    middleware_plugin = "rsyncmod"
+    is_singletone = False
 
     class Meta:
         fields = '__all__'
         model = models.RsyncMod
-
-    def save(self):
-        with client as c:
-            cdata = self.cleaned_data
-
-            if self.instance.id:
-                c.call('rsyncdmod.do_update', self.instance.id, cdata)
-            else:
-                c.call('rsyncdmod.do_create', cdata)
-            c.call('service.reload', 'rsync')
-
-        return self.instance
 
     def clean_rsyncmod_name(self):
         name = self.cleaned_data['rsyncmod_name']
