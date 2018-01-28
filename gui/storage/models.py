@@ -838,9 +838,21 @@ class ReplRemote(Model):
 
 class Replication(Model):
     repl_filesystem = models.CharField(
-        max_length=150,
-        verbose_name=_("Volume/Dataset"),
+         max_length=150,
+         verbose_name=_("Volume/Dataset"),
+         blank=True,
+    )
+    repl_snap_task = models.ForeignKey(
+        'storage.Task',
         blank=True,
+        null=True,
+        verbose_name=_("Remote Host"),
+    )
+    repl_peer = models.ForeignKey(
+        Peer,
+        blank=True,
+        null=True,
+        verbose_name=_("Remote Peer"),
     )
     repl_lastsnapshot = models.CharField(
         max_length=120,
