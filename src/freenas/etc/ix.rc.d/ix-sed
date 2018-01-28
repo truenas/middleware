@@ -34,7 +34,8 @@ unlock_drives()
 	 " | \
 	while eval read $g $f
 	do
-		/sbin/camcontrol security /dev/${disk_name} "$(/usr/local/bin/midclt call notifier.pwenc_decrypt ${disk_passwd})"
+		/sbin/camcontrol security /dev/${disk_name} -l high -U user -k "$(/usr/local/bin/midclt call notifier.pwenc_decrypt ${disk_passwd})"
+		/usr/bin/true > /dev/${disk_name}
 	done
 }
 
