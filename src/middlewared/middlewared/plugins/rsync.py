@@ -34,7 +34,7 @@ import threading
 import shutil
 from collections import defaultdict
 from middlewared.schema import accepts, Bool, Dict, Str, Int, Ref, List
-from middlewared.validators import Range
+from middlewared.validators import Range, Match
 from middlewared.service import (
     Service, job, CallError, CRUDService, SystemServiceService, ValidationError
 )
@@ -285,7 +285,7 @@ class RsyncModService(CRUDService):
 
     @accepts(Dict(
         'rsyncmod',
-        Str('name'),
+        Str('name', validators=[Match(r'[^/\]]')]),
         Str('comment'),
         Str('path'),
         Str('mode'),
@@ -298,12 +298,6 @@ class RsyncModService(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
-        if re.search(r'[/\]]', data.get('name')):
-            raise ValidationError(
-                "name",
-                "The name cannot contain slash or a closing square backet."
-            )
-
         if data.get("hostsallow"):
             data["hostsallow"] = " ".join(data["hostsallow"])
         else:
@@ -335,12 +329,6 @@ class RsyncModService(CRUDService):
 
         module["hostsallow"] = " ".join(module["hostsallow"])
         module["hostsdeny"] = " ".join(module["hostsdeny"])
-
-        if re.search(r'[/\]]', module['name']):
-            raise ValidationError(
-                "name",
-                "The name cannot contain slash or a closing square backet."
-            )
 
         await self.middleware.call(
             'datastore.update',
