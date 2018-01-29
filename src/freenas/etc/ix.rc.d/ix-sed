@@ -34,8 +34,19 @@ unlock_drives()
 	 " | \
 	while eval read $g $f
 	do
-		/sbin/camcontrol security /dev/${disk_name} -l high -U user -k "$(/usr/local/bin/midclt call notifier.pwenc_decrypt ${disk_passwd})"
-		/usr/bin/true > /dev/${disk_name}
+		ret=$(/sbin/camcontrol security /dev/${disk_name} | awk '$1 == "drive" {print $3}')
+		if [ -n "${ret}" -a "${ret}" = "yes" ]; then
+			echo -n "Unlocking ${disk_name}: "
+			/sbin/camcontrol security /dev/${disk_name} -l high -U user -k "$(/usr/local/bin/midclt call notifier.pwenc_decrypt ${disk_passwd})" > /dev/null 2>&1
+			if [ $? -eq 0 ]; then
+				/usr/bin/true > /dev/${disk_name}
+				echo "Success"
+			else
+				echo "Failed"
+			fi
+		else
+			echo "Skipping ${disk_name}, already unlocked"
+		fi
 	done
 }
 
