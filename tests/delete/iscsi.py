@@ -16,9 +16,9 @@ try:
 except ImportError:
     RunTest = False
 else:
+    MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
     RunTest = True
 
-MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
 DEVICE_NAME_PATH = "/tmp/iscsi_dev_name"
 TARGET_NAME = "iqn.freenas:target0"
 

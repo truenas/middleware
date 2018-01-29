@@ -18,13 +18,12 @@ try:
 except ImportError:
     RunTest = False
 else:
+    MOUNTPOINT = "/tmp/ad-bsd" + BRIDGEHOST
     RunTest = True
-
 
 DATASET = "ad-bsd"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET
-MOUNTPOINT = "/tmp/ad-bsd" + BRIDGEHOST
 VOL_GROUP = "wheel"
 
 

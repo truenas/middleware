@@ -17,9 +17,9 @@ try:
 except ImportError:
     RunTest = False
 else:
+    MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
     RunTest = True
 
-MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
 global DEVICE_NAME
 DEVICE_NAME = ""
 DEVICE_NAME_PATH = "/tmp/freenasiscsi"

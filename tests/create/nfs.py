@@ -16,10 +16,10 @@ try:
 except ImportError:
     RunTest = False
 else:
+    MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
     RunTest = True
 
 NFS_PATH = "/mnt/tank/share"
-MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
 
 
 class nfs_test(unittest.TestCase):

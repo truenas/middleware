@@ -16,12 +16,12 @@ try:
 except ImportError:
     RunTest = False
 else:
+    MOUNTPOINT = "/tmp/afp-osx" + BRIDGEHOST
     RunTest = True
 
 DATASET = "afp-osx"
 AFP_NAME = "MyAFPShare"
 AFP_PATH = "/mnt/tank/" + DATASET
-MOUNTPOINT = "/tmp/afp-osx" + BRIDGEHOST
 VOL_GROUP = "wheel"
 
 

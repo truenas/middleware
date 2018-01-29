@@ -10,7 +10,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
-from functions import OSX_TEST, return_output
+from functions import OSX_TEST
 from auto_config import ip
 try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
@@ -19,12 +19,12 @@ try:
 except ImportError:
     RunTest = False
 else:
+    MOUNTPOINT = "/tmp/ldap-osx%s" % BRIDGEHOST
     RunTest = True
 
 DATASET = "ldap-osx"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/%s" % DATASET
-MOUNTPOINT = "/tmp/ldap-osx%s" % BRIDGEHOST
 LDAP_USER = "ldapuser"
 LDAP_PASS = "12345678"
 VOL_GROUP = "wheel"

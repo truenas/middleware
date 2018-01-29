@@ -19,13 +19,12 @@ try:
 except ImportError:
     RunTest = False
 else:
+    MOUNTPOINT = "/tmp/ldap-bsd" + BRIDGEHOST
     RunTest = True
-
 
 DATASET = "ldap-bsd"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET
-MOUNTPOINT = "/tmp/ldap-bsd" + BRIDGEHOST
 VOL_GROUP = "qa"
 
 

@@ -18,13 +18,13 @@ try:
 except ImportError:
     RunTest = False
 else:
+    MOUNTPOINT = "/tmp/ldap-osx" + BRIDGEHOST
     RunTest = True
 
-DATASET = "ldap-osx"
-SMB_NAME = "TestShare"
-SMB_PATH = "/mnt/tank/" + DATASET
-MOUNTPOINT = "/tmp/ldap-osx" + BRIDGEHOST
-VOL_GROUP = "qa"
+    DATASET = "ldap-osx"
+    SMB_NAME = "TestShare"
+    SMB_PATH = "/mnt/tank/" + DATASET
+    VOL_GROUP = "qa"
 
 
 class ldap_osx_test(unittest.TestCase):

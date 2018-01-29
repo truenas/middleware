@@ -16,6 +16,7 @@ try:
 except ImportError:
     RunTest = False
 else:
+    MOUNTPOINT = "/tmp/webdav-bsd" + BRIDGEHOST
     RunTest = True
 
 DATASET = "webdavshare"
@@ -24,7 +25,6 @@ TMP_FILE = "/tmp/testfile.txt"
 SHARE_NAME = "webdavshare"
 SHARE_USER = "webdav"
 SHARE_PASS = "davtest2"
-MOUNTPOINT = "/tmp/webdav-bsd" + BRIDGEHOST
 
 
 class webdav_bsd_test(unittest.TestCase):
