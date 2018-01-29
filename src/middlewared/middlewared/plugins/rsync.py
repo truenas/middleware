@@ -27,7 +27,6 @@
 import os
 import errno
 import pwd
-import re
 import tempfile
 import subprocess
 import threading
@@ -36,7 +35,7 @@ from collections import defaultdict
 from middlewared.schema import accepts, Bool, Dict, Str, Int, Ref, List
 from middlewared.validators import Range, Match
 from middlewared.service import (
-    Service, job, CallError, CRUDService, SystemServiceService, ValidationError
+    Service, job, CallError, CRUDService, SystemServiceService
 )
 from middlewared.logger import Logger
 
