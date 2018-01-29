@@ -28,7 +28,7 @@ class PeerService(CRUDService):
     async def do_create(self, peer):
         peer_type = peer.get('peer_type')
         return await self.middleware.call(
-            f'peer.{peer_type}.do_create',
+            f'peer.{peer_type}.create',
             peer,
         )
 
@@ -39,7 +39,7 @@ class PeerService(CRUDService):
             peer_data = await self.query([('id', '=', id)], {'get': True})
             peer_type = peer_data['peer_type']
         return await self.middleware.call(
-            f'peer.{peer_type}.do_update',
+            f'peer.{peer_type}.update',
             id,
             peer,
         )
