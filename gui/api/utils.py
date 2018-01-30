@@ -186,7 +186,8 @@ class ResourceMixin(object):
 
         if (
             request.META.get('HTTP_X_REQUESTED_FROM') == 'WebUI' or
-            not request.META.get('HTTP_AUTHORIZATION', '').startswith('Basic')
+            not (request.META.get('HTTP_AUTHORIZATION', '').startswith('Basic') or
+                 request.META.get('HTTP_AUTHORIZATION', '').startswith('Token'))
         ):
             return True
 
