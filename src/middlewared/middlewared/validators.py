@@ -45,7 +45,7 @@ class Match:
         if not self.regex.match(value):
             raise ShouldBe(f"{self.pattern}")
 
-    def __deepcopy__(self):
+    def __deepcopy__(self, memo):
         return Match(self.pattern, self.flags)
 
 
