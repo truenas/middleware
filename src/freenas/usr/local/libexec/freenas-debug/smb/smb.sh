@@ -129,6 +129,10 @@ smb_func()
 	net status shares
 	section_footer
 
+	section_header "Lock information"
+	smbstatus -L | head -200
+	section_footer
+	
 	section_header "ACLs - 'sharesec --view-all'"
 	sharesec --view-all
 	section_footer
