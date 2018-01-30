@@ -32,8 +32,11 @@ import subprocess
 import threading
 import shutil
 from collections import defaultdict
-from middlewared.schema import accepts, Bool, Dict, Str, Int
-from middlewared.service import Service, job, CallError
+from middlewared.schema import accepts, Bool, Dict, Str, Int, Ref, List
+from middlewared.validators import Range, Match
+from middlewared.service import (
+    Service, job, CallError, CRUDService, SystemServiceService
+)
 from middlewared.logger import Logger
 
 
@@ -248,3 +251,95 @@ class RsyncService(Service):
                 password_file.close()
 
         job.set_progress(100, 'Rsync copy job successfully completed')
+
+
+class RsyncdService(SystemServiceService):
+
+    class Config:
+        service = "rsync"
+        service_model = 'rsyncd'
+        datastore_prefix = "rsyncd_"
+
+    @accepts(Dict(
+        'rsyncd_update',
+        Int('port', validators=[Range(min=1, max=65535)]),
+        Str('auxiliary')
+    ))
+    async def update(self, data):
+        old = await self.config()
+
+        new = old.copy()
+        new.update(data)
+
+        await self._update_service(old, new)
+
+        return new
+
+
+class RsyncModService(CRUDService):
+
+    class Config:
+        datastore = 'services.rsyncmod'
+        datastore_prefix = 'rsyncmod_'
+
+    @accepts(Dict(
+        'rsyncmod',
+        Str('name', validators=[Match(r'[^/\]]')]),
+        Str('comment'),
+        Str('path'),
+        Str('mode'),
+        Int('maxconn'),
+        Str('user'),
+        Str('group'),
+        List('hostsallow', items=[Str('hostsallow')]),
+        List('hostsdeny', items=[Str('hostdeny')]),
+        Str('auxiliary'),
+        register=True,
+    ))
+    async def do_create(self, data):
+        if data.get("hostsallow"):
+            data["hostsallow"] = " ".join(data["hostsallow"])
+        else:
+            data["hostsallow"] = ''
+
+        if data.get("hostsdeny"):
+            data["hostsdeny"] = " ".join(data["hostsdeny"])
+        else:
+            data["hostsdeny"] = ''
+
+        data['id'] = await self.middleware.call(
+            'datastore.insert',
+            self._config.datastore,
+            data,
+            {'prefix': self._config.datastore_prefix}
+        )
+        await self.middleware.call('service.reload', 'rsync')
+        return data
+
+    @accepts(Int('id'), Ref('rsyncmod'))
+    async def do_update(self, id, data):
+        module = await self.middleware.call(
+            'datastore.query',
+            self._config.datastore,
+            [('id', '=', id)],
+            {'prefix': self._config.datastore_prefix, 'get': True}
+        )
+        module.update(data)
+
+        module["hostsallow"] = " ".join(module["hostsallow"])
+        module["hostsdeny"] = " ".join(module["hostsdeny"])
+
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            id,
+            data,
+            {'prefix': self._config.datastore_prefix}
+        )
+        await self.middleware.call('service.reload', 'rsync')
+
+        return module
+
+    @accepts(Int('id'))
+    async def do_delete(self, id):
+        return await self.middleware.call('datastore.delete', self._config.datastore, id)
