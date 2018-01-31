@@ -80,6 +80,8 @@ def start(request, id):
                     if prebuilt_image and raw_file_cnt:
                         c.call('vm.decompress_gzip', prebuilt_image, raw_file_cnt)
                         c.call('vm.raw_resize', raw_file_cnt, raw_file_resize)
+                    elif prebuilt_image is False:
+                        return HttpResponse('Error: Image downloaded has a checksum error and will be removed!')
         with client as c:
             c.call('vm.start', id)
         return JsonResp(request, message='VM Started')
