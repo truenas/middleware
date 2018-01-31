@@ -36,7 +36,7 @@ def main(command, quiet):
                 print("Node status: Not an HA node")
             sys.exit(0)
         elif ret == "UNKNOWN" and fo_exists:
-            print("Node status: Passive (Master mode unreachable)")
+            print("Node status: Passive (Master node unreachable)")
 
         if fo_exists:
             ret = client.call('notifier.failover_disabled_reasons')
