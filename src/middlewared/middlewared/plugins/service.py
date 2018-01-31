@@ -777,8 +777,8 @@ class ServiceService(CRUDService):
         if nfs['nfs_srv_v4']:
             sysctl.filter('vfs.nfsd.server_max_nfsvers')[0].value = 4
             if nfs['nfs_srv_v4_v3owner']:
-                #Per RFC7530, sending NFSv3 style UID/GIDs across the wire is now allowed
-                #You must have both of these sysctl's set to allow the desired functionality
+                # Per RFC7530, sending NFSv3 style UID/GIDs across the wire is now allowed
+                # You must have both of these sysctl's set to allow the desired functionality
                 sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 1
                 sysctl.filter('vfs.nfs.enable_uidtostring')[0].value = 1
                 await self._service("nfsuserd", "stop", force=True, **kwargs)
