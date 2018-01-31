@@ -629,6 +629,9 @@ class UPSForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(UPSForm, self).__init__(*args, **kwargs)
+        _n = notifier()
+        if not _n.is_freenas():
+            self.fields['ups_powerdown'].help_text = _("Signal the UPS to power off after TrueNAS shuts down.")
         self.fields['ups_shutdown'].widget.attrs['onChange'] = mark_safe(
             "disableGeneric('id_ups_shutdown', ['id_ups_shutdowntimer'], "
             "function(box) { if(box.get('value') == 'lowbatt') { return true; "
