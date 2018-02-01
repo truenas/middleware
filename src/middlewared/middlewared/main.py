@@ -1036,7 +1036,7 @@ class Middleware(object):
         self.__setup_periodic_tasks()
 
         self.logger.debug('Accepting connections')
-        web.run_app(app, host='127.0.0.1', port=6000, access_log=None)
+        web.run_app(app, host='0.0.0.0', port=6000, access_log=None)
         try:
             self.__loop.run_forever()
         except RuntimeError as e:
