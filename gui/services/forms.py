@@ -153,7 +153,7 @@ class CIFSForm(MiddlewareModelForm, ModelForm):
                     'cifs_srv_bindip',
                     self.data['cifs_srv_bindip'].split(',')
                 )
-        self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices())
+        self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices(noloopback=False))
         if self.instance.id and self.instance.cifs_srv_bindip:
             bindips = []
             for ip in self.instance.cifs_srv_bindip:
@@ -629,7 +629,7 @@ class UPSForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(UPSForm, self).__init__(*args, **kwargs)
-        _n = notifier()
+        _n = notifier()   
         if not _n.is_freenas():
             self.fields['ups_powerdown'].help_text = _("Signal the UPS to power off after TrueNAS shuts down.")
         self.fields['ups_shutdown'].widget.attrs['onChange'] = mark_safe(

@@ -442,13 +442,14 @@ class whoChoices:
 # Network|Interface Management
 class NICChoices(object):
     """Populate a list of NIC choices"""
-    def __init__(self, nolagg=False, novlan=False, notap=True,
+    def __init__(self, nolagg=False, novlan=False, noloopback=True, notap=True,
                  exclude_configured=True, include_vlan_parent=False,
                  exclude_unconfigured_vlan_parent=False,
                  with_alias=False, nobridge=True, noepair=True):
 
         self.nolagg = nolagg
         self.novlan = novlan
+        self.noloopback = noloopback
         self.notap = notap
         self.exclude_configured = exclude_configured
         self.include_vlan_parent = include_vlan_parent
@@ -460,8 +461,9 @@ class NICChoices(object):
     def __iter__(self):
         pipe = popen("/sbin/ifconfig -l")
         self._NIClist = pipe.read().strip().split(' ')
-        # Remove lo0 from choices
         self._NIClist = [y for y in self._NIClist if y not in ('lo0', 'pfsync0', 'pflog0', 'ipfw0')]
+        if self.noloopback is False:
+            self._NIClist.append('lo0') 
 
         from freenasUI.middleware.notifier import notifier
         # Remove internal interfaces for failover
@@ -593,12 +595,14 @@ class IPChoices(NICChoices):
         ipv6=True,
         nolagg=False,
         novlan=False,
+        noloopback=True,
         exclude_configured=False,
         include_vlan_parent=True
     ):
         super(IPChoices, self).__init__(
             nolagg=nolagg,
             novlan=novlan,
+            noloopback=noloopback, 
             exclude_configured=exclude_configured,
             include_vlan_parent=include_vlan_parent
         )
@@ -957,9 +961,7 @@ SAMBA4_FOREST_LEVEL_CHOICES = (
     ('2000', '2000'),
     ('2003', '2003'),
     ('2008', '2008'),
-    ('2008_R2', '2008_R2'),
-    ('2012', '2012'),
-    ('2012_R2', '2012_R2')
+    ('2008_R2', '2008_R2')
 )
 
 SHARE_TYPE_CHOICES = (
