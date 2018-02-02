@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: middlewared-watchdog
+# BEFORE: fsck earlykld middlewared
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+pidfile=/var/run/middlewared-watchdog.pid
+command="/usr/sbin/daemon"
+
+middlewared_watchdog_start() {
+    env PATH=$PATH:/usr/local/sbin:/usr/local/bin LC_ALL=en_US.UTF-8 ${command} -f -P ${pidfile} -r /usr/local/bin/python -m middlewared.watchdog
+}
+
+name="middlewared_watchdog"
+start_cmd='middlewared_watchdog_start'
+
+load_rc_config $name
+run_rc_command $*

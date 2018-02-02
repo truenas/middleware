@@ -34,7 +34,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py \
 		rclone>0:net/rclone \
 		swagger-ui>0:freenas/swagger-ui
 
-USE_RC_SUBR=	middlewared
+USE_RC_SUBR=	middlewared middlewared-watchdog
 
 WRKSRC?=/usr/nas_source/middlewared
 
