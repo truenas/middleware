@@ -94,8 +94,8 @@ HDDSTANDBY_CHOICES = (
 
 ADVPOWERMGMT_CHOICES = (
     ('Disabled', _('Disabled')),
-    ('1',  _('Level 1 - Minimum power usage with Standby (spindown)')),
-    ('64',  _('Level 64 - Intermediate power usage with Standby')),
+    ('1', _('Level 1 - Minimum power usage with Standby (spindown)')),
+    ('64', _('Level 64 - Intermediate power usage with Standby')),
     ('127', _('Level 127 - Maximum power usage with Standby')),
     ('128', _('Level 128 - Minimum power usage without Standby (no spindown)')),
     ('192', _('Level 192 - Intermediate power usage without Standby')),
@@ -203,7 +203,7 @@ class CHARSET(object):
 
     __CODEPAGE = re.compile("(?P<name>CP|GB|ISO-8859-|UTF-)(?P<num>\d+)").match
 
-    __canonical = { 'UTF-8', 'ASCII', 'GB2312', 'HZ-GB-2312', 'CP1361' }
+    __canonical = {'UTF-8', 'ASCII', 'GB2312', 'HZ-GB-2312', 'CP1361'}
 
     def __check_codec(self, encoding):
         try:
@@ -213,26 +213,21 @@ class CHARSET(object):
             pass
         return
 
-
     def __key_cp(self, encoding):
         cp = CHARSET.__CODEPAGE(encoding)
         if cp:
             return tuple((cp.group('name'), int(cp.group('num'), 10)))
         return tuple((encoding, float('inf')))
 
-
     def __init__(self, popular=[]):
 
         self.__popular = popular
 
-        out = subprocess.Popen(['/usr/bin/iconv', '-l'],
-                stdout=subprocess.PIPE,
-                encoding='utf8'
-            ).communicate()[0]
+        out = subprocess.Popen(['/usr/bin/iconv', '-l'], stdout=subprocess.PIPE, encoding='utf8').communicate()[0]
 
         encodings = set()
         for line in out.splitlines():
-            enc = [ e for e in line.split() if self.__check_codec(e) ]
+            enc = [e for e in line.split() if self.__check_codec(e)]
             if enc:
                 cp = enc[0]
                 for e in enc:
@@ -241,7 +236,7 @@ class CHARSET(object):
                         break
                 encodings.add(cp)
 
-        self.__charsets = [ c for c in sorted(encodings, key=self.__key_cp) if c not in self.__popular ]
+        self.__charsets = [c for c in sorted(encodings, key=self.__key_cp) if c not in self.__popular]
 
     def __iter__(self):
         if self.__popular:
@@ -357,7 +352,7 @@ UPS_CHOICES = (
 BTENCRYPT_CHOICES = (
     ('preferred', _('Preferred')),
     ('tolerated', _('Tolerated')),
-    ('required',  _('Required')),
+    ('required', _('Required')),
 )
 
 PWEncryptionChoices = (
@@ -371,11 +366,11 @@ PWEncryptionChoices = (
 )
 
 LAGGType = (
-    ('failover',    'Failover'),
-    ('lacp',        'LACP'),
+    ('failover', 'Failover'),
+    ('lacp', 'LACP'),
     ('loadbalance', 'Load Balance'),
-    ('roundrobin',  'Round Robin'),
-    ('none',        'None'),
+    ('roundrobin', 'Round Robin'),
+    ('none', 'None'),
 )
 
 VLAN_PCP_CHOICES = (
@@ -442,13 +437,14 @@ class whoChoices:
 # Network|Interface Management
 class NICChoices(object):
     """Populate a list of NIC choices"""
-    def __init__(self, nolagg=False, novlan=False, notap=True,
+    def __init__(self, nolagg=False, novlan=False, noloopback=True, notap=True,
                  exclude_configured=True, include_vlan_parent=False,
                  exclude_unconfigured_vlan_parent=False,
                  with_alias=False, nobridge=True, noepair=True):
 
         self.nolagg = nolagg
         self.novlan = novlan
+        self.noloopback = noloopback
         self.notap = notap
         self.exclude_configured = exclude_configured
         self.include_vlan_parent = include_vlan_parent
@@ -460,8 +456,9 @@ class NICChoices(object):
     def __iter__(self):
         pipe = popen("/sbin/ifconfig -l")
         self._NIClist = pipe.read().strip().split(' ')
-        # Remove lo0 from choices
         self._NIClist = [y for y in self._NIClist if y not in ('lo0', 'pfsync0', 'pflog0', 'ipfw0')]
+        if self.noloopback is False:
+            self._NIClist.append('lo0')
 
         from freenasUI.middleware.notifier import notifier
         # Remove internal interfaces for failover
@@ -593,12 +590,14 @@ class IPChoices(NICChoices):
         ipv6=True,
         nolagg=False,
         novlan=False,
+        noloopback=True,
         exclude_configured=False,
         include_vlan_parent=True
     ):
         super(IPChoices, self).__init__(
             nolagg=nolagg,
             novlan=novlan,
+            noloopback=noloopback,
             exclude_configured=exclude_configured,
             include_vlan_parent=include_vlan_parent
         )
@@ -711,17 +710,17 @@ ACCESS_MODE = (
     ('ro', _('Read-only')),
     ('wo', _('Write-only')),
     ('rw', _('Read and Write')),
-    )
+)
 
 ZFS_DEDUP = (
     ('on', _('On')),
     ('verify', _('Verify')),
     ('off', _('Off')),
-    )
+)
 
 ZFS_DEDUP_INHERIT = (
     ('inherit', _('Inherit')),
-    ) + ZFS_DEDUP
+) + ZFS_DEDUP
 
 TASK_INTERVAL = (
     (5, _("%(minutes)s minutes") % {'minutes': '5'}),
@@ -738,7 +737,7 @@ TASK_INTERVAL = (
     (10080, _("%(week)s week") % {'week': '1'}),
     (20160, _("%(weeks)s weeks") % {'weeks': '2'}),
     (40320, _("%(weeks)s weeks") % {'weeks': '4'}),
-    )
+)
 
 SMART_POWERMODE = (
     ('never', _("Never - Check the device regardless of its power mode")),
@@ -747,14 +746,14 @@ SMART_POWERMODE = (
                   " mode")),
     ('idle', _("Idle - Check the device unless it is in SLEEP, STANDBY or IDLE"
                " mode")),
-    )
+)
 
 SMART_TEST = (
     ('L', _('Long Self-Test')),
     ('S', _('Short Self-Test')),
     ('C', _('Conveyance Self-Test (ATA  only)')),
     ('O', _('Offline Immediate Test (ATA only)')),
-    )
+)
 
 SERIAL_SPEED = (
     ('9600', _('9600')),
@@ -762,7 +761,7 @@ SERIAL_SPEED = (
     ('38400', _('38400')),
     ('57600', _('57600')),
     ('115200', _('115200')),
-    )
+)
 
 
 class UPSDRIVER_CHOICES(object):
@@ -831,7 +830,7 @@ SFTP_LOG_LEVEL = (
     ('DEBUG', _('Debug')),
     ('DEBUG2', _('Debug2')),
     ('DEBUG3', _('Debug3')),
-    )
+)
 
 
 SFTP_LOG_FACILITY = (
@@ -846,14 +845,14 @@ SFTP_LOG_FACILITY = (
     ('LOCAL5', _('Local 5')),
     ('LOCAL6', _('Local 6')),
     ('LOCAL7', _('Local 7')),
-    )
+)
 
 DIRECTORY_SERVICE_CHOICES = (
     ('activedirectory', _('Active Directory')),
     ('domaincontroller', _('Domain Controller')),
     ('ldap', _('LDAP')),
     ('nis', _('NIS')),
-    )
+)
 
 
 SYS_LOG_LEVEL = (
@@ -866,7 +865,7 @@ SYS_LOG_LEVEL = (
     ('f_info', _('Info')),
     ('f_debug', _('Debug')),
     ('f_is_debug', _('Is_Debug')),
-    )
+)
 
 
 # on|off|ctrl|[!]data|auth|auth+[!]data
@@ -969,9 +968,9 @@ SHARE_TYPE_CHOICES = (
 )
 
 CASE_SENSITIVITY_CHOICES = (
-    ('sensitive',  _('Sensitive')),
-    ('insensitive',  _('Insensitive')),
-    ('mixed',  _('Mixed'))
+    ('sensitive', _('Sensitive')),
+    ('insensitive', _('Insensitive')),
+    ('mixed', _('Mixed'))
 )
 
 
