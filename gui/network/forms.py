@@ -614,8 +614,7 @@ class GlobalConfigurationForm(ModelForm):
             if c.call('routes.ipv4gw_reachable', val.exploded):
                 return val
 
-        raise forms.ValidationError(
-                _("Gateway {} is unreachable".format(val)))
+        raise forms.ValidationError(_("Gateway {} is unreachable".format(val)))
 
     def clean_gc_nameserver1(self):
         val = self.cleaned_data.get("gc_nameserver1")
@@ -709,7 +708,7 @@ class GlobalConfigurationForm(ModelForm):
                 c.call('routes.sync')
 
         if hasattr(notifier, 'failover_licensed') and notifier().failover_licensed() and \
-            self.instance._orig_gc_hostname_virtual != self.cleaned_data.get('gc_hostname_virtual'):
+                self.instance._orig_gc_hostname_virtual != self.cleaned_data.get('gc_hostname_virtual'):
             from freenasUI.services.models import services, NFS
             svcobj = services.objects.get(srv_service='nfs')
             nfsobj = NFS.objects.all()[0]
