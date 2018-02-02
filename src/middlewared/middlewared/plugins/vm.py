@@ -1011,23 +1011,13 @@ class VMService(CRUDService):
                     self.logger.debug("===> Checksum OK: {}".format(file_path))
                     return file_path
                 else:
-                    self.logger.debug("===> Checksum NOK: {}".format(file_path))
+                    self.logger.debug("===> Checksum NOK, removing file: {}".format(file_path))
+                    os.remove(file_path)
                     return False
             else:
                 return False
         else:
             return False
-
-    def decompress_hookreport(self, dst_file, job):
-        totalsize = 4756340736  # XXX: It will be parsed from a sha256 file.
-        fd = os.open(dst_file, os.O_RDONLY)
-        try:
-            size = os.lseek(fd, 0, os.SEEK_END)
-        finally:
-            os.close(fd)
-
-        percent = (size / totalsize) * 100
-        job.set_progress(int(percent), 'Decompress', {'decompressed': size, 'total': totalsize})
 
     @accepts(Str('src'), Str('dst'))
     def decompress_gzip(self, src, dst):
