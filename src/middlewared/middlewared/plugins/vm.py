@@ -283,21 +283,22 @@ class VMSupervisor(object):
         while self.taps:
             netif.destroy_interface(self.taps.pop())
 
-    def set_tap_mtu(self, iface, tap):
-        if iface.mtu > tap.mtu:
-            tap.mtu = iface.mtu
-        return tap
+    def set_iface_mtu(self, ifacesrc, ifacedst):
+        ifacedst.mtu = ifacesrc.mtu
+
+        return ifacedst
 
     async def bridge_setup(self, tapname, tap, attach_iface):
+        if_bridge = []
+        bridge_enabled = False
+        attach_iface_info = netif.get_interface(attach_iface)
+
         if attach_iface is None:
             # XXX: backward compatibility prior to 11.1-RELEASE.
             try:
                 attach_iface = netif.RoutingTable().default_route_ipv4.interface
             except:
                 return
-
-        if_bridge = []
-        bridge_enabled = False
 
         for brgname, iface in list(netif.list_interfaces().items()):
             if brgname.startswith('bridge'):
@@ -307,13 +308,13 @@ class VMSupervisor(object):
             for bridge in if_bridge:
                 if attach_iface in bridge.members:
                     bridge_enabled = True
-                    self.set_tap_mtu(bridge, tap)
+                    self.set_iface_mtu(attach_iface_info, tap)
                     bridge.add_member(tapname)
                     break
 
         if bridge_enabled is False:
             bridge = netif.get_interface(netif.create_interface('bridge'))
-            self.set_tap_mtu(bridge, tap)
+            self.set_iface_mtu(attach_iface_info, tap)
             bridge.add_member(tapname)
             bridge.add_member(attach_iface)
             bridge.up()
