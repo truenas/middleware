@@ -28,5 +28,5 @@ class dyndns_test(unittest.TestCase):
                    "ddns_domain": NOIPHOST}
         assert PUT("/services/dynamicdns/", payload) == 200
 
-if RunTest is True:
+if __name__ == "__main__":
     unittest.main(verbosity=2)

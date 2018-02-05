@@ -42,5 +42,5 @@ class iscsi_test(unittest.TestCase):
     def test_02_Delete_iSCSI_extent(self):
         assert DELETE("/services/iscsi/extent/1/") == 204
 
-if RunTest is True:
+if __name__ == "__main__":
     unittest.main(verbosity=2)

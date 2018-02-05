@@ -86,5 +86,5 @@ class nfs_test(unittest.TestCase):
         assert BSD_TEST(cmd) is True
 
 
-if RunTest is True:
+if __name__ == "__main__":
     unittest.main(verbosity=2)

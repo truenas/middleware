@@ -142,5 +142,5 @@ class smb_bsd_test(unittest.TestCase):
         assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
 
 
-if RunTest is True:
+if __name__ == "__main__":
     unittest.main(verbosity=2)

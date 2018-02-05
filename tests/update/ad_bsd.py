@@ -9,9 +9,7 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
-from functions import BSD_TEST, return_output
-from auto_config import ip
+from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, BSD_TEST
 
 try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
@@ -153,5 +151,5 @@ class ad_bsd_test(unittest.TestCase):
     def test_21_Destroying_SMB_dataset(self):
         assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
 
-if RunTest is True:
+if __name__ == "__main__":
     unittest.main(verbosity=2)

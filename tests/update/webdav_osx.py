@@ -70,5 +70,5 @@ class webdav_osx_test(unittest.TestCase):
         assert GET_OUTPUT("/services/services/webdav",
                           "srv_state") == "STOPPED"
 
-if RunTest is True:
+if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -100,5 +100,5 @@ class iscsi_test(unittest.TestCase):
         assert GET_OUTPUT("/services/services/iscsitarget/",
                           "srv_state") == "STOPPED"
 
-if RunTest is True:
+if __name__ == "__main__":
     unittest.main(verbosity=2)

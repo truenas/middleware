@@ -34,5 +34,5 @@ class network(unittest.TestCase):
         assert PUT("/network/globalconfiguration/", payload) == 200
 
 
-if RunTest is True:
+if __name__ == "__main__":
     unittest.main(verbosity=2)

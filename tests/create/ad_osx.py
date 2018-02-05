@@ -170,5 +170,5 @@ class ad_osx_test(unittest.TestCase):
     def test_21_Destroying_SMB_dataset(self):
         assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
 
-if RunTest is True:
+if __name__ == "__main__":
     unittest.main(verbosity=2)

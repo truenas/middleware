@@ -51,5 +51,5 @@ class jails_test(unittest.TestCase):
     def test_06_Stopping_jail(self):
         assert POST("/jails/jails/1/stop/", "") == 202
 
-if RunTest is True:
+if __name__ == "__main__":
     unittest.main(verbosity=2)

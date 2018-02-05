@@ -45,5 +45,5 @@ class domaincontroller_test(unittest.TestCase):
         payload = {"dc_forest_level": FORESTLEVEL}
         assert PUT("/services/services/domaincontroller/", payload) == 200
 
-if RunTest is True:
+if __name__ == "__main__":
     unittest.main(verbosity=2)

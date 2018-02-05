@@ -10,7 +10,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, OSX_TEST
-from functions import return_output, SSH_TEST
+
 from auto_config import ip
 try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
@@ -176,5 +176,5 @@ class ldap_osx_test(unittest.TestCase):
     def test_22_Destroying_SMB_dataset(self):
         assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
 
-if RunTest is True:
+if __name__ == "__main__":
     unittest.main(verbosity=2)
