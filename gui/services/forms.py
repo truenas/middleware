@@ -153,7 +153,7 @@ class CIFSForm(MiddlewareModelForm, ModelForm):
                     'cifs_srv_bindip',
                     self.data['cifs_srv_bindip'].split(',')
                 )
-        self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices())
+        self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices(noloopback=False))
         if self.instance.id and self.instance.cifs_srv_bindip:
             bindips = []
             for ip in self.instance.cifs_srv_bindip:
@@ -439,59 +439,32 @@ class SSHForm(ModelForm):
         return obj
 
 
-class RsyncdForm(ModelForm):
+class RsyncdForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "rsyncd_"
+    middleware_attr_schema = "rsyncd"
+    middleware_plugin = "rsyncd"
 
     class Meta:
         fields = '__all__'
         model = models.Rsyncd
 
-    def save(self):
-        super(RsyncdForm, self).save()
-        started = notifier().reload("rsync")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='rsync').srv_enable
-        ):
-            raise ServiceFailed(
-                "rsync", _("The Rsync service failed to reload.")
-            )
 
+class RsyncModForm(MiddlewareModelForm, ModelForm):
 
-class RsyncModForm(ModelForm):
+    middleware_attr_prefix = "rsyncmod_"
+    middleware_attr_schema = "rsyncmod"
+    middleware_plugin = "rsyncmod"
+    is_singletone = False
 
     class Meta:
         fields = '__all__'
         model = models.RsyncMod
 
-    def clean_rsyncmod_name(self):
-        name = self.cleaned_data['rsyncmod_name']
-        if re.search(r'[/\]]', name):
-            raise forms.ValidationError(
-                _("The name cannot contain slash or a closing square backet.")
-            )
-        name = name.strip()
-        return name
-
-    def clean_rsyncmod_hostsallow(self):
-        hosts = self.cleaned_data['rsyncmod_hostsallow']
-        hosts = hosts.replace("\n", " ").strip()
-        return hosts
-
-    def clean_rsyncmod_hostsdeny(self):
-        hosts = self.cleaned_data['rsyncmod_hostsdeny']
-        hosts = hosts.replace("\n", " ").strip()
-        return hosts
-
-    def save(self):
-        super(RsyncModForm, self).save()
-        started = notifier().reload("rsync")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='rsync').srv_enable
-        ):
-            raise ServiceFailed(
-                "rsync", _("The Rsync service failed to reload.")
-            )
+    def middleware_clean(self, update):
+        update['hostsallow'] = list(filter(None, re.split(r"\s+", update["hostsallow"])))
+        update['hostsdeny'] = list(filter(None, re.split(r"\s+", update["hostsdeny"])))
+        return update
 
 
 class DynamicDNSForm(MiddlewareModelForm, ModelForm):
@@ -656,6 +629,9 @@ class UPSForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(UPSForm, self).__init__(*args, **kwargs)
+        _n = notifier()
+        if not _n.is_freenas():
+            self.fields['ups_powerdown'].help_text = _("Signal the UPS to power off after TrueNAS shuts down.")
         self.fields['ups_shutdown'].widget.attrs['onChange'] = mark_safe(
             "disableGeneric('id_ups_shutdown', ['id_ups_shutdowntimer'], "
             "function(box) { if(box.get('value') == 'lowbatt') { return true; "

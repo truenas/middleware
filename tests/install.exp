@@ -87,7 +87,7 @@ expect {
 
 # Installation complete!
 expect {
-  "Installation finished. No error reported." {
+  "succeeded!" {
     send_user "Bhyve installation finished."
     sleep 5
     exit 0

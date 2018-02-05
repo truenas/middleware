@@ -1692,18 +1692,25 @@ class InterfacesResourceMixin(object):
             ] = item.alias_v6netmaskbit
             bundle.data['alias_set-%d-id' % i] = item.id
         initial = i + 1
-        for i, item in enumerate(newips, i + 1):
+        i = initial
+        for item in newips:
             ip, nm = item.rsplit('/', 1)
             if ':' in ip:
-                bundle.data['alias_set-%d-alias_v6address' % i] = ip
-                bundle.data['alias_set-%d-alias_v6netmaskbit' % i] = nm
+                v = 'v6'
             else:
-                bundle.data['alias_set-%d-alias_v4address' % i] = ip
-                bundle.data['alias_set-%d-alias_v4netmaskbit' % i] = nm
-            bundle.data['alias_set-%d-id' % i] = ''
+                v = 'v4'
+            for j in range(initial):
+                if bundle.data['alias_set-%d-alias_%saddress' % (j, v)] == ip:
+                    bundle.data['alias_set-%d-alias_%saddress' % (j, v)] = ip
+                    bundle.data['alias_set-%d-alias_%snetmaskbit' % (j, v)] = nm
+                    break
+            else:
+                bundle.data['alias_set-%d-alias_%saddress' % (i, v)] = ip
+                bundle.data['alias_set-%d-alias_%snetmaskbit' % (i, v)] = nm
+                i += 1
         bundle.data['int_aliases'] = newips
         bundle.data['alias_set-INITIAL_FORMS'] = initial
-        bundle.data['alias_set-TOTAL_FORMS'] = i + 1
+        bundle.data['alias_set-TOTAL_FORMS'] = i
         return bundle
 
     def is_form_valid(self, bundle, form):
