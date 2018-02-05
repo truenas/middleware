@@ -7,9 +7,11 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE
+from auto_config import results_xml
 
 
 class rsync_test(unittest.TestCase):

@@ -7,10 +7,11 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, BSD_TEST
-from auto_config import ip
+from auto_config import ip, results_xml
 try:
     from config import BRIDGEHOST
 except ImportError:

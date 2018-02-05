@@ -6,10 +6,11 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, is_agent_setup, if_key_listed
-from auto_config import sshKey
+from auto_config import sshKey, results_xml
 
 
 class ssh_test(unittest.TestCase):

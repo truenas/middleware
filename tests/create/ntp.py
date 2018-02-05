@@ -6,10 +6,11 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, DELETE
-from auto_config import ntpServer
+from auto_config import ntpServer, results_xml
 
 
 class ntp_test(unittest.TestCase):

@@ -7,9 +7,11 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import SSH_TEST
+from auto_config import results_xml
 alert_msg = "Testing system alerts with failure."
 alert_status = "FAIL"
 alert_file = "/tmp/self-test-alert"

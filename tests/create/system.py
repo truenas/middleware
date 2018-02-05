@@ -7,9 +7,11 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST
+from auto_config import results_xml
 
 
 class system_test(unittest.TestCase):

@@ -6,9 +6,11 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET_OUTPUT
+from auto_config import results_xml
 
 
 class cronjob_test(unittest.TestCase):

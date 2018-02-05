@@ -7,9 +7,11 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
+from auto_config import results_xml
 
 DATASET = "webdavshare"
 DATASET_PATH = "/mnt/tank/%s/" % DATASET

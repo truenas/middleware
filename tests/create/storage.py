@@ -6,10 +6,11 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, POST
-from auto_config import disk1, disk2
+from auto_config import disk1, disk2, results_xml
 
 
 class storage_test(unittest.TestCase):

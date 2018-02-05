@@ -7,10 +7,11 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, RC_TEST  # , POST
-from auto_config import ip
+from auto_config import ip, results_xml
 
 
 class ldap_osx_test(unittest.TestCase):

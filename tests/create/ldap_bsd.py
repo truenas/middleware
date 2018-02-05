@@ -7,11 +7,12 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE_ALL, DELETE, BSD_TEST
 from functions import return_output
-from auto_config import ip
+from auto_config import ip, results_xml
 
 try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME

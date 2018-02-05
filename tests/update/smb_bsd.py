@@ -7,11 +7,12 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
 from functions import BSD_TEST
-from auto_config import ip
+from auto_config import ip, results_xml
 try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
     from config import LDAPBASEDN, LDAPHOSTNAME, LDAPBINDDN, LDAPBINDPASSWORD

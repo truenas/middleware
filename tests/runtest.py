@@ -12,6 +12,12 @@ import sys
 apifolder = getcwd()
 sys.path.append(apifolder)
 
+try:
+    import xmlrunner
+except ImportError:
+    cmd2 = "pip-3.6 uninstall -y middlewared.client"
+    call(cmd2, shell=True)
+
 results_xml = getcwd() + '/results/'
 localHome = path.expanduser('~')
 dotsshPath = localHome + '/.ssh'
@@ -61,7 +67,8 @@ disk2 = "vtbd2"
 #disk1 = "da1"
 #disk2 = "da2"
 keyPath = "%s"
-""" % (passwd, ip, interface, localHome, keyPath)
+results_xml = "%s"
+""" % (passwd, ip, interface, localHome, keyPath, results_xml)
 
 cfg_file = open("auto_config.py", 'w')
 cfg_file.writelines(cfg_content)
