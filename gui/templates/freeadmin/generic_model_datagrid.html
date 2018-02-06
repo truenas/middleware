@@ -208,7 +208,7 @@ require([
     {% endif %}
 
     grid.on("dgrid-error", function(event) {
-      if(event.error.status == 401) {
+      if(event.error.response.status == 401) {
         window.location = '/';
       }
       grid.contentNode.innerHTML = event.error.message;
