@@ -51,7 +51,7 @@ require(["dojo/_base/fx", "dojo/dom", "dojo/fx/easing", "dojo/_base/html", "dojo
 <div id="login" data-dojo-type="dijit.Dialog" data-dojo-props="title: '{% blocktrans with sw_login_version=sw_login_version sw_name=sw_name %}Welcome to {{ sw_name }}&reg; {{ sw_login_version }}{% endblocktrans %}'" style="max-width: 400px;">
 <script type="dojo/event" data-dojo-event="onFocus">
   require(["dojo/dom"], function(dom) {
-    dom.byId("id_password").focus();
+    dom.byId("id_username").focus();
   });
 </script>
 <form action="." method="post">{% csrf_token %}
