@@ -111,6 +111,7 @@ from freenasUI.system.forms import (
 )
 from freenasUI.system.models import Update as mUpdate, Alert as mAlert
 from freenasUI.system.utils import BootEnv, debug_generate, factory_restore
+from freenasUI.system.views import restart_httpd, restart_httpd_all
 from middlewared.client import ClientException
 from tastypie import fields, http
 from tastypie.http import (
@@ -273,6 +274,34 @@ class AlertResource(DojoResource):
 
 
 class SettingsResourceMixin(object):
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/restart-httpd%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('restart_httpd'),
+            ),
+            url(
+                r"^(?P<resource_name>%s)/restart-httpd-all%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('restart_httpd_all'),
+            ),
+        ]
+
+    def restart_httpd(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        return restart_httpd(request)
+
+    def restart_httpd_all(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        return restart_httpd_all(request)
 
     def dehydrate(self, bundle):
         bundle = super(SettingsResourceMixin, self).dehydrate(bundle)
