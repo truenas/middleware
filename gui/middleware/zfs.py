@@ -480,7 +480,7 @@ class ZFSDataset(object):
 
     properties = [
         'atime', 'used', 'usedsnap', 'usedds', 'usedrefreserv', 'usedchild',
-        'avail', 'refer', 'mountpoint', 'compression', 'dedup',
+        'avail', 'refer', 'mountpoint', 'sync', 'compression', 'dedup',
         'description', 'quota', 'refquota', 'readonly', 'recordsize',
         'reservation', 'refreservation',
     ]
@@ -546,7 +546,7 @@ class ZFSVol(object):
 
     properties = [
         'used', 'usedsnap', 'usedds', 'usedrefreserv', 'usedchild',
-        'avail', 'refer', 'volsize', 'compression', 'dedup',
+        'avail', 'refer', 'volsize', 'sync', 'compression', 'dedup',
         'description', 'readonly',
     ]
 
@@ -917,6 +917,7 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
             ('usedbyrefreservation', 'usedrefreserv', int),
             ('usedbychildren', 'usedchild', int),
             ('referenced', 'refer', int),
+            ('sync', 'sync', str),
             ('compression', 'compression', str),
             ('dedup', 'dedup', str),
             ('readonly', 'readonly', str),
