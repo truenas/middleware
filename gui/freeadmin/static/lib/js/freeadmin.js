@@ -2795,7 +2795,7 @@ require([
             } else if(item.type == 'iscsi') {
                 Menu.openISCSI(item.gname);
             } else if(item.action == 'logout') {
-                window.location='/account/logout/';
+                window.location='/legacy/account/logout/';
             } else if(item.action == 'displayprocs') {
                 registry.byId("top_dialog").show();
             } else if(item.action == 'shell') {
