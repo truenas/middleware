@@ -71,7 +71,10 @@ class BootService(Service):
             ) + [dev]
         )
         for command in commands:
-            await run(*command)
+            p = await run(*command, check=False)
+            if p.returncode != 0:
+                raise CallError('%r failed:\n%s%s' % (" ".join(command), p.stdout.decode("utf-8"), p.stderr.decode("utf-8")))
+
         return boottype
 
     @private
@@ -122,7 +125,33 @@ class BootService(Service):
                 format_opts['size'] = int(e.find('./length').text)
                 break
 
-        boottype = await self.format(dev, format_opts)
+        try:
+            boottype = await self.format(dev, format_opts)
+        except CallError as e:
+            if "gpart: autofill: No space left on device" in e.errmsg:
+                async def get_diskinfo(dev):
+                    diskinfo = {
+                        s.split("#")[1].strip(): s.split("#")[0].strip()
+                        for s in (await run("/usr/sbin/diskinfo", "-v", dev)).stdout.decode("utf-8").split("\n")
+                        if "#" in s
+                    }
+                    return {
+                        "name": diskinfo.get("Disk descr.", dev),
+                        "size_gb": "%.2f" % ((int(diskinfo["mediasize in sectors"]) * int(diskinfo["sectorsize"]) /
+                                             float(1024 ** 3))),
+                        "size_sectors": int(diskinfo["mediasize in sectors"]),
+                    }
+
+                src_info = await get_diskinfo(disks[0])
+                dst_info = await get_diskinfo(dev)
+
+                raise CallError((
+                    f"The device called {dst_info['name']} ({dst_info['size_gb']} GB, {dst_info['size_sectors']} "
+                    f"sectors does not have enough space to mirror the old device {src_info['name']} "
+                    f"({src_info['size_gb']} GB, {src_info['size_sectors']} sectors). Please use a larger device."
+                ))
+
+            raise
 
         await self.middleware.call('zfs.pool.extend', 'freenas-boot', None, [{'target': f'{disks[0]}p2', 'type': 'DISK', 'path': f'/dev/{dev}p2'}])
 
