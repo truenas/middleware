@@ -508,6 +508,33 @@ def bootenv_pool_attach(request):
     })
 
 
+def bootenv_pool_attach_progress(request):
+    with client as c:
+        try:
+            job = c.call('core.get_jobs', [('method', '=', 'boot.attach')], {'order_by': ['-id']})[0]
+            load = {
+                'apply': True,
+                'error': job['error'],
+                'finished': job['state'] in ('SUCCESS', 'FAILED', 'ABORTED'),
+                'indeterminate': True if job['progress']['percent'] is None else False,
+                'percent': job['progress'].get('percent'),
+                'step': 1,
+                'reboot': True,
+                'uuid': ['id'],
+            }
+            desc = job['progress'].get('description')
+            if desc:
+                load['details'] = desc
+
+        except IndexError:
+            load = {}
+
+    return HttpResponse(
+        json.dumps(load),
+        content_type='application/json',
+    )
+
+
 def bootenv_pool_detach(request, label):
     if request.method == 'POST':
         with client as c:
