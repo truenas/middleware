@@ -19,6 +19,7 @@ except ImportError:
     RunTest = False
 else:
     RunTest = True
+TestName = "create jails"
 
 
 class jails_test(unittest.TestCase):

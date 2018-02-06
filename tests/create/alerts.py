@@ -16,6 +16,7 @@ alert_msg = "Testing system alerts with failure."
 alert_status = "FAIL"
 alert_file = "/tmp/self-test-alert"
 RunTest = True
+TestName = "create a"
 
 
 class alerts_test(unittest.TestCase):

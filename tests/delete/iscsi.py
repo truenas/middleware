@@ -20,7 +20,7 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
     RunTest = True
-TestName = "update ad osx"
+TestName = "delete iscsi"
 DEVICE_NAME_PATH = "/tmp/iscsi_dev_name"
 TARGET_NAME = "iqn.freenas:target0"
 

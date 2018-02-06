@@ -12,6 +12,7 @@ sys.path.append(apifolder)
 from functions import PUT
 from auto_config import results_xml
 RunTest = True
+TestName = "create emails"
 
 
 class email_test(unittest.TestCase):

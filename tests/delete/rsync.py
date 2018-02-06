@@ -13,7 +13,7 @@ sys.path.append(apifolder)
 from functions import DELETE
 from auto_config import results_xml
 RunTest = True
-TestName = "update ad osx"
+TestName = "delete rsync"
 
 
 class rsync_test(unittest.TestCase):

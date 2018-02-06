@@ -13,6 +13,7 @@ sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
 from auto_config import results_xml
 RunTest = True
+TestName = "create webdav bsd"
 DATASET = "webdavshare"
 DATASET_PATH = "/mnt/tank/%s/" % DATASET
 TMP_FILE = "/tmp/testfile.txt"

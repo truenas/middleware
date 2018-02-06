@@ -20,7 +20,7 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/webdav-osx" + BRIDGEHOST
     RunTest = True
-
+TestName = "create webdav osx"
 
 DATASET = "webdavshare"
 DATASET_PATH = "/mnt/tank/%s/" % DATASET

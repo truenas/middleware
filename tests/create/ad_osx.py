@@ -20,6 +20,7 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/ad-osx" + BRIDGEHOST
     RunTest = True
+TestName = "create ad osx"
 
 DATASET = "ad-osx"
 SMB_NAME = "TestShare"

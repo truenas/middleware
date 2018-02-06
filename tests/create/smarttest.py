@@ -13,6 +13,7 @@ sys.path.append(apifolder)
 from functions import POST, GET_OUTPUT
 from auto_config import results_xml
 RunTest = True
+TestName = "create smarttest"
 
 
 class smarttest_test(unittest.TestCase):

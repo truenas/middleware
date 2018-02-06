@@ -21,6 +21,7 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
     RunTest = True
+TestName = "create iscsi"
 
 global DEVICE_NAME
 DEVICE_NAME = ""

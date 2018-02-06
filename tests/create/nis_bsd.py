@@ -19,6 +19,7 @@ except ImportError:
     RunTest = False
 else:
     RunTest = True
+TestName = "create nis bsd"
 
 # define variables
 SERVER = NISSERVER

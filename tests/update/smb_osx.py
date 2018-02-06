@@ -22,7 +22,7 @@ else:
     MOUNTPOINT = "/tmp/smb-bsd" + BRIDGEHOST
     RunTest = True
 
-TestName = "update ad osx"
+TestName = "update smb osx"
 
 DATASET = "smb-bsd"
 SMB_NAME = "TestShare"

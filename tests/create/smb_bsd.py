@@ -20,6 +20,7 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/smb-bsd" + BRIDGEHOST
     RunTest = True
+TestName = "create smb bsd"
 
 DATASET = "smb-bsd"
 SMB_NAME = "TestShare"

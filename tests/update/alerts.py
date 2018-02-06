@@ -13,7 +13,7 @@ sys.path.append(apifolder)
 from functions import GET_OUTPUT
 from auto_config import results_xml
 
-TestName = "update ad osx"
+TestName = "update alerts"
 
 RunTest = True
 ALERT_MSG = "Testing system alerts with failure."

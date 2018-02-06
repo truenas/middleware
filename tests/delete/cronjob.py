@@ -13,7 +13,7 @@ sys.path.append(apifolder)
 from functions import DELETE, GET
 from auto_config import results_xml
 RunTest = True
-TestName = "update ad osx"
+TestName = "delete cronjob"
 
 
 class cronjob_test(unittest.TestCase):

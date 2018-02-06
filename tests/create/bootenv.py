@@ -12,6 +12,7 @@ sys.path.append(apifolder)
 from functions import POST
 from auto_config import results_xml
 RunTest = True
+TestName = "create bootenv"
 
 
 class bootenv_test(unittest.TestCase):

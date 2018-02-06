@@ -14,7 +14,7 @@ from functions import PUT
 from auto_config import results_xml
 
 RunTest = True
-TestName = "update ad osx"
+TestName = "update group"
 
 GroupIdFile = "/tmp/.ixbuild_test_groupid"
 

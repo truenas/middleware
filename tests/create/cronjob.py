@@ -12,6 +12,7 @@ sys.path.append(apifolder)
 from functions import POST, GET_OUTPUT
 from auto_config import results_xml
 RunTest = True
+TestName = "create cronjob"
 
 
 class cronjob_test(unittest.TestCase):

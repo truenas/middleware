@@ -23,7 +23,7 @@ else:
     MOUNTPOINT = "/tmp/ldap-bsd" + BRIDGEHOST
     RunTest = True
 
-TestName = "update ad osx"
+TestName = "update ldap bsd"
 
 DATASET = "ldap-bsd"
 SMB_NAME = "TestShare"

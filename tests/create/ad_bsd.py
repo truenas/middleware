@@ -21,7 +21,7 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/ad-bsd" + BRIDGEHOST
     RunTest = True
-TestName = "create ad osx"
+TestName = "create ad bsd"
 
 DATASET = "ad-bsd"
 SMB_NAME = "TestShare"
