@@ -51,6 +51,11 @@ for output, arg in myopts:
     elif output in ('-I', '--interface'):
         interface = arg
 
+if interface == "vtnet0":
+    disk = 'disk1 = "vtbd1"\ndisk2 = "vtbd2"'
+else:
+    disk = 'disk1 "da1"\ndisk2 = "da2"'
+
 cfg_content = """#!/usr/bin/env python3.6
 
 import os
@@ -62,13 +67,10 @@ freenas_url = 'http://' + ip + '/api/v1.0'
 interface = "%s"
 ntpServer = "10.20.20.122"
 localHome = "%s"
-disk1 = "vtbd1"
-disk2 = "vtbd2"
-#disk1 = "da1"
-#disk2 = "da2"
+%s
 keyPath = "%s"
 results_xml = "%s"
-""" % (passwd, ip, interface, localHome, keyPath, results_xml)
+""" % (passwd, ip, interface, localHome, disk, keyPath, results_xml)
 
 cfg_file = open("auto_config.py", 'w')
 cfg_file.writelines(cfg_content)
