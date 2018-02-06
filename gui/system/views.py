@@ -144,7 +144,7 @@ def bootenv_datagrid(request):
     zlist = zpool_list(name='freenas-boot')
     try:
         advanced = models.Advanced.objects.order_by('-id')[0]
-    except:
+    except Exception:
         advanced = models.Advanced.objects.create()
 
     return render(request, 'system/bootenv_datagrid.html', {
@@ -335,7 +335,7 @@ def bootenv_scrub_interval(request):
 
     try:
         advanced = models.Advanced.objects.order_by('-id')[0]
-    except:
+    except Exception:
         advanced = models.Advanced.objects.create()
 
     advanced.adv_boot_scrub = int(interval)
@@ -423,7 +423,7 @@ def bootenv_deletebulk_progress(request):
             }),
             content_type='application/json',
         )
-    except:
+    except Exception:
         log.warn("Unable to load progress status for boot env bulk delete")
 
     return HttpResponse(
@@ -652,7 +652,7 @@ def config_download(request):
     try:
         with open(VERSION_FILE) as d:
             freenas_build = d.read().strip()
-    except:
+    except Exception:
         pass
 
     response = StreamingHttpResponse(
@@ -1340,7 +1340,7 @@ def update_apply(request):
                     # version standby node using hasyncd
                     s.reboot()
 
-                except:
+                except Exception:
                     pass
                 return render(request, 'failover/update_standby.html')
             else:
@@ -1548,7 +1548,7 @@ def update_check(request):
                         # If method does not exist it means we are still upgranding old
                         # version standby node using hasyncd
                         s.reboot()
-                    except:
+                    except Exception:
                         pass
                     return render(request, 'failover/update_standby.html')
 
@@ -2020,12 +2020,12 @@ def certificate_export_privatekey(request, id):
     return response
 
 
-# Need to figure this one out...
 def certificate_export_certificate_and_privatekey(request, id):
     c = models.Certificate.objects.get(pk=id)
 
-    export_certificate(c.cert_certificate)
-    export_privatekey(c.cert_privatekey)
+    cert = export_certificate(c.cert_certificate)
+    key = export_privatekey(c.cert_privatekey)
+    combined = key + cert
 
     response = StreamingHttpResponse(
         buf_generator(combined), content_type='application/octet-stream'
@@ -2074,7 +2074,7 @@ def certificate_to_json(certtype):
 
     try:
         data['cert_signedby'] = "%s" % certtype.cert_signedby
-    except:
+    except Exception:
         data['cert_signedby'] = None
 
     try:
