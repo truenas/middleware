@@ -966,15 +966,19 @@ def volume_lock(request, object_id):
 
     if request.method == "POST":
         notifier().volume_detach(volume)
-        if hasattr(notifier, 'failover_status'):
-            if notifier().failover_status() == 'MASTER':
-                from freenasUI.failover.enc_helper import LocalEscrowCtl
-                escrowctl = LocalEscrowCtl()
-                escrowctl.clear()
-                try:
-                    os.unlink('/tmp/.failover_master')
-                except:
-                    pass
+        if hasattr(notifier, 'failover_status') and notifier().failover_status() == 'MASTER':
+            from freenasUI.failover.enc_helper import LocalEscrowCtl
+            escrowctl = LocalEscrowCtl()
+            escrowctl.clear()
+            try:
+                os.unlink('/tmp/.failover_master')
+            except Exception:
+                pass
+            try:
+                with client as c:
+                    c.call('failover.call_remote', 'failover.encryption_clearkey')
+            except Exception:
+                log.warn('Failed to clear key on standby node, is it down?', exc_info=True)
         notifier().restart("system_datasets")
         return JsonResp(request, message=_("Volume locked"))
     return render(request, "storage/lock.html")
