@@ -107,7 +107,7 @@ class afp_osx_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(ad_osx_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(afp_osx_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

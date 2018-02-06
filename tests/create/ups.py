@@ -12,9 +12,10 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT
 from auto_config import results_xml
+RunTest = True
 
 
-class tftp_test(unittest.TestCase):
+class ups_test(unittest.TestCase):
 
     def test_01_Enabling_UPS_Service(self):
         assert PUT("/services/services/ups/", {"srv_enable": True}) == 200
@@ -51,5 +52,10 @@ class tftp_test(unittest.TestCase):
     def test_11_Setting_Identifier(self):
         assert PUT("/services/services/ups/", {"ups_identifier": "ups"}) == 200
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(ups_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    run_test()

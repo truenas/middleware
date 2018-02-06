@@ -12,7 +12,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, GET_OUTPUT
 from auto_config import results_xml
-
+RunTest = True
 LOCATION = "Maryville, TN"
 COUNTRY = "US"
 INTDESC = True
@@ -40,5 +40,10 @@ class lldp_test(unittest.TestCase):
     def test_05_Checking_to_see_if_LLDP_service_is_running(self):
         assert GET_OUTPUT("/services/services/lldp/", "srv_state") == "RUNNING"
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(lldp_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    run_test()

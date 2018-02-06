@@ -145,5 +145,9 @@ class smb_osx_test(unittest.TestCase):
         assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
 
 
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(smb_osx_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
 if RunTest is True:
-    unittest.main(verbosity=2)
+    run_test()

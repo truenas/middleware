@@ -12,7 +12,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, SSH_TEST
 from auto_config import results_xml
-
+RunTest = True
 TESTFILE = "/tmp/.testFileCreatedViaCronjob"
 CRONJOB_ID = 1
 
@@ -38,5 +38,10 @@ class cronjob_test(unittest.TestCase):
     def test_02_Deleting_test_file_created_by_cronjob(self):
         SSH_TEST('rm -f "%s"' % TESTFILE) is True
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(cronjob_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    run_test()

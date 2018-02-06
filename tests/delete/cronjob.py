@@ -12,6 +12,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET
 from auto_config import results_xml
+RunTest = True
 
 
 class cronjob_test(unittest.TestCase):
@@ -24,5 +25,10 @@ class cronjob_test(unittest.TestCase):
     def test_02_Check_that_the_API_reports_the_cronjob_as_deleted(self):
         assert GET("/tasks/cronjob/1/") == 404
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(cronjob_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    run_test()

@@ -11,6 +11,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET_OUTPUT
 from auto_config import results_xml
+RunTest = True
 
 
 class cronjob_test(unittest.TestCase):
@@ -24,5 +25,10 @@ class cronjob_test(unittest.TestCase):
     def test_02_Checking_to_see_if_cronjob_was_created_and_enabled(self):
         assert GET_OUTPUT("/tasks/cronjob/1/", "cron_enabled") is True
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(cronjob_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    run_test()

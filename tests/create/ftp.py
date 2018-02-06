@@ -12,9 +12,10 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, RC_TEST
 from auto_config import ip, results_xml
+RunTest = True
 
 
-class user_test(unittest.TestCase):
+class ftp_test(unittest.TestCase):
 
     def test_01_Configuring_ftp_service(self):
         payload = {"ftp_clients": 10, "ftp_rootlogin": "true"}
@@ -31,5 +32,10 @@ class user_test(unittest.TestCase):
         cmd = "ftp -o /tmp/ftpfile ftp://testuser:test@" + ip + "/.cshrc"
         RC_TEST(cmd) is True
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(ftp_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    run_test()

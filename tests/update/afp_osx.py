@@ -108,5 +108,10 @@ class afp_osx_test(unittest.TestCase):
     # def test_17_Verify_AFP_dataset_can_be_destroyed(self):
     #     assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(afp_osx_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    run_test()

@@ -12,9 +12,10 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, RC_TEST  # , POST
 from auto_config import ip, results_xml
+RunTest = True
 
 
-class ldap_osx_test(unittest.TestCase):
+class rsync_test(unittest.TestCase):
 
     def test_01_Configuring_rsyncd_service(self):
         assert PUT("/services/rsyncd/", {"rsyncd_port": 873}) == 200
@@ -35,5 +36,10 @@ class ldap_osx_test(unittest.TestCase):
     def test_05_Testings_rsync_access(self):
         RC_TEST("rsync -avn %s::testmod" % ip) is True
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(rsync_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    run_test()

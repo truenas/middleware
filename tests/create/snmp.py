@@ -12,6 +12,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT
 from auto_config import results_xml
+RunTest = True
 
 COMMUNITY = "public"
 TRAPS = False
@@ -43,5 +44,10 @@ class snmp_test(unittest.TestCase):
         assert GET_OUTPUT("/services/snmp/", "snmp_location") == LOCATION
         assert GET_OUTPUT("/services/snmp/", "snmp_v3_password") == PASSWORD
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(snmp_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    run_test()

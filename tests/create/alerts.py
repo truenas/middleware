@@ -15,13 +15,19 @@ from auto_config import results_xml
 alert_msg = "Testing system alerts with failure."
 alert_status = "FAIL"
 alert_file = "/tmp/self-test-alert"
+RunTest = True
 
 
-class ad_bsd_test(unittest.TestCase):
+class alerts_test(unittest.TestCase):
 
     def test_01_Create_an_alert_on_the_remote_system(self):
         cmd = "echo '[%s] %s' >> %s" % (alert_status, alert_msg, alert_file)
         assert SSH_TEST(cmd) is True
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(alerts_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    run_test()

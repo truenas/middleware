@@ -44,5 +44,10 @@ class iscsi_test(unittest.TestCase):
     def test_02_Delete_iSCSI_extent(self):
         assert DELETE("/services/iscsi/extent/1/") == 204
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(iscsi_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    run_test()

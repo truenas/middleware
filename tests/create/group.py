@@ -12,6 +12,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST
 from auto_config import results_xml
+RunTest = True
 
 
 class group_test(unittest.TestCase):
@@ -20,5 +21,10 @@ class group_test(unittest.TestCase):
         payload = {"bsdgrp_gid": 1200, "bsdgrp_group": "testgroup"}
         assert POST("/account/groups/", payload) == 201
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(group_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    run_test()

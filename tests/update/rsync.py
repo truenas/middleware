@@ -12,6 +12,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET_OUTPUT  # , PUT
 from auto_config import results_xml
+RunTest = True
 
 
 class nfs_test(unittest.TestCase):
@@ -24,5 +25,10 @@ class nfs_test(unittest.TestCase):
         assert GET_OUTPUT("/services/services/rsync/",
                           "srv_state") == "RUNNING"
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(nfs_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    run_test()

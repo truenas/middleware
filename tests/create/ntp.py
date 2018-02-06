@@ -11,6 +11,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, DELETE
 from auto_config import ntpServer, results_xml
+RunTest = True
 
 
 class ntp_test(unittest.TestCase):
@@ -35,5 +36,9 @@ class ntp_test(unittest.TestCase):
         assert DELETE("/system/ntpserver/3/") == 204
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(ntp_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    run_test()

@@ -11,6 +11,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, POST
 from auto_config import disk1, disk2, results_xml
+RunTest = True
 
 
 class storage_test(unittest.TestCase):
@@ -66,5 +67,10 @@ class storage_test(unittest.TestCase):
         payload = {"name": "testzvol2", "volsize": "10M"}
         assert POST("/storage/volume/tank/zvols/", payload) == 202
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(storage_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    run_test()
