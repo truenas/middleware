@@ -367,6 +367,7 @@ class PoolDatasetService(CRUDService):
                 ('dedup', 'deduplication', str.upper),
                 ('atime', None, str.upper),
                 ('casesensitivity', None, str.upper),
+                ('sync', None, str.upper),
                 ('compression', None, str.upper),
                 ('quota', None, _null),
                 ('refquota', None, _null),
@@ -409,6 +410,9 @@ class PoolDatasetService(CRUDService):
         ]),
         Bool('sparse'),
         Str('comments'),
+        Str('sync', enum=[
+            'STANDARD', 'ALWAYS', 'DISABLED',
+        ]),
         Str('compression', enum=[
             'OFF', 'LZ4', 'GZIP-1', 'GZIP-6', 'GZIP-9', 'ZLE', 'LZJB',
         ]),
@@ -444,6 +448,7 @@ class PoolDatasetService(CRUDService):
             ('atime', None, str.lower),
             ('casesensitivity', None, str.lower),
             ('comments', 'org.freenas:description', None),
+            ('sync', None, str.lower),
             ('compression', None, str.lower),
             ('deduplication', 'dedup', str.lower),
             ('quota', None, _none),
@@ -484,6 +489,7 @@ class PoolDatasetService(CRUDService):
         ('rm', {'name': 'sparse'}),  # Create time only attribute
         ('rm', {'name': 'volblocksize'}),  # Create time only attribute
         ('edit', _add_inherit('atime')),
+        ('edit', _add_inherit('sync')),
         ('edit', _add_inherit('compression')),
         ('edit', _add_inherit('deduplication')),
         ('edit', _add_inherit('readonly')),
@@ -510,6 +516,7 @@ class PoolDatasetService(CRUDService):
         for i, real_name, transform, inheritable in (
             ('atime', None, str.lower, True),
             ('comments', 'org.freenas:description', None, False),
+            ('sync', None, str.lower, True),
             ('compression', None, str.lower, True),
             ('deduplication', 'dedup', str.lower, True),
             ('quota', None, _none, False),

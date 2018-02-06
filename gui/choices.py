@@ -403,6 +403,13 @@ ZFS_ExecChoices = (
     ('off', _('Off')),
 )
 
+ZFS_SyncChoices = (
+    ('inherit', _('Inherit')),
+    ('standard', _('Standard')),
+    ('always', _('Always')),
+    ('disabled', _('Disabled')),
+)
+
 ZFS_CompressionChoices = (
     ('inherit', _('Inherit')),
     ('off', _('Off')),
