@@ -131,6 +131,12 @@ class FailoverService(Service):
         escrowctl = LocalEscrowCtl()
         return escrowctl.setkey(passphrase)
 
+    @accepts()
+    def encryption_clearkey(self):
+        # FIXME: we could get rid of escrow, middlewared can do that job
+        escrowctl = LocalEscrowCtl()
+        return escrowctl.clear()
+
     @accepts(
         Str('action', enum=['ENABLE', 'DISABLE']),
         Dict(
