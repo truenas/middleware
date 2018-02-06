@@ -105,7 +105,8 @@ class BootService(Service):
             Bool('expand', default=False),
         ),
     )
-    async def attach(self, dev, options=None):
+    @job(lock='boot_attach')
+    async def attach(self, job, dev, options=None):
         """
         Attach a disk to the boot pool, turning a stripe into a mirror.
 
