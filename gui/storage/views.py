@@ -395,8 +395,9 @@ def dataset_create(request, fs):
         else:
             return JsonResp(request, form=form)
     else:
-        defaults = {'dataset_compression': 'inherit',
-                    'dataset_atime': 'inherit'}
+        defaults = {'dataset_atime': 'inherit',
+                    'dataset_sync': 'inherit',
+                    'dataset_compression': 'inherit'}
         form = forms.ZFSDatasetCreateForm(initial=defaults, fs=fs)
     return render(request, 'storage/datasets.html', {
         'form': form,
@@ -438,7 +439,8 @@ def zvol_create(request, parent):
                     message=_("ZFS Volume successfully added."))
     else:
         zvol_form = forms.ZVol_CreateForm(
-            initial={'zvol_compression': 'inherit'},
+            initial={'zvol_sync': 'inherit',
+                     'zvol_compression': 'inherit'},
             parentds=parent)
     return render(request, 'storage/zvols.html', {
         'form': zvol_form,

@@ -1217,6 +1217,11 @@ class ZFSDatasetCommonForm(Form):
         max_length=1024,
         label=_('Comments'),
         required=False)
+    dataset_sync = forms.ChoiceField(
+        choices=choices.ZFS_SyncChoices,
+        widget=forms.Select(attrs=attrs_dict),
+        label=_('Sync'),
+        initial=choices.ZFS_SyncChoices[0][0])
     dataset_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
         widget=forms.Select(attrs=attrs_dict),
@@ -1303,6 +1308,10 @@ class ZFSDatasetCommonForm(Form):
                 choices.ZFS_AtimeChoices,
                 self.parentdata['atime'][0]
             )
+            self.fields['dataset_sync'].choices = _inherit_choices(
+                choices.ZFS_SyncChoices,
+                self.parentdata['sync'][0]
+            )
             self.fields['dataset_compression'].choices = _inherit_choices(
                 choices.ZFS_CompressionChoices,
                 self.parentdata['compression'][0]
@@ -1351,7 +1360,7 @@ class ZFSDatasetCommonForm(Form):
             props[prop] = value
 
         for prop in (
-            'org.freenas:description', 'compression', 'atime', 'dedup',
+            'org.freenas:description', 'sync', 'compression', 'atime', 'dedup',
             'aclmode', 'recordsize', 'casesensitivity', 'readonly', 'exec',
         ):
             if prop == 'org.freenas:description':
@@ -1478,6 +1487,11 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
         else:
             data['dataset_dedup'] = 'off'
 
+        if zdata['sync'][2] == 'inherit':
+            data['dataset_sync'] = 'inherit'
+        else:
+            data['dataset_sync'] = zdata['sync'][0]
+
         if zdata['compression'][2] == 'inherit':
             data['dataset_compression'] = 'inherit'
         else:
@@ -1562,6 +1576,11 @@ class CommonZVol(Form):
         required=False,
         help_text=_('Allow the zvol to consume more than 80% of available space'),
     )
+    zvol_sync = forms.ChoiceField(
+        choices=choices.ZFS_SyncChoices,
+        initial='inherit',
+        widget=forms.Select(attrs=attrs_dict),
+        label=_('Sync'))
     zvol_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
         initial='inherit',
@@ -1579,6 +1598,10 @@ class CommonZVol(Form):
         super(CommonZVol, self).__init__(*args, **kwargs)
 
         if hasattr(self, 'parentdata'):
+            self.fields['zvol_sync'].choices = _inherit_choices(
+                choices.ZFS_SyncChoices,
+                self.parentdata['sync'][0]
+            )
             self.fields['zvol_compression'].choices = _inherit_choices(
                 choices.ZFS_CompressionChoices,
                 self.parentdata['compression'][0]
@@ -1645,6 +1668,10 @@ class ZVol_EditForm(CommonZVol):
         self.zdata = _n.zfs_get_options(self.name)
         if 'org.freenas:description' in self.zdata and self.zdata['org.freenas:description'][2] == 'local':
             self.fields['zvol_comments'].initial = self.zdata['org.freenas:description'][0]
+        if self.zdata['sync'][2] == 'inherit':
+            self.fields['zvol_sync'].initial = 'inherit'
+        else:
+            self.fields['zvol_sync'].initial = self.zdata['sync'][0]
         if self.zdata['compression'][2] == 'inherit':
             self.fields['zvol_compression'].initial = 'inherit'
         else:
@@ -1687,6 +1714,7 @@ class ZVol_EditForm(CommonZVol):
         error = False
         for attr, formfield, can_inherit in (
             ('org.freenas:description', 'zvol_comments', False),
+            ('sync', None, True),
             ('compression', None, True),
             ('dedup', None, True),
             ('volsize', None, True),
@@ -1800,7 +1828,9 @@ class ZVol_CreateForm(CommonZVol):
         zvol_blocksize = self.cleaned_data.get("zvol_blocksize")
         zvol_name = f"{self.parentds}/{self.cleaned_data.get('zvol_name')}"
         zvol_comments = self.cleaned_data.get('zvol_comments')
+        zvol_sync = self.cleaned_data.get('zvol_sync')
         zvol_compression = self.cleaned_data.get('zvol_compression')
+        props['sync'] = str(zvol_sync)
         props['compression'] = str(zvol_compression)
         if zvol_blocksize:
             props['volblocksize'] = zvol_blocksize
