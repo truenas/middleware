@@ -19,6 +19,7 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
     RunTest = True
+TestName = "create nfs"
 
 NFS_PATH = "/mnt/tank/share"
 
@@ -92,4 +93,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()

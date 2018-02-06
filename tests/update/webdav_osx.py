@@ -20,6 +20,7 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/webdav-osx" + BRIDGEHOST
     RunTest = True
+TestName = "update webdav osx"
 
 DATASET = "webdavshare"
 DATASET_PATH = "/mnt/tank/%s/" % DATASET
@@ -78,4 +79,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()

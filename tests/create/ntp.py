@@ -12,6 +12,7 @@ sys.path.append(apifolder)
 from functions import PUT, DELETE
 from auto_config import ntpServer, results_xml
 RunTest = True
+TestName = "create ntp"
 
 
 class ntp_test(unittest.TestCase):
@@ -41,4 +42,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()

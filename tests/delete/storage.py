@@ -13,6 +13,7 @@ sys.path.append(apifolder)
 from functions import DELETE
 from auto_config import results_xml
 RunTest = True
+TestName = "update ad osx"
 
 
 class storage_test(unittest.TestCase):
@@ -35,4 +36,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()

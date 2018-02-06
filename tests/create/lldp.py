@@ -13,6 +13,7 @@ sys.path.append(apifolder)
 from functions import PUT, GET, GET_OUTPUT
 from auto_config import results_xml
 RunTest = True
+TestName = "create lldp"
 LOCATION = "Maryville, TN"
 COUNTRY = "US"
 INTDESC = True
@@ -46,4 +47,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()

@@ -12,6 +12,7 @@ sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, is_agent_setup, if_key_listed
 from auto_config import sshKey, results_xml
 RunTest = True
+TestName = "create ssh"
 
 
 class ssh_test(unittest.TestCase):
@@ -43,4 +44,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()

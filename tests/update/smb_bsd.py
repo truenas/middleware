@@ -22,6 +22,8 @@ else:
     MOUNTPOINT = "/tmp/smb-bsd" + BRIDGEHOST
     RunTest = True
 
+TestName = "update smb bsd"
+
 DATASET = "smb-bsd2"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/thank/" + DATASET
@@ -153,4 +155,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()

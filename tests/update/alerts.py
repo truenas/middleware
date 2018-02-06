@@ -13,6 +13,8 @@ sys.path.append(apifolder)
 from functions import GET_OUTPUT
 from auto_config import results_xml
 
+TestName = "update ad osx"
+
 RunTest = True
 ALERT_MSG = "Testing system alerts with failure."
 
@@ -32,4 +34,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()

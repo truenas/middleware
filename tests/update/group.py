@@ -14,6 +14,7 @@ from functions import PUT
 from auto_config import results_xml
 
 RunTest = True
+TestName = "update ad osx"
 
 GroupIdFile = "/tmp/.ixbuild_test_groupid"
 
@@ -40,4 +41,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()

@@ -20,6 +20,7 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
     RunTest = True
+TestName = "update iscsi"
 
 global DEVICE_NAME
 DEVICE_NAME = ""
@@ -107,4 +108,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()

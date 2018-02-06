@@ -20,7 +20,7 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
     RunTest = True
-
+TestName = "update ad osx"
 DEVICE_NAME_PATH = "/tmp/iscsi_dev_name"
 TARGET_NAME = "iqn.freenas:target0"
 
@@ -50,4 +50,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()

@@ -12,7 +12,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
 from auto_config import results_xml
-RunTest =
+RunTest = True
 DATASET = "webdavshare"
 DATASET_PATH = "/mnt/tank/%s/" % DATASET
 TMP_FILE = "/tmp/testfile.txt"
@@ -72,4 +72,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()

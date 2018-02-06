@@ -20,6 +20,7 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/smb-osx" + BRIDGEHOST
     RunTest = True
+TestName = "create smb osx"
 
 DATASET = "smb-osx"
 SMB_NAME = "TestShare"
@@ -149,4 +150,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()

@@ -13,6 +13,8 @@ sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, SSH_TEST
 from auto_config import results_xml
 RunTest = True
+TestName = "update cronjob"
+
 TESTFILE = "/tmp/.testFileCreatedViaCronjob"
 CRONJOB_ID = 1
 
@@ -44,4 +46,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()

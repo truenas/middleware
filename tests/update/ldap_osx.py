@@ -22,6 +22,7 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/ldap-osx%s" % BRIDGEHOST
     RunTest = True
+TestName = "update ldap osx"
 
 DATASET = "ldap-osx"
 SMB_NAME = "TestShare"
@@ -185,4 +186,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()

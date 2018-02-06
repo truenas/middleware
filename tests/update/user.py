@@ -14,6 +14,7 @@ from functions import PUT, POST, GET_USER
 from auto_config import results_xml
 
 RunTest = True
+TestName = "update user"
 
 
 class user_test(unittest.TestCase):
@@ -46,4 +47,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()

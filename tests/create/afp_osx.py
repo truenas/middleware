@@ -19,6 +19,7 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/afp-osx" + BRIDGEHOST
     RunTest = True
+TestName = "create apf osx"
 
 DATASET = "afp-osx"
 AFP_NAME = "MyAFPShare"
@@ -111,4 +112,5 @@ def run_test():
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
+    print('Starting %s test...' % TestName)
     run_test()
