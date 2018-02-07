@@ -81,6 +81,17 @@ class InterfacesFAdmin(NetworkInterruptMixin, BaseFreeAdmin):
         'int_group',
     )
 
+    def get_confirm_message(self, action, **kwargs):
+        if action == 'delete' and kwargs['obj'].int_critical:
+            qs = models.Interfaces.objects.filter(int_critical=True).exclude(id=kwargs['obj'].id)
+            if not qs.exists():
+                return (
+                    'Changing the network settings on this interface will '
+                    'disable failover (High Availability). '
+                    'Please contact your iX Support representative before continuing.'
+                )
+        return super().get_confirm_message(action, **kwargs)
+
     def get_datagrid_columns(self):
         columns = super(InterfacesFAdmin, self).get_datagrid_columns()
         columns.insert(3, {
