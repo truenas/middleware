@@ -96,7 +96,7 @@ class BootService(Service):
                 await run('umount', tmpdirname, check=False)
 
         else:
-            await run('gpart', 'bootcode', '-b', '/boot/pmbr', '-p', '/boot/gptzfsboot', '-i', '1', f'/dev/{dev}p1', check=False)
+            await run('gpart', 'bootcode', '-b', '/boot/pmbr', '-p', '/boot/gptzfsboot', '-i', '1', f'/dev/{dev}', check=False)
 
     @accepts(
         Str('dev'),
