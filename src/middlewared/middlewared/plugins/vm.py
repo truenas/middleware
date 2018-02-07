@@ -361,7 +361,7 @@ class VMSupervisor(object):
             os.kill(self.proc.pid, signal.SIGTERM)
             self.logger.debug("===> Soft Stop VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
 
-
+        self.destroy_tap()
         return await self.kill_bhyve_pid()
 
     async def running(self):
