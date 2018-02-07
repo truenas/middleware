@@ -1004,6 +1004,9 @@ def generate_smb4_conf(client, smb4_conf, role):
     else:
         confset1(smb4_conf, "logging = file")
 
+    if not client.call('notifier.is_freenas') and client.call('notifier.failover_licensed'):
+        confset1(smb4_conf, "winbind netbios alias spn = false")
+
     confset1(smb4_conf, "load printers = no")
     confset1(smb4_conf, "printing = bsd")
     confset1(smb4_conf, "printcap name = /dev/null")
