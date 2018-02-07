@@ -712,7 +712,7 @@ class GlobalConfigurationForm(ModelForm):
             from freenasUI.services.models import services, NFS
             svcobj = services.objects.get(srv_service='nfs')
             nfsobj = NFS.objects.all()[0]
-            if (svcobj and svcobj.srv_enable) and (nfsobj and (nfsobj.nfs_srv_v4 and nfsobj.nfs_srv_v4_krb)):
+            if (svcobj and svcobj.srv_enable) and (nfsobj.nfs_srv_v4 and nfsobj.nfs_srv_v4_krb):
                 notifier().restart("ix-nfsd")
                 whattoreload.append("mountd")
 
