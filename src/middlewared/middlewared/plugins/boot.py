@@ -1,10 +1,11 @@
+import os
+import tempfile
+
 from middlewared.schema import Bool, Dict, Int, Str, accepts
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run
 
 from bsd import geom
-
-import asyncio
 
 
 class BootService(Service):
@@ -95,7 +96,7 @@ class BootService(Service):
                 await run('umount', tmpdirname, check=False)
 
         else:
-            await run('gpart', 'bootcode', '-b', '/boot/pmbr', '-p', '/boot/gptzfsboot', '-i', '1',  f'/dev/{dev}p1', check=False)
+            await run('gpart', 'bootcode', '-b', '/boot/pmbr', '-p', '/boot/gptzfsboot', '-i', '1', f'/dev/{dev}p1', check=False)
 
     @accepts(
         Str('dev'),
