@@ -64,13 +64,12 @@ class BootService(Service):
         commands = []
         commands.append(['gpart', 'create', '-s', 'gpt', '-f', 'active', f'/dev/{dev}'])
         boottype = await self.get_boot_type()
-        if boottype != 'EFI':
-            commands.append(['gpart', 'add', '-t', 'bios-boot', '-i', '1', '-s', '512k', dev])
-            commands.append(['gpart', 'set', '-a', 'active', dev])
-        else:
+        if boottype == 'EFI':
             commands.append(['gpart', 'add', '-t', 'efi', '-i', '1', '-s', '260m', dev])
             commands.append(['newfs_msdos', '-F', '16', f'/dev/{dev}p1'])
-            commands.append(['gpart', 'set', '-a', 'lenovofix', dev])
+        else:
+            commands.append(['gpart', 'add', '-t', 'freebsd-boot', '-i', '1', '-s', '512k', dev])
+            commands.append(['gpart', 'set', '-a', 'active', dev])
         commands.append(
             ['gpart', 'add', '-t', 'freebsd-zfs', '-i', '2', '-a', '4k'] + (
                 ['-s', str(options['size']) + 'B'] if options.get('size') else []
@@ -81,22 +80,19 @@ class BootService(Service):
         return boottype
 
     @private
-    async def install_grub(self, boottype, dev):
-        args = [
-            '/usr/local/sbin/grub-install',
-            '--modules=zfs part_gpt',
-        ]
-
+    async def install_loader(self, boottype, dev):
         if boottype == 'EFI':
-            await run('mount', '-t', 'msdosfs', f'/dev/{dev}p1', '/boot/efi', check=False)
-            args += ['--efi-directory=/boot/efi', '--removable', '--target=x86_64-efi']
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                await run('mount', '-t', 'msdosfs', f'/dev/{dev}p1', tmpdirname, check=False)
+                try:
+                    os.makedirs(f'{tmpdirname}/efi/boot')
+                except FileExistsError:
+                    pass
+                await run('cp', '/boot/boot1.efi', f'{tmpdirname}/efi/boot/BOOTx64.efi', check=False)
+                await run('umount', tmpdirname, check=False)
 
-        args.append(f'/dev/{dev}')
-
-        await run(*args, check=False)
-
-        if boottype == 'EFI':
-            await run('umount', '/boot/efi', check=False)
+        else:
+            await run('gpart', 'bootcode', '-b', '/boot/pmbr', '-p', '/boot/gptzfsboot', '-i', '1',  f'/dev/{dev}p1', check=False)
 
     @accepts(
         Str('dev'),
@@ -132,10 +128,7 @@ class BootService(Service):
 
         await self.middleware.call('zfs.pool.extend', 'freenas-boot', None, [{'target': f'{disks[0]}p2', 'type': 'DISK', 'path': f'/dev/{dev}p2'}])
 
-        # We need to wait a little bit to install grub onto the new disk
-        # FIXME: use event for when its ready instead of sleep
-        await asyncio.sleep(10)
-        await self.install_grub(boottype, dev)
+        await self.install_loader(boottype, dev)
 
     @accepts(Str('dev'))
     async def detach(self, dev):
@@ -149,15 +142,9 @@ class BootService(Service):
         """
         Replace device `label` on boot pool with `dev`.
         """
-
         boottype = await self.format(dev)
-
         await self.middleware.call('zfs.pool.replace', 'freenas-boot', label, f'{dev}p2')
-
-        # We need to wait a little bit to install grub onto the new disk
-        # FIXME: use event for when its ready instead of sleep
-        await asyncio.sleep(10)
-        await self.install_grub(boottype, dev)
+        await self.install_loader(boottype, dev)
 
     @accepts()
     @job(lock='boot_scrub')
