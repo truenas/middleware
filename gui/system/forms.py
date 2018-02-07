@@ -293,7 +293,7 @@ class BootEnvPoolAttachForm(Form):
 
         with client as c:
             try:
-                c.call('boot.attach', devname, {'expand': self.cleaned_data['expand']})
+                c.call('boot.attach', devname, {'expand': self.cleaned_data['expand']}, job=True)
             except ClientException as e:
                 raise MiddlewareError(str(e))
         return True
