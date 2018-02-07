@@ -178,31 +178,11 @@ define([
             value: initial.username
           }, this.dapUsername);
 
-          on(this._username, 'change', function() {
-            if(!me._username.get('value') || !me._password.get('value')) {
-              return;
-            }
-            me.fetchCategories({
-              user: me._username.get('value'),
-              password: me._password.get('value')
-            });
-          });
-
           this._password = new TextBox({
             name: "password",
             type: "password",
             value: initial.password
           }, this.dapPassword);
-
-          on(this._password, 'change', function() {
-            if(!me._username.get('value') || !me._password.get('value')) {
-              return;
-            }
-            me.fetchCategories({
-              user: me._username.get('value'),
-              password: me._password.get('value')
-            });
-          });
 
           this._type = new Select({
             name: "type",
