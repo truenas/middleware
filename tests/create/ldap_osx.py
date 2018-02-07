@@ -23,10 +23,10 @@ else:
     RunTest = True
 TestName = "create ldap osx"
 
-    DATASET = "ldap-osx"
-    SMB_NAME = "TestShare"
-    SMB_PATH = "/mnt/tank/" + DATASET
-    VOL_GROUP = "qa"
+DATASET = "ldap-osx"
+SMB_NAME = "TestShare"
+SMB_PATH = "/mnt/tank/" + DATASET
+VOL_GROUP = "qa"
 
 
 class ldap_osx_test(unittest.TestCase):

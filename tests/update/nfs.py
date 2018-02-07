@@ -15,6 +15,14 @@ from auto_config import results_xml
 RunTest = True
 TestName = "update nsf"
 
+try:
+    from config import BRIDGEHOST
+except ImportError:
+    RunTest = False
+else:
+    MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
+    RunTest = True
+
 
 class nfs_test(unittest.TestCase):
 
