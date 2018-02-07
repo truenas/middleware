@@ -1003,7 +1003,7 @@ def generate_smb4_conf(client, smb4_conf, role):
         confset1(smb4_conf, "logging = syslog:%s" % loglevel)
     else:
         confset1(smb4_conf, "logging = file")
-    
+
     if not client.call('notifier.is_freenas') and client.call('notifier.failover_licensed'):
         confset1(smb4_conf, "winbind netbios alias spn = false")
 
