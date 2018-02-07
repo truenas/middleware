@@ -7,9 +7,13 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET_USER
+from auto_config import results_xml
+RunTest = True
+TestName = "delete user"
 
 
 class user_test(unittest.TestCase):
@@ -23,5 +27,11 @@ class user_test(unittest.TestCase):
     def test_01_Deleting_user_testuser(self):
         assert DELETE("/account/users/%s/" % self.userid) == 204
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(user_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

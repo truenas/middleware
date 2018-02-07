@@ -7,12 +7,16 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET_OUTPUT  # , PUT
+from auto_config import results_xml
+RunTest = True
+TestName = "update rsync"
 
 
-class nfs_test(unittest.TestCase):
+class rsync_test(unittest.TestCase):
 
     # def test_01_Updating_rsync_resource(self):
     #     payload = {"rsyncmod_user": "testuser"}
@@ -22,5 +26,11 @@ class nfs_test(unittest.TestCase):
         assert GET_OUTPUT("/services/services/rsync/",
                           "srv_state") == "RUNNING"
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(rsync_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

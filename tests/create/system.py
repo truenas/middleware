@@ -7,9 +7,13 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST
+from auto_config import results_xml
+RunTest = True
+TestName = "create system"
 
 
 class system_test(unittest.TestCase):
@@ -42,5 +46,11 @@ class system_test(unittest.TestCase):
     def test_06_Verify_system_tunable_dummynet_load(self):
         SSH_TEST('kldstat -m dummynet')
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(system_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

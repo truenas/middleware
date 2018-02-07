@@ -7,9 +7,13 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE
+from auto_config import results_xml
+RunTest = True
+TestName = "delete storage"
 
 
 class storage_test(unittest.TestCase):
@@ -26,5 +30,11 @@ class storage_test(unittest.TestCase):
     def test_01_Destroying_ZVOL_02_02(self):
         assert DELETE("/storage/volume/tank/zvols/testzvol2/") == 204
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(storage_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

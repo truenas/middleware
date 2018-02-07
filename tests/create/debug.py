@@ -6,9 +6,13 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET_OUTPUT
+from auto_config import results_xml
+RunTest = True
+TestName = "create debug"
 
 
 class debug_test(unittest.TestCase):
@@ -21,5 +25,10 @@ class debug_test(unittest.TestCase):
         assert GET_OUTPUT("/system/debug/", "url") == "/system/debug/download/"
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(debug_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

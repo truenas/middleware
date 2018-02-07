@@ -7,10 +7,15 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET_OUTPUT
+from auto_config import results_xml
 
+TestName = "update alerts"
+
+RunTest = True
 ALERT_MSG = "Testing system alerts with failure."
 
 
@@ -23,5 +28,11 @@ class alerts_test(unittest.TestCase):
         assert GET_OUTPUT("/system/alert/", "level") == "CRIT"
         assert GET_OUTPUT("/system/alert/", "dismissed") is False
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(alerts_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

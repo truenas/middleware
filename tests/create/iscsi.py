@@ -7,18 +7,22 @@
 import unittest
 import sys
 import os
+import xmlrunner
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, BSD_TEST, return_output
 from functions import POSTNOJSON
-from auto_config import ip
+from auto_config import ip, results_xml
 try:
     from config import BRIDGEHOST
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
+    RunTest = True
+TestName = "create iscsi"
 
-MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
 global DEVICE_NAME
 DEVICE_NAME = ""
 TARGET_NAME = "iqn.1994-09.freenasqa:target0"
@@ -155,5 +159,11 @@ class iscsi_test(unittest.TestCase):
         assert GET_OUTPUT("/services/services/iscsitarget/",
                           "srv_state") == "STOPPED"
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(iscsi_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

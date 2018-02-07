@@ -7,21 +7,24 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
-from functions import OSX_TEST, return_output
-from auto_config import ip
+from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, OSX_TEST
+from auto_config import ip, results_xml
 try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
     from config import LDAPBASEDN, LDAPBINDDN, LDAPBINDPASSWORD, LDAPHOSTNAME
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    MOUNTPOINT = "/tmp/smb-osx" + BRIDGEHOST
+    RunTest = True
+TestName = "create smb osx"
 
 DATASET = "smb-osx"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET
-MOUNTPOINT = "/tmp/smb-osx" + BRIDGEHOST
 VOL_GROUP = "wheel"
 
 
@@ -142,5 +145,10 @@ class smb_osx_test(unittest.TestCase):
         assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(smb_osx_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

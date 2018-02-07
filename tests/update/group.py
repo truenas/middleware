@@ -7,9 +7,14 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT
+from auto_config import results_xml
+
+RunTest = True
+TestName = "update group"
 
 GroupIdFile = "/tmp/.ixbuild_test_groupid"
 
@@ -30,5 +35,11 @@ class group_test(unittest.TestCase):
                    "bsdgrp_group": "newgroup"}
         assert PUT("/account/groups/%s/" % self.groupid, payload) == 200
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(group_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

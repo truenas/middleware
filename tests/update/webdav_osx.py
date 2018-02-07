@@ -7,14 +7,20 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
+from auto_config import results_xml
 
 try:
     from config import BRIDGEHOST
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    MOUNTPOINT = "/tmp/webdav-osx" + BRIDGEHOST
+    RunTest = True
+TestName = "update webdav osx"
 
 DATASET = "webdavshare"
 DATASET_PATH = "/mnt/tank/%s/" % DATASET
@@ -22,7 +28,6 @@ TMP_FILE = "/tmp/testfile.txt"
 SHARE_NAME = "webdavshare"
 SHARE_USER = "webdav"
 SHARE_PASS = "davtest2"
-MOUNTPOINT = "/tmp/webdav-osx" + BRIDGEHOST
 
 
 class webdav_osx_test(unittest.TestCase):
@@ -68,5 +73,11 @@ class webdav_osx_test(unittest.TestCase):
         assert GET_OUTPUT("/services/services/webdav",
                           "srv_state") == "STOPPED"
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(webdav_osx_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

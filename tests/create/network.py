@@ -6,14 +6,21 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import interface
+from auto_config import interface, results_xml
 from functions import POST, PUT
-from config import BRIDGEDOMAIN, BRIDGEHOST, BRIDGEDNS, BRIDGEGW
+try:
+    from config import BRIDGEDOMAIN, BRIDGEHOST, BRIDGEDNS, BRIDGEGW
+except ImportError:
+    RunTest = False
+else:
+    RunTest = True
+TestName = "create network"
 
 
-class network(unittest.TestCase):
+class network_test(unittest.TestCase):
 
     def test_01_configure_interface_dhcp(self):
         payload = {"int_dhcp": "true",
@@ -29,5 +36,10 @@ class network(unittest.TestCase):
         assert PUT("/network/globalconfiguration/", payload) == 200
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(network_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

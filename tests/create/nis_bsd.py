@@ -7,14 +7,19 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT
+from auto_config import results_xml
 
 try:
     from config import NISSERVER, NISDOMAIN
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    RunTest = True
+TestName = "create nis bsd"
 
 # define variables
 SERVER = NISSERVER
@@ -60,5 +65,11 @@ class nis_bsd_test(unittest.TestCase):
     def test_12_Disabling_NIS_service(self):
         assert PUT("/directoryservice/nis/", {"nis_enable": False}) == 200
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(nis_bsd_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

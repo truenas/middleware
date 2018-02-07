@@ -7,9 +7,13 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST
+from auto_config import results_xml
+RunTest = True
+TestName = "update bootenv"
 
 
 class bootenv_test(unittest.TestCase):
@@ -18,5 +22,11 @@ class bootenv_test(unittest.TestCase):
         payload = {"name": "newbe2", "source": "newbe1"}
         assert POST("/system/bootenv/", payload) == 201
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(bootenv_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

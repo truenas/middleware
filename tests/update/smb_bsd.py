@@ -7,21 +7,26 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
-from functions import BSD_TEST, return_output
-from auto_config import ip
+from functions import BSD_TEST
+from auto_config import ip, results_xml
 try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
     from config import LDAPBASEDN, LDAPHOSTNAME, LDAPBINDDN, LDAPBINDPASSWORD
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    MOUNTPOINT = "/tmp/smb-bsd" + BRIDGEHOST
+    RunTest = True
+
+TestName = "update smb bsd"
 
 DATASET = "smb-bsd2"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/thank/" + DATASET
-MOUNTPOINT = "/tmp/smb-bsd" + BRIDGEHOST
 VOL_GROUP = "wheel"
 
 
@@ -145,5 +150,10 @@ class smb_bsd_test(unittest.TestCase):
         assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(smb_bsd_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()
