@@ -614,8 +614,7 @@ class GlobalConfigurationForm(ModelForm):
             if c.call('routes.ipv4gw_reachable', val.exploded):
                 return val
 
-        raise forms.ValidationError(
-                _("Gateway {} is unreachable".format(val)))
+        raise forms.ValidationError(_("Gateway {} is unreachable".format(val)))
 
     def clean_gc_nameserver1(self):
         val = self.cleaned_data.get("gc_nameserver1")
@@ -690,7 +689,7 @@ class GlobalConfigurationForm(ModelForm):
         # or the interface wouldn't appear once IP was changed.
         retval = super(GlobalConfigurationForm, self).save()
 
-        whattoreload = "hostname"
+        whattoreload = ["hostname"]
         if (
             self.instance._orig_gc_domain != self.cleaned_data.get('gc_domain') or
             self.instance._orig_gc_nameserver1 != self.cleaned_data.get('gc_nameserver1') or
@@ -698,17 +697,27 @@ class GlobalConfigurationForm(ModelForm):
             self.instance._orig_gc_nameserver3 != self.cleaned_data.get('gc_nameserver3')
         ):
             # Note notifier's _reload_resolvconf has reloading hostname folded in it
-            whattoreload = "resolvconf"
+            whattoreload.append("resolvconf")
         if (
             self.instance._orig_gc_ipv4gateway != self.cleaned_data.get('gc_ipv4gateway') or
             self.instance._orig_gc_ipv6gateway != self.cleaned_data.get('gc_ipv6gateway')
         ):
             # this supersedes all since it has hostname and resolvconf reloads folded in it
-            whattoreload = "networkgeneral"
+            whattoreload.append("networkgeneral")
             with client as c:
                 c.call('routes.sync')
 
-        notifier().reload(whattoreload)
+        if hasattr(notifier, 'failover_licensed') and notifier().failover_licensed() and \
+                self.instance._orig_gc_hostname_virtual != self.cleaned_data.get('gc_hostname_virtual'):
+            from freenasUI.services.models import services, NFS
+            svcobj = services.objects.get(srv_service='nfs')
+            nfsobj = NFS.objects.all()[0]
+            if (svcobj and svcobj.srv_enable) and (nfsobj.nfs_srv_v4 and nfsobj.nfs_srv_v4_krb):
+                notifier().restart("ix-nfsd")
+                whattoreload.append("mountd")
+
+        for what in whattoreload:
+            notifier().reload(what)
 
         http_proxy = self.cleaned_data.get('gc_httpproxy')
         configure_http_proxy(http_proxy)
