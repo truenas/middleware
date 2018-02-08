@@ -634,9 +634,10 @@ class ShellApplication(object):
 
 class Middleware(object):
 
-    def __init__(self, loop_monitor=True, plugins_dirs=None, debug_level=None):
+    def __init__(self, debug=False, loop_monitor=True, plugins_dirs=None, debug_level=None):
         self.logger = logger.Logger('middlewared', debug_level).getLogger()
         self.crash_reporting = logger.CrashReporting()
+        self.debug = debug
         self.loop_monitor = loop_monitor
         self.plugins_dirs = plugins_dirs or []
         self.__loop = None
@@ -996,7 +997,7 @@ class Middleware(object):
     def run(self):
         self.loop = self.__loop = asyncio.get_event_loop()
 
-        if self.loop_monitor:
+        if self.debug:
             self.__loop.set_debug(True)
             # loop.slow_callback_duration(0.2)
 
@@ -1075,6 +1076,7 @@ def main():
     parser.add_argument('--foreground', '-f', action='store_true')
     parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
     parser.add_argument('--plugins-dirs', '-p', action='append')
+    parser.add_argument('--debug', '-d', action='store_true')
     parser.add_argument('--debug-level', choices=[
         'TRACE',
         'DEBUG',
@@ -1132,6 +1134,7 @@ def main():
     os.environ['MIDDLEWARED'] = str(os.getpid())
 
     Middleware(
+        debug=args.debug,
         loop_monitor=not args.disable_loop_monitor,
         plugins_dirs=args.plugins_dirs,
         debug_level=debug_level,
