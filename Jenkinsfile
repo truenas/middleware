@@ -11,7 +11,7 @@ throttle(['FreeNAS']) {
         } catch (exc) {
           echo 'Saving failed artifacts...'
           archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
-          throw
+          throw exc
         }
       }
       stage('artifact') {
