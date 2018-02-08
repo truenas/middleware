@@ -93,7 +93,7 @@
         <th>{% trans "Load Average" %}</th>
         <td class="descr">{{ local.loadavg }}</td>
     </tr>
-    {% if not is_freenas %}
+    {% if system_manufacturer == 'iXsystems' %}
     <tr>
         <th>{% trans "System Serial" %}</th>
         <td class="descr">{{ local.system_serial }}</td>
@@ -102,6 +102,8 @@
         <th>{% trans "System Product" %}</th>
         <td class="descr">{{ local.system_product }}</td>
     </tr>
+    {% endif %}
+    {% if not is_freenas %}
     <tr>
         <th>{% trans "License" %}</th>
         <td class="descr">
