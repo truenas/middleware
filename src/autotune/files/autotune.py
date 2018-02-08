@@ -127,7 +127,7 @@ def sysctl_int(oid):
 
 
 # TrueNAS HA heads may have slighty different available memory
-HW_PHYSMEM = sysctl_int('hw.physmem') / 10000000 * 10000000
+HW_PHYSMEM = sysctl_int('hw.physmem') // 10000000 * 10000000
 HW_PHYSMEM_GB = HW_PHYSMEM / GB
 
 # If you add a dictionary key here be sure to add it
@@ -241,7 +241,7 @@ def guess_net_inet_tcp_sendbuf_max():
 
 
 def guess_vm_kmem_size():
-    return int(1.25 * sysctl_int('hw.physmem'))
+    return int(1.25 * HW_PHYSMEM)
 
 
 def guess_vfs_zfs_arc_max():
