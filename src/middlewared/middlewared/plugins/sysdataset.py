@@ -5,6 +5,7 @@ from middlewared.utils import Popen, run
 import asyncio
 import os
 import shutil
+import uuid
 
 SYSDATASET_PATH = '/var/db/system'
 
@@ -39,6 +40,18 @@ class SystemDatasetService(ConfigService):
         if not await self.middleware.call('system.is_freenas'):
             if await self.middleware.call('notifier.failover_node') == 'B':
                 config['uuid'] = config['uuid_b']
+
+        if not config['uuid']:
+            config['uuid'] = uuid.uuid4().hex
+            if (
+                not await self.middleware.call('system.is_freenas') and
+                await self.middleware.call('notifier.failover_node') == 'B'
+            ):
+                attr = 'uuid_b'
+                config[attr] = config['uuid']
+            else:
+                attr = 'uuid'
+            await self.middleware.call('datastore.update', 'system.systemdataset', config['id'], {f'sys_{attr}': config['uuid']})
 
         config['syslog'] = config.pop('syslog_usedataset')
         config['rrd'] = config.pop('rrd_usedataset')
