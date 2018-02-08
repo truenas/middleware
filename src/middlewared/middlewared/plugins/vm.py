@@ -451,14 +451,15 @@ class VMUtils(object):
 
         VMUtils.__mkdirs(vm_private_dir)
 
-        with open(grub_file, 'w') as grubcfg:
-            for line in grub_default_args:
-                grubcfg.write(line)
-                grubcfg.write('\n')
-            for line in grub_additional_args[vmOS]:
-                grubcfg.write(line)
-                grubcfg.write('\n')
-            grubcfg.write('}')
+        if not os.path.exists(grub_file):
+            with open(grub_file, 'w') as grubcfg:
+                for line in grub_default_args:
+                    grubcfg.write(line)
+                    grubcfg.write('\n')
+                for line in grub_additional_args[vmOS]:
+                    grubcfg.write(line)
+                    grubcfg.write('\n')
+                grubcfg.write('}')
 
         return vm_private_dir
 
