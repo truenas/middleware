@@ -211,9 +211,23 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
         # toplogy change on the active node, the standby node will get a link_up
         # event on the lagg.  To  prevent the standby node from immediately pre-empting
         # we wait 2 seconds to see if the evbent was transient.
+        # 28143 - default timeout to solve cases like saturated networks(lost CARP packets)
         if ifname.startswith("lagg"):
             if sleeper < 2:
                 sleeper = 2
+        else:
+            # Check interlink - if it's down there is no need to wait.
+            for iface in fobj['internal_interfaces']:
+                error, output = run(
+                    "ifconfig %s | grep 'status:' | awk '{print $2}'" % iface
+                )
+                if output != 'active':
+                    break
+            else:
+                if sleeper < 2:
+                    sleeper = 2
+
+        if sleeper != 0:
             log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
             time.sleep(sleeper)
             error, output = run(
@@ -222,16 +236,6 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             if output != 'MASTER':
                 log.warn("%s became %s. Previous event ignored.", ifname, output)
                 sys.exit(0)
-        else:
-            if sleeper != 0:
-                log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
-                time.sleep(sleeper)
-                error, output = run(
-                    "ifconfig %s | grep 'carp:' | grep 'vhid %s ' | awk '{print $2}'" % (ifname, vhid)
-                )
-                if output != 'MASTER':
-                    log.warn("%s became %s. Previous event ignored.", ifname, output)
-                    sys.exit(0)
 
     if os.path.exists(FAILOVER_ASSUMED_MASTER) or forcetakeover:
         error, output = run("ifconfig -l")
