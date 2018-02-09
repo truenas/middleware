@@ -1222,70 +1222,6 @@ def show_ip():
         print(_("Please check network configuration."))
     print()
 
-def system_update():
-    import freenasOS.Update as Update
-    import freenasOS.Configuration as Configuration
-    import freenasOS.Exceptions as Exceptions
-    from freenasOS.Installer import ProgressHandler
-    
-    def CheckHandler(index, pkg, pkgList):
-        print("Downloading package {0}".format(pkg.Name()))
-    def InstallHandler(index, name, packages):
-        print("Installing package {0}".format(name))
-        
-    update_dir = notifier().get_update_location()
-    try:
-        rv = Update.DownloadUpdate(None, directory=update_dir, check_handler=CheckHandler)
-    except Exceptions.UpdateBusyCacheException:
-        print("Update cache busy, cannot update")
-        return False
-    except Exceptions.UpdateInvalidUpdateException as e:
-        print("Invalid update: {0}".format(str(e)))
-        return False
-    except Exceptions.UpdateException as e:
-        print("Downloading update failed: {0}".format(str(e)))
-        return False
-    except KeyboardInterrupt:
-        raise
-    except Exception as e:
-        print("Got exception {0}".format(str(e)))
-        raise
-    
-    if rv is True:
-        try:
-            diffs = Update.PendingUpdatesChanges(update_dir)
-        except Exceptions.UpdateException as e:
-            print("Comparing update failed: {0}".format(str(e)))
-            return False
-        except Exception as e:
-            print("Comparing update got exception {0}".format(str(e)))
-            raise
-
-        if diffs and len(diffs) != 0:
-            print("Installing update")
-            with ProgressHandler() as pf:
-                try:
-                    rv = Update.ApplyUpdate(directory=update_dir,
-                                            install_handler=InstallHandler,
-                                            progressFunc=pf.update)
-                except Exceptions.UpdateException as e:
-                    print("Update failed: {0}".format(str(e)))
-                    return False
-                except Exception as e:
-                    print("Applying update got exception {0}".format(str(e)))
-                    raise
-            if rv is True:
-                os.system("/sbin/shutdown -r now")
-                time.sleep(60)
-                return False
-            else:
-                print("Unable to apply update", file=sys.stderr)
-        else:
-            print("No updates to apply", file=sys.stderr)
-    else:
-        print("No update available", file=sys.stderr)
-    return True
-
 
 def netcli_title():
     proc = subprocess.Popen(['dmidecode', '-s', 'system-product-name'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
@@ -1306,7 +1242,6 @@ def main_menu():
         [ _("Reset Root Password"), reset_root_pw ],
         [ _("Reset Configuration to Defaults"), reset_factory_defaults ],
         [ _("Shell"), shell ],
-        [ _("System Update (requires networking)"), system_update ],
         [ _("Reboot"), reboot ],
         [ _("Shut Down"), shutdown],
     ]
