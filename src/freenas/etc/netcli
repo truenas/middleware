@@ -346,7 +346,7 @@ def configure_interface():
             print(_("Several input formats are supported"))
             print(_("Example 1 CIDR Notation:"))
             print("    192.168.1.1/24")
-            print(_("Example 2 IP and Netmask seperate:"))
+            print(_("Example 2 IP and Netmask separate:"))
             print("    IP: 192.168.1.1")
             print("    Netmask: 255.255.255.0, /24 or 24")
 
@@ -1098,7 +1098,7 @@ def automatic_ix_alert(*args):
         text = _("enabled")
     else:
         text = _("disabled")
-    print(_("Automatic suport alerts to iXsystems: %s") % text)
+    print(_("Automatic support alerts to iXsystems: %s") % text)
     while True:
         if support.enabled:
             ret = input(_("Disable (y/n): "))
