@@ -67,6 +67,11 @@ class SystemService(Service):
             stdout=subprocess.PIPE,
         )).communicate())[0].decode().strip() or None
 
+        manufacturer = (await(await Popen(
+            ['dmidecode', '-s', 'system-manufacturer'],
+            stdout=subprocess.PIPE,
+        )).communicate())[0].decode().strip() or None
+
         license = get_license()[0]
         if license:
             license = {
@@ -92,6 +97,7 @@ class SystemService(Service):
             ),
             'datetime': datetime.utcnow(),
             'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
+            'system_manufacturer': manufacturer,
         }
 
     @accepts(Dict('system-reboot', Int('delay', required=False), required=False))
