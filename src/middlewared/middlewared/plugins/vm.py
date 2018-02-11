@@ -291,14 +291,16 @@ class VMSupervisor(object):
     async def bridge_setup(self, tapname, tap, attach_iface):
         if_bridge = []
         bridge_enabled = False
-        attach_iface_info = netif.get_interface(attach_iface)
 
         if attach_iface is None:
             # XXX: backward compatibility prior to 11.1-RELEASE.
             try:
                 attach_iface = netif.RoutingTable().default_route_ipv4.interface
+                attach_iface_info = netif.get_interface(attach_iface)
             except:
                 return
+        else:
+            attach_iface_info = netif.get_interface(attach_iface)
 
         for brgname, iface in list(netif.list_interfaces().items()):
             if brgname.startswith('bridge'):
