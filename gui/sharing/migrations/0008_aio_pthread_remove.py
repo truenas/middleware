@@ -26,7 +26,7 @@ def change_cifs_vfsobjects_defaults(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sharing', '0007_afp_share_afp_home'),
+        ('sharing', '0006_afp_share_afp_timemachine_quota_in_gib'),
     ]
 
     operations = [
