@@ -549,17 +549,19 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
         if ifname.startswith("lagg"):
             if sleeper < 2:
                 sleeper = 2
-            log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
-            # FIXME
-            time.sleep(sleeper)
-            error, output = run(
-                "ifconfig %s | grep 'carp:' | awk '{print $2}'" % ifname
-            )
-            if output == 'MASTER':
-                log.warn("Ignoring state on %s because it changed back to MASTER after "
-                         "%s seconds.", ifname, sleeper)
-                sys.exit(0)
         else:
+            # Check interlink - if it's down there is no need to wait.
+            for iface in fobj['internal_interfaces']:
+                error, output = run(
+                    "ifconfig %s | grep 'status:' | awk '{print $2}'" % iface
+                )
+                if output != 'active':
+                    break
+            else:
+                if sleeper < 2:
+                    sleeper = 2
+
+        if sleeper != 0:
             log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
             time.sleep(sleeper)
             error, output = run(
