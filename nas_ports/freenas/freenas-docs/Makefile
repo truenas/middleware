@@ -25,6 +25,8 @@ WRKSRC=		/usr/freenas_docs
 .if ${PRODUCT} == "TrueNAS"
 USES+=		gmake
 BUILD_DEPENDS+=	gmake>0:devel/gmake \
+		tex-xetex>0:print/tex-xetex \
+		tex-dvipdfmx>0:print/tex-dvipdfmx \
 		tex-formats>0:print/tex-formats \
 		tex-dvipsk>0:print/tex-dvipsk
 .endif
