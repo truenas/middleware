@@ -14,14 +14,6 @@
   </script>
 </div>
 {% endif %}
-{% if sw_name != "freenas" %}
-<div data-dojo-type="dijit/form/Button">
-  {% trans "Userguide (PDF)" %}
-  <script type="dojo/method" data-dojo-event="onClick">
-    window.open("{% url 'download_guide' %}");
-  </script>
-</div>
-{% endif %}
 </h1>
 <table class="form">
 {% if license %}
