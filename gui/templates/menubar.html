@@ -69,11 +69,30 @@
     <span id="menuBar_AlertText">{% trans "Alert" %}</span>
   </div>
 
-  <div id="menuBar_Documentation" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openDocumentation();" class="menu_icon right">
-    <img src="{{ STATIC_URL }}images/ui/menu/{{ sw_name|lower }}guide.png" />
-    <br />
-    <span>{% trans "Guide" %}</span>
-  </div>
+  {% if sw_name|lower != "freenas" %}
+    <div id="menuBar_Documentation" data-dojo-type="dijit.PopupMenuBarItem" class="menu_icon right">
+      <span>
+        <img src="{{ STATIC_URL }}images/ui/menu/{{ sw_name|lower }}guide.png" />
+        <br />
+        Guide
+      </span>
+      <div data-dojo-type="dijit.DropDownMenu">
+          <div data-dojo-type="dijit.MenuItem" onClick="Menu.openDocumentation();">User Guide (HTML)</div>
+          <div data-dojo-type="dijit.MenuItem">
+            User Guide (PDF)
+            <script type="dojo/method" data-dojo-event="onClick">
+              window.open("{% url 'download_guide' %}");
+            </script>
+          </div>
+      </div>
+    </div>
+  {% else %}
+    <div id="menuBar_Documentation" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openDocumentation();" class="menu_icon right">
+      <img src="{{ STATIC_URL }}images/ui/menu/{{ sw_name|lower }}guide.png" />
+      <br />
+      <span>{% trans "Guide" %}</span>
+    </div>
+  {% endif %}
 
   <div id="menuBar_Support" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openSystem('system.Support');" class="menu_icon right">
     <img src="{{ STATIC_URL }}images/ui/menu/support.png" />
