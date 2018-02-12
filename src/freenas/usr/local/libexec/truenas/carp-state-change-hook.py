@@ -224,8 +224,16 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                 if output != 'active':
                     break
             else:
-                if sleeper < 2:
-                    sleeper = 2
+                # Check whether both vhid are master - link may be acctive while second node reboots.
+                for iface in fobj['internal_interfaces']:
+                    error, output = run(
+                        "ifconfig %s | grep 'carp:' | awk '{print $2}'| grep 'MASTER' | wc -l " % iface
+                    )
+                    if int(output) >= 2:
+                        break
+                else:
+                    if sleeper < 2:
+                        sleeper = 2
 
         if sleeper != 0:
             log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
