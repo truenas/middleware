@@ -16,10 +16,6 @@ class AFPService(SystemServiceService):
         Str('guest_user'),
         List('bindip', items=[Str('ip', validators=[IpAddress()])]),
         Int('connections_limit', validators=[Range(min=1, max=65535)]),
-        Bool('homedir_enable'),
-        Dir('homedir'),
-        Str('homename'),
-        Bool('hometimemachine'),
         Dir('dbpath'),
         Str('global_aux'),
         Str('map_acls', enum=["rights", "mode", "none"]),
@@ -32,15 +28,6 @@ class AFPService(SystemServiceService):
         new.update(data)
 
         verrors = ValidationErrors()
-
-        if new["homedir_enable"] and not new["homedir"]:
-            verrors.add("afp_update.homedir", "This field is required for \"Home directories\".")
-
-        if not new["homedir_enable"] and new["homedir"]:
-            verrors.add("afp_update.homedir_enable", "This field is required for \"Home directories\".")
-
-        if new["homedir"]:
-            await check_path_resides_within_volume(verrors, self.middleware, "afp_update.homedir", new["homedir"])
 
         if new["dbpath"]:
             await check_path_resides_within_volume(verrors, self.middleware, "afp_update.dbpath", new["dbpath"])

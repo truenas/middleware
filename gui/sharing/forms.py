@@ -240,6 +240,18 @@ class AFP_ShareForm(ModelForm):
                 self.fields['afp_umask'].widget.attrs['disabled'] = 'false'
         self.fields['afp_name'].required = False
 
+    def clean_afp_home(self):
+        home = self.cleaned_data.get('afp_home')
+        if home:
+            qs = models.AFP_Share.objects.filter(afp_home=True)
+            if self.instance.id:
+                qs = qs.exclude(id=self.instance.id)
+            if qs.exists():
+                raise forms.ValidationError(_(
+                    'Only one share is allowed to be a home share.'
+                ))
+        return home
+
     def clean_afp_hostsallow(self):
         res = self.cleaned_data['afp_hostsallow']
         res = re.sub(r'\s{2,}|\n', ' ', res).strip()
@@ -291,8 +303,11 @@ class AFP_ShareForm(ModelForm):
     def clean_afp_name(self):
         name = self.cleaned_data.get('afp_name')
         path = self.cleaned_data.get('afp_path')
-        if path and not name:
-            name = path.rsplit('/', 1)[-1]
+        if not name:
+            if self.cleaned_data.get('afp_home'):
+                name = 'Homes'
+            elif path:
+                name = path.rsplit('/', 1)[-1]
         qs = models.AFP_Share.objects.filter(afp_name=name)
         if self.instance.id:
             qs = qs.exclude(id=self.instance.id)
