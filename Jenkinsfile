@@ -1,5 +1,7 @@
-context="continuous-integration/jenkins/pr-head"
-setBuildStatus ("${context}", 'Build is queued', 'PENDING')
+node() {
+  context="continuous-integration/jenkins/pr-head"
+  setBuildStatus ("${context}", 'Build is queued', 'PENDING')
+}
 
 node('FreeNAS-ISO') {
   stage('Checkout') {
