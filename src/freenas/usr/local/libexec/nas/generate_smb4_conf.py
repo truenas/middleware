@@ -258,7 +258,7 @@ def config_share_for_zfs(share):
 
 #
 # ticket: # 16325
-# aio_pthread needs to be last
+# aio_pthread needs to be last. But it's NOOP on FreeBSD anyhow.
 # fruit needs to be before streams_xattr, streams_xattr is required
 # for fruit, and if catia and fruit are used, catia comes before fruit
 #
