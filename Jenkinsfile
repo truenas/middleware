@@ -1,11 +1,9 @@
-node() {
-  context="continuous-integration/jenkins/pr-head"
-  setBuildStatus ("${context}", 'Build is queued', 'PENDING')
-}
+
+githubNotify context: 'continuous-integration/jenkins/pr-head', description: 'Build queued',  status: 'PENDING'
 
 node('FreeNAS-ISO') {
   stage('Checkout') {
-    ontext="continuous-integration/jenkins/"
+    context="continuous-integration/jenkins/"
     context += isPRMergeBuild()?"pr-merge/checkout":"branch/checkout"
     setBuildStatus ("${context}", 'Checking out sources', 'PENDING')
     try {
