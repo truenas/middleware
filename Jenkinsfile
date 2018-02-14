@@ -1,6 +1,7 @@
 pipeline {
-
-  pullRequestSetCommitStatus state: 'PENDING', context: 'continuous-integration/jenkins/pr-head', message: 'Build queued'
+  script {
+    pullRequestSetCommitStatus state: 'PENDING', context: 'continuous-integration/jenkins/pr-head', message: 'Build queued'
+  }
 
   agent {
     label 'FreeNAS-ISO'
