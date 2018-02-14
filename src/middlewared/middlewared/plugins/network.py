@@ -12,6 +12,8 @@ import signal
 import subprocess
 import urllib.request
 
+RE_MTU = re.compile(r'\bmtu\s+(\d+)')
+
 
 def dhclient_status(interface):
     """
@@ -89,12 +91,53 @@ class InterfacesService(Service):
                 self.logger.info('{}: changing protocol to {}'.format(name, protocol))
                 iface.protocol = protocol
 
-            members_configured = set(p[0] for p in iface.ports)
             members_database = set()
+            members_configured = set(p[0] for p in iface.ports)
+            members_changes = []
+            # In case there are MTU changes we need to use the lowest MTU between
+            # all members and use that.
+            lower_mtu = None
             for member in (await self.middleware.call('datastore.query', 'network.lagginterfacemembers', [('lagg_interfacegroup_id', '=', lagg['id'])])):
                 members_database.add(member['lagg_physnic'])
+                try:
+                    member_iface = netif.get_interface(member['lagg_physnic'])
+                except KeyError:
+                    self.logger.warn('Could not find {} from {}'.format(member['lagg_physnic'], name))
+                    continue
 
-            # Remeve member configured but not in database
+                # In case there is no MTU in interface options and it is currently
+                # different than the default of 1500, revert it.
+                # If there is MTU and its different set it (using member options).
+                reg_mtu = RE_MTU.search(member['lagg_deviceoptions'])
+                if (
+                    reg_mtu and (
+                        int(reg_mtu.group(1)) != member_iface.mtu or
+                        int(reg_mtu.group(1)) != iface.mtu
+                    )
+                ) or (not reg_mtu and (member_iface.mtu != 1500 or iface.mtu != 1500)):
+                    if not reg_mtu:
+                        if not lower_mtu or lower_mtu > 1500:
+                            lower_mtu = 1500
+                    else:
+                        reg_mtu = int(reg_mtu.group(1))
+                        if not lower_mtu or lower_mtu > reg_mtu:
+                            lower_mtu = reg_mtu
+
+                members_changes.append((member_iface, member['lagg_physnic'], member['lagg_deviceoptions']))
+
+            for member_iface, member_name, member_options in members_changes:
+                # We need to remove interface from LAGG before changing MTU
+                if lower_mtu and member_iface.mtu != lower_mtu and member_name in members_configured:
+                    iface.delete_port(member_name)
+                    members_configured.remove(member_name)
+                proc = await Popen(f'/sbin/ifconfig {member_name} {member_options}', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+                err = (await proc.communicate())[1].decode()
+                if err:
+                    self.logger.info(f'{member_name}: error applying: {err}')
+                if lower_mtu and member_iface.mtu != lower_mtu:
+                    member_iface.mtu = lower_mtu
+
+            # Remove member configured but not in database
             for member in (members_configured - members_database):
                 iface.delete_port(member)
 
