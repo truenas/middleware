@@ -29,7 +29,7 @@ SHARE_USER = "webdav"
 SHARE_PASS = "davtest"
 
 
-class webdav_osx_test(unittest.TestCase):
+class create_webdav_osx_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed test runs
     @classmethod
@@ -74,7 +74,7 @@ class webdav_osx_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(webdav_osx_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_webdav_osx_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

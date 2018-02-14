@@ -16,7 +16,7 @@ RunTest = True
 TestName = "delete cronjob"
 
 
-class cronjob_test(unittest.TestCase):
+class delete_cronjob_test(unittest.TestCase):
 
     # Delete cronjob from API
     def test_01_Deleting_cron_job_which_will_run_every_minuted(self):
@@ -28,7 +28,7 @@ class cronjob_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(cronjob_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(delete_cronjob_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

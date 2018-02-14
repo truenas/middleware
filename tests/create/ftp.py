@@ -16,7 +16,7 @@ RunTest = True
 TestName = "create ftp"
 
 
-class ftp_test(unittest.TestCase):
+class create_ftp_test(unittest.TestCase):
 
     def test_01_Configuring_ftp_service(self):
         payload = {"ftp_clients": 10, "ftp_rootlogin": "true"}
@@ -35,7 +35,7 @@ class ftp_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(ftp_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_ftp_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

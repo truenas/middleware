@@ -19,7 +19,7 @@ COUNTRY = "US"
 INTDESC = True
 
 
-class lldp_test(unittest.TestCase):
+class create_lldp_test(unittest.TestCase):
 
     def test_01_Configuring_LLDP_service(self):
         payload = {"lldp_country": COUNTRY,
@@ -43,7 +43,7 @@ class lldp_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(lldp_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_lldp_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

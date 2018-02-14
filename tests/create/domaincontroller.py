@@ -27,7 +27,7 @@ DNSFORWARDER = "8.8.8.8"
 FORESTLEVEL = "2003"
 
 
-class domaincontroller_test(unittest.TestCase):
+class create_domaincontroller_test(unittest.TestCase):
     def Test_01_Setting_Realm_Name(self):
         payload = {"dc_realm": REALM}
         assert PUT("/services/services/domaincontroller/", payload) == 200
@@ -50,7 +50,8 @@ class domaincontroller_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(domaincontroller_test)
+    suite = unittest.TestLoader()
+    suite.loadTestsFromTestCase(create_domaincontroller_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

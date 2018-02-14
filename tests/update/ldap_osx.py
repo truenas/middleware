@@ -32,7 +32,7 @@ LDAP_PASS = "12345678"
 VOL_GROUP = "wheel"
 
 
-class ldap_osx_test(unittest.TestCase):
+class update_ldap_osx_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed AD LDAP or SMB runs
     @classmethod
@@ -182,7 +182,7 @@ class ldap_osx_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(ldap_osx_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(update_ldap_osx_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

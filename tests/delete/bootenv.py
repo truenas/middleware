@@ -16,14 +16,14 @@ RunTest = True
 TestName = "delete bootenv"
 
 
-class bootenv_test(unittest.TestCase):
+class delete_bootenv_test(unittest.TestCase):
 
     def test_01_Removing_a_boot_environment_newbe2(self):
         assert DELETE("/system/bootenv/newbe2/") == 204
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(bootenv_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(delete_bootenv_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

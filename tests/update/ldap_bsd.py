@@ -32,7 +32,7 @@ LDAP_USER = 'ldapuser'
 VOL_GROUP = "qa"
 
 
-class ldap_bsd_test(unittest.TestCase):
+class update_ldap_bsd_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed AD LDAP or SMB runs
     @classmethod
@@ -192,7 +192,7 @@ class ldap_bsd_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(ldap_bsd_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(update_ldap_bsd_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

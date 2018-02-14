@@ -15,7 +15,7 @@ RunTest = True
 TestName = "create ssh"
 
 
-class ssh_test(unittest.TestCase):
+class create_ssh_test(unittest.TestCase):
 
     def test_1_Configuring_ssh_settings(self):
         payload = {"ssh_rootlogin": 'true'}
@@ -40,7 +40,7 @@ class ssh_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(ssh_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_ssh_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

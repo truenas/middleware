@@ -19,7 +19,7 @@ RunTest = True
 ALERT_MSG = "Testing system alerts with failure."
 
 
-class alerts_test(unittest.TestCase):
+class update_alerts_test(unittest.TestCase):
 
     def test_01_Polling_API_endpoint_for_new_system_alert(self):
         assert GET_OUTPUT("/system/alert/", "message") == ALERT_MSG
@@ -30,7 +30,7 @@ class alerts_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(alerts_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(update_alerts_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

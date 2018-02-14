@@ -16,7 +16,7 @@ RunTest = True
 TestName = "create ups"
 
 
-class ups_test(unittest.TestCase):
+class create_ups_test(unittest.TestCase):
 
     def test_01_Enabling_UPS_Service(self):
         assert PUT("/services/services/ups/", {"srv_enable": True}) == 200
@@ -55,7 +55,7 @@ class ups_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(ups_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_ups_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

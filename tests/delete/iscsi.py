@@ -25,7 +25,7 @@ DEVICE_NAME_PATH = "/tmp/iscsi_dev_name"
 TARGET_NAME = "iqn.freenas:target0"
 
 
-class iscsi_test(unittest.TestCase):
+class delete_iscsi_test(unittest.TestCase):
 
     # Clean up any leftover items from any previous failed runs
     @classmethod
@@ -46,7 +46,7 @@ class iscsi_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(iscsi_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(delete_iscsi_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

@@ -16,14 +16,14 @@ RunTest = True
 TestName = "delete rsync"
 
 
-class rsync_test(unittest.TestCase):
+class delete_rsync_test(unittest.TestCase):
 
     def test_01_Delete_rsync_resource(self):
         assert DELETE("/services/rsyncmod/1/") == 204
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(rsync_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(delete_rsync_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

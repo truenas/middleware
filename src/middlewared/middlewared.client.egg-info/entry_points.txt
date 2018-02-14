@@ -1,0 +1,3 @@
+[console_scripts]
+midclt = middlewared.client.client:main
+

@@ -24,7 +24,7 @@ TestName = "create nfs"
 NFS_PATH = "/mnt/tank/share"
 
 
-class nfs_test(unittest.TestCase):
+class create_nfs_test(unittest.TestCase):
 
     # Enable NFS server
     def test_01_Creating_the_NFS_server(self):
@@ -89,7 +89,7 @@ class nfs_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(nfs_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_nfs_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

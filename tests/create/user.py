@@ -16,7 +16,7 @@ RunTest = True
 TestName = "create user"
 
 
-class user_test(unittest.TestCase):
+class create_user_test(unittest.TestCase):
 
     def test_01_Creating_home_dataset_tank_sur_testuser(self):
         payload = {"name": "testuser"}
@@ -40,7 +40,7 @@ class user_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(user_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_user_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

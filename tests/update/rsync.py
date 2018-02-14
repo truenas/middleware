@@ -16,7 +16,7 @@ RunTest = True
 TestName = "update rsync"
 
 
-class rsync_test(unittest.TestCase):
+class update_rsync_test(unittest.TestCase):
 
     # def test_01_Updating_rsync_resource(self):
     #     payload = {"rsyncmod_user": "testuser"}
@@ -28,7 +28,7 @@ class rsync_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(rsync_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(update_rsync_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

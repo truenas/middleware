@@ -22,7 +22,7 @@ else:
 TestName = "create jails"
 
 
-class jails_test(unittest.TestCase):
+class create_jails_test(unittest.TestCase):
 
     def test_01_Configuring_jails(self):
         payload = {"jc_ipv4_network_start": JAILIP,
@@ -56,7 +56,7 @@ class jails_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(jails_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_jails_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

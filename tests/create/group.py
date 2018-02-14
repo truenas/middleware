@@ -16,7 +16,7 @@ RunTest = True
 TestName = "create group"
 
 
-class group_test(unittest.TestCase):
+class create_group_test(unittest.TestCase):
 
     def test_01_Creating_group_testgroup(self):
         payload = {"bsdgrp_gid": 1200, "bsdgrp_group": "testgroup"}
@@ -24,7 +24,7 @@ class group_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(group_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_group_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

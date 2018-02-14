@@ -16,7 +16,7 @@ RunTest = True
 TestName = "delete group"
 
 
-class group_test(unittest.TestCase):
+class delete_group_test(unittest.TestCase):
 
     # Delete the testgroup
     def test_01_Delete_group_testgroup_newgroup(self):
@@ -24,7 +24,7 @@ class group_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(group_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(delete_group_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

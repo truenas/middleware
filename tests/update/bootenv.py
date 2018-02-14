@@ -16,7 +16,7 @@ RunTest = True
 TestName = "update bootenv"
 
 
-class bootenv_test(unittest.TestCase):
+class update_bootenv_test(unittest.TestCase):
 
     def test_01_Cloning_a_new_boot_environment_newbe2(services):
         payload = {"name": "newbe2", "source": "newbe1"}
@@ -24,7 +24,7 @@ class bootenv_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(bootenv_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(update_bootenv_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

@@ -16,7 +16,7 @@ RunTest = True
 TestName = "create smarttest"
 
 
-class smarttest_test(unittest.TestCase):
+class create_smarttest_test(unittest.TestCase):
 
     @classmethod
     def setUpClass(inst):
@@ -38,7 +38,7 @@ class smarttest_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(smarttest_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_smarttest_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

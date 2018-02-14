@@ -19,7 +19,7 @@ RunTest = True
 TestName = "create a"
 
 
-class alerts_test(unittest.TestCase):
+class create_alerts_test(unittest.TestCase):
 
     def test_01_Create_an_alert_on_the_remote_system(self):
         cmd = "echo '[%s] %s' >> %s" % (alert_status, alert_msg, alert_file)
@@ -27,7 +27,7 @@ class alerts_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(alerts_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_alerts_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

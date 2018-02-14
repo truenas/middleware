@@ -29,7 +29,7 @@ SMB_PATH = "/mnt/tank/" + DATASET
 VOL_GROUP = "qa"
 
 
-class ldap_osx_test(unittest.TestCase):
+class create_ldap_osx_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed runs
     @classmethod
@@ -180,7 +180,7 @@ class ldap_osx_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(ldap_osx_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_ldap_osx_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

@@ -8,7 +8,7 @@ invalid_users = [
 
 
 def test_auth_check_valid_user(conn):
-    req = conn.rest.post('auth/check_user', data={'username': 'root', 'password': 'freenas'})
+    req = conn.rest.post('auth/check_user', data={'username': 'root', 'password': 'testing'})
 
     assert req.status_code == 200, req.text
     assert req.json() is True

@@ -15,7 +15,7 @@ RunTest = True
 TestName = "create cronjob"
 
 
-class cronjob_test(unittest.TestCase):
+class create_cronjob_test(unittest.TestCase):
 
     def test_01_Creating_new_cron_job_which_will_run_every_minute(self):
         payload = {"cron_user": "root",
@@ -28,7 +28,7 @@ class cronjob_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(cronjob_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_cronjob_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
