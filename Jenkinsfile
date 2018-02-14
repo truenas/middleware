@@ -1,6 +1,8 @@
 pipeline {
 
-  githubNotify context: 'continuous-integration/jenkins/pr-head', description: 'Build queued',  status: 'PENDING'
+  context="continuous-integration/jenkins/"
+  context += isPRMergeBuild()?"pr-merge/checkout":"branch/checkout"
+  setBuildStatus ("${context}", 'Build is queued', 'PENDING')
 
   agent {
     label 'FreeNAS-ISO'
@@ -37,4 +39,26 @@ pipeline {
       }
     }
   }
+}
+
+def isPRMergeBuild() {
+    return (env.BRANCH_NAME ==~ /^PR-\d+$/)
+}
+
+def getRepoSlug() {
+    tokens = "${env.JOB_NAME}".tokenize('/')
+    org = tokens[tokens.size()-3]
+    repo = tokens[tokens.size()-2]
+    return "${org}/${repo}"
+}
+
+void setBuildStatus(context, message, state) {
+  // partially hard coded URL because of https://issues.jenkins-ci.org/browse/JENKINS-36961, adjust to your own GitHub instance
+  step([
+      $class: "GitHubCommitStatusSetter",
+      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: context],
+      reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/freenas/${getRepoSlug()}"],
+      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
+  ]);
 }
