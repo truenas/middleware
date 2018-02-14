@@ -2004,12 +2004,17 @@ class ISCSIPortalResourceMixin(object):
         bundle = super(ISCSIPortalResourceMixin, self).dehydrate(bundle)
         globalconf = iSCSITargetGlobalConfiguration.objects.latest('id')
         if globalconf.iscsi_alua:
+            listen = []
             listen_a = []
             listen_b = []
             for p in bundle.obj.ips.all():
-                ips = p.alua_ips()
-                listen_a.extend(ips[0])
-                listen_b.extend(ips[1])
+                if p.iscsi_target_portalip_ip == '0.0.0.0':
+                    listen.append(f'{p.iscsi_target_portalip_ip}:{p.iscsi_target_portalip_port}')
+                else:
+                    ips = p.alua_ips()
+                    listen_a.extend(ips[0])
+                    listen_b.extend(ips[1])
+            bundle.data['iscsi_target_portal_ips'] = f'{", ".join(listen + listen_a + listen_b)}'
             bundle.data['iscsi_target_portal_ips_a'] = listen_a
             bundle.data['iscsi_target_portal_ips_b'] = listen_b
         else:
