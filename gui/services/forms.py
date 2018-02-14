@@ -39,6 +39,7 @@ from django.utils.translation import (
 )
 
 from dojango import forms
+from django.db.models import Q
 from freenasUI import choices
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm, Form
@@ -57,6 +58,7 @@ from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
+from freenasUI.network.models import Alias, Interfaces
 from freenasUI.services import models
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Volume, Disk
@@ -1450,7 +1452,16 @@ class iSCSITargetPortalIPForm(ModelForm):
             label=self.fields['iscsi_target_portalip_ip'].label,
         )
         ips = [('', '------'), ('0.0.0.0', '0.0.0.0')]
-        ips.extend(list(choices.IPChoices()))
+        iface_ips = {
+            iface.int_vip: f'{iface.int_ipv4address}, {iface.int_ipv4address_b}'
+            for iface in Interfaces.objects.exclude(Q(int_vip=None) | Q(int_vip=''))
+        }
+        for alias in Alias.objects.exclude(Q(alias_vip=None) | Q(alias_vip='')):
+            iface_ips[alias.alias_vip] = f'{alias.alias_v4address}, {alias.alias_v4address_b}'
+        for k, v in choices.IPChoices():
+            if v in iface_ips:
+                v = iface_ips[v]
+            ips.append((k, v))
         self.fields['iscsi_target_portalip_ip'].choices = ips
         if not self.instance.id and not self.data:
             if not(
