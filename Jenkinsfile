@@ -1,5 +1,7 @@
-
 pipeline {
+
+  githubNotify context: 'continuous-integration/jenkins/pr-head', description: 'Build queued',  status: 'PENDING'
+
   agent {
     label 'FreeNAS-ISO'
   }
