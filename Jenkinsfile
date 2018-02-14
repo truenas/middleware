@@ -1,8 +1,7 @@
 pipeline {
 
-  context="continuous-integration/jenkins/"
-  context += isPRMergeBuild()?"pr-merge/checkout":"branch/checkout"
-  setBuildStatus ("${context}", 'Build is queued', 'PENDING')
+  context="continuous-integration/jenkins/pr-head"
+  pullRequestSetCommitStatus state: 'PENDING', context: "${context}", message: 'Build queued'
 
   agent {
     label 'FreeNAS-ISO'
