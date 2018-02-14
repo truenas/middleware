@@ -116,6 +116,10 @@ class FailoverService(Service):
                 return c.call(method, *args, **options)
         except ConnectionRefusedError:
             raise CallError('Connection refused', errno.ECONNREFUSED)
+        except OSError as e:
+            if e.errno == errno.EHOSTDOWN:
+                raise CallError('Standby node is down', errno.EHOSTDOWN)
+            raise
         except ClientException as e:
             raise CallError(str(e), e.errno)
 
