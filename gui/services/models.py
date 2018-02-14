@@ -752,19 +752,22 @@ class iSCSITargetPortalIP(Model):
         from freenasUI.network.models import Interfaces
         node_a = []
         node_b = []
-        ifaces = Interfaces.objects.exclude(Q(int_vip=None) | Q(int_vip=''))
-        if self.iscsi_target_portalip_ip != '0.0.0.0':
-            ifaces = ifaces.filter(int_vip=self.iscsi_target_portalip_ip)
-        for iface in ifaces:
-            if iface.int_ipv4address:
-                node_a.append('{}:{}'.format(iface.int_ipv4address, self.iscsi_target_portalip_port))
-            if iface.int_ipv4address_b:
-                node_b.append('{}:{}'.format(iface.int_ipv4address_b, self.iscsi_target_portalip_port))
+        if self.iscsi_target_portalip_ip == '0.0.0.0':
+            return node_a, node_b
+        for iface in Interfaces.objects.all():
+            if self.iscsi_target_portalip_ip == iface.int_vip:
+                if iface.int_ipv4address:
+                    node_a.append('{}:{}'.format(iface.int_ipv4address, self.iscsi_target_portalip_port))
+                if iface.int_ipv4address_b:
+                    node_b.append('{}:{}'.format(iface.int_ipv4address_b, self.iscsi_target_portalip_port))
+                break
             for alias in iface.alias_set.all():
-                if alias.alias_v4address:
-                    node_a.append('{}:{}'.format(alias.alias_v4address, self.iscsi_target_portalip_port))
-                if alias.alias_v4address_b:
-                    node_b.append('{}:{}'.format(alias.alias_v4address_b, self.iscsi_target_portalip_port))
+                if self.iscsi_target_portalip_ip == alias.alias_vip:
+                    if alias.alias_v4address:
+                        node_a.append('{}:{}'.format(alias.alias_v4address, self.iscsi_target_portalip_port))
+                    if alias.alias_v4address_b:
+                        node_b.append('{}:{}'.format(alias.alias_v4address_b, self.iscsi_target_portalip_port))
+                    break
         return node_a, node_b
 
 
