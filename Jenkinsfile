@@ -24,7 +24,7 @@ pipeline {
         success {
           archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
           junit 'results/**'
-	  stash includes: 'artifacts/iso/*.iso', name 'iso' (1)
+	  stash includes: 'artifacts/iso/*.iso', name: 'iso'
         }
         failure {
           echo 'Saving failed artifacts...'
