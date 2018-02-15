@@ -20,7 +20,7 @@ else:
 TestName = "create network"
 
 
-class network_test(unittest.TestCase):
+class create_network_test(unittest.TestCase):
 
     def test_01_configure_interface_dhcp(self):
         payload = {"int_dhcp": "true",
@@ -37,7 +37,7 @@ class network_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(network_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_network_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

@@ -15,7 +15,7 @@ RunTest = True
 TestName = "create storage"
 
 
-class storage_test(unittest.TestCase):
+class create_storage_test(unittest.TestCase):
 
     def test_01_Check_getting_disks(self):
         assert GET("/storage/disk/") == 200
@@ -70,7 +70,7 @@ class storage_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(storage_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_storage_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

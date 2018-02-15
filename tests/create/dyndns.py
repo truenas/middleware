@@ -22,7 +22,7 @@ else:
 TestName = "create dyndns"
 
 
-class dyndns_test(unittest.TestCase):
+class create_dyndns_test(unittest.TestCase):
 
     def test_01_Updating_Settings_for_NO_IP(self):
         payload = {"ddns_password": NOIPPASSWORD,
@@ -33,7 +33,7 @@ class dyndns_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(dyndns_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_dyndns_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

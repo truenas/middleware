@@ -24,7 +24,7 @@ else:
     RunTest = True
 
 
-class nfs_test(unittest.TestCase):
+class update_nfs_test(unittest.TestCase):
 
     # Update NFS server
     def test_01_Updating_the_NFS_service(self):
@@ -35,7 +35,7 @@ class nfs_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(nfs_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(update_nfs_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

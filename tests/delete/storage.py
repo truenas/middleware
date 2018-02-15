@@ -16,7 +16,7 @@ RunTest = True
 TestName = "delete storage"
 
 
-class storage_test(unittest.TestCase):
+class delete_storage_test(unittest.TestCase):
 
     # Check destroying a ZFS snapshot
     def test_01_Destroying_ZFS_snapshot_IXBUILD_ROOT_ZVOL_test(self):
@@ -32,7 +32,7 @@ class storage_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(storage_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(delete_storage_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

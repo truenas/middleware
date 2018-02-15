@@ -18,7 +18,7 @@ TESTFILE_NAME = "tftp-testfile.txt"
 TESTFILE_PATH = "/tmp/"
 
 
-class tftp_test(unittest.TestCase):
+class create_tftp_test(unittest.TestCase):
 
     def test_01_Creating_dataset_tank_tftproot(self):
         payload = {"name": "tftproot"}
@@ -46,7 +46,7 @@ class tftp_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(tftp_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_tftp_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

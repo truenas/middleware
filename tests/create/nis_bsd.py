@@ -28,7 +28,7 @@ DATASET = "nis-bsd"
 NIS_PATH = "/mnt/tank/" + DATASET
 
 
-class nis_bsd_test(unittest.TestCase):
+class create_nis_bsd_test(unittest.TestCase):
     def test_01_Setting_NIS_domain(self):
         assert PUT("/directoryservice/nis/", {"nis_domain": NISDOMAIN}) == 200
 
@@ -67,7 +67,7 @@ class nis_bsd_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(nis_bsd_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_nis_bsd_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

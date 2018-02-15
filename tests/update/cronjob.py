@@ -19,7 +19,7 @@ TESTFILE = "/tmp/.testFileCreatedViaCronjob"
 CRONJOB_ID = 1
 
 
-class cronjob_test(unittest.TestCase):
+class update_cronjob_test(unittest.TestCase):
 
     # Ensure test file does exist
     # def test_01_Verify_cronjob_has_created_the_test_file(seff):
@@ -42,7 +42,7 @@ class cronjob_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(cronjob_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(update_cronjob_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

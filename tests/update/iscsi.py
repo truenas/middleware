@@ -28,7 +28,7 @@ DEVICE_NAME_PATH = "/tmp/freenasiscsi"
 TARGET_NAME = "iqn.1994-09.freenasqa:target0"
 
 
-class iscsi_test(unittest.TestCase):
+class update_iscsi_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed AD LDAP or SMB runs
     @classmethod
@@ -104,7 +104,7 @@ class iscsi_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(iscsi_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(update_iscsi_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

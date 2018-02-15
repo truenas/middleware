@@ -16,7 +16,7 @@ RunTest = True
 TestName = "delete user"
 
 
-class user_test(unittest.TestCase):
+class delete_user_test(unittest.TestCase):
 
     # Get the ID of testuser
     @classmethod
@@ -29,7 +29,7 @@ class user_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(user_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(delete_user_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

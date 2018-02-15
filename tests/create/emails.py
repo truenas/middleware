@@ -15,7 +15,7 @@ RunTest = True
 TestName = "create emails"
 
 
-class email_test(unittest.TestCase):
+class create_email_test(unittest.TestCase):
 
     def test_01_Configuring_email_settings(self):
         payload = {"em_fromemail": "william.spam@ixsystems.com",
@@ -29,7 +29,7 @@ class email_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(email_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_email_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

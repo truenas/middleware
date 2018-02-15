@@ -15,7 +15,7 @@ RunTest = True
 TestName = "create ntp"
 
 
-class ntp_test(unittest.TestCase):
+class create_ntp_test(unittest.TestCase):
 
     def test_01_Changing_permissions_on_share(self):
         payload = {"id": "1",
@@ -38,7 +38,7 @@ class ntp_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(ntp_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_ntp_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

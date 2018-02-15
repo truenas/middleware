@@ -16,7 +16,7 @@ RunTest = True
 TestName = "update ftp"
 
 
-class ftp_test(unittest.TestCase):
+class update_ftp_test(unittest.TestCase):
 
     def test_01_Stopping_ftp_service(self):
         assert PUT("/services/services/ftp/", {"srv_enable": False}) == 200
@@ -32,7 +32,7 @@ class ftp_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(ftp_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(update_ftp_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

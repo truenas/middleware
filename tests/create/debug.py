@@ -15,7 +15,7 @@ RunTest = True
 TestName = "create debug"
 
 
-class debug_test(unittest.TestCase):
+class create_debug_test(unittest.TestCase):
 
     def test_01_Creating_diagnostic_file(self):
         payload = {"name": "newbe1", "source": "default"}
@@ -26,7 +26,7 @@ class debug_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(debug_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_debug_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

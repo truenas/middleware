@@ -16,7 +16,7 @@ RunTest = True
 TestName = "create system"
 
 
-class system_test(unittest.TestCase):
+class create_system_test(unittest.TestCase):
 
     def test_01_Checking_system_version(self):
         assert GET("/system/version/") == 200
@@ -48,7 +48,7 @@ class system_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(system_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_system_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

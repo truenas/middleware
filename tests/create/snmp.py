@@ -22,7 +22,7 @@ LOCATION = "Maryville, TN"
 PASSWORD = "testing1234"
 
 
-class snmp_test(unittest.TestCase):
+class create_snmp_test(unittest.TestCase):
     def test_01_Configure_SNMP(self):
         payload = {"snmp_community": COMMUNITY,
                    "snmp_traps": TRAPS,
@@ -47,7 +47,7 @@ class snmp_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(snmp_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_snmp_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

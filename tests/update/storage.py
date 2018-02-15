@@ -16,7 +16,7 @@ RunTest = True
 TestName = "update storage"
 
 
-class storage_test(unittest.TestCase):
+class update_storage_test(unittest.TestCase):
 
     # Check updating a ZVOL
     def test_01_Updating_ZVOL(self):
@@ -34,7 +34,7 @@ class storage_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(storage_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(update_storage_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

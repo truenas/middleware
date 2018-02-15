@@ -16,7 +16,7 @@ RunTest = True
 TestName = "create rsync"
 
 
-class rsync_test(unittest.TestCase):
+class create_rsync_test(unittest.TestCase):
 
     def test_01_Configuring_rsyncd_service(self):
         assert PUT("/services/rsyncd/", {"rsyncd_port": 873}) == 200
@@ -39,7 +39,7 @@ class rsync_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(rsync_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_rsync_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:

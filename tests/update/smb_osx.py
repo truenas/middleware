@@ -30,7 +30,7 @@ SMB_PATH = "/mnt/tank/" + DATASET
 VOL_GROUP = "wheel"
 
 
-class smb_osx_test(unittest.TestCase):
+class update_smb_osx_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed AD LDAP or SMB runs
     @classmethod
@@ -148,7 +148,7 @@ class smb_osx_test(unittest.TestCase):
 
 
 def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(smb_osx_test)
+    suite = unittest.TestLoader().loadTestsFromTestCase(update_smb_osx_test)
     xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
 
 if RunTest is True:
