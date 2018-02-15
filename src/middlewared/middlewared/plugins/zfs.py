@@ -537,8 +537,10 @@ class ZFSQuoteService(Service):
 
     async def __get_quota_excesses(self):
         excesses = []
-        zfs = libzfs.ZFS()
-        for properties in await self.middleware.run_in_thread_pool(SINGLE_THREAD_POOL, lambda: [i.properties for i in zfs.datasets]):
+        for properties in await self.middleware.run_in_thread_pool(SINGLE_THREAD_POOL, lambda: [
+            {k: v.__getstate__() for k, v in i.properties.items()}
+            for i in libzfs.ZFS().datasets
+        ]):
             quota = await self.__get_quota_excess(properties, "quota", "quota", "used")
             if quota:
                 excesses.append(quota)
@@ -551,14 +553,14 @@ class ZFSQuoteService(Service):
 
     async def __get_quota_excess(self, properties, quota_type, quota_property, used_property):
         try:
-            quota_value = int(properties[quota_property].rawvalue)
+            quota_value = int(properties[quota_property]["rawvalue"])
         except (AttributeError, KeyError, ValueError):
             return None
 
         if quota_value == 0:
             return
 
-        used = int(properties[used_property].rawvalue)
+        used = int(properties[used_property]["rawvalue"])
         try:
             percent_used = 100 * used / quota_value
         except ZeroDivisionError:
@@ -572,17 +574,17 @@ class ZFSQuoteService(Service):
             return None
 
         mountpoint = None
-        if properties["mounted"].value == "yes":
-            if properties["mountpoint"].value == "legacy":
+        if properties["mounted"]["value"] == "yes":
+            if properties["mountpoint"]["value"] == "legacy":
                 for m in await self.middleware.run_in_thread(getmntinfo):
-                    if m.source == properties["name"].value:
+                    if m.source == properties["name"]["value"]:
                         mountpoint = m.dest
                         break
             else:
-                mountpoint = properties["mountpoint"].value
+                mountpoint = properties["mountpoint"]["value"]
         if mountpoint is None:
             self.logger.debug("Unable to get mountpoint for dataset %r, assuming owner = root",
-                              properties["name"].value)
+                              properties["name"]["value"])
             uid = 0
         else:
             try:
@@ -594,7 +596,7 @@ class ZFSQuoteService(Service):
                 uid = stat_info.st_uid
 
         return {
-            "dataset_name": properties["name"].value,
+            "dataset_name": properties["name"]["value"],
             "quota_type": quota_type,
             "quota_value": quota_value,
             "level": level,
