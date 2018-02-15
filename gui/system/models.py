@@ -1153,8 +1153,8 @@ class Support(Model):
         if license is None:
             return False, support
         if license.contract_type in (
-            ContractType.silver.value,
-            ContractType.gold.value,
+            ContractType.silver,
+            ContractType.gold,
         ):
             return True, support
         return False, support
