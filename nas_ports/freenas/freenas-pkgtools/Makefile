@@ -11,6 +11,8 @@ COMMENT=	FreeNAS sef\'s pkg tools
 
 PRODUCT?=
 
+USES=		python
+
 EXTRACT_ONLY=
 WRKSRC=/usr/nas_source/freenas-pkgtools
 
