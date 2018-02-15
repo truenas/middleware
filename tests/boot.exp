@@ -8,7 +8,7 @@ set PID [spawn vm console "$vm"]
 send_user "Spawned PID: $PID \n"
 
 expect {
-  "Enter an option from 1-12:" {
+  "Enter an option from 1-11:" {
     sleep .5
     exit
   }
