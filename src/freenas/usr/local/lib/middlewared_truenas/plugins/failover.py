@@ -117,7 +117,7 @@ class FailoverService(Service):
         except ConnectionRefusedError:
             raise CallError('Connection refused', errno.ECONNREFUSED)
         except OSError as e:
-            if e.errno == errno.EHOSTDOWN:
+            if e.errno in (errno.EHOSTDOWN, errno.ENETUNREACH):
                 raise CallError('Standby node is down', errno.EHOSTDOWN)
             raise
         except ClientException as e:
