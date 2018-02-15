@@ -106,6 +106,23 @@ class AuthService(Service):
             app.authenticated = True
         return valid
 
+    @pass_app
+    @no_auth_required
+    async def logout(self, app):
+        """
+        Returns True if a token was removed, else False
+        """
+        sessionid = app.sessionid
+        token_id = self.authtokens.get_token_by_sessionid(sessionid)
+        app.authenticated = False
+
+        try:
+            self.authtokens.pop_token(token_id)
+        except KeyError:
+            return False
+
+        return True
+
     @no_auth_required
     @accepts(Str('token'))
     @pass_app
