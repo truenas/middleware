@@ -44,16 +44,20 @@ system_func()
 	ntpq -c rv
 	section_footer
 
-	section_header "ps -axw"
-	ps -axw
+	section_header "ntpq -pwn"
+	ntpq -pwn
+	section_footer
+
+	section_header "ps -auxww"
+	ps -auxww
 	section_footer
 
 	section_header "mount"
 	mount
 	section_footer
 
-	section_header "df -h"
-	df -h
+	section_header "df -T -h"
+	df -T -h
 	section_footer
 
 	section_header "swapinfo -h"
