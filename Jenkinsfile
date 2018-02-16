@@ -50,9 +50,10 @@ pipeline {
       steps {
         echo 'Starting QA API testing'
         unstash 'iso'
-        sh 'rm -rf tests/iso'
-        sh 'mkdir -p tests/iso'
-        sh 'mv artifacts/iso/*.iso tests/iso'
+        sh 'rm -rf ${WORKSPACE}/tests/iso'
+        sh 'mkdir -p ${WORKSPACE}/tests/iso'
+        sh 'mv artifacts/iso/*.iso ${WORKSPACE}/tests/iso/'
+        echo 'ISO WORKSPACE: ${WORKSPACE}/tests/iso/'
         sh 'ixautomation --run api-tests --systype freenas'
       }
     }
