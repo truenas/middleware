@@ -128,10 +128,10 @@ section_footer()
 	if [ $fnd_section_start_time ]; then
 		fnd_section_end_time=`date +"%s"`  #get epoch time at end of routine
 		#subtract to find elapsed time
-		fnd_section_elapsed_time=$(($fnd_section_end_time - $fnd_section_start_time))  
+		fnd_section_elapsed_time=$(($fnd_section_end_time - $fnd_section_start_time))
 		echo "debug finished in $fnd_section_elapsed_time seconds for $name"
-		#$dirfunc is the module named used passed in to us by the debug toture suite
-		if [ $dirfunc ]; then
+		#$dirfunc is the module name passed to us by the debug torture suite
+		if [ -n "$dirfunc" ]; then
 			echo "command used:"
 			modname=`echo -n "$dirfunc" | sed -e 's/_directory//'`
 			echo `pwd`/$modname.sh
