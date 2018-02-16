@@ -526,6 +526,7 @@ Acceptable formats are 255.255.255.0,
 
             print(_("Saving interface configuration:"), end=' ')
             try:
+                iface.int_critical = True
                 iface.save()
             except:
                 print(_("Failed"))
