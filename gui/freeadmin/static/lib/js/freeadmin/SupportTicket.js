@@ -371,9 +371,14 @@ define([
           tmpForm = new Form({
             encType: "multipart/form-data"
           });
+          var t = {"ticket": tnumber, "filename": item.files[0].name};
+          if(me.softwareName == 'freenas') {
+            t["username"] = me._username.get('value');
+            t["password"] = me._password.get('value');
+          }
           var data = new TextBox({
             name: "data",
-            value: json.stringify({"method": "support.attach_ticket", "params": [{"ticket": tnumber, "filename": item.files[0].name, "username": me._username.get('value'), "password": me._password.get('value')}]}),
+            value: json.stringify({"method": "support.attach_ticket", "params": [t]}),
             type: "hidden"
           });
           file = item.cloneNode(true);
@@ -475,17 +480,14 @@ define([
           data['phone'] = me._phone.get('value');
           data['name'] = me._name.get('value');
           data['email'] = me._email.get('value');
-          data['criticality'] = me._criticality.get('value');
-          data['environment'] = me._environment.get('value');
+          data['criticality'] = me._crit.get('value');
+          data['environment'] = me._env.get('value');
         }
 
         this._submit.set('disabled', true);
 
         Middleware.call('support.new_ticket', [data], function(data) {
-
-
           me.attachFiles(data.result.ticket).then(function(attach_res) {
-
             me.dapErrorMessage.innerHTML = '';
             domStyle.set(me.dapErrorMessageRow, "display", "none");
             progressbar.destroyRecursive();
@@ -494,17 +496,19 @@ define([
 
             me.clear();
             me._submit.set('disabled', false);
-
           }, function(err) {
             me.dapErrorMessage.innerHTML = err;
             domStyle.set(me.dapErrorMessageRow, "display", "block");
             submitting.destroyRecursive();
-          });
 
+            me._submit.set('disabled', false);
+          });
         }, function(data) {
             me.dapErrorMessage.innerHTML = data.error;
             domStyle.set(me.dapErrorMessageRow, "display", "block");
             submitting.destroyRecursive();
+
+            me._submit.set('disabled', false);
         }, true, function(progress) {
           //console.log("progress", progress);
         });
