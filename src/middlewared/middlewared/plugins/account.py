@@ -155,6 +155,20 @@ class UserService(CRUDService):
                         'exists and is not a directory',
                         errno.EEXIST
                     )
+
+                # The TLD won't get chowned by walking
+                os.chown(data['home'], data['uid'], group['gid'])
+
+                # The user already created this, to avoid unexpected issues, we
+                # set the user and group as the owner for ALL of the data in the
+                # dataset supplied
+                for rdir, dirs, files in os.walk(data['home']):
+                    for d in dirs:
+                        os.chown(os.path.join(rdir, d), data['uid'],
+                                 group['gid'])
+                    for f in files:
+                        os.chown(os.path.join(rdir, f), data['uid'],
+                                 group['gid'])
             except OSError as oe:
                 raise CallError(
                     'Failed to create the home directory '
