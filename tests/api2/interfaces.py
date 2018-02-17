@@ -9,7 +9,7 @@ import os
 import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import interface, results_xml
+from auto_config import interface, results_xml, ip
 from functions import GET_OUT_ALL
 # try:
 #     from config import BRIDGEDOMAIN, BRIDGEHOST, BRIDGEDNS, BRIDGEGW
@@ -25,6 +25,10 @@ class get_interfaces_test(unittest.TestCase):
 
     def test_01_get_interface_driver(self):
         assert GET_OUT_ALL('/interfaces/query')[0]['name'] == interface
+
+    def test_02_get_interfaces_ip(self):
+        getip = GET_OUT_ALL('/interfaces/query')[0]['aliases'][1]['address']
+        assert getip == ip
 
 
 def run_test():
