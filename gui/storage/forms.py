@@ -1073,9 +1073,18 @@ class VolumeAutoImportForm(Form):
 
 
 class DiskFormPartial(ModelForm):
+    disk_passwd2 = forms.CharField(
+        max_length=50,
+        label=_("Confirm SED Password"),
+        widget=forms.widgets.PasswordInput(),
+        required=False,
+    )
 
     class Meta:
         model = models.Disk
+        widgets = {
+            'disk_passwd': forms.widgets.PasswordInput(render_value=False)
+        }
         exclude = (
             'disk_transfermode',  # This option isn't used anywhere
         )
@@ -1097,6 +1106,13 @@ class DiskFormPartial(ModelForm):
 
     def clean_disk_name(self):
         return self.instance.disk_name
+
+    def clean_disk_passwd2(self):
+        password1 = self.cleaned_data.get("disk_passwd")
+        password2 = self.cleaned_data.get("disk_passwd2")
+        if password1 != password2:
+            raise forms.ValidationError(_("The two password fields didn't match."))
+        return password2
 
     def save(self, *args, **kwargs):
         obj = super(DiskFormPartial, self).save(*args, **kwargs)
