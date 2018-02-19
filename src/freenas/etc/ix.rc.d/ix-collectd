@@ -204,6 +204,7 @@ LoadPlugin load
 LoadPlugin memory
 LoadPlugin network
 LoadPlugin processes
+LoadPlugin python
 LoadPlugin rrdtool
 LoadPlugin swap
 LoadPlugin uptime
@@ -285,6 +286,16 @@ LoadPlugin zfs_arc_v2
     Mountpoint "/"
     Mountpoint "/^\/mnt\//"
     FSType "zfs"
+</Plugin>
+
+<Plugin python>
+    ModulePath "/usr/local/lib/collectd_pyplugins"
+    LogTraces true
+    Interactive false
+    Import "disktemp"
+
+    <Module "disktemp">
+    </Module>
 </Plugin>
 EOF
 
