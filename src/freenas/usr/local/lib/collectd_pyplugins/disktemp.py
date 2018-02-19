@@ -23,10 +23,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import asyncio
+import concurrent.futures
 import re
 import subprocess
 import sysctl
+import time
 
 # One cannot simply import collectd in a python interpreter (for various reasons)
 # thus adding this workaround for standalone testing
@@ -82,57 +83,50 @@ class DiskTemp(object):
     def init(self):
         collectd.debug('Initializing "disktemp" plugin')
 
-    def read(self):
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.loop())
-
-    def dispatch_value(self, name, instance, value, data_type='gauge'):
+    def dispatch_value(self, name, instance, value, data_type=None):
         val = collectd.Values()
         val.plugin = 'disktemp'
         val.plugin_instance = name
-        val.type = data_type
-        val.type_instance = instance
+        if data_type:
+            val.type = data_type
         val.values = [value, ]
         val.meta = {'0': True}
         val.dispatch()
 
-    async def loop(self):
-        while True:
-            disks = sysctl.filter('kern.disks')[0].value.split()
-            futures = {}
+    def read(self):
+        disks = sysctl.filter('kern.disks')[0].value.split()
+        futures = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             for disk in disks:
                 if disk.startswith('cd'):
                     continue
-                futures[asyncio.ensure_future(self.get_temperature(disk))] = disk
+                futures[executor.submit(self.get_temperature, disk)] = disk
 
-            done = (await asyncio.wait(futures, timeout=10))[0]
-            for task in done:
-                disk = futures.get(task)
+            for fut in concurrent.futures.as_completed(futures.keys()):
+                disk = futures.get(fut)
                 if not disk:
                     continue
-                temp = task.result()
-                if temp is None:
-                    continue
-                self.dispatch_value(disk, 'temperature', temp)
+                try:
+                    temp = fut.result()
+                    if temp is None:
+                        continue
+                    self.dispatch_value(disk, 'temperature', temp, data_type='temperature')
+                except Exception as e:
+                    pass
 
-            await asyncio.sleep(READ_INTERVAL)
-
-    async def get_temperature(self, disk):
-        proc = await asyncio.create_subprocess_exec('smartctl', '-a', '-n', 'standby', f'/dev/{disk}', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        try:
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=5)
-            stdout = stdout.decode('utf8', 'ignore')
-            if proc.returncode != 0:
-                return None
-            reg = re.search(r'190\s+Airflow_Temperature_Cel[^\n]*', stdout, re.M)
-            if reg:
-                return int(reg.group(0).split()[9])
-
-            reg = re.search(r'194\s+Temperature_Celsius[^\n]*', stdout, re.M)
-            if reg:
-                return int(reg.group(0).split()[9])
-        except asyncio.TimeoutError:
+    def get_temperature(self, disk):
+        cp = subprocess.run(['/usr/local/sbin/smartctl', '-a', '-n', 'standby', f'/dev/{disk}'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if cp.returncode != 0:
             return None
+        stdout = cp.stdout.decode('utf8', 'ignore')
+        reg = re.search(r'190\s+Airflow_Temperature_Cel[^\n]*', stdout, re.M)
+        if reg:
+            return int(reg.group(0).split()[9])
+
+        reg = re.search(r'194\s+Temperature_Celsius[^\n]*', stdout, re.M)
+        if reg:
+            return int(reg.group(0).split()[9])
+        return None
 
 
 disktemp = DiskTemp()
