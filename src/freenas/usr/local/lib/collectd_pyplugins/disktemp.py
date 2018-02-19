@@ -130,5 +130,5 @@ class DiskTemp(object):
 
 disktemp = DiskTemp()
 
-collectd.register_init(disktemp.init, READ_INTERVAL)
-collectd.register_read(disktemp.read)
+collectd.register_init(disktemp.init)
+collectd.register_read(disktemp.read, READ_INTERVAL)
