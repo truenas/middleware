@@ -1,10 +1,11 @@
+import os
+import tempfile
+
 from middlewared.schema import Bool, Dict, Int, Str, accepts
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run
 
 from bsd import geom
-
-import asyncio
 
 
 class BootService(Service):
@@ -64,39 +65,38 @@ class BootService(Service):
         commands = []
         commands.append(['gpart', 'create', '-s', 'gpt', '-f', 'active', f'/dev/{dev}'])
         boottype = await self.get_boot_type()
-        if boottype != 'EFI':
-            commands.append(['gpart', 'add', '-t', 'bios-boot', '-i', '1', '-s', '512k', dev])
-            commands.append(['gpart', 'set', '-a', 'active', dev])
-        else:
+        if boottype == 'EFI':
             commands.append(['gpart', 'add', '-t', 'efi', '-i', '1', '-s', '260m', dev])
             commands.append(['newfs_msdos', '-F', '16', f'/dev/{dev}p1'])
-            commands.append(['gpart', 'set', '-a', 'lenovofix', dev])
+        else:
+            commands.append(['gpart', 'add', '-t', 'freebsd-boot', '-i', '1', '-s', '512k', dev])
+            commands.append(['gpart', 'set', '-a', 'active', dev])
         commands.append(
             ['gpart', 'add', '-t', 'freebsd-zfs', '-i', '2', '-a', '4k'] + (
                 ['-s', str(options['size']) + 'B'] if options.get('size') else []
             ) + [dev]
         )
         for command in commands:
-            await run(*command)
+            p = await run(*command, check=False)
+            if p.returncode != 0:
+                raise CallError('%r failed:\n%s%s' % (" ".join(command), p.stdout.decode("utf-8"), p.stderr.decode("utf-8")))
+
         return boottype
 
     @private
-    async def install_grub(self, boottype, dev):
-        args = [
-            '/usr/local/sbin/grub-install',
-            '--modules=zfs part_gpt',
-        ]
-
+    async def install_loader(self, boottype, dev):
         if boottype == 'EFI':
-            await run('mount', '-t', 'msdosfs', f'/dev/{dev}p1', '/boot/efi', check=False)
-            args += ['--efi-directory=/boot/efi', '--removable', '--target=x86_64-efi']
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                await run('mount', '-t', 'msdosfs', f'/dev/{dev}p1', tmpdirname, check=False)
+                try:
+                    os.makedirs(f'{tmpdirname}/efi/boot')
+                except FileExistsError:
+                    pass
+                await run('cp', '/boot/boot1.efi', f'{tmpdirname}/efi/boot/BOOTx64.efi', check=False)
+                await run('umount', tmpdirname, check=False)
 
-        args.append(f'/dev/{dev}')
-
-        await run(*args, check=False)
-
-        if boottype == 'EFI':
-            await run('umount', '/boot/efi', check=False)
+        else:
+            await run('gpart', 'bootcode', '-b', '/boot/pmbr', '-p', '/boot/gptzfsboot', '-i', '1', f'/dev/{dev}', check=False)
 
     @accepts(
         Str('dev'),
@@ -105,7 +105,8 @@ class BootService(Service):
             Bool('expand', default=False),
         ),
     )
-    async def attach(self, dev, options=None):
+    @job(lock='boot_attach')
+    async def attach(self, job, dev, options=None):
         """
         Attach a disk to the boot pool, turning a stripe into a mirror.
 
@@ -128,14 +129,37 @@ class BootService(Service):
                 format_opts['size'] = int(e.find('./length').text)
                 break
 
-        boottype = await self.format(dev, format_opts)
+        try:
+            boottype = await self.format(dev, format_opts)
+        except CallError as e:
+            if "gpart: autofill: No space left on device" in e.errmsg:
+                async def get_diskinfo(dev):
+                    diskinfo = {
+                        s.split("#")[1].strip(): s.split("#")[0].strip()
+                        for s in (await run("/usr/sbin/diskinfo", "-v", dev)).stdout.decode("utf-8").split("\n")
+                        if "#" in s
+                    }
+                    return {
+                        "name": diskinfo.get("Disk descr.", dev),
+                        "size_gb": "%.2f" % ((int(diskinfo["mediasize in sectors"]) * int(diskinfo["sectorsize"]) /
+                                             float(1024 ** 3))),
+                        "size_sectors": int(diskinfo["mediasize in sectors"]),
+                    }
+
+                src_info = await get_diskinfo(disks[0])
+                dst_info = await get_diskinfo(dev)
+
+                raise CallError((
+                    f"The device called {dst_info['name']} ({dst_info['size_gb']} GB, {dst_info['size_sectors']} "
+                    f"sectors does not have enough space to mirror the old device {src_info['name']} "
+                    f"({src_info['size_gb']} GB, {src_info['size_sectors']} sectors). Please use a larger device."
+                ))
+
+            raise
 
         await self.middleware.call('zfs.pool.extend', 'freenas-boot', None, [{'target': f'{disks[0]}p2', 'type': 'DISK', 'path': f'/dev/{dev}p2'}])
 
-        # We need to wait a little bit to install grub onto the new disk
-        # FIXME: use event for when its ready instead of sleep
-        await asyncio.sleep(10)
-        await self.install_grub(boottype, dev)
+        await self.install_loader(boottype, dev)
 
     @accepts(Str('dev'))
     async def detach(self, dev):
@@ -149,15 +173,9 @@ class BootService(Service):
         """
         Replace device `label` on boot pool with `dev`.
         """
-
         boottype = await self.format(dev)
-
         await self.middleware.call('zfs.pool.replace', 'freenas-boot', label, f'{dev}p2')
-
-        # We need to wait a little bit to install grub onto the new disk
-        # FIXME: use event for when its ready instead of sleep
-        await asyncio.sleep(10)
-        await self.install_grub(boottype, dev)
+        await self.install_loader(boottype, dev)
 
     @accepts()
     @job(lock='boot_scrub')

@@ -7,27 +7,30 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE_ALL, DELETE, BSD_TEST
 from functions import return_output
-from auto_config import ip
+from auto_config import ip, results_xml
 
 try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
     from config import LDAPBASEDN, LDAPHOSTNAME
 except ImportError:
-    exit()
-
+    RunTest = False
+else:
+    MOUNTPOINT = "/tmp/ldap-bsd" + BRIDGEHOST
+    RunTest = True
+TestName = "create ldap bsd"
 
 DATASET = "ldap-bsd"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET
-MOUNTPOINT = "/tmp/ldap-bsd" + BRIDGEHOST
 VOL_GROUP = "qa"
 
 
-class ldap_bsd_test(unittest.TestCase):
+class create_ldap_bsd_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed AD LDAP or SMB runs
     @classmethod
@@ -197,5 +200,10 @@ class ldap_bsd_test(unittest.TestCase):
         DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_ldap_bsd_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

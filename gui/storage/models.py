@@ -972,7 +972,7 @@ class Replication(Model):
             try:
                 results = pickle.loads(data)
                 results.pop(self.id, None)
-                with open(REPL_RESULTFILE, 'w') as f:
+                with open(REPL_RESULTFILE, 'wb') as f:
                     f.write(pickle.dumps(results))
             except Exception as e:
                 log.debug('Failed to remove replication from state file %s', e)

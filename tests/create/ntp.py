@@ -6,13 +6,16 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, DELETE
-from auto_config import ntpServer
+from auto_config import ntpServer, results_xml
+RunTest = True
+TestName = "create ntp"
 
 
-class ntp_test(unittest.TestCase):
+class create_ntp_test(unittest.TestCase):
 
     def test_01_Changing_permissions_on_share(self):
         payload = {"id": "1",
@@ -34,5 +37,10 @@ class ntp_test(unittest.TestCase):
         assert DELETE("/system/ntpserver/3/") == 204
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_ntp_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

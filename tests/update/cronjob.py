@@ -7,15 +7,19 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, SSH_TEST
+from auto_config import results_xml
+RunTest = True
+TestName = "update cronjob"
 
 TESTFILE = "/tmp/.testFileCreatedViaCronjob"
 CRONJOB_ID = 1
 
 
-class cronjob_test(unittest.TestCase):
+class update_cronjob_test(unittest.TestCase):
 
     # Ensure test file does exist
     # def test_01_Verify_cronjob_has_created_the_test_file(seff):
@@ -36,5 +40,11 @@ class cronjob_test(unittest.TestCase):
     def test_02_Deleting_test_file_created_by_cronjob(self):
         SSH_TEST('rm -f "%s"' % TESTFILE) is True
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(update_cronjob_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

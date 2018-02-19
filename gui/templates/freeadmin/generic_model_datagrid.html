@@ -208,8 +208,8 @@ require([
     {% endif %}
 
     grid.on("dgrid-error", function(event) {
-      if(event.error.status == 401) {
-        window.location = '/';
+      if(event.error.response.status == 401) {
+        window.location = '/legacy/';
       }
       grid.contentNode.innerHTML = event.error.message;
     });

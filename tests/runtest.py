@@ -12,6 +12,12 @@ import sys
 apifolder = getcwd()
 sys.path.append(apifolder)
 
+try:
+    import xmlrunner
+except ImportError:
+    cmd = "pip-3.6 install unittest-xml-reporting"
+    call(cmd, shell=True)
+
 results_xml = getcwd() + '/results/'
 localHome = path.expanduser('~')
 dotsshPath = localHome + '/.ssh'
@@ -45,6 +51,11 @@ for output, arg in myopts:
     elif output in ('-I', '--interface'):
         interface = arg
 
+if interface == "vtnet0":
+    disk = 'disk1 = "vtbd1"\ndisk2 = "vtbd2"'
+else:
+    disk = 'disk1 "da1"\ndisk2 = "da2"'
+
 cfg_content = """#!/usr/bin/env python3.6
 
 import os
@@ -56,12 +67,10 @@ freenas_url = 'http://' + ip + '/api/v1.0'
 interface = "%s"
 ntpServer = "10.20.20.122"
 localHome = "%s"
-disk1 = "vtbd1"
-disk2 = "vtbd2"
-#disk1 = "da1"
-#disk2 = "da2"
+%s
 keyPath = "%s"
-""" % (passwd, ip, interface, localHome, keyPath)
+results_xml = "%s"
+""" % (passwd, ip, interface, localHome, disk, keyPath, results_xml)
 
 cfg_file = open("auto_config.py", 'w')
 cfg_file.writelines(cfg_content)
@@ -85,185 +94,66 @@ cfg_file.writelines('sshKey = "%s"\n' % Key)
 cfg_file.close()
 
 # Create test
-
-call(["py.test-3.6", "--junitxml",
-      "%screate_network_result.xml" % results_xml,
-      "create/network.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_ssh_result.xml" % results_xml,
-      "create/ssh.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_storage_result.xml" % results_xml,
-      "create/storage.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_ntp_result.xml" % results_xml,
-      "create/ntp.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_ad_bsd_result.xml" % results_xml,
-      "create/ad_bsd.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_ad_osx_result.xml" % results_xml,
-      "create/ad_osx.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_afp_osx_result.xml" % results_xml,
-      "create/afp_osx.py"])
-# call(["py.test-3.6", "--junitxml",
-#        "%screate_alerts_result.xml" % results_xml,
-#        "create/alerts.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_bootenv_result.xml" % results_xml,
-      "create/bootenv.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_cronjob_result.xml" % results_xml,
-      "create/cronjob.py"])
-# call(["py.test-3.6", "--junitxml",
-#       "%screate_debug_result.xml" % results_xml,
-#       "create/debug.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_emails_result.xml" % results_xml,
-      "create/emails.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_domaincontroller_result.xml" % results_xml,
-      "create/domaincontroller.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_user_result.xml" % results_xml,
-      "create/user.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_ftp_result.xml" % results_xml,
-      "create/ftp.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_group_result.xml" % results_xml,
-      "create/group.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_iscsi_result.xml" % results_xml,
-      "create/iscsi.py"])
+call(["python3.6", "create/network.py"])
+call(["python3.6", "create/ssh.py"])
+call(["python3.6", "create/storage.py"])
+call(["python3.6", "create/ntp.py"])
+call(["python3.6", "create/ad_bsd.py"])
+call(["python3.6", "create/ad_osx.py"])
+call(["python3.6", "create/afp_osx.py"])
+# call(["python3.6", "create/alerts.py"])
+call(["python3.6", "create/bootenv.py"])
+call(["python3.6", "create/cronjob.py"])
+# call(["python3.6", "create/debug.py"])
+call(["python3.6", "create/emails.py"])
+call(["python3.6", "create/domaincontroller.py"])
+call(["python3.6", "create/user.py"])
+call(["python3.6", "create/ftp.py"])
+call(["python3.6", "create/group.py"])
+call(["python3.6", "create/iscsi.py"])
 # jails API Broken
-# call(["py.test-3.6", "--junitxml",
-#        "%screate_jails_result.xml" % results_xml,
-#        "create/jails.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_ldap_bsd_result.xml" % results_xml,
-      "create/ldap_bsd.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_ldap_osx_result.xml" % results_xml,
-      "create/ldap_osx.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_lldp_result.xml" % results_xml,
-      "create/lldp.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_nfs_result.xml" % results_xml,
-      "create/nfs.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_rsync_result.xml" % results_xml,
-      "create/rsync.py"])
-# call(["py.test-3.6", "--junitxml",
-#        "%screate_smarttest_result.xml" % results_xml,
-#        "create/smarttest.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_smb_bsd_result.xml" % results_xml,
-      "create/smb_bsd.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_smb_osx_result.xml" % results_xml,
-      "create/smb_osx.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_snmp_result.xml" % results_xml,
-      "create/snmp.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_system_result.xml" % results_xml,
-      "create/system.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_tftp_result.xml" % results_xml,
-      "create/tftp.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_ups_result.xml" % results_xml,
-      "create/ups.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_webdav_bsd_result.xml" % results_xml,
-      "create/webdav_bsd.py"])
-call(["py.test-3.6", "--junitxml",
-      "%screate_webdav_osx_result.xml" % results_xml,
-      "create/webdav_osx.py"])
+# call(["python3.6", "create/jails.py"])
+call(["python3.6", "create/ldap_bsd.py"])
+call(["python3.6", "create/ldap_osx.py"])
+call(["python3.6", "create/lldp.py"])
+call(["python3.6", "create/nfs.py"])
+call(["python3.6", "create/rsync.py"])
+# call(["python3.6", "create/smarttest.py"])
+call(["python3.6", "create/smb_bsd.py"])
+call(["python3.6", "create/smb_osx.py"])
+call(["python3.6", "create/snmp.py"])
+call(["python3.6", "create/system.py"])
+call(["python3.6", "create/tftp.py"])
+call(["python3.6", "create/ups.py"])
+call(["python3.6", "create/webdav_bsd.py"])
+call(["python3.6", "create/webdav_osx.py"])
 
 # Update test
-
-call(["py.test-3.6", "--junitxml",
-      "%supdate_ad_bsd_result.xml" % results_xml,
-      "update/ad_bsd.py"])
-call(["py.test-3.6", "--junitxml",
-      "%supdate_ad_osx_result.xml" % results_xml,
-      "update/ad_osx.py"])
-call(["py.test-3.6", "--junitxml",
-      "%supdate_apf_osx_result.xml" % results_xml,
-      "update/afp_osx.py"])
-# call(["py.test-3.6", "--junitxml",
-#       "%supdate_alerts_result.xml" % results_xml,
-#       "update/alerts.py]"])
-call(["py.test-3.6", "--junitxml",
-      "%supdate_apf_bsd_result.xml" % results_xml,
-      "update/bootenv.py"])
-call(["py.test-3.6", "--junitxml",
-      "%supdate_cronjob_result.xml" % results_xml,
-      "update/cronjob.py"])
-call(["py.test-3.6", "--junitxml",
-      "%supdate_ftp_result.xml" % results_xml,
-      "update/ftp.py"])
-# call(["py.test-3.6", "--junitxml",
-#      "%supdate_group_result.xml" % results_xml,
-#      "update/group.py"])
-call(["py.test-3.6", "--junitxml",
-      "%supdate_iscsi_result.xml" % results_xml,
-      "update/iscsi.py"])
-call(["py.test-3.6", "--junitxml",
-      "%supdate_ldap_bsd_result.xml" % results_xml,
-      "update/ldap_bsd.py"])
-call(["py.test-3.6", "--junitxml",
-      "%supdate_ldap_osx_result.xml" % results_xml,
-      "update/ldap_osx.py"])
-call(["py.test-3.6", "--junitxml",
-      "%supdate_nfs_result.xml" % results_xml,
-      "update/nfs.py"])
-call(["py.test-3.6", "--junitxml",
-      "%supdate_rsync_result.xml" % results_xml,
-      "update/rsync.py"])
-call(["py.test-3.6", "--junitxml",
-      "%supdate_smb_bsd_result.xml" % results_xml,
-      "update/smb_bsd.py"])
-call(["py.test-3.6", "--junitxml",
-      "%supdate_smb_osx_result.xml" % results_xml,
-      "update/smb_osx.py"])
-call(["py.test-3.6", "--junitxml",
-      "%supdate_storage_result.xml" % results_xml,
-      "update/storage.py"])
-call(["py.test-3.6", "--junitxml",
-      "%supdate_user_result.xml" % results_xml,
-      "update/user.py"])
-call(["py.test-3.6", "--junitxml",
-      "%supdate_webdav_bsd_result.xml" % results_xml,
-      "update/webdav_bsd.py"])
-call(["py.test-3.6", "--junitxml",
-      "%supdate_webdav_osx_result.xml" % results_xml,
-      "update/webdav_osx.py"])
+call(["python3.6", "update/ad_bsd.py"])
+call(["python3.6", "update/ad_osx.py"])
+call(["python3.6", "update/afp_osx.py"])
+# call(["python3.6", "update/alerts.py]"])
+call(["python3.6", "update/bootenv.py"])
+call(["python3.6", "update/cronjob.py"])
+call(["python3.6", "update/ftp.py"])
+# call(["python3.6", "update/group.py"])
+call(["python3.6", "update/iscsi.py"])
+call(["python3.6", "update/ldap_bsd.py"])
+call(["python3.6", "update/ldap_osx.py"])
+call(["python3.6", "update/nfs.py"])
+call(["python3.6", "update/rsync.py"])
+call(["python3.6", "update/smb_bsd.py"])
+call(["python3.6", "update/smb_osx.py"])
+call(["python3.6", "update/storage.py"])
+call(["python3.6", "update/user.py"])
+call(["python3.6", "update/webdav_bsd.py"])
+call(["python3.6", "update/webdav_osx.py"])
 
 # Delete test
-
-call(["py.test-3.6", "--junitxml",
-      "%sdelete_apf_bsd_result.xml" % results_xml,
-      "delete/bootenv.py"])
-call(["py.test-3.6", "--junitxml",
-      "%sdelete_cronjob_result.xml" % results_xml,
-      "delete/cronjob.py"])
-# call(["py.test-3.6", "--junitxml",
-#      "%sdelete_group_result.xml" % results_xml,
-#      "delete/group.py"])
-call(["py.test-3.6", "--junitxml",
-      "%sdelete_iscsi_result.xml" % results_xml,
-      "delete/iscsi.py"])
-# call(["py.test-3.6", "--junitxml",
-#       "%sdelete_rsync_result.xml" % results_xml,
-#       "delete/rsync.py"])
-call(["py.test-3.6", "--junitxml",
-      "%sdelete_storage_result.xml" % results_xml,
-      "delete/storage.py"])
-call(["py.test-3.6", "--junitxml",
-      "%sdelete_user_result.xml" % results_xml,
-      "delete/user.py"])
+call(["python3.6", "delete/bootenv.py"])
+call(["python3.6", "delete/cronjob.py"])
+# call(["python3.6", "delete/group.py"])
+call(["python3.6", "delete/iscsi.py"])
+# call(["python3.6", "delete/rsync.py"])
+call(["python3.6", "delete/storage.py"])
+call(["python3.6", "delete/user.py"])

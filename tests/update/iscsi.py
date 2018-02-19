@@ -7,24 +7,28 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, BSD_TEST, return_output
-from auto_config import ip
+from auto_config import ip, results_xml
 from time import sleep
 try:
     from config import BRIDGEHOST
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
+    RunTest = True
+TestName = "update iscsi"
 
-MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
 global DEVICE_NAME
 DEVICE_NAME = ""
 DEVICE_NAME_PATH = "/tmp/freenasiscsi"
 TARGET_NAME = "iqn.1994-09.freenasqa:target0"
 
 
-class iscsi_test(unittest.TestCase):
+class update_iscsi_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed AD LDAP or SMB runs
     @classmethod
@@ -98,5 +102,11 @@ class iscsi_test(unittest.TestCase):
         assert GET_OUTPUT("/services/services/iscsitarget/",
                           "srv_state") == "STOPPED"
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(update_iscsi_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

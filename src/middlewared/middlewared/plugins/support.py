@@ -106,7 +106,8 @@ class SupportService(Service):
                 raise CallError(f'{i} is required', errno.EINVAL)
 
         data['version'] = (await self.middleware.call('system.version')).split('-', 1)[-1]
-        data['user'] = data.pop('username')
+        if 'username' in data:
+            data['user'] = data.pop('username')
         debug = data.pop('attach_debug')
 
         type_ = data.get('type')
@@ -166,12 +167,15 @@ class SupportService(Service):
 
             job.set_progress(80, 'Attaching debug file')
 
-            tjob = await self.middleware.call('support.attach_ticket', {
+            t = {
                 'ticket': ticket,
                 'filename': debug_name,
-                'username': data.get('user'),
-                'password': data.get('password'),
-            })
+            }
+            if 'user' in data:
+                t['username'] = data['user']
+            if 'password' in data:
+                t['password'] = data['password']
+            tjob = await self.middleware.call('support.attach_ticket', t)
 
             def writer():
                 with open(debug_file, 'rb') as f:
@@ -195,8 +199,8 @@ class SupportService(Service):
         'attach_ticket',
         Int('ticket', required=True),
         Str('filename', required=True),
-        Str('username', required=True),
-        Str('password', required=True),
+        Str('username'),
+        Str('password'),
     ))
     @job(pipe=True)
     async def attach_ticket(self, job, data):
@@ -206,7 +210,8 @@ class SupportService(Service):
 
         sw_name = 'freenas' if await self.middleware.call('system.is_freenas') else 'truenas'
 
-        data['user'] = data.pop('username')
+        if 'username' in data:
+            data['user'] = data.pop('username')
         data['ticketnum'] = data.pop('ticket')
         filename = data.pop('filename')
 

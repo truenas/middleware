@@ -7,13 +7,16 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, RC_TEST
-from auto_config import ip
+from auto_config import ip, results_xml
+RunTest = True
+TestName = "create ftp"
 
 
-class user_test(unittest.TestCase):
+class create_ftp_test(unittest.TestCase):
 
     def test_01_Configuring_ftp_service(self):
         payload = {"ftp_clients": 10, "ftp_rootlogin": "true"}
@@ -30,5 +33,11 @@ class user_test(unittest.TestCase):
         cmd = "ftp -o /tmp/ftpfile ftp://testuser:test@" + ip + "/.cshrc"
         RC_TEST(cmd) is True
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_ftp_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

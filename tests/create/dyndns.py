@@ -7,17 +7,22 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT
+from auto_config import results_xml
 
 try:
     from config import NOIPUSERNAME, NOIPPASSWORD, NOIPHOST
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    RunTest = True
+TestName = "create dyndns"
 
 
-class dyndns_test(unittest.TestCase):
+class create_dyndns_test(unittest.TestCase):
 
     def test_01_Updating_Settings_for_NO_IP(self):
         payload = {"ddns_password": NOIPPASSWORD,
@@ -26,5 +31,11 @@ class dyndns_test(unittest.TestCase):
                    "ddns_domain": NOIPHOST}
         assert PUT("/services/dynamicdns/", payload) == 200
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_dyndns_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

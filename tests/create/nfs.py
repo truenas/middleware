@@ -7,20 +7,24 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, BSD_TEST
-from auto_config import ip
+from auto_config import ip, results_xml
 try:
     from config import BRIDGEHOST
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
+    RunTest = True
+TestName = "create nfs"
 
 NFS_PATH = "/mnt/tank/share"
-MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
 
 
-class nfs_test(unittest.TestCase):
+class create_nfs_test(unittest.TestCase):
 
     # Enable NFS server
     def test_01_Creating_the_NFS_server(self):
@@ -84,5 +88,10 @@ class nfs_test(unittest.TestCase):
         assert BSD_TEST(cmd) is True
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_nfs_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

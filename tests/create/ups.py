@@ -7,12 +7,16 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT
+from auto_config import results_xml
+RunTest = True
+TestName = "create ups"
 
 
-class tftp_test(unittest.TestCase):
+class create_ups_test(unittest.TestCase):
 
     def test_01_Enabling_UPS_Service(self):
         assert PUT("/services/services/ups/", {"srv_enable": True}) == 200
@@ -49,5 +53,11 @@ class tftp_test(unittest.TestCase):
     def test_11_Setting_Identifier(self):
         assert PUT("/services/services/ups/", {"ups_identifier": "ups"}) == 200
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_ups_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

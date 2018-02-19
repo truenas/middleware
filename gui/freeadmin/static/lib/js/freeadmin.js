@@ -94,6 +94,8 @@ require([
     "dijit/Dialog",
     "dijit/MenuBar",
     "dijit/MenuBarItem",
+    "dijit/PopupMenuBarItem",
+    "dijit/DropDownMenu",
     "dijit/ProgressBar",
     "dijit/Tooltip",
     "dojox/form/BusyButton",
@@ -174,6 +176,8 @@ require([
     Dialog,
     MenuBar,
     MenuBarItem,
+    PopupMenuBarItem,
+    DropDownMenu,
     ProgressBar,
     Tooltip,
     BusyButton,
@@ -2795,7 +2799,7 @@ require([
             } else if(item.type == 'iscsi') {
                 Menu.openISCSI(item.gname);
             } else if(item.action == 'logout') {
-                window.location='/account/logout/';
+                window.location='/legacy/account/logout/';
             } else if(item.action == 'displayprocs') {
                 registry.byId("top_dialog").show();
             } else if(item.action == 'shell') {

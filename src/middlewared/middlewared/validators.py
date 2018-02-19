@@ -37,11 +37,16 @@ class IpAddress:
 class Match:
     def __init__(self, pattern, flags=0):
         self.pattern = pattern
+        self.flags = flags
+
         self.regex = re.compile(pattern, flags)
 
     def __call__(self, value):
         if not self.regex.match(value):
             raise ShouldBe(f"{self.pattern}")
+
+    def __deepcopy__(self, memo):
+        return Match(self.pattern, self.flags)
 
 
 class Or:

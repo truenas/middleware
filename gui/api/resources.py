@@ -112,6 +112,7 @@ from freenasUI.system.forms import (
 )
 from freenasUI.system.models import Update as mUpdate, Alert as mAlert
 from freenasUI.system.utils import BootEnv, debug_generate, factory_restore
+from freenasUI.system.views import restart_httpd, restart_httpd_all
 from middlewared.client import ClientException
 from tastypie import fields, http
 from tastypie.http import (
@@ -275,6 +276,34 @@ class AlertResource(DojoResource):
 
 class SettingsResourceMixin(object):
 
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/restart-httpd%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('restart_httpd'),
+            ),
+            url(
+                r"^(?P<resource_name>%s)/restart-httpd-all%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('restart_httpd_all'),
+            ),
+        ]
+
+    def restart_httpd(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        return restart_httpd(request)
+
+    def restart_httpd_all(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        return restart_httpd_all(request)
+
     def dehydrate(self, bundle):
         bundle = super(SettingsResourceMixin, self).dehydrate(bundle)
         if bundle.obj.stg_guicertificate:
@@ -388,6 +417,7 @@ class DatasetResource(DojoResource):
     refreservation = fields.IntegerField(attribute='refreservation')
     recordsize = fields.IntegerField(attribute='recordsize')
     comments = fields.CharField(attribute='description', null=True)
+    sync = fields.CharField(attribute='sync')
     compression = fields.CharField(attribute='compression')
     dedup = fields.CharField(attribute='dedup')
     atime = fields.CharField(attribute='atime')
@@ -523,6 +553,7 @@ class ZVolResource(DojoResource):
     refer = fields.IntegerField(attribute='refer')
     used = fields.IntegerField(attribute='used')
     avail = fields.IntegerField(attribute='avail')
+    sync = fields.CharField(attribute='sync')
     compression = fields.CharField(attribute='compression')
     dedup = fields.CharField(attribute='dedup')
     comments = fields.CharField(attribute='description')
@@ -1695,18 +1726,25 @@ class InterfacesResourceMixin(object):
             ] = item.alias_v6netmaskbit
             bundle.data['alias_set-%d-id' % i] = item.id
         initial = i + 1
-        for i, item in enumerate(newips, i + 1):
+        i = initial
+        for item in newips:
             ip, nm = item.rsplit('/', 1)
             if ':' in ip:
-                bundle.data['alias_set-%d-alias_v6address' % i] = ip
-                bundle.data['alias_set-%d-alias_v6netmaskbit' % i] = nm
+                v = 'v6'
             else:
-                bundle.data['alias_set-%d-alias_v4address' % i] = ip
-                bundle.data['alias_set-%d-alias_v4netmaskbit' % i] = nm
-            bundle.data['alias_set-%d-id' % i] = ''
+                v = 'v4'
+            for j in range(initial):
+                if bundle.data['alias_set-%d-alias_%saddress' % (j, v)] == ip:
+                    bundle.data['alias_set-%d-alias_%saddress' % (j, v)] = ip
+                    bundle.data['alias_set-%d-alias_%snetmaskbit' % (j, v)] = nm
+                    break
+            else:
+                bundle.data['alias_set-%d-alias_%saddress' % (i, v)] = ip
+                bundle.data['alias_set-%d-alias_%snetmaskbit' % (i, v)] = nm
+                i += 1
         bundle.data['int_aliases'] = newips
         bundle.data['alias_set-INITIAL_FORMS'] = initial
-        bundle.data['alias_set-TOTAL_FORMS'] = i + 1
+        bundle.data['alias_set-TOTAL_FORMS'] = i
         return bundle
 
     def is_form_valid(self, bundle, form):
@@ -1969,12 +2007,17 @@ class ISCSIPortalResourceMixin(object):
         bundle = super(ISCSIPortalResourceMixin, self).dehydrate(bundle)
         globalconf = iSCSITargetGlobalConfiguration.objects.latest('id')
         if globalconf.iscsi_alua:
+            listen = []
             listen_a = []
             listen_b = []
             for p in bundle.obj.ips.all():
-                ips = p.alua_ips()
-                listen_a.extend(ips[0])
-                listen_b.extend(ips[1])
+                if p.iscsi_target_portalip_ip == '0.0.0.0':
+                    listen.append(f'{p.iscsi_target_portalip_ip}:{p.iscsi_target_portalip_port}')
+                else:
+                    ips = p.alua_ips()
+                    listen_a.extend(ips[0])
+                    listen_b.extend(ips[1])
+            bundle.data['iscsi_target_portal_ips'] = f'{", ".join(listen + listen_a + listen_b)}'
             bundle.data['iscsi_target_portal_ips_a'] = listen_a
             bundle.data['iscsi_target_portal_ips_b'] = listen_b
         else:

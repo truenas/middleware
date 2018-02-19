@@ -7,24 +7,27 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
-from functions import OSX_TEST, return_output
-from auto_config import ip
+from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, OSX_TEST
+from auto_config import ip, results_xml
 try:
     from config import BRIDGEHOST
 except ImportError:
-    exit()
+    RunTest = False
+else:
+    MOUNTPOINT = "/tmp/afp-osx" + BRIDGEHOST
+    RunTest = True
+TestName = "update apf osx"
 
 DATASET = "afp-osx2"
 AFP_NAME = "MyAFPShare"
 AFP_PATH = "/mnt/tank/" + DATASET
-MOUNTPOINT = "/tmp/afp-osx" + BRIDGEHOST
 VOL_GROUP = "qa"
 
 
-class afp_osx_test(unittest.TestCase):
+class update_afp_osx_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed AD LDAP or SMB runs
     @classmethod
@@ -106,5 +109,11 @@ class afp_osx_test(unittest.TestCase):
     # def test_17_Verify_AFP_dataset_can_be_destroyed(self):
     #     assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(update_afp_osx_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

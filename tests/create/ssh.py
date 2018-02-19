@@ -6,13 +6,16 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, is_agent_setup, if_key_listed
-from auto_config import sshKey
+from auto_config import sshKey, results_xml
+RunTest = True
+TestName = "create ssh"
 
 
-class ssh_test(unittest.TestCase):
+class create_ssh_test(unittest.TestCase):
 
     def test_1_Configuring_ssh_settings(self):
         payload = {"ssh_rootlogin": 'true'}
@@ -35,5 +38,11 @@ class ssh_test(unittest.TestCase):
         payload = {"bsdusr_sshpubkey": sshKey}
         assert PUT("/account/users/1/", payload) == 200
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_ssh_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

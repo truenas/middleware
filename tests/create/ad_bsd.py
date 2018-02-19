@@ -7,27 +7,29 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
-from functions import BSD_TEST, return_output
-from auto_config import ip
-
+from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, BSD_TEST
+from auto_config import ip, results_xml
 
 try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
     from config import LDAPBASEDN, LDAPBINDDN, LDAPHOSTNAME, LDAPBINDPASSWORD
 except ImportError:
-    exit
+    RunTest = False
+else:
+    MOUNTPOINT = "/tmp/ad-bsd" + BRIDGEHOST
+    RunTest = True
+TestName = "create ad bsd"
 
 DATASET = "ad-bsd"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET
-MOUNTPOINT = "/tmp/ad-bsd" + BRIDGEHOST
 VOL_GROUP = "wheel"
 
 
-class ad_bsd_test(unittest.TestCase):
+class create_ad_bsd_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed runs
     @classmethod
@@ -119,12 +121,6 @@ class ad_bsd_test(unittest.TestCase):
         cmd += '"//aduser@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
         assert BSD_TEST(cmd) is True
 
-    # def test_12_Checking_permissions_on_MOUNTPOINT(self):
-    #     device_name = return_output('dirname "%s"' % MOUNTPOINT)
-    #     cmd = 'ls -la %s | ' % device_name
-    #     cmd += 'awk \'$4 == "%s" && $9 == "%s"\'' % (VOL_GROUP, DATASET)
-    #     assert BSD_TEST(cmd) is True
-
     def test_13_Creating_SMB_file(self):
         assert BSD_TEST('touch "%s/testfile"' % MOUNTPOINT) is True
 
@@ -171,5 +167,11 @@ class ad_bsd_test(unittest.TestCase):
     def test_23_Destroying_SMB_dataset(self):
         assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_ad_bsd_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()

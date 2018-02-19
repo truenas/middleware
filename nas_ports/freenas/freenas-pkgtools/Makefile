@@ -11,6 +11,8 @@ COMMENT=	FreeNAS sef\'s pkg tools
 
 PRODUCT?=
 
+USES=		python
+
 EXTRACT_ONLY=
 WRKSRC=/usr/nas_source/freenas-pkgtools
 
@@ -21,5 +23,12 @@ checksum fetch:
 ALL_TARGET=obj all
 
 MAKE_JOBS_UNSAFE=yes
+
+post-install:
+	${PYTHON_CMD} -m compileall ${STAGEDIR}${PREFIX}/lib/freenasOS
+	(cd ${STAGEDIR}${PREFIX}/lib/freenasOS; ${FIND} . -type f \
+		| ${SED} -e 's,^\./,,g' \
+		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
+		| ${AWK} '{print "lib/freenasOS/"$$2 }' >> ${TMPPLIST})
 
 .include <bsd.port.mk>

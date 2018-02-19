@@ -39,6 +39,7 @@ from django.utils.translation import (
 )
 
 from dojango import forms
+from django.db.models import Q
 from freenasUI import choices
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm, Form
@@ -57,6 +58,7 @@ from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
+from freenasUI.network.models import Alias, Interfaces
 from freenasUI.services import models
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Volume, Disk
@@ -153,7 +155,7 @@ class CIFSForm(MiddlewareModelForm, ModelForm):
                     'cifs_srv_bindip',
                     self.data['cifs_srv_bindip'].split(',')
                 )
-        self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices())
+        self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices(noloopback=False))
         if self.instance.id and self.instance.cifs_srv_bindip:
             bindips = []
             for ip in self.instance.cifs_srv_bindip:
@@ -439,59 +441,32 @@ class SSHForm(ModelForm):
         return obj
 
 
-class RsyncdForm(ModelForm):
+class RsyncdForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "rsyncd_"
+    middleware_attr_schema = "rsyncd"
+    middleware_plugin = "rsyncd"
 
     class Meta:
         fields = '__all__'
         model = models.Rsyncd
 
-    def save(self):
-        super(RsyncdForm, self).save()
-        started = notifier().reload("rsync")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='rsync').srv_enable
-        ):
-            raise ServiceFailed(
-                "rsync", _("The Rsync service failed to reload.")
-            )
 
+class RsyncModForm(MiddlewareModelForm, ModelForm):
 
-class RsyncModForm(ModelForm):
+    middleware_attr_prefix = "rsyncmod_"
+    middleware_attr_schema = "rsyncmod"
+    middleware_plugin = "rsyncmod"
+    is_singletone = False
 
     class Meta:
         fields = '__all__'
         model = models.RsyncMod
 
-    def clean_rsyncmod_name(self):
-        name = self.cleaned_data['rsyncmod_name']
-        if re.search(r'[/\]]', name):
-            raise forms.ValidationError(
-                _("The name cannot contain slash or a closing square backet.")
-            )
-        name = name.strip()
-        return name
-
-    def clean_rsyncmod_hostsallow(self):
-        hosts = self.cleaned_data['rsyncmod_hostsallow']
-        hosts = hosts.replace("\n", " ").strip()
-        return hosts
-
-    def clean_rsyncmod_hostsdeny(self):
-        hosts = self.cleaned_data['rsyncmod_hostsdeny']
-        hosts = hosts.replace("\n", " ").strip()
-        return hosts
-
-    def save(self):
-        super(RsyncModForm, self).save()
-        started = notifier().reload("rsync")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='rsync').srv_enable
-        ):
-            raise ServiceFailed(
-                "rsync", _("The Rsync service failed to reload.")
-            )
+    def middleware_clean(self, update):
+        update['hostsallow'] = list(filter(None, re.split(r"\s+", update["hostsallow"])))
+        update['hostsdeny'] = list(filter(None, re.split(r"\s+", update["hostsdeny"])))
+        return update
 
 
 class DynamicDNSForm(MiddlewareModelForm, ModelForm):
@@ -652,10 +627,14 @@ class UPSForm(ModelForm):
             'ups_remoteport': forms.widgets.TextInput(),
             'ups_driver': forms.widgets.FilteringSelect(),
             'ups_nocommwarntime': forms.widgets.TextInput(),
+            'ups_monpwd': forms.widgets.PasswordInput(render_value=True),
         }
 
     def __init__(self, *args, **kwargs):
         super(UPSForm, self).__init__(*args, **kwargs)
+        _n = notifier()
+        if not _n.is_freenas():
+            self.fields['ups_powerdown'].help_text = _("Signal the UPS to power off after TrueNAS shuts down.")
         self.fields['ups_shutdown'].widget.attrs['onChange'] = mark_safe(
             "disableGeneric('id_ups_shutdown', ['id_ups_shutdowntimer'], "
             "function(box) { if(box.get('value') == 'lowbatt') { return true; "
@@ -1394,7 +1373,16 @@ class iSCSITargetPortalIPForm(ModelForm):
             label=self.fields['iscsi_target_portalip_ip'].label,
         )
         ips = [('', '------'), ('0.0.0.0', '0.0.0.0')]
-        ips.extend(list(choices.IPChoices()))
+        iface_ips = {
+            iface.int_vip: f'{iface.int_ipv4address}, {iface.int_ipv4address_b}'
+            for iface in Interfaces.objects.exclude(Q(int_vip=None) | Q(int_vip=''))
+        }
+        for alias in Alias.objects.exclude(Q(alias_vip=None) | Q(alias_vip='')):
+            iface_ips[alias.alias_vip] = f'{alias.alias_v4address}, {alias.alias_v4address_b}'
+        for k, v in choices.IPChoices():
+            if v in iface_ips:
+                v = iface_ips[v]
+            ips.append((k, v))
         self.fields['iscsi_target_portalip_ip'].choices = ips
         if not self.instance.id and not self.data:
             if not(

@@ -88,6 +88,10 @@ _interface_config()
 			then
 				continue
 			fi
+			if echo "${interface}"|grep -q ':'
+			then
+				continue
+			fi
 			echo "ifconfig_${interface}=\"DHCP\""
 		done
 	fi
@@ -572,9 +576,11 @@ _gen_conf()
 				# with the >16 group support.
 				echo "nfsuserd_enable=\"NO\""
 				sysctl vfs.nfsd.enable_stringtouid=1 > /dev/null
+				sysctl vfs.nfs.enable_uidtostring=1 > /dev/null
 			else
 				echo "nfsuserd_enable=\"YES\""
 				sysctl vfs.nfsd.enable_stringtouid=0 > /dev/null
+				sysctl vfs.nfs.enable_uidtostring=0 > /dev/null
 				if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_16 FROM services_nfs")" = 1 ]; then
 					# >16 group support
 					echo "nfsuserd_flags=\"-manage-gids\""

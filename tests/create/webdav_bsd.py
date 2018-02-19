@@ -7,10 +7,13 @@
 import unittest
 import sys
 import os
+import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
-
+from auto_config import results_xml
+RunTest = True
+TestName = "create webdav bsd"
 DATASET = "webdavshare"
 DATASET_PATH = "/mnt/tank/%s/" % DATASET
 TMP_FILE = "/tmp/testfile.txt"
@@ -19,7 +22,7 @@ SHARE_USER = "webdav"
 SHARE_PASS = "davtest"
 
 
-class webdav_bsd_test(unittest.TestCase):
+class create_webdav_bsd_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed test runs
     @classmethod
@@ -64,5 +67,11 @@ class webdav_bsd_test(unittest.TestCase):
         assert GET_OUTPUT("/services/services/webdav",
                           "srv_state") == "STOPPED"
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+
+def run_test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(create_webdav_bsd_test)
+    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
+
+if RunTest is True:
+    print('\n\nStarting %s tests...' % TestName)
+    run_test()
