@@ -407,6 +407,9 @@ class InterfacePlugin(RRDBase):
             "%s/interface-%s" % (self._base_path, self.identifier),
             "if_octets.rrd"
         )
+        # Escape interfaces with colon in the name
+        # See #28470
+        path = path.replace(':', '\\:')
 
         args = [
             'DEF:min_rx_raw=%s:rx:MIN' % path,
