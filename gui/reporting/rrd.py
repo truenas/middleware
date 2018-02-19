@@ -382,8 +382,10 @@ class CPUTempPlugin(RRDBase):
 
 class DiskTempPlugin(RRDBase):
 
-    title = "Disk Temperature"
     vertical_label = "\u00b0C"
+
+    def get_title(self):
+        return f'Disk Temperature ({self.identifier})'
 
     def get_identifiers(self):
         ids = []
