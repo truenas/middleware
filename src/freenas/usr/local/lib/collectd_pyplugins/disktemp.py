@@ -27,7 +27,6 @@ import concurrent.futures
 import re
 import subprocess
 import sysctl
-import time
 
 # One cannot simply import collectd in a python interpreter (for various reasons)
 # thus adding this workaround for standalone testing
@@ -131,5 +130,5 @@ class DiskTemp(object):
 
 disktemp = DiskTemp()
 
-collectd.register_init(disktemp.init)
+collectd.register_init(disktemp.init, READ_INTERVAL)
 collectd.register_read(disktemp.read)
