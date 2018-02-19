@@ -88,6 +88,10 @@ _interface_config()
 			then
 				continue
 			fi
+			if echo "${interface}"|grep -q ':'
+			then
+				continue
+			fi
 			echo "ifconfig_${interface}=\"DHCP\""
 		done
 	fi
