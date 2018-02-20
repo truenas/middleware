@@ -25,9 +25,7 @@ pipeline {
           archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
           junit 'results/**'
 	  stash includes: 'artifacts/iso/*.iso', name: 'iso'
-          if ( env.STAGE_PR == "YES") {
-	    stash includes: 'artifacts/*-Update/**', name: 'update-files'
-          }
+	  stash includes: 'artifacts/*-Update/**', name: 'update-files'
         }
         failure {
           echo 'Saving failed artifacts...'
