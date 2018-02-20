@@ -367,6 +367,14 @@ class Advanced(Model):
         verbose_name=_("Use FQDN for logging"),
         default=False,
     )
+    adv_sed_user = models.CharField(
+        max_length=120,
+        choices=choices.SED_USER,
+        default="user",
+        help_text=_("User passed to camcontrol security -u "
+                    "for unlocking SEDs"),
+        verbose_name=_("camcontrol security user")
+    )
 
     class Meta:
         verbose_name = _("Advanced")
@@ -1153,8 +1161,8 @@ class Support(Model):
         if license is None:
             return False, support
         if license.contract_type in (
-            ContractType.silver.value,
-            ContractType.gold.value,
+            ContractType.silver,
+            ContractType.gold,
         ):
             return True, support
         return False, support

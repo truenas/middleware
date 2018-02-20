@@ -157,9 +157,6 @@ class mDNSThread(threading.Thread):
     def active(self, sdRef):
         return (bool(sdRef) and sdRef.fileno() != -1)
 
-    def debug(self, msg, *args, **kwargs):
-        self.logger.debug(msg, *args, **kwargs)
-
 
 class DiscoverThread(mDNSThread):
     def __init__(self, **kwargs):
@@ -170,7 +167,7 @@ class DiscoverThread(mDNSThread):
         self.pipe = os.pipe()
 
     def on_discover(self, sdRef, flags, interface, error, name, regtype, domain):
-        self.debug("DiscoverThread: name=%s flags=0x%08x error=%d", name, flags, error)
+        self.logger.trace("DiscoverThread: name=%s flags=0x%08x error=%d", name, flags, error)
 
         if error != kDNSServiceErr_NoError:
             return
@@ -233,7 +230,7 @@ class ServicesThread(mDNSThread):
         return regtype
 
     def on_discover(self, sdRef, flags, interface, error, name, regtype, domain):
-        self.debug("ServicesThread: name=%s flags=0x%08x error=%d", name, flags, error)
+        self.logger.trace("ServicesThread: name=%s flags=0x%08x error=%d", name, flags, error)
 
         if error != kDNSServiceErr_NoError:
             return
@@ -248,7 +245,7 @@ class ServicesThread(mDNSThread):
         )
 
         if not (obj.flags & kDNSServiceFlagsAdd):
-            self.debug("ServicesThread: remove %s", name)
+            self.logger.trace("ServicesThread: remove %s", name)
             cobj = self.cache.get(obj.fullname)
             if cobj:
                 if cobj.sdRef in self.references:
@@ -313,7 +310,7 @@ class ResolveThread(mDNSThread):
         self.services = []
 
     def on_resolve(self, sdRef, flags, interface, error, name, target, port, text):
-        self.debug("ResolveThread: name=%s flags=0x%08x error=%d", name, flags, error)
+        self.logger.trace("ResolveThread: name=%s flags=0x%08x error=%d", name, flags, error)
 
         if error != kDNSServiceErr_NoError:
             return
@@ -464,7 +461,7 @@ class mDNSBrowserService(Service):
 
     @private
     def start(self):
-        self.logger.debug("mDNSBrowserService: start()")
+        self.logger.trace("mDNSBrowserService: start()")
 
         self.lock.acquire()
         if self.initialized:
@@ -489,7 +486,7 @@ class mDNSBrowserService(Service):
 
     @private
     def stop(self):
-        self.logger.debug("mDNSBrowserService: stop()")
+        self.logger.trace("mDNSBrowserService: stop()")
 
         self.rthread.cancel()
         self.sthread.cancel()
@@ -501,7 +498,7 @@ class mDNSBrowserService(Service):
 
     @private
     def restart(self):
-        self.logger.debug("mDNSBrowserService: restart()")
+        self.logger.trace("mDNSBrowserService: restart()")
 
         self.stop()
         self.start()
@@ -520,9 +517,6 @@ class mDNSServiceThread(threading.Thread):
         self.port = kwargs.get('port')
         self.pipe = os.pipe()
         self.finished = threading.Event()
-
-    def debug(self, msg, *args, **kwargs):
-        self.logger.debug(msg, *args, **kwargs)
 
     def _register(self, name, regtype, port):
         if not (name and regtype and port):
