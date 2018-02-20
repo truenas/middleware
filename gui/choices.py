@@ -764,6 +764,11 @@ SERIAL_SPEED = (
     ('115200', _('115200')),
     )
 
+SED_USER = (
+    ('user', _('User')),
+    ('master', _('Master')),
+)
+
 
 class UPSDRIVER_CHOICES(object):
     "Populate choices from /usr/local/etc/nut/driver.list"
