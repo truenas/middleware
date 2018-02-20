@@ -25,6 +25,9 @@ pipeline {
           archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
           junit 'results/**'
 	  stash includes: 'artifacts/iso/*.iso', name: 'iso'
+          if ( env.STAGE_PR == "YES") {
+	    stash includes: 'artifacts/update-files/**', name: 'update-files'
+          }
         }
         failure {
           echo 'Saving failed artifacts...'
@@ -35,6 +38,19 @@ pipeline {
         checkout scm
         echo 'Starting iXBuild Framework pipeline'
         sh '/ixbuild/jenkins.sh freenas freenas-pipeline'
+      }
+    }
+
+    if ( env.STAGE_PR == "YES") {
+      stage('PR Staging') {
+        agent {
+          label 'FreeNAS-Update-Stage'
+        }
+        steps {
+          echo 'Staging the PR update'
+          unstash 'update-files'
+          sh '/root/freenas-update/release-pr-workspace.sh'
+        }
       }
     }
 
@@ -53,7 +69,8 @@ pipeline {
         sh 'rm -rf ${WORKSPACE}/tests/iso'
         sh 'mkdir -p ${WORKSPACE}/tests/iso'
         sh 'mv artifacts/iso/*.iso ${WORKSPACE}/tests/iso/'
-        echo 'ISO WORKSPACE: ${WORKSPACE}/tests/iso/'
+        sh 'touch ${WORKSPACE}/tests/iso/.keepme'
+        echo "ISO WORKSPACE: ${WORKSPACE}/tests/iso/"
         sh 'ixautomation --run api-tests --systype freenas'
       }
     }
