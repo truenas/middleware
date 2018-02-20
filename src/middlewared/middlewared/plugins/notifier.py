@@ -260,5 +260,7 @@ class NotifierService(Service):
         """
         rv = []
         for alert in alertPlugins.get_alerts():
+            if alert.getDismiss():
+                continue
             rv.append(f'{alert.getLevel()} - {alert.getMessage()}')
         return '\n'.join(rv)
