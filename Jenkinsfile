@@ -26,7 +26,7 @@ pipeline {
           junit 'results/**'
 	  stash includes: 'artifacts/iso/*.iso', name: 'iso'
           if ( env.STAGE_PR == "YES") {
-	    stash includes: 'artifacts/update-files/**', name: 'update-files'
+	    stash includes: 'artifacts/*-Update/**', name: 'update-files'
           }
         }
         failure {
@@ -41,16 +41,14 @@ pipeline {
       }
     }
 
-    if ( env.STAGE_PR == "YES") {
-      stage('PR Staging') {
-        agent {
-          label 'FreeNAS-Update-Stage'
-        }
-        steps {
-          echo 'Staging the PR update'
-          unstash 'update-files'
-          sh '/root/freenas-update/release-pr-workspace.sh'
-        }
+    stage('PR Staging') {
+      agent {
+        label 'FreeNAS-Update-Stage'
+      }
+      steps {
+        echo 'Staging the PR update'
+        unstash 'update-files'
+        sh '/root/freenas-update/release-pr-workspace.sh'
       }
     }
 
