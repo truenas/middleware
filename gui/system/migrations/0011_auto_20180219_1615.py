@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0010_syscons_to_vt.py'),
+        ('system', '0010_syscons_to_vt'),
     ]
 
     operations = [
