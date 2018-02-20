@@ -371,7 +371,8 @@ class Advanced(Model):
         max_length=120,
         choices=choices.SED_USER,
         default="user",
-        help_text=_("User passed to camcontrol security -u for unlocking SEDs"),
+        help_text=_("User passed to camcontrol security -u "
+                    "for unlocking SEDs"),
         verbose_name=_("camcontrol security user")
     )
 

@@ -747,7 +747,7 @@ class Disk(Model):
             try:
                 self.disk_passwd = notifier().pwenc_decrypt(self.disk_passwd)
             except:
-                log.debug('Failed to decrypt SED password for disk %s' % 
+                log.debug('Failed to decrypt SED password for disk %s' %
                           self.disk_name, exc_info=True)
                 self.disk_passwd = ''
 
