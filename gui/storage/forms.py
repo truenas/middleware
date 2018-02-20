@@ -1114,6 +1114,12 @@ class DiskFormPartial(ModelForm):
             raise forms.ValidationError(_("The two password fields didn't match."))
         return password2
 
+    def clean(self):
+            cdata = self.cleaned_data
+            if not cdata.get("disk_passwd"):
+                cdata['disk_passwd'] = self.instance.disk_passwd
+            return cdata
+
     def save(self, *args, **kwargs):
         obj = super(DiskFormPartial, self).save(*args, **kwargs)
         # Commit ataidle changes, if any
