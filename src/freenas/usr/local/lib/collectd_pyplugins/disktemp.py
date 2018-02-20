@@ -27,6 +27,7 @@ import concurrent.futures
 import re
 import subprocess
 import sysctl
+import traceback
 
 # One cannot simply import collectd in a python interpreter (for various reasons)
 # thus adding this workaround for standalone testing
@@ -71,7 +72,7 @@ else:
     import collectd
 
 
-READ_INTERVAL = 300
+READ_INTERVAL = 300.0
 
 
 collectd.info('Loading "disktemp" python plugin')
@@ -80,7 +81,7 @@ collectd.info('Loading "disktemp" python plugin')
 class DiskTemp(object):
 
     def init(self):
-        collectd.debug('Initializing "disktemp" plugin')
+        collectd.info('Initializing "disktemp" plugin')
 
     def dispatch_value(self, name, instance, value, data_type=None):
         val = collectd.Values()
@@ -90,7 +91,7 @@ class DiskTemp(object):
             val.type = data_type
         val.values = [value, ]
         val.meta = {'0': True}
-        val.dispatch()
+        val.dispatch(interval=READ_INTERVAL)
 
     def read(self):
         disks = sysctl.filter('kern.disks')[0].value.split()
@@ -111,11 +112,12 @@ class DiskTemp(object):
                         continue
                     self.dispatch_value(disk, 'temperature', temp, data_type='temperature')
                 except Exception as e:
-                    pass
+                    collectd.info(traceback.format_exc())
 
     def get_temperature(self, disk):
         cp = subprocess.run(['/usr/local/sbin/smartctl', '-a', '-n', 'standby', f'/dev/{disk}'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if cp.returncode != 0:
+            collectd.info(f'Failed to run smartctl for {disk}: {cp.stdout.decode("utf8", "ignore")}')
             return None
         stdout = cp.stdout.decode('utf8', 'ignore')
         reg = re.search(r'190\s+Airflow_Temperature_Cel[^\n]*', stdout, re.M)
