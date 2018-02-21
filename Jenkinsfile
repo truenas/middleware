@@ -45,6 +45,7 @@ pipeline {
       }
       steps {
         echo 'Staging the PR update'
+        sh 'rm -rf ${WORKSPACE}/artifacts/*Update'
         unstash 'update-files'
         sh '/root/freenas-update/release-pr-workspace.sh'
       }
