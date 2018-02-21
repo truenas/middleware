@@ -26,15 +26,34 @@ middlewared_start() {
 	/sbin/ifconfig lo0 127.0.0.1 up
 	if checkyesno middlewared_debug; then
 		/usr/local/bin/tmux new-session -s middlewared -d
-		/usr/local/bin/tmux send -t middlewared "env LC_ALL=en_US.UTF-8 ${command} -f ${plugins_dirs_arg}" ENTER
+		/usr/local/bin/tmux send -t middlewared "env PATH=$PATH:/usr/local/sbin:/usr/local/bin LC_ALL=en_US.UTF-8 /usr/local/bin/middlewared -f ${plugins_dirs_arg}" ENTER
 	else
 		env PATH=$PATH:/usr/local/sbin:/usr/local/bin LC_ALL=en_US.UTF-8 ${command} -f -P ${pidfile} -r /usr/local/bin/middlewared -f ${plugins_dirs_arg} --log-handler=file
 	fi
 	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt -t 120 waitready
 }
 
+middlewared_stop() {
+	if [ -f "${pidfile}" ] ; then
+		rc_pid=$(cat $pidfile)
+		echo 'Stopping middlewared.'
+		kill -s TERM ${rc_pid}
+		wait_for_pids ${rc_pid}
+	else
+		echo 'middlewared is not running'
+		exit 1
+	fi
+
+	if checkyesno middlewared_debug; then
+		/usr/local/bin/tmux kill-session -t 'middlewared'
+	fi
+
+	rm $pidfile
+}
+
 name="middlewared"
 start_cmd='middlewared_start'
+stop_cmd='middlewared_stop'
 
 load_rc_config $name
 run_rc_command $*
