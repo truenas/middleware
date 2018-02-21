@@ -102,7 +102,7 @@ log { source(src); filter(f_mail); filter(f_crit); destination(console); };
 #
 # *.notice;authpriv.none;kern.debug;lpr.info;mail.crit;news.err	/var/log/messages
 #
-log { source(src); filter(f_notice); filter(f_not_authpriv); filter(f_not_mdnsresponder); destination(messages); };
+log { source(src); filter(f_notice); filter(f_not_authpriv); filter(f_not_mdnsresponder); filter(f_not_consul); destination(messages); };
 log { source(src); filter(f_kern); filter(f_debug); destination(messages); };
 log { source(src); filter(f_lpr); filter(f_info); destination(messages); };
 log { source(src); filter(f_mail); filter(f_crit); destination(messages); };
