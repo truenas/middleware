@@ -507,4 +507,6 @@ class RsyncTaskService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        return await self.middleware.call('datastore.delete', self._config.datastore, id)
+        res = await self.middleware.call('datastore.delete', self._config.datastore, id)
+        await self.middleware.call('service.reload', 'cron')
+        return res
