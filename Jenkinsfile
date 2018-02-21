@@ -63,12 +63,17 @@ pipeline {
       steps {
         echo 'Starting QA API testing'
         unstash 'iso'
+        sh 'ixautomation --destroy-all-vm'
+        sh 'rm -rf ${WORKSPACE}/tests/results'
+        sh 'mkdir -p ${WORKSPACE}/tests/results'
         sh 'rm -rf ${WORKSPACE}/tests/iso'
         sh 'mkdir -p ${WORKSPACE}/tests/iso'
         sh 'mv artifacts/iso/*.iso ${WORKSPACE}/tests/iso/'
         sh 'touch ${WORKSPACE}/tests/iso/.keepme'
         echo "ISO WORKSPACE: ${WORKSPACE}/tests/iso/"
+        sleep 30
         sh 'ixautomation --run api-tests --systype freenas'
+        sh 'ixautomation --destroy-all-vm'
       }
     }
   }
