@@ -50,10 +50,12 @@ generate_inetd_files()
     cat /conf/base/etc/services $tmp_services_extra >> $tmp
     if [ $? -eq 0 ]; then
         mv $tmp /etc/services
+        chmod 644 /etc/services
     fi
     cat /conf/base/etc/inetd.conf $tmp_inetd_conf_extra > $tmp
     if [ $? -eq 0 ]; then
         mv $tmp /etc/inetd.conf
+        chmod 644 /etc/inetd.conf
     fi
     rm -f $tmp $tmp_inetd_conf_extra $tmp_services_extra
     # we assume that someone else kicks inetd if necessary
