@@ -1,9 +1,9 @@
-#!/usr/local/bin/python
+ #!/usr/local/bin/python
 
 from middlewared.client import Client
 from middlewared.client.utils import Struct
 from middlewared.plugins.smb import LOGLEVEL_MAP
-
+ 
 import os
 import pwd
 import re
@@ -1610,7 +1610,6 @@ def main():
                 smb4_tdb,
                 "/var/db/samba4/private/passdb.tdb"
             )
-
             client.call('notifier.samba4', 'user_import_sentinel_file_create')
 
         smb4_map_groups(client)
