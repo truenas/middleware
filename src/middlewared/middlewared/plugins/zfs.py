@@ -495,9 +495,10 @@ class ZFSQuoteService(Service):
                         [('bsdusr_uid', '=', excess['uid'])],
                         {'get': True},
                     )
+                    to = bsduser['bsdusr_email'] or None
                 except IndexError:
                     self.logger.warning('Unable to query bsduser with uid %r', excess['uid'])
-                    continue
+                    to = None
 
                 hostname = socket.gethostname()
 
@@ -505,7 +506,7 @@ class ZFSQuoteService(Service):
                     # FIXME: Translation
                     human_quota_type = excess["quota_type"][0].upper() + excess["quota_type"][1:]
                     await (await self.middleware.call('mail.send', {
-                        'to': [bsduser['bsdusr_email']],
+                        'to': to,
                         'subject': '{}: {} exceed on dataset {}'.format(hostname, human_quota_type,
                                                                         excess["dataset_name"]),
                         'text': textwrap.dedent('''\
