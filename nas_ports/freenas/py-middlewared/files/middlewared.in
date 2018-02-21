@@ -34,16 +34,21 @@ middlewared_start() {
 }
 
 middlewared_stop() {
+	if [ -f "${pidfile}" ] ; then
+		rc_pid=$(cat $pidfile)
+		echo 'Stopping middlewared.'
+		kill -s TERM ${rc_pid}
+		wait_for_pids ${rc_pid}
+	else
+		echo 'middlewared is not running'
+		exit 1
+	fi
+
 	if checkyesno middlewared_debug; then
 		/usr/local/bin/tmux kill-session -t 'middlewared'
-	else
-		if [ -f "${pidfile}" ] ; then
-			echo 'Stopping middlewared.'
-			/bin/pkill -F "${pidfile}"
-		else
-			echo 'middlewared is not running'
-		fi
 	fi
+
+	rm $pidfile
 }
 
 name="middlewared"
