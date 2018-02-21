@@ -31,11 +31,14 @@ import tempfile
 import subprocess
 import threading
 import shutil
+import asyncssh
+import glob
+
 from collections import defaultdict
 from middlewared.schema import accepts, Bool, Dict, Str, Int, Ref, List
 from middlewared.validators import Range, Match
 from middlewared.service import (
-    Service, job, CallError, CRUDService, SystemServiceService
+    Service, job, CallError, CRUDService, SystemServiceService, ValidationErrors
 )
 from middlewared.logger import Logger
 
@@ -300,12 +303,12 @@ class RsyncModService(CRUDService):
         if data.get("hostsallow"):
             data["hostsallow"] = " ".join(data["hostsallow"])
         else:
-            data["hostsallow"] = ''
+            data["hostsallow"] = ""
 
         if data.get("hostsdeny"):
             data["hostsdeny"] = " ".join(data["hostsdeny"])
         else:
-            data["hostsdeny"] = ''
+            data["hostsdeny"] = ""
 
         data['id'] = await self.middleware.call(
             'datastore.insert',
@@ -339,6 +342,168 @@ class RsyncModService(CRUDService):
         await self.middleware.call('service.reload', 'rsync')
 
         return module
+
+    @accepts(Int('id'))
+    async def do_delete(self, id):
+        return await self.middleware.call('datastore.delete', self._config.datastore, id)
+
+
+class RsyncTaskService(CRUDService):
+
+    class Config:
+        datastore = 'tasks.rsync'
+        datastore_prefix = 'rsync_'
+
+    async def validate_rsync_task(self, data):
+        verrors = ValidationErrors()
+
+        if ' ' in data.get("user"):
+            raise verrors.add("user", "Usernames cannot have spaces")
+
+        if data.get("extra"):
+                data["extra"] = " ".join(data["extra"])
+        else:
+            data["extra"] = ""
+
+        if data.get("month"):
+                if len(data['month']) == 12:
+                    data['month'] = '*'
+                else:
+                    data['month'] = ",".join(data['month'])
+
+        if data.get("dayweek"):
+                if len(data['dayweek']) == 7:
+                    data['dayweek'] = '*'
+                else:
+                    data['dayweek'] = ",".join(data['dayweek'])
+
+        mode = data.get("mode")
+        rmodule = data.get("remotemodule")
+        if mode == 'module' and not rmodule:
+            verrors.add('remotemodule', 'This field is required')
+
+        rpath = data.get("remotepath")
+        if mode == 'ssh' and not rpath:
+            verrors.add('remotepath', 'This field is required')
+
+        username = data.get("user")
+        if mode == 'ssh':
+            rport = data.get("remoteport")
+            if not rport:
+                verrors.add('remoteport', 'This field is required')
+  
+            try:
+                user = await self.middleware.call('user.query', [('username', '=', username)], {'get': True})
+            except IndexError:
+                verrors.add('user', 'Provided user does not exists')
+            else:
+                search = os.path.join(user['home'], ".ssh", "id_[edr]*.*")
+                if not glob.glob(search):
+                    verrors.add(
+                        "user",
+                        "In order to use rsync over SSH you need a user"
+                        "with a public key (DSA/ECDSA/RSA) set up in home dir."
+                    )
+                else:
+                    if data.get("validate_rpath"):
+                        rhost = str(data.get("remotehost"))
+                        if '@' in rhost:
+                            username, rhost = rhost.split('@')
+
+                        try:
+                            async with asyncssh.connect(
+                                rhost,
+                                port=rport,
+                                username=username) as conn:
+
+                                await conn.run(f'test -d {rpath}', check=True)
+
+                        except (OSError, asyncssh.Error) as e:
+                            verrors.add(
+                                "remotepath",
+                                "The Remote Path you specified does not exist or is not a "
+                                "directory.Either create one yourself on the remote "
+                                "machine or uncheck the rsync_validate_rpath' field."
+                                "**Note**: This could also happen if the remote path "
+                                "entered exceeded 255 characters and was truncated, please"
+                                " restrict it to 255. Or it could also be that your SSH "
+                                "credentials (remote host,etc) are wrong."
+                            )
+
+        if data.get("validate_rpath"):
+            data.pop("validate_rpath")
+
+        return verrors, data
+
+    @accepts(Dict(
+        'rsync_task',
+        Str('path'),
+        Str('user'),
+        Str('remotehost'),
+        Int('remoteport'),
+        Str('mode'),
+        Str('remotemodule'),
+        Str('remotepath'),
+        Bool('validate_rpath'),
+        Str('direction'),
+        Str('desc'),
+        Str('minute'),
+        Str('hour'),
+        Str('daymonth'),
+        List('month', items=[Str('month')]),
+        List('dayweek', items=[Str('dayweek')]),
+        Bool('recursive'),
+        Bool('times'),
+        Bool('compress'),
+        Bool('archive'),
+        Bool('delete'),
+        Bool('quiet'),
+        Bool('preserveperm'),
+        Bool('preserveattr'),
+        Bool('delayupdates'),
+        List('extra', items=[Str('extra')]),
+        Bool('enabled'),
+        register=True,
+    ))
+    async def do_create(self, data):
+        verrors, data = await self.validate_rsync_task(data)
+        if verrors:
+            raise verrors
+
+        data['id'] = await self.middleware.call(
+            'datastore.insert',
+            self._config.datastore,
+            data,
+            {'prefix': self._config.datastore_prefix}
+        )
+        await self.middleware.call('service.reload', 'cron')
+
+        return data
+
+    @accepts(Int('id'), Ref('rsync_task'))
+    async def do_update(self, id, data):
+        task = await self.middleware.call(
+            'datastore.query',
+            self._config.datastore,
+            [('id', '=', id)],
+            {'prefix': self._config.datastore_prefix, 'get': True}
+        )
+        task.update(data)
+
+        verrors, data = await self.validate_rsync_task(task)
+        if verrors:
+            raise verrors
+
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            id,
+            task,
+            {'prefix': self._config.datastore_prefix}
+        )
+        await self.middleware.call('service.reload', 'cron')
+
+        return task
 
     @accepts(Int('id'))
     async def do_delete(self, id):
