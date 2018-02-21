@@ -1,9 +1,9 @@
- #!/usr/local/bin/python
+#!/usr/local/bin/python
 
 from middlewared.client import Client
 from middlewared.client.utils import Struct
 from middlewared.plugins.smb import LOGLEVEL_MAP
- 
+
 import os
 import pwd
 import re
