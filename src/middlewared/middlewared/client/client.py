@@ -52,6 +52,7 @@ class WSClient(WebSocketClient):
         self.client = kwargs.pop('client')
         reserved_ports = kwargs.pop('reserved_ports')
         reserved_ports_blacklist = kwargs.pop('reserved_ports_blacklist')
+        self.reserved_fd = None
         self.protocol = DDPProtocol(self)
         if not reserved_ports:
             super(WSClient, self).__init__(url, *args, **kwargs)
@@ -98,19 +99,23 @@ class WSClient(WebSocketClient):
                 """
                 This is the line replaced to use socket.fromfd
                 """
-                sock = socket.fromfd(
-                    self.get_reserved_portfd(blacklist=reserved_ports_blacklist),
-                    family,
-                    socktype,
-                    proto
-                )
-                sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                if hasattr(socket, 'AF_INET6') and family == socket.AF_INET6 and self.host.startswith('::'):
-                    try:
-                        sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
-                    except (AttributeError, socket.error):
-                        pass
+                try:
+                    self.reserved_fd = self.get_reserved_portfd(blacklist=reserved_ports_blacklist)
+                    sock = socket.fromfd(self.reserved_fd, family, socktype, proto)
+                    sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                    if hasattr(socket, 'AF_INET6') and family == socket.AF_INET6 and self.host.startswith('::'):
+                        try:
+                            sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+                        except (AttributeError, socket.error):
+                            pass
+                except Exception:
+                    if self.reserved_fd:
+                        try:
+                            os.close(self.reserved_fd)
+                        except OSError:
+                            pass
+                    raise
 
             WebSocket.__init__(self, sock, protocols=kwargs.get('protocols'),
                                extensions=kwargs.get('extensions'),
@@ -166,6 +171,14 @@ class WSClient(WebSocketClient):
 
     def closed(self, code, reason=None):
         self.protocol.on_close(code, reason)
+
+    def close_connection(self):
+        try:
+            if self.reserved_fd:
+                os.close(self.reserved_fd)
+        except OSError:
+            pass
+        return super().close_connection()
 
     def received_message(self, message):
         self.protocol.on_message(message.data.decode('utf8'))
