@@ -278,7 +278,10 @@ class Application(object):
                     'version': '1',
                 })
             else:
-                await self.middleware.call_hook('core.on_connect', app=self)
+                # aiohttp can cancel tasks if a request take too long to finish
+                # It is desired to prevent that in this stage in case we are debugging
+                # middlewared via gdb (which makes the program execution a lot slower)
+                await asyncio.shield(self.middleware.call_hook('core.on_connect', app=self))
                 self._send({
                     'msg': 'connected',
                     'session': self.sessionid,
