@@ -361,21 +361,21 @@ class RsyncTaskService(CRUDService):
             raise verrors.add("user", "Usernames cannot have spaces")
 
         if data.get("extra"):
-                data["extra"] = " ".join(data["extra"])
+            data["extra"] = " ".join(data["extra"])
         else:
             data["extra"] = ""
 
         if data.get("month"):
-                if len(data['month']) == 12:
-                    data['month'] = '*'
-                else:
-                    data['month'] = ",".join(data['month'])
+            if len(data['month']) == 12:
+                data['month'] = '*'
+            else:
+                data['month'] = ",".join(data['month'])
 
         if data.get("dayweek"):
-                if len(data['dayweek']) == 7:
-                    data['dayweek'] = '*'
-                else:
-                    data['dayweek'] = ",".join(data['dayweek'])
+            if len(data['dayweek']) == 7:
+                data['dayweek'] = '*'
+            else:
+                data['dayweek'] = ",".join(data['dayweek'])
 
         mode = data.get("mode")
         rmodule = data.get("remotemodule")
