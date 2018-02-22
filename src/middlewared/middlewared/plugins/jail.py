@@ -156,6 +156,7 @@ class JailService(CRUDService):
 
         return jail, path, iocage
 
+    @accepts()
     def get_activated_pool(self):
         """Returns the activated pool if there is one, or None"""
         pool = None
