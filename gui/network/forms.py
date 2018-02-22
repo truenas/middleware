@@ -742,7 +742,7 @@ class HostnameForm(Form):
     hostname = forms.CharField(
         max_length=200,
         validators=[RegexValidator(
-            regex=r'^[a-zA-Z\.\-\_0-9]+$',
+            regex=r'^[a-zA-Z\.\-\0-9]+$',
         )],
     )
 
