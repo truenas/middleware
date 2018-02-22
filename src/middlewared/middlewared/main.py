@@ -1108,7 +1108,11 @@ def main():
         if os.path.exists(pidpath):
             with open(pidpath, 'r') as f:
                 pid = int(f.read().strip())
-            os.kill(pid, 15)
+            try:
+                os.kill(pid, 15)
+            except ProcessLookupError as e:
+                if e.errno != errno.ESRCH:
+                    raise
 
     if not args.foreground:
         _logger.configure_logging('file')
