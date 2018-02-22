@@ -14,7 +14,7 @@ from functions import GET_OUT_ALL
 # try:
 #     from config import BRIDGEDOMAIN, BRIDGEHOST, BRIDGEDNS, BRIDGEGW
 # except ImportError:
-#     RunTest = False
+#      RunTest = False
 # else:
 
 RunTest = True
@@ -23,12 +23,16 @@ TestName = "get interface"
 
 class get_interfaces_test(unittest.TestCase):
 
-    def test_01_get_interface_driver(self):
+    def test_01_get_interfaces_driver(self):
         assert GET_OUT_ALL('/interfaces/query')[0]['name'] == interface
 
     def test_02_get_interfaces_ip(self):
         getip = GET_OUT_ALL('/interfaces/query')[0]['aliases'][1]['address']
         assert getip == ip
+
+    def test_03_get_interfaces_netmask(self):
+        getinfo = GET_OUT_ALL('/interfaces/query')[0]['aliases'][1]['netmask']
+        assert getinfo == "24"
 
 
 def run_test():
