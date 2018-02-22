@@ -37,7 +37,7 @@ zfs_func()
 	section_footer
 
 	section_header "ZFS Pools Status"
-	zpool status
+	zpool status -v
 	section_footer
 
 	section_header "ZFS Pools History - excepting replication"
