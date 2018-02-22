@@ -18,7 +18,7 @@ from functions import GET_OUT_ALL
 # else:
 
 RunTest = True
-TestName = "get interface"
+TestName = "get interface information"
 
 
 class get_interfaces_test(unittest.TestCase):
@@ -32,7 +32,7 @@ class get_interfaces_test(unittest.TestCase):
 
     def test_03_get_interfaces_netmask(self):
         getinfo = GET_OUT_ALL('/interfaces/query')[0]['aliases'][1]['netmask']
-        assert getinfo == "24"
+        assert getinfo == 24
 
 
 def run_test():

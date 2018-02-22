@@ -17,7 +17,7 @@ except ImportError:
     RunTest = False
 else:
     RunTest = True
-TestName = "get network info"
+TestName = "get network information"
 
 
 class get_network_info_test(unittest.TestCase):

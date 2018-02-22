@@ -95,3 +95,4 @@ cfg_file.close()
 
 call(["python3.6", "interfaces.py"])
 call(["python3.6", "network.py"])
+call(["python3.6", "disk.py"])
