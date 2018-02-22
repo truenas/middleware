@@ -156,6 +156,20 @@ class JailService(CRUDService):
 
         return jail, path, iocage
 
+    def get_activated_pool(self):
+        """Returns the activated pool if there is one, or None"""
+        pool = None
+
+        try:
+            pool = ioc.IOCage(skip_jails=True).get("", pool=True)
+        except KeyError:
+            pass
+        else:
+            raise
+
+        return pool
+
+
     @accepts(
         Dict("options",
              Str("release"),
