@@ -688,6 +688,15 @@ def zpool_disk_remove(request, vname, label):
 
 def volume_detach(request, vid):
 
+    _n = notifier()
+    standby_offline = False
+    if not _n.is_freenas() and _n.failover_licensed():
+        try:
+            with client as c:
+                c.call('failover.call_remote', 'core.ping')
+        except Exception:
+            standby_offline = True
+
     volume = models.Volume.objects.get(pk=vid)
     usedbytes = volume._get_used_bytes()
     usedsize = humanize_size(usedbytes) if usedbytes else None
@@ -725,6 +734,7 @@ def volume_detach(request, vid):
     else:
         form = forms.VolumeExport(instance=volume, services=services)
     return render(request, 'storage/volume_detach.html', {
+        'standby_offline': standby_offline,
         'volume': volume,
         'form': form,
         'used': usedsize,

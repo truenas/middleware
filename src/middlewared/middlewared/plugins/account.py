@@ -155,6 +155,9 @@ class UserService(CRUDService):
                         'exists and is not a directory',
                         errno.EEXIST
                     )
+
+                # If it exists, ensure the user is owner
+                os.chown(data['home'], data['uid'], group['gid'])
             except OSError as oe:
                 raise CallError(
                     'Failed to create the home directory '

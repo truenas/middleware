@@ -380,6 +380,39 @@ class CPUTempPlugin(RRDBase):
         return args
 
 
+class DiskTempPlugin(RRDBase):
+
+    vertical_label = "\u00b0C"
+
+    def get_title(self):
+        return f'Disk Temperature ({self.identifier})'
+
+    def get_identifiers(self):
+        ids = []
+        for entry in glob.glob('%s/disktemp-*' % self._base_path):
+            ident = entry.rsplit('-', 1)[-1]
+            if os.path.exists(os.path.join(entry, 'temperature.rrd')):
+                ids.append(ident)
+        ids.sort(key=RRDBase._sort_disks)
+        return ids
+
+    def graph(self):
+        path = os.path.join(
+            "%s/disktemp-%s" % (self._base_path, self.identifier),
+            "temperature.rrd"
+        )
+
+        args = [
+            'DEF:temp_raw=%s:value:AVERAGE' % path,
+            'CDEF:temp=temp_raw',
+            'AREA:temp#bfbfff',
+            'LINE1:temp#0000ff:Temperature',
+            'GPRINT:temp:AVERAGE:%.1lf\u00b0 Avg',
+        ]
+
+        return args
+
+
 class InterfacePlugin(RRDBase):
 
     vertical_label = "Bits/s"
@@ -407,6 +440,9 @@ class InterfacePlugin(RRDBase):
             "%s/interface-%s" % (self._base_path, self.identifier),
             "if_octets.rrd"
         )
+        # Escape interfaces with colon in the name
+        # See #28470
+        path = path.replace(':', '\\:')
 
         args = [
             'DEF:min_rx_raw=%s:rx:MIN' % path,

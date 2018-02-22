@@ -1,9 +1,13 @@
 import os
-import glob
 import re
 
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
-from freenasUI.system.ixselftests import (ALERT_FILE, TEST_PASS, TEST_WARNING, TEST_FAIL, TEST_CRITICAL)
+from freenasUI.system.ixselftests import (ALERT_FILE,
+                                          TEST_PASS,
+                                          TEST_WARNING,
+                                          TEST_FAIL,
+                                          TEST_CRITICAL)
+
 
 class ixSelfTestAlert(BaseAlert):
 
@@ -30,5 +34,6 @@ class ixSelfTestAlert(BaseAlert):
                     else:
                         alerts.append(Alert(lvl, line))
         return alerts
+
 
 alertPlugins.register(ixSelfTestAlert)

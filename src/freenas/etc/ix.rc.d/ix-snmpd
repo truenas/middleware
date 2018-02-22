@@ -55,6 +55,8 @@ EOF
 
 		else
 			echo "rocommunity \"${snmp_community}\" default" >> ${snmp_config}
+			# Below line required for SNMP over IPv6 -- the strings are not the same!
+			echo "rocommunity6 \"${snmp_community}\" default" >> ${snmp_config}
 		fi
 
 		echo "${snmp_options}" >> ${snmp_config}

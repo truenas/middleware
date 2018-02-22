@@ -1131,6 +1131,10 @@ def main():
     # Workaround to tell django to not set up logging on its own
     os.environ['MIDDLEWARED'] = str(os.getpid())
 
+    if args.foreground:
+        with open(pidpath, "w") as _pidfile:
+            _pidfile.write(f"{str(os.getpid())}\n")
+
     Middleware(
         loop_monitor=not args.disable_loop_monitor,
         plugins_dirs=args.plugins_dirs,

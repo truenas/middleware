@@ -93,6 +93,5 @@ cfg_file = open("auto_config.py", 'a')
 cfg_file.writelines('sshKey = "%s"\n' % Key)
 cfg_file.close()
 
-# Create test
 call(["python3.6", "interfaces.py"])
 call(["python3.6", "network.py"])
