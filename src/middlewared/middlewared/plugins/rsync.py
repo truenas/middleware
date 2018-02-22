@@ -357,6 +357,8 @@ class RsyncTaskService(CRUDService):
     async def validate_rsync_task(self, data):
         verrors = ValidationErrors()
 
+        # Windows users can have spaces in their usernames
+        # http://www.freebsd.org/cgi/query-pr.cgi?pr=164808
         if ' ' in data.get("user"):
             raise verrors.add("user", "Usernames cannot have spaces")
 
