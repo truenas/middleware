@@ -169,7 +169,6 @@ class JailService(CRUDService):
 
         return pool
 
-
     @accepts(
         Dict("options",
              Str("release"),
