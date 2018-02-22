@@ -164,7 +164,6 @@ class MailService(ConfigService):
         ]
         """
 
-        syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_MAIL)
         interval = message.get('interval')
         if interval is None:
             interval = timedelta()
@@ -254,6 +253,7 @@ class MailService(ConfigService):
             else:
                 msg[key] = val
 
+        syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_MAIL)
         try:
             server = self._get_smtp_server(config, message['timeout'], local_hostname=local_hostname)
             # NOTE: Don't do this.
@@ -264,16 +264,18 @@ class MailService(ConfigService):
             # This is because FreeNAS doesn't run a full MTA.
             # else:
             #    server.connect()
-            syslog.syslog("sending mail to " + ', '.join(to) + '\n' + msg.as_string()[0:140])
+            headers = '\n'.join([f'{k}: {v}' for k, v in m._headers])
+            syslog.syslog(f"sending mail to {', '.join(to)}\n{headers}")
             server.sendmail(config['fromemail'], to, msg.as_string())
             server.quit()
         except ValueError as ve:
             # Don't spam syslog with these messages. They should only end up in the
             # test-email pane.
             raise CallError(str(ve))
-        except smtplib.SMTPAuthenticationError as e:
-            raise CallError(f'Authentication error ({e.smtp_code}): {e.smtp_error}', errno.EAUTH)
         except Exception as e:
+            syslog.syslog(f'Failed to send email to {", ".join(to)}: {str(e)}')
+            if isinstance(e, smtplib.SMTPAuthenticationError):
+                raise CallError(f'Authentication error ({e.smtp_code}): {e.smtp_error}', errno.EAUTH)
             self.logger.warn('Failed to send email: %s', str(e), exc_info=True)
             if message['queue']:
                 with MailQueue() as mq:
