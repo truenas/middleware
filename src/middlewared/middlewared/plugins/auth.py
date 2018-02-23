@@ -106,6 +106,22 @@ class AuthService(Service):
             app.authenticated = True
         return valid
 
+    @accepts()
+    @pass_app
+    async def logout(self, app):
+        """
+        Deauthenticates an app and if a token exists, removes that from the
+        session.
+        """
+        sessionid = app.sessionid
+        token = self.authtokens.get_token_by_sessionid(sessionid)
+        app.authenticated = False
+
+        if token:
+            self.authtokens.pop_token(token["id"])
+
+        return True
+
     @no_auth_required
     @accepts(Str('token'))
     @pass_app
