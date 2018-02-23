@@ -13,12 +13,11 @@ import pysnmp.hlapi
 import pysnmp.smi
 
 from freenasUI.common.locks import lock
-from freenasUI.common.system import send_mail, get_sw_version, service_enabled
+from freenasUI.common.system import send_mail, service_enabled
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import Alert as mAlert, Support
-from freenasUI.support.utils import get_license
 
 from lxml import etree
 
@@ -293,12 +292,6 @@ class AlertPlugins(metaclass=HookMetaclass):
             encoding='utf8',
         ).communicate()[0].split('\n')[0].upper()
 
-        license, reason = get_license()
-        if license:
-            company = license.customer_name.decode()
-        else:
-            company = 'Unknown'
-
         for name, verbose_name in (
             ('name', 'Contact Name'),
             ('title', 'Contact Title'),
@@ -318,11 +311,7 @@ class AlertPlugins(metaclass=HookMetaclass):
                 rv = c.call('support.new_ticket', {
                     'title': 'Automatic alert (%s)' % serial,
                     'body': '\n'.join(msgs),
-                    'version': get_sw_version().split('-', 1)[-1],
-                    'debug': False,
-                    'company': company,
-                    'serial': serial,
-                    'department': 20,
+                    'attach_debug': False,
                     'category': 'Hardware',
                     'criticality': 'Loss of Functionality',
                     'environment': 'Production',
