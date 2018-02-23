@@ -12,7 +12,7 @@ import subprocess
 import sys
 import time
 
-# FIXME: Remove when we can generate debug from middleware
+# FIXME: Remove when we can generate debug and move license to middleware
 if '/usr/local/www' not in sys.path:
     sys.path.append('/usr/local/www')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
@@ -23,6 +23,7 @@ if not apps.ready:
     django.setup()
 
 from freenasUI.system.utils import debug_get_settings, debug_generate
+from freenasUI.support.utils import get_license
 
 ADDRESS = 'support-proxy.ixsystems.com'
 
@@ -99,7 +100,11 @@ class SupportService(Service):
         else:
             required_attrs = ('phone', 'name', 'email', 'criticality', 'environment')
             data['serial'] = (await (await Popen(['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'], stdout=subprocess.PIPE)).communicate())[0].decode().split('\n')[0].upper()
-            data['company'] = 'Unknown'
+            license = get_license()[0]
+            if license:
+                data['company'] = license.customer_name
+            else:
+                data['company'] = 'Unknown'
 
         for i in required_attrs:
             if i not in data:
