@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-haready
+# REQUIRES: ix-postinit
+
+. /etc/rc.freenas
+
+do_haready()
+{
+	# Tell CARP to start allowing and advertising CARP/VRRP packets.
+	# We could also check whether HA is enabled but that does not seem necessary.
+	# See #28198 for one of the reasons why this is required.
+	if ! is_freenas; then
+		/sbin/sysctl net.inet.carp.allow=1
+	fi
+}
+
+name="ix-haready"
+start_cmd='do_haready'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
