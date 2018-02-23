@@ -106,6 +106,7 @@ class AuthService(Service):
             app.authenticated = True
         return valid
 
+    @accepts()
     @pass_app
     async def logout(self, app):
         """
