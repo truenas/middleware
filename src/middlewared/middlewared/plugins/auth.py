@@ -109,7 +109,8 @@ class AuthService(Service):
     @pass_app
     async def logout(self, app):
         """
-        Returns True if a token was removed, else False
+        Deauthenticates an app and if a token exists, removes that from the
+        session.
         """
         sessionid = app.sessionid
         token = self.authtokens.get_token_by_sessionid(sessionid)
