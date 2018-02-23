@@ -170,7 +170,7 @@ fi
  /*
   * collect info when zil_lwb_write_start fires
   */
-fbt::zil_lwb_write_start:entry
+fbt::zil_lwb_write_issue:entry
 /OPT_pool == 0 || POOL == args[0]->zl_dmu_pool->dp_spa->spa_name/
 {
      nused += args[1]->lwb_nused;
