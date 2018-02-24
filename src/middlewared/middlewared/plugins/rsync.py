@@ -33,6 +33,7 @@ import threading
 import shutil
 import asyncssh
 import glob
+import asyncio
 
 from collections import defaultdict
 from middlewared.schema import accepts, Bool, Dict, Str, Int, Ref, List
@@ -413,10 +414,10 @@ class RsyncTaskService(CRUDService):
                             username, rhost = rhost.split('@')
 
                         try:
-                            async with asyncssh.connect(
+                            with (await asyncio.wait_for(asyncssh.connect(
                                 rhost,
                                 port=rport,
-                                username=username) as conn:
+                                username=username), timeout=5)) as conn:
 
                                 await conn.run(f'test -d {rpath}', check=True)
 
