@@ -421,6 +421,12 @@ class RsyncTaskService(CRUDService):
 
                                 await conn.run(f'test -d {rpath}', check=True)
 
+                        except asyncio.TimeoutError:
+                            verrors.add(
+                                "remotepath",
+                                "SSH timeout occurred. Remote path cannot be validated."
+                            )
+
                         except (OSError, asyncssh.Error) as e:
                             verrors.add(
                                 "remotepath",
