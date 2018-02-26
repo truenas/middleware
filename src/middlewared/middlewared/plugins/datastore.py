@@ -1,5 +1,6 @@
-from middlewared.service import Service
+from middlewared.service import CallError, Service
 from middlewared.schema import accepts, Any, Bool, Dict, List, Ref, Str
+from sqlite3 import OperationalError
 
 import os
 import sys
@@ -258,6 +259,8 @@ class DatastoreService(Service):
             else:
                 cursor.executelocal(query, params)
             rv = cursor.fetchall()
+        except OperationalError as err:
+            raise CallError(err)
         finally:
             cursor.close()
         return rv
