@@ -266,7 +266,8 @@ def update_plugin_zipfile(
 
 
 def encrypt_string(password, key):
-    cipher = DES.new(key, DES.MODE_CFB, key)
+    key_bytes = bytes(key, encoding="utf8")
+    cipher = DES.new(key_bytes, DES.MODE_CFB, key_bytes)
     resolved = cipher.encrypt(password.encode('ISO-8859-1'))
     return resolved.decode('ISO-8859-1')
 
