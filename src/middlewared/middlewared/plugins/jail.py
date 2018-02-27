@@ -161,7 +161,7 @@ class JailService(CRUDService):
         """Returns the activated pool if there is one, or None"""
         try:
             pool = ioc.IOCage(skip_jails=True).get("", pool=True)
-        except:
+        except Exception:
             pool = None
 
         return pool
