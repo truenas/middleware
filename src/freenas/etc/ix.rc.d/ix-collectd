@@ -126,13 +126,7 @@ generate_collectd()
         # Create RAMdisk (if not already exists) for RRD files so they don't fill up root partition
         if [ $datadir_is_ramdisk -eq 0 ];
         then
-            # Each disk consumes about 1.7MB (geom_stat) + 1.1MB(disk) of space
-            # so we need bigger tmpfs on systems with lots of disks.
-            no_disks=$(sysctl -n kern.disks | tr -s " " "\n" | wc -l)
-            # Each CPU takes about 1MB
-            no_cpus=$(sysctl -n kern.smp.cpus)
-            size=$(echo "(300 + ${no_disks}*2.8 + ${no_cpus}*1) / 1" | bc)
-            mount -t tmpfs -o size=${size}m tmpfs "${datadir}"
+            mount -t tmpfs -o size=1g tmpfs "${datadir}"
         fi
     fi
 
