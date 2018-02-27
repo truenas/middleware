@@ -322,7 +322,7 @@ class SystemDatasetService(ConfigService):
             proc = await Popen(f'zfs list -H -o name {_from}/.system|xargs zfs destroy -r', shell=True)
             await proc.communicate()
 
-        os.rmdir('/tmp/system.new')
+        shutil.rmtree('/tmp/system.new')
 
         for i in restart:
             await self.middleware.call('service.start', i)
