@@ -71,7 +71,8 @@ class FilesystemService(Service):
             stat = os.stat(path, follow_symlinks=False)
         except FileNotFoundError:
             raise CallError(f'Path {path} not found', errno.ENOENT)
-        return {
+
+        stat = {
             'size': stat.st_size,
             'mode': stat.st_mode,
             'uid': stat.st_uid,
@@ -83,6 +84,15 @@ class FilesystemService(Service):
             'inode': stat.st_ino,
             'nlink': stat.st_nlink,
         }
+
+        if os.path.exists(os.path.join(path, ".windows")):
+            stat["acl"] = "windows"
+        elif os.path.exists(os.path.join(path, ".mac")):
+            stat["acl"] = "mac"
+        else:
+            stat["acl"] = "unix"
+
+        return stat
 
     @private
     @accepts(
