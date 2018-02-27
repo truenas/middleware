@@ -574,6 +574,42 @@ class VMService(CRUDService):
         return vnc_devices
 
     @accepts()
+    def vnc_port_wizard(self):
+        """
+        It returns the next available VNC PORT and WEB VNC PORT.
+
+        Returns:
+            dict: with two keys vnc_port and vnc_web or None in case we can't query the db.
+        """
+        vnc_ports_in_use = []
+        vms = self.middleware.call_sync('datastore.query', 'vm.vm', [], {'order_by': ['id']})
+        if vms:
+            latest_vm_id = vms.pop().get('id', None)
+            vnc_port = 5900 + latest_vm_id + 1
+
+            check_vnc_device = self.middleware.call_sync('datastore.query', 'vm.device', [('dtype', '=', 'VNC')])
+            for vnc in check_vnc_device:
+                vnc_used_port = vnc['attributes'].get('vnc_port', None)
+                if vnc_used_port is None:
+                    vm_id = vnc['vm'].get('id', None)
+                    vnc_ports_in_use.append(5900 + vm_id)
+                else:
+                    vnc_ports_in_use.append(int(vnc_used_port))
+
+            auto_generate = True
+            while auto_generate:
+                if vnc_port in vnc_ports_in_use:
+                    vnc_port = vnc_port + 1
+                else:
+                    auto_generate = False
+                    split_port = int(str(vnc_port)[:2]) - 1
+                    vnc_web = int(str(split_port) + str(vnc_port)[2:])
+                    vnc_attr = {"vnc_port": vnc_port, "vnc_web": vnc_web}
+        else:
+            return None
+        return vnc_attr
+
+    @accepts()
     def get_vnc_ipv4(self):
         """
         Get all available IPv4 address in the system.
