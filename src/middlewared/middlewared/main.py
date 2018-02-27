@@ -395,6 +395,12 @@ class FileApplication(object):
                             denied = False
                 except binascii.Error:
                     pass
+            elif auth.startswith('Token '):
+                auth_token = auth.split(" ", 1)[1]
+                token = await self.middleware.call('auth.get_token', auth_token)
+
+                if token:
+                    denied = False
         else:
             qs = urllib.parse.parse_qs(request.query_string)
             if 'auth_token' in qs:
