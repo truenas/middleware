@@ -596,12 +596,12 @@ class VMService(CRUDService):
                 else:
                     vnc_ports_in_use.append(int(vnc_used_port))
 
-            auto_genarate = True
-            while auto_genarate:
+            auto_generate = True
+            while auto_generate:
                 if vnc_port in vnc_ports_in_use:
                     vnc_port = vnc_port + 1
                 else:
-                    auto_genarate = False
+                    auto_generate = False
                     split_port = int(str(vnc_port)[:2]) - 1
                     vnc_web = int(str(split_port) + str(vnc_port)[2:])
                     vnc_attr = {"vnc_port": vnc_port, "vnc_web": vnc_web}
