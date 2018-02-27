@@ -58,8 +58,6 @@ else:
 
 cfg_content = """#!/usr/bin/env python3.6
 
-import os
-
 user = "root"
 password = "%s"
 ip = "%s"

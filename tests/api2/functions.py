@@ -28,7 +28,7 @@ def GET_OUTPUT(testpath, inputs):
     return getit.json()[inputs]
 
 
-def GET_OUT_ALL(testpath):
+def GET_ALL_OUTPUT(testpath):
     getit = requests.get(freenas_url + testpath, headers=header,
                          auth=authentification)
     return getit.json()
