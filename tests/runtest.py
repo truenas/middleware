@@ -24,27 +24,32 @@ dotsshPath = localHome + '/.ssh'
 keyPath = localHome + '/.ssh/test_id_rsa'
 
 error_msg = """Usage for %s:
+Mandatory option
     --ip <###.###.###.###>     - IP of the FreeNAS
     --password <root password> - Password of the FreeNAS root user
     --interface <interface>    - The interface that FreeNAS is run one
+
+Optional option
+    --test <test name>         - Test name (Network, ALL)
+    --api <version number>     - API version number (1.0, 2.0)
     """ % argv[0]
 
-# if have no argumment stop
+# if have no argument stop
 if len(argv) == 1:
     print(error_msg)
     exit()
 
 # look if all the argument are there.
 try:
-    myopts, args = getopt.getopt(argv[1:], 'ipIt', ["ip=",
-                                                    "password=", "interface=",
-                                                    'test='])
+    myopts, args = getopt.getopt(argv[1:], 'aipIt', ["api=", "ip=", "password=",
+                                                     "interface=", 'test='])
 except getopt.GetoptError as e:
     print(str(e))
     print(error_msg)
     exit()
 
 testName = None
+api = "1.0"
 
 for output, arg in myopts:
     if output in ('-i', '--ip'):
@@ -55,6 +60,9 @@ for output, arg in myopts:
         interface = arg
     elif output in ('-t', '--test'):
         testName = arg
+    elif output in ('-a', '--api'):
+        api = arg
+        print(api)
 
 if interface == "vtnet0":
     disk = 'disk1 = "vtbd1"\ndisk2 = "vtbd2"'
@@ -63,19 +71,17 @@ else:
 
 cfg_content = """#!/usr/bin/env python3.6
 
-import os
-
 user = "root"
 password = "%s"
 ip = "%s"
-freenas_url = 'http://' + ip + '/api/v1.0'
+freenas_url = 'http://' + ip + '/api/v%s'
 interface = "%s"
 ntpServer = "10.20.20.122"
 localHome = "%s"
 %s
 keyPath = "%s"
 results_xml = "%s"
-""" % (passwd, ip, interface, localHome, disk, keyPath, results_xml)
+""" % (passwd, ip, api, interface, localHome, disk, keyPath, results_xml)
 
 cfg_file = open("auto_config.py", 'w')
 cfg_file.writelines(cfg_content)
@@ -98,68 +104,73 @@ cfg_file = open("auto_config.py", 'a')
 cfg_file.writelines('sshKey = "%s"\n' % Key)
 cfg_file.close()
 
-# Create test
-call(["python3.6", "create/network.py"])
-if testName != 'network':
-    call(["python3.6", "create/ssh.py"])
-    call(["python3.6", "create/storage.py"])
-    call(["python3.6", "create/ntp.py"])
-    call(["python3.6", "create/ad_bsd.py"])
-    call(["python3.6", "create/ad_osx.py"])
-    call(["python3.6", "create/afp_osx.py"])
-    # call(["python3.6", "create/alerts.py"])
-    call(["python3.6", "create/bootenv.py"])
-    call(["python3.6", "create/cronjob.py"])
-    # call(["python3.6", "create/debug.py"])
-    call(["python3.6", "create/emails.py"])
-    call(["python3.6", "create/domaincontroller.py"])
-    call(["python3.6", "create/user.py"])
-    call(["python3.6", "create/ftp.py"])
-    call(["python3.6", "create/group.py"])
-    call(["python3.6", "create/iscsi.py"])
-    # jails API Broken
-    # call(["python3.6", "create/jails.py"])
-    call(["python3.6", "create/ldap_bsd.py"])
-    call(["python3.6", "create/ldap_osx.py"])
-    call(["python3.6", "create/lldp.py"])
-    call(["python3.6", "create/nfs.py"])
-    call(["python3.6", "create/rsync.py"])
-    # call(["python3.6", "create/smarttest.py"])
-    call(["python3.6", "create/smb_bsd.py"])
-    call(["python3.6", "create/smb_osx.py"])
-    call(["python3.6", "create/snmp.py"])
-    call(["python3.6", "create/system.py"])
-    call(["python3.6", "create/tftp.py"])
-    call(["python3.6", "create/ups.py"])
-    call(["python3.6", "create/webdav_bsd.py"])
-    call(["python3.6", "create/webdav_osx.py"])
+if api == "1.0":
+    # Create test
+    call(["python3.6", "api1/create/network.py"])
+    if testName != 'network':
+        call(["python3.6", "api1/create/ssh.py"])
+        call(["python3.6", "api1/create/storage.py"])
+        call(["python3.6", "api1/create/ntp.py"])
+        call(["python3.6", "api1/create/ad_bsd.py"])
+        call(["python3.6", "api1/create/ad_osx.py"])
+        call(["python3.6", "api1/create/afp_osx.py"])
+        # call(["python3.6", "api1/create/alerts.py"])
+        call(["python3.6", "api1/create/bootenv.py"])
+        call(["python3.6", "api1/create/cronjob.py"])
+        # call(["python3.6", "api1/create/debug.py"])
+        call(["python3.6", "api1/create/emails.py"])
+        call(["python3.6", "api1/create/domaincontroller.py"])
+        call(["python3.6", "api1/create/user.py"])
+        call(["python3.6", "api1/create/ftp.py"])
+        call(["python3.6", "api1/create/group.py"])
+        call(["python3.6", "api1/create/iscsi.py"])
+        # jails API Broken
+        # call(["python3.6", "api1/create/jails.py"])
+        call(["python3.6", "api1/create/ldap_bsd.py"])
+        call(["python3.6", "api1/create/ldap_osx.py"])
+        call(["python3.6", "api1/create/lldp.py"])
+        call(["python3.6", "api1/create/nfs.py"])
+        call(["python3.6", "api1/create/rsync.py"])
+        # call(["python3.6", "api1/create/smarttest.py"])
+        call(["python3.6", "api1/create/smb_bsd.py"])
+        call(["python3.6", "api1/create/smb_osx.py"])
+        call(["python3.6", "api1/create/snmp.py"])
+        call(["python3.6", "api1/create/system.py"])
+        call(["python3.6", "api1/create/tftp.py"])
+        call(["python3.6", "api1/create/ups.py"])
+        call(["python3.6", "api1/create/webdav_bsd.py"])
+        call(["python3.6", "api1/create/webdav_osx.py"])
 
-    # Update test
-    call(["python3.6", "update/ad_bsd.py"])
-    call(["python3.6", "update/ad_osx.py"])
-    call(["python3.6", "update/afp_osx.py"])
-    # call(["python3.6", "update/alerts.py]"])
-    call(["python3.6", "update/bootenv.py"])
-    call(["python3.6", "update/cronjob.py"])
-    call(["python3.6", "update/ftp.py"])
-    # call(["python3.6", "update/group.py"])
-    call(["python3.6", "update/iscsi.py"])
-    call(["python3.6", "update/ldap_bsd.py"])
-    call(["python3.6", "update/ldap_osx.py"])
-    call(["python3.6", "update/nfs.py"])
-    call(["python3.6", "update/rsync.py"])
-    call(["python3.6", "update/smb_bsd.py"])
-    call(["python3.6", "update/smb_osx.py"])
-    call(["python3.6", "update/storage.py"])
-    call(["python3.6", "update/user.py"])
-    call(["python3.6", "update/webdav_bsd.py"])
-    call(["python3.6", "update/webdav_osx.py"])
+        # Update test
+        call(["python3.6", "api1/update/ad_bsd.py"])
+        call(["python3.6", "api1/update/ad_osx.py"])
+        call(["python3.6", "api1/update/afp_osx.py"])
+        # call(["python3.6", "api1/update/alerts.py]"])
+        call(["python3.6", "api1/update/bootenv.py"])
+        call(["python3.6", "api1/update/cronjob.py"])
+        call(["python3.6", "api1/update/ftp.py"])
+        # call(["python3.6", "api1/update/group.py"])
+        call(["python3.6", "api1/update/iscsi.py"])
+        call(["python3.6", "api1/update/ldap_bsd.py"])
+        call(["python3.6", "api1/update/ldap_osx.py"])
+        call(["python3.6", "api1/update/nfs.py"])
+        call(["python3.6", "api1/update/rsync.py"])
+        call(["python3.6", "api1/update/smb_bsd.py"])
+        call(["python3.6", "api1/update/smb_osx.py"])
+        call(["python3.6", "api1/update/storage.py"])
+        call(["python3.6", "api1/update/user.py"])
+        call(["python3.6", "api1/update/webdav_bsd.py"])
+        call(["python3.6", "api1/update/webdav_osx.py"])
 
-    # Delete test
-    call(["python3.6", "delete/bootenv.py"])
-    call(["python3.6", "delete/cronjob.py"])
-    # call(["python3.6", "delete/group.py"])
-    call(["python3.6", "delete/iscsi.py"])
-    # call(["python3.6", "delete/rsync.py"])
-    call(["python3.6", "delete/storage.py"])
-    call(["python3.6", "delete/user.py"])
+        # Delete test
+        call(["python3.6", "api1/delete/bootenv.py"])
+        call(["python3.6", "api1/delete/cronjob.py"])
+        # call(["python3.6", "api1/delete/group.py"])
+        call(["python3.6", "api1/delete/iscsi.py"])
+        # call(["python3.6", "api1/delete/rsync.py"])
+        call(["python3.6", "api1/delete/storage.py"])
+        call(["python3.6", "api1/delete/user.py"])
+elif api == "2.0":
+    call(["python3.6", "api2/interfaces.py"])
+    call(["python3.6", "api2/network.py"])
+    call(["python3.6", "api2/disk.py"])

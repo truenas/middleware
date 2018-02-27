@@ -10,7 +10,7 @@ import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import interface, results_xml, ip
-from functions import GET_OUT_ALL
+from functions import GET_ALL_OUTPUT
 # try:
 #     from config import BRIDGEDOMAIN, BRIDGEHOST, BRIDGEDNS, BRIDGEGW
 # except ImportError:
@@ -24,14 +24,15 @@ TestName = "get interface information"
 class get_interfaces_test(unittest.TestCase):
 
     def test_01_get_interfaces_driver(self):
-        assert GET_OUT_ALL('/interfaces/query')[0]['name'] == interface
+        assert GET_ALL_OUTPUT('/interfaces/query')[0]['name'] == interface
 
     def test_02_get_interfaces_ip(self):
-        getip = GET_OUT_ALL('/interfaces/query')[0]['aliases'][1]['address']
+        getip = GET_ALL_OUTPUT('/interfaces/query')[0]['aliases'][1]['address']
         assert getip == ip
 
     def test_03_get_interfaces_netmask(self):
-        getinfo = GET_OUT_ALL('/interfaces/query')[0]['aliases'][1]['netmask']
+        getinfo = GET_ALL_OUTPUT('/interfaces/query')
+        getinfo = getinfo[0]['aliases'][1]['netmask']
         assert getinfo == 24
 
 

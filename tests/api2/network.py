@@ -10,7 +10,7 @@ import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import interface, results_xml, ip
-from functions import GET_OUT_ALL
+from functions import GET_ALL_OUTPUT
 try:
     from config import BRIDGEGW
 except ImportError:
@@ -23,16 +23,17 @@ TestName = "get network information"
 class get_network_info_test(unittest.TestCase):
 
     def test_01_get_IPV4_info(self):
-        getinfo = GET_OUT_ALL("/network/general/summary")
+        getinfo = GET_ALL_OUTPUT("/network/general/summary")
         getinfo = getinfo['ips'][interface]['IPV4']
         assert getinfo == ['%s/24' % ip]
 
     def test_02_get_default_routes_info(self):
-        getinfo = GET_OUT_ALL("/network/general/summary")['default_routes'][0]
+        getinfo = GET_ALL_OUTPUT("/network/general/summary")
+        getinfo = getinfo['default_routes'][0]
         assert getinfo == BRIDGEGW
 
     def test_03_get_nameserver_info(self):
-        getinfo = GET_OUT_ALL("/network/general/summary")['nameservers'][0]
+        getinfo = GET_ALL_OUTPUT("/network/general/summary")['nameservers'][0]
         assert getinfo == BRIDGEGW
 
 
