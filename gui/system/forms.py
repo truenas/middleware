@@ -967,10 +967,10 @@ class ManualUpdateWizard(FileWizard):
                                 elif job['state'] == 'FAILED':
                                     raise MiddlewareError(job['error'])
                             time.sleep(1)
-                    try:
-                        c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
-                    except Exception:
-                        log.debug('Failed to reboot standby', exc_info=True)
+                        try:
+                            c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
+                        except Exception:
+                            log.debug('Failed to reboot standby', exc_info=True)
                 except ClientException as e:
                     if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and (e.trace is None or e.trace['class'] not in ('KeyError', 'ConnectionRefusedError')):
                         raise
