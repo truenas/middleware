@@ -284,8 +284,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                       ' root' % ifname)
             sys.exit(1)
 
-    if not forcetakeover:
-        run('pkill -9 -f fenced')
+    run('pkill -9 -f fenced')
 
     try:
         os.unlink(FAILED_FILE)
