@@ -518,6 +518,17 @@ Acceptable formats are 255.255.255.0,
                 iface.int_vhid = vhid
                 break
 
+            while True:
+                intcrit = input(_("Mark interface as Critical for Failover? (y/n) "))
+                if intcrit.lower().startswith("y"):
+                    iface.int_critical = True
+                elif intcrit.lower().startswith("n"):
+                    iface.int_critical = False
+                else:
+                    print(_("Please select y or n"))
+                    continue
+                break
+
             pwd_prompt = prompt("Password", iface.int_pass)
             passwd = input(pwd_prompt)
             if not passwd and iface.int_pass:
