@@ -69,10 +69,10 @@ async def mount(device, path, fs_type, options=None):
 
     if proc.returncode != 0:
         logger.debug("Mount failed (%s): %s", proc.returncode, output)
-        raise ValueError("Mount failed {0} -> {1}, {2}" .format(
+        raise ValueError("Mount failed (exit code {0}):\n{1}{2}" .format(
             proc.returncode,
-            output[0],
-            output[1]
+            output[0].decode("utf-8"),
+            output[1].decode("utf-8"),
         ))
     else:
         return True
