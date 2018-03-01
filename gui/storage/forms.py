@@ -301,12 +301,12 @@ class VolumeManagerForm(VolumeMixin, Form):
                     notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
 
                 scrub = models.Scrub.objects.create(scrub_volume=volume)
-        except Exception:
-            if volume:
+        except Exception as e:
+            if not add and volume:
                 volume.delete(destroy=False, cascade=False)
             if scrub:
                 scrub.delete()
-            raise
+            raise e
 
         if volume.vol_encrypt >= 2 and add:
             # FIXME: ask current passphrase to the user
