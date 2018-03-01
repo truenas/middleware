@@ -13,6 +13,10 @@
 
 run_smartctl()
 {
+	# Before executing smartctl -i, set IFS to " " so that the command
+	# parameter, especially ones built for special controllers, would
+	# be split into several parameters as required by smartctl(8).
+	local IFS=" "
 	/usr/local/sbin/smartctl $1
 }
 
@@ -94,6 +98,12 @@ get_disk_smart_options_impl()
 		# Common device
 		${disk}:*)
 			propdev="/dev/$disk"
+
+			if run_smartctl "-i $propdev" | grep "Unknown USB bridge" > /dev/null 2>&1
+			then
+				propdev="/dev/$disk -d sat"
+			fi
+
 			break
 			;;
 		esac
