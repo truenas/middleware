@@ -1125,6 +1125,9 @@ class notifier(metaclass=HookMetaclass):
 
         self.sync_encrypted(volume)
 
+        if volume.vol_encrypt >= 1:
+            self._system(f'/sbin/geli detach {label}')
+
         # TODO: This operation will cause damage to disk data which should be limited
         if from_disk:
             self.__gpt_unlabeldisk(from_disk)
