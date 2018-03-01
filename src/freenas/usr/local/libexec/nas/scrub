@@ -80,6 +80,19 @@ main()
 
 	pool=$1
 
+	pool_json=$(midclt call pool.query '[["name", "=","'${pool}'"]]' | jq '.[]')
+	pool_status=$(echo $pool_json | jq -r '.status')
+	pool_decrypted=$(echo $pool_json | jq -r '.is_decrypted')
+
+	if [ "$pool_status" = "OFFLINE" ] ; then
+		if [ "$pool_decrypted" = "false" ] ; then
+			echo "${pool} is not decrypted, skipping scrub."
+		else
+			echo "${pool} is offline, not running scrub"
+		fi
+		return 6
+	fi
+
 	# Piece of code based on 800.scrub-zfs from periodic
 	_last_scrub=$(zpool history ${pool} | \
 		egrep "^[0-9\.\:\-]{19} zpool scrub ${pool}\$" | tail -1 |\
