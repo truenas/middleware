@@ -4,6 +4,7 @@ import copy
 from datetime import datetime
 import enum
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -12,6 +13,8 @@ import traceback
 import threading
 
 from middlewared.utils import Popen
+
+logger = logging.getLogger(__name__)
 
 
 class State(enum.Enum):
@@ -160,7 +163,7 @@ class JobsDeque(object):
     """
 
     def __init__(self, maxlen=1000):
-        self.maxlen = 1000
+        self.maxlen = maxlen
         self.count = 0
         self.__dict = OrderedDict()
 
@@ -168,7 +171,12 @@ class JobsDeque(object):
         self.count += 1
         job.set_id(self.count)
         if len(self.__dict) > self.maxlen:
-            self.__dict.popitem(last=False)
+            for old_job_id, old_job in self.__dict.items():
+                if old_job.state in (State.SUCCESS, State.FAILED, State.ABORTED):
+                    del self.__dict[old_job_id]
+                    break
+            else:
+                logger.warning("There are %d jobs waiting or running", len(self.__dict))
         self.__dict[job.id] = job
 
     def all(self):
