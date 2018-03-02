@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Bool, Dict, Str
-from middlewared.service import ConfigService, private
+from middlewared.service import ConfigService, job, private
 from middlewared.utils import Popen, run
 
 import asyncio
@@ -69,7 +69,8 @@ class SystemDatasetService(ConfigService):
         Bool('syslog'),
         Bool('rrd'),
     ))
-    async def do_update(self, data):
+    @job(lock='sysdataset_update')
+    async def do_update(self, job, data):
         config = await self.config()
 
         new = config.copy()
@@ -94,7 +95,7 @@ class SystemDatasetService(ConfigService):
         if config['rrd'] != new['rrd']:
             await self.rrd_toggle()
             await self.middleware.call('service.restart', 'collectd')
-        return config['id']
+        return config
 
     @accepts(Bool('mount', default=True))
     @private
@@ -112,11 +113,13 @@ class SystemDatasetService(ConfigService):
 
         if config['pool'] and config['pool'] != 'freenas-boot':
             if not await self.middleware.call('pool.query', [('name', '=', config['pool'])]):
-                await self.middleware.call('systemdataset.update', {'pool': ''})
+                job = await self.middleware.call('systemdataset.update', {'pool': ''})
+                await job.wait()
                 config = await self.config()
 
         if not config['pool'] and not await self.middleware.call('system.is_freenas'):
-            await self.middleware.call('systemdataset.update', {'pool': 'freenas-boot'})
+            job = await self.middleware.call('systemdataset.update', {'pool': 'freenas-boot'})
+            await job.wait()
             config = await self.config()
         elif not config['pool']:
             pool = None
@@ -125,7 +128,8 @@ class SystemDatasetService(ConfigService):
                     pool = p
                     break
             if pool:
-                await self.middleware.call('systemdataset.update', {'pool': pool['name']})
+                job = await self.middleware.call('systemdataset.update', {'pool': pool['name']})
+                await job.wait()
                 config = await self.config()
 
         if not config['basename']:
