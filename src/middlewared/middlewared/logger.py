@@ -12,6 +12,8 @@ from raven.transport.threaded import ThreadedHTTPTransport
 logging.getLogger('MARKDOWN').setLevel(logging.INFO)
 # asyncio runs in debug mode but we do not need INFO/DEBUG
 logging.getLogger('asyncio').setLevel(logging.WARN)
+# we dont need ws4py close debug messages
+logging.getLogger('ws4py').setLevel(logging.WARN)
 
 LOGFILE = '/var/log/middlewared.log'
 logging.TRACE = 6
