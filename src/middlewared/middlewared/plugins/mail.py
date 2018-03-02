@@ -264,7 +264,7 @@ class MailService(ConfigService):
             # This is because FreeNAS doesn't run a full MTA.
             # else:
             #    server.connect()
-            headers = '\n'.join([f'{k}: {v}' for k, v in m._headers])
+            headers = '\n'.join([f'{k}: {v}' for k, v in msg._headers])
             syslog.syslog(f"sending mail to {', '.join(to)}\n{headers}")
             server.sendmail(config['fromemail'], to, msg.as_string())
             server.quit()
