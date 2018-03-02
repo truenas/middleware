@@ -36,6 +36,7 @@ class MiddlewareModelForm:
     middleware_attr_prefix = NotImplemented
     middleware_attr_schema = NotImplemented
     middleware_plugin = NotImplemented
+    middleware_job = False
     is_singletone = NotImplemented
 
     middleware_exclude_fields = []
@@ -75,6 +76,9 @@ class MiddlewareModelForm:
             self._middleware_action = "create"
 
             args = (data,) + args
+
+        if self.middleware_job:
+            kwargs['job'] = True
 
         with client as c:
             try:
