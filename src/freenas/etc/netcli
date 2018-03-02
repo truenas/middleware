@@ -69,6 +69,7 @@ from freenasUI.common.system import get_sw_version
 from freenasUI.network.models import GlobalConfiguration, Interfaces, \
 	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
 from freenasUI.system.models import Settings, Support
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 
 from requests.packages.urllib3 import poolmanager
@@ -1280,11 +1281,28 @@ def main_menu():
 
     while True:
         if is_truenas and os.path.exists('/tmp/.failover_needop'):
-             yes = input(_("Enter passphrase now? (y/n) "))
-             if yes.lower().startswith("y"):
-                 os.system("/usr/local/sbin/enc_helper interactive")
-                 time.sleep(5)
-                 continue
+            """
+            Currently we can have multiple pools.
+            Because one encrypted pool failed to import does not mean the node
+            is supposed/allowed to unlock.
+            """
+            passphrase = (notifier().failover_status() != 'MASTER')
+            if passphrase:
+                try:
+                    with client as c:
+                        passphrase &= (
+                            c.call('failover.call_remote', 'notifier.failover_status') != 'MASTER'
+                        )
+
+                except Exception as e:
+                    pass
+
+            if passphrase:
+                yes = input(_("Enter passphrase now? (y/n) "))
+                if yes.lower().startswith("y"):
+                    os.system("/usr/local/sbin/enc_helper interactive")
+                    time.sleep(5)
+                    continue
 
         if is_truenas:
             print(netcli_title())
