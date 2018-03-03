@@ -109,13 +109,13 @@ class WSClient(WebSocketClient):
                             sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
                         except (AttributeError, socket.error):
                             pass
-                except Exception:
+                except Exception as e:
                     if self.reserved_fd:
                         try:
                             os.close(self.reserved_fd)
                         except OSError:
                             pass
-                    raise
+                    raise e
 
             WebSocket.__init__(self, sock, protocols=kwargs.get('protocols'),
                                extensions=kwargs.get('extensions'),
@@ -157,6 +157,8 @@ class WSClient(WebSocketClient):
                 continue
             else:
                 break
+        if fd < 0:
+            raise ValueError('Failed to reserv a privileged port')
         return fd
 
     def connect(self):
@@ -184,12 +186,17 @@ class WSClient(WebSocketClient):
     def closed(self, code, reason=None):
         self.protocol.on_close(code, reason)
 
-    def close_connection(self):
+    def __close_reserved_fd(self):
         try:
             if self.reserved_fd:
                 os.close(self.reserved_fd)
         except OSError:
             pass
+        finally:
+            self.reserved_fd = None
+
+    def close_connection(self):
+        self.__close_reserved_fd()
         return super().close_connection()
 
     def received_message(self, message):
@@ -203,6 +210,9 @@ class WSClient(WebSocketClient):
 
     def on_close(self, code, reason=None):
         self.client.on_close(code, reason)
+
+    def __del__(self):
+        self.__close_reserved_fd()
 
 
 class Call(object):
@@ -284,16 +294,20 @@ class Client(object):
             uri = 'ws://127.0.0.1:6000/websocket'
         self._closed = Event()
         self._connected = Event()
-        self._ws = WSClient(
-            uri,
-            client=self,
-            reserved_ports=reserved_ports,
-            reserved_ports_blacklist=reserved_ports_blacklist,
-        )
-        self._ws.connect()
-        self._connected.wait(10)
-        if not self._connected.is_set():
-            raise ClientException('Failed connection handshake')
+        try:
+            self._ws = WSClient(
+                uri,
+                client=self,
+                reserved_ports=reserved_ports,
+                reserved_ports_blacklist=reserved_ports_blacklist,
+            )
+            self._ws.connect()
+            self._connected.wait(10)
+            if not self._connected.is_set():
+                raise ClientException('Failed connection handshake')
+        except Exception as e:
+            del self._ws
+            raise e
 
     def __enter__(self):
         return self
