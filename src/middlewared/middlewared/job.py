@@ -295,6 +295,9 @@ class Job(object):
             self.set_exception(sys.exc_info())
             raise
         finally:
+            if self.method_name == "mail.send":
+                os.close(self.read_fd)
+                os.close(self.write_fd)
             queue.release_lock(self)
             self._finished.set()
             self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
