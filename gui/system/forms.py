@@ -131,7 +131,7 @@ def clean_path_execbit(path):
             mode = os.stat(current).st_mode
             if mode & stat.S_IXOTH == 0:
                 raise forms.ValidationError(
-                    _("The path '%s' requires execute permission bit") % (
+                    _("The path '%s' requires an execute permission bit.") % (
                         current,
                     )
                 )
@@ -149,7 +149,7 @@ def clean_path_locked(mp):
         obj = qs[0]
         if not obj.is_decrypted():
             raise forms.ValidationError(
-                _("The volume %s is locked by encryption") % (
+                _("Volume %s is locked by encryption.") % (
                     obj.vol_name,
                 )
             )
@@ -166,7 +166,8 @@ def clean_certificate(instance, certificate):
     try:
         load_certificate(certificate)
     except crypto.Error:
-        raise forms.ValidationError(_("CA not in PEM format."))
+        raise forms.ValidationError(
+            _("The certificate is not in Privacy Enhanced Mail (PEM) format."))
 
     return certificate
 
@@ -175,13 +176,13 @@ def validate_certificate_keys_match(public_key, private_key, passphrase=None):
     try:
         public_key_obj = crypto.load_certificate(crypto.FILETYPE_PEM, public_key)
     except crypto.Error:
-        raise forms.ValidationError(_("Not a valid certificate."))
+        raise forms.ValidationError(_("Certificate invalid!"))
 
     try:
         private_key_obj = crypto.load_privatekey(crypto.FILETYPE_PEM, private_key,
                                                  passphrase=lambda _: passphrase.encode() if passphrase else b"")
     except crypto.Error:
-        raise forms.ValidationError(_("Not a valid private key."))
+        raise forms.ValidationError(_("Invalid private key!"))
 
     try:
         context = SSL.Context(SSL.TLSv1_2_METHOD)
@@ -198,7 +199,7 @@ def check_certificate(certificate):
     nmatches = len(matches)
     if not nmatches:
         raise forms.ValidationError(_(
-            "Not a valid certificate."
+            "Invalid certificate!"
         ))
 
     return nmatches
@@ -228,7 +229,7 @@ class BootEnvAddForm(Form):
             except ValidationErrors:
                 raise
             except ClientException:
-                raise MiddlewareError(_('Failed to create a new Boot.'))
+                raise MiddlewareError(_('Boot Environment creation failed!'))
 
 
 class BootEnvRenameForm(Form):
@@ -253,7 +254,7 @@ class BootEnvRenameForm(Form):
             except ValidationErrors:
                 raise
             except ClientException:
-                raise MiddlewareError(_('Failed to rename Boot Environment.'))
+                raise MiddlewareError(_('Boot Environment rename failed!'))
 
 
 class BootEnvPoolAttachForm(Form):
@@ -479,8 +480,8 @@ class InitialWizard(CommonWizard):
                     ).split('|')
                     if not _n.zfs_import(volume_name, guid):
                         raise MiddlewareError(_(
-                            'The volume "%s" failed to import, '
-                            'for futher details check pool status'
+                            'Volume "%s" import failed!'
+                            ' Check the pool status for more details.'
                         ) % volume_name)
 
                 volume = Volume(vol_name=volume_name)
@@ -601,7 +602,7 @@ class InitialWizard(CommonWizard):
 
                 if errno > 0:
                     raise MiddlewareError(
-                        _('Failed to create ZFS: %s') % errmsg
+                        _('Failed to create ZFS item %s.') % errmsg
                     )
 
                 path = '/mnt/%s/%s' % (volume_name, share_name)
@@ -1063,7 +1064,7 @@ class SettingsForm(ModelForm):
 
         if not cdata["stg_guicertificate"]:
             raise forms.ValidationError(
-                "HTTPS specified without certificate")
+                "HTTPS is specified without a certificate.")
         else:
             certificate_obj = models.Certificate.objects.get(cert_name=cdata["stg_guicertificate"])
             fingerprint = certificate_obj.get_fingerprint()
@@ -2059,7 +2060,7 @@ class InitialWizardShareForm(Form):
             path = '/mnt/%s/%s' % (volume_name, share_name)
             if os.path.exists(path):
                 raise forms.ValidationError(
-                    _('Share path %s already exists') % path
+                    _('Share path %s already exists.') % path
                 )
         return share_name
 
@@ -2555,11 +2556,11 @@ class CertificateAuthorityImportForm(ModelForm):
             ))
         if name in ("external", "self-signed", "external - signature pending"):
             raise forms.ValidationError(_(
-                "{0} is a reserved internal keyword for Certificate Management".format(name)
+                "{0} is a reserved internal keyword for Certificate Management.".format(name)
             ))
         reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
         if not reg:
-            raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
+            raise forms.ValidationError(_('Use only alphanumeric characters, "_" and "-".'))
         return name
 
     def clean_cert_passphrase(self):
