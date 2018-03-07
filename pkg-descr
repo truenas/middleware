@@ -6,4 +6,4 @@ With a basic data structure it is easy to implement any remote desktop
 protocol without dig into the protocol specification or third part
 libraries, you can check some of our examples.
 
-WWW: https://github.com/araujobsd/libhyve-remote
+WWW: https://github.com/freenas/libhyve-remote
