@@ -46,9 +46,8 @@ middlewared_stop() {
 
 	if checkyesno middlewared_debug; then
 		/usr/local/bin/tmux kill-session -t 'middlewared'
+		rm $pidfile
 	fi
-
-	rm $pidfile
 }
 
 name="middlewared"
