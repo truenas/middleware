@@ -1114,7 +1114,7 @@ def main():
         debug_level = args.debug_level or 'DEBUG'
 
     _logger = logger.Logger('middleware', debug_level)
-    get_logger = _logger.getLogger()
+    _logger.getLogger()
 
     pidpath = '/var/run/middlewared.pid'
 
