@@ -15,7 +15,7 @@ from functions import PUT, POST, GET_OUTPUT, BSD_TEST, return_output
 from functions import POSTNOJSON
 from auto_config import ip, results_xml
 try:
-    from config import BRIDGEHOST
+    from config import BRIDGEHOST, BRIDGETEST
 except ImportError:
     RunTest = False
 else:

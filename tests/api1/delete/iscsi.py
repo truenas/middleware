@@ -14,7 +14,7 @@ from functions import DELETE, PUT, BSD_TEST
 from auto_config import results_xml
 
 try:
-    from config import BRIDGEHOST
+    from config import BRIDGEHOST, BRIDGETEST
 except ImportError:
     RunTest = False
 else:

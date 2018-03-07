@@ -13,7 +13,7 @@ sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, OSX_TEST
 from auto_config import ip, results_xml
 try:
-    from config import BRIDGEHOST
+    from config import BRIDGEHOST, BRIDGETEST
 except ImportError:
     RunTest = False
 else:

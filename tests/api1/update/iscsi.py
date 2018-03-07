@@ -14,7 +14,7 @@ from functions import PUT, GET_OUTPUT, BSD_TEST, return_output
 from auto_config import ip, results_xml
 from time import sleep
 try:
-    from config import BRIDGEHOST
+    from config import BRIDGEHOST, BRIDGETEST
 except ImportError:
     RunTest = False
 else:
