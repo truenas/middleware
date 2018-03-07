@@ -643,6 +643,11 @@ class DiskService(CRUDService):
         dumpdev = False
         unused_partitions = []
         for size, partitions in swap_partitions_by_size.items():
+            # If we have only one partition add it to unused_partitions list
+            if len(partitions) == 1:
+                unused_partitions += partitions
+                continue
+
             for i in range(int(len(partitions) / 2)):
                 if len(swap_devices) > MIRROR_MAX:
                     break
