@@ -9,8 +9,6 @@ from .utils import start_daemon_thread
 from aiohttp import web
 from aiohttp_wsgi import WSGIHandler
 from collections import defaultdict
-from daemon import DaemonContext
-from daemon.pidfile import TimeoutPIDLockFile
 
 import argparse
 import asyncio
@@ -1094,7 +1092,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('restart', nargs='?')
-    parser.add_argument('--foreground', '-f', action='store_true')
+    parser.add_argument('--pidfile', '-P', action='store_true')
     parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
     parser.add_argument('--plugins-dirs', '-p', action='append')
     parser.add_argument('--debug-level', choices=[
@@ -1107,16 +1105,10 @@ def main():
     parser.add_argument('--log-handler', choices=[
         'console',
         'file',
-    ])
+    ], default='console')
     args = parser.parse_args()
 
-    #  Logger
-    if args.log_handler:
-        log_handlers = [args.log_handler]
-    else:
-        log_handlers = ['console' if args.foreground else 'file']
-
-    if args.debug_level is None and args.foreground:
+    if args.debug_level is None:
         debug_level = 'TRACE'
     else:
         debug_level = args.debug_level or 'DEBUG'
@@ -1136,19 +1128,10 @@ def main():
                 if e.errno != errno.ESRCH:
                     raise
 
-    if not args.foreground:
-        _logger.configure_logging('file')
-        daemonc = DaemonContext(
-            pidfile=TimeoutPIDLockFile(pidpath),
-            detach_process=True,
-            stdout=logger.LoggerStream(get_logger),
-            stderr=logger.LoggerStream(get_logger),
-        )
-        daemonc.open()
-    elif 'file' in log_handlers:
+    if 'file' in args.log_handler:
         _logger.configure_logging('file')
         sys.stdout = sys.stderr = _logger.stream()
-    elif 'console' in log_handlers:
+    elif 'console' in args.log_handler:
         _logger.configure_logging('console')
     else:
         _logger.configure_logging('file')
@@ -1157,7 +1140,7 @@ def main():
     # Workaround to tell django to not set up logging on its own
     os.environ['MIDDLEWARED'] = str(os.getpid())
 
-    if args.foreground:
+    if args.pidfile:
         with open(pidpath, "w") as _pidfile:
             _pidfile.write(f"{str(os.getpid())}\n")
 
@@ -1166,8 +1149,6 @@ def main():
         plugins_dirs=args.plugins_dirs,
         debug_level=debug_level,
     ).run()
-    if not args.foreground:
-        daemonc.close()
 
 
 if __name__ == '__main__':
