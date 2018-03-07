@@ -702,8 +702,7 @@ List resource
                 "smarttest_dayweek": "*",
                 "smarttest_daymonth": "*",
                 "smarttest_disks": [
-                        2,
-                        3
+                        "{devicename}vtbd3"
                 ],
                 "smarttest_month": "*",
                 "smarttest_type": "L",
@@ -734,7 +733,7 @@ Create resource
       Content-Type: application/json
 
         {
-                "smarttest_disks": [2, 3],
+                "smarttest_disks": ["{devicename}vtbd3"],
                 "smarttest_type": "L",
                 "smarttest_hour": "*",
                 "smarttest_daymonth": "*",
@@ -754,8 +753,7 @@ Create resource
                 "smarttest_dayweek": "*",
                 "smarttest_daymonth": "*",
                 "smarttest_disks": [
-                        2,
-                        3
+                        "{devicename}vtbd3"
                 ],
                 "smarttest_month": "*",
                 "smarttest_type": "L",
@@ -768,7 +766,7 @@ Create resource
    :json string smarttest_daymonth: days of the month to run
    :json string smarttest_hour: hours to run
    :json string smarttest_month: months to run
-   :json string smarttest_disks: list of ids of "storage/disk" resource
+   :json string smarttest_disks: list of disk_identifier of "storage/disk" resource
    :json string smarttest_type: L (Long Self-Test), S (Short Self-Test), C (Conveyance Self-Test (ATA  only)), O (Offline Immediate Test (ATA only))
    :json string smarttest_desc: user description of the test
    :reqheader Content-Type: the request content type
@@ -792,7 +790,7 @@ Update resource
 
         {
                 "smarttest_type": "S",
-                "smarttest_disks": [2, 3]
+                "smarttest_disks": ["{devicename}vtbd3"]
         }
 
    **Example response**:
@@ -807,8 +805,7 @@ Update resource
                 "smarttest_dayweek": "*",
                 "smarttest_daymonth": "*",
                 "smarttest_disks": [
-                        2,
-                        3
+                        "{devicename}vtbd3"
                 ],
                 "smarttest_month": "*",
                 "smarttest_type": "L",
@@ -821,7 +818,7 @@ Update resource
    :json string smarttest_daymonth: days of the month to run
    :json string smarttest_hour: hours to run
    :json string smarttest_month: months to run
-   :json string smarttest_disks: list of ids of "storage/disk" resource
+   :json string smarttest_disks: list of disk_identifier of "storage/disk" resource
    :json string smarttest_type: L (Long Self-Test), S (Short Self-Test), C (Conveyance Self-Test (ATA  only)), O (Offline Immediate Test (ATA only))
    :json string smarttest_desc: user description of the test
    :reqheader Content-Type: the request content type

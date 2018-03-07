@@ -172,7 +172,9 @@ class ConfigService(Service):
         return await self.middleware.call('datastore.config', self._config.datastore, options)
 
     async def update(self, data):
-        return await self.do_update(data)
+        return await self.middleware._call(
+            f'{self._config.namespace}.update', self, self.do_update, [data]
+        )
 
 
 class SystemServiceService(ConfigService):

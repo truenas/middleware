@@ -11,7 +11,16 @@
 
 : ${smartd_config="/usr/local/etc/smartd.conf"}
 
-print_devlist ()
+run_smartctl()
+{
+	# Before executing smartctl -i, set IFS to " " so that the command
+	# parameter, especially ones built for special controllers, would
+	# be split into several parameters as required by smartctl(8).
+	local IFS=" "
+	/usr/local/sbin/smartctl $1
+}
+
+print_devlist()
 {
 	camcontrol devlist -v | while read LINE; do
 		case $LINE in
@@ -38,7 +47,7 @@ print_devlist ()
 	done
 }
 
-parse_devlist()
+get_disk_smart_options_impl()
 {
 	disk=$1
 
@@ -83,32 +92,47 @@ parse_devlist()
 			;;
 		# LSI MegaRAID 6Gb/s and 12Gb/s SAS+SATA RAID controller (not supported)
 		${disk}:mrsas)
-			propdev=
+			propdev=""
 			break
 			;;
 		# Common device
-		${disk}:* )
-			propdev=/dev/$disk
+		${disk}:*)
+			propdev="/dev/$disk"
+
+			if run_smartctl "-i $propdev" | grep "Unknown USB bridge" > /dev/null 2>&1
+			then
+				propdev="/dev/$disk -d sat"
+			fi
+
 			break
 			;;
 		esac
 	done
 
-	if [ "$propdev" != "" ]; then
-		local IFS=" "
-		if ! /usr/local/sbin/smartctl -i ${propdev} | grep -v nvd | egrep -i "^.*SMART.*abled" > /dev/null 2>&1; then
-			propdev=/dev/$disk
+	smartctl=`run_smartctl "-i $propdev"`
+	if echo "$smartctl" | egrep -i "SMART.*abled" > /dev/null 2>&1
+	then
+		if ! echo "$smartctl" | egrep -i "SMART.*Enabled" > /dev/null 2>&1
+		then
+			if ! run_smartctl "-s on $propdev" > /dev/null 2>&1
+			then
+				# Unable to enable SMART
+				propdev=""
+			fi
 		fi
+	else
+		# SMART is not available
+		propdev=""
 	fi
 
 	echo -n $propdev
 }
 
-get_prop_dev()
+get_disk_smart_options()
 {
 	disk=$1
 	tmpfile=$2
-	grep ${disk}\$ ${tmpfile} | parse_devlist $disk
+	grep ${disk}\$ ${tmpfile} | get_disk_smart_options_impl $disk
 }
 
 generate_smartd_cfg()
@@ -140,16 +164,12 @@ EOF
 				continue
 				;;
 			esac
-			prop_dev=`get_prop_dev ${disk_name} ${TMPFILE}`
+
+			prop_dev=`get_disk_smart_options ${disk_name} ${TMPFILE}`
 			if [ "$prop_dev" == "" ]; then
 				continue
 			fi
-			/usr/local/sbin/smartctl -i ${prop_dev} > /dev/null 2>&1
-			if [ $? -eq 0 ]; then
-				if ! /usr/local/sbin/smartctl -i ${prop_dev} | egrep -i "^.*SMART.*Enabled" > /dev/null 2>&1; then
-					eval "/usr/local/sbin/smartctl -s on ${prop_dev} > /dev/null 2>&1" || continue
-				fi
-			fi
+
 			echo -n "${prop_dev} -a"
 			echo -n " -n ${smart_powermode}"
 			echo -n " -W ${smart_difference},${smart_informational},${smart_critical}"

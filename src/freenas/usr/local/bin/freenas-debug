@@ -274,6 +274,10 @@ main()
 	if $all_debug; then
 		func_pids=""
 		for opt in ${opts_spaced} ; do
+			if [ "${opt}" = "B" ]
+			then
+				continue
+			fi
 
 			var=\$$(echo "module_func_${opt}")
 			func=$(eval "echo ${var}")

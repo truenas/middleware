@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Bool, Dict, Str
-from middlewared.service import ConfigService, private
+from middlewared.service import ConfigService, job, private
 from middlewared.utils import Popen, run
 
 import asyncio
@@ -69,7 +69,8 @@ class SystemDatasetService(ConfigService):
         Bool('syslog'),
         Bool('rrd'),
     ))
-    async def do_update(self, data):
+    @job(lock='sysdataset_update')
+    async def do_update(self, job, data):
         config = await self.config()
 
         new = config.copy()
@@ -94,7 +95,7 @@ class SystemDatasetService(ConfigService):
         if config['rrd'] != new['rrd']:
             await self.rrd_toggle()
             await self.middleware.call('service.restart', 'collectd')
-        return config['id']
+        return config
 
     @accepts(Bool('mount', default=True))
     @private
@@ -112,11 +113,13 @@ class SystemDatasetService(ConfigService):
 
         if config['pool'] and config['pool'] != 'freenas-boot':
             if not await self.middleware.call('pool.query', [('name', '=', config['pool'])]):
-                await self.middleware.call('systemdataset.update', {'pool': ''})
+                job = await self.middleware.call('systemdataset.update', {'pool': ''})
+                await job.wait()
                 config = await self.config()
 
         if not config['pool'] and not await self.middleware.call('system.is_freenas'):
-            await self.middleware.call('systemdataset.update', {'pool': 'freenas-boot'})
+            job = await self.middleware.call('systemdataset.update', {'pool': 'freenas-boot'})
+            await job.wait()
             config = await self.config()
         elif not config['pool']:
             pool = None
@@ -125,7 +128,8 @@ class SystemDatasetService(ConfigService):
                     pool = p
                     break
             if pool:
-                await self.middleware.call('systemdataset.update', {'pool': pool['name']})
+                job = await self.middleware.call('systemdataset.update', {'pool': pool['name']})
+                await job.wait()
                 config = await self.config()
 
         if not config['basename']:
@@ -139,26 +143,7 @@ class SystemDatasetService(ConfigService):
         if not config['is_decrypted']:
             return
 
-        datasets = [i[0] for i in self.__get_datasets(config['pool'], config['uuid'])]
-
-        createdds = False
-        datasets_prop = {i['id']: i['properties'].get('mountpoint') for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', datasets)])}
-        for dataset in datasets:
-            mountpoint = datasets_prop.get(dataset)
-            if mountpoint and mountpoint['value'] != 'legacy':
-                await self.middleware.call(
-                    'zfs.dataset.update',
-                    dataset,
-                    {'properties': {'mountpoint': {'value': 'legacy'}}},
-                )
-            elif not mountpoint:
-                await self.middleware.call('zfs.dataset.create', {
-                    'name': dataset,
-                    'properties': {'mountpoint': 'legacy'},
-                })
-                createdds = True
-
-        if createdds:
+        if await self.__setup_datasets(config['pool'], config['uuid']):
             # There is no need to wait this to finish
             asyncio.ensure_future(self.middleware.call('service.restart', 'collectd'))
 
@@ -189,6 +174,29 @@ class SystemDatasetService(ConfigService):
 
         return config
 
+    async def __setup_datasets(self, pool, uuid):
+        """
+        Make sure system datasets for `pool` exist and have the right mountpoint property
+        """
+        createdds = False
+        datasets = [i[0] for i in self.__get_datasets(pool, uuid)]
+        datasets_prop = {i['id']: i['properties'].get('mountpoint') for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', datasets)])}
+        for dataset in datasets:
+            mountpoint = datasets_prop.get(dataset)
+            if mountpoint and mountpoint['value'] != 'legacy':
+                await self.middleware.call(
+                    'zfs.dataset.update',
+                    dataset,
+                    {'properties': {'mountpoint': {'value': 'legacy'}}},
+                )
+            elif not mountpoint:
+                await self.middleware.call('zfs.dataset.create', {
+                    'name': dataset,
+                    'properties': {'mountpoint': 'legacy'},
+                })
+                createdds = True
+        return createdds
+
     async def __mount(self, pool, uuid, path=SYSDATASET_PATH):
         for dataset, name in self.__get_datasets(pool, uuid):
             if name:
@@ -199,7 +207,7 @@ class SystemDatasetService(ConfigService):
                 continue
             if not os.path.isdir(mountpoint):
                 os.mkdir(mountpoint)
-            await run('mount', '-t', 'zfs', dataset, mountpoint, check=False)
+            await run('mount', '-t', 'zfs', dataset, mountpoint, check=True)
 
     async def __umount(self, pool, uuid):
         for dataset, name in reversed(self.__get_datasets(pool, uuid)):
@@ -302,6 +310,8 @@ class SystemDatasetService(ConfigService):
 
         if not os.path.exists('/tmp/system.new'):
             os.mkdir('/tmp/system.new')
+
+        await self.__setup_datasets(_to, config['uuid'])
         await self.__mount(_to, config['uuid'], path='/tmp/system.new')
 
         restart = ['syslogd', 'collectd']

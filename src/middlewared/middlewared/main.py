@@ -395,6 +395,12 @@ class FileApplication(object):
                             denied = False
                 except binascii.Error:
                     pass
+            elif auth.startswith('Token '):
+                auth_token = auth.split(" ", 1)[1]
+                token = await self.middleware.call('auth.get_token', auth_token)
+
+                if token:
+                    denied = False
         else:
             qs = urllib.parse.parse_qs(request.query_string)
             if 'auth_token' in qs:
@@ -469,11 +475,12 @@ class ShellWorkerThread(threading.Thread):
     and spawning the reader and writer threads.
     """
 
-    def __init__(self, ws, input_queue, loop):
+    def __init__(self, ws, input_queue, loop, jail=None):
         self.ws = ws
         self.input_queue = input_queue
         self.loop = loop
         self.shell_pid = None
+        self.jail = jail
         self._die = False
         super(ShellWorkerThread, self).__init__(daemon=True)
 
@@ -489,7 +496,17 @@ class ShellWorkerThread(threading.Thread):
                 except:
                     pass
             os.chdir('/root')
-            os.execve('/usr/local/bin/bash', ['bash'], {
+            cmd = [
+                '/usr/local/bin/bash'
+            ]
+
+            if self.jail is not None:
+                cmd = [
+                    '/usr/local/bin/iocage',
+                    'console',
+                    self.jail
+                ]
+            os.execve(cmd[0], cmd, {
                 'TERM': 'xterm',
                 'HOME': '/root',
                 'LANG': 'en_US.UTF-8',
@@ -597,7 +614,9 @@ class ShellApplication(object):
                 ws.send_json({
                     'msg': 'connected',
                 })
-                t_worker = ShellWorkerThread(ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop())
+
+                jail = data.get('jail')
+                t_worker = ShellWorkerThread(ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(), jail=jail)
                 t_worker.start()
 
         # If connection was not authenticated, return earlier

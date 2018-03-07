@@ -126,21 +126,7 @@ generate_collectd()
         # Create RAMdisk (if not already exists) for RRD files so they don't fill up root partition
         if [ $datadir_is_ramdisk -eq 0 ];
         then
-            mount -t tmpfs -o size=600m tmpfs "${datadir}"
-        fi
-    fi
-
-    if [ -f "${rrdfile}" ]; then
-        if use_rrd_dataset && [ -d "${rrdmnt}" ]; then
-            if tar -tf "${rrdfile}"|egrep -q '^collectd/rrd/$'; then
-                cd "${rrdmnt}"
-                tar -jxf "${rrdfile}"
-                mv collectd/rrd/* "${rrdmnt}/"
-                mv "${rrdfile}" "${rrdmnt}/"
-                rm -rf collectd
-            fi
-        elif [ -d "/var/db" -a ! -d "${datadir}" ]; then
-            (cd /var/db && tar jxf "${rrdfile}")
+            mount -t tmpfs -o size=1g tmpfs "${datadir}"
         fi
     fi
 
@@ -149,6 +135,18 @@ generate_collectd()
     else
         cd "${datadir}" || exit 1
     fi
+
+    if [ -f "${rrdfile}" ]; then
+        if tar -tf "${rrdfile}" | egrep -q '^collectd/rrd/$'; then
+            tar -jxf "${rrdfile}"
+            mv collectd/rrd/* .
+            rm -rf collectd
+        fi
+        if use_rrd_dataset; then
+            rm "${rrdfile}"
+        fi
+    fi
+
     # Migrate from old version, where "${hostname}" was a real directory
     # and "localhost" was a symlink.
     # Skip the case where "${hostname}" is "localhost", so symlink was not
@@ -279,7 +277,7 @@ LoadPlugin zfs_arc_v2
 </Plugin>
 
 <Plugin "geom_stat">
-    Filter "^([a]?da|ciss|md|mfi|md|nvd|pmem|xbd|vtbd)[0123456789]+(p[0123456789]+)?(\.eli)?$"
+    Filter "^([a]?da|ciss|md|mfi|md|nvd|pmem|xbd|vtbd)[0123456789]+$"
 </Plugin>
 
 <Plugin "df">

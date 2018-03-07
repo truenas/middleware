@@ -967,10 +967,10 @@ class ManualUpdateWizard(FileWizard):
                                 elif job['state'] == 'FAILED':
                                     raise MiddlewareError(job['error'])
                             time.sleep(1)
-                    try:
-                        c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
-                    except Exception:
-                        log.debug('Failed to reboot standby', exc_info=True)
+                        try:
+                            c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
+                        except Exception:
+                            log.debug('Failed to reboot standby', exc_info=True)
                 except ClientException as e:
                     if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and (e.trace is None or e.trace['class'] not in ('KeyError', 'ConnectionRefusedError')):
                         raise
@@ -1761,7 +1761,14 @@ class ConsulAlertsForm(ModelForm):
         self.instance.delete()
 
 
-class SystemDatasetForm(ModelForm):
+class SystemDatasetForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "sys_"
+    middleware_attr_schema = "sysdataset_update"
+    middleware_plugin = "systemdataset"
+    middleware_job = True
+    is_singletone = True
+
     sys_pool = forms.ChoiceField(
         label=_("System dataset pool"),
         required=False
@@ -1786,17 +1793,10 @@ class SystemDatasetForm(ModelForm):
             "systemDatasetMigration();"
         )
 
-    def save(self):
-        data = {
-            'pool': self.cleaned_data.get('sys_pool'),
-            'syslog': self.cleaned_data.get('sys_syslog_usedataset'),
-            'rrd': self.cleaned_data.get('sys_rrd_usedataset'),
-        }
-        with client as c:
-            pk = c.call('systemdataset.update', data)
-
-        self.instance = models.SystemDataset.objects.get(pk=pk)
-        return self.instance
+    def middleware_clean(self, update):
+        update['syslog'] = update.pop('syslog_usedataset')
+        update['rrd'] = update.pop('rrd_usedataset')
+        return update
 
 
 class InitialWizardDSForm(Form):

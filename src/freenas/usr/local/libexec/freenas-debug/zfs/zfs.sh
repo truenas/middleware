@@ -37,7 +37,7 @@ zfs_func()
 	section_footer
 
 	section_header "ZFS Pools Status"
-	zpool status
+	zpool status -v
 	section_footer
 
 	section_header "ZFS Pools History - excepting replication"
@@ -81,7 +81,7 @@ zfs_func()
 	section_header  "pool joined to storage"
 		cat  /tmp/pool.normal  |   ${FREENAS_DEBUG_MODULEDIR}/zfs/join_pool.nawk
 	section_footer
-	section_header  "enclusure data joined to pool"
+	section_header  "enclosure data joined to pool"
 		cat  /tmp/ses.normal  |   ${FREENAS_DEBUG_MODULEDIR}/zfs/join_ses.nawk
 	section_footer
 }
