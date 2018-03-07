@@ -1101,19 +1101,14 @@ def main():
         'INFO',
         'WARN',
         'ERROR',
-    ])
+    ], default='DEBUG')
     parser.add_argument('--log-handler', choices=[
         'console',
         'file',
     ], default='console')
     args = parser.parse_args()
 
-    if args.debug_level is None:
-        debug_level = 'TRACE'
-    else:
-        debug_level = args.debug_level or 'DEBUG'
-
-    _logger = logger.Logger('middleware', debug_level)
+    _logger = logger.Logger('middleware', args.debug_level)
     _logger.getLogger()
 
     pidpath = '/var/run/middlewared.pid'
@@ -1147,7 +1142,7 @@ def main():
     Middleware(
         loop_monitor=not args.disable_loop_monitor,
         plugins_dirs=args.plugins_dirs,
-        debug_level=debug_level,
+        debug_level=args.debug_level,
     ).run()
 
 

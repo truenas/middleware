@@ -6,7 +6,7 @@ reinstall: clean
 	python setup.py install --single-version-externally-managed --record=/dev/null
 
 dev: reinstall
-	middlewared restart -L -P
+	middlewared restart -L -P --debug-level 'TRACE'
 
 reinstall-remote:
 	sh -c 'if [ -z "${HOST}" ]; then echo "You need to set HOST"; exit 1; fi;'
