@@ -125,7 +125,7 @@ if api == "1.0":
         call(["python3.6", "api1/create/group.py"])
         call(["python3.6", "api1/create/iscsi.py"])
         # jails API Broken
-        # call(["python3.6", "api1/create/jails.py"])
+        call(["python3.6", "api1/create/jails.py"])
         call(["python3.6", "api1/create/ldap_bsd.py"])
         call(["python3.6", "api1/create/ldap_osx.py"])
         call(["python3.6", "api1/create/lldp.py"])
