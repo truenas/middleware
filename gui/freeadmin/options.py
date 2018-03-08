@@ -171,8 +171,14 @@ class BaseFreeAdmin(object):
                 authorization=APIAuthorization(),
             )
             mf = navtree._modelforms.get(self._model, None)
-            if mf and not isinstance(mf, dict):
-                myArgs['validation'] = FormValidation(form_class=mf)
+            if mf:
+                if isinstance(mf, dict):
+                    for v in mf.values():
+                        if getattr(v, "freeadmin_form", False):
+                            myArgs['validation'] = FormValidation(form_class=v)
+                            break
+                else:
+                    myArgs['validation'] = FormValidation(form_class=mf)
 
             """
             For models that represent a single object do not allow create
