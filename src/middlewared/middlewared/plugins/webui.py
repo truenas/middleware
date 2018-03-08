@@ -16,9 +16,9 @@ class ImageService(CRUDService):
     @private
     async def url_extend(self, image):
         """
-        Adds the URL field to the image which is /var/db/system/webui/images/ID
+        Adds the URL field to the image which is /images/ID
         """
-        image["url"] = f"/var/db/system/webui/images/{image['id']}"
+        image["url"] = f"/images/{image['id']}"
 
         return image
 
