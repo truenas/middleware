@@ -69,11 +69,12 @@ class Alert(object):
     CRIT = 'CRIT'
     WARN = 'WARN'
 
-    def __init__(self, level, message, id=None, dismiss=False, hardware=False):
+    def __init__(self, level, message, id=None, dismiss=False, hardware=False, mail=None):
         self._level = level
         self._message = message
         self._dismiss = dismiss
         self._hardware = hardware
+        self._mail = mail
         if id is None:
             self._id = hashlib.md5(message.encode('utf8')).hexdigest()
         else:
@@ -136,6 +137,9 @@ class Alert(object):
 
     def getDatetime(self):
         return datetime.datetime.fromtimestamp(self._timestamp)
+
+    def getMail(self):
+        return self._mail
 
 
 class SnmpTrapSender:
@@ -391,16 +395,6 @@ class AlertPlugins(metaclass=HookMetaclass):
         qs = mAlert.objects.exclude(message_id__in=ids, node=node)
         if qs.exists():
             qs.delete()
-        crits = sorted([a for a in rvs if a and a.getLevel() == Alert.CRIT])
-        if obj and crits:
-            lastcrits = sorted([
-                a for a in obj['alerts'] if a and a.getLevel() == Alert.CRIT
-            ])
-            if crits == lastcrits:
-                crits = []
-
-        if crits:
-            self.email(crits)
 
         new_alerts = sorted([
             a
@@ -408,11 +402,30 @@ class AlertPlugins(metaclass=HookMetaclass):
             if a and (not obj or a not in obj['alerts'])
         ])
 
+        critical_alerts = sorted([
+            a
+            for a in rvs
+            if a.getLevel() == Alert.CRIT
+        ])
+        new_critical_alerts_worth_emailing = [
+            a
+            for a in critical_alerts
+            if a in new_alerts and a.getMail() is None
+        ]
+        if new_critical_alerts_worth_emailing:
+            self.email(critical_alerts)
+
         if service_enabled("snmp"):
             for a in cancelled_alerts:
                 self.snmp_trap_sender.cancel_alert(a)
             for a in new_alerts:
                 self.snmp_trap_sender.send_alert(a)
+
+        for a in new_alerts:
+            mail = a.getMail()
+            if mail:
+                with client as c:
+                    c.call('mail.send', mail, job=True)
 
         if not notifier().is_freenas():
             # Automatically create ticket for new alerts tagged as possible
