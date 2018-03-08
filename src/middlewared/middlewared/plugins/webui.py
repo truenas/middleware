@@ -18,7 +18,7 @@ class ImageService(CRUDService):
         """
         Adds the URL field to the image which is /images/ID
         """
-        image["url"] = f"/images/{image['id']}"
+        image["url"] = f"/images/{image['id']}.png"
 
         return image
 
@@ -45,7 +45,7 @@ class ImageService(CRUDService):
             # Likely a duplicate entry
             raise CallError(e)
 
-        final_location = f"/var/db/system/webui/images/{id}"
+        final_location = f"/var/db/system/webui/images/{id}.png"
         put_job = await self.middleware.call('filesystem.put', final_location,
                                              {"mode": 493})
 
@@ -72,7 +72,7 @@ class ImageService(CRUDService):
         Remove the database entry, and then the item if it exists
         """
         self.__ensure_dir()
-        item = f"/var/db/system/webui/images/{id}"
+        item = f"/var/db/system/webui/images/{id}.png"
 
         self.middleware.call_sync('datastore.delete', 'system.filesystem', id)
 
