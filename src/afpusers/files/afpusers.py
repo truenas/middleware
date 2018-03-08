@@ -51,7 +51,7 @@ def AFPUsers():
             if m is not None:
                 pid = int(m.group(1))
                 try:
-                   host = socket.gethostbyaddr(m.group(2))[0]
+                    host = socket.gethostbyaddr(m.group(2))[0]
                 except:
                     host = 'unknown ' + m.group(2)
                 mac[pid] = host
