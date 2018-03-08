@@ -25,9 +25,10 @@ TestName = "create jails"
 class create_jails_test(unittest.TestCase):
 
     def test_01_Configuring_jails(self):
-        payload = {"jc_ipv4_network_start": JAILIP,
-                   "jc_path": "/mnt/tank/jails"}
-        assert PUT("/jails/configuration/", payload) == 201
+        payload = {"jc_ipv4_network_start": JAILIP}
+        # ,
+        # "jc_path": "/mnt/tank/jails"}
+        assert PUT("/jails/configuration/", payload) == 200
 
     def test_02_Creating_jail_VNET_OFF(self):
         payload = {"jail_host": "testjail",
