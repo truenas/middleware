@@ -55,7 +55,6 @@ def AFPUsers():
                 except:
                     host = 'unknown ' + m.group(2)
                 mac[pid] = host
-
         p.wait()
 
     try:
@@ -98,8 +97,8 @@ def AFPUsers():
                         uid = temp.pw_uid
                         fname = temp.pw_gecos
                     yield (pid, uid, user, fname, time, mac[pid])
-
         p.wait()
+
 
 if __name__ == "__main__":
     print("PID      UID      Username         Name                 Logintime Mac")
