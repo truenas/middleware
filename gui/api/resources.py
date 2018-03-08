@@ -1079,12 +1079,14 @@ class VolumeResourceMixin(NestedMixin):
                         enable even for disks already under replacing
                         subtree
                         """
-                        data['_replace_url'] = reverse(
-                            'storage_zpool_disk_replace',
-                            kwargs={
-                                'vname': pool.name,
-                                'label': current.name,
-                            })
+                        if current.parent.parent.name != 'spares':
+                            # spares can't be replaced - so no replace url should be available for them
+                            data['_replace_url'] = reverse(
+                                'storage_zpool_disk_replace',
+                                kwargs={
+                                    'vname': pool.name,
+                                    'label': current.name,
+                                })
                         if current.parent.parent.name in (
                             'spares',
                             'cache',
