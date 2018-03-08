@@ -113,6 +113,8 @@ class KerberosKeytabFAdmin(BaseFreeAdmin):
 
 
 class KerberosPrincipalFAdmin(BaseFreeAdmin):
+    create_modelform = "KerberosPrincipalForm"
+    edit_modelform = "KerberosPrincipalForm"
     resource_mixin = KerberosPrincipalResourceMixin
 
 

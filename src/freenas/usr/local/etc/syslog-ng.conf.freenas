@@ -23,6 +23,7 @@ source src { unix-dgram("/var/run/log");
 # destinations
 #
 destination messages { file("/var/log/messages"); };
+destination system { file("/var/log/system"); };
 destination security { file("/var/log/security"); };
 destination authlog { file("/var/log/auth.log"); };
 destination daemon { file("/var/log/daemon.log"); };
@@ -92,6 +93,12 @@ filter f_not_mdnsresponder { not program("mDNSResponder"); };
 filter f_not_consul { not program("consul"); };
 
 #
+# message filters
+#
+filter f_arpchange { message("^arp:.*moved from.*on.*$"); };
+filter f_not_arpchange { not filter(f_arpchange); };
+
+#
 # *.err;kern.warning;auth.notice;mail.crit		/dev/console
 #
 log { source(src); filter(f_err); filter(f_not_mdnsresponder); filter(f_not_consul); destination(console); };
@@ -103,7 +110,7 @@ log { source(src); filter(f_mail); filter(f_crit); destination(console); };
 # *.notice;authpriv.none;kern.debug;lpr.info;mail.crit;news.err	/var/log/messages
 #
 log { source(src); filter(f_notice); filter(f_not_authpriv); filter(f_not_mdnsresponder); filter(f_not_consul); destination(messages); };
-log { source(src); filter(f_kern); filter(f_debug); destination(messages); };
+log { source(src); filter(f_kern); filter(f_debug); filter(f_not_arpchange); destination(messages); };
 log { source(src); filter(f_lpr); filter(f_info); destination(messages); };
 log { source(src); filter(f_mail); filter(f_crit); destination(messages); };
 log { source(src); filter(f_news); filter(f_err); destination(messages); };
@@ -147,6 +154,11 @@ log { source(src); filter(f_daemon); destination(daemon); };
 # *.=debug						/var/log/debug.log
 #
 log { source(src); filter(f_is_debug); destination(debuglog); };
+
+#
+# Filtered System Messages
+#
+log { source(src);  filter(f_kern); filter(f_info); filter(f_arpchange); destination(system); };
 
 #
 # *.emerg						*
