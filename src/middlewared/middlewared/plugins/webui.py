@@ -2,9 +2,8 @@ import os
 
 from django.db.utils import IntegrityError
 from middlewared.schema import Dict, Int, Str, accepts
-from middlewared.service import CRUDService, filterable, job, private
+from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError
-from middlewared.utils import filter_list
 
 
 class ImageService(CRUDService):
@@ -50,15 +49,14 @@ class ImageService(CRUDService):
                                              {"mode": 0o755})
 
         def rw_thread():
-            with os.fdopen(put_job.write_fd, 'wb') as f, \
-                os.fdopen(job.read_fd, 'rb') as f2:
-                    while True:
-                        read = f2.read(102400)
+            with os.fdopen(put_job.write_fd, 'wb') as f, os.fdopen(job.read_fd, 'rb') as f2:
+                while True:
+                    read = f2.read(102400)
 
-                        if read == b'':
-                            break
+                    if read == b'':
+                        break
 
-                        f.write(read)
+                    f.write(read)
 
         await self.middleware.run_in_thread(rw_thread)
 
