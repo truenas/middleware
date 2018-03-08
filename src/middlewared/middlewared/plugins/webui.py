@@ -47,7 +47,7 @@ class ImageService(CRUDService):
 
         final_location = f"/var/db/system/webui/images/{id}.png"
         put_job = await self.middleware.call('filesystem.put', final_location,
-                                             {"mode": 493})
+                                             {"mode": 0o755})
 
         def rw_thread():
             with os.fdopen(put_job.write_fd, 'wb') as f, \
