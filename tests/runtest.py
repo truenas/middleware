@@ -106,7 +106,9 @@ cfg_file.close()
 
 if api == "1.0":
     # Create test
-    call(["python3.6", "api1/create/network.py"])
+    call(["py.test-3.6", "--junitxml",
+          "%screate_network_result.xml" % results_xml,
+          "api1/create/network.py"])
     if testName != 'network':
         call(["python3.6", "api1/create/ssh.py"])
         call(["python3.6", "api1/create/storage.py"])
@@ -125,11 +127,16 @@ if api == "1.0":
         call(["python3.6", "api1/create/group.py"])
         call(["python3.6", "api1/create/iscsi.py"])
         # jails API Broken
+        call(["py.test-3.6", "--junitxml",
+              "%screate_jails_result.xml" % results_xml,
+              "api1/create/jails.py"])
         call(["python3.6", "api1/create/jails.py"])
         call(["python3.6", "api1/create/ldap_bsd.py"])
         call(["python3.6", "api1/create/ldap_osx.py"])
         call(["python3.6", "api1/create/lldp.py"])
-        call(["python3.6", "api1/create/nfs.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_nfs_result.xml" % results_xml,
+              "api1/create/nfs.py"])
         call(["python3.6", "api1/create/rsync.py"])
         # call(["python3.6", "api1/create/smarttest.py"])
         call(["python3.6", "api1/create/smb_bsd.py"])

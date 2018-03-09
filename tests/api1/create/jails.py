@@ -4,14 +4,13 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
+import pytest
 import unittest
 import sys
 import os
-import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, PUT_TIMEOUT, POST_TIMEOUT
-from auto_config import results_xml
 
 try:
     from config import JAILIP, JAILGW, JAILNETMASK
@@ -21,13 +20,16 @@ else:
     RunTest = True
 TestName = "create jails"
 
+Reason = "JAILIP, JAILGW and JAILNETMASK are not in ixautomation.conf"
 
+
+@pytest.mark.skipif(RunTest is False, reason=Reason)
 class create_jails_test(unittest.TestCase):
 
     def test_01_Configuring_jails(self):
         payload = {"jc_ipv4_network_start": JAILIP,
                    "jc_path": "/mnt/tank/jails"}
-        assert PUT_TIMEOUT("/jails/configuration/", payload, 60) == 200
+        assert PUT_TIMEOUT("/jails/configuration/", payload, 60) == 201
 
     def test_02_Creating_jail_VNET_OFF(self):
         payload = {"jail_host": "testjail",
@@ -36,6 +38,11 @@ class create_jails_test(unittest.TestCase):
                    "jail_ipv4_netmask": JAILNETMASK,
                    "jail_vnet": True}
         assert POST_TIMEOUT("/jails/jails/", payload, 1200) == 201
+
+    # def test_01_Configuring_jails(self):
+    #     payload = {"jc_ipv4_network_start": JAILIP,
+    #                "jc_path": "/mnt/tank/jails"}
+    #     assert PUT_TIMEOUT("/jails/configuration/", payload, 60) == 200
 
     def test_03_Mount_tank_share_into_jail(self):
         payload = {"destination": "/mnt",
@@ -53,12 +60,3 @@ class create_jails_test(unittest.TestCase):
 
     def test_06_Stopping_jail(self):
         assert POST("/jails/jails/1/stop/", None) == 202
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(create_jails_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()

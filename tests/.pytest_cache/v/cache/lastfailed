@@ -1,4 +1,7 @@
 {
+  "api1/create/jails.py::create_jails_test::test_01_Configuring_jails": true,
+  "api1/create/jails.py::create_jails_test::test_04_Starting_jail": true,
+  "api1/create/network.py::create_network_test::test_01_configure_interface_dhcp": true,
   "create/ad_bsd.py::ad_bsd_test::test_01_creating_smb_dataset": true,
   "create/ad_bsd.py::ad_bsd_test::test_02_enabling_active_directory": true,
   "create/ad_bsd.py::ad_bsd_test::test_03_checking_active_directory": true,
