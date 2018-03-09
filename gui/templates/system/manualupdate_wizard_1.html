@@ -4,6 +4,8 @@ doSubmit({
   form: this,
   event: e,
   url: '{{ request.path }}',
+  longRunning: true,
+  longRunningUrl: '{% url "system_manualupdate_running" %}',
   progressbar: {
     steps: [
       {"label": "Uploading update"},
