@@ -994,14 +994,13 @@ def manualupdate_running(request):
                     elif job['state'] == 'FAILED':
                         return JsonResp(request, message=job['error'], error=True)
         else:
-            # XXX: very ugly hack to get the legacy manuak upgrade thread from the form
+            # XXX: very ugly hack to get the legacy manual upgrade thread from the form
             from freenasUI.system.forms import LEGACY_MANUAL_UPGRADE
-            if LEGACY_MANUAL_UPGRADE:
-                if not LEGACY_MANUAL_UPGRADE.isAlive():
-                    if not LEGACY_MANUAL_UPGRADE.exception:
-                        return render_to_response('failover/update_standby.html')
-                    else:
-                        return JsonResp(request, message=str(LEGACY_MANUAL_UPGRADE.exception), error=True)
+            if LEGACY_MANUAL_UPGRADE and not LEGACY_MANUAL_UPGRADE.isAlive():
+                if not LEGACY_MANUAL_UPGRADE.exception:
+                    return render_to_response('failover/update_standby.html')
+                else:
+                    return JsonResp(request, message=str(LEGACY_MANUAL_UPGRADE.exception), error=True)
     else:
         with client as c:
             job = c.call('core.get_jobs', [('id', '=', int(uuid))])
