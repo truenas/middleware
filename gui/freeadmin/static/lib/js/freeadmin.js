@@ -2291,13 +2291,33 @@ require([
                 handleAs: 'text',
                 headers: {"X-CSRFToken": CSRFToken}
                 }).then(function(response) {
-                    try {
-                        JSON.parse(response);
+
+                    if(attrs.longRunning && attrs.longRunningUrl) {
+                      waitForComplete = function() {
+                        var longpromise = xhr.post(attrs.longRunningUrl + '?uuid=' + response, {
+                          headers: {"X-CSRFToken": CSRFToken},
+                          handleAs: 'text'
+                        });
+                        longpromise.then(function(data) {
+                           longpromise.response.then(function(response) {
+                            if(response.status == 202) {
+                              setTimeout(waitForComplete, 2000);
+                            } else {
+                              handleReq(data);
+                            }
+                           });
+                        });
+                      }
+                      setTimeout(waitForComplete, 2000);
+                    } else {
+                      try {
+                          JSON.parse(response);
+                      }
+                      catch (e) {
+                          response = "<pre>" + response + "</pre>";
+                      }
+                      handleReq(response);
                     }
-                    catch (e) {
-                        response = "<pre>" + response + "</pre>";
-                    }
-                    handleReq(response);
                 }, function(evt) {
                     handleReq(evt.response.data, evt.response, true);
                 });

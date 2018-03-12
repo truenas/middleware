@@ -37,6 +37,7 @@ import random
 import re
 import stat
 import subprocess
+import threading
 import time
 
 from OpenSSL import crypto, SSL
@@ -113,12 +114,12 @@ from freenasUI.sharing.models import (
 from freenasUI.storage.forms import VolumeAutoImportForm, VolumeMixin
 from freenasUI.storage.models import Disk, Volume, Scrub
 from freenasUI.system import models
-from freenasUI.system.utils import manual_update
 from freenasUI.tasks.models import SMARTTest
 from common.ssl import CERT_CHAIN_REGEX
 
 log = logging.getLogger('system.forms')
 WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'
+LEGACY_MANUAL_UPGRADE = None
 
 
 def clean_path_execbit(path):
@@ -944,7 +945,35 @@ class ManualUpdateWizard(FileWizard):
             'system/manualupdate_wizard_%s.html' % self.get_step_index(),
         ]
 
+    def render_done(self, form, **kwargs):
+        """
+        XXX: method copied from base class so storage is not reset
+        and files get removed.
+        """
+        final_forms = OrderedDict()
+        # walk through the form list and try to validate the data again.
+        for form_key in self.get_form_list():
+            form_obj = self.get_form(
+                step=form_key,
+                data=self.storage.get_step_data(form_key),
+                files=self.storage.get_step_files(form_key))
+            if not form_obj.is_valid():
+                return self.render_revalidation_failure(form_key,
+                                                        form_obj,
+                                                        **kwargs)
+            final_forms[form_key] = form_obj
+
+        # render the done view and reset the wizard before returning the
+        # response. This is needed to prevent from rendering done with the
+        # same data twice.
+        done_response = self.done(final_forms.values(),
+                                  form_dict=final_forms,
+                                  **kwargs)
+        # self.storage.reset()
+        return done_response
+
     def done(self, form_list, **kwargs):
+        global LEGACY_MANUAL_UPGRADE
         cleaned_data = self.get_all_cleaned_data()
         updatefile = cleaned_data.get('updatefile')
 
@@ -957,54 +986,54 @@ class ManualUpdateWizard(FileWizard):
                     with client as c:
                         c.call('failover.call_remote', 'notifier.create_upload_location')
                         _n.sync_file_send_v2(c, path, '/var/tmp/firmware/update.tar.xz')
-                        job_id = c.call('failover.call_remote', 'update.manual', ['/var/tmp/firmware/update.tar.xz'])
-                        while True:
-                            job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', job_id)]])
-                            if job:
-                                job = job[0]
-                                if job['state'] == 'SUCCESS':
-                                    break
-                                elif job['state'] == 'FAILED':
-                                    raise MiddlewareError(job['error'])
-                            time.sleep(1)
                         try:
-                            c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
-                        except Exception:
-                            log.debug('Failed to reboot standby', exc_info=True)
+                            os.unlink(path)
+                        except OSError:
+                            pass
+                        uuid = c.call('failover.call_remote', 'update.manual', ['/var/tmp/firmware/update.tar.xz'])
                 except ClientException as e:
                     if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and (e.trace is None or e.trace['class'] not in ('KeyError', 'ConnectionRefusedError')):
                         raise
 
-                    s = _n.failover_rpc(timeout=10)
-                    s.notifier('create_upload_location', None, None)
-                    _n.sync_file_send(s, path, '/var/tmp/firmware/update.tar.xz', legacy=True)
-                    s.update_manual('/var/tmp/firmware/update.tar.xz')
+                    # XXX: ugly hack to run the legacy upgrade in a thread
+                    # so we can check progress in another view
+                    class PerformLegacyUpgrade(threading.Thread):
 
-                    try:
-                        s.reboot()
-                    except Exception:
-                        pass
-                response = render_to_response('failover/update_standby.html')
+                        def __init__(self, *args, **kwargs):
+                            self.exception = None
+                            self.path = kwargs.pop('path')
+                            super().__init__(*args, **kwargs)
+
+                        def run(self):
+                            try:
+                                _n = notifier()
+                                s = _n.failover_rpc(timeout=10)
+                                s.notifier('create_upload_location', None, None)
+                                _n.sync_file_send(s, self.path, '/var/tmp/firmware/update.tar.xz', legacy=True)
+                                s.update_manual('/var/tmp/firmware/update.tar.xz')
+
+                                try:
+                                    s.reboot()
+                                except Exception:
+                                    pass
+                            except Exception as e:
+                                self.exception = e
+
+                    t = PerformLegacyUpgrade(path=path)
+                    t.start()
+                    LEGACY_MANUAL_UPGRADE = t
+                    uuid = 0  # Hardcode 0 when using legacy upgrade
             else:
-                manual_update(path)
+                with client as c:
+                    uuid = c.call('update.manual', path)
                 self.request.session['allow_reboot'] = True
-                response = render_to_response('system/done.html', {
-                    'retval': getattr(self, 'retval', None),
-                })
+            return HttpResponse(content=f'<html><body><textarea>{uuid}</textarea></boby></html>', status=202)
         except Exception:
             try:
                 self.file_storage.delete(updatefile.name)
             except Exception:
                 log.warn('Failed to delete uploaded file', exc_info=True)
             raise
-
-        if not self.request.is_ajax():
-            response.content = (
-                b"<html><body><textarea>" +
-                response.content +
-                b"</textarea></boby></html>"
-            )
-        return response
 
 
 class SettingsForm(ModelForm):

@@ -391,6 +391,10 @@ __EOF__
             proxy_set_header X-Real-Remote-Port \$remote_port;
         }
 
+        location /images {
+            alias /var/db/system/webui/images;
+        }
+
         #error_page  404              /404.html;
 
         # redirect server error pages to the static page /50x.html
