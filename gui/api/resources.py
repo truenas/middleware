@@ -1085,10 +1085,9 @@ class VolumeResourceMixin(NestedMixin):
                         subtree
                         """
                         if (
-                                current.parent.parent.name != 'spares'
-                                and (
-                                    not current.parent.name.startswith('spare-')
-                                    or current.status == 'UNAVAIL'
+                                current.parent.parent.name != 'spares' and (
+                                    not current.parent.name.startswith('spare-') or
+                                    current.status == 'UNAVAIL'
                                 )
                         ):
                             # spares can't be replaced - so no replace url should be available for them
