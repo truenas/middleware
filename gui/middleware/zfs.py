@@ -807,11 +807,11 @@ def parse_status(name, doc, data):
         ident = int(len(spaces) / 2)
         if (
                 (
-                    ident < 2
-                    or (pnode.name.startswith('spare-') and ident == 2)
-                )
-                and lastident is not None
-                and ident < lastident
+                    ident < 2 or
+                    (pnode.name.startswith('spare-') and ident == 2)
+                ) and
+                lastident is not None and
+                ident < lastident
         ):
             for x in range(lastident - ident):
                 pnode = pnode.parent
