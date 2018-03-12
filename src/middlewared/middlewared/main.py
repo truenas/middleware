@@ -661,9 +661,8 @@ class Middleware(object):
         self.plugins_dirs = plugins_dirs or []
         self.__loop = None
         self.__thread_id = threading.get_ident()
-        self.__threadpool = concurrent.futures.ThreadPoolExecutor(
-            max_workers=10,
-        )
+        self.__procpool = concurrent.futures.ProcessPoolExecutor(max_workers=3)
+        self.__threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
         self.jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
@@ -850,11 +849,12 @@ class Middleware(object):
     def get_schema(self, name):
         return self.__schemas.get(name)
 
-    async def run_in_thread_pool(self, pool, method, *args, **kwargs):
+    async def run_in_executor(self, pool, method, *args, **kwargs):
         """
-        Runs method in a native thread using concurrent.futures.ThreadPool.
-        This prevents a CPU intensive or non-greenlet friendly method
+        Runs method in a native thread using concurrent.futures.Pool.
+        This prevents a CPU intensive or non-asyncio friendly method
         to block the event loop indefinitely.
+        Also used to run non thread safe libraries (using a ProcessPool)
         """
         loop = asyncio.get_event_loop()
         task = loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
@@ -862,7 +862,10 @@ class Middleware(object):
         return task.result()
 
     async def run_in_thread(self, method, *args, **kwargs):
-        return await self.run_in_thread_pool(self.__threadpool, method, *args, **kwargs)
+        return await self.run_in_executor(self.__threadpool, method, *args, **kwargs)
+
+    async def run_in_proc(self, method, *args, **kwargs):
+        return await self.run_in_executor(self.__procpool, method, *args, **kwargs)
 
     async def run_in_io_thread(self, method, *args):
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
