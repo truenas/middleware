@@ -132,11 +132,22 @@ if api == "1.0":
         call(["py.test-3.6", "--junitxml",
               "%screate_alerts_result.xml" % results_xml,
               "api1/create/alerts.py"])
-        call(["python3.6", "api1/create/bootenv.py"])
-        call(["python3.6", "api1/create/cronjob.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_bootenv_result.xml" % results_xml,
+              "api1/create/bootenv.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_cronjob_result.xml" % results_xml,
+              "api1/create/cronjob.py"])
         # call(["python3.6", "api1/create/debug.py"])
-        call(["python3.6", "api1/create/emails.py"])
-        call(["python3.6", "api1/create/domaincontroller.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_domaincontroller_result.xml" % results_xml,
+              "api1/create/domaincontroller.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_dyndns_result.xml" % results_xml,
+              "api1/create/dyndns.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_emails_result.xml" % results_xml,
+              "api1/create/emails.py"])
         call(["python3.6", "api1/create/user.py"])
         call(["python3.6", "api1/create/ftp.py"])
         call(["python3.6", "api1/create/group.py"])

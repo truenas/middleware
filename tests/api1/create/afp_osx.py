@@ -31,11 +31,10 @@ Reason = "BRIDGEHOST BRIDGETEST are not in ixautomation.conf"
 class create_afp_osx_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed runs
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
     @classmethod
     def setUpClass(inst):
-        cmd = 'umount -f "%s"; rmdir "%s"; exit 0;' % (MOUNTPOINT, MOUNTPOINT)
-        OSX_TEST(cmd)
+        # cmd = 'umount -f "%s"; rmdir "%s"; exit 0;' % (MOUNTPOINT, MOUNTPOINT)
+        # OSX_TEST(cmd)
         PUT("/services/afp/", {"afp_srv_guest": False})
         payload = {"afp_name": AFP_NAME, "afp_path": AFP_PATH}
         DELETE_ALL("/sharing/afp/", payload)
@@ -64,8 +63,7 @@ class create_afp_osx_test(unittest.TestCase):
         assert PUT("/storage/permission/", payload) == 201
 
     def test_06_Creating_a_AFP_share_on_AFP_PATH(self):
-        payload = {"afp_name": AFP_NAME,
-                   "afp_path": AFP_PATH}
+        payload = {"afp_name": AFP_NAME, "afp_path": AFP_PATH}
         assert POST("/sharing/afp/", payload) == 201
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)

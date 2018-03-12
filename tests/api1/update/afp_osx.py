@@ -22,26 +22,24 @@ else:
     RunTest = True
 TestName = "update apf osx"
 
-DATASET = "afp-osx2"
+DATASET = "afp-osx"
 AFP_NAME = "MyAFPShare"
 AFP_PATH = "/mnt/tank/" + DATASET
 VOL_GROUP = "qa"
-
 Reason = "BRIDGEHOST BRIDGETEST are not in ixautomation.conf"
 
 
 class update_afp_osx_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed AD LDAP or SMB runs
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
     @classmethod
     def setUpClass(inst):
         PUT("/services/afp/", {"afp_srv_guest": False})
         payload = {"afp_name": AFP_NAME, "afp_path": AFP_PATH}
         DELETE_ALL("/sharing/afp/", payload)
         DELETE("/storage/volume/1/datasets/%s/" % DATASET)
-        cmd = 'umount -f "%s"; rmdir "%s"; exit 0;' % (MOUNTPOINT, MOUNTPOINT)
-        OSX_TEST(cmd)
+        # cmd = 'umount -f "%s"; rmdir "%s"; exit 0;' % (MOUNTPOINT, MOUNTPOINT)
+        # OSX_TEST(cmd)
 
     def test_01_Creating_AFP_dataset(self):
         assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
