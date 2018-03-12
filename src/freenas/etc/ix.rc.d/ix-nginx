@@ -196,8 +196,8 @@ http {
     #upload_store /var/tmp/firmware;
     client_body_temp_path /var/tmp/firmware;
 
-    error_log /var/log/nginx/error.log error;
-    access_log /var/log/nginx/access.log combined;
+    error_log syslog:server=unix:/var/run/log,nohostname;
+    access_log syslog:server=unix:/var/run/log,nohostname;
 
     upstream netdata {
         # the netdata server
