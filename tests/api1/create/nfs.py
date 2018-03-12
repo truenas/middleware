@@ -13,7 +13,7 @@ sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, BSD_TEST
 from auto_config import ip
 try:
-    from config import BRIDGEHOST, BRIDGETEST
+    from config import BRIDGEHOST
 except ImportError:
     RunTest = False
 else:
@@ -96,4 +96,3 @@ class create_nfs_test(unittest.TestCase):
     def test_14_Removing_NFS_mountpoint(self):
         cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
         assert BSD_TEST(cmd) is True
-

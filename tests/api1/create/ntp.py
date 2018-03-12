@@ -6,12 +6,10 @@
 import unittest
 import sys
 import os
-import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, DELETE
-from auto_config import ntpServer, results_xml
-RunTest = True
+from auto_config import ntpServer
 TestName = "create ntp"
 
 
@@ -35,12 +33,3 @@ class create_ntp_test(unittest.TestCase):
 
     def test_03_Removing_non_AD_NTP_servers_2sur2(self):
         assert DELETE("/system/ntpserver/3/") == 204
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(create_ntp_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()

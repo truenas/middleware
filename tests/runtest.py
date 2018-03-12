@@ -41,8 +41,9 @@ if len(argv) == 1:
 
 # look if all the argument are there.
 try:
-    myopts, args = getopt.getopt(argv[1:], 'aipIt', ["api=", "ip=", "password=",
-                                                     "interface=", 'test='])
+    myopts, args = getopt.getopt(argv[1:], 'aipIt', ["api=", "ip=",
+                                                     "password=", "interface=",
+                                                     'test='])
 except getopt.GetoptError as e:
     print(str(e))
     print(error_msg)
@@ -110,13 +111,27 @@ if api == "1.0":
           "%screate_network_result.xml" % results_xml,
           "api1/create/network.py"])
     if testName != 'network':
-        call(["python3.6", "api1/create/ssh.py"])
-        call(["python3.6", "api1/create/storage.py"])
-        call(["python3.6", "api1/create/ntp.py"])
-        call(["python3.6", "api1/create/ad_bsd.py"])
-        call(["python3.6", "api1/create/ad_osx.py"])
-        call(["python3.6", "api1/create/afp_osx.py"])
-        # call(["python3.6", "api1/create/alerts.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_ssh_result.xml" % results_xml,
+              "api1/create/ssh.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_storage_result.xml" % results_xml,
+              "api1/create/storage.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_ntp_result.xml" % results_xml,
+              "api1/create/ntp.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_ad_bsd_result.xml" % results_xml,
+              "api1/create/ad_bsd.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_ad_osx.xml" % results_xml,
+              "api1/create/ad_osx.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_afp_osx_result.xml" % results_xml,
+              "api1/create/afp_osx.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_alerts_result.xml" % results_xml,
+              "api1/create/alerts.py"])
         call(["python3.6", "api1/create/bootenv.py"])
         call(["python3.6", "api1/create/cronjob.py"])
         # call(["python3.6", "api1/create/debug.py"])
@@ -137,6 +152,9 @@ if api == "1.0":
         call(["py.test-3.6", "--junitxml",
               "%screate_nfs_result.xml" % results_xml,
               "api1/create/nfs.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_nis_bsd_result.xml" % results_xml,
+              "api1/create/nis_bsd.py"])
         call(["python3.6", "api1/create/rsync.py"])
         # call(["python3.6", "api1/create/smarttest.py"])
         call(["python3.6", "api1/create/smb_bsd.py"])
@@ -151,6 +169,9 @@ if api == "1.0":
         # Update test
         call(["python3.6", "api1/update/ad_bsd.py"])
         call(["python3.6", "api1/update/ad_osx.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_afp_osx_result.xml" % results_xml,
+              "api1/update/afp_osx.py"])
         call(["python3.6", "api1/update/afp_osx.py"])
         # call(["python3.6", "api1/update/alerts.py]"])
         call(["python3.6", "api1/update/bootenv.py"])
