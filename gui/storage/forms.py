@@ -301,12 +301,12 @@ class VolumeManagerForm(VolumeMixin, Form):
                     notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
 
                 scrub = models.Scrub.objects.create(scrub_volume=volume)
-        except Exception:
-            if volume:
+        except Exception as e:
+            if not add and volume:
                 volume.delete(destroy=False, cascade=False)
             if scrub:
                 scrub.delete()
-            raise
+            raise e
 
         if volume.vol_encrypt >= 2 and add:
             # FIXME: ask current passphrase to the user
@@ -2227,6 +2227,10 @@ class ZFSDiskReplacementForm(Form):
             if pool.spares:
                 for vdev in pool.spares:
                     for dev in vdev:
+                        if self.disk == dev.disk:
+                            # if the current selected disk in the form is the current dev disk - then it is being used
+                            # and shouldn't be removed from used disks list
+                            continue
                         if dev.status != 'INUSE' and dev.disk in used_disks:
                             used_disks.remove(dev.disk)
         except Exception as e:

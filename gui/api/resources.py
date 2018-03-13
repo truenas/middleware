@@ -3466,12 +3466,14 @@ class BootEnvResource(NestedMixin, DojoResource):
                                     'vname': pool.name,
                                     'label': current.name,
                                 })
-
-                        data['_detach_url'] = reverse(
-                            'system_bootenv_pool_detach',
-                            kwargs={
-                                'label': current.name,
-                            })
+                        if len(current.parent.children) > 1:
+                            # Only add a detach url if there are other mirrored boot devices - meaning current node
+                            # has siblings
+                            data['_detach_url'] = reverse(
+                                'system_bootenv_pool_detach',
+                                kwargs={
+                                    'label': current.name,
+                                })
 
                         """
                         Replacing might go south leaving multiple UNAVAIL

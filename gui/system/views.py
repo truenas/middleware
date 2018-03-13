@@ -50,7 +50,7 @@ from django.http import (
     HttpResponseRedirect,
     StreamingHttpResponse,
 )
-from django.shortcuts import render
+from django.shortcuts import render, render_to_response
 from django.utils.translation import ugettext as _, ungettext
 from django.views.decorators.cache import never_cache
 
@@ -971,6 +971,57 @@ def file_browser(request, path='/'):
     context = directories
     content = json.dumps(context)
     return HttpResponse(content, content_type='application/json')
+
+
+def manualupdate_running(request):
+    uuid = request.GET.get('uuid')
+    if not uuid:
+        return HttpResponse(uuid, status=202)
+
+    _n = notifier()
+    if not _n.is_freenas() and _n.failover_licensed():
+        if uuid != "0":
+            with client as c:
+                job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]])
+                if job:
+                    job = job[0]
+                    if job['state'] == 'SUCCESS':
+                        try:
+                            c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
+                        except Exception:
+                            log.debug('Failed to reboot standby', exc_info=True)
+                        return render_to_response('failover/update_standby.html')
+                    elif job['state'] == 'FAILED':
+                        return JsonResp(request, message=job['error'], error=True)
+        else:
+            # XXX: very ugly hack to get the legacy manual upgrade thread from the form
+            from freenasUI.system.forms import LEGACY_MANUAL_UPGRADE
+            if LEGACY_MANUAL_UPGRADE and not LEGACY_MANUAL_UPGRADE.isAlive():
+                if not LEGACY_MANUAL_UPGRADE.exception:
+                    return render_to_response('failover/update_standby.html')
+                else:
+                    return JsonResp(request, message=str(LEGACY_MANUAL_UPGRADE.exception), error=True)
+    else:
+        with client as c:
+            job = c.call('core.get_jobs', [('id', '=', int(uuid))])
+            if job:
+                job = job[0]
+                if job['state'] in ('SUCCESS', 'FAILED'):
+                    try:
+                        os.unlink(job['arguments'][0])
+                    except OSError:
+                        pass
+                if job['state'] == 'SUCCESS':
+                    try:
+                        c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
+                    except Exception:
+                        log.debug('Failed to reboot standby', exc_info=True)
+                    return render_to_response('system/done.html')
+                elif job['state'] == 'FAILED':
+                    return JsonResp(request, message=job['error'], error=True)
+            else:
+                return JsonResp(request, message=_('Update job not found'), error=True)
+    return HttpResponse(uuid, status=202)
 
 
 def manualupdate_progress(request):

@@ -977,6 +977,16 @@ def volume_lock(request, object_id):
     assert(volume.vol_encrypt > 0)
 
     if request.method == "POST":
+
+        _n = notifier()
+        if '__confirm' not in request.POST and not _n.is_freenas() and _n.failover_licensed():
+            remaining_volumes = [v for v in models.Volume.objects.exclude(pk=object_id) if v.is_decrypted()]
+            if not remaining_volumes:
+                message = render_to_string('freeadmin/generic_model_confirm.html', {
+                    'message': 'Warning: Locking this volume will prevent failover from functioning correctly.<br />Do you want to continue?',
+                })
+                return JsonResp(request, confirm=message)
+
         notifier().volume_detach(volume)
         if hasattr(notifier, 'failover_status') and notifier().failover_status() == 'MASTER':
             from freenasUI.failover.enc_helper import LocalEscrowCtl

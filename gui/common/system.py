@@ -529,7 +529,7 @@ def backup_database():
         systemdataset["path"],
         f'configs-{systemdataset["uuid"]}',
         get_sw_version(),
-        f'{today}%s.db',
+        f'{today}.db',
     )
 
     dirname = os.path.dirname(newfile)

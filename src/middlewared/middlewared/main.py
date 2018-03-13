@@ -9,8 +9,6 @@ from .utils import start_daemon_thread
 from aiohttp import web
 from aiohttp_wsgi import WSGIHandler
 from collections import defaultdict
-from daemon import DaemonContext
-from daemon.pidfile import TimeoutPIDLockFile
 
 import argparse
 import asyncio
@@ -475,11 +473,12 @@ class ShellWorkerThread(threading.Thread):
     and spawning the reader and writer threads.
     """
 
-    def __init__(self, ws, input_queue, loop):
+    def __init__(self, ws, input_queue, loop, jail=None):
         self.ws = ws
         self.input_queue = input_queue
         self.loop = loop
         self.shell_pid = None
+        self.jail = jail
         self._die = False
         super(ShellWorkerThread, self).__init__(daemon=True)
 
@@ -495,7 +494,17 @@ class ShellWorkerThread(threading.Thread):
                 except:
                     pass
             os.chdir('/root')
-            os.execve('/usr/local/bin/bash', ['bash'], {
+            cmd = [
+                '/usr/local/bin/bash'
+            ]
+
+            if self.jail is not None:
+                cmd = [
+                    '/usr/local/bin/iocage',
+                    'console',
+                    self.jail
+                ]
+            os.execve(cmd[0], cmd, {
                 'TERM': 'xterm',
                 'HOME': '/root',
                 'LANG': 'en_US.UTF-8',
@@ -603,7 +612,9 @@ class ShellApplication(object):
                 ws.send_json({
                     'msg': 'connected',
                 })
-                t_worker = ShellWorkerThread(ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop())
+
+                jail = data.get('jail')
+                t_worker = ShellWorkerThread(ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(), jail=jail)
                 t_worker.start()
 
         # If connection was not authenticated, return earlier
@@ -1081,7 +1092,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('restart', nargs='?')
-    parser.add_argument('--foreground', '-f', action='store_true')
+    parser.add_argument('--pidfile', '-P', action='store_true')
     parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
     parser.add_argument('--plugins-dirs', '-p', action='append')
     parser.add_argument('--debug-level', choices=[
@@ -1090,26 +1101,15 @@ def main():
         'INFO',
         'WARN',
         'ERROR',
-    ])
+    ], default='DEBUG')
     parser.add_argument('--log-handler', choices=[
         'console',
         'file',
-    ])
+    ], default='console')
     args = parser.parse_args()
 
-    #  Logger
-    if args.log_handler:
-        log_handlers = [args.log_handler]
-    else:
-        log_handlers = ['console' if args.foreground else 'file']
-
-    if args.debug_level is None and args.foreground:
-        debug_level = 'TRACE'
-    else:
-        debug_level = args.debug_level or 'DEBUG'
-
-    _logger = logger.Logger('middleware', debug_level)
-    get_logger = _logger.getLogger()
+    _logger = logger.Logger('middleware', args.debug_level)
+    _logger.getLogger()
 
     pidpath = '/var/run/middlewared.pid'
 
@@ -1123,19 +1123,10 @@ def main():
                 if e.errno != errno.ESRCH:
                     raise
 
-    if not args.foreground:
-        _logger.configure_logging('file')
-        daemonc = DaemonContext(
-            pidfile=TimeoutPIDLockFile(pidpath),
-            detach_process=True,
-            stdout=logger.LoggerStream(get_logger),
-            stderr=logger.LoggerStream(get_logger),
-        )
-        daemonc.open()
-    elif 'file' in log_handlers:
+    if 'file' in args.log_handler:
         _logger.configure_logging('file')
         sys.stdout = sys.stderr = _logger.stream()
-    elif 'console' in log_handlers:
+    elif 'console' in args.log_handler:
         _logger.configure_logging('console')
     else:
         _logger.configure_logging('file')
@@ -1144,17 +1135,15 @@ def main():
     # Workaround to tell django to not set up logging on its own
     os.environ['MIDDLEWARED'] = str(os.getpid())
 
-    if args.foreground:
+    if args.pidfile:
         with open(pidpath, "w") as _pidfile:
             _pidfile.write(f"{str(os.getpid())}\n")
 
     Middleware(
         loop_monitor=not args.disable_loop_monitor,
         plugins_dirs=args.plugins_dirs,
-        debug_level=debug_level,
+        debug_level=args.debug_level,
     ).run()
-    if not args.foreground:
-        daemonc.close()
 
 
 if __name__ == '__main__':
