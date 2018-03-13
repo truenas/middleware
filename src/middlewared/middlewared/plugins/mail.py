@@ -131,7 +131,7 @@ class MailService(ConfigService):
         Bool('queue', default=True),
         Dict('extra_headers', additional_attrs=True),
     ), Dict('mailconfig', additional_attrs=True))
-    @job(pipe=True)
+    @job(pipes=['input'], check_pipes=False)
     def send(self, job, message, config=None):
         """
         Sends mail using configured mail settings.
@@ -203,23 +203,29 @@ class MailService(ConfigService):
             if not to[0]:
                 raise CallError('Email address for root is not configured')
 
-        def read_json():
-            f = os.fdopen(job.read_fd, 'rb')
-            data = b''
-            i = 0
-            while True:
-                read = f.read(1048576)  # 1MiB
-                if read == b'':
-                    break
-                data += read
-                i += 1
-                if i > 50:
-                    raise ValueError('Attachments bigger than 50MB not allowed yet')
-            if data == b'':
-                return None
-            return json.loads(data)
+        if message.get('attachments'):
+            job.check_pipe("input")
 
-        attachments = read_json() if message.get('attachments') else None
+            def read_json():
+                f = job.pipes.input.r
+                data = b''
+                i = 0
+                while True:
+                    read = f.read(1048576)  # 1MiB
+                    if read == b'':
+                        break
+                    data += read
+                    i += 1
+                    if i > 50:
+                        raise ValueError('Attachments bigger than 50MB not allowed yet')
+                if data == b'':
+                    return None
+                return json.loads(data)
+
+            attachments = read_json()
+        else:
+            attachments = None
+
         if attachments:
             msg = MIMEMultipart()
             msg.preamble = message['text']

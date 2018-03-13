@@ -198,18 +198,11 @@ class PoolService(CRUDService):
 
         job_id, url = await self.middleware.call(
             'core.download',
-            'pool.download_encryption_key_job',
+            'filesystem.get',
             [os.path.join(self.GELI_KEYPATH, f"{pool['encryptkey']}.key")],
             'geli.key'
         )
         return url
-
-    @job(pipe=True)
-    @private
-    async def download_encryption_key_job(self, job, filename):
-        with open(filename, "rb") as src:
-            with os.fdopen(job.write_fd, "wb") as dst:
-                shutil.copyfileobj(src, dst)
 
     @private
     def configure_resilver_priority(self):

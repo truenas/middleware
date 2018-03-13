@@ -7,7 +7,6 @@ from middlewared.service import (
 )
 from middlewared.utils import Popen
 
-
 import asyncio
 import base64
 import boto3
@@ -18,6 +17,7 @@ from Crypto.Util import Counter
 import errno
 import json
 import os
+import shutil
 import subprocess
 import re
 import requests
@@ -408,41 +408,42 @@ class BackupS3Service(Service):
         idx = 1
 
         try:
-            with os.fdopen(read_fd, 'rb') as f:
-                mp = client.create_multipart_upload(
-                    Bucket=backup['attributes']['bucket'],
-                    Key=key
-                )
+            f = read_fd
 
-                while True:
-                    chunk = f.read(CHUNK_SIZE)
-                    if chunk == b'':
-                        break
+            mp = client.create_multipart_upload(
+                Bucket=backup['attributes']['bucket'],
+                Key=key
+            )
 
-                    resp = client.upload_part(
-                        Bucket=backup['attributes']['bucket'],
-                        Key=key,
-                        PartNumber=idx,
-                        UploadId=mp['UploadId'],
-                        ContentLength=CHUNK_SIZE,
-                        Body=chunk
-                    )
+            while True:
+                chunk = f.read(CHUNK_SIZE)
+                if chunk == b'':
+                    break
 
-                    parts.append({
-                        'ETag': resp['ETag'],
-                        'PartNumber': idx
-                    })
-
-                    idx += 1
-
-                client.complete_multipart_upload(
+                resp = client.upload_part(
                     Bucket=backup['attributes']['bucket'],
                     Key=key,
+                    PartNumber=idx,
                     UploadId=mp['UploadId'],
-                    MultipartUpload={
-                        'Parts': parts
-                    }
+                    ContentLength=CHUNK_SIZE,
+                    Body=chunk
                 )
+
+                parts.append({
+                    'ETag': resp['ETag'],
+                    'PartNumber': idx
+                })
+
+                idx += 1
+
+            client.complete_multipart_upload(
+                Bucket=backup['attributes']['bucket'],
+                Key=key,
+                UploadId=mp['UploadId'],
+                MultipartUpload={
+                    'Parts': parts
+                }
+            )
         finally:
             pass
 
@@ -456,12 +457,7 @@ class BackupS3Service(Service):
             Key=key
         )
 
-        with os.fdopen(write_fd, 'wb') as f:
-            while True:
-                chunk = obj['Body'].read(CHUNK_SIZE)
-                if chunk == b'':
-                    break
-                f.write(chunk)
+        shutil.copyfileobj(obj['Body'], f)
 
     @private
     async def ls(self, cred_id, bucket, path):

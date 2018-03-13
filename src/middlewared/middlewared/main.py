@@ -2,6 +2,7 @@ from .apidocs import app as apidocs_app
 from .client import ejson as json
 from .event import EventSource
 from .job import Job, JobsQueue
+from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
 from .schema import ResolverError, Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
@@ -23,6 +24,7 @@ import os
 import queue
 import select
 import setproctitle
+import shutil
 import signal
 import sys
 import threading
@@ -318,6 +320,18 @@ class FileApplication(object):
 
     def __init__(self, middleware):
         self.middleware = middleware
+        self.jobs = {}
+
+    def register_job(self, job_id):
+        self.jobs[job_id] = self.middleware.loop.call_later(
+            60, lambda: asyncio.ensure_future(self._cleanup_job(job_id)))
+
+    async def _cleanup_job(self, job_id):
+        self.jobs[job_id].cancel()
+        del self.jobs[job_id]
+
+        job = self.middleware.jobs[job_id]
+        await job.pipes.close()
 
     async def download(self, request):
         path = request.path.split('/')
@@ -327,12 +341,6 @@ class FileApplication(object):
             return resp
 
         job_id = int(path[-1])
-        jobs = self.middleware.jobs.all()
-        job = jobs.get(job_id)
-        if not job:
-            resp = web.Response()
-            resp.set_status(404)
-            return resp
 
         qs = urllib.parse.parse_qs(request.query_string)
         denied = False
@@ -354,6 +362,17 @@ class FileApplication(object):
             resp.set_status(401)
             return resp
 
+        job = self.middleware.jobs.get(job_id)
+        if not job:
+            resp = web.Response()
+            resp.set_status(404)
+            return resp
+
+        if job_id not in self.jobs:
+            resp = web.Response()
+            resp.set_status(410)
+            return resp
+
         resp = web.StreamResponse(status=200, reason='OK', headers={
             'Content-Type': 'application/octet-stream',
             'Content-Disposition': f'attachment; filename="{filename}"',
@@ -361,26 +380,15 @@ class FileApplication(object):
         })
         await resp.prepare(request)
 
-        f = None
         try:
-            def read_write():
-                f = os.fdopen(job.read_fd, 'rb')
-                while True:
-                    read = f.read(1024)
-                    if read == b'':
-                        break
-                    resp.write(read)
-                    # await web.drain()
-            await self.middleware.run_in_thread(read_write)
-            await resp.drain()
-
+            await self.middleware.run_in_io_thread(shutil.copyfileobj, job.pipes.output.r, resp)
         finally:
-            if f:
-                f.close()
+            await self._cleanup_job(job_id)
+
+        await resp.drain()
         return resp
 
     async def upload(self, request):
-
         denied = True
         auth = request.headers.get('Authorization')
         if auth:
@@ -427,35 +435,27 @@ class FileApplication(object):
 
         try:
             data = json.loads(form['data'])
-            if 'method' not in data:
-                return web.Response(status=422)
-            job = await self.middleware.call(data['method'], *(data.get('params') or []))
+        except Exception as e:
+            return web.Response(status=400, reason=str(e))
+
+        if 'method' not in data:
+            return web.Response(status=422)
+
+        try:
+            job = await self.middleware.call(data['method'], *(data.get('params') or []),
+                                             pipes=Pipes(input=self.middleware.pipe()))
+            try:
+                await self.middleware.run_in_io_thread(job.pipes.input.w.write, form['file'])
+            finally:
+                await self.middleware.run_in_io_thread(job.pipes.input.w.close)
         except CallError as e:
             if e.errno == CallError.ENOMETHOD:
                 status_code = 422
             else:
                 status_code = 412
             return web.Response(status=status_code, reason=str(e))
-        except json.decoder.JSONDecodeError as e:
-            return web.Response(status=400, reason=str(e))
         except Exception as e:
             return web.Response(status=500, reason=str(e))
-
-        f = None
-        try:
-            def read_write():
-                f = os.fdopen(job.write_fd, 'wb')
-                i = 0
-                while True:
-                    read = form['file'][i * 1024:(i + 1) * 1024]
-                    if read == b'':
-                        break
-                    f.write(read)
-                    i += 1
-            await self.middleware.run_in_thread(read_write)
-        finally:
-            if f:
-                f.close()
 
         resp = web.Response(
             status=200,
@@ -864,7 +864,17 @@ class Middleware(object):
     async def run_in_thread(self, method, *args, **kwargs):
         return await self.run_in_thread_pool(self.__threadpool, method, *args, **kwargs)
 
-    async def _call(self, name, serviceobj, methodobj, params=None, app=None):
+    async def run_in_io_thread(self, method, *args):
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        try:
+            return await self.loop.run_in_executor(executor, method, *args)
+        finally:
+            executor.shutdown(wait=False)
+
+    def pipe(self):
+        return Pipe(self)
+
+    async def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None):
 
         args = []
         if hasattr(methodobj, '_pass_app'):
@@ -878,7 +888,7 @@ class Middleware(object):
         job_options = getattr(methodobj, '_job', None)
         if job_options:
             # Create a job instance with required args
-            job = Job(self, name, methodobj, args, job_options)
+            job = Job(self, name, methodobj, args, job_options, pipes)
             # Add the job to the queue.
             # At this point an `id` is assinged to the job.
             job = self.jobs.add(job)
@@ -923,9 +933,9 @@ class Middleware(object):
 
         return await self._call(message['method'], serviceobj, methodobj, params, app=app)
 
-    async def call(self, name, *params):
+    async def call(self, name, *params, pipes=None):
         serviceobj, methodobj = self._method_lookup(name)
-        return await self._call(name, serviceobj, methodobj, params)
+        return await self._call(name, serviceobj, methodobj, params, pipes=pipes)
 
     def call_sync(self, name, *params):
         """
@@ -1040,9 +1050,9 @@ class Middleware(object):
 
         app.router.add_route("*", "/api/docs{path_info:.*}", WSGIHandler(apidocs_app))
 
-        fileapp = FileApplication(self)
-        app.router.add_route('*', '/_download{path_info:.*}', fileapp.download)
-        app.router.add_route('*', '/_upload{path_info:.*}', fileapp.upload)
+        self.fileapp = FileApplication(self)
+        app.router.add_route('*', '/_download{path_info:.*}', self.fileapp.download)
+        app.router.add_route('*', '/_upload{path_info:.*}', self.fileapp.upload)
 
         shellapp = ShellApplication(self)
         app.router.add_route('*', '/_shell{path_info:.*}', shellapp.ws_handler)
