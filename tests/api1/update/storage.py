@@ -7,11 +7,11 @@
 import unittest
 import sys
 import os
-import xmlrunner
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST  # , GET_OUTPUT
-from auto_config import results_xml
+
 RunTest = True
 TestName = "update storage"
 
@@ -31,12 +31,3 @@ class update_storage_test(unittest.TestCase):
     # Check to verify snapshot was rolled back
     # def test_03_Check_to_verify_snapshot_was_rolled_back(self):
     #     GET_OUTPUT("/storage/volume/tank/datasets/", "name") == "snapcheck"
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(update_storage_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()

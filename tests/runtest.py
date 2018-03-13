@@ -243,12 +243,33 @@ if api == "1.0":
         call(["py.test-3.6", "--junitxml",
               "%screate_nfs_result.xml" % results_xml,
               "api1/update/nfs.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_nfs_result.xml" % results_xml,
+              "api1/update/nfs.py"])
         call(["python3.6", "api1/update/rsync.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_smb_bsd_result.xml" % results_xml,
+              "api1/update/smb_bsd.py"])
         call(["python3.6", "api1/update/smb_bsd.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_smb_osx_result.xml" % results_xml,
+              "api1/update/smb_osx.py"])
         call(["python3.6", "api1/update/smb_osx.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_storage_result.xml" % results_xml,
+              "api1/update/storage.py"])
         call(["python3.6", "api1/update/storage.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_user_result.xml" % results_xml,
+              "api1/update/user.py"])
         call(["python3.6", "api1/update/user.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_webdav_bsd_result.xml" % results_xml,
+              "api1/update/webdav_bsd.py"])
         call(["python3.6", "api1/update/webdav_bsd.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_webdav_osx_result.xml" % results_xml,
+              "api1/update/webdav_osx.py"])
         call(["python3.6", "api1/update/webdav_osx.py"])
 
         # Delete test

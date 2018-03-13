@@ -4,6 +4,7 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
+import pytest
 import unittest
 import sys
 import os
