@@ -326,7 +326,7 @@ class MailService(ConfigService):
                     server = self._get_smtp_server(config)
                     server.sendmail(queue.message['From'], queue.message['To'].split(', '), queue.message.as_string())
                     server.quit()
-                except:
+                except Exception:
                     self.logger.debug('Sending message from queue failed', exc_info=True)
                     queue.attempts += 1
                     if queue.attempts >= mq.MAX_ATTEMPTS:

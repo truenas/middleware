@@ -254,7 +254,7 @@ class Application(object):
         for method in self.__callbacks['on_close']:
             try:
                 method(self)
-            except:
+            except Exception:
                 self.logger.error('Failed to run on_close callback.', exc_info=True)
 
         for ident, val in self.__event_sources.items():
@@ -268,7 +268,7 @@ class Application(object):
         for method in self.__callbacks['on_message']:
             try:
                 method(self, message)
-            except:
+            except Exception:
                 self.logger.error('Failed to run on_message callback.', exc_info=True)
 
         if message['msg'] == 'connect':
@@ -491,7 +491,7 @@ class ShellWorkerThread(threading.Thread):
                     continue
                 try:
                     os.close(i)
-                except:
+                except Exception:
                     pass
             os.chdir('/root')
             cmd = [
@@ -820,7 +820,7 @@ class Middleware(object):
                     await hook['method'](*args, **kwargs)
                 else:
                     asyncio.ensure_future(hook['method'], *args, **kwargs)
-            except:
+            except Exception:
                 self.logger.error('Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True)
 
     def register_event_source(self, name, event_source):
@@ -973,7 +973,7 @@ class Middleware(object):
         for sessionid, wsclient in self.__wsclients.items():
             try:
                 wsclient.send_event(name, event_type, **kwargs)
-            except:
+            except Exception:
                 self.logger.warn('Failed to send event {} to {}'.format(name, sessionid), exc_info=True)
 
         # Send event also for internally subscribed plugins

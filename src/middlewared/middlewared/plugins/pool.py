@@ -3,7 +3,6 @@ import errno
 import logging
 from datetime import datetime
 import os
-import shutil
 import subprocess
 import sysctl
 
