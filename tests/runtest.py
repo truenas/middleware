@@ -148,28 +148,47 @@ if api == "1.0":
         call(["py.test-3.6", "--junitxml",
               "%screate_emails_result.xml" % results_xml,
               "api1/create/emails.py"])
-        call(["python3.6", "api1/create/user.py"])
-        call(["python3.6", "api1/create/ftp.py"])
-        call(["python3.6", "api1/create/group.py"])
-        call(["python3.6", "api1/create/iscsi.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_user_result.xml" % results_xml,
+              "api1/create/user.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_ftp_result.xml" % results_xml,
+              "api1/create/ftp.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_group_result.xml" % results_xml,
+              "api1/create/group.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_iscsi_result.xml" % results_xml,
+              "api1/create/iscsi.py"])
         # jails API Broken
         call(["py.test-3.6", "--junitxml",
               "%screate_jails_result.xml" % results_xml,
               "api1/create/jails.py"])
-        call(["python3.6", "api1/create/jails.py"])
-        call(["python3.6", "api1/create/ldap_bsd.py"])
-        call(["python3.6", "api1/create/ldap_osx.py"])
-        call(["python3.6", "api1/create/lldp.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_ldap_bsd_result.xml" % results_xml,
+              "api1/create/ldap_bsd.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_ldap_osx_result.xml" % results_xml,
+              "api1/create/lldp.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_ldap_osx_result.xml" % results_xml,
+              "api1/create/lldp.py"])
         call(["py.test-3.6", "--junitxml",
               "%screate_nfs_result.xml" % results_xml,
               "api1/create/nfs.py"])
         call(["py.test-3.6", "--junitxml",
               "%screate_nis_bsd_result.xml" % results_xml,
               "api1/create/nis_bsd.py"])
-        call(["python3.6", "api1/create/rsync.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_rsync_result.xml" % results_xml,
+              "api1/create/rsync.py"])
         # call(["python3.6", "api1/create/smarttest.py"])
-        call(["python3.6", "api1/create/smb_bsd.py"])
-        call(["python3.6", "api1/create/smb_osx.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_smb_bsd_result.xml" % results_xml,
+              "api1/create/smb_bsd.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_smb_osx_result.xml" % results_xml,
+              "api1/create/smb_osx.py"])
         call(["python3.6", "api1/create/snmp.py"])
         call(["python3.6", "api1/create/system.py"])
         call(["python3.6", "api1/create/tftp.py"])

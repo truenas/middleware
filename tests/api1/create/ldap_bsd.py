@@ -4,16 +4,16 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
+import pytest
 import unittest
 import sys
 import os
-import xmlrunner
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE_ALL, DELETE, BSD_TEST
-from functions import return_output
-from auto_config import ip, results_xml
 
+from auto_config import ip
 try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
     from config import LDAPBASEDN, LDAPHOSTNAME
@@ -28,8 +28,11 @@ DATASET = "ldap-bsd"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET
 VOL_GROUP = "qa"
+Reason = "BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME,  LDAPBASEDN and "
+Reason += "LDAPHOSTNAMEare not in ixautomation.conf"
 
 
+@pytest.mark.skipif(RunTest is False, reason=Reason)
 class create_ldap_bsd_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed AD LDAP or SMB runs
@@ -198,12 +201,3 @@ class create_ldap_bsd_test(unittest.TestCase):
     # Check destroying a SMB dataset
     def test_28_Destroying_SMB_dataset(self):
         DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(create_ldap_bsd_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()
