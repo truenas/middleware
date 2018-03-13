@@ -1,6 +1,7 @@
 from datetime import datetime
 import os
 import textwrap
+import time
 
 from middlewared.service import Service
 
@@ -15,6 +16,12 @@ class UnauthorizedRebootAlertService(Service):
 
 async def setup(middleware):
     if os.path.exists(SENTINEL_PATH):
+
+        # If uptime is bigger than 3 minutes its likely middleware crashed.
+        # We want to emit the mail only if the machine truly rebooted.
+        uptime = time.clock_gettime(5)  # CLOCK_UPTIME = 5
+        if uptime > 180:
+            return
         gc = await middleware.call('datastore.config', 'network.globalconfiguration')
 
         hostname = f"{gc['gc_hostname']}.{gc['gc_domain']}"

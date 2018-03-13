@@ -89,6 +89,7 @@ class SystemService(Service):
             'cores': sysctl.filter('hw.ncpu')[0].value,
             'loadavg': os.getloadavg(),
             'uptime': uptime,
+            'uptime_seconds': time.clock_gettime(5),  # CLOCK_UPTIME = 5
             'system_serial': serial,
             'system_product': product,
             'license': license,
