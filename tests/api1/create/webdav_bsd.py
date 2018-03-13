@@ -7,12 +7,11 @@
 import unittest
 import sys
 import os
-import xmlrunner
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
-from auto_config import results_xml
-RunTest = True
+
 TestName = "create webdav bsd"
 DATASET = "webdavshare"
 DATASET_PATH = "/mnt/tank/%s/" % DATASET
@@ -28,7 +27,7 @@ class create_webdav_bsd_test(unittest.TestCase):
     @classmethod
     def setUpClass(inst):
         payload = {"webdav_name": SHARE_NAME,
-                   "webdav_comment": "Auto-created by ixbuild tests",
+                   "webdav_comment": "Auto-created by API tests",
                    "webdav_path": DATASET_PATH}
         DELETE_ALL("/sharing/webdav/", payload)
 
@@ -49,7 +48,7 @@ class create_webdav_bsd_test(unittest.TestCase):
 
     def test_03_Creating_WebDAV_share_on_DATASET_PATH(self):
         payload = {"webdav_name": SHARE_NAME,
-                   "webdav_comment": "Auto-created by ixbuild tests",
+                   "webdav_comment": "Auto-created by API tests",
                    "webdav_path": DATASET_PATH}
         assert POST("/sharing/webdav/", payload) == 201
 
@@ -66,12 +65,3 @@ class create_webdav_bsd_test(unittest.TestCase):
     def test_07_Verifying_that_the_WebDAV_service_has_stopped(self):
         assert GET_OUTPUT("/services/services/webdav",
                           "srv_state") == "STOPPED"
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(create_webdav_bsd_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()

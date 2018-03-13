@@ -169,9 +169,9 @@ if api == "1.0":
               "api1/create/ldap_bsd.py"])
         call(["py.test-3.6", "--junitxml",
               "%screate_ldap_osx_result.xml" % results_xml,
-              "api1/create/lldp.py"])
+              "api1/create/ldap_osx.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_ldap_osx_result.xml" % results_xml,
+              "%screate_lldp_result.xml" % results_xml,
               "api1/create/lldp.py"])
         call(["py.test-3.6", "--junitxml",
               "%screate_nfs_result.xml" % results_xml,
@@ -189,21 +189,38 @@ if api == "1.0":
         call(["py.test-3.6", "--junitxml",
               "%screate_smb_osx_result.xml" % results_xml,
               "api1/create/smb_osx.py"])
-        call(["python3.6", "api1/create/snmp.py"])
-        call(["python3.6", "api1/create/system.py"])
-        call(["python3.6", "api1/create/tftp.py"])
-        call(["python3.6", "api1/create/ups.py"])
-        call(["python3.6", "api1/create/webdav_bsd.py"])
-        call(["python3.6", "api1/create/webdav_osx.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_snmp_result.xml" % results_xml,
+              "api1/create/snmp.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_system_result.xml" % results_xml,
+              "api1/create/system.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_tftp_result.xml" % results_xml,
+              "api1/create/tftp.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_ups_result.xml" % results_xml,
+              "api1/create/ups.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_webdav_bsd_result.xml" % results_xml,
+              "api1/create/webdav_bsd.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_webdav_osx_result.xml" % results_xml,
+              "api1/create/webdav_osx.py"])
 
         # Update test
-        call(["python3.6", "api1/update/ad_bsd.py"])
-        call(["python3.6", "api1/update/ad_osx.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_ad_bsd_result.xml" % results_xml,
+              "api1/update/ad_bsd.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_ad_osx_result.xml" % results_xml,
+              "api1/update/ad_osx.py"])
         call(["py.test-3.6", "--junitxml",
               "%screate_afp_osx_result.xml" % results_xml,
               "api1/update/afp_osx.py"])
-        call(["python3.6", "api1/update/afp_osx.py"])
-        # call(["python3.6", "api1/update/alerts.py]"])
+        # call(["py.test-3.6", "--junitxml",
+        #       "%screate_alerts_result.xml" % results_xml,
+        #       "api1/update/alerts.py"])
         call(["python3.6", "api1/update/bootenv.py"])
         call(["python3.6", "api1/update/cronjob.py"])
         call(["python3.6", "api1/update/ftp.py"])
