@@ -852,6 +852,10 @@ def add_domaincontroller_conf(client, smb4_conf):
     confset2(smb4_conf, "dns forwarder = %s", dc.dc_dns_forwarder)
     confset1(smb4_conf, "idmap_ldb:use rfc2307 = yes")
 
+    # We have to manually add vfs objects here until we get more general fix to DC
+    # code in loadparm.c
+    confset1(smb4_conf, "vfs objects = dfs_samba4 zfsacl")
+
     # confset2(smb4_conf, "server services = %s",
     #    string.join(server_services, ',').rstrip(','))
     # confset2(smb4_conf, "dcerpc endpoint servers = %s",
@@ -1232,13 +1236,12 @@ def generate_smb4_system_shares(client, smb4_shares):
 
                 confset1(smb4_shares, "path = %s" % (path))
                 confset1(smb4_shares, "read only = no")
+                # map_dacl_protected=true and nfs4:mode=simple are required
+                # to pass samba-tool ACL validation on GPOs
+                confset1(smb4_shares, "zfsacl:map_dacl_protected=true")
+                confset1(smb4_shares, "nfs4:mode=simple")
+                confset1(smb4_shares, "nfs4:chown=true")
 
-                vfs_objects = []
-
-                extend_vfs_objects_for_zfs(path, vfs_objects)
-                config_share_for_vfs_objects(smb4_shares, vfs_objects)
-
-                config_share_for_nfs4(smb4_shares)
                 config_share_for_zfs(smb4_shares)
 
         except:
