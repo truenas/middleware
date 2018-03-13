@@ -54,8 +54,10 @@ if __name__ == "__main__":
         rv = escrowctl.status()
         if rv:
             print("Escrow have the passphrase")
+            log.warn("Escrowd has the passphrase")
         else:
             print("Escrow running without passphrase")
+            log.warn("Escrowd is running without the passphrase")
     elif cmd == 'attachall':
         with tempfile.NamedTemporaryFile(mode='w+') as tmp:
             tmp.file.write(escrowctl.getkey() or "")
