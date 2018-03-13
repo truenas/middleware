@@ -221,14 +221,28 @@ if api == "1.0":
         # call(["py.test-3.6", "--junitxml",
         #       "%screate_alerts_result.xml" % results_xml,
         #       "api1/update/alerts.py"])
-        call(["python3.6", "api1/update/bootenv.py"])
-        call(["python3.6", "api1/update/cronjob.py"])
-        call(["python3.6", "api1/update/ftp.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_bootenv_result.xml" % results_xml,
+              "api1/update/bootenv.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_cronjob_result.xml" % results_xml,
+              "api1/update/cronjob.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_ftp_result.xml" % results_xml,
+              "api1/update/ftp.py"])
         # call(["python3.6", "api1/update/group.py"])
-        call(["python3.6", "api1/update/iscsi.py"])
-        call(["python3.6", "api1/update/ldap_bsd.py"])
-        call(["python3.6", "api1/update/ldap_osx.py"])
-        call(["python3.6", "api1/update/nfs.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_iscsi_result.xml" % results_xml,
+              "api1/update/iscsi.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_ldap_bsd_result.xml" % results_xml,
+              "api1/update/ldap_bsd.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_ldap_osx_result.xml" % results_xml,
+              "api1/update/ldap_osx.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%screate_nfs_result.xml" % results_xml,
+              "api1/update/nfs.py"])
         call(["python3.6", "api1/update/rsync.py"])
         call(["python3.6", "api1/update/smb_bsd.py"])
         call(["python3.6", "api1/update/smb_osx.py"])
