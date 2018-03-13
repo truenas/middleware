@@ -400,7 +400,7 @@ class BackupS3Service(Service):
         })
 
     @private
-    async def put(self, backup, filename, read_fd):
+    async def put(self, backup, filename, f):
         client = await self.get_client(backup['id'])
         folder = backup['attributes']['folder'] or ''
         key = os.path.join(folder, filename)
@@ -408,8 +408,6 @@ class BackupS3Service(Service):
         idx = 1
 
         try:
-            f = read_fd
-
             mp = client.create_multipart_upload(
                 Bucket=backup['attributes']['bucket'],
                 Key=key
@@ -448,7 +446,7 @@ class BackupS3Service(Service):
             pass
 
     @private
-    async def get(self, backup, filename, write_fd):
+    async def get(self, backup, filename, f):
         client = await self.get_client(backup['id'])
         folder = backup['attributes']['folder'] or ''
         key = os.path.join(folder, filename)
