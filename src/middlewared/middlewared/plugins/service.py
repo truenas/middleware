@@ -920,11 +920,11 @@ class ServiceService(CRUDService):
         return (len(out) > 0)
 
     async def _start_saver(self, **kwargs):
-        if not self.__saver_loaded():
+        if not await self.__saver_loaded():
             await self._system("kldload daemon_saver")
 
     async def _stop_saver(self, **kwargs):
-        if self.__saver_loaded():
+        if await self.__saver_loaded():
             await self._system("kldunload daemon_saver")
 
     async def _restart_saver(self, **kwargs):
