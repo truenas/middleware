@@ -1238,7 +1238,7 @@ def terminal(request):
             response = HttpResponse('Disconnected')
             response.status_code = 400
             return response
-    except (KeyError, ValueError, IndexError, xmlrpc.client.Fault) as e:
+    except (KeyError, ValueError, TypeError, IndexError, xmlrpc.client.Fault) as e:
         response = HttpResponse('Invalid parameters: %s' % e)
         response.status_code = 400
         return response
