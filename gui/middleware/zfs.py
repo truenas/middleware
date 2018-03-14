@@ -422,9 +422,10 @@ class Dev(Tnode):
                     pool = pool.parent
                 # Lets check whether it is a guid
                 try:
-                    vdev = libzfs.ZFS().get(pool.name).vdev_by_guid(int(self.name))
-                    if vdev:
-                        self.path = vdev.path
+                    with libzfs.ZFS() as zfs:
+                        vdev = zfs.get(pool.name).vdev_by_guid(int(self.name))
+                        if vdev:
+                            self.path = vdev.path
                 except libzfs.ZFSException as e:
                     if e.code.name != 'NOENT':
                         raise
@@ -1067,17 +1068,17 @@ def zpool_list(name=None):
 
 
 def zfs_ashift_from_label(pool, label):
-    zfs = libzfs.ZFS()
-    pool = zfs.get(pool)
-    if not pool:
-        return None
-    if label.isdigit():
-        vdev = pool.vdev_by_guid(int(label))
-    else:
-        vdev = vdev_by_path(pool.groups, '/dev/' + label)
-    if not vdev:
-        return None
-    return vdev.stats.configured_ashift
+    with libzfs.ZFS() as zfs:
+        pool = zfs.get(pool)
+        if not pool:
+            return None
+        if label.isdigit():
+            vdev = pool.vdev_by_guid(int(label))
+        else:
+            vdev = vdev_by_path(pool.groups, '/dev/' + label)
+        if not vdev:
+            return None
+        return vdev.stats.configured_ashift
 
 
 def iterate_vdevs(topology):
