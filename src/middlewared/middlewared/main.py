@@ -965,6 +965,7 @@ class Middleware(object):
                     'HOME': '/root',
                     'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin',
                     'TERM': 'xterm',
+                    'LC_ALL': 'en_US.UTF-8',
                 })
 
             os.close(c_read_fd)
