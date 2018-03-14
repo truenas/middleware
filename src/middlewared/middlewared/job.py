@@ -6,13 +6,13 @@ import enum
 import json
 import logging
 import os
-import subprocess
 import sys
 import time
 import traceback
 import threading
 
 from middlewared.pipe import Pipes
+from middlewared.service_exception import CallError
 from middlewared.utils import Popen
 
 logger = logging.getLogger(__name__)
@@ -201,10 +201,11 @@ class Job(object):
     Represents a long running call, methods marked with @job decorator
     """
 
-    def __init__(self, middleware, method_name, method, args, options, pipes):
+    def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes):
         self._finished = asyncio.Event()
         self.middleware = middleware
         self.method_name = method_name
+        self.serviceobj = serviceobj
         self.method = method
         self.args = args
         self.options = options
@@ -337,36 +338,14 @@ class Job(object):
         and return the result as a json
         """
         if self.options.get('process'):
-            proc = await Popen([
-                '/usr/bin/env',
-                'python3',
-                os.path.join(
-                    os.path.dirname(os.path.realpath(__file__)),
-                    'job_process.py',
-                ),
-                str(self.id),
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True, env={
-                'LOGNAME': 'root',
-                'USER': 'root',
-                'GROUP': 'wheel',
-                'HOME': '/root',
-                'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin',
-                'TERM': 'xterm',
-            })
-            output = await proc.communicate()
             try:
-                data = json.loads(output[0].decode())
-            except ValueError:
+                rv = await self.middleware.run_in_thread(self.middleware._call_worker, self.serviceobj, self.method_name, *self.args, job={'id': self.id})
+                self.set_result(rv)
+                self.set_state('SUCCESS')
+            except CallError as e:
                 self.set_state('FAILED')
-                self.error = 'Running job has failed.\nSTDOUT: {}\nSTDERR: {}'.format(output[0], output[1])
-            else:
-                if proc.returncode != 0:
-                    self.set_state('FAILED')
-                    self.error = data['error']
-                    self.exception = data['exception']
-                else:
-                    self.set_result(data)
-                    self.set_state('SUCCESS')
+                self.error = str(e)
+                self.exception = e.exception
         else:
             # Make sure args are not altered during job run
             args = copy.deepcopy(self.args)
