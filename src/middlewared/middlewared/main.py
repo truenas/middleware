@@ -971,6 +971,7 @@ class Middleware(object):
             os.close(c_write_fd)
             os.close(stdout_wfd)
             os.close(stderr_wfd)
+            c_read_fd, c_write_fd, stdout_wfd, stderr_wfd = (None, ) * 4
 
             # Close p_write_fd since we wont use anymore and child can get an EOF
             with os.fdopen(p_write_fd, 'wb') as f:
@@ -982,6 +983,7 @@ class Middleware(object):
                     args,
                     job,
                 ]).encode())
+            p_write_fd = None
 
             streams = {
                 os.fdopen(p_read_fd, 'rb', closefd=False): 'channel',
@@ -992,12 +994,13 @@ class Middleware(object):
             while streams:
                 ready = select.select(streams.keys(), [], [])[0]
                 for io in ready:
-                    name = streams[io]
+                    ioname = streams[io]
                     read = io.readline()
                     if read == b'':
                         streams.pop(io)
                         continue
-                    data[name] += read
+                    data[ioname] += read
+
             # We only care about exit code, not signal
             returncode = os.waitpid(pid, 0)[1] >> 8
             try:
@@ -1019,7 +1022,8 @@ class Middleware(object):
                 stdout_rfd, stdout_wfd, stderr_rfd, stderr_wfd,
             ):
                 try:
-                    os.close(i)
+                    if i is not None:
+                        os.close(i)
                 except OSError:
                     pass
 
