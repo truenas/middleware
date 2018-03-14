@@ -16,6 +16,7 @@ from middlewared.service_exception import CallException, CallError, ValidationEr
 from middlewared.utils import filter_list
 from middlewared.logger import Logger
 from middlewared.job import Job
+from middlewared.pipe import Pipes
 
 
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
@@ -29,14 +30,15 @@ def item_method(fn):
     return fn
 
 
-def job(lock=None, lock_queue_size=None, process=False, pipe=False):
+def job(lock=None, lock_queue_size=None, process=False, pipes=None, check_pipes=True):
     """Flag method as a long running job."""
     def check_job(fn):
         fn._job = {
             'lock': lock,
             'lock_queue_size': lock_queue_size,
             'process': process,
-            'pipe': pipe,
+            'pipes': pipes or [],
+            'check_pipes': check_pipes,
         }
         return fn
     return check_job
@@ -445,8 +447,9 @@ class CoreService(Service):
 
         Returns the job id and the URL for download.
         """
-        job = await self.middleware.call(method, *args)
+        job = await self.middleware.call(method, *args, pipes=Pipes(output=self.middleware.pipe()))
         token = await self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job.id})
+        self.middleware.fileapp.register_job(job.id)
         return job.id, f'/_download/{job.id}?auth_token={token}'
 
     @private
