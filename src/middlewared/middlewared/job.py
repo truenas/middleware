@@ -3,9 +3,7 @@ from collections import OrderedDict
 import copy
 from datetime import datetime
 import enum
-import json
 import logging
-import os
 import sys
 import time
 import traceback
@@ -13,7 +11,6 @@ import threading
 
 from middlewared.pipe import Pipes
 from middlewared.service_exception import CallError
-from middlewared.utils import Popen
 
 logger = logging.getLogger(__name__)
 

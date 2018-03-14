@@ -23,7 +23,7 @@ class JailService(CRUDService):
 
     # FIXME: foreign schemas cannot be referenced when
     # using `process_pool`
-    #@filterable
+    # @filterable
     @accepts(
         Dict('query-filters', additional_attrs=True),
         Dict('query-options', additional_attrs=True),
