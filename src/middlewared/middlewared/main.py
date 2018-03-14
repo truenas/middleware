@@ -13,6 +13,7 @@ from collections import defaultdict
 
 import argparse
 import asyncio
+import bsd
 import binascii
 import concurrent.futures
 import errno
@@ -890,8 +891,11 @@ class Middleware(object):
         # entry to keep track of its state.
         job_options = getattr(methodobj, '_job', None)
         if job_options:
+            # Currently its only a boolean
+            if serviceobj._config.process_pool is True:
+                job_options['process'] = True
             # Create a job instance with required args
-            job = Job(self, name, methodobj, args, job_options, pipes)
+            job = Job(self, name, serviceobj, methodobj, args, job_options, pipes)
             # Add the job to the queue.
             # At this point an `id` is assinged to the job.
             job = self.jobs.add(job)
@@ -901,18 +905,123 @@ class Middleware(object):
         if job:
             return job
         else:
+
+            # Currently its only a boolean
+            if serviceobj._config.process_pool is True:
+                return await self.run_in_thread(self._call_worker, serviceobj, name, *args)
+
             if asyncio.iscoroutinefunction(methodobj):
                 return await methodobj(*args)
             else:
-                pool = None
+                tpool = None
                 if serviceobj._config.thread_pool:
-                    pool = serviceobj._config.thread_pool
+                    tpool = serviceobj._config.thread_pool
                 if hasattr(methodobj, '_thread_pool'):
-                    pool = methodobj._thread_pool
-                if pool:
-                    return await self.run_in_thread_pool(pool, methodobj, *args)
-                else:
-                    return await self.run_in_thread(methodobj, *args)
+                    tpool = methodobj._thread_pool
+                if tpool:
+                    return await self.run_in_executor(tpool, methodobj, *args)
+
+                return await self.run_in_thread(methodobj, *args)
+
+    def _call_worker(self, serviceobj, name, *args, job=None):
+        # TODO: spawning a worker on every call is not ideal.
+        # What we should be doing is spawn a pool of processes and
+        # communicate with them.
+        (c_read_fd, p_write_fd, p_read_fd, c_write_fd,
+         stdout_rfd, stdout_wfd, stderr_rfd, stderr_wfd) = (None, ) * 8
+        try:
+            c_read_fd, p_write_fd = os.pipe2(0)
+            p_read_fd, c_write_fd = os.pipe2(0)
+            stdout_rfd, stdout_wfd = os.pipe2(0)
+            stderr_rfd, stderr_wfd = os.pipe2(0)
+            pid = os.fork()
+            if pid == 0:
+                os.close(1)
+                os.close(2)
+                os.dup2(stdout_wfd, 1)
+                os.dup2(stderr_wfd, 2)
+                # Close all fds until `stderr_wfd` which is supposed to be the last
+                # one that matters. Use bsd.closefrom to close everything above that.
+                for i in range(stderr_wfd):
+                    if i in (1, 2, c_read_fd, c_write_fd):
+                        continue
+                    try:
+                        os.close(i)
+                    except OSError:
+                        pass
+                bsd.closefrom(stderr_wfd)
+                os.execve('/usr/local/bin/python3.6', [
+                    '/usr/local/bin/python3.6',
+                    os.path.join(
+                        os.path.dirname(os.path.realpath(__file__)),
+                        'worker.py',
+                    ),
+                    str(c_read_fd),
+                    str(c_write_fd)
+                ], env={
+                    'LOGNAME': 'root',
+                    'USER': 'root',
+                    'GROUP': 'wheel',
+                    'HOME': '/root',
+                    'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin',
+                    'TERM': 'xterm',
+                })
+
+            os.close(c_read_fd)
+            os.close(c_write_fd)
+            os.close(stdout_wfd)
+            os.close(stderr_wfd)
+
+            # Close p_write_fd since we wont use anymore and child can get an EOF
+            with os.fdopen(p_write_fd, 'wb') as f:
+                f.write(json.dumps([
+                    # For now only plugins in middlewared.plugins are supported
+                    f'middlewared.plugins.{serviceobj.__class__.__module__}',
+                    serviceobj.__class__.__name__,
+                    name.rsplit('.', 1)[-1],
+                    args,
+                    job,
+                ]).encode())
+
+            streams = {
+                os.fdopen(p_read_fd, 'rb', closefd=False): 'channel',
+                os.fdopen(stdout_rfd, 'rb', closefd=False): 'stdout',
+                os.fdopen(stderr_rfd, 'rb', closefd=False): 'stderr',
+            }
+            data = defaultdict(bytes)
+            while streams:
+                ready = select.select(streams.keys(), [], [])[0]
+                for io in ready:
+                    name = streams[io]
+                    read = io.readline()
+                    if read == b'':
+                        streams.pop(io)
+                        continue
+                    data[name] += read
+            # We only care about exit code, not signal
+            returncode = os.waitpid(pid, 0)[1] >> 8
+            try:
+                data = json.loads(data['channel'].decode())
+            except Exception:
+                self.logger.error(
+                    f'Worker process for "{name}" returned unreadable data: {data["channel"]}.\n'
+                    f'STDOUT: {data["stdout"]}\nSTDERR: {data["stderr"]}'
+                )
+                raise CallError('Worker process failed unexpectedly')
+            if returncode != 0:
+                # FIXME: serialize exception so it can be properly passed from worker to client
+                self.logger.error(f'Worker process for "{name}" failed: {data["exception"]}')
+                raise CallError(data['error'], exception=data['exception'])
+            return data
+        finally:
+            for i in (
+                c_read_fd, p_write_fd, p_read_fd, c_write_fd,
+                stdout_rfd, stdout_wfd, stderr_rfd, stderr_wfd,
+            ):
+                try:
+                    os.close(i)
+                except OSError:
+                    pass
 
     def _method_lookup(self, name):
         if '.' not in name:
