@@ -2510,7 +2510,8 @@ class notifier(metaclass=HookMetaclass):
         imported = imp.returncode == 0
         if not imported:
             try:
-                imported = libzfs.ZFS().get(name) is not None
+                with libzfs.ZFS() as zfs:
+                    imported = zfs.get(name) is not None
             except libzfs.ZFSException:
                 pass
 
