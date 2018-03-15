@@ -200,7 +200,7 @@ def smb4_set_SID(client, role):
         else:
             if database_SID != system_SID:
                 if not set_sid_func(database_SID):
-                    print(("Unable to set SID to " "%s" % database_SID), file=sys.stderr)
+                    print(("Unable to set SID to %s" % database_SID), file=sys.stderr)
 
     else:
         if not system_SID:
