@@ -191,7 +191,7 @@ fi
 # user specifically requests that we do.
 #
 if ! $boot_time ; then
-	$mydir/freenas-debug -A >/dev/null
+	$mydir/freenas-debug -A > /tmp/ixdiagnose.diagnose
 	tar -cHf - -C /var log | tar -C $dir -xf -
 	tar -cHf - -C /var/tmp fndebug | tar -C $dir -xf -
 	if [ "${limit}" != "-1" ] ; then

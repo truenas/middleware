@@ -27,14 +27,15 @@
 #####################################################################
 
 
-dtrace_opt() { echo d; }
-dtrace_help() { echo "Dump DTrace Scripts"; }
-dtrace_directory() { echo "Dtrace"; }
-dtrace_func()
+latency_opt() { echo L; }
+latency_help() { echo "disk latency via dtrace "; }
+latency_directory() { echo "latency"; }
+latency_func()
 {
 	local loaded=false
-	section_header "Dtrace Disk Latency"
-	echo "dtrace section deprecated in favor of latency debug module and more specific dtrace output"
+	local dtscript="$(realpath ${FREENAS_DEBUG_MODULEDIR}/latency/disklatencycmd.d)"
+	section_header "Dtrace Disk Latency - 'dtrace -qs ${dtscript}'"
+	dtrace -qs ${dtscript}
 	section_footer
 
 }

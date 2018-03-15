@@ -27,14 +27,15 @@
 #####################################################################
 
 
-dtrace_opt() { echo d; }
-dtrace_help() { echo "Dump DTrace Scripts"; }
-dtrace_directory() { echo "Dtrace"; }
-dtrace_func()
+slow_ops_opt() { echo b; }
+slow_ops_help() { echo "slow operations zfslower DTrace Scripts"; }
+slow_ops_directory() { echo "slow_ops"; }
+slow_ops_func()
 {
 	local loaded=false
-	section_header "Dtrace Disk Latency"
-	echo "dtrace section deprecated in favor of latency debug module and more specific dtrace output"
+	local dtscript="$(realpath ${FREENAS_DEBUG_MODULEDIR}/slow_ops/zfslower.d)"
+	section_header "storage operations that took >50ms  'dtrace -s ${dtscript} 50000 60'"
+	dtrace -qs ${dtscript} 50000 60
 	section_footer
 
 }

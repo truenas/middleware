@@ -134,7 +134,7 @@ section_footer()
 		if [ -n "$dirfunc" ]; then
 			echo "command used:"
 			modname=`echo -n "$dirfunc" | sed -e 's/_directory//'`
-			echo `pwd`/$modname.sh
+			echo  ${FREENAS_DEBUG_MODULEDIR}/$modname.sh
 		fi
 
 
