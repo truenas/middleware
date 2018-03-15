@@ -1,7 +1,7 @@
 import json
 import requests
 
-from middlewared.alert.base import ProThreadedAlertService, ellipsis
+from middlewared.alert.base import ProThreadedAlertService
 from middlewared.schema import Dict, Str
 
 
