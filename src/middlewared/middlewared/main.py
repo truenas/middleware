@@ -14,7 +14,6 @@ from collections import defaultdict
 
 import argparse
 import asyncio
-import bsd
 import binascii
 import concurrent.futures
 import errno
@@ -862,8 +861,7 @@ class Middleware(object):
         Also used to run non thread safe libraries (using a ProcessPool)
         """
         loop = asyncio.get_event_loop()
-        task = loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
-        await task
+        task = await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
         return task.result()
 
     async def run_in_thread(self, method, *args, **kwargs):
@@ -928,7 +926,8 @@ class Middleware(object):
                 return await self.run_in_thread(methodobj, *args)
 
     async def _call_worker(self, serviceobj, name, *args, job=None):
-        return await self.run_in_proc(main_worker,
+        return await self.run_in_proc(
+            main_worker,
             # For now only plugins in middlewared.plugins are supported
             f'middlewared.plugins.{serviceobj.__class__.__module__}',
             serviceobj.__class__.__name__,
