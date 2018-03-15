@@ -7,7 +7,7 @@ from .restful import RESTfulAPI
 from .schema import ResolverError, Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from .utils import start_daemon_thread
-from .worker import main_worker
+from .worker import ProcessPoolExecutor, main_worker
 from aiohttp import web
 from aiohttp_wsgi import WSGIHandler
 from collections import defaultdict
@@ -665,7 +665,7 @@ class Middleware(object):
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
         multiprocessing.set_start_method('spawn')
-        self.__procpool = concurrent.futures.ProcessPoolExecutor(max_workers=3)
+        self.__procpool = ProcessPoolExecutor(max_workers=2)
         self.__threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
         self.jobs = JobsQueue(self)
         self.__schemas = {}
@@ -861,8 +861,7 @@ class Middleware(object):
         Also used to run non thread safe libraries (using a ProcessPool)
         """
         loop = asyncio.get_event_loop()
-        task = await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
-        return task.result()
+        return await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
 
     async def run_in_thread(self, method, *args, **kwargs):
         return await self.run_in_executor(self.__threadpool, method, *args, **kwargs)
@@ -1090,8 +1089,12 @@ class Middleware(object):
 
         self.__setup_periodic_tasks()
 
+        # Start up middleware worker process pool
+        self.__procpool._start_queue_management_thread()
+
         self.logger.debug('Accepting connections')
         web.run_app(app, host='0.0.0.0', port=6000, access_log=None)
+
         try:
             self.__loop.run_forever()
         except RuntimeError as e:
