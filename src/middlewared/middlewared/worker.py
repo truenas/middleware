@@ -1,14 +1,12 @@
 #!/usr/local/bin/python3
 from middlewared.client import Client
-from middlewared.service_exception import CallError
 
 import asyncio
 import importlib
-import json
 import logging
-import os
-import sys
-import traceback
+import setproctitle
+
+MIDDLEWARE = None
 
 
 class FakeMiddleware(object):
@@ -16,21 +14,24 @@ class FakeMiddleware(object):
     Implements same API from real middleware
     """
 
-    def __init__(self, client):
-        self.client = client
+    def __init__(self):
+        self.client = None
         self.logger = logging.getLogger('worker')
 
     async def _call(self, service_mod, service_name, method, args, job=None):
-        module = importlib.import_module(service_mod)
-        serviceobj = getattr(module, service_name)(self)
-        methodobj = getattr(serviceobj, method)
-        job_options = getattr(methodobj, '_job', None)
-        if job_options:
-            args.insert(0, FakeJob(job['id'], self.client))
-        if asyncio.iscoroutinefunction(methodobj):
-            return await methodobj(*args)
-        else:
-            return methodobj(*args)
+        with Client() as c:
+            self.client = c
+            module = importlib.import_module(service_mod)
+            serviceobj = getattr(module, service_name)(self)
+            methodobj = getattr(serviceobj, method)
+            job_options = getattr(methodobj, '_job', None)
+            if job_options:
+                args.insert(0, FakeJob(job['id'], self.client))
+            if asyncio.iscoroutinefunction(methodobj):
+                return await methodobj(*args)
+            else:
+                return methodobj(*args)
+        self.client = None
 
     async def call(self, method, *params, timeout=None, **kwargs):
         """
@@ -65,28 +66,13 @@ class FakeJob(object):
         self.client.call('core.job_update', self.id, {'progress': self.progress})
 
 
-async def main(read_fd):
-    with os.fdopen(read_fd, 'rb') as f:
-        call_args = json.loads(f.read().decode())
-    with Client() as c:
-        middleware = FakeMiddleware(c)
-        return await middleware._call(*call_args)
+def main_worker(*call_args):
+    loop = asyncio.get_event_loop()
+    coro = MIDDLEWARE._call(*call_args)
+    res = loop.run_until_complete(coro)
+    return res
 
-if __name__ == '__main__':
-    try:
-        read_fd = int(sys.argv[1])
-        write_fd = int(sys.argv[2])
-        loop = asyncio.get_event_loop()
-        coro = main(read_fd)
-        res = loop.run_until_complete(coro)
-        os.write(write_fd, json.dumps(res).encode())
-    except Exception as e:
-        if isinstance(e, CallError):
-            error = e.errmsg
-        else:
-            error = str(e)
-        os.write(write_fd, json.dumps({
-            'exception': ''.join(traceback.format_exception(*sys.exc_info())),
-            'error': error,
-        }).encode())
-        sys.exit(2)
+
+if __name__ == 'middlewared.worker':
+    MIDDLEWARE = FakeMiddleware()
+    setproctitle.setproctitle('middlewared (worker)')
