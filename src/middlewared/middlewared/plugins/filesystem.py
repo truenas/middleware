@@ -1,12 +1,13 @@
-from middlewared.main import EventSource
-from middlewared.schema import Bool, Dict, Int, Ref, Str, accepts
-from middlewared.service import private, CallError, Service, job
-from middlewared.utils import filter_list
-
 import binascii
 import errno
 import os
 import select
+import shutil
+
+from middlewared.main import EventSource
+from middlewared.schema import Bool, Dict, Int, Ref, Str, accepts
+from middlewared.service import private, CallError, Service, job
+from middlewared.utils import filter_list
 
 
 class FilesystemService(Service):
@@ -152,7 +153,7 @@ class FilesystemService(Service):
         return data
 
     @accepts(Str('path'))
-    @job(pipe=True)
+    @job(pipes=["output"])
     async def get(self, job, path):
         """
         Job to get contents of `path`.
@@ -161,16 +162,8 @@ class FilesystemService(Service):
         if not os.path.isfile(path):
             raise CallError(f'{path} is not a file')
 
-        def read_write():
-            with open(path, 'rb') as f:
-                f2 = os.fdopen(job.write_fd, 'wb')
-                while True:
-                    read = f.read(102400)
-                    if read == b'':
-                        break
-                    f2.write(read)
-                f2.close()
-        await self.middleware.run_in_thread(read_write)
+        with open(path, 'rb') as f:
+            await self.middleware.run_in_io_thread(shutil.copyfileobj, f, job.pipes.output.w)
 
     @accepts(
         Str('path'),
@@ -180,7 +173,7 @@ class FilesystemService(Service):
             Int('mode'),
         ),
     )
-    @job(pipe=True)
+    @job(pipes=["input"])
     async def put(self, job, path, options=None):
         """
         Job to put contents to `path`.
@@ -194,16 +187,8 @@ class FilesystemService(Service):
         else:
             openmode = 'wb+'
 
-        def read_write():
-            with open(path, openmode) as f:
-                f2 = os.fdopen(job.read_fd, 'rb')
-                while True:
-                    read = f2.read(102400)
-                    if read == b'':
-                        break
-                    f.write(read)
-                f2.close()
-        await self.middleware.run_in_thread(read_write)
+        with open(path, openmode) as f:
+            await self.middleware.run_in_io_thread(shutil.copyfileobj, job.pipes.input.r, f)
 
         mode = options.get('mode')
         if mode:

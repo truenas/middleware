@@ -77,35 +77,33 @@ async def devd_listen(middleware):
     reader, writer = await asyncio.open_unix_connection(sock=s)
 
     while True:
-        read = await reader.read(8192)
-        read = read.decode(errors='ignore')
-        if read == "":
+        line = await reader.readline()
+        line = line.decode(errors='ignore')
+        if line == "":
             break
 
-        for line in read.split('\n'):
+        if not line.startswith('!'):
+            # TODO: its not a complete message, ignore for now
+            continue
 
-            if not line.startswith('!'):
-                # TODO: its not a complete message, ignore for now
-                continue
+        try:
+            parsed = await middleware.run_in_thread(lambda l: dict(t.split('=') for t in shlex.split(l)), line[1:])
+        except ValueError:
+            middleware.logger.warn(f'Failed to parse devd message: {line}')
+            continue
 
-            try:
-                parsed = await middleware.run_in_thread(lambda l: dict(t.split('=') for t in shlex.split(l)), line[1:])
-            except ValueError:
-                middleware.logger.warn(f'Failed to parse devd message: {line}')
-                continue
+        if 'system' not in parsed:
+            continue
 
-            if 'system' not in parsed:
-                continue
+        # Lets ignore CAM messages for now
+        if parsed['system'] in ('CAM', 'ACPI'):
+            continue
 
-            # Lets ignore CAM messages for now
-            if parsed['system'] in ('CAM', 'ACPI'):
-                continue
-
-            middleware.send_event(
-                f'devd.{parsed["system"]}'.lower(),
-                'ADDED',
-                data=parsed,
-            )
+        middleware.send_event(
+            f'devd.{parsed["system"]}'.lower(),
+            'ADDED',
+            data=parsed,
+        )
 
 
 def setup(middleware):

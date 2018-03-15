@@ -525,7 +525,7 @@ class ZFSQuoteService(Service):
 
     async def __get_quota_excesses(self):
         excesses = []
-        for properties in await self.middleware.run_in_thread_pool(SINGLE_THREAD_POOL, lambda: [
+        for properties in await self.middleware.run_in_executor(SINGLE_THREAD_POOL, lambda: [
             {k: v.__getstate__() for k, v in i.properties.items()}
             for i in libzfs.ZFS().datasets
         ]):

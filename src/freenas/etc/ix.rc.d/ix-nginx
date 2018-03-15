@@ -196,8 +196,8 @@ http {
     #upload_store /var/tmp/firmware;
     client_body_temp_path /var/tmp/firmware;
 
-    error_log /var/log/nginx/error.log error;
-    access_log /var/log/nginx/access.log combined;
+    error_log syslog:server=unix:/var/run/log,nohostname;
+    access_log syslog:server=unix:/var/run/log,nohostname;
 
     upstream netdata {
         # the netdata server
@@ -389,6 +389,10 @@ __EOF__
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr \$remote_addr;
             proxy_set_header X-Real-Remote-Port \$remote_port;
+        }
+
+        location /images {
+            alias /var/db/system/webui/images;
         }
 
         #error_page  404              /404.html;

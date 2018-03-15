@@ -2,15 +2,15 @@ from .apidocs import app as apidocs_app
 from .client import ejson as json
 from .event import EventSource
 from .job import Job, JobsQueue
+from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
 from .schema import ResolverError, Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from .utils import start_daemon_thread
+from .worker import ProcessPoolExecutor, main_worker
 from aiohttp import web
 from aiohttp_wsgi import WSGIHandler
 from collections import defaultdict
-from daemon import DaemonContext
-from daemon.pidfile import TimeoutPIDLockFile
 
 import argparse
 import asyncio
@@ -21,10 +21,12 @@ import functools
 import imp
 import inspect
 import linecache
+import multiprocessing
 import os
 import queue
 import select
 import setproctitle
+import shutil
 import signal
 import sys
 import threading
@@ -254,7 +256,7 @@ class Application(object):
         for method in self.__callbacks['on_close']:
             try:
                 method(self)
-            except:
+            except Exception:
                 self.logger.error('Failed to run on_close callback.', exc_info=True)
 
         for ident, val in self.__event_sources.items():
@@ -268,7 +270,7 @@ class Application(object):
         for method in self.__callbacks['on_message']:
             try:
                 method(self, message)
-            except:
+            except Exception:
                 self.logger.error('Failed to run on_message callback.', exc_info=True)
 
         if message['msg'] == 'connect':
@@ -320,6 +322,18 @@ class FileApplication(object):
 
     def __init__(self, middleware):
         self.middleware = middleware
+        self.jobs = {}
+
+    def register_job(self, job_id):
+        self.jobs[job_id] = self.middleware.loop.call_later(
+            60, lambda: asyncio.ensure_future(self._cleanup_job(job_id)))
+
+    async def _cleanup_job(self, job_id):
+        self.jobs[job_id].cancel()
+        del self.jobs[job_id]
+
+        job = self.middleware.jobs[job_id]
+        await job.pipes.close()
 
     async def download(self, request):
         path = request.path.split('/')
@@ -329,12 +343,6 @@ class FileApplication(object):
             return resp
 
         job_id = int(path[-1])
-        jobs = self.middleware.jobs.all()
-        job = jobs.get(job_id)
-        if not job:
-            resp = web.Response()
-            resp.set_status(404)
-            return resp
 
         qs = urllib.parse.parse_qs(request.query_string)
         denied = False
@@ -356,6 +364,17 @@ class FileApplication(object):
             resp.set_status(401)
             return resp
 
+        job = self.middleware.jobs.get(job_id)
+        if not job:
+            resp = web.Response()
+            resp.set_status(404)
+            return resp
+
+        if job_id not in self.jobs:
+            resp = web.Response()
+            resp.set_status(410)
+            return resp
+
         resp = web.StreamResponse(status=200, reason='OK', headers={
             'Content-Type': 'application/octet-stream',
             'Content-Disposition': f'attachment; filename="{filename}"',
@@ -363,26 +382,15 @@ class FileApplication(object):
         })
         await resp.prepare(request)
 
-        f = None
         try:
-            def read_write():
-                f = os.fdopen(job.read_fd, 'rb')
-                while True:
-                    read = f.read(1024)
-                    if read == b'':
-                        break
-                    resp.write(read)
-                    # await web.drain()
-            await self.middleware.run_in_thread(read_write)
-            await resp.drain()
-
+            await self.middleware.run_in_io_thread(shutil.copyfileobj, job.pipes.output.r, resp)
         finally:
-            if f:
-                f.close()
+            await self._cleanup_job(job_id)
+
+        await resp.drain()
         return resp
 
     async def upload(self, request):
-
         denied = True
         auth = request.headers.get('Authorization')
         if auth:
@@ -429,35 +437,27 @@ class FileApplication(object):
 
         try:
             data = json.loads(form['data'])
-            if 'method' not in data:
-                return web.Response(status=422)
-            job = await self.middleware.call(data['method'], *(data.get('params') or []))
+        except Exception as e:
+            return web.Response(status=400, reason=str(e))
+
+        if 'method' not in data:
+            return web.Response(status=422)
+
+        try:
+            job = await self.middleware.call(data['method'], *(data.get('params') or []),
+                                             pipes=Pipes(input=self.middleware.pipe()))
+            try:
+                await self.middleware.run_in_io_thread(job.pipes.input.w.write, form['file'])
+            finally:
+                await self.middleware.run_in_io_thread(job.pipes.input.w.close)
         except CallError as e:
             if e.errno == CallError.ENOMETHOD:
                 status_code = 422
             else:
                 status_code = 412
             return web.Response(status=status_code, reason=str(e))
-        except json.decoder.JSONDecodeError as e:
-            return web.Response(status=400, reason=str(e))
         except Exception as e:
             return web.Response(status=500, reason=str(e))
-
-        f = None
-        try:
-            def read_write():
-                f = os.fdopen(job.write_fd, 'wb')
-                i = 0
-                while True:
-                    read = form['file'][i * 1024:(i + 1) * 1024]
-                    if read == b'':
-                        break
-                    f.write(read)
-                    i += 1
-            await self.middleware.run_in_thread(read_write)
-        finally:
-            if f:
-                f.close()
 
         resp = web.Response(
             status=200,
@@ -475,11 +475,12 @@ class ShellWorkerThread(threading.Thread):
     and spawning the reader and writer threads.
     """
 
-    def __init__(self, ws, input_queue, loop):
+    def __init__(self, ws, input_queue, loop, jail=None):
         self.ws = ws
         self.input_queue = input_queue
         self.loop = loop
         self.shell_pid = None
+        self.jail = jail
         self._die = False
         super(ShellWorkerThread, self).__init__(daemon=True)
 
@@ -492,10 +493,20 @@ class ShellWorkerThread(threading.Thread):
                     continue
                 try:
                     os.close(i)
-                except:
+                except Exception:
                     pass
             os.chdir('/root')
-            os.execve('/usr/local/bin/bash', ['bash'], {
+            cmd = [
+                '/usr/local/bin/bash'
+            ]
+
+            if self.jail is not None:
+                cmd = [
+                    '/usr/local/bin/iocage',
+                    'console',
+                    self.jail
+                ]
+            os.execve(cmd[0], cmd, {
                 'TERM': 'xterm',
                 'HOME': '/root',
                 'LANG': 'en_US.UTF-8',
@@ -603,7 +614,9 @@ class ShellApplication(object):
                 ws.send_json({
                     'msg': 'connected',
                 })
-                t_worker = ShellWorkerThread(ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop())
+
+                jail = data.get('jail')
+                t_worker = ShellWorkerThread(ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(), jail=jail)
                 t_worker.start()
 
         # If connection was not authenticated, return earlier
@@ -650,9 +663,10 @@ class Middleware(object):
         self.plugins_dirs = plugins_dirs or []
         self.__loop = None
         self.__thread_id = threading.get_ident()
-        self.__threadpool = concurrent.futures.ThreadPoolExecutor(
-            max_workers=10,
-        )
+        # Spawn new processes for ProcessPool instead of forking
+        multiprocessing.set_start_method('spawn')
+        self.__procpool = ProcessPoolExecutor(max_workers=2)
+        self.__threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
         self.jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
@@ -809,7 +823,7 @@ class Middleware(object):
                     await hook['method'](*args, **kwargs)
                 else:
                     asyncio.ensure_future(hook['method'], *args, **kwargs)
-            except:
+            except Exception:
                 self.logger.error('Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True)
 
     def register_event_source(self, name, event_source):
@@ -839,21 +853,33 @@ class Middleware(object):
     def get_schema(self, name):
         return self.__schemas.get(name)
 
-    async def run_in_thread_pool(self, pool, method, *args, **kwargs):
+    async def run_in_executor(self, pool, method, *args, **kwargs):
         """
-        Runs method in a native thread using concurrent.futures.ThreadPool.
-        This prevents a CPU intensive or non-greenlet friendly method
+        Runs method in a native thread using concurrent.futures.Pool.
+        This prevents a CPU intensive or non-asyncio friendly method
         to block the event loop indefinitely.
+        Also used to run non thread safe libraries (using a ProcessPool)
         """
         loop = asyncio.get_event_loop()
-        task = loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
-        await task
-        return task.result()
+        return await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
 
     async def run_in_thread(self, method, *args, **kwargs):
-        return await self.run_in_thread_pool(self.__threadpool, method, *args, **kwargs)
+        return await self.run_in_executor(self.__threadpool, method, *args, **kwargs)
 
-    async def _call(self, name, serviceobj, methodobj, params=None, app=None):
+    async def run_in_proc(self, method, *args, **kwargs):
+        return await self.run_in_executor(self.__procpool, method, *args, **kwargs)
+
+    async def run_in_io_thread(self, method, *args):
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        try:
+            return await self.loop.run_in_executor(executor, method, *args)
+        finally:
+            executor.shutdown(wait=False)
+
+    def pipe(self):
+        return Pipe(self)
+
+    async def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None):
 
         args = []
         if hasattr(methodobj, '_pass_app'):
@@ -866,8 +892,11 @@ class Middleware(object):
         # entry to keep track of its state.
         job_options = getattr(methodobj, '_job', None)
         if job_options:
+            # Currently its only a boolean
+            if serviceobj._config.process_pool is True:
+                job_options['process'] = True
             # Create a job instance with required args
-            job = Job(self, name, methodobj, args, job_options)
+            job = Job(self, name, serviceobj, methodobj, args, job_options, pipes)
             # Add the job to the queue.
             # At this point an `id` is assinged to the job.
             job = self.jobs.add(job)
@@ -877,18 +906,34 @@ class Middleware(object):
         if job:
             return job
         else:
+
+            # Currently its only a boolean
+            if serviceobj._config.process_pool is True:
+                return await self._call_worker(serviceobj, name, *args)
+
             if asyncio.iscoroutinefunction(methodobj):
                 return await methodobj(*args)
             else:
-                pool = None
+                tpool = None
                 if serviceobj._config.thread_pool:
-                    pool = serviceobj._config.thread_pool
+                    tpool = serviceobj._config.thread_pool
                 if hasattr(methodobj, '_thread_pool'):
-                    pool = methodobj._thread_pool
-                if pool:
-                    return await self.run_in_thread_pool(pool, methodobj, *args)
-                else:
-                    return await self.run_in_thread(methodobj, *args)
+                    tpool = methodobj._thread_pool
+                if tpool:
+                    return await self.run_in_executor(tpool, methodobj, *args)
+
+                return await self.run_in_thread(methodobj, *args)
+
+    async def _call_worker(self, serviceobj, name, *args, job=None):
+        return await self.run_in_proc(
+            main_worker,
+            # For now only plugins in middlewared.plugins are supported
+            f'middlewared.plugins.{serviceobj.__class__.__module__}',
+            serviceobj.__class__.__name__,
+            name.rsplit('.', 1)[-1],
+            args,
+            job,
+        )
 
     def _method_lookup(self, name):
         if '.' not in name:
@@ -912,9 +957,9 @@ class Middleware(object):
 
         return await self._call(message['method'], serviceobj, methodobj, params, app=app)
 
-    async def call(self, name, *params):
+    async def call(self, name, *params, pipes=None):
         serviceobj, methodobj = self._method_lookup(name)
-        return await self._call(name, serviceobj, methodobj, params)
+        return await self._call(name, serviceobj, methodobj, params, pipes=pipes)
 
     def call_sync(self, name, *params):
         """
@@ -952,7 +997,7 @@ class Middleware(object):
         for sessionid, wsclient in self.__wsclients.items():
             try:
                 wsclient.send_event(name, event_type, **kwargs)
-            except:
+            except Exception:
                 self.logger.warn('Failed to send event {} to {}'.format(name, sessionid), exc_info=True)
 
         # Send event also for internally subscribed plugins
@@ -1029,9 +1074,9 @@ class Middleware(object):
 
         app.router.add_route("*", "/api/docs{path_info:.*}", WSGIHandler(apidocs_app))
 
-        fileapp = FileApplication(self)
-        app.router.add_route('*', '/_download{path_info:.*}', fileapp.download)
-        app.router.add_route('*', '/_upload{path_info:.*}', fileapp.upload)
+        self.fileapp = FileApplication(self)
+        app.router.add_route('*', '/_download{path_info:.*}', self.fileapp.download)
+        app.router.add_route('*', '/_upload{path_info:.*}', self.fileapp.upload)
 
         shellapp = ShellApplication(self)
         app.router.add_route('*', '/_shell{path_info:.*}', shellapp.ws_handler)
@@ -1044,8 +1089,12 @@ class Middleware(object):
 
         self.__setup_periodic_tasks()
 
+        # Start up middleware worker process pool
+        self.__procpool._start_queue_management_thread()
+
         self.logger.debug('Accepting connections')
         web.run_app(app, host='0.0.0.0', port=6000, access_log=None)
+
         try:
             self.__loop.run_forever()
         except RuntimeError as e:
@@ -1081,7 +1130,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('restart', nargs='?')
-    parser.add_argument('--foreground', '-f', action='store_true')
+    parser.add_argument('--pidfile', '-P', action='store_true')
     parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
     parser.add_argument('--plugins-dirs', '-p', action='append')
     parser.add_argument('--debug-level', choices=[
@@ -1090,26 +1139,15 @@ def main():
         'INFO',
         'WARN',
         'ERROR',
-    ])
+    ], default='DEBUG')
     parser.add_argument('--log-handler', choices=[
         'console',
         'file',
-    ])
+    ], default='console')
     args = parser.parse_args()
 
-    #  Logger
-    if args.log_handler:
-        log_handlers = [args.log_handler]
-    else:
-        log_handlers = ['console' if args.foreground else 'file']
-
-    if args.debug_level is None and args.foreground:
-        debug_level = 'TRACE'
-    else:
-        debug_level = args.debug_level or 'DEBUG'
-
-    _logger = logger.Logger('middleware', debug_level)
-    get_logger = _logger.getLogger()
+    _logger = logger.Logger('middleware', args.debug_level)
+    _logger.getLogger()
 
     pidpath = '/var/run/middlewared.pid'
 
@@ -1123,19 +1161,10 @@ def main():
                 if e.errno != errno.ESRCH:
                     raise
 
-    if not args.foreground:
-        _logger.configure_logging('file')
-        daemonc = DaemonContext(
-            pidfile=TimeoutPIDLockFile(pidpath),
-            detach_process=True,
-            stdout=logger.LoggerStream(get_logger),
-            stderr=logger.LoggerStream(get_logger),
-        )
-        daemonc.open()
-    elif 'file' in log_handlers:
+    if 'file' in args.log_handler:
         _logger.configure_logging('file')
         sys.stdout = sys.stderr = _logger.stream()
-    elif 'console' in log_handlers:
+    elif 'console' in args.log_handler:
         _logger.configure_logging('console')
     else:
         _logger.configure_logging('file')
@@ -1144,17 +1173,15 @@ def main():
     # Workaround to tell django to not set up logging on its own
     os.environ['MIDDLEWARED'] = str(os.getpid())
 
-    if args.foreground:
+    if args.pidfile:
         with open(pidpath, "w") as _pidfile:
             _pidfile.write(f"{str(os.getpid())}\n")
 
     Middleware(
         loop_monitor=not args.disable_loop_monitor,
         plugins_dirs=args.plugins_dirs,
-        debug_level=debug_level,
+        debug_level=args.debug_level,
     ).run()
-    if not args.foreground:
-        daemonc.close()
 
 
 if __name__ == '__main__':

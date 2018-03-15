@@ -1,16 +1,18 @@
-from middlewared.schema import Bool, Dict, Int, Str, accepts
-from middlewared.service import CallError, Service, job
-from middlewared.utils import Popen
-
 import errno
 import json
 import os
 import requests
+import shutil
 import simplejson
 import socket
 import subprocess
 import sys
 import time
+
+from middlewared.pipe import Pipes
+from middlewared.schema import Bool, Dict, Int, Str, accepts
+from middlewared.service import CallError, Service, job
+from middlewared.utils import Popen
 
 # FIXME: Remove when we can generate debug and move license to middleware
 if '/usr/local/www' not in sys.path:
@@ -180,17 +182,12 @@ class SupportService(Service):
                 t['username'] = data['user']
             if 'password' in data:
                 t['password'] = data['password']
-            tjob = await self.middleware.call('support.attach_ticket', t)
+            tjob = await self.middleware.call('support.attach_ticket', t, pipes=Pipes(input=self.middleware.pipe()))
 
-            def writer():
-                with open(debug_file, 'rb') as f:
-                    while True:
-                        read = f.read(10240)
-                        if read == b'':
-                            break
-                        os.write(tjob.write_fd, read)
-                    os.close(tjob.write_fd)
-            await self.middleware.run_in_thread(writer)
+            with open(debug_file, 'rb') as f:
+                await self.middleware.run_in_io_thread(shutil.copyfileobj, f, tjob.pipes.input.w)
+                await self.middleware.run_in_io_thread(tjob.pipes.input.w.close)
+
             await tjob.wait()
         else:
             job.set_progress(100)
@@ -207,7 +204,7 @@ class SupportService(Service):
         Str('username'),
         Str('password'),
     ))
-    @job(pipe=True)
+    @job(pipes=["input"])
     async def attach_ticket(self, job, data):
         """
         Method to attach a file to a existing ticket.
@@ -220,14 +217,12 @@ class SupportService(Service):
         data['ticketnum'] = data.pop('ticket')
         filename = data.pop('filename')
 
-        fileobj = os.fdopen(job.read_fd, 'rb')
-
         try:
-            r = await self.middleware.run_in_thread(lambda: requests.post(
+            r = await self.middleware.run_in_io_thread(lambda: requests.post(
                 f'https://{ADDRESS}/{sw_name}/api/v1.0/ticket/attachment',
                 data=data,
                 timeout=10,
-                files={'file': (filename, fileobj)},
+                files={'file': (filename, job.pipes.input.r)},
             ))
             data = r.json()
         except simplejson.JSONDecodeError:

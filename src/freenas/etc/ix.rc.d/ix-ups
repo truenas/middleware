@@ -65,9 +65,13 @@ generate_upsmon()
 		else
 			powerdown="/etc/nokillpower"
 		fi
-
+		if [ "$ups_shutdown" = "batt" ]; then
+		
 		cat <<EOF
 FINALDELAY ${ups_shutdowntimer}
+EOF
+		fi
+		cat <<EOF
 MONITOR ${ident} 1 ${user} ${passwd} ${ups_mode}
 NOTIFYCMD "/usr/local/sbin/upssched"
 NOTIFYFLAG ONBATT SYSLOG+WALL+EXEC

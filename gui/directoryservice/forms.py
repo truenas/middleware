@@ -998,6 +998,8 @@ class KerberosRealmForm(ModelForm):
 
 
 class KerberosKeytabCreateForm(ModelForm):
+    freeadmin_form = True
+
     keytab_file = FileField(
         label=_("Kerberos Keytab"),
         required=False
@@ -1014,21 +1016,23 @@ class KerberosKeytabCreateForm(ModelForm):
                 _("A keytab is required.")
             )
 
-        encoded = None
-        if hasattr(keytab_file, 'temporary_file_path'):
-            filename = keytab_file.temporary_file_path()
-            with open(filename, "rb") as f:
-                keytab_contents = f.read()
-                encoded = base64.b64encode(keytab_contents).decode()
+        if isinstance(keytab_file, str):
+            encoded = keytab_file
         else:
-            filename = tempfile.mktemp(dir='/tmp')
-            with open(filename, 'wb+') as f:
-                for c in keytab_file.chunks():
-                    f.write(c)
-            with open(filename, "rb") as f:
-                keytab_contents = f.read()
-                encoded = base64.b64encode(keytab_contents).decode()
-            os.unlink(filename)
+            if hasattr(keytab_file, 'temporary_file_path'):
+                filename = keytab_file.temporary_file_path()
+                with open(filename, "rb") as f:
+                    keytab_contents = f.read()
+                    encoded = base64.b64encode(keytab_contents).decode()
+            else:
+                filename = tempfile.mktemp(dir='/tmp')
+                with open(filename, 'wb+') as f:
+                    for c in keytab_file.chunks():
+                        f.write(c)
+                with open(filename, "rb") as f:
+                    keytab_contents = f.read()
+                    encoded = base64.b64encode(keytab_contents).decode()
+                os.unlink(filename)
 
         return encoded
 
@@ -1108,6 +1112,13 @@ class KerberosKeytabEditForm(ModelForm):
     def save(self):
         super(KerberosKeytabEditForm, self).save()
         notifier().start("ix-kerberos")
+
+
+class KerberosPrincipalForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.KerberosPrincipal
 
 
 class KerberosSettingsForm(ModelForm):

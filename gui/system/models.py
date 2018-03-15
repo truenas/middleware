@@ -1175,3 +1175,7 @@ class Support(Model):
             bool
         """
         return self.is_available(support=self)[0] and self.enabled
+
+
+class Filesystem(Model):
+    identifier = models.CharField(max_length=255, unique=True)

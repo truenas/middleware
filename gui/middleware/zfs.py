@@ -44,7 +44,7 @@ def _is_vdev(name):
     if (
         name in ('stripe', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3')
         or
-        re.search(r'^(mirror|raidz|raidz1|raidz2|raidz3)(-\d+)?$', name)
+        re.search(r'^(mirror|raidz|raidz1|raidz2|raidz3|spare)(-\d+)?$', name)
     ):
         return True
     return False
@@ -52,7 +52,7 @@ def _is_vdev(name):
 
 def _vdev_type(name):
     # raidz needs to appear after other raidz types
-    supported_types = ('stripe', 'mirror', 'raidz3', 'raidz2', 'raidz')
+    supported_types = ('stripe', 'mirror', 'raidz3', 'raidz2', 'raidz', 'spare-')
     for _type in supported_types:
         if name.startswith(_type):
             return _type
@@ -124,8 +124,7 @@ class Pool(object):
             if klass is None:
                 continue
             for vdev in klass:
-                for dev in vdev:
-                    devs.append(dev)
+                devs.extend(vdev.get_devs())
         return devs
 
     def get_disks(self):
@@ -272,9 +271,7 @@ class Root(Tnode):
         """
         disks = []
         for vdev in self:
-            for disk in vdev:
-                if disk.disk:
-                    disks.append(disk.disk)
+            disks.extend(vdev.get_disks())
         return disks
 
     def validate(self):
@@ -291,18 +288,39 @@ class Vdev(Tnode):
     def __repr__(self):
         return "<Section: %s>" % self.name
 
+    def get_disks(self):
+        disks = []
+        for child in self:
+            if isinstance(child, Vdev):
+                disks.extend(child.get_disks())
+            else:
+                if child.disk:
+                    disks.append(child.disk)
+        return disks
+
     def append(self, node):
         """
         Append a Dev
         """
-        if not isinstance(node, Dev):
-            raise Exception("Not a device: %s" % node)
-        self.children.append(node)
-        node.parent = self
+        if isinstance(node, Dev) or isinstance(node, Vdev):
+            self.children.append(node)
+            node.parent = self
+        else:
+            raise Exception("Not a dev/vdev: %s" % node)
+
+    def get_devs(self):
+        # Returns all children of self which are devs ( Dev objects )
+        disk_objects = []
+        for child in self:
+            if isinstance(child, Vdev):
+                disk_objects.extend(child.get_devs())
+            else:
+                disk_objects.append(child)
+        return disk_objects
 
     def dump(self):
         disks = []
-        for dev in self:
+        for dev in self.get_devs():
             disks.append(dev.dump())
         return {
             'name': self.name,
@@ -314,10 +332,10 @@ class Vdev(Tnode):
 
     def validate(self):
         """
-        Validate the current Vdev and children (Devs)
+        Validate the current Vdev and children (Vdevs, Devs)
         """
-        for dev in self:
-            dev.validate()
+        for child in self:
+            child.validate()
         if len(self.children) == 0:
             stripe = self.parent.find_by_name("stripe")
             if not stripe:
@@ -787,7 +805,14 @@ def parse_status(name, doc, data):
             ).groups()
             read, write, cksum = 0, 0, 0
         ident = int(len(spaces) / 2)
-        if ident < 2 and lastident is not None and ident < lastident:
+        if (
+                (
+                    ident < 2 or
+                    (pnode.name.startswith('spare-') and ident == 2)
+                ) and
+                lastident is not None and
+                ident < lastident
+        ):
             for x in range(lastident - ident):
                 pnode = pnode.parent
 
@@ -843,21 +868,34 @@ def parse_status(name, doc, data):
                 pnode = node
         elif ident >= 2:
             if not word.startswith('replacing'):
-                if ident == 3:
-                    replacing = True
+                if ident == 2 and word.startswith('spare-'):
+                    node = Vdev(
+                        word,
+                        doc,
+                        read=read,
+                        write=write,
+                        cksum=cksum,
+                    )
+                    node.status = status
+                    pnode.append(node)
+                    pnode = node
                 else:
-                    replacing = False
-                node = Dev(
-                    word,
-                    doc,
-                    status=status,
-                    replacing=replacing,
-                    read=read,
-                    write=write,
-                    cksum=cksum,
-                )
-                pnode.append(node)
-            ident = 2
+                    if ident == 3:
+                        replacing = True
+                    else:
+                        replacing = False
+                    node = Dev(
+                        word,
+                        doc,
+                        status=status,
+                        replacing=replacing,
+                        read=read,
+                        write=write,
+                        cksum=cksum,
+                    )
+                    pnode.append(node)
+            if not pnode.name.startswith('spare-'):
+                ident = 2
 
         lastident = ident
     pool.validate()
