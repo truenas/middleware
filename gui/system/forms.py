@@ -33,9 +33,11 @@ import json
 import logging
 import math
 import os
+import random
 import re
 import stat
 import subprocess
+import threading
 import time
 
 from OpenSSL import crypto, SSL
@@ -113,12 +115,12 @@ from freenasUI.sharing.models import (
 from freenasUI.storage.forms import VolumeAutoImportForm, VolumeMixin
 from freenasUI.storage.models import Disk, Volume, Scrub
 from freenasUI.system import models
-from freenasUI.system.utils import manual_update
 from freenasUI.tasks.models import SMARTTest
 from common.ssl import CERT_CHAIN_REGEX
 
 log = logging.getLogger('system.forms')
 WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'
+LEGACY_MANUAL_UPGRADE = None
 
 
 def clean_path_execbit(path):
@@ -265,8 +267,11 @@ class BootEnvPoolAttachForm(Form):
     expand = forms.BooleanField(
         label=_('Use all disk space'),
         help_text=_(
-            'If disabled will format the new disk using the size of current '
-            'disk.'
+            'Unchecked (default): format the new disk to the same capacity as the '
+            'existing disk. Checked: use full capacity of the new disk. If the '
+            'original disk in the mirror is replaced, the mirror could grow to '
+            'the capacity of the new disk, requiring replacement boot devices '
+            'to be as large as this new disk.'
         ),
         required=False,
         initial=False,
@@ -311,7 +316,7 @@ class BootEnvPoolAttachForm(Form):
 
         with client as c:
             try:
-                c.call('boot.attach', devname, {'expand': self.cleaned_data['expand']})
+                c.call('boot.attach', devname, {'expand': self.cleaned_data['expand']}, job=True)
             except ClientException as e:
                 raise MiddlewareError(str(e))
         return True
@@ -941,7 +946,35 @@ class ManualUpdateWizard(FileWizard):
             'system/manualupdate_wizard_%s.html' % self.get_step_index(),
         ]
 
+    def render_done(self, form, **kwargs):
+        """
+        XXX: method copied from base class so storage is not reset
+        and files get removed.
+        """
+        final_forms = OrderedDict()
+        # walk through the form list and try to validate the data again.
+        for form_key in self.get_form_list():
+            form_obj = self.get_form(
+                step=form_key,
+                data=self.storage.get_step_data(form_key),
+                files=self.storage.get_step_files(form_key))
+            if not form_obj.is_valid():
+                return self.render_revalidation_failure(form_key,
+                                                        form_obj,
+                                                        **kwargs)
+            final_forms[form_key] = form_obj
+
+        # render the done view and reset the wizard before returning the
+        # response. This is needed to prevent from rendering done with the
+        # same data twice.
+        done_response = self.done(final_forms.values(),
+                                  form_dict=final_forms,
+                                  **kwargs)
+        # self.storage.reset()
+        return done_response
+
     def done(self, form_list, **kwargs):
+        global LEGACY_MANUAL_UPGRADE
         cleaned_data = self.get_all_cleaned_data()
         updatefile = cleaned_data.get('updatefile')
 
@@ -950,35 +983,58 @@ class ManualUpdateWizard(FileWizard):
 
         try:
             if not _n.is_freenas() and _n.failover_licensed():
-                with client as c:
-                    c.call('failover.call_remote', 'notifier.create_upload_location')
-                    _n.sync_file_send(c, path, '/var/tmp/firmware/update.tar.xz')
-                    c.call('failover.call_remote', 'update.manual', ['/var/tmp/firmware/update.tar.xz'], {'job': True})
                 try:
-                    c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
-                except Exception:
-                    pass
-                response = render_to_response('failover/update_standby.html')
+                    with client as c:
+                        c.call('failover.call_remote', 'notifier.create_upload_location')
+                        _n.sync_file_send_v2(c, path, '/var/tmp/firmware/update.tar.xz')
+                        try:
+                            os.unlink(path)
+                        except OSError:
+                            pass
+                        uuid = c.call('failover.call_remote', 'update.manual', ['/var/tmp/firmware/update.tar.xz'])
+                except ClientException as e:
+                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and (e.trace is None or e.trace['class'] not in ('KeyError', 'ConnectionRefusedError')):
+                        raise
+
+                    # XXX: ugly hack to run the legacy upgrade in a thread
+                    # so we can check progress in another view
+                    class PerformLegacyUpgrade(threading.Thread):
+
+                        def __init__(self, *args, **kwargs):
+                            self.exception = None
+                            self.path = kwargs.pop('path')
+                            super().__init__(*args, **kwargs)
+
+                        def run(self):
+                            try:
+                                _n = notifier()
+                                s = _n.failover_rpc(timeout=10)
+                                s.notifier('create_upload_location', None, None)
+                                _n.sync_file_send(s, self.path, '/var/tmp/firmware/update.tar.xz', legacy=True)
+                                s.update_manual('/var/tmp/firmware/update.tar.xz')
+
+                                try:
+                                    s.reboot()
+                                except Exception:
+                                    pass
+                            except Exception as e:
+                                self.exception = e
+
+                    t = PerformLegacyUpgrade(path=path)
+                    t.start()
+                    LEGACY_MANUAL_UPGRADE = t
+                    uuid = 0  # Hardcode 0 when using legacy upgrade
             else:
-                manual_update(path)
+                with client as c:
+                    uuid = c.call('update.manual', path)
                 self.request.session['allow_reboot'] = True
-                response = render_to_response('system/done.html', {
-                    'retval': getattr(self, 'retval', None),
-                })
+            return HttpResponse(content=f'<html><body><textarea>{uuid}</textarea></boby></html>', status=202)
         except Exception:
             try:
                 self.file_storage.delete(updatefile.name)
             except Exception:
                 log.warn('Failed to delete uploaded file', exc_info=True)
             raise
-
-        if not self.request.is_ajax():
-            response.content = (
-                b"<html><body><textarea>" +
-                response.content +
-                b"</textarea></boby></html>"
-            )
-        return response
 
 
 class SettingsForm(ModelForm):
@@ -1778,7 +1834,14 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
             c.call("alert_service.delete", self.instance.id)
 
 
-class SystemDatasetForm(ModelForm):
+class SystemDatasetForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "sys_"
+    middleware_attr_schema = "sysdataset_update"
+    middleware_plugin = "systemdataset"
+    middleware_job = True
+    is_singletone = True
+
     sys_pool = forms.ChoiceField(
         label=_("System dataset pool"),
         required=False
@@ -1803,17 +1866,10 @@ class SystemDatasetForm(ModelForm):
             "systemDatasetMigration();"
         )
 
-    def save(self):
-        data = {
-            'pool': self.cleaned_data.get('sys_pool'),
-            'syslog': self.cleaned_data.get('sys_syslog_usedataset'),
-            'rrd': self.cleaned_data.get('sys_rrd_usedataset'),
-        }
-        with client as c:
-            pk = c.call('systemdataset.update', data)
-
-        self.instance = models.SystemDataset.objects.get(pk=pk)
-        return self.instance
+    def middleware_clean(self, update):
+        update['syslog'] = update.pop('syslog_usedataset')
+        update['rrd'] = update.pop('rrd_usedataset')
+        return update
 
 
 class InitialWizardDSForm(Form):
@@ -2962,9 +3018,9 @@ class CertificateAuthoritySignCSRForm(ModelForm):
         csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, ca.cert_CSR)
 
         cert = crypto.X509()
-        cert.set_serial_number(12345)
+        cert.set_serial_number(int(random.random() * (1 << 160)))
         cert.gmtime_adj_notBefore(0)
-        cert.gmtime_adj_notAfter(3650)
+        cert.gmtime_adj_notAfter(86400 * 365 * 10)
         cert.set_issuer(cert_info.get_subject())
         cert.set_subject(csr.get_subject())
         cert.set_pubkey(csr.get_pubkey())

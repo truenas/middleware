@@ -39,6 +39,7 @@ from django.utils.translation import (
 )
 
 from dojango import forms
+from django.db.models import Q
 from freenasUI import choices
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm, Form
@@ -57,6 +58,7 @@ from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
+from freenasUI.network.models import Alias, Interfaces
 from freenasUI.services import models
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Volume, Disk
@@ -66,6 +68,7 @@ from ipaddr import (
     IPAddress, IPNetwork, AddressValueError, NetmaskValueError,
     IPv4Address, IPv6Address,
 )
+from middlewared.plugins.smb import LOGLEVEL_MAP
 
 log = logging.getLogger('services.form')
 
@@ -124,7 +127,12 @@ class servicesForm(ModelForm):
         return obj
 
 
-class CIFSForm(ModelForm):
+class CIFSForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "cifs_srv_"
+    middleware_attr_schema = "smb"
+    middleware_plugin = "smb"
+    is_singletone = True
 
     cifs_srv_bindip = forms.MultipleChoiceField(
         label=models.CIFS._meta.get_field('cifs_srv_bindip').verbose_name,
@@ -147,7 +155,7 @@ class CIFSForm(ModelForm):
                     'cifs_srv_bindip',
                     self.data['cifs_srv_bindip'].split(',')
                 )
-        self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices())
+        self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices(noloopback=False))
         if self.instance.id and self.instance.cifs_srv_bindip:
             bindips = []
             for ip in self.instance.cifs_srv_bindip:
@@ -183,88 +191,10 @@ class CIFSForm(ModelForm):
         else:
             del self.fields['cifs_srv_netbiosname_b']
 
-    def __check_octet(self, v):
-        try:
-            if v != "" and (int(v, 8) & ~0o11777):
-                raise ValueError
-        except:
-            raise forms.ValidationError(_("This is not a valid mask"))
-
-    def clean_cifs_srv_workgroup(self):
-        netbios = self.cleaned_data.get("cifs_srv_netbiosname")
-        workgroup = self.cleaned_data.get("cifs_srv_workgroup").strip()
-        if netbios and netbios.lower() == workgroup.lower():
-            raise forms.ValidationError("NetBIOS and Workgroup must be unique")
-        try:
-            validate_netbios_name(workgroup)
-        except Exception as e:
-            raise forms.ValidationError(_("workgroup: %s" % e))
-        return workgroup
-
-    def clean_cifs_srv_netbiosname(self):
-        netbios = self.cleaned_data.get("cifs_srv_netbiosname")
-        try:
-            validate_netbios_name(netbios)
-        except Exception as e:
-            raise forms.ValidationError(_("netbiosname: %s" % e))
-        return netbios
-
-    def clean_cifs_srv_netbiosname_b(self):
-        netbios = self.cleaned_data.get("cifs_srv_netbiosname_b")
-        if netbios:
-            try:
-                validate_netbios_name(netbios)
-            except Exception as e:
-                raise forms.ValidationError(_("netbiosname: %s" % e))
-        return netbios
-
-    def clean_cifs_srv_netbiosalias(self):
-        alias = self.cleaned_data.get("cifs_srv_netbiosalias")
-        if alias:
-            try:
-                validate_netbios_name(alias)
-            except Exception as e:
-                raise forms.ValidationError(_("NetBIOS Alias: %s" % e))
-        return alias
-
-    def clean_cifs_srv_filemask(self):
-        v = self.cleaned_data.get("cifs_srv_filemask").strip()
-        self.__check_octet(v)
-        return v
-
-    def clean_cifs_srv_dirmask(self):
-        v = self.cleaned_data.get("cifs_srv_dirmask").strip()
-        self.__check_octet(v)
-        return v
-
-    def clean_cifs_srv_bindip(self):
-        ips = self.cleaned_data.get("cifs_srv_bindip")
-        if not ips:
-            return ''
-        bind = []
-        for ip in ips:
-            try:
-                IPAddress(ip)
-            except:
-                raise forms.ValidationError(
-                    "This is not a valid IP: %s" % (ip, )
-                )
-            bind.append(ip)
-        return ','.join(bind)
-
-    def save(self):
-        obj = super(CIFSForm, self).save(commit=False)
-        obj.cifs_srv_bindip = self.cleaned_data.get('cifs_srv_bindip')
-        obj.save()
-
-        started = notifier().restart("cifs")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='cifs').srv_enable
-        ):
-            raise ServiceFailed(
-                "cifs", _("The SMB service failed to reload.")
-            )
+    def middleware_clean(self, data):
+        if 'loglevel' in data:
+            data['loglevel'] = LOGLEVEL_MAP.get(data['loglevel'])
+        return data
 
 
 class AFPForm(MiddlewareModelForm, ModelForm):
@@ -511,59 +441,32 @@ class SSHForm(ModelForm):
         return obj
 
 
-class RsyncdForm(ModelForm):
+class RsyncdForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "rsyncd_"
+    middleware_attr_schema = "rsyncd"
+    middleware_plugin = "rsyncd"
 
     class Meta:
         fields = '__all__'
         model = models.Rsyncd
 
-    def save(self):
-        super(RsyncdForm, self).save()
-        started = notifier().reload("rsync")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='rsync').srv_enable
-        ):
-            raise ServiceFailed(
-                "rsync", _("The Rsync service failed to reload.")
-            )
 
+class RsyncModForm(MiddlewareModelForm, ModelForm):
 
-class RsyncModForm(ModelForm):
+    middleware_attr_prefix = "rsyncmod_"
+    middleware_attr_schema = "rsyncmod"
+    middleware_plugin = "rsyncmod"
+    is_singletone = False
 
     class Meta:
         fields = '__all__'
         model = models.RsyncMod
 
-    def clean_rsyncmod_name(self):
-        name = self.cleaned_data['rsyncmod_name']
-        if re.search(r'[/\]]', name):
-            raise forms.ValidationError(
-                _("The name cannot contain slash or a closing square backet.")
-            )
-        name = name.strip()
-        return name
-
-    def clean_rsyncmod_hostsallow(self):
-        hosts = self.cleaned_data['rsyncmod_hostsallow']
-        hosts = hosts.replace("\n", " ").strip()
-        return hosts
-
-    def clean_rsyncmod_hostsdeny(self):
-        hosts = self.cleaned_data['rsyncmod_hostsdeny']
-        hosts = hosts.replace("\n", " ").strip()
-        return hosts
-
-    def save(self):
-        super(RsyncModForm, self).save()
-        started = notifier().reload("rsync")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='rsync').srv_enable
-        ):
-            raise ServiceFailed(
-                "rsync", _("The Rsync service failed to reload.")
-            )
+    def middleware_clean(self, update):
+        update['hostsallow'] = list(filter(None, re.split(r"\s+", update["hostsallow"])))
+        update['hostsdeny'] = list(filter(None, re.split(r"\s+", update["hostsdeny"])))
+        return update
 
 
 class DynamicDNSForm(MiddlewareModelForm, ModelForm):
@@ -724,10 +627,14 @@ class UPSForm(ModelForm):
             'ups_remoteport': forms.widgets.TextInput(),
             'ups_driver': forms.widgets.FilteringSelect(),
             'ups_nocommwarntime': forms.widgets.TextInput(),
+            'ups_monpwd': forms.widgets.PasswordInput(render_value=True),
         }
 
     def __init__(self, *args, **kwargs):
         super(UPSForm, self).__init__(*args, **kwargs)
+        _n = notifier()
+        if not _n.is_freenas():
+            self.fields['ups_powerdown'].help_text = _("Signal the UPS to power off after TrueNAS shuts down.")
         self.fields['ups_shutdown'].widget.attrs['onChange'] = mark_safe(
             "disableGeneric('id_ups_shutdown', ['id_ups_shutdowntimer'], "
             "function(box) { if(box.get('value') == 'lowbatt') { return true; "
@@ -1466,7 +1373,16 @@ class iSCSITargetPortalIPForm(ModelForm):
             label=self.fields['iscsi_target_portalip_ip'].label,
         )
         ips = [('', '------'), ('0.0.0.0', '0.0.0.0')]
-        ips.extend(list(choices.IPChoices()))
+        iface_ips = {
+            iface.int_vip: f'{iface.int_ipv4address}, {iface.int_ipv4address_b}'
+            for iface in Interfaces.objects.exclude(Q(int_vip=None) | Q(int_vip=''))
+        }
+        for alias in Alias.objects.exclude(Q(alias_vip=None) | Q(alias_vip='')):
+            iface_ips[alias.alias_vip] = f'{alias.alias_v4address}, {alias.alias_v4address_b}'
+        for k, v in choices.IPChoices():
+            if v in iface_ips:
+                v = iface_ips[v]
+            ips.append((k, v))
         self.fields['iscsi_target_portalip_ip'].choices = ips
         if not self.instance.id and not self.data:
             if not(
@@ -1925,7 +1841,14 @@ class WebDAVForm(ModelForm):
             notifier().start_ssl("webdav")
 
 
-class S3Form(ModelForm):
+class S3Form(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "s3_"
+    middleware_attr_schema = "s3"
+    middleware_exclude_fields = ('secret_key2', )
+    middleware_plugin = "s3"
+    is_singletone = True
+
     s3_bindip = forms.ChoiceField(
         label=models.S3._meta.get_field("s3_bindip").verbose_name,
         help_text=models.S3._meta.get_field("s3_bindip").help_text,
@@ -1977,24 +1900,6 @@ class S3Form(ModelForm):
 
         self.fields['s3_mode'].widget = forms.widgets.HiddenInput()
 
-    def clean_s3_access_key(self):
-        s3_access_key = self.cleaned_data.get("s3_access_key")
-        s3_access_key_len = len(s3_access_key)
-        if s3_access_key_len < 5 or s3_access_key_len > 20:
-            raise forms.ValidationError(
-                _("S3 access key should be 5 to 20 characters in length.")
-            )
-        return s3_access_key
-
-    def clean_s3_secret_key(self):
-        s3_secret_key = self.cleaned_data.get("s3_secret_key")
-        s3_secret_key_len = len(s3_secret_key)
-        if s3_secret_key_len < 8 or s3_secret_key_len > 40:
-            raise forms.ValidationError(
-                _("S3 secret key should be 8 to 40 characters in length.")
-            )
-        return s3_secret_key
-
     def clean_s3_secret_key2(self):
         s3_secret_key1 = self.cleaned_data.get("s3_secret_key")
         s3_secret_key2 = self.cleaned_data.get("s3_secret_key2")
@@ -2010,17 +1915,8 @@ class S3Form(ModelForm):
             cdata["s3_secret_key"] = self.instance.s3_secret_key
         return cdata
 
-    def save(self):
-        obj = super(S3Form, self).save()
-        path = self.cleaned_data.get("s3_disks")
-        if not path:
-            return
-        try:
-            path = path.decode('utf-8')
-        except Exception as e:
-            log.debug("ERROR: unable to decode string %s", e)
-            pass
-        if notifier().mp_get_owner(path) != "minio":
-            # Currently not working because of python byte string
-            notifier().winacl_reset(path=path, owner="minio", group="minio")
-        return obj
+    def middleware_clean(self, data):
+        if 'disks' in data:
+            data['storage_path'] = data.pop('disks')
+        data.pop('mode', None)
+        return data

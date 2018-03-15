@@ -1,4 +1,5 @@
 {% extends "freeadmin/generic_form.html" %}
+{% load freeadmin %}
 {% block form %}
 {% if form.initial_fail %}
   <tr>
@@ -8,7 +9,7 @@
 {{ block.super }}
 {% endblock %}
 {% block extra_buttons %}
-  <button id="btn_IPMI_Identify" data-dojo-type="dijit.form.Button" type="button">
+  <button id="btn_{% cls_name form %}_Identify" data-dojo-type="dijit.form.Button" type="button">
     {% trans "Identify Light" %}
     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
       editObject('{% trans "IPMI Identify"|escapejs %}', '{% url "network_ipmi_identify" %}');

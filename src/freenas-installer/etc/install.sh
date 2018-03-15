@@ -9,8 +9,6 @@ HOME=/root
 export HOME
 TERM=${TERM:-xterm}
 export TERM
-GRUB_TERMINAL_OUTPUT="console serial"
-export GRUB_TERMINAL_OUTPUT
 
 . /etc/avatar.conf
 
@@ -316,6 +314,48 @@ EOD
     return $?
 }
 
+install_loader() {
+    local _disk _disks
+    local _mnt
+
+    _mnt="$1"
+    shift
+    disks="$*"
+
+
+    # When doing inplace upgrades, its entirely possible we've
+    # booted in the wrong mode (I.E. bios/efi)
+    # Default to re-stamping what was already used on the current install
+    _boottype="$BOOTMODE"
+    if [ "${_upgrade_type}" = "inplace" ] ; then
+       glabel list | grep -q 'efibsd'
+      if [ $? -eq 0 ] ; then
+         _boottype="efi"
+      else
+         _boottype="bios"
+      fi
+    fi
+
+    for _disk in $_disks
+    do
+	if [ "$_boottype" = "efi" ] ; then
+	    echo "Stamping EFI loader on: ${_disk}"
+	    mkdir -p /tmp/efi
+	    mount -t msdosfs /dev/${_disk}p1 /tmp/efi
+	    # Copy the .efi file
+	    mkdir -p /tmp/efi/efi/boot
+	    cp ${_mnt}/boot/boot1.efi /tmp/efi/efi/boot/BOOTx64.efi
+	    umount /tmp/efi
+	else
+	    echo "Stamping GPT loader on: ${_disk}"
+	    gpart modify -i 1 -t freebsd-boot ${_disk}
+	    chroot ${_mnt} gpart bootcode -b /boot/pmbr -p /boot/gptzfsboot -i 1 /dev/${_disk}
+	fi
+    done
+
+    return 0
+}
+
 save_serial_settings() {
     _mnt="$1"
 
@@ -324,61 +364,21 @@ save_serial_settings() {
     USESERIAL=$((`sysctl -n debug.boothowto` & 0x1000))
     if [ "$USESERIAL" -eq 0 ] ; then return 0; fi
 
+    # Enable serial/internal for BSD loader
+    echo 'boot_multicons="YES"' >> ${_mnt}/boot/loader.conf
+    echo 'boot_serial="YES"' >> ${_mnt}/boot/loader.conf
+    echo 'console="comconsole,vidconsole"' >> ${_mnt}/boot/loader.conf
+
     chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialconsole = 1"
     SERIALSPEED=`kenv hw.uart.console | sed -En 's/.*br:([0-9]+).*/\1/p'`
     if [ -n "$SERIALSPEED" ] ; then
+       echo "comconsole_speed=\"$SERIALSPEED\"" >> ${_mnt}/boot/loader.conf
        chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialspeed = $SERIALSPEED"
     fi
     SERIALPORT=`kenv hw.uart.console | sed -En 's/.*io:([0-9a-fx]+).*/\1/p'`
     if [ -n "$SERIALPORT" ] ; then
        chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialport = '$SERIALPORT'"
     fi
-}
-
-install_grub() {
-	local _disk _disks
-	local _mnt
-	local _grub_args
-
-	_mnt="$1"
-	shift
-
-	_disks="$*"
-
-	# Install grub
-	# /usr/local/etc got changed to a symlink to /etc/local
-	ln -s /conf/base/etc/local ${_mnt}/etc/local
-	chroot ${_mnt} /sbin/zpool set cachefile=/boot/zfs/rpool.cache freenas-boot
-	/usr/bin/sed -i.bak -e 's,^ROOTFS=.*$,ROOTFS=freenas-boot/ROOT/${BENAME},g' ${_mnt}/usr/local/sbin/beadm ${_mnt}/conf/base/etc/local/grub.d/10_ktrueos
-	# Having 10_ktruos.bak in place causes grub-mkconfig to
-	# create two boot menu items.  So let's move it out of place
-	mkdir -p /tmp/bakup
-	mv ${_mnt}/conf/base/etc/local/grub.d/10_ktrueos.bak /tmp/bakup
-	for _disk in ${_disks}; do
-	    _grub_args=""
-	    if [ "$BOOTMODE" = "efi" ] ; then
-		# EFI Mode
-		glabel label efibsd /dev/${_disk}p1
-		mkdir -p ${_mnt}/boot/efi
-		mount -t msdosfs /dev/${_disk}p1 ${_mnt}/boot/efi
-		_grub_args="--efi-directory=/boot/efi --removable --target=x86_64-efi"
-		export GRUB_TERMINAL_OUTPUT="gfxterm"
-	        echo "chroot ${_mnt} /usr/local/sbin/grub-install ${_grub_args} /dev/${_disk}"
-	        chroot ${_mnt} /usr/local/sbin/grub-install ${_grub_args} /dev/${_disk}
-		umount -f ${_mnt}/boot/efi
-	    else
-		# BIOS Mode
-	        chroot ${_mnt} /usr/local/sbin/grub-install --modules='zfs part_gpt' ${_grub_args} /dev/${_disk}
-	    fi
-	done
-	chroot ${_mnt} /usr/local/sbin/beadm activate ${BENAME}
-	chroot ${_mnt} /usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1
-	# And now move the backup files back in place
-	mv ${_mnt}/usr/local/sbin/beadm.bak ${_mnt}/usr/local/sbin/beadm
-	mv /tmp/bakup/10_ktrueos.bak ${_mnt}/conf/base/etc/local/grub.d/10_ktrueos
-	# And clean up the annoying symlink
-	rm -f ${_mnt}/etc/local
-	return 0
 }
 
 mount_disk() {
@@ -391,8 +391,6 @@ mount_disk() {
 	_mnt="$1"
 	mkdir -p "${_mnt}"
 	mount -t zfs -o noatime freenas-boot/ROOT/${BENAME} ${_mnt}
-	mkdir -p ${_mnt}/boot/grub
-	mount -t zfs -o noatime freenas-boot/grub ${_mnt}/boot/grub
 	mkdir -p ${_mnt}/data
 	return 0
 }
@@ -416,7 +414,7 @@ create_partitions() {
 	  fi
 	else
 	  # BIOS Mode
-          if ! gpart add -t bios-boot -i 1 -s 512k ${_disk}; then
+          if ! gpart add -t freebsd-boot -i 1 -s 512k ${_disk}; then
 	    return 1
 	  fi
 	fi
@@ -514,7 +512,6 @@ partition_disk() {
 	zfs set compress=lz4 freenas-boot
 	zfs create -o canmount=off freenas-boot/ROOT
 	zfs create -o mountpoint=legacy freenas-boot/ROOT/${BENAME}
-	zfs create -o mountpoint=legacy freenas-boot/grub
 
 	return 0
 }
@@ -567,35 +564,16 @@ disk_is_freenas()
 	fi
 	zpool import -N -f freenas-boot || return 1
 	# Now we want to figure out which dataset to use.
-	# We'll mount freenas-boot/grub, and then look for "default=" in
-	# grub.cfg
-	# Of course, if grub.cfg doesn't exist, this isn't a freenas pool, just
-	# a pool masquerading as us.
-	if ! mount -t zfs freenas-boot/grub /tmp/data_old; then
-	    zpool export freenas-boot
-	    return 1
-	fi
-	if [ ! -f /tmp/data_old/grub.cfg ]; then
-	    umount /tmp/data_old
-	    rmdir /tmp/data_old
-	    zpool export freenas-boot
+	DS=$(zpool list -H -o bootfs freenas-boot | head -n 1 | cut -d '/' -f 3)
+	if [ -z "$DS" ] ; then
+	    zpool export freenas-boot || true
 	    return 1
 	fi
 	# There should always be a "set default=" line in a grub.cfg
 	# that we created.
-	if grep -q '^set default=' /tmp/data_old/grub.cfg ; then
-	    DF=$(grep '^set default=' /tmp/data_old/grub.cfg | tail -1 | sed 's/^set default="\(.*\)"$/\1/')
-	    case "${DF}" in
-		0)	# No default, use "default"
-		    DS=default ;;
-                *${AVATAR_PROJECT}*)    # Default dataset
-                    DS=$(expr "${DF}" : "${AVATAR_PROJECT} (\(.*\)) .*") ;;
-		*) DS="" ;;
-	    esac
-	    umount /tmp/data_old
-	    if [ -n "${DS}" ]; then
-		# Okay, mount this pool
-		if mount -t zfs freenas-boot/ROOT/"${DS}" /tmp/data_old; then
+        if [ -n "${DS}" ]; then
+    	   # Okay, mount this pool
+	   if mount -t zfs freenas-boot/ROOT/"${DS}" /tmp/data_old; then
 		    # If the active dataset doesn't have a database file,
 		    # then it's not FN as far as we're concerned (the upgrade code
 		    # will go badly).
@@ -619,32 +597,25 @@ disk_is_freenas()
 		    if [ -d /tmp/data_old/boot/modules ]; then
 			mkdir -p /tmp/modules
 			for i in `ls /tmp/data_old/boot/modules`
-			do
-			    cp -p /tmp/data_old/boot/modules/$i /tmp/modules/
-			done
-		    fi
-		    if [ -d /tmp/data_old/usr/local/fusionio ]; then
-			cp -pR /tmp/data_old/usr/local/fusionio /tmp/
-		    fi
-		    if [ -f /tmp/data_old/boot.config ]; then
-			cp /tmp/data_old/boot.config /tmp/
-		    fi
-		    if [ -f /tmp/data_old/boot/loader.conf.local ]; then
-			cp /tmp/data_old/boot/loader.conf.local /tmp/
-		    fi
-		    umount /tmp/data_old || return 1
-		    zpool export freenas-boot || return 1
-		    return 0
-		fi
+		do
+	    cp -p /tmp/data_old/boot/modules/$i /tmp/modules/
+		done
 	    fi
-	    zpool export freenas-boot || true
-	    return 1
-	else
+	    if [ -d /tmp/data_old/usr/local/fusionio ]; then
+		cp -pR /tmp/data_old/usr/local/fusionio /tmp/
+	    fi
+	    if [ -f /tmp/data_old/boot.config ]; then
+		cp /tmp/data_old/boot.config /tmp/
+	    fi
+	    if [ -f /tmp/data_old/boot/loader.conf.local ]; then
+		cp /tmp/data_old/boot/loader.conf.local /tmp/
+	    fi
 	    umount /tmp/data_old || return 1
-	    zpool export freenas-boot || true
-	    return 1
-	fi
-    fi
+	    zpool export freenas-boot || return 1
+	    return 0
+        fi
+      fi
+    fi # End of if NEW upgrade style
 
     # This is now legacy code, to support the old
     # partitioning scheme (freenas-9.2 and earlier)
@@ -774,14 +745,34 @@ create_be()
   # fresh into that, so old datasets are not lost
   zpool import -N -f freenas-boot || return 1
 
+  # First we need to nuke any old grub dataset
+  if zfs list freenas-boot/grub >/dev/null 2>/dev/null ; then
+      echo "Removing GRUB dataset"
+      zfs destroy -R -f freenas-boot/grub
+
+      _cDir="/tmp/_beClean"
+      if [ ! -e "${_cDir}" ] ; then
+          mkdir ${_cDir}
+      fi
+
+      # Sanitize the old BE's by removing grub fstab entries
+      for _be in `zfs list -H -d 1 freenas-boot/ROOT | awk '{print $1}' | cut -d '/' -f 3`
+      do
+	  zfs mount -t zfs freenas-boot/ROOT/${_be} ${_cDir}
+	  if [ -e ${_cDir}/etc/fstab ] ; then
+	      cp ${_cDir}/etc/fstab ${_cDir}/etc/fstab.oldGRUB
+	      cat ${_cDir}/etc/fstab.oldGRUB | grep -v "^freenas-boot/grub" > ${_cDir}/etc/fstab
+	  fi
+	  umount -f ${_cDir}
+      done
+  fi
+
   # Create the new BE
   zfs create -o mountpoint=legacy freenas-boot/ROOT/${BENAME} || return 1
 
   # Mount the new BE datasets
   mkdir -p ${1}
   mount -t zfs freenas-boot/ROOT/${BENAME} ${1} || return 1
-  mkdir -p ${1}/boot/grub
-  mount -t zfs -o noatime freenas-boot/grub ${1}/boot/grub
   mkdir -p ${1}/data
 
   return 0
@@ -1111,7 +1102,6 @@ menu_install()
     /usr/local/bin/freenas-install -P /.mount/${OS}/Packages -M /.mount/${OS}-MANIFEST /tmp/data
 
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
-    echo "freenas-boot/grub	/boot/grub	zfs	rw,noatime	1	0" > /tmp/data/etc/fstab
     if is_truenas; then
        make_swap ${_realdisks}
     fi
@@ -1158,7 +1148,7 @@ menu_install()
     # XXX: Fixup
     # tar cf - -C /tmp/data/conf/base etc | tar xf - -C /tmp/data/
     
-    # grub and beadm will need a devfs
+    # beadm will need a devfs
     mount -t devfs devfs /tmp/data/dev
     # Create a temporary /var
     mount -t tmpfs tmpfs /tmp/data/var
@@ -1170,7 +1160,7 @@ menu_install()
     save_serial_settings /tmp/data
     # Set default boot filesystem
     zpool set bootfs=freenas-boot/ROOT/${BENAME} freenas-boot
-    install_grub /tmp/data ${_realdisks}
+    install_loader /tmp/data ${_realdisks}
     
 #    set +x
     if [ -d /tmp/data_preserved ]; then
@@ -1195,7 +1185,6 @@ menu_install()
     # Finally, before we unmount, start a srub.
     # zpool scrub freenas-boot || true
 
-    umount /tmp/data/boot/grub
     umount /tmp/data/dev
     umount /tmp/data/var
     umount /tmp/data/

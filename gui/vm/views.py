@@ -72,14 +72,16 @@ def start(request, id):
                     status = __call.get('state')
                     utils.dump_download_progress(__call)
                     if status == 'FAILED':
-                        return HttpResponse('Error: failed to download the image!')
+                        return HttpResponse('Error: Image download failed!')
                     elif status == 'ABORTED':
-                        return HttpResponse('Error: download ABORTED!')
+                        return HttpResponse('Error: Download aborted!')
                 if status == 'SUCCESS':
                     prebuilt_image = c.call('vm.image_path', 'RancherOS')
                     if prebuilt_image and raw_file_cnt:
                         c.call('vm.decompress_gzip', prebuilt_image, raw_file_cnt)
                         c.call('vm.raw_resize', raw_file_cnt, raw_file_resize)
+                    elif prebuilt_image is False:
+                        return HttpResponse('Error: Checksum error in downloaded image. Image removed. Please retry.')
         with client as c:
             c.call('vm.start', id)
         return JsonResp(request, message='VM Started')
@@ -95,6 +97,17 @@ def stop(request, id):
             c.call('vm.stop', id)
         return JsonResp(request, message='VM Stopped')
     return render(request, "vm/stop.html", {
+        'name': vm.name,
+    })
+
+
+def power_off(request, id):
+    vm = models.VM.objects.get(id=id)
+    if request.method == 'POST':
+        with client as c:
+            c.call('vm.stop', id, True)
+        return JsonResp(request, message='VM Powered off')
+    return render(request, "vm/poweroff.html", {
         'name': vm.name,
     })
 

@@ -50,14 +50,14 @@ class GlobalConfiguration(Model):
         verbose_name=_("Hostname"),
         default='nas',
         validators=[RegexValidator(
-            regex=r'^[a-zA-Z\.\-\_0-9]+$',
+            regex=r'^[a-zA-Z\.\-\0-9]+$',
         )],
     )
     gc_hostname_b = models.CharField(
         max_length=120,
         verbose_name=_("Hostname"),
         validators=[RegexValidator(
-            regex=r'^[a-zA-Z\.\-\_0-9]+$',
+            regex=r'^[a-zA-Z\.\-\0-9]+$',
         )],
         blank=True,
         null=True,
@@ -66,7 +66,7 @@ class GlobalConfiguration(Model):
         max_length=120,
         verbose_name=_("Hostname (Virtual)"),
         validators=[RegexValidator(
-            regex=r'^[a-zA-Z\.\-\_0-9]+$',
+            regex=r'^[a-zA-Z\.\-\0-9]+$',
         )],
         blank=True,
         null=True,
@@ -161,6 +161,7 @@ class GlobalConfiguration(Model):
             'gc_ipv4gateway',
             'gc_ipv6gateway',
             'gc_domain',
+            'gc_domains',
             'gc_nameserver1',
             'gc_nameserver2',
             'gc_nameserver3',

@@ -1,6 +1,6 @@
 #!/bin/sh
 #+
-# Copyright 2016 iXsystems, Inc.
+# Copyright 2018 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,16 +27,13 @@
 #####################################################################
 
 
-grub_opt() { echo G; }
-grub_help() { echo "Dump Grub Configuration"; }
-grub_directory() { echo "Grub"; }
-grub_func()
+db_dump_opt() { echo B; }
+db_dump_help() { echo "Dump System Configuration Database"; }
+db_dump_directory() { echo "db_dump"; }
+db_dump_func()
 {
-	section_header "/boot/grub/grub.cfg"
-	sc "/boot/grub/grub.cfg"
-	section_footer
 
-	section_header "Console - 'sysctl kern.vty'"
-	sysctl kern.vty
+	section_header "System Database Contents"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} .dump
 	section_footer
 }

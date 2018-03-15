@@ -154,6 +154,7 @@ MIDDLEWARE_CLASSES = (
     'freenasUI.freeadmin.middleware.LocaleMiddleware',
     'freenasUI.freeadmin.middleware.CatchError',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'freenasUI.freeadmin.middleware.AuthTokenMiddleware',
     'freenasUI.freeadmin.middleware.RequireLoginMiddleware',
 )
 

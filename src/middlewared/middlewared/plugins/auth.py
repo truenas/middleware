@@ -106,6 +106,22 @@ class AuthService(Service):
             app.authenticated = True
         return valid
 
+    @accepts()
+    @pass_app
+    async def logout(self, app):
+        """
+        Deauthenticates an app and if a token exists, removes that from the
+        session.
+        """
+        sessionid = app.sessionid
+        token = self.authtokens.get_token_by_sessionid(sessionid)
+        app.authenticated = False
+
+        if token:
+            self.authtokens.pop_token(token["id"])
+
+        return True
+
     @no_auth_required
     @accepts(Str('token'))
     @pass_app
@@ -162,7 +178,7 @@ async def check_permission(app):
     """
     remote_addr, remote_port = app.request.transport.get_extra_info('peername')
 
-    if remote_addr not in ('127.0.0.1', '::1'):
+    if not (remote_addr.startswith('127.') or remote_addr == '::1'):
         return
 
     remote = '{0}:{1}'.format(remote_addr, remote_port)

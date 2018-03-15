@@ -85,6 +85,10 @@ def get_sw_name():
     return get_sw_version().split('-')[0]
 
 
+def get_sw_year():
+    return str(datetime.now().year)
+
+
 def get_freenas_var_by_file(f, var):
     assert f and var
 
@@ -525,7 +529,7 @@ def backup_database():
         systemdataset["path"],
         f'configs-{systemdataset["uuid"]}',
         get_sw_version(),
-        f'{today}%s.db',
+        f'{today}.db',
     )
 
     dirname = os.path.dirname(newfile)

@@ -50,7 +50,7 @@ from django.http import (
     HttpResponseRedirect,
     StreamingHttpResponse,
 )
-from django.shortcuts import render
+from django.shortcuts import render, render_to_response
 from django.utils.translation import ugettext as _, ungettext
 from django.views.decorators.cache import never_cache
 
@@ -144,7 +144,7 @@ def bootenv_datagrid(request):
     zlist = zpool_list(name='freenas-boot')
     try:
         advanced = models.Advanced.objects.order_by('-id')[0]
-    except:
+    except Exception:
         advanced = models.Advanced.objects.create()
 
     return render(request, 'system/bootenv_datagrid.html', {
@@ -335,7 +335,7 @@ def bootenv_scrub_interval(request):
 
     try:
         advanced = models.Advanced.objects.order_by('-id')[0]
-    except:
+    except Exception:
         advanced = models.Advanced.objects.create()
 
     advanced.adv_boot_scrub = int(interval)
@@ -423,7 +423,7 @@ def bootenv_deletebulk_progress(request):
             }),
             content_type='application/json',
         )
-    except:
+    except Exception:
         log.warn("Unable to load progress status for boot env bulk delete")
 
     return HttpResponse(
@@ -506,6 +506,33 @@ def bootenv_pool_attach(request):
         'form': form,
         'label': label,
     })
+
+
+def bootenv_pool_attach_progress(request):
+    with client as c:
+        try:
+            job = c.call('core.get_jobs', [('method', '=', 'boot.attach')], {'order_by': ['-id']})[0]
+            load = {
+                'apply': True,
+                'error': job['error'],
+                'finished': job['state'] in ('SUCCESS', 'FAILED', 'ABORTED'),
+                'indeterminate': True if job['progress']['percent'] is None else False,
+                'percent': job['progress'].get('percent'),
+                'step': 1,
+                'reboot': True,
+                'uuid': ['id'],
+            }
+            desc = job['progress'].get('description')
+            if desc:
+                load['details'] = desc
+
+        except IndexError:
+            load = {}
+
+    return HttpResponse(
+        json.dumps(load),
+        content_type='application/json',
+    )
 
 
 def bootenv_pool_detach(request, label):
@@ -625,7 +652,7 @@ def config_download(request):
     try:
         with open(VERSION_FILE) as d:
             freenas_build = d.read().strip()
-    except:
+    except Exception:
         pass
 
     response = StreamingHttpResponse(
@@ -946,6 +973,57 @@ def file_browser(request, path='/'):
     return HttpResponse(content, content_type='application/json')
 
 
+def manualupdate_running(request):
+    uuid = request.GET.get('uuid')
+    if not uuid:
+        return HttpResponse(uuid, status=202)
+
+    _n = notifier()
+    if not _n.is_freenas() and _n.failover_licensed():
+        if uuid != "0":
+            with client as c:
+                job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]])
+                if job:
+                    job = job[0]
+                    if job['state'] == 'SUCCESS':
+                        try:
+                            c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
+                        except Exception:
+                            log.debug('Failed to reboot standby', exc_info=True)
+                        return render_to_response('failover/update_standby.html')
+                    elif job['state'] == 'FAILED':
+                        return JsonResp(request, message=job['error'], error=True)
+        else:
+            # XXX: very ugly hack to get the legacy manual upgrade thread from the form
+            from freenasUI.system.forms import LEGACY_MANUAL_UPGRADE
+            if LEGACY_MANUAL_UPGRADE and not LEGACY_MANUAL_UPGRADE.isAlive():
+                if not LEGACY_MANUAL_UPGRADE.exception:
+                    return render_to_response('failover/update_standby.html')
+                else:
+                    return JsonResp(request, message=str(LEGACY_MANUAL_UPGRADE.exception), error=True)
+    else:
+        with client as c:
+            job = c.call('core.get_jobs', [('id', '=', int(uuid))])
+            if job:
+                job = job[0]
+                if job['state'] in ('SUCCESS', 'FAILED'):
+                    try:
+                        os.unlink(job['arguments'][0])
+                    except OSError:
+                        pass
+                if job['state'] == 'SUCCESS':
+                    try:
+                        c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
+                    except Exception:
+                        log.debug('Failed to reboot standby', exc_info=True)
+                    return render_to_response('system/done.html')
+                elif job['state'] == 'FAILED':
+                    return JsonResp(request, message=job['error'], error=True)
+            else:
+                return JsonResp(request, message=_('Update job not found'), error=True)
+    return HttpResponse(uuid, status=202)
+
+
 def manualupdate_progress(request):
 
     data = {}
@@ -1160,7 +1238,7 @@ def terminal(request):
             response = HttpResponse('Disconnected')
             response.status_code = 400
             return response
-    except (KeyError, ValueError, IndexError, xmlrpc.client.Fault) as e:
+    except (KeyError, ValueError, TypeError, IndexError, xmlrpc.client.Fault) as e:
         response = HttpResponse('Invalid parameters: %s' % e)
         response.status_code = 400
         return response
@@ -1313,7 +1391,7 @@ def update_apply(request):
                     # version standby node using hasyncd
                     s.reboot()
 
-                except:
+                except Exception:
                     pass
                 return render(request, 'failover/update_standby.html')
             else:
@@ -1521,7 +1599,7 @@ def update_check(request):
                         # If method does not exist it means we are still upgranding old
                         # version standby node using hasyncd
                         s.reboot()
-                    except:
+                    except Exception:
                         pass
                     return render(request, 'failover/update_standby.html')
 
@@ -1993,12 +2071,12 @@ def certificate_export_privatekey(request, id):
     return response
 
 
-# Need to figure this one out...
 def certificate_export_certificate_and_privatekey(request, id):
     c = models.Certificate.objects.get(pk=id)
 
-    export_certificate(c.cert_certificate)
-    export_privatekey(c.cert_privatekey)
+    cert = export_certificate(c.cert_certificate)
+    key = export_privatekey(c.cert_privatekey)
+    combined = key + cert
 
     response = StreamingHttpResponse(
         buf_generator(combined), content_type='application/octet-stream'
@@ -2047,7 +2125,7 @@ def certificate_to_json(certtype):
 
     try:
         data['cert_signedby'] = "%s" % certtype.cert_signedby
-    except:
+    except Exception:
         data['cert_signedby'] = None
 
     try:

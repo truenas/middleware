@@ -85,6 +85,7 @@ from freenasUI.storage.forms import (
     CloneSnapshotForm,
     MountPointAccessForm,
     ReKeyForm,
+    CreatePassphraseForm,
     UnlockPassphraseForm,
     VolumeAutoImportForm,
     VolumeManagerForm,
@@ -110,6 +111,7 @@ from freenasUI.system.forms import (
 )
 from freenasUI.system.models import Update as mUpdate
 from freenasUI.system.utils import BootEnv, debug_generate, factory_restore
+from freenasUI.system.views import restart_httpd, restart_httpd_all
 from middlewared.client import ClientException
 from tastypie import fields, http
 from tastypie.http import (
@@ -201,6 +203,34 @@ class AlertResource(DojoResource):
 
 class SettingsResourceMixin(object):
 
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/restart-httpd%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('restart_httpd'),
+            ),
+            url(
+                r"^(?P<resource_name>%s)/restart-httpd-all%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('restart_httpd_all'),
+            ),
+        ]
+
+    def restart_httpd(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        return restart_httpd(request)
+
+    def restart_httpd_all(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        return restart_httpd_all(request)
+
     def dehydrate(self, bundle):
         bundle = super(SettingsResourceMixin, self).dehydrate(bundle)
         if bundle.obj.stg_guicertificate:
@@ -253,6 +283,9 @@ class DiskResourceMixin(object):
             del bundle.data['disk_number']
         if 'disk_subsystem' in bundle.data:
             del bundle.data['disk_subsystem']
+        if 'disk_passwd' in bundle.data:
+            if bundle.data['disk_passwd'] != '':
+                bundle.data['disk_passwd'] = '********'
         return bundle
 
 
@@ -311,6 +344,7 @@ class DatasetResource(DojoResource):
     refreservation = fields.IntegerField(attribute='refreservation')
     recordsize = fields.IntegerField(attribute='recordsize')
     comments = fields.CharField(attribute='description', null=True)
+    sync = fields.CharField(attribute='sync')
     compression = fields.CharField(attribute='compression')
     dedup = fields.CharField(attribute='dedup')
     atime = fields.CharField(attribute='atime')
@@ -446,6 +480,7 @@ class ZVolResource(DojoResource):
     refer = fields.IntegerField(attribute='refer')
     used = fields.IntegerField(attribute='used')
     avail = fields.IntegerField(attribute='avail')
+    sync = fields.CharField(attribute='sync')
     compression = fields.CharField(attribute='compression')
     dedup = fields.CharField(attribute='dedup')
     comments = fields.CharField(attribute='description')
@@ -665,6 +700,12 @@ class VolumeResourceMixin(NestedMixin):
                 ),
                 self.wrap_view('rekey')
             ),
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/keypassphrase%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('keypassphrase')
+            ),
         ]
 
     def replace_disk(self, request, **kwargs):
@@ -820,7 +861,26 @@ class VolumeResourceMixin(NestedMixin):
             )
         else:
             form.done()
-        return HttpResponse('Volume key has been recreated.', status=202)
+        return HttpResponse('Volume has been rekeyed.', status=202)
+
+    def keypassphrase(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        form = CreatePassphraseForm(deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.done(obj)
+        return HttpResponse('Volume passphrase has been set.', status=201)
 
     def status(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
@@ -932,7 +992,12 @@ class VolumeResourceMixin(NestedMixin):
                                         'label': current.name,
                                     })
 
-                        if current.replacing:
+                        if (
+                                current.replacing
+                        ) and current.status not in (
+                            'ONLINE',
+                            'OFFLINE'
+                        ):
                             data['_detach_url'] = reverse(
                                 'storage_disk_detach',
                                 kwargs={
@@ -946,12 +1011,19 @@ class VolumeResourceMixin(NestedMixin):
                         enable even for disks already under replacing
                         subtree
                         """
-                        data['_replace_url'] = reverse(
-                            'storage_zpool_disk_replace',
-                            kwargs={
-                                'vname': pool.name,
-                                'label': current.name,
-                            })
+                        if (
+                                current.parent.parent.name != 'spares' and (
+                                    not current.parent.name.startswith('spare-') or
+                                    current.status == 'UNAVAIL'
+                                )
+                        ):
+                            # spares can't be replaced - so no replace url should be available for them
+                            data['_replace_url'] = reverse(
+                                'storage_zpool_disk_replace',
+                                kwargs={
+                                    'vname': pool.name,
+                                    'label': current.name,
+                                })
                         if current.parent.parent.name in (
                             'spares',
                             'cache',
@@ -967,12 +1039,13 @@ class VolumeResourceMixin(NestedMixin):
                                         'label': current.name,
                                     })
                             else:
-                                data['_remove_url'] = reverse(
-                                    'storage_zpool_disk_remove',
-                                    kwargs={
-                                        'vname': pool.name,
-                                        'label': current.name,
-                                    })
+                                if current.status != 'INUSE':
+                                    data['_remove_url'] = reverse(
+                                        'storage_zpool_disk_remove',
+                                        kwargs={
+                                            'vname': pool.name,
+                                            'label': current.name,
+                                        })
 
                 else:
                     raise ValueError("Invalid node")
@@ -1593,18 +1666,25 @@ class InterfacesResourceMixin(object):
             ] = item.alias_v6netmaskbit
             bundle.data['alias_set-%d-id' % i] = item.id
         initial = i + 1
-        for i, item in enumerate(newips, i + 1):
+        i = initial
+        for item in newips:
             ip, nm = item.rsplit('/', 1)
             if ':' in ip:
-                bundle.data['alias_set-%d-alias_v6address' % i] = ip
-                bundle.data['alias_set-%d-alias_v6netmaskbit' % i] = nm
+                v = 'v6'
             else:
-                bundle.data['alias_set-%d-alias_v4address' % i] = ip
-                bundle.data['alias_set-%d-alias_v4netmaskbit' % i] = nm
-            bundle.data['alias_set-%d-id' % i] = ''
+                v = 'v4'
+            for j in range(initial):
+                if bundle.data['alias_set-%d-alias_%saddress' % (j, v)] == ip:
+                    bundle.data['alias_set-%d-alias_%saddress' % (j, v)] = ip
+                    bundle.data['alias_set-%d-alias_%snetmaskbit' % (j, v)] = nm
+                    break
+            else:
+                bundle.data['alias_set-%d-alias_%saddress' % (i, v)] = ip
+                bundle.data['alias_set-%d-alias_%snetmaskbit' % (i, v)] = nm
+                i += 1
         bundle.data['int_aliases'] = newips
         bundle.data['alias_set-INITIAL_FORMS'] = initial
-        bundle.data['alias_set-TOTAL_FORMS'] = i + 1
+        bundle.data['alias_set-TOTAL_FORMS'] = i
         return bundle
 
     def is_form_valid(self, bundle, form):
@@ -1702,9 +1782,14 @@ class LAGGInterfaceMembersResourceMixin(object):
         bundle = super(LAGGInterfaceMembersResourceMixin, self).dehydrate(
             bundle
         )
-        bundle.data['lagg_interfacegroup'] = str(
-            bundle.obj.lagg_interfacegroup
-        )
+        if self.is_webclient(bundle.request):
+            bundle.data['lagg_interfacegroup'] = str(
+                bundle.obj.lagg_interfacegroup
+            )
+        else:
+            bundle.data['lagg_interfacegroup'] = (
+                bundle.obj.lagg_interfacegroup.id
+            )
         return bundle
 
 
@@ -1713,8 +1798,10 @@ class CloudSyncResourceMixin(NestedMixin):
     def dispatch_list(self, request, **kwargs):
         with client as c:
             self.__jobs = {}
-            for job in c.call('core.get_jobs', [('method', '=', 'backup.sync')], {'order_by': ['-id']}):
-                if job['arguments'] and job['arguments'][0] not in self.__jobs:
+            for job in c.call('core.get_jobs', [('method', '=', 'backup.sync')], {'order_by': ['id']}):
+                if job['arguments']:
+                    if job['arguments'][0] in self.__jobs and self.__jobs[job['arguments'][0]]['state'] == 'RUNNING':
+                        continue
                     self.__jobs[job['arguments'][0]] = job
         return super(CloudSyncResourceMixin, self).dispatch_list(request, **kwargs)
 
@@ -1860,12 +1947,17 @@ class ISCSIPortalResourceMixin(object):
         bundle = super(ISCSIPortalResourceMixin, self).dehydrate(bundle)
         globalconf = iSCSITargetGlobalConfiguration.objects.latest('id')
         if globalconf.iscsi_alua:
+            listen = []
             listen_a = []
             listen_b = []
             for p in bundle.obj.ips.all():
-                ips = p.alua_ips()
-                listen_a.extend(ips[0])
-                listen_b.extend(ips[1])
+                if p.iscsi_target_portalip_ip == '0.0.0.0':
+                    listen.append(f'{p.iscsi_target_portalip_ip}:{p.iscsi_target_portalip_port}')
+                else:
+                    ips = p.alua_ips()
+                    listen_a.extend(ips[0])
+                    listen_b.extend(ips[1])
+            bundle.data['iscsi_target_portal_ips'] = f'{", ".join(listen + listen_a + listen_b)}'
             bundle.data['iscsi_target_portal_ips_a'] = listen_a
             bundle.data['iscsi_target_portal_ips_b'] = listen_b
         else:
@@ -3314,12 +3406,14 @@ class BootEnvResource(NestedMixin, DojoResource):
                                     'vname': pool.name,
                                     'label': current.name,
                                 })
-
-                        data['_detach_url'] = reverse(
-                            'system_bootenv_pool_detach',
-                            kwargs={
-                                'label': current.name,
-                            })
+                        if len(current.parent.children) > 1:
+                            # Only add a detach url if there are other mirrored boot devices - meaning current node
+                            # has siblings
+                            data['_detach_url'] = reverse(
+                                'system_bootenv_pool_detach',
+                                kwargs={
+                                    'label': current.name,
+                                })
 
                         """
                         Replacing might go south leaving multiple UNAVAIL
@@ -3908,6 +4002,7 @@ class VMResourceMixin(object):
         bundle = super(VMResourceMixin, self).dehydrate(bundle)
         state = 'UNKNOWN'
         device_start_url = device_stop_url = device_restart_url = device_clone_url = device_vncweb_url = info = ''
+        device_poweroff_url = ''
         try:
             with client as c:
                 status = c.call('vm.status', bundle.obj.id)
@@ -3920,6 +4015,9 @@ class VMResourceMixin(object):
                 if state == 'RUNNING':
                     device_stop_url = reverse(
                         'vm_stop', kwargs={'id': bundle.obj.id},
+                    )
+                    device_poweroff_url = reverse(
+                        'vm_poweroff', kwargs={'id': bundle.obj.id},
                     )
                     device_restart_url = reverse(
                         'vm_restart', kwargs={'id': bundle.obj.id},
@@ -3938,6 +4036,7 @@ class VMResourceMixin(object):
                 bundle.data.update({
                     '_device_url': reverse('freeadmin_vm_device_datagrid') + '?id=%d' % bundle.obj.id,
                     '_stop_url': device_stop_url,
+                    '_poweroff_url': device_poweroff_url,
                     '_start_url': device_start_url,
                     '_restart_url': device_restart_url,
                     '_clone_url': device_clone_url,

@@ -42,7 +42,8 @@ from freenasUI.system.forms import (
 from .views import (
     home, initialwizard_progress, reboot, reboot_dialog, reboot_run, shutdown,
     shutdown_dialog, shutdown_run, reporting, system_info, bootenv_activate,
-    manualupdate_progress, bootenv_add, bootenv_pool_attach, bootenv_pool_detach,
+    manualupdate_running,
+    manualupdate_progress, bootenv_add, bootenv_pool_attach, bootenv_pool_attach_progress, bootenv_pool_detach,
     bootenv_pool_replace, bootenv_scrub, bootenv_scrub_interval, bootenv_deletebulk,
     bootenv_deletebulk_progress, bootenv_delete, bootenv_rename, bootenv_keep,
     bootenv_unkeep, bootenv_datagrid, bootenv_datagrid_structure,
@@ -91,10 +92,12 @@ urlpatterns = [
         [ManualUpdateTemporaryLocationForm, ManualUpdateUploadForm]
     ), name='system_manualupdate'),
     url(r'^manualupdate/progress/$', manualupdate_progress, name="system_manualupdate_progress"),
+    url(r'^manualupdate/running/$', manualupdate_running, name="system_manualupdate_running"),
     url(r'^bootenv/activate/(?P<name>[^/]+)/$', bootenv_activate, name='system_bootenv_activate'),
     url(r'^bootenv/add/$', bootenv_add, name='system_bootenv_add'),
     url(r'^bootenv/add/(?P<source>[^/]+)/$', bootenv_add, name='system_bootenv_add'),
     url(r'^bootenv/pool/attach/$', bootenv_pool_attach, name='system_bootenv_pool_attach'),
+    url(r'^bootenv/pool/attach/progress/$', bootenv_pool_attach_progress, name="system_bootenv_pool_attach_progress"),
     url(r'^bootenv/pool/detach/(?P<label>.+)/$', bootenv_pool_detach, name='system_bootenv_pool_detach'),
     url(r'^bootenv/pool/replace/(?P<label>.+)/$', bootenv_pool_replace, name='system_bootenv_pool_replace'),
     url(r'^bootenv/scrub/$', bootenv_scrub, name='system_bootenv_scrub'),

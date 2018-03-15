@@ -2,7 +2,7 @@ from datetime import timedelta
 import os
 import re
 
-from freenasUI.system.ixselftests import (ALERT_FILE, TEST_PASS, TEST_WARNING, TEST_FAIL, TEST_CRITICAL)
+from freenasUI.system.ixselftests import ALERT_FILE, TEST_PASS, TEST_WARNING, TEST_FAIL, TEST_CRITICAL
 
 from middlewared.alert.base import Alert, AlertLevel, AlertSource
 

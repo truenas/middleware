@@ -43,6 +43,7 @@ import oauth2 as oauth
 
 from freenasUI import settings as mysettings
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.auth import AuthTokenBackend
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import RPCToken
@@ -284,3 +285,16 @@ class ProfileMiddleware(object):
                 len(comment)
 
         return response
+
+
+class AuthTokenMiddleware:
+    HEADER_PREFIX = "Token "
+
+    def process_request(self, request):
+        header = request.META.get("HTTP_AUTHORIZATION")
+        if header and header.startswith(self.HEADER_PREFIX) and not request.user.is_authenticated:
+            user = AuthTokenBackend().authenticate(header[len(self.HEADER_PREFIX):])
+            if user is None:
+                return HttpResponse(status=401)
+
+            request.user = user

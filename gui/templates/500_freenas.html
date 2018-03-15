@@ -197,10 +197,17 @@ Exception Value: {{ exception_value|escape }}
       </thead>
       <tbody>
         {% for var in request.POST.items %}
-          <tr>
-            <td>{{ var.0 }}</td>
-            <td class="code">{{ var.1|pprint }}</td>
-          </tr>
+          {% if 'password' in var.0 or var.0 == 'csrfmiddlewaretoken'%}
+            <tr>
+              <td>{{ var.0 }}</td>
+              <td class="code">{{ '********'|pprint }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td>{{ var.0 }}</td>
+              <td class="code">{{ var.1|pprint }}</td>
+            </tr>
+          {% endif %}
         {% endfor %}
       </tbody>
     </table>
@@ -241,10 +248,17 @@ Exception Value: {{ exception_value|escape }}
       </thead>
       <tbody>
         {% for var in request.COOKIES.items %}
-          <tr>
-            <td>{{ var.0 }}</td>
-            <td class="code">{{ var.1|pprint }}</td>
-          </tr>
+          {% if var.0 == 'csrftoken'%}
+            <tr>
+              <td>{{ var.0 }}</td>
+              <td class="code">{{ '********'|pprint }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td>{{ var.0 }}</td>
+              <td class="code">{{ var.1|pprint }}</td>
+            </tr>
+          {% endif %}
         {% endfor %}
       </tbody>
     </table>

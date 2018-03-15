@@ -4,10 +4,17 @@
       form: this,
       event: e,
       url: '{% url "storage_detach" vid=volume.id %}',
-      progressbar: true
+      progressbar: true,
+      confirm: conf
       });
 {%endblock %}
 {% block form %}
+  {% if standby_offline %}
+    <tr><td colspan="2"><p>
+    {% trans "You cannot detach volume while standby node is down!" %}
+    </p></td></tr>
+  {% else %}
+
     {% if used %}
     <tr>
         <td colspan="2">
@@ -15,13 +22,13 @@
         </td>
     </tr>
     {% endif %}
-{% if services %}
+    {% if services %}
     <tr>
         <td colspan="2">
         <p>{% trans "ATTENTION - Currently the following services depend on this volume: " %}<strong>{{ services.keys|join:", " }}</strong></p>
         </td>
     </tr>
-{% endif %}
+    {% endif %}
 {% if volume.vol_encrypt > 0 %}
     <tr>
         <td colspan="2">
@@ -32,5 +39,19 @@
 {% endif %}
 {{ block.super }}
 <tr><td><strong>{{ volume.vol_name}}</strong>: {% trans "Are you sure you want to detach?" %}</td></tr>
+  {% endif %}
 {% endblock %}
 {% block oklabel %}{% trans "Yes" %}{% endblock %}
+{% block buttons %}
+  {% if standby_offline %}
+    <button id="btn_Detach_Cancel" data-dojo-type="dijit.form.Button" type="button">
+        {% trans "OK" %}
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            cancelDialog(this);
+        </script>
+    </button>
+
+  {% else %}
+  {{ block.super }}
+  {% endif %}
+{% endblock %}

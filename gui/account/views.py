@@ -54,7 +54,7 @@ from freenasUI.common.freenasnis import (
     FreeNAS_NIS_Users,
 )
 from freenasUI.common.freenasusers import FreeNAS_Users, FreeNAS_Groups
-from freenasUI.common.system import get_sw_login_version, get_sw_name, get_sw_version
+from freenasUI.common.system import get_sw_login_version, get_sw_name, get_sw_year, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 
@@ -266,7 +266,7 @@ class ExtendedAuthForm(AuthenticationForm):
     def __init__(self, request=None, *args, **kwargs):
         if request is not None:
             initial = kwargs.get('initial', {})
-            initial_default = {'username': 'root'}
+            initial_default = {}
             initial_default.update(initial)
             kwargs['initial'] = initial_default
         super(ExtendedAuthForm, self).__init__(request, *args, **kwargs)
@@ -304,6 +304,7 @@ def login_wrapper(
         'sw_login_version': get_sw_login_version(),
         'sw_version_footer': get_sw_version(strip_build_num=True).split('-', 1)[-1],
         'sw_name': get_sw_name(),
+        'sw_year': get_sw_year(),
     })
     if not models.bsdUsers.has_root_password():
         authentication_form = forms.NewPasswordForm

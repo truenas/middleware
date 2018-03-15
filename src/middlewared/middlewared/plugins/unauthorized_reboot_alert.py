@@ -5,6 +5,7 @@ import textwrap
 from middlewared.service import Service
 
 SENTINEL_PATH = "/data/sentinels/unauthorized-reboot"
+MIDDLEWARE_STARTED_SENTINEL_PATH = "/tmp/.middleware-started"
 
 
 class UnauthorizedRebootAlertService(Service):
@@ -15,6 +16,10 @@ class UnauthorizedRebootAlertService(Service):
 
 async def setup(middleware):
     if os.path.exists(SENTINEL_PATH):
+        # We want to emit the mail only if the machine truly rebooted.
+        if os.path.exists(MIDDLEWARE_STARTED_SENTINEL_PATH):
+            return
+
         gc = await middleware.call('datastore.config', 'network.globalconfiguration')
 
         hostname = f"{gc['gc_hostname']}.{gc['gc_domain']}"
@@ -33,4 +38,7 @@ async def setup(middleware):
         os.mkdir(sentinel_dir)
 
     with open(SENTINEL_PATH, "wb"):
+        pass
+
+    with open(MIDDLEWARE_STARTED_SENTINEL_PATH, "wb"):
         pass

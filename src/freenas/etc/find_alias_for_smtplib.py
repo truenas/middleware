@@ -62,7 +62,7 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
     margs['extra_headers'].update({
         'X-Mailer': get_sw_name(),
         'X-%s-Host' % get_sw_name(): socket.gethostname(),
-        'To': to_addr,
+        'To': ', '.join(to_addrs_repl),
     })
     margs['subject'] = em.get('Subject')
 
@@ -125,7 +125,7 @@ def main():
     if not to and not args.parse_recipients:
         parser.exit(message=parser.format_usage())
     msg = sys.stdin.read()
-    syslog.syslog("sending mail to " + ','.join(to) + msg[0:140])
+    syslog.syslog("sending mail to " + ', '.join(to) + '\n' + msg[0:140])
     do_sendmail(msg, to_addrs=to, parse_recipients=args.parse_recipients)
 
 

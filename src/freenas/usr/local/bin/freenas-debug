@@ -52,6 +52,7 @@ usage()
 	Where options are:
 	    -$email_opt	Email debug log to this comma-delimited list of email addresses
 	    -A	Dump all debug information
+	    -Z  Remove old debug information
 
 __EOF__
 
@@ -219,6 +220,7 @@ main()
 	local func
 	local var
 	local all_debug=false
+	local zap=false
 
 	load_modules
 	get_module_options
@@ -226,26 +228,28 @@ main()
 	opts_spaced="${VAL_SPACED}"
 
 	aopts="${opts}${email_opt}:"
-	while getopts "A${aopts}" opt
-	do
+	while getopts "AZ${aopts}" opt ; do
 		case "${opt}" in
-		$email_opt)
-			email="${OPTARG}"
-			;;
-	A)
-	    all_debug=true
-	    ;;
-		[${opts}])
-			has_debug_command=true
-			;;
-		\?)
-			usage "${opts}"
-			return 2
-			;;
-		esac
+			$email_opt)
+				email="${OPTARG}"
+				;;
+			A)
+				all_debug=true
+				;;
+			Z)
+				zap=true
+				;;
+			[${opts}])
+				has_debug_command=true
+				;;
+			\?)
+				usage "${opts}"
+				return 2
+				;;
+			esac
 	done
 
-	if ! $has_debug_command && ! $all_debug; then
+	if ! $has_debug_command && ! $all_debug && ! $zap; then
 		usage "${opts}"
 		return 2
 	fi
@@ -255,6 +259,13 @@ main()
 	then
 		rm -rf "${FREENAS_DEBUG_DIRECTORY}"
 	fi
+
+	if $zap ; then
+		# They just want to nuke old debugs
+		echo "Old debugs removed"
+		return 2
+	fi
+
 	mkdir -p "${FREENAS_DEBUG_DIRECTORY}"
 
 	freenas_header 2>&1|tee -a "${FREENAS_DEBUG_DIRECTORY}/osinfo.txt"
@@ -263,6 +274,10 @@ main()
 	if $all_debug; then
 		func_pids=""
 		for opt in ${opts_spaced} ; do
+			if [ "${opt}" = "B" ]
+			then
+				continue
+			fi
 
 			var=\$$(echo "module_func_${opt}")
 			func=$(eval "echo ${var}")

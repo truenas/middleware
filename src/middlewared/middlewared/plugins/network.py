@@ -1,8 +1,9 @@
-from middlewared.service import Service, private
-from middlewared.utils import Popen
+from middlewared.service import Service, filterable, private
+from middlewared.utils import Popen, filter_list, run
 from middlewared.schema import accepts, Str
 
 import asyncio
+from collections import defaultdict
 import ipaddr
 import ipaddress
 import netif
@@ -11,6 +12,9 @@ import re
 import signal
 import subprocess
 import urllib.request
+
+RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
+RE_MTU = re.compile(r'\bmtu\s+(\d+)')
 
 
 def dhclient_status(interface):
@@ -61,6 +65,59 @@ def dhclient_leases(interface):
 
 class InterfacesService(Service):
 
+    @filterable
+    def query(self, filters, options):
+        data = []
+        for name, iface in netif.list_interfaces().items():
+            if name in ('lo0', 'pfsync0', 'pflog0'):
+                continue
+            data.append(self.iface_extend(iface.__getstate__()))
+        return filter_list(data, filters, options)
+
+    @private
+    def iface_extend(self, iface):
+        iface.update({
+            'configured_aliases': [],
+            'dhcp': False,
+        })
+        config = self.middleware.call_sync('datastore.query', 'network.interfaces', [('int_interface', '=', iface['name'])])
+        if not config:
+            return iface
+        config = config[0]
+
+        if config['int_dhcp']:
+            iface['dhcp'] = True
+        else:
+            if config['int_ipv4address']:
+                iface['configured_aliases'].append({
+                    'type': 'INET',
+                    'address': config['int_ipv4address'],
+                    'netmask': int(config['int_v4netmaskbit']),
+                })
+            if config['int_ipv6address']:
+                iface['configured_aliases'].append({
+                    'type': 'INET6',
+                    'address': config['int_ipv6address'],
+                    'netmask': int(config['int_v6netmaskbit']),
+                })
+
+        for alias in self.middleware.call_sync('datastore.query', 'network.alias', [('alias_interface', '=', config['id'])]):
+
+            if alias['alias_v4address']:
+                iface['configured_aliases'].append({
+                    'type': 'INET',
+                    'address': alias['alias_v4address'],
+                    'netmask': int(alias['alias_v4netmaskbit']),
+                })
+            if alias['alias_v6address']:
+                iface['configured_aliases'].append({
+                    'type': 'INET6',
+                    'address': alias['alias_v6address'],
+                    'netmask': int(alias['alias_v6netmaskbit']),
+                })
+
+        return iface
+
     @private
     async def sync(self):
         """
@@ -89,12 +146,53 @@ class InterfacesService(Service):
                 self.logger.info('{}: changing protocol to {}'.format(name, protocol))
                 iface.protocol = protocol
 
-            members_configured = set(p[0] for p in iface.ports)
             members_database = set()
+            members_configured = set(p[0] for p in iface.ports)
+            members_changes = []
+            # In case there are MTU changes we need to use the lowest MTU between
+            # all members and use that.
+            lower_mtu = None
             for member in (await self.middleware.call('datastore.query', 'network.lagginterfacemembers', [('lagg_interfacegroup_id', '=', lagg['id'])])):
                 members_database.add(member['lagg_physnic'])
+                try:
+                    member_iface = netif.get_interface(member['lagg_physnic'])
+                except KeyError:
+                    self.logger.warn('Could not find {} from {}'.format(member['lagg_physnic'], name))
+                    continue
 
-            # Remeve member configured but not in database
+                # In case there is no MTU in interface options and it is currently
+                # different than the default of 1500, revert it.
+                # If there is MTU and its different set it (using member options).
+                reg_mtu = RE_MTU.search(member['lagg_deviceoptions'])
+                if (
+                    reg_mtu and (
+                        int(reg_mtu.group(1)) != member_iface.mtu or
+                        int(reg_mtu.group(1)) != iface.mtu
+                    )
+                ) or (not reg_mtu and (member_iface.mtu != 1500 or iface.mtu != 1500)):
+                    if not reg_mtu:
+                        if not lower_mtu or lower_mtu > 1500:
+                            lower_mtu = 1500
+                    else:
+                        reg_mtu = int(reg_mtu.group(1))
+                        if not lower_mtu or lower_mtu > reg_mtu:
+                            lower_mtu = reg_mtu
+
+                members_changes.append((member_iface, member['lagg_physnic'], member['lagg_deviceoptions']))
+
+            for member_iface, member_name, member_options in members_changes:
+                # We need to remove interface from LAGG before changing MTU
+                if lower_mtu and member_iface.mtu != lower_mtu and member_name in members_configured:
+                    iface.delete_port(member_name)
+                    members_configured.remove(member_name)
+                proc = await Popen(f'/sbin/ifconfig {member_name} {member_options}', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+                err = (await proc.communicate())[1].decode()
+                if err:
+                    self.logger.info(f'{member_name}: error applying: {err}')
+                if lower_mtu and member_iface.mtu != lower_mtu:
+                    member_iface.mtu = lower_mtu
+
+            # Remove member configured but not in database
             for member in (members_configured - members_database):
                 iface.delete_port(member)
 
@@ -381,6 +479,14 @@ class InterfacesService(Service):
 
 class RoutesService(Service):
 
+    @filterable
+    def system_routes(self, filters, options):
+        """
+        Get current/applied network routes.
+        """
+        rtable = netif.RoutingTable()
+        return filter_list([r.__getstate__() for r in rtable.routes], filters, options)
+
     @private
     async def sync(self):
         config = await self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
@@ -467,6 +573,14 @@ class RoutesService(Service):
 
 class DNSService(Service):
 
+    @filterable
+    async def query(self, filters, options):
+        data = []
+        resolvconf = (await run('resolvconf', '-l')).stdout.decode()
+        for nameserver in RE_NAMESERVER.findall(resolvconf):
+            data.append({'nameserver': nameserver})
+        return filter_list(data, filters, options)
+
     @private
     async def sync(self):
         domains = []
@@ -506,6 +620,34 @@ class DNSService(Service):
         data = await proc.communicate(input=resolvconf.encode())
         if proc.returncode != 0:
             self.logger.warn(f'Failed to run resolvconf: {data[1].decode()}')
+
+
+class NetworkGeneralService(Service):
+
+    class Config:
+        namespace = 'network.general'
+
+    @accepts()
+    async def summary(self):
+        ips = defaultdict(lambda: defaultdict(list))
+        for iface in await self.middleware.call('interfaces.query'):
+            for alias in iface['aliases']:
+                if alias['type'] == 'INET':
+                    ips[iface['name']]['IPV4'].append(f'{alias["address"]}/{alias["netmask"]}')
+
+        default_routes = []
+        for route in await self.middleware.call('routes.system_routes', [('netmask', 'in', ['0.0.0.0', '::'])]):
+            default_routes.append(route['gateway'])
+
+        nameservers = []
+        for ns in await self.middleware.call('dns.query'):
+            nameservers.append(ns['nameserver'])
+
+        return {
+            'ips': ips,
+            'default_routes': default_routes,
+            'nameservers': nameservers,
+        }
 
 
 async def configure_http_proxy(middleware, *args, **kwargs):

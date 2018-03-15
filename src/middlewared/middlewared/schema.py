@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import errno
+import ipaddress
 import os
 
 from middlewared.service_exception import ValidationErrors
@@ -159,6 +160,17 @@ class File(Str):
         if verrors:
             raise verrors
 
+        return super().validate(value)
+
+
+class IPAddr(Str):
+
+    def validate(self, value):
+        if value:
+            try:
+                ipaddress.ip_address(value)
+            except ValueError:
+                raise Error(self.name, f'Not a valid IP Address: {value}')
         return super().validate(value)
 
 

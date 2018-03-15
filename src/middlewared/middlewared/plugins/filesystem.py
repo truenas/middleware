@@ -1,12 +1,13 @@
-from middlewared.main import EventSource
-from middlewared.schema import Bool, Dict, Int, Ref, Str, accepts
-from middlewared.service import private, CallError, Service
-from middlewared.utils import filter_list
-
 import binascii
 import errno
 import os
 import select
+import shutil
+
+from middlewared.main import EventSource
+from middlewared.schema import Bool, Dict, Int, Ref, Str, accepts
+from middlewared.service import private, CallError, Service, job
+from middlewared.utils import filter_list
 
 
 class FilesystemService(Service):
@@ -71,7 +72,8 @@ class FilesystemService(Service):
             stat = os.stat(path, follow_symlinks=False)
         except FileNotFoundError:
             raise CallError(f'Path {path} not found', errno.ENOENT)
-        return {
+
+        stat = {
             'size': stat.st_size,
             'mode': stat.st_mode,
             'uid': stat.st_uid,
@@ -83,6 +85,15 @@ class FilesystemService(Service):
             'inode': stat.st_ino,
             'nlink': stat.st_nlink,
         }
+
+        if os.path.exists(os.path.join(path, ".windows")):
+            stat["acl"] = "windows"
+        elif os.path.exists(os.path.join(path, ".mac")):
+            stat["acl"] = "mac"
+        else:
+            stat["acl"] = "unix"
+
+        return stat
 
     @private
     @accepts(
@@ -140,6 +151,49 @@ class FilesystemService(Service):
                 f.seek(options['offset'])
             data = binascii.b2a_base64(f.read(options.get('maxlen'))).decode().strip()
         return data
+
+    @accepts(Str('path'))
+    @job(pipes=["output"])
+    async def get(self, job, path):
+        """
+        Job to get contents of `path`.
+        """
+
+        if not os.path.isfile(path):
+            raise CallError(f'{path} is not a file')
+
+        with open(path, 'rb') as f:
+            await self.middleware.run_in_io_thread(shutil.copyfileobj, f, job.pipes.output.w)
+
+    @accepts(
+        Str('path'),
+        Dict(
+            'options',
+            Bool('append', default=False),
+            Int('mode'),
+        ),
+    )
+    @job(pipes=["input"])
+    async def put(self, job, path, options=None):
+        """
+        Job to put contents to `path`.
+        """
+        options = options or {}
+        dirname = os.path.dirname(path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        if options.get('append'):
+            openmode = 'ab'
+        else:
+            openmode = 'wb+'
+
+        with open(path, openmode) as f:
+            await self.middleware.run_in_io_thread(shutil.copyfileobj, job.pipes.input.r, f)
+
+        mode = options.get('mode')
+        if mode:
+            os.chmod(path, mode)
+        return True
 
 
 class FileFollowTailEventSource(EventSource):

@@ -17,14 +17,15 @@ import sysctl
 import gzip
 import hashlib
 import shutil
+import signal
 
 logger = middlewared.logger.Logger('vm').getLogger()
 
 CONTAINER_IMAGES = {
     "RancherOS": {
-        "URL": "http://download.freenas.org/bhyve-templates/rancheros-bhyve-v1.1.0/rancheros-bhyve-v1.1.0.img.gz",
-        "GZIPFILE": "rancheros-bhyve-v1.1.0.img.gz",
-        "SHA256": "721966b303bdb5dff3a169be60f6dce679ab05aad567fff5c5188531f7e0cd9d",
+        "URL": "http://download.freenas.org/bhyve-templates/rancheros-bhyve-v1.1.3/rancheros-bhyve-v1.1.3.img.gz",
+        "GZIPFILE": "rancheros-bhyve-v1.1.3.img.gz",
+        "SHA256": "e9288df573e01f5468c1f7e4609fbeab481caa3ffc5855af9d003b49557dde84",
     }
 }
 BUFSIZE = 65536
@@ -47,12 +48,12 @@ class VMManager(object):
         except:
             raise
 
-    async def stop(self, id):
+    async def stop(self, id, force=False):
         supervisor = self._vm.get(id)
         if not supervisor:
             return False
 
-        err = await supervisor.stop()
+        err = await supervisor.stop(force)
         return err
 
     async def restart(self, id):
@@ -106,6 +107,7 @@ class VMSupervisor(object):
         vnc_web = None  # We need to initialize before line 200
         args = [
             'bhyve',
+            '-A',
             '-H',
             '-w',
             '-c', str(self.vm['vcpus']),
@@ -304,21 +306,24 @@ class VMSupervisor(object):
         while self.taps:
             netif.destroy_interface(self.taps.pop())
 
-    def set_tap_mtu(self, iface, tap):
-        if iface.mtu > tap.mtu:
-            tap.mtu = iface.mtu
-        return tap
+    def set_iface_mtu(self, ifacesrc, ifacedst):
+        ifacedst.mtu = ifacesrc.mtu
+
+        return ifacedst
 
     async def bridge_setup(self, tapname, tap, attach_iface):
+        if_bridge = []
+        bridge_enabled = False
+
         if attach_iface is None:
             # XXX: backward compatibility prior to 11.1-RELEASE.
             try:
                 attach_iface = netif.RoutingTable().default_route_ipv4.interface
+                attach_iface_info = netif.get_interface(attach_iface)
             except:
                 return
-
-        if_bridge = []
-        bridge_enabled = False
+        else:
+            attach_iface_info = netif.get_interface(attach_iface)
 
         for brgname, iface in list(netif.list_interfaces().items()):
             if brgname.startswith('bridge'):
@@ -328,13 +333,13 @@ class VMSupervisor(object):
             for bridge in if_bridge:
                 if attach_iface in bridge.members:
                     bridge_enabled = True
-                    self.set_tap_mtu(bridge, tap)
+                    self.set_iface_mtu(attach_iface_info, tap)
                     bridge.add_member(tapname)
                     break
 
         if bridge_enabled is False:
             bridge = netif.get_interface(netif.create_interface('bridge'))
-            self.set_tap_mtu(bridge, tap)
+            self.set_iface_mtu(attach_iface_info, tap)
             bridge.add_member(tapname)
             bridge.add_member(attach_iface)
             bridge.up()
@@ -342,7 +347,7 @@ class VMSupervisor(object):
     async def kill_bhyve_pid(self):
         if self.proc:
             try:
-                os.kill(self.proc.pid, 15)
+                os.kill(self.proc.pid, signal.SIGTERM)
             except ProcessLookupError as e:
                 # Already stopped, process do not exist anymore
                 if e.errno != errno.ESRCH:
@@ -353,7 +358,7 @@ class VMSupervisor(object):
         if self.web_proc:
             try:
                 self.logger.debug("==> Killing WEBVNC: {}".format(self.web_proc.pid))
-                os.kill(self.web_proc.pid, 15)
+                os.kill(self.web_proc.pid, signal.SIGTERM)
             except ProcessLookupError as e:
                 if e.errno != errno.ESRCH:
                     raise
@@ -365,13 +370,17 @@ class VMSupervisor(object):
         self.destroy_tap()
         await self.kill_bhyve_web()
 
-    async def stop(self):
-        bhyve_error = await (await Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
-        self.logger.debug("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+    async def stop(self, force=False):
+        if force:
+            bhyve_error = await (await Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+            self.logger.debug("===> Force Stop VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            if bhyve_error:
+                self.logger.error("===> Stopping VM error: {0}".format(bhyve_error))
+        else:
+            os.kill(self.proc.pid, signal.SIGTERM)
+            self.logger.debug("===> Soft Stop VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
 
-        if bhyve_error:
-            self.logger.error("===> Stopping VM error: {0}".format(bhyve_error))
-
+        self.destroy_tap()
         return await self.kill_bhyve_pid()
 
     async def running(self):
@@ -452,8 +461,8 @@ class VMUtils(object):
         ]
 
         grub_additional_args = {
-            "RancherOS": ['linux /boot/vmlinuz-4.9.45-rancher rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.state.autoformat=[/dev/sda] rancher.resize_device=/dev/sda'.format(quote(password)),
-                          'initrd /boot/initrd-v1.1.0']
+            "RancherOS": ['linux /boot/vmlinuz-4.9.75-rancher rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.resize_device=/dev/sda'.format(quote(password)),
+                          'initrd /boot/initrd-v1.1.3']
         }
 
         vm_private_dir = sharefs_path + '/configs/' + str(vm_id) + '_' + vm_name + '/' + 'grub/'
@@ -461,14 +470,15 @@ class VMUtils(object):
 
         VMUtils.__mkdirs(vm_private_dir)
 
-        with open(grub_file, 'w') as grubcfg:
-            for line in grub_default_args:
-                grubcfg.write(line)
-                grubcfg.write('\n')
-            for line in grub_additional_args[vmOS]:
-                grubcfg.write(line)
-                grubcfg.write('\n')
-            grubcfg.write('}')
+        if not os.path.exists(grub_file):
+            with open(grub_file, 'w') as grubcfg:
+                for line in grub_default_args:
+                    grubcfg.write(line)
+                    grubcfg.write('\n')
+                for line in grub_additional_args[vmOS]:
+                    grubcfg.write(line)
+                    grubcfg.write('\n')
+                grubcfg.write('}')
 
         return vm_private_dir
 
@@ -562,6 +572,42 @@ class VMService(CRUDService):
                 vnc = device['attributes']
                 vnc_devices.append(vnc)
         return vnc_devices
+
+    @accepts()
+    def vnc_port_wizard(self):
+        """
+        It returns the next available VNC PORT and WEB VNC PORT.
+
+        Returns:
+            dict: with two keys vnc_port and vnc_web or None in case we can't query the db.
+        """
+        vnc_ports_in_use = []
+        vms = self.middleware.call_sync('datastore.query', 'vm.vm', [], {'order_by': ['id']})
+        if vms:
+            latest_vm_id = vms.pop().get('id', None)
+            vnc_port = 5900 + latest_vm_id + 1
+
+            check_vnc_device = self.middleware.call_sync('datastore.query', 'vm.device', [('dtype', '=', 'VNC')])
+            for vnc in check_vnc_device:
+                vnc_used_port = vnc['attributes'].get('vnc_port', None)
+                if vnc_used_port is None:
+                    vm_id = vnc['vm'].get('id', None)
+                    vnc_ports_in_use.append(5900 + vm_id)
+                else:
+                    vnc_ports_in_use.append(int(vnc_used_port))
+
+            auto_generate = True
+            while auto_generate:
+                if vnc_port in vnc_ports_in_use:
+                    vnc_port = vnc_port + 1
+                else:
+                    auto_generate = False
+                    split_port = int(str(vnc_port)[:2]) - 1
+                    vnc_web = int(str(split_port) + str(vnc_port)[2:])
+                    vnc_attr = {"vnc_port": vnc_port, "vnc_web": vnc_web}
+        else:
+            return None
+        return vnc_attr
 
     @accepts()
     def get_vnc_ipv4(self):
@@ -922,11 +968,11 @@ class VMService(CRUDService):
             return False
 
     @item_method
-    @accepts(Int('id'))
-    async def stop(self, id):
+    @accepts(Int('id'), Bool('force', default=False),)
+    async def stop(self, id, force):
         """Stop a VM."""
         try:
-            return await self._manager.stop(id)
+            return await self._manager.stop(id, force)
         except Exception as err:
             self.logger.error("===> {0}".format(err))
             return False
@@ -1006,23 +1052,13 @@ class VMService(CRUDService):
                     self.logger.debug("===> Checksum OK: {}".format(file_path))
                     return file_path
                 else:
-                    self.logger.debug("===> Checksum NOK: {}".format(file_path))
+                    self.logger.debug("===> Checksum NOK, removing file: {}".format(file_path))
+                    os.remove(file_path)
                     return False
             else:
                 return False
         else:
             return False
-
-    def decompress_hookreport(self, dst_file, job):
-        totalsize = 4756340736  # XXX: It will be parsed from a sha256 file.
-        fd = os.open(dst_file, os.O_RDONLY)
-        try:
-            size = os.lseek(fd, 0, os.SEEK_END)
-        finally:
-            os.close(fd)
-
-        percent = (size / totalsize) * 100
-        job.set_progress(int(percent), 'Decompress', {'decompressed': size, 'total': totalsize})
 
     @accepts(Str('src'), Str('dst'))
     def decompress_gzip(self, src, dst):

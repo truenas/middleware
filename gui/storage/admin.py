@@ -24,6 +24,7 @@ class DiskFAdmin(BaseFreeAdmin):
         'disk_multipath_name',
         'disk_multipath_member',
         'disk_expiretime',
+        'disk_enclosure_slot',
     )
     resource_mixin = DiskResourceMixin
 

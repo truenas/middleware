@@ -5,7 +5,6 @@ import json
 import os
 import traceback
 
-from freenasUI.common.system import get_sw_version
 from freenasUI.support.utils import get_license
 from licenselib.license import ContractType
 
@@ -194,8 +193,6 @@ class AlertService(Service):
 
                                 serial = await self.middleware.call("system._serial")
 
-                                company = license.customer_name.decode()
-
                                 for name, verbose_name in (
                                     ("name", "Contact Name"),
                                     ("title", "Contact Title"),
@@ -214,11 +211,7 @@ class AlertService(Service):
                                     await self.middleware.call("support.new_ticket", {
                                         "title": "Automatic alert (%s)" % serial,
                                         "body": "\n".join(msg),
-                                        "version": get_sw_version().split("-", 1)[-1],
-                                        "debug": False,
-                                        "company": company,
-                                        "serial": serial,
-                                        "department": 20,
+                                        "attach_debug": False,
                                         "category": "Hardware",
                                         "criticality": "Loss of Functionality",
                                         "environment": "Production",

@@ -69,6 +69,7 @@ from freenasUI.common.system import get_sw_version
 from freenasUI.network.models import GlobalConfiguration, Interfaces, \
 	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
 from freenasUI.system.models import Settings, Support
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 
 from requests.packages.urllib3 import poolmanager
@@ -346,7 +347,7 @@ def configure_interface():
             print(_("Several input formats are supported"))
             print(_("Example 1 CIDR Notation:"))
             print("    192.168.1.1/24")
-            print(_("Example 2 IP and Netmask seperate:"))
+            print(_("Example 2 IP and Netmask separate:"))
             print("    IP: 192.168.1.1")
             print("    Netmask: 255.255.255.0, /24 or 24")
 
@@ -516,6 +517,17 @@ Acceptable formats are 255.255.255.0,
                         print('VHID should be between 1 and 255')
                         continue
                 iface.int_vhid = vhid
+                break
+
+            while True:
+                intcrit = input(_("Mark interface as Critical for Failover? (y/n) "))
+                if intcrit.lower().startswith("y"):
+                    iface.int_critical = True
+                elif intcrit.lower().startswith("n"):
+                    iface.int_critical = False
+                else:
+                    print(_("Please select y or n"))
+                    continue
                 break
 
             pwd_prompt = prompt("Password", iface.int_pass)
@@ -808,12 +820,14 @@ def create_vlan():
     # Get interface name
     while True:
         vlan_vint = input(_("Enter an interface name ")
-                              + _("(vlanXX) or a to abort: "))
+                              + _("(vlanX) or a to abort: "))
         if vlan_vint == "a":
             return
-        if not re.match(r'vlan\d+', vlan_vint):
-            print(_("Interface name must be vlanXX where XX is a number"))
+        reg = re.search(r'vlan(\d+)', vlan_vint)
+        if not reg:
+            print(_("Interface name must be vlanX where X is a number"))
             continue
+        vlan_vint = f'vlan{int(reg.group(1))}'
         break
     # Get vlan tag
     while True:
@@ -1096,7 +1110,7 @@ def automatic_ix_alert(*args):
         text = _("enabled")
     else:
         text = _("disabled")
-    print(_("Automatic suport alerts to iXsystems: %s") % text)
+    print(_("Automatic support alerts to iXsystems: %s") % text)
     while True:
         if support.enabled:
             ret = input(_("Disable (y/n): "))
@@ -1225,28 +1239,6 @@ def show_ip():
         print(_("Please check network configuration."))
     print()
 
-def system_update():
-    import freenasOS.Update as Update
-    import freenasOS.Configuration as Configuration
-
-    update_dir = notifier().get_update_location()
-    rv = Update.DownloadUpdate(None, directory = update_dir)
-    if rv is True:
-        diffs = Update.PendingUpdates(update_dir)
-        if diffs and len(diffs) != 0:
-            rv = Update.ApplyUpdate(directory = update_dir)
-            if rv is True:
-                os.system("/sbin/shutdown -r now")
-                time.sleep(60)
-                return False
-            else:
-                print("Unable to apply update", file=sys.stderr)
-        else:
-            print("No updates to apply", file=sys.stderr)
-    else:
-        print("No update available", file=sys.stderr)
-    return True
-
 
 def netcli_title():
     proc = subprocess.Popen(['dmidecode', '-s', 'system-product-name'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
@@ -1267,7 +1259,6 @@ def main_menu():
         [ _("Reset Root Password"), reset_root_pw ],
         [ _("Reset Configuration to Defaults"), reset_factory_defaults ],
         [ _("Shell"), shell ],
-        [ _("System Update (requires networking)"), system_update ],
         [ _("Reboot"), reboot ],
         [ _("Shut Down"), shutdown],
     ]
@@ -1290,11 +1281,28 @@ def main_menu():
 
     while True:
         if is_truenas and os.path.exists('/tmp/.failover_needop'):
-             yes = input(_("Enter passphrase now? (y/n) "))
-             if yes.lower().startswith("y"):
-                 os.system("/usr/local/sbin/enc_helper interactive")
-                 time.sleep(5)
-                 continue
+            """
+            Currently we can have multiple pools.
+            Because one encrypted pool failed to import does not mean the node
+            is supposed/allowed to unlock.
+            """
+            passphrase = (notifier().failover_status() != 'MASTER')
+            if passphrase:
+                try:
+                    with client as c:
+                        passphrase &= (
+                            c.call('failover.call_remote', 'notifier.failover_status') != 'MASTER'
+                        )
+
+                except Exception as e:
+                    pass
+
+            if passphrase:
+                yes = input(_("Enter passphrase now? (y/n) "))
+                if yes.lower().startswith("y"):
+                    os.system("/usr/local/sbin/enc_helper interactive")
+                    time.sleep(5)
+                    continue
 
         if is_truenas:
             print(netcli_title())

@@ -427,13 +427,19 @@ class ServiceService(CRUDService):
 
     async def _stop_jails(self, **kwargs):
         for jail in await self.middleware.call('datastore.query', 'jails.jails'):
-            await self.middleware.call('notifier.warden', 'stop', [], {'jail': jail['jail_host']})
+            try:
+                await self.middleware.call('notifier.warden', 'stop', [], {'jail': jail['jail_host']})
+            except Exception as e:
+                self.logger.debug(f'Failed to stop jail {jail["jail_host"]}', exc_info=True)
 
     async def _start_jails(self, **kwargs):
         await self._service("ix-warden", "start", **kwargs)
         for jail in await self.middleware.call('datastore.query', 'jails.jails'):
             if jail['jail_autostart']:
-                await self.middleware.call('notifier.warden', 'start', [], {'jail': jail['jail_host']})
+                try:
+                    await self.middleware.call('notifier.warden', 'start', [], {'jail': jail['jail_host']})
+                except Exception as e:
+                    self.logger.debug(f'Failed to start jail {jail["jail_host"]}', exc_info=True)
         await self._service("ix-plugins", "start", **kwargs)
         await self.reload("http", kwargs)
 
@@ -514,6 +520,10 @@ class ServiceService(CRUDService):
     async def _start_s3(self, **kwargs):
         await self.middleware.call('etc.generate', 's3')
         await self._service("minio", "start", quiet=True, stdout=None, stderr=None, **kwargs)
+
+    async def _reload_s3(self, **kwargs):
+        await self.middleware.call('etc.generate', 's3')
+        await self._service("minio", "restart", quiet=True, stdout=None, stderr=None, **kwargs)
 
     async def _reload_rsync(self, **kwargs):
         await self._service("ix-rsyncd", "start", quiet=True, **kwargs)
@@ -771,10 +781,14 @@ class ServiceService(CRUDService):
         if nfs['nfs_srv_v4']:
             sysctl.filter('vfs.nfsd.server_max_nfsvers')[0].value = 4
             if nfs['nfs_srv_v4_v3owner']:
+                # Per RFC7530, sending NFSv3 style UID/GIDs across the wire is now allowed
+                # You must have both of these sysctl's set to allow the desired functionality
                 sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 1
+                sysctl.filter('vfs.nfs.enable_uidtostring')[0].value = 1
                 await self._service("nfsuserd", "stop", force=True, **kwargs)
             else:
                 sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 0
+                sysctl.filter('vfs.nfs.enable_uidtostring')[0].value = 0
                 await self._service("nfsuserd", "start", quiet=True, **kwargs)
         else:
             sysctl.filter('vfs.nfsd.server_max_nfsvers')[0].value = 3
@@ -817,6 +831,11 @@ class ServiceService(CRUDService):
         return res, []
 
     async def _restart_dynamicdns(self, **kwargs):
+        await self._service("ix-inadyn", "start", quiet=True, **kwargs)
+        await self._service("inadyn", "stop", force=True, **kwargs)
+        await self._service("inadyn", "restart", **kwargs)
+
+    async def _reload_dynamicdns(self, **kwargs):
         await self._service("ix-inadyn", "start", quiet=True, **kwargs)
         await self._service("inadyn", "stop", force=True, **kwargs)
         await self._service("inadyn", "restart", **kwargs)
@@ -871,6 +890,13 @@ class ServiceService(CRUDService):
         await self._service("snmpd", "start", quiet=True, **kwargs)
         await self._service("snmp-agent", "start", quiet=True, **kwargs)
 
+    async def _reload_snmp(self, **kwargs):
+        await self._service("snmp-agent", "stop", quiet=True, **kwargs)
+        await self._service("snmpd", "stop", force=True, **kwargs)
+        await self._service("ix-snmpd", "start", quiet=True, **kwargs)
+        await self._service("snmpd", "start", quiet=True, **kwargs)
+        await self._service("snmp-agent", "start", quiet=True, **kwargs)
+
     async def _restart_http(self, **kwargs):
         await self._service("ix-nginx", "start", quiet=True, **kwargs)
         await self._service("ix_register", "reload", **kwargs)
@@ -894,11 +920,11 @@ class ServiceService(CRUDService):
         return (len(out) > 0)
 
     async def _start_saver(self, **kwargs):
-        if not self.__saver_loaded():
+        if not await self.__saver_loaded():
             await self._system("kldload daemon_saver")
 
     async def _stop_saver(self, **kwargs):
-        if self.__saver_loaded():
+        if await self.__saver_loaded():
             await self._system("kldunload daemon_saver")
 
     async def _restart_saver(self, **kwargs):

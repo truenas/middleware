@@ -301,12 +301,12 @@ class VolumeManagerForm(VolumeMixin, Form):
                     notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
 
                 scrub = models.Scrub.objects.create(scrub_volume=volume)
-        except Exception:
-            if volume:
+        except Exception as e:
+            if not add and volume:
                 volume.delete(destroy=False, cascade=False)
             if scrub:
                 scrub.delete()
-            raise
+            raise e
 
         if volume.vol_encrypt >= 2 and add:
             # FIXME: ask current passphrase to the user
@@ -1073,9 +1073,18 @@ class VolumeAutoImportForm(Form):
 
 
 class DiskFormPartial(ModelForm):
+    disk_passwd2 = forms.CharField(
+        max_length=50,
+        label=_("Confirm SED Password"),
+        widget=forms.widgets.PasswordInput(),
+        required=False,
+    )
 
     class Meta:
         model = models.Disk
+        widgets = {
+            'disk_passwd': forms.widgets.PasswordInput(render_value=False)
+        }
         exclude = (
             'disk_transfermode',  # This option isn't used anywhere
         )
@@ -1097,6 +1106,19 @@ class DiskFormPartial(ModelForm):
 
     def clean_disk_name(self):
         return self.instance.disk_name
+
+    def clean_disk_passwd2(self):
+        password1 = self.cleaned_data.get("disk_passwd")
+        password2 = self.cleaned_data.get("disk_passwd2")
+        if password1 != password2:
+            raise forms.ValidationError(_("The two password fields didn't match."))
+        return password2
+
+    def clean(self):
+            cdata = self.cleaned_data
+            if not cdata.get("disk_passwd"):
+                cdata['disk_passwd'] = self.instance.disk_passwd
+            return cdata
 
     def save(self, *args, **kwargs):
         obj = super(DiskFormPartial, self).save(*args, **kwargs)
@@ -1217,6 +1239,11 @@ class ZFSDatasetCommonForm(Form):
         max_length=1024,
         label=_('Comments'),
         required=False)
+    dataset_sync = forms.ChoiceField(
+        choices=choices.ZFS_SyncChoices,
+        widget=forms.Select(attrs=attrs_dict),
+        label=_('Sync'),
+        initial=choices.ZFS_SyncChoices[0][0])
     dataset_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
         widget=forms.Select(attrs=attrs_dict),
@@ -1303,6 +1330,10 @@ class ZFSDatasetCommonForm(Form):
                 choices.ZFS_AtimeChoices,
                 self.parentdata['atime'][0]
             )
+            self.fields['dataset_sync'].choices = _inherit_choices(
+                choices.ZFS_SyncChoices,
+                self.parentdata['sync'][0]
+            )
             self.fields['dataset_compression'].choices = _inherit_choices(
                 choices.ZFS_CompressionChoices,
                 self.parentdata['compression'][0]
@@ -1351,7 +1382,7 @@ class ZFSDatasetCommonForm(Form):
             props[prop] = value
 
         for prop in (
-            'org.freenas:description', 'compression', 'atime', 'dedup',
+            'org.freenas:description', 'sync', 'compression', 'atime', 'dedup',
             'aclmode', 'recordsize', 'casesensitivity', 'readonly', 'exec',
         ):
             if prop == 'org.freenas:description':
@@ -1478,6 +1509,11 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
         else:
             data['dataset_dedup'] = 'off'
 
+        if zdata['sync'][2] == 'inherit':
+            data['dataset_sync'] = 'inherit'
+        else:
+            data['dataset_sync'] = zdata['sync'][0]
+
         if zdata['compression'][2] == 'inherit':
             data['dataset_compression'] = 'inherit'
         else:
@@ -1562,6 +1598,11 @@ class CommonZVol(Form):
         required=False,
         help_text=_('Allow the zvol to consume more than 80% of available space'),
     )
+    zvol_sync = forms.ChoiceField(
+        choices=choices.ZFS_SyncChoices,
+        initial='inherit',
+        widget=forms.Select(attrs=attrs_dict),
+        label=_('Sync'))
     zvol_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
         initial='inherit',
@@ -1579,6 +1620,10 @@ class CommonZVol(Form):
         super(CommonZVol, self).__init__(*args, **kwargs)
 
         if hasattr(self, 'parentdata'):
+            self.fields['zvol_sync'].choices = _inherit_choices(
+                choices.ZFS_SyncChoices,
+                self.parentdata['sync'][0]
+            )
             self.fields['zvol_compression'].choices = _inherit_choices(
                 choices.ZFS_CompressionChoices,
                 self.parentdata['compression'][0]
@@ -1645,6 +1690,10 @@ class ZVol_EditForm(CommonZVol):
         self.zdata = _n.zfs_get_options(self.name)
         if 'org.freenas:description' in self.zdata and self.zdata['org.freenas:description'][2] == 'local':
             self.fields['zvol_comments'].initial = self.zdata['org.freenas:description'][0]
+        if self.zdata['sync'][2] == 'inherit':
+            self.fields['zvol_sync'].initial = 'inherit'
+        else:
+            self.fields['zvol_sync'].initial = self.zdata['sync'][0]
         if self.zdata['compression'][2] == 'inherit':
             self.fields['zvol_compression'].initial = 'inherit'
         else:
@@ -1687,6 +1736,7 @@ class ZVol_EditForm(CommonZVol):
         error = False
         for attr, formfield, can_inherit in (
             ('org.freenas:description', 'zvol_comments', False),
+            ('sync', None, True),
             ('compression', None, True),
             ('dedup', None, True),
             ('volsize', None, True),
@@ -1800,7 +1850,9 @@ class ZVol_CreateForm(CommonZVol):
         zvol_blocksize = self.cleaned_data.get("zvol_blocksize")
         zvol_name = f"{self.parentds}/{self.cleaned_data.get('zvol_name')}"
         zvol_comments = self.cleaned_data.get('zvol_comments')
+        zvol_sync = self.cleaned_data.get('zvol_sync')
         zvol_compression = self.cleaned_data.get('zvol_compression')
+        props['sync'] = str(zvol_sync)
         props['compression'] = str(zvol_compression)
         if zvol_blocksize:
             props['volblocksize'] = zvol_blocksize
@@ -2169,16 +2221,6 @@ class ZFSDiskReplacementForm(Form):
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
         disks = notifier().get_disks()
-
-        pool = notifier().zpool_parse(self.volume.vol_name)
-        try:
-            if pool.spares:
-                for vdev in pool.spares:
-                    for dev in vdev:
-                        if dev.status != 'INUSE' and dev.disk in used_disks:
-                            used_disks.remove(dev.disk)
-        except Exception as e:
-            log.debug("Failed to get spares: %s", e)
 
         for disk in disks:
             if disk in used_disks:
@@ -2797,7 +2839,7 @@ class UnlockPassphraseForm(Form):
             os.unlink(keyfile)
         else:
             raise ValueError("Need a passphrase or recovery key")
-        zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid)
+        zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid, first_time=False)
         if not zimport:
             if failed > 0:
                 msg = _(
@@ -2811,7 +2853,11 @@ class UnlockPassphraseForm(Form):
 
         _notifier = notifier()
         for svc in self.cleaned_data.get("services"):
-            _notifier.restart(svc)
+            if svc == 'jails':
+                with client as c:
+                    c.call('core.bulk', 'service.restart', [['jails']])
+            else:
+                _notifier.restart(svc)
         _notifier.start("ix-warden")
         _notifier.restart("system_datasets")
         _notifier.reload("disk")

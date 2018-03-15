@@ -48,6 +48,7 @@ def main():
         cf_contents.append("\tafp interfaces = %s\n" % ' '.join(ifaces))
     cf_contents.append("\tmax connections = %s\n" % afp.afp_srv_connections_limit)
     cf_contents.append("\tmimic model = RackMac\n")
+    cf_contents.append("\tafpstats = yes\n")
     if afp.afp_srv_dbpath:
         cf_contents.append("\tvol dbnest = no\n")
         cf_contents.append("\tvol dbpath = %s\n" % afp.afp_srv_dbpath)
@@ -162,7 +163,7 @@ def main():
                                 <integer>%d</integer>
                             </dict>
                         </plist>
-                    """ % (share.afp_timemachine_quota * 1024 * 1024)))
+                    """ % (share.afp_timemachine_quota * 1024 * 1024 * 1024)))
             except IOError:
                 pass
 

@@ -64,6 +64,11 @@ class SystemService(Service):
             stdout=subprocess.PIPE,
         )).communicate())[0].decode().strip() or None
 
+        manufacturer = (await(await Popen(
+            ['dmidecode', '-s', 'system-manufacturer'],
+            stdout=subprocess.PIPE,
+        )).communicate())[0].decode().strip() or None
+
         license = get_license()[0]
         if license:
             license = {
@@ -81,6 +86,7 @@ class SystemService(Service):
             'cores': sysctl.filter('hw.ncpu')[0].value,
             'loadavg': os.getloadavg(),
             'uptime': uptime,
+            'uptime_seconds': time.clock_gettime(5),  # CLOCK_UPTIME = 5
             'system_serial': serial,
             'system_product': product,
             'license': license,
@@ -89,6 +95,7 @@ class SystemService(Service):
             ),
             'datetime': datetime.utcnow(),
             'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
+            'system_manufacturer': manufacturer,
         }
 
     @private

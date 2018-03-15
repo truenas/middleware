@@ -1,18 +1,20 @@
-from middlewared.schema import Bool, Dict, Int, Str, accepts
-from middlewared.service import CallError, Service, job
-from middlewared.utils import Popen
-
 import errno
 import json
 import os
 import requests
+import shutil
 import simplejson
 import socket
 import subprocess
 import sys
 import time
 
-# FIXME: Remove when we can generate debug from middleware
+from middlewared.pipe import Pipes
+from middlewared.schema import Bool, Dict, Int, Str, accepts
+from middlewared.service import CallError, Service, job
+from middlewared.utils import Popen
+
+# FIXME: Remove when we can generate debug and move license to middleware
 if '/usr/local/www' not in sys.path:
     sys.path.append('/usr/local/www')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
@@ -23,6 +25,7 @@ if not apps.ready:
     django.setup()
 
 from freenasUI.system.utils import debug_get_settings, debug_generate
+from freenasUI.support.utils import get_license
 
 ADDRESS = 'support-proxy.ixsystems.com'
 
@@ -99,14 +102,19 @@ class SupportService(Service):
         else:
             required_attrs = ('phone', 'name', 'email', 'criticality', 'environment')
             data['serial'] = (await (await Popen(['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'], stdout=subprocess.PIPE)).communicate())[0].decode().split('\n')[0].upper()
-            data['company'] = 'Unknown'
+            license = get_license()[0]
+            if license:
+                data['company'] = license.customer_name
+            else:
+                data['company'] = 'Unknown'
 
         for i in required_attrs:
             if i not in data:
                 raise CallError(f'{i} is required', errno.EINVAL)
 
         data['version'] = (await self.middleware.call('system.version')).split('-', 1)[-1]
-        data['user'] = data.pop('username')
+        if 'username' in data:
+            data['user'] = data.pop('username')
         debug = data.pop('attach_debug')
 
         type_ = data.get('type')
@@ -166,22 +174,20 @@ class SupportService(Service):
 
             job.set_progress(80, 'Attaching debug file')
 
-            tjob = await self.middleware.call('support.attach_ticket', {
+            t = {
                 'ticket': ticket,
                 'filename': debug_name,
-                'username': data.get('user'),
-                'password': data.get('password'),
-            })
+            }
+            if 'user' in data:
+                t['username'] = data['user']
+            if 'password' in data:
+                t['password'] = data['password']
+            tjob = await self.middleware.call('support.attach_ticket', t, pipes=Pipes(input=self.middleware.pipe()))
 
-            def writer():
-                with open(debug_file, 'rb') as f:
-                    while True:
-                        read = f.read(10240)
-                        if read == b'':
-                            break
-                        os.write(tjob.write_fd, read)
-                    os.close(tjob.write_fd)
-            await self.middleware.run_in_thread(writer)
+            with open(debug_file, 'rb') as f:
+                await self.middleware.run_in_io_thread(shutil.copyfileobj, f, tjob.pipes.input.w)
+                await self.middleware.run_in_io_thread(tjob.pipes.input.w.close)
+
             await tjob.wait()
         else:
             job.set_progress(100)
@@ -195,10 +201,10 @@ class SupportService(Service):
         'attach_ticket',
         Int('ticket', required=True),
         Str('filename', required=True),
-        Str('username', required=True),
-        Str('password', required=True),
+        Str('username'),
+        Str('password'),
     ))
-    @job(pipe=True)
+    @job(pipes=["input"])
     async def attach_ticket(self, job, data):
         """
         Method to attach a file to a existing ticket.
@@ -206,18 +212,17 @@ class SupportService(Service):
 
         sw_name = 'freenas' if await self.middleware.call('system.is_freenas') else 'truenas'
 
-        data['user'] = data.pop('username')
+        if 'username' in data:
+            data['user'] = data.pop('username')
         data['ticketnum'] = data.pop('ticket')
         filename = data.pop('filename')
 
-        fileobj = os.fdopen(job.read_fd, 'rb')
-
         try:
-            r = await self.middleware.run_in_thread(lambda: requests.post(
+            r = await self.middleware.run_in_io_thread(lambda: requests.post(
                 f'https://{ADDRESS}/{sw_name}/api/v1.0/ticket/attachment',
                 data=data,
                 timeout=10,
-                files={'file': (filename, fileobj)},
+                files={'file': (filename, job.pipes.input.r)},
             ))
             data = r.json()
         except simplejson.JSONDecodeError:

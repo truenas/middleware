@@ -395,8 +395,9 @@ def dataset_create(request, fs):
         else:
             return JsonResp(request, form=form)
     else:
-        defaults = {'dataset_compression': 'inherit',
-                    'dataset_atime': 'inherit'}
+        defaults = {'dataset_atime': 'inherit',
+                    'dataset_sync': 'inherit',
+                    'dataset_compression': 'inherit'}
         form = forms.ZFSDatasetCreateForm(initial=defaults, fs=fs)
     return render(request, 'storage/datasets.html', {
         'form': form,
@@ -438,7 +439,8 @@ def zvol_create(request, parent):
                     message=_("ZFS Volume successfully added."))
     else:
         zvol_form = forms.ZVol_CreateForm(
-            initial={'zvol_compression': 'inherit'},
+            initial={'zvol_sync': 'inherit',
+                     'zvol_compression': 'inherit'},
             parentds=parent)
     return render(request, 'storage/zvols.html', {
         'form': zvol_form,
@@ -686,6 +688,15 @@ def zpool_disk_remove(request, vname, label):
 
 def volume_detach(request, vid):
 
+    _n = notifier()
+    standby_offline = False
+    if not _n.is_freenas() and _n.failover_licensed():
+        try:
+            with client as c:
+                c.call('failover.call_remote', 'core.ping')
+        except Exception:
+            standby_offline = True
+
     volume = models.Volume.objects.get(pk=vid)
     usedbytes = volume._get_used_bytes()
     usedsize = humanize_size(usedbytes) if usedbytes else None
@@ -703,10 +714,12 @@ def volume_detach(request, vid):
         if form.is_valid():
             _n = notifier()
             if '__confirm' not in request.POST and not _n.is_freenas() and _n.failover_licensed():
-                message = render_to_string('freeadmin/generic_model_confirm.html', {
-                    'message': 'Warning: this pool is required for HA to function.<br />Do you want to continue?',
-                })
-                return JsonResp(request, confirm=message)
+                remaining_volumes = models.Volume.objects.exclude(pk=vid)
+                if not remaining_volumes.exists():
+                    message = render_to_string('freeadmin/generic_model_confirm.html', {
+                        'message': 'Warning: this pool is required for HA to function.<br />Do you want to continue?',
+                    })
+                    return JsonResp(request, confirm=message)
             try:
                 events = []
                 volume.delete(
@@ -723,6 +736,7 @@ def volume_detach(request, vid):
     else:
         form = forms.VolumeExport(instance=volume, services=services)
     return render(request, 'storage/volume_detach.html', {
+        'standby_offline': standby_offline,
         'volume': volume,
         'form': form,
         'used': usedsize,
@@ -963,16 +977,30 @@ def volume_lock(request, object_id):
     assert(volume.vol_encrypt > 0)
 
     if request.method == "POST":
+
+        _n = notifier()
+        if '__confirm' not in request.POST and not _n.is_freenas() and _n.failover_licensed():
+            remaining_volumes = [v for v in models.Volume.objects.exclude(pk=object_id) if v.is_decrypted()]
+            if not remaining_volumes:
+                message = render_to_string('freeadmin/generic_model_confirm.html', {
+                    'message': 'Warning: Locking this volume will prevent failover from functioning correctly.<br />Do you want to continue?',
+                })
+                return JsonResp(request, confirm=message)
+
         notifier().volume_detach(volume)
-        if hasattr(notifier, 'failover_status'):
-            if notifier().failover_status() == 'MASTER':
-                from freenasUI.failover.enc_helper import LocalEscrowCtl
-                escrowctl = LocalEscrowCtl()
-                escrowctl.clear()
-                try:
-                    os.unlink('/tmp/.failover_master')
-                except:
-                    pass
+        if hasattr(notifier, 'failover_status') and notifier().failover_status() == 'MASTER':
+            from freenasUI.failover.enc_helper import LocalEscrowCtl
+            escrowctl = LocalEscrowCtl()
+            escrowctl.clear()
+            try:
+                os.unlink('/tmp/.failover_master')
+            except Exception:
+                pass
+            try:
+                with client as c:
+                    c.call('failover.call_remote', 'failover.encryption_clearkey')
+            except Exception:
+                log.warn('Failed to clear key on standby node, is it down?', exc_info=True)
         notifier().restart("system_datasets")
         return JsonResp(request, message=_("Volume locked"))
     return render(request, "storage/lock.html")

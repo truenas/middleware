@@ -2,6 +2,13 @@
 *.swp
 *.mo
 *.o
+*.iso
+_pycache_
+*.xml
+*.pyc
+.cache
+config.py
+auto_config.py
 .DS_Store
 .vscode/
 /docs/api/_build/

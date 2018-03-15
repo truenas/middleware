@@ -29,6 +29,7 @@ generate_snmpconf()
 	kern_osrelease=`/sbin/sysctl -n kern.osrelease`
 	kern_osrevision=`/sbin/sysctl -n kern.osrevision`
 
+	local snmp_options=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT snmp_options FROM services_snmp ORDER BY -id LIMIT 1")
 	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT $sf FROM services_snmp ORDER BY -id LIMIT 1" | \
 	while eval read -r $f; do
 		cat > "${snmp_config}" << EOF
@@ -54,8 +55,11 @@ EOF
 
 		else
 			echo "rocommunity \"${snmp_community}\" default" >> ${snmp_config}
+			# Below line required for SNMP over IPv6 -- the strings are not the same!
+			echo "rocommunity6 \"${snmp_community}\" default" >> ${snmp_config}
 		fi
 
+		echo "${snmp_options}" >> ${snmp_config}
 	done
 }
 

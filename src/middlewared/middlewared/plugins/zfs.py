@@ -384,8 +384,9 @@ class ZFSSnapshot(CRUDService):
 
     @accepts(Dict(
         'snapshot_remove',
-        Str('dataset'),
-        Str('name')
+        Str('dataset', required=True),
+        Str('name', required=True),
+        Bool('defer_delete')
     ))
     async def remove(self, data):
         """
@@ -395,31 +396,19 @@ class ZFSSnapshot(CRUDService):
             bool: True if succeed otherwise False.
         """
         zfs = libzfs.ZFS()
-
-        dataset = data.get('dataset', '')
-        snapshot_name = data.get('name', '')
-
-        if not dataset or not snapshot_name:
-            return False
+        snapshot_name = data['dataset'] + '@' + data['name']
 
         try:
-            ds = zfs.get_dataset(dataset)
+            snap = zfs.get_snapshot(snapshot_name)
+            snap.delete(True if data.get('defer_delete') else False)
+
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
             return False
+        else:
+            self.logger.info(f"Destroyed snapshot: {snapshot_name}")
 
-        __snap_name = dataset + '@' + snapshot_name
-        try:
-            for snap in list(ds.snapshots):
-                if snap.name == __snap_name:
-                    ds.destroy_snapshot(snapshot_name)
-                    self.logger.info("Destroyed snapshot: {0}".format(__snap_name))
-                    return True
-            self.logger.error("There is no snapshot {0} on dataset {1}".format(snapshot_name, dataset))
-            return False
-        except libzfs.ZFSException as err:
-            self.logger.error("{0}".format(err))
-            return False
+        return True
 
     @accepts(Dict(
         'snapshot_clone',
@@ -506,9 +495,10 @@ class ZFSQuoteService(Service):
                         [('bsdusr_uid', '=', excess['uid'])],
                         {'get': True},
                     )
+                    to = bsduser['bsdusr_email'] or None
                 except IndexError:
                     self.logger.warning('Unable to query bsduser with uid %r', excess['uid'])
-                    continue
+                    to = None
 
                 hostname = socket.gethostname()
 
@@ -516,7 +506,7 @@ class ZFSQuoteService(Service):
                     # FIXME: Translation
                     human_quota_type = excess["quota_type"][0].upper() + excess["quota_type"][1:]
                     await (await self.middleware.call('mail.send', {
-                        'to': [bsduser['bsdusr_email']],
+                        'to': to,
                         'subject': '{}: {} exceed on dataset {}'.format(hostname, human_quota_type,
                                                                         excess["dataset_name"]),
                         'text': textwrap.dedent('''\
@@ -535,8 +525,10 @@ class ZFSQuoteService(Service):
 
     async def __get_quota_excesses(self):
         excesses = []
-        zfs = libzfs.ZFS()
-        for properties in await self.middleware.run_in_thread_pool(SINGLE_THREAD_POOL, lambda: [i.properties for i in zfs.datasets]):
+        for properties in await self.middleware.run_in_thread_pool(SINGLE_THREAD_POOL, lambda: [
+            {k: v.__getstate__() for k, v in i.properties.items()}
+            for i in libzfs.ZFS().datasets
+        ]):
             quota = await self.__get_quota_excess(properties, "quota", "quota", "used")
             if quota:
                 excesses.append(quota)
@@ -549,14 +541,14 @@ class ZFSQuoteService(Service):
 
     async def __get_quota_excess(self, properties, quota_type, quota_property, used_property):
         try:
-            quota_value = int(properties[quota_property].rawvalue)
+            quota_value = int(properties[quota_property]["rawvalue"])
         except (AttributeError, KeyError, ValueError):
             return None
 
         if quota_value == 0:
             return
 
-        used = int(properties[used_property].rawvalue)
+        used = int(properties[used_property]["rawvalue"])
         try:
             percent_used = 100 * used / quota_value
         except ZeroDivisionError:
@@ -570,17 +562,17 @@ class ZFSQuoteService(Service):
             return None
 
         mountpoint = None
-        if properties["mounted"].value == "yes":
-            if properties["mountpoint"].value == "legacy":
+        if properties["mounted"]["value"] == "yes":
+            if properties["mountpoint"]["value"] == "legacy":
                 for m in await self.middleware.run_in_thread(getmntinfo):
-                    if m.source == properties["name"].value:
+                    if m.source == properties["name"]["value"]:
                         mountpoint = m.dest
                         break
             else:
-                mountpoint = properties["mountpoint"].value
+                mountpoint = properties["mountpoint"]["value"]
         if mountpoint is None:
             self.logger.debug("Unable to get mountpoint for dataset %r, assuming owner = root",
-                              properties["name"].value)
+                              properties["name"]["value"])
             uid = 0
         else:
             try:
@@ -592,7 +584,7 @@ class ZFSQuoteService(Service):
                 uid = stat_info.st_uid
 
         return {
-            "dataset_name": properties["name"].value,
+            "dataset_name": properties["name"]["value"],
             "quota_type": quota_type,
             "quota_value": quota_value,
             "level": level,

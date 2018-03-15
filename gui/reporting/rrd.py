@@ -365,9 +365,9 @@ class CPUTempPlugin(RRDBase):
                 'DEF:s_min{0}={1}:value:MIN'.format(n, cputemp_file),
                 'DEF:s_avg{0}={1}:value:AVERAGE'.format(n, cputemp_file),
                 'DEF:s_max{0}={1}:value:MAX'.format(n, cputemp_file),
-                'CDEF:min{0}=s_min{0},100,/'.format(n),
-                'CDEF:avg{0}=s_avg{0},100,/'.format(n),
-                'CDEF:max{0}=s_max{0},100,/'.format(n),
+                'CDEF:min{0}=s_min{0},10,/,273.15,-'.format(n),
+                'CDEF:avg{0}=s_avg{0},10,/,273.15,-'.format(n),
+                'CDEF:max{0}=s_max{0},10,/,273.15,-'.format(n),
                 'AREA:max{0}#bfffbf'.format(n),
                 'AREA:min{0}#FFFFFF'.format(n),
                 'LINE1:avg{0}{1}: Core {2}'.format(n, colors[n % len(colors)], n + 1),
@@ -377,6 +377,39 @@ class CPUTempPlugin(RRDBase):
                 'GPRINT:avg{0}:LAST:%.1lf\u00b0 Last\l'.format(n)
             ]
             args.extend(a)
+        return args
+
+
+class DiskTempPlugin(RRDBase):
+
+    vertical_label = "\u00b0C"
+
+    def get_title(self):
+        return f'Disk Temperature ({self.identifier})'
+
+    def get_identifiers(self):
+        ids = []
+        for entry in glob.glob('%s/disktemp-*' % self._base_path):
+            ident = entry.rsplit('-', 1)[-1]
+            if os.path.exists(os.path.join(entry, 'temperature.rrd')):
+                ids.append(ident)
+        ids.sort(key=RRDBase._sort_disks)
+        return ids
+
+    def graph(self):
+        path = os.path.join(
+            "%s/disktemp-%s" % (self._base_path, self.identifier),
+            "temperature.rrd"
+        )
+
+        args = [
+            'DEF:temp_raw=%s:value:AVERAGE' % path,
+            'CDEF:temp=temp_raw',
+            'AREA:temp#bfbfff',
+            'LINE1:temp#0000ff:Temperature',
+            'GPRINT:temp:AVERAGE:%.1lf\u00b0 Avg',
+        ]
+
         return args
 
 
@@ -407,6 +440,9 @@ class InterfacePlugin(RRDBase):
             "%s/interface-%s" % (self._base_path, self.identifier),
             "if_octets.rrd"
         )
+        # Escape interfaces with colon in the name
+        # See #28470
+        path = path.replace(':', '\\:')
 
         args = [
             'DEF:min_rx_raw=%s:rx:MIN' % path,

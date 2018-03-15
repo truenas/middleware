@@ -310,7 +310,7 @@ class UpdateService(Service):
         Downloads (if not already in cache) and apply an update.
         """
         attrs = attrs or {}
-        train = attrs.get('train') or (await self.get_trains())['selected']
+        train = attrs.get('train') or (await self.middleware.call('update.get_trains'))['selected']
         location = await self.middleware.call('notifier.get_update_location')
 
         job.set_progress(0, 'Retrieving update manifest')
@@ -340,10 +340,10 @@ class UpdateService(Service):
         return True
 
     @accepts()
-    @job(lock='updatedownload', process=True)
-    async def download(self, job):
-        train = (await self.get_trains())['selected']
-        location = await self.middleware.call('notifier.get_update_location')
+    @job(lock='updatedownload')
+    def download(self, job):
+        train = self.middleware.call_sync('update.get_trains')['selected']
+        location = self.middleware.call_sync('notifier.get_update_location')
 
         Update.DownloadUpdate(
             train,
@@ -356,13 +356,13 @@ class UpdateService(Service):
 
         notified = False
         try:
-            if await self.middleware.call('cache.has_key', 'update.notified'):
-                notified = await self.middleware.call('cache.get', 'update.notified')
+            if self.middleware.call_sync('cache.has_key', 'update.notified'):
+                notified = self.middleware.call_sync('cache.get', 'update.notified')
         except Exception:
             pass
 
         if not notified:
-            await self.middleware.call('cache.put', 'update.notified', True)
+            self.middleware.call_sync('cache.put', 'update.notified', True)
             conf = Configuration.Configuration()
             sys_mani = conf.SystemManifest()
             if sys_mani:
@@ -375,7 +375,7 @@ class UpdateService(Service):
 
             try:
                 # FIXME: Translation
-                await (await self.middleware.call('mail.send', {
+                self.middleware.call_sync('mail.send', {
                     'subject': '{}: {}'.format(hostname, 'Update Available'),
                     'text': '''A new update is available for the %(train)s train.
 Version: %(version)s
@@ -386,7 +386,7 @@ Changelog:
                         'version': update.Version(),
                         'changelog': changelog,
                     },
-                })).wait()
+                }).wait_sync()
             except Exception:
                 self.logger.warn('Failed to send email about new update', exc_info=True)
         return True
@@ -400,7 +400,7 @@ Changelog:
         rv = await self.middleware.call('notifier.validate_update', path)
         if not rv:
             raise CallError('Invalid update file', errno.EINVAL)
-        await self.middleware.call('notifier.apply_update', path)
+        await self.middleware.call('notifier.apply_update', path, timeout=None)
         try:
             await self.middleware.call('notifier.destroy_upload_location')
         except Exception:

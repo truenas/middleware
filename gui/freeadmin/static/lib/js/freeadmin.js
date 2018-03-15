@@ -94,6 +94,8 @@ require([
     "dijit/Dialog",
     "dijit/MenuBar",
     "dijit/MenuBarItem",
+    "dijit/PopupMenuBarItem",
+    "dijit/DropDownMenu",
     "dijit/ProgressBar",
     "dijit/Tooltip",
     "dojox/form/BusyButton",
@@ -174,6 +176,8 @@ require([
     Dialog,
     MenuBar,
     MenuBarItem,
+    PopupMenuBarItem,
+    DropDownMenu,
     ProgressBar,
     Tooltip,
     BusyButton,
@@ -2287,13 +2291,33 @@ require([
                 handleAs: 'text',
                 headers: {"X-CSRFToken": CSRFToken}
                 }).then(function(response) {
-                    try {
-                        JSON.parse(response);
+
+                    if(attrs.longRunning && attrs.longRunningUrl) {
+                      waitForComplete = function() {
+                        var longpromise = xhr.post(attrs.longRunningUrl + '?uuid=' + response, {
+                          headers: {"X-CSRFToken": CSRFToken},
+                          handleAs: 'text'
+                        });
+                        longpromise.then(function(data) {
+                           longpromise.response.then(function(response) {
+                            if(response.status == 202) {
+                              setTimeout(waitForComplete, 2000);
+                            } else {
+                              handleReq(data);
+                            }
+                           });
+                        });
+                      }
+                      setTimeout(waitForComplete, 2000);
+                    } else {
+                      try {
+                          JSON.parse(response);
+                      }
+                      catch (e) {
+                          response = "<pre>" + response + "</pre>";
+                      }
+                      handleReq(response);
                     }
-                    catch (e) {
-                        response = "<pre>" + response + "</pre>";
-                    }
-                    handleReq(response);
                 }, function(evt) {
                     handleReq(evt.response.data, evt.response, true);
                 });
@@ -2719,7 +2743,7 @@ require([
     dojo._contentHandlers.text = (function(old){
       return function(xhr){
         if(xhr.responseText.match("<!-- THIS IS A LOGIN WEBPAGE -->")){
-          window.location='/';
+          window.location='/legacy/';
           return '';
         }
         var text = old(xhr);
@@ -2795,7 +2819,7 @@ require([
             } else if(item.type == 'iscsi') {
                 Menu.openISCSI(item.gname);
             } else if(item.action == 'logout') {
-                window.location='/account/logout/';
+                window.location='/legacy/account/logout/';
             } else if(item.action == 'displayprocs') {
                 registry.byId("top_dialog").show();
             } else if(item.action == 'shell') {

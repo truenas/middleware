@@ -52,6 +52,7 @@ class WSClient(WebSocketClient):
         self.client = kwargs.pop('client')
         reserved_ports = kwargs.pop('reserved_ports')
         reserved_ports_blacklist = kwargs.pop('reserved_ports_blacklist')
+        self.reserved_fd = None
         self.protocol = DDPProtocol(self)
         if not reserved_ports:
             super(WSClient, self).__init__(url, *args, **kwargs)
@@ -98,19 +99,23 @@ class WSClient(WebSocketClient):
                 """
                 This is the line replaced to use socket.fromfd
                 """
-                sock = socket.fromfd(
-                    self.get_reserved_portfd(blacklist=reserved_ports_blacklist),
-                    family,
-                    socktype,
-                    proto
-                )
-                sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                if hasattr(socket, 'AF_INET6') and family == socket.AF_INET6 and self.host.startswith('::'):
-                    try:
-                        sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
-                    except (AttributeError, socket.error):
-                        pass
+                try:
+                    self.reserved_fd = self.get_reserved_portfd(blacklist=reserved_ports_blacklist)
+                    sock = socket.fromfd(self.reserved_fd, family, socktype, proto)
+                    sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                    if hasattr(socket, 'AF_INET6') and family == socket.AF_INET6 and self.host.startswith('::'):
+                        try:
+                            sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+                        except (AttributeError, socket.error):
+                            pass
+                except Exception as e:
+                    if self.reserved_fd:
+                        try:
+                            os.close(self.reserved_fd)
+                        except OSError:
+                            pass
+                    raise e
 
             WebSocket.__init__(self, sock, protocols=kwargs.get('protocols'),
                                extensions=kwargs.get('extensions'),
@@ -152,11 +157,25 @@ class WSClient(WebSocketClient):
                 continue
             else:
                 break
+        if fd < 0:
+            raise ValueError('Failed to reserv a privileged port')
         return fd
 
     def connect(self):
         self.sock.settimeout(10)
-        rv = super(WSClient, self).connect()
+        max_attempts = 3
+        for i in range(max_attempts):
+            try:
+                rv = super(WSClient, self).connect()
+            except OSError as e:
+                # Lets retry a few times in case the error is
+                # [Errno 48] Address already in use
+                # which I believe may be caused by a race condition
+                if e.errno == errno.EADDRINUSE and i < max_attempts - 1:
+                    continue
+                raise
+            else:
+                break
         if self.sock:
             self.sock.settimeout(None)
         return rv
@@ -166,6 +185,19 @@ class WSClient(WebSocketClient):
 
     def closed(self, code, reason=None):
         self.protocol.on_close(code, reason)
+
+    def __close_reserved_fd(self):
+        try:
+            if self.reserved_fd:
+                os.close(self.reserved_fd)
+        except OSError:
+            pass
+        finally:
+            self.reserved_fd = None
+
+    def close_connection(self):
+        self.__close_reserved_fd()
+        return super().close_connection()
 
     def received_message(self, message):
         self.protocol.on_message(message.data.decode('utf8'))
@@ -178,6 +210,9 @@ class WSClient(WebSocketClient):
 
     def on_close(self, code, reason=None):
         self.client.on_close(code, reason)
+
+    def __del__(self):
+        self.__close_reserved_fd()
 
 
 class Call(object):
@@ -259,16 +294,20 @@ class Client(object):
             uri = 'ws://127.0.0.1:6000/websocket'
         self._closed = Event()
         self._connected = Event()
-        self._ws = WSClient(
-            uri,
-            client=self,
-            reserved_ports=reserved_ports,
-            reserved_ports_blacklist=reserved_ports_blacklist,
-        )
-        self._ws.connect()
-        self._connected.wait(10)
-        if not self._connected.is_set():
-            raise ClientException('Failed connection handshake')
+        try:
+            self._ws = WSClient(
+                uri,
+                client=self,
+                reserved_ports=reserved_ports,
+                reserved_ports_blacklist=reserved_ports_blacklist,
+            )
+            self._ws.connect()
+            self._connected.wait(10)
+            if not self._connected.is_set():
+                raise ClientException('Failed connection handshake')
+        except Exception as e:
+            del self._ws
+            raise e
 
     def __enter__(self):
         return self

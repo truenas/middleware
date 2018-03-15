@@ -16,6 +16,7 @@ from middlewared.service_exception import CallException, CallError, ValidationEr
 from middlewared.utils import filter_list
 from middlewared.logger import Logger
 from middlewared.job import Job
+from middlewared.pipe import Pipes
 
 
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
@@ -29,13 +30,15 @@ def item_method(fn):
     return fn
 
 
-def job(lock=None, process=False, pipe=False):
+def job(lock=None, lock_queue_size=None, process=False, pipes=None, check_pipes=True):
     """Flag method as a long running job."""
     def check_job(fn):
         fn._job = {
             'lock': lock,
+            'lock_queue_size': lock_queue_size,
             'process': process,
-            'pipe': pipe,
+            'pipes': pipes or [],
+            'check_pipes': check_pipes,
         }
         return fn
     return check_job
@@ -97,6 +100,8 @@ class ServiceBase(type):
       - datastore_extend: datastore `extend` option used in common `query` method
       - datastore_prefix: datastore `prefix` option used in helper methods
       - service: system service `name` option used by `SystemServiceService`
+      - service_model: system service datastore model option used by `SystemServiceService` (`service` if used if not provided)
+      - service_verb: verb to be used on update (default to `reload`)
       - namespace: namespace identifier of the service
       - private: whether or not the service is deemed private
       - verbose_name: human-friendly singular name for the service
@@ -123,6 +128,7 @@ class ServiceBase(type):
             'datastore_extend': None,
             'service': None,
             'service_model': None,
+            'service_verb': 'reload',
             'namespace': namespace,
             'private': False,
             'thread_pool': None,
@@ -168,7 +174,9 @@ class ConfigService(Service):
         return await self.middleware.call('datastore.config', self._config.datastore, options)
 
     async def update(self, data):
-        return await self.do_update(data)
+        return await self.middleware._call(
+            f'{self._config.namespace}.update', self, self.do_update, [data]
+        )
 
 
 class SystemServiceService(ConfigService):
@@ -197,7 +205,7 @@ class SystemServiceService(ConfigService):
             'datastore.query', 'services.services', [('srv_service', '=', self._config.service)], {'get': True}
         ))['srv_enable']
 
-        started = await self.middleware.call('service.reload', self._config.service, {'onetime': False})
+        started = await self.middleware.call(f'service.{self._config.service_verb}', self._config.service, {'onetime': False})
 
         if enabled and not started:
             raise CallError(f'The {self._config.service} service failed to start', CallError.ESERVICESTARTFAILURE)
@@ -370,6 +378,10 @@ class CoreService(Service):
                 if hasattr(method, '_private'):
                     continue
 
+                # terminate is a private method used to clean up a service on shutdown
+                if attr == 'terminate':
+                    continue
+
                 examples = defaultdict(list)
                 doc = inspect.getdoc(method)
                 if doc:
@@ -435,8 +447,9 @@ class CoreService(Service):
 
         Returns the job id and the URL for download.
         """
-        job = await self.middleware.call(method, *args)
+        job = await self.middleware.call(method, *args, pipes=Pipes(output=self.middleware.pipe()))
         token = await self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job.id})
+        self.middleware.fileapp.register_job(job.id)
         return job.id, f'/_download/{job.id}?auth_token={token}'
 
     @private
@@ -549,7 +562,7 @@ class CoreService(Service):
 
         for p in params:
             try:
-                msg = await self.middleware.call(method, p)
+                msg = await self.middleware.call(method, *p)
                 error = None
 
                 if isinstance(msg, Job):

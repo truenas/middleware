@@ -3,7 +3,6 @@ import errno
 import logging
 from datetime import datetime
 import os
-import shutil
 import subprocess
 import sysctl
 
@@ -69,10 +68,10 @@ async def mount(device, path, fs_type, options=None):
 
     if proc.returncode != 0:
         logger.debug("Mount failed (%s): %s", proc.returncode, output)
-        raise ValueError("Mount failed {0} -> {1}, {2}" .format(
+        raise ValueError("Mount failed (exit code {0}):\n{1}{2}" .format(
             proc.returncode,
-            output[0],
-            output[1]
+            output[0].decode("utf-8"),
+            output[1].decode("utf-8"),
         ))
     else:
         return True
@@ -178,6 +177,13 @@ class PoolService(CRUDService):
             if pool['is_decrypted']:
                 async for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
                     yield i
+            else:
+                for encrypted_disk in await self.middleware.call('datastore.query', 'storage.encrypteddisk',
+                                                                 [('encrypted_volume', '=', pool['id'])]):
+                    disk = {k[len("disk_"):]: v for k, v in encrypted_disk["encrypted_disk"].items()}
+                    name = await self.middleware.call("disk.get_name", disk)
+                    if os.path.exists(os.path.join("/dev", name)):
+                        yield name
 
     @item_method
     @accepts(Int('id'))
@@ -191,18 +197,11 @@ class PoolService(CRUDService):
 
         job_id, url = await self.middleware.call(
             'core.download',
-            'pool.download_encryption_key_job',
+            'filesystem.get',
             [os.path.join(self.GELI_KEYPATH, f"{pool['encryptkey']}.key")],
             'geli.key'
         )
         return url
-
-    @job(pipe=True)
-    @private
-    async def download_encryption_key_job(self, job, filename):
-        with open(filename, "rb") as src:
-            with os.fdopen(job.write_fd, "wb") as dst:
-                shutil.copyfileobj(src, dst)
 
     @private
     def configure_resilver_priority(self):
@@ -360,6 +359,7 @@ class PoolDatasetService(CRUDService):
                 ('dedup', 'deduplication', str.upper),
                 ('atime', None, str.upper),
                 ('casesensitivity', None, str.upper),
+                ('sync', None, str.upper),
                 ('compression', None, str.upper),
                 ('quota', None, _null),
                 ('refquota', None, _null),
@@ -402,6 +402,9 @@ class PoolDatasetService(CRUDService):
         ]),
         Bool('sparse'),
         Str('comments'),
+        Str('sync', enum=[
+            'STANDARD', 'ALWAYS', 'DISABLED',
+        ]),
         Str('compression', enum=[
             'OFF', 'LZ4', 'GZIP-1', 'GZIP-6', 'GZIP-9', 'ZLE', 'LZJB',
         ]),
@@ -437,13 +440,14 @@ class PoolDatasetService(CRUDService):
             ('atime', None, str.lower),
             ('casesensitivity', None, str.lower),
             ('comments', 'org.freenas:description', None),
+            ('sync', None, str.lower),
             ('compression', None, str.lower),
             ('deduplication', 'dedup', str.lower),
             ('quota', None, _none),
             ('refquota', None, _none),
             ('reservation', None, _none),
             ('refreservation', None, _none),
-            ('copies', None, None),
+            ('copies', None, lambda x: str(x)),
             ('snapdir', None, str.lower),
             ('readonly', None, str.lower),
             ('recordsize', None, None),
@@ -456,11 +460,13 @@ class PoolDatasetService(CRUDService):
             name = real_name or i
             props[name] = data[i] if not transform else transform(data[i])
 
-        return await self.middleware.call('zfs.dataset.create', {
+        await self.middleware.call('zfs.dataset.create', {
             'name': data['name'],
             'type': data['type'],
             'properties': props,
         })
+
+        await self.middleware.call('zfs.dataset.mount', data['name'])
 
     def _add_inherit(name):
         def add(attr):
@@ -475,6 +481,7 @@ class PoolDatasetService(CRUDService):
         ('rm', {'name': 'sparse'}),  # Create time only attribute
         ('rm', {'name': 'volblocksize'}),  # Create time only attribute
         ('edit', _add_inherit('atime')),
+        ('edit', _add_inherit('sync')),
         ('edit', _add_inherit('compression')),
         ('edit', _add_inherit('deduplication')),
         ('edit', _add_inherit('readonly')),
@@ -488,7 +495,7 @@ class PoolDatasetService(CRUDService):
 
         verrors = ValidationErrors()
 
-        dataset = await self.query([('id', '=', id)])
+        dataset = await self.middleware.call('pool.dataset.query', [('id', '=', id)])
         if not dataset:
             verrors.add('id', f'{id} does not exist', errno.ENOENT)
         else:
@@ -501,6 +508,7 @@ class PoolDatasetService(CRUDService):
         for i, real_name, transform, inheritable in (
             ('atime', None, str.lower, True),
             ('comments', 'org.freenas:description', None, False),
+            ('sync', None, str.lower, True),
             ('compression', None, str.lower, True),
             ('deduplication', 'dedup', str.lower, True),
             ('quota', None, _none, False),

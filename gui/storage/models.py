@@ -733,10 +733,25 @@ class Disk(Model):
         null=True,
         editable=False,
     )
+    disk_passwd = models.CharField(
+        max_length=120,
+        verbose_name=_("Password for SED"),
+        blank=True
+    )
 
     def __init__(self, *args, **kwargs):
         super(Disk, self).__init__(*args, **kwargs)
         self._original_state = dict(self.__dict__)
+
+        if self.disk_passwd:
+            try:
+                self.disk_passwd = notifier().pwenc_decrypt(self.disk_passwd)
+            except:
+                log.debug('Failed to decrypt SED password for disk %s' %
+                          self.disk_name, exc_info=True)
+                self.disk_passwd = ''
+
+        self._disk_passwd_encrypted = False
 
     def identifier_to_device(self):
         """
@@ -755,6 +770,9 @@ class Disk(Model):
         if self.pk and self._original_state.get("disk_togglesmart", None) != \
                 self.__dict__.get("disk_togglesmart"):
             notifier().restart("smartd")
+        if self.disk_passwd and not self._disk_passwd_encrypted:
+            self.disk_passwd = notifier().pwenc_encrypt(self.disk_passwd)
+            self._disk_passwd_encrypted = True
         super(Disk, self).save(*args, **kwargs)
 
     def delete(self):
@@ -954,7 +972,7 @@ class Replication(Model):
             try:
                 results = pickle.loads(data)
                 results.pop(self.id, None)
-                with open(REPL_RESULTFILE, 'w') as f:
+                with open(REPL_RESULTFILE, 'wb') as f:
                     f.write(pickle.dumps(results))
             except Exception as e:
                 log.debug('Failed to remove replication from state file %s', e)
