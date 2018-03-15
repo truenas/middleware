@@ -284,6 +284,12 @@ if api == "1.0":
               "%sdelete_user_result.xml" % results_xml,
               "api1/delete/user.py"])
 elif api == "2.0":
-    call(["python3.6", "api2/interfaces.py"])
-    call(["python3.6", "api2/network.py"])
-    call(["python3.6", "api2/disk.py"])
+    call(["py.test-3.6", "--junitxml",
+          "%sinterfaces_test_result.xml" % results_xml,
+          "api2/interfaces.py"])
+    call(["py.test-3.6", "--junitxml",
+          "%snetwork_user_result.xml" % results_xml,
+          "api2/network.py"])
+    call(["py.test-3.6", "--junitxml",
+          "%sdisk_test_result.xml" % results_xml,
+          "api2/disk.py"])
