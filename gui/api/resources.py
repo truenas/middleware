@@ -1065,7 +1065,12 @@ class VolumeResourceMixin(NestedMixin):
                                         'label': current.name,
                                     })
 
-                        if current.replacing:
+                        if (
+                                current.replacing
+                        ) and current.status not in (
+                            'ONLINE',
+                            'OFFLINE'
+                        ):
                             data['_detach_url'] = reverse(
                                 'storage_disk_detach',
                                 kwargs={
@@ -1079,12 +1084,19 @@ class VolumeResourceMixin(NestedMixin):
                         enable even for disks already under replacing
                         subtree
                         """
-                        data['_replace_url'] = reverse(
-                            'storage_zpool_disk_replace',
-                            kwargs={
-                                'vname': pool.name,
-                                'label': current.name,
-                            })
+                        if (
+                                current.parent.parent.name != 'spares' and (
+                                    not current.parent.name.startswith('spare-') or
+                                    current.status == 'UNAVAIL'
+                                )
+                        ):
+                            # spares can't be replaced - so no replace url should be available for them
+                            data['_replace_url'] = reverse(
+                                'storage_zpool_disk_replace',
+                                kwargs={
+                                    'vname': pool.name,
+                                    'label': current.name,
+                                })
                         if current.parent.parent.name in (
                             'spares',
                             'cache',
@@ -1100,12 +1112,13 @@ class VolumeResourceMixin(NestedMixin):
                                         'label': current.name,
                                     })
                             else:
-                                data['_remove_url'] = reverse(
-                                    'storage_zpool_disk_remove',
-                                    kwargs={
-                                        'vname': pool.name,
-                                        'label': current.name,
-                                    })
+                                if current.status != 'INUSE':
+                                    data['_remove_url'] = reverse(
+                                        'storage_zpool_disk_remove',
+                                        kwargs={
+                                            'vname': pool.name,
+                                            'label': current.name,
+                                        })
 
                 else:
                     raise ValueError("Invalid node")

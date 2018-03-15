@@ -42,6 +42,8 @@ destination ppp { file("/var/log/ppp.log"); };
 destination console { file("/dev/console"); };
 destination allusers { usertty("*"); };
 destination mdnsresponder { file("/var/log/mdnsresponder.log"); };
+destination nginx_access { file("/tmp/nginx-access.log"); };
+destination nginx_error { file("/var/log/nginx/error.log"); };
 #destination loghost { udp("loghost" port(514)); };
 
 #
@@ -80,6 +82,7 @@ filter f_err { level(err..emerg); };
 filter f_warning { level(warning..emerg); };
 filter f_notice { level(notice..emerg); };
 filter f_info { level(info..emerg); };
+filter f_is_info { level(info); };
 filter f_debug { level(debug..emerg); };
 filter f_is_debug { level(debug); };
 
@@ -91,6 +94,8 @@ filter f_slip { program("startslip"); };
 filter f_mdnsresponder { program("mDNSResponder"); };
 filter f_not_mdnsresponder { not program("mDNSResponder"); };
 filter f_not_consul { not program("consul"); };
+filter f_nginx { program("nginx"); };
+filter f_not_nginx { not program("nginx"); };
 
 #
 # message filters
@@ -109,7 +114,7 @@ log { source(src); filter(f_mail); filter(f_crit); destination(console); };
 #
 # *.notice;authpriv.none;kern.debug;lpr.info;mail.crit;news.err	/var/log/messages
 #
-log { source(src); filter(f_notice); filter(f_not_authpriv); filter(f_not_mdnsresponder); filter(f_not_consul); destination(messages); };
+log { source(src); filter(f_notice); filter(f_not_authpriv); filter(f_not_mdnsresponder); filter(f_not_nginx); filter(f_not_consul); destination(messages); };
 log { source(src); filter(f_kern); filter(f_debug); filter(f_not_arpchange); destination(messages); };
 log { source(src); filter(f_lpr); filter(f_info); destination(messages); };
 log { source(src); filter(f_mail); filter(f_crit); destination(messages); };
@@ -200,3 +205,11 @@ log { source(src); filter(f_emerg); destination(allusers); };
 #
 log { source(src); filter(f_ppp); destination(ppp); };
 log { source(src); filter(f_mdnsresponder); filter(f_info); destination(mdnsresponder); };
+
+
+#
+# nginx.err                                             /var/log/nginx/error.log
+# nginx.info                                            /tmp/nginx-access.log
+#
+log { source(src); filter(f_nginx); filter(f_is_info); destination(nginx_access); };
+log { source(src); filter(f_nginx); filter(f_err); destination(nginx_error); };

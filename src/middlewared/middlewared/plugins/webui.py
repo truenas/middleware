@@ -1,6 +1,8 @@
 import os
 
 from django.db.utils import IntegrityError
+
+from middlewared.pipe import Pipes
 from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError
@@ -25,7 +27,7 @@ class ImageService(CRUDService):
         "options",
         Str("identifier")
     ))
-    @job(pipe=True)
+    @job(pipes=["input"])
     async def do_create(self, job, options):
         """
         Create a new database entry with identifier as the tag, all entries are
@@ -46,19 +48,8 @@ class ImageService(CRUDService):
 
         final_location = f"/var/db/system/webui/images/{id}.png"
         put_job = await self.middleware.call('filesystem.put', final_location,
-                                             {"mode": 0o755})
-
-        def rw_thread():
-            with os.fdopen(put_job.write_fd, 'wb') as f, os.fdopen(job.read_fd, 'rb') as f2:
-                while True:
-                    read = f2.read(102400)
-
-                    if read == b'':
-                        break
-
-                    f.write(read)
-
-        await self.middleware.run_in_thread(rw_thread)
+                                             {"mode": 0o755}, pipes=Pipes(input=job.pipes.input))
+        await put_job.wait()
 
         return id
 
