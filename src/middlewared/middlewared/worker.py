@@ -54,6 +54,7 @@ class FakeMiddleware(object):
             methodobj = getattr(serviceobj, method)
             job_options = getattr(methodobj, '_job', None)
             if job_options:
+                args = list(args)
                 args.insert(0, FakeJob(job['id'], self.client))
             if asyncio.iscoroutinefunction(methodobj):
                 return await methodobj(*args)
