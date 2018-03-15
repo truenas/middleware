@@ -14,9 +14,9 @@ MIDDLEWARE = None
 
 def _process_worker_wrapper(*args, **kwargs):
     """
-    We need to defined a wrapper to initialize the process
-    as soon as it is started to loading everything we need
-    or the first call will take too long
+    We need to define a wrapper to initialize the process
+    as soon as it is started to load everything we need
+    or the first call will take too long.
     """
     init()
     return _process_worker(*args, **kwargs)
