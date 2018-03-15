@@ -10,7 +10,6 @@ import traceback
 import threading
 
 from middlewared.pipe import Pipes
-from middlewared.service_exception import CallError
 
 logger = logging.getLogger(__name__)
 
@@ -336,8 +335,6 @@ class Job(object):
         """
         if self.options.get('process'):
             rv = await self.middleware._call_worker(self.serviceobj, self.method_name, *self.args, job={'id': self.id})
-            self.set_result(rv)
-            self.set_state('SUCCESS')
         else:
             # Make sure args are not altered during job run
             args = copy.deepcopy(self.args)
@@ -345,8 +342,8 @@ class Job(object):
                 rv = await self.method(*([self] + args))
             else:
                 rv = await self.middleware.run_in_thread(self.method, *([self] + args))
-            self.set_result(rv)
-            self.set_state('SUCCESS')
+        self.set_result(rv)
+        self.set_state('SUCCESS')
 
     def __encode__(self):
         return {
