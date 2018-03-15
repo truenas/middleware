@@ -335,14 +335,9 @@ class Job(object):
         and return the result as a json
         """
         if self.options.get('process'):
-            try:
-                rv = await self.middleware.run_in_thread(self.middleware._call_worker, self.serviceobj, self.method_name, *self.args, job={'id': self.id})
-                self.set_result(rv)
-                self.set_state('SUCCESS')
-            except CallError as e:
-                self.set_state('FAILED')
-                self.error = str(e)
-                self.exception = e.exception
+            rv = await self.middleware._call_worker(self.serviceobj, self.method_name, *self.args, job={'id': self.id})
+            self.set_result(rv)
+            self.set_state('SUCCESS')
         else:
             # Make sure args are not altered during job run
             args = copy.deepcopy(self.args)
