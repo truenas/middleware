@@ -210,76 +210,79 @@ if api == "1.0":
 
         # Update test
         call(["py.test-3.6", "--junitxml",
-              "%screate_ad_bsd_result.xml" % results_xml,
+              "%supdate_ad_bsd_result.xml" % results_xml,
               "api1/update/ad_bsd.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_ad_osx_result.xml" % results_xml,
+              "%supdate_ad_osx_result.xml" % results_xml,
               "api1/update/ad_osx.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_afp_osx_result.xml" % results_xml,
+              "%supdate_afp_osx_result.xml" % results_xml,
               "api1/update/afp_osx.py"])
         # call(["py.test-3.6", "--junitxml",
-        #       "%screate_alerts_result.xml" % results_xml,
+        #       "%supdate_alerts_result.xml" % results_xml,
         #       "api1/update/alerts.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_bootenv_result.xml" % results_xml,
+              "%supdate_bootenv_result.xml" % results_xml,
               "api1/update/bootenv.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_cronjob_result.xml" % results_xml,
+              "%supdate_cronjob_result.xml" % results_xml,
               "api1/update/cronjob.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_ftp_result.xml" % results_xml,
+              "%supdate_ftp_result.xml" % results_xml,
               "api1/update/ftp.py"])
         # call(["python3.6", "api1/update/group.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_iscsi_result.xml" % results_xml,
+              "%supdate_iscsi_result.xml" % results_xml,
               "api1/update/iscsi.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_ldap_bsd_result.xml" % results_xml,
+              "%supdate_ldap_bsd_result.xml" % results_xml,
               "api1/update/ldap_bsd.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_ldap_osx_result.xml" % results_xml,
+              "%supdate_ldap_osx_result.xml" % results_xml,
               "api1/update/ldap_osx.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_nfs_result.xml" % results_xml,
+              "%supdate_nfs_result.xml" % results_xml,
               "api1/update/nfs.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_nfs_result.xml" % results_xml,
+              "%supdate_nfs_result.xml" % results_xml,
               "api1/update/nfs.py"])
-        call(["python3.6", "api1/update/rsync.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_smb_bsd_result.xml" % results_xml,
+              "%supdate_smb_bsd_result.xml" % results_xml,
               "api1/update/smb_bsd.py"])
-        call(["python3.6", "api1/update/smb_bsd.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_smb_osx_result.xml" % results_xml,
+              "%supdate_smb_osx_result.xml" % results_xml,
               "api1/update/smb_osx.py"])
-        call(["python3.6", "api1/update/smb_osx.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_storage_result.xml" % results_xml,
+              "%supdate_storage_result.xml" % results_xml,
               "api1/update/storage.py"])
-        call(["python3.6", "api1/update/storage.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_user_result.xml" % results_xml,
+              "%supdate_user_result.xml" % results_xml,
               "api1/update/user.py"])
-        call(["python3.6", "api1/update/user.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_webdav_bsd_result.xml" % results_xml,
+              "%supdate_webdav_bsd_result.xml" % results_xml,
               "api1/update/webdav_bsd.py"])
-        call(["python3.6", "api1/update/webdav_bsd.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_webdav_osx_result.xml" % results_xml,
+              "%supdate_webdav_osx_result.xml" % results_xml,
               "api1/update/webdav_osx.py"])
-        call(["python3.6", "api1/update/webdav_osx.py"])
 
         # Delete test
-        call(["python3.6", "api1/delete/bootenv.py"])
-        call(["python3.6", "api1/delete/cronjob.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%sdelete_bootenv_result.xml" % results_xml,
+              "api1/delete/bootenv.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%sdelete_cronjob_result.xml" % results_xml,
+              "api1/delete/cronjob.py"])
         # call(["python3.6", "api1/delete/group.py"])
-        call(["python3.6", "api1/delete/iscsi.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%sdelete_iscsi_result.xml" % results_xml,
+              "api1/delete/iscsi.py"])
         # call(["python3.6", "api1/delete/rsync.py"])
-        call(["python3.6", "api1/delete/storage.py"])
-        call(["python3.6", "api1/delete/user.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%sdelete_storage_result.xml" % results_xml,
+              "api1/delete/storage.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%sdelete_user_result.xml" % results_xml,
+              "api1/delete/user.py"])
 elif api == "2.0":
     call(["python3.6", "api2/interfaces.py"])
     call(["python3.6", "api2/network.py"])
