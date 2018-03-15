@@ -95,14 +95,16 @@ class TunableService(CRUDService):
             tunable['comment'] = tun_comment.strip()
 
         if '"' in tun_value or "'" in tun_value:
-            verrors.add(schema_name, 'Quotes in value are not allowed')
+            verrors.add(f"{schema_name}.tun_value",
+                        'Quotes in value are not allowed')
 
         tun_vars = await self.middleware.call(
             'datastore.query', self._config.datastore, [('tun_var', '=',
                                                          tun_var)])
 
         if tun_vars:
-            verrors.add(schema_name, 'This variable already exists')
+            verrors.add(f"{schema_name}.tun_var",
+                        'This variable already exists')
 
         if verrors:
             raise verrors
@@ -144,7 +146,7 @@ class TunableService(CRUDService):
             tun_type == 'sysctl' and
             not sysctl_re.match(tun_var)
         ):
-            verrors.add(schema_name, err_msg)
+            verrors.add(f"{schema_name}.tun_var", err_msg)
 
         if verrors:
             raise verrors
