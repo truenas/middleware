@@ -41,7 +41,6 @@ active_directory_func()
 	local onoff
 	local enabled="DISABLED"
 
-
 	#
 	#	First, check if the Active Directory service is enabled.
 	#
@@ -60,6 +59,14 @@ active_directory_func()
 	if [ "${onoff}" = "1" ]
 	then
 		enabled="ENABLED"
+	fi
+
+	#
+	#	If Active Directory is disabled, there is no reason to run this module
+	#
+	if [ "${onoff}" = "0" ]
+	then
+		exit 0
 	fi
 
 	section_header "Active Directory Status"
