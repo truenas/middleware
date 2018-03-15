@@ -988,6 +988,7 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset1(smb4_conf, "oplocks = yes")
     confset1(smb4_conf, "deadtime = 15")
     confset1(smb4_conf, "max log size = 51200")
+    confset1(smb4_conf, "private dir = /root/samba/private")
 
     confset2(smb4_conf, "max open files = %d",
              int(get_sysctl('kern.maxfilesperproc')) - 25)
@@ -1301,10 +1302,13 @@ def smb4_unlink(dir):
 
 def smb4_setup(client):
     statedir = "/var/db/samba4"
+    privatedir = "/root/samba/private"
+
+    if not os.access(privatedir, os.F_OK):
+        smb4_mkdir(privatedir)
+        os.chmod(private, 0o700)
 
     smb4_mkdir("/var/run/samba")
-    smb4_mkdir("/var/db/samba")
-
     smb4_mkdir("/var/run/samba4")
 
     smb4_mkdir("/var/log/samba4")
