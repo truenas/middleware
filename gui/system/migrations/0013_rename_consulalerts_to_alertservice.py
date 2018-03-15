@@ -9,7 +9,7 @@ import freenasUI.freeadmin.models.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0009_auto_20171023_2159'),
+        ('system', '0012_add_filesystem_model'),
     ]
 
     operations = [
@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
         ),
         migrations.RunSQL("""
             INSERT INTO system_alertservice (id, type, name, attributes, enabled, settings)
-            SELECT id, consulalert_type, consulalert_type, attributes, enabled, '{}' FROM system_consulalerts"
+            SELECT id, consulalert_type, consulalert_type, attributes, enabled, '{}' FROM system_consulalerts
         """),
         migrations.DeleteModel(
             name='ConsulAlerts',

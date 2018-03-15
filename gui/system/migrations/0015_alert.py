@@ -9,7 +9,7 @@ import freenasUI.freeadmin.models.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0011_alert_default_settings'),
+        ('system', '0014_alert_default_settings'),
     ]
 
     operations = [

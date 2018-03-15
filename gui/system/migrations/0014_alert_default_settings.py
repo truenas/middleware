@@ -3,14 +3,13 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-import django.db.models.deletion
 import freenasUI.freeadmin.models.fields
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0010_rename_consulalerts_to_alertservice'),
+        ('system', '0013_rename_consulalerts_to_alertservice'),
     ]
 
     operations = [
