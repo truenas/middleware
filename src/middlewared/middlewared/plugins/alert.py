@@ -20,8 +20,8 @@ from middlewared.utils import load_modules, load_classes
 POLICIES = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]
 DEFAULT_POLICY = "IMMEDIATELY"
 
-alert_sources = []
-alert_services_factories = {}
+ALERT_SOURCES = []
+ALERT_SERVICES_FACTORIES = {}
 
 
 class AlertPolicy:
@@ -88,12 +88,12 @@ class AlertService(Service):
         for module in load_modules(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir,
                                                 "alert", "source")):
             for cls in load_classes(module, AlertSource, (FilePresenceAlertSource, ThreadedAlertSource)):
-                alert_sources.append(cls(self.middleware))
+                ALERT_SOURCES.append(cls(self.middleware))
 
         for module in load_modules(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir,
                                                 "alert", "service")):
             for cls in load_classes(module, _AlertService, (ThreadedAlertService,)):
-                alert_services_factories[cls.name()] = cls
+                ALERT_SERVICES_FACTORIES[cls.name()] = cls
 
     async def terminate(self):
         await self.flush_alerts()
@@ -107,7 +107,7 @@ class AlertService(Service):
                 "name": source.name,
                 "title": source.title,
             }
-            for source in sorted(alert_sources, key=lambda source: source.title.lower())
+            for source in sorted(ALERT_SOURCES, key=lambda source: source.title.lower())
         ]
 
     def list(self):
@@ -155,7 +155,7 @@ class AlertService(Service):
                 if not service_gone_alerts and not service_new_alerts:
                     continue
 
-                factory = alert_services_factories.get(alert_service_desc["type"])
+                factory = ALERT_SERVICES_FACTORIES.get(alert_service_desc["type"])
                 if factory is None:
                     self.logger.error("Alert service %r does not exist", alert_service_desc["type"])
                     continue
@@ -175,7 +175,7 @@ class AlertService(Service):
 
             if policy_name == "IMMEDIATELY":
                 if not await self.middleware.call("system.is_freenas"):
-                    new_hardware_alerts = [alert for alert in new_alerts if alert_sources[alert.source].hardware]
+                    new_hardware_alerts = [alert for alert in new_alerts if ALERT_SOURCES[alert.source].hardware]
                     if new_hardware_alerts:
                         license = get_license()
                         if license and license.contract_type in [ContractType.silver.value, ContractType.gold.value]:
@@ -223,7 +223,7 @@ class AlertService(Service):
                                     self.logger.error(f"Failed to create a support ticket", exc_info=True)
 
     async def __run_alerts(self):
-        for alert_source in alert_sources:
+        for alert_source in ALERT_SOURCES:
             if datetime.utcnow() < self.alert_source_last_run[alert_source.name] + alert_source.interval:
                 continue
 
@@ -287,13 +287,13 @@ class AlertServiceService(CRUDService):
                 "name": name,
                 "title": factory.title,
             }
-            for name, factory in sorted(alert_services_factories.items(), key=lambda i: i[1].title.lower())
+            for name, factory in sorted(ALERT_SERVICES_FACTORIES.items(), key=lambda i: i[1].title.lower())
         ]
 
     @private
     async def _extend(self, service):
         try:
-            service["type__title"] = alert_services_factories[service["type"]].title
+            service["type__title"] = ALERT_SERVICES_FACTORIES[service["type"]].title
         except KeyError:
             service["type__title"] = "<Unknown>"
 
@@ -307,7 +307,7 @@ class AlertServiceService(CRUDService):
     async def _validate(self, service, schema_name):
         verrors = ValidationErrors()
 
-        factory = alert_services_factories.get(service["type"])
+        factory = ALERT_SERVICES_FACTORIES.get(service["type"])
         if factory is None:
             verrors.add(f"{schema_name}.type", "This field has invalid value")
 
@@ -374,7 +374,7 @@ class AlertServiceService(CRUDService):
     async def test(self, data):
         await self._validate(data, "alert_service_test")
 
-        factory = alert_services_factories.get(data["type"])
+        factory = ALERT_SERVICES_FACTORIES.get(data["type"])
         if factory is None:
             self.logger.error("Alert service %r does not exist", data["type"])
             return False
@@ -437,7 +437,7 @@ async def setup(middleware):
 
 def validate_settings(verrors, schema_name, settings):
     for k, v in settings.items():
-        if not any(alert_source.name == k for alert_source in alert_sources):
+        if not any(alert_source.name == k for alert_source in ALERT_SOURCES):
             verrors.add(f"{schema_name}.{k}", "This alert source does not exist")
 
         if v not in POLICIES:
