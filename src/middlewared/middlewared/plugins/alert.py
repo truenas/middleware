@@ -95,12 +95,15 @@ class AlertService(Service):
             for cls in load_classes(module, _AlertService, (ThreadedAlertService,)):
                 ALERT_SERVICES_FACTORIES[cls.name()] = cls
 
+    @private
     async def terminate(self):
         await self.flush_alerts()
 
+    @accepts()
     async def list_policies(self):
         return POLICIES
 
+    @accepts()
     async def list_sources(self):
         return [
             {
@@ -110,6 +113,7 @@ class AlertService(Service):
             for source in sorted(ALERT_SOURCES, key=lambda source: source.title.lower())
         ]
 
+    @accepts()
     def list(self):
         return [
             dict(alert.__dict__,
@@ -281,6 +285,7 @@ class AlertServiceService(CRUDService):
         datastore_extend = "alertservice._extend"
         datastore_order_by = ["name"]
 
+    @accepts()
     async def list_types(self):
         return [
             {
