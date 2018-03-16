@@ -92,14 +92,6 @@ active_directory_func()
 	section_footer
 
 	#
-	#	If Active Directory is disabled, there is no reason to run this module
-	#
-	if [ "${onoff}" = "0" ]
-	then
-		exit 0
-	fi
-
-	#
 	#	Next, dump Active Directory configuration
 	#
 	local IFS="|"

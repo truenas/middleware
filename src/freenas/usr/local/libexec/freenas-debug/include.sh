@@ -131,11 +131,15 @@ section_footer()
 		fnd_section_elapsed_time=$(($fnd_section_end_time - $fnd_section_start_time))
 		echo "debug finished in $fnd_section_elapsed_time seconds for $name"
 		#$dirfunc is the module name passed to us by the debug torture suite
-		if [ -n "$dirfunc" ]; then
-			echo "command used:"
-			modname=`echo -n "$dirfunc" | sed -e 's/_directory//'`
-			echo  ${FREENAS_DEBUG_MODULEDIR}/$modname.sh
-		fi
+		#
+		#The information included with this output is not warranted and
+	        #is also producing the wrong output at certain times.
+		#There is no loss in functionality by disabling this section.	
+		#if [ -n "$dirfunc" ]; then
+		#	echo "command used:"
+		#	modname=`echo -n "$dirfunc" | sed -e 's/_directory//'`
+		#	echo  ${FREENAS_DEBUG_MODULEDIR}/$modname.sh
+		#fi
 
 
 	fi
