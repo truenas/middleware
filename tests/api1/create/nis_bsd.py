@@ -4,14 +4,13 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
+import pytest
 import unittest
 import sys
 import os
-import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT
-from auto_config import results_xml
 
 try:
     from config import NISSERVER, NISDOMAIN
@@ -19,16 +18,20 @@ except ImportError:
     RunTest = False
 else:
     RunTest = True
-TestName = "create nis bsd"
+    SERVER = NISSERVER
+    DOMAIN = NISDOMAIN
 
 # define variables
-SERVER = NISSERVER
-DOMAIN = NISDOMAIN
 DATASET = "nis-bsd"
 NIS_PATH = "/mnt/tank/" + DATASET
+TestName = "create nis bsd"
+
+Reason = "NISSERVER and NISDOMAIN are not in ixautomation.conf"
 
 
+@pytest.mark.skipif(RunTest is False, reason=Reason)
 class create_nis_bsd_test(unittest.TestCase):
+
     def test_01_Setting_NIS_domain(self):
         assert PUT("/directoryservice/nis/", {"nis_domain": NISDOMAIN}) == 200
 
@@ -64,12 +67,3 @@ class create_nis_bsd_test(unittest.TestCase):
 
     def test_12_Disabling_NIS_service(self):
         assert PUT("/directoryservice/nis/", {"nis_enable": False}) == 200
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(create_nis_bsd_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()

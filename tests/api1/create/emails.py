@@ -6,12 +6,12 @@
 import unittest
 import sys
 import os
-import xmlrunner
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT
-from auto_config import results_xml
-RunTest = True
+
+
 TestName = "create emails"
 
 
@@ -26,12 +26,3 @@ class create_email_test(unittest.TestCase):
                    "em_smtp": "true",
                    "em_user": "william.spam@ixsystems.com"}
         assert PUT("/system/email/", payload) == 200
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(create_email_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()

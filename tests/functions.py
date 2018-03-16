@@ -44,8 +44,23 @@ def GET_USER(username):
 
 
 def POST(testpath, payload):
-    postit = requests.post(freenas_url + testpath, headers=header,
-                           auth=authentification, data=json.dumps(payload))
+    if payload is None:
+        postit = requests.post(freenas_url + testpath, headers=header,
+                               auth=authentification)
+    else:
+        postit = requests.post(freenas_url + testpath, headers=header,
+                               auth=authentification, data=json.dumps(payload))
+    return postit.status_code
+
+
+def POST_TIMEOUT(testpath, payload, timeOut):
+    if payload is None:
+        postit = requests.post(freenas_url + testpath, headers=header,
+                               auth=authentification, timeout=timeOut)
+    else:
+        postit = requests.post(freenas_url + testpath, headers=header,
+                               auth=authentification, data=json.dumps(payload),
+                               timeout=timeOut)
     return postit.status_code
 
 
@@ -58,6 +73,13 @@ def POSTNOJSON(testpath, payload):
 def PUT(testpath, payload):
     putit = requests.put(freenas_url + testpath, headers=header,
                          auth=authentification, data=json.dumps(payload))
+    return putit.status_code
+
+
+def PUT_TIMEOUT(testpath, payload, timeOut):
+    putit = requests.put(freenas_url + testpath, headers=header,
+                         auth=authentification, data=json.dumps(payload),
+                         timeout=timeOut)
     return putit.status_code
 
 

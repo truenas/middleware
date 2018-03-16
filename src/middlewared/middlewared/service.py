@@ -106,6 +106,7 @@ class ServiceBase(type):
       - private: whether or not the service is deemed private
       - verbose_name: human-friendly singular name for the service
       - thread_pool: thread pool to use for threaded methods
+      - process_pool: process pool to run service methods
 
     """
 
@@ -132,6 +133,7 @@ class ServiceBase(type):
             'namespace': namespace,
             'private': False,
             'thread_pool': None,
+            'process_pool': None,
             'verbose_name': klass.__name__.replace('Service', ''),
         }
 
@@ -309,7 +311,7 @@ class CoreService(Service):
             else:
                 _typ = 'service'
             services[k] = {
-                'config': {k: v for k, v in list(v._config.__dict__.items()) if not k.startswith(('_', 'thread_pool'))},
+                'config': {k: v for k, v in list(v._config.__dict__.items()) if not k.startswith(('_', 'process_pool', 'thread_pool'))},
                 'type': _typ,
             }
         return services
@@ -468,7 +470,7 @@ class CoreService(Service):
                 sys.stderr = handler.stream
             try:
                 stream.close()
-            except:
+            except Exception:
                 pass
 
     @private

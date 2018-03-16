@@ -11,15 +11,24 @@ from iocage.lib.ioc_json import IOCJson
 from iocage.lib.ioc_list import IOCList
 from iocage.lib.ioc_upgrade import IOCUpgrade
 from middlewared.schema import Bool, Dict, List, Str, accepts, Int
-from middlewared.service import CRUDService, filterable, job, private
+from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
 
 
 class JailService(CRUDService):
 
-    @filterable
-    async def query(self, filters=None, options=None):
+    class Config:
+        process_pool = True
+
+    # FIXME: foreign schemas cannot be referenced when
+    # using `process_pool`
+    # @filterable
+    @accepts(
+        Dict('query-filters', additional_attrs=True),
+        Dict('query-options', additional_attrs=True),
+    )
+    def query(self, filters=None, options=None):
         options = options or {}
         jails = []
         try:
@@ -35,6 +44,7 @@ class JailService(CRUDService):
             pass
 
         return filter_list(jails, filters, options)
+    query._fiterable = True
 
     @accepts(
         Dict("options",
@@ -91,7 +101,7 @@ class JailService(CRUDService):
         if not os.path.isdir(f"{iocroot}/releases/{release}") and not \
                 template and not empty:
             self.middleware.call_sync('jail.fetch', {"release":
-                                                     release}).wait_sync()
+                                                     release}, job=True)
 
         err, msg = iocage.create(
             release,

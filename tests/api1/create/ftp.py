@@ -7,12 +7,12 @@
 import unittest
 import sys
 import os
-import xmlrunner
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, RC_TEST
-from auto_config import ip, results_xml
-RunTest = True
+from auto_config import ip
+
 TestName = "create ftp"
 
 
@@ -32,12 +32,3 @@ class create_ftp_test(unittest.TestCase):
     def test_04_Fetching_file_via_FTP(self):
         cmd = "ftp -o /tmp/ftpfile ftp://testuser:test@" + ip + "/.cshrc"
         RC_TEST(cmd) is True
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(create_ftp_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()

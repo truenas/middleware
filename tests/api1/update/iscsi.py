@@ -4,14 +4,15 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
+import pytest
 import unittest
 import sys
 import os
-import xmlrunner
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, BSD_TEST, return_output
-from auto_config import ip, results_xml
+from auto_config import ip
 from time import sleep
 try:
     from config import BRIDGEHOST
@@ -20,17 +21,19 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
     RunTest = True
-TestName = "update iscsi"
 
+TestName = "update iscsi"
 global DEVICE_NAME
 DEVICE_NAME = ""
 DEVICE_NAME_PATH = "/tmp/freenasiscsi"
 TARGET_NAME = "iqn.1994-09.freenasqa:target0"
+Reason = "BRIDGEHOST are not in ixautomation.conf"
 
 
 class update_iscsi_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed AD LDAP or SMB runs
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     @classmethod
     def setUpClass(inst):
         PUT("/services/services/iscsitarget/", {"srv_enable": False})
@@ -48,9 +51,11 @@ class update_iscsi_test(unittest.TestCase):
                           "srv_state") == "RUNNING"
 
     # Now connect to iSCSI target
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_03_Connecting_to_iSCSI_target(self):
         BSD_TEST('iscsictl -A -p %s:3620 -t %s' % (ip, TARGET_NAME)) is True
 
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_04_Waiting_for_iscsi_connection_before_grabbing_device_name(self):
         while True:
             BSD_TEST('iscsictl -L') is True
@@ -68,28 +73,36 @@ class update_iscsi_test(unittest.TestCase):
             sleep(3)
 
     # Now check if we can mount target create, rename, copy, delete, umount
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_05_Creating_iSCSI_mountpoint(self):
         BSD_TEST('mkdir -p "%s"' % MOUNTPOINT) is True
 
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_06_Mount_the_target_volume(self):
         BSD_TEST('mount "/dev/%s" "%s"' % (DEVICE_NAME,
                                            MOUNTPOINT)) is True
 
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_07_Creating_45MB_file_to_verify_vzol_size_increase(self):
         BSD_TEST('dd if=/dev/zero of=/tmp/45Mfile.img bs=1M count=45') is True
 
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_08_Moving_45MB_file_to_verify_vzol_size_increase(self):
         BSD_TEST('mv /tmp/45Mfile.img "%s/testfile1"' % MOUNTPOINT) is True
 
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_09_Deleting_file(self):
         BSD_TEST('rm "%s/testfile1"' % MOUNTPOINT) is True
 
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_10_Unmounting_iSCSI_volume(self):
         BSD_TEST('umount -f "%s"' % MOUNTPOINT) is True
 
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_11_Removing_iSCSI_volume_mountpoint(self):
         BSD_TEST('rm -rf "%s"' % MOUNTPOINT) is True
 
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_12_Disconnect_iSCSI_target(self):
         BSD_TEST('iscsictl -R -t %s' % TARGET_NAME) is True
 
@@ -101,12 +114,3 @@ class update_iscsi_test(unittest.TestCase):
     def test_14_Verify_the_iSCSI_service_is_Sdisabled(self):
         assert GET_OUTPUT("/services/services/iscsitarget/",
                           "srv_state") == "STOPPED"
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(update_iscsi_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()

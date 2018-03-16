@@ -7,12 +7,12 @@
 import unittest
 import sys
 import os
-import xmlrunner
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, RC_TEST  # , POST
-from auto_config import ip, results_xml
-RunTest = True
+from auto_config import ip
+
 TestName = "create rsync"
 
 
@@ -36,12 +36,3 @@ class create_rsync_test(unittest.TestCase):
     # Test rsync
     def test_05_Testings_rsync_access(self):
         RC_TEST("rsync -avn %s::testmod" % ip) is True
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(create_rsync_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()
