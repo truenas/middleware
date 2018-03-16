@@ -52,7 +52,7 @@ class TunableService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        await self.clean(data, 'tunable_update')
+        await self.clean(data, 'tunable_update', old=old)
         await self.validate(data, 'tunable_update')
 
         await self.lower(data)
@@ -85,8 +85,9 @@ class TunableService(CRUDService):
         return data
 
     @private
-    async def clean(self, tunable, schema_name):
+    async def clean(self, tunable, schema_name, old=None):
         verrors = ValidationErrors()
+        skip_dupe = False
         tun_comment = tunable.get('comment')
         tun_value = tunable['value']
         tun_var = tunable['var']
@@ -95,16 +96,24 @@ class TunableService(CRUDService):
             tunable['comment'] = tun_comment.strip()
 
         if '"' in tun_value or "'" in tun_value:
-            verrors.add(f"{schema_name}.tun_value",
+            verrors.add(f"{schema_name}.value",
                         'Quotes in value are not allowed')
 
-        tun_vars = await self.middleware.call(
-            'datastore.query', self._config.datastore, [('tun_var', '=',
-                                                         tun_var)])
+        if schema_name == 'tunable_update' and old:
+            old_tun_var = old['var']
 
-        if tun_vars:
-            verrors.add(f"{schema_name}.tun_var",
-                        'This variable already exists')
+            if old_tun_var == tun_var:
+                # They aren't trying to change to a new name, just updating
+                skip_dupe = True
+
+        if not skip_dupe:
+            tun_vars = await self.middleware.call(
+                'datastore.query', self._config.datastore, [('tun_var', '=',
+                                                             tun_var)])
+
+            if tun_vars:
+                verrors.add(f"{schema_name}.value",
+                            'This variable already exists')
 
         if verrors:
             raise verrors
@@ -146,7 +155,7 @@ class TunableService(CRUDService):
             tun_type == 'sysctl' and
             not sysctl_re.match(tun_var)
         ):
-            verrors.add(f"{schema_name}.tun_var", err_msg)
+            verrors.add(f"{schema_name}.value", err_msg)
 
         if verrors:
             raise verrors
