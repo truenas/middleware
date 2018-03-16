@@ -655,11 +655,11 @@ class ShellApplication(object):
 
 class Middleware(object):
 
-    def __init__(self, loop_monitor=True, plugins_dirs=None, debug_level=None):
+    def __init__(self, loop_monitor=True, overlay_dirs=None, debug_level=None):
         self.logger = logger.Logger('middlewared', debug_level).getLogger()
         self.crash_reporting = logger.CrashReporting()
         self.loop_monitor = loop_monitor
-        self.plugins_dirs = plugins_dirs or []
+        self.overlay_dirs = overlay_dirs or []
         self.__loop = None
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
@@ -687,7 +687,7 @@ class Middleware(object):
             os.path.dirname(os.path.realpath(__file__)),
             'plugins',
         )
-        plugins_dirs = list(self.plugins_dirs)
+        plugins_dirs = [os.path.join(overlay_dir, 'plugins') for overlay_dir in self.overlay_dirs]
         plugins_dirs.insert(0, main_plugins_dir)
 
         self.logger.debug('Loading plugins from {0}'.format(','.join(plugins_dirs)))
@@ -1115,7 +1115,7 @@ def main():
     parser.add_argument('restart', nargs='?')
     parser.add_argument('--pidfile', '-P', action='store_true')
     parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
-    parser.add_argument('--plugins-dirs', '-p', action='append')
+    parser.add_argument('--overlay-dirs', '-o', action='append')
     parser.add_argument('--debug-level', choices=[
         'TRACE',
         'DEBUG',
@@ -1162,7 +1162,7 @@ def main():
 
     Middleware(
         loop_monitor=not args.disable_loop_monitor,
-        plugins_dirs=args.plugins_dirs,
+        overlay_dirs=args.overlay_dirs,
         debug_level=args.debug_level,
     ).run()
 
