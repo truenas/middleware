@@ -117,15 +117,19 @@ hardware_func()
 		fi
 	done
 
-	if [ -c /dev/ipmi0 ]
-	then
-		for list_type in sel sdr
-		do
-			section_header "ipmitool $list_type list"
-			ipmitool $list_type list
-			section_footer
-		done
-	fi
+	#
+	#	This logic is being moved to the IPMI module
+	#	because we are running duplicate ipmitool commands
+	#
+	#if [ -c /dev/ipmi0 ]
+	#then
+	#	for list_type in sel sdr
+	#	do
+	#		section_header "ipmitool $list_type list"
+	#		ipmitool $list_type list
+	#		section_footer
+	#	done
+	#fi
 
 	if which getencstat > /dev/null
 	then
