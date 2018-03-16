@@ -274,7 +274,9 @@ main()
 	if $all_debug; then
 		func_pids=""
 		for opt in ${opts_spaced} ; do
-			if [ "${opt}" = "B" ]
+			# These functions must be explicitly called from the CLI
+			if [ "${opt}" = "B" ] || [ "${opt}" = "b" || [ "${opt}" = "E" ] \
+			|| [ "${opt}" = "L" ]
 			then
 				continue
 			fi

@@ -32,16 +32,30 @@ ipmi_help() { echo "Dump IPMI Configuration"; }
 ipmi_directory() { echo "IPMI"; }
 ipmi_func()
 {
+	#
+	#	Let's check if the character device exists.
+	#	We make this check because the x-series
+	#	doesn't have an internal /dev/ipmi device
+	#	If the /dev/ipmi0 doesn't exist, we prevent
+	#	the script from trying to run all the commands
+	#
+	
+	section_header "ipmitool sel elist && ipmitool sdr elist"
+	if [ -c /dev/ipmi0 ]
+        then
+               for list_type in sel sdr
+               do
+                       ipmitool $list_type elist
+                       section_footer
+               done
+	else
+		echo "/dev/ipmi0 device doesn't exist!"
+		echo "This is expected behavior on an x-series appliance!"
+		exit 0
+        fi
+	
 	section_header "ipmitool lan print"
 	ipmitool lan print
-	section_footer
-
-	section_header "ipmitool sel elist"
-	ipmitool sel elist
-	section_footer
-
-	section_header "ipmitool sdr list | grep Temp"
-	ipmitool sdr list | grep Temp
 	section_footer
 
 	section_header "ipmitool sensor"
