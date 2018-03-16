@@ -4,14 +4,14 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
+import pytest
 import unittest
 import sys
 import os
-import xmlrunner
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, OSX_TEST
-from auto_config import ip, results_xml
+from auto_config import ip
 try:
     from config import BRIDGEHOST
 except ImportError:
@@ -25,6 +25,7 @@ DATASET = "afp-osx"
 AFP_NAME = "MyAFPShare"
 AFP_PATH = "/mnt/tank/" + DATASET
 VOL_GROUP = "wheel"
+Reason = "BRIDGEHOST BRIDGETEST are not in ixautomation.conf"
 
 
 class create_afp_osx_test(unittest.TestCase):
@@ -32,8 +33,8 @@ class create_afp_osx_test(unittest.TestCase):
     # Clean up any leftover items from previous failed runs
     @classmethod
     def setUpClass(inst):
-        cmd = 'umount -f "%s"; rmdir "%s"; exit 0;' % (MOUNTPOINT, MOUNTPOINT)
-        OSX_TEST(cmd)
+        # cmd = 'umount -f "%s"; rmdir "%s"; exit 0;' % (MOUNTPOINT, MOUNTPOINT)
+        # OSX_TEST(cmd)
         PUT("/services/afp/", {"afp_srv_guest": False})
         payload = {"afp_name": AFP_NAME, "afp_path": AFP_PATH}
         DELETE_ALL("/sharing/afp/", payload)
@@ -62,22 +63,25 @@ class create_afp_osx_test(unittest.TestCase):
         assert PUT("/storage/permission/", payload) == 201
 
     def test_06_Creating_a_AFP_share_on_AFP_PATH(self):
-        payload = {"afp_name": AFP_NAME,
-                   "afp_path": AFP_PATH}
+        payload = {"afp_name": AFP_NAME, "afp_path": AFP_PATH}
         assert POST("/sharing/afp/", payload) == 201
 
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     # Mount share on OSX system and create a test file
     def test_07_Create_mount_point_for_AFP_on_OSX_system(self):
         assert OSX_TEST('mkdir -p "%s"' % MOUNTPOINT) is True
 
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_08_Mount_AFP_share_on_OSX_system(self):
         cmd = 'mount -t afp "afp://%s/%s" "%s"' % (ip, AFP_NAME, MOUNTPOINT)
         assert OSX_TEST(cmd) is True
 
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_10_Create_file_on_AFP_share_via_OSX_to_test_permissions(self):
         assert OSX_TEST('touch "%s/testfile.txt"' % MOUNTPOINT) is True
 
     # Move test file to a new location on the AFP share
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_11_Moving_AFP_test_file_into_a_new_directory(self):
         cmd = 'mkdir -p "%s/tmp" && ' % MOUNTPOINT
         cmd += 'mv "%s/testfile.txt" ' % MOUNTPOINT
@@ -85,16 +89,19 @@ class create_afp_osx_test(unittest.TestCase):
         assert OSX_TEST(cmd) is True
 
     # Delete test file and test directory from AFP share
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_12_Deleting_test_file_and_directory_from_AFP_share(self):
         cmd = 'rm -f "%s/tmp/testfile.txt" && ' % MOUNTPOINT
         cmd += 'rmdir "%s/tmp"' % MOUNTPOINT
         assert OSX_TEST(cmd) is True
 
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_13_Verifying_test_file_directory_were_successfully_removed(self):
         cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
         assert OSX_TEST(cmd) is True
 
     # Clean up mounted AFP share
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_14_Unmount_AFP_share(self):
         assert OSX_TEST("umount -f '%s'" % MOUNTPOINT) is True
 
@@ -103,14 +110,5 @@ class create_afp_osx_test(unittest.TestCase):
         assert PUT("/services/afp/", {"afp_srv_guest": "false"}) == 200
 
     # Test delete AFP dataset
-    # def test_16_Verify_AFP_dataset_can_be_destroyed(self):
-    #     assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(create_afp_osx_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()
+    def test_16_Verify_AFP_dataset_can_be_destroyed(self):
+        assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204

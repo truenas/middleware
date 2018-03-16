@@ -4,14 +4,14 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
+import pytest
 import unittest
 import sys
 import os
-import xmlrunner
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, PUT, BSD_TEST
-from auto_config import results_xml
 
 try:
     from config import BRIDGEHOST
@@ -23,11 +23,13 @@ else:
 TestName = "delete iscsi"
 DEVICE_NAME_PATH = "/tmp/iscsi_dev_name"
 TARGET_NAME = "iqn.freenas:target0"
+Reason = "BRIDGEHOST ixautomation.conf"
 
 
 class delete_iscsi_test(unittest.TestCase):
 
     # Clean up any leftover items from any previous failed runs
+    @pytest.mark.skipif(RunTest is False, reason=Reason)
     @classmethod
     def setUpClass(inst):
         PUT("/services/services/iscsitarget/", {"srv_enable": False})
@@ -43,12 +45,3 @@ class delete_iscsi_test(unittest.TestCase):
     # Remove iSCSI extent
     def test_02_Delete_iSCSI_extent(self):
         assert DELETE("/services/iscsi/extent/1/") == 204
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(delete_iscsi_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()

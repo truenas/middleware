@@ -7,11 +7,11 @@
 import unittest
 import sys
 import os
-import xmlrunner
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET_OUTPUT
-from auto_config import results_xml
+
 RunTest = True
 TestName = "create smarttest"
 
@@ -35,12 +35,3 @@ class create_smarttest_test(unittest.TestCase):
     def test_02_Check_that_API_reports_new_SMARTTest(self):
         assert GET_OUTPUT("/tasks/smarttest/",
                           "smarttest_disks") == self.disk_ident_1
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(create_smarttest_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()

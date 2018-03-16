@@ -4,15 +4,16 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
+import pytest
 import unittest
 import sys
 import os
-import xmlrunner
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
 from functions import OSX_TEST
-from auto_config import ip, results_xml
+from auto_config import ip
 try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
     from config import LDAPBASEDN, LDAPHOSTNAME, LDAPHOSTNAME2
@@ -22,16 +23,20 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/ldap-osx%s" % BRIDGEHOST
     RunTest = True
-TestName = "update ldap osx"
 
+TestName = "update ldap osx"
 DATASET = "ldap-osx"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/%s" % DATASET
 LDAP_USER = "ldapuser"
 LDAP_PASS = "12345678"
 VOL_GROUP = "wheel"
+Reason = "BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME, LDAPBASEDN, "
+Reason += "LDAPHOSTNAME, LDAPHOSTNAME2, LDAPBASEDN2, LDAPBINDDN2, "
+Reason += "LDAPBINDPASSWORD2 are not in ixautomation.conf"
 
 
+@pytest.mark.skipif(RunTest is False, reason=Reason)
 class update_ldap_osx_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed AD LDAP or SMB runs
@@ -179,12 +184,3 @@ class update_ldap_osx_test(unittest.TestCase):
     # Check destroying a SMB dataset
     def test_22_Destroying_SMB_dataset(self):
         assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(update_ldap_osx_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()

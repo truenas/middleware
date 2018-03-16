@@ -7,11 +7,10 @@
 import unittest
 import sys
 import os
-import xmlrunner
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_USER
-from auto_config import results_xml
 
 RunTest = True
 TestName = "update user"
@@ -40,12 +39,3 @@ class update_user_test(unittest.TestCase):
         payload = {"bsdusr_password": "newpasswd"}
         path = "/account/users/%s/password/" % self.userid
         assert POST(path, payload) == 200
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(update_user_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()

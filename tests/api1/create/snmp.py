@@ -7,12 +7,11 @@
 import unittest
 import sys
 import os
-import xmlrunner
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT
-from auto_config import results_xml
-RunTest = True
+
 TestName = "create snmp"
 
 COMMUNITY = "public"
@@ -23,6 +22,7 @@ PASSWORD = "testing1234"
 
 
 class create_snmp_test(unittest.TestCase):
+
     def test_01_Configure_SNMP(self):
         payload = {"snmp_community": COMMUNITY,
                    "snmp_traps": TRAPS,
@@ -44,12 +44,3 @@ class create_snmp_test(unittest.TestCase):
         assert GET_OUTPUT("/services/snmp/", "snmp_contact") == CONTACT
         assert GET_OUTPUT("/services/snmp/", "snmp_location") == LOCATION
         assert GET_OUTPUT("/services/snmp/", "snmp_v3_password") == PASSWORD
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(create_snmp_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()

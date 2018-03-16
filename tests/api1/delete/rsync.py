@@ -7,12 +7,11 @@
 import unittest
 import sys
 import os
-import xmlrunner
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE
-from auto_config import results_xml
-RunTest = True
+
 TestName = "delete rsync"
 
 
@@ -20,12 +19,3 @@ class delete_rsync_test(unittest.TestCase):
 
     def test_01_Delete_rsync_resource(self):
         assert DELETE("/services/rsyncmod/1/") == 204
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(delete_rsync_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()
