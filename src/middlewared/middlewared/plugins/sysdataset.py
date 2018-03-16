@@ -1,8 +1,9 @@
 from middlewared.schema import accepts, Bool, Dict, Str
-from middlewared.service import ConfigService, job, private
+from middlewared.service import ConfigService, ValidationErrors, job, private
 from middlewared.utils import Popen, run
 
 import asyncio
+import errno
 import os
 import shutil
 import uuid
@@ -75,6 +76,12 @@ class SystemDatasetService(ConfigService):
 
         new = config.copy()
         new.update(data)
+
+        verrors = ValidationErrors()
+        if not await self.middleware.call('zfs.pool.query', [('name', '=', data['pool'])]):
+            verrors.add('sysdataset_update.pool', f'Pool "{data["pool"]}" not found', errno.ENOENT)
+        if verrors:
+            raise verrors
 
         new['syslog_usedataset'] = new['syslog']
         new['rrd_usedataset'] = new['rrd']
