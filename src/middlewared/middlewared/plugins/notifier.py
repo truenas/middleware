@@ -22,6 +22,7 @@ from freenasUI.common.freenasldap import (
     FreeNAS_LDAP,
     FLAGS_DBINIT,
 )
+from freenasUI.common.freenasusers import FreeNAS_User
 from freenasUI.common.samba import Samba4
 from freenasUI.common.warden import Warden
 from freenasUI.middleware import zfs
@@ -163,6 +164,14 @@ class NotifierService(Service):
             if hasattr(ds, i):
                 data[i] = getattr(ds, i)
         return data
+
+    async def get_user_object(self, username):
+        user = False
+        try:
+            user = FreeNAS_User(username)
+        except Exception:
+            pass
+        return user
 
     def ldap_status(self):
         ret = False
