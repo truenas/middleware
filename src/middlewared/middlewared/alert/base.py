@@ -21,11 +21,13 @@ class AlertLevel(enum.Enum):
 
 
 class Alert:
-    def __init__(self, title=None, args=None, source=None, key=undefined, datetime=None, level=None, dismissed=None):
+    def __init__(self, title=None, args=None, node=None, source=None, key=undefined, datetime=None, level=None,
+                 dismissed=None):
         self.title = title
         self.args = args
 
         self.source = source
+        self.node = node
         if key is not undefined:
             self.key = key
         else:
@@ -60,6 +62,8 @@ class AlertSource:
 
     onetime = False
     interval = timedelta()
+
+    run_on_passive_node = True
 
     def __init__(self, middleware):
         self.middleware = middleware
@@ -154,15 +158,19 @@ def format_alerts(alerts, gone_alerts, new_alerts):
     text = ""
 
     if new_alerts:
-        text += "New alerts:\n" + "".join([f"* {alert.formatted}\n" for alert in new_alerts]) + "\n"
+        text += "New alerts:\n" + "".join(["* %s\n" % format_alert(alert) for alert in new_alerts]) + "\n"
 
     if gone_alerts:
-        text += "Gone alerts:\n" + "".join([f"* {alert.formatted}\n" for alert in gone_alerts]) + "\n"
+        text += "Gone alerts:\n" + "".join(["* %s\n" % format_alert(alert) for alert in gone_alerts]) + "\n"
 
     if alerts:
-        text += "Alerts:\n" + "".join([f"* {alert.formatted}\n" for alert in new_alerts]) + "\n"
+        text += "Alerts:\n" + "".join(["* %s\n" % format_alert(alert) for alert in new_alerts]) + "\n"
 
     return text
+
+
+def format_alert(alert):
+    return alert.formatted + (" (on node {alert.node)" if alert.node != "A" else "")
 
 
 def ellipsis(s, l):
