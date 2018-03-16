@@ -24,6 +24,7 @@
 #
 #####################################################################
 import base64
+import calendar
 import errno
 import json
 import logging
@@ -162,6 +163,7 @@ class NestedMixin(object):
 class AlertResource(DojoResource):
 
     class Meta:
+        allowed_methods = ['get']
         resource_name = 'system/alert'
 
     def prepend_urls(self):
@@ -174,6 +176,61 @@ class AlertResource(DojoResource):
                 name="api_alert_dismiss"
             ),
         ]
+
+    def get_list(self, request, **kwargs):
+        with client as c:
+            results = c.call("alert.list")
+
+        for alert in results:
+            alert["timestamp"] = calendar.timegm(alert["datetime"].timetuple())
+
+        if (
+            'timestamp' in request.GET or
+            'timestamp__gte' in request.GET or
+            'timestamp__lte' in request.GET
+        ):
+            for res in list(results):
+                eq = request.GET.get('timestamp')
+                if eq and int(eq) != res["timestamp"]:
+                    results.remove(res)
+                    continue
+
+                gte = request.GET.get('timestamp__gte')
+                if gte and int(gte) > res["timestamp"]:
+                    results.remove(res)
+                    continue
+
+                lte = request.GET.get('timestamp__lte')
+                if lte and int(lte) < res["timestamp"]:
+                    results.remove(res)
+                    continue
+
+        paginator = self._meta.paginator_class(
+            request,
+            results,
+            resource_uri=self.get_resource_uri(),
+            limit=self._meta.limit,
+            max_limit=self._meta.max_limit,
+            collection_name=self._meta.collection_name,
+        )
+        to_be_serialized = paginator.page()
+        to_be_serialized["objects"] = [
+            {
+                "id": alert["id"],
+                "level": alert["level"],
+                "message": alert["formatted"],
+                "dismissed": alert["dismissed"],
+                "timestamp": alert["timestamp"],
+            }
+            for alert in to_be_serialized["objects"]
+        ]
+        response = self.create_response(request, to_be_serialized)
+        response['Content-Range'] = 'items %d-%d/%d' % (
+            paginator.offset,
+            paginator.offset + len(to_be_serialized) - 1,
+            len(results)
+        )
+        return response
 
     def dismiss(self, request, **kwargs):
         if request.method != 'PUT':
