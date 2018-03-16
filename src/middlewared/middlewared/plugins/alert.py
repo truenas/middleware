@@ -231,9 +231,18 @@ class AlertService(Service):
                                     self.logger.error(f"Failed to create a support ticket", exc_info=True)
 
     async def __run_alerts(self):
-        failover = False
+        run_on_passive_node = False
         if not await self.middleware.call("system.is_freenas"):
-            failover = await self.middleware.call("notifier.failover_licensed")
+            if await self.middleware.call("notifier.failover_licensed"):
+                try:
+                    remote_version = await self.middleware.call("failover.call_remote", "system.version")
+                    failover_status = await self.middleware.call("failover.call_remote", "notifier.failover_status")
+                except Exception:
+                    pass
+                else:
+                    if remote_version == await self.middleware.call("system.version"):
+                        if failover_status == "BACKUP":
+                            run_on_passive_node = True
 
         for alert_source in ALERT_SOURCES.values():
             if datetime.utcnow() < self.alert_source_last_run[alert_source.name] + alert_source.interval:
@@ -248,7 +257,7 @@ class AlertService(Service):
                 alert.node = "A"
 
             alerts_b = []
-            if failover and alert_source.run_on_passive_node:
+            if run_on_passive_node and alert_source.run_on_passive_node:
                 try:
                     alerts_b = [Alert(**alert)
                                 for alert in (await self.middleware.call("failover.call_remote", "alert.run_source",
