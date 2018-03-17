@@ -25,27 +25,25 @@
 #
 #####################################################################
 
-from collections import defaultdict, OrderedDict
-from datetime import datetime
 import errno
-import pickle as pickle
 import json
 import logging
 import math
 import os
+import pickle as pickle
 import random
 import re
 import stat
 import subprocess
 import threading
 import time
+from collections import OrderedDict, defaultdict
+from datetime import datetime
 
-from OpenSSL import crypto, SSL
+from OpenSSL import SSL, crypto
 
-from ldap import LDAPError
-
+from common.ssl import CERT_CHAIN_REGEX
 from django.conf import settings
-from formtools.wizard.views import SessionWizardView
 from django.core.cache import cache
 from django.core.files.storage import FileSystemStorage
 from django.db.models import Q
@@ -53,69 +51,46 @@ from django.forms import FileField
 from django.forms.formsets import BaseFormSet, formset_factory
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
-from django.utils.html import escapejs
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _, ugettext as __
-
+from django.utils.html import escapejs
+from django.utils.translation import ugettext as __
+from django.utils.translation import ugettext_lazy as _
 from dojango import forms
+from formtools.wizard.views import SessionWizardView
 from freenasOS import Configuration, Update
 from freenasUI import choices
 from freenasUI.account.models import bsdGroups, bsdUsers
-from freenasUI.common import humanize_size, humanize_number_si
+from freenasUI.common import humanize_number_si, humanize_size
+from freenasUI.common.forms import Form, ModelForm
+from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory, FreeNAS_LDAP
+from freenasUI.common.ssl import (create_certificate,
+                                  create_certificate_signing_request,
+                                  create_self_signed_CA, export_privatekey,
+                                  generate_key, load_certificate,
+                                  load_privatekey, sign_certificate)
 from freenasUI.common.system import test_ntp_server
-from freenasUI.common.forms import ModelForm, Form
-from freenasUI.common.freenasldap import (
-    FreeNAS_ActiveDirectory,
-    FreeNAS_LDAP
-)
-from freenasUI.common.ssl import (
-    create_self_signed_CA,
-    create_certificate_signing_request,
-    create_certificate,
-    sign_certificate,
-    load_certificate,
-    load_privatekey,
-    export_privatekey,
-    generate_key
-)
-
-from freenasUI.directoryservice.forms import (
-    ActiveDirectoryForm,
-    LDAPForm,
-    NISForm
-)
-from freenasUI.directoryservice.models import (
-    ActiveDirectory,
-    LDAP,
-    NIS
-)
-from freenasUI.freeadmin.views import JsonResp
+from freenasUI.directoryservice.forms import (ActiveDirectoryForm, LDAPForm,
+                                              NISForm)
+from freenasUI.directoryservice.models import LDAP, NIS, ActiveDirectory
 from freenasUI.freeadmin.utils import key_order
-from freenasUI.middleware.client import client, ClientException, ValidationErrors
+from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.client import (ClientException, ValidationErrors,
+                                         client)
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
-from freenasUI.services.models import (
-    services,
-    iSCSITarget,
-    iSCSITargetGroups,
-    iSCSITargetAuthorizedInitiator,
-    iSCSITargetExtent,
-    iSCSITargetPortal,
-    iSCSITargetPortalIP,
-    iSCSITargetToExtent,
-)
-from freenasUI.sharing.models import (
-    AFP_Share,
-    CIFS_Share,
-    NFS_Share,
-    NFS_Share_Path,
-)
+from freenasUI.services.models import (iSCSITarget,
+                                       iSCSITargetAuthorizedInitiator,
+                                       iSCSITargetExtent, iSCSITargetGroups,
+                                       iSCSITargetPortal, iSCSITargetPortalIP,
+                                       iSCSITargetToExtent, services)
+from freenasUI.sharing.models import (AFP_Share, CIFS_Share, NFS_Share,
+                                      NFS_Share_Path)
 from freenasUI.storage.forms import VolumeAutoImportForm, VolumeMixin
-from freenasUI.storage.models import Disk, Volume, Scrub
+from freenasUI.storage.models import Disk, Scrub, Volume
 from freenasUI.system import models
 from freenasUI.tasks.models import SMARTTest
-from common.ssl import CERT_CHAIN_REGEX
+from ldap import LDAPError
 
 log = logging.getLogger('system.forms')
 WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'
@@ -1472,55 +1447,20 @@ LOADER_VARNAME_FORMAT_RE = \
     re.compile('[a-z][a-z0-9_]+\.*([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
 
 
-class TunableForm(ModelForm):
+class TunableForm(MiddlewareModelForm, ModelForm):
 
     class Meta:
         fields = '__all__'
         model = models.Tunable
 
-    def clean_tun_comment(self):
-        return self.cleaned_data.get('tun_comment').strip()
+    middleware_attr_prefix = "tun_"
+    middleware_attr_schema = "tunable"
+    middleware_plugin = "tunable"
+    is_singletone = False
 
-    def clean_tun_value(self):
-        value = self.cleaned_data.get('tun_value')
-        if '"' in value or "'" in value:
-            raise forms.ValidationError(_('Quotes are not allowed'))
-        return value
-
-    def clean_tun_var(self):
-        value = self.cleaned_data.get('tun_var').strip()
-        qs = models.Tunable.objects.filter(tun_var=value)
-        if self.instance.id:
-            qs = qs.exclude(id=self.instance.id)
-        if qs.exists():
-            raise forms.ValidationError(_(
-                'This variable already exists'
-            ))
-        return value
-
-    def clean(self):
-        cdata = self.cleaned_data
-        value = cdata.get('tun_var')
-        if value:
-            if (
-                cdata.get('tun_type') in ('loader', 'rc') and
-                not LOADER_VARNAME_FORMAT_RE.match(value)
-            ) or (
-                cdata.get('tun_type') == 'sysctl' and
-                not SYSCTL_VARNAME_FORMAT_RE.match(value)
-            ):
-                self.errors['tun_var'] = self.error_class(
-                    [_(SYSCTL_TUNABLE_VARNAME_FORMAT)]
-                )
-                cdata.pop('tun_var', None)
-        return cdata
-
-    def save(self):
-        super(TunableForm, self).save()
-        if self.cleaned_data.get('tun_type') == 'loader':
-            notifier().reload("loader")
-        else:
-            notifier().reload("sysctl")
+    def middleware_clean(self, data):
+        data['type'] = data['type'].upper()
+        return data
 
 
 class ConsulAlertsForm(ModelForm):
