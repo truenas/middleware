@@ -156,7 +156,7 @@ def _clean_zfssize_fields(form, attrs, prefix):
                 cdata[formfield] = '%s%s' % (number, suffix[0])
             try:
                 Decimal(number)
-            except:
+            except Exception:
                 form._errors[formfield] = form.error_class([
                     _("%s is not a valid number") % (number, ),
                 ])
@@ -980,7 +980,7 @@ class AutoImportDecryptForm(Form):
                     keyfile,
                     passphrase=passphrase
                 )
-            except:
+            except Exception:
                 failed.append(disk)
         if failed:
             self._errors['__all__'] = self.error_class([
@@ -1935,7 +1935,7 @@ class MountPointAccessForm(Form):
                 user, group = notifier().mp_get_owner(path)
                 self.fields['mp_user'].initial = user
                 self.fields['mp_group'].initial = group
-            except:
+            except Exception:
                 pass
         self.fields['mp_acl'].widget.attrs['onChange'] = "mpAclChange(this);"
 
@@ -2090,7 +2090,7 @@ class ManualSnapshotForm(Form):
                 ssl_context.verify_mode = ssl.CERT_NONE
 
                 si = connect.SmartConnect(host=obj.hostname, user=obj.username, pwd=obj.get_password(), sslContext=ssl_context)
-            except:
+            except Exception:
                 continue
             content = si.RetrieveContent()
             vm_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
@@ -2879,7 +2879,7 @@ class UnlockPassphraseForm(Form):
             try:
                 with client as c:
                     c.call('failover.call_remote', 'failover.encryption_setkey', [passphrase])
-            except:
+            except Exception:
                 log.warn('Failed to set key on standby node, is it down?', exc_info=True)
             _notifier.failover_force_master()
 

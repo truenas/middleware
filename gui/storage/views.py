@@ -229,7 +229,7 @@ def volumemanager(request):
             continue
         try:
             _n.zpool_parse(vol.vol_name)
-        except:
+        except Exception:
             continue
         extend.append({
             'label': vol.vol_name,
@@ -753,7 +753,7 @@ def zpool_scrub(request, vid):
     volume = models.Volume.objects.get(pk=vid)
     try:
         pool = notifier().zpool_parse(volume.vol_name)
-    except:
+    except Exception:
         raise MiddlewareError(
             _('Pool output could not be parsed. Is the pool imported?')
         )
@@ -919,7 +919,7 @@ def disk_wipe_progress(request, devname):
                 else:
                     try:
                         progress = int(float(received) / float(size) * 100)
-                    except:
+                    except Exception:
                         pass
 
     except Exception as e:
@@ -1096,7 +1096,7 @@ def volume_rekey(request, object_id):
         try:
             with client as c:
                 c.call('failover.call_remote', 'core.ping')
-        except:
+        except Exception:
             standby_offline = True
 
     volume = models.Volume.objects.get(id=object_id)
@@ -1181,7 +1181,7 @@ def volume_upgrade(request, object_id):
     volume = models.Volume.objects.get(pk=object_id)
     try:
         notifier().zpool_version(volume.vol_name)
-    except:
+    except Exception:
         raise MiddlewareError(
             _('Pool output could not be parsed. Is the pool imported?')
         )
@@ -1285,7 +1285,7 @@ def tasks_json(request, dataset=None):
                             Q(task_recursive=True)
                         )
                     break
-            except:
+            except Exception:
                 pass
 
     else:
@@ -1298,7 +1298,7 @@ def tasks_json(request, dataset=None):
                 continue
             try:
                 t[f.name] = str(getattr(task, f.name))
-            except:
+            except Exception:
                 pass
         t['str'] = str(task)
         tasks.append(t)
@@ -1337,7 +1337,7 @@ def tasks_recursive_json(request, dataset=None):
                 continue
             try:
                 t[f.name] = str(getattr(task, f.name))
-            except:
+            except Exception:
                 pass
         t['str'] = str(task)
         tasks.append(t)

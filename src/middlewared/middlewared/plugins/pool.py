@@ -9,7 +9,7 @@ import sysctl
 import bsd
 
 from middlewared.job import JobProgressBuffer
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
 from middlewared.service import (
     filterable, item_method, job, private, CRUDService, ValidationErrors,
 )
