@@ -16,6 +16,8 @@ from freenasUI.support.utils import get_license
 
 from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
 
+from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+
 
 class LicenseStatusAlertSource(ThreadedAlertSource):
     level = AlertLevel.CRITICAL
