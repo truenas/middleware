@@ -764,6 +764,12 @@ class VolumeImportForm(Form):
         widget=forms.RadioSelect(attrs=attrs_dict),
         label=_('File System type'),
     )
+    volume_msdosfs_locale = forms.ChoiceField(
+        label=_("MSDOSFS locale"),
+        choices=(),
+        widget=forms.Select(attrs=attrs_dict),
+        required=False,
+    )
 
     volume_dest_path = PathField(
         label=_("Destination"),
@@ -773,6 +779,11 @@ class VolumeImportForm(Form):
     def __init__(self, *args, **kwargs):
         super(VolumeImportForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
+        with client as c:
+            self.fields['volume_msdosfs_locale'].choices = [('', 'Default')] + [
+                (locale, locale)
+                for locale in c.call('pool.import_disk_msdosfs_locales')
+            ]
 
     def _populate_disk_choices(self):
 

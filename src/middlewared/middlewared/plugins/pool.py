@@ -9,7 +9,7 @@ import sysctl
 import bsd
 
 from middlewared.job import JobProgressBuffer
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str
 from middlewared.service import (
     filterable, item_method, job, private, CRUDService, ValidationErrors,
 )
@@ -35,7 +35,7 @@ async def is_mounted(middleware, path):
     return any(fs.dest == path for fs in mounted)
 
 
-async def mount(device, path, fs_type, options=None):
+async def mount(device, path, fs_type, msdosfs_locale, options):
     options = options or []
 
     if isinstance(device, str):
@@ -52,6 +52,11 @@ async def mount(device, path, fs_type, options=None):
 
     if fs_type == "ntfs":
         executable = "/usr/local/bin/ntfs-3g"
+    elif fs_type == "msdosfs" and msdosfs_locale:
+        executable = "/sbin/mount_msdosfs"
+        arguments.extend(["-L", msdosfs_locale])
+        arguments.extend(sum([["-o", option] for option in options], []))
+        options = []
     else:
         arguments.extend(["-t", fs_type])
 
@@ -245,9 +250,9 @@ class PoolService(CRUDService):
         sysctl.filter('vfs.zfs.resilver_min_time_ms')[0].value = resilver_min_time_ms
         sysctl.filter('vfs.zfs.scan_idle')[0].value = scan_idle
 
-    @accepts(Str('volume'), Str('fs_type'), Str('dst_path'))
+    @accepts(Str('volume'), Str('fs_type'), Str('msdosfs_locale'), Str('dst_path'))
     @job(lock=lambda args: 'volume_import', logs=True)
-    async def import_disk(self, job, volume, fs_type, dst_path):
+    async def import_disk(self, job, volume, fs_type, msdosfs_locale, dst_path):
         job.set_progress(None, description="Mounting")
 
         src = os.path.join('/var/run/importcopy/tmpdir', os.path.relpath(volume, '/'))
@@ -258,8 +263,9 @@ class PoolService(CRUDService):
         try:
             os.makedirs(src)
 
-            async with KernelModuleContextManager({"ntfs": "fuse"}.get(fs_type)):
-                async with MountFsContextManager(self.middleware, volume, src, fs_type, ["ro"]):
+            async with KernelModuleContextManager({"msdosfs": "msdosfs_iconv",
+                                                   "ntfs": "fuse"}.get(fs_type)):
+                async with MountFsContextManager(self.middleware, volume, src, fs_type, msdosfs_locale, ["ro"]):
                     job.set_progress(None, description="Importing")
 
                     line = [
@@ -308,6 +314,14 @@ class PoolService(CRUDService):
                     job.set_progress(100, description="Done", extra="")
         finally:
             os.rmdir(src)
+
+    @accepts()
+    def import_disk_msdosfs_locales(self):
+        return [
+            locale.strip()
+            for locale in subprocess.check_output(["locale", "-a"], encoding="utf-8").split("\n")
+            if locale.strip()
+        ]
 
     """
     These methods are hacks for old UI which supports only one volume import at a time
