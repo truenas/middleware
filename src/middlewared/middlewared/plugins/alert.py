@@ -189,6 +189,10 @@ class AlertService(Service):
                         self.logger.error("Error in alert service %r", alert_service_desc["type"], exc_info=True)
 
             if policy_name == "IMMEDIATELY":
+                for alert in new_alerts:
+                    if alert.mail:
+                        await self.middleware.call("mail.send", alert.mail, job=True)
+
                 if not await self.middleware.call("system.is_freenas"):
                     new_hardware_alerts = [alert for alert in new_alerts if ALERT_SOURCES[alert.source].hardware]
                     if new_hardware_alerts:
@@ -333,6 +337,7 @@ class AlertService(Service):
         for alert in self.__get_all_alerts():
             d = alert.__dict__.copy()
             d["level"] = d["level"].value
+            del d["mail"]
             await self.middleware.call("datastore.insert", "system.alert", d)
 
     def __get_all_alerts(self):

@@ -22,7 +22,7 @@ class AlertLevel(enum.Enum):
 
 class Alert:
     def __init__(self, title=None, args=None, node=None, source=None, key=undefined, datetime=None, level=None,
-                 dismissed=None):
+                 dismissed=None, mail=None):
         self.title = title
         self.args = args
 
@@ -35,6 +35,7 @@ class Alert:
         self.datetime = datetime
         self.level = level
         self.dismissed = dismissed
+        self.mail = mail
 
     def __repr__(self):
         return repr(self.__dict__)
