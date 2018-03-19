@@ -4,6 +4,7 @@ import copy
 from datetime import datetime
 import enum
 import logging
+import os
 import sys
 import time
 import traceback
@@ -185,6 +186,7 @@ class JobsDeque(object):
         if len(self.__dict) > self.maxlen:
             for old_job_id, old_job in self.__dict.items():
                 if old_job.state in (State.SUCCESS, State.FAILED, State.ABORTED):
+                    self.__dict[old_job_id].cleanup()
                     del self.__dict[old_job_id]
                     break
             else:
@@ -222,6 +224,10 @@ class Job(object):
         self.time_finished = None
         self.loop = None
         self.future = None
+
+        self.logs_path = None
+        self.logs_fd = None
+        self.logs_excerpt = None
 
         if self.options["check_pipes"]:
             for pipe in self.options["pipes"]:
@@ -305,6 +311,12 @@ class Job(object):
         This method is supposed to run in a greenlet.
         """
 
+        if self.options["logs"]:
+            logs_dir = os.path.join("/tmp/middlewared/jobs")
+            os.makedirs(logs_dir, exist_ok=True)
+            self.logs_path = os.path.join(logs_dir, f"{self.id}.log")
+            self.logs_fd = open(self.logs_path, "wb")
+
         self.set_state('RUNNING')
         try:
             self.loop = asyncio.get_event_loop()
@@ -316,12 +328,8 @@ class Job(object):
             self.set_state('FAILED')
             self.set_exception(sys.exc_info())
         finally:
-            def close_pipes():
-                if self.pipes.input:
-                    self.pipes.input.r.close()
-                if self.pipes.output:
-                    self.pipes.output.w.close()
-            await self.middleware.run_in_io_thread(close_pipes)
+            await self.__close_logs()
+            await self.__close_pipes()
 
             queue.release_lock(self)
             self._finished.set()
@@ -345,11 +353,49 @@ class Job(object):
         self.set_result(rv)
         self.set_state('SUCCESS')
 
+    async def __close_logs(self):
+        if self.logs_fd:
+            self.logs_fd.close()
+
+            def get_logs_excerpt():
+                head = []
+                tail = []
+                lines = 0
+                with open(self.logs_path, "r", encoding="utf-8", errors="ignore") as f:
+                    for line in f:
+                        if len(head) < 5:
+                            head.append(line)
+
+                        tail.append(line)
+                        tail = tail[-5:]
+
+                        lines += 1
+
+                if lines > 10:
+                    excerpt = "%s[%d more lines]\n%s" % ("".join(head), lines - 10, "".join(tail))
+                else:
+                    excerpt = "".join(head + tail)
+
+                return excerpt
+
+            self.logs_excerpt = await self.middleware.run_in_io_thread(get_logs_excerpt)
+
+    async def __close_pipes(self):
+        def close_pipes():
+            if self.pipes.input:
+                self.pipes.input.r.close()
+            if self.pipes.output:
+                self.pipes.output.w.close()
+
+        await self.middleware.run_in_io_thread(close_pipes)
+
     def __encode__(self):
         return {
             'id': self.id,
             'method': self.method_name,
             'arguments': self.args,
+            'logs_path': self.logs_path,
+            'logs_excerpt': self.logs_excerpt,
             'progress': self.progress,
             'result': self.result,
             'error': self.error,
@@ -373,6 +419,13 @@ class Job(object):
         if subjob.exception:
             raise subjob.exception
         return subjob.result
+
+    def cleanup(self):
+        if self.logs_path:
+            try:
+                os.unlink(self.logs_path)
+            except Exception:
+                pass
 
 
 class JobProgressBuffer:
