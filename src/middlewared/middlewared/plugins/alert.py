@@ -8,7 +8,15 @@ import traceback
 from freenasUI.support.utils import get_license
 from licenselib.license import ContractType
 
-from middlewared.alert.base import *
+from middlewared.alert.base import (
+    AlertLevel,
+    Alert,
+    AlertSource,
+    FilePresenceAlertSource,
+    ThreadedAlertSource,
+    ThreadedAlertService,
+    ProThreadedAlertService
+)
 from middlewared.alert.base import AlertService as _AlertService
 from middlewared.schema import Dict, Str, Bool, Int, accepts, Patch
 from middlewared.service import (
