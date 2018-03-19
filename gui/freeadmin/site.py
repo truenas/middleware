@@ -1,4 +1,3 @@
-import enum
 from functools import update_wrapper
 import hashlib
 import json
@@ -17,8 +16,6 @@ from freenasUI.common.system import get_sw_name, get_sw_year, get_sw_version
 from freenasUI.middleware.client import client
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.options import BaseFreeAdmin
-
-from middlewared.alert.base import AlertLevel
 
 RE_ALERT = re.compile(r'^(?P<status>\w+)\[(?P<msgid>.+?)\]: (?P<message>.+)')
 log = logging.getLogger('freeadmin.site')
@@ -271,6 +268,8 @@ class FreeAdminSite(object):
 
     @never_cache
     def alert_status(self, request):
+        from middlewared.alert.base import AlertLevel
+
         level = "INFO"
 
         with client as c:
