@@ -13,10 +13,12 @@
     {% else %}
         Import of Volume {{ arguments.0 }} Successfully Done
     {% endif %}
-    {% if result %}
+    {% if logs_excerpt %}
         <br>
         <div class="disclosure-title" onclick="disclosureToggle(this)">Import's Rsync Log</div>
-        <div class="disclosure-wrapper"><div class="disclosure-content">{{ result|linebreaks }}</div></div>
+        <div class="disclosure-wrapper"><div class="disclosure-content">{{ logs_excerpt|linebreaks }}
+
+See full log file at {{ logs_path }}</div></div>
     {% endif %}
 {% endblock %}
 <br />
