@@ -35,7 +35,7 @@ async def is_mounted(middleware, path):
     return any(fs.dest == path for fs in mounted)
 
 
-async def mount(device, path, fs_type, msdosfs_locale, options):
+async def mount(device, path, fs_type, fs_options, options):
     options = options or []
 
     if isinstance(device, str):
@@ -52,9 +52,10 @@ async def mount(device, path, fs_type, msdosfs_locale, options):
 
     if fs_type == "ntfs":
         executable = "/usr/local/bin/ntfs-3g"
-    elif fs_type == "msdosfs" and msdosfs_locale:
+    elif fs_type == "msdosfs" and fs_options:
         executable = "/sbin/mount_msdosfs"
-        arguments.extend(["-L", msdosfs_locale])
+        if "locale" in fs_options:
+            arguments.extend(["-L", fs_options["locale"]])
         arguments.extend(sum([["-o", option] for option in options], []))
         options = []
     else:
@@ -250,9 +251,9 @@ class PoolService(CRUDService):
         sysctl.filter('vfs.zfs.resilver_min_time_ms')[0].value = resilver_min_time_ms
         sysctl.filter('vfs.zfs.scan_idle')[0].value = scan_idle
 
-    @accepts(Str('volume'), Str('fs_type'), Str('msdosfs_locale'), Str('dst_path'))
+    @accepts(Str('volume'), Str('fs_type'), Dict('fs_options', additional_attrs=True), Str('dst_path'))
     @job(lock=lambda args: 'volume_import', logs=True)
-    async def import_disk(self, job, volume, fs_type, msdosfs_locale, dst_path):
+    async def import_disk(self, job, volume, fs_type, fs_options, dst_path):
         job.set_progress(None, description="Mounting")
 
         src = os.path.join('/var/run/importcopy/tmpdir', os.path.relpath(volume, '/'))
@@ -265,7 +266,7 @@ class PoolService(CRUDService):
 
             async with KernelModuleContextManager({"msdosfs": "msdosfs_iconv",
                                                    "ntfs": "fuse"}.get(fs_type)):
-                async with MountFsContextManager(self.middleware, volume, src, fs_type, msdosfs_locale, ["ro"]):
+                async with MountFsContextManager(self.middleware, volume, src, fs_type, fs_options, ["ro"]):
                     job.set_progress(None, description="Importing")
 
                     line = [

@@ -312,14 +312,14 @@ def volimport(request):
             form.done(request)
             with client as c:
                 if form.cleaned_data.get('volume_fstype').lower() == 'msdosfs':
-                    msdosfs_locale = form.cleaned_data.get('volume_msdosfs_locale')
+                    fs_options = {'locale': form.cleaned_data.get('volume_msdosfs_locale')}
                 else:
-                    msdosfs_locale = ''
+                    fs_options = {}
                 c.call(
                     'pool.import_disk',
                     "/dev/{0}".format(form.cleaned_data.get('volume_disks')),
                     form.cleaned_data.get('volume_fstype').lower(),
-                    msdosfs_locale,
+                    fs_options,
                     form.cleaned_data.get('volume_dest_path'),
                 )
             return render(request, 'storage/import_progress.html')
