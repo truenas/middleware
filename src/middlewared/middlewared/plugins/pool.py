@@ -246,7 +246,7 @@ class PoolService(CRUDService):
         sysctl.filter('vfs.zfs.scan_idle')[0].value = scan_idle
 
     @accepts(Str('volume'), Str('fs_type'), Str('dst_path'))
-    @job(lock=lambda args: 'volume_import')
+    @job(lock=lambda args: 'volume_import', logs=True)
     async def import_disk(self, job, volume, fs_type, dst_path):
         job.set_progress(None, description="Mounting")
 
@@ -274,13 +274,12 @@ class PoolService(CRUDService):
                     rsync_proc = await Popen(
                         line, stdout=subprocess.PIPE, bufsize=0, preexec_fn=os.setsid,
                     )
-                    stdout = b""
                     try:
                         progress_buffer = JobProgressBuffer(job)
                         while True:
                             line = await rsync_proc.stdout.readline()
+                            job.logs_fd.write(line)
                             if line:
-                                stdout += line
                                 try:
                                     proc_output = line.decode("utf-8", "ignore").strip()
                                     prog_out = proc_output.split(' ')
@@ -307,7 +306,6 @@ class PoolService(CRUDService):
                         raise
 
                     job.set_progress(100, description="Done", extra="")
-                    return stdout.decode("utf-8", "ignore")
         finally:
             os.rmdir(src)
 
