@@ -14,7 +14,6 @@ import tempfile
 import time
 import logging
 import logging.config
-from dns import resolver
 
 sys.path.extend([
     '/usr/local/www',
@@ -201,13 +200,11 @@ def smb4_set_SID(client, role):
         else:
             if database_SID != system_SID:
                 if not set_sid_func(database_SID):
-                    print(("Unable to set SID to "
-                                          "%s" % database_SID), file=sys.stderr)
+                    print(("Unable to set SID to %s" % database_SID), file=sys.stderr)
 
     else:
         if not system_SID:
-            print(("Unable to figure out SID, things are "
-                                  "seriously jacked!"), file=sys.stderr)
+            print(("Unable to figure out SID, things are seriously jacked!"), file=sys.stderr)
 
         if not set_sid_func(system_SID):
             print("Unable to set SID to %s" % system_SID, file=sys.stderr)
@@ -777,6 +774,8 @@ def add_ldap_conf(client, smb4_conf):
 
 
 def add_activedirectory_conf(client, smb4_conf):
+    cachedir = "/var/tmp/.cache/.samba"
+
     try:
         ad = Struct(client.call('datastore.query', 'directoryservice.ActiveDirectory', None, {'get': True}))
         ad.ds_type = 1  # FIXME: DS_TYPE_ACTIVEDIRECTORY = 1
@@ -937,11 +936,11 @@ def generate_smb4_conf(client, smb4_conf, role):
         confset1(smb4_conf, "username map = /usr/local/etc/smbusers")
 
     server_min_protocol = fs().services.smb.config.server_min_protocol
-    if server_min_protocol != 'NONE': 
+    if server_min_protocol != 'NONE':
         confset2(smb4_conf, "server min protocol = %s", server_min_protocol)
 
     server_max_protocol = fs().services.smb.config.server_max_protocol
-    if server_max_protocol != 'NONE': 
+    if server_max_protocol != 'NONE':
         confset2(smb4_conf, "server max protocol = %s", server_max_protocol)
 
     if cifs.bindip:
@@ -988,6 +987,7 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset1(smb4_conf, "oplocks = yes")
     confset1(smb4_conf, "deadtime = 15")
     confset1(smb4_conf, "max log size = 51200")
+    confset1(smb4_conf, "private dir = /root/samba/private")
 
     confset2(smb4_conf, "max open files = %d",
              int(get_sysctl('kern.maxfilesperproc')) - 25)
@@ -1301,10 +1301,13 @@ def smb4_unlink(dir):
 
 def smb4_setup(client):
     statedir = "/var/db/samba4"
+    privatedir = "/root/samba/private"
+
+    if not os.access(privatedir, os.F_OK):
+        smb4_mkdir(privatedir)
+        os.chmod(privatedir, 0o700)
 
     smb4_mkdir("/var/run/samba")
-    smb4_mkdir("/var/db/samba")
-
     smb4_mkdir("/var/run/samba4")
 
     smb4_mkdir("/var/log/samba4")
@@ -1347,8 +1350,7 @@ def smb4_setup(client):
         try:
             os.symlink(basename_realpath, statedir)
         except Exception as e:
-            print(("Unable to create symlink '%s' -> '%s' (%s)"
-                                  % (basename_realpath, statedir, e)), file=sys.stderr)
+            print(("Unable to create symlink '%s' -> '%s' (%s)" % (basename_realpath, statedir, e)), file=sys.stderr)
             sys.exit(1)
 
     if os.path.islink(statedir) and not os.path.exists(statedir_realpath):
@@ -1672,6 +1674,7 @@ def main():
 
     if role == 'member' and client.call('notifier.common', 'system', 'activedirectory_enabled') and idmap_backend_rfc2307(client):
         set_idmap_rfc2307_secret(client)
+
 
 if __name__ == '__main__':
     main()
