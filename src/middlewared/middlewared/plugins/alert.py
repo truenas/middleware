@@ -199,7 +199,7 @@ class AlertService(Service):
             if policy_name == "IMMEDIATELY":
                 for alert in new_alerts:
                     if alert.mail:
-                        await self.middleware.call("mail.send", alert.mail, job=True)
+                        await self.middleware.call("mail.send", alert.mail)
 
                 if not await self.middleware.call("system.is_freenas"):
                     new_hardware_alerts = [alert for alert in new_alerts if ALERT_SOURCES[alert.source].hardware]
