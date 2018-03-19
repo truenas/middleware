@@ -100,7 +100,7 @@ class AlertService(Service):
         services_dirs.insert(0, main_services_dir)
         for services_dir in services_dirs:
             for module in load_modules(services_dir):
-                for cls in load_classes(module, _AlertService, (ThreadedAlertService,)):
+                for cls in load_classes(module, _AlertService, (ThreadedAlertService, ProThreadedAlertService)):
                     ALERT_SERVICES_FACTORIES[cls.name()] = cls
 
     @private
