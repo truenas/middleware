@@ -280,7 +280,7 @@ class PoolService(CRUDService):
                         dst_path
                     ]
                     rsync_proc = await Popen(
-                        line, stdout=subprocess.PIPE, bufsize=0, preexec_fn=os.setsid,
+                        line, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0, preexec_fn=os.setsid,
                     )
                     try:
                         progress_buffer = JobProgressBuffer(job)
