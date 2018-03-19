@@ -3,6 +3,7 @@ import errno
 import logging
 from datetime import datetime
 import os
+import re
 import subprocess
 import sysctl
 
@@ -282,17 +283,16 @@ class PoolService(CRUDService):
                             if line:
                                 stdout += line
                                 try:
-                                    proc_output = line.decode("utf-8", "ignore").strip()
-                                    prog_out = proc_output.split(' ')
-                                    progress = [x for x in prog_out if '%' in x]
-                                    if len(progress):
-                                        progress_buffer.set_progress(int(progress[0][:-1]))
-                                    elif not proc_output.endswith('/'):
+                                    line = line.decode("utf-8", "ignore").strip()
+                                    bits = re.split("\s+", line)
+                                    if len(bits) == 6 and bits[1].endswith("%") and bits[1][:-1].isdigit():
+                                        progress_buffer.set_progress(int(bits[1][:-1]))
+                                    elif not line.endswith('/'):
                                         if (
-                                            proc_output not in ['sending incremental file list'] and
-                                            'xfr#' not in proc_output
+                                            line not in ['sending incremental file list'] and
+                                            'xfr#' not in line
                                         ):
-                                            progress_buffer.set_progress(None, extra=proc_output)
+                                            progress_buffer.set_progress(None, extra=line)
                                 except Exception:
                                     logger.warning('Parsing error in rsync task', exc_info=True)
                             else:
