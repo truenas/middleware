@@ -22,7 +22,7 @@ FAILOVER_JSON = '/tmp/failover.json'
 
 class FailoverCheckAlertSource(ThreadedAlertSource):
     level = AlertLevel.CRITICAL
-    title = ""
+    title = "Failover is not working"
 
     def check_sync(self):
         alerts = []
