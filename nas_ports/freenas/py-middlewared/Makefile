@@ -31,6 +31,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py \
 		${PYTHON_PKGNAMEPREFIX}zeroconf>0:net/py-zeroconf \
 		${PYTHON_PKGNAMEPREFIX}google-cloud-storage>0:www/py-google-cloud-storage \
 		${PYTHON_PKGNAMEPREFIX}azure-storage>0:www/py-azure-storage \
+		${PYTHON_PKGNAMEPREFIX}influxdb>0:databases/py-influxdb \
 		${PYTHON_PKGNAMEPREFIX}asyncssh>0:security/py-asyncssh \
 		rclone>0:net/rclone \
 		swagger-ui>0:freenas/swagger-ui

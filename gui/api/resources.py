@@ -24,6 +24,7 @@
 #
 #####################################################################
 import base64
+import calendar
 import errno
 import json
 import logging
@@ -96,7 +97,6 @@ from freenasUI.storage.forms import (
     ZFSDatasetEditForm
 )
 from freenasUI.storage.models import Disk, VMWarePlugin
-from freenasUI.system.alert import alert_node, alertPlugins, Alert
 from freenasUI.system.forms import (
     BootEnvAddForm,
     BootEnvRenameForm,
@@ -110,7 +110,7 @@ from freenasUI.system.forms import (
     ManualUpdateUploadForm,
     ManualUpdateWizard,
 )
-from freenasUI.system.models import Update as mUpdate, Alert as mAlert
+from freenasUI.system.models import Update as mUpdate
 from freenasUI.system.utils import BootEnv, debug_generate, factory_restore
 from freenasUI.system.views import restart_httpd, restart_httpd_all
 from middlewared.client import ClientException
@@ -162,21 +162,14 @@ class NestedMixin(object):
 
 class AlertResource(DojoResource):
 
-    id = fields.CharField(attribute='_id')
-    level = fields.CharField(attribute='_level')
-    message = fields.CharField(attribute='_message')
-    dismissed = fields.BooleanField(attribute='_dismiss')
-    timestamp = fields.IntegerField(attribute='_timestamp', null=True)
-
     class Meta:
         allowed_methods = ['get']
-        object_class = Alert
         resource_name = 'system/alert'
 
     def prepend_urls(self):
         return [
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/dismiss%s$" % (
+                r"^(?P<resource_name>%s)/dismiss%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('dismiss'),
@@ -185,7 +178,11 @@ class AlertResource(DojoResource):
         ]
 
     def get_list(self, request, **kwargs):
-        results = alertPlugins.run()
+        with client as c:
+            results = c.call("alert.list")
+
+        for alert in results:
+            alert["timestamp"] = calendar.timegm(alert["datetime"].timetuple())
 
         if (
             'timestamp' in request.GET or
@@ -194,17 +191,17 @@ class AlertResource(DojoResource):
         ):
             for res in list(results):
                 eq = request.GET.get('timestamp')
-                if eq and int(eq) != res.getTimestamp():
+                if eq and int(eq) != res["timestamp"]:
                     results.remove(res)
                     continue
 
                 gte = request.GET.get('timestamp__gte')
-                if gte and int(gte) > res.getTimestamp():
+                if gte and int(gte) > res["timestamp"]:
                     results.remove(res)
                     continue
 
                 lte = request.GET.get('timestamp__lte')
-                if lte and int(lte) < res.getTimestamp():
+                if lte and int(lte) < res["timestamp"]:
                     results.remove(res)
                     continue
 
@@ -217,23 +214,20 @@ class AlertResource(DojoResource):
             collection_name=self._meta.collection_name,
         )
         to_be_serialized = paginator.page()
-        # Dehydrate the bundles in preparation for serialization.
-        bundles = []
-
-        for obj in to_be_serialized[self._meta.collection_name]:
-            bundle = self.build_bundle(obj=obj, request=request)
-            bundles.append(self.full_dehydrate(bundle))
-
-        length = len(bundles)
-        to_be_serialized[self._meta.collection_name] = bundles
-        to_be_serialized = self.alter_list_data_to_serialize(
-            request,
-            to_be_serialized
-        )
+        to_be_serialized["objects"] = [
+            {
+                "id": alert["id"],
+                "level": alert["level"],
+                "message": alert["formatted"],
+                "dismissed": alert["dismissed"],
+                "timestamp": alert["timestamp"],
+            }
+            for alert in to_be_serialized["objects"]
+        ]
         response = self.create_response(request, to_be_serialized)
         response['Content-Range'] = 'items %d-%d/%d' % (
             paginator.offset,
-            paginator.offset + length - 1,
+            paginator.offset + len(to_be_serialized) - 1,
             len(results)
         )
         return response
@@ -252,21 +246,11 @@ class AlertResource(DojoResource):
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
 
-        alert = None
-        for i in alertPlugins.run():
-            if i.getId() == kwargs['pk']:
-                alert = i
-                break
-        if alert is None:
-            raise ImmediateHttpResponse(response=HttpNotFound())
-
-        try:
-            alertobj = mAlert.objects.get(node=alert_node(), message_id=kwargs['pk'])
-            if dismiss is False:
-                alertobj.delete()
-        except mAlert.DoesNotExist:
-            if dismiss is True:
-                mAlert.objects.create(node=alert_node(), message_id=kwargs['pk'])
+        with client as c:
+            if dismiss["dismiss"]:
+                c.call("alert.dismiss", dismiss["id"])
+            else:
+                c.call("alert.restore", dismiss["id"])
 
         return HttpResponse(status=202)
 

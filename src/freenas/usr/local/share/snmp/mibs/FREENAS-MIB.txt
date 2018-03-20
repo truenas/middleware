@@ -39,9 +39,9 @@ AlertLevelType ::= TEXTUAL-CONVENTION
     DESCRIPTION
         ""
     SYNTAX  INTEGER {
-                ok(0),
-                warn(30),
-                crit(50)
+                info(20),
+                warning(30),
+                critical(50)
                 }
 
 zfs     OBJECT IDENTIFIER ::= { freeNas 1 }

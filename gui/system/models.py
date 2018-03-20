@@ -60,21 +60,6 @@ def time_now():
     return int(time.time())
 
 
-class Alert(Model):
-    """
-    Model to keep track of dismissed alerts.
-    """
-    node = models.CharField(default='A', max_length=100)
-    message_id = models.CharField(
-        max_length=100,
-    )
-
-    class Meta:
-        unique_together = (
-            ('node', 'message_id'),
-        )
-
-
 class Settings(Model):
     stg_guiprotocol = models.CharField(
         max_length=120,
@@ -508,15 +493,51 @@ class Tunable(Model):
         icon_view = "ViewTunableIcon"
 
 
-class ConsulAlerts(Model):
+class Alert(Model):
+    node = models.CharField(default='A', max_length=100)
+    source = models.TextField()
+    key = models.TextField()
+    datetime = models.DateTimeField()
+    level = models.IntegerField()
+    title = models.TextField()
+    args = DictField()
+    dismissed = models.BooleanField()
 
-    consulalert_type = models.CharField(
-        verbose_name=_('Service Name'),
+    class Meta:
+        unique_together = (
+            ('node', 'source', 'key'),
+        )
+
+
+class AlertDefaultSettings(Model):
+    settings = DictField(
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = _("Alerts")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = "AlertServiceIcon"
+        icon_object = "AlertServiceIcon"
+        icon_view = "AlertServiceIcon"
+        icon_add = "AlertServiceIcon"
+
+
+class AlertService(Model):
+    name = models.CharField(
+        max_length=120,
+        verbose_name=_("Name"),
+        help_text=_("Name to identify this alert service"),
+    )
+    type = models.CharField(
+        verbose_name=_("Type"),
         max_length=20,
-        choices=choices.CONSULALERTS_TYPES,
-        default='AWS-SNS',
+        default='Mail',
     )
     attributes = DictField(
+        blank=True,
         editable=False,
         verbose_name=_("Attributes"),
     )
@@ -524,25 +545,30 @@ class ConsulAlerts(Model):
         verbose_name=_("Enabled"),
         default=True,
     )
+    settings = DictField(
+        blank=True,
+        verbose_name=_("Settings"),
+    )
 
     class Meta:
         verbose_name = _("Alert Service")
         verbose_name_plural = _("Alert Services")
-        ordering = ["consulalert_type"]
+        ordering = ["type"]
 
     class FreeAdmin:
-        icon_model = "ConsulAlertsIcon"
-        icon_object = "ConsulAlertsIcon"
-        icon_add = "AddConsulAlertsIcon"
-        icon_view = "ViewConsulAlertsIcon"
+        icon_model = "AlertServiceIcon"
+        icon_object = "AlertServiceIcon"
+        icon_add = "AddAlertServiceIcon"
+        icon_view = "ViewAlertServiceIcon"
 
         exclude_fields = (
             'attributes',
+            'settings',
             'id',
         )
 
     def __str__(self):
-        return self.consulalert_type
+        return self.name
 
 
 class SystemDataset(Model):
