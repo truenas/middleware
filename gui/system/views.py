@@ -1089,6 +1089,7 @@ def debug(request):
 
     _n = notifier()
     if request.method == 'GET':
+        DEBUG_THREAD = None
         if not _n.is_freenas() and _n.failover_licensed():
             try:
                 with client as c:
