@@ -6,7 +6,7 @@ from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
 from .schema import ResolverError, Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
-from .utils import start_daemon_thread
+from .utils import start_daemon_thread, load_modules, load_classes
 from .worker import ProcessPoolExecutor, main_worker
 from aiohttp import web
 from aiohttp_wsgi import WSGIHandler
@@ -18,7 +18,6 @@ import binascii
 import concurrent.futures
 import errno
 import functools
-import imp
 import inspect
 import linecache
 import multiprocessing
@@ -656,11 +655,11 @@ class ShellApplication(object):
 
 class Middleware(object):
 
-    def __init__(self, loop_monitor=True, plugins_dirs=None, debug_level=None):
+    def __init__(self, loop_monitor=True, overlay_dirs=None, debug_level=None):
         self.logger = logger.Logger('middlewared', debug_level).getLogger()
         self.crash_reporting = logger.CrashReporting()
         self.loop_monitor = loop_monitor
-        self.plugins_dirs = plugins_dirs or []
+        self.overlay_dirs = overlay_dirs or []
         self.__loop = None
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
@@ -688,7 +687,7 @@ class Middleware(object):
             os.path.dirname(os.path.realpath(__file__)),
             'plugins',
         )
-        plugins_dirs = list(self.plugins_dirs)
+        plugins_dirs = [os.path.join(overlay_dir, 'plugins') for overlay_dir in self.overlay_dirs]
         plugins_dirs.insert(0, main_plugins_dir)
 
         self.logger.debug('Loading plugins from {0}'.format(','.join(plugins_dirs)))
@@ -699,25 +698,9 @@ class Middleware(object):
             if not os.path.exists(plugins_dir):
                 raise ValueError(f'plugins dir not found: {plugins_dir}')
 
-            for f in os.listdir(plugins_dir):
-                if not f.endswith('.py'):
-                    continue
-                f = f[:-3]
-                fp, pathname, description = imp.find_module(f, [plugins_dir])
-                try:
-                    mod = imp.load_module(f, fp, pathname, description)
-                finally:
-                    if fp:
-                        fp.close()
-
-                for attr in dir(mod):
-                    attr = getattr(mod, attr)
-                    if not inspect.isclass(attr):
-                        continue
-                    if attr in (Service, CRUDService, ConfigService, SystemServiceService):
-                        continue
-                    if issubclass(attr, Service):
-                        self.add_service(attr(self))
+            for mod in load_modules(plugins_dir):
+                for cls in load_classes(mod, Service, (ConfigService, CRUDService, SystemServiceService)):
+                    self.add_service(cls(self))
 
                 if hasattr(mod, 'setup'):
                     setup_funcs.append(mod.setup)
@@ -1132,7 +1115,7 @@ def main():
     parser.add_argument('restart', nargs='?')
     parser.add_argument('--pidfile', '-P', action='store_true')
     parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
-    parser.add_argument('--plugins-dirs', '-p', action='append')
+    parser.add_argument('--overlay-dirs', '-o', action='append')
     parser.add_argument('--debug-level', choices=[
         'TRACE',
         'DEBUG',
@@ -1179,7 +1162,7 @@ def main():
 
     Middleware(
         loop_monitor=not args.disable_loop_monitor,
-        plugins_dirs=args.plugins_dirs,
+        overlay_dirs=args.overlay_dirs,
         debug_level=args.debug_level,
     ).run()
 

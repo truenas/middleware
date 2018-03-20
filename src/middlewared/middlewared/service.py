@@ -471,7 +471,7 @@ class CoreService(Service):
                 sys.stderr = handler.stream
             try:
                 stream.close()
-            except:
+            except Exception:
                 pass
 
     @private

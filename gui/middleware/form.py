@@ -1,5 +1,9 @@
+import json
+
+from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Model
 
+from freenasUI.freeadmin.models.fields import DictField
 from freenasUI.middleware.client import client, ClientException
 from freenasUI.services.exceptions import ServiceFailed
 
@@ -52,7 +56,7 @@ class MiddlewareModelForm:
 
     def middleware_prepare(self):
         data = {
-            k[len(self.middleware_attr_prefix):]: v.id if isinstance(v, Model) else v
+            k[len(self.middleware_attr_prefix):]: self.__middleware_prepare_value(k, v)
             for k, v in self.cleaned_data.items()
             if (k.startswith(self.middleware_attr_prefix) and
                 k[len(self.middleware_attr_prefix):] not in self.middleware_exclude_fields)
@@ -61,6 +65,20 @@ class MiddlewareModelForm:
         data = self.middleware_clean(data)
 
         return data
+
+    def __middleware_prepare_value(self, k, v):
+        if isinstance(v, Model):
+            return v.id
+
+        try:
+            field = self.instance._meta.get_field(k)
+        except FieldDoesNotExist:
+            pass
+        else:
+            if isinstance(field, DictField):
+                return json.loads(v)
+
+        return v
 
     def __save(self, *args, **kwargs):
         data = self.middleware_prepare()

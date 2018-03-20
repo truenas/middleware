@@ -1,4 +1,7 @@
 import asyncio
+import imp
+import inspect
+import os
 import sys
 import subprocess
 import threading
@@ -232,3 +235,31 @@ class cache_with_autorefresh(object):
             return self.cached_return
 
         return wrapper
+
+
+def load_modules(directory):
+    modules = []
+    for f in os.listdir(directory):
+        if not f.endswith('.py'):
+            continue
+        f = f[:-3]
+        fp, pathname, description = imp.find_module(f, [directory])
+        try:
+            modules.append(imp.load_module(f, fp, pathname, description))
+        finally:
+            if fp:
+                fp.close()
+
+    return modules
+
+
+def load_classes(module, base, blacklist):
+    classes = []
+    for attr in dir(module):
+        attr = getattr(module, attr)
+        if inspect.isclass(attr):
+            if issubclass(attr, base):
+                if attr is not base and attr not in blacklist:
+                    classes.append(attr)
+
+    return classes

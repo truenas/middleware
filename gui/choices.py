@@ -1010,17 +1010,6 @@ TUNABLE_TYPES = (
     ('sysctl', _('Sysctl')),
 )
 
-CONSULALERTS_TYPES = (
-    ('AWSSNS', _('AWS-SNS')),
-    ('HipChat', _('HipChat')),
-    ('InfluxDB', _('InfluxDB')),
-    ('Mattermost', _('Mattermost')),
-    ('OpsGenie', _('OpsGenie')),
-    ('PagerDuty', _('PagerDuty')),
-    ('Slack', _('Slack')),
-    ('VictorOps', _('VictorOps')),
-)
-
 CERT_TYPE_CA_CHOICES = (
     ('ca', _('Import an existing Certificate Authority')),
     ('internal_ca', _('Create an internal Certificate Authority')),

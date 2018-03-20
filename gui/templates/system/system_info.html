@@ -93,7 +93,7 @@
         <th>{% trans "Load Average" %}</th>
         <td class="descr">{{ local.loadavg }}</td>
     </tr>
-    {% if local.system_manufacturer == 'iXsystems' %}
+    {% if local.system_manufacturer|lower == 'ixsystems' %}
     <tr>
         <th>{% trans "System Serial" %}</th>
         <td class="descr">{{ local.system_serial }}</td>

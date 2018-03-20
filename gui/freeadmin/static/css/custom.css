@@ -977,18 +977,18 @@ table.grid tr {
     width:16px;
     height:16px;
 }
-.AddConsulAlertsIcon {
-    background-image:url('/legacy/static/images/ui/tree/add_consulalert.png');
+.AddAlertServiceIcon {
+    background-image:url('/legacy/static/images/ui/tree/add_alertservice.png');
     width:16px;
     height:16px;
 }
-.ViewConsulAlertsIcon {
-    background-image:url('/legacy/static/images/ui/tree/view_consulalert.png');
+.ViewAlertServiceIcon {
+    background-image:url('/legacy/static/images/ui/tree/view_alertservice.png');
     width:16px;
     height:16px;
 }
-.ConsulAlertsIcon {
-    background-image:url('/legacy/static/images/ui/tree/consulalert.png');
+.AlertServiceIcon {
+    background-image:url('/legacy/static/images/ui/tree/alertservice.png');
     width:16px;
     height:16px;
 }

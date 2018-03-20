@@ -1,6 +1,6 @@
 from datetime import datetime
 from middlewared.schema import accepts, Dict, Int
-from middlewared.service import no_auth_required, job, Service
+from middlewared.service import no_auth_required, job, private, Service
 from middlewared.utils import Popen, sw_version
 
 import os
@@ -57,10 +57,7 @@ class SystemService(Service):
             shell=True,
         )).communicate())[0].decode().strip()
 
-        serial = (await(await Popen(
-            ['dmidecode', '-s', 'system-serial-number'],
-            stdout=subprocess.PIPE,
-        )).communicate())[0].decode().strip() or None
+        serial = await self._system_serial()
 
         product = (await(await Popen(
             ['dmidecode', '-s', 'system-product-name'],
@@ -100,6 +97,13 @@ class SystemService(Service):
             'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
             'system_manufacturer': manufacturer,
         }
+
+    @private
+    async def _system_serial(self):
+        return (await(await Popen(
+            ['dmidecode', '-s', 'system-serial-number'],
+            stdout=subprocess.PIPE,
+        )).communicate())[0].decode().strip() or None
 
     @accepts(Dict('system-reboot', Int('delay', required=False), required=False))
     @job()

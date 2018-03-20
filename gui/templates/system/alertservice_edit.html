@@ -1,0 +1,25 @@
+{% extends "freeadmin/generic_model_edit.html" %}
+{% block post_form %}
+{{ block.super }}
+<script type="dojo/method">
+addToStack(function() {
+    alertServiceTypeToggle();
+});
+</script>
+{% endblock %}
+
+{% block buttons_extra %}
+<button id="btn_Fake" data-dojo-type="dijit.form.Button"type="button">
+<script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+    form = getForm(this);
+    doSubmit({
+        form: form,
+        event: evt,
+        url: '{{ request.path }}',
+        extraKey: "send_test_alert",
+        extraValue: "1",
+        });
+</script>
+{% trans "Send Test Alert" %}
+</button>
+{% endblock %}

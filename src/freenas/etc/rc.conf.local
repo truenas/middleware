@@ -629,7 +629,7 @@ _gen_conf()
 			echo "collectd_enable=\"YES\""
 		fi
 
-		echo "middlewared_plugins_dirs=\"/usr/local/lib/middlewared_truenas/plugins\""
+		echo "middlewared_overlay_dirs=\"/usr/local/lib/middlewared_truenas\""
 	else
 		echo "collectd_enable=\"YES\""
 		echo "failover_enable=\"NO\""

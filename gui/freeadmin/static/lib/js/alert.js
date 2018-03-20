@@ -59,15 +59,15 @@ require([
                 if(data == _alert_status)
                     return true;
                 _alert_status = data;
-                if(data == 'OK') {
+                if(data == 'INFO') {
                     domClass.remove(alertdiv, ["alert_crit", "alert_warn"]);
                     domClass.add(alertdiv, "alert_ok");
                     alerttext.innerHTML = gettext('OK');
-                } else if(data == 'WARN') {
+                } else if(data == 'WARNING') {
                     domClass.remove(alertdiv, ["alert_crit", "alert_ok"]);
                     domClass.add(alertdiv, "alert_warn");
                     alerttext.innerHTML = gettext('Warning');
-                } else if(data == 'CRIT') {
+                } else if(data == 'CRITICAL') {
                     domClass.remove(alertdiv, ["alert_warn", "alert_ok"]);
                     domClass.add(alertdiv, "alert_crit");
                     alerttext.innerHTML = gettext('Critical');
