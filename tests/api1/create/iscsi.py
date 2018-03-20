@@ -36,11 +36,16 @@ class create_iscsi_test(unittest.TestCase):
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     @classmethod
     def setUpClass(inst):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         payload = {"srv_enable": False}
         PUT("/services/services/iscsitarget/", payload)
-        BSD_TEST("iscsictl -R -a")
-        BSD_TEST('umount -f "%s" &>/dev/null' % MOUNTPOINT)
-        BSD_TEST('rm -rf "%s" &>/dev/null' % MOUNTPOINT)
+        BSD_TEST("iscsictl -R -a", username, password, host)
+        BSD_TEST('umount -f "%s" &>/dev/null' % MOUNTPOINT,
+                 username, password, host)
+        BSD_TEST('rm -rf "%s" &>/dev/null' % MOUNTPOINT,
+                 username, password, host)
 
     # Add iSCSI initator
     def test_01_Add_iSCSI_initiator(self):
@@ -100,13 +105,19 @@ class create_iscsi_test(unittest.TestCase):
     # Now connect to iSCSI target
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_09_Connecting_to_iSCSI_target(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'iscsictl -A -p %s:3620 -t %s' % (ip, TARGET_NAME)
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         while True:
-            BSD_TEST('iscsictl -L') is True
+            BSD_TEST('iscsictl -L', username, password, host) is True
             state = 'cat /tmp/.bsdCmdTestStdOut | '
             state += 'awk \'$2 == "%s:3620" {print $3}\'' % ip
             iscsi_state = return_output(state)
@@ -121,49 +132,86 @@ class create_iscsi_test(unittest.TestCase):
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_11_Format_the_target_volume(self):
-        assert BSD_TEST('newfs "/dev/%s"' % DEVICE_NAME) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('newfs "/dev/%s"' % DEVICE_NAME,
+                        username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_12_Creating_iSCSI_mountpoint(self):
-        assert BSD_TEST('mkdir -p "%s"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('mkdir -p "%s"' % MOUNTPOINT,
+                        username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_13_Mount_the_target_volume(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'mount "/dev/%s" "%s"' % (DEVICE_NAME, MOUNTPOINT)
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd,
+                        username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_14_Creating_file(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'touch "%s/testfile"' % MOUNTPOINT
         # The line under doesn't make sence
         # "umount '${MOUNTPOINT}'; rmdir '${MOUNTPOINT}'"
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_15_Moving_file(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_16_Copying_file(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_17_Deleting_file(self):
-        assert BSD_TEST('rm "%s/testfile2"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('rm "%s/testfile2"' % MOUNTPOINT,
+                        username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_18_Unmounting_iSCSI_volume(self):
-        assert BSD_TEST('umount "%s"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('umount "%s"' % MOUNTPOINT,
+                        username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_19_Removing_iSCSI_volume_mountpoint(self):
-        assert BSD_TEST('rm -rf "%s"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('rm -rf "%s"' % MOUNTPOINT,
+                        username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_20_Disconnect_all_targets(self):
-        assert BSD_TEST('iscsictl -R -t %s' % TARGET_NAME) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('iscsictl -R -t %s' % TARGET_NAME,
+                        username, password, host) is True
 
     # Disable the iSCSI service
     def test_21_Disable_iSCSI_service(self):

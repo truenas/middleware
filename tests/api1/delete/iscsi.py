@@ -32,11 +32,14 @@ class delete_iscsi_test(unittest.TestCase):
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     @classmethod
     def setUpClass(inst):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         PUT("/services/services/iscsitarget/", {"srv_enable": False})
         BSD_TEST("iscsictl -R -t %s" % TARGET_NAME)
         cmd = 'umount -f "%s" &>/dev/null ; ' % MOUNTPOINT
         cmd += 'rmdir "%s" &>/dev/null' % MOUNTPOINT
-        BSD_TEST(cmd)
+        BSD_TEST(cmd, username, password, host)
 
     # Remove iSCSI target
     def test_01_Delete_iSCSI_target(self):
