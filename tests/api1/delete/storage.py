@@ -12,8 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE
 
-TestName = "delete storage"
-
 
 class delete_storage_test(unittest.TestCase):
 

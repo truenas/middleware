@@ -19,8 +19,6 @@ except ImportError:
 else:
     RunTest = True
 
-TestName = "create jails"
-
 Reason = "JAILIP, JAILGW and JAILNETMASK are not in ixautomation.conf"
 
 

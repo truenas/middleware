@@ -10,8 +10,6 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET_OUTPUT
-RunTest = True
-TestName = "create cronjob"
 
 
 class create_cronjob_test(unittest.TestCase):

@@ -12,8 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST
 
-TestName = "update bootenv"
-
 
 class update_bootenv_test(unittest.TestCase):
 

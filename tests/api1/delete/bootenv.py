@@ -12,8 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE
 
-TestName = "delete bootenv"
-
 
 class delete_bootenv_test(unittest.TestCase):
 

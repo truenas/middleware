@@ -8,6 +8,7 @@ import pytest
 import unittest
 import sys
 import os
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, BSD_TEST
@@ -19,10 +20,8 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
     RunTest = True
-TestName = "create nfs"
 
 NFS_PATH = "/mnt/tank/share"
-
 Reason = "BRIDGEHOST is not in ixautomation.conf"
 
 

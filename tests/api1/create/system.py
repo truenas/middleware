@@ -12,8 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST
 
-TestName = "create system"
-
 
 class create_system_test(unittest.TestCase):
 

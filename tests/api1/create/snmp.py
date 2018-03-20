@@ -12,8 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT
 
-TestName = "create snmp"
-
 COMMUNITY = "public"
 TRAPS = False
 CONTACT = "root@localhost"
@@ -38,9 +36,17 @@ class create_snmp_test(unittest.TestCase):
     def test_03_Validate_that_SNMP_service_is_running(self):
         assert GET_OUTPUT("/services/services/snmp/", "srv_state") == "RUNNING"
 
-    def test_04_Validate_that_SNMP_settings_were_preserved(self):
+    def test_04_Validate_that_SNMP_snmp_community_setting_is_preserved(self):
         assert GET_OUTPUT("/services/snmp/", "snmp_community") == COMMUNITY
+
+    def test_05_Validate_that_SNMP_snmp_traps_setting_is_preserved(self):
         assert GET_OUTPUT("/services/snmp/", "snmp_traps") == TRAPS
+
+    def test_06_Validate_that_SNMP_snmp_contact_setting_is_preserved(self):
         assert GET_OUTPUT("/services/snmp/", "snmp_contact") == CONTACT
+
+    def test_07_Validate_that_SNMP_snmp_location_setting_is_preserved(self):
         assert GET_OUTPUT("/services/snmp/", "snmp_location") == LOCATION
+
+    def test_08_Validate_that_SNMP_snmp_v3_password_setting_is_preserved(self):
         assert GET_OUTPUT("/services/snmp/", "snmp_v3_password") == PASSWORD

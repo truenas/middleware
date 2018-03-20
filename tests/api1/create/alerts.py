@@ -15,7 +15,6 @@ from functions import SSH_TEST
 alert_msg = "Testing system alerts with failure."
 alert_status = "FAIL"
 alert_file = "/tmp/self-test-alert"
-TestName = "create a"
 
 
 class create_alerts_test(unittest.TestCase):

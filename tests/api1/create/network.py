@@ -7,6 +7,7 @@ import pytest
 import unittest
 import sys
 import os
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import interface
@@ -17,8 +18,6 @@ except ImportError:
     RunTest = False
 else:
     RunTest = True
-
-TestName = "create network"
 
 Reason = "BRIDGEDOMAIN BRIDGEHOST BRIDGEDNS BRIDGEGW "
 Reason += "are not in ixautomation.conf"

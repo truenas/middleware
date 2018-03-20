@@ -12,8 +12,6 @@ sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, is_agent_setup, if_key_listed
 from auto_config import sshKey
 
-TestName = "create ssh"
-
 
 class create_ssh_test(unittest.TestCase):
 

@@ -6,12 +6,10 @@
 import unittest
 import sys
 import os
-import xmlrunner
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST
-from auto_config import results_xml
-TestName = "create bootenv"
 
 
 class create_bootenv_test(unittest.TestCase):

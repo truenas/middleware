@@ -21,7 +21,6 @@ else:
     MOUNTPOINT = "/tmp/ad-bsd" + BRIDGEHOST
     RunTest = True
 
-TestName = "update ad bsd"
 DATASET = "ad-bsd2"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET

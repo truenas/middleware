@@ -12,9 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST  # , GET_OUTPUT
 
-RunTest = True
-TestName = "update storage"
-
 
 class update_storage_test(unittest.TestCase):
 

@@ -13,8 +13,6 @@ sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, RC_TEST
 from auto_config import ip
 
-TestName = "create ftp"
-
 
 class create_ftp_test(unittest.TestCase):
 

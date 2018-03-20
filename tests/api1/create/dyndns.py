@@ -18,7 +18,7 @@ except ImportError:
     RunTest = False
 else:
     RunTest = True
-TestName = "create dyndns"
+
 Reason = "NOIPUSERNAME, NOIPPASSWORD and NOIPHOST are not in ixautomation.conf"
 
 

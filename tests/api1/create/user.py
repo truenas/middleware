@@ -12,8 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET_USER
 
-TestName = "create user"
-
 
 class create_user_test(unittest.TestCase):
 

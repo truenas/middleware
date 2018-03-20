@@ -18,7 +18,6 @@ except ImportError:
     RunTest = False
 else:
     RunTest = True
-TestName = "create domaincontroller"
 
 REALM = "samdom.local"
 DOMAIN = "samdom"

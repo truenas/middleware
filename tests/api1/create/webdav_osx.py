@@ -12,7 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
 
-TestName = "create webdav osx"
 DATASET = "webdavshare"
 DATASET_PATH = "/mnt/tank/%s/" % DATASET
 SHARE_NAME = "webdavshare"

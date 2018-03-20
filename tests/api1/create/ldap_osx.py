@@ -21,7 +21,6 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/ldap-osx" + BRIDGEHOST
     RunTest = True
-TestName = "create ldap osx"
 
 DATASET = "ldap-osx"
 SMB_NAME = "TestShare"

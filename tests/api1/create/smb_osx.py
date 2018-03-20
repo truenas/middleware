@@ -21,7 +21,6 @@ else:
     MOUNTPOINT = "/tmp/smb-osx" + BRIDGEHOST
     RunTest = True
 
-TestName = "create smb osx"
 DATASET = "smb-osx"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET

@@ -12,9 +12,6 @@ sys.path.append(apifolder)
 from functions import PUT
 
 
-TestName = "create emails"
-
-
 class create_email_test(unittest.TestCase):
 
     def test_01_Configuring_email_settings(self):

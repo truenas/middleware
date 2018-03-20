@@ -12,7 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET_OUTPUT, PUT, DELETE, DELETE_ALL, OSX_TEST
 from auto_config import ip
-
 try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
     from config import LDAPBASEDN, LDAPBINDDN, LDAPBINDPASSWORD, LDAPHOSTNAME
@@ -21,7 +20,6 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/ad-osx" + BRIDGEHOST
     RunTest = True
-TestName = "create ad osx"
 
 DATASET = "ad-osx"
 SMB_NAME = "TestShare"

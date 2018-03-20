@@ -22,7 +22,6 @@ else:
     MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
     RunTest = True
 
-TestName = "update iscsi"
 global DEVICE_NAME
 DEVICE_NAME = ""
 DEVICE_NAME_PATH = "/tmp/freenasiscsi"

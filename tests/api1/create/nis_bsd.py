@@ -8,10 +8,10 @@ import pytest
 import unittest
 import sys
 import os
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT
-
 try:
     from config import NISSERVER, NISDOMAIN
 except ImportError:
@@ -24,8 +24,6 @@ else:
 # define variables
 DATASET = "nis-bsd"
 NIS_PATH = "/mnt/tank/" + DATASET
-TestName = "create nis bsd"
-
 Reason = "NISSERVER and NISDOMAIN are not in ixautomation.conf"
 
 

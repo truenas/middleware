@@ -12,7 +12,6 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, OSX_TEST
-
 try:
     from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
     from config import LDAPBASEDN, LDAPBINDDN, LDAPHOSTNAME, LDAPBINDPASSWORD
@@ -22,7 +21,6 @@ else:
     MOUNTPOINT = "/tmp/ad-bsd" + BRIDGEHOST
     RunTest = True
 
-TestName = "update ad osx"
 DATASET = "ad-osx"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET

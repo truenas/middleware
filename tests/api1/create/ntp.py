@@ -6,11 +6,11 @@
 import unittest
 import sys
 import os
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, DELETE
 from auto_config import ntpServer
-TestName = "create ntp"
 
 
 class create_ntp_test(unittest.TestCase):

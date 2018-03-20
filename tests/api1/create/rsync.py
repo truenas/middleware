@@ -13,8 +13,6 @@ sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, RC_TEST  # , POST
 from auto_config import ip
 
-TestName = "create rsync"
-
 
 class create_rsync_test(unittest.TestCase):
 

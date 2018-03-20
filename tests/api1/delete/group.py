@@ -12,8 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE
 
-TestName = "delete group"
-
 
 class delete_group_test(unittest.TestCase):
 

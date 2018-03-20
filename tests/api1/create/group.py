@@ -12,8 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST
 
-TestName = "create group"
-
 
 class create_group_test(unittest.TestCase):
 

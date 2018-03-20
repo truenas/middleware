@@ -22,7 +22,6 @@ else:
     MOUNTPOINT = "/tmp/smb-bsd" + BRIDGEHOST
     RunTest = True
 
-TestName = "update smb osx"
 DATASET = "smb-bsd"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET

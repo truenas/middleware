@@ -12,7 +12,6 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, PUT, BSD_TEST
-
 try:
     from config import BRIDGEHOST
 except ImportError:
@@ -20,7 +19,7 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
     RunTest = True
-TestName = "delete iscsi"
+
 DEVICE_NAME_PATH = "/tmp/iscsi_dev_name"
 TARGET_NAME = "iqn.freenas:target0"
 Reason = "BRIDGEHOST ixautomation.conf"

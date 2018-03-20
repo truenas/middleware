@@ -12,8 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET_USER
 
-TestName = "delete user"
-
 
 class delete_user_test(unittest.TestCase):
 

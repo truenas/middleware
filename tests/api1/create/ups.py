@@ -12,8 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT
 
-TestName = "create ups"
-
 
 class create_ups_test(unittest.TestCase):
 

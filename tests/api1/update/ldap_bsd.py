@@ -24,7 +24,6 @@ else:
     MOUNTPOINT = "/tmp/ldap-bsd" + BRIDGEHOST
     RunTest = True
 
-TestName = "update ldap bsd"
 DATASET = "ldap-bsd"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET

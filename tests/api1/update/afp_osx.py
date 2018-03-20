@@ -20,7 +20,6 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/afp-osx" + BRIDGEHOST
     RunTest = True
-TestName = "update apf osx"
 
 DATASET = "afp-osx"
 AFP_NAME = "MyAFPShare"

@@ -11,9 +11,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET_OUTPUT
 
-RunTest = True
-TestName = "create debug"
-
 
 class create_debug_test(unittest.TestCase):
 

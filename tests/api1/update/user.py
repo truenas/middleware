@@ -12,9 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_USER
 
-RunTest = True
-TestName = "update user"
-
 
 class update_user_test(unittest.TestCase):
 

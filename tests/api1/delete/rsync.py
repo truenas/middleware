@@ -12,8 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE
 
-TestName = "delete rsync"
-
 
 class delete_rsync_test(unittest.TestCase):
 

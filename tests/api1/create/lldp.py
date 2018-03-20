@@ -12,7 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, GET_OUTPUT
 
-TestName = "create lldp"
 LOCATION = "Maryville, TN"
 COUNTRY = "US"
 INTDESC = True

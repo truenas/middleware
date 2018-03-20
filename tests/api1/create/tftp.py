@@ -12,7 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT, POST
 
-TestName = "create tftp"
 TESTFILE_NAME = "tftp-testfile.txt"
 TESTFILE_PATH = "/tmp/"
 

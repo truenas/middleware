@@ -22,7 +22,6 @@ except ImportError:
 else:
     MOUNTPOINT = "/tmp/ldap-bsd" + BRIDGEHOST
     RunTest = True
-TestName = "create ldap bsd"
 
 DATASET = "ldap-bsd"
 SMB_NAME = "TestShare"

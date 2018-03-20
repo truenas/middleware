@@ -12,7 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET_OUTPUT
 
-TestName = "update alerts"
 ALERT_MSG = "Testing system alerts with failure."
 
 

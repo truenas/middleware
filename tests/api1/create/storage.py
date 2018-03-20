@@ -10,7 +10,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, POST
 from auto_config import disk1, disk2
-TestName = "create storage"
 
 
 class create_storage_test(unittest.TestCase):

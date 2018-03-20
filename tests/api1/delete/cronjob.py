@@ -12,8 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET
 
-TestName = "delete cronjob"
-
 
 class delete_cronjob_test(unittest.TestCase):
 

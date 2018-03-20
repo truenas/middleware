@@ -12,8 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET_OUTPUT
 
-TestName = "update ftp"
-
 
 class update_ftp_test(unittest.TestCase):
 

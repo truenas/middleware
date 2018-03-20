@@ -12,8 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET_OUTPUT  # , PUT
 
-TestName = "update rsync"
-
 
 class update_rsync_test(unittest.TestCase):
 
