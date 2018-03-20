@@ -987,7 +987,9 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset1(smb4_conf, "oplocks = yes")
     confset1(smb4_conf, "deadtime = 15")
     confset1(smb4_conf, "max log size = 51200")
-    confset1(smb4_conf, "private dir = /root/samba/private")
+
+    if not client.call('notifier.is_freenas') and client.call('notifier.failover_licensed'):
+        confset1(smb4_conf, "private dir = /root/samba/private")
 
     confset2(smb4_conf, "max open files = %d",
              int(get_sysctl('kern.maxfilesperproc')) - 25)
