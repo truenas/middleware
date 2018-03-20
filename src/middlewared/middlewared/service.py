@@ -30,12 +30,13 @@ def item_method(fn):
     return fn
 
 
-def job(lock=None, lock_queue_size=None, process=False, pipes=None, check_pipes=True):
+def job(lock=None, lock_queue_size=None, logs=False, process=False, pipes=None, check_pipes=True):
     """Flag method as a long running job."""
     def check_job(fn):
         fn._job = {
             'lock': lock,
             'lock_queue_size': lock_queue_size,
+            'logs': logs,
             'process': process,
             'pipes': pipes or [],
             'check_pipes': check_pipes,

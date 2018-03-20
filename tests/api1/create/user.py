@@ -7,12 +7,11 @@
 import unittest
 import sys
 import os
-import xmlrunner
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET_USER
-from auto_config import results_xml
-RunTest = True
+
 TestName = "create user"
 
 
@@ -37,12 +36,3 @@ class create_user_test(unittest.TestCase):
         payload = ["wheel", "ftp"]
         userid = GET_USER("testuser")
         assert POST("/account/users/%s/groups/" % userid, payload) == 202
-
-
-def run_test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(create_user_test)
-    xmlrunner.XMLTestRunner(output=results_xml, verbosity=2).run(suite)
-
-if RunTest is True:
-    print('\n\nStarting %s tests...' % TestName)
-    run_test()

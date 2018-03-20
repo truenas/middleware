@@ -3,10 +3,11 @@
 *.mo
 *.o
 *.iso
-_pycache_
+__pycache__
 *.xml
 *.pyc
 .cache
+.pytest_cache
 config.py
 auto_config.py
 .DS_Store
