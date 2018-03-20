@@ -37,8 +37,11 @@ class create_ldap_osx_test(unittest.TestCase):
     # Clean up any leftover items from previous failed runs
     @classmethod
     def setUpClass(inst):
+        host = pytest.importorskip("config.OSX_HOST")
+        username = pytest.importorskip("config.OSX_USERNAME")
+        password = pytest.importorskip("config.OSX_PASSWORD")
         cmd = 'umount -f "%s"; rmdir "%s"; exit 0' % (MOUNTPOINT, MOUNTPOINT)
-        OSX_TEST(cmd)
+        OSX_TEST(cmd, username, password, host)
         payload1 = {"ad_bindpw": ADPASSWORD,
                     "ad_bindname": ADUSERNAME,
                     "ad_domainname": BRIDGEDOMAIN,

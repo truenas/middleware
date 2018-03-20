@@ -38,6 +38,9 @@ class create_ldap_bsd_test(unittest.TestCase):
     # Clean up any leftover items from previous failed AD LDAP or SMB runs
     @classmethod
     def setUpClass(inst):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         payload = {"ad_bindpw": ADPASSWORD,
                    "ad_bjindname": ADUSERNAME,
                    "ad_domainname": BRIDGEDOMAIN,
@@ -61,7 +64,7 @@ class create_ldap_bsd_test(unittest.TestCase):
         DELETE("/storage/volume/1/datasets/%s/" % DATASET)
         cmd = 'umount -f "%s" &>/dev/null; ' % MOUNTPOINT
         cmd += 'rmdir "%s" &>/dev/null' % MOUNTPOINT
-        BSD_TEST(cmd)
+        BSD_TEST(cmd, username, password, host)
 
     # Set auxilary parameters to allow mount_smbfs to work with ldap
     def test_01_Setting_auxilary_parameters_for_mount_smbfs(self):
@@ -122,18 +125,28 @@ class create_ldap_bsd_test(unittest.TestCase):
 
     # BSD test to be done when when BSD_TEST is functional
     def test_11_Creating_SMB_mountpoint(self):
-        assert BSD_TEST('mkdir -p "%s" && sync' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('mkdir -p "%s" && sync' % MOUNTPOINT,
+                        username, password, host) is True
 
     # The LDAPUSER user must exist in LDAP with this password
     def test_12_Store_LDAP_credentials_for_mount_smbfs(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'echo "[TESTNAS:LDAPUSER]" > ~/.nsmbrc && '
         cmd += 'echo "password=12345678" >> ~/.nsmbrc'
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     def test_13_Mounting_SMB(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'mount_smbfs -N -I %s -W LDAP01 ' % ip
         cmd += '//ldapuser@testnas/%s "%s"' % (SMB_NAME, MOUNTPOINT)
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     # def test_14_Checking_permissions_on_MOUNTPOINT(self):
     #    device_name = return_output('dirname "%s"' % MOUNTPOINT)
@@ -142,32 +155,61 @@ class create_ldap_bsd_test(unittest.TestCase):
     #    assert BSD_TEST(cmd) is True
 
     def test_15_Creating_SMB_file(self):
-        assert BSD_TEST('touch "%s/testfile"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('touch "%s/testfile"' % MOUNTPOINT,
+                        username, password, host) is True
 
     def test_16_Moving_SMB_file(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     def test_17_Copying_SMB_file(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     def test_18_Deleting_SMB_file_1_2(self):
-        assert BSD_TEST('rm "%s/testfile"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('rm "%s/testfile"' % MOUNTPOINT,
+                        username, password, host) is True
 
     def test_19_Deleting_SMB_file_2_2(self):
-        assert BSD_TEST('rm "%s/testfile2"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('rm "%s/testfile2"' % MOUNTPOINT,
+                        username, password, host) is True
 
     def test_20_Unmounting_SMB(self):
-        assert BSD_TEST('umount -f "%s"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('umount -f "%s"' % MOUNTPOINT,
+                        username, password, host) is True
 
     def test_21_Verifying_SMB_share_was_unmounted(self):
-        assert BSD_TEST('mount | grep -qv "%s"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('mount | grep -qv "%s"' % MOUNTPOINT,
+                        username, password, host) is True
 
     def test_22_Removing_SMB_mountpoint(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'test -d "%s" && ' % MOUNTPOINT
         cmd += 'rmdir "%s" || exit 0' % MOUNTPOINT
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     def test_23_Removing_SMB_share_on_SMB_PATH(self):
         payload = {"cfs_comment": "My Test SMB Share",

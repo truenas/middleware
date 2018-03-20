@@ -23,7 +23,7 @@ TestName = "create nfs"
 
 NFS_PATH = "/mnt/tank/share"
 
-Reason = "BRIDGEHOST BRIDGETEST are not in ixautomation.conf"
+Reason = "BRIDGEHOST is not in ixautomation.conf"
 
 
 class create_nfs_test(unittest.TestCase):
@@ -59,40 +59,67 @@ class create_nfs_test(unittest.TestCase):
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     # Now check if we can mount NFS / create / rename / copy / delete / umount
     def test_07_Creating_NFS_mountpoint(self):
-        assert BSD_TEST('mkdir -p "%s"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('mkdir -p "%s"' % MOUNTPOINT,
+                        username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_08_Mounting_NFS(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'mount_nfs %s:%s %s' % (ip, NFS_PATH, MOUNTPOINT)
         # command below does not make sence
         # "umount '${MOUNTPOINT}' ; rmdir '${MOUNTPOINT}'" "60"
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_09_Creating_NFS_file(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'touch "%s/testfile"' % MOUNTPOINT
         # 'umount "${MOUNTPOINT}"; rmdir "${MOUNTPOINT}"'
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_10_Moving_NFS_file(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_11_Copying_NFS_file(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_12_Deleting_NFS_file(self):
-        assert BSD_TEST('rm "%s/testfile2"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('rm "%s/testfile2"' % MOUNTPOINT,
+                        username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_13_Unmounting_NFS(self):
-        assert BSD_TEST('umount "%s"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('umount "%s"' % MOUNTPOINT,
+                        username, password, host) is True
 
     @pytest.mark.skipif(RunTest is False, reason=Reason)
     def test_14_Removing_NFS_mountpoint(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True

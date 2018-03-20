@@ -41,6 +41,9 @@ class update_ldap_bsd_test(unittest.TestCase):
     # Clean up any leftover items from previous failed AD LDAP or SMB runs
     @classmethod
     def setUpClass(inst):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         # Clean up any leftover items from previous failed AD LDAP or SMB runs
         payload1 = {"ad_bindpw": ADPASSWORD,
                     "ad_bindname": ADUSERNAME,
@@ -66,7 +69,7 @@ class update_ldap_bsd_test(unittest.TestCase):
         DELETE("/storage/volume/1/datasets/%s/" % DATASET)
         cmd = 'umount -f "%s" &>/dev/null; ' % MOUNTPOINT
         cmd += 'rmdir "%s" &>/dev/null' % MOUNTPOINT
-        BSD_TEST(cmd)
+        BSD_TEST(cmd, username, password, host)
 
     # Set auxilary parameters to allow mount_smbfs to work with ldap
     def test_01_Creating_SMB_dataset(self):
@@ -120,45 +123,84 @@ class update_ldap_bsd_test(unittest.TestCase):
 
     # Now check if we can mount SMB / create / rename / copy / delete / umount
     def test_09_Creating_SMB_mountpoint(self):
-        assert BSD_TEST('mkdir -p "%s" && sync' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('mkdir -p "%s" && sync' % MOUNTPOINT,
+                        username, password, host) is True
 
     # The LDAPUSER user must exist in LDAP with this password
     def test_10_Store_LDAP_credentials_in_file_for_mount_smbfs(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'echo "[TESTNAS:LDAPUSER]" > ~/.nsmbrc && '
         cmd += 'echo "password=12345678" >> ~/.nsmbrc'
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     def test_11_Mounting_SMB(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'mount_smbfs -N -I %s -W LDAP02 ' % ip
         cmd += '"//%s@testnas/%s" "%s"' % (LDAP_USER, SMB_NAME, MOUNTPOINT)
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     def test_13_Creating_SMB_file(self):
-        assert BSD_TEST('touch "%s/testfile"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('touch "%s/testfile"' % MOUNTPOINT,
+                        username, password, host) is True
 
     def test_14_Moving_SMB_file(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     def test_15_Copying_SMB_file(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     def test_16_Deleting_SMB_file_1_2(self):
-        assert BSD_TEST('rm "%s/testfile"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('rm "%s/testfile"' % MOUNTPOINT,
+                        username, password, host) is True
 
     def test_17_Deleting_SMB_file_2_2(self):
-        assert BSD_TEST('rm "%s/testfile2"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('rm "%s/testfile2"' % MOUNTPOINT,
+                        username, password, host) is True
 
     def test_18_Unmounting_SMB(self):
-        assert BSD_TEST('umount -f "%s"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('umount -f "%s"' % MOUNTPOINT,
+                        username, password, host) is True
 
     def test_19_Verifying_SMB_share_was_unmounted(self):
-        assert BSD_TEST('mount | grep -qv "%s"' % MOUNTPOINT) is True
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
+        assert BSD_TEST('mount | grep -qv "%s"' % MOUNTPOINT,
+                        username, password, host) is True
 
     def test_20_Removing_SMB_mountpoint(self):
+        host = pytest.importorskip("config.BSD_HOST")
+        username = pytest.importorskip("config.BSD_USERNAME")
+        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd) is True
+        assert BSD_TEST(cmd, username, password, host) is True
 
     def test_21_Removing_SMB_share_on_SMB_PATH(self):
         payload = {"cfs_comment": "My Test SMB Share",
