@@ -480,7 +480,13 @@ class ServiceService(CRUDService):
         await self._service("ix-localtime", "start", quiet=True, **kwargs)
         await self._service("ix-ntpd", "start", quiet=True, **kwargs)
         await self._service("ntpd", "restart", **kwargs)
-        os.environ['TZ'] = await self.middleware.call('datastore.query', 'system.settings', [], {'order_by': ['-id'], 'get': True})['stg_timezone']
+        settings = await self.middleware.call(
+            'datastore.query',
+            'system.settings',
+            [],
+            {'order_by': ['-id'], 'get': True}
+        )
+        os.environ['TZ'] = settings['stg_timezone']
         time.tzset()
 
     async def _restart_smartd(self, **kwargs):

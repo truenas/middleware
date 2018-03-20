@@ -661,24 +661,56 @@ class InterfacesService(Service):
                 interface, output,
             ))
 
-    @accepts()
-    def ipv4_in_use(self):
+    @accepts(
+        Dict(
+            'ips',
+            Bool('ipv4'),
+            Bool('ipv6')
+        )
+    )
+    def ip_in_use(self, choices=None):
         """
-        Get all IPv4 from all valid interfaces, excluding lo0, bridge* and tap*.
+        Get all IPv4 / Ipv6 from all valid interfaces, excluding lo0, bridge* and tap*.
+        Choices is a dictionary with defaults to {'ipv4': True, 'ipv6': True}
+        Returns a list of dicts - eg -
 
-        Returns:
-            list: A list with all IPv4 in use, or an empty list.
+        [
+            {
+                "type": "INET6",
+                "address": "fe80::5054:ff:fe16:4aac",
+                "netmask": 64
+            },
+            {
+                "type": "INET",
+                "address": "192.168.122.148",
+                "netmask": 24,
+                "broadcast": "192.168.122.255"
+            },
+        ]
+
         """
-        list_of_ipv4 = []
+        if choices is None:
+            choices = {
+                'ipv4': True,
+                'ipv6': True
+            }
+
+        ipv4 = choices['ipv4'] if choices.get('ipv4') else False
+        ipv6 = choices['ipv6'] if choices.get('ipv6') else False
+        list_of_ip = []
         ignore_nics = ('lo', 'bridge', 'tap', 'epair')
         for if_name, iface in list(netif.list_interfaces().items()):
             if not if_name.startswith(ignore_nics):
-                for nic_address in iface.addresses:
-                    if nic_address.af == netif.AddressFamily.INET:
-                        ipv4_address = nic_address.address.exploded
-                        list_of_ipv4.append(str(ipv4_address))
+                aliases_list = iface.__getstate__()['aliases']
+                for alias_dict in aliases_list:
 
-        return list_of_ipv4
+                    if ipv4 and alias_dict['type'] == 'INET':
+                        list_of_ip.append(alias_dict)
+
+                    if ipv6 and alias_dict['type'] == 'INET6':
+                        list_of_ip.append(alias_dict)
+
+        return list_of_ip
 
 
 class RoutesService(Service):

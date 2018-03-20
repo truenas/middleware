@@ -1012,7 +1012,21 @@ class ManualUpdateWizard(FileWizard):
             raise
 
 
-class SettingsForm(ModelForm):
+class SettingsForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'stg_'
+    middleware_attr_schema = 'general_settings'
+    middleware_plugin = 'system.general'
+    is_singletone = True
+    middleware_attr_map = {
+        'ui_address': 'stg_guiaddress',
+        'ui_certificate': 'stg_guicertificate',
+        'ui_httpsport': 'stg_guihttpsport',
+        'ui_httpsredirect': 'stg_guihttpsredirect',
+        'ui_port': 'stg_guiport',
+        'ui_protocol': 'stg_guiprotocol',
+        'ui_v6address': 'stg_guiv6address'
+    }
 
     class Meta:
         fields = '__all__'
@@ -1027,12 +1041,7 @@ class SettingsForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(SettingsForm, self).__init__(*args, **kwargs)
-        for i in (
-            'stg_guiprotocol', 'stg_guiaddress', 'stg_guiport',
-            'stg_guihttpsport', 'stg_guihttpsredirect', 'stg_sysloglevel',
-            'stg_syslogserver', 'stg_guicertificate', 'stg_timezone',
-        ):
-            setattr(self.instance, f'_original_{i}', getattr(self.instance, i))
+        self.original_instance = self.instance.__dict__
 
         self.fields['stg_language'].choices = settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")
@@ -1050,51 +1059,26 @@ class SettingsForm(ModelForm):
             ['::', '::']
         ] + list(choices.IPChoices(ipv4=False))
 
-    def clean(self):
-        cdata = self.cleaned_data
+    def middleware_clean(self, update):
+        keys = update.keys()
+        for key in keys:
+            if key.startswith('gui'):
+                update['ui_' + key[3:]] = update.pop(key)
 
-        # todo: make this and ix-syslogd support udp6
-        if cdata["stg_syslogserver"]:
-            syslogserver = cdata.get("stg_syslogserver")
-            match = re.match("^[\w\.\-]+(\:\d+)?$", syslogserver)
-            if match is None:
-                self._errors['stg_syslogserver'] = self.error_class([_(
-                    "Invalid syslog server format")
-                ])
-
-        proto = cdata.get("stg_guiprotocol")
-        if proto == "http":
-            return cdata
-
-        if not cdata["stg_guicertificate"]:
-            raise forms.ValidationError(
-                "HTTPS is specified without a certificate.")
-        else:
-            certificate_obj = models.Certificate.objects.get(cert_name=cdata["stg_guicertificate"])
-            fingerprint = certificate_obj.get_fingerprint()
-            # using log.error since it logs to /var/log/messages, /var/log/debug.log as well as /dev/console all at once
-            log.error("Fingerprint of the certificate used in the GUI: " + fingerprint)
-        return cdata
-
-    def save(self):
-        obj = super(SettingsForm, self).save()
-        if (self.instance._original_stg_sysloglevel != self.instance.stg_sysloglevel or
-                self.instance._original_stg_syslogserver != self.instance.stg_syslogserver):
-            notifier().restart("syslogd")
-        cache.set('guiLanguage', obj.stg_language)
-        notifier().reload("timeservices")
-        if self.instance._original_stg_timezone != self.instance.stg_timezone:
-            notifier().restart("cron")
-        return obj
+        update['ui_protocol'] = update['ui_protocol'].upper()
+        update['sysloglevel'] = update['sysloglevel'].upper()
+        return update
 
     def done(self, request, events):
+        cache.set('guiLanguage', self.instance.stg_language)
+
         if (
-            self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol or
-            self.instance._original_stg_guiaddress != self.instance.stg_guiaddress or
-            self.instance._original_stg_guiport != self.instance.stg_guiport or
-            self.instance._original_stg_guihttpsport != self.instance.stg_guihttpsport or
-            self.instance._original_stg_guihttpsredirect != self.instance.stg_guihttpsredirect or
-            self.instance._original_stg_guicertificate != self.instance.stg_guicertificate
+            self.original_instance['stg_guiprotocol'] != self.instance.stg_guiprotocol or
+            self.original_instance['stg_guiaddress'] != self.instance.stg_guiaddress or
+            self.original_instance['stg_guiport'] != self.instance.stg_guiport or
+            self.original_instance['stg_guihttpsport'] != self.instance.stg_guihttpsport or
+            self.original_instance['stg_guihttpsredirect'] != self.instance.stg_guihttpsredirect or
+            self.original_instance['stg_guicertificate_id'] != self.instance.stg_guicertificate_id
         ):
             if self.instance.stg_guiaddress == "0.0.0.0":
                 address = request.META['HTTP_HOST'].split(':')[0]
@@ -1104,20 +1088,23 @@ class SettingsForm(ModelForm):
                 protocol = 'http'
             else:
                 protocol = self.instance.stg_guiprotocol
+
             newurl = "%s://%s" % (
                 protocol,
                 address
             )
+
             if self.instance.stg_guiport and protocol == 'http':
                 newurl += ":" + str(self.instance.stg_guiport)
             elif self.instance.stg_guihttpsport and protocol == 'https':
                 newurl += ":" + str(self.instance.stg_guihttpsport)
-            notifier().start_ssl("nginx")
-            if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol:
+
+            if self.original_instance['stg_guiprotocol'] != self.instance.stg_guiprotocol:
                 events.append("evilrestartHttpd('%s')" % newurl)
             else:
                 events.append("restartHttpd('%s')" % newurl)
-        if self.instance._original_stg_timezone != self.instance.stg_timezone:
+
+        if self.original_instance['stg_timezone'] != self.instance.stg_timezone:
             os.environ['TZ'] = self.instance.stg_timezone
             time.tzset()
             timezone.activate(self.instance.stg_timezone)
