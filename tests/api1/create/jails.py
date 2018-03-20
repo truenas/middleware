@@ -10,7 +10,7 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, PUT_TIMEOUT, POST_TIMEOUT
+from functions import POST, PUT_TIMEOUT
 
 try:
     from config import JAILIP, JAILGW, JAILNETMASK
@@ -38,7 +38,7 @@ class create_jails_test(unittest.TestCase):
                    "jail_ipv4": JAILIP,
                    "jail_ipv4_netmask": JAILNETMASK,
                    "jail_vnet": True}
-        assert POST_TIMEOUT("/jails/jails/", payload, 1200) == 201
+        assert POST("/jails/jails/", payload) == 201
 
     def test_03_Mount_tank_share_into_jail(self):
         payload = {"destination": "/mnt",

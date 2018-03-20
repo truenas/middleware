@@ -41,7 +41,6 @@ class create_ad_bsd_test(unittest.TestCase):
         host = pytest.importorskip("config.BSD_HOST")
         username = pytest.importorskip("config.BSD_USERNAME")
         password = pytest.importorskip("config.BSD_PASSWORD")
-
         payload1 = {"ad_bindpw": ADPASSWORD,
                     "ad_bindname": ADUSERNAME,
                     "ad_domainname": BRIDGEDOMAIN,
