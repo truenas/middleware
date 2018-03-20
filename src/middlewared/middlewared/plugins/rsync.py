@@ -31,11 +31,15 @@ import tempfile
 import subprocess
 import threading
 import shutil
+import asyncssh
+import glob
+import asyncio
+
 from collections import defaultdict
 from middlewared.schema import accepts, Bool, Dict, Str, Int, Ref, List
 from middlewared.validators import Range, Match
 from middlewared.service import (
-    Service, job, CallError, CRUDService, SystemServiceService
+    Service, job, CallError, CRUDService, SystemServiceService, ValidationErrors
 )
 from middlewared.logger import Logger
 
@@ -300,12 +304,12 @@ class RsyncModService(CRUDService):
         if data.get("hostsallow"):
             data["hostsallow"] = " ".join(data["hostsallow"])
         else:
-            data["hostsallow"] = ''
+            data["hostsallow"] = ""
 
         if data.get("hostsdeny"):
             data["hostsdeny"] = " ".join(data["hostsdeny"])
         else:
-            data["hostsdeny"] = ''
+            data["hostsdeny"] = ""
 
         data['id'] = await self.middleware.call(
             'datastore.insert',
@@ -343,3 +347,249 @@ class RsyncModService(CRUDService):
     @accepts(Int('id'))
     async def do_delete(self, id):
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
+
+
+class RsyncTaskService(CRUDService):
+
+    class Config:
+        datastore = 'tasks.rsync'
+        datastore_prefix = 'rsync_'
+
+    async def validate_rsync_task(self, data, schema):
+        verrors = ValidationErrors()
+
+        # Windows users can have spaces in their usernames
+        # http://www.freebsd.org/cgi/query-pr.cgi?pr=164808
+        if not data.get('user'):
+            verrors.add(f'{schema}.user', 'This field is required')
+            raise verrors
+
+        username = data.get('user')
+        if ' ' in username:
+            verrors.add(f'{schema}.user', 'User names cannot have spaces')
+            raise verrors
+
+        user = await self.middleware.call(
+            'notifier.get_user_object',
+            username
+        )
+        if not user:
+            verrors.add(f'{schema}.user', f'Provided user "{username}" does not exist')
+            raise verrors
+
+        remote_host = data.get('remotehost')
+        if not remote_host:
+            verrors.add(f'{schema}.remotehost', 'Please specify a remote host')
+
+        if data.get('extra'):
+            data['extra'] = ' '.join(data['extra'])
+        else:
+            data['extra'] = ''
+
+        if data.get('month'):
+            if len(data['month']) == 12:
+                data['month'] = '*'
+            else:
+                data['month'] = ','.join(data['month'])
+
+        if data.get('dayweek'):
+            if len(data['dayweek']) == 7:
+                data['dayweek'] = '*'
+            else:
+                data['dayweek'] = ",".join(data['dayweek'])
+
+        mode = data.get('mode')
+        if not mode:
+            verrors.add(f'{schema}.mode', 'This field is required')
+
+        remote_module = data.get('remotemodule')
+        if mode == 'module' and not remote_module:
+            verrors.add(f'{schema}.remotemodule', 'This field is required')
+
+        if mode == 'ssh':
+            remote_port = data.get('remoteport')
+            if not remote_port:
+                verrors.add(f'{schema}.remoteport', 'This field is required')
+
+            remote_path = data.get('remotepath')
+            if not remote_path:
+                verrors.add(f'{schema}.remotepath', 'This field is required')
+
+            search = os.path.join(user.pw_dir, '.ssh', 'id_[edr]*')
+            exclude_from_search = os.path.join(user.pw_dir, '.ssh', 'id_[edr]*pub')
+            if not set(glob.glob(search)) - set(glob.glob(exclude_from_search)):
+                verrors.add(
+                    f'{schema}.user',
+                    'In order to use rsync over SSH you need a user'
+                    ' with a private key (DSA/ECDSA/RSA) set up in home dir.'
+                )
+            else:
+                for file in glob.glob(search):
+                    if '.pub' not in file:
+                        # file holds a private key and it's permissions should be 600
+                        if os.stat(file).st_mode & 0o077 != 0:
+                            verrors.add(
+                                f'{schema}.user',
+                                f'Permissions {oct(os.stat(file).st_mode & 0o777)} for {file} are too open. Please '
+                                f'correct them by running chmod 600 {file}'
+                            )
+
+            if(
+                data.get('validate_rpath') and
+                remote_path and
+                remote_host and
+                remote_port
+            ):
+                if '@' in remote_host:
+                    remote_username, remote_host = remote_host.split('@')
+                else:
+                    remote_username = username
+
+                try:
+                    with (await asyncio.wait_for(asyncssh.connect(
+                            remote_host,
+                            port=remote_port,
+                            username=remote_username), timeout=5)) as conn:
+
+                        await conn.run(f'test -d {remote_path}', check=True)
+
+                except asyncio.TimeoutError:
+
+                    verrors.add(
+                        f'{schema}.remotehost',
+                        'SSH timeout occurred. Remote path cannot be validated.'
+                    )
+
+                except OSError as e:
+
+                    if e.errno == 113:
+                        verrors.add(
+                            f'{schema}.remotehost',
+                            f'Connection to the remote host {remote_host} on port {remote_port} failed.'
+                        )
+                    else:
+                        verrors.add(
+                            f'{schema}.remotehost',
+                            e.__str__()
+                        )
+
+                except asyncssh.DisconnectError as e:
+
+                    verrors.add(
+                        f'{schema}.remotehost',
+                        f'Disconnect Error[ error code {e.code} ] was generated when trying to '
+                        f'communicate with remote host {remote_host} and remote user {remote_username}.'
+                    )
+
+                except asyncssh.ProcessError as e:
+
+                    if e.code == '1':
+                        verrors.add(
+                            f'{schema}.remotepath',
+                            'The Remote Path you specified does not exist or is not a directory.'
+                            'Either create one yourself on the remote machine or uncheck the '
+                            'rsync_validate_rpath field'
+                        )
+                    else:
+                        verrors.add(
+                            f'{schema}.remotepath',
+                            f'Connection to Remote Host was successful but failed to verify '
+                            f'Remote Path. {e.__str__()}'
+                        )
+
+                except asyncssh.Error as e:
+
+                    if e.__class__.__name__ in e.__str__():
+                        exception_reason = e.__str__()
+                    else:
+                        exception_reason = e.__class__.__name__ + ' ' + e.__str__()
+                    verrors.add(
+                        f'{schema}.remotepath',
+                        f'Remote Path could not be validated. An exception was raised. {exception_reason}'
+                    )
+            elif data.get('validate_rpath'):
+                verrors.add(
+                    f'{schema}.remotepath',
+                    'Remote path could not be validated because of missing fields'
+                )
+
+        if data.get('validate_rpath'):
+            data.pop('validate_rpath')
+
+        return verrors, data
+
+    @accepts(Dict(
+        'rsync_task',
+        Str('path'),
+        Str('user'),
+        Str('remotehost'),
+        Int('remoteport'),
+        Str('mode'),
+        Str('remotemodule'),
+        Str('remotepath'),
+        Bool('validate_rpath'),
+        Str('direction'),
+        Str('desc'),
+        Str('minute'),
+        Str('hour'),
+        Str('daymonth'),
+        List('month', items=[Str('month')]),
+        List('dayweek', items=[Str('dayweek')]),
+        Bool('recursive'),
+        Bool('times'),
+        Bool('compress'),
+        Bool('archive'),
+        Bool('delete'),
+        Bool('quiet'),
+        Bool('preserveperm'),
+        Bool('preserveattr'),
+        Bool('delayupdates'),
+        List('extra', items=[Str('extra')]),
+        Bool('enabled'),
+        register=True,
+    ))
+    async def do_create(self, data):
+        verrors, data = await self.validate_rsync_task(data, 'rsync_task')
+        if verrors:
+            raise verrors
+
+        data['id'] = await self.middleware.call(
+            'datastore.insert',
+            self._config.datastore,
+            data,
+            {'prefix': self._config.datastore_prefix}
+        )
+        await self.middleware.call('service.reload', 'cron')
+
+        return data
+
+    @accepts(Int('id'), Ref('rsync_task'))
+    async def do_update(self, id, data):
+        task = await self.middleware.call(
+            'datastore.query',
+            self._config.datastore,
+            [('id', '=', id)],
+            {'prefix': self._config.datastore_prefix, 'get': True}
+        )
+        task.update(data)
+
+        verrors, data = await self.validate_rsync_task(task, 'rsync_task')
+        if verrors:
+            raise verrors
+
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            id,
+            task,
+            {'prefix': self._config.datastore_prefix}
+        )
+        await self.middleware.call('service.reload', 'cron')
+
+        return task
+
+    @accepts(Int('id'))
+    async def do_delete(self, id):
+        res = await self.middleware.call('datastore.delete', self._config.datastore, id)
+        await self.middleware.call('service.reload', 'cron')
+        return res

@@ -1,9 +1,6 @@
-import glob
 import json
 import logging
-import os
-import pwd
-import subprocess
+import re
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -213,7 +210,12 @@ class InitShutdownForm(MiddlewareModelForm, ModelForm):
         return data
 
 
-class RsyncForm(ModelForm):
+class RsyncForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "rsync_"
+    middleware_attr_schema = "rsync_task"
+    middleware_plugin = "rsynctask"
+    is_singletone = False
 
     rsync_validate_rpath = forms.BooleanField(
         initial=True,
@@ -290,106 +292,11 @@ class RsyncForm(ModelForm):
             "rsyncModeToggle();"
         )
 
-    def check_rpath_exists(self):
-        """A function to check if the rsync_remotepath,
-        exists or not. Returns TRUE rpath is a directory
-        and exists, else FALSE"""
-
-        ruser = self.cleaned_data.get("rsync_user")
-        rhost = str(self.cleaned_data.get("rsync_remotehost"))
-        if '@' in rhost:
-            remote = rhost
-        else:
-            remote = '"%s"@%s' % (
-                ruser,
-                rhost,
-            )
-        rport = str(self.cleaned_data.get("rsync_remoteport"))
-        rpath = self.cleaned_data.get("rsync_remotepath")
-        proc = subprocess.Popen(
-            """su -m "%s" -c 'ssh -p %s -o "BatchMode yes" -o """
-            """"ConnectTimeout=5" %s test -d \\""%s"\\"' """
-            % (ruser, rport, remote, rpath), shell=True)
-        proc.wait()
-        return proc.returncode == 0
-
-    def clean_rsync_user(self):
-        user = self.cleaned_data.get("rsync_user")
-        # Windows users can have spaces in their usernames
-        # http://www.freebsd.org/cgi/query-pr.cgi?pr=164808
-        if ' ' in user:
-            raise forms.ValidationError(_("Usernames cannot have spaces"))
-        return user
-
-    def clean_rsync_remotemodule(self):
-        mode = self.cleaned_data.get("rsync_mode")
-        val = self.cleaned_data.get("rsync_remotemodule")
-        if mode == 'module' and not val:
-            raise forms.ValidationError(_("This field is required"))
-        return val
-
-    def clean_rsync_remotepath(self):
-        mode = self.cleaned_data.get("rsync_mode")
-        val = self.cleaned_data.get("rsync_remotepath")
-        if mode == 'ssh' and not val:
-            raise forms.ValidationError(_("This field is required"))
-        return val
-
-    def clean_rsync_month(self):
-        m = self.data.getlist("rsync_month")
-        if len(m) == 12:
-            return '*'
-        m = ",".join(m)
-        return m
-
-    def clean_rsync_dayweek(self):
-        w = self.data.getlist("rsync_dayweek")
-        if len(w) == 7:
-            return '*'
-        w = ",".join(w)
-        return w
-
-    def clean_rsync_extra(self):
-        extra = self.cleaned_data.get("rsync_extra")
-        if extra:
-            extra = extra.replace('\n', ' ')
-        return extra
-
-    def clean(self):
-        cdata = self.cleaned_data
-        mode = cdata.get("rsync_mode")
-        user = cdata.get("rsync_user")
-        if mode == 'ssh':
-            try:
-                home = pwd.getpwnam(user).pw_dir
-                search = os.path.join(home, ".ssh", "id_[edr]*.*")
-                if not glob.glob(search):
-                    raise ValueError
-            except (KeyError, ValueError, AttributeError, TypeError):
-                self._errors['rsync_user'] = self.error_class([
-                    _("In order to use rsync over SSH you need a user<br />"
-                      "with a public key (DSA/ECDSA/RSA) set up in home dir."),
-                ])
-                cdata.pop('rsync_user', None)
-        if 'rsync_user' in cdata and not (
-            self.cleaned_data.get("rsync_mode") == 'module' or
-            not self.cleaned_data.get("rsync_validate_rpath") or
-            self.check_rpath_exists()
-        ):
-            self._errors["rsync_remotepath"] = self.error_class([_(
-                "The Remote Path you specified does not exist or is not a "
-                "directory.<br>Either create one yourself on the remote "
-                "machine or uncheck the<br>'rsync_validate_rpath' field."
-                "<br>**Note**: This could also happen if the remote path "
-                "entered<br> exceeded 255 characters and was truncated, please"
-                " restrict it to<br>255. Or it could also be that your SSH "
-                "credentials (remote host,etc) are wrong."
-            )])
-        return cdata
-
-    def save(self):
-        super(RsyncForm, self).save()
-        notifier().restart("cron")
+    def middleware_clean(self, update):
+        update['month'] = self.data.getlist("rsync_month")
+        update['dayweek'] = self.data.getlist("rsync_dayweek")
+        update['extra'] = list(filter(None, re.split(r"\s+", update["extra"])))
+        return update
 
 
 class SMARTTestForm(ModelForm):
