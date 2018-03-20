@@ -12,6 +12,8 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT
 
+GroupIdFile = "/tmp/.ixbuild_test_groupid"
+
 
 class update_group_test(unittest.TestCase):
 
