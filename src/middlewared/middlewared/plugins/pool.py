@@ -3,6 +3,7 @@ import errno
 import logging
 from datetime import datetime
 import os
+import re
 import subprocess
 import sysctl
 
@@ -35,7 +36,7 @@ async def is_mounted(middleware, path):
     return any(fs.dest == path for fs in mounted)
 
 
-async def mount(device, path, fs_type, options=None):
+async def mount(device, path, fs_type, fs_options, options):
     options = options or []
 
     if isinstance(device, str):
@@ -52,6 +53,12 @@ async def mount(device, path, fs_type, options=None):
 
     if fs_type == "ntfs":
         executable = "/usr/local/bin/ntfs-3g"
+    elif fs_type == "msdosfs" and fs_options:
+        executable = "/sbin/mount_msdosfs"
+        if "locale" in fs_options:
+            arguments.extend(["-L", fs_options["locale"]])
+        arguments.extend(sum([["-o", option] for option in options], []))
+        options = []
     else:
         arguments.extend(["-t", fs_type])
 
@@ -245,9 +252,9 @@ class PoolService(CRUDService):
         sysctl.filter('vfs.zfs.resilver_min_time_ms')[0].value = resilver_min_time_ms
         sysctl.filter('vfs.zfs.scan_idle')[0].value = scan_idle
 
-    @accepts(Str('volume'), Str('fs_type'), Str('dst_path'))
-    @job(lock=lambda args: 'volume_import')
-    async def import_disk(self, job, volume, fs_type, dst_path):
+    @accepts(Str('volume'), Str('fs_type'), Dict('fs_options', additional_attrs=True), Str('dst_path'))
+    @job(lock=lambda args: 'volume_import', logs=True)
+    async def import_disk(self, job, volume, fs_type, fs_options, dst_path):
         job.set_progress(None, description="Mounting")
 
         src = os.path.join('/var/run/importcopy/tmpdir', os.path.relpath(volume, '/'))
@@ -258,8 +265,9 @@ class PoolService(CRUDService):
         try:
             os.makedirs(src)
 
-            async with KernelModuleContextManager({"ntfs": "fuse"}.get(fs_type)):
-                async with MountFsContextManager(self.middleware, volume, src, fs_type, ["ro"]):
+            async with KernelModuleContextManager({"msdosfs": "msdosfs_iconv",
+                                                   "ntfs": "fuse"}.get(fs_type)):
+                async with MountFsContextManager(self.middleware, volume, src, fs_type, fs_options, ["ro"]):
                     job.set_progress(None, description="Importing")
 
                     line = [
@@ -272,27 +280,25 @@ class PoolService(CRUDService):
                         dst_path
                     ]
                     rsync_proc = await Popen(
-                        line, stdout=subprocess.PIPE, bufsize=0, preexec_fn=os.setsid,
+                        line, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0, preexec_fn=os.setsid,
                     )
-                    stdout = b""
                     try:
                         progress_buffer = JobProgressBuffer(job)
                         while True:
                             line = await rsync_proc.stdout.readline()
+                            job.logs_fd.write(line)
                             if line:
-                                stdout += line
                                 try:
-                                    proc_output = line.decode("utf-8", "ignore").strip()
-                                    prog_out = proc_output.split(' ')
-                                    progress = [x for x in prog_out if '%' in x]
-                                    if len(progress):
-                                        progress_buffer.set_progress(int(progress[0][:-1]))
-                                    elif not proc_output.endswith('/'):
+                                    line = line.decode("utf-8", "ignore").strip()
+                                    bits = re.split("\s+", line)
+                                    if len(bits) == 6 and bits[1].endswith("%") and bits[1][:-1].isdigit():
+                                        progress_buffer.set_progress(int(bits[1][:-1]))
+                                    elif not line.endswith('/'):
                                         if (
-                                            proc_output not in ['sending incremental file list'] and
-                                            'xfr#' not in proc_output
+                                            line not in ['sending incremental file list'] and
+                                            'xfr#' not in line
                                         ):
-                                            progress_buffer.set_progress(None, extra=proc_output)
+                                            progress_buffer.set_progress(None, extra=line)
                                 except Exception:
                                     logger.warning('Parsing error in rsync task', exc_info=True)
                             else:
@@ -307,9 +313,16 @@ class PoolService(CRUDService):
                         raise
 
                     job.set_progress(100, description="Done", extra="")
-                    return stdout.decode("utf-8", "ignore")
         finally:
             os.rmdir(src)
+
+    @accepts()
+    def import_disk_msdosfs_locales(self):
+        return [
+            locale.strip()
+            for locale in subprocess.check_output(["locale", "-a"], encoding="utf-8").split("\n")
+            if locale.strip()
+        ]
 
     """
     These methods are hacks for old UI which supports only one volume import at a time
@@ -359,6 +372,7 @@ class PoolDatasetService(CRUDService):
                 ('dedup', 'deduplication', str.upper),
                 ('atime', None, str.upper),
                 ('casesensitivity', None, str.upper),
+                ('exec', None, str.upper),
                 ('sync', None, str.upper),
                 ('compression', None, str.upper),
                 ('quota', None, _null),
@@ -409,6 +423,7 @@ class PoolDatasetService(CRUDService):
             'OFF', 'LZ4', 'GZIP-1', 'GZIP-6', 'GZIP-9', 'ZLE', 'LZJB',
         ]),
         Str('atime', enum=['ON', 'OFF']),
+        Str('exec', enum=['ON', 'OFF']),
         Int('quota'),
         Int('refquota'),
         Int('reservation'),
@@ -440,20 +455,21 @@ class PoolDatasetService(CRUDService):
             ('atime', None, str.lower),
             ('casesensitivity', None, str.lower),
             ('comments', 'org.freenas:description', None),
-            ('sync', None, str.lower),
             ('compression', None, str.lower),
-            ('deduplication', 'dedup', str.lower),
-            ('quota', None, _none),
-            ('refquota', None, _none),
-            ('reservation', None, _none),
-            ('refreservation', None, _none),
             ('copies', None, lambda x: str(x)),
-            ('snapdir', None, str.lower),
+            ('deduplication', 'dedup', str.lower),
+            ('exec', None, str.lower),
+            ('quota', None, _none),
             ('readonly', None, str.lower),
             ('recordsize', None, None),
+            ('refquota', None, _none),
+            ('refreservation', None, _none),
+            ('reservation', None, _none),
+            ('snapdir', None, str.lower),
             ('sparse', None, None),
-            ('volsize', None, lambda x: str(x)),
+            ('sync', None, str.lower),
             ('volblocksize', None, None),
+            ('volsize', None, lambda x: str(x)),
         ):
             if i not in data:
                 continue
@@ -481,6 +497,7 @@ class PoolDatasetService(CRUDService):
         ('rm', {'name': 'sparse'}),  # Create time only attribute
         ('rm', {'name': 'volblocksize'}),  # Create time only attribute
         ('edit', _add_inherit('atime')),
+        ('edit', _add_inherit('exec')),
         ('edit', _add_inherit('sync')),
         ('edit', _add_inherit('compression')),
         ('edit', _add_inherit('deduplication')),
@@ -511,6 +528,7 @@ class PoolDatasetService(CRUDService):
             ('sync', None, str.lower, True),
             ('compression', None, str.lower, True),
             ('deduplication', 'dedup', str.lower, True),
+            ('exec', None, str.lower, True),
             ('quota', None, _none, False),
             ('refquota', None, _none, False),
             ('reservation', None, _none, False),

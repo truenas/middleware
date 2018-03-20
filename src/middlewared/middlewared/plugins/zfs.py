@@ -1,4 +1,3 @@
-import concurrent.futures
 import errno
 import os
 import socket
@@ -18,7 +17,6 @@ from middlewared.service import (
 from middlewared.utils import filter_list, start_daemon_thread
 
 SCAN_THREADS = {}
-SINGLE_THREAD_POOL = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 
 
 def find_vdev(pool, vname):
@@ -49,32 +47,31 @@ class ZFSPoolService(Service):
     class Config:
         namespace = 'zfs.pool'
         private = True
-        thread_pool = SINGLE_THREAD_POOL
 
     @filterable
     def query(self, filters, options):
-        zfs = libzfs.ZFS()
-        # Handle `id` filter specially to avoiding getting all pool
-        if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
-            try:
-                pools = [zfs.get(filters[0][2]).__getstate__()]
-            except libzfs.ZFSException:
-                pools = []
-        else:
-            pools = [i.__getstate__() for i in zfs.pools]
+        with libzfs.ZFS() as zfs:
+            # Handle `id` filter specially to avoiding getting all pool
+            if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
+                try:
+                    pools = [zfs.get(filters[0][2]).__getstate__()]
+                except libzfs.ZFSException:
+                    pools = []
+            else:
+                pools = [i.__getstate__() for i in zfs.pools]
         return filter_list(pools, filters, options)
 
     @accepts(Str('pool'))
     async def get_disks(self, name):
-        zfs = libzfs.ZFS()
         try:
-            zpool = zfs.get(name)
+            with libzfs.ZFS() as zfs:
+                disks = list(zfs.get(name).disks)
         except libzfs.ZFSException as e:
             raise CallError(str(e), errno.ENOENT)
 
         await self.middleware.run_in_thread(geom.scan)
         labelclass = geom.class_by_name('LABEL')
-        for absdev in zpool.disks:
+        for absdev in disks:
             dev = absdev.replace('/dev/', '').replace('.eli', '')
             find = labelclass.xml.findall(f".//provider[name='{dev}']/../consumer/provider")
             name = None
@@ -115,20 +112,20 @@ class ZFSPoolService(Service):
             raise CallError('Adding new vdev is not implemented yet')
 
         try:
-            zfs = libzfs.ZFS()
-            pool = zfs.get(name)
+            with libzfs.ZFS() as zfs:
+                pool = zfs.get(name)
 
-            # Make sure we can find all target vdev
-            for i in (existing or []):
-                target = find_vdev(pool, i['target'])
-                if target is None:
-                    raise CallError(f'Failed to find vdev for {target}', errno.EINVAL)
-                i['target'] = target
+                # Make sure we can find all target vdev
+                for i in (existing or []):
+                    target = find_vdev(pool, i['target'])
+                    if target is None:
+                        raise CallError(f'Failed to find vdev for {target}', errno.EINVAL)
+                    i['target'] = target
 
-            for i in (existing or []):
-                newvdev = libzfs.ZFSVdev(zfs, i['type'].lower())
-                newvdev.path = i['path']
-                i['target'].attach(newvdev)
+                for i in (existing or []):
+                    newvdev = libzfs.ZFSVdev(zfs, i['type'].lower())
+                    newvdev.path = i['path']
+                    i['target'].attach(newvdev)
 
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
@@ -139,12 +136,12 @@ class ZFSPoolService(Service):
         Detach device `label` from the pool `pool`.
         """
         try:
-            zfs = libzfs.ZFS()
-            pool = zfs.get(name)
-            target = find_vdev(pool, label)
-            if target is None:
-                raise CallError(f'Failed to find vdev for {label}', errno.EINVAL)
-            target.detach()
+            with libzfs.ZFS() as zfs:
+                pool = zfs.get(name)
+                target = find_vdev(pool, label)
+                if target is None:
+                    raise CallError(f'Failed to find vdev for {label}', errno.EINVAL)
+                target.detach()
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
 
@@ -154,15 +151,15 @@ class ZFSPoolService(Service):
         Replace device `label` with `dev` in pool `name`.
         """
         try:
-            zfs = libzfs.ZFS()
-            pool = zfs.get(name)
-            target = find_vdev(pool, label)
-            if target is None:
-                raise CallError(f'Failed to find vdev for {label}', errno.EINVAL)
+            with libzfs.ZFS() as zfs:
+                pool = zfs.get(name)
+                target = find_vdev(pool, label)
+                if target is None:
+                    raise CallError(f'Failed to find vdev for {label}', errno.EINVAL)
 
-            newvdev = libzfs.ZFSVdev(zfs, 'disk')
-            newvdev.path = f'/dev/{dev}'
-            target.replace(newvdev)
+                newvdev = libzfs.ZFSVdev(zfs, 'disk')
+                newvdev.path = f'/dev/{dev}'
+                target.replace(newvdev)
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
 
@@ -173,28 +170,28 @@ class ZFSPoolService(Service):
         Start a scrub on pool `name`.
         """
         try:
-            zfs = libzfs.ZFS()
-            pool = zfs.get(name)
-            pool.start_scrub()
+            with libzfs.ZFS() as zfs:
+                pool = zfs.get(name)
+                pool.start_scrub()
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
 
         def watch():
             while True:
-                pool = zfs.get(name)
-                scrub = pool.scrub
-                if scrub.function != libzfs.ScanFunction.SCRUB:
+                with libzfs.ZFS() as zfs:
+                    scrub = zfs.get(name).scrub.__getstate__()
+                if scrub['function'] != 'SCRUB':
                     break
 
-                if scrub.state == libzfs.ScanState.FINISHED:
+                if scrub['state'] == 'FINISHED':
                     job.set_progress(100, 'Scrub finished')
                     break
 
-                if scrub.state == libzfs.ScanState.CANCELED:
+                if scrub['state'] == 'CANCELED':
                     break
 
-                if scrub.state == libzfs.ScanState.SCANNING:
-                    job.set_progress(scrub.percentage, 'Scrubbing')
+                if scrub['state'] == 'SCANNING':
+                    job.set_progress(scrub['percentage'], 'Scrubbing')
                 time.sleep(1)
 
         t = threading.Thread(target=watch, daemon=True)
@@ -207,19 +204,18 @@ class ZFSDatasetService(CRUDService):
     class Config:
         namespace = 'zfs.dataset'
         private = True
-        thread_pool = SINGLE_THREAD_POOL
 
     @filterable
     def query(self, filters, options):
-        zfs = libzfs.ZFS()
-        # Handle `id` filter specially to avoiding getting all datasets
-        if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
-            try:
-                datasets = [zfs.get_dataset(filters[0][2]).__getstate__()]
-            except libzfs.ZFSException:
-                datasets = []
-        else:
-            datasets = [i.__getstate__() for i in zfs.datasets]
+        with libzfs.ZFS() as zfs:
+            # Handle `id` filter specially to avoiding getting all datasets
+            if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
+                try:
+                    datasets = [zfs.get_dataset(filters[0][2]).__getstate__()]
+                except libzfs.ZFSException:
+                    datasets = []
+            else:
+                datasets = [i.__getstate__() for i in zfs.datasets]
         return filter_list(datasets, filters, options)
 
     @accepts(Dict(
@@ -253,9 +249,9 @@ class ZFSDatasetService(CRUDService):
             params[k] = v
 
         try:
-            zfs = libzfs.ZFS()
-            pool = zfs.get(data['name'].split('/')[0])
-            pool.create(data['name'], params, fstype=getattr(libzfs.DatasetType, data['type']), sparse_vol=sparse)
+            with libzfs.ZFS() as zfs:
+                pool = zfs.get(data['name'].split('/')[0])
+                pool.create(data['name'], params, fstype=getattr(libzfs.DatasetType, data['type']), sparse_vol=sparse)
         except libzfs.ZFSException as e:
             self.logger.error('Failed to create dataset', exc_info=True)
             raise CallError(f'Failed to create dataset: {e}')
@@ -272,29 +268,29 @@ class ZFSDatasetService(CRUDService):
     )
     def do_update(self, id, data):
         try:
-            zfs = libzfs.ZFS()
-            dataset = zfs.get_dataset(id)
+            with libzfs.ZFS() as zfs:
+                dataset = zfs.get_dataset(id)
 
-            if 'properties' in data:
-                for k, v in data['properties'].items():
+                if 'properties' in data:
+                    for k, v in data['properties'].items():
 
-                    # If prop already exists we just update it,
-                    # otherwise create a user property
-                    prop = dataset.properties.get(k)
-                    if prop:
-                        if v.get('source') == 'INHERIT':
-                            prop.inherit()
-                        elif 'value' in v and prop.value != v['value']:
-                            prop.value = v['value']
-                        elif 'parsed' in v and prop.parsed != v['parsed']:
-                            prop.parsed = v['parsed']
-                    else:
-                        if 'value' not in v:
-                            raise ValidationError('properties', f'properties.{k} needs a "value" attribute')
-                        if ':' not in k:
-                            raise ValidationError('properties', f'User property needs a colon (:) in its name`')
-                        prop = libzfs.ZFSUserProperty(v['value'])
-                        dataset.properties[k] = prop
+                        # If prop already exists we just update it,
+                        # otherwise create a user property
+                        prop = dataset.properties.get(k)
+                        if prop:
+                            if v.get('source') == 'INHERIT':
+                                prop.inherit()
+                            elif 'value' in v and prop.value != v['value']:
+                                prop.value = v['value']
+                            elif 'parsed' in v and prop.parsed != v['parsed']:
+                                prop.parsed = v['parsed']
+                        else:
+                            if 'value' not in v:
+                                raise ValidationError('properties', f'properties.{k} needs a "value" attribute')
+                            if ':' not in k:
+                                raise ValidationError('properties', f'User property needs a colon (:) in its name`')
+                            prop = libzfs.ZFSUserProperty(v['value'])
+                            dataset.properties[k] = prop
 
         except libzfs.ZFSException as e:
             self.logger.error('Failed to update dataset', exc_info=True)
@@ -302,25 +298,27 @@ class ZFSDatasetService(CRUDService):
 
     def do_delete(self, id):
         try:
-            zfs = libzfs.ZFS()
-            ds = zfs.get_dataset(id)
-            ds.delete()
+            with libzfs.ZFS() as zfs:
+                ds = zfs.get_dataset(id)
+                ds.delete()
         except libzfs.ZFSException as e:
             self.logger.error('Failed to delete dataset', exc_info=True)
             raise CallError(f'Failed to delete dataset: {e}')
 
     def mount(self, name):
         try:
-            dataset = libzfs.ZFS().get_dataset(name)
-            dataset.mount()
+            with libzfs.ZFS() as zfs:
+                dataset = zfs.get_dataset(name)
+                dataset.mount()
         except libzfs.ZFSException as e:
             self.logger.error('Failed to mount dataset', exc_info=True)
             raise CallError(f'Failed to mount dataset: {e}')
 
     def promote(self, name):
         try:
-            dataset = libzfs.ZFS().get_dataset(name)
-            dataset.promote()
+            with libzfs.ZFS() as zfs:
+                dataset = zfs.get_dataset(name)
+                dataset.promote()
         except libzfs.ZFSException as e:
             self.logger.error('Failed to promote dataset', exc_info=True)
             raise CallError(f'Failed to promote dataset: {e}')
@@ -330,13 +328,13 @@ class ZFSSnapshot(CRUDService):
 
     class Config:
         namespace = 'zfs.snapshot'
-        thread_pool = SINGLE_THREAD_POOL
 
     @filterable
     def query(self, filters, options):
-        zfs = libzfs.ZFS()
+        with libzfs.ZFS() as zfs:
+            snapshots = [i.__getstate__() for i in list(zfs.snapshots)]
         # FIXME: awful performance with hundreds/thousands of snapshots
-        return filter_list([i.__getstate__() for i in list(zfs.snapshots)], filters, options)
+        return filter_list(snapshots, filters, options)
 
     @accepts(Dict(
         'snapshot_create',
@@ -353,7 +351,6 @@ class ZFSSnapshot(CRUDService):
         Returns:
             bool: True if succeed otherwise False.
         """
-        zfs = libzfs.ZFS()
 
         dataset = data.get('dataset', '')
         name = data.get('name', '')
@@ -365,22 +362,18 @@ class ZFSSnapshot(CRUDService):
             return False
 
         try:
-            ds = zfs.get_dataset(dataset)
-        except libzfs.ZFSException as err:
-            self.logger.error("{0}".format(err))
-            return False
+            with libzfs.ZFS() as zfs:
+                ds = zfs.get_dataset(dataset)
+                ds.snapshot(f'{dataset}@{name}', recursive=recursive, fsopts=properties)
 
-        try:
-            ds.snapshot(f'{dataset}@{name}', recursive=recursive, fsopts=properties)
-
-            if vmsnaps_count > 0:
-                ds.properties['freenas:vmsynced'] = libzfs.ZFSUserProperty('Y')
+                if vmsnaps_count > 0:
+                    ds.properties['freenas:vmsynced'] = libzfs.ZFSUserProperty('Y')
 
             self.logger.info(f"Snapshot taken: {dataset}@{name}")
             return True
         except libzfs.ZFSException as err:
-                self.logger.error(f"{err}")
-                return False
+            self.logger.error(f"{err}")
+            return False
 
     @accepts(Dict(
         'snapshot_remove',
@@ -395,13 +388,12 @@ class ZFSSnapshot(CRUDService):
         Returns:
             bool: True if succeed otherwise False.
         """
-        zfs = libzfs.ZFS()
         snapshot_name = data['dataset'] + '@' + data['name']
 
         try:
-            snap = zfs.get_snapshot(snapshot_name)
-            snap.delete(True if data.get('defer_delete') else False)
-
+            with libzfs.ZFS() as zfs:
+                snap = zfs.get_snapshot(snapshot_name)
+                snap.delete(True if data.get('defer_delete') else False)
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
             return False
@@ -422,7 +414,6 @@ class ZFSSnapshot(CRUDService):
         Returns:
             bool: True if succeed otherwise False.
         """
-        zfs = libzfs.ZFS()
 
         snapshot = data.get('snapshot', '')
         dataset_dst = data.get('dataset_dst', '')
@@ -431,13 +422,9 @@ class ZFSSnapshot(CRUDService):
             return False
 
         try:
-            snp = zfs.get_snapshot(snapshot)
-        except libzfs.ZFSException as err:
-            self.logger.error("{0}".format(err))
-            return False
-
-        try:
-            snp.clone(dataset_dst)
+            with libzfs.ZFS() as zfs:
+                snp = zfs.get_snapshot(snapshot)
+                snp.clone(dataset_dst)
             self.logger.info("Cloned snapshot {0} to dataset {1}".format(snapshot, dataset_dst))
             return True
         except libzfs.ZFSException as err:
@@ -450,11 +437,9 @@ class ZFSQuoteService(Service):
     class Config:
         namespace = 'zfs.quota'
         private = True
-        thread_pool = SINGLE_THREAD_POOL
 
     def __init__(self, middleware):
         super().__init__(middleware)
-
         self.excesses = None
 
     @periodic(60)
@@ -524,11 +509,16 @@ class ZFSQuoteService(Service):
                     self.logger.warning('Failed to send email about quota excess', exc_info=True)
 
     async def __get_quota_excesses(self):
+
+        def get_props():
+            with libzfs.ZFS() as zfs:
+                return [
+                    {k: v.__getstate__() for k, v in i.properties.items()}
+                    for i in zfs.datasets
+                ]
+
         excesses = []
-        for properties in await self.middleware.run_in_thread_pool(SINGLE_THREAD_POOL, lambda: [
-            {k: v.__getstate__() for k, v in i.properties.items()}
-            for i in libzfs.ZFS().datasets
-        ]):
+        for properties in await self.middleware.run_in_thread(get_props):
             quota = await self.__get_quota_excess(properties, "quota", "quota", "used")
             if quota:
                 excesses.append(quota)
@@ -611,7 +601,8 @@ class ScanWatch(object):
     def run(self):
 
         while not self._cancel.wait(2):
-            scan = SINGLE_THREAD_POOL.submit(lambda: libzfs.ZFS().get(self.pool).scrub.__getstate__()).result()
+            with libzfs.ZFS() as zfs:
+                scan = zfs.get(self.pool).scrub.__getstate__()
             if scan['state'] == 'SCANNING':
                 self.send_scan(scan)
             elif scan['state'] == 'FINISHED':
@@ -621,7 +612,8 @@ class ScanWatch(object):
 
     def send_scan(self, scan=None):
         if not scan:
-            scan = SINGLE_THREAD_POOL.submit(lambda: libzfs.ZFS().get(self.pool).scrub.__getstate__()).result()
+            with libzfs.ZFS() as zfs:
+                scan = zfs.get(self.pool).scrub.__getstate__()
         self.middleware.send_event('zfs.pool.scan', 'CHANGED', fields={
             'scan': scan,
             'name': self.pool,

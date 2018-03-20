@@ -30,12 +30,13 @@ def item_method(fn):
     return fn
 
 
-def job(lock=None, lock_queue_size=None, process=False, pipes=None, check_pipes=True):
+def job(lock=None, lock_queue_size=None, logs=False, process=False, pipes=None, check_pipes=True):
     """Flag method as a long running job."""
     def check_job(fn):
         fn._job = {
             'lock': lock,
             'lock_queue_size': lock_queue_size,
+            'logs': logs,
             'process': process,
             'pipes': pipes or [],
             'check_pipes': check_pipes,
@@ -106,6 +107,7 @@ class ServiceBase(type):
       - private: whether or not the service is deemed private
       - verbose_name: human-friendly singular name for the service
       - thread_pool: thread pool to use for threaded methods
+      - process_pool: process pool to run service methods
 
     """
 
@@ -132,6 +134,7 @@ class ServiceBase(type):
             'namespace': namespace,
             'private': False,
             'thread_pool': None,
+            'process_pool': None,
             'verbose_name': klass.__name__.replace('Service', ''),
         }
 
@@ -309,7 +312,7 @@ class CoreService(Service):
             else:
                 _typ = 'service'
             services[k] = {
-                'config': {k: v for k, v in list(v._config.__dict__.items()) if not k.startswith(('_', 'thread_pool'))},
+                'config': {k: v for k, v in list(v._config.__dict__.items()) if not k.startswith(('_', 'process_pool', 'thread_pool'))},
                 'type': _typ,
             }
         return services

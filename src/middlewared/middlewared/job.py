@@ -3,17 +3,14 @@ from collections import OrderedDict
 import copy
 from datetime import datetime
 import enum
-import json
 import logging
 import os
-import subprocess
 import sys
 import time
 import traceback
 import threading
 
 from middlewared.pipe import Pipes
-from middlewared.utils import Popen
 
 logger = logging.getLogger(__name__)
 
@@ -189,6 +186,7 @@ class JobsDeque(object):
         if len(self.__dict) > self.maxlen:
             for old_job_id, old_job in self.__dict.items():
                 if old_job.state in (State.SUCCESS, State.FAILED, State.ABORTED):
+                    self.__dict[old_job_id].cleanup()
                     del self.__dict[old_job_id]
                     break
             else:
@@ -201,10 +199,11 @@ class Job(object):
     Represents a long running call, methods marked with @job decorator
     """
 
-    def __init__(self, middleware, method_name, method, args, options, pipes):
+    def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes):
         self._finished = asyncio.Event()
         self.middleware = middleware
         self.method_name = method_name
+        self.serviceobj = serviceobj
         self.method = method
         self.args = args
         self.options = options
@@ -225,6 +224,10 @@ class Job(object):
         self.time_finished = None
         self.loop = None
         self.future = None
+
+        self.logs_path = None
+        self.logs_fd = None
+        self.logs_excerpt = None
 
         if self.options["check_pipes"]:
             for pipe in self.options["pipes"]:
@@ -308,6 +311,12 @@ class Job(object):
         This method is supposed to run in a greenlet.
         """
 
+        if self.options["logs"]:
+            logs_dir = os.path.join("/tmp/middlewared/jobs")
+            os.makedirs(logs_dir, exist_ok=True)
+            self.logs_path = os.path.join(logs_dir, f"{self.id}.log")
+            self.logs_fd = open(self.logs_path, "wb")
+
         self.set_state('RUNNING')
         try:
             self.loop = asyncio.get_event_loop()
@@ -319,12 +328,8 @@ class Job(object):
             self.set_state('FAILED')
             self.set_exception(sys.exc_info())
         finally:
-            def close_pipes():
-                if self.pipes.input:
-                    self.pipes.input.r.close()
-                if self.pipes.output:
-                    self.pipes.output.w.close()
-            await self.middleware.run_in_io_thread(close_pipes)
+            await self.__close_logs()
+            await self.__close_pipes()
 
             queue.release_lock(self)
             self._finished.set()
@@ -337,36 +342,7 @@ class Job(object):
         and return the result as a json
         """
         if self.options.get('process'):
-            proc = await Popen([
-                '/usr/bin/env',
-                'python3',
-                os.path.join(
-                    os.path.dirname(os.path.realpath(__file__)),
-                    'job_process.py',
-                ),
-                str(self.id),
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True, env={
-                'LOGNAME': 'root',
-                'USER': 'root',
-                'GROUP': 'wheel',
-                'HOME': '/root',
-                'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin',
-                'TERM': 'xterm',
-            })
-            output = await proc.communicate()
-            try:
-                data = json.loads(output[0].decode())
-            except ValueError:
-                self.set_state('FAILED')
-                self.error = 'Running job has failed.\nSTDOUT: {}\nSTDERR: {}'.format(output[0], output[1])
-            else:
-                if proc.returncode != 0:
-                    self.set_state('FAILED')
-                    self.error = data['error']
-                    self.exception = data['exception']
-                else:
-                    self.set_result(data)
-                    self.set_state('SUCCESS')
+            rv = await self.middleware._call_worker(self.serviceobj, self.method_name, *self.args, job={'id': self.id})
         else:
             # Make sure args are not altered during job run
             args = copy.deepcopy(self.args)
@@ -374,14 +350,52 @@ class Job(object):
                 rv = await self.method(*([self] + args))
             else:
                 rv = await self.middleware.run_in_thread(self.method, *([self] + args))
-            self.set_result(rv)
-            self.set_state('SUCCESS')
+        self.set_result(rv)
+        self.set_state('SUCCESS')
+
+    async def __close_logs(self):
+        if self.logs_fd:
+            self.logs_fd.close()
+
+            def get_logs_excerpt():
+                head = []
+                tail = []
+                lines = 0
+                with open(self.logs_path, "r", encoding="utf-8", errors="ignore") as f:
+                    for line in f:
+                        if len(head) < 5:
+                            head.append(line)
+
+                        tail.append(line)
+                        tail = tail[-5:]
+
+                        lines += 1
+
+                if lines > 10:
+                    excerpt = "%s[%d more lines]\n%s" % ("".join(head), lines - 10, "".join(tail))
+                else:
+                    excerpt = "".join(head + tail)
+
+                return excerpt
+
+            self.logs_excerpt = await self.middleware.run_in_io_thread(get_logs_excerpt)
+
+    async def __close_pipes(self):
+        def close_pipes():
+            if self.pipes.input:
+                self.pipes.input.r.close()
+            if self.pipes.output:
+                self.pipes.output.w.close()
+
+        await self.middleware.run_in_io_thread(close_pipes)
 
     def __encode__(self):
         return {
             'id': self.id,
             'method': self.method_name,
             'arguments': self.args,
+            'logs_path': self.logs_path,
+            'logs_excerpt': self.logs_excerpt,
             'progress': self.progress,
             'result': self.result,
             'error': self.error,
@@ -405,6 +419,13 @@ class Job(object):
         if subjob.exception:
             raise subjob.exception
         return subjob.result
+
+    def cleanup(self):
+        if self.logs_path:
+            try:
+                os.unlink(self.logs_path)
+            except Exception:
+                pass
 
 
 class JobProgressBuffer:

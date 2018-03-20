@@ -7,6 +7,7 @@ from .restful import RESTfulAPI
 from .schema import ResolverError, Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from .utils import start_daemon_thread
+from .worker import ProcessPoolExecutor, main_worker
 from aiohttp import web
 from aiohttp_wsgi import WSGIHandler
 from collections import defaultdict
@@ -20,6 +21,7 @@ import functools
 import imp
 import inspect
 import linecache
+import multiprocessing
 import os
 import queue
 import select
@@ -661,9 +663,10 @@ class Middleware(object):
         self.plugins_dirs = plugins_dirs or []
         self.__loop = None
         self.__thread_id = threading.get_ident()
-        self.__threadpool = concurrent.futures.ThreadPoolExecutor(
-            max_workers=10,
-        )
+        # Spawn new processes for ProcessPool instead of forking
+        multiprocessing.set_start_method('spawn')
+        self.__procpool = ProcessPoolExecutor(max_workers=2)
+        self.__threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
         self.jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
@@ -850,19 +853,21 @@ class Middleware(object):
     def get_schema(self, name):
         return self.__schemas.get(name)
 
-    async def run_in_thread_pool(self, pool, method, *args, **kwargs):
+    async def run_in_executor(self, pool, method, *args, **kwargs):
         """
-        Runs method in a native thread using concurrent.futures.ThreadPool.
-        This prevents a CPU intensive or non-greenlet friendly method
+        Runs method in a native thread using concurrent.futures.Pool.
+        This prevents a CPU intensive or non-asyncio friendly method
         to block the event loop indefinitely.
+        Also used to run non thread safe libraries (using a ProcessPool)
         """
         loop = asyncio.get_event_loop()
-        task = loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
-        await task
-        return task.result()
+        return await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
 
     async def run_in_thread(self, method, *args, **kwargs):
-        return await self.run_in_thread_pool(self.__threadpool, method, *args, **kwargs)
+        return await self.run_in_executor(self.__threadpool, method, *args, **kwargs)
+
+    async def run_in_proc(self, method, *args, **kwargs):
+        return await self.run_in_executor(self.__procpool, method, *args, **kwargs)
 
     async def run_in_io_thread(self, method, *args):
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
@@ -887,8 +892,11 @@ class Middleware(object):
         # entry to keep track of its state.
         job_options = getattr(methodobj, '_job', None)
         if job_options:
+            # Currently its only a boolean
+            if serviceobj._config.process_pool is True:
+                job_options['process'] = True
             # Create a job instance with required args
-            job = Job(self, name, methodobj, args, job_options, pipes)
+            job = Job(self, name, serviceobj, methodobj, args, job_options, pipes)
             # Add the job to the queue.
             # At this point an `id` is assinged to the job.
             job = self.jobs.add(job)
@@ -898,18 +906,34 @@ class Middleware(object):
         if job:
             return job
         else:
+
+            # Currently its only a boolean
+            if serviceobj._config.process_pool is True:
+                return await self._call_worker(serviceobj, name, *args)
+
             if asyncio.iscoroutinefunction(methodobj):
                 return await methodobj(*args)
             else:
-                pool = None
+                tpool = None
                 if serviceobj._config.thread_pool:
-                    pool = serviceobj._config.thread_pool
+                    tpool = serviceobj._config.thread_pool
                 if hasattr(methodobj, '_thread_pool'):
-                    pool = methodobj._thread_pool
-                if pool:
-                    return await self.run_in_thread_pool(pool, methodobj, *args)
-                else:
-                    return await self.run_in_thread(methodobj, *args)
+                    tpool = methodobj._thread_pool
+                if tpool:
+                    return await self.run_in_executor(tpool, methodobj, *args)
+
+                return await self.run_in_thread(methodobj, *args)
+
+    async def _call_worker(self, serviceobj, name, *args, job=None):
+        return await self.run_in_proc(
+            main_worker,
+            # For now only plugins in middlewared.plugins are supported
+            f'middlewared.plugins.{serviceobj.__class__.__module__}',
+            serviceobj.__class__.__name__,
+            name.rsplit('.', 1)[-1],
+            args,
+            job,
+        )
 
     def _method_lookup(self, name):
         if '.' not in name:
@@ -1065,8 +1089,12 @@ class Middleware(object):
 
         self.__setup_periodic_tasks()
 
+        # Start up middleware worker process pool
+        self.__procpool._start_queue_management_thread()
+
         self.logger.debug('Accepting connections')
         web.run_app(app, host='0.0.0.0', port=6000, access_log=None)
+
         try:
             self.__loop.run_forever()
         except RuntimeError as e:
