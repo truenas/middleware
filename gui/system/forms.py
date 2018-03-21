@@ -3486,11 +3486,13 @@ class CloudCredentialsForm(ModelForm):
         label=_('Access Key'),
         max_length=200,
         required=False,
+        widget=forms.widgets.PasswordInput(render_value=True),
     )
     AMAZON_secret_key = forms.CharField(
         label=_('Secret Key'),
         max_length=200,
         required=False,
+        widget=forms.widgets.PasswordInput(render_value=True),
     )
     AZURE_account_name = forms.CharField(
         label=_('Account Name'),
@@ -3501,6 +3503,7 @@ class CloudCredentialsForm(ModelForm):
         label=_('Account Key'),
         max_length=200,
         required=False,
+        widget=forms.widgets.PasswordInput(render_value=True),
     )
     BACKBLAZE_account_id = forms.CharField(
         label=_('Account ID'),
@@ -3511,10 +3514,12 @@ class CloudCredentialsForm(ModelForm):
         label=_('Application Key'),
         max_length=200,
         required=False,
+        widget=forms.widgets.PasswordInput(render_value=True),
     )
     GCLOUD_keyfile = FileField(
         label=_('JSON Service Account Key'),
         required=False,
+        widget=forms.widgets.PasswordInput(render_value=True),
     )
 
     PROVIDER_MAP = {
