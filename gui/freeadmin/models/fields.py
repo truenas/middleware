@@ -77,7 +77,10 @@ class EncryptedDictField(models.Field):
         if not value:
             return {}
         if isinstance(value, str):
-            return json.loads(notifier().pwenc_decrypt(value))
+            try:
+                return json.loads(notifier().pwenc_decrypt(value))
+            except Exception:
+                return {}
         return value
 
 
