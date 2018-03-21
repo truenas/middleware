@@ -93,7 +93,6 @@ filter f_ppp { program("ppp"); };
 filter f_slip { program("startslip"); };
 filter f_mdnsresponder { program("mDNSResponder"); };
 filter f_not_mdnsresponder { not program("mDNSResponder"); };
-filter f_not_consul { not program("consul"); };
 filter f_nginx { program("nginx"); };
 filter f_not_nginx { not program("nginx"); };
 
@@ -106,7 +105,7 @@ filter f_not_arpchange { not filter(f_arpchange); };
 #
 # *.err;kern.warning;auth.notice;mail.crit		/dev/console
 #
-log { source(src); filter(f_err); filter(f_not_mdnsresponder); filter(f_not_consul); destination(console); };
+log { source(src); filter(f_err); filter(f_not_mdnsresponder); destination(console); };
 log { source(src); filter(f_kern); filter(f_warning); destination(console); };
 log { source(src); filter(f_auth); filter(f_notice); destination(console); };
 log { source(src); filter(f_mail); filter(f_crit); destination(console); };
@@ -114,7 +113,7 @@ log { source(src); filter(f_mail); filter(f_crit); destination(console); };
 #
 # *.notice;authpriv.none;kern.debug;lpr.info;mail.crit;news.err	/var/log/messages
 #
-log { source(src); filter(f_notice); filter(f_not_authpriv); filter(f_not_mdnsresponder); filter(f_not_nginx); filter(f_not_consul); destination(messages); };
+log { source(src); filter(f_notice); filter(f_not_authpriv); filter(f_not_mdnsresponder); filter(f_not_nginx); destination(messages); };
 log { source(src); filter(f_kern); filter(f_debug); filter(f_not_arpchange); destination(messages); };
 log { source(src); filter(f_lpr); filter(f_info); destination(messages); };
 log { source(src); filter(f_mail); filter(f_crit); destination(messages); };
