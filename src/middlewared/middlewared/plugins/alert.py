@@ -1,7 +1,6 @@
 from collections import defaultdict
 import copy
 from datetime import datetime
-import json
 import os
 import traceback
 
@@ -298,7 +297,6 @@ class AlertService(Service):
                 existing_alert = self.alerts[alert.node][alert_source.name].get(alert.key)
 
                 alert.source = alert_source.name
-                alert.key = alert.key or json.dumps(alert.args, sort_keys=True)
                 if existing_alert is None:
                     alert.datetime = datetime.utcnow()
                 else:

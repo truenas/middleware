@@ -30,10 +30,9 @@ class Alert:
 
         self.source = source
         self.node = node
-        if key is not undefined:
-            self.key = key
-        else:
-            self.key = self.formatted
+        if key is undefined:
+            key = [title, args]
+        self.key = key if isinstance(key, str) else json.dumps(key, sort_keys=True)
         self.datetime = datetime
         self.level = level
         self.dismissed = dismissed
