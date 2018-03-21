@@ -32,6 +32,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.text import capfirst
 
+from freenasUI.middleware.notifier import notifier
+
 log = logging.getLogger('freeadmin.models.fields')
 
 
@@ -54,6 +56,28 @@ class DictField(models.Field):
             return {}
         if isinstance(value, str):
             return json.loads(value)
+        return value
+
+
+class EncryptedDictField(models.Field):
+    empty_strings_allowed = False
+
+    def get_internal_type(self):
+        return "TextField"
+
+    def get_db_prep_value(self, value, connection, prepared=False):
+        if not value:
+            value = {}
+        return notifier().pwenc_encrypt(json.dumps(value))
+
+    def from_db_value(self, value, expression, connection, context):
+        return self.to_python(value)
+
+    def to_python(self, value):
+        if not value:
+            return {}
+        if isinstance(value, str):
+            return json.loads(notifier().pwenc_decrypt(value))
         return value
 
 
