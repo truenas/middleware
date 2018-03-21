@@ -92,6 +92,8 @@ for controller in controllerlist:
                 # following in controller_boardname:
                 # SAS9200-8e
                 try:
+                    if controller_boardname == "Echostreams HBA":
+                        controller_boardname = "SAS9300-8i"
                     # If the boardname doesn't start with SAS we aren't
                     # going to have a firmware for it anyways.
                     # This should never happen on TrueNAS BOM hardware
