@@ -1311,7 +1311,6 @@ def smb4_setup(client):
             pipeopen("cp -a '%s/' '%s'" % (oldprivatedir, privatedir)).wait()
             pipeopen("mv '%s' '%s.bak'" % (oldprivatedir, oldprivatedir)).wait()
 
-
     smb4_mkdir("/var/run/samba")
     smb4_mkdir("/var/run/samba4")
 
