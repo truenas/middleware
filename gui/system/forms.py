@@ -1543,9 +1543,6 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
     type = forms.ChoiceField(
         choices=(),
     )
-    settings = forms.CharField(
-        widget=AlertServiceSettingsWidget(allow_inherit=True),
-    )
 
     # Common fields between all API
     username = forms.CharField(
@@ -1711,6 +1708,10 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         required=False,
     )
 
+    settings = forms.CharField(
+        widget=AlertServiceSettingsWidget(allow_inherit=True),
+    )
+
     send_test_alert = forms.CharField(
         required=False,
         widget=forms.widgets.HiddenInput(),
@@ -1740,7 +1741,8 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         self.fields['type'].widget.attrs['onChange'] = (
             "alertServiceTypeToggle();"
         )
-        key_order(self, len(self.fields) - 1, 'enabled', instance=True)
+        key_order(self, len(self.fields) - 2, 'enabled', instance=True)
+        key_order(self, len(self.fields) - 1, 'settings', instance=True)
 
         if self.instance.id:
             for k in self.types_fields.get(self.instance.type, []):
