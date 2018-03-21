@@ -1,6 +1,7 @@
 import asyncio
 import errno
 import os
+import socket
 import sys
 
 from collections import defaultdict
@@ -117,7 +118,7 @@ class FailoverService(Service):
         except ConnectionRefusedError:
             raise CallError('Connection refused', errno.ECONNREFUSED)
         except OSError as e:
-            if e.errno in (errno.EHOSTDOWN, errno.ENETUNREACH):
+            if e.errno in (errno.EHOSTDOWN, errno.ENETUNREACH) or isinstance(e, socket.timeout):
                 raise CallError('Standby node is down', errno.EHOSTDOWN)
             raise
         except ClientException as e:
@@ -202,6 +203,9 @@ def journal_sync(middleware, retries):
                     c.call('failover.call_remote', 'datastore.sql', [query, params])
                 j.queries.remove(q)
             except ClientException as e:
+                if e.errno == errno.EHOSTDOWN:
+                    middleware.logger.trace('Skipping journal sync, node down')
+                    break
                 retries[str(q)] += 1
                 if retries[str(q)] >= 2:
                     # No need to warn/log multiple times the same thing
