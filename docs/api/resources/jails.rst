@@ -78,7 +78,7 @@ Update resource
 
         {
           "id": 1,
-          "jc_collectionurl": "http://cdn.freenas.org/latest/RELEASE/x64/jails",
+          "jc_collectionurl": "http://download.freenas.org/jails/11/x64/",
           "jc_ipv4_network": "192.168.3.0/24",
           "jc_ipv4_network_end": "192.168.3.254",
           "jc_ipv4_network_start": "192.168.3.50",
