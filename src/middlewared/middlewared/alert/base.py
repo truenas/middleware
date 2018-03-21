@@ -5,6 +5,8 @@ import json
 import logging
 import os
 
+from middlewared.alert.schedule import IntervalSchedule
+
 __all__ = ["AlertLevel", "Alert", "AlertSource", "FilePresenceAlertSource", "ThreadedAlertSource",
            "AlertService", "ThreadedAlertService", "ProThreadedAlertService",
            "format_alerts", "ellipsis"]
@@ -62,7 +64,7 @@ class AlertSource:
     hardware = False
 
     onetime = False
-    interval = timedelta()
+    schedule = IntervalSchedule(timedelta())
 
     run_on_passive_node = True
 

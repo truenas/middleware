@@ -264,7 +264,7 @@ class AlertService(Service):
                             run_on_passive_node = True
 
         for alert_source in ALERT_SOURCES.values():
-            if datetime.utcnow() < self.alert_source_last_run[alert_source.name] + alert_source.interval:
+            if not alert_source.schedule.should_run(datetime.utcnow(), self.alert_source_last_run[alert_source.name]):
                 continue
 
             self.alert_source_last_run[alert_source.name] = datetime.utcnow()
