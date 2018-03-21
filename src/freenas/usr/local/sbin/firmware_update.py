@@ -17,7 +17,7 @@ LOGFILE = '/data/hba_firmware_flash.log'
 LOGLINES = []
 
 MPS_VERSION = 20
-MPR_VERSION = 14
+MPR_VERSION = 15
 
 UPDATE_SUCCESS = []
 UPDATE_FAIL = []
@@ -155,7 +155,7 @@ for controller in controllerlist:
         # anti-downgrade logic
         if MPR_VERSION > controller_firmware_version:
             firmware_file = "/usr/local/share/firmware/mpr_%s_p%s.firmware.bin" % \
-                (controller_boardname.replace("-", "_"), MPR_VERSION)
+                (controller_boardname, MPR_VERSION)
             bios_file = "/usr/local/share/firmware/mpr_p%s_bios.rom" % MPR_VERSION
             if os.path.exists(firmware_file) and os.path.exists(bios_file):
                 ret = os.system("%s -c %s -b %s -f %s" %
