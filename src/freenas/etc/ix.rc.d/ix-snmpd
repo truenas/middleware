@@ -28,6 +28,7 @@ generate_snmpconf()
 	kern_ostype=`/sbin/sysctl -n kern.ostype`
 	kern_osrelease=`/sbin/sysctl -n kern.osrelease`
 	kern_osrevision=`/sbin/sysctl -n kern.osrevision`
+	freenas_version=`cat /etc/version`
 
 	local snmp_options=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT snmp_options FROM services_snmp ORDER BY -id LIMIT 1")
 	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT $sf FROM services_snmp ORDER BY -id LIMIT 1" | \
@@ -36,7 +37,7 @@ generate_snmpconf()
 agentAddress udp:161,udp6:161,unix:/var/run/snmpd.sock
 sysLocation ${snmp_location:-unknown}
 sysContact ${snmp_contact:-unknown@localhost}
-sysDescr Hardware: ${hw_machine} ${hw_model} running at ${hw_clockrate} Software: ${kern_ostype} ${kern_osrelease} (revision ${kern_osrevision})
+sysDescr ${freenas_version}. Hardware: ${hw_machine} ${hw_model} running at ${hw_clockrate}. Software: ${kern_ostype} ${kern_osrelease} (revision ${kern_osrevision})
 
 master agentx
 EOF

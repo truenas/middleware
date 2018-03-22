@@ -41,6 +41,9 @@ setup(
     description='FreeNAS Middleware Daemon',
     packages=[
         'middlewared',
+        'middlewared.alert',
+        'middlewared.alert.service',
+        'middlewared.alert.source',
         'middlewared.client',
         'middlewared.plugins',
         'middlewared.apidocs',

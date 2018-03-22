@@ -341,13 +341,13 @@ require([
         var msgid = input.value;
         var dismiss;
         if(input.checked) {
-            dismiss = 'false';
+            dismiss = false;
         } else {
-            dismiss = 'true';
+            dismiss = true;
         }
-        xhr.put("/api/v1.0/system/alert/" + msgid + "/dismiss/", {
-          headers: {"X-CSRFToken": CSRFToken, "Content-Type": "application/json"},
-            data: dismiss
+        xhr.put("/api/v1.0/system/alert/dismiss/", {
+            headers: {"X-CSRFToken": CSRFToken, "Content-Type": "application/json"},
+            data: JSON.stringify({"id": msgid, "dismiss": dismiss})
         }).then(function(data) {
             loadalert();
         });
@@ -1395,9 +1395,9 @@ require([
         }
     }
 
-    consulTypeToggle = function() {
+    alertServiceTypeToggle = function() {
 
-        var consulalert_type = registry.byId("id_consulalert_type");
+        var type = registry.byId("id_type");
 
         // Common fields between all API
         var cluster_name = registry.byId("id_cluster_name").domNode.parentNode.parentNode;
@@ -1441,7 +1441,9 @@ require([
         // VictorOps
         var routing_key = registry.byId("id_routing_key").domNode.parentNode.parentNode;
 
-        domStyle.set(enabled, "display", "none");
+        // Mail
+        var email = registry.byId("id_email").domNode.parentNode.parentNode;
+
         domStyle.set(_url, "display", "none");
         domStyle.set(cluster_name, "display", "none");
         domStyle.set(username, "display", "none");
@@ -1465,55 +1467,50 @@ require([
         domStyle.set(aws_access_key_id, "display", "none");
         domStyle.set(aws_secret_access_key, "display", "none");
         domStyle.set(routing_key, "display", "none");
+        domStyle.set(email, "display", "none");
 
-        if(consulalert_type.get('value') == 'InfluxDB') {
+        if(type.get('value') == 'InfluxDB') {
             domStyle.set(host, "display", "table-row");
             domStyle.set(username, "display", "table-row");
             domStyle.set(password, "display", "table-row");
             domStyle.set(database, "display", "table-row");
             domStyle.set(series_name, "display", "table-row");
-            domStyle.set(enabled, "display", "table-row");
-        } else if(consulalert_type.get('value') == 'Slack') {
+        } else if(type.get('value') == 'Slack') {
             domStyle.set(cluster_name, "display", "table-row");
             domStyle.set(_url, "display", "table-row");
             domStyle.set(channel, "display", "table-row");
             domStyle.set(username, "display", "table-row");
             domStyle.set(icon_url, "display", "table-row");
             domStyle.set(detailed, "display", "table-row");
-            domStyle.set(enabled, "display", "table-row");
-        } else if(consulalert_type.get('value') == 'Mattermost') {
+        } else if(type.get('value') == 'Mattermost') {
             domStyle.set(cluster_name, "display", "table-row");
             domStyle.set(_url, "display", "table-row");
             domStyle.set(username, "display", "table-row");
             domStyle.set(password, "display", "table-row");
             domStyle.set(team, "display", "table-row");
             domStyle.set(channel, "display", "table-row");
-            domStyle.set(enabled, "display", "table-row");
-        } else if(consulalert_type.get('value') == 'PagerDuty') {
+        } else if(type.get('value') == 'PagerDuty') {
             domStyle.set(service_key, "display", "table-row");
             domStyle.set(client_name, "display", "table-row");
-            domStyle.set(enabled, "display", "table-row");
-        } else if(consulalert_type.get('value') == 'HipChat') {
+        } else if(type.get('value') == 'HipChat') {
             domStyle.set(hfrom, "display", "table-row");
             domStyle.set(cluster_name, "display", "table-row");
             domStyle.set(base_url, "display", "table-row");
             domStyle.set(room_id, "display", "table-row");
             domStyle.set(auth_token, "display", "table-row");
-            domStyle.set(enabled, "display", "table-row");
-        } else if(consulalert_type.get('value') == 'OpsGenie') {
+        } else if(type.get('value') == 'OpsGenie') {
             domStyle.set(cluster_name, "display", "table-row");
             domStyle.set(api_key, "display", "table-row");
-            domStyle.set(enabled, "display", "table-row");
-        } else if(consulalert_type.get('value') == 'AWSSNS') {
+        } else if(type.get('value') == 'AWSSNS') {
             domStyle.set(region, "display", "table-row");
             domStyle.set(topic_arn, "display", "table-row");
             domStyle.set(aws_access_key_id, "display", "table-row");
             domStyle.set(aws_secret_access_key, "display", "table-row");
-            domStyle.set(enabled, "display", "table-row");
-        } else if(consulalert_type.get('value') == 'VictorOps') {
+        } else if(type.get('value') == 'VictorOps') {
             domStyle.set(api_key, "display", "table-row");
             domStyle.set(routing_key, "display", "table-row");
-            domStyle.set(enabled, "display", "table-row");
+        } else if(type.get('value') == 'Mail') {
+            domStyle.set(email, "display", "table-row");
         }
     }
 
@@ -2131,6 +2128,9 @@ require([
         newData['__form_id'] = attrs.form.id;
         if(attrs.confirm == true) {
           newData['__confirm'] = "1";
+        }
+        if(attrs.extraKey) {
+          newData[attrs.extraKey] = attrs.extraValue;
         }
 
         multipart = query("input[type=file]", attrs.form.domNode).length > 0;
