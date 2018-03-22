@@ -1626,6 +1626,7 @@ def restore_secrets_database():
 
     smb4_restore_tdbfile(backup, secrets)
 
+
 def smb4_do_migrations(client):
     sentinel_directory = "/data/sentinels/samba"
 
@@ -1641,8 +1642,9 @@ def smb4_do_migrations(client):
         if not os.access(sentinel_file, os.F_OK):
             if os.access(samba_user_import_file, os.F_OK):
                 os.unlink(samba_user_import_file)
-                
+
     migrate_11_1_U3_to_11_1_U4(client)
+
 
 def main():
     client = Client()
