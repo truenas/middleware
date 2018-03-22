@@ -1305,14 +1305,11 @@ def smb4_setup(client):
     statedir = "/var/db/samba4"
 
     if not client.call('notifier.is_freenas') and client.call('notifier.failover_licensed'):
-        oldprivatedir = "/var/db/samba4/private"
         privatedir = "/root/samba/private"
 
         if not os.access(privatedir, os.F_OK):
             smb4_mkdir(privatedir)
             os.chmod(privatedir, 0o700)
-            pipeopen("cp -a '%s/' '%s'" % (oldprivatedir, privatedir)).wait()
-            pipeopen("mv '%s' '%s.bak'" % (oldprivatedir, oldprivatedir)).wait()
 
     smb4_mkdir("/var/run/samba")
     smb4_mkdir("/var/run/samba4")
