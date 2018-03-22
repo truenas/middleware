@@ -24,7 +24,8 @@ def pw_checkname(verrors, attribute, name):
     Makes sure the provided `name` is a valid unix name.
     """
     if name.startswith('-'):
-        verrors.add(attribute, 'must begin with an alphanumeric character and not a "-".')
+        verrors.add(attribute, 'Name must begin with an alphanumeric '
+          ' character and not a "-".')
     if name.find('$') not in (-1, len(name) - 1):
         verrors.add(
             attribute,
@@ -113,12 +114,14 @@ class UserService(CRUDService):
         ) or (
             data.get('group') is not None and data.get('group_create')
         ):
-            verrors.add('group', f'Enter either a group name or create a new group to continue.', errno.EINVAL)
+            verrors.add('group', f'Enter either a group name or create '
+              'a new group to continue.', errno.EINVAL)
 
         await self.__common_validation(verrors, data)
 
         if data.get('sshpubkey') and not data['home'].startswith('/mnt'):
-            verrors.add('sshpubkey', 'The home directory is not writable. Leave this field blank.')
+            verrors.add('sshpubkey', 'The home directory is not writable. '
+              'Leave this field blank.')
 
         if verrors:
             raise verrors
@@ -397,28 +400,32 @@ class UserService(CRUDService):
             # See bug #4098
             verrors.add(
                 'password',
-                'An SMB issue prevents creating passwords containing a question mark (?).',
+                'An SMB issue prevents creating passwords containing a '
+                'question mark (?).',
                 errno.EINVAL
             )
         elif not pk and not password and not data.get('password_disabled'):
             verrors.add('password', 'Password is required')
         elif data.get('password_disabled') and password:
-            verrors.add('password_disabled', 'Leave "Password" blank when "Disable password login" '
-                                  'is checked.')
+            verrors.add('password_disabled', 'Leave "Password" blank when "Disable '
+              'password login" is checked.')
 
         if 'home' in data:
             if ':' in data['home']:
                 verrors.add('home', '"Home Directory" cannot contain colons (:).')
             if not data['home'].startswith('/mnt/') and data['home'] != '/nonexistent':
-                verrors.add('home', '"Home Directory" must begin with /mnt/ or be set to /nonexistent.')
+                verrors.add('home', '"Home Directory" must begin with '
+                  '/mnt/ or set to /nonexistent.')
 
         if 'groups' in data:
             groups = data.get('groups') or []
             if groups and len(groups) > 64:
-                verrors.add('groups', 'A user cannot belong to more than 64 auxiliary groups.')
+                verrors.add('groups', 'A user cannot belong to more than '
+                  '64 auxiliary groups.')
 
         if 'full_name' in data and ':' in data['full_name']:
-            verrors.add('full_name', 'The ":" character is not allowed in the "Full Name".')
+            verrors.add('full_name', 'The ":" character is not allowed '
+              'in a "Full Name".')
 
     async def __set_password(self, data):
         if 'password' not in data:

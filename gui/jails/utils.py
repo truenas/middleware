@@ -614,12 +614,14 @@ def new_default_plugin_jail(basename):
 
     if not jc.jc_ipv4_dhcp:
         if not addrs['high_ipv4']:
-            raise MiddlewareError(_("Unable to determine IPv4 settings for this plugin."))
+            raise MiddlewareError(_("Unable to determine IPv4 settings "
+              "for this plugin."))
 
     if (jc.jc_ipv6_autoconf or jc.jc_ipv6_network):
         if not jc.jc_ipv6_autoconf:
             if not addrs['high_ipv6']:
-                raise MiddlewareError(_("Unable to determine IPv6 settings for this plugin."))
+                raise MiddlewareError(_("Unable to determine IPv6 "
+                  "settings for this plugin."))
 
     jailname = None
     for i in range(1, 1000):

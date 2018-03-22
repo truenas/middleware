@@ -142,8 +142,8 @@ def clean_certificate(instance, certificate):
     try:
         load_certificate(certificate)
     except crypto.Error:
-        raise forms.ValidationError(
-            _("The certificate is not in Privacy Enhanced Mail (PEM) format."))
+        raise forms.ValidationError(_("The certificate is not in "
+          "Privacy Enhanced Mail (PEM) format."))
 
     return certificate
 
@@ -174,10 +174,7 @@ def check_certificate(certificate):
 
     nmatches = len(matches)
     if not nmatches:
-        raise forms.ValidationError(_(
-            "Invalid certificate!"
-        ))
-
+        raise forms.ValidationError(_("Invalid certificate!"))
     return nmatches
 
 
@@ -205,7 +202,8 @@ class BootEnvAddForm(Form):
             except ValidationErrors:
                 raise
             except ClientException:
-                raise MiddlewareError(_('Boot Environment creation failed!'))
+                raise MiddlewareError(_('Boot Environment creation '
+                  'failed!'))
 
 
 class BootEnvRenameForm(Form):
@@ -455,9 +453,8 @@ class InitialWizard(CommonWizard):
                         'volume_id'
                     ).split('|')
                     if not _n.zfs_import(volume_name, guid):
-                        raise MiddlewareError(_(
-                            'Volume "%s" import failed!'
-                            ' Check the pool status for more details.'
+                        raise MiddlewareError(_('Volume "%s" import '
+                          'failed! Check the pool status for more details.'
                         ) % volume_name)
 
                 volume = Volume(vol_name=volume_name)
@@ -2574,7 +2571,8 @@ class CertificateAuthorityImportForm(ModelForm):
             ))
         reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
         if not reg:
-            raise forms.ValidationError(_('Use only alphanumeric characters, "_" and "-".'))
+            raise forms.ValidationError(_('Use only alphanumeric '
+              'characters, "_", and "-".'))
         return name
 
     def clean_cert_passphrase(self):
