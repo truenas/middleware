@@ -1,6 +1,7 @@
-from middlewared.service import Service, filterable, private
+from middlewared.service import ConfigService, Service, filterable, private, ValidationErrors
 from middlewared.utils import Popen, filter_list, run
-from middlewared.schema import accepts, Str
+from middlewared.schema import accepts, Bool, Dict, IPAddr, List, Str
+from middlewared.validators import Match
 
 import asyncio
 from collections import defaultdict
@@ -15,6 +16,209 @@ import urllib.request
 
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 RE_MTU = re.compile(r'\bmtu\s+(\d+)')
+
+
+class NetworkConfigurationService(ConfigService):
+    class Config:
+        namespace = 'network.configuration'
+        datastore = 'network.globalconfiguration'
+        datastore_prefix = 'gc_'
+        datastore_extend = 'network.configuration.network_config_extend'
+
+    def network_config_extend(self, data):
+        data['domains'] = data['domains'].split()
+        data['netwait_ip'] = data['netwait_ip'].split()
+        return data
+
+    async def validate_general_settings(self, data, schema):
+        verrors = ValidationErrors()
+
+        for key in [key for key in data.keys() if 'nameserver' in key]:
+            nameserver_value = data.get(key)
+            if nameserver_value:
+                try:
+                    nameserver_ip = ipaddress.ip_address(nameserver_value)
+                except ValueError as e:
+                    verrors.add(
+                        f'{schema}.{key}',
+                        str(e)
+                    )
+                else:
+                    if nameserver_ip.is_loopback:
+                        verrors.add(
+                            f'{schema}.{key}',
+                            'Loopback is not a valid nameserver'
+                        )
+                    elif nameserver_ip.is_unspecified:
+                        verrors.add(
+                            f'{schema}.{key}',
+                            'Unspecified addresses are not valid as nameservers'
+                        )
+                    elif nameserver_ip.version == 4:
+                        if nameserver_value == '255.255.255.255':
+                            verrors.add(
+                                f'{schema}.{key}',
+                                'This is not a valid nameserver address'
+                            )
+                        elif nameserver_value.startswith('169.254'):
+                            verrors.add(
+                                f'{schema}.{key}',
+                                '169.254/16 subnet is not valid for nameserver'
+                            )
+
+                    nameserver_number = int(key[-1])
+                    for i in range(nameserver_number - 1, 0, -1):
+                        if f'nameserver{i}' in data.keys() and not data[f'nameserver{i}']:
+                            verrors.add(
+                                f'{schema}.{key}',
+                                f'Must fill out namserver{i} before filling out {key}'
+                            )
+
+        ipv4_gateway_value = data.get('ipv4gateway')
+        if ipv4_gateway_value:
+            if not await self.middleware.call(
+                    'routes.ipv4gw_reachable',
+                    ipaddress.ip_address(ipv4_gateway_value).exploded
+            ):
+                verrors.add(
+                    f'{schema}.ipv4gateway',
+                    f'Gateway {ipv4_gateway_value} is unreachable'
+                )
+
+        netwait_ip = data.get('netwait_ip')
+        if netwait_ip:
+            for ip in netwait_ip:
+                try:
+                    ipaddress.ip_address(ip)
+                except ValueError as e:
+                    verrors.add(
+                        f'{schema}.netwait_ip',
+                        f'{e.__str__()}'
+                    )
+
+        if data.get('domains'):
+            if len(data.get('domains')) > 5:
+                verrors.add(
+                    f'{schema}.domains',
+                    'No more than 5 additional domains are allowed'
+                )
+
+        return verrors
+
+    @accepts(
+        Dict(
+            'global_configuration',
+            Str('hostname', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
+            Str('hostname_b', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
+            Str('hostname_virtual', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
+            Str('domain', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
+            List('domains', items=[Str('domains')]),
+            IPAddr('ipv4gateway'),
+            IPAddr('ipv6gateway'),
+            IPAddr('nameserver1'),
+            IPAddr('nameserver2'),
+            IPAddr('nameserver3'),
+            Str('httpproxy'),
+            Bool('netwait_enabled'),
+            List('netwait_ip', items=[Str('netwait_ip')]),
+            Str('hosts'),
+        )
+    )
+    async def do_update(self, data):
+        config = await self.config()
+        new_config = config.copy()
+
+        if not (
+                not await self.middleware.call('system.is_freenas') and
+                await self.middleware.call('notifier.failover_licensed')
+        ):
+            for key in ['hostname_virtual', 'hostname_b']:
+                data.pop(key, None)
+
+        new_config.update(data)
+        verrors = await self.validate_general_settings(data, 'global_configuration_update')
+        if verrors:
+            raise verrors
+
+        new_config['domains'] = ' '.join(new_config.get('domains', []))
+        new_config['netwait_ip'] = ' '.join(new_config.get('netwait_ip', []))
+
+        await self.middleware.call(
+            'datastore.update',
+            'network.globalconfiguration',
+            config['id'],
+            new_config,
+            {'prefix': 'gc_'}
+        )
+
+        new_config['domains'] = new_config['domains'].split()
+        new_config['netwait_ip'] = new_config['netwait_ip'].split()
+
+        netwait_ip_set = set(new_config.pop('netwait_ip', []))
+        old_netwait_ip_set = set(config.pop('netwait_ip', []))
+        data_changed = netwait_ip_set != old_netwait_ip_set
+
+        if not data_changed:
+            domains_set = set(new_config.pop('domains', []))
+            old_domains_set = set(config.pop('domains', []))
+            data_changed = domains_set != old_domains_set
+
+        if (
+                data_changed or
+                len(set(new_config.items()) ^ set(config.items())) > 0
+        ):
+            services_to_reload = ['hostname']
+            if (
+                    new_config['domain'] != config['domain'] or
+                    new_config['nameserver1'] != config['nameserver1'] or
+                    new_config['nameserver2'] != config['nameserver2'] or
+                    new_config['nameserver3'] != config['nameserver3']
+            ):
+                services_to_reload.append('resolvconf')
+
+            if (
+                    new_config['ipv4gateway'] != config['ipv4gateway'] or
+                    new_config['ipv6gateway'] != config['ipv6gateway']
+            ):
+                services_to_reload.append('networkgeneral')
+                await self.middleware.call('routes.sync')
+
+            if (
+                    'hostname_virtual' in new_config.keys() and
+                    new_config['hostname_virtual'] != config['hostname_virtual']
+            ):
+                srv_service_obj = await self.middleware.call(
+                    'datastore.query',
+                    'service.service',
+                    [('srv_service', '=', 'nfs')]
+                )
+                nfs_object = await self.middleware.call(
+                    'datastore.query',
+                    'services.nfs',
+                )
+                if len(srv_service_obj) > 0 and len(nfs_object) > 0:
+                    srv_service_obj = srv_service_obj[0]
+                    nfs_object = nfs_object[0]
+
+                    if (
+                            (srv_service_obj and srv_service_obj.srv_enable) and
+                            (nfs_object and (nfs_object.nfs_srv_v4 and nfs_object.nfs_srv_v4_krb))
+                    ):
+                        await self.middleware.call('service.restart', 'ix-nfsd', {'onetime': False})
+                        services_to_reload.append('mountd')
+
+            for service_to_reload in services_to_reload:
+                await self.middleware.call('service.restart', service_to_reload, {'onetime': False})
+
+            if new_config['httpproxy'] != config['httpproxy']:
+                await self.middleware.call(
+                    'core.event_send',
+                    'network.config',
+                    'CHANGED',
+                    {'data': {'httpproxy': new_config['httpproxy']}}
+                )
+
+        return await self.config()
 
 
 def dhclient_status(interface):
