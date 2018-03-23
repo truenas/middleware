@@ -16,7 +16,7 @@ from auto_config import ip
 from config import *
 
 if "BRIDGEHOST" in locals():
-    MOUNTPOINT = "/tmp/ldap-bsd" + BRIDGEHOST
+    MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
 
 NFS_PATH = "/mnt/tank/share"
 Reason = "BRIDGEHOST is missing in ixautomation.conf"

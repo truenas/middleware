@@ -13,7 +13,7 @@ from functions import PUT, DELETE
 from auto_config import ntpServer
 
 
-def test_01_Changing_permissions_on_share(self):
+def test_01_Changing_permissions_on_share():
     payload = {"id": "1",
                "ntp_address": ntpServer,
                "ntp_burst": "true",
@@ -27,9 +27,9 @@ def test_01_Changing_permissions_on_share(self):
 
 
 # Remove Other NTP Servers
-def test_02_Removing_non_AD_NTP_servers_1sur2(self):
+def test_02_Removing_non_AD_NTP_servers_1sur2():
     assert DELETE("/system/ntpserver/2/") == 204
 
 
-def test_03_Removing_non_AD_NTP_servers_2sur2(self):
+def test_03_Removing_non_AD_NTP_servers_2sur2():
     assert DELETE("/system/ntpserver/3/") == 204

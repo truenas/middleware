@@ -12,23 +12,23 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, PUT, BSD_TEST
-try:
-    from config import BRIDGEHOST
-except ImportError:
-    RunTest = False
-else:
-    MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
-    RunTest = True
+from config import *
 
+if "BRIDGEHOST" in locals():
+    MOUNTPOINT = "/tmp/iscsi" + BRIDGEHOST
 DEVICE_NAME_PATH = "/tmp/iscsi_dev_name"
 TARGET_NAME = "iqn.freenas:target0"
-Reason = "BRIDGEHOST ixautomation.conf"
+Reason = "BRIDGEHOST is missing in ixautomation.conf"
+
+mount_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
+                                         "MOUNTPOINT" in locals()
+                                         ]) is False, reason=Reason)
 
 
 class delete_iscsi_test(unittest.TestCase):
 
     # Clean up any leftover items from any previous failed runs
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
     @classmethod
     def setUpClass(inst):
         host = pytest.importorskip("config.BSD_HOST")

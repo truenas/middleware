@@ -30,10 +30,10 @@ ldap_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
                                         "MOUNTPOINT" in locals()
                                         ]) is False, reason=Reason)
 
-OSX_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
+osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        "OSX_USERNAME" in locals(),
                                        "OSX_PASSWORD" in locals()
-                                       ]) is False, reason=osxReason)
+                                       ]) is False, reason=OSXReason)
 
 
 @ldap_test_cfg

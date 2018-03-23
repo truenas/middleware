@@ -24,7 +24,7 @@ route_and_dns_cfg = pytest.mark.skipif(all(["BRIDGEDOMAIN" in locals(),
                                             ]) is False, reason=Reason)
 
 
-def test_01_configure_interface_dhcp(self):
+def test_01_configure_interface_dhcp():
     payload = {"int_dhcp": "true",
                "int_name": "ext",
                "int_interface": interface}
@@ -32,7 +32,7 @@ def test_01_configure_interface_dhcp(self):
 
 
 @route_and_dns_cfg
-def test_02_Setting_default_route_and_DNS(self):
+def test_02_Setting_default_route_and_DNS():
     payload = {"gc_domain": BRIDGEDOMAIN,
                "gc_hostname": BRIDGEHOST,
                "gc_ipv4gateway": BRIDGEGW,

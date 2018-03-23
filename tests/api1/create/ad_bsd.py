@@ -17,7 +17,6 @@ from config import *
 if "BRIDGEHOST" in locals():
     MOUNTPOINT = "/tmp/ad-bsd" + BRIDGEHOST
 
-
 DATASET = "ad-bsd"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET
