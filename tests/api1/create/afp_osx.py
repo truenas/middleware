@@ -21,7 +21,7 @@ AFP_NAME = "MyAFPShare"
 AFP_PATH = "/mnt/tank/" + DATASET
 VOL_GROUP = "wheel"
 Reason = "BRIDGEHOST is missing in ixautomation.conf"
-OSXReason = 'OSX host configuration is mising in ixautomation.conf'
+OSXReason = 'OSX host configuration is missing in ixautomation.conf'
 
 mount_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
                                          "MOUNTPOINT" in locals()

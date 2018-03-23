@@ -12,22 +12,19 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT
-try:
-    from config import NISSERVER, NISDOMAIN
-except ImportError:
-    RunTest = False
-else:
-    RunTest = True
-    SERVER = NISSERVER
-    DOMAIN = NISDOMAIN
+from config import *
 
 # define variables
 DATASET = "nis-bsd"
 NIS_PATH = "/mnt/tank/" + DATASET
-Reason = "NISSERVER and NISDOMAIN are not in ixautomation.conf"
+Reason = "NISSERVER and NISDOMAIN are missing in ixautomation.conf"
+
+nis_test_cfg = pytest.mark.skipif(all(["NISSERVER" in locals(),
+                                       "NISDOMAIN" in locals()
+                                       ]) is False, reason=Reason)
 
 
-@pytest.mark.skipif(RunTest is False, reason=Reason)
+@nis_test_cfg
 class create_nis_bsd_test(unittest.TestCase):
 
     def test_01_Setting_NIS_domain(self):

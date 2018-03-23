@@ -18,7 +18,8 @@ REALM = "samdom.local"
 DOMAIN = "samdom"
 DNSFORWARDER = "8.8.8.8"
 FORESTLEVEL = "2003"
-Reason = "ADPASSWORD in missing in ixautomation.conf"
+Reason = "ADPASSWORD is missing in ixautomation.conf"
+
 adpsswd_test_cfg = pytest.mark.skipif(all(["ADPASSWORD" in locals()
                                            ]) is False, reason=Reason)
 

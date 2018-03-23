@@ -22,8 +22,9 @@ DATASET = "ldap-bsd"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET
 VOL_GROUP = "qa"
-Reason = "BRIDGEHOST, LDAPBASEDN and LDAPHOSTNAME are not in ixautomation.conf"
-BSDReason = 'BSD host configuration is mising in ixautomation.conf'
+Reason = "BRIDGEHOST, LDAPBASEDN and LDAPHOSTNAME are missing "
+Reason += "in ixautomation.conf"
+BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 
 ldap_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
                                         "LDAPBASEDN" in locals(),

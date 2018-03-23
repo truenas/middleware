@@ -22,8 +22,8 @@ if "BRIDGEHOST" in locals():
 global DEVICE_NAME
 DEVICE_NAME = ""
 TARGET_NAME = "iqn.1994-09.freenasqa:target0"
-Reason = "BRIDGEHOST is not in ixautomation.conf"
-BSDReason = 'BSD host configuration is mising in ixautomation.conf'
+Reason = "BRIDGEHOST is missing in ixautomation.conf"
+BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 
 mount_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
                                          "MOUNTPOINT" in locals()

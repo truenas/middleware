@@ -25,7 +25,7 @@ VOL_GROUP = "wheel"
 
 Reason = "BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, and ADUSERNAME are missing in "
 Reason += "ixautomation.conf"
-BSDReason = 'BSD host configuration is mising in ixautomation.conf'
+BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 
 ad_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
                                       "BRIDGEDOMAIN" in locals(),

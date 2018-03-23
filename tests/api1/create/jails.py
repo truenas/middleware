@@ -11,18 +11,17 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, PUT_TIMEOUT
+from config import *
 
-try:
-    from config import JAILIP, JAILGW, JAILNETMASK
-except ImportError:
-    RunTest = False
-else:
-    RunTest = True
+Reason = "JAILIP, JAILGW and JAILNETMASK are missing in ixautomation.conf"
 
-Reason = "JAILIP, JAILGW and JAILNETMASK are not in ixautomation.conf"
+jail_test_cfg = pytest.mark.skipif(all(["JAILIP" in locals(),
+                                        "JAILGW" in locals(),
+                                        "JAILNETMASK" in locals(),
+                                        ]) is False, reason=Reason)
 
 
-@pytest.mark.skipif(RunTest is False, reason=Reason)
+@jail_test_cfg
 class create_jails_test(unittest.TestCase):
 
     def test_01_Configuring_jails(self):

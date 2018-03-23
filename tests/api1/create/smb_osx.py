@@ -13,30 +13,35 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, OSX_TEST
 from auto_config import ip
-try:
-    from config import BRIDGEHOST
-except ImportError:
-    RunTest = False
-else:
+from config import *
+if BRIDGEHOST in locals():
     MOUNTPOINT = "/tmp/smb-osx" + BRIDGEHOST
-    RunTest = True
 
 DATASET = "smb-osx"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET
 VOL_GROUP = "wheel"
-Reason = "BRIDGEHOST are not in ixautomation.conf"
+
+Reason = "BRIDGEHOST is missing in ixautomation.conf"
+OSXReason = 'OSX host configuration is missing in ixautomation.conf'
+
+mount_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
+                                         "MOUNTPOINT" in locals()
+                                         ]) is False, reason=Reason)
+
+osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
+                                       "OSX_USERNAME" in locals(),
+                                       "OSX_PASSWORD" in locals()
+                                       ]) is False, reason=OSXReason)
 
 
 class create_smb_osx_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed ad, SMB runs
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
+    @osx_host_cfg
     @classmethod
     def setUpClass(inst):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         PUT("/services/services/cifs/", {"srv_enable": False})
         payload3 = {"cfs_comment": "My Test SMB Share",
                     "cifs_path": SMB_PATH,
@@ -48,7 +53,7 @@ class create_smb_osx_test(unittest.TestCase):
         # Clean up any leftover items from previous failed SMB runs
         cmd = 'umount -f "%s"; ' % MOUNTPOINT
         cmd += 'rmdir "%s"; exit 0;' % MOUNTPOINT
-        OSX_TEST(cmd, username, password, host)
+        OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
 
     def test_01_Creating_SMB_dataset(self):
         assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
@@ -76,78 +81,62 @@ class create_smb_osx_test(unittest.TestCase):
         assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "RUNNING"
 
     # Mount share on OSX system and create a test file
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
+    @osx_host_cfg
     def test_06_Create_mount_point_for_SMB_on_OSX_system(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         assert OSX_TEST('mkdir -p "%s"' % MOUNTPOINT,
-                        username, password, host) is True
+                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
+    @osx_host_cfg
     def test_07_Mount_SMB_share_on_OSX_system(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         cmd = 'mount -t smbfs "smb://guest'
         cmd += '@%s/%s" "%s"' % (ip, SMB_NAME, MOUNTPOINT)
-        assert OSX_TEST(cmd, username, password, host) is True
+        assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
-    # @pytest.mark.skipif(RunTest is False, reason=Reason)
+    # @mount_test_cfg
+    # @osx_host_cfg
     # def test_08_Checking_permissions_on_MOUNTPOINT(self):
     #     device_name = return_output('dirname "%s"' % MOUNTPOINT)
-    #     host = pytest.importorskip("config.OSX_HOST")
-    #     username = pytest.importorskip("config.OSX_USERNAME")
-    #     password = pytest.importorskip("config.OSX_PASSWORD")
     #     cmd = 'ls -la "%s" | ' % device_name
     #     cmd += 'awk \'$4 == "%s" && $9 == "%s"\'' % (VOL_GROUP, DATASET)
-    #     assert OSX_TEST(cmd, username, password, host) is True
+    #     assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
+    @osx_host_cfg
     def test_09_Create_file_on_SMB_share_via_OSX_to_test_permissions(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         assert OSX_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
-                        username, password, host) is True
+                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # Move test file to a new location on the SMB share
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
+    @osx_host_cfg
     def test_10_Moving_SMB_test_file_into_a_new_directory(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         cmd = 'mkdir -p "%s/tmp" ' % MOUNTPOINT
         cmd += '&& mv "%s/testfile.txt" ' % MOUNTPOINT
         cmd += '"%s/tmp/testfile.txt"' % MOUNTPOINT
-        assert OSX_TEST(cmd, username, password, host) is True
+        assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # Delete test file and test directory from SMB share
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
+    @osx_host_cfg
     def test_11_Deleting_test_file_and_directory_from_SMB_share(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         cmd = 'rm -f "%s/tmp/testfile.txt" ' % MOUNTPOINT
         cmd += '&& rmdir "%s/tmp"' % MOUNTPOINT
-        assert OSX_TEST(cmd, username, password, host) is True
+        assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
+    @osx_host_cfg
     def test_12_Verifying_test_file_directory_were_successfully_removed(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
-        assert OSX_TEST(cmd, username, password, host) is True
+        assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # Clean up mounted SMB share
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
+    @osx_host_cfg
     def test_13_Unmount_SMB_share(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         assert OSX_TEST('umount -f "%s"' % MOUNTPOINT,
-                        username, password, host) is True
+                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     def test_14_Removing_SMB_share_on_SMB_PATH(self):
         payload = {"cfs_comment": "My Test SMB Share",

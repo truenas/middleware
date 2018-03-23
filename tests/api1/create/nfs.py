@@ -13,16 +13,23 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, BSD_TEST
 from auto_config import ip
-try:
-    from config import BRIDGEHOST
-except ImportError:
-    RunTest = False
-else:
-    MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
-    RunTest = True
+from config import *
+
+if "BRIDGEHOST" in locals():
+    MOUNTPOINT = "/tmp/ldap-bsd" + BRIDGEHOST
 
 NFS_PATH = "/mnt/tank/share"
-Reason = "BRIDGEHOST is not in ixautomation.conf"
+Reason = "BRIDGEHOST is missing in ixautomation.conf"
+BSDReason = 'BSD host configuration is missing in ixautomation.conf'
+
+mount_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
+                                         "MOUNTPOINT" in locals()
+                                         ]) is False, reason=Reason)
+
+bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
+                                       "BSD_USERNAME" in locals(),
+                                       "BSD_PASSWORD" in locals()
+                                       ]) is False, reason=BSDReason)
 
 
 class create_nfs_test(unittest.TestCase):
@@ -55,70 +62,54 @@ class create_nfs_test(unittest.TestCase):
     def test_06_Checking_to_see_if_NFS_service_is_enabled(self):
         assert GET_OUTPUT("/services/services/nfs/", "srv_state") == "RUNNING"
 
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
+    @bsd_host_cfg
     # Now check if we can mount NFS / create / rename / copy / delete / umount
     def test_07_Creating_NFS_mountpoint(self):
-        host = pytest.importorskip("config.BSD_HOST")
-        username = pytest.importorskip("config.BSD_USERNAME")
-        password = pytest.importorskip("config.BSD_PASSWORD")
         assert BSD_TEST('mkdir -p "%s"' % MOUNTPOINT,
-                        username, password, host) is True
+                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
+    @bsd_host_cfg
     def test_08_Mounting_NFS(self):
-        host = pytest.importorskip("config.BSD_HOST")
-        username = pytest.importorskip("config.BSD_USERNAME")
-        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'mount_nfs %s:%s %s' % (ip, NFS_PATH, MOUNTPOINT)
         # command below does not make sence
         # "umount '${MOUNTPOINT}' ; rmdir '${MOUNTPOINT}'" "60"
-        assert BSD_TEST(cmd, username, password, host) is True
+        assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
+    @bsd_host_cfg
     def test_09_Creating_NFS_file(self):
-        host = pytest.importorskip("config.BSD_HOST")
-        username = pytest.importorskip("config.BSD_USERNAME")
-        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'touch "%s/testfile"' % MOUNTPOINT
         # 'umount "${MOUNTPOINT}"; rmdir "${MOUNTPOINT}"'
-        assert BSD_TEST(cmd, username, password, host) is True
+        assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
+    @bsd_host_cfg
     def test_10_Moving_NFS_file(self):
-        host = pytest.importorskip("config.BSD_HOST")
-        username = pytest.importorskip("config.BSD_USERNAME")
-        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd, username, password, host) is True
+        assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
+    @bsd_host_cfg
     def test_11_Copying_NFS_file(self):
-        host = pytest.importorskip("config.BSD_HOST")
-        username = pytest.importorskip("config.BSD_USERNAME")
-        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd, username, password, host) is True
+        assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
+    @bsd_host_cfg
     def test_12_Deleting_NFS_file(self):
-        host = pytest.importorskip("config.BSD_HOST")
-        username = pytest.importorskip("config.BSD_USERNAME")
-        password = pytest.importorskip("config.BSD_PASSWORD")
         assert BSD_TEST('rm "%s/testfile2"' % MOUNTPOINT,
-                        username, password, host) is True
+                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
+    @bsd_host_cfg
     def test_13_Unmounting_NFS(self):
-        host = pytest.importorskip("config.BSD_HOST")
-        username = pytest.importorskip("config.BSD_USERNAME")
-        password = pytest.importorskip("config.BSD_PASSWORD")
         assert BSD_TEST('umount "%s"' % MOUNTPOINT,
-                        username, password, host) is True
+                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @mount_test_cfg
+    @bsd_host_cfg
     def test_14_Removing_NFS_mountpoint(self):
-        host = pytest.importorskip("config.BSD_HOST")
-        username = pytest.importorskip("config.BSD_USERNAME")
-        password = pytest.importorskip("config.BSD_PASSWORD")
         cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd, username, password, host) is True
+        assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
