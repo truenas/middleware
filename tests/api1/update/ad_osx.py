@@ -15,9 +15,7 @@ from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, OSX_TEST
 from config import *
 
 if BRIDGEHOST in locals():
-    MOUNTPOINT = "/tmp/ad-bsd" + BRIDGEHOST
-
-
+    MOUNTPOINT = "/tmp/ad-osx" + BRIDGEHOST
 DATASET = "ad-osx"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET

@@ -12,25 +12,32 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET_OUTPUT, PUT, DELETE, DELETE_ALL, OSX_TEST
 from auto_config import ip
-try:
-    from config import BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME
-    from config import LDAPBASEDN, LDAPBINDDN, LDAPBINDPASSWORD, LDAPHOSTNAME
-except ImportError:
-    RunTest = False
-else:
-    MOUNTPOINT = "/tmp/ad-osx" + BRIDGEHOST
-    RunTest = True
+from config import *
 
+if BRIDGEHOST in locals():
+    MOUNTPOINT = "/tmp/ad-osx" + BRIDGEHOST
 DATASET = "ad-osx"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET
 VOL_GROUP = "wheel"
-Reason = "BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, ADUSERNAME, LDAPBASEDN, "
-Reason += "LDAPBINDDN, LDAPHOSTNAME and  LDAPBINDPASSWORD are not in "
+Reason = "BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, and ADUSERNAME are missing in "
 Reason += "ixautomation.conf"
+OSXReason = 'OSX host configuration is mising in ixautomation.conf'
+
+ad_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
+                                      "BRIDGEDOMAIN" in locals(),
+                                      "ADPASSWORD" in locals(),
+                                      "ADUSERNAME" in locals(),
+                                      "MOUNTPOINT" in locals()
+                                      ]) is False, reason=Reason)
+
+osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
+                                       "OSX_USERNAME" in locals(),
+                                       "OSX_PASSWORD" in locals()
+                                       ]) is False, reason=OSXReason)
 
 
-@pytest.mark.skipif(RunTest is False, reason=Reason)
+@ad_test_cfg
 class create_ad_osx_test(unittest.TestCase):
 
     # Clean up any leftover items from previous failed AD LDAP or SMB runs
@@ -43,14 +50,6 @@ class create_ad_osx_test(unittest.TestCase):
                     "ad_idmap_backend": "rid",
                     "ad_enable": "false"}
         PUT("/directoryservice/activedirectory/1/", payload1)
-        payload2 = {"ldap_basedn": LDAPBASEDN,
-                    "ldap_binddn": LDAPBINDDN,
-                    "ldap_bindpw": LDAPBINDPASSWORD,
-                    "ldap_netbiosname_a": BRIDGEHOST,
-                    "ldap_hostname": LDAPHOSTNAME,
-                    "ldap_has_samba_schema": "true",
-                    "ldap_enable": "false"}
-        PUT("/directoryservice/ldap/1/", payload2)
         PUT("/services/services/cifs/", {"srv_enable": "false"})
         payload3 = {"cfs_comment": "My Test SMB Share",
                     "cifs_path": SMB_PATH,
@@ -115,20 +114,16 @@ class create_ad_osx_test(unittest.TestCase):
         # assert SSH_TEST(cmd) is True
 
     # Mount share on OSX system and create a test file
+    @osx_host_cfg
     def test_10_Create_mount_point_for_SMB_on_OSX_system(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         assert OSX_TEST('mkdir -p "%s"' % MOUNTPOINT,
-                        username, password, host) is True
+                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
+    @osx_host_cfg
     def test_11_Mount_SMB_share_on_OSX_system(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         cmd = 'mount -t smbfs "smb://%s:' % ADUSERNAME
         cmd += '%s@%s/%s" "%s"' % (ADPASSWORD, ip, SMB_NAME, MOUNTPOINT)
-        assert OSX_TEST(cmd, username, password, host) is True
+        assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # def test_12_Checking_permissions_on_MOUNTPOINT_(self):
     #     device_name = return_output('dirname "%s"' % MOUNTPOINT)
@@ -136,46 +131,36 @@ class create_ad_osx_test(unittest.TestCase):
     #     cmd += 'awk \'$4 == "%s" && $9 == "%s"\'' % (VOL_GROUP, DATASET)
     #     assert OSX_TEST(cmd) is True
 
+    @osx_host_cfg
     def test_13_Create_file_on_SMB_share_via_OSX_to_test_permissions(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         assert OSX_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
-                        username, password, host) is True
+                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # Move test file to a new location on the SMB share
+    @osx_host_cfg
     def test_14_Moving_SMB_test_file_into_a_new_directory(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         cmd = 'mkdir -p "%s/tmp" && ' % MOUNTPOINT
         cmd += 'mv "%s/testfile.txt" ' % MOUNTPOINT
         cmd += '"%s/tmp/testfile.txt"' % MOUNTPOINT
-        assert OSX_TEST(cmd, username, password, host) is True
+        assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # Delete test file and test directory from SMB share
+    @osx_host_cfg
     def test_15_Deleting_test_file_and_directory_from_SMB_share(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         cmd = 'rm -f "%s/tmp/testfile.txt" && ' % MOUNTPOINT
         cmd += 'rmdir "%s/tmp"' % MOUNTPOINT
-        assert OSX_TEST(cmd, username, password, host) is True
+        assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
+    @osx_host_cfg
     def test_16_Verifying_that_test_file_directory_successfully_removed(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
-        assert OSX_TEST(cmd, username, password, host) is True
+        assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # Clean up mounted SMB share
+    @osx_host_cfg
     def test_17_Unmount_SMB_share(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         assert OSX_TEST('umount -f "%s"' % MOUNTPOINT,
-                        username, password, host) is True
+                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # Disable Active Directory Directory
     def test_18_Disabling_Active_Directory(self):

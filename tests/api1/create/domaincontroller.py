@@ -12,18 +12,15 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT
-try:
-    from config import ADPASSWORD
-except ImportError:
-    RunTest = False
-else:
-    RunTest = True
+from config import *
 
 REALM = "samdom.local"
 DOMAIN = "samdom"
 DNSFORWARDER = "8.8.8.8"
 FORESTLEVEL = "2003"
-Reason = "ADPASSWORD are not in ixautomation.conf"
+Reason = "ADPASSWORD in missing in ixautomation.conf"
+adpsswd_test_cfg = pytest.mark.skipif(all(["ADPASSWORD" in locals()
+                                           ]) is False, reason=Reason)
 
 
 class create_domaincontroller_test(unittest.TestCase):
@@ -39,7 +36,7 @@ class create_domaincontroller_test(unittest.TestCase):
         payload = {"dc_dns_forwarder": DNSFORWARDER}
         assert PUT("/services/services/domaincontroller/", payload) == 200
 
-    @pytest.mark.skipif(RunTest is False, reason=Reason)
+    @adpsswd_test_cfg
     def test_04_Setting_the_Admin_Password(self):
         payload = {"dc_passwd": ADPASSWORD}
         assert PUT("/services/services/domaincontroller/", payload) == 200
