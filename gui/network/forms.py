@@ -43,6 +43,7 @@ from freenasUI.contrib.IPAddressField import IP4AddressFormField
 from freenasUI.freeadmin.sqlite3_ha.base import DBSync
 from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.util import run_alerts
 from freenasUI.network import models
 from freenasUI.network.utils import configure_http_proxy
 from freenasUI.freeadmin.utils import key_order
@@ -725,14 +726,7 @@ class GlobalConfigurationForm(ModelForm):
             # Notify the middleware http_proxy has changed
             with client as c:
                 c.call('core.event_send', 'network.config', 'CHANGED', {'data': {'httpproxy': http_proxy}})
-            try:
-                alertd_pidfile = '/var/run/alertd.pid'
-                if os.path.exists(alertd_pidfile):
-                    with open(alertd_pidfile, 'r') as f:
-                        pid = int(f.read())
-                    os.kill(pid, signal.SIGHUP)
-            except (FileNotFoundError, OSError, ValueError):
-                log.warn('Failed to kick alertd', exc_info=True)
+            run_alerts()
 
         return retval
 
