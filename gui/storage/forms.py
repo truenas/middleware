@@ -26,9 +26,11 @@
 from collections import defaultdict, OrderedDict
 from datetime import datetime, time
 from decimal import Decimal
+import json
 import logging
 import os
 import re
+import requests
 import ssl
 import tempfile
 import uuid
@@ -941,13 +943,11 @@ class AutoImportDecryptForm(Form):
         self.fields['disks'].choices = self._populate_disk_choices()
 
     def _populate_disk_choices(self):
-        gelis = notifier().geli_get_all_providers()
-        for vol in models.Volume.objects.filter(vol_encrypt__gt=0):
-            for disk in vol.get_disks():
-                for geli in list(gelis):
-                    if geli[1].startswith('%sp' % disk):
-                        gelis.remove(geli)
-        return gelis
+        with client as c:
+            return [
+                (i['dev'], i['name'])
+                for i in c.call('disk.get_encrypted', {'unused': True})
+            ]
 
     def clean(self):
         key = self.cleaned_data.get("key")
@@ -959,38 +959,34 @@ class AutoImportDecryptForm(Form):
             return self.cleaned_data
 
         passphrase = self.cleaned_data.get("passphrase")
-        if passphrase:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
-                f.write(passphrase)
-            passphrase = passfile
 
-        keyfile = tempfile.mktemp(dir='/var/tmp/firmware')
-        with open(keyfile, 'wb') as f:
-            os.chmod(keyfile, 600)
-            f.write(key.read())
+        with client as c:
+            token = c.call('auth.generate_token')
+            r = requests.post(
+                'http://127.0.0.1/_upload/',
+                files={
+                    'file': key,
+                    'data': json.dumps({
+                        'method': 'disk.decrypt',
+                        'params': [disks, passphrase],
+                    }),
+                },
+                headers={
+                    'Authorization': f'Token {token}',
+                },
+            )
+            job_id = r.json()['job_id']
+            while True:
+                job = c.call('core.get_jobs', [('id', '=', job_id)])
+                if job:
+                    job = job[0]
+                    if job['state'] == 'FAILED':
+                        self._errors['__all__'] = self.error_class([job['error']])
+                    elif job['state'] == 'ABORTED':
+                        self._errors['__all__'] = self.error_class([_('Decrypt job aborted')])
+                    elif job['state'] == 'SUCCESS':
+                        break
 
-        _notifier = notifier()
-        failed = []
-        for disk in disks:
-            try:
-                _notifier.geli_attach_single(
-                    disk,
-                    keyfile,
-                    passphrase=passphrase
-                )
-            except Exception:
-                failed.append(disk)
-        if failed:
-            self._errors['__all__'] = self.error_class([
-                _("The following disks failed to attach: %s") % (
-                    ', '.join(failed),
-                )
-            ])
-        os.unlink(keyfile)
-        if passphrase:
-            os.unlink(passphrase)
         return self.cleaned_data
 
 
