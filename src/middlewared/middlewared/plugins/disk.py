@@ -8,10 +8,11 @@ import signal
 import subprocess
 import sys
 import sysctl
+import tempfile
 
 from bsd import geom
-from middlewared.schema import accepts, Dict, Bool, Str
-from middlewared.service import filterable, job, private, CRUDService
+from middlewared.schema import accepts, Dict, List, Bool, Str
+from middlewared.service import filterable, job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
 
 # FIXME: temporary import of SmartAlert until alert is implemented
@@ -85,35 +86,88 @@ class DiskService(CRUDService):
             disks_blacklist += self.middleware.call_sync('disk.get_reserved')
 
         geom.scan()
-        klass = geom.class_by_name('ELI')
-        if not klass:
+        klass_part = geom.class_by_name('PART')
+        klass_label = geom.class_by_name('LABEL')
+        if not klass_part:
             return providers
 
-        for g in klass.geoms:
-            p = g.consumer.provider
-            name = None
-            if p.geom.clazz.name == 'LABEL':
-                name = p.name
-                p = p.geom.consumer.provider
+        for g in klass_part.geoms:
+            for p in g.providers:
 
-            if p.geom.clazz.name != 'PART':
-                continue
+                if p.config['type'] != 'freebsd-zfs':
+                    continue
 
-            disk = p.geom.consumer.provider.name
-            if disk in disks_blacklist:
-                continue
+                disk = p.geom.consumer.provider.name
+                if disk in disks_blacklist:
+                    continue
 
-            if name is None:
-                name = p.name
+                try:
+                    subprocess.run(
+                        ['geli', 'dump', p.name],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True,
+                    )
+                except subprocess.CalledProcessError:
+                    continue
 
-            providers.append({
-                'name': name,
-                'dev': p.name,
-                'disk': disk
-            })
+                dev = None
+                if klass_label:
+                    for g in klass_label.geoms:
+                        if g.name == p.name:
+                            dev = g.provider.name
+                            break
 
+                if dev is None:
+                    dev = p.name
+
+                providers.append({
+                    'name': p.name,
+                    'dev': dev,
+                    'disk': disk
+                })
 
         return providers
+
+    @accepts(
+        List('devices', items=[Str('device')]),
+        Str('passphrase'),
+    )
+    @job(pipes=['input'])
+    def decrypt(self, job, devices, passphrase=None):
+        """
+        Decrypt `devices` using uploaded encryption key
+        """
+        job.check_pipe("input")
+
+        with tempfile.NamedTemporaryFile(dir='/tmp/') as f:
+            f.write(job.pipes.input.r.read())
+            f.flush()
+
+            if passphrase:
+                passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
+                os.chmod(passf.name, 0o600)
+                passf.write(passphrase)
+                passf.flush()
+                passphrase = passf.name
+
+
+            failed = []
+            for dev in devices:
+                try:
+                    self.middleware.call_sync(
+                        'notifier.geli_attach_single',
+                        dev,
+                        f.name,
+                        passphrase,
+                    )
+                except Exception:
+                    failed.append(dev)
+
+            if passphrase:
+                passf.close()
+
+            if failed:
+                raise CallError(f'The following devices failed to attach: {", ".join(failed)}')
+        return True
 
     @private
     async def get_reserved(self):
