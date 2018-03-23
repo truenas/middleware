@@ -1639,6 +1639,7 @@ def smb4_do_migrations(client):
         if not os.access(sentinel_file, os.F_OK):
             if os.access(samba_user_import_file, os.F_OK):
                 os.unlink(samba_user_import_file)
+            open(sentinel_file, "w").close()
 
     migrate_11_1_U3_to_11_1_U4(client)
 
