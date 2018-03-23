@@ -40,16 +40,23 @@ class EnumMixin(object):
 
 class Attribute(object):
 
-    def __init__(self, name, verbose=None, required=False, validators=None, register=False, **kwargs):
+    def __init__(self, name, verbose=None, required=False, private=False, validators=None, register=False, **kwargs):
         self.name = name
         self.has_default = 'default' in kwargs
         self.default = kwargs.pop('default', None)
         self.required = required
+        self.private = private
         self.verbose = verbose or name
         self.validators = validators or []
         self.register = register
 
     def clean(self, value):
+        return value
+
+    def dump(self, value):
+        if self.private:
+            return "********"
+
         return value
 
     def validate(self, value):
@@ -241,6 +248,12 @@ class List(EnumMixin, Attribute):
                     raise Error(self.name, 'Item#{0} is not valid per list types: {1}'.format(index, found))
         return value
 
+    def dump(self, value):
+        if self.private or (self.items and any(item.private for item in self.items)):
+            return "********"
+
+        return value
+
     def validate(self, value):
         verrors = ValidationErrors()
 
@@ -317,6 +330,23 @@ class Dict(Attribute):
                     data[attr.name] = attr.default
 
         return data
+
+    def dump(self, value):
+        if self.private:
+            return "********"
+
+        if not isinstance(value, dict):
+            return value
+
+        value = value.copy()
+        for key in value:
+            attr = self.attrs.get(key)
+            if not attr:
+                continue
+
+            value[key] = attr.dump(value[key])
+
+        return value
 
     def validate(self, value):
         verrors = ValidationErrors()
