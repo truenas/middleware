@@ -10,7 +10,7 @@ import sys
 import sysctl
 
 from bsd import geom
-from middlewared.schema import accepts, Bool, Str
+from middlewared.schema import accepts, Dict, Bool, Str
 from middlewared.service import filterable, job, private, CRUDService
 from middlewared.utils import Popen, run
 
@@ -60,7 +60,7 @@ class DiskService(CRUDService):
         Helper method to get all disks that are not in use, either by the boot
         pool or the user pools.
         """
-        disks = await self.query([('name', 'nin', await self.__get_reserved())])
+        disks = await self.query([('name', 'nin', await self.get_reserved())])
 
         if join_partitions:
             for disk in disks:
@@ -68,7 +68,55 @@ class DiskService(CRUDService):
 
         return disks
 
-    async def __get_reserved(self):
+    @accepts(Dict(
+        'options',
+        Bool('unused', default=False),
+    ))
+    def get_encrypted(self, options):
+        """
+        Get all geli providers
+
+        It might be an entire disk or a partition of type freebsd-zfs
+        """
+        providers = []
+
+        disks_blacklist = []
+        if options['unused']:
+            disks_blacklist += self.middleware.call_sync('disk.get_reserved')
+
+        geom.scan()
+        klass = geom.class_by_name('ELI')
+        if not klass:
+            return providers
+
+        for g in klass.geoms:
+            p = g.consumer.provider
+            name = None
+            if p.geom.clazz.name == 'LABEL':
+                name = p.name
+                p = p.geom.consumer.provider
+
+            if p.geom.clazz.name != 'PART':
+                continue
+
+            disk = p.geom.consumer.provider.name
+            if disk in disks_blacklist:
+                continue
+
+            if name is None:
+                name = p.name
+
+            providers.append({
+                'name': name,
+                'dev': p.name,
+                'disk': disk
+            })
+
+
+        return providers
+
+    @private
+    async def get_reserved(self):
         reserved = [i async for i in await self.middleware.call('boot.get_disks')]
         reserved += [i async for i in await self.middleware.call('pool.get_disks')]
         reserved += [i async for i in self.__get_iscsi_targets()]
@@ -514,7 +562,7 @@ class DiskService(CRUDService):
                     continue
                 mp_disks.append(p_geom.name)
 
-        reserved = await self.__get_reserved()
+        reserved = await self.get_reserved()
 
         is_freenas = await self.middleware.call('system.is_freenas')
 
