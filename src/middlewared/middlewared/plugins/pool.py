@@ -12,7 +12,7 @@ import bsd
 from middlewared.job import JobProgressBuffer
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
 from middlewared.service import (
-    filterable, item_method, job, private, CRUDService, ValidationErrors,
+    filterable, item_method, job, private, CallError, CRUDService, ValidationErrors,
 )
 from middlewared.utils import Popen, filter_list, run
 
@@ -375,6 +375,7 @@ class PoolDatasetService(CRUDService):
                 ('exec', None, str.upper),
                 ('sync', None, str.upper),
                 ('compression', None, str.upper),
+                ('origin', None, None),
                 ('quota', None, _null),
                 ('refquota', None, _null),
                 ('reservation', None, _null),
@@ -569,6 +570,19 @@ class PoolDatasetService(CRUDService):
     @accepts(Str('id'))
     async def do_delete(self, id):
         return await self.middleware.call('zfs.dataset.delete', id)
+
+    @item_method
+    @accepts(Str('id'))
+    async def promote(self, id):
+        """
+        Promote the cloned dataset `id`
+        """
+        dataset = await self.middleware.call('zfs.dataset.query', [('id', '=', id)])
+        if not dataset:
+            raise CallError(f'Dataset "{id}" does not exist.', errno.ENOENT)
+        if not dataset[0]['properties']['origin']['value']:
+            raise CallError('Only cloned datasets can be promoted.', errno.EBADMSG)
+        return await self.middleware.call('zfs.dataset.promote', id)
 
 
 def setup(middleware):

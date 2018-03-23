@@ -40,6 +40,7 @@ import tempfile
 import time
 import urllib.parse
 import xmlrpc.client
+import threading
 import traceback
 import sys
 
@@ -85,6 +86,7 @@ from freenasUI.system.utils import (
 )
 from middlewared.plugins.update import CheckUpdateHandler, get_changelog, parse_changelog
 
+DEBUG_THREAD = None
 VERSION_FILE = '/etc/version'
 PGFILE = '/tmp/.extract_progress'
 INSTALLFILE = '/tmp/.upgrade_install'
@@ -1083,9 +1085,11 @@ def reload_httpd(request):
 
 
 def debug(request):
+    global DEBUG_THREAD
 
     _n = notifier()
     if request.method == 'GET':
+        DEBUG_THREAD = None
         if not _n.is_freenas() and _n.failover_licensed():
             try:
                 with client as c:
@@ -1094,7 +1098,15 @@ def debug(request):
                 return render(request, 'system/debug.html', {"failover_down": True})
 
         return render(request, 'system/debug.html')
-    debug_generate()
+
+    if not DEBUG_THREAD:
+        # XXX: Dont do this, temporary workaround for legacy UI
+        DEBUG_THREAD = threading.Thread(target=debug_generate, daemon=True)
+        DEBUG_THREAD.start()
+        return HttpResponse('1', status=202)
+    if DEBUG_THREAD.isAlive():
+        return HttpResponse('1', status=202)
+    DEBUG_THREAD = None
     return render(request, 'system/debug_download.html')
 
 

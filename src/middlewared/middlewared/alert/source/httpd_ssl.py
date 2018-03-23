@@ -3,13 +3,14 @@ import glob
 import os
 
 from middlewared.alert.base import Alert, AlertLevel, AlertSource
+from middlewared.alert.schedule import IntervalSchedule
 
 
 class HTTPD_SSL_AlertSource(AlertSource):
     level = AlertLevel.WARNING
     title = "FreeNAS HTTP server SSL misconfiguration"
 
-    interval = timedelta(minutes=5)
+    schedule = IntervalSchedule(timedelta(minutes=5))
 
     async def check(self):
         alerts = []

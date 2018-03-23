@@ -173,7 +173,7 @@ def ticket_progress(request):
 
 def download_guide(request):
     if not notifier().is_freenas():
-        pdf_path = '/usr/local/www/data/docs/TrueNAS.pdf'
+        pdf_path = '/usr/local/www/data/docs_legacy/TrueNAS.pdf'
         with open(pdf_path, 'rb') as f:
             wrapper = FileWrapper(f)
             response = HttpResponse(wrapper, content_type='application/pdf')

@@ -183,16 +183,16 @@ class ZilstatThread(threading.Thread):
         }
 
     def run(self):
-        while True:
-            zilstatproc = subprocess.Popen(
-                ["/usr/local/bin/zilstat", str(self.interval), "1"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                preexec_fn=os.setsid,
-            )
-            output = zilstatproc.communicate()[0].strip(b"\n")
-            output = output.split(b"\n")[1].split()
-            self.value = {
+        zilstatproc = subprocess.Popen(
+            ["/usr/local/bin/zilstat", str(self.interval)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            preexec_fn=os.setsid,
+        )
+        zilstatproc.stdout.readline().strip()
+        while zilstatproc.poll() is None:
+            output = zilstatproc.stdout.readline().strip().split()
+            value = {
                 "NBytes": output[0],
                 "NBytespersec": output[1],
                 "NMaxRate": output[2],
@@ -204,6 +204,7 @@ class ZilstatThread(threading.Thread):
                 "4to32kb": output[8],
                 "gteq4kb": output[9],
             }
+            self.value = value
 
 
 if __name__ == "__main__":

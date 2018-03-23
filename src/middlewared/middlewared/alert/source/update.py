@@ -7,6 +7,7 @@ from freenasOS.Update import PendingUpdates
 from freenasUI.system.utils import is_update_applied
 
 from middlewared.alert.base import Alert, AlertLevel, FilePresenceAlertSource, ThreadedAlertSource
+from middlewared.alert.schedule import IntervalSchedule
 
 UPDATE_APPLIED_SENTINEL = "/tmp/.updateapplied"
 
@@ -17,7 +18,7 @@ class HasUpdateAlertSource(ThreadedAlertSource):
     level = AlertLevel.INFO
     title = "There is a new update available"
 
-    interval = timedelta(hours=1)
+    schedule = IntervalSchedule(timedelta(hours=1))
 
     def check_sync(self):
         try:
@@ -45,7 +46,7 @@ class UpdateAppliedAlertSource(ThreadedAlertSource):
     level = AlertLevel.WARNING
     title = "Update not applied"
 
-    interval = timedelta(minutes=10)
+    schedule = IntervalSchedule(timedelta(minutes=10))
 
     def check_sync(self):
         if os.path.exists(UPDATE_APPLIED_SENTINEL):
@@ -70,6 +71,6 @@ class UpdateFailedAlertSource(FilePresenceAlertSource):
     level = AlertLevel.CRITICAL
     title = "Update failed. Check /data/update.failed for further details"
 
-    interval = timedelta(hours=1)
+    schedule = IntervalSchedule(timedelta(hours=1))
 
     path = "/data/update.failed"
