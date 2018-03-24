@@ -497,16 +497,29 @@ class RoutesService(Service):
 
         ipv4_gateway = config['gc_ipv4gateway'] or None
         if not ipv4_gateway:
-            interface = await self.middleware.call('datastore.query', 'network.interfaces', [('int_dhcp', '=', True)])
-            if interface:
-                interface = interface[0]
-                dhclient_running, dhclient_pid = dhclient_status(interface['int_interface'])
+            interfaces = await self.middleware.call('datastore.query', 'network.interfaces')
+            if interfaces:
+                interfaces = [interface['int_interface'] for interface in interfaces if interface['int_dhcp']]
+            else:
+                ifconfig = await Popen(["ifconfig", "-l"], stdout=subprocess.PIPE)
+                ifconfig = await ifconfig.communicate()
+                interfaces = [
+                    interface
+                    for interface in [interface.decode("utf-8") for interface in ifconfig[0].split()]
+                    if not (
+                        re.match("^(bridge|epair|ipfw|lo)[0-9]+", interface) or
+                        ":" in interface
+                    )
+                ]
+            for interface in interfaces:
+                dhclient_running, dhclient_pid = dhclient_status(interface)
                 if dhclient_running:
-                    leases = dhclient_leases(interface['int_interface'])
+                    leases = dhclient_leases(interface)
                     reg_routers = re.search(r'option routers (.+);', leases or '')
                     if reg_routers:
                         # Make sure to get first route only
                         ipv4_gateway = reg_routers.group(1).split(' ')[0]
+                        break
         routing_table = netif.RoutingTable()
         if ipv4_gateway:
             ipv4_gateway = netif.Route('0.0.0.0', '0.0.0.0', ipaddress.ip_address(str(ipv4_gateway)))
