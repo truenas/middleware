@@ -44,7 +44,7 @@ class create_ldap_osx_test(unittest.TestCase):
     @osx_host_cfg
     def setUpClass(inst):
         cmd = 'umount -f "%s"; rmdir "%s"; exit 0' % (MOUNTPOINT, MOUNTPOINT)
-        OSX_TEST(cmd, OSX_USUERNAME, OSX_PASSWORD, OSX_HOST)
+        OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
         payload2 = {"ldap_basedn": LDAPBASEDN,
                     "ldap_anonbind": True,
                     "ldap_netbiosname_a": BRIDGEHOST,
@@ -120,13 +120,13 @@ class create_ldap_osx_test(unittest.TestCase):
     @osx_host_cfg
     def test_10_Create_mount_point_for_SMB_on_OSX_system(self):
         assert OSX_TEST('mkdir -p "%s"' % MOUNTPOINT,
-                        OSX_USUERNAME, OSX_PASSWORD, OSX_HOST) is True
+                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     @osx_host_cfg
     def test_11_Mount_SMB_share_on_OSX_system(self):
         cmd = 'mount -t smbfs "smb://ldapuser:12345678'
         cmd += '@%s/%s" %s' % (ip, SMB_NAME, MOUNTPOINT)
-        assert OSX_TEST(cmd, OSX_USUERNAME, OSX_PASSWORD, OSX_HOST) is True
+        assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # def test_12_Checking_permissions_on_MOUNTPOINT(self):
     #     device_name = return_output('dirname "%s"' % MOUNTPOINT)
@@ -137,7 +137,7 @@ class create_ldap_osx_test(unittest.TestCase):
     @osx_host_cfg
     def test_13_Create_file_on_SMB_share_via_OSX_to_test_permissions(self):
         assert OSX_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
-                        OSX_USUERNAME, OSX_PASSWORD, OSX_HOST) is True
+                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # Move test file to a new location on the SMB share
     @osx_host_cfg
@@ -145,25 +145,25 @@ class create_ldap_osx_test(unittest.TestCase):
         cmd = 'mkdir -p "%s/tmp" && ' % MOUNTPOINT
         cmd += 'mv "%s/testfile.txt" ' % MOUNTPOINT
         cmd += '"%s/tmp/testfile.txt"' % MOUNTPOINT
-        assert OSX_TEST(cmd, OSX_USUERNAME, OSX_PASSWORD, OSX_HOST) is True
+        assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # Delete test file and test directory from SMB share
     @osx_host_cfg
     def test_15_Deleting_test_file_and_directory_from_SMB_share(self):
         cmd = 'rm -f "%s/tmp/testfile.txt" && ' % MOUNTPOINT
         cmd += 'rmdir "%s/tmp"' % MOUNTPOINT
-        assert OSX_TEST(cmd, OSX_USUERNAME, OSX_PASSWORD, OSX_HOST) is True
+        assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     @osx_host_cfg
     def test_16_Verifying_test_file_directory_were_successfully_removed(self):
         cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
-        assert OSX_TEST(cmd, OSX_USUERNAME, OSX_PASSWORD, OSX_HOST) is True
+        assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # Clean up mounted SMB share
     @osx_host_cfg
     def test_17_Unmount_SMB_share(self):
         assert OSX_TEST('umount -f "%s"' % MOUNTPOINT,
-                        OSX_USUERNAME, OSX_PASSWORD, OSX_HOST) is True
+                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # Disable LDAP
     def test_18_Disabling_LDAP_with_anonymous_bind(self):

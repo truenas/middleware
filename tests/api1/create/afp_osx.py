@@ -75,71 +75,50 @@ class create_afp_osx_test(unittest.TestCase):
     @mount_test_cfg
     @osx_host_cfg
     def test_07_Create_mount_point_for_AFP_on_OSX_system(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         assert OSX_TEST('mkdir -p "%s"' % MOUNTPOINT,
-                        username, password, host) is True
+                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     @mount_test_cfg
     @osx_host_cfg
     def test_08_Mount_AFP_share_on_OSX_system(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         cmd = 'mount -t afp "afp://%s/%s" "%s"' % (ip, AFP_NAME, MOUNTPOINT)
-        assert OSX_TEST(cmd, username, password, host) is True
+        assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     @mount_test_cfg
     @osx_host_cfg
     def test_10_Create_file_on_AFP_share_via_OSX_to_test_permissions(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         assert OSX_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
-                        username, password, host) is True
+                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # Move test file to a new location on the AFP share
     @mount_test_cfg
     @osx_host_cfg
     def test_11_Moving_AFP_test_file_into_a_new_directory(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         cmd = 'mkdir -p "%s/tmp" && ' % MOUNTPOINT
         cmd += 'mv "%s/testfile.txt" ' % MOUNTPOINT
         cmd += '"%s/tmp/testfile.txt"' % MOUNTPOINT
-        assert OSX_TEST(cmd, username, password, host) is True
+        assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # Delete test file and test directory from AFP share
     @mount_test_cfg
     @osx_host_cfg
     def test_12_Deleting_test_file_and_directory_from_AFP_share(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         cmd = 'rm -f "%s/tmp/testfile.txt" && ' % MOUNTPOINT
         cmd += 'rmdir "%s/tmp"' % MOUNTPOINT
-        assert OSX_TEST(cmd, username, password, host) is True
+        assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     @mount_test_cfg
     @osx_host_cfg
     def test_13_Verifying_test_file_directory_were_successfully_removed(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
-        assert OSX_TEST(cmd, username, password, host) is True
+        assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # Clean up mounted AFP share
     @mount_test_cfg
     @osx_host_cfg
     def test_14_Unmount_AFP_share(self):
-        host = pytest.importorskip("config.OSX_HOST")
-        username = pytest.importorskip("config.OSX_USERNAME")
-        password = pytest.importorskip("config.OSX_PASSWORD")
         assert OSX_TEST("umount -f '%s'" % MOUNTPOINT,
-                        username, password, host) is True
+                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
     # Test disable AFP
     def test_15_Verify_AFP_service_can_be_disabled(self):
