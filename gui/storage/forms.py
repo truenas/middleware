@@ -893,12 +893,13 @@ class AutoImportWizard(SessionWizardView):
         try:
             upload_job_and_wait(key, 'pool.import_pool', {
                 'guid': vol['guid'],
+                'devices': enc_disks,
+                'passphrase': passphrase,
             })
         except JobAborted:
             raise MiddlewareError(_('Import job aborted'))
         except JobFailed as e:
             raise MiddlewareError(_('Import job failed: %s') % e.value)
-
 
         events = ['loadalert()']
         appPool.hook_form_done('AutoImportWizard', self, self.request, events)
