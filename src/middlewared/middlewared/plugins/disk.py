@@ -149,7 +149,6 @@ class DiskService(CRUDService):
                 passf.flush()
                 passphrase = passf.name
 
-
             failed = []
             for dev in devices:
                 try:
