@@ -25,7 +25,6 @@
 #####################################################################
 import json
 import logging
-import os
 
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -33,6 +32,7 @@ from django.shortcuts import render
 from freenasUI.directoryservice import forms, models, utils
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import services
@@ -453,16 +453,11 @@ def directoryservice_idmap_backend(request, obj_type, obj_id, idmap_type):
 
 
 def directoryservice_clearcache(request):
-    error = False
-    errmsg = ''
 
-    os.system(
-        "(/usr/local/bin/python "
-        "/usr/local/www/freenasUI/tools/cachetool.py expire >/dev/null 2>&1 &&"
-        " /usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py "
-        "fill >/dev/null 2>&1) &")
+    with client as c:
+        c.call('notifier.ds_clearcache')
 
     return HttpResponse(json.dumps({
-        'error': error,
-        'errmsg': errmsg,
+        'error': False,
+        'errmsg': ''
     }))

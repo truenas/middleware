@@ -317,6 +317,10 @@ __EOF__
             alias /usr/local/www/swagger-ui/node_modules/swagger-ui-dist;
         }
 
+        location /docs {
+            alias /usr/local/www/data/docs;
+        }
+
         location /docs_legacy {
             alias /usr/local/www/data/docs_legacy;
         }

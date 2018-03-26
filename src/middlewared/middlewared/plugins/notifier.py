@@ -2,6 +2,7 @@ from middlewared.service import CallError, Service
 
 import errno
 import os
+import subprocess
 import sys
 import logging
 
@@ -43,7 +44,7 @@ from freenasUI.directoryservice.models import (
 )
 from freenasUI.directoryservice.utils import get_idmap_object
 
-from middlewared.utils import django_modelobj_serialize
+from middlewared.utils import Popen, django_modelobj_serialize
 
 
 logger = logging.getLogger('plugins.notifier')
@@ -229,6 +230,14 @@ class NotifierService(Service):
         if code not in mapping:
             raise ValueError('Unknown idmap code: {0}'.format(code))
         return mapping[code]
+
+    async def ds_clearcache(self):
+        """Temporary call to rebuild DS cache"""
+        await Popen(
+            '/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py expire && '
+            '/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py fill',
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=True
+        )
 
     def samba4(self, name, args=None):
         """Temporary wrapper to use Samba4 over middlewared"""
