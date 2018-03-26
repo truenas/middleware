@@ -258,7 +258,17 @@ class PoolService(CRUDService):
         Get a list of pools available for import with the following details:
         name, guid, status, hostname.
         """
+
+        existing_guids = [i['guid'] for i in await self.middleware.call('pool.query')]
+
         for pool in await self.middleware.call('zfs.pool.find_import'):
+            if pool['status'] == 'UNAVAIL':
+                continue
+            # Exclude pools with same guid as existing pools (in database)
+            # It could be the pool is in the database but was exported/detached for some reason
+            # See #6808
+            if pool['guid'] in existing_guids:
+                continue
             entry = {}
             for i in ('name', 'guid', 'status', 'hostname'):
                 entry[i] = pool[i]
