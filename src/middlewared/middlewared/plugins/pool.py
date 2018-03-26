@@ -252,6 +252,17 @@ class PoolService(CRUDService):
         sysctl.filter('vfs.zfs.resilver_min_time_ms')[0].value = resilver_min_time_ms
         sysctl.filter('vfs.zfs.scan_idle')[0].value = scan_idle
 
+    @accepts()
+    async def import_find(self):
+        """
+        Get a list of pools available for import with the following details:
+        name, guid, status, hostname.
+        """
+        for pool in await self.middleware.call('zfs.pool.find_import'):
+            entry = {}
+            for i in ('name', 'guid', 'status', 'hostname'):
+                entry[i] = pool[i]
+            yield entry
 
     @accepts(Dict(
         'pool_import',
