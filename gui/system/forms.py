@@ -143,7 +143,7 @@ def clean_certificate(instance, certificate):
         load_certificate(certificate)
     except crypto.Error:
         raise forms.ValidationError(_("The certificate is not in "
-          "Privacy Enhanced Mail (PEM) format."))
+            "Privacy Enhanced Mail (PEM) format."))
 
     return certificate
 
@@ -203,7 +203,7 @@ class BootEnvAddForm(Form):
                 raise
             except ClientException:
                 raise MiddlewareError(_('Boot Environment creation '
-                  'failed!'))
+                    'failed!'))
 
 
 class BootEnvRenameForm(Form):
@@ -454,8 +454,8 @@ class InitialWizard(CommonWizard):
                     ).split('|')
                     if not _n.zfs_import(volume_name, guid):
                         raise MiddlewareError(_('Volume "%s" import '
-                          'failed! Check the pool status for more details.'
-                        ) % volume_name)
+                            'failed! Check the pool status for more details.'
+                            ) % volume_name)
 
                 volume = Volume(vol_name=volume_name)
                 volume.save()
@@ -2572,7 +2572,7 @@ class CertificateAuthorityImportForm(ModelForm):
         reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
         if not reg:
             raise forms.ValidationError(_('Use only alphanumeric '
-              'characters, "_", and "-".'))
+                'characters, "_", and "-".'))
         return name
 
     def clean_cert_passphrase(self):

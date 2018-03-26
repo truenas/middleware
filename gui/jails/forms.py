@@ -238,8 +238,8 @@ class JailCreateForm(ModelForm):
         jail_host = self.cleaned_data.get('jail_host')
         if not re.search(r'^[A-Za-z0-9_-]+$', jail_host):
             raise forms.ValidationError(_(
-             "A jail name can only contain letters, numbers, dashes (-),"
-             " and underscores (_)."
+               "A jail name can only contain letters, numbers, dashes (-),"
+               " and underscores (_)."
             ))
         return jail_host
 
@@ -247,8 +247,8 @@ class JailCreateForm(ModelForm):
         jail_mac = self.cleaned_data.get('jail_mac')
         if is_jail_mac_duplicate(jail_mac):
             raise forms.ValidationError(_(
-              "This MAC address already exists."
-              "Enter a new MAC address."
+                "This MAC address already exists."
+                "Enter a new MAC address."
             ))
         return jail_mac
 
