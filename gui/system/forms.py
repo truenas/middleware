@@ -458,7 +458,7 @@ class InitialWizard(CommonWizard):
                         raise MiddlewareError(_(
                             'Volume "%s" import failed! Check the pool '
                             'status for more details.'
-                            ) % volume_name)
+                        ) % volume_name)
 
                 volume = Volume(vol_name=volume_name)
                 volume.save()
@@ -2576,7 +2576,7 @@ class CertificateAuthorityImportForm(ModelForm):
         if not reg:
             raise forms.ValidationError(_(
                 'Use only alphanumeric characters, "_", and "-".'
-                ))
+            ))
         return name
 
     def clean_cert_passphrase(self):

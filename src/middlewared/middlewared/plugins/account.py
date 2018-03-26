@@ -420,7 +420,7 @@ class UserService(CRUDService):
                 'password_disabled',
                 'Leave "Password" blank when "Disable password login" '
                 'is checked.'
-                )
+            )
 
         if 'home' in data:
             if ':' in data['home']:
@@ -441,8 +441,10 @@ class UserService(CRUDService):
                 )
 
         if 'full_name' in data and ':' in data['full_name']:
-            verrors.add('full_name', 'The ":" character is not allowed '
-                'in a "Full Name".')
+            verrors.add(
+                'full_name',
+                'The ":" character is not allowed in a "Full Name".'
+            )
 
     async def __set_password(self, data):
         if 'password' not in data:
