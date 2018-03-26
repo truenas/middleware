@@ -501,11 +501,9 @@ class RoutesService(Service):
             if interfaces:
                 interfaces = [interface['int_interface'] for interface in interfaces if interface['int_dhcp']]
             else:
-                ifconfig = await Popen(["ifconfig", "-l"], stdout=subprocess.PIPE)
-                ifconfig = await ifconfig.communicate()
                 interfaces = [
                     interface
-                    for interface in [interface.decode("utf-8") for interface in ifconfig[0].split()]
+                    for interface in netif.list_interfaces().keys()
                     if not (
                         re.match("^(bridge|epair|ipfw|lo)[0-9]+", interface) or
                         ":" in interface
