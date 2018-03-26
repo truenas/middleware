@@ -25,7 +25,7 @@ class JailService(CRUDService):
     # using `process_pool`
     # @filterable
     @accepts(
-        Dict('query-filters', additional_attrs=True),
+        List('query-filters'),
         Dict('query-options', additional_attrs=True),
     )
     def query(self, filters=None, options=None):
