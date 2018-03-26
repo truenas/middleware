@@ -4,7 +4,6 @@
 # Location for tests into REST API of FreeNAS
 
 import pytest
-import unittest
 import sys
 import os
 
@@ -39,150 +38,185 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
                                        ]) is False, reason=BSDReason)
 
 
+# Clean up any leftover items from previous failed runs
+@bsd_host_cfg
 @ad_test_cfg
-class create_ad_bsd_test(unittest.TestCase):
+def test_00_cleanup_tests():
+    payload1 = {"ad_bindpw": ADPASSWORD,
+                "ad_bindname": ADUSERNAME,
+                "ad_domainname": BRIDGEDOMAIN,
+                "ad_netbiosname_a": BRIDGEHOST,
+                "ad_idmap_backend": "rid",
+                "ad_enable": False}
+    PUT("/directoryservice/activedirectory/1/", payload1) == 200
+    PUT("/services/services/cifs/", {"srv_enable": "false"}) == 200
+    payload3 = {"cfs_comment": "My Test SMB Share",
+                "cifs_path": SMB_PATH,
+                "cifs_name": SMB_NAME,
+                "cifs_guestok": "true",
+                "cifs_vfsobjects": "streams_xattr"}
+    DELETE_ALL("/sharing/cifs/", payload3) == 204
+    DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
+    BSD_TEST("umount -f " + MOUNTPOINT,
+             BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    BSD_TEST("rmdir " + MOUNTPOINT, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
 
-    # Clean up any leftover items from previous failed runs
-    @bsd_host_cfg
-    @classmethod
-    def setUpClass(inst):
-        payload1 = {"ad_bindpw": ADPASSWORD,
-                    "ad_bindname": ADUSERNAME,
-                    "ad_domainname": BRIDGEDOMAIN,
-                    "ad_netbiosname_a": BRIDGEHOST,
-                    "ad_idmap_backend": "rid",
-                    "ad_enable": False}
-        PUT("/directoryservice/activedirectory/1/", payload1) == 200
-        PUT("/services/services/cifs/", {"srv_enable": "false"}) == 200
-        payload3 = {"cfs_comment": "My Test SMB Share",
-                    "cifs_path": SMB_PATH,
-                    "cifs_name": SMB_NAME,
-                    "cifs_guestok": "true",
-                    "cifs_vfsobjects": "streams_xattr"}
-        DELETE_ALL("/sharing/cifs/", payload3) == 204
-        DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
-        BSD_TEST("umount -f " + MOUNTPOINT,
-                 BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-        BSD_TEST("rmdir " + MOUNTPOINT, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
 
-    def test_01_creating_smb_dataset(self):
-        assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
+def test_01_creating_smb_dataset():
+    assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
 
-    def test_02_enabling_active_directory(self):
-        payload = {"ad_bindpw": ADPASSWORD,
-                   "ad_bindname": ADUSERNAME,
-                   "ad_domainname": BRIDGEDOMAIN,
-                   "ad_netbiosname_a": BRIDGEHOST,
-                   "ad_idmap_backend": "rid",
-                   "ad_enable": True}
-        assert PUT("/directoryservice/activedirectory/1/", payload) == 200
 
-    def test_03_checking_active_directory(self):
-        assert GET_OUTPUT("/directoryservice/activedirectory/",
-                          "ad_enable") is True
+@ad_test_cfg
+def test_02_enabling_active_directory():
+    payload = {"ad_bindpw": ADPASSWORD,
+               "ad_bindname": ADUSERNAME,
+               "ad_domainname": BRIDGEDOMAIN,
+               "ad_netbiosname_a": BRIDGEHOST,
+               "ad_idmap_backend": "rid",
+               "ad_enable": True}
+    assert PUT("/directoryservice/activedirectory/1/", payload) == 200
 
-    def test_04_checking_to_see_if_smb_service_is_enabled(self):
-        assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "RUNNING"
 
-    def test_05_enabling_smb_service(self):
-        payload = {"cifs_srv_description": "Test FreeNAS Server",
-                   "cifs_srv_guest": "nobody",
-                   "cifs_hostname_lookup": False,
-                   "cifs_srv_aio_enable": False}
-        assert PUT("/services/cifs/", payload) == 200
+@ad_test_cfg
+def test_03_checking_active_directory():
+    assert GET_OUTPUT("/directoryservice/activedirectory/",
+                      "ad_enable") is True
 
-    # Now start the service
-    def test_06_Starting_SMB_service(self):
-        assert PUT("/services/services/cifs/", {"srv_enable": "true"}) == 200
 
-    def test_07_Changing_permissions_on_SMB_PATH(self):
-        payload = {"mp_path": SMB_PATH,
-                   "mp_acl": "unix",
-                   "mp_mode": "777",
-                   "mp_user": "root",
-                   "mp_group": "wheel",
-                   "mp_recursive": True}
-        assert PUT("/storage/permission/", payload) == 201
+@ad_test_cfg
+def test_04_checking_to_see_if_smb_service_is_enabled():
+    assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "RUNNING"
 
-    def test_08_Creating_a_SMB_share_on_SMB_PATH(self):
-        payload = {"cfs_comment": "My Test SMB Share",
-                   "cifs_path": SMB_PATH,
-                   "cifs_name": SMB_NAME,
-                   "cifs_guestok": "true",
-                   "cifs_vfsobjects": "streams_xattr"}
-        assert POST("/sharing/cifs/", payload) == 201
 
-    @bsd_host_cfg
-    def test_09_creating_smb_mountpoint(self):
-        assert BSD_TEST('mkdir -p "%s" && sync' % MOUNTPOINT,
-                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+def test_05_enabling_smb_service():
+    payload = {"cifs_srv_description": "Test FreeNAS Server",
+               "cifs_srv_guest": "nobody",
+               "cifs_hostname_lookup": False,
+               "cifs_srv_aio_enable": False}
+    assert PUT("/services/cifs/", payload) == 200
 
-    # The ADUSER user must exist in AD with this password
-    @bsd_host_cfg
-    def test_10_Store_AD_credentials_in_a_file_for_mount_smbfs(self):
-        cmd = 'echo "[TESTNAS:ADUSER]" > ~/.nsmbrc && '
-        cmd += 'echo "password=12345678" >> ~/.nsmbrc'
-        assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    @bsd_host_cfg
-    def test_11_Mounting_SMB(self):
-        cmd = 'mount_smbfs -N -I %s -W AD01 ' % ip
-        cmd += '"//aduser@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
-        assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+# Now start the service
+def test_06_Starting_SMB_service():
+    assert PUT("/services/services/cifs/", {"srv_enable": "true"}) == 200
 
-    @bsd_host_cfg
-    def test_13_Creating_SMB_file(self):
-        assert BSD_TEST('touch "%s/testfile"' % MOUNTPOINT,
-                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    @bsd_host_cfg
-    def test_14_Moving_SMB_file(self):
-        cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+def test_07_Changing_permissions_on_SMB_PATH():
+    payload = {"mp_path": SMB_PATH,
+               "mp_acl": "unix",
+               "mp_mode": "777",
+               "mp_user": "root",
+               "mp_group": "wheel",
+               "mp_recursive": True}
+    assert PUT("/storage/permission/", payload) == 201
 
-    @bsd_host_cfg
-    def test_15_Copying_SMB_file(self):
-        cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    @bsd_host_cfg
-    def test_16_Deleting_SMB_file_1_2(self):
-        assert BSD_TEST('rm "%s/testfile"' % MOUNTPOINT,
-                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+def test_08_Creating_a_SMB_share_on_SMB_PATH():
+    payload = {"cfs_comment": "My Test SMB Share",
+               "cifs_path": SMB_PATH,
+               "cifs_name": SMB_NAME,
+               "cifs_guestok": "true",
+               "cifs_vfsobjects": "streams_xattr"}
+    assert POST("/sharing/cifs/", payload) == 201
 
-    @bsd_host_cfg
-    def test_17_Deleting_SMB_file_2_2(self):
-        assert BSD_TEST('rm "%s/testfile2"' % MOUNTPOINT,
-                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    @bsd_host_cfg
-    def test_18_Unmounting_SMB(self):
-        assert BSD_TEST('umount "%s"' % MOUNTPOINT,
-                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+@bsd_host_cfg
+@ad_test_cfg
+def test_09_creating_smb_mountpoint():
+    assert BSD_TEST('mkdir -p "%s" && sync' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    @bsd_host_cfg
-    def test_19_Removing_SMB_mountpoint(self):
-        cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    # Disable Active Directory Directory
-    def test_20_disabling_active_directory(self):
-        payload = {"ad_bindpw": ADPASSWORD,
-                   "ad_bindname": ADUSERNAME,
-                   "ad_domainname": BRIDGEDOMAIN,
-                   "ad_netbiosname_a": BRIDGEHOST,
-                   "ad_idmap_backend": "rid",
-                   "ad_enable": "false"}
-        assert PUT("/directoryservice/activedirectory/1/", payload) == 200
+# The ADUSER user must exist in AD with this password
+@bsd_host_cfg
+@ad_test_cfg
+def test_10_Store_AD_credentials_in_a_file_for_mount_smbfs():
+    cmd = 'echo "[TESTNAS:ADUSER]" > ~/.nsmbrc && '
+    cmd += 'echo "password=12345678" >> ~/.nsmbrc'
+    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    # Check Active Directory
-    def test_21_Verify_Active_Directory_is_disabled(self):
-        assert GET_OUTPUT("/directoryservice/activedirectory/",
-                          "ad_enable") is False
 
-    def test_22_Verify_SMB_service_is_disabled(self):
-        assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "STOPPED"
+@bsd_host_cfg
+@ad_test_cfg
+def test_11_Mounting_SMB():
+    cmd = 'mount_smbfs -N -I %s -W AD01 ' % ip
+    cmd += '"//aduser@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
+    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    # Check destroying a SMB dataset
-    def test_23_Destroying_SMB_dataset(self):
-        assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_13_Creating_SMB_file():
+    assert BSD_TEST('touch "%s/testfile"' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_14_Moving_SMB_file():
+    cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
+    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_15_Copying_SMB_file():
+    cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
+    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_16_Deleting_SMB_file_1_2():
+    assert BSD_TEST('rm "%s/testfile"' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_17_Deleting_SMB_file_2_2():
+    assert BSD_TEST('rm "%s/testfile2"' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_18_Unmounting_SMB():
+    assert BSD_TEST('umount "%s"' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_19_Removing_SMB_mountpoint():
+    cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
+    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+# Disable Active Directory Directory
+@ad_test_cfg
+def test_20_disabling_active_directory():
+    payload = {"ad_bindpw": ADPASSWORD,
+               "ad_bindname": ADUSERNAME,
+               "ad_domainname": BRIDGEDOMAIN,
+               "ad_netbiosname_a": BRIDGEHOST,
+               "ad_idmap_backend": "rid",
+               "ad_enable": "false"}
+    assert PUT("/directoryservice/activedirectory/1/", payload) == 200
+
+
+# Check Active Directory
+@ad_test_cfg
+def test_21_Verify_Active_Directory_is_disabled():
+    assert GET_OUTPUT("/directoryservice/activedirectory/",
+                      "ad_enable") is False
+
+
+@ad_test_cfg
+def test_22_Verify_SMB_service_is_disabled():
+    assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "STOPPED"
+
+
+# Check destroying a SMB dataset
+def test_23_Destroying_SMB_dataset():
+    assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
