@@ -1792,10 +1792,6 @@ class WebDAVForm(MiddlewareModelForm, ModelForm):
 
         return data
 
-    def done(self, *args, **kwargs):
-        if getattr(self.instance, 'webdav_certssl') != 'NONE':
-            notifier().start_ssl("webdav")
-
 
 class S3Form(MiddlewareModelForm, ModelForm):
 
