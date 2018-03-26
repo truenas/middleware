@@ -26,11 +26,9 @@
 from collections import defaultdict, OrderedDict
 from datetime import datetime, time
 from decimal import Decimal
-import json
 import logging
 import os
 import re
-import requests
 import ssl
 import tempfile
 import uuid
@@ -61,6 +59,7 @@ from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.util import JobAborted, JobFailed, upload_job_and_wait
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent, services
 from freenasUI.storage import models
@@ -891,7 +890,15 @@ class AutoImportWizard(SessionWizardView):
         cdata = self.get_cleaned_data_for_step('2') or {}
         vol = cdata['volume']
 
-        self.volume = notifier().volume_import(vol['label'], vol['id'], key, passphrase, enc_disks)
+        try:
+            upload_job_and_wait(key, 'pool.import_pool', {
+                'guid': vol['guid'],
+            })
+        except JobAborted:
+            raise MiddlewareError(_('Import job aborted'))
+        except JobFailed as e:
+            raise MiddlewareError(_('Import job failed: %s') % e.value)
+
 
         events = ['loadalert()']
         appPool.hook_form_done('AutoImportWizard', self, self.request, events)
@@ -960,32 +967,12 @@ class AutoImportDecryptForm(Form):
 
         passphrase = self.cleaned_data.get("passphrase")
 
-        with client as c:
-            token = c.call('auth.generate_token')
-            r = requests.post(
-                'http://127.0.0.1/_upload/',
-                files={
-                    'file': key,
-                    'data': json.dumps({
-                        'method': 'disk.decrypt',
-                        'params': [disks, passphrase],
-                    }),
-                },
-                headers={
-                    'Authorization': f'Token {token}',
-                },
-            )
-            job_id = r.json()['job_id']
-            while True:
-                job = c.call('core.get_jobs', [('id', '=', job_id)])
-                if job:
-                    job = job[0]
-                    if job['state'] == 'FAILED':
-                        self._errors['__all__'] = self.error_class([job['error']])
-                    elif job['state'] == 'ABORTED':
-                        self._errors['__all__'] = self.error_class([_('Decrypt job aborted')])
-                    elif job['state'] == 'SUCCESS':
-                        break
+        try:
+            upload_job_and_wait(key, 'disk.decrypt', disks, passphrase)
+        except JobFailed as e:
+            self._errors['__all__'] = self.error_class([e.value])
+        except JobAborted:
+            self._errors['__all__'] = self.error_class([_('Decrypt job aborted')])
 
         return self.cleaned_data
 
