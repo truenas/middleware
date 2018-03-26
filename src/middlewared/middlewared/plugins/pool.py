@@ -10,11 +10,12 @@ import sysctl
 import bsd
 
 from middlewared.job import JobProgressBuffer
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str
 from middlewared.service import (
-    filterable, item_method, job, private, CallError, CRUDService, ValidationErrors,
+    filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
 )
 from middlewared.utils import Popen, filter_list, run
+from middlewared.validators import Range
 
 logger = logging.getLogger(__name__)
 
@@ -583,6 +584,182 @@ class PoolDatasetService(CRUDService):
         if not dataset[0]['properties']['origin']['value']:
             raise CallError('Only cloned datasets can be promoted.', errno.EBADMSG)
         return await self.middleware.call('zfs.dataset.promote', id)
+
+
+class PoolScrubService(CRUDService):
+
+    class Config:
+        datastore = 'storage.scrub'
+        datastore_extend = 'pool.scrub.pool_scrub_extend'
+        datastore_prefix = 'scrub_'
+        namespace = 'pool.scrub'
+
+    async def pool_scrub_extend(self, data):
+        data['pool'] = data.pop('volume')
+        data['pool'] = data['pool']['id']
+        if data['dayweek'] == '*':
+            data['dayweek'] = [str(value) for value in range(1, 8)]
+        else:
+            data['dayweek'] = data['dayweek'].split(',')
+
+        if data['month'] == '*':
+            data['month'] = [str(value) for value in range(1, 13)]
+        else:
+            data['month'] = data['month'].split(',')
+        return data
+
+    async def validate_data(self, data, schema):
+        verrors = ValidationErrors()
+
+        pool_pk = data.get('pool')
+        if pool_pk:
+            pool_obj = await self.middleware.call(
+                'datastore.query',
+                'storage.volume',
+                [('id', '=', pool_pk)]
+            )
+
+            if len(pool_obj) == 0:
+                verrors.add(
+                    f'{schema}.pool',
+                    'The specified volume does not exist'
+                )
+            elif (
+                    'id' not in data.keys() or
+                    (
+                        'id' in data.keys() and
+                        'original_pool_id' in data.keys() and
+                        pool_pk != data['original_pool_id']
+                    )
+            ):
+                scrub_obj = await self.query(filters=[('volume_id', '=', pool_pk)])
+                if len(scrub_obj) != 0:
+                    verrors.add(
+                        f'{schema}.pool',
+                        'A scrub with this pool already exists'
+                    )
+
+        else:
+            verrors.add(
+                f'{schema}.pool',
+                'This field is required'
+            )
+
+        month = data.get('month')
+        if not month:
+            verrors.add(
+                f'{schema}.month',
+                'This field is required'
+            )
+        elif len(month) == 12:
+            data['month'] = '*'
+        else:
+            data['month'] = ','.join(month)
+
+        dayweek = data.get('dayweek')
+        if not dayweek:
+            verrors.add(
+                f'{schema}.dayweek',
+                'This field is required'
+            )
+        elif len(dayweek) == 7:
+            data['dayweek'] = '*'
+        else:
+            data['dayweek'] = ','.join(dayweek)
+
+        return verrors, data
+
+    @accepts(
+        Dict(
+            'pool_scrub_create',
+            Int('pool', validators=[Range(min=1)]),
+            Int('threshold', validators=[Range(min=0)]),
+            Str('description'),
+            List('dayweek', items=[Str('dayweek')]),
+            List('month', items=[Str('month')]),
+            Str('daymonth'),
+            Bool('enabled'),
+            Str('minute'),
+            Str('hour'),
+            register=True
+        )
+    )
+    async def do_create(self, data):
+        verrors, data = await self.validate_data(data, 'pool_scrub_create')
+
+        if verrors:
+            raise verrors
+
+        data['volume'] = data.pop('pool')
+        data['id'] = await self.middleware.call(
+            'datastore.insert',
+            self._config.datastore,
+            data,
+            {'prefix': self._config.datastore_prefix}
+        )
+
+        await self.middleware.call(
+            'service.restart',
+            'cron',
+            {'onetime': False}
+        )
+
+        return await self.query(filters=[('id', '=', data['id'])], options={'get': True})
+
+    @accepts(
+        Int('id', validators=[Range(min=1)]),
+        Patch('pool_scrub_create', 'pool_scrub_update', ('attr', {'update': True}))
+    )
+    async def do_update(self, id, data):
+        task_data = await self.query(filters=[('id', '=', id)], options={'get': True})
+        original_data = task_data.copy()
+        task_data['original_pool_id'] = original_data['pool']
+        task_data.update(data)
+        verrors, task_data = await self.validate_data(task_data, 'pool_scrub_update')
+
+        if verrors:
+            raise verrors
+
+        task_data.pop('original_pool_id')
+        original_data['month'] = '*' if len(original_data['month']) == 12 else ','.join(original_data['month'])
+        original_data['dayweek'] = '*' if len(original_data['dayweek']) == 7 else ','.join(original_data['dayweek'])
+
+        if len(set(task_data.items()) ^ set(original_data.items())) > 0:
+
+            task_data['volume'] = task_data.pop('pool')
+
+            await self.middleware.call(
+                'datastore.update',
+                self._config.datastore,
+                id,
+                task_data,
+                {'prefix': self._config.datastore_prefix}
+            )
+
+            await self.middleware.call(
+                'service.restart',
+                'cron',
+                {'onetime': False}
+            )
+
+        return await self.query(filters=[('id', '=', id)], options={'get': True})
+
+    @accepts(
+        Int('id')
+    )
+    async def do_delete(self, id):
+        response = await self.middleware.call(
+            'datastore.delete',
+            self._config.datastore,
+            id
+        )
+
+        await self.middleware.call(
+            'service.restart',
+            'cron',
+            {'onetime': False}
+        )
+        return response
 
 
 def setup(middleware):

@@ -58,6 +58,7 @@ from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent, services
@@ -2592,7 +2593,15 @@ class ZvolDestroyForm(Form):
                 label=label)
 
 
-class ScrubForm(ModelForm):
+class ScrubForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'scrub_'
+    middleware_attr_schema = 'pool_scrub'
+    middleware_plugin = 'pool.scrub'
+    is_singletone = False
+    middleware_attr_map = {
+        'pool': 'scrub_volume'
+    }
 
     class Meta:
         fields = '__all__'
@@ -2625,35 +2634,11 @@ class ScrubForm(ModelForm):
             1, 2, 3, 4, 5, 6, 7
         ])
 
-    def clean_scrub_volume(self):
-        vol = self.cleaned_data.get('scrub_volume')
-        if vol:
-            qs = models.Scrub.objects.filter(scrub_volume__id=vol.id)
-            if self.instance.id:
-                qs = qs.exclude(id=self.instance.id)
-            if qs.exists():
-                raise forms.ValidationError(
-                    _('A scrub with this volume already exists.')
-                )
-        return vol
-
-    def clean_scrub_month(self):
-        m = self.data.getlist("scrub_month")
-        if len(m) == 12:
-            return '*'
-        m = ",".join(m)
-        return m
-
-    def clean_scrub_dayweek(self):
-        w = self.data.getlist("scrub_dayweek")
-        if len(w) == 7:
-            return '*'
-        w = ",".join(w)
-        return w
-
-    def save(self):
-        super(ScrubForm, self).save()
-        notifier().restart("cron")
+    def middleware_clean(self, update):
+        update['month'] = self.data.getlist('scrub_month')
+        update['dayweek'] = self.data.getlist('scrub_dayweek')
+        update['pool'] = update.pop('volume')
+        return update
 
 
 class DiskWipeForm(Form):
