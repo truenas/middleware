@@ -198,6 +198,11 @@ class ZFSPoolService(Service):
         t.start()
         t.join()
 
+    @accepts()
+    def find_import(self):
+        with libzfs.ZFS() as zfs:
+            return [i.__getstate__() for i in zfs.find_import()]
+
 
 class ZFSDatasetService(CRUDService):
 
