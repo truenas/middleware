@@ -2611,7 +2611,6 @@ class notifier(metaclass=HookMetaclass):
     def volume_import(self, volume_name, volume_id, key=None, passphrase=None, enc_disks=None):
         from freenasUI.storage.models import Disk, EncryptedDisk, Scrub, Volume
         from freenasUI.sharing.models import AFP_Share, CIFS_Share, NFS_Share_Path, WebDAV_Share
-        from freenasUI.system.alert import alertPlugins
 
         if enc_disks is None:
             enc_disks = []
@@ -2636,7 +2635,10 @@ class notifier(metaclass=HookMetaclass):
             if encrypt > 0:
                 if not os.path.exists(GELI_KEYPATH):
                     os.mkdir(GELI_KEYPATH)
-                key.seek(0)
+                try:
+                    key.seek(0)
+                except OSError:
+                    pass
                 keydata = key.read()
                 with open(volume.get_geli_keyfile(), 'wb') as f:
                     f.write(keydata)
@@ -2711,7 +2713,6 @@ class notifier(metaclass=HookMetaclass):
         # FIXME: do not restart collectd again
         self.restart("system_datasets")
 
-        alertPlugins.run()
         return volume
 
     def __rmdir_mountpoint(self, path):
