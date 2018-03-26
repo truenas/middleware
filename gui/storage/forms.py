@@ -1001,64 +1001,23 @@ class VolumeAutoImportForm(Form):
         super(VolumeAutoImportForm, self).__init__(*args, **kwargs)
         self.fields['volume_id'].choices = self._volume_choices()
 
-    @staticmethod
-    def _unused_volumes():
-
-        used_disks = []
-        guids = []
-        for v in models.Volume.objects.all():
-            guids.append(v.vol_guid)
-            used_disks.extend(v.get_disks())
-
-        # Grab partition list
-        # NOTE: This approach may fail if device nodes are not accessible.
-        vols = notifier().detect_volumes()
-
-        for vol in list(vols):
-            # Exclude volumes with same guid as existing volumes
-            # See #6808
-            if vol.get('id') in guids:
-                vols.remove(vol)
-                continue
-            for vdev in vol['disks']['vdevs']:
-                for disk in vdev['disks']:
-                    if [x for x in used_disks if x is not None and re.search(
-                        r'^%s([ps]|$)' % disk['name'],
-                        x
-                    )]:
-                        vols.remove(vol)
-                        break
-                else:
-                    continue
-                break
-
-        return vols
-
     @classmethod
     def _volume_choices(cls):
-
         volchoices = {}
-        vols = cls._unused_volumes()
-        for vol in vols:
-            if vol.get("id", None):
-                name = "%s [%s, id=%s]" % (
-                    vol['label'],
-                    vol['type'],
-                    vol['id'])
-            else:
-                name = "%s [%s]" % (vol['label'], vol['type'])
-            volchoices["%s|%s" % (vol['label'], vol.get('id', ''))] = name
-
+        with client as c:
+            for p in c.call('pool.import_find'):
+                volchoices[f'{p["name"]}|{p["guid"]}'] = f'{p["name"]} [id={p["guid"]}]'
         return list(volchoices.items())
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        vols = notifier().detect_volumes()
-        volume_name, zid = cleaned_data.get('volume_id', '|').split('|', 1)
-        for vol in vols:
-            if vol['label'] == volume_name:
-                if (zid and zid == vol['id']) or not zid:
-                    cleaned_data['volume'] = vol
+        with client as c:
+            pools = c.call('pool.import_find')
+        volume_name, guid = cleaned_data.get('volume_id', '|').split('|', 1)
+        for pool in pools:
+            if pool['name'] == volume_name:
+                if (guid and guid == pool['guid']) or not guid:
+                    cleaned_data['volume'] = pool
                     break
 
         if cleaned_data.get('volume', None) is None:
@@ -1068,13 +1027,10 @@ class VolumeAutoImportForm(Form):
 
         else:
             if models.Volume.objects.filter(
-                    vol_name=cleaned_data['volume']['label']).count() > 0:
+                    vol_name=cleaned_data['volume']['name']).count() > 0:
                 msg = _("You already have a volume with same name")
                 self._errors["volume_id"] = self.error_class([msg])
                 del cleaned_data["volume_id"]
-
-            if cleaned_data['volume']['type'] != 'zfs':
-                raise NotImplementedError
 
         return cleaned_data
 
