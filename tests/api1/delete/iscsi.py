@@ -5,7 +5,6 @@
 # Location for tests into REST API of FreeNAS
 
 import pytest
-import unittest
 import sys
 import os
 
@@ -25,25 +24,24 @@ mount_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
                                          ]) is False, reason=Reason)
 
 
-class delete_iscsi_test(unittest.TestCase):
+# Clean up any leftover items from any previous failed runs
+@mount_test_cfg
+def test_00_cleanup_tests():
+    host = pytest.importorskip("config.BSD_HOST")
+    username = pytest.importorskip("config.BSD_USERNAME")
+    password = pytest.importorskip("config.BSD_PASSWORD")
+    PUT("/services/services/iscsitarget/", {"srv_enable": False})
+    BSD_TEST("iscsictl -R -t %s" % TARGET_NAME)
+    cmd = 'umount -f "%s" &>/dev/null ; ' % MOUNTPOINT
+    cmd += 'rmdir "%s" &>/dev/null' % MOUNTPOINT
+    BSD_TEST(cmd, username, password, host)
 
-    # Clean up any leftover items from any previous failed runs
-    @mount_test_cfg
-    @classmethod
-    def setUpClass(inst):
-        host = pytest.importorskip("config.BSD_HOST")
-        username = pytest.importorskip("config.BSD_USERNAME")
-        password = pytest.importorskip("config.BSD_PASSWORD")
-        PUT("/services/services/iscsitarget/", {"srv_enable": False})
-        BSD_TEST("iscsictl -R -t %s" % TARGET_NAME)
-        cmd = 'umount -f "%s" &>/dev/null ; ' % MOUNTPOINT
-        cmd += 'rmdir "%s" &>/dev/null' % MOUNTPOINT
-        BSD_TEST(cmd, username, password, host)
 
-    # Remove iSCSI target
-    def test_01_Delete_iSCSI_target(self):
-        assert DELETE("/services/iscsi/target/1/") == 204
+# Remove iSCSI target
+def test_01_Delete_iSCSI_target():
+    assert DELETE("/services/iscsi/target/1/") == 204
 
-    # Remove iSCSI extent
-    def test_02_Delete_iSCSI_extent(self):
-        assert DELETE("/services/iscsi/extent/1/") == 204
+
+# Remove iSCSI extent
+def test_02_Delete_iSCSI_extent():
+    assert DELETE("/services/iscsi/extent/1/") == 204

@@ -4,7 +4,6 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
-import unittest
 import sys
 import os
 
@@ -13,13 +12,11 @@ sys.path.append(apifolder)
 from functions import DELETE, GET_USER
 
 
-class delete_user_test(unittest.TestCase):
+def test_00_cleanup_tests():
+    global userid
+    userid = GET_USER("testuser")
 
-    # Get the ID of testuser
-    @classmethod
-    def setUpClass(inst):
-        inst.userid = GET_USER("testuser")
 
-    # Delete the testuser
-    def test_01_Deleting_user_testuser(self):
-        assert DELETE("/account/users/%s/" % self.userid) == 204
+# Delete the testuser
+def test_01_Deleting_user_testuser():
+    assert DELETE("/account/users/%s/" % userid) == 204

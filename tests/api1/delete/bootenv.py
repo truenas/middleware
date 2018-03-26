@@ -4,7 +4,6 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
-import unittest
 import sys
 import os
 
@@ -13,7 +12,5 @@ sys.path.append(apifolder)
 from functions import DELETE
 
 
-class delete_bootenv_test(unittest.TestCase):
-
-    def test_01_Removing_a_boot_environment_newbe2(self):
-        assert DELETE("/system/bootenv/newbe2/") == 204
+def test_01_Removing_a_boot_environment_newbe2():
+    assert DELETE("/system/bootenv/newbe2/") == 204

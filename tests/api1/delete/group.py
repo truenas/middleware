@@ -4,7 +4,6 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
-import unittest
 import sys
 import os
 
@@ -13,8 +12,6 @@ sys.path.append(apifolder)
 from functions import DELETE
 
 
-class delete_group_test(unittest.TestCase):
-
-    # Delete the testgroup
-    def test_01_Delete_group_testgroup_newgroup(self):
-        assert DELETE("/account/groups/1/") == 204
+# Delete the testgroup
+def test_01_Delete_group_testgroup_newgroup():
+    assert DELETE("/account/groups/1/") == 204
