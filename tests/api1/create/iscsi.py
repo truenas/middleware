@@ -11,7 +11,7 @@ import os
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, BSD_TEST, return_output
+from functions import PUT, POST, GET_OUTPUT, SSH_TEST, return_output
 from functions import POSTNOJSON
 from auto_config import ip
 from config import *
@@ -40,10 +40,10 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
 def test_00_cleanup_tests():
     payload = {"srv_enable": False}
     PUT("/services/services/iscsitarget/", payload)
-    BSD_TEST("iscsictl -R -a", BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    BSD_TEST('umount -f "%s" &>/dev/null' % MOUNTPOINT,
+    SSH_TEST("iscsictl -R -a", BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    SSH_TEST('umount -f "%s" &>/dev/null' % MOUNTPOINT,
              BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    BSD_TEST('rm -rf "%s" &>/dev/null' % MOUNTPOINT,
+    SSH_TEST('rm -rf "%s" &>/dev/null' % MOUNTPOINT,
              BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
 
 
@@ -109,26 +109,26 @@ def test_08_Verify_the_iSCSI_service_is_enabled():
                       "srv_state") == "RUNNING"
 
 
-# when BSD_TEST is functional test using it will need to be added
+# when SSH_TEST is functional test using it will need to be added
 # Now connect to iSCSI target
 @mount_test_cfg
 @bsd_host_cfg
 def test_09_Connecting_to_iSCSI_target():
     cmd = 'iscsictl -A -p %s:3620 -t %s' % (ip, TARGET_NAME)
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name():
     while True:
-        BSD_TEST('iscsictl -L', BSD_USERNAME, BSD_PASSWORD,
+        SSH_TEST('iscsictl -L', BSD_USERNAME, BSD_PASSWORD,
                  BSD_HOST) is True
-        state = 'cat /tmp/.bsdCmdTestStdOut | '
+        state = 'cat /tmp/.sshCmdTestStdOut | '
         state += 'awk \'$2 == "%s:3620" {print $3}\'' % ip
         iscsi_state = return_output(state)
         if iscsi_state == "Connected:":
-            dev = 'cat /tmp/.bsdCmdTestStdOut | '
+            dev = 'cat /tmp/.sshCmdTestStdOut | '
             dev += 'awk \'$2 == "%s:3620" {print $4}\'' % ip
             iscsi_dev = return_output(dev)
             global DEVICE_NAME
@@ -140,14 +140,14 @@ def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name():
 @mount_test_cfg
 @bsd_host_cfg
 def test_11_Format_the_target_volume():
-    assert BSD_TEST('newfs "/dev/%s"' % DEVICE_NAME,
+    assert SSH_TEST('newfs "/dev/%s"' % DEVICE_NAME,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_12_Creating_iSCSI_mountpoint():
-    assert BSD_TEST('mkdir -p "%s"' % MOUNTPOINT,
+    assert SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
@@ -155,7 +155,7 @@ def test_12_Creating_iSCSI_mountpoint():
 @bsd_host_cfg
 def test_13_Mount_the_target_volume():
     cmd = 'mount "/dev/%s" "%s"' % (DEVICE_NAME, MOUNTPOINT)
-    assert BSD_TEST(cmd,
+    assert SSH_TEST(cmd,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
@@ -165,48 +165,48 @@ def test_14_Creating_file():
     cmd = 'touch "%s/testfile"' % MOUNTPOINT
     # The line under doesn't make sence
     # "umount '${MOUNTPOINT}'; rmdir '${MOUNTPOINT}'"
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_15_Moving_file():
     cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_16_Copying_file():
     cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_17_Deleting_file():
-    assert BSD_TEST('rm "%s/testfile2"' % MOUNTPOINT,
+    assert SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_18_Unmounting_iSCSI_volume():
-    assert BSD_TEST('umount "%s"' % MOUNTPOINT,
+    assert SSH_TEST('umount "%s"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_19_Removing_iSCSI_volume_mountpoint():
-    assert BSD_TEST('rm -rf "%s"' % MOUNTPOINT,
+    assert SSH_TEST('rm -rf "%s"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_20_Disconnect_all_targets():
-    assert BSD_TEST('iscsictl -R -t %s' % TARGET_NAME,
+    assert SSH_TEST('iscsictl -R -t %s' % TARGET_NAME,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 

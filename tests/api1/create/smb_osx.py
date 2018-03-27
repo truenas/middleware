@@ -10,7 +10,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, OSX_TEST
+from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, SSH_TEST
 from auto_config import ip
 from config import *
 if BRIDGEHOST in locals():
@@ -49,7 +49,7 @@ def test_00_cleanup_tests():
     # Clean up any leftover items from previous failed SMB runs
     cmd = 'umount -f "%s"; ' % MOUNTPOINT
     cmd += 'rmdir "%s"; exit 0;' % MOUNTPOINT
-    OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
 
 
 def test_01_Creating_SMB_dataset():
@@ -86,7 +86,7 @@ def test_05_Checking_to_see_if_SMB_service_is_running():
 @mount_test_cfg
 @osx_host_cfg
 def test_06_Create_mount_point_for_SMB_on_OSX_system():
-    assert OSX_TEST('mkdir -p "%s"' % MOUNTPOINT,
+    assert SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
                     OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
@@ -95,7 +95,7 @@ def test_06_Create_mount_point_for_SMB_on_OSX_system():
 def test_07_Mount_SMB_share_on_OSX_system():
     cmd = 'mount -t smbfs "smb://guest'
     cmd += '@%s/%s" "%s"' % (ip, SMB_NAME, MOUNTPOINT)
-    assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
 # @mount_test_cfg
@@ -104,13 +104,13 @@ def test_07_Mount_SMB_share_on_OSX_system():
 #     device_name = return_output('dirname "%s"' % MOUNTPOINT)
 #     cmd = 'ls -la "%s" | ' % device_name
 #     cmd += 'awk \'$4 == "%s" && $9 == "%s"\'' % (VOL_GROUP, DATASET)
-#     assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+#     assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
 @mount_test_cfg
 @osx_host_cfg
 def test_09_Create_file_on_SMB_share_via_OSX_to_test_permissions():
-    assert OSX_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
+    assert SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
                     OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
@@ -121,7 +121,7 @@ def test_10_Moving_SMB_test_file_into_a_new_directory():
     cmd = 'mkdir -p "%s/tmp" ' % MOUNTPOINT
     cmd += '&& mv "%s/testfile.txt" ' % MOUNTPOINT
     cmd += '"%s/tmp/testfile.txt"' % MOUNTPOINT
-    assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
 # Delete test file and test directory from SMB share
@@ -130,21 +130,21 @@ def test_10_Moving_SMB_test_file_into_a_new_directory():
 def test_11_Deleting_test_file_and_directory_from_SMB_share():
     cmd = 'rm -f "%s/tmp/testfile.txt" ' % MOUNTPOINT
     cmd += '&& rmdir "%s/tmp"' % MOUNTPOINT
-    assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
 @mount_test_cfg
 @osx_host_cfg
 def test_12_Verifying_test_file_directory_were_successfully_removed():
     cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
-    assert OSX_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
 # Clean up mounted SMB share
 @mount_test_cfg
 @osx_host_cfg
 def test_13_Unmount_SMB_share():
-    assert OSX_TEST('umount -f "%s"' % MOUNTPOINT,
+    assert SSH_TEST('umount -f "%s"' % MOUNTPOINT,
                     OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 

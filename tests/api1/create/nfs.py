@@ -10,7 +10,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, BSD_TEST
+from functions import PUT, POST, GET_OUTPUT, SSH_TEST
 from auto_config import ip
 from config import *
 
@@ -67,7 +67,7 @@ def test_06_Checking_to_see_if_NFS_service_is_enabled():
 @bsd_host_cfg
 # Now check if we can mount NFS / create / rename / copy / delete / umount
 def test_07_Creating_NFS_mountpoint():
-    assert BSD_TEST('mkdir -p "%s"' % MOUNTPOINT,
+    assert SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
@@ -77,7 +77,7 @@ def test_08_Mounting_NFS():
     cmd = 'mount_nfs %s:%s %s' % (ip, NFS_PATH, MOUNTPOINT)
     # command below does not make sence
     # "umount '${MOUNTPOINT}' ; rmdir '${MOUNTPOINT}'" "60"
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
@@ -85,34 +85,34 @@ def test_08_Mounting_NFS():
 def test_09_Creating_NFS_file():
     cmd = 'touch "%s/testfile"' % MOUNTPOINT
     # 'umount "${MOUNTPOINT}"; rmdir "${MOUNTPOINT}"'
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_10_Moving_NFS_file():
     cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_11_Copying_NFS_file():
     cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_12_Deleting_NFS_file():
-    assert BSD_TEST('rm "%s/testfile2"' % MOUNTPOINT,
+    assert SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_13_Unmounting_NFS():
-    assert BSD_TEST('umount "%s"' % MOUNTPOINT,
+    assert SSH_TEST('umount "%s"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
@@ -120,4 +120,4 @@ def test_13_Unmounting_NFS():
 @bsd_host_cfg
 def test_14_Removing_NFS_mountpoint():
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
