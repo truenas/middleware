@@ -48,10 +48,16 @@ class FakeMiddleware(object):
         self.logger = logging.getLogger('worker')
 
     async def run_in_thread(self, method, *args, **kwargs):
-        with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        try:
             return await asyncio.get_event_loop().run_in_executor(
                 executor, functools.partial(method, *args, **kwargs)
             )
+        finally:
+            # We need this because default behavior of PoolExecutor with
+            # context manager is to shutdown(wait=True) which would block
+            # the worker until thread finishes.
+            executor.shutdown(wait=False)
 
     async def _call(self, service_mod, service_name, method, args, job=None):
         with Client() as c:
