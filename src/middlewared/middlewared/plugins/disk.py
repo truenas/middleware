@@ -129,15 +129,13 @@ class DiskService(CRUDService):
 
     @accepts(
         List('devices', items=[Str('device')]),
-        Str('passphrase'),
+        Str('passphrase', private=True),
     )
     @job(pipes=['input'])
     def decrypt(self, job, devices, passphrase=None):
         """
         Decrypt `devices` using uploaded encryption key
         """
-        job.check_pipe("input")
-
         with tempfile.NamedTemporaryFile(dir='/tmp/') as f:
             f.write(job.pipes.input.r.read())
             f.flush()
