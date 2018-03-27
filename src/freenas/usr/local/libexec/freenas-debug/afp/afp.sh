@@ -31,7 +31,10 @@ afp_help() { echo "Dump AFP Configuration"; }
 afp_directory() { echo "AFP"; }
 afp_func()
 {
-	onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	local afp_onoff
+	local afp_enabled="DISABLED"
+	
+	afp_onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		srv_enable
 	FROM
@@ -43,16 +46,23 @@ afp_func()
 	LIMIT 1
 	")
 
-	enabled="DISABLED"
-	if [ "${onoff}" = "1" ]
+	afp_enabled="DISABLED"
+	if [ "${afp_onoff}" = "1" ]
 	then
-		enabled="ENABLED"
+		afp_enabled="ENABLED"
 	fi
 
 	section_header "AFP Status"
-	echo "AFP is ${enabled}"
+	echo "AFP is ${afp_enabled}"
 	section_footer
 
+	#
+	#	If AFP is disabled, there is no reason to run this module
+	#
+	if [ "${afp_onoff}" = "0" ]
+	then
+		exit 0
+	fi
 	#
 	#	Dump AFP version info
 	#
@@ -83,11 +93,8 @@ afp_func()
 		-id
 	" | while read -r afp_path afp_name
 	do
-		section_header "${afp_name}:${afp_path}"
-		ls -ld "${afp_path}"
 		printf "\n"
 		getfacl "${afp_path}"
-		printf "\n"
 	done
 	section_footer
 }

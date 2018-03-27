@@ -73,7 +73,15 @@ domain_controller_func()
 	section_footer
 
 	#
-	#	Next, dump Domain Controller configuration
+	#	If Domain Controller isn't enabled, no need to run so exit
+	#
+	if [ "${onoff}" = "0" ]
+	then
+		exit 0
+	fi
+
+	#
+	#	If enabled, dump Domain Controller configuration
 	#
 	local IFS="|"
 	read realm domain role dns_backend dns_forwarder forest_level \
@@ -213,15 +221,19 @@ __EOF__
 	#
 	#	Dump Active Directory users and groups
 	#
-	section_header "Active Directory Users and Groups"
-	section_header "Users - 'wbinfo -u'"
-	wbinfo -u
-	section_header "Groups - 'wbinfo -g'"
-	wbinfo -g
-	section_header "Using getent"
-	section_header "Users - 'getent passwd'"
-	getent passwd
-	section_header "Groups - 'getent group'"
-	getent group
+	#
+	#	We limit the output here because the point of running
+	#	wbinfo and getent is not, necessarily, to find a
+	#	specific user or group. It's to simply see if we
+	#	are even enumerating users and groups
+	#
+	section_header "Active Directory Users - 'wbinfo -u'"
+	wbinfo -u | -head 50
+	section_header "Active Directory Groups - 'wbinfo -g'"
+	wbinfo -g | -head 50
+	section_header "Local Users database- 'getent passwd'"
+	getent passwd | -head 50
+	section_header "Local Groups database- 'getent group'"
+	getent group | -head 50
 	section_footer
 }

@@ -29,50 +29,116 @@
 
 cache_opt() { echo c; }
 cache_help() { echo "Dump (AD|LDAP) Cache"; }
-cache_directory() { echo "DirectoryCache"; }
+cache_directory() { echo "Directory_Cache"; }
 cache_func()
 {
-	local cachetype="${1}"
+	# local cachetype="${1}"
+	#
+	# cachedir="${FREENAS_CACHEDIR}"
+	# directory_cachedir=
+	#
+	# case ${cachetype} in
+	#	AD) directory_cachedir="${cachedir}/.ldap/.activedirectory" ;;
+	#	LDAP) directory_cachedir="${cachedir}/.ldap/.ldap" ;;
+	# esac
+	#
+	# directory_local_users="${directory_cachedir}/.local/.users/.cache.db"
+	# directory_local_groups="${directory_cachedir}/.local/.users/.cache.db"
+	# directory_users="${directory_cachedir}/.users/.cache.db"
+	# directory_groups="${directory_cachedir}/.groups/.cache.db"
+	#
+	#
+	# if [ -f "${directory_local_users}" ]
+	# then
+	#	section_header "${directory_local_users}"
+	#	"${db_stat}" "${directory_local_users}"
+	#	section_footer
+	# fi
+	#
+	# if [ -f "${directory_local_groups}" ]
+	# then
+	#	section_header "${directory_local_groups}"
+	#	"${db_stat}" -d "${directory_local_groups}"
+	#	section_footer
+	# fi
+	#
+	# if [ -f "${directory_users}" ]
+	# then
+	#	section_header "${directory_users}"
+	#	"${db_stat}" -d "${directory_users}"
+	#	section_footer
+	# fi
+	#
+	# if [ -f "${directory_groups}" ]
+	# then
+	#	section_header "${directory_groups}"
+	#	"${db_stat}" -d "${directory_groups}"
+	#	section_footer
+	# fi
+	#
+	
+	local ldap_onoff
+	local ldap_enabled="DISABLED"
+	local ad_onoff
+	local ad_enabled="DISABLED"
 
-	cachedir="${FREENAS_CACHEDIR}"
-	directory_cachedir=
+	#
+	#	First, check if the LDAP service is enabled.
+	#
 
-	case ${cachetype} in
-		AD) directory_cachedir="${cachedir}/.ldap/.activedirectory" ;;
-		LDAP) directory_cachedir="${cachedir}/.ldap/.ldap" ;;
-	esac
+	ldap_onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ldap_enable
+	FROM
+		directoryservice_ldap
+	ORDER BY
+		-id
+	LIMIT 1
+	")
 
-	directory_local_users="${directory_cachedir}/.local/.users/.cache.db"
-	directory_local_groups="${directory_cachedir}/.local/.users/.cache.db"
-	directory_users="${directory_cachedir}/.users/.cache.db"
-	directory_groups="${directory_cachedir}/.groups/.cache.db"
-
-	if [ -f "${directory_local_users}" ]
+	ldap_enabled="DISABLED"
+	if [ "${ldap_onoff}" = "1" ]
 	then
-		section_header "${directory_local_users}"
-		/usr/local/bin/db_stat-4.8 -d "${directory_local_users}"
-		section_footer
+		ldap_enabled="ENABLED"
 	fi
 
-	if [ -f "${directory_local_groups}" ]
+	section_header "LDAP Status"
+	echo "LDAP is ${ldap_enabled}"
+	section_footer
+
+	#
+	#	Second, check if the Active Directory service is enabled.
+	#
+
+	ad_onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ad_enable
+	FROM
+		directoryservice_activedirectory
+	ORDER BY
+		-id
+	LIMIT 1
+	")
+
+	ad_enabled="DISABLED"
+	if [ "${ad_onoff}" = "1" ]
 	then
-		section_header "${directory_local_groups}"
-		/usr/local/bin/db_stat-4.8 -d "${directory_local_groups}"
-		section_footer
+		ad_enabled="ENABLED"
 	fi
 
-	if [ -f "${directory_users}" ]
-	then
-		section_header "${directory_users}"
-		/usr/local/bin/db_stat-4.8 -d "${directory_users}"
-		section_footer
-	fi
+	section_header "Active Directory Status"
+	echo "Active Directory is ${ad_enabled}"
+	section_footer
 
-	if [ -f "${directory_groups}" ]
+
+	#
+	#	If LDAP & AD are disabled, there is no reason to dump this cache, so exit
+	#
+
+	if [ "${ldap_onoff}" = "0" ] && [ "${ad_onoff}" = "0" ]
 	then
-		section_header "${directory_groups}"
-		/usr/local/bin/db_stat-4.8 -d "${directory_groups}"
-		section_footer
+		echo "LDAP and AD are disabled. Exiting"
+		exit 0
 	fi
 
 	section_header "User and Group cache dump"

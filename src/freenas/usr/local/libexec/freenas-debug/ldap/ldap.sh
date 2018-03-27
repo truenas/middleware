@@ -60,6 +60,15 @@ ldap_func()
 	section_footer
 
 	#
+	#	If LDAP is disabled, exit.
+	#
+
+	if [ "${onoff}" = "0" ]
+	then
+		exit 0
+	fi
+
+	#
 	#	Next, dump LDAP configuration
 	#
 	local IFS="|"
@@ -168,11 +177,10 @@ __EOF__
 	#
 	#	Dump LDAP users and groups
 	#
-	section_header "LDAP Users and Groups"
-	section_header "Users - 'getent passwd'"
-	getent passwd
-	section_header "Groups - 'getent group'"
-	getent group
+	section_header "LDAP Users - 'getent passwd'"
+	getent passwd | head -50
+	section_header "LDAP Groups - 'getent group'"
+	getent group | head -50
 	section_footer
 
 	#
