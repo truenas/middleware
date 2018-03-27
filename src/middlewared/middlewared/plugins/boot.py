@@ -157,9 +157,14 @@ class BootService(Service):
 
             raise
 
-        await self.middleware.call('zfs.pool.extend', 'freenas-boot', None, [{'target': f'{disks[0]}p2', 'type': 'DISK', 'path': f'/dev/{dev}p2'}])
+        extend_pool_job = await self.middleware.call('zfs.pool.extend', 'freenas-boot', None,
+                                                     [{'target': f'{disks[0]}p2',
+                                                       'type': 'DISK',
+                                                       'path': f'/dev/{dev}p2'}])
 
         await self.install_loader(boottype, dev)
+
+        await job.wrap(extend_pool_job)
 
     @accepts(Str('dev'))
     async def detach(self, dev):
