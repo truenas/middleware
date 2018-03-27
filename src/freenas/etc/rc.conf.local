@@ -446,6 +446,8 @@ _s3_config()
 	" |\
 	while read s3_enable s3_bindip s3_bindport s3_access_key \
 		s3_secret_key s3_browser s3_mode s3_disks; do
+		s3_access_key=$(echo "$s3_access_key" | sed 's/"/"'"'"'"'"'"'"''/g')
+		s3_secret_key=$(echo "$s3_secret_key" | sed 's/"/"'"'"'"'"'"'"''/g')
 		cat <<-__MINIO__
 			minio_enable="YES"
 			minio_disks="${s3_disks}"
