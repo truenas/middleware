@@ -70,6 +70,7 @@ from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.util import run_alerts
 from freenasUI.network.forms import AliasForm
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import availablePlugins, Plugin
@@ -3180,15 +3181,8 @@ class CertificateAuthorityResourceMixin(object):
             with open('/tmp/alert_invalidCA_{0}'.format(bundle.obj.cert_name),
                       'w') as fout:
                 fout.write('')
-            # Now send SIGUSR1 (signal 10) to the alertd daemon (to rescan
-            # alertmods)
-            try:
-                with open("/var/run/alertd.pid", "r") as f:
-                    alertd_pid = int(f.read())
-                os.kill(alertd_pid, signal.SIGUSR1)
-            except:
-                # alertd not running?
-                pass
+
+            run_alerts()
 
         return bundle
 
@@ -3337,15 +3331,8 @@ class CertificateResourceMixin(object):
             with open('/tmp/alert_invalidcert_{0}'.format(bundle.obj.cert_name),
                       'w') as fout:
                 fout.write('')
-            # Now send SIGUSR1 (signal 10) to the alertd daemon (to rescan
-            # alertmods)
-            try:
-                with open("/var/run/alertd.pid", "r") as f:
-                    alertd_pid = int(f.read())
-                os.kill(alertd_pid, signal.SIGUSR1)
-            except:
-                # alertd not running?
-                pass
+
+            run_alerts()
 
         return bundle
 
