@@ -119,7 +119,7 @@ class ZFSPoolService(Service):
                 for i in (existing or []):
                     target = find_vdev(pool, i['target'])
                     if target is None:
-                        raise CallError(f'Failed to find vdev for {target}', errno.EINVAL)
+                        raise CallError(f"Failed to find vdev for {i['target']}", errno.EINVAL)
                     i['target'] = target
 
                 for i in (existing or []):
