@@ -73,7 +73,6 @@ pipeline {
         echo "ISO WORKSPACE: ${WORKSPACE}/tests/iso/"
         sleep 30
         sh 'ixautomation --run api-tests --systype freenas'
-        sh 'ixautomation --destroy-all-vm'
       }
     }
   }
