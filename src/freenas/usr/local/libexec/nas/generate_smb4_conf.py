@@ -52,6 +52,7 @@ log = logging.getLogger('generate_smb4_conf')
 
 is_truenas = False
 
+
 def qw(w):
     return '"%s"' % w.replace('"', '\\"')
 
