@@ -10,6 +10,7 @@ import time
 import traceback
 import threading
 
+from middlewared.service_exception import CallError
 from middlewared.pipe import Pipes
 
 logger = logging.getLogger(__name__)
@@ -417,7 +418,7 @@ class Job(object):
                 pass
             self.set_progress(**subjob.progress)
         if subjob.exception:
-            raise subjob.exception
+            raise CallError(subjob.exception)
         return subjob.result
 
     def cleanup(self):
