@@ -5,7 +5,6 @@
 # Location for tests into REST API of FreeNAS
 
 import pytest
-import unittest
 import sys
 import os
 
@@ -35,123 +34,140 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
                                        ]) is False, reason=BSDReason)
 
 
-class update_smb_bsd_test(unittest.TestCase):
+# Clean up any leftover items from previous failed AD LDAP or SMB runs
+@mount_test_cfg
+@bsd_host_cfg
+def test_00_cleanup_tests():
+    PUT("/services/services/cifs/", {"srv_enable": False})
+    payload3 = {"cfs_comment": "My Test SMB Share",
+                "cifs_path": SMB_PATH,
+                "cifs_name": SMB_NAME,
+                "cifs_guestok": True,
+                "cifs_vfsobjects": "streams_xattr"}
+    DELETE_ALL("/sharing/cifs/", payload3)
+    DELETE("/storage/volume/1/datasets/%s/" % DATASET)
 
-    # Clean up any leftover items from previous failed AD LDAP or SMB runs
-    @mount_test_cfg
-    @bsd_host_cfg
-    @classmethod
-    def setUpClass(inst):
-        PUT("/services/services/cifs/", {"srv_enable": False})
-        payload3 = {"cfs_comment": "My Test SMB Share",
-                    "cifs_path": SMB_PATH,
-                    "cifs_name": SMB_NAME,
-                    "cifs_guestok": True,
-                    "cifs_vfsobjects": "streams_xattr"}
-        DELETE_ALL("/sharing/cifs/", payload3)
-        DELETE("/storage/volume/1/datasets/%s/" % DATASET)
 
-    # Set auxilary parameters to allow mount_smbfs to work
-    def test_01_Setting_auxilary_parameters_for_mount_smbfs(self):
-        option = "lanman auth = yes\nntlm auth = yes \nraw NTLMv2 auth = yes"
-        payload = {"cifs_srv_smb_options": option}
-        assert PUT("/services/cifs/", payload) == 200
+# Set auxilary parameters to allow mount_smbfs to work
+def test_01_Setting_auxilary_parameters_for_mount_smbfs():
+    option = "lanman auth = yes\nntlm auth = yes \nraw NTLMv2 auth = yes"
+    payload = {"cifs_srv_smb_options": option}
+    assert PUT("/services/cifs/", payload) == 200
 
-    def test_02_Creating_SMB_dataset(self):
-        assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
 
-    def test_03_Updating_SMB_service(self):
-        assert PUT("/services/cifs/", {"cifs_srv_hostlookup": False}) == 200
+def test_02_Creating_SMB_dataset():
+    assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
 
-    # Now start the service
-    def test_04_Starting_SMB_service(self):
-        assert PUT("/services/services/cifs/", {"srv_enable": True}) == 200
 
-    def test_05_Checking_to_see_if_SMB_service_is_enabled(self):
-        assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "RUNNING"
+def test_03_Updating_SMB_service():
+    assert PUT("/services/cifs/", {"cifs_srv_hostlookup": False}) == 200
 
-    def test_06_Changing_permissions_on_SMB_PATH(self):
-        payload = {"mp_path": SMB_PATH,
-                   "mp_acl": "unix",
-                   "mp_mode": "777",
-                   "mp_user": "root",
-                   "mp_group": "wheel"}
-        assert PUT("/storage/permission/", payload) == 201
 
-    # def test_07_Creating_a_SMB_share_on_SMB_PATH(self):
-    #     payload = {"cfs_comment": "My Test SMB Share",
-    #                "cifs_path": SMB_PATH,
-    #                "cifs_name": SMB_NAME,
-    #                "cifs_guestok": True,
-    #                "cifs_vfsobjects": "streams_xattr"}
-    #     assert POST("/sharing/cifs/", payload) == 201
+# Now start the service
+def test_04_Starting_SMB_service():
+    assert PUT("/services/services/cifs/", {"srv_enable": True}) == 200
 
-    # Now check if we can mount SMB / create / rename / copy / delete / umount
-    @mount_test_cfg
-    @bsd_host_cfg
-    def test_08_Creating_SMB_mountpoint(self):
-        assert BSD_TEST('mkdir "%s" && sync' % MOUNTPOINT,
-                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    # def test_09_Mounting_SMB(self):
-    #     cmd = 'mount_smbfs -N -I %s ' % ip
-    #     cmd += '"//guest@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
-    #     assert BSD_TEST(cmd) is True
+def test_05_Checking_to_see_if_SMB_service_is_enabled():
+    assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "RUNNING"
 
-    @mount_test_cfg
-    @bsd_host_cfg
-    def test_11_Creating_SMB_file(self):
-        assert BSD_TEST('touch %s/testfile' % MOUNTPOINT,
-                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    @mount_test_cfg
-    @bsd_host_cfg
-    def test_12_Moving_SMB_file(self):
-        cmd = 'mv %s/testfile %s/testfile2' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+def test_06_Changing_permissions_on_SMB_PATH():
+    payload = {"mp_path": SMB_PATH,
+               "mp_acl": "unix",
+               "mp_mode": "777",
+               "mp_user": "root",
+               "mp_group": "wheel"}
+    assert PUT("/storage/permission/", payload) == 201
 
-    @mount_test_cfg
-    @bsd_host_cfg
-    def test_13_Copying_SMB_file(self):
-        cmd = 'cp %s/testfile2 %s/testfile' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    @mount_test_cfg
-    @bsd_host_cfg
-    def test_14_Deleting_SMB_file_1_2(self):
-        assert BSD_TEST('rm %s/testfile' % MOUNTPOINT,
-                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+# def test_07_Creating_a_SMB_share_on_SMB_PATH():
+#     payload = {"cfs_comment": "My Test SMB Share",
+#                "cifs_path": SMB_PATH,
+#                "cifs_name": SMB_NAME,
+#                "cifs_guestok": True,
+#                "cifs_vfsobjects": "streams_xattr"}
+#     assert POST("/sharing/cifs/", payload) == 201
 
-    @mount_test_cfg
-    @bsd_host_cfg
-    def test_15_Deleting_SMB_file_2_2(self):
-        assert BSD_TEST('rm %s/testfile2' % MOUNTPOINT,
-                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    # def test_16_Unmounting_SMB(self):
-    #     assert BSD_TEST('umount -f %s' % MOUNTPOINT) is True
+# Now check if we can mount SMB / create / rename / copy / delete / umount
+@mount_test_cfg
+@bsd_host_cfg
+def test_08_Creating_SMB_mountpoint():
+    assert BSD_TEST('mkdir "%s" && sync' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    @mount_test_cfg
-    @bsd_host_cfg
-    def test_17_Removing_SMB_mountpoint(self):
-        cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-        assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    def test_18_Removing_SMB_share_on_SMB_PATH(self):
-        payload = {"cfs_comment": "My Test SMB Share",
-                   "cifs_path": SMB_PATH,
-                   "cifs_name": SMB_NAME,
-                   "cifs_guestok": True,
-                   "cifs_vfsobjects": "streams_xattr"}
-        assert DELETE_ALL("/sharing/cifs/", payload) == 204
+# def test_09_Mounting_SMB():
+#     cmd = 'mount_smbfs -N -I %s ' % ip
+#     cmd += '"//guest@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
+#     assert BSD_TEST(cmd) is True
 
-    # Now stop the service
-    def test_19_Stopping_SMB_service(self):
-        assert PUT("/services/services/cifs/", {"srv_enable": False}) == 200
 
-    def test_20_Verify_SMB_service_is_disabled(self):
-        assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "STOPPED"
+@mount_test_cfg
+@bsd_host_cfg
+def test_11_Creating_SMB_file():
+    assert BSD_TEST('touch %s/testfile' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
-    # Check destroying a SMB dataset
-    def test_21_Destroying_SMB_dataset(self):
-        assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
+
+@mount_test_cfg
+@bsd_host_cfg
+def test_12_Moving_SMB_file():
+    cmd = 'mv %s/testfile %s/testfile2' % (MOUNTPOINT, MOUNTPOINT)
+    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@mount_test_cfg
+@bsd_host_cfg
+def test_13_Copying_SMB_file():
+    cmd = 'cp %s/testfile2 %s/testfile' % (MOUNTPOINT, MOUNTPOINT)
+    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@mount_test_cfg
+@bsd_host_cfg
+def test_14_Deleting_SMB_file_1_2():
+    assert BSD_TEST('rm %s/testfile' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@mount_test_cfg
+@bsd_host_cfg
+def test_15_Deleting_SMB_file_2_2():
+    assert BSD_TEST('rm %s/testfile2' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+# def test_16_Unmounting_SMB():
+#     assert BSD_TEST('umount -f %s' % MOUNTPOINT) is True
+
+
+@mount_test_cfg
+@bsd_host_cfg
+def test_17_Removing_SMB_mountpoint():
+    cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
+    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+def test_18_Removing_SMB_share_on_SMB_PATH():
+    payload = {"cfs_comment": "My Test SMB Share",
+               "cifs_path": SMB_PATH,
+               "cifs_name": SMB_NAME,
+               "cifs_guestok": True,
+               "cifs_vfsobjects": "streams_xattr"}
+    assert DELETE_ALL("/sharing/cifs/", payload) == 204
+
+
+# Now stop the service
+def test_19_Stopping_SMB_service():
+    assert PUT("/services/services/cifs/", {"srv_enable": False}) == 200
+
+
+def test_20_Verify_SMB_service_is_disabled():
+    assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "STOPPED"
+
+
+# Check destroying a SMB dataset
+def test_21_Destroying_SMB_dataset():
+    assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204

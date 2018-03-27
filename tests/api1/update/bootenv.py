@@ -4,7 +4,6 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
-import unittest
 import sys
 import os
 
@@ -13,8 +12,6 @@ sys.path.append(apifolder)
 from functions import POST
 
 
-class update_bootenv_test(unittest.TestCase):
-
-    def test_01_Cloning_a_new_boot_environment_newbe2(services):
-        payload = {"name": "newbe2", "source": "newbe1"}
-        assert POST("/system/bootenv/", payload) == 201
+def test_01_Cloning_a_new_boot_environment_newbe2():
+    payload = {"name": "newbe2", "source": "newbe1"}
+    assert POST("/system/bootenv/", payload) == 201

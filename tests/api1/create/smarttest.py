@@ -14,12 +14,12 @@ from functions import POST, GET_OUTPUT
 
 def test_00_cleanup_tests():
     disk_identifiers = GET_OUTPUT("/storage/disk", "disk_identifier")
-    global disk_ident_1
-    disk_indent_1 = disk_identifiers.split()[0]
+    global disk_ident
+    disk_indent = disk_identifiers.split()[0]
 
 
 def test_01_Create_a_new_SMARTTest():
-    payload = {"smarttest_disks": disk_ident_1,
+    payload = {"smarttest_disks": disk_ident,
                "smarttest_type": "L",
                "smarttest_hour": "*",
                "smarttest_daymonth": "*",
@@ -30,4 +30,4 @@ def test_01_Create_a_new_SMARTTest():
 
 def test_02_Check_that_API_reports_new_SMARTTest():
     assert GET_OUTPUT("/tasks/smarttest/",
-                      "smarttest_disks") == disk_ident_1
+                      "smarttest_disks") == disk_ident

@@ -59,7 +59,6 @@ def test_00_cleanup_tests():
 
 
 # Set auxilary parameters to allow mount_smbfs to work with ldap
-@ldap_test_cfg
 def test_01_Creating_SMB_dataset():
     assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
 
@@ -82,7 +81,6 @@ def test_03_Checking_LDAP():
     assert GET_OUTPUT("/directoryservice/ldap/", "ldap_enable") is True
 
 
-@ldap_test_cfg
 def test_04_Enabling_SMB_service():
     payload = {"cifs_srv_description": "Test FreeNAS Server",
                "cifs_srv_guest": "nobody",
@@ -92,7 +90,6 @@ def test_04_Enabling_SMB_service():
 
 
 # Now start the service
-@ldap_test_cfg
 def test_05_Starting_SMB_service():
     assert PUT("/services/services/cifs/", {"srv_enable": True}) == 200
 
@@ -102,7 +99,6 @@ def test_06_Checking_to_see_if_SMB_service_is_enabled():
     assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "RUNNING"
 
 
-@ldap_test_cfg
 def test_07_Changing_permissions_on_SMB_PATH():
     payload = {"mp_path": SMB_PATH,
                "mp_acl": "unix",
@@ -113,7 +109,6 @@ def test_07_Changing_permissions_on_SMB_PATH():
     assert PUT("/storage/permission/", payload) == 201
 
 
-@ldap_test_cfg
 def test_08_Creating_a_SMB_share_on_SMB_PATH():
     payload = {"cfs_comment": "My Test SMB Share",
                "cifs_path": SMB_PATH,
@@ -209,7 +204,6 @@ def test_18_Disabling_LDAP_with_anonymous_bind():
 
 
 # Now stop the SMB service
-@ldap_test_cfg
 def test_19_Stopping_SMB_service():
     assert PUT("/services/services/cifs/", {"srv_enable": False}) == 200
 
@@ -226,6 +220,5 @@ def test_21_Verify_SMB_service_is_disabled():
 
 
 # Check destroying a SMB dataset
-@ldap_test_cfg
 def test_22_Destroying_SMB_dataset():
     assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204

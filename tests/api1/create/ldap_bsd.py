@@ -61,14 +61,12 @@ def test_00_cleanup_tests():
 
 
 # Set auxilary parameters to allow mount_smbfs to work with ldap
-@ldap_test_cfg
 def test_01_Setting_auxilary_parameters_for_mount_smbfs():
     options = "lanman auth = yes\nntlm auth = yes \nraw NTLMv2 auth = yes"
     payload = {"cifs_srv_smb_options": options}
     assert PUT("/services/cifs/", payload) == 200
 
 
-@ldap_test_cfg
 def test_02_Creating_SMB_dataset():
     assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
 
@@ -101,7 +99,6 @@ def test_05_Enabling_SMB_service():
 
 
 # Now start the service
-@ldap_test_cfg
 def test_06_Starting_SMB_service():
     assert PUT("/services/services/cifs/", {"srv_enable": True}) == 200
 
