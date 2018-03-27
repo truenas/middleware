@@ -2,15 +2,15 @@
 import sys
 import subprocess
 
+
 def attach_console():
     """attach console.
 
     Keyword arguments:
     None
-    
+
     Returns
     None
-    
     """
     devices = subprocess.Popen("fuser {0}".format(
         sys.argv[1]), shell=True, stdout=subprocess.PIPE).stdout.read()
@@ -19,6 +19,7 @@ def attach_console():
     for pid in pids:
         subprocess.Popen("kill -9 {0}".format(
             pid), shell=True, stdout=subprocess.PIPE).stdout.read()
+
 
 if __name__ == '__main__':
     """
