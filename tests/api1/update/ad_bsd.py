@@ -87,7 +87,7 @@ def test_03_Checking_Active_Directory():
 
 
 @ad_test_cfg
-def test_04_Checking_to_see_if_SMB_service_is_enabled(seff):
+def test_04_Checking_to_see_if_SMB_service_is_enabled():
     assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "RUNNING"
 
 

@@ -21,6 +21,7 @@ if "BRIDGEHOST" in locals():
 DATASET = "ldap-bsd"
 SMB_NAME = "TestShare"
 SMB_PATH = "/mnt/tank/" + DATASET
+LDAP_USER = 'ldapuser'
 VOL_GROUP = "qa"
 Reason = "BRIDGEHOST, LDAPBASEDN and LDAPHOSTNAME are missing "
 Reason += "in ixautomation.conf"
