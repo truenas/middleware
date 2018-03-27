@@ -885,6 +885,7 @@ class AutoImportWizard(SessionWizardView):
         cdata = self.get_cleaned_data_for_step('1') or {}
         enc_disks = cdata.get("disks", [])
         key = cdata.get("key")
+        key.seek(0)
         passphrase = cdata.get("passphrase")
 
         cdata = self.get_cleaned_data_for_step('2') or {}
