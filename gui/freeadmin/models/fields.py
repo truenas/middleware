@@ -88,7 +88,7 @@ class UserField(models.CharField):
         super(UserField, self).__init__(*args, **kwargs)
 
     def formfield(self, **kwargs):
-        #FIXME: Move to top (causes cycle-dependency)
+        # FIXME: Move to top (causes cycle-dependency)
         from freenasUI.freeadmin.forms import UserField as UF
         defaults = {'form_class': UF, 'exclude': self._exclude}
         kwargs.update(defaults)
@@ -97,7 +97,7 @@ class UserField(models.CharField):
 
 class GroupField(models.CharField):
     def formfield(self, **kwargs):
-        #FIXME: Move to top (causes cycle-dependency)
+        # FIXME: Move to top (causes cycle-dependency)
         from freenasUI.freeadmin.forms import GroupField as GF
         defaults = {'form_class': GF}
         kwargs.update(defaults)
@@ -119,7 +119,7 @@ class PathField(models.CharField):
         super(PathField, self).__init__(*args, **kwargs)
 
     def formfield(self, **kwargs):
-        #FIXME: Move to top (causes cycle-dependency)
+        # FIXME: Move to top (causes cycle-dependency)
         from freenasUI.freeadmin.forms import PathField as PF
         defaults = {
             'form_class': PF,
@@ -166,10 +166,6 @@ class MultiSelectField(models.Field):
 
     def get_choices_default(self):
         return self.get_choices(include_blank=False)
-
-    def _get_FIELD_display(self, field):
-        value = getattr(self, field.attname)
-        choicedict = dict(field.choices)
 
     def formfield(self, **kwargs):
         from freenasUI.freeadmin.forms import SelectMultipleField
@@ -226,12 +222,13 @@ class MultiSelectField(models.Field):
     def contribute_to_class(self, cls, name):
         super(MultiSelectField, self).contribute_to_class(cls, name)
         if self.choices:
-            func = lambda self, fieldname=name, choicedict=dict(
+            def func(self, fieldname=name, choicedict=dict(
                 self.choices
-            ): ','.join([
-                choicedict.get(value, value)
-                for value in getattr(self, fieldname)
-            ])
+            )):
+                return ','.join([
+                    choicedict.get(value, value)
+                    for value in getattr(self, fieldname)
+                ])
             setattr(cls, 'get_%s_display' % self.name, func)
 
     def get_choices_selected(self, arr_choices=''):
@@ -254,7 +251,7 @@ class Network4Field(models.CharField):
         super(Network4Field, self).__init__(*args, **kwargs)
 
     def formfield(self, **kwargs):
-        #FIXME: Move to top (causes cycle-dependency)
+        # FIXME: Move to top (causes cycle-dependency)
         from freenasUI.freeadmin.forms import Network4Field as NF
         defaults = {'form_class': NF}
         kwargs.update(defaults)
@@ -269,7 +266,7 @@ class Network6Field(models.CharField):
         super(Network6Field, self).__init__(*args, **kwargs)
 
     def formfield(self, **kwargs):
-        #FIXME: Move to top (causes cycle-dependency)
+        # FIXME: Move to top (causes cycle-dependency)
         from freenasUI.freeadmin.forms import Network6Field as NF
         defaults = {'form_class': NF}
         kwargs.update(defaults)
