@@ -157,8 +157,10 @@ class BootService(Service):
 
             raise
 
+        pool = await self.middleware.call("zfs.pool.query", [["name", "=", "freenas-boot"]], {"get": True})
+
         extend_pool_job = await self.middleware.call('zfs.pool.extend', 'freenas-boot', None,
-                                                     [{'target': f'{disks[0]}p2',
+                                                     [{'target': pool["groups"]["data"][0]["guid"],
                                                        'type': 'DISK',
                                                        'path': f'/dev/{dev}p2'}])
 
