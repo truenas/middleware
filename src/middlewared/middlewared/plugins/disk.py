@@ -715,13 +715,13 @@ class DiskService(CRUDService):
                     del providers[c.provider.id]
 
         for name in mirrors:
-            await run('swapoff', f'/dev/mirror/{name}.eli', check=False)
+            await run('swapoff', f'/dev/mirror/{name}.eli')
             if os.path.exists(f'/dev/mirror/{name}.eli'):
-                await run('geli', 'detach', f'mirror/{name}.eli', check=False)
-            await run('gmirror', 'destroy', name, check=False)
+                await run('geli', 'detach', f'mirror/{name}.eli')
+            await run('gmirror', 'destroy', name)
 
         for p in providers.values():
-            await run('swapoff', f'/dev/{p.name}.eli', check=False)
+            await run('swapoff', f'/dev/{p.name}.eli')
 
     @private
     async def wipe_quick(self, dev, size=None):
