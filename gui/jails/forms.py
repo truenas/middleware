@@ -238,8 +238,8 @@ class JailCreateForm(ModelForm):
         jail_host = self.cleaned_data.get('jail_host')
         if not re.search(r'^[A-Za-z0-9_-]+$', jail_host):
             raise forms.ValidationError(_(
-                "Valid characters for jail names are letters, numbers, dashes,"
-                " or underscores."
+                "A jail name can only contain letters, numbers, dashes "
+                "(-), and underscores (_)."
             ))
         return jail_host
 
@@ -247,8 +247,8 @@ class JailCreateForm(ModelForm):
         jail_mac = self.cleaned_data.get('jail_mac')
         if is_jail_mac_duplicate(jail_mac):
             raise forms.ValidationError(_(
-                "You have entered an existing MAC Address."
-                "Please enter a new one."
+                "This MAC address already exists."
+                "Enter a new MAC address."
             ))
         return jail_mac
 
@@ -266,7 +266,7 @@ class JailCreateForm(ModelForm):
         jc = self.jc
 
         if not jc.jc_path:
-            raise MiddlewareError(_("No jail root configured."))
+            raise MiddlewareError(_("No jail root is configured."))
 
         jc_ipv4_netmask = 24
         if jc.jc_ipv4_network:
@@ -687,7 +687,7 @@ class JailsConfigurationForm(ModelForm):
 
         if is_jail_root_shared(jc_path):
             raise forms.ValidationError(
-                _("Jail dataset created on a share")
+                _("The jail dataset was created on a share.")
             )
 
         jc_fpath = jc_path
@@ -1076,7 +1076,7 @@ class JailTemplateCreateForm(ModelForm):
             return jt_name
         qs = JailTemplate.objects.filter(jt_name=jt_name)
         if qs.exists():
-            raise forms.ValidationError(_('This name is already in use.'))
+            raise forms.ValidationError(_('The name already exists.'))
         return jt_name
 
 
@@ -1176,14 +1176,14 @@ class JailMountPointForm(ModelForm):
 
         if not self.jail:
             raise forms.ValidationError(
-                _("This shouldn't happen, but the jail could not be found")
+                _("The jail could not be found.")
             )
 
         self._full = "%s/%s%s" % (self.jc.jc_path, self.jail.jail_host, dest)
 
         if len(self._full) > 88:
             raise forms.ValidationError(
-                _("The full path cannot exceed 88 characters")
+                _("The full path cannot exceed 88 characters.")
             )
 
         return dest

@@ -20,7 +20,7 @@ from middlewared.alert.base import AlertService as _AlertService
 from middlewared.schema import Dict, Str, Bool, Int, accepts, Patch
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
-    periodic, private,
+    job, periodic, private,
 )
 from middlewared.utils import load_modules, load_classes
 
@@ -151,7 +151,8 @@ class AlertService(Service):
         alert.dismissed = False
 
     @periodic(60)
-    async def process_alerts(self):
+    @job(lock="process_alerts")
+    async def process_alerts(self, job):
         if not await self.middleware.call("system.is_freenas"):
             if await self.middleware.call("notifier.failover_node") == "B":
                 return

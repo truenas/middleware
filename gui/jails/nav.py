@@ -153,10 +153,10 @@ def plugin_fetch(args):
         response = opener.open(url, None, 5)
         data = response.read()
         if not data:
-            log.warn(_("Empty data returned from %s") % (url,))
+            log.warn(_("Empty data returned from %s.") % (url,))
 
     except Exception as e:
-        log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
+        log.warn(_("Could not retrieve %(url)s: %(error)s.") % {
             'url': url,
             'error': e,
         })

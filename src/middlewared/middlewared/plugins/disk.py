@@ -8,10 +8,11 @@ import signal
 import subprocess
 import sys
 import sysctl
+import tempfile
 
 from bsd import geom
-from middlewared.schema import accepts, Bool, Str
-from middlewared.service import filterable, job, private, CRUDService
+from middlewared.schema import accepts, Dict, List, Bool, Str
+from middlewared.service import filterable, job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
 
 # FIXME: temporary import of SmartAlert until alert is implemented
@@ -60,7 +61,7 @@ class DiskService(CRUDService):
         Helper method to get all disks that are not in use, either by the boot
         pool or the user pools.
         """
-        disks = await self.query([('name', 'nin', await self.__get_reserved())])
+        disks = await self.query([('name', 'nin', await self.get_reserved())])
 
         if join_partitions:
             for disk in disks:
@@ -68,7 +69,105 @@ class DiskService(CRUDService):
 
         return disks
 
-    async def __get_reserved(self):
+    @accepts(Dict(
+        'options',
+        Bool('unused', default=False),
+    ))
+    def get_encrypted(self, options):
+        """
+        Get all geli providers
+
+        It might be an entire disk or a partition of type freebsd-zfs
+        """
+        providers = []
+
+        disks_blacklist = []
+        if options['unused']:
+            disks_blacklist += self.middleware.call_sync('disk.get_reserved')
+
+        geom.scan()
+        klass_part = geom.class_by_name('PART')
+        klass_label = geom.class_by_name('LABEL')
+        if not klass_part:
+            return providers
+
+        for g in klass_part.geoms:
+            for p in g.providers:
+
+                if p.config['type'] != 'freebsd-zfs':
+                    continue
+
+                disk = p.geom.consumer.provider.name
+                if disk in disks_blacklist:
+                    continue
+
+                try:
+                    subprocess.run(
+                        ['geli', 'dump', p.name],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True,
+                    )
+                except subprocess.CalledProcessError:
+                    continue
+
+                dev = None
+                if klass_label:
+                    for g in klass_label.geoms:
+                        if g.name == p.name:
+                            dev = g.provider.name
+                            break
+
+                if dev is None:
+                    dev = p.name
+
+                providers.append({
+                    'name': p.name,
+                    'dev': dev,
+                    'disk': disk
+                })
+
+        return providers
+
+    @accepts(
+        List('devices', items=[Str('device')]),
+        Str('passphrase', private=True),
+    )
+    @job(pipes=['input'])
+    def decrypt(self, job, devices, passphrase=None):
+        """
+        Decrypt `devices` using uploaded encryption key
+        """
+        with tempfile.NamedTemporaryFile(dir='/tmp/') as f:
+            f.write(job.pipes.input.r.read())
+            f.flush()
+
+            if passphrase:
+                passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
+                os.chmod(passf.name, 0o600)
+                passf.write(passphrase)
+                passf.flush()
+                passphrase = passf.name
+
+            failed = []
+            for dev in devices:
+                try:
+                    self.middleware.call_sync(
+                        'notifier.geli_attach_single',
+                        dev,
+                        f.name,
+                        passphrase,
+                    )
+                except Exception:
+                    failed.append(dev)
+
+            if passphrase:
+                passf.close()
+
+            if failed:
+                raise CallError(f'The following devices failed to attach: {", ".join(failed)}')
+        return True
+
+    @private
+    async def get_reserved(self):
         reserved = [i async for i in await self.middleware.call('boot.get_disks')]
         reserved += [i async for i in await self.middleware.call('pool.get_disks')]
         reserved += [i async for i in self.__get_iscsi_targets()]
@@ -514,7 +613,7 @@ class DiskService(CRUDService):
                     continue
                 mp_disks.append(p_geom.name)
 
-        reserved = await self.__get_reserved()
+        reserved = await self.get_reserved()
 
         is_freenas = await self.middleware.call('system.is_freenas')
 
@@ -715,13 +814,13 @@ class DiskService(CRUDService):
                     del providers[c.provider.id]
 
         for name in mirrors:
-            await run('swapoff', f'/dev/mirror/{name}.eli', check=False)
+            await run('swapoff', f'/dev/mirror/{name}.eli')
             if os.path.exists(f'/dev/mirror/{name}.eli'):
-                await run('geli', 'detach', f'mirror/{name}.eli', check=False)
-            await run('gmirror', 'destroy', name, check=False)
+                await run('geli', 'detach', f'mirror/{name}.eli')
+            await run('gmirror', 'destroy', name)
 
         for p in providers.values():
-            await run('swapoff', f'/dev/{p.name}.eli', check=False)
+            await run('swapoff', f'/dev/{p.name}.eli')
 
     @private
     async def wipe_quick(self, dev, size=None):

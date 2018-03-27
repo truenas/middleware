@@ -42,6 +42,7 @@ from OpenSSL import crypto
 from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, Model, UserField
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.util import run_alerts
 from freenasUI.support.utils import get_license
 from licenselib.license import ContractType
 
@@ -1003,13 +1004,7 @@ class CertificateAuthority(CertificateBase):
         # If this was a malformed CA then delete its alert sentinel file
         try:
             os.unlink('/tmp/alert_invalidCA_{0}'.format(temp_cert_name))
-            try:
-                with open("/var/run/alertd.pid", "r") as f:
-                    alertd_pid = int(f.read())
-                os.kill(alertd_pid, signal.SIGUSR1)
-            except:
-                # alertd not running?
-                pass
+            run_alerts()
         except OSError:
             # It was not a malformed CA after all!
             pass
@@ -1027,13 +1022,7 @@ class Certificate(CertificateBase):
         # If this was a malformed CA then delete its alert sentinel file
         try:
             os.unlink('/tmp/alert_invalidcert_{0}'.format(temp_cert_name))
-            try:
-                with open("/var/run/alertd.pid", "r") as f:
-                    alertd_pid = int(f.read())
-                os.kill(alertd_pid, signal.SIGUSR1)
-            except:
-                # alertd not running?
-                pass
+            run_alerts()
         except OSError:
             # It was not a malformed CA after all!
             pass

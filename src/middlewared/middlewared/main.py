@@ -172,7 +172,10 @@ class Application(object):
             self.send_error(message, e.errno, str(e), sys.exc_info())
         except Exception as e:
             self.send_error(message, errno.EINVAL, str(e), sys.exc_info())
-            self.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
+            self.logger.warn('Exception while calling {}(*{})'.format(
+                message['method'],
+                self.middleware.dump_args(message.get('params', []), method_name=message['method'])
+            ), exc_info=True)
 
             if self.middleware.crash_reporting.is_disabled():
                 self.logger.debug('[Crash Reporting] is disabled using sentinel file.')
@@ -928,6 +931,16 @@ class Middleware(object):
         except (AttributeError, KeyError):
             raise CallError(f'Method "{method_name}" not found in "{service}"', CallError.ENOMETHOD)
         return serviceobj, methodobj
+
+    def dump_args(self, args, method=None, method_name=None):
+        if method is None:
+            if method_name is not None:
+                try:
+                    method = self._method_lookup(method_name)[1]
+                except Exception:
+                    return args
+
+        return [method.accepts[i].dump(arg) for i, arg in enumerate(args) if i < len(method.accepts)]
 
     async def call_method(self, app, message):
         """Call method from websocket"""

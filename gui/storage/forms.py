@@ -59,6 +59,7 @@ from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.util import JobAborted, JobFailed, upload_job_and_wait
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent, services
 from freenasUI.storage import models
@@ -884,12 +885,22 @@ class AutoImportWizard(SessionWizardView):
         cdata = self.get_cleaned_data_for_step('1') or {}
         enc_disks = cdata.get("disks", [])
         key = cdata.get("key")
+        key.seek(0)
         passphrase = cdata.get("passphrase")
 
         cdata = self.get_cleaned_data_for_step('2') or {}
         vol = cdata['volume']
 
-        self.volume = notifier().volume_import(vol['label'], vol['id'], key, passphrase, enc_disks)
+        try:
+            upload_job_and_wait(key, 'pool.import_pool', {
+                'guid': vol['guid'],
+                'devices': enc_disks,
+                'passphrase': passphrase,
+            })
+        except JobAborted:
+            raise MiddlewareError(_('Import job aborted'))
+        except JobFailed as e:
+            raise MiddlewareError(_('Import job failed: %s') % e.value)
 
         events = ['loadalert()']
         appPool.hook_form_done('AutoImportWizard', self, self.request, events)
@@ -941,13 +952,11 @@ class AutoImportDecryptForm(Form):
         self.fields['disks'].choices = self._populate_disk_choices()
 
     def _populate_disk_choices(self):
-        gelis = notifier().geli_get_all_providers()
-        for vol in models.Volume.objects.filter(vol_encrypt__gt=0):
-            for disk in vol.get_disks():
-                for geli in list(gelis):
-                    if geli[1].startswith('%sp' % disk):
-                        gelis.remove(geli)
-        return gelis
+        with client as c:
+            return [
+                (i['dev'], i['name'])
+                for i in c.call('disk.get_encrypted', {'unused': True})
+            ]
 
     def clean(self):
         key = self.cleaned_data.get("key")
@@ -959,38 +968,14 @@ class AutoImportDecryptForm(Form):
             return self.cleaned_data
 
         passphrase = self.cleaned_data.get("passphrase")
-        if passphrase:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
-                f.write(passphrase)
-            passphrase = passfile
 
-        keyfile = tempfile.mktemp(dir='/var/tmp/firmware')
-        with open(keyfile, 'wb') as f:
-            os.chmod(keyfile, 600)
-            f.write(key.read())
+        try:
+            upload_job_and_wait(key, 'disk.decrypt', disks, passphrase)
+        except JobFailed as e:
+            self._errors['__all__'] = self.error_class([e.value])
+        except JobAborted:
+            self._errors['__all__'] = self.error_class([_('Decrypt job aborted')])
 
-        _notifier = notifier()
-        failed = []
-        for disk in disks:
-            try:
-                _notifier.geli_attach_single(
-                    disk,
-                    keyfile,
-                    passphrase=passphrase
-                )
-            except Exception:
-                failed.append(disk)
-        if failed:
-            self._errors['__all__'] = self.error_class([
-                _("The following disks failed to attach: %s") % (
-                    ', '.join(failed),
-                )
-            ])
-        os.unlink(keyfile)
-        if passphrase:
-            os.unlink(passphrase)
         return self.cleaned_data
 
 
@@ -1005,64 +990,23 @@ class VolumeAutoImportForm(Form):
         super(VolumeAutoImportForm, self).__init__(*args, **kwargs)
         self.fields['volume_id'].choices = self._volume_choices()
 
-    @staticmethod
-    def _unused_volumes():
-
-        used_disks = []
-        guids = []
-        for v in models.Volume.objects.all():
-            guids.append(v.vol_guid)
-            used_disks.extend(v.get_disks())
-
-        # Grab partition list
-        # NOTE: This approach may fail if device nodes are not accessible.
-        vols = notifier().detect_volumes()
-
-        for vol in list(vols):
-            # Exclude volumes with same guid as existing volumes
-            # See #6808
-            if vol.get('id') in guids:
-                vols.remove(vol)
-                continue
-            for vdev in vol['disks']['vdevs']:
-                for disk in vdev['disks']:
-                    if [x for x in used_disks if x is not None and re.search(
-                        r'^%s([ps]|$)' % disk['name'],
-                        x
-                    )]:
-                        vols.remove(vol)
-                        break
-                else:
-                    continue
-                break
-
-        return vols
-
     @classmethod
     def _volume_choices(cls):
-
         volchoices = {}
-        vols = cls._unused_volumes()
-        for vol in vols:
-            if vol.get("id", None):
-                name = "%s [%s, id=%s]" % (
-                    vol['label'],
-                    vol['type'],
-                    vol['id'])
-            else:
-                name = "%s [%s]" % (vol['label'], vol['type'])
-            volchoices["%s|%s" % (vol['label'], vol.get('id', ''))] = name
-
+        with client as c:
+            for p in c.call('pool.import_find'):
+                volchoices[f'{p["name"]}|{p["guid"]}'] = f'{p["name"]} [id={p["guid"]}]'
         return list(volchoices.items())
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        vols = notifier().detect_volumes()
-        volume_name, zid = cleaned_data.get('volume_id', '|').split('|', 1)
-        for vol in vols:
-            if vol['label'] == volume_name:
-                if (zid and zid == vol['id']) or not zid:
-                    cleaned_data['volume'] = vol
+        with client as c:
+            pools = c.call('pool.import_find')
+        volume_name, guid = cleaned_data.get('volume_id', '|').split('|', 1)
+        for pool in pools:
+            if pool['name'] == volume_name:
+                if (guid and guid == pool['guid']) or not guid:
+                    cleaned_data['volume'] = pool
                     break
 
         if cleaned_data.get('volume', None) is None:
@@ -1072,13 +1016,10 @@ class VolumeAutoImportForm(Form):
 
         else:
             if models.Volume.objects.filter(
-                    vol_name=cleaned_data['volume']['label']).count() > 0:
+                    vol_name=cleaned_data['volume']['name']).count() > 0:
                 msg = _("You already have a volume with same name")
                 self._errors["volume_id"] = self.error_class([msg])
                 del cleaned_data["volume_id"]
-
-            if cleaned_data['volume']['type'] != 'zfs':
-                raise NotImplementedError
 
         return cleaned_data
 

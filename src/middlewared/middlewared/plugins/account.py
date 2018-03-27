@@ -24,11 +24,15 @@ def pw_checkname(verrors, attribute, name):
     Makes sure the provided `name` is a valid unix name.
     """
     if name.startswith('-'):
-        verrors.add(attribute, 'Your name cannot start with "-"')
+        verrors.add(
+            attribute,
+            'Name must begin with an alphanumeric character and not a '
+            '"-".'
+        )
     if name.find('$') not in (-1, len(name) - 1):
         verrors.add(
             attribute,
-            'The character $ is only allowed as the final character'
+            'The character $ is only allowed as the final character.'
         )
     invalid_chars = ' ,\t:+&#%\^()!@~\*?<>=|\\/"'
     invalids = []
@@ -41,7 +45,7 @@ def pw_checkname(verrors, attribute, name):
     if invalids:
         verrors.add(
             attribute,
-            f'Your name contains invalid characters ({", ".join(invalids)})'
+            f'name contains invalid characters: {", ".join(invalids)}'
         )
 
 
@@ -113,12 +117,20 @@ class UserService(CRUDService):
         ) or (
             data.get('group') is not None and data.get('group_create')
         ):
-            verrors.add('group', f'You need to either provide a group or group_create', errno.EINVAL)
+            verrors.add(
+                'group',
+                f'Enter either a group name or create a new group to '
+                'continue.',
+                errno.EINVAL
+            )
 
         await self.__common_validation(verrors, data)
 
         if data.get('sshpubkey') and not data['home'].startswith('/mnt'):
-            verrors.add('sshpubkey', 'Home directory is not writable, leave this blank"')
+            verrors.add(
+                'sshpubkey',
+                'The home directory is not writable. Leave this field blank.'
+            )
 
         if verrors:
             raise verrors
@@ -167,8 +179,8 @@ class UserService(CRUDService):
                 new_homedir = True
             if os.stat(data['home']).st_dev == os.stat('/mnt').st_dev:
                 raise CallError(
-                    f'Path for the home directory (data["home"]) '
-                    'must be under a volume or dataset'
+                    f'The path for the home directory "(data["home"])" '
+                    'must include a volume or dataset.'
                 )
 
         if not data.get('uid'):
@@ -390,35 +402,49 @@ class UserService(CRUDService):
             pw_checkname(verrors, 'username', data['username'])
 
             if await self.middleware.call('datastore.query', 'account.bsdusers', [('username', '=', data['username'])] + exclude_filter, {'prefix': 'bsdusr_'}):
-                verrors.add('username', f'A user with the username "{data["username"]}" already exists', errno.EEXIST)
+                verrors.add('username', f'The username "{data["username"]}" already exists.', errno.EEXIST)
 
         password = data.get('password')
         if password and '?' in password:
             # See bug #4098
             verrors.add(
                 'password',
-                'Passwords containing a question mark (?) are currently not '
-                'allowed due to problems with SMB.',
+                'An SMB issue prevents creating passwords containing a '
+                'question mark (?).',
                 errno.EINVAL
             )
         elif not pk and not password and not data.get('password_disabled'):
             verrors.add('password', 'Password is required')
         elif data.get('password_disabled') and password:
-            verrors.add('password_disabled', 'Password disabled, leave password blank')
+            verrors.add(
+                'password_disabled',
+                'Leave "Password" blank when "Disable password login" '
+                'is checked.'
+            )
 
         if 'home' in data:
             if ':' in data['home']:
-                verrors.add('home', 'Home directory cannot contain colons')
+                verrors.add('home', '"Home Directory" cannot contain colons (:).')
             if not data['home'].startswith('/mnt/') and data['home'] != '/nonexistent':
-                verrors.add('home', 'Home directory has to start with /mnt/ or be /nonexistent')
+                verrors.add(
+                    'home',
+                    '"Home Directory" must begin with /mnt/ or set to '
+                    '/nonexistent.'
+                )
 
         if 'groups' in data:
             groups = data.get('groups') or []
             if groups and len(groups) > 64:
-                verrors.add('groups', 'A user cannot belong to more than 64 auxiliary groups')
+                verrors.add(
+                    'groups',
+                    'A user cannot belong to more than 64 auxiliary groups.'
+                )
 
         if 'full_name' in data and ':' in data['full_name']:
-            verrors.add('full_name', '":" character is not allowed in Full Name')
+            verrors.add(
+                'full_name',
+                'The ":" character is not allowed in a "Full Name".'
+            )
 
     async def __set_password(self, data):
         if 'password' not in data:
@@ -490,7 +516,7 @@ class UserService(CRUDService):
                     os.makedirs(sshpath)
                     os.chmod(sshpath, 0o700)
                 if not os.path.isdir(sshpath):
-                    raise CallError(f'{sshpath} is not a directory')
+                    raise CallError(f'{sshpath} must be a valid directory.')
                 if pubkey == '' and os.path.exists(keysfile):
                     os.unlink(keysfile)
                 else:
@@ -600,7 +626,7 @@ class GroupService(CRUDService):
         group = await self._get_instance(pk)
 
         if group['builtin']:
-            raise CallError('Builtin group cannot be deleted', errno.EACCES)
+            raise CallError('A built-in group cannot be deleted.', errno.EACCES)
 
         if options['delete_users']:
             for i in await self.middleware.call('datastore.query', 'account.bsdusers', [('group', '=', group['id'])], {'prefix': 'bsdusr_'}):
@@ -635,7 +661,7 @@ class GroupService(CRUDService):
         if 'name' in data:
             existing = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', data['name'])] + exclude_filter, {'prefix': 'bsdgrp_'})
             if existing:
-                verrors.add('name', f'Group with name "{data["name"]}" already exists', errno.EEXIST)
+                verrors.add('name', f'A Group with the name "{data["name"]}" already exists.', errno.EEXIST)
 
             pw_checkname(verrors, 'name', data['name'])
 
@@ -643,7 +669,7 @@ class GroupService(CRUDService):
         if data.get('gid') and not allow_duplicate_gid:
             existing = await self.middleware.call('datastore.query', 'account.bsdgroups', [('gid', '=', data['gid'])] + exclude_filter, {'prefix': 'bsdgrp_'})
             if existing:
-                verrors.add('gid', f'Group ID "{data["gid"]}" already exists', errno.EEXIST)
+                verrors.add('gid', f'The Group ID "{data["gid"]}" already exists.', errno.EEXIST)
 
         if 'users' in data:
             existing = set([i['id'] for i in await self.middleware.call('datastore.query', 'account.bsdusers', [('id', 'in', data['users'])])])

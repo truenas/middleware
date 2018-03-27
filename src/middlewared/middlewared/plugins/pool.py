@@ -10,7 +10,7 @@ import sysctl
 import bsd
 
 from middlewared.job import JobProgressBuffer
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str
 from middlewared.service import (
     filterable, item_method, job, private, CallError, CRUDService, ValidationErrors,
 )
@@ -251,6 +251,61 @@ class PoolService(CRUDService):
         sysctl.filter('vfs.zfs.resilver_delay')[0].value = resilver_delay
         sysctl.filter('vfs.zfs.resilver_min_time_ms')[0].value = resilver_min_time_ms
         sysctl.filter('vfs.zfs.scan_idle')[0].value = scan_idle
+
+    @accepts()
+    async def import_find(self):
+        """
+        Get a list of pools available for import with the following details:
+        name, guid, status, hostname.
+        """
+
+        existing_guids = [i['guid'] for i in await self.middleware.call('pool.query')]
+
+        for pool in await self.middleware.call('zfs.pool.find_import'):
+            if pool['status'] == 'UNAVAIL':
+                continue
+            # Exclude pools with same guid as existing pools (in database)
+            # It could be the pool is in the database but was exported/detached for some reason
+            # See #6808
+            if pool['guid'] in existing_guids:
+                continue
+            entry = {}
+            for i in ('name', 'guid', 'status', 'hostname'):
+                entry[i] = pool[i]
+            yield entry
+
+    @accepts(Dict(
+        'pool_import',
+        Str('guid', required=True),
+        Str('name'),
+        Str('passphrase', private=True),
+        List('devices', items=[Str('device')]),
+    ))
+    @job(lock='import_pool', pipes=['input'], check_pipes=False)
+    async def import_pool(self, job, data):
+        """
+        Import a pool.
+
+        Errors:
+            ENOENT - Pool not found
+        """
+
+        pool = None
+        for p in await self.middleware.call('zfs.pool.find_import'):
+            if p['guid'] == data['guid']:
+                pool = p
+                break
+        if pool is None:
+            raise CallError(f'Pool with guid "{data["guid"]}" not found', errno.ENOENT)
+
+        if data['devices']:
+            job.check_pipe("input")
+            args = [job.pipes.input.r, data['passphrase'], data['devices']]
+        else:
+            args = []
+
+        await self.middleware.call('notifier.volume_import', data.get('name') or pool['name'], data['guid'], *args)
+        return True
 
     @accepts(Str('volume'), Str('fs_type'), Dict('fs_options', additional_attrs=True), Str('dst_path'))
     @job(lock=lambda args: 'volume_import', logs=True)
