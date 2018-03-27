@@ -106,7 +106,10 @@ def main_worker(*call_args):
     global MIDDLEWARE
     loop = asyncio.get_event_loop()
     coro = MIDDLEWARE._call(*call_args)
-    res = loop.run_until_complete(coro)
+    try:
+        res = loop.run_until_complete(coro)
+    except SystemExit:
+        raise RuntimeError('Worker call raised SystemExit exception')
     return res
 
 
