@@ -25,9 +25,7 @@
 #####################################################################
 from struct import pack
 import logging
-import os
 import re
-import signal
 import socket
 import struct
 
@@ -43,11 +41,11 @@ from freenasUI.contrib.IPAddressField import IP4AddressFormField
 from freenasUI.freeadmin.sqlite3_ha.base import DBSync
 from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
-from freenasUI.middleware.util import run_alerts
+from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.network import models
 from freenasUI.network.utils import configure_http_proxy
 from freenasUI.freeadmin.utils import key_order
-from ipaddr import IPAddress, AddressValueError, IPNetwork
+from ipaddr import IPNetwork
 
 log = logging.getLogger('network.forms')
 SW_NAME = get_sw_name()
@@ -565,7 +563,12 @@ class IPMIIdentifyForm(Form):
             return c.call('ipmi.identify', data)
 
 
-class GlobalConfigurationForm(ModelForm):
+class GlobalConfigurationForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'gc_'
+    middleware_attr_schema = 'global_configuration'
+    middleware_plugin = 'network.configuration'
+    is_singletone = True
 
     class Meta:
         fields = '__all__'
@@ -573,6 +576,8 @@ class GlobalConfigurationForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(GlobalConfigurationForm, self).__init__(*args, **kwargs)
+        self.original_instance = self.instance.__dict__
+
         if hasattr(notifier, 'failover_licensed'):
             if not notifier().failover_licensed():
                 del self.fields['gc_hostname_b']
@@ -589,146 +594,29 @@ class GlobalConfigurationForm(ModelForm):
             del self.fields['gc_hostname_b']
             del self.fields['gc_hostname_virtual']
 
-    def _clean_nameserver(self, value):
-        if value:
-            if value.is_loopback:
-                raise forms.ValidationError(
-                    _("Loopback is not a valid nameserver"))
-            elif value.is_unspecified:
-                raise forms.ValidationError(
-                    _("Unspecified addresses are not valid as nameservers"))
-            elif value.version == 4:
-                if str(value) == '255.255.255.255':
-                    raise forms.ValidationError(
-                        _("This is not a valid nameserver address"))
-                elif str(value).startswith('169.254'):
-                    raise forms.ValidationError(
-                        _("169.254/16 subnet is not valid for nameserver"))
-
     def clean_gc_ipv4gateway(self):
-        val = self.cleaned_data.get("gc_ipv4gateway")
+        return str(self.cleaned_data['gc_ipv4gateway'])
 
-        if not val:
-            return val
-
-        with client as c:
-            if c.call('routes.ipv4gw_reachable', val.exploded):
-                return val
-
-        raise forms.ValidationError(_("Gateway {} is unreachable".format(val)))
+    def clean_gc_ipv6gateway(self):
+        return str(self.cleaned_data['gc_ipv6gateway'])
 
     def clean_gc_nameserver1(self):
-        val = self.cleaned_data.get("gc_nameserver1")
-        self._clean_nameserver(val)
-        return val
+        return str(self.cleaned_data['gc_nameserver1'])
 
     def clean_gc_nameserver2(self):
-        val = self.cleaned_data.get("gc_nameserver2")
-        self._clean_nameserver(val)
-        return val
+        return str(self.cleaned_data['gc_nameserver2'])
 
     def clean_gc_nameserver3(self):
-        val = self.cleaned_data.get("gc_nameserver3")
-        self._clean_nameserver(val)
-        return val
+        return str(self.cleaned_data['gc_nameserver3'])
 
-    def clean_gc_netwait_ip(self):
-        iplist = self.cleaned_data.get("gc_netwait_ip").strip()
-        if not iplist:
-            return ''
-        for ip in iplist.split(' '):
-            try:
-                IPAddress(ip)
-            except (AddressValueError, ValueError):
-                raise forms.ValidationError(
-                    _("The IP \"%s\" is not valid") % ip
-                )
-        return iplist
+    def middleware_clean(self, update):
+        update['domains'] = update['domains'].split()
+        update['netwait_ip'] = update['netwait_ip'].split()
+        return update
 
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        domains = (cleaned_data.get("gc_domains") or "").split()
-        nameserver1 = cleaned_data.get("gc_nameserver1")
-        nameserver2 = cleaned_data.get("gc_nameserver2")
-        nameserver3 = cleaned_data.get("gc_nameserver3")
-        if domains:
-            if len(domains) > 5:
-                msg = _("No more than 5 additional domains are allowed.")
-                self._errors["gc_domains"] = self.error_class([msg])
-            else:
-                cleaned_data['gc_domains'] = '\n'.join(domains)
-        if nameserver3:
-            if nameserver2 == "":
-                msg = _("Must fill out nameserver 2 before "
-                        "filling out nameserver 3")
-                self._errors["gc_nameserver3"] = self.error_class([msg])
-                msg = _("Required when using nameserver 3")
-                self._errors["gc_nameserver2"] = self.error_class([msg])
-                del cleaned_data["gc_nameserver2"]
-            if nameserver1 == "":
-                msg = _("Must fill out nameserver 1 before "
-                        "filling out nameserver 3")
-                self._errors["gc_nameserver3"] = self.error_class([msg])
-                msg = _("Required when using nameserver 3")
-                self._errors["gc_nameserver1"] = self.error_class([msg])
-                del cleaned_data["gc_nameserver1"]
-            if nameserver1 == "" or nameserver2 == "":
-                del cleaned_data["gc_nameserver3"]
-        elif nameserver2:
-            if nameserver1 == "":
-                del cleaned_data["gc_nameserver2"]
-                msg = _("Must fill out nameserver 1 before "
-                        "filling out nameserver 2")
-                self._errors["gc_nameserver2"] = self.error_class([msg])
-                msg = _("Required when using nameserver 3")
-                self._errors["gc_nameserver1"] = self.error_class([msg])
-                del cleaned_data["gc_nameserver1"]
-        return cleaned_data
-
-    def save(self):
-        # TODO: new IP address should be added in a side-by-side manner
-        # or the interface wouldn't appear once IP was changed.
-        retval = super(GlobalConfigurationForm, self).save()
-
-        whattoreload = ["hostname"]
-        if (
-            self.instance._orig_gc_domain != self.cleaned_data.get('gc_domain') or
-            self.instance._orig_gc_nameserver1 != self.cleaned_data.get('gc_nameserver1') or
-            self.instance._orig_gc_nameserver2 != self.cleaned_data.get('gc_nameserver2') or
-            self.instance._orig_gc_nameserver3 != self.cleaned_data.get('gc_nameserver3')
-        ):
-            # Note notifier's _reload_resolvconf has reloading hostname folded in it
-            whattoreload.append("resolvconf")
-        if (
-            self.instance._orig_gc_ipv4gateway != self.cleaned_data.get('gc_ipv4gateway') or
-            self.instance._orig_gc_ipv6gateway != self.cleaned_data.get('gc_ipv6gateway')
-        ):
-            # this supersedes all since it has hostname and resolvconf reloads folded in it
-            whattoreload.append("networkgeneral")
-            with client as c:
-                c.call('routes.sync')
-
-        if hasattr(notifier, 'failover_licensed') and notifier().failover_licensed() and \
-                self.instance._orig_gc_hostname_virtual != self.cleaned_data.get('gc_hostname_virtual'):
-            from freenasUI.services.models import services, NFS
-            svcobj = services.objects.get(srv_service='nfs')
-            nfsobj = NFS.objects.all()[0]
-            if (svcobj and svcobj.srv_enable) and (nfsobj and (nfsobj.nfs_srv_v4 and nfsobj.nfs_srv_v4_krb)):
-                notifier().restart("ix-nfsd")
-                whattoreload.append("mountd")
-
-        for what in whattoreload:
-            notifier().reload(what)
-
+    def done(self, request, events):
         http_proxy = self.cleaned_data.get('gc_httpproxy')
         configure_http_proxy(http_proxy)
-        if self.instance._orig_gc_httpproxy != http_proxy:
-            # Notify the middleware http_proxy has changed
-            with client as c:
-                c.call('core.event_send', 'network.config', 'CHANGED', {'data': {'httpproxy': http_proxy}})
-            run_alerts()
-
-        return retval
 
 
 class HostnameForm(Form):
