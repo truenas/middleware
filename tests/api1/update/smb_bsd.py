@@ -11,7 +11,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
-from functions import BSD_TEST
+from functions import SSH_TEST
 from config import *
 
 if "BRIDGEHOST" in locals():
@@ -94,20 +94,20 @@ def test_06_Changing_permissions_on_SMB_PATH():
 @mount_test_cfg
 @bsd_host_cfg
 def test_08_Creating_SMB_mountpoint():
-    assert BSD_TEST('mkdir "%s" && sync' % MOUNTPOINT,
+    assert SSH_TEST('mkdir "%s" && sync' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 # def test_09_Mounting_SMB():
 #     cmd = 'mount_smbfs -N -I %s ' % ip
 #     cmd += '"//guest@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
-#     assert BSD_TEST(cmd) is True
+#     assert SSH_TEST(cmd) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_11_Creating_SMB_file():
-    assert BSD_TEST('touch %s/testfile' % MOUNTPOINT,
+    assert SSH_TEST('touch %s/testfile' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
@@ -115,39 +115,39 @@ def test_11_Creating_SMB_file():
 @bsd_host_cfg
 def test_12_Moving_SMB_file():
     cmd = 'mv %s/testfile %s/testfile2' % (MOUNTPOINT, MOUNTPOINT)
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_13_Copying_SMB_file():
     cmd = 'cp %s/testfile2 %s/testfile' % (MOUNTPOINT, MOUNTPOINT)
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_14_Deleting_SMB_file_1_2():
-    assert BSD_TEST('rm %s/testfile' % MOUNTPOINT,
+    assert SSH_TEST('rm %s/testfile' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_15_Deleting_SMB_file_2_2():
-    assert BSD_TEST('rm %s/testfile2' % MOUNTPOINT,
+    assert SSH_TEST('rm %s/testfile2' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 # def test_16_Unmounting_SMB():
-#     assert BSD_TEST('umount -f %s' % MOUNTPOINT) is True
+#     assert SSH_TEST('umount -f %s' % MOUNTPOINT) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_17_Removing_SMB_mountpoint():
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 def test_18_Removing_SMB_share_on_SMB_PATH():

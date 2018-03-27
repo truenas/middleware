@@ -5,14 +5,13 @@
 # Location for tests into REST API of FreeNAS
 
 import pytest
-import unittest
 import sys
 import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
-from functions import OSX_TEST
+from functions import SSH_TEST
 from auto_config import ip
 from config import *
 
@@ -93,7 +92,7 @@ def test_07_Creating_a_SMB_share_on_SMB_PATH():
 @mount_test_cfg
 @osx_host_cfg
 def test_08_Create_mount_point_for_SMB_on_OSX_system():
-    assert OSX_TEST('mkdir -p "%s"' % MOUNTPOINT,
+    assert SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
@@ -102,13 +101,13 @@ def test_08_Create_mount_point_for_SMB_on_OSX_system():
 def test_09_Mount_SMB_share_on_OSX_system():
     cmd = 'mount -t smbfs "smb://guest@'
     cmd += '%s/%s" "%s"' % (ip, SMB_NAME, MOUNTPOINT)
-    assert OSX_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @osx_host_cfg
 def test_11_Create_file_on_SMB_share_via_OSX_to_test_permissions():
-    assert OSX_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
+    assert SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
@@ -119,7 +118,7 @@ def test_12_Moving_SMB_test_file_into_a_new_directory():
     cmd = 'mkdir -p "%s/tmp" && ' % MOUNTPOINT
     cmd += 'mv "%s/testfile.txt" ' % MOUNTPOINT
     cmd += '"%s/tmp/testfile.txt"' % MOUNTPOINT
-    assert OSX_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 # Delete test file and test directory from SMB share
@@ -128,21 +127,21 @@ def test_12_Moving_SMB_test_file_into_a_new_directory():
 def test_13_Deleting_test_file_and_directory_from_SMB_share():
     cmd = 'rm -f "%s/tmp/testfile.txt" && ' % MOUNTPOINT
     cmd += 'rmdir "%s/tmp"' % MOUNTPOINT
-    assert OSX_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @osx_host_cfg
 def test_14_Verifying_test_file_directory_were_successfully_removed():
     cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
-    assert OSX_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 # Clean up mounted SMB share
 @mount_test_cfg
 @osx_host_cfg
 def test_15_Unmount_SMB_share():
-    assert OSX_TEST('umount -f "%s"' % MOUNTPOINT,
+    assert SSH_TEST('umount -f "%s"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 

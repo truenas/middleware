@@ -10,7 +10,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, GET_OUTPUT, BSD_TEST, return_output
+from functions import PUT, GET_OUTPUT, SSH_TEST, return_output
 from auto_config import ip
 from time import sleep
 from config import *
@@ -39,10 +39,10 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
 @bsd_host_cfg
 def test_00_cleanup_tests():
     PUT("/services/services/iscsitarget/", {"srv_enable": False})
-    BSD_TEST('iscsictl -R -a', BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    BSD_TEST('umount -f "%s" &>/dev/null' % MOUNTPOINT,
+    SSH_TEST('iscsictl -R -a', BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    SSH_TEST('umount -f "%s" &>/dev/null' % MOUNTPOINT,
              BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    BSD_TEST('rm -rf "%s" &>/dev/null' % MOUNTPOINT,
+    SSH_TEST('rm -rf "%s" &>/dev/null' % MOUNTPOINT,
              BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
 
 
@@ -61,7 +61,7 @@ def test_02_Verify_the_iSCSI_service_is_enabled():
 @mount_test_cfg
 @bsd_host_cfg
 def test_03_Connecting_to_iSCSI_target():
-    BSD_TEST('iscsictl -A -p %s:3620 -t %s' % (ip, TARGET_NAME),
+    SSH_TEST('iscsictl -A -p %s:3620 -t %s' % (ip, TARGET_NAME),
              BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
@@ -69,13 +69,13 @@ def test_03_Connecting_to_iSCSI_target():
 @bsd_host_cfg
 def test_04_Waiting_for_iscsi_connection_before_grabbing_device_name():
     while True:
-        BSD_TEST('iscsictl -L', BSD_USERNAME, BSD_PASSWORD,
+        SSH_TEST('iscsictl -L', BSD_USERNAME, BSD_PASSWORD,
                  BSD_HOST) is True
-        state = 'cat /tmp/.bsdCmdTestStdOut | '
+        state = 'cat /tmp/.sshCmdTestStdOut | '
         state += 'awk \'$2 == "%s:3620" {print $3}\'' % ip
         iscsi_state = return_output(state)
         if iscsi_state == "Connected:":
-            dev = 'cat /tmp/.bsdCmdTestStdOut | '
+            dev = 'cat /tmp/.sshCmdTestStdOut | '
             dev += 'awk \'$2 == "%s:3620" {print $4}\'' % ip
             iscsi_dev = return_output(dev)
             global DEVICE_NAME
@@ -89,56 +89,56 @@ def test_04_Waiting_for_iscsi_connection_before_grabbing_device_name():
 @mount_test_cfg
 @bsd_host_cfg
 def test_05_Creating_iSCSI_mountpoint():
-    BSD_TEST('mkdir -p "%s"' % MOUNTPOINT,
+    SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
              BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_06_Mount_the_target_volume():
-    BSD_TEST('mount "/dev/%s" "%s"' % (DEVICE_NAME, MOUNTPOINT),
+    SSH_TEST('mount "/dev/%s" "%s"' % (DEVICE_NAME, MOUNTPOINT),
              BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_07_Creating_45MB_file_to_verify_vzol_size_increase():
-    BSD_TEST('dd if=/dev/zero of=/tmp/45Mfile.img bs=1M count=45',
+    SSH_TEST('dd if=/dev/zero of=/tmp/45Mfile.img bs=1M count=45',
              BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_08_Moving_45MB_file_to_verify_vzol_size_increase():
-    BSD_TEST('mv /tmp/45Mfile.img "%s/testfile1"' % MOUNTPOINT,
+    SSH_TEST('mv /tmp/45Mfile.img "%s/testfile1"' % MOUNTPOINT,
              BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_09_Deleting_file():
-    BSD_TEST('rm "%s/testfile1"' % MOUNTPOINT,
+    SSH_TEST('rm "%s/testfile1"' % MOUNTPOINT,
              BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_10_Unmounting_iSCSI_volume():
-    BSD_TEST('umount -f "%s"' % MOUNTPOINT,
+    SSH_TEST('umount -f "%s"' % MOUNTPOINT,
              BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_11_Removing_iSCSI_volume_mountpoint():
-    BSD_TEST('rm -rf "%s"' % MOUNTPOINT,
+    SSH_TEST('rm -rf "%s"' % MOUNTPOINT,
              BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_12_Disconnect_iSCSI_target():
-    BSD_TEST('iscsictl -R -t %s' % TARGET_NAME,
+    SSH_TEST('iscsictl -R -t %s' % TARGET_NAME,
              BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 

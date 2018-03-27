@@ -11,7 +11,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
-from functions import BSD_TEST
+from functions import SSH_TEST
 from auto_config import ip
 from config import *
 
@@ -61,7 +61,7 @@ def test_00_cleanup_tests():
     DELETE("/storage/volume/1/datasets/%s/" % DATASET)
     cmd = 'umount -f "%s" &>/dev/null; ' % MOUNTPOINT
     cmd += 'rmdir "%s" &>/dev/null' % MOUNTPOINT
-    BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
 
 
 # Set auxilary parameters to allow mount_smbfs to work with ldap
@@ -129,7 +129,7 @@ def test_08_Creating_a_SMB_share_on_SMB_PATH():
 @bsd_host_cfg
 @ldap_test_cfg
 def test_09_Creating_SMB_mountpoint():
-    assert BSD_TEST('mkdir -p "%s" && sync' % MOUNTPOINT,
+    assert SSH_TEST('mkdir -p "%s" && sync' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
@@ -139,7 +139,7 @@ def test_09_Creating_SMB_mountpoint():
 def test_10_Store_LDAP_credentials_in_file_for_mount_smbfs():
     cmd = 'echo "[TESTNAS:LDAPUSER]" > ~/.nsmbrc && '
     cmd += 'echo "password=12345678" >> ~/.nsmbrc'
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @bsd_host_cfg
@@ -147,13 +147,13 @@ def test_10_Store_LDAP_credentials_in_file_for_mount_smbfs():
 def test_11_Mounting_SMB():
     cmd = 'mount_smbfs -N -I %s -W LDAP02 ' % ip
     cmd += '"//%s@testnas/%s" "%s"' % (LDAP_USER, SMB_NAME, MOUNTPOINT)
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @bsd_host_cfg
 @ldap_test_cfg
 def test_13_Creating_SMB_file():
-    assert BSD_TEST('touch "%s/testfile"' % MOUNTPOINT,
+    assert SSH_TEST('touch "%s/testfile"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
@@ -161,41 +161,41 @@ def test_13_Creating_SMB_file():
 @ldap_test_cfg
 def test_14_Moving_SMB_file():
     cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @bsd_host_cfg
 @ldap_test_cfg
 def test_15_Copying_SMB_file():
     cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @bsd_host_cfg
 @ldap_test_cfg
 def test_16_Deleting_SMB_file_1_2():
-    assert BSD_TEST('rm "%s/testfile"' % MOUNTPOINT,
+    assert SSH_TEST('rm "%s/testfile"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @bsd_host_cfg
 @ldap_test_cfg
 def test_17_Deleting_SMB_file_2_2():
-    assert BSD_TEST('rm "%s/testfile2"' % MOUNTPOINT,
+    assert SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @bsd_host_cfg
 @ldap_test_cfg
 def test_18_Unmounting_SMB():
-    assert BSD_TEST('umount -f "%s"' % MOUNTPOINT,
+    assert SSH_TEST('umount -f "%s"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @bsd_host_cfg
 @ldap_test_cfg
 def test_19_Verifying_SMB_share_was_unmounted():
-    assert BSD_TEST('mount | grep -qv "%s"' % MOUNTPOINT,
+    assert SSH_TEST('mount | grep -qv "%s"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
@@ -203,7 +203,7 @@ def test_19_Verifying_SMB_share_was_unmounted():
 @ldap_test_cfg
 def test_20_Removing_SMB_mountpoint():
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-    assert BSD_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @ldap_test_cfg

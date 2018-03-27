@@ -10,7 +10,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import DELETE, PUT, BSD_TEST
+from functions import DELETE, PUT, SSH_TEST
 from config import *
 
 if "BRIDGEHOST" in locals():
@@ -34,7 +34,7 @@ def test_00_cleanup_tests():
     BSD_TEST("iscsictl -R -t %s" % TARGET_NAME)
     cmd = 'umount -f "%s" &>/dev/null ; ' % MOUNTPOINT
     cmd += 'rmdir "%s" &>/dev/null' % MOUNTPOINT
-    BSD_TEST(cmd, username, password, host)
+    SSH_TEST(cmd, username, password, host)
 
 
 # Remove iSCSI target
