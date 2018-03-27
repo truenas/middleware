@@ -614,12 +614,16 @@ def new_default_plugin_jail(basename):
 
     if not jc.jc_ipv4_dhcp:
         if not addrs['high_ipv4']:
-            raise MiddlewareError(_("Unable to determine IPv4 for plugin"))
+            raise MiddlewareError(_(
+                "Unable to determine IPv4 settings for this plugin."
+            ))
 
     if (jc.jc_ipv6_autoconf or jc.jc_ipv6_network):
         if not jc.jc_ipv6_autoconf:
             if not addrs['high_ipv6']:
-                raise MiddlewareError(_("Unable to determine IPv6 for plugin"))
+                raise MiddlewareError(_(
+                    "Unable to determine IPv6 settings for this plugin."
+                ))
 
     jailname = None
     for i in range(1, 1000):
@@ -777,7 +781,7 @@ def jail_auto_configure():
 
     volume = Volume.objects.all()
     if not volume.exists():
-        raise MiddlewareError(_("You need to create a ZFS volume to proceed!"))
+        raise MiddlewareError(_("A ZFS volume must be created before proceeding!"))
 
     volume = volume[0]
     basename = "%s/jails" % volume.vol_name

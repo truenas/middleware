@@ -625,7 +625,7 @@ class JailTemplate(Model):
         ninstances = self.jt_instances
         if ninstances != 0:
             raise MiddlewareError(
-                _("Template must have 0 instances!")
+                _("Template must have zero instances!")
             )
 
         template = self.jt_name
