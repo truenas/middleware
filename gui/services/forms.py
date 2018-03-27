@@ -1730,7 +1730,13 @@ class DomainControllerForm(ModelForm):
             Samba4().set_administrator_password()
 
 
-class WebDAVForm(ModelForm):
+class WebDAVForm(MiddlewareModelForm, ModelForm):
+    middleware_attr_prefix = 'webdav_'
+    middleware_attr_schema = 'webdav'
+    middleware_exclude_fields = ['password2']
+    middleware_plugin = 'webdav'
+    is_singletone = True
+
     webdav_password2 = forms.CharField(
         max_length=120,
         label=_("Confirm WebDAV Password"),
@@ -1750,37 +1756,6 @@ class WebDAVForm(ModelForm):
             'webdav_password': forms.widgets.PasswordInput(),
         }
 
-    def __original_save(self):
-        for name in (
-            'webdav_password',
-            'webdav_tcpport',
-            'webdav_tcpportssl',
-            'webdav_protocol',
-            'webdav_htauth',
-            'webdav_certssl'
-        ):
-            setattr(self.instance, "_original_%s" % name, getattr(self.instance, name))
-
-    def _has_changed(self, name):
-        if getattr(self.instance, "_original_%s" % name) != getattr(self.instance, name):
-            return True
-        return False
-
-    def __original_changed(self):
-        for name in (
-            'webdav_password',
-            'webdav_tcpport',
-            'webdav_protocol',
-            'webdav_tcpportssl',
-            'webdav_htauth',
-            'webdav_certssl'
-        ):
-            original_value = getattr(self.instance, "_original_%s" % name)
-            instance_value = getattr(self.instance, name)
-            if original_value != instance_value:
-                return True
-        return False
-
     def __init__(self, *args, **kwargs):
         super(WebDAVForm, self).__init__(*args, **kwargs)
         if self.instance.webdav_password:
@@ -1794,10 +1769,10 @@ class WebDAVForm(ModelForm):
         self.fields['webdav_htauth'].widget.attrs['onChange'] = (
             "webdavhtauthToggle();"
         )
-        self.__original_save()
 
     def clean(self):
         cdata = self.cleaned_data
+
         if self._api is not True and cdata.get("webdav_password") != cdata.get("webdav_password2"):
             self._errors["webdav_password"] = self.error_class(
                 [_("The two password fields didn't match.")]
@@ -1808,33 +1783,14 @@ class WebDAVForm(ModelForm):
             cdata['webdav_tcpport'] = self.instance.webdav_tcpport
         if not cdata.get("webdav_tcpportssl"):
             cdata['webdav_tcpportssl'] = self.instance.webdav_tcpportssl
-        if (
-            cdata.get("webdav_protocol") == 'httphttps' and
-            self.cleaned_data.get("webdav_tcpport") == self.cleaned_data.get("webdav_tcpportssl")
-        ):
-            self._errors["webdav_tcpport"] = self.error_class(
-                [_("The HTTP and HTTPS ports cannot be the same!")]
-            )
-        if (cdata.get("webdav_protocol") != 'http' and cdata.get("webdav_certssl") is None):
-            self._errors["webdav_certssl"] = self.error_class(
-                [_("Webdav SSL protocol specified without choosing a certificate")]
-            )
+
         return cdata
 
-    def save(self):
-        obj = super(WebDAVForm, self).save()
-        if self.__original_changed():
-            started = notifier().reload("webdav")
-            if (
-                started is False and
-                models.services.objects.get(srv_service='webdav').srv_enable
-            ):
-                raise ServiceFailed("webdav", _("The WebDAV service failed to reload."))
-        return obj
+    def middleware_clean(self, data):
+        data['protocol'] = data['protocol'].upper()
+        data['htauth'] = data['htauth'].upper()
 
-    def done(self, *args, **kwargs):
-        if self._has_changed('webdav_certssl'):
-            notifier().start_ssl("webdav")
+        return data
 
 
 class S3Form(MiddlewareModelForm, ModelForm):
