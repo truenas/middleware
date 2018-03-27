@@ -4,7 +4,7 @@
 # License: BSD
 
 import requests
-from auto_config import freenas_url, user, password, ip
+from auto_config import freenas_url, user, password
 import json
 import os
 from subprocess import run, Popen, PIPE
@@ -96,39 +96,9 @@ def DELETE_ALL(testpath, payload):
     return deleteitall.status_code
 
 
-def SSH_TEST(command):
+def SSH_TEST(command, username, passwrd, host):
     teststdout = "/tmp/.sshCmdTestStdOut"
-    cmd = "sshpass -p %s " % password
-    cmd += "ssh -o StrictHostKeyChecking=no "
-    cmd += "-o UserKnownHostsFile=/dev/null "
-    cmd += "-o VerifyHostKeyDNS=no "
-    cmd += "%s@%s '%s' " % (user, ip, command)
-    cmd += "> %s" % teststdout
-    process = run(cmd, shell=True)
-    if process.returncode != 0:
-        return False
-    else:
-        return True
-
-
-def BSD_TEST(command, username, password, host):
-    teststdout = "/tmp/.bsdCmdTestStdOut"
-    cmd = "sshpass -p %s " % password
-    cmd += "ssh -o StrictHostKeyChecking=no "
-    cmd += "-o UserKnownHostsFile=/dev/null "
-    cmd += "-o VerifyHostKeyDNS=no "
-    cmd += "%s@%s '%s' " % (username, host, command)
-    cmd += "> %s" % teststdout
-    process = run(cmd, shell=True)
-    if process.returncode != 0:
-        return False
-    else:
-        return True
-
-
-def OSX_TEST(command, username, password, host):
-    teststdout = "/tmp/.osxCmdTestStdOut"
-    cmd = "sshpass -p %s " % password
+    cmd = "sshpass -p %s " % passwrd
     cmd += "ssh -o StrictHostKeyChecking=no "
     cmd += "-o UserKnownHostsFile=/dev/null "
     cmd += "-o VerifyHostKeyDNS=no "

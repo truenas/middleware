@@ -10,6 +10,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST
+from auto_config import user, password, ip
 
 
 def test_01_Checking_system_version():
@@ -43,4 +44,4 @@ def test_03_Creating_system_tunable_dummynet():
 
 # Verify loader tunable
 def test_06_Verify_system_tunable_dummynet_load():
-    SSH_TEST('kldstat -m dummynet')
+    SSH_TEST('kldstat -m dummynet', user, password, ip)
