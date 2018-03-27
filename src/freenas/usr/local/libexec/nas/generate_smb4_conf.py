@@ -49,7 +49,7 @@ from freenasUI.common.freenassysctl import freenas_sysctl as fs
 
 log = logging.getLogger('generate_smb4_conf')
 
-is_truenas = False
+is_truenas_ha = False
 
 def qw(w):
     return '"%s"' % w.replace('"', '\\"')
@@ -920,7 +920,7 @@ def generate_smb4_tdb(client, smb4_tdb):
 
 
 def generate_smb4_conf(client, smb4_conf, role):
-    global is_truenas
+    global is_truenas_ha
 
     cifs = Struct(client.call('smb.config'))
 
@@ -990,7 +990,7 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset1(smb4_conf, "deadtime = 15")
     confset1(smb4_conf, "max log size = 51200")
 
-    if is_truenas:
+    if is_truenas_ha:
         confset1(smb4_conf, "private dir = /root/samba/private")
 
     confset2(smb4_conf, "max open files = %d",
@@ -1006,7 +1006,7 @@ def generate_smb4_conf(client, smb4_conf, role):
     else:
         confset1(smb4_conf, "logging = file")
 
-    if is_truenas:
+    if is_truenas_ha:
         confset1(smb4_conf, "winbind netbios alias spn = false")
 
     confset1(smb4_conf, "load printers = no")
@@ -1302,11 +1302,11 @@ def smb4_unlink(dir):
 
 
 def smb4_setup(client):
-    global is_truenas
+    global is_truenas_ha
     statedir = "/var/db/samba4"
     privatedir = "/var/db/samba4/private"
 
-    if is_truenas:
+    if is_truenas_ha:
         privatedir = "/root/samba/private"
 
     if not os.access(privatedir, os.F_OK):
@@ -1650,7 +1650,7 @@ def smb4_do_migrations(client):
 
 
 def main():
-    global is_truenas
+    global is_truenas_ha
 
     smb4_tdb = []
     smb4_conf = []
@@ -1661,10 +1661,10 @@ def main():
     client = Client()
 
     if not client.call('notifier.is_freenas') and client.call('notifier.failover_licensed'):
-        is_truenas = True
+        is_truenas_ha = True
 
     privatedir = "/var/db/samba4/private"
-    if is_truenas:
+    if is_truenas_ha:
         privatedir = "/root/samba/private"
 
     smb4_setup(client)
