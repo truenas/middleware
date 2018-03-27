@@ -50,6 +50,8 @@ from freenasUI.common.freenassysctl import freenas_sysctl as fs
 
 log = logging.getLogger('generate_smb4_conf')
 
+is_truenas_ha = False
+
 
 def qw(w):
     return '"%s"' % w.replace('"', '\\"')
@@ -920,6 +922,8 @@ def generate_smb4_tdb(client, smb4_tdb):
 
 
 def generate_smb4_conf(client, smb4_conf, role):
+    global is_truenas_ha
+
     cifs = Struct(client.call('smb.config'))
 
     if not cifs.guest:
@@ -987,7 +991,9 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset1(smb4_conf, "oplocks = yes")
     confset1(smb4_conf, "deadtime = 15")
     confset1(smb4_conf, "max log size = 51200")
-    confset1(smb4_conf, "private dir = /root/samba/private")
+
+    if is_truenas_ha:
+        confset1(smb4_conf, "private dir = /root/samba/private")
 
     confset2(smb4_conf, "max open files = %d",
              int(get_sysctl('kern.maxfilesperproc')) - 25)
@@ -1004,7 +1010,7 @@ def generate_smb4_conf(client, smb4_conf, role):
     else:
         confset1(smb4_conf, "logging = file")
 
-    if not client.call('notifier.is_freenas') and client.call('notifier.failover_licensed'):
+    if is_truenas_ha:
         confset1(smb4_conf, "winbind netbios alias spn = false")
 
     confset1(smb4_conf, "load printers = no")
@@ -1300,8 +1306,12 @@ def smb4_unlink(dir):
 
 
 def smb4_setup(client):
+    global is_truenas_ha
     statedir = "/var/db/samba4"
-    privatedir = "/root/samba/private"
+    privatedir = "/var/db/samba4/private"
+
+    if is_truenas_ha:
+        privatedir = "/root/samba/private"
 
     if not os.access(privatedir, os.F_OK):
         smb4_mkdir(privatedir)
@@ -1623,15 +1633,46 @@ def restore_secrets_database():
     smb4_restore_tdbfile(backup, secrets)
 
 
+def smb4_do_migrations(client):
+    sentinel_directory = "/data/sentinels/samba"
+
+    if not os.access(sentinel_directory, os.F_OK):
+        smb4_mkdir(sentinel_directory)
+        os.chmod(sentinel_directory, 0o700)
+
+    # 11.1-U3 -> 11.1-U4
+    def migrate_11_1_U3_to_11_1_U4(client):
+        samba_user_import_file = "/var/db/samba4/.usersimported"
+        sentinel_file = os.path.join(sentinel_directory, "private-dir-fix")
+
+        if not os.access(sentinel_file, os.F_OK):
+            if os.access(samba_user_import_file, os.F_OK):
+                os.unlink(samba_user_import_file)
+            open(sentinel_file, "w").close()
+
+    migrate_11_1_U3_to_11_1_U4(client)
+
+
 def main():
-    client = Client()
-    smb_conf_path = "/usr/local/etc/smb4.conf"
+    global is_truenas_ha
 
     smb4_tdb = []
     smb4_conf = []
     smb4_shares = []
 
+    smb_conf_path = "/usr/local/etc/smb4.conf"
+
+    client = Client()
+
+    if not client.call('notifier.is_freenas') and client.call('notifier.failover_licensed'):
+        is_truenas_ha = True
+
+    privatedir = "/var/db/samba4/private"
+    if is_truenas_ha:
+        privatedir = "/root/samba/private"
+
     smb4_setup(client)
+    smb4_do_migrations(client)
 
     old_samba4_datasets = get_old_samba4_datasets(client)
     if migration_available(old_samba4_datasets):
@@ -1665,7 +1706,7 @@ def main():
                 client,
                 smb_conf_path,
                 smb4_tdb,
-                "/var/db/samba4/private/passdb.tdb"
+                privatedir + "/passdb.tdb"
             )
             smb4_grant_rights()
             client.call('notifier.samba4', 'user_import_sentinel_file_create')

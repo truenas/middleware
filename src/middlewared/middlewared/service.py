@@ -174,12 +174,20 @@ class ConfigService(Service):
             options['prefix'] = self._config.datastore_prefix
         if self._config.datastore_extend:
             options['extend'] = self._config.datastore_extend
-        return await self.middleware.call('datastore.config', self._config.datastore, options)
+        return await self._get_or_insert(self._config.datastore, options)
 
     async def update(self, data):
         return await self.middleware._call(
             f'{self._config.namespace}.update', self, self.do_update, [data]
         )
+
+    @private
+    async def _get_or_insert(self, datastore, options):
+        try:
+            return await self.middleware.call('datastore.config', datastore, options)
+        except IndexError:
+            await self.middleware.call('datastore.insert', datastore, {})
+            return await self.middleware.call('datastore.config', datastore, options)
 
 
 class SystemServiceService(ConfigService):
@@ -191,8 +199,8 @@ class SystemServiceService(ConfigService):
 
     @accepts()
     async def config(self):
-        return await self.middleware.call(
-            'datastore.config', f'services.{self._config.service_model or self._config.service}', {
+        return await self._get_or_insert(
+            f'services.{self._config.service_model or self._config.service}', {
                 'extend': self._config.datastore_extend,
                 'prefix': self._config.datastore_prefix
             }

@@ -23,7 +23,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from collections import OrderedDict
 import base64
 import glob
 import hashlib
@@ -31,25 +30,25 @@ import logging
 import os
 import re
 import subprocess
+from collections import OrderedDict
+
+from ipaddr import (AddressValueError, IPAddress, IPNetwork, IPv4Address,
+                    IPv6Address, NetmaskValueError)
+
 import sysctl
 from django.core.validators import validate_email
-from django.utils.safestring import mark_safe
-from django.utils.translation import (
-    ugettext_lazy as _, ungettext_lazy
-)
-
-from dojango import forms
 from django.db.models import Q
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ungettext_lazy
+from dojango import forms
 from freenasUI import choices
 from freenasUI.common import humanize_size
-from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common.forms import Form, ModelForm
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.samba import Samba4
-from freenasUI.common.system import (
-    validate_netbios_name,
-    activedirectory_enabled,
-    ldap_enabled
-)
+from freenasUI.common.system import (activedirectory_enabled, ldap_enabled,
+                                     validate_netbios_name)
 from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.freeadmin.utils import key_order
@@ -61,13 +60,9 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.services import models
 from freenasUI.services.exceptions import ServiceFailed
-from freenasUI.storage.models import Volume, Disk
+from freenasUI.storage.models import Disk, Volume
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import fc_enabled
-from ipaddr import (
-    IPAddress, IPNetwork, AddressValueError, NetmaskValueError,
-    IPv4Address, IPv6Address,
-)
 from middlewared.plugins.smb import LOGLEVEL_MAP
 
 log = logging.getLogger('services.form')
@@ -733,15 +728,16 @@ class UPSForm(ModelForm):
             raise ServiceFailed("ups", _("The UPS service failed to reload."))
 
 
-class LLDPForm(ModelForm):
+class LLDPForm(MiddlewareModelForm, ModelForm):
 
     class Meta:
         fields = '__all__'
         model = models.LLDP
 
-    def save(self):
-        super(LLDPForm, self).save()
-        notifier().restart("lldp")
+    middleware_attr_prefix = "lldp_"
+    middleware_attr_schema = "lldp"
+    middleware_plugin = "lldp"
+    is_singletone = True
 
 
 class iSCSITargetAuthCredentialForm(ModelForm):

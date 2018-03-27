@@ -5,6 +5,8 @@ import json
 import logging
 import os
 
+from middlewared.alert.schedule import IntervalSchedule
+
 __all__ = ["AlertLevel", "Alert", "AlertSource", "FilePresenceAlertSource", "ThreadedAlertSource",
            "AlertService", "ThreadedAlertService", "ProThreadedAlertService",
            "format_alerts", "ellipsis"]
@@ -28,10 +30,9 @@ class Alert:
 
         self.source = source
         self.node = node
-        if key is not undefined:
-            self.key = key
-        else:
-            self.key = self.formatted
+        if key is undefined:
+            key = [title, args]
+        self.key = key if isinstance(key, str) else json.dumps(key, sort_keys=True)
         self.datetime = datetime
         self.level = level
         self.dismissed = dismissed
@@ -62,7 +63,7 @@ class AlertSource:
     hardware = False
 
     onetime = False
-    interval = timedelta()
+    schedule = IntervalSchedule(timedelta())
 
     run_on_passive_node = True
 

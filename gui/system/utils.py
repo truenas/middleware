@@ -39,6 +39,7 @@ from freenasOS import Update
 from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.middleware.client import client
+from freenasUI.middleware.util import run_alerts
 
 log = logging.getLogger('system.utils')
 
@@ -77,15 +78,8 @@ def create_update_alert(update_version):
     # created (and sometimes even activated)
     with open(UPDATE_APPLIED_SENTINEL, 'w+') as f:
         f.write(json.dumps({'update_version': update_version}))
-    # Now send SIGUSR1 (signal 10) to the alertd daemon (to rescan
-    # alertmods)
-    try:
-        with open("/var/run/alertd.pid", "r") as f:
-            alertd_pid = int(f.read())
-        os.kill(alertd_pid, signal.SIGUSR1)
-    except:
-        # alertd not running?
-        pass
+
+    run_alerts()
 
 
 class BootEnv(object):

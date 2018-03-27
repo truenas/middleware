@@ -394,7 +394,7 @@ class Job(object):
         return {
             'id': self.id,
             'method': self.method_name,
-            'arguments': self.args,
+            'arguments': self.middleware.dump_args(self.args, method=self.method),
             'logs_path': self.logs_path,
             'logs_excerpt': self.logs_excerpt,
             'progress': self.progress,

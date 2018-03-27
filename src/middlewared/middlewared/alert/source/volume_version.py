@@ -2,13 +2,14 @@ from datetime import timedelta
 import subprocess
 
 from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.schedule import IntervalSchedule
 
 
 class VolumeVersionAlertSource(ThreadedAlertSource):
     level = AlertLevel.WARNING
     title = "ZFS version is out of date"
 
-    interval = timedelta(minutes=5)
+    schedule = IntervalSchedule(timedelta(minutes=5))
 
     def check_sync(self):
         alerts = []

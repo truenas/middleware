@@ -1,7 +1,6 @@
 from collections import defaultdict
 import copy
 from datetime import datetime
-import json
 import os
 import traceback
 
@@ -21,7 +20,7 @@ from middlewared.alert.base import AlertService as _AlertService
 from middlewared.schema import Dict, Str, Bool, Int, accepts, Patch
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
-    periodic, private,
+    job, periodic, private,
 )
 from middlewared.utils import load_modules, load_classes
 
@@ -152,7 +151,8 @@ class AlertService(Service):
         alert.dismissed = False
 
     @periodic(60)
-    async def process_alerts(self):
+    @job(lock="process_alerts")
+    async def process_alerts(self, job):
         if not await self.middleware.call("system.is_freenas"):
             if await self.middleware.call("notifier.failover_node") == "B":
                 return
@@ -264,7 +264,7 @@ class AlertService(Service):
                             run_on_passive_node = True
 
         for alert_source in ALERT_SOURCES.values():
-            if datetime.utcnow() < self.alert_source_last_run[alert_source.name] + alert_source.interval:
+            if not alert_source.schedule.should_run(datetime.utcnow(), self.alert_source_last_run[alert_source.name]):
                 continue
 
             self.alert_source_last_run[alert_source.name] = datetime.utcnow()
@@ -298,7 +298,6 @@ class AlertService(Service):
                 existing_alert = self.alerts[alert.node][alert_source.name].get(alert.key)
 
                 alert.source = alert_source.name
-                alert.key = alert.key or json.dumps(alert.args, sort_keys=True)
                 if existing_alert is None:
                     alert.datetime = datetime.utcnow()
                 else:
