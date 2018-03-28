@@ -120,11 +120,11 @@ def test_08_Store_AD_credentials_in_a_file_for_mount_smbfs():
     assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
-# @ad_test_cfg
-# def test_09_Mounting_SMB():
-#     cmd = 'mount_smbfs -N -I %s -W AD01 ' % ip
-#     cmd += '"//aduser@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
-#     assert SSH_TEST(cmd) is True
+@ad_test_cfg
+def test_09_Mounting_SMB():
+    cmd = 'mount_smbfs -N -I %s -W AD01 ' % ip
+    cmd += '"//aduser@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
+    assert SSH_TEST(cmd) is True
 
 
 @bsd_host_cfg
@@ -162,9 +162,9 @@ def test_15_Deleting_SMB_file_2_2():
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
-# @ad_test_cfg
-# def test_16_Unmounting_SMB():
-#     assert SSH_TEST('umount "%s"' % MOUNTPOINT) is True
+@ad_test_cfg
+def test_16_Unmounting_SMB():
+    assert SSH_TEST('umount "%s"' % MOUNTPOINT) is True
 
 
 @bsd_host_cfg

@@ -106,12 +106,12 @@ def test_07_Create_mount_point_for_SMB_on_OSX_system():
                     OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
-# @osx_host_cfg
-# @ad_test_cfg
-# def test_08_Mount_SMB_share_on_OSX_system():
-#     cmd = 'mount -t smbfs "smb://%s:' % ADUSERNAME
-#     cmd += '%s@%s/%s" "%s"' % (ADPASSWORD, ip, SMB_NAME, MOUNTPOINT)
-#     assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+@osx_host_cfg
+@ad_test_cfg
+def test_08_Mount_SMB_share_on_OSX_system():
+    cmd = 'mount -t smbfs "smb://%s:' % ADUSERNAME
+    cmd += '%s@%s/%s" "%s"' % (ADPASSWORD, ip, SMB_NAME, MOUNTPOINT)
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
 @osx_host_cfg
@@ -146,12 +146,12 @@ def test_13_Verifying_test_file_directory_were_successfully_removed():
     cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
     assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
-# Clean up mounted SMB share
-# @osx_host_cfg
-# @ad_test_cfg
-# def test_14_Unmount_SMB_share():
-#     assert SSH_TEST('umount -f "%s"' % MOUNTPOINT,
-#                     OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+Clean up mounted SMB share
+@osx_host_cfg
+@ad_test_cfg
+def test_14_Unmount_SMB_share():
+    assert SSH_TEST('umount -f "%s"' % MOUNTPOINT,
+                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
 # Disable Active Directory Directory
