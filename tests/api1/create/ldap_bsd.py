@@ -57,10 +57,10 @@ def test_00_cleanup_tests():
 
 
 # Set auxilary parameters to allow mount_smbfs to work with ldap
-def test_01_Setting_auxilary_parameters_for_mount_smbfs():
-    options = "lanman auth = yes\nntlm auth = yes \nraw NTLMv2 auth = yes"
-    payload = {"cifs_srv_smb_options": options}
-    assert PUT("/services/cifs/", payload) == 200
+#def test_01_Setting_auxilary_parameters_for_mount_smbfs():
+#    options = "lanman auth = yes\nntlm auth = yes \nraw NTLMv2 auth = yes"
+#    payload = {"cifs_srv_smb_options": options}
+#    assert PUT("/services/cifs/", payload) == 200
 
 
 def test_02_Creating_SMB_dataset():
