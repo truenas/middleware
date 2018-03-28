@@ -12,6 +12,8 @@ def handle_middleware_validation(form, excep):
     for err in excep.errors:
         field_name = form.middleware_attr_map.get(err.attribute)
         error_message = err.errmsg
+        if not field_name and '.' in err.attribute:
+            field_name = form.middleware_attr_map.get(err.attribute.split('.', 1)[-1])
         if not field_name:
             field_name = err.attribute
             if form.middleware_attr_schema:
