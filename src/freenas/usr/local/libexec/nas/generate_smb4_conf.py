@@ -1095,6 +1095,7 @@ def generate_smb4_conf(client, smb4_conf, role):
             confset2(smb4_conf, "netbios aliases = %s", cifs.netbiosalias.upper())
         confset2(smb4_conf, "workgroup = %s", cifs.workgroup.upper())
         confset1(smb4_conf, "security = user")
+        confset1(smb4_conf, "passdb backend = tdbsam:/var/db/samba4/private/passdb.tdb")
 
     confset2(smb4_conf, "create mask = %s", cifs.filemask)
     confset2(smb4_conf, "directory mask = %s", cifs.dirmask)
@@ -1269,7 +1270,7 @@ def generate_smbusers(client):
 
 
 def provision_smb4(client):
-    if not client.call('notifier.samba4', 'domain_provision', timeout=300):
+    if not client.call('notifier.samba4', 'domain_provision', {'method_args': {'timeout': 300}}):
         print("Failed to provision domain", file=sys.stderr)
         return False
 
@@ -1541,9 +1542,9 @@ def smb4_import_groups(client):
     # XXX: WTF moment, this method is not used
     groups = get_groups(client)
     for g in groups:
-        client.call('notifier.samba4', 'group_add', [g])
+        client.call('notifier.samba4', 'group_add', {'method_args': [g]})
         if groups[g]:
-            client.call('notifier.samba4', 'group_addmembers', [g, groups[g]])
+            client.call('notifier.samba4', 'group_addmembers', {'method_args': [g, groups[g]]})
 
 
 def smb4_group_mapped(groupmap, group):
@@ -1667,8 +1668,10 @@ def main():
     if not client.call('notifier.is_freenas') and client.call('notifier.failover_licensed'):
         is_truenas_ha = True
 
+    role = get_server_role(client)
+
     privatedir = "/var/db/samba4/private"
-    if is_truenas_ha:
+    if is_truenas_ha and role != "standalone":
         privatedir = "/root/samba/private"
 
     smb4_setup(client)
@@ -1677,8 +1680,6 @@ def main():
     old_samba4_datasets = get_old_samba4_datasets(client)
     if migration_available(old_samba4_datasets):
         do_migration(client, old_samba4_datasets)
-
-    role = get_server_role(client)
 
     generate_smbusers(client)
     generate_smb4_tdb(client, smb4_tdb)
@@ -1701,16 +1702,13 @@ def main():
         set_ldap_password(client)
 
     if role != 'dc':
-        if not client.call('notifier.samba4', 'users_imported'):
-            smb4_import_users(
-                client,
-                smb_conf_path,
-                smb4_tdb,
-                privatedir + "/passdb.tdb"
-            )
-            smb4_grant_rights()
-            client.call('notifier.samba4', 'user_import_sentinel_file_create')
-
+        smb4_import_users(
+            client,
+            smb_conf_path,
+            smb4_tdb,
+            privatedir + "/passdb.tdb"
+        )
+        smb4_grant_rights()
         smb4_map_groups(client)
 
     if role == 'member' and client.call('notifier.common', 'system', 'activedirectory_enabled') and idmap_backend_rfc2307(client):
