@@ -93,7 +93,7 @@ class Samba4(object):
             for key in nonargs:
                 samba_tool_args = "%s '%s'" % (samba_tool_args, key)
 
-        p = pipeopen("%s %s" % (self.samba_tool, samba_tool_args), quiet=quiet)
+        p = pipeopen("%s %s" % (self._samba_tool, samba_tool_args), quiet=quiet)
         out = p.communicate()
         if buf is not None:
             buf.append(out)
@@ -128,7 +128,7 @@ class Samba4(object):
         }
 
         buf = []
-        res = self.samba_tool("domain provision", args, buf=buf)
+        res = self._samba_tool("domain provision", args, buf=buf)
         try:
             buf = buf[0][1]
             for line in buf.splitlines():
@@ -140,10 +140,10 @@ class Samba4(object):
         return res
 
     def disable_password_complexity(self):
-        return self.samba_tool("domain passwordsettings set", {'complexity': 'off'})
+        return self._samba_tool("domain passwordsettings set", {'complexity': 'off'})
 
     def set_min_pwd_length(self):
-        return self.samba_tool("domain passwordsettings set", {'min-pwd-length': '1'})
+        return self._samba_tool("domain passwordsettings set", {'min-pwd-length': '1'})
 
     def set_administrator_password(self):
         try:
@@ -154,10 +154,10 @@ class Samba4(object):
         return self.set_user_password('Administrator', dc.dc_passwd)
 
     def change_forest_level(self, level):
-        return self.samba_tool("domain level raise", {'forest-level': level})
+        return self._samba_tool("domain level raise", {'forest-level': level})
 
     def change_domain_level(self, level):
-        return self.samba_tool("domain level raise", {'domain-level': level})
+        return self._samba_tool("domain level raise", {'domain-level': level})
 
     def user_add(self):
         pass
@@ -166,19 +166,19 @@ class Samba4(object):
         pass
 
     def user_delete(self, user):
-        return self.samba_tool("user delete", None, [user])
+        return self._samba_tool("user delete", None, [user])
 
     def user_disable(self, user):
-        return self.samba_tool("user disable", None, [user])
+        return self._samba_tool("user disable", None, [user])
 
     def user_enable(self, user):
-        return self.samba_tool("user enable", None, [user])
+        return self._samba_tool("user enable", None, [user])
 
     def user_list(self):
         buf = []
         users = []
 
-        if not self.samba_tool("user list", None, buf=buf):
+        if not self._samba_tool("user list", None, buf=buf):
             return users
 
         try:
@@ -200,27 +200,27 @@ class Samba4(object):
         pass
 
     def set_user_password(self, user, password):
-        return self.samba_tool("user setpassword", {'newpassword': password}, [user], True)
+        return self._samba_tool("user setpassword", {'newpassword': password}, [user], True)
 
     def group_add(self, group):
-        return self.samba_tool("group add", None, [group])
+        return self._samba_tool("group add", None, [group])
 
     def group_create(self, group):
-        return self.samba_tool("group create", None, [group])
+        return self._samba_tool("group create", None, [group])
 
     def group_addmembers(self, group, members):
-        return self.samba_tool(
+        return self._samba_tool(
             "group addmembers", None, [group, ','.join(members)]
         )
 
     def group_delete(self, group):
-        return self.samba_tool("group delete", None, [group])
+        return self._samba_tool("group delete", None, [group])
 
     def group_list(self):
         buf = []
         groups = []
 
-        if not self.samba_tool("group list", None, buf=buf):
+        if not self._samba_tool("group list", None, buf=buf):
             return groups
 
         try:
@@ -236,7 +236,7 @@ class Samba4(object):
         buf = []
         members = []
 
-        if not self.samba_tool("group listmembers", None, [group], buf=buf):
+        if not self._samba_tool("group listmembers", None, [group], buf=buf):
             return members
 
         try:
@@ -249,7 +249,7 @@ class Samba4(object):
         return members
 
     def group_removemembers(self, group, members):
-        return self.samba_tool(
+        return self._samba_tool(
             "group removemembers", None, [group, ','.join(members)]
         )
 
