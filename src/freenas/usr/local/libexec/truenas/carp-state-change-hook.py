@@ -25,6 +25,7 @@ import time
 ELECTING_FILE = '/tmp/.failover_electing'
 IMPORTING_FILE = '/tmp/.failover_importing'
 FAILED_FILE = '/tmp/.failover_failed'
+FAILOVER_STATE = '/tmp/.failover_state'
 FAILOVER_ASSUMED_MASTER = '/tmp/.failover_master'
 
 # Config file, externally generated
@@ -38,8 +39,8 @@ FAILOVER_EVENT = '/tmp/.failover_event'
 # Fast track, user initiated failover
 FAILOVER_OVERRIDE = '/tmp/failover_override'
 
-# GUI sentinel file
-FAILOVER_STATE = '/tmp/.failover_state'
+# Samba sentinel file
+SAMBA_USER_IMPORT_FILE = "/root/samba/.usersimported"
 
 # This sentinel is created by the pool decryption
 # script to let us know we need to do something
@@ -481,6 +482,11 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "cifs"')
             ret = c.fetchone()
             if ret and ret[0] == 1:
+                # XXX: Tha would enforce re-importing all Samba users
+                try:
+                    os.unlink(SAMBA_USER_IMPORT_FILE)
+                except:
+                    pass
                 run('/usr/local/libexec/nas/generate_smb4_conf.py')
                 run('/usr/sbin/service samba_server forcestop')
                 run('/usr/sbin/service samba_server quietstart')
