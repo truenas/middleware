@@ -244,6 +244,31 @@ async def journal_ha(middleware):
             middleware.logger.warn('Failed to sync journal', exc_info=True)
 
 
+def service_remote(middleware):
+    """
+    Most of service actions need to be replicated to the standby node so we don't lose
+    too much time during failover regenerating things (e.g. users database)
+
+    This is the middleware side of what legacy UI did on service changes.
+    """
+    async def service_remote_async(service, verb, options):
+        # Skip if service is blacklisted or we are not MASTER
+        if service in (
+            'system',
+            'webshell',
+            'smartd',
+            'system_datasets',
+        ) or await middleware.call('notifier.failover_status') != 'MASTER':
+            return
+        try:
+            await middleware.call('failover.call_remote', 'core.bulk', [f'service.{verb}', [[service, options]]])
+        except Exception as e:
+            if not (isinstance(e, CallError) and e.errno in (errno.ECONNREFUSED, errno.EHOSTDOWN)):
+                middleware.logger.warn(f'Failed to run {verb}({service})', exc_info=True)
+    return service_remote_async
+
+
 def setup(middleware):
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
+    middleware.register_hook('service.pre_action', service_remote(middleware), sync=False)
     asyncio.ensure_future(journal_ha(middleware))
