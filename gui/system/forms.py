@@ -2388,7 +2388,7 @@ class InitialWizardVolumeImportForm(VolumeAutoImportForm):
             return False
         if Volume.objects.all().exists():
             return False
-        return len(cls._unused_volumes()) > 0
+        return len(cls._volume_choices()) > 0
 
 
 class InitialWizardSettingsForm(Form):
