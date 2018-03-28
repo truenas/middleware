@@ -156,7 +156,7 @@ class ServiceService(CRUDService):
 
         The helper will use method self._start_[service]() to start the service.
         If the method does not exist, it would fallback using service(8)."""
-        await self.middleware.call_hook('service.pre_start', service)
+        await self.middleware.call_hook('service.pre_action', service, 'start', options)
         sn = self._started_notify("start", service)
         await self._simplecmd("start", service, options)
         return await self.started(service, sn)
@@ -191,7 +191,7 @@ class ServiceService(CRUDService):
 
         The helper will use method self._stop_[service]() to stop the service.
         If the method does not exist, it would fallback using service(8)."""
-        await self.middleware.call_hook('service.pre_stop', service)
+        await self.middleware.call_hook('service.pre_action', service, 'stop', options)
         sn = self._started_notify("stop", service)
         await self._simplecmd("stop", service, options)
         return await self.started(service, sn)
@@ -206,7 +206,7 @@ class ServiceService(CRUDService):
 
         The helper will use method self._restart_[service]() to restart the service.
         If the method does not exist, it would fallback using service(8)."""
-        await self.middleware.call_hook('service.pre_restart', service)
+        await self.middleware.call_hook('service.pre_action', service, 'restart', options)
         sn = self._started_notify("restart", service)
         await self._simplecmd("restart", service, options)
         return await self.started(service, sn)
@@ -222,7 +222,7 @@ class ServiceService(CRUDService):
         The helper will use method self._reload_[service]() to reload the service.
         If the method does not exist, the helper will try self.restart of the
         service instead."""
-        await self.middleware.call_hook('service.pre_reload', service)
+        await self.middleware.call_hook('service.pre_action', service, 'reload', options)
         try:
             await self._simplecmd("reload", service, options)
         except Exception as e:
