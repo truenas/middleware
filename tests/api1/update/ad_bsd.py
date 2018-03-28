@@ -5,13 +5,13 @@
 # Location for tests into REST API of FreeNAS
 
 import pytest
-
 import sys
 import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, SSH_TEST
+from auto_config import ip
 from config import *
 
 if "BRIDGEHOST" in locals():
@@ -124,7 +124,7 @@ def test_08_Store_AD_credentials_in_a_file_for_mount_smbfs():
 def test_09_Mounting_SMB():
     cmd = 'mount_smbfs -N -I %s -W AD01 ' % ip
     cmd += '"//aduser@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
-    assert SSH_TEST(cmd) is True
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @bsd_host_cfg
@@ -164,7 +164,8 @@ def test_15_Deleting_SMB_file_2_2():
 
 @ad_test_cfg
 def test_16_Unmounting_SMB():
-    assert SSH_TEST('umount "%s"' % MOUNTPOINT) is True
+    assert SSH_TEST('umount "%s"' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @bsd_host_cfg

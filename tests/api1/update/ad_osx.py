@@ -146,7 +146,8 @@ def test_13_Verifying_test_file_directory_were_successfully_removed():
     cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
     assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
-Clean up mounted SMB share
+
+# Clean up mounted SMB share
 @osx_host_cfg
 @ad_test_cfg
 def test_14_Unmount_SMB_share():

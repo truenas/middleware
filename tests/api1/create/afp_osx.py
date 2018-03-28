@@ -39,7 +39,7 @@ def test_00_cleanup_tests():
     PUT("/services/afp/", {"afp_srv_guest": False})
     payload = {"afp_name": AFP_NAME, "afp_path": AFP_PATH}
     DELETE_ALL("/sharing/afp/", payload)
-    DELETE("/storage/volume/1/datasets/%s/" % DATASET)
+    # DELETE("/storage/volume/1/datasets/%s/" % DATASET)
 
 
 def test_01_Creating_AFP_dataset():
