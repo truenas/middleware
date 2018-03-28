@@ -103,6 +103,11 @@ def test_06_Starting_SMB_service():
     assert PUT("/services/services/cifs/", {"srv_enable": True}) == 200
 
 
+@ldap_test_cfg
+def test_09_Checking_to_see_if_SMB_service_is_enabled():
+    assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "RUNNING"
+
+
 def test_07_Changing_permissions_on_SMB_PATH():
     payload = {"mp_path": SMB_PATH,
                "mp_acl": "unix",
@@ -120,11 +125,6 @@ def test_08_Creating_a_SMB_share_on_SMB_PATH():
                "cifs_guestok": True,
                "cifs_vfsobjects": "streams_xattr"}
     assert POST("/sharing/cifs/", payload) == 201
-
-
-@ldap_test_cfg
-def test_09_Checking_to_see_if_SMB_service_is_enabled():
-    assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "RUNNING"
 
 
 # BSD test to be done when when SSH_TEST is functional
