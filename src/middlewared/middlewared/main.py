@@ -800,11 +800,12 @@ class Middleware(object):
         """
         for hook in self.__hooks[name]:
             try:
+                fut = hook['method'](*args, **kwargs)
                 if hook['sync']:
-                    await hook['method'](*args, **kwargs)
+                    await fut
                 else:
-                    asyncio.ensure_future(hook['method'], *args, **kwargs)
-            except:
+                    asyncio.ensure_future(fut)
+            except Exception:
                 self.logger.error('Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True)
 
     def register_event_source(self, name, event_source):
