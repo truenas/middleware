@@ -1,3 +1,4 @@
+from datetime import datetime
 from dateutil.tz import tzlocal
 
 
@@ -19,6 +20,9 @@ class CrontabSchedule:
         self.hour = hour
 
     def should_run(self, now, last_run):
+        if last_run == datetime.min:
+            return True
+
         local_now = now + tzlocal().utcoffset(now)
         local_last_run = last_run + tzlocal().utcoffset(last_run)
         return local_now.hour == self.hour and local_last_run.date() != local_now.date()
