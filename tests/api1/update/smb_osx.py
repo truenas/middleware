@@ -28,9 +28,9 @@ mount_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
                                          "MOUNTPOINT" in locals()
                                          ]) is False, reason=Reason)
 
-osx_host_cfg = pytest.mark.skipif(all(["osx_HOST" in locals(),
-                                       "osx_USERNAME" in locals(),
-                                       "osx_PASSWORD" in locals()
+osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
+                                       "OSX_USERNAME" in locals(),
+                                       "OSX_PASSWORD" in locals()
                                        ]) is False, reason=OSXReason)
 
 
