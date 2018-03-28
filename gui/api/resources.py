@@ -1440,9 +1440,10 @@ class VolumeImportResource(DojoResource):
 
     def get_list(self, request, **kwargs):
         self.is_authenticated(request)
-        vols = VolumeAutoImportForm._unused_volumes()
+        with client as c:
+            vols = c.call('pool.import_find')
         for vol in vols:
-            vol['id'] = '%s|%s' % (vol['label'], vol['id'])
+            vol['id'] = '%s|%s' % (vol['name'], vol['guid'])
         return self.create_response(request, vols)
 
     def post_list(self, request, **kwargs):
