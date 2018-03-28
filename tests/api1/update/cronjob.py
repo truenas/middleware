@@ -18,7 +18,7 @@ CRONJOB_ID = 1
 
 # Ensure test file does exist
 def test_01_Verify_cronjob_has_created_the_test_file():
-    assert SSH_TEST('test -f "%s"' % TESTFILE) == True
+    assert SSH_TEST('test -f "%s"' % TESTFILE, user, password, ip) == True
 
 
 # Update cronjob to disabled with new cron_command
