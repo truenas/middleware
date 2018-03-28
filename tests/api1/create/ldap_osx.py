@@ -36,11 +36,8 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 
 
 # Clean up any leftover items from previous failed runs
-@osx_host_cfg
 @ldap_test_cfg
 def test_00_cleanup_tests():
-    cmd = 'umount -f "%s"; rmdir "%s"; exit 0' % (MOUNTPOINT, MOUNTPOINT)
-    SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     payload2 = {"ldap_basedn": LDAPBASEDN,
                 "ldap_anonbind": True,
                 "ldap_netbiosname_a": BRIDGEHOST,

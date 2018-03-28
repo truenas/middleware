@@ -38,7 +38,6 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
 
 
 # Clean up any leftover items from previous failed AD LDAP or SMB runs
-@bsd_host_cfg
 @ldap_test_cfg
 def test_00_cleanup_tests():
     payload1 = {"ldap_basedn": LDAPBASEDN,
@@ -55,9 +54,6 @@ def test_00_cleanup_tests():
                 "cifs_vfsobjects": "streams_xattr"}
     DELETE_ALL("/sharing/cifs/", payload2)
     DELETE("/storage/volume/1/datasets/%s/" % DATASET)
-    cmd = 'umount -f "%s" &>/dev/null; ' % MOUNTPOINT
-    cmd += 'rmdir "%s" &>/dev/null' % MOUNTPOINT
-    SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
 
 
 # Set auxilary parameters to allow mount_smbfs to work with ldap
@@ -104,11 +100,11 @@ def test_06_Starting_SMB_service():
 
 
 @ldap_test_cfg
-def test_09_Checking_to_see_if_SMB_service_is_enabled():
+def test_07_Checking_to_see_if_SMB_service_is_enabled():
     assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "RUNNING"
 
 
-def test_07_Changing_permissions_on_SMB_PATH():
+def test_09_Changing_permissions_on_SMB_PATH():
     payload = {"mp_path": SMB_PATH,
                "mp_acl": "unix",
                "mp_mode": "777",
@@ -118,7 +114,7 @@ def test_07_Changing_permissions_on_SMB_PATH():
     assert PUT("/storage/permission/", payload) == 201
 
 
-def test_08_Creating_a_SMB_share_on_SMB_PATH():
+def test_09_Creating_a_SMB_share_on_SMB_PATH():
     payload = {"cfs_comment": "My Test SMB Share",
                "cifs_path": SMB_PATH,
                "cifs_name": SMB_NAME,
