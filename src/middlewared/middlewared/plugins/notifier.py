@@ -223,11 +223,25 @@ class NotifierService(Service):
             raise ValueError('Unknown idmap code: {0}'.format(code))
         return mapping[code]
 
-    def samba4(self, name, args=None):
+    async def ds_clearcache(self):
+        """Temporary call to rebuild DS cache"""
+        await Popen(
+            '/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py expire && '
+            '/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py fill',
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=True
+        )
+
+    def samba4(self, name, kwargs):
         """Temporary wrapper to use Samba4 over middlewared"""
-        if args is None:
-            args = []
-        return getattr(Samba4(), name)(*args)
+        object_args = {}
+        if 'object_args' in kwargs:
+            object_args = kwargs['object_args']
+
+        method_args = []
+        if 'method_args' in kwargs:
+            method_args = kwargs['method_args']
+
+        return getattr(Samba4(**object_args), name)(*method_args)
 
     def choices(self, name, args=None):
         """Temporary wrapper to get to UI choices"""

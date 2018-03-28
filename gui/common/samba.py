@@ -29,10 +29,11 @@ import sys
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.services.models import DomainController
 
-SAMBA_DB_PATH = "/var/db/samba4"
-SAMBA_PROVISIONED_FILE = os.path.join(SAMBA_DB_PATH, ".provisioned")
-SAMBA_USER_IMPORT_FILE = os.path.join(SAMBA_DB_PATH, ".usersimported")
-SAMBA_TOOL = "/usr/local/bin/samba-tool"
+# XXX Keep commented out for now, until we /really/ know these are gone ;-) XXX
+# SAMBA_DB_PATH = "/var/db/samba4"
+# SAMBA_PROVISIONED_FILE = os.path.join(SAMBA_DB_PATH, ".provisioned")
+# SAMBA_USER_IMPORT_FILE = os.path.join(SAMBA_DB_PATH, ".usersimported")
+# SAMBA_TOOL = "/usr/local/bin/samba-tool"
 
 
 class SambaConf(object):
@@ -42,7 +43,41 @@ class SambaConf(object):
 
 class Samba4(object):
     def __init__(self, *args, **kwargs):
-        self.samba_tool_path = SAMBA_TOOL
+        self._samba_db_path = "/var/db/samba4"
+
+        # This should always be under /var/db/samba4/
+        self._samba_provisioned_file = os.path.join(self._samba_db_path, ".provisioned")
+
+        if 'db_path' in kwargs and kwargs['db_path']:
+            self._samba_db_path = kwargs['db_path']
+
+        self._samba_user_import_file = os.path.join(self._samba_db_path, ".usersimported")
+        self._samba_tool = "/usr/local/bin/samba-tool"
+
+    @property
+    def db_path(self):
+        return self._samba_db_path
+
+    @db_path.setter
+    def db_path(self, value):
+        self._samba_db_path = value
+        self._samba_user_import_file = os.path.join(self._samba_db_path, ".usersimported")
+
+    @property
+    def provisioned_file(self):
+        return self._samba_provisioned_file
+
+    @provisioned_file.setter
+    def provisioned_file(self, value):
+        self._samba_provisioned_file = value
+
+    @property
+    def user_import_file(self):
+        return self._samba_user_import_file
+
+    @user_import_file.setter
+    def user_import_file(self, value):
+        self._samba_user_import_file = value
 
     def samba_tool(self, cmd, args, nonargs=None, quiet=False, buf=None):
         samba_tool_args = cmd
@@ -58,7 +93,7 @@ class Samba4(object):
             for key in nonargs:
                 samba_tool_args = "%s '%s'" % (samba_tool_args, key)
 
-        p = pipeopen("%s %s" % (self.samba_tool_path, samba_tool_args), quiet=quiet)
+        p = pipeopen("%s %s" % (self.samba_tool, samba_tool_args), quiet=quiet)
         out = p.communicate()
         if buf is not None:
             buf.append(out)
@@ -69,13 +104,13 @@ class Samba4(object):
         return True
 
     def domain_provisioned(self):
-        return self.sentinel_file_exists(SAMBA_PROVISIONED_FILE)
+        return self.sentinel_file_exists(self._samba_provisioned_file)
 
     def domain_sentinel_file_create(self):
-        return self.sentinel_file_create(SAMBA_PROVISIONED_FILE)
+        return self.sentinel_file_create(self._samba_provisioned_file)
 
     def domain_sentinel_file_remove(self):
-        return self.sentinel_file_remove(SAMBA_PROVISIONED_FILE)
+        return self.sentinel_file_remove(self._samba_provisioned_file)
 
     def domain_provision(self):
         try:
@@ -252,10 +287,10 @@ class Samba4(object):
         return ret
 
     def users_imported(self):
-        return self.sentinel_file_exists(SAMBA_USER_IMPORT_FILE)
+        return self.sentinel_file_exists(self._samba_user_import_file)
 
     def user_import_sentinel_file_create(self):
-        return self.sentinel_file_create(SAMBA_USER_IMPORT_FILE)
+        return self.sentinel_file_create(self._samba_user_import_file)
 
     def user_import_sentinel_file_remove(self):
-        return self.sentinel_file_remove(SAMBA_USER_IMPORT_FILE)
+        return self.sentinel_file_remove(self._samba_user_import_file)
