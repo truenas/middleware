@@ -13,7 +13,7 @@ from functions import POST, GET_OUTPUT, PUT, DELETE, DELETE_ALL, SSH_TEST
 from auto_config import ip
 from config import *
 
-if BRIDGEHOST in locals():
+if "BRIDGEHOST" in locals():
     MOUNTPOINT = "/tmp/ad-osx" + BRIDGEHOST
 DATASET = "ad-osx"
 SMB_NAME = "TestShare"

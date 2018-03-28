@@ -40,7 +40,6 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 
 
 # Clean up any leftover items from previous failed AD LDAP or SMB runs
-@osx_host_cfg
 @ldap_test_cfg
 def test_00_cleanup_tests():
     # Clean up any leftover items from previous failed AD LDAP or SMB runs
@@ -59,8 +58,6 @@ def test_00_cleanup_tests():
                 "cifs_vfsobjects": "streams_xattr"}
     DELETE_ALL("/sharing/cifs/", payload3)
     DELETE("/storage/volume/1/datasets/%s/" % DATASET)
-    cmd = 'umount -f "%s"; rmdir "%s"; exit 0' % (MOUNTPOINT, MOUNTPOINT)
-    SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
 
 
 # Set auxilary parameters to allow mount_smbfs to work with ldap
