@@ -260,6 +260,9 @@ def service_remote(middleware):
             'system_datasets',
         ) or await middleware.call('notifier.failover_status') != 'MASTER':
             return
+        # Nginx should never be stopped on standby node
+        if service == 'nginx' and verb == 'stop':
+            return
         try:
             await middleware.call('failover.call_remote', 'core.bulk', [f'service.{verb}', [[service, options]]])
         except Exception as e:
