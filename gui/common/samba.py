@@ -31,7 +31,6 @@ from freenasUI.services.models import DomainController
 
 SAMBA_DB_PATH = "/var/db/samba4"
 SAMBA_PROVISIONED_FILE = os.path.join(SAMBA_DB_PATH, ".provisioned")
-SAMBA_USER_IMPORT_FILE = os.path.join(SAMBA_DB_PATH, ".usersimported")
 SAMBA_TOOL = "/usr/local/bin/samba-tool"
 
 
@@ -42,6 +41,15 @@ class SambaConf(object):
 
 class Samba4(object):
     def __init__(self, *args, **kwargs):
+        from freenasUI.middleware.notifier import notifier
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_licensed()
+        ):
+            self.samba_user_import_file = os.path.join("/root/samba", ".usersimported")
+        else:
+            self.samba_user_import_file = os.path.join(SAMBA_DB_PATH, ".usersimported")
+
         self.samba_tool_path = SAMBA_TOOL
 
     def samba_tool(self, cmd, args, nonargs=None, quiet=False, buf=None):
@@ -252,10 +260,10 @@ class Samba4(object):
         return ret
 
     def users_imported(self):
-        return self.sentinel_file_exists(SAMBA_USER_IMPORT_FILE)
+        return self.sentinel_file_exists(self.samba_user_import_file)
 
     def user_import_sentinel_file_create(self):
-        return self.sentinel_file_create(SAMBA_USER_IMPORT_FILE)
+        return self.sentinel_file_create(self.samba_user_import_file)
 
     def user_import_sentinel_file_remove(self):
-        return self.sentinel_file_remove(SAMBA_USER_IMPORT_FILE)
+        return self.sentinel_file_remove(self.samba_user_import_file)
