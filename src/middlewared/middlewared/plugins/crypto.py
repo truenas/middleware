@@ -1,3 +1,4 @@
+from middlewared.schema import accepts, Int
 from middlewared.service import CRUDService, filterable, private
 from OpenSSL import crypto
 
@@ -26,6 +27,27 @@ class CertificateService(CRUDService):
             options = {}
         options['extend'] = 'certificate.cert_extend'
         return await self.middleware.call('datastore.query', 'system.certificate', filters, options)
+
+    @accepts(
+        Int('certificate_id', required=True)
+    )
+    async def get_fingerprint(self, certificate_id):
+        certificate_list = await self.query(filters=[('id', '=', certificate_id)])
+        if len(certificate_list) == 0:
+            return None
+        else:
+            cert_certificate = certificate_list[0]['cert_certificate']
+
+        # getting fingerprint of certificate
+        try:
+            certificate = crypto.load_certificate(
+                crypto.FILETYPE_PEM,
+                cert_certificate
+            )
+        except Exception:
+            return None
+        else:
+            return certificate.digest('sha1').decode()
 
     @private
     async def cert_extend(self, cert):

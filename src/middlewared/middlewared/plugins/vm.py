@@ -618,7 +618,8 @@ class VMService(CRUDService):
            list: will return a list of available IPv4 address.
         """
         default_ifaces = ['0.0.0.0', '127.0.0.1']
-        ifaces = self.middleware.call_sync('interfaces.ipv4_in_use')
+        ifaces_dict_list = self.middleware.call_sync('interfaces.ip_in_use', {'ipv4': True})
+        ifaces = [alias_dict['address'] for alias_dict in ifaces_dict_list]
 
         default_ifaces.extend(ifaces)
         return default_ifaces
