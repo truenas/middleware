@@ -1,18 +1,21 @@
-from middlewared.service import ConfigService, Service, filterable, private, ValidationErrors
-from middlewared.utils import Popen, filter_list, run
-from middlewared.schema import accepts, Bool, Dict, IPAddr, List, Str
-from middlewared.validators import Match
-
 import asyncio
-from collections import defaultdict
-import ipaddr
 import ipaddress
-import netif
 import os
 import re
 import signal
 import subprocess
 import urllib.request
+from collections import defaultdict
+
+import ipaddr
+
+import netif
+from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Str,
+                                ValidationErrors, accepts)
+from middlewared.service import (ConfigService, CRUDService, Service,
+                                 filterable, private)
+from middlewared.utils import Popen, filter_list, run
+from middlewared.validators import Match
 
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 RE_MTU = re.compile(r'\bmtu\s+(\d+)')
@@ -439,7 +442,7 @@ class InterfacesService(Service):
         for interface in interfaces:
             try:
                 await self.sync_interface(interface)
-            except:
+            except Exception:
                 self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
 
         internal_interfaces = ['lo', 'pflog', 'pfsync', 'tun', 'tap', 'bridge', 'epair']
@@ -816,6 +819,108 @@ class RoutesService(Service):
                         if ipaddress.ip_address(ipv4_gateway) in ipaddress.ip_network(nic_result):
                             return True
         return False
+
+
+class StaticRouteService(CRUDService):
+    class Config:
+        datastore = 'network.staticroute'
+        datastore_prefix = 'sr_'
+        datastore_extend = 'staticroute.upper'
+
+    @accepts(Dict(
+        'staticroute_create',
+        IPAddr('destination'),
+        IPAddr('gateway'),
+        Str('description'),
+        register=True
+    ))
+    async def do_create(self, data):
+        await self.clean(data, 'staticroute_create')
+        await self.lower(data)
+
+        data['id'] = await self.middleware.call(
+            'datastore.insert', self._config.datastore, data,
+            {'prefix': self._config.datastore_prefix})
+
+        await self.middleware.call('service.start', 'routing')
+        await self.upper(data)
+
+        return data
+
+    @accepts(
+        Int('id'),
+        Patch(
+            'staticroute_create',
+            'staticroute_update',
+            ('attr', {'update': True})
+        )
+    )
+    async def do_update(self, id, data):
+        old = await self.middleware.call(
+            'datastore.query', self._config.datastore, [('id', '=', id)],
+            {'extend': self._config.datastore_extend,
+             'prefix': self._config.datastore_prefix,
+             'get': True})
+
+        new = old.copy()
+        new.update(data)
+
+        await self.clean(data, 'staticroute_update')
+
+        await self.lower(data)
+
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, id, data,
+            {'prefix': self._config.datastore_prefix})
+
+        await self.middleware.call('service.start', 'routing')
+        await self.upper(new)
+
+        return new
+
+    @accepts(Int('id'))
+    async def do_delete(self, id):
+        return await self.middleware.call(
+            'datastore.delete', self._config.datastore, id)
+
+    @private
+    async def lower(self, data):
+        data['description'] = data['description'].lower()
+
+        return data
+
+    @private
+    async def upper(self, data):
+        data['description'] = data['description'].upper()
+
+        return data
+
+    @private
+    async def clean(self, staticroute, schema_name):
+        verrors = ValidationErrors()
+        dest = staticroute.get('destination')
+        dest = re.sub(r'\s{2,}', ' ', dest).strip()
+        raise_err = False
+
+        if dest.find('/') != -1:
+            try:
+                subnet_mask = int(dest.split('/')[1])
+                print(subnet_mask)
+
+                if subnet_mask > 32 or subnet_mask < 0:
+                    raise ValueError
+            except (ValueError, IndexError):
+                raise_err = True
+        else:
+            raise_err = True
+
+        if raise_err:
+                verrors.add(
+                    f"{schema_name}.destination",
+                    f"The network '{dest}' is not valid, CIDR expected."
+                )
+
+                raise verrors
 
 
 class DNSService(Service):

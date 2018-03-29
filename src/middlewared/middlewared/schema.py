@@ -174,6 +174,7 @@ class IPAddr(Str):
 
     def validate(self, value):
         if value:
+            value = value.rsplit('/')[0]  # May have CIDR
             try:
                 ipaddress.ip_address(value)
             except ValueError:

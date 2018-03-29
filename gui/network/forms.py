@@ -40,6 +40,7 @@ from freenasUI.common.system import get_sw_name
 from freenasUI.contrib.IPAddressField import IP4AddressFormField
 from freenasUI.freeadmin.sqlite3_ha.base import DBSync
 from freenasUI.middleware.client import client
+from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.network import models
@@ -860,31 +861,21 @@ class LAGGInterfaceMemberForm(ModelForm):
         notifier().start("network")
 
 
-class StaticRouteForm(ModelForm):
+class StaticRouteForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'sr_'
+    middleware_attr_schema = 'staticroute'
+    middleware_plugin = 'staticroute'
+    is_singletone = False
 
     class Meta:
         fields = '__all__'
         model = models.StaticRoute
 
-    def save(self):
-        retval = super(StaticRouteForm, self).save()
-        notifier().start("routing")
-        return retval
-
-    def clean_sr_destination(self):
-        sr = self.cleaned_data['sr_destination']
-        sr = re.sub(r'\s{2,}', ' ', sr).strip()
-        try:
-            if sr.find("/") != -1:
-                socket.inet_aton(sr.split("/")[0])
-                if int(sr.split("/")[1]) > 32 or int(sr.split("/")[1]) < 0:
-                    raise
-            else:
-                raise
-        except:
-            raise forms.ValidationError(
-                _("The network '%s' is not valid, CIDR expected.") % sr)
-        return sr
+    def middleware_clean(self, data):
+        data['description'] = data['description'].upper()
+        data['gateway'] = str(data['gateway'])
+        return data
 
 
 class AliasForm(ModelForm):
