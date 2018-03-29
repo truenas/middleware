@@ -235,7 +235,7 @@ if __name__ == "__main__":
             zvols = []
             zpool_table.clear()
             for i, zpool in enumerate(zfs.pools):
-                row = zpool_table.addRow([agent.Integer32(i)])
+                row = zpool_table.addRow([agent.Integer32(i + 1)])
                 row.setRowCell(2, agent.DisplayString(zpool.properties["name"].value))
                 allocation_units, \
                     (
@@ -270,7 +270,7 @@ if __name__ == "__main__":
 
             dataset_table.clear()
             for i, dataset in enumerate(datasets):
-                row = dataset_table.addRow([agent.Integer32(i)])
+                row = dataset_table.addRow([agent.Integer32(i + 1)])
                 row.setRowCell(2, agent.DisplayString(dataset.properties["name"].value))
                 allocation_units, (
                     size,
@@ -288,7 +288,7 @@ if __name__ == "__main__":
 
             zvol_table.clear()
             for i, zvol in enumerate(zvols):
-                row = zvol_table.addRow([agent.Integer32(i)])
+                row = zvol_table.addRow([agent.Integer32(i + 1)])
                 row.setRowCell(2, agent.DisplayString(zvol.properties["name"].value))
                 allocation_units, (
                     volsize,
