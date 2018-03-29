@@ -92,7 +92,7 @@ def test_07_Creating_a_SMB_share_on_SMB_PATH():
 @mount_test_cfg
 @osx_host_cfg
 def test_08_Create_mount_point_for_SMB_on_OSX_system():
-    assert SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
+    assert SSH_TEST('mkdir -p %s' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
