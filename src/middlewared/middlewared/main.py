@@ -640,7 +640,8 @@ class ShellApplication(object):
         if not authenticated:
             return ws
 
-        asyncio.ensure_future(self.worker_kill(conndata.t_worker))
+        if conndata.t_worker:
+            asyncio.ensure_future(self.worker_kill(conndata.t_worker))
 
         return ws
 
