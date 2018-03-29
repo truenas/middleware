@@ -38,6 +38,8 @@ import codecs
 from os import popen
 from django.utils.translation import ugettext_lazy as _
 
+from freenasUI.middleware.client import client
+
 log = logging.getLogger('choices')
 
 HTAUTH_CHOICES = (
@@ -989,19 +991,13 @@ CASE_SENSITIVITY_CHOICES = (
 class SERIAL_CHOICES(object):
 
     def __iter__(self):
-        from freenasUI.middleware.notifier import notifier
-        _n = notifier()
-        if not _n.is_freenas() and _n.failover_hardware() == "ECHOSTREAM":
-            yield ('0x3f8', '0x3f8')
-        else:
-            pipe = popen("/usr/sbin/devinfo -u | "
-                         "grep -A 99999 '^I/O ports:' | "
-                         "sed -En 's/ *([0-9a-fA-Fx]+).*\(uart[0-9]+\)/\\1/p'")
-            ports = [y for y in pipe.read().strip().strip('\n').split('\n') if y]
-            if not ports:
-                ports = ['0x2f8']
-            for p in ports:
-                yield (p, p)
+        try:
+            with client as c:
+                ports = c.call('system.advanced.serial_port_choices')
+        except Exception:
+            ports = ['0x2f8']
+        for p in ports:
+            yield (p, p)
 
 
 TUNABLE_TYPES = (

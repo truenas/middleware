@@ -1163,7 +1163,13 @@ class NTPForm(ModelForm):
         notifier().restart("ntpd")
 
 
-class AdvancedForm(ModelForm):
+class AdvancedForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'adv_'
+    middleware_attr_schema = 'advanced_settings'
+    middleware_plugin = 'system.advanced'
+    is_singletone = True
+
     class Meta:
         fields = '__all__'
         model = models.Advanced
@@ -1171,81 +1177,25 @@ class AdvancedForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(AdvancedForm, self).__init__(*args, **kwargs)
         self.fields['adv_motd'].strip = False
-        self.instance._original_adv_motd = self.instance.adv_motd
-        self.instance._original_adv_consolemenu = self.instance.adv_consolemenu
-        self.instance._original_adv_powerdaemon = self.instance.adv_powerdaemon
-        self.instance._original_adv_serialconsole = (
-            self.instance.adv_serialconsole
-        )
-        self.instance._original_adv_serialspeed = self.instance.adv_serialspeed
-        self.instance._original_adv_serialport = self.instance.adv_serialport
-        self.instance._original_adv_consolescreensaver = (
-            self.instance.adv_consolescreensaver
-        )
-        self.instance._original_adv_consolemsg = self.instance.adv_consolemsg
-        self.instance._original_adv_advancedmode = (
-            self.instance.adv_advancedmode
-        )
-        self.instance._original_adv_autotune = self.instance.adv_autotune
-        self.instance._original_adv_debugkernel = self.instance.adv_debugkernel
-        self.instance._original_adv_periodic_notifyuser = self.instance.adv_periodic_notifyuser
-        self.instance._original_adv_cpu_in_percentage = self.instance.adv_cpu_in_percentage
-        self.instance._original_adv_graphite = self.instance.adv_graphite
-        self.instance._original_adv_fqdn_syslog = self.instance.adv_fqdn_syslog
+        self.original_instance = self.instance.__dict__
 
-    def save(self):
-        super(AdvancedForm, self).save()
-        loader_reloaded = False
-        if self.instance._original_adv_motd != self.instance.adv_motd:
-            notifier().start("motd")
-        if self.instance._original_adv_consolemenu != self.instance.adv_consolemenu:
-            notifier().start("ttys")
-        if self.instance._original_adv_powerdaemon != self.instance.adv_powerdaemon:
-            notifier().restart("powerd")
-        if self.instance._original_adv_serialconsole != self.instance.adv_serialconsole:
-            notifier().start("ttys")
-            if not loader_reloaded:
-                notifier().reload("loader")
-                loader_reloaded = True
-        elif (self.instance._original_adv_serialspeed != self.instance.adv_serialspeed or
-                self.instance._original_adv_serialport != self.instance.adv_serialport):
-            if not loader_reloaded:
-                notifier().reload("loader")
-                loader_reloaded = True
-        if self.instance._original_adv_consolescreensaver != self.instance.adv_consolescreensaver:
-            if self.instance.adv_consolescreensaver == 0:
-                notifier().stop("saver")
-            else:
-                notifier().start("saver")
-            if not loader_reloaded:
-                notifier().reload("loader")
-                loader_reloaded = True
-        if (
-            self.instance._original_adv_autotune != self.instance.adv_autotune and
-            not loader_reloaded
-        ):
-            notifier().reload("loader")
-        if self.instance._original_adv_debugkernel != self.instance.adv_debugkernel:
-            notifier().reload("loader")
-        if self.instance._original_adv_periodic_notifyuser != self.instance.adv_periodic_notifyuser:
-            notifier().start("ix-periodic")
-        if (self.instance._original_adv_cpu_in_percentage != self.instance.adv_cpu_in_percentage or
-                self.instance._original_adv_graphite != self.instance.adv_graphite):
-            notifier().restart("collectd")
-        if self.instance._original_adv_fqdn_syslog != self.instance.adv_fqdn_syslog:
-            notifier().restart("syslogd")
+    def middleware_clean(self, data):
+        if data.get('sed_user'):
+            data['sed_user'] = data['sed_user'].upper()
+
+        return data
 
     def done(self, request, events):
-        if self.instance._original_adv_consolemsg != self.instance.adv_consolemsg:
+        if self.original_instance['adv_consolemsg'] != self.instance.adv_consolemsg:
             if self.instance.adv_consolemsg:
                 events.append("_msg_start()")
             else:
                 events.append("_msg_stop()")
-        if self.instance._original_adv_advancedmode != self.instance.adv_advancedmode:
+        if self.original_instance['adv_advancedmode'] != self.instance.adv_advancedmode:
             # Invalidate cache
             request.session.pop("adv_mode", None)
         if (
-            self.instance._original_adv_autotune != self.instance.adv_autotune and
+            self.original_instance['adv_autotune'] != self.instance.adv_autotune and
             self.instance.adv_autotune is True
         ):
             events.append("refreshTree()")

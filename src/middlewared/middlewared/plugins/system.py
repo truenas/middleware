@@ -1,6 +1,6 @@
 from datetime import datetime
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, Str
-from middlewared.service import no_auth_required, job, private, ConfigService, Service, ValidationErrors
+from middlewared.service import ConfigService, no_auth_required, job, private, Service, ValidationErrors
 from middlewared.utils import Popen, sw_version
 from middlewared.validators import Range
 
@@ -24,6 +24,169 @@ from freenasUI.system.utils import debug_get_settings, debug_run
 
 # Flag telling whether the system completed boot and is ready to use
 SYSTEM_READY = False
+
+
+class SytemAdvancedService(ConfigService):
+
+    class Config:
+        datastore = 'system.advanced'
+        datastore_prefix = 'adv_'
+        datastore_extend = 'system.advanced.system_advanced_extend'
+        namespace = 'system.advanced'
+
+    @accepts()
+    async def serial_port_choices(self):
+        if(
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('notifier.failover_hardware') == 'ECHOSTREAM'
+        ):
+            ports = ['0x3f8']
+        else:
+            pipe = await Popen("/usr/sbin/devinfo -u | grep -A 99999 '^I/O ports:' | "
+                               "sed -En 's/ *([0-9a-fA-Fx]+).*\(uart[0-9]+\)/\\1/p'", stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, shell=True)
+            ports = [y for y in (await pipe.communicate())[0].decode().strip().strip('\n').split('\n') if y]
+            if not ports:
+                ports = ['0x2f8']
+
+        return ports
+
+    async def system_advanced_extend(self, data):
+        if data.get('sed_user'):
+            data['sed_user'] = data.get('sed_user').upper()
+        return data
+
+    async def validate_fields(self, schema, data):
+        verrors = ValidationErrors()
+
+        user = data.get('periodic_notifyuser')
+        if user:
+            if not (
+                await self.middleware.call(
+                    'notifier.get_user_object',
+                    user
+                )
+            ):
+                verrors.add(
+                    f'{schema}.periodic_notifyuser',
+                    'Specified user does not exist'
+                )
+
+        serial_choice = data.get('serialport')
+        if serial_choice:
+            if serial_choice not in await self.serial_port_choices():
+                verrors.add(
+                    f'{schema}.serialport',
+                    'Serial port specified has not been identified by the system'
+                )
+        return verrors, data
+
+    @accepts(
+        Dict(
+            'system_advanced_update',
+            Bool('advancedmode'),
+            Bool('autotune'),
+            Bool('consolemenu'),
+            Bool('consolemsg'),
+            Bool('consolescreensaver'),
+            Bool('cpu_in_percentage'),
+            Bool('debugkernel'),
+            Bool('fqdn_syslog'),
+            Str('graphite'),
+            Str('motd'),
+            Str('periodic_notifyuser'),
+            Bool('powerdaemon'),
+            Bool('serialconsole'),
+            Str('serialport'),
+            Str('serialspeed', enum=['9600', '19200', '38400', '57600', '115200']),
+            Int('swapondrive', validators=[Range(min=0)]),
+            Bool('traceback'),
+            Bool('uploadcrash'),
+            Bool('anonstats'),
+            Str('sed_user', enum=['USER', 'MASTER'])
+        )
+    )
+    async def do_update(self, data):
+        config_data = await self.config()
+        original_data = config_data.copy()
+        config_data.update(data)
+
+        verrors, config_data = await self.validate_fields('advanced_settings_update', config_data)
+        if verrors:
+            raise verrors
+
+        if len(set(config_data.items()) ^ set(original_data.items())) > 0:
+            if original_data.get('sed_user'):
+                original_data['sed_user'] = original_data['sed_user'].lower()
+            if config_data.get('sed_user'):
+                config_data['sed_user'] = config_data['sed_user'].lower()
+
+            await self.middleware.call(
+                'datastore.update',
+                self._config.datastore,
+                config_data['id'],
+                config_data,
+                {'prefix': self._config.datastore_prefix}
+            )
+
+            loader_reloaded = False
+            if original_data['motd'] != config_data['motd']:
+                await self.middleware.call('service.start', 'motd', {'onetime': False})
+
+            if original_data['consolemenu'] != config_data['consolemenu']:
+                await self.middleware.call('service.start', 'ttys', {'onetime': False})
+
+            if original_data['powerdaemon'] != config_data['powerdaemon']:
+                await self.middleware.call('service.restart', 'powerd', {'onetime': False})
+
+            if original_data['serialconsole'] != config_data['serialconsole']:
+                await self.middleware.call('service.start', 'ttys', {'onetime': False})
+                if not loader_reloaded:
+                    await self.middleware.call('service.reload', 'loader', {'onetime': False})
+                    loader_reloaded = True
+            elif (
+                    original_data['serialspeed'] != config_data['serialspeed'] or
+                    original_data['serialport'] != config_data['serialport']
+            ):
+                if not loader_reloaded:
+                    await self.middleware.call('service.reload', 'loader', {'onetime': False})
+                    loader_reloaded = True
+
+            if original_data['consolescreensaver'] != config_data['consolescreensaver']:
+                if config_data['consolescreensaver'] == 0:
+                    await self.middleware.call('service.stop', 'saver', {'onetime': False})
+                else:
+                    await self.middleware.call('service.start', 'saver', {'onetime': False})
+                if not loader_reloaded:
+                    await self.middleware.call('service.reload', 'loader', {'onetime': False})
+                    loader_reloaded = True
+
+            if (
+                original_data['autotune'] != config_data['autotune'] and
+                not loader_reloaded
+            ):
+                await self.middleware.call('service.reload', 'loader', {'onetime': False})
+                loader_reloaded = True
+
+            if (
+                original_data['debugkernel'] != config_data['debugkernel'] and
+                not loader_reloaded
+            ):
+                await self.middleware.call('service.reload', 'loader', {'onetime': False})
+
+            if original_data['periodic_notifyuser'] != config_data['periodic_notifyuser']:
+                await self.middleware.call('service.start', 'ix-periodic', {'onetime': False})
+
+            if (
+                original_data['cpu_in_percentage'] != config_data['cpu_in_percentage'] or
+                original_data['graphite'] != config_data['graphite']
+            ):
+                await self.middleware.call('service.restart', 'collectd', {'onetime': False})
+
+            if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
+                await self.middleware.call('service.restart', 'syslogd', {'onetime': False})
+
+        return await self.config()
 
 
 class SystemService(Service):
