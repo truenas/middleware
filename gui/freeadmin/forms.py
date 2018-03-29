@@ -27,6 +27,7 @@ import logging
 import os
 import re
 
+from django.core.urlresolvers import reverse
 from django.forms.widgets import Widget, TextInput
 from django.forms.utils import flatatt
 from django.template.loader import render_to_string
@@ -106,15 +107,18 @@ class UserField(forms.ChoiceField):
             users = FreeNAS_Users(flags=FLAGS_DBINIT | FLAGS_CACHE_READ_USER)
         except:
             users = []
+        kwargs = {
+            'api_name': 'v1.0',
+            'resource_name': 'account/all_users'
+        }
         if len(users) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
-            kwargs = {}
             if len(self._exclude) > 0:
                 kwargs['exclude'] = ','.join(self._exclude)
             self.widget = FilteredSelectJSON(
                 attrs=self.widget.attrs,
-                url=("account_bsduser_json", None, (), kwargs)
+                url=reverse('api_dispatch_list', kwargs=kwargs)
             )
         else:
             ulist = []
@@ -134,7 +138,7 @@ class UserField(forms.ChoiceField):
 
             self.widget = FilteredSelectJSON(
                 attrs=self.widget.attrs,
-                url=("account_bsduser_json",),
+                url=reverse('api_dispatch_list', kwargs=kwargs),
                 choices=ulist
             )
             #self.choices = ulist
@@ -175,12 +179,16 @@ class GroupField(forms.ChoiceField):
             groups = FreeNAS_Groups(flags=FLAGS_DBINIT | FLAGS_CACHE_READ_GROUP)
         except:
             groups = []
+        kwargs = {
+            'api_name': 'v1.0',
+            'resource_name': 'account/all_groups'
+        }
         if len(groups) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
             self.widget = FilteredSelectJSON(
                 attrs=self.widget.attrs,
-                url=("account_bsdgroup_json",)
+                url=reverse('api_dispatch_list', kwargs=kwargs)
             )
         else:
             glist = []
@@ -201,7 +209,7 @@ class GroupField(forms.ChoiceField):
             #self.choices = glist
             self.widget = FilteredSelectJSON(
                 attrs=self.widget.attrs,
-                url=("account_bsdgroup_json",),
+                url=reverse('api_dispatch_list', kwargs=kwargs),
                 choices=glist
             )
 

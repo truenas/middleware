@@ -28,7 +28,6 @@ import os
 import re
 
 from django.contrib.auth import authenticate
-from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.http import QueryDict
 
@@ -113,7 +112,6 @@ class FilteredSelectJSON(forms.widgets.ComboBox):
     def render(self, name, value, attrs=None):
         if attrs is None:
             attrs = {}
-        self.url = reverse(*self.url)
         store = 'state' + attrs['id']
         attrs.update({
             'store': store,
