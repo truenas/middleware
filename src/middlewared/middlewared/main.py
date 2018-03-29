@@ -562,10 +562,14 @@ class ShellWorkerThread(threading.Thread):
 
         t_reader.join()
         t_writer.join()
-        asyncio.ensure_future(self.ws.close(), loop=self.loop)
+        asyncio.run_coroutine_threadsafe(self.ws.close(), self.loop)
 
     def die(self):
         self._die = True
+
+
+class ShellConnectionData(object):
+    t_worker = None
 
 
 class ShellApplication(object):
@@ -577,9 +581,20 @@ class ShellApplication(object):
         ws = web.WebSocketResponse()
         await ws.prepare(request)
 
+        conndata = ShellConnectionData()
+
+        try:
+            await self.run(ws, request, conndata)
+        except Exception as e:
+            if conndata.t_worker:
+                await self.worker_kill(conndata.t_worker)
+        finally:
+            return ws
+
+    async def run(self, ws, request, conndata):
+
         # Each connection will have its own input queue
         input_queue = queue.Queue()
-        t_worker = None
         authenticated = False
 
         async for msg in ws:
@@ -618,13 +633,18 @@ class ShellApplication(object):
                 })
 
                 jail = data.get('jail')
-                t_worker = ShellWorkerThread(ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(), jail=jail)
-                t_worker.start()
+                conndata.t_worker = ShellWorkerThread(ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(), jail=jail)
+                conndata.t_worker.start()
 
         # If connection was not authenticated, return earlier
         if not authenticated:
             return ws
 
+        asyncio.ensure_future(self.worker_kill(conndata.t_worker))
+
+        return ws
+
+    async def worker_kill(self, t_worker):
         # If connection has been closed lets make sure shell is killed
         if t_worker.shell_pid:
 
@@ -652,8 +672,6 @@ class ShellApplication(object):
         # Wait thread join in yet another thread to avoid event loop blockage
         # There may be a simpler/better way to do this?
         await self.middleware.run_in_thread(t_worker.join)
-
-        return ws
 
 
 class Middleware(object):
