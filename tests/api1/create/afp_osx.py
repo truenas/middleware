@@ -39,7 +39,7 @@ def test_00_cleanup_tests():
     PUT("/services/afp/", {"afp_srv_guest": False})
     payload = {"afp_name": AFP_NAME, "afp_path": AFP_PATH}
     DELETE_ALL("/sharing/afp/", payload)
-    # DELETE("/storage/volume/1/datasets/%s/" % DATASET)
+    DELETE("/storage/volume/1/datasets/%s/" % DATASET)
 
 
 def test_01_Creating_AFP_dataset():
@@ -135,6 +135,11 @@ def test_15_Verify_AFP_service_can_be_disabled():
     assert PUT("/services/afp/", {"afp_srv_guest": "false"}) == 200
 
 
+def test_16_Verify_delete_afp_name_and_afp_path():
+    payload = {"afp_name": AFP_NAME, "afp_path": AFP_PATH}
+    assert DELETE_ALL("/sharing/afp/", payload) == 200
+
+
 # Test delete AFP dataset
-def test_16_Verify_AFP_dataset_can_be_destroyed():
+def test_17_Verify_AFP_dataset_can_be_destroyed():
     assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204

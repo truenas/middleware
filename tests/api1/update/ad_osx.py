@@ -11,6 +11,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, SSH_TEST
+from auto_config import ip
 from config import *
 
 if "BRIDGEHOST" in locals():
