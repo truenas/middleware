@@ -137,7 +137,7 @@ def test_15_Verify_AFP_service_can_be_disabled():
 
 def test_16_Verify_delete_afp_name_and_afp_path():
     payload = {"afp_name": AFP_NAME, "afp_path": AFP_PATH}
-    assert DELETE_ALL("/sharing/afp/", payload) == 200
+    assert DELETE_ALL("/sharing/afp/", payload) == 204
 
 
 # Test delete AFP dataset
