@@ -414,11 +414,9 @@ class ServiceService(CRUDService):
         await self._service("collectd", "start", **kwargs)
 
     async def _start_sysctl(self, **kwargs):
-        await self._service("sysctl", "start", **kwargs)
         await self._service("ix-sysctl", "start", quiet=True, **kwargs)
 
     async def _reload_sysctl(self, **kwargs):
-        await self._service("sysctl", "start", **kwargs)
         await self._service("ix-sysctl", "reload", **kwargs)
 
     async def _start_network(self, **kwargs):
