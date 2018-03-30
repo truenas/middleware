@@ -289,7 +289,8 @@ class DiskService(CRUDService):
 
     @private
     @accepts()
-    async def sync_all(self):
+    @job(lock="disk.sync_all")
+    async def sync_all(self, job):
         """
         Synchronyze all disks with the cache in database.
         """
@@ -390,6 +391,8 @@ class DiskService(CRUDService):
                     disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
                 # FIXME: use a truenas middleware plugin
                 await self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], True)
+
+        return "OK"
 
     async def __multipath_create(self, name, consumers, mode=None):
         """
@@ -823,7 +826,7 @@ async def _event_devfs(middleware, event_type, args):
         # TODO: hack so every disk is not synced independently during boot
         # This is a performance issue
         if os.path.exists('/tmp/.sync_disk_done'):
-            await middleware.call('disk.sync_all')
+            await (await middleware.call('disk.sync_all'))
             await middleware.call('disk.multipath_sync')
             try:
                 with SmartAlert() as sa:
