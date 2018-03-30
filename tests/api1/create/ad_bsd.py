@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, SSH_TEST
+from functions import PUT, POST, GET_OUTPUT, SSH_TEST
 from auto_config import ip
 from config import *
 
@@ -36,30 +36,6 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
                                        "BSD_USERNAME" in locals(),
                                        "BSD_PASSWORD" in locals()
                                        ]) is False, reason=BSDReason)
-
-
-# Clean up any leftover items from previous failed runs
-@bsd_host_cfg
-@ad_test_cfg
-def test_00_cleanup_tests():
-    payload1 = {"ad_bindpw": ADPASSWORD,
-                "ad_bindname": ADUSERNAME,
-                "ad_domainname": BRIDGEDOMAIN,
-                "ad_netbiosname_a": BRIDGEHOST,
-                "ad_idmap_backend": "rid",
-                "ad_enable": False}
-    PUT("/directoryservice/activedirectory/1/", payload1) == 200
-    PUT("/services/services/cifs/", {"srv_enable": "false"}) == 200
-    payload3 = {"cfs_comment": "My Test SMB Share",
-                "cifs_path": SMB_PATH,
-                "cifs_name": SMB_NAME,
-                "cifs_guestok": "true",
-                "cifs_vfsobjects": "streams_xattr"}
-    DELETE_ALL("/sharing/cifs/", payload3) == 204
-    DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
-    SSH_TEST("umount -f " + MOUNTPOINT,
-             BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    SSH_TEST("rmdir " + MOUNTPOINT, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
 
 
 def test_01_creating_smb_dataset():
@@ -184,39 +160,3 @@ def test_17_Deleting_SMB_file_2_2():
 def test_18_Unmounting_SMB():
     assert SSH_TEST('umount "%s"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
-
-
-@bsd_host_cfg
-@ad_test_cfg
-def test_19_Removing_SMB_mountpoint():
-    cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
-
-
-# Disable Active Directory Directory
-@ad_test_cfg
-def test_20_disabling_active_directory():
-    payload = {"ad_bindpw": ADPASSWORD,
-               "ad_bindname": ADUSERNAME,
-               "ad_domainname": BRIDGEDOMAIN,
-               "ad_netbiosname_a": BRIDGEHOST,
-               "ad_idmap_backend": "rid",
-               "ad_enable": "false"}
-    assert PUT("/directoryservice/activedirectory/1/", payload) == 200
-
-
-# Check Active Directory
-@ad_test_cfg
-def test_21_Verify_Active_Directory_is_disabled():
-    assert GET_OUTPUT("/directoryservice/activedirectory/",
-                      "ad_enable") is False
-
-
-@ad_test_cfg
-def test_22_Verify_SMB_service_is_disabled():
-    assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "STOPPED"
-
-
-# Check destroying a SMB dataset
-def test_23_Destroying_SMB_dataset():
-    assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
