@@ -1886,6 +1886,7 @@ class CloudSyncResourceMixin(NestedMixin):
                     job['state'],
                     job['error'],
                 )
+                bundle.data['job_id'] = job['id']
             else:
                 bundle.data['status'] = job['state']
         else:

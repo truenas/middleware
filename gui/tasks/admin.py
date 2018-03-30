@@ -82,6 +82,13 @@ class CloudSyncFAdmin(BaseFreeAdmin):
             'name': 'status',
             'label': _('Status'),
             'sortable': False,
+            'formatter': """function(value, obj) {
+                if (obj.job_id) {
+                    return '<a onclick="jobLogs(' + obj.job_id + '); return false;" style="cursor: pointer; text-decoration: underline;">' + value + '</a>';
+                }
+
+                return value;
+            }""",
         })
         for idx, column in enumerate(human_colums):
             columns.insert(4 + idx, dict(column))

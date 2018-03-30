@@ -69,32 +69,28 @@ async def rclone(job, backup, config):
         proc = await Popen(
             args,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
         check_task = asyncio.ensure_future(rclone_check_progress(job, proc))
         await proc.wait()
         if proc.returncode != 0:
             await asyncio.wait_for(check_task, None)
-            raise ValueError('rclone failed: {}'.format(check_task.result()))
+            raise ValueError("rclone failed")
         return True
 
 
 async def rclone_check_progress(job, proc):
     RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
-    read_buffer = ''
     while True:
-        read = (await proc.stderr.readline()).decode()
+        read = (await proc.stdout.readline()).decode()
+        job.logs_fd.write(read.encode("utf-8", "ignore"))
         if read == '':
             break
-        read_buffer += read
-        if len(read_buffer) > 10240:
-            read_buffer = read_buffer[-10240:]
         reg = RE_TRANSF.search(read)
         if reg:
             transferred = reg.group(1).strip()
             if not transferred.isdigit():
                 job.set_progress(None, transferred)
-    return read_buffer
 
 
 def rclone_encrypt_password(password):
@@ -310,7 +306,7 @@ class BackupService(CRUDService):
 
     @item_method
     @accepts(Int('id'))
-    @job(lock=lambda args: 'backup:{}'.format(args[-1]), lock_queue_size=1)
+    @job(lock=lambda args: 'backup:{}'.format(args[-1]), lock_queue_size=1, logs=True)
     async def sync(self, job, id):
         """
         Run the backup job `id`, syncing the local data to remote.

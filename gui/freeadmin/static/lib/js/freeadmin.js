@@ -2698,6 +2698,16 @@ require([
             });
     }
 
+    jobLogs = function(job_id) {
+        commonDialog({
+            id: "job_logs_dialog",
+            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+            name: "Logs",
+            url: "/legacy/system/job/" + job_id + "/logs/",
+            nodes: []
+        });
+    }
+
     viewModel = function(name, url, tab) {
         var opened = false;
         var p = registry.byId("content");

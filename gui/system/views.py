@@ -2153,3 +2153,10 @@ def CA_info(request, id):
     return certificate_to_json(
         models.CertificateAuthority.objects.get(pk=int(id))
     )
+
+
+def job_logs(request, id):
+    with client as c:
+        job = c.call('core.get_jobs', [('id', '=', int(id))])[0]
+
+    return render_to_response('system/job_logs.html', job)
