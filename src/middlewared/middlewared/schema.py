@@ -172,9 +172,9 @@ class File(Str):
 
 class IPAddr(Str):
 
-    def validate(self, value):
+    def validate(self, value, cidr=True):
         if value:
-            value = value.rsplit('/')[0]  # May have CIDR
+            value = value.rsplit('/')[0] if cidr else value
             try:
                 ipaddress.ip_address(value)
             except ValueError:

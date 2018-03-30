@@ -905,7 +905,6 @@ class StaticRouteService(CRUDService):
         if dest.find('/') != -1:
             try:
                 subnet_mask = int(dest.split('/')[1])
-                print(subnet_mask)
 
                 if subnet_mask > 32 or subnet_mask < 0:
                     raise ValueError
