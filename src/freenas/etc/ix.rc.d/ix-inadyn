@@ -26,15 +26,16 @@ generate_inadyn_real()
             if [ "${ddns_provider}" = "custom" ]; then
                 echo "custom customProvider {"
 
-                if [ "${ddns_ssl}" -eq "1" ]; then
-                    echo "    ssl = true"
-                else
-                    echo "    ssl = false"
-                fi
                 echo "    ddns-server = \"${ddns_custom_ddns_server}\""
                 echo "    ddns-path = \"${ddns_custom_ddns_path}\""
             else
                 echo "provider ${ddns_provider} {"
+            fi
+
+            if [ "${ddns_ssl}" -eq "1" ]; then
+                echo "    ssl = true"
+            else
+                echo "    ssl = false"
             fi
 
             if [ -n "${ddns_checkip_server}" ] && [ -n "${ddns_checkip_path}" ]; then
