@@ -607,13 +607,13 @@ class ServiceService(CRUDService):
     async def _started_activedirectory(self, **kwargs):
         for srv in ('kinit', 'activedirectory', ):
             if await self._system('/usr/sbin/service ix-%s status' % (srv, )) != 0:
-                self.logger.warn('AD monitor: Failed to get ix-%s status' % srv)
+                self.logger.debug('AD monitor: Failed to get ix-%s status' % srv)
                 return False, []
         if await self._system('/usr/local/bin/wbinfo -p') != 0:
-                self.logger.warn('AD monitor: wbinfo -p failed')
+                self.logger.debug('AD monitor: wbinfo -p failed')
                 return False, []
         if await self._system('/usr/local/bin/wbinfo -t') != 0:
-                self.logger.warn('AD monitor: wbinfo -t failed')
+                self.logger.debug('AD monitor: wbinfo -t failed')
                 return False, []
         return True, []
 
