@@ -479,6 +479,21 @@ class VMUtils(object):
                     grubcfg.write(line)
                     grubcfg.write('\n')
                 grubcfg.write('}')
+        else:
+            grub_password = 'rancher.password={0}'.format(quote(password))
+
+            with open(grub_file, 'r') as cfg_src:
+                cfg_src_data = cfg_src.read()
+                src_data = cfg_src_data.split(' ')
+                for index, data in enumerate(src_data):
+                    if data.startswith('rancher.password'):
+                        if src_data[index] == grub_password:
+                            return vm_private_dir
+                        src_data[index] = 'rancher.password={0}'.format(quote(password))
+                        break
+
+            with open(grub_file, 'w') as cfg_dst:
+                cfg_dst.write(" ".join(src_data))
 
         return vm_private_dir
 
