@@ -1913,7 +1913,12 @@ class MountPointAccessForm(Form):
         )
 
 
-class ResilverForm(ModelForm):
+class ResilverForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_schema = 'pool_resilver'
+    middleware_attr_prefix = ''
+    middleware_plugin = 'pool.resilver'
+    is_singletone = True
 
     class Meta:
         fields = '__all__'
@@ -1932,13 +1937,15 @@ class ResilverForm(ModelForm):
         super(ResilverForm, self).__init__(*args, **kwargs)
 
     def clean_weekday(self):
-        bwd = self.data.getlist('weekday')
-        return ','.join(bwd)
+        return self.data.getlist('weekday')
 
-    def done(self, *args, **kwargs):
-        notifier().restart('cron')
-        with client as c:
-            c.call('pool.configure_resilver_priority')
+    def clean_begin(self):
+        begin = self.data.get('begin')
+        return begin.strftime('%H:%M')
+
+    def clean_end(self):
+        end = self.data.get('end')
+        return end.strftime('%H:%M')
 
 
 class PeriodicSnapForm(ModelForm):
