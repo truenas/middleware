@@ -325,6 +325,11 @@ class VMSupervisor(object):
         else:
             attach_iface_info = netif.get_interface(attach_iface)
 
+        # If for some reason the main iface is down, we need to up it.
+        attach_iface_status = netif.InterfaceFlags.UP in attach_iface_info.flags
+        if attach_iface_status is False:
+            attach_iface_info.up()
+
         for brgname, iface in list(netif.list_interfaces().items()):
             if brgname.startswith('bridge'):
                 if_bridge.append(iface)
