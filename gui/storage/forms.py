@@ -886,22 +886,29 @@ class AutoImportWizard(SessionWizardView):
         cdata = self.get_cleaned_data_for_step('1') or {}
         enc_disks = cdata.get("disks", [])
         key = cdata.get("key")
-        key.seek(0)
+        if key:
+            key.seek(0)
         passphrase = cdata.get("passphrase")
 
         cdata = self.get_cleaned_data_for_step('2') or {}
         vol = cdata['volume']
 
-        try:
-            upload_job_and_wait(key, 'pool.import_pool', {
-                'guid': vol['guid'],
-                'devices': enc_disks,
-                'passphrase': passphrase,
-            })
-        except JobAborted:
-            raise MiddlewareError(_('Import job aborted'))
-        except JobFailed as e:
-            raise MiddlewareError(_('Import job failed: %s') % e.value)
+        arg = {
+            'guid': vol['guid'],
+            'devices': enc_disks,
+            'passphrase': passphrase,
+        }
+
+        if enc_disks:
+            try:
+                upload_job_and_wait(key, 'pool.import_pool', arg)
+            except JobAborted:
+                raise MiddlewareError(_('Import job aborted'))
+            except JobFailed as e:
+                raise MiddlewareError(_('Import job failed: %s') % e.value)
+        else:
+            with client as c:
+                c.call('pool.import_pool', arg, job=True)
 
         events = ['loadalert()']
         appPool.hook_form_done('AutoImportWizard', self, self.request, events)
