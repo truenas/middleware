@@ -10,7 +10,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, SSH_TEST
+from functions import PUT, GET_OUTPUT, SSH_TEST
 from auto_config import ip
 from config import *
 
@@ -33,51 +33,13 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        ]) is False, reason=OSXReason)
 
 
-# Clean up any leftover items from previous failed AD LDAP or SMB runs
-def test_00_cleanup_tests():
-    PUT("/services/afp/", {"afp_srv_guest": False})
-    payload = {"afp_name": AFP_NAME, "afp_path": AFP_PATH}
-    DELETE_ALL("/sharing/afp/", payload)
-    DELETE("/storage/volume/1/datasets/%s/" % DATASET)
-    # cmd = 'umount -f "%s"; rmdir "%s"; exit 0;' % (MOUNTPOINT, MOUNTPOINT)
-    # SSH_TEST(cmd)
-
-
-def test_01_Creating_AFP_dataset():
-    assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
-
-
 def test_02_Updating_AFP_service():
     payload = {"afp_srv_connections_limit": "100"}
     assert PUT("/services/afp/", payload) == 200
 
 
-def test_03_Enabling_AFP_service():
-    payload = {"afp_srv_guest": True, "afp_srv_bindip": ip}
-    assert PUT("/services/afp/", payload) == 200
-
-
-# Now start the service
-def test_04_Starting_AFP_service():
-    assert PUT("/services/services/afp/", {"srv_enable": True}) == 200
-
-
 def test_05_Checking_to_see_if_AFP_service_is_enabled():
     assert GET_OUTPUT("/services/services/afp/", "srv_state") == "RUNNING"
-
-
-def test_06_Changing_permissions_on_AFP_PATH():
-    payload = {"mp_path": AFP_PATH,
-               "mp_acl": "unix",
-               "mp_mode": "777",
-               "mp_user": "root",
-               "mp_group": "wheel"}
-    assert PUT("/storage/permission/", payload) == 201
-
-
-def test_07_Creating_a_AFP_share_on_AFP_PATH():
-    payload = {"afp_name": AFP_NAME, "afp_path": AFP_PATH}
-    assert POST("/sharing/afp/", payload) == 201
 
 
 # Mount share on OSX system and create a test file
@@ -134,18 +96,3 @@ def test_14_Verifying_test_file_directory_were_successfully_removed():
 def test_15_Unmount_AFP_share():
     assert SSH_TEST('umount -f "%s"' % MOUNTPOINT,
                     OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
-
-
-# Test disable AFP
-def test_16_Verify_AFP_service_can_be_disabled():
-    assert PUT("/services/afp/", {"afp_srv_guest": False}) == 200
-
-
-def test_17_Verify_delete_afp_name_and_afp_path():
-    payload = {"afp_name": AFP_NAME, "afp_path": AFP_PATH}
-    assert DELETE_ALL("/sharing/afp/", payload) == 204
-
-
-# Test delete AFP dataset
-def test_18_Verify_AFP_dataset_can_be_destroyed():
-    assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204

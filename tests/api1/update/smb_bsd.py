@@ -99,6 +99,8 @@ def test_08_Creating_SMB_mountpoint():
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
+@mount_test_cfg
+@bsd_host_cfg
 def test_09_Mounting_SMB():
     cmd = 'mount_smbfs -N -I %s ' % ip
     cmd += '"//guest@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
@@ -140,6 +142,8 @@ def test_15_Deleting_SMB_file_2_2():
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
+@mount_test_cfg
+@bsd_host_cfg
 def test_16_Unmounting_SMB():
     assert SSH_TEST('umount -f %s' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True

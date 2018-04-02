@@ -10,7 +10,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET_OUTPUT, SSH_TEST
+from functions import GET_OUTPUT, SSH_TEST, GET
 from auto_config import ip
 from config import *
 
@@ -53,13 +53,6 @@ def test_02_Checking_Active_Directory():
 @ad_test_cfg
 def test_03_Checking_to_see_if_SMB_service_is_enabled():
     assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "RUNNING"
-
-
-@bsd_host_cfg
-@ad_test_cfg
-def test_04_creating_smb_mountpoint():
-    assert SSH_TEST('mkdir -p "%s" && sync' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 # The ADUSER user must exist in AD with this password

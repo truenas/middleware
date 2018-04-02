@@ -37,23 +37,23 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 
 
 # Clean up any leftover items from previous failed AD LDAP or SMB runs
-@ad_test_cfg
-def test_00_cleanup_tests():
-    payload1 = {"ad_bindpw": ADPASSWORD,
-                "ad_bindname": ADUSERNAME,
-                "ad_domainname": BRIDGEDOMAIN,
-                "ad_netbiosname_a": BRIDGEHOST,
-                "ad_idmap_backend": "rid",
-                "ad_enable": "false"}
-    PUT("/directoryservice/activedirectory/1/", payload1)
-    PUT("/services/services/cifs/", {"srv_enable": "false"})
-    payload3 = {"cfs_comment": "My Test SMB Share",
-                "cifs_path": SMB_PATH,
-                "cifs_name": SMB_NAME,
-                "cifs_guestok": "true",
-                "cifs_vfsobjects": "streams_xattr"}
-    DELETE_ALL("/sharing/cifs/", payload3)
-    DELETE("/storage/volume/1/datasets/%s/" % DATASET)
+# @ad_test_cfg
+# def test_00_cleanup_tests():
+#     payload1 = {"ad_bindpw": ADPASSWORD,
+#                 "ad_bindname": ADUSERNAME,
+#                 "ad_domainname": BRIDGEDOMAIN,
+#                 "ad_netbiosname_a": BRIDGEHOST,
+#                 "ad_idmap_backend": "rid",
+#                 "ad_enable": "false"}
+#     PUT("/directoryservice/activedirectory/1/", payload1)
+#     PUT("/services/services/cifs/", {"srv_enable": "false"})
+#     payload3 = {"cfs_comment": "My Test SMB Share",
+#                 "cifs_path": SMB_PATH,
+#                 "cifs_name": SMB_NAME,
+#                 "cifs_guestok": "true",
+#                 "cifs_vfsobjects": "streams_xattr"}
+#     DELETE_ALL("/sharing/cifs/", payload3)
+#     DELETE("/storage/volume/1/datasets/%s/" % DATASET)
 
 
 # Set auxilary parameters allow mount_smbfs to work with Active Directory

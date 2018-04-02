@@ -12,12 +12,6 @@ import sys
 apifolder = getcwd()
 sys.path.append(apifolder)
 
-try:
-    import xmlrunner
-except ImportError:
-    cmd = "pip-3.6 install unittest-xml-reporting"
-    call(cmd, shell=True)
-
 results_xml = getcwd() + '/results/'
 localHome = path.expanduser('~')
 dotsshPath = localHome + '/.ssh'
@@ -266,6 +260,12 @@ if api == "1.0":
               "api1/update/webdav_osx.py"])
 
         # Delete test
+        call(["py.test-3.6", "--junitxml",
+              "%sdelete_ad_bsd_result.xml" % results_xml,
+              "api1/delete/ad_bsd.py"])
+        call(["py.test-3.6", "--junitxml",
+              "%sdelete_afp_osx_result.xml" % results_xml,
+              "api1/delete/afp_osx.py"])
         call(["py.test-3.6", "--junitxml",
               "%sdelete_bootenv_result.xml" % results_xml,
               "api1/delete/bootenv.py"])
