@@ -9,18 +9,14 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
+from functions import PUT, POST, GET_OUTPUT
 
-DATASET = "webdavshare"
+DATASET = "webdav-bsd-share"
 DATASET_PATH = "/mnt/tank/%s/" % DATASET
 TMP_FILE = "/tmp/testfile.txt"
 SHARE_NAME = "webdavshare"
 SHARE_USER = "webdav"
 SHARE_PASS = "davtest2"
-
-
-def test_01_Creating_dataset_for_WebDAV_use():
-    assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
 
 
 def test_02_Changing_permissions_on_DATASET_PATH():

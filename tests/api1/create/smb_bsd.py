@@ -126,11 +126,11 @@ def test_15_Unmounting_SMB():
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
-@mount_test_cfg
-@bsd_host_cfg
-def test_16_Removing_SMB_mountpoint():
-    cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+# @mount_test_cfg
+# @bsd_host_cfg
+# def test_16_Removing_SMB_mountpoint():
+#     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
+#     assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 def test_17_SMB_share_on_SMB_PATH():

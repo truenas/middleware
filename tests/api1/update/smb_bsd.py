@@ -68,13 +68,13 @@ def test_06_Changing_permissions_on_SMB_PATH():
     assert PUT("/storage/permission/", payload) == 201
 
 
-# def test_07_Creating_a_SMB_share_on_SMB_PATH():
-#     payload = {"cfs_comment": "My Test SMB Share",
-#                "cifs_path": SMB_PATH,
-#                "cifs_name": SMB_NAME,
-#                "cifs_guestok": True,
-#                "cifs_vfsobjects": "streams_xattr"}
-#     assert POST("/sharing/cifs/", payload) == 201
+def test_07_Creating_a_SMB_share_on_SMB_PATH():
+    payload = {"cfs_comment": "My Test SMB Share",
+               "cifs_path": SMB_PATH,
+               "cifs_name": SMB_NAME,
+               "cifs_guestok": True,
+               "cifs_vfsobjects": "streams_xattr"}
+    assert POST("/sharing/cifs/", payload) == 201
 
 
 # Now check if we can mount SMB / create / rename / copy / delete / umount

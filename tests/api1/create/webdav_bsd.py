@@ -11,7 +11,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET_OUTPUT
 
-DATASET = "webdavshare"
+DATASET = "webdav-bsd-share"
 DATASET_PATH = "/mnt/tank/%s/" % DATASET
 TMP_FILE = "/tmp/testfile.txt"
 SHARE_NAME = "webdavshare"

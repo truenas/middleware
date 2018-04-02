@@ -81,15 +81,6 @@ def test_07_Mount_SMB_share_on_OSX_system():
     assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
-# @mount_test_cfg
-# @osx_host_cfg
-# def test_08_Checking_permissions_on_MOUNTPOINT():
-#     device_name = return_output('dirname "%s"' % MOUNTPOINT)
-#     cmd = 'ls -la "%s" | ' % device_name
-#     cmd += 'awk \'$4 == "%s" && $9 == "%s"\'' % (VOL_GROUP, DATASET)
-#     assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
-
-
 @mount_test_cfg
 @osx_host_cfg
 def test_09_Create_file_on_SMB_share_via_OSX_to_test_permissions():
