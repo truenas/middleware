@@ -37,11 +37,6 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        ]) is False, reason=OSXReason)
 
 
-# Set auxilary parameters allow mount_smbfs to work with Active Directory
-def test_01_Creating_SMB_dataset():
-    assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
-
-
 # Enable Active Directory Directory
 @ad_test_cfg
 def test_02_Enabling_Active_Directory():

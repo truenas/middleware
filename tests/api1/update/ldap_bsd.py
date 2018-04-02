@@ -27,8 +27,10 @@ Reason += "in ixautomation.conf"
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 
 ldap_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
-                                        "LDAPBASEDN" in locals(),
-                                        "LDAPHOSTNAME" in locals(),
+                                        "LDAPBASEDN2" in locals(),
+                                        "LDAPBINDDN2" in locals(),
+                                        "LDAPHOSTNAME2" in locals(),
+                                        "LDAPBINDPASSWORD2" in locals(),
                                         "MOUNTPOINT" in locals()
                                         ]) is False, reason=Reason)
 
@@ -53,7 +55,7 @@ def test_01_Enabling_LDAPd():
 
 # Check LDAP
 @ldap_test_cfg
-def test_03_Checking_LDAPd():
+def test_02_Checking_LDAPd():
     assert GET_OUTPUT("/directoryservice/ldap/", "ldap_enable") is True
 
 

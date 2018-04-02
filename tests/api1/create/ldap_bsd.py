@@ -27,7 +27,9 @@ BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 
 ldap_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
                                         "LDAPBASEDN" in locals(),
+                                        "LDAPBINDDN" in locals(),
                                         "LDAPHOSTNAME" in locals(),
+                                        "LDAPBINDPASSWORD" in locals(),
                                         "MOUNTPOINT" in locals()
                                         ]) is False, reason=Reason)
 
@@ -50,12 +52,12 @@ def test_02_Creating_SMB_dataset():
 
 # Enable LDAP
 @ldap_test_cfg
-def test_01_Enabling_LDAPd():
-    payload = {"ldap_basedn": LDAPBASEDN2,
-               "ldap_binddn": LDAPBINDDN2,
-               "ldap_bindpw": LDAPBINDPASSWORD2,
+def test_03_Enabling_LDAPd():
+    payload = {"ldap_basedn": LDAPBASEDN,
+               "ldap_binddn": LDAPBINDDN,
+               "ldap_bindpw": LDAPBINDPASSWORD,
                "ldap_netbiosname_a": BRIDGEHOST,
-               "ldap_hostname": LDAPHOSTNAME2,
+               "ldap_hostname": LDAPHOSTNAME,
                "ldap_has_samba_schema": True,
                "ldap_enable": True}
     assert PUT("/directoryservice/ldap/1/", payload) == 200
@@ -86,7 +88,7 @@ def test_07_Checking_to_see_if_SMB_service_is_enabled():
     assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "RUNNING"
 
 
-def test_09_Changing_permissions_on_SMB_PATH():
+def test_08_Changing_permissions_on_SMB_PATH():
     payload = {"mp_path": SMB_PATH,
                "mp_acl": "unix",
                "mp_mode": "777",
