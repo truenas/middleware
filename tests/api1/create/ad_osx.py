@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET_OUTPUT, PUT, DELETE, DELETE_ALL, SSH_TEST
+from functions import POST, GET_OUTPUT, PUT, DELETE, SSH_TEST
 from auto_config import ip
 from config import *
 
@@ -36,27 +36,6 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        ]) is False, reason=OSXReason)
 
 
-# Clean up any leftover items from previous failed AD LDAP or SMB runs
-# @ad_test_cfg
-# def test_00_cleanup_tests():
-#     payload1 = {"ad_bindpw": ADPASSWORD,
-#                 "ad_bindname": ADUSERNAME,
-#                 "ad_domainname": BRIDGEDOMAIN,
-#                 "ad_netbiosname_a": BRIDGEHOST,
-#                 "ad_idmap_backend": "rid",
-#                 "ad_enable": "false"}
-#     PUT("/directoryservice/activedirectory/1/", payload1)
-#     PUT("/services/services/cifs/", {"srv_enable": "false"})
-#     payload3 = {"cfs_comment": "My Test SMB Share",
-#                 "cifs_path": SMB_PATH,
-#                 "cifs_name": SMB_NAME,
-#                 "cifs_guestok": "true",
-#                 "cifs_vfsobjects": "streams_xattr"}
-#     DELETE_ALL("/sharing/cifs/", payload3)
-#     DELETE("/storage/volume/1/datasets/%s/" % DATASET)
-
-
-# Set auxilary parameters allow mount_smbfs to work with Active Directory
 def test_01_Creating_SMB_dataset():
     assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
 
@@ -115,13 +94,6 @@ def test_08_Creating_a_SMB_share_on_SMB_PATH():
     assert POST("/sharing/cifs/", payload) == 201
 
 
-# def test_09_Checking_permissions_on_SMB_NAME():
-    # vol_name = return_output('dirname "%s"' % SMB_PATH)
-    # cmd = 'ls -la "%s" | ' % vol_name
-    # cmd += 'awk \'$4 == "%s" && $9 == "%s"\'' % (VOL_GROUP, DATASET)
-    # assert SSH_TEST(cmd) is True
-
-
 # Mount share on OSX system and create a test file
 @osx_host_cfg
 @ad_test_cfg
@@ -136,13 +108,6 @@ def test_11_Mount_SMB_share_on_OSX_system():
     cmd = 'mount -t smbfs "smb://%s:' % ADUSERNAME
     cmd += '%s@%s/%s" "%s"' % (ADPASSWORD, ip, SMB_NAME, MOUNTPOINT)
     assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
-
-
-# def test_12_Checking_permissions_on_MOUNTPOINT_():
-#     device_name = return_output('dirname "%s"' % MOUNTPOINT)
-#     cmd = 'ls -la "%s" | ' % device_name
-#     cmd += 'awk \'$4 == "%s" && $9 == "%s"\'' % (VOL_GROUP, DATASET)
-#     assert SSH_TEST(cmd) is True
 
 
 @osx_host_cfg
@@ -184,32 +149,3 @@ def test_16_Verifying_that_test_file_directory_successfully_removed():
 def test_17_Unmount_SMB_share():
     assert SSH_TEST('umount -f "%s"' % MOUNTPOINT,
                     OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
-
-
-# Disable Active Directory Directory
-@ad_test_cfg
-def test_18_Disabling_Active_Directory():
-    payload = {"ad_bindpw": ADPASSWORD,
-               "ad_bindname": ADUSERNAME,
-               "ad_domainname": BRIDGEDOMAIN,
-               "ad_netbiosname_a": BRIDGEHOST,
-               "ad_idmap_backend": "rid",
-               "ad_enable": False}
-    assert PUT("/directoryservice/activedirectory/1/", payload) == 200
-
-
-# Check Active Directory
-@ad_test_cfg
-def test_19_Verify_Active_Directory_is_disabled():
-    assert GET_OUTPUT("/directoryservice/activedirectory/",
-                      "ad_enable") is False
-
-
-@ad_test_cfg
-def test_20_Verify_SMB_service_is_disabled():
-    assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "STOPPED"
-
-
-# Check destroying a SMB dataset
-def test_21_Destroying_SMB_dataset():
-    assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
