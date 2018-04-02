@@ -10,6 +10,7 @@ import ipaddress
 import netif
 import os
 import re
+import shlex
 import signal
 import subprocess
 import urllib.request
@@ -389,7 +390,7 @@ class InterfacesService(Service):
                 if lower_mtu and member_iface.mtu != lower_mtu and member_name in members_configured:
                     iface.delete_port(member_name)
                     members_configured.remove(member_name)
-                proc = await Popen(['/sbin/ifconfig', member_name, member_options], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+                proc = await Popen(['/sbin/ifconfig', member_name] + shlex.split(member_options), stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
                 err = (await proc.communicate())[1].decode()
                 if err:
                     self.logger.info(f'{member_name}: error applying: {err}')
@@ -618,7 +619,7 @@ class InterfacesService(Service):
         # Apply interface options specified in GUI
         if data['int_options']:
             self.logger.info('{}: applying {}'.format(name, data['int_options']))
-            proc = await Popen(['/sbin/ifconfig', name, data['int_options']], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+            proc = await Popen(['/sbin/ifconfig', name] + shlex.split(data['int_options']), stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
             err = (await proc.communicate())[1].decode()
             if err:
                 self.logger.info('{}: error applying: {}'.format(name, err))
