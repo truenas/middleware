@@ -893,34 +893,6 @@ class StaticRouteService(CRUDService):
     async def upper(self, data):
         data['description'] = data['description'].upper()
 
-        return data
-
-    @private
-    async def clean(self, staticroute, schema_name):
-        verrors = ValidationErrors()
-        dest = staticroute.get('destination')
-        dest = re.sub(r'\s{2,}', ' ', dest).strip()
-        raise_err = False
-
-        if dest.find('/') != -1:
-            try:
-                subnet_mask = int(dest.split('/')[1])
-
-                if subnet_mask > 32 or subnet_mask < 0:
-                    raise ValueError
-            except (ValueError, IndexError):
-                raise_err = True
-        else:
-            raise_err = True
-
-        if raise_err:
-                verrors.add(
-                    f"{schema_name}.destination",
-                    f"The network '{dest}' is not valid, CIDR expected."
-                )
-
-                raise verrors
-
 
 class DNSService(Service):
 

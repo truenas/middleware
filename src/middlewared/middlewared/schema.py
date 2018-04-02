@@ -172,11 +172,10 @@ class File(Str):
 
 class IPAddr(Str):
 
-    def validate(self, value, cidr=True):
+    def validate(self, value):
         if value:
-            value = value.rsplit('/')[0] if cidr else value
             try:
-                ipaddress.ip_address(value)
+                ipaddress.ip_interface(value)
             except ValueError:
                 raise Error(self.name, f'Not a valid IP Address: {value}')
         return super().validate(value)
