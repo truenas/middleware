@@ -829,7 +829,7 @@ class StaticRouteService(CRUDService):
 
     @accepts(Dict(
         'staticroute_create',
-        IPAddr('destination'),
+        IPAddr('destination', cidr=True),
         IPAddr('gateway'),
         Str('description'),
         register=True
