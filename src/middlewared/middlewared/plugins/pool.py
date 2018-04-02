@@ -1,7 +1,7 @@
 import asyncio
 import errno
 import logging
-from datetime import datetime
+from datetime import datetime, time
 import os
 import re
 import subprocess
@@ -12,10 +12,10 @@ import bsd
 from middlewared.job import JobProgressBuffer
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str
 from middlewared.service import (
-    filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
+    ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
 )
 from middlewared.utils import Popen, filter_list, run
-from middlewared.validators import Range
+from middlewared.validators import Range, Time
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +83,79 @@ async def mount(device, path, fs_type, fs_options, options):
         ))
     else:
         return True
+
+
+class PoolResilverService(ConfigService):
+
+    class Config:
+        namespace = 'pool.resilver'
+        datastore = 'storage.resilver'
+        datastore_extend = 'pool.resilver.resilver_extend'
+
+    async def resilver_extend(self, data):
+        data['begin'] = data['begin'].strftime('%H:%M')
+        data['end'] = data['end'].strftime('%H:%M')
+        data['weekday'] = [int(v) for v in data['weekday'].split(',')]
+        return data
+
+    async def validate_fields_and_update(self, data, schema):
+        verrors = ValidationErrors()
+
+        begin = data.get('begin')
+        if begin:
+            data['begin'] = time(int(begin.split(':')[0]), int(begin.split(':')[1]))
+
+        end = data.get('end')
+        if end:
+            data['end'] = time(int(end.split(':')[0]), int(end.split(':')[1]))
+
+        weekdays = data.get('weekday')
+        if weekdays:
+            if len([day for day in weekdays if day not in range(1, 8)]) > 0:
+                verrors.add(
+                    f'{schema}.weekday',
+                    'The week days should be in range of 1-7 inclusive'
+                )
+            else:
+                data['weekday'] = ','.join([str(day) for day in weekdays])
+
+        return verrors, data
+
+    @accepts(
+        Dict(
+            'pool_resilver',
+            Str('begin', validators=[Time()]),
+            Str('end', validators=[Time()]),
+            Bool('enabled'),
+            List('weekday', items=[Int('weekday')])
+        )
+    )
+    async def do_update(self, data):
+        config = await self.config()
+        original_config = config.copy()
+        config.update(data)
+
+        verrors, new_config = await self.validate_fields_and_update(config, 'pool_resilver_update')
+        if verrors:
+            raise verrors
+
+        # before checking if any changes have been made, original_config needs to be mapped to new_config
+        original_config['weekday'] = ','.join([str(day) for day in original_config['weekday']])
+        original_config['begin'] = time(*(int(value) for value in original_config['begin'].split(':')))
+        original_config['end'] = time(*(int(value) for value in original_config['end'].split(':')))
+        if len(set(original_config.items()) ^ set(new_config.items())) > 0:
+            # data has changed
+            await self.middleware.call(
+                'datastore.update',
+                self._config.datastore,
+                new_config['id'],
+                new_config
+            )
+
+            await self.middleware.call('service.restart', 'cron', {'onetime': False})
+            await self.middleware.call('pool.configure_resilver_priority')
+
+        return await self.config()
 
 
 class KernelModuleContextManager:
