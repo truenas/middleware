@@ -1,21 +1,20 @@
+from middlewared.service import (ConfigService, CRUDService, Service,
+                                 filterable, private)
+from middlewared.utils import Popen, filter_list, run
+from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Str,
+                                ValidationErrors, accepts)
+from middlewared.validators import Match
+
 import asyncio
+from collections import defaultdict
+import ipaddr
 import ipaddress
+import netif
 import os
 import re
 import signal
 import subprocess
 import urllib.request
-from collections import defaultdict
-
-import ipaddr
-
-import netif
-from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Str,
-                                ValidationErrors, accepts)
-from middlewared.service import (ConfigService, CRUDService, Service,
-                                 filterable, private)
-from middlewared.utils import Popen, filter_list, run
-from middlewared.validators import Match
 
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 RE_MTU = re.compile(r'\bmtu\s+(\d+)')
