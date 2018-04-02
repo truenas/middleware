@@ -52,14 +52,13 @@ def test_02_Creating_SMB_dataset():
 
 # Enable LDAP
 @ldap_test_cfg
-def test_03_Enabling_LDAPd():
+def test_03_Enabling_LDAP_with_anonymous_bind():
     payload = {"ldap_basedn": LDAPBASEDN,
-               "ldap_binddn": LDAPBINDDN,
-               "ldap_bindpw": LDAPBINDPASSWORD,
+               "ldap_anonbind": "true",
                "ldap_netbiosname_a": BRIDGEHOST,
                "ldap_hostname": LDAPHOSTNAME,
-               "ldap_has_samba_schema": True,
-               "ldap_enable": True}
+               "ldap_has_samba_schema": "true",
+               "ldap_enable": "true"}
     assert PUT("/directoryservice/ldap/1/", payload) == 200
 
 

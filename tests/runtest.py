@@ -280,8 +280,8 @@ if api == "1.0":
               "%sdelete_iscsi_result.xml" % results_xml,
               "api1/delete/iscsi.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_ldap_bsd.xml" % results_xml,
-              "api1/create/ldap_bsd.py"])
+              "%sdelete_ldap_bsd.xml" % results_xml,
+              "api1/delete/ldap_bsd.py"])
         # call(["python3.6", "api1/delete/rsync.py"])
         call(["py.test-3.6", "--junitxml",
               "%sdelete_storage_result.xml" % results_xml,

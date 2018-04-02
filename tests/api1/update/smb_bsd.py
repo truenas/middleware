@@ -35,20 +35,6 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
                                        ]) is False, reason=BSDReason)
 
 
-# Clean up any leftover items from previous failed AD LDAP or SMB runs
-@mount_test_cfg
-@bsd_host_cfg
-def test_00_cleanup_tests():
-    PUT("/services/services/cifs/", {"srv_enable": False})
-    payload3 = {"cfs_comment": "My Test SMB Share",
-                "cifs_path": SMB_PATH,
-                "cifs_name": SMB_NAME,
-                "cifs_guestok": True,
-                "cifs_vfsobjects": "streams_xattr"}
-    DELETE_ALL("/sharing/cifs/", payload3)
-    DELETE("/storage/volume/1/datasets/%s/" % DATASET)
-
-
 # Set auxilary parameters to allow mount_smbfs to work
 def test_01_Setting_auxilary_parameters_for_mount_smbfs():
     option = "lanman auth = yes\nntlm auth = yes \nraw NTLMv2 auth = yes"

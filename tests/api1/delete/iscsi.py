@@ -23,18 +23,21 @@ mount_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
                                          "MOUNTPOINT" in locals()
                                          ]) is False, reason=Reason)
 
+bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
+                                       "BSD_USERNAME" in locals(),
+                                       "BSD_PASSWORD" in locals()
+                                       ]) is False, reason=BSDReason)
+
 
 # Clean up any leftover items from any previous failed runs
+@bsd_host_cfg
 @mount_test_cfg
 def test_00_cleanup_tests():
-    host = pytest.importorskip("config.BSD_HOST")
-    username = pytest.importorskip("config.BSD_USERNAME")
-    password = pytest.importorskip("config.BSD_PASSWORD")
     PUT("/services/services/iscsitarget/", {"srv_enable": False})
     BSD_TEST("iscsictl -R -t %s" % TARGET_NAME)
     cmd = 'umount -f "%s" &>/dev/null ; ' % MOUNTPOINT
     cmd += 'rmdir "%s" &>/dev/null' % MOUNTPOINT
-    SSH_TEST(cmd, username, password, host)
+    SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
 
 
 # Remove iSCSI target

@@ -35,26 +35,6 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        ]) is False, reason=OSXReason)
 
 
-# Clean up any leftover items from previous failed runs
-@ldap_test_cfg
-def test_00_cleanup_tests():
-    payload2 = {"ldap_basedn": LDAPBASEDN,
-                "ldap_anonbind": True,
-                "ldap_netbiosname_a": BRIDGEHOST,
-                "ldap_hostname": LDAPHOSTNAME,
-                "ldap_has_samba_schema": True,
-                "ldap_enable": False}
-    PUT("/directoryservice/ldap/1/", payload2)
-    PUT("/services/services/cifs/", {"srv_enable": False})
-    payload3 = {"cfs_comment": "My Test SMB Share",
-                "cifs_path": SMB_PATH,
-                "cifs_name": SMB_NAME,
-                "cifs_guestok": True,
-                "cifs_vfsobjects": "streams_xattr"}
-    DELETE_ALL("/sharing/cifs/", payload3)
-    DELETE("/storage/volume/1/datasets/%s/" % DATASET)
-
-
 # Set auxilary parameters to allow mount_smbfs to work with ldap
 def test_01_Creating_SMB_dataset():
     assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201

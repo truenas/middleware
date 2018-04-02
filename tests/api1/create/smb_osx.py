@@ -35,24 +35,6 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        ]) is False, reason=OSXReason)
 
 
-# Clean up any leftover items from previous failed ad, SMB runs
-@mount_test_cfg
-@osx_host_cfg
-def test_00_cleanup_tests():
-    PUT("/services/services/cifs/", {"srv_enable": False})
-    payload3 = {"cfs_comment": "My Test SMB Share",
-                "cifs_path": SMB_PATH,
-                "cifs_name": SMB_NAME,
-                "cifs_guestok": True,
-                "cifs_vfsobjects": "streams_xattr"}
-    DELETE_ALL("/sharing/cifs/", payload3)
-    DELETE("/storage/volume/1/datasets/%s/" % DATASET)
-    # Clean up any leftover items from previous failed SMB runs
-    cmd = 'umount -f "%s"; ' % MOUNTPOINT
-    cmd += 'rmdir "%s"; exit 0;' % MOUNTPOINT
-    SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
-
-
 def test_01_Creating_SMB_dataset():
     assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
 

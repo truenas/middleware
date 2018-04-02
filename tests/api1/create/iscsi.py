@@ -34,19 +34,6 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
                                        ]) is False, reason=BSDReason)
 
 
-# Clean up any leftover items from previous failed runs
-@mount_test_cfg
-@bsd_host_cfg
-def test_00_cleanup_tests():
-    payload = {"srv_enable": False}
-    PUT("/services/services/iscsitarget/", payload)
-    SSH_TEST("iscsictl -R -a", BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    SSH_TEST('umount -f "%s" &>/dev/null' % MOUNTPOINT,
-             BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    SSH_TEST('rm -rf "%s" &>/dev/null' % MOUNTPOINT,
-             BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-
-
 # Add iSCSI initator
 def test_01_Add_iSCSI_initiator():
     payload = {"id": 1,

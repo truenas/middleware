@@ -9,23 +9,13 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL
+from functions import PUT, POST, GET_OUTPUT
 
 DATASET = "webdavshare"
 DATASET_PATH = "/mnt/tank/%s/" % DATASET
 SHARE_NAME = "webdavshare"
 SHARE_USER = "webdav"
 SHARE_PASS = "davtest"
-
-
-# Clean up any leftover items from previous failed test runs
-def test_00_cleanup_tests():
-    payload = {"webdav_name": SHARE_NAME,
-               "webdav_comment": "Auto-created by API tests",
-               "webdav_path": DATASET_PATH}
-    DELETE_ALL("/sharing/webdav/", payload)
-    PUT("/services/services/webdav/", {"srv_enable": False})
-    DELETE("/storage/volume/1/datasets/%s/" % DATASET)
 
 
 def test_01_Creating_dataset_for_WebDAV_use():

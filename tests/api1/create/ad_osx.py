@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET_OUTPUT, PUT, DELETE, SSH_TEST
+from functions import POST, GET_OUTPUT, PUT, SSH_TEST
 from auto_config import ip
 from config import *
 
@@ -34,10 +34,6 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        "OSX_USERNAME" in locals(),
                                        "OSX_PASSWORD" in locals()
                                        ]) is False, reason=OSXReason)
-
-
-def test_01_Creating_SMB_dataset():
-    assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
 
 
 @ad_test_cfg

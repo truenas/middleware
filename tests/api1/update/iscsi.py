@@ -34,18 +34,6 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
                                        ]) is False, reason=BSDReason)
 
 
-# Clean up any leftover items from previous failed AD LDAP or SMB runs
-@mount_test_cfg
-@bsd_host_cfg
-def test_00_cleanup_tests():
-    PUT("/services/services/iscsitarget/", {"srv_enable": False})
-    SSH_TEST('iscsictl -R -a', BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    SSH_TEST('umount -f "%s" &>/dev/null' % MOUNTPOINT,
-             BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    SSH_TEST('rm -rf "%s" &>/dev/null' % MOUNTPOINT,
-             BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-
-
 # Enable the iSCSI service
 def test_01_Enable_iSCSI_service():
     payload = {"srv_enable": True}

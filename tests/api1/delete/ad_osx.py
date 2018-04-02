@@ -37,7 +37,7 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 
 # Disable Active Directory Directory
 @ad_test_cfg
-def test_18_Disabling_Active_Directory():
+def test_01_Disabling_Active_Directory():
     payload = {"ad_bindpw": ADPASSWORD,
                "ad_bindname": ADUSERNAME,
                "ad_domainname": BRIDGEDOMAIN,
@@ -49,16 +49,16 @@ def test_18_Disabling_Active_Directory():
 
 # Check Active Directory
 @ad_test_cfg
-def test_19_Verify_Active_Directory_is_disabled():
+def test_02_Verify_Active_Directory_is_disabled():
     assert GET_OUTPUT("/directoryservice/activedirectory/",
                       "ad_enable") is False
 
 
 @ad_test_cfg
-def test_20_Verify_SMB_service_is_disabled():
+def test_03_Verify_SMB_service_is_disabled():
     assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "STOPPED"
 
 
 # Check destroying a SMB dataset
-def test_21_Destroying_SMB_dataset():
+def test_04_Destroying_SMB_dataset():
     assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
