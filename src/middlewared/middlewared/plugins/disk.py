@@ -903,7 +903,7 @@ class DiskService(CRUDService):
                 line = line.decode()
                 reg = RE_DD.search(line)
                 if reg:
-                    job.set_progress(int(reg.group(1)) / size, extra={'speed': int(reg.group(2))})
+                    job.set_progress((int(reg.group(1)) / size) * 100, extra={'speed': int(reg.group(2))})
 
         await self.sync(dev)
 
