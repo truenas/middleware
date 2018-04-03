@@ -206,9 +206,9 @@ if api == "1.0":
         # call(["py.test-3.6", "--junitxml",
         #       "%supdate_ad_bsd_result.xml" % results_xml,
         #       "api1/update/ad_bsd.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%supdate_ad_osx_result.xml" % results_xml,
-              "api1/update/ad_osx.py"])
+        # call(["py.test-3.6", "--junitxml",
+        #       "%supdate_ad_osx_result.xml" % results_xml,
+        #       "api1/update/ad_osx.py"])
         call(["py.test-3.6", "--junitxml",
               "%supdate_afp_osx_result.xml" % results_xml,
               "api1/update/afp_osx.py"])
@@ -263,9 +263,9 @@ if api == "1.0":
         # call(["py.test-3.6", "--junitxml",
         #       "%sdelete_ad_bsd_result.xml" % results_xml,
         #       "api1/delete/ad_bsd.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%sdelete_ad_osx.xml" % results_xml,
-              "api1/delete/ad_osx.py"])
+        # call(["py.test-3.6", "--junitxml",
+        #       "%sdelete_ad_osx.xml" % results_xml,
+        #       "api1/delete/ad_osx.py"])
         call(["py.test-3.6", "--junitxml",
               "%sdelete_afp_osx_result.xml" % results_xml,
               "api1/delete/afp_osx.py"])

@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET_OUTPUT, PUT, SSH_TEST
+from functions import POST, GET_OUTPUT, PUT, SSH_TEST, DELETE
 from auto_config import ip
 from config import *
 
@@ -43,7 +43,7 @@ def test_02_Enabling_Active_Directory():
                "ad_domainname": BRIDGEDOMAIN,
                "ad_netbiosname_a": BRIDGEHOST,
                "ad_idmap_backend": "rid",
-               "ad_enable": "true"}
+               "ad_enable": True}
     assert PUT("/directoryservice/activedirectory/1/", payload) == 200
 
 
@@ -145,3 +145,90 @@ def test_16_Verifying_that_test_file_directory_successfully_removed():
 def test_17_Unmount_SMB_share():
     assert SSH_TEST('umount -f "%s"' % MOUNTPOINT,
                     OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+# Update test
+@osx_host_cfg
+@ad_test_cfg
+def test_18_Mount_SMB_share_on_OSX_system():
+    cmd = 'mount -t smbfs "smb://%s:' % ADUSERNAME
+    cmd += '%s@%s/%s" "%s"' % (ADPASSWORD, ip, SMB_NAME, MOUNTPOINT)
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+@osx_host_cfg
+@ad_test_cfg
+def test_19_Create_file_on_SMB_share_via_OSX_to_test_permissions():
+    assert SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
+                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+# Move test file to a new location on the SMB share
+@osx_host_cfg
+@ad_test_cfg
+def test_20_Moving_SMB_test_file_into_a_new_directory():
+    cmd = 'mkdir -p "%s/tmp" && ' % MOUNTPOINT
+    cmd += 'mv "%s/testfile.txt" ' % MOUNTPOINT
+    cmd += '"%s/tmp/testfile.txt"' % MOUNTPOINT
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+# Delete test file and test directory from SMB share
+@osx_host_cfg
+@ad_test_cfg
+def test_21_Deleting_test_file_and_directory_from_SMB_share():
+    cmd = 'rm -f "%s/tmp/testfile.txt" && ' % MOUNTPOINT
+    cmd += 'rmdir "%s/tmp"' % MOUNTPOINT
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+@osx_host_cfg
+@ad_test_cfg
+def test_22_Verifying_test_file_directory_were_successfully_removed():
+    cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+# Clean up mounted SMB share
+@osx_host_cfg
+@ad_test_cfg
+def test_23_Unmount_SMB_share():
+    assert SSH_TEST('umount -f "%s"' % MOUNTPOINT,
+                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+# Delete test
+@bsd_host_cfg
+@ad_test_cfg
+def test_24_Removing_SMB_mountpoint():
+    cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+# Disable Active Directory Directory
+@ad_test_cfg
+def test_25_Disabling_Active_Directory():
+    payload = {"ad_bindpw": ADPASSWORD,
+               "ad_bindname": ADUSERNAME,
+               "ad_domainname": BRIDGEDOMAIN,
+               "ad_netbiosname_a": BRIDGEHOST,
+               "ad_idmap_backend": "rid",
+               "ad_enable": False}
+    assert PUT("/directoryservice/activedirectory/1/", payload) == 200
+
+
+# Check Active Directory
+@ad_test_cfg
+def test_26_Verify_Active_Directory_is_disabled():
+    assert GET_OUTPUT("/directoryservice/activedirectory/",
+                      "ad_enable") is False
+
+
+@ad_test_cfg
+def test_27_Verify_SMB_service_is_disabled():
+    assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "STOPPED"
+
+
+# Check destroying a SMB dataset
+def test_28_Destroying_SMB_dataset():
+    assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204

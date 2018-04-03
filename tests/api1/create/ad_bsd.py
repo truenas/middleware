@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, SSH_TEST
+from functions import PUT, POST, GET_OUTPUT, SSH_TEST, DELETE
 from auto_config import ip
 from config import *
 
