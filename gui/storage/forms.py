@@ -2587,12 +2587,24 @@ class DiskWipeForm(Form):
     method = forms.ChoiceField(
         label=_("Method"),
         choices=(
-            ("quick", _("Quick")),
-            ("full", _("Full with zeros")),
-            ("fullrandom", _("Full with random data")),
+            ("QUICK", _("Quick")),
+            ("FULL", _("Full with zeros")),
+            ("FULL_RANDOM", _("Full with random data")),
         ),
         widget=forms.widgets.RadioSelect(),
     )
+
+    def __init__(self, *args, **kwargs):
+        self.disk = kwargs.pop('disk')
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        with client as c:
+            if self.disk in c.call('disk.get_reserved'):
+                self._errors['__all__'] = self.error_class([
+                    _('The disk %s is currently in use and cannot be wiped.') % self.disk
+                ])
+        return self.cleaned_data
 
 
 class CreatePassphraseForm(Form):

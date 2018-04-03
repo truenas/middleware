@@ -29,8 +29,6 @@ import json
 import logging
 import os
 import re
-import signal
-import subprocess
 import urllib.request, urllib.parse, urllib.error
 from time import sleep
 
@@ -44,18 +42,19 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
-from freenasUI.common.system import is_mounted
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.util import JobAborted, JobFailed, wait_job
 from freenasUI.system.models import Advanced
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
 
+DISK_WIPE_JOB_ID = None
 log = logging.getLogger('storage.views')
 
 
@@ -844,34 +843,27 @@ def multipath_status_json(request):
 
 
 def disk_wipe(request, devname):
+    global DISK_WIPE_JOB_ID
 
-    form = forms.DiskWipeForm()
     if request.method == "POST":
-        form = forms.DiskWipeForm(request.POST)
+        form = forms.DiskWipeForm(request.POST, disk=devname)
         if form.is_valid():
-            mounted = []
-            for geom in notifier().disk_get_consumers(devname):
-                gname = geom.xpath("./name")[0].text
-                dev = "/dev/%s" % (gname, )
-                if dev not in mounted and is_mounted(device=dev):
-                    mounted.append(dev)
-            for vol in models.Volume.objects.all():
-                if devname in vol.get_disks():
-                    mounted.append(vol.vol_name)
-            if mounted:
-                form._errors['__all__'] = form.error_class([
-                    "Umount the following mount points before proceeding:"
-                    "<br /> %s" % (
-                        '<br /> '.join(mounted),
-                    )
-                ])
-            else:
-                notifier().disk_wipe(devname, form.cleaned_data['method'])
-                return JsonResp(
-                    request,
-                    message=_("Disk successfully wiped"))
+            DISK_WIPE_JOB_ID = None
+            try:
+                with client as c:
+                    DISK_WIPE_JOB_ID = c.call('disk.wipe', devname, form.cleaned_data['method'])
+                    wait_job(c, DISK_WIPE_JOB_ID)
+            except JobAborted:
+                raise MiddlewareError(_('Disk wipe job was aborted'))
+            except JobFailed as e:
+                raise MiddlewareError(_('Disk wipe job failed: %s') % str(e.value))
+            return JsonResp(
+                request,
+                message=_("Disk successfully wiped"))
 
         return JsonResp(request, form=form)
+
+    form = forms.DiskWipeForm(disk=devname)
 
     return render(request, "storage/disk_wipe.html", {
         'devname': devname,
@@ -880,51 +872,30 @@ def disk_wipe(request, devname):
 
 
 def disk_wipe_progress(request, devname):
+    global DISK_WIPE_JOB_ID
     details = 'Starting Disk Wipe'
     indeterminate = True
     progress = 0
     step = 1
     finished = False
     error = False
-    pidfile = '/var/tmp/disk_wipe_%s.pid' % (devname, )
-    if not os.path.exists(pidfile):
+    if not DISK_WIPE_JOB_ID:
         return HttpResponse('new Object({state: "starting"});')
 
-    with open(pidfile, 'r') as f:
-        pid = f.read()
+    with client as c:
+        job = c.call('core.get_jobs', [['id', '=', DISK_WIPE_JOB_ID]])
 
-    try:
-        os.kill(int(pid), signal.SIGINFO)
-        received = 0
-        size = 0
-        indeterminate = False
-        with open('/var/tmp/disk_wipe_%s.progress' % (devname, ), 'r') as f:
-            data = f.read()
-            transf = re.findall(
-                r'^(?P<bytes>\d+) bytes transferred.*',
-                data,
-                re.M)
-            if transf:
-                pipe = subprocess.Popen([
-                    "/usr/sbin/diskinfo",
-                    devname,
-                ], stdout=subprocess.PIPE, encoding='utf8')
-                output = pipe.communicate()[0]
-                size = output.split()[2]
-                received = transf[-1]
-                details = 'Wiping Disk...'
-                if received == size:
-                    finished = True
-                    progress = 100
-                else:
-                    try:
-                        progress = int(float(received) / float(size) * 100)
-                    except Exception:
-                        pass
+    if not job:
+        return HttpResponse('new Object({state: "starting"});')
+    job = job[0]
 
-    except Exception as e:
-        log.warn("Could not check for disk wipe progress: %s", e)
-        indeterminate = True
+    if job['state'] == 'FAILED':
+        error = True
+        details = job['error']
+    elif job['state'] == 'RUNNING':
+        progress = job['progress']['percent'] or 0
+    elif job['state'] == 'SUCCESS':
+        finished = True
 
     data = {
         'error': error,

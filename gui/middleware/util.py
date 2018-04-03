@@ -1,5 +1,6 @@
 import json
 import requests
+import time
 
 from freenasUI.middleware.client import client
 
@@ -16,6 +17,21 @@ class JobFailed(Exception):
 def run_alerts():
     with client as c:
         c.call('alert.process_alerts')
+
+
+def wait_job(client, job_id):
+    assert isinstance(job_id, int)
+    while True:
+        job = client.call('core.get_jobs', [('id', '=', job_id)])
+        if job:
+            job = job[0]
+            if job['state'] == 'FAILED':
+                raise JobFailed(job['error'])
+            elif job['state'] == 'ABORTED':
+                raise JobAborted()
+            elif job['state'] == 'SUCCESS':
+                return job
+        time.sleep(0.5)
 
 
 def upload_job_and_wait(fileobj, method_name, *args):
@@ -36,13 +52,4 @@ def upload_job_and_wait(fileobj, method_name, *args):
             },
         )
         job_id = r.json()['job_id']
-        while True:
-            job = c.call('core.get_jobs', [('id', '=', job_id)])
-            if job:
-                job = job[0]
-                if job['state'] == 'FAILED':
-                    raise JobFailed(job['error'])
-                elif job['state'] == 'ABORTED':
-                    raise JobAborted()
-                elif job['state'] == 'SUCCESS':
-                    return job
+        return wait_job(c, job_id)
