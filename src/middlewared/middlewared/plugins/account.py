@@ -315,7 +315,7 @@ class UserService(CRUDService):
         await run('smbpasswd', '-x', user['username'], check=False)
 
         if await self.middleware.call('notifier.common', 'system', 'domaincontroller_enabled'):
-            await self.middleware.call('notifier.samba4', 'user_delete', user['username'])
+            await self.middleware.call('notifier.samba4', 'user_delete', [user['username']])
 
         # TODO: add a hook in CIFS service
         cifs = await self.middleware.call('datastore.query', 'services.cifs', [], {'prefix': 'cifs_srv_'})
@@ -541,7 +541,7 @@ class GroupService(CRUDService):
                 await self.middleware.call('datastore.delete', 'account.bsdusers', i['id'])
 
         if await self.middleware.call('notifier.common', 'system', 'domaincontroller_enabled'):
-            await self.middleware.call('notifier.samba4', 'group_delete', group['group'])
+            await self.middleware.call('notifier.samba4', 'group_delete', [group['group']])
 
         await self.middleware.call('datastore.delete', 'account.bsdgroups', pk)
 
