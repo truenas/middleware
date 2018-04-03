@@ -834,7 +834,6 @@ class StaticRouteService(CRUDService):
         register=True
     ))
     async def do_create(self, data):
-        await self.clean(data, 'staticroute_create')
         await self.lower(data)
 
         data['id'] = await self.middleware.call(
@@ -864,10 +863,7 @@ class StaticRouteService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        await self.clean(data, 'staticroute_update')
-
         await self.lower(data)
-
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, data,
             {'prefix': self._config.datastore_prefix})
