@@ -10,7 +10,7 @@ import sys
 import sysctl
 import tempfile
 
-from bsd import geom
+from bsd import geom, getswapinfo
 from middlewared.schema import accepts, Dict, List, Bool, Str
 from middlewared.service import filterable, job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
@@ -813,14 +813,21 @@ class DiskService(CRUDService):
                     mirrors.add(g.name)
                     del providers[c.provider.id]
 
+        swapinfo_devs = [s.devname for s in getswapinfo()]
+
         for name in mirrors:
-            await run('swapoff', f'/dev/mirror/{name}.eli')
-            if os.path.exists(f'/dev/mirror/{name}.eli'):
-                await run('geli', 'detach', f'mirror/{name}.eli')
+            devname = f'mirror/{name}.eli'
+            devpath = f'/dev/{devname}'
+            if devname in swapinfo_devs:
+                await run('swapoff', devpath)
+            if os.path.exists(devpath):
+                await run('geli', 'detach', devname)
             await run('gmirror', 'destroy', name)
 
         for p in providers.values():
-            await run('swapoff', f'/dev/{p.name}.eli')
+            devname = f'{p.name}.eli'
+            if devname in swapinfo_devs:
+                await run('swapoff', f'/dev/{devname}')
 
     @private
     async def wipe_quick(self, dev, size=None):

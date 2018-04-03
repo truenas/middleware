@@ -144,15 +144,21 @@ def volumemanager(request):
 
     if request.method == "POST":
         form = forms.VolumeManagerForm(request.POST)
-        if form.is_valid() and form.save():
-            events = []
-            form.done(request, events)
-            return JsonResp(
-                request,
-                message=_("Volume successfully added."),
-                events=events,
-            )
-        else:
+        try:
+            if form.is_valid() and form.save():
+                events = []
+                form.done(request, events)
+                return JsonResp(
+                    request,
+                    message=_("Volume successfully added."),
+                    events=events,
+                )
+            else:
+                return JsonResp(request, form=form, formsets={'layout': {
+                    'instance': form._formset,
+                }})
+        except MiddlewareError as e:
+            form._errors['__all__'] = form.error_class([str(e)])
             return JsonResp(request, form=form, formsets={'layout': {
                 'instance': form._formset,
             }})

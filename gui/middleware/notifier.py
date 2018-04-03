@@ -322,8 +322,10 @@ class notifier(metaclass=HookMetaclass):
         # Round up to nearest whole integral multiple of 128 and subtract by 34
         # so next partition starts at mutiple of 128.
         swapsize = (int((swapsize + 127) / 128)) * 128
-        # To be safe, wipe out the disk, both ends... before we start
-        self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
+
+        with client as c:
+            c.call('disk.wipe', devname, 'QUICK', job=True)
+
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
             size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
@@ -333,12 +335,6 @@ class notifier(metaclass=HookMetaclass):
             # The GPT header takes about 34KB + alignment, round it to 100
             if size - 100 <= swapgb * 1024 * 1024:
                 raise MiddlewareError('Your disk size must be higher than %dGB' % (swapgb, ))
-            # HACK: force the wipe at the end of the disk to always succeed. This
-            # is a lame workaround.
-            self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
-                devname,
-                int(size / 1024) - 32,
-            ))
 
         commands = []
         commands.append("gpart create -s gpt /dev/%s" % (devname, ))
@@ -679,8 +675,6 @@ class notifier(metaclass=HookMetaclass):
 
     def __prepare_zfs_vdev(self, disks, swapsize, encrypt, volume):
         vdevs = []
-        with client as c:
-            c.call('disk.swaps_remove_disks', disks)
         for disk in disks:
             self.__gpt_labeldisk(type="freebsd-zfs",
                                  devname=disk,
