@@ -172,10 +172,17 @@ class File(Str):
 
 class IPAddr(Str):
 
+    def __init__(self, *args, **kwargs):
+        self.cidr = kwargs.pop('cidr', False)
+        super(IPAddr, self).__init__(*args, **kwargs)
+
     def validate(self, value):
         if value:
             try:
-                ipaddress.ip_address(value)
+                if self.cidr:
+                    ipaddress.ip_interface(value)
+                else:
+                    ipaddress.ip_address(value)
             except ValueError:
                 raise Error(self.name, f'Not a valid IP Address: {value}')
         return super().validate(value)

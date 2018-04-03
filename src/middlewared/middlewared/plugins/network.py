@@ -1,6 +1,8 @@
-from middlewared.service import ConfigService, Service, filterable, private, ValidationErrors
+from middlewared.service import (ConfigService, CRUDService, Service,
+                                 filterable, private)
 from middlewared.utils import Popen, filter_list, run
-from middlewared.schema import accepts, Bool, Dict, IPAddr, List, Str
+from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Str,
+                                ValidationErrors, accepts)
 from middlewared.validators import Match
 
 import asyncio
@@ -440,7 +442,7 @@ class InterfacesService(Service):
         for interface in interfaces:
             try:
                 await self.sync_interface(interface)
-            except:
+            except Exception:
                 self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
 
         internal_interfaces = ['lo', 'pflog', 'pfsync', 'tun', 'tap', 'bridge', 'epair']
@@ -817,6 +819,75 @@ class RoutesService(Service):
                         if ipaddress.ip_address(ipv4_gateway) in ipaddress.ip_network(nic_result):
                             return True
         return False
+
+
+class StaticRouteService(CRUDService):
+    class Config:
+        datastore = 'network.staticroute'
+        datastore_prefix = 'sr_'
+        datastore_extend = 'staticroute.upper'
+
+    @accepts(Dict(
+        'staticroute_create',
+        IPAddr('destination', cidr=True),
+        IPAddr('gateway'),
+        Str('description'),
+        register=True
+    ))
+    async def do_create(self, data):
+        await self.lower(data)
+
+        data['id'] = await self.middleware.call(
+            'datastore.insert', self._config.datastore, data,
+            {'prefix': self._config.datastore_prefix})
+
+        await self.middleware.call('service.start', 'routing')
+        await self.upper(data)
+
+        return data
+
+    @accepts(
+        Int('id'),
+        Patch(
+            'staticroute_create',
+            'staticroute_update',
+            ('attr', {'update': True})
+        )
+    )
+    async def do_update(self, id, data):
+        old = await self.middleware.call(
+            'datastore.query', self._config.datastore, [('id', '=', id)],
+            {'extend': self._config.datastore_extend,
+             'prefix': self._config.datastore_prefix,
+             'get': True})
+
+        new = old.copy()
+        new.update(data)
+
+        await self.lower(data)
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, id, data,
+            {'prefix': self._config.datastore_prefix})
+
+        await self.middleware.call('service.start', 'routing')
+        await self.upper(new)
+
+        return new
+
+    @accepts(Int('id'))
+    async def do_delete(self, id):
+        return await self.middleware.call(
+            'datastore.delete', self._config.datastore, id)
+
+    @private
+    async def lower(self, data):
+        data['description'] = data['description'].lower()
+
+        return data
+
+    @private
+    async def upper(self, data):
+        data['description'] = data['description'].upper()
 
 
 class DNSService(Service):
