@@ -171,8 +171,8 @@ def test_21_Unmount_AFP_share():
 
 
 # Delete tests
-@bsd_host_cfg
-@ad_test_cfg
+@mount_test_cfg
+@osx_host_cfg
 def test_22_Removing_SMB_mountpoint():
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
     assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True

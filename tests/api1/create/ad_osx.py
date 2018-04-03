@@ -199,7 +199,7 @@ def test_23_Unmount_SMB_share():
 
 
 # Delete tests
-@bsd_host_cfg
+@osx_host_cfg
 @ad_test_cfg
 def test_24_Removing_SMB_mountpoint():
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
