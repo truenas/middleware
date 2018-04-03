@@ -32,19 +32,23 @@ zfs_help() { echo "Dump ZFS Configuration"; }
 zfs_directory() { echo "ZFS"; }
 zfs_func()
 {
-	section_header "ZFS Pools"
+	section_header "zpool list"
 	zpool list
 	section_footer
 
-	section_header "ZFS Pools Status"
+	section_header "zfs list"
+	zfs list
+	section_footer
+
+	section_header "zpool status -v"
 	zpool status -v
 	section_footer
 
-	section_header "ZFS Pools History - excepting replication"
-	zpool history |  egrep -v "zfs.*(snapshot|destroy|recv).*"
+	section_header "zpool history - excepting replication"
+	zpool history | egrep -v "zfs.*(snapshot|destroy|recv).*"
 	section_footer
 
-	section_header "ZFS Pools Properties"
+	section_header "zpool get all"
 	pools=$(zpool list -H|awk '{ print $1 }'|xargs)
 	for p in ${pools}
 	do
@@ -54,15 +58,11 @@ zfs_func()
 	done
 	section_footer
 
-	section_header "ZFS Datasets and ZVols"
-	zfs list
-	section_footer
-
-	section_header "ZFS Snapshots"
+	section_header "zfs list -t snapshot"
 	zfs list -t snapshot -o name,used,available,referenced,mountpoint,freenas:state
 	section_footer
 
-	section_header "ZFS Datasets Properties"
+	section_header "zfs get all"
 	zfs list -o name -H | while read -r s
 	do
 		section_header "${s}"
@@ -73,15 +73,15 @@ zfs_func()
 
 	glabel status > /tmp/glabel.out 
 	section_header  "zpool disk membership normal form"
-		zpool status |  ${FREENAS_DEBUG_MODULEDIR}/zfs/normalize_pool.nawk  | tee /tmp/pool.normal
+		zpool status | ${FREENAS_DEBUG_MODULEDIR}/zfs/normalize_pool.nawk | tee /tmp/pool.normal
 	section_footer
 	section_header  "enclosure use normal form"
-		sesutil map  |  ${FREENAS_DEBUG_MODULEDIR}/zfs/normalize_ses.nawk  | tee /tmp/ses.normal
+		sesutil map | ${FREENAS_DEBUG_MODULEDIR}/zfs/normalize_ses.nawk | tee /tmp/ses.normal
 	section_footer
 	section_header  "pool joined to storage"
-		cat  /tmp/pool.normal  |   ${FREENAS_DEBUG_MODULEDIR}/zfs/join_pool.nawk
+		cat  /tmp/pool.normal | ${FREENAS_DEBUG_MODULEDIR}/zfs/join_pool.nawk
 	section_footer
 	section_header  "enclosure data joined to pool"
-		cat  /tmp/ses.normal  |   ${FREENAS_DEBUG_MODULEDIR}/zfs/join_ses.nawk
+		cat  /tmp/ses.normal | ${FREENAS_DEBUG_MODULEDIR}/zfs/join_ses.nawk
 	section_footer
 }

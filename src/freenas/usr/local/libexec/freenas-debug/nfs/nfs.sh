@@ -32,13 +32,28 @@ nfs_help() { echo "Dump NFS Configuration"; }
 nfs_directory() { echo "NFS"; }
 nfs_func()
 {
-	section_header "/etc/version"
-	sc "/etc/version"
-	section_footer
+	
+	#
+	#	If NFS is disabled, exit.
+	#
 
-	section_header "/etc/resolv.conf"
-	sc "/etc/resolv.conf"
-	section_footer
+	local nfs_enabled
+
+	nfs_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		srv_enable
+	FROM
+		service_services
+	WHERE
+		srv_service = 'nfs'
+	")
+	
+	section_header "NFS Status"	
+	if [ "${nfs_enabled}" = "0" ]
+	then
+		echo "NFS is DISABLED"
+		exit 0
+	fi
 
 	section_header "/etc/hosts"
 	sc "/etc/hosts"
@@ -49,10 +64,7 @@ nfs_func()
 	section_footer
 
 	section_header "showmount -e"
-	if srv_enabled nfs
-	then
-		showmount -e
-	fi
+	showmount -e
 	section_footer
 
 	section_header "rpcinfo -p"
@@ -69,22 +81,6 @@ nfs_func()
 
 	section_header "nfsstat -s"
 	nfsstat -s
-	section_footer
-
-	section_header "netstat -m"
-	netstat -m
-	section_footer
-
-	section_header "netstat -s -p udp"
-	netstat -s -p udp
-	section_footer
-
-	section_header "getent passwd"
-	getent passwd
-	section_footer
-
-	section_header "getent group"
-	getent group
 	section_footer
 
 	section_header "nfsv4 locks: nfsdumpstate"
