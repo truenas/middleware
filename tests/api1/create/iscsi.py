@@ -11,7 +11,7 @@ import os
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, SSH_TEST, return_output
+from functions import PUT, POST, GET_OUTPUT, SSH_TEST, return_output, DELETE
 from functions import POSTNOJSON
 from auto_config import ip
 from config import *
@@ -34,6 +34,7 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
                                        ]) is False, reason=BSDReason)
 
 
+# Create tests
 # Add iSCSI initator
 def test_01_Add_iSCSI_initiator():
     payload = {"id": 1,
@@ -185,24 +186,70 @@ def test_18_Unmounting_iSCSI_volume():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_19_Removing_iSCSI_volume_mountpoint():
-    assert SSH_TEST('rm -rf "%s"' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+def test_19_Mount_the_target_volume():
+    SSH_TEST('mount "/dev/%s" "%s"' % (DEVICE_NAME, MOUNTPOINT),
+             BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_20_Disconnect_all_targets():
-    assert SSH_TEST('iscsictl -R -t %s' % TARGET_NAME,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+def test_20_Creating_45MB_file_to_verify_vzol_size_increase():
+    SSH_TEST('dd if=/dev/zero of=/tmp/45Mfile.img bs=1M count=45',
+             BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@mount_test_cfg
+@bsd_host_cfg
+def test_21_Moving_45MB_file_to_verify_vzol_size_increase():
+    SSH_TEST('mv /tmp/45Mfile.img "%s/testfile1"' % MOUNTPOINT,
+             BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@mount_test_cfg
+@bsd_host_cfg
+def test_22_Deleting_file():
+    SSH_TEST('rm "%s/testfile1"' % MOUNTPOINT,
+             BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@mount_test_cfg
+@bsd_host_cfg
+def test_23_Unmounting_iSCSI_volume():
+    SSH_TEST('umount -f "%s"' % MOUNTPOINT,
+             BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+# Delete tests
+@mount_test_cfg
+@bsd_host_cfg
+def test_24_Removing_iSCSI_volume_mountpoint():
+    SSH_TEST('rm -rf "%s"' % MOUNTPOINT,
+             BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@mount_test_cfg
+@bsd_host_cfg
+def test_25_Disconnect_iSCSI_target():
+    SSH_TEST('iscsictl -R -t %s' % TARGET_NAME,
+             BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 # Disable the iSCSI service
-def test_21_Disable_iSCSI_service():
-    payload = {"srv_enable": "false"}
+def test_26_Disable_iSCSI_service():
+    payload = {"srv_enable": False}
     assert PUT("/services/services/iscsitarget/", payload) == 200
 
 
-def test_22_Verify_the_iSCSI_service_is_disabled():
+def test_27_Verify_the_iSCSI_service_is_Sdisabled():
     assert GET_OUTPUT("/services/services/iscsitarget/",
                       "srv_state") == "STOPPED"
+
+
+# Remove iSCSI target
+def test_28_Delete_iSCSI_target():
+    assert DELETE("/services/iscsi/target/1/") == 204
+
+
+# Remove iSCSI extent
+def test_29_Delete_iSCSI_extent():
+    assert DELETE("/services/iscsi/extent/1/") == 204

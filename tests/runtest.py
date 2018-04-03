@@ -225,9 +225,9 @@ if api == "1.0":
               "%supdate_ftp_result.xml" % results_xml,
               "api1/update/ftp.py"])
         # call(["python3.6", "api1/update/group.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%supdate_iscsi_result.xml" % results_xml,
-              "api1/update/iscsi.py"])
+        # call(["py.test-3.6", "--junitxml",
+        #       "%supdate_iscsi_result.xml" % results_xml,
+        #       "api1/update/iscsi.py"])
         call(["py.test-3.6", "--junitxml",
               "%supdate_ldap_bsd_result.xml" % results_xml,
               "api1/update/ldap_bsd.py"])
@@ -276,9 +276,9 @@ if api == "1.0":
               "%sdelete_cronjob_result.xml" % results_xml,
               "api1/delete/cronjob.py"])
         # call(["python3.6", "api1/delete/group.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%sdelete_iscsi_result.xml" % results_xml,
-              "api1/delete/iscsi.py"])
+        # call(["py.test-3.6", "--junitxml",
+        #       "%sdelete_iscsi_result.xml" % results_xml,
+        #       "api1/delete/iscsi.py"])
         call(["py.test-3.6", "--junitxml",
               "%sdelete_ldap_bsd.xml" % results_xml,
               "api1/delete/ldap_bsd.py"])
