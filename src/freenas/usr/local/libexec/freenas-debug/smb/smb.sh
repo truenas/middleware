@@ -64,6 +64,14 @@ smb_func()
 	section_footer
 
 	#
+	#	If SMB is disabled, exit
+	#
+	if [ "${onoff}" = "0" ]
+	then
+		exit 0
+	fi
+	
+	#
 	#	Dump samba version
 	#
 	section_header "smbd -V"
@@ -116,34 +124,25 @@ smb_func()
 	net getdomainsid
 	section_footer
 	section_header "net usersidlist"
-	net usersidlist | head -200
+	net usersidlist | head -50
 	section_footer
 	section_header "net groupmap list"
-	net groupmap list | head -200
+	net groupmap list | head -50
 	section_footer
 
 	section_header "net status sessions"
-	net status sessions | head -200
+	net status sessions | head -50
 	section_footer
 	section_header "net status shares"
 	net status shares
 	section_footer
 
 	section_header "Lock information"
-	smbstatus -L | head -200
+	smbstatus -L | head -50
 	section_footer
 	
 	section_header "ACLs - 'sharesec --view-all'"
 	sharesec --view-all
 	section_footer
 
-	#
-	#	Dump SMB users and groups
-	#
-	section_header "Users and Groups"
-	section_header "Users - 'wbinfo -u'"
-	wbinfo -u | head -200
-	section_header "Groups - 'wbinfo -g'"
-	wbinfo -g | head -200
-	section_footer
 }

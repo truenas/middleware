@@ -40,10 +40,35 @@ active_directory_func()
 	local pamfiles
 	local onoff
 	local enabled="DISABLED"
+	local mon_onoff
+	local mon_enabled="DISABLED"
 
 
 	#
-	#	First, check if the Active Directory service is enabled.
+	#	First, check if the AD Monitoring service is enabled.
+	#
+	mon_onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ad_enable_monitor
+	FROM
+		directoryservice_activedirectory
+	ORDER BY
+		-id
+	LIMIT 1
+	")
+		
+	mon_enabled="DISABLED"
+	if [ "${mon_onoff}" = "1" ]
+	then
+		mon_enabled="ENABLED"
+	fi
+
+	section_header "Active Directory Monitoring"
+	echo "Active Directory Monitoring is ${mon_enabled}"
+	section_footer
+
+	#
+	#	Second, check if the Active Directory service is enabled.
 	#
 	onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
@@ -61,7 +86,7 @@ active_directory_func()
 	then
 		enabled="ENABLED"
 	fi
-
+	
 	section_header "Active Directory Status"
 	echo "Active Directory is ${enabled}"
 	section_footer
@@ -156,24 +181,10 @@ __EOF__
 	section_footer
 
 	#
-	#	Try to generate an AD config file
-	#
-	section_header "adtool get config_file"
-	adtool get config_file
-	section_footer
-
-	#
 	#	Dump Active Directory domain info
 	#
 	section_header "Active Directory Domain Info - 'net ads info'"
 	net ads info
-	section_footer
-
-	#
-	#	Dump Active Directory domain status
-	#
-	section_header "Active Directory Domain Status - 'net ads status'"
-	net ads status
 	section_footer
 
 	#
@@ -210,20 +221,10 @@ __EOF__
 	#
 	#	Dump Active Directory users and groups
 	#
-	section_header "Active Directory Users and Groups"
-	section_header "Users - 'wbinfo -u'"
-	wbinfo -u | head -200
-	section_header "Groups - 'wbinfo -g'"
-	wbinfo -g | head -200
-	section_header "Using getent"
-	section_header "Users - 'getent passwd'"
-	getent passwd | head -200
-	section_header "Groups - 'getent group'"
-	getent group | head -200
+	section_header "Active Directory Users - 'wbinfo -u'"
+	wbinfo -u | head -50
+	section_header "Active Directory Groups - 'wbinfo -g'"
+	wbinfo -g | head -50
 	section_footer
 
-	#
-	#	Dump cache info
-	#
-	cache_func "AD"
 }

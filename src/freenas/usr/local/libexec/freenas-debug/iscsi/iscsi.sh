@@ -32,6 +32,45 @@ iscsi_help() { echo "Dump iSCSI Configuration"; }
 iscsi_directory() { echo "iSCSI"; }
 iscsi_func()
 {
+	#
+	#	If iSCSI is disabled, exit.
+	#
+
+	iscsi_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		srv_enable	
+	FROM
+		services_services
+	WHERE
+		srv_service = 'iscsitarget'
+	")
+
+	if [ "${iscsi_enabled}" = "0" ]
+	then
+		section_header "iSCSI Status"
+		echo "iSCSI is DISABLED"
+		exit 0
+	fi
+
+	alua_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		iscsi_alua
+	FROM
+		services_iscsitargetglobalconfiguration
+	")
+
+	if [ "${alua_enabled}" = "0" ]
+	then
+		section_header "iSCSI ALUA Status"
+		echo "ALUA is DISABLED"
+	fi
+
+	if [ "${alua_enabled}" = "1" ]
+	then
+		section_header "iSCSI ALUA Status"
+		echo "ALUA is ENABLED"
+	fi
+
 	section_header "/etc/ctl.conf"
 	sc "/etc/ctl.conf.shadow"
 	section_footer
