@@ -38,6 +38,7 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
                                        ]) is False, reason=BSDReason)
 
 
+# Create tests
 def test_01_creating_smb_dataset():
     assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
 
@@ -167,6 +168,7 @@ def test_18_Unmounting_SMB():
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
+# Update tests
 @ad_test_cfg
 def test_19_Mounting_SMB():
     cmd = 'mount_smbfs -N -I %s -W AD01 ' % ip
@@ -215,6 +217,7 @@ def test_25_Unmounting_SMB():
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
+# Delete tests
 @bsd_host_cfg
 @ad_test_cfg
 def test_26_Removing_SMB_mountpoint():

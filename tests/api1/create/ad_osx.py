@@ -36,6 +36,7 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        ]) is False, reason=OSXReason)
 
 
+# Create tests
 @ad_test_cfg
 def test_02_Enabling_Active_Directory():
     payload = {"ad_bindpw": ADPASSWORD,
@@ -147,7 +148,7 @@ def test_17_Unmount_SMB_share():
                     OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
-# Update test
+# Update tests
 @osx_host_cfg
 @ad_test_cfg
 def test_18_Mount_SMB_share_on_OSX_system():
@@ -197,7 +198,7 @@ def test_23_Unmount_SMB_share():
                     OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
-# Delete test
+# Delete tests
 @bsd_host_cfg
 @ad_test_cfg
 def test_24_Removing_SMB_mountpoint():

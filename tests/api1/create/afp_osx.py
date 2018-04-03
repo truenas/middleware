@@ -32,6 +32,7 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        ]) is False, reason=OSXReason)
 
 
+# Create tests
 def test_01_Creating_AFP_dataset():
     assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
 
@@ -118,3 +119,75 @@ def test_13_Verifying_test_file_directory_were_successfully_removed():
 def test_14_Unmount_AFP_share():
     assert SSH_TEST("umount -f '%s'" % MOUNTPOINT,
                     OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+# Update tests
+@mount_test_cfg
+@osx_host_cfg
+def test_16_Mount_AFP_share_on_OSX_system():
+    cmd = 'mount -t afp "afp://%s/%s" "%s"' % (ip, AFP_NAME, MOUNTPOINT)
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+@mount_test_cfg
+@osx_host_cfg
+def test_17_Create_file_on_AFP_share_via_OSX_to_test_permissions():
+    assert SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
+                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+# Move test file to a new location on the AFP share
+@mount_test_cfg
+@osx_host_cfg
+def test_18_Moving_AFP_test_file_into_a_new_directory():
+    cmd = 'mkdir -p "%s/tmp" && ' % MOUNTPOINT
+    cmd += 'mv "%s/testfile.txt" ' % MOUNTPOINT
+    cmd += '"%s/tmp/testfile.txt"' % MOUNTPOINT
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+# Delete test file and test directory from AFP share
+@mount_test_cfg
+@osx_host_cfg
+def test_19_Deleting_test_file_and_directory_from_AFP_share():
+    cmd = 'rm -f "%s/tmp/testfile.txt" && ' % MOUNTPOINT
+    cmd += 'rmdir "%s/tmp"' % MOUNTPOINT
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+@mount_test_cfg
+@osx_host_cfg
+def test_20_Verifying_test_file_directory_were_successfully_removed():
+    cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+# Clean up mounted AFP share
+@mount_test_cfg
+@osx_host_cfg
+def test_21_Unmount_AFP_share():
+    assert SSH_TEST('umount -f "%s"' % MOUNTPOINT,
+                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+# Delete tests
+@bsd_host_cfg
+@ad_test_cfg
+def test_22_Removing_SMB_mountpoint():
+    cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+# Test disable AFP
+def test_23_Verify_AFP_service_can_be_disabled():
+    assert PUT("/services/afp/", {"afp_srv_guest": "false"}) == 200
+
+
+def test_24_Verify_delete_afp_name_and_afp_path():
+    payload = {"afp_name": AFP_NAME, "afp_path": AFP_PATH}
+    assert DELETE_ALL("/sharing/afp/", payload) == 204
+
+
+# Test delete AFP dataset
+def test_25_Verify_AFP_dataset_can_be_destroyed():
+    assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
