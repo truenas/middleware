@@ -228,9 +228,9 @@ if api == "1.0":
         # call(["py.test-3.6", "--junitxml",
         #       "%supdate_iscsi_result.xml" % results_xml,
         #       "api1/update/iscsi.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%supdate_ldap_bsd_result.xml" % results_xml,
-              "api1/update/ldap_bsd.py"])
+        # call(["py.test-3.6", "--junitxml",
+        #       "%supdate_ldap_bsd_result.xml" % results_xml,
+        #       "api1/update/ldap_bsd.py"])
         call(["py.test-3.6", "--junitxml",
               "%supdate_ldap_osx_result.xml" % results_xml,
               "api1/update/ldap_osx.py"])
@@ -279,9 +279,9 @@ if api == "1.0":
         # call(["py.test-3.6", "--junitxml",
         #       "%sdelete_iscsi_result.xml" % results_xml,
         #       "api1/delete/iscsi.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%sdelete_ldap_bsd.xml" % results_xml,
-              "api1/delete/ldap_bsd.py"])
+        # call(["py.test-3.6", "--junitxml",
+        #       "%sdelete_ldap_bsd.xml" % results_xml,
+        #       "api1/delete/ldap_bsd.py"])
         # call(["python3.6", "api1/delete/rsync.py"])
         call(["py.test-3.6", "--junitxml",
               "%sdelete_storage_result.xml" % results_xml,
