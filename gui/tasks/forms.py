@@ -123,7 +123,11 @@ class CloudSyncForm(ModelForm):
             c.call('backup.delete', self.instance.id)
 
 
-class CronJobForm(ModelForm):
+class CronJobForm(MiddlewareModelForm, ModelForm):
+    middleware_attr_prefix = 'cron_'
+    middleware_plugin = 'cronjob'
+    middleware_attr_schema = 'cron_job'
+    is_singletone = False
 
     class Meta:
         fields = '__all__'
@@ -158,20 +162,12 @@ class CronJobForm(ModelForm):
             1, 2, 3, 4, 5, 6, 7
         ])
 
-    def clean_cron_user(self):
-        user = self.cleaned_data.get("cron_user")
-        # Windows users can have spaces in their usernames
-        # http://www.freebsd.org/cgi/query-pr.cgi?pr=164808
-        if ' ' in user:
-            raise forms.ValidationError("Usernames cannot have spaces")
-        return user
-
     def clean_cron_month(self):
         m = self.data.getlist("cron_month")
         if len(m) == 12:
             return '*'
-        m = ",".join(m)
-        return m
+        else:
+            return ','.join(m)
 
     def clean_cron_dayweek(self):
         w = self.data.getlist('cron_dayweek')
@@ -179,12 +175,18 @@ class CronJobForm(ModelForm):
             return w
         if len(w) == 7:
             return '*'
-        w = ",".join(w)
-        return w
+        else:
+            return ','.join(w)
 
-    def save(self):
-        super(CronJobForm, self).save()
-        notifier().restart("cron")
+    def middleware_clean(self, update):
+        update['schedule'] = {
+            'minute': update.pop('minute'),
+            'hour': update.pop('hour'),
+            'dom': update.pop('daymonth'),
+            'month': update.pop('month'),
+            'dow': update.pop('dayweek')
+        }
+        return update
 
 
 class InitShutdownForm(MiddlewareModelForm, ModelForm):
