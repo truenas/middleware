@@ -165,3 +165,87 @@ def test_17_Deleting_SMB_file_2_2():
 def test_18_Unmounting_SMB():
     assert SSH_TEST('umount "%s"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@ad_test_cfg
+def test_19_Mounting_SMB():
+    cmd = 'mount_smbfs -N -I %s -W AD01 ' % ip
+    cmd += '"//aduser@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_20_Creating_SMB_file():
+    assert SSH_TEST('touch "%s/testfile"' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_21_Moving_SMB_file():
+    cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_22_Copying_SMB_file():
+    cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_23_Deleting_SMB_file_1_2():
+    assert SSH_TEST('rm "%s/testfile"' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_24_Deleting_SMB_file_2_2():
+    assert SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@ad_test_cfg
+def test_25_Unmounting_SMB():
+    assert SSH_TEST('umount "%s"' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_26_Removing_SMB_mountpoint():
+    cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+# Disable Active Directory Directory
+@ad_test_cfg
+def test_27_Disabling_Active_Directory():
+    payload = {"ad_bindpw": ADPASSWORD,
+               "ad_bindname": ADUSERNAME,
+               "ad_domainname": BRIDGEDOMAIN,
+               "ad_netbiosname_a": BRIDGEHOST,
+               "ad_idmap_backend": "ad",
+               "ad_enable": False}
+    assert PUT("/directoryservice/activedirectory/1/", payload) == 200
+
+
+# Check Active Directory
+@ad_test_cfg
+def test_28_Verify_Active_Directory_is_disabled():
+    assert GET_OUTPUT("/directoryservice/activedirectory/",
+                      "ad_enable") is False
+
+
+@ad_test_cfg
+def test_29_Verify_SMB_service_is_disabled():
+    assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "STOPPED"
+
+
+# Check destroying a SMB dataset
+def test_30_Destroying_SMB_dataset():
+    assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204

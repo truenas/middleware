@@ -203,9 +203,9 @@ if api == "1.0":
               "api1/create/webdav_osx.py"])
 
         # Update test
-        call(["py.test-3.6", "--junitxml",
-              "%supdate_ad_bsd_result.xml" % results_xml,
-              "api1/update/ad_bsd.py"])
+        # call(["py.test-3.6", "--junitxml",
+        #       "%supdate_ad_bsd_result.xml" % results_xml,
+        #       "api1/update/ad_bsd.py"])
         call(["py.test-3.6", "--junitxml",
               "%supdate_ad_osx_result.xml" % results_xml,
               "api1/update/ad_osx.py"])
@@ -260,9 +260,9 @@ if api == "1.0":
               "api1/update/webdav_osx.py"])
 
         # Delete test
-        call(["py.test-3.6", "--junitxml",
-              "%sdelete_ad_bsd_result.xml" % results_xml,
-              "api1/delete/ad_bsd.py"])
+        # call(["py.test-3.6", "--junitxml",
+        #       "%sdelete_ad_bsd_result.xml" % results_xml,
+        #       "api1/delete/ad_bsd.py"])
         call(["py.test-3.6", "--junitxml",
               "%sdelete_ad_osx.xml" % results_xml,
               "api1/delete/ad_osx.py"])
