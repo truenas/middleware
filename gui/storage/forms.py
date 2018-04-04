@@ -2819,6 +2819,7 @@ class UnlockPassphraseForm(Form):
             if svc == 'jails':
                 with client as c:
                     c.call('core.bulk', 'service.restart', [['jails']])
+                    c.call('core.bulk', 'jail.rc_action', [['RESTART']])
             else:
                 _notifier.restart(svc)
         _notifier.start("ix-warden")

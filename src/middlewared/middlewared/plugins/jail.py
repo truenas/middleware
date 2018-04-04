@@ -1,4 +1,5 @@
 import os
+import time
 
 import iocage.lib.iocage as ioc
 import libzfs
@@ -10,7 +11,7 @@ from iocage.lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
 from iocage.lib.ioc_list import IOCList
 from iocage.lib.ioc_upgrade import IOCUpgrade
-from middlewared.schema import Bool, Dict, List, Str, accepts, Int
+from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
@@ -227,6 +228,22 @@ class JailService(CRUDService):
             resource_list = iocage.list(resource)
 
         return resource_list
+
+    @accepts(Str("action", enum=["START", "STOP", "RESTART"]))
+    def rc_action(self, action):
+        """Does specified action on rc enabled (boot=on) jails"""
+        iocage = ioc.IOCage(rc=True)
+
+        if action == "START":
+            iocage.start()
+        elif action == "STOP":
+            iocage.stop()
+        else:
+            iocage.stop()
+            time.sleep(0.5)
+            iocage.start()
+
+        return True
 
     @accepts(Str("jail"))
     def start(self, jail):
