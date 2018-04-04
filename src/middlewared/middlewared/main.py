@@ -962,6 +962,9 @@ class Middleware(object):
                 except Exception:
                     return args
 
+        if not hasattr(method, 'accepts'):
+            return args
+
         return [method.accepts[i].dump(arg) for i, arg in enumerate(args) if i < len(method.accepts)]
 
     async def call_method(self, app, message):
