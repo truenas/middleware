@@ -32,8 +32,7 @@ import re
 import subprocess
 from collections import OrderedDict
 
-from ipaddr import (AddressValueError, IPAddress, IPNetwork, IPv4Address,
-                    IPv6Address, NetmaskValueError)
+from ipaddr import AddressValueError, IPAddress, IPNetwork, NetmaskValueError
 
 import sysctl
 from django.core.validators import validate_email
@@ -47,8 +46,7 @@ from freenasUI.common import humanize_size
 from freenasUI.common.forms import Form, ModelForm
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.samba import Samba4
-from freenasUI.common.system import (activedirectory_enabled, ldap_enabled,
-                                     validate_netbios_name)
+from freenasUI.common.system import activedirectory_enabled, ldap_enabled
 from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.freeadmin.utils import key_order
