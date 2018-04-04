@@ -89,6 +89,8 @@ class Range:
         self.max = max
 
     def __call__(self, value):
+        if value is None:
+            return
         error = {
             (True, True): f"between {self.min} and {self.max}",
             (False, True): f"less or equal than {self.max}",
