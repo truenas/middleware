@@ -926,7 +926,12 @@ class iSCSITargetToExtentForm(ModelForm):
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 
 
-class iSCSITargetGlobalConfigurationForm(ModelForm):
+class iSCSITargetGlobalConfigurationForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "iscsi_"
+    middleware_attr_schema = "iscsiglobal"
+    middleware_plugin = "iscsi.global"
+    is_singletone = True
 
     class Meta:
         fields = '__all__'
@@ -937,67 +942,13 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetGlobalConfigurationForm, self).__init__(*args, **kwargs)
-        self.instance._original_iscsi_alua = self.instance.iscsi_alua
         _n = notifier()
         if not (not _n.is_freenas() and _n.failover_licensed()):
             del self.fields['iscsi_alua']
 
-    def _clean_number_range(self, field, start, end):
-        f = self.cleaned_data[field]
-        if f < start or f > end:
-            raise forms.ValidationError(_(
-                "This value must be between %(start)d and %(end)d, "
-                "inclusive."
-            ) % {
-                'start': start,
-                'end': end,
-            })
-        return f
-
-    def clean_iscsi_isns_servers(self):
-        servers = self.cleaned_data.get('iscsi_isns_servers')
-        servers = servers.replace('\n', ' ').strip(' ')
-        servers = re.sub(r'\s+', ' ', servers)
-        errors = []
-        for server in servers.split(' '):
-            if not server:
-                continue
-            reg = re.search(r'\[(.+?)\](:[0-9]+)?', server)
-            if reg:
-                ip = reg.group(1)
-                try:
-                    IPv6Address(ip)
-                    continue
-                except AddressValueError:
-                    errors.append(ip)
-            reg = re.search(
-                r'([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})(:[0-9]+)?',
-                server,
-            )
-            if reg:
-                ip = reg.group(1)
-                try:
-                    IPv4Address(ip)
-                    continue
-                except AddressValueError:
-                    errors.append(ip)
-            errors.append(server)
-
-        if errors:
-            raise forms.ValidationError(_(
-                'The following addresses are not valid: %s') % ', '.join(errors)
-            )
-
-        return servers
-
-    def save(self):
-        obj = super(iSCSITargetGlobalConfigurationForm, self).save()
-        if self.instance._original_iscsi_alua != self.instance.iscsi_alua:
-            notifier().start('ix-loader')
-        started = notifier().reload("iscsitarget")
-        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
-        return obj
+    def middleware_clean(self, data):
+        data['isns_servers'] = data['isns_servers'].split()
+        return data
 
 
 class iSCSITargetExtentForm(ModelForm):
