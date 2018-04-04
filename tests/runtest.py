@@ -115,14 +115,14 @@ if api == "1.0":
               "%screate_ntp_result.xml" % results_xml,
               "api1/create/ntp.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_ad_bsd_result.xml" % results_xml,
-              "api1/create/ad_bsd.py"])
+              "%sad_bsd_result.xml" % results_xml,
+              "api1/ad_bsd.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_ad_osx.xml" % results_xml,
-              "api1/create/ad_osx.py"])
+              "%sad_osx_result.xml" % results_xml,
+              "api1/ad_osx.py"])
         call(["py.test-3.6", "--junitxml",
-              "%screate_afp_osx_result.xml" % results_xml,
-              "api1/create/afp_osx.py"])
+              "%safp_osx_result.xml" % results_xml,
+              "api1/afp_osx.py"])
         call(["py.test-3.6", "--junitxml",
               "%screate_alerts_result.xml" % results_xml,
               "api1/create/alerts.py"])
@@ -231,9 +231,9 @@ if api == "1.0":
         # call(["py.test-3.6", "--junitxml",
         #       "%supdate_ldap_bsd_result.xml" % results_xml,
         #       "api1/update/ldap_bsd.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%supdate_ldap_osx_result.xml" % results_xml,
-              "api1/update/ldap_osx.py"])
+        # call(["py.test-3.6", "--junitxml",
+        #       "%supdate_ldap_osx_result.xml" % results_xml,
+        #       "api1/update/ldap_osx.py"])
         call(["py.test-3.6", "--junitxml",
               "%supdate_nfs_result.xml" % results_xml,
               "api1/update/nfs.py"])
@@ -260,15 +260,6 @@ if api == "1.0":
               "api1/update/webdav_osx.py"])
 
         # Delete test
-        # call(["py.test-3.6", "--junitxml",
-        #       "%sdelete_ad_bsd_result.xml" % results_xml,
-        #       "api1/delete/ad_bsd.py"])
-        # call(["py.test-3.6", "--junitxml",
-        #       "%sdelete_ad_osx.xml" % results_xml,
-        #       "api1/delete/ad_osx.py"])
-        # call(["py.test-3.6", "--junitxml",
-        #       "%sdelete_afp_osx_result.xml" % results_xml,
-        #       "api1/delete/afp_osx.py"])
         call(["py.test-3.6", "--junitxml",
               "%sdelete_bootenv_result.xml" % results_xml,
               "api1/delete/bootenv.py"])
@@ -276,13 +267,6 @@ if api == "1.0":
               "%sdelete_cronjob_result.xml" % results_xml,
               "api1/delete/cronjob.py"])
         # call(["python3.6", "api1/delete/group.py"])
-        # call(["py.test-3.6", "--junitxml",
-        #       "%sdelete_iscsi_result.xml" % results_xml,
-        #       "api1/delete/iscsi.py"])
-        # call(["py.test-3.6", "--junitxml",
-        #       "%sdelete_ldap_bsd.xml" % results_xml,
-        #       "api1/delete/ldap_bsd.py"])
-        # call(["python3.6", "api1/delete/rsync.py"])
         call(["py.test-3.6", "--junitxml",
               "%sdelete_storage_result.xml" % results_xml,
               "api1/delete/storage.py"])

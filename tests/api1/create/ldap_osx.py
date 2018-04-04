@@ -25,9 +25,19 @@ OSXReason = 'OSX host configuration is missing in ixautomation.conf'
 
 ldap_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
                                         "LDAPBASEDN" in locals(),
+                                        "LDAPBINDDN" in locals(),
                                         "LDAPHOSTNAME" in locals(),
+                                        "LDAPBINDPASSWORD" in locals(),
                                         "MOUNTPOINT" in locals()
                                         ]) is False, reason=Reason)
+
+up_ldap_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
+                                           "LDAPBASEDN2" in locals(),
+                                           "LDAPBINDDN2" in locals(),
+                                           "LDAPHOSTNAME2" in locals(),
+                                           "LDAPBINDPASSWORD2" in locals(),
+                                           "MOUNTPOINT" in locals()
+                                           ]) is False, reason=Reason)
 
 osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        "OSX_USERNAME" in locals(),
@@ -35,6 +45,7 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        ]) is False, reason=OSXReason)
 
 
+# Create tests
 # Set auxilary parameters to allow mount_smbfs to work with ldap
 def test_01_Creating_SMB_dataset():
     assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
@@ -42,9 +53,10 @@ def test_01_Creating_SMB_dataset():
 
 # Enable LDAP
 @ldap_test_cfg
-def test_02_Enabling_LDAP_with_anonymous_bind():
+def test_02_Enabling_LDAPd():
     payload = {"ldap_basedn": LDAPBASEDN,
-               "ldap_anonbind": True,
+               "ldap_binddn": LDAPBINDDN,
+               "ldap_bindpw": LDAPBINDPASSWORD,
                "ldap_netbiosname_a": BRIDGEHOST,
                "ldap_hostname": LDAPHOSTNAME,
                "ldap_has_samba_schema": True,
@@ -95,41 +107,25 @@ def test_08_Creating_a_SMB_share_on_SMB_PATH():
     assert POST("/sharing/cifs/", payload) == 201
 
 
-# @ldap_test_cfg
-# def test_09_Checking_permissions_on_SMB_NAME():
-#     vol_name = return_output('dirname "%s"' % SMB_NAME)
-#     cmd = 'ls -la "%s" | ' % vol_name
-#     cmd += 'awk \'$4 == "%s" && $9 == "%s"\'' % (VOL_GROUP, DATASET)
-#     assert SSH_TEST(cmd) is True
-
-
 # Mount share on OSX system and create a test file
 @osx_host_cfg
 @ldap_test_cfg
-def test_10_Create_mount_point_for_SMB_on_OSX_system():
+def test_09_Create_mount_point_for_SMB_on_OSX_system():
     assert SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
                     OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
 @osx_host_cfg
 @ldap_test_cfg
-def test_11_Mount_SMB_share_on_OSX_system():
+def test_10_Mount_SMB_share_on_OSX_system():
     cmd = 'mount -t smbfs "smb://ldapuser:12345678'
     cmd += '@%s/%s" %s' % (ip, SMB_NAME, MOUNTPOINT)
     assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
-# @ldap_test_cfg
-# def test_12_Checking_permissions_on_MOUNTPOINT():
-#     device_name = return_output('dirname "%s"' % MOUNTPOINT)
-#     cmd = 'time ls -la "%s" | ' % device_name
-#     cmd += 'awk \'$4 == "%s" && $9 == "%s"\'' % (VOL_GROUP, DATASET)
-#     assert SSH_TEST(cmd) is True
-
-
 @osx_host_cfg
 @ldap_test_cfg
-def test_13_Create_file_on_SMB_share_via_OSX_to_test_permissions():
+def test_12_Create_file_on_SMB_share_via_OSX_to_test_permissions():
     assert SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
                     OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
@@ -137,7 +133,7 @@ def test_13_Create_file_on_SMB_share_via_OSX_to_test_permissions():
 # Move test file to a new location on the SMB share
 @osx_host_cfg
 @ldap_test_cfg
-def test_14_Moving_SMB_test_file_into_a_new_directory():
+def test_13_Moving_SMB_test_file_into_a_new_directory():
     cmd = 'mkdir -p "%s/tmp" && ' % MOUNTPOINT
     cmd += 'mv "%s/testfile.txt" ' % MOUNTPOINT
     cmd += '"%s/tmp/testfile.txt"' % MOUNTPOINT
@@ -147,7 +143,7 @@ def test_14_Moving_SMB_test_file_into_a_new_directory():
 # Delete test file and test directory from SMB share
 @osx_host_cfg
 @ldap_test_cfg
-def test_15_Deleting_test_file_and_directory_from_SMB_share():
+def test_14_Deleting_test_file_and_directory_from_SMB_share():
     cmd = 'rm -f "%s/tmp/testfile.txt" && ' % MOUNTPOINT
     cmd += 'rmdir "%s/tmp"' % MOUNTPOINT
     assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
@@ -155,7 +151,7 @@ def test_15_Deleting_test_file_and_directory_from_SMB_share():
 
 @osx_host_cfg
 @ldap_test_cfg
-def test_16_Verifying_test_file_directory_were_successfully_removed():
+def test_15_Verifying_test_file_directory_were_successfully_removed():
     cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
     assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
@@ -163,39 +159,134 @@ def test_16_Verifying_test_file_directory_were_successfully_removed():
 # Clean up mounted SMB share
 @osx_host_cfg
 @ldap_test_cfg
-def test_17_Unmount_SMB_share():
+def test_16_Unmount_SMB_share():
     assert SSH_TEST('umount -f "%s"' % MOUNTPOINT,
                     OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
-# Disable LDAP
-@ldap_test_cfg
-def test_18_Disabling_LDAP_with_anonymous_bind():
-    payload = {"ldap_basedn": LDAPBASEDN,
-               "ldap_anonbind": True,
+# Update tests
+# Enable LDAP
+@up_ldap_test_cfg
+def test_17_Enabling_LDAP():
+    payload = {"ldap_basedn": LDAPBASEDN2,
+               "ldap_binddn": LDAPBINDDN2,
+               "ldap_bindpw": LDAPBINDPASSWORD2,
                "ldap_netbiosname_a": BRIDGEHOST,
-               "ldap_hostname": LDAPHOSTNAME,
+               "ldap_hostname": LDAPHOSTNAME2,
+               "ldap_has_samba_schema": True,
+               "ldap_enable": True}
+    assert PUT("/directoryservice/ldap/1/", payload) == 200
+
+
+# Check LDAP
+@up_ldap_test_cfg
+def test_18_Checking_LDAP():
+    assert GET_OUTPUT("/directoryservice/ldap/", "ldap_enable") is True
+
+
+# Mount share on OSX system and create a test file
+@osx_host_cfg
+@up_ldap_test_cfg
+def test_19_Create_mount_point_for_SMB_on_OSX_system():
+    assert SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
+                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+@osx_host_cfg
+@up_ldap_test_cfg
+def test_20_Mount_SMB_share_on_OSX_system():
+    cmd = 'mount -t smbfs "smb://%s:%s' % (LDAP_USER, LDAP_PASS)
+    cmd += '@%s/%s" "%s"' % (ip, SMB_NAME, MOUNTPOINT)
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+@osx_host_cfg
+@up_ldap_test_cfg
+def test_21_Create_file_on_SMB_share_via_OSX_to_test_permissions():
+    assert SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
+                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+# Move test file to a new location on the SMB share
+@osx_host_cfg
+@up_ldap_test_cfg
+def test_22_Moving_SMB_test_file_into_a_new_directory():
+    cmd = 'mkdir -p "%s/tmp" && ' % MOUNTPOINT
+    cmd += 'mv "%s/testfile.txt" ' % MOUNTPOINT
+    cmd += '"%s/tmp/testfile.txt"' % MOUNTPOINT
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+# Delete test file and test directory from SMB share
+@osx_host_cfg
+@up_ldap_test_cfg
+def test_23_Deleting_test_file_and_directory_from_SMB_share():
+    cmd = 'rm -f "%s/tmp/testfile.txt" && ' % MOUNTPOINT
+    cmd += 'rmdir "%s/tmp"' % MOUNTPOINT
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+@osx_host_cfg
+@up_ldap_test_cfg
+def test_24_Verifying_test_file_directory_were_successfully_removed():
+    cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+# Clean up mounted SMB share
+@osx_host_cfg
+@up_ldap_test_cfg
+def test_25_Unmount_SMB_share():
+    assert SSH_TEST('umount -f "%s"' % MOUNTPOINT,
+                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+
+
+# Delete tests
+@osx_host_cfg
+@ad_test_cfg
+def test_26_Removing_SMB_mountpoint():
+    cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+def test_27_Removing_SMB_share_on_SMB_PATH():
+    payload = {"cfs_comment": "My Test SMB Share",
+               "cifs_path": SMB_PATH,
+               "cifs_name": SMB_NAME,
+               "cifs_guestok": True,
+               "cifs_vfsobjects": "streams_xattr"}
+    assert DELETE_ALL("/sharing/cifs/", payload) == 204
+
+
+# Disable LDAP
+@up_ldap_test_cfg
+def test_28_Disabling_LDAP():
+    payload = {"ldap_basedn": LDAPBASEDN2,
+               "ldap_binddn": LDAPBINDDN2,
+               "ldap_bindpw": LDAPBINDPASSWORD2,
+               "ldap_netbiosname_a": BRIDGEHOST,
+               "ldap_hostname": LDAPHOSTNAME2,
                "ldap_has_samba_schema": True,
                "ldap_enable": False}
     assert PUT("/directoryservice/ldap/1/", payload) == 200
 
 
 # Now stop the SMB service
-def test_19_Stopping_SMB_service():
+def test_29_Stopping_SMB_service():
     assert PUT("/services/services/cifs/", {"srv_enable": False}) == 200
 
 
 # Check LDAP
 @ldap_test_cfg
-def test_20_Verify_LDAP_is_disabled():
+def test_30_Verify_LDAP_is_disabledd():
     assert GET_OUTPUT("/directoryservice/ldap/", "ldap_enable") is False
 
 
 @ldap_test_cfg
-def test_21_Verify_SMB_service_is_disabled():
+def test_31_Verify_SMB_service_has_shut_down():
     assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "STOPPED"
 
 
 # Check destroying a SMB dataset
-def test_22_Destroying_SMB_dataset():
+def test_32_Destroying_SMB_dataset():
     assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
