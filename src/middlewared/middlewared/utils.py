@@ -6,6 +6,7 @@ import sys
 import subprocess
 import threading
 from datetime import datetime, timedelta
+from itertools import chain
 from functools import wraps
 from threading import Lock
 
@@ -18,12 +19,12 @@ VERSION = None
 
 
 async def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
-    from django.db.models.fields.related import ForeignKey
+    from django.db.models.fields.related import ForeignKey, ManyToManyField
     from freenasUI.contrib.IPAddressField import (
         IPAddressField, IP4AddressField, IP6AddressField
     )
     data = {}
-    for field in obj._meta.fields:
+    for field in chain(obj._meta.fields, obj._meta.many_to_many):
         name = field.name
         try:
             value = getattr(obj, name)
@@ -41,6 +42,10 @@ async def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=N
             data[name] = str(value)
         elif isinstance(field, ForeignKey):
             data[name] = await django_modelobj_serialize(middleware, value) if value is not None else value
+        elif isinstance(field, ManyToManyField):
+            data[name] = []
+            for o in value.all():
+                data[name].append((await django_modelobj_serialize(middleware, o)))
         else:
             data[name] = value
     if extend:
