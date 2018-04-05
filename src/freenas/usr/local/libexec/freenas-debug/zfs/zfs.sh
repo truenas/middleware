@@ -36,8 +36,8 @@ zfs_func()
 	zpool list
 	section_footer
 
-	section_header "zfs list"
-	zfs list
+	section_header "zfs list -ro space,refer,mountpoint"
+	zfs list -ro space,refer,mountpoint
 	section_footer
 
 	section_header "zpool status -v"
