@@ -56,6 +56,7 @@ from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Disk, Volume
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import fc_enabled
+from middlewared.plugins.iscsi import AUTHMETHOD_LEGACY_MAP
 from middlewared.plugins.smb import LOGLEVEL_MAP
 
 log = logging.getLogger('services.form')
@@ -1164,7 +1165,12 @@ class iSCSITargetExtentForm(ModelForm):
         return oExtent
 
 
-class iSCSITargetPortalForm(ModelForm):
+class iSCSITargetPortalForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'iscsi_target_portal_'
+    middleware_attr_schema = 'iscsiportal'
+    middleware_plugin = 'iscsi.portal'
+
     iscsi_target_portal_discoveryauthgroup = forms.ChoiceField(
         label=_("Discovery Auth Group")
     )
@@ -1178,29 +1184,26 @@ class iSCSITargetPortalForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetPortalForm, self).__init__(*args, **kwargs)
-        self.fields["iscsi_target_portal_tag"].initial = (
-            models.iSCSITargetPortal.objects.all().count() + 1)
+        self._listen = []
         self.fields['iscsi_target_portal_discoveryauthgroup'].required = False
-        self.fields['iscsi_target_portal_discoveryauthgroup'].choices = [('-1', _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
+        self.fields['iscsi_target_portal_discoveryauthgroup'].choices = [(None, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
 
-    def clean_iscsi_target_portal_discoveryauthgroup(self):
-        discoverymethod = self.cleaned_data['iscsi_target_portal_discoveryauthmethod']
-        discoverygroup = self.cleaned_data['iscsi_target_portal_discoveryauthgroup']
-        if discoverygroup in ('', None):
-            return None
-        if discoverymethod in ('CHAP', 'CHAP Mutual'):
-            if int(discoverygroup) == -1:
-                raise forms.ValidationError(_("This field is required if discovery method is set to CHAP or CHAP Mutual."))
-        elif int(discoverygroup) == -1:
-            return None
-        return discoverygroup
+    def cleanformset_iscsitargetportalip(self, fs, forms):
+        for form in forms:
+            if not hasattr(form, 'cleaned_data'):
+                continue
+            self._listen.append({
+                'ip': form.cleaned_data.get('iscsi_target_portalip_ip'),
+                'port': form.cleaned_data.get('iscsi_target_portalip_port'),
+            })
+        return True
 
-    def clean_iscsi_target_portal_tag(self):
-        tag = self.cleaned_data["iscsi_target_portal_tag"]
-        higher = models.iSCSITargetPortal.objects.all().count() + 1
-        if tag > higher:
-            raise forms.ValidationError(_("Your Portal Group ID cannot be higher than %d") % higher)
-        return tag
+    def middleware_clean(self, data):
+        data['listen'] = self._listen
+        data['discovery_authmethod'] = AUTHMETHOD_LEGACY_MAP.get(data.pop('discoveryauthmethod'))
+        data['discovery_authgroup'] = data.pop('discoveryauthgroup') or None
+        data.pop('tag', None)
+        return data
 
     def done(self, *args, **kwargs):
         super(iSCSITargetPortalForm, self).done(*args, **kwargs)
@@ -1243,20 +1246,11 @@ class iSCSITargetPortalIPForm(ModelForm):
             ) or (self.parent and not self.parent.instance.id):
                 self.fields['iscsi_target_portalip_ip'].initial = '0.0.0.0'
 
-    def clean(self):
-        ip = self.cleaned_data.get('iscsi_target_portalip_ip')
-        port = self.cleaned_data.get('iscsi_target_portalip_port')
-        qs = models.iSCSITargetPortalIP.objects.filter(
-            iscsi_target_portalip_ip=ip,
-            iscsi_target_portalip_port=port,
-        )
-        if self.instance.id:
-            qs = qs.exclude(id=self.instance.id)
-        if qs.exists():
-            self._errors['__all__'] = self.error_class([
-                _('This IP and port are already in use.'),
-            ])
-        return self.cleaned_data
+
+class iSCSITargetPortalIPInlineFormSet(FreeBaseInlineFormSet):
+    def save(self, *args, **kwargs):
+        # save is done in middleware using parent form
+        pass
 
 
 class iSCSITargetAuthorizedInitiatorForm(ModelForm):
