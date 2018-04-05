@@ -34,7 +34,7 @@ class FailoverCriticalAlertSource(ThreadedAlertSource):
             output = proc.communicate()[0]
             if proc.returncode != 0:
                 alerts.append(Alert((
-                    'Interface "%s" is critical for failover and was not '
+                    'Interface "%s" is critical for failover but was not '
                     'found in the system.'
                 ) % iface.int_interface))
                 continue
@@ -42,16 +42,16 @@ class FailoverCriticalAlertSource(ThreadedAlertSource):
             reg = re.search(r'carp: (\S+) .*vhid (\d+)', output, re.M)
             if not reg:
                 alerts.append(Alert((
-                    'Interface "%s" is critical for failover but no CARP is '
-                    'configured.'
+                    'Interface "%s" is critical for failover but CARP is '
+                    'not configured.'
                 ) % iface.int_interface))
             else:
                 carp = reg.group(1)
                 vhid = int(reg.group(2))
                 if carp not in ('MASTER', 'BACKUP'):
                     alerts.append(Alert(Alert.CRIT, _(
-                        'Interface "%s" is critical for failover but no CARP '
-                        'does not have a valid state.'
+                        'Interface "%s" is critical for failover but CARP '
+                        'is not in a valid state.'
                     ) % iface.int_interface))
                 if vhid != iface.int_vhid:
                     alerts.append(Alert(Alert.CRIT, _(
