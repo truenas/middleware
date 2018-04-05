@@ -158,7 +158,19 @@ class Service(object, metaclass=ServiceBase):
         self.middleware = middleware
 
 
-class ConfigService(Service):
+class ServiceChangeMixin:
+    async def _service_change(self, service, verb):
+        enabled = (await self.middleware.call(
+            'datastore.query', 'services.services', [('srv_service', '=', service)], {'get': True}
+        ))['srv_enable']
+
+        started = await self.middleware.call(f'service.{verb}', service, {'onetime': False})
+
+        if enabled and not started:
+            raise CallError(f'The {service} service failed to start', CallError.ESERVICESTARTFAILURE)
+
+
+class ConfigService(ServiceChangeMixin, Service):
     """
     Config service abstract class
 
@@ -210,18 +222,11 @@ class SystemServiceService(ConfigService):
         await self.middleware.call('datastore.update',
                                    f'services.{self._config.service_model or self._config.service}', old['id'], new,
                                    {'prefix': self._config.datastore_prefix})
-
-        enabled = (await self.middleware.call(
-            'datastore.query', 'services.services', [('srv_service', '=', self._config.service)], {'get': True}
-        ))['srv_enable']
-
-        started = await self.middleware.call(f'service.{self._config.service_verb}', self._config.service, {'onetime': False})
-
-        if enabled and not started:
-            raise CallError(f'The {self._config.service} service failed to start', CallError.ESERVICESTARTFAILURE)
+        await self._service_change(self._config.service, self._config.service_verb)
 
 
-class CRUDService(Service):
+
+class CRUDService(ServiceChangeMixin, Service):
     """
     CRUD service abstract class
 
