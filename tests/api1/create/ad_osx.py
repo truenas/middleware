@@ -37,6 +37,14 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 
 
 # Create tests
+def test_01_creating_smb_dataset():
+    assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
+
+
+def test_02_Verify_smb_dataset_is_created():
+    assert GET("/storage/volume/1/datasets/%s/" % DATASET) == 200
+
+
 @ad_test_cfg
 def test_02_Enabling_Active_Directory():
     payload = {"ad_bindpw": ADPASSWORD,

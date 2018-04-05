@@ -203,18 +203,6 @@ if api == "1.0":
               "api1/create/webdav_osx.py"])
 
         # Update test
-        # call(["py.test-3.6", "--junitxml",
-        #       "%supdate_ad_bsd_result.xml" % results_xml,
-        #       "api1/update/ad_bsd.py"])
-        # call(["py.test-3.6", "--junitxml",
-        #       "%supdate_ad_osx_result.xml" % results_xml,
-        #       "api1/update/ad_osx.py"])
-        # call(["py.test-3.6", "--junitxml",
-        #       "%supdate_afp_osx_result.xml" % results_xml,
-        #       "api1/update/afp_osx.py"])
-        # call(["py.test-3.6", "--junitxml",
-        #       "%supdate_alerts_result.xml" % results_xml,
-        #       "api1/update/alerts.py"])
         call(["py.test-3.6", "--junitxml",
               "%supdate_bootenv_result.xml" % results_xml,
               "api1/update/bootenv.py"])
@@ -225,27 +213,12 @@ if api == "1.0":
               "%supdate_ftp_result.xml" % results_xml,
               "api1/update/ftp.py"])
         # call(["python3.6", "api1/update/group.py"])
-        # call(["py.test-3.6", "--junitxml",
-        #       "%supdate_iscsi_result.xml" % results_xml,
-        #       "api1/update/iscsi.py"])
-        # call(["py.test-3.6", "--junitxml",
-        #       "%supdate_ldap_bsd_result.xml" % results_xml,
-        #       "api1/update/ldap_bsd.py"])
-        # call(["py.test-3.6", "--junitxml",
-        #       "%supdate_ldap_osx_result.xml" % results_xml,
-        #       "api1/update/ldap_osx.py"])
         call(["py.test-3.6", "--junitxml",
               "%supdate_nfs_result.xml" % results_xml,
               "api1/update/nfs.py"])
         call(["py.test-3.6", "--junitxml",
-              "%supdate_nfs_result.xml" % results_xml,
-              "api1/update/nfs.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%supdate_smb_bsd_result.xml" % results_xml,
-              "api1/update/smb_bsd.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%supdate_smb_osx_result.xml" % results_xml,
-              "api1/update/smb_osx.py"])
+              "%supdate_rsync_result.xml" % results_xml,
+              "api1/update/rsync.py"])
         call(["py.test-3.6", "--junitxml",
               "%supdate_storage_result.xml" % results_xml,
               "api1/update/storage.py"])

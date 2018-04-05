@@ -9,7 +9,7 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, SSH_TEST, DELETE, DELETE_ALL
+from functions import PUT, POST, GET_OUTPUT, SSH_TEST, DELETE, DELETE_ALL, GET
 from auto_config import ip
 from config import *
 
@@ -35,6 +35,10 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 # Create tests
 def test_01_Creating_AFP_dataset():
     assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
+
+
+def test_02_Verify_AFP_dataset_is_created():
+    assert GET("/storage/volume/1/datasets/%s/" % DATASET) == 200
 
 
 def test_02_Enabling_AFP_service():
