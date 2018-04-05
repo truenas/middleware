@@ -238,7 +238,7 @@ def test_24_Unmount_SMB_share():
 @ldap_test_cfg
 def test_25_Removing_SMB_mountpoint():
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
 def test_26_Removing_SMB_share_on_SMB_PATH():
