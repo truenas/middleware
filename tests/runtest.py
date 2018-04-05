@@ -204,48 +204,11 @@ if api == "1.0":
 
         # Update test
         call(["py.test-3.6", "--junitxml",
-              "%supdate_bootenv_result.xml" % results_xml,
-              "api1/update/bootenv.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%supdate_cronjob_result.xml" % results_xml,
-              "api1/update/cronjob.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%supdate_ftp_result.xml" % results_xml,
-              "api1/update/ftp.py"])
-        # call(["python3.6", "api1/update/group.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%supdate_nfs_result.xml" % results_xml,
-              "api1/update/nfs.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%supdate_rsync_result.xml" % results_xml,
-              "api1/update/rsync.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%supdate_storage_result.xml" % results_xml,
-              "api1/update/storage.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%supdate_user_result.xml" % results_xml,
-              "api1/update/user.py"])
-        call(["py.test-3.6", "--junitxml",
               "%supdate_webdav_bsd_result.xml" % results_xml,
               "api1/update/webdav_bsd.py"])
         call(["py.test-3.6", "--junitxml",
               "%supdate_webdav_osx_result.xml" % results_xml,
               "api1/update/webdav_osx.py"])
-
-        # Delete test
-        call(["py.test-3.6", "--junitxml",
-              "%sdelete_bootenv_result.xml" % results_xml,
-              "api1/delete/bootenv.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%sdelete_cronjob_result.xml" % results_xml,
-              "api1/delete/cronjob.py"])
-        # call(["python3.6", "api1/delete/group.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%sdelete_storage_result.xml" % results_xml,
-              "api1/delete/storage.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%sdelete_user_result.xml" % results_xml,
-              "api1/delete/user.py"])
 elif api == "2.0":
     call(["py.test-3.6", "--junitxml",
           "%sinterfaces_test_result.xml" % results_xml,

@@ -121,3 +121,12 @@ def test_13_Unmounting_NFS():
 def test_14_Removing_NFS_mountpoint():
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
     assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+# Update test
+def test_15_Updating_the_NFS_service():
+    assert PUT("/services/nfs/", {"nfs_srv_servers": "50"}) == 200
+
+
+def test_16_Checking_to_see_if_NFS_service_is_enabled():
+    assert GET_OUTPUT("/services/services/nfs/", "srv_state") == "RUNNING"
