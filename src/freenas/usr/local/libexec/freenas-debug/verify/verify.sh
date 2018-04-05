@@ -32,8 +32,14 @@ verify_help() { echo "Dump Boot System File Verification Status and Inconsistenc
 verify_directory() { echo "Verify"; }
 verify_func()
 {
-	section_header "Verifier Results - 'freenas-verify'"
-	echo "Running Verifier...."
+	local sqlite3_cmd="/usr/local/bin/sqlite3"
+	local config_db="/data/freenas-v1.db"
+
+	section_header "Verification Results - 'freenas-verify'"
 	freenas-verify
+	section_footer
+
+	section_header "Configuration Database Integrity Check"
+	${sqlite3_cmd} ${config_db} "PRAGMA integrity_check"
 	section_footer
 }
