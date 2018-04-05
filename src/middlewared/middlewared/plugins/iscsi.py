@@ -150,6 +150,8 @@ class ISCSIPortalService(CRUDService):
             await self.middleware.call('datastore.delete', self._config.datastore, pk)
             raise e
 
+        await self._service_change('iscsitarget', 'reload')
+
         return await self.query([('id', '=', pk)], {'get': True})
 
     @accepts(Int('id'))
