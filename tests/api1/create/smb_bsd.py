@@ -32,6 +32,7 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
                                        ]) is False, reason=BSDReason)
 
 
+# Create tests
 def test_01_Setting_auxilary_parameters_for_mount_smbfs():
     toload = "lanman auth = yes\nntlm auth = yes \nraw NTLMv2 auth = yes"
     payload = {"cifs_srv_smb_options": toload}
@@ -86,54 +87,106 @@ def test_08_Mounting_SMB():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_10_Creating_SMB_file():
+def test_09_Creating_SMB_file():
     assert SSH_TEST("touch %s/testfile" % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_11_Moving_SMB_file():
+def test_10_Moving_SMB_file():
     cmd = 'mv %s/testfile %s/testfile2' % (MOUNTPOINT, MOUNTPOINT)
     assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_12_Copying_SMB_file():
+def test_11_Copying_SMB_file():
     cmd = 'cp %s/testfile2 %s/testfile' % (MOUNTPOINT, MOUNTPOINT)
     assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_13_Deleting_SMB_file_1_2():
+def test_12_Deleting_SMB_file_1_2():
     assert SSH_TEST('rm "%s/testfile"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_14_Deleting_SMB_file_2_2():
+def test_13_Deleting_SMB_file_2_2():
     assert SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_15_Unmounting_SMB():
+def test_14_Unmounting_SMB():
     assert SSH_TEST('umount -f %s' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
-# @mount_test_cfg
-# @bsd_host_cfg
-# def test_16_Removing_SMB_mountpoint():
-#     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-#     assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+# Update tests
+@mount_test_cfg
+@bsd_host_cfg
+def test_15_Mounting_SMB():
+    cmd = 'mount_smbfs -N -I %s ' % ip
+    cmd += '"//guest@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
-def test_17_SMB_share_on_SMB_PATH():
+@mount_test_cfg
+@bsd_host_cfg
+def test_16_Creating_SMB_file():
+    assert SSH_TEST('touch %s/testfile' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@mount_test_cfg
+@bsd_host_cfg
+def test_17_Moving_SMB_file():
+    cmd = 'mv %s/testfile %s/testfile2' % (MOUNTPOINT, MOUNTPOINT)
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@mount_test_cfg
+@bsd_host_cfg
+def test_18_Copying_SMB_file():
+    cmd = 'cp %s/testfile2 %s/testfile' % (MOUNTPOINT, MOUNTPOINT)
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@mount_test_cfg
+@bsd_host_cfg
+def test_19_Deleting_SMB_file_1_2():
+    assert SSH_TEST('rm %s/testfile' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@mount_test_cfg
+@bsd_host_cfg
+def test_20_Deleting_SMB_file_2_2():
+    assert SSH_TEST('rm %s/testfile2' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+@mount_test_cfg
+@bsd_host_cfg
+def test_21_Unmounting_SMB():
+    assert SSH_TEST('umount -f %s' % MOUNTPOINT,
+                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+# Delete tests
+@mount_test_cfg
+@bsd_host_cfg
+def test_22_Removing_SMB_mountpoint():
+    cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
+    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+
+
+def test_23_SMB_share_on_SMB_PATH():
     payload = {"cfs_comment": "My Test SMB Share",
                "cifs_path": SMB_PATH,
                "cifs_name": SMB_NAME,
@@ -143,14 +196,14 @@ def test_17_SMB_share_on_SMB_PATH():
 
 
 # Now stop the service
-def test_18_Stopping_SMB_service():
+def test_24_Stopping_SMB_service():
     assert PUT("/services/services/cifs/", {"srv_enable": False}) == 200
 
 
-def test_19_Verify_SMB_service_is_disabled():
+def test_25_Verify_SMB_service_is_disabled():
     assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "STOPPED"
 
 
 # Check destroying a SMB dataset
-def test_20_Destroying_SMB_dataset():
+def test_26_Destroying_SMB_dataset():
     assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204

@@ -187,7 +187,7 @@ def test_17_Checking_LDAP():
 @osx_host_cfg
 @up_ldap_test_cfg
 def test_18_Mount_SMB_share_on_OSX_system():
-    cmd = 'mount -t smbfs "smb://%s:%s' % (LDAP_USER, LDAP_PASS)
+    cmd = 'mount -t smbfs "smb://ldapuser:12345678'
     cmd += '@%s/%s" "%s"' % (ip, SMB_NAME, MOUNTPOINT)
     assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
