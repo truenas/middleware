@@ -1205,13 +1205,6 @@ class iSCSITargetPortalForm(MiddlewareModelForm, ModelForm):
         data.pop('tag', None)
         return data
 
-    def done(self, *args, **kwargs):
-        super(iSCSITargetPortalForm, self).done(*args, **kwargs)
-        # This must be done here and not on save() because it saves foreign keys
-        started = notifier().reload("iscsitarget")
-        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
-
 
 class iSCSITargetPortalIPForm(ModelForm):
 
