@@ -201,14 +201,6 @@ if api == "1.0":
         call(["py.test-3.6", "--junitxml",
               "%swebdav_osx_result.xml" % results_xml,
               "api1/webdav_osx.py"])
-
-        # Update test
-        call(["py.test-3.6", "--junitxml",
-              "%supdate_webdav_bsd_result.xml" % results_xml,
-              "api1/update/webdav_bsd.py"])
-        call(["py.test-3.6", "--junitxml",
-              "%supdate_webdav_osx_result.xml" % results_xml,
-              "api1/update/webdav_osx.py"])
 elif api == "2.0":
     call(["py.test-3.6", "--junitxml",
           "%sinterfaces_test_result.xml" % results_xml,
