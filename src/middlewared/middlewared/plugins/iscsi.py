@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, IPAddr, Int, List, Str
+from middlewared.schema import accepts, Bool, Dict, IPAddr, Int, List, Patch, Str
 from middlewared.validators import Range
 from middlewared.service import CRUDService, SystemServiceService, ValidationErrors, private
 
@@ -97,6 +97,31 @@ class ISCSIPortalService(CRUDService):
             })
         return data
 
+    async def __validate(self, verrors, data, schema):
+        if not data['listen']:
+            verrors.add(f'{schema}.listen', 'At least one listen entry is required.')
+        else:
+            for i in data['listen']:
+                filters = [
+                    ('iscsi_target_portalip_ip', '=', i['ip']),
+                    ('iscsi_target_portalip_port', '=', i['port']),
+                ]
+                if schema == 'iscsiportal_update':
+                    filters.append(('iscsi_target_portalip_portal', '!=', data['id']))
+                if await self.middleware.call(
+                    'datastore.query', 'services.iscsitargetportalip', filters
+                ):
+                    verrors.add('{schema}.listen', f'{i["ip"]}:{i["port"]} already in use.')
+
+        if data['discovery_authgroup']:
+            if not await self.middleware.call(
+                'datastore.query', 'services.iscsitargetauthcredential',
+                [('iscsi_target_auth_tag', '=', data['discovery_authgroup'])]
+            ):
+                verrors.add(f'{schema}.discovery_authgroup', 'Auth Group "{data["discovery_authgroup"]}" not found.', errno.ENOENT)
+        elif data['discovery_authmethod'] in ('CHAP', 'CHAP_MUTUAL'):
+            verrors.add(f'{schema}.discovery_authgroup', 'This field is required if discovery method is set to CHAP or CHAP Mutual.')
+
     @accepts(Dict(
         'iscsiportal_create',
         Str('comment'),
@@ -113,39 +138,29 @@ class ISCSIPortalService(CRUDService):
     ))
     async def do_create(self, data):
         verrors = ValidationErrors()
-        schema = 'iscsiportal_create'
-
-        if not data['listen']:
-            verrors.add(f'{schema}.listen', 'At least one listen entry is required.')
-        else:
-            for i in data['listen']:
-                filters = [
-                    ('iscsi_target_portalip_ip', '=', i['ip']),
-                    ('iscsi_target_portalip_port', '=', i['port']),
-                ]
-                if schema == 'iscsiportal_update':
-                    filters.append(('iscsi_target_portalip_portal', '!=', data['id']))
-                if await self.middleware.call('datastore.query', 'services.iscsitargetportalip', filters):
-                    verrors.add('{schema}.listen', f'{i["ip"]}:{i["port"]} already in use.')
-
-        if data['discovery_authgroup']:
-            if not await self.middleware.call('datastore.query', 'services.iscsitargetauthcredential', [('iscsi_target_auth_tag', '=', data['discovery_authgroup'])]):
-                verrors.add(f'{schema}.discovery_authgroup', 'Auth Group "{data["discovery_authgroup"]}" not found.', errno.ENOENT)
-        elif data['discovery_authmethod'] in ('CHAP', 'CHAP_MUTUAL'):
-            verrors.add(f'{schema}.discovery_authgroup', 'This field is required if discovery method is set to CHAP or CHAP Mutual.')
-
+        await self.__validate(verrors, data, 'iscsiportal_create')
         if verrors:
             raise verrors
 
-        data['tag'] = (await self.middleware.call('datastore.query', self._config.datastore, [], {'count': True})) + 1
+        data['tag'] = (await self.middleware.call(
+            'datastore.query', self._config.datastore, [], {'count': True}
+        )) + 1
 
         listen = data.pop('listen')
         data['discoveryauthgroup'] = data.pop('discovery_authgroup', None)
         data['discoveryauthmethod'] = AUTHMETHOD_LEGACY_MAP.inv.get(data.pop('discovery_authmethod'), 'None')
-        pk = await self.middleware.call('datastore.insert', self._config.datastore, data, {'prefix': self._config.datastore_prefix})
+        pk = await self.middleware.call(
+            'datastore.insert', self._config.datastore, data,
+            {'prefix': self._config.datastore_prefix}
+        )
         try:
             for i in listen:
-                await self.middleware.call('datastore.insert', 'services.iscsitargetportalip', {'portal': pk, 'ip': i['ip'], 'port': i['port']}, {'prefix': 'iscsi_target_portalip_'})
+                await self.middleware.call(
+                    'datastore.insert',
+                    'services.iscsitargetportalip',
+                    {'portal': pk, 'ip': i['ip'], 'port': i['port']},
+                    {'prefix': 'iscsi_target_portalip_'}
+                )
         except Exception as e:
             await self.middleware.call('datastore.delete', self._config.datastore, pk)
             raise e
@@ -154,6 +169,64 @@ class ISCSIPortalService(CRUDService):
 
         return await self.query([('id', '=', pk)], {'get': True})
 
+    @accepts(
+        Int('id'),
+        Patch(
+            'iscsiportal_create',
+            'iscsiportal_update',
+            ('attr', {'update': True})
+        )
+    )
+    async def do_update(self, pk, data):
+
+        old = await self.query([('id', '=', pk)], {'get': True})
+
+        new = old.copy()
+        new.update(data)
+
+        verrors = ValidationErrors()
+        await self.__validate(verrors, new, 'iscsiportal_update')
+        if verrors:
+            raise verrors
+
+        listen = new.pop('listen')
+        new['discoveryauthgroup'] = new.pop('discovery_authgroup', None)
+        new['discoveryauthmethod'] = AUTHMETHOD_LEGACY_MAP.inv.get(new.pop('discovery_authmethod'), 'None')
+
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, pk, new,
+            {'prefix': self._config.datastore_prefix}
+        )
+
+        new_listen_set = set([tuple(i.items()) for i in listen])
+        old_listen_set = set([tuple(i.items()) for i in old['listen']])
+        for i in new_listen_set - old_listen_set:
+            i = dict(i)
+            await self.middleware.call(
+                'datastore.insert',
+                'services.iscsitargetportalip',
+                {'portal': pk, 'ip': i['ip'], 'port': i['port']},
+                {'prefix': 'iscsi_target_portalip_'}
+            1)
+
+        for i in old_listen_set - new_listen_set:
+            i = dict(i)
+            portalip = await self.middleware.call(
+                'datastore.query',
+                'services.iscsitargetportalip',
+                [('portal', '=', pk), ('ip', '=', i['ip']), ('port', '=', i['port'])],
+                {'prefix': 'iscsi_target_portalip_'}
+            )
+            if portalip:
+                await self.middleware.call(
+                    'datastore.delete', 'services.iscsitargetportalip', portalip[0]['id']
+                )
+
+        await self._service_change('iscsitarget', 'reload')
+
+        return await self.query([('id', '=', pk)], {'get': True})
+
     @accepts(Int('id'))
     async def do_delete(self, id):
         await self.middleware.call('datastore.delete', self._config.datastore, id)
+        await self._service_change('iscsitarget', 'reload')

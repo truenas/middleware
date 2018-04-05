@@ -1170,6 +1170,7 @@ class iSCSITargetPortalForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = 'iscsi_target_portal_'
     middleware_attr_schema = 'iscsiportal'
     middleware_plugin = 'iscsi.portal'
+    is_singletone = False
 
     iscsi_target_portal_discoveryauthgroup = forms.ChoiceField(
         label=_("Discovery Auth Group")
@@ -1191,6 +1192,8 @@ class iSCSITargetPortalForm(MiddlewareModelForm, ModelForm):
     def cleanformset_iscsitargetportalip(self, fs, forms):
         for form in forms:
             if not hasattr(form, 'cleaned_data'):
+                continue
+            if form.cleaned_data.get('DELETE'):
                 continue
             self._listen.append({
                 'ip': form.cleaned_data.get('iscsi_target_portalip_ip'),
