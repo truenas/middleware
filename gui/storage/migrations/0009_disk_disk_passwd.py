@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
+import os
 
 
 class Migration(migrations.Migration):
@@ -11,7 +12,23 @@ class Migration(migrations.Migration):
         ('storage', '0008_quota_value'),
     ]
 
+    def forward_pre(apps, schema_editor):
+        # Check for sentinel file that signifies storage_disk was added manually
+        if os.path.isfile("/data/.sed"):
+            # save the contents of storage_disk off manually.  This will be
+            # re-added by ix-sed after the system reboots.
+            ret = os.popen('sqlite3 /data/freenas-v1.db'
+                           ' "SELECT disk_name, disk_passwd FROM storage_disk" ').read()
+            fh = open("/data/seddata", "w")
+            fh.write(ret)
+            fh.close()
+            os.remove("/data/.sed")
+
+    def reverse_pre(apps, schema_editor):
+        pass
+
     operations = [
+        migrations.RunPython(forward_pre, reverse_pre),
         migrations.AddField(
             model_name='disk',
             name='disk_passwd',
