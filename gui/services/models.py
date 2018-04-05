@@ -510,7 +510,8 @@ def extent_serial():
     try:
         nic = list(choices.NICChoices(nolagg=True,
                                       novlan=True,
-                                      exclude_configured=False))[0][0]
+                                      exclude_configured=False,
+                                      include_lagg_parent=False))[0][0]
         mac = subprocess.Popen(
             "ifconfig %s ether| grep ether | "
             "awk '{print $2}'|tr -d :" % (nic, ),
