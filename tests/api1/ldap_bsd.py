@@ -59,11 +59,11 @@ def test_02_Creating_SMB_dataset():
     assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
 
 
-# Enable LDAP
 @ldap_test_cfg
-def test_03_Enabling_LDAP_with_anonymous_bind():
+def test_03_Enabling_LDAPd():
     payload = {"ldap_basedn": LDAPBASEDN,
-               "ldap_anonbind": True,
+               "ldap_binddn": LDAPBINDDN,
+               "ldap_bindpw": LDAPBINDPASSWORD,
                "ldap_netbiosname_a": BRIDGEHOST,
                "ldap_hostname": LDAPHOSTNAME,
                "ldap_has_samba_schema": True,
@@ -213,7 +213,7 @@ def test_22_Checking_LDAPd():
 @up_ldap_test_cfg
 def test_23_Mounting_SMB():
     cmd = 'mount_smbfs -N -I %s -W LDAP02 ' % ip
-    cmd += '"//%s@testnas/%s" "%s"' % (LDAP_USER, SMB_NAME, MOUNTPOINT)
+    cmd += '"//ldapuser@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
     assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 

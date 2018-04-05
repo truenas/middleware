@@ -37,6 +37,10 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 
 
 # Create tests
+def test_01_creating_smb_dataset():
+    assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
+
+
 @ad_test_cfg
 def test_02_Enabling_Active_Directory():
     payload = {"ad_bindpw": ADPASSWORD,
@@ -203,7 +207,7 @@ def test_23_Unmount_SMB_share():
 @ad_test_cfg
 def test_24_Removing_SMB_mountpoint():
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
 # Disable Active Directory Directory
@@ -231,5 +235,5 @@ def test_27_Verify_SMB_service_is_disabled():
 
 
 # Check destroying a SMB dataset
-def test_28_Destroying_SMB_dataset():
-    assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
+# def test_28_Destroying_SMB_dataset():
+#     assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204

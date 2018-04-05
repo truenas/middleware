@@ -9,7 +9,7 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, SSH_TEST, DELETE, DELETE_ALL
+from functions import PUT, POST, GET_OUTPUT, SSH_TEST, DELETE, DELETE_ALL, GET
 from auto_config import ip
 from config import *
 
@@ -175,7 +175,7 @@ def test_21_Unmount_AFP_share():
 @osx_host_cfg
 def test_22_Removing_SMB_mountpoint():
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
 
 
 # Test disable AFP
@@ -189,5 +189,5 @@ def test_24_Verify_delete_afp_name_and_afp_path():
 
 
 # Test delete AFP dataset
-def test_25_Verify_AFP_dataset_can_be_destroyed():
-    assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
+# def test_25_Verify_AFP_dataset_can_be_destroyed():
+#     assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
