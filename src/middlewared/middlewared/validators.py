@@ -1,8 +1,9 @@
+import ipaddress
+import re
+
 from datetime import time
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-import ipaddress
-import re
 
 
 class ShouldBe(Exception):
