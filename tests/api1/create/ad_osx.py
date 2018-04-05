@@ -41,10 +41,6 @@ def test_01_creating_smb_dataset():
     assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
 
 
-def test_02_Verify_smb_dataset_is_created():
-    assert GET("/storage/volume/1/datasets/%s/" % DATASET) == 200
-
-
 @ad_test_cfg
 def test_02_Enabling_Active_Directory():
     payload = {"ad_bindpw": ADPASSWORD,
@@ -239,5 +235,5 @@ def test_27_Verify_SMB_service_is_disabled():
 
 
 # Check destroying a SMB dataset
-def test_28_Destroying_SMB_dataset():
-    assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
+# def test_28_Destroying_SMB_dataset():
+#     assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204

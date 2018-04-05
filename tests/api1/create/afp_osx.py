@@ -37,10 +37,6 @@ def test_01_Creating_AFP_dataset():
     assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
 
 
-def test_02_Verify_AFP_dataset_is_created():
-    assert GET("/storage/volume/1/datasets/%s/" % DATASET) == 200
-
-
 def test_02_Enabling_AFP_service():
     payload = {"afp_srv_guest": "true",
                "afp_srv_bindip": ip}
@@ -193,5 +189,5 @@ def test_24_Verify_delete_afp_name_and_afp_path():
 
 
 # Test delete AFP dataset
-def test_25_Verify_AFP_dataset_can_be_destroyed():
-    assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
+# def test_25_Verify_AFP_dataset_can_be_destroyed():
+#     assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
