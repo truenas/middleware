@@ -36,6 +36,7 @@ from freenasUI.common.forms import ModelForm
 from freenasUI.freeadmin.forms import SelectMultipleWidget
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.services.models import services, NFS
 from freenasUI.sharing import models
@@ -208,7 +209,11 @@ class CIFS_ShareForm(ModelForm):
                 owner=owner, group=group)
 
 
-class AFP_ShareForm(ModelForm):
+class AFP_ShareForm(MiddlewareModelForm, ModelForm):
+    middleware_attr_prefix = "afp_"
+    middleware_attr_schema = "afp"
+    middleware_plugin = "sharing.afp"
+    is_singletone = False
 
     class Meta:
         fields = '__all__'
@@ -239,117 +244,6 @@ class AFP_ShareForm(ModelForm):
                 self.fields['afp_dperm'].widget.attrs['disabled'] = 'false'
                 self.fields['afp_umask'].widget.attrs['disabled'] = 'false'
         self.fields['afp_name'].required = False
-
-    def clean_afp_home(self):
-        home = self.cleaned_data.get('afp_home')
-        if home:
-            qs = models.AFP_Share.objects.filter(afp_home=True)
-            if self.instance.id:
-                qs = qs.exclude(id=self.instance.id)
-            if qs.exists():
-                raise forms.ValidationError(_(
-                    'Only one share is allowed to be a home share.'
-                ))
-        return home
-
-    def clean_afp_hostsallow(self):
-        res = self.cleaned_data['afp_hostsallow']
-        res = re.sub(r'\s{2,}|\n', ' ', res).strip()
-        if not res:
-            return res
-        for n in res.split(' '):
-            err_n = False
-            err_a = False
-            try:
-                IPNetwork(n)
-                if n.find("/") == -1:
-                    raise ValueError(n)
-            except (AddressValueError, NetmaskValueError, ValueError):
-                err_n = True
-            try:
-                IPAddress(n)
-            except (AddressValueError, ValueError):
-                err_a = True
-            if (err_n and err_a) or (not err_n and not err_a):
-                raise forms.ValidationError(
-                    _("Invalid IP or Network.")
-                )
-        return res
-
-    def clean_afp_hostsdeny(self):
-        res = self.cleaned_data['afp_hostsdeny']
-        res = re.sub(r'\s{2,}|\n', ' ', res).strip()
-        if not res:
-            return res
-        for n in res.split(' '):
-            err_n = False
-            err_a = False
-            try:
-                IPNetwork(n)
-                if n.find("/") == -1:
-                    raise ValueError(n)
-            except (AddressValueError, NetmaskValueError, ValueError):
-                err_n = True
-            try:
-                IPAddress(n)
-            except (AddressValueError, ValueError):
-                err_a = True
-            if (err_n and err_a) or (not err_n and not err_a):
-                raise forms.ValidationError(
-                    _("Invalid IP or Network.")
-                )
-        return res
-
-    def clean_afp_name(self):
-        name = self.cleaned_data.get('afp_name')
-        path = self.cleaned_data.get('afp_path')
-        if not name:
-            if self.cleaned_data.get('afp_home'):
-                name = 'Homes'
-            elif path:
-                name = path.rsplit('/', 1)[-1]
-        qs = models.AFP_Share.objects.filter(afp_name=name)
-        if self.instance.id:
-            qs = qs.exclude(id=self.instance.id)
-        if qs.exists():
-            raise forms.ValidationError(_(
-                'A share with this name already exists.'
-            ))
-        return name
-
-    def clean_afp_umask(self):
-        umask = self.cleaned_data.get("afp_umask")
-        if umask in (None, ''):
-            return umask
-        try:
-            int(umask)
-        except:
-            raise forms.ValidationError(
-                _("The umask must be between 000 and 777.")
-            )
-        for i in range(len(umask)):
-            if int(umask[i]) > 7 or int(umask[i]) < 0:
-                raise forms.ValidationError(
-                    _("The umask must be between 000 and 777.")
-                )
-        return umask
-
-    def save(self):
-        obj = super(AFP_ShareForm, self).save(commit=False)
-        path = self.cleaned_data.get('afp_path').encode('utf8')
-        if path and not os.path.exists(path):
-            try:
-                os.makedirs(path)
-            except OSError as e:
-                raise MiddlewareError(_(
-                    'Failed to create %(path)s: %(error)s' % {
-                        'path': path,
-                        'error': e,
-                    }
-                ))
-        obj.save()
-        notifier().reload("afp")
-        return obj
 
     def done(self, request, events):
         if not services.objects.get(srv_service='afp').srv_enable:
