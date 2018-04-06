@@ -449,7 +449,7 @@ class NICChoices(object):
     def __init__(self, nolagg=False, novlan=False, noloopback=True, notap=True,
                  exclude_configured=True, include_vlan_parent=False,
                  exclude_unconfigured_vlan_parent=False,
-                 with_alias=False, nobridge=True, noepair=True):
+                 with_alias=False, nobridge=True, noepair=True, include_lagg_parent=True):
 
         self.nolagg = nolagg
         self.novlan = novlan
@@ -459,8 +459,9 @@ class NICChoices(object):
         self.include_vlan_parent = include_vlan_parent
         self.exclude_unconfigured_vlan_parent = exclude_unconfigured_vlan_parent
         self.with_alias = with_alias
-        self.nobridge = noepair
+        self.nobridge = nobridge
         self.noepair = noepair
+        self.include_lagg_parent = include_lagg_parent
 
     def __iter__(self):
         pipe = popen("/sbin/ifconfig -l")
@@ -485,14 +486,15 @@ class NICChoices(object):
         # Database queries are wrapped in try/except as this is run
         # before the database is created during syncdb and the queries
         # will fail
-        try:
-            c.execute("SELECT lagg_physnic FROM network_lagginterfacemembers")
-        except sqlite3.OperationalError:
-            pass
-        else:
-            for interface in c:
-                if interface[0] in self._NIClist:
-                    self._NIClist.remove(interface[0])
+        if self.include_lagg_parent:
+            try:
+                c.execute("SELECT lagg_physnic FROM network_lagginterfacemembers")
+            except sqlite3.OperationalError:
+                pass
+            else:
+                for interface in c:
+                    if interface[0] in self._NIClist:
+                        self._NIClist.remove(interface[0])
 
         if self.nolagg:
             # vlan devices are not valid parents of laggs
