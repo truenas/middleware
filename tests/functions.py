@@ -4,7 +4,7 @@
 # License: BSD
 
 import requests
-from auto_config import freenas_url, password, user, ip
+from auto_config import freenas_url, user, password
 import json
 import os
 from subprocess import run, Popen, PIPE
@@ -96,59 +96,19 @@ def DELETE_ALL(testpath, payload):
     return deleteitall.status_code
 
 
-def SSH_TEST(command):
+def SSH_TEST(command, username, passwrd, host):
     teststdout = "/tmp/.sshCmdTestStdOut"
-    cmd = "sshpass -p %s " % password
+    cmd = "sshpass -p %s " % passwrd
     cmd += "ssh -o StrictHostKeyChecking=no "
     cmd += "-o UserKnownHostsFile=/dev/null "
     cmd += "-o VerifyHostKeyDNS=no "
-    cmd += "%s@%s '%s' " % (user, ip, command)
+    cmd += "%s@%s '%s' " % (username, host, command)
     cmd += "> %s" % teststdout
     process = run(cmd, shell=True)
     if process.returncode != 0:
         return False
     else:
         return True
-
-
-def BSD_TEST(command):
-    try:
-        from config import BSD_HOST, BSD_USERNAME, BSD_PASSWORD
-    except ImportError:
-        return False
-    else:
-        teststdout = "/tmp/.bsdCmdTestStdOut"
-        cmd = "sshpass -p %s " % BSD_PASSWORD
-        cmd += "ssh -o StrictHostKeyChecking=no "
-        cmd += "-o UserKnownHostsFile=/dev/null "
-        cmd += "-o VerifyHostKeyDNS=no "
-        cmd += "%s@%s '%s' " % (BSD_USERNAME, BSD_HOST, command)
-        cmd += "> %s" % teststdout
-        process = run(cmd, shell=True)
-        if process.returncode != 0:
-            return False
-        else:
-            return True
-
-
-def OSX_TEST(command):
-    try:
-        from config import OSX_HOST, OSX_USERNAME, OSX_PASSWORD
-    except ImportError:
-        return False
-    else:
-        teststdout = "/tmp/.osxCmdTestStdOut"
-        cmd = "sshpass -p %s " % OSX_PASSWORD
-        cmd += "ssh -o StrictHostKeyChecking=no "
-        cmd += "-o UserKnownHostsFile=/dev/null "
-        cmd += "-o VerifyHostKeyDNS=no "
-        cmd += "%s@%s '%s' " % (OSX_USERNAME, OSX_HOST, command)
-        cmd += "> %s" % teststdout
-        process = run(cmd, shell=True)
-        if process.returncode != 0:
-            return False
-        else:
-            return True
 
 
 def RC_TEST(command):
