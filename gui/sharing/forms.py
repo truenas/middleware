@@ -245,6 +245,19 @@ class AFP_ShareForm(MiddlewareModelForm, ModelForm):
                 self.fields['afp_umask'].widget.attrs['disabled'] = 'false'
         self.fields['afp_name'].required = False
 
+    def middleware_clean(self, data):
+        data['allow'] = data['allow'].split()
+        data['deny'] = data['deny'].split()
+        data['ro'] = data['ro'].split()
+        data['rw'] = data['rw'].split()
+        data['hostsallow'] = data['hostsallow'].split()
+        data['hostsdeny'] = data['hostsdeny'].split()
+        data['fperm'] = int(data['fperm'], 8)
+        data['dperm'] = int(data['dperm'], 8)
+        data['umask'] = int(data['umask'], 8)
+
+        return data
+
     def done(self, request, events):
         if not services.objects.get(srv_service='afp').srv_enable:
             events.append('ask_service("afp")')

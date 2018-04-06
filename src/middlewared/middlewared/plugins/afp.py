@@ -1,5 +1,6 @@
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.schema import accepts, Bool, Dict, Dir, Int, List, Str, Patch
+from middlewared.schema import (accepts, Bool, Dict, Dir, Int, List, Str,
+                                Patch, IPAddr)
 from middlewared.validators import IpAddress, Range
 from middlewared.service import (SystemServiceService, ValidationErrors,
                                  CRUDService, private)
@@ -49,6 +50,7 @@ class SharingAFPService(CRUDService):
         namespace = 'sharing.afp'
         datastore = 'sharing.afp_share'
         datastore_prefix = 'afp_'
+        datastore_extend = 'sharing.afp.extend'
 
     @accepts(Dict(
         'sharingafp_create',
@@ -56,42 +58,45 @@ class SharingAFPService(CRUDService):
         Bool('home'),
         Str('name'),
         Str('comment'),
-        Str('allow'),
-        Str('deny'),
-        Str('ro'),
-        Str('rw'),
+        List('allow'),
+        List('deny'),
+        List('ro'),
+        List('rw'),
         Bool('timemachine'),
         Int('timemachine_quota'),
         Bool('nodev'),
         Bool('nostat'),
         Bool('upriv'),
-        Str('fperm'),
-        Str('dperm'),
-        Str('umask'),
-        Str('hostsallow'),
-        Str('hostsdeny'),
+        Int('fperm', validators=[Range(min=0, max=0o777)], default=0o644),
+        Int('dperm', validators=[Range(min=0, max=0o777)], default=0o755),
+        Int('umask', validators=[Range(min=0, max=0o777)], default=0),
+        List('hostsallow', items=[IPAddr('ip', cidr=True)]),
+        List('hostsdeny', items=[IPAddr('ip', cidr=True)]),
         Str('auxparams'),
         register=True
     ))
     async def do_create(self, data):
+        verrors = ValidationErrors()
         path = data['path']
 
-        await self.clean(data, 'sharingafp_create')
-        await self.validate(data, 'sharingafp_create')
+        await self.clean(data, 'sharingafp_create', verrors)
+        await self.validate(data, 'sharingafp_create', verrors)
 
         if path and not os.path.exists(path):
             try:
                 os.makedirs(path)
             except OSError as e:
-                verrors = ValidationErrors()
                 verrors.add('sharingafp_create.path',
-                            f"Failed to create {path}: {e}")
+                            f'Failed to create {path}: {e}')
 
-                raise verrors
+        if verrors:
+            raise verrors
 
+        await self.compress(data)
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
+        await self.extend(data)
 
         await self.middleware.call('service.reload', 'afp')
 
@@ -106,20 +111,27 @@ class SharingAFPService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        verrors = ValidationErrors()
         old = await self.middleware.call(
             'datastore.query', self._config.datastore, [('id', '=', id)],
-            {'prefix': self._config.datastore_prefix,
+            {'extend': self._config.datastore_extend,
+            'prefix': self._config.datastore_prefix,
              'get': True})
 
         new = old.copy()
         new.update(data)
 
-        await self.clean(data, 'sharingafp_update', id=id)
-        await self.validate(data, 'sharingafp_update', old=old)
+        await self.clean(data, 'sharingafp_update', verrors, id=id)
+        await self.validate(data, 'sharingafp_update', verrors, old=old)
 
+        if verrors:
+            raise verrors
+
+        await self.compress(new)
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, data,
             {'prefix': self._config.datastore_prefix})
+        await self.extend(new)
 
         await self.middleware.call('service.reload', 'afp')
 
@@ -131,90 +143,42 @@ class SharingAFPService(CRUDService):
             'datastore.delete', self._config.datastore, id)
 
     @private
-    async def clean(self, data, schema_name, id=None):
-        clean_networks = ['hostsallow', 'hostsdeny']
-
-        for name in clean_networks:
-            data[name] = await self.clean_network(data[name], schema_name,
-                                                  name)
-
-        data['name'] = await self.name_exists(data, schema_name, id)
+    async def clean(self, data, schema_name, verrors, id=None):
+        data['name'] = await self.name_exists(data, schema_name, verrors, id)
 
     @private
-    async def clean_network(self, data, schema_name, attribute):
-        verrors = ValidationErrors()
-
-        if data:
-            for net in data.split(' '):
-                try:
-                    ipaddress.ip_interface(net)
-                except ValueError as e:
-                    verrors.add(f"{schema_name}.{attribute}",
-                                f'Invalid IP or Network: {net}')
-
-            if verrors:
-                raise verrors
-
-            return data.strip()
-
-        return ""
+    async def validate(self, data, schema_name, verrors, old=None):
+        await self.home_exists(data['home'], schema_name, verrors, old)
 
     @private
-    async def validate(self, data, schema_name, old=None):
-        await self.home_exists(data['home'], schema_name, old)
-        await self.validate_umask(data['umask'], schema_name)
-
-    async def validate_umask(self, data, schema_name):
-        verrors = ValidationErrors()
-
-        if not data.isdigit():
-                verrors.add(f"{schema_name}.umask",
-                            'The umask must be between 000 and 777.'
-                            )
-        else:
-            for i in range(len(data)):
-                umask_bit = int(data[i])
-                if umask_bit > 7 or umask_bit < 0:
-                    verrors.add(f"{schema_name}.umask",
-                                'The umask must be between 000 and 777.'
-                                )
-
-        if verrors:
-            raise verrors
-
-    @private
-    async def home_exists(self, home, schema_name, old=None):
-        verrors = ValidationErrors()
-        home_result = []
+    async def home_exists(self, home, schema_name, verrors, old=None):
+        home_filters = [('home', '=', True)]
 
         if home:
             if old and old['id'] is not None:
                 id = old['id']
 
                 if not old['home']:
+                    home_filters.append(('id', '!=', id))
                     # The user already had this set as the home share
                     home_result = await self.middleware.call(
                         'datastore.query', self._config.datastore,
-                        [('home', '=', True), ('id', '!=', id)],
-                        {'prefix': self._config.datastore_prefix})
-            else:
-                home_result = await self.middleware.call(
-                    'datastore.query', self._config.datastore,
-                    [('home', '=', True)],
-                    {'prefix': self._config.datastore_prefix})
+                        home_filters, {'prefix': self._config.datastore_prefix})
+
+        home_result = await self.middleware.call(
+            'datastore.query', self._config.datastore,
+            home_filters, {'prefix': self._config.datastore_prefix})
 
         if home_result:
-            verrors.add(f"{schema_name}.home",
+            verrors.add(f'{schema_name}.home',
                         'Only one share is allowed to be a home share.')
 
-            raise verrors
-
-    @private
-    async def name_exists(self, data, schema_name, id=None):
-        verrors = ValidationErrors()
+    async def name_exists(self, data, schema_name, verrors, id=None):
         name = data['name']
         path = data['path']
         home = data['home']
+        name_filters = [('name', '=', name)]
+        path_filters = [('path', '=', path)]
 
         if not name:
             if home:
@@ -222,34 +186,53 @@ class SharingAFPService(CRUDService):
             else:
                 name = path.rsplit('/', 1)[-1]
 
-        if id is None:
-            name_result = await self.middleware.call(
-                'datastore.query', self._config.datastore,
-                [('name', '=', name)],
-                {'prefix': self._config.datastore_prefix})
-            path_result = await self.middleware.call(
-                'datastore.query', self._config.datastore,
-                [('path', '=', path)],
-                {'prefix': self._config.datastore_prefix})
-        else:
-            name_result = await self.middleware.call(
-                'datastore.query', self._config.datastore,
-                [('name', '=', name), ('id', '!=', id)],
-                {'prefix': self._config.datastore_prefix})
-            path_result = await self.middleware.call(
-                'datastore.query', self._config.datastore,
-                [('path', '=', path), ('id', '!=', id)],
-                {'prefix': self._config.datastore_prefix})
+        if id is not None:
+            name_filters.append(('id', '!=', id))
+            path_filters.append(('id', '!=', id))
+
+        name_result = await self.middleware.call(
+            'datastore.query', self._config.datastore,
+            name_filters,
+            {'prefix': self._config.datastore_prefix})
+        path_result = await self.middleware.call(
+            'datastore.query', self._config.datastore,
+            path_filters,
+            {'prefix': self._config.datastore_prefix})
 
         if name_result:
-            verrors.add(f"{schema_name}.name",
+            verrors.add(f'{schema_name}.name',
                         'A share with this name already exists.')
 
         if path_result:
-            verrors.add(f"{schema_name}.path",
+            verrors.add(f'{schema_name}.path',
                         'A share with this path already exists.')
 
-        if verrors:
-            raise verrors
-
         return name
+
+    @private
+    async def extend(self, data):
+        data['allow'] = data['allow'].split()
+        data['deny'] = data['deny'].split()
+        data['ro'] = data['ro'].split()
+        data['rw'] = data['rw'].split()
+        data['hostsallow'] = data['hostsallow'].split()
+        data['hostsdeny'] = data['hostsdeny'].split()
+        data['fperm'] = int(data['fperm'], 8)
+        data['dperm'] = int(data['dperm'], 8)
+        data['umask'] = int(data['umask'], 8)
+
+        return data
+
+    @private
+    async def compress(self, data):
+        data['allow'] = ' '.join(data['allow'])
+        data['deny'] = ' '.join(data['deny'])
+        data['ro'] = ' '.join(data['ro'])
+        data['rw'] = ' '.join(data['rw'])
+        data['hostsallow'] = ' '.join(data['hostsallow'])
+        data['hostsdeny'] = ' '.join(data['hostsdeny'])
+        data['fperm'] = f"{data['fperm']:o}"
+        data['dperm'] = f"{data['dperm']:o}"
+        data['umask'] = f"{data['umask']:o}"
+
+        return data
