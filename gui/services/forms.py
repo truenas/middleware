@@ -35,11 +35,9 @@ from collections import OrderedDict
 from ipaddr import AddressValueError, IPAddress, IPNetwork, NetmaskValueError
 
 import sysctl
-from django.core.validators import validate_email
 from django.db.models import Q
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
-from django.utils.translation import ungettext_lazy
 from dojango import forms
 from freenasUI import choices
 from freenasUI.common import humanize_size
@@ -611,7 +609,12 @@ key_order(SNMPForm, 7, 'snmp_v3_password2')
 key_order(SNMPForm, 10, 'snmp_v3_privpassphrase2')
 
 
-class UPSForm(ModelForm):
+class UPSForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "ups_"
+    middleware_attr_schema = "ups"
+    middleware_plugin = "ups"
+    is_singletone = True
 
     class Meta:
         fields = '__all__'
@@ -655,75 +658,11 @@ class UPSForm(ModelForm):
                 0, (self.instance.ups_port, self.instance.ups_port)
             )
 
-    def clean_ups_port(self):
-        port = self.cleaned_data.get("ups_port")
-        if self.cleaned_data.get("ups_mode") == 'master' and not port:
-            raise forms.ValidationError(
-                _("This field is required")
-            )
-        return port
-
-    def clean_ups_remotehost(self):
-        rhost = self.cleaned_data.get("ups_remotehost")
-        if self.cleaned_data.get("ups_mode") != 'master':
-            if not rhost:
-                raise forms.ValidationError(
-                    _("This field is required")
-                )
-        return rhost
-
-    def clean_ups_identifier(self):
-        ident = self.cleaned_data.get("ups_identifier")
-        if not re.search(r'^[a-z0-9\.\-_]+$', ident, re.I):
-            raise forms.ValidationError(
-                _("Use alphanumeric characters, \".\", \"-\" and \"_\".")
-            )
-        return ident
-
-    def clean_ups_monuser(self):
-        user = self.cleaned_data.get("ups_monuser")
-        if re.search(r'[ #]', user, re.I):
-            raise forms.ValidationError(
-                _("Spaces or number signs are not allowed.")
-            )
-        return user
-
-    def clean_ups_monpwd(self):
-        pwd = self.cleaned_data.get("ups_monpwd")
-        if re.search(r'[ #]', pwd, re.I):
-            raise forms.ValidationError(
-                _("Spaces or number signs are not allowed.")
-            )
-        return pwd
-
-    def clean_ups_toemail(self):
-        email = self.cleaned_data.get("ups_toemail")
-        if email:
-            invalids = []
-            for e in email.split(';'):
-                try:
-                    validate_email(e.strip())
-                except:
-                    invalids.append(e.strip())
-
-            if len(invalids) > 0:
-                raise forms.ValidationError(ungettext_lazy(
-                    'The email %(email)s is not valid',
-                    'The following emails are not valid: %(email)s',
-                    len(invalids)
-                ) % {
-                    'email': ", ".join(invalids),
-                })
-        return email
-
-    def save(self):
-        super(UPSForm, self).save()
-        started = notifier().restart("ups")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='ups').srv_enable
-        ):
-            raise ServiceFailed("ups", _("The UPS service failed to reload."))
+    def middleware_clean(self, data):
+        data['toemail'] = [v.strip() for v in data['toemail'].split(';') if v]
+        data['shutdown'] = data['shutdown'].upper()
+        data['mode'] = data['mode'].upper()
+        return data
 
 
 class LLDPForm(MiddlewareModelForm, ModelForm):

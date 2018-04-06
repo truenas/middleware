@@ -26,7 +26,6 @@
 
 import freenasUI.settings
 import csv
-import io
 import logging
 import os
 import re
@@ -781,29 +780,14 @@ SED_USER = (
 
 
 class UPSDRIVER_CHOICES(object):
-    "Populate choices from /usr/local/etc/nut/driver.list"
     def __iter__(self):
-        if os.path.exists("/conf/base/etc/local/nut/driver.list"):
-            with open('/conf/base/etc/local/nut/driver.list', 'rb') as f:
-                d = f.read().decode('utf8', 'ignore')
-            r = io.StringIO()
-            for line in re.sub(r'[ \t]+', ' ', d, flags=re.M).split('\n'):
-                r.write(line.strip() + '\n')
-            r.seek(0)
-            reader = csv.reader(r, delimiter=' ', quotechar='"')
-            for row in reader:
-                if len(row) == 0 or row[0].startswith('#'):
-                    continue
-                if row[-2] == '#':
-                    last = -3
-                else:
-                    last = -1
-                if row[last].find(' (experimental)') != -1:
-                    row[last] = row[last].replace(' (experimental)', '').strip()
-                for i, field in enumerate(list(row)):
-                    row[i] = field
-                yield ("$".join([row[last], row[3]]), "%s (%s)" %
-                       (" ".join(row[0:last]), row[last]))
+        try:
+            with client as c:
+                driver_choices_dict = c.call('ups.driver_choices')
+                for key, value in driver_choices_dict.items():
+                    yield (key, value)
+        except Exception:
+            yield (None, None)
 
 
 LDAP_SSL_CHOICES = (
