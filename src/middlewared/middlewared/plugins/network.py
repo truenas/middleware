@@ -211,7 +211,7 @@ class NetworkConfigurationService(ConfigService):
                         services_to_reload.append('mountd')
 
             for service_to_reload in services_to_reload:
-                await self.middleware.call('service.restart', service_to_reload, {'onetime': False})
+                await self.middleware.call('service.reload', service_to_reload, {'onetime': False})
 
             if new_config['httpproxy'] != config['httpproxy']:
                 await self.middleware.call(
