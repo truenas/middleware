@@ -1593,6 +1593,17 @@ class CommonZVol(Form):
                 self.parentdata['dedup'][0]
             )
 
+        if not dedup_enabled():
+            self.fields['zvol_dedup'].widget.attrs['readonly'] = True
+            self.fields['zvol_dedup'].widget.attrs['class'] = (
+                'dijitSelectDisabled dijitDisabled')
+            self.fields['zvol_dedup'].widget.text = mark_safe(
+                '<span style="color: red;">Dedup feature not activated. '
+                'Contact <a href="mailto:truenas-support@ixsystems.com?subject'
+                '=ZFS Deduplication Activation">TrueNAS Support</a> for '
+                'assistance.</span><br />'
+            )
+
     def _zvol_force(self):
         if self._force:
             if not self.cleaned_data.get('zvol_force'):
