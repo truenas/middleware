@@ -95,6 +95,10 @@ class ISCSIPortalService(CRUDService):
                 'ip': portalip['ip'],
                 'port': portalip['port'],
             })
+        data['discovery_authmethod'] = AUTHMETHOD_LEGACY_MAP.get(
+            data.pop('discoveryauthmethod')
+        )
+        data['discovery_authgroup'] = data.pop('discoveryauthgroup')
         return data
 
     async def __validate(self, verrors, data, schema):
@@ -118,7 +122,11 @@ class ISCSIPortalService(CRUDService):
                 'datastore.query', 'services.iscsitargetauthcredential',
                 [('iscsi_target_auth_tag', '=', data['discovery_authgroup'])]
             ):
-                verrors.add(f'{schema}.discovery_authgroup', 'Auth Group "{data["discovery_authgroup"]}" not found.', errno.ENOENT)
+                verrors.add(
+                    f'{schema}.discovery_authgroup',
+                    'Auth Group "{data["discovery_authgroup"]}" not found.',
+                    errno.ENOENT,
+                )
         elif data['discovery_authmethod'] in ('CHAP', 'CHAP_MUTUAL'):
             verrors.add(f'{schema}.discovery_authgroup', 'This field is required if discovery method is set to CHAP or CHAP Mutual.')
 
@@ -137,11 +145,17 @@ class ISCSIPortalService(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
+        """
+        Create a new iSCSI Portal.
+
+        `discovery_authgroup` is required for CHAP and CHAP_MUTUAL.
+        """
         verrors = ValidationErrors()
         await self.__validate(verrors, data, 'iscsiportal_create')
         if verrors:
             raise verrors
 
+        # tag attribute increments sequentially
         data['tag'] = (await self.middleware.call(
             'datastore.query', self._config.datastore, [], {'count': True}
         )) + 1
@@ -154,52 +168,22 @@ class ISCSIPortalService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
         try:
-            for i in listen:
-                await self.middleware.call(
-                    'datastore.insert',
-                    'services.iscsitargetportalip',
-                    {'portal': pk, 'ip': i['ip'], 'port': i['port']},
-                    {'prefix': 'iscsi_target_portalip_'}
-                )
+            await self.__save_listen(pk, listen)
         except Exception as e:
             await self.middleware.call('datastore.delete', self._config.datastore, pk)
             raise e
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self.query([('id', '=', pk)], {'get': True})
+        return await self._get_instance(pk)
 
-    @accepts(
-        Int('id'),
-        Patch(
-            'iscsiportal_create',
-            'iscsiportal_update',
-            ('attr', {'update': True})
-        )
-    )
-    async def do_update(self, pk, data):
-
-        old = await self.query([('id', '=', pk)], {'get': True})
-
-        new = old.copy()
-        new.update(data)
-
-        verrors = ValidationErrors()
-        await self.__validate(verrors, new, 'iscsiportal_update')
-        if verrors:
-            raise verrors
-
-        listen = new.pop('listen')
-        new['discoveryauthgroup'] = new.pop('discovery_authgroup', None)
-        new['discoveryauthmethod'] = AUTHMETHOD_LEGACY_MAP.inv.get(new.pop('discovery_authmethod'), 'None')
-
-        await self.middleware.call(
-            'datastore.update', self._config.datastore, pk, new,
-            {'prefix': self._config.datastore_prefix}
-        )
-
-        new_listen_set = set([tuple(i.items()) for i in listen])
-        old_listen_set = set([tuple(i.items()) for i in old['listen']])
+    async def __save_listen(self, pk, new, old=None):
+        """
+        Update database with a set new listen IP:PORT tuples.
+        It will delete no longer existing addresses and add new ones.
+        """
+        new_listen_set = set([tuple(i.items()) for i in new])
+        old_listen_set = set([tuple(i.items()) for i in old]) if old else set()
         for i in new_listen_set - old_listen_set:
             i = dict(i)
             await self.middleware.call(
@@ -207,7 +191,7 @@ class ISCSIPortalService(CRUDService):
                 'services.iscsitargetportalip',
                 {'portal': pk, 'ip': i['ip'], 'port': i['port']},
                 {'prefix': 'iscsi_target_portalip_'}
-            1)
+            )
 
         for i in old_listen_set - new_listen_set:
             i = dict(i)
@@ -222,11 +206,48 @@ class ISCSIPortalService(CRUDService):
                     'datastore.delete', 'services.iscsitargetportalip', portalip[0]['id']
                 )
 
+    @accepts(
+        Int('id'),
+        Patch(
+            'iscsiportal_create',
+            'iscsiportal_update',
+            ('attr', {'update': True})
+        )
+    )
+    async def do_update(self, pk, data):
+        """
+        Update iSCSI Portal `id`.
+        """
+
+        old = await self._get_instance(pk)
+
+        new = old.copy()
+        new.update(data)
+
+        verrors = ValidationErrors()
+        await self.__validate(verrors, new, 'iscsiportal_update')
+        if verrors:
+            raise verrors
+
+        listen = new.pop('listen')
+        new['discoveryauthgroup'] = new.pop('discovery_authgroup', None)
+        new['discoveryauthmethod'] = AUTHMETHOD_LEGACY_MAP.inv.get(new.pop('discovery_authmethod'), 'None')
+
+        await self.__save_listen(pk, listen, old['listen'])
+
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, pk, new,
+            {'prefix': self._config.datastore_prefix}
+        )
+
         await self._service_change('iscsitarget', 'reload')
 
-        return await self.query([('id', '=', pk)], {'get': True})
+        return await self._get_instance(pk)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        """
+        Delete iSCSI Portal `id`.
+        """
         await self.middleware.call('datastore.delete', self._config.datastore, id)
-        await self._service_change('iscsitarget', 'reload')
+        # service is currently restarted by datastore/django model
