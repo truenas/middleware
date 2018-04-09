@@ -499,6 +499,9 @@ class UserService(CRUDService):
         if not os.path.isdir(homedir):
             return
 
+        sshpath = f'{homedir}/.ssh'
+        keysfile = f'{sshpath}/authorized_keys'
+
         pubkey = user.get('sshpubkey', '').strip()
         if pubkey == '':
             try:
@@ -507,8 +510,6 @@ class UserService(CRUDService):
                 pass
             return
 
-        sshpath = f'{homedir}/.ssh'
-        keysfile = f'{sshpath}/authorized_keys'
         oldpubkey = ''
         try:
             with open(keysfile, 'r') as f:
