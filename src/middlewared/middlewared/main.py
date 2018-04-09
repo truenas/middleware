@@ -849,7 +849,7 @@ class Middleware(object):
     async def run_in_thread(self, method, *args, **kwargs):
         return await self.run_in_thread_pool(self.__threadpool, method, *args, **kwargs)
 
-    async def _call(self, name, serviceobj, methodobj, params, app=None):
+    async def _call(self, name, serviceobj, methodobj, params, app=None, spawn_thread=True):
 
         args = []
         if hasattr(methodobj, '_pass_app'):
@@ -875,6 +875,11 @@ class Middleware(object):
         else:
             if asyncio.iscoroutinefunction(methodobj):
                 return await methodobj(*args)
+            elif not spawn_thread:
+                # If this method is already being called from a thread we dont need to spawn
+                # another one or we may run out of threads and deadlock.
+                # e.g. multiple concurrent calls to a threaded method which uses call_sync
+                return methodobj(*args)
             else:
                 pool = None
                 if serviceobj._config.thread_pool:
@@ -920,7 +925,7 @@ class Middleware(object):
             raise RuntimeError('You cannot call_sync from main thread')
 
         serviceobj, methodobj = self._method_lookup(name)
-        fut = asyncio.run_coroutine_threadsafe(self._call(name, serviceobj, methodobj, params), self.__loop)
+        fut = asyncio.run_coroutine_threadsafe(self._call(name, serviceobj, methodobj, params, spawn_thread=False), self.__loop)
         event = threading.Event()
 
         def done(_):
