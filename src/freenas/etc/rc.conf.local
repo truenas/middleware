@@ -33,21 +33,29 @@
 # Reference these variables in script to prevent from having to make \
 # duplicate middleware calls.
 
-is_licensed=1
-ha_status=1
+is_licensed()
+{
+	local is_licensed=1
+	
+	if ! is_freenas; then
+		if [ `ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed` = "True" ]
+        	then
+                	return 0
+        	fi
+	fi
+}
 
-if ! is_freenas; then
-
-        if [ `ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed` = "True" ]
-        then
-                is_licensed=0
-        fi
-        if [ `ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status` = "MASTER" ]
-        then
-                ha_status=0
-        fi
-fi
-
+ha_status()
+{
+	local ha_status=1
+	
+	if ! is_freenas; then
+		if [ `ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status` = "MASTER" ]
+        	then
+                	return 0
+        	fi
+	fi
+}
 http_ssl_enabled()
 {
 	local ssl=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
@@ -122,7 +130,7 @@ _interface_config()
 	if ! is_freenas; then
 
 		if [ "$(ha_mode)" = "MANUAL" ]; then
-			if [ $is_licensed = 0 ]; then
+			if is_licensed; then
 				configure_ifaces=0
 				echo "# Unable to determine HA hardware and node, skipping interfaces configuration" | tee /dev/console
 			fi
@@ -217,7 +225,7 @@ _interface_config()
 			else
 				int_passopt=""
 			fi
-			if [ $ha_status = 0 ]; then
+			if ha_status; then
 				carp1_skew="1"
 			fi
 			echo -n "ifconfig_${interface}_alias0=\"inet vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${int_vip}/32"
@@ -638,13 +646,13 @@ _gen_conf()
 
 	_count_config powerd_enable system_advanced adv_powerdaemon =1
 	if ! is_freenas; then
-		if [ $is_licensed = 0 ]; then
+		if is_licensed; then
 			echo "failover_enable=\"YES\""
 			echo "pf_enable=\"YES\""
 		else
 			echo "failover_enable=\"NO\""
 		fi
-		if [ $ha_status = 0 ]; then
+		if ha_status; then
 			echo "collectd_enable=\"YES\""
 		fi
 
@@ -750,8 +758,7 @@ _gen_conf()
 		fi
 	done
 
-	if [ $is_licensed = 1 ];
-        then
+	if ! is_licensed; then
                 echo "geli_devices=\"`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT encrypted_provider FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
                         tr \\\n \  `\""
                 ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT e.encrypted_provider,v.vol_encryptkey FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
