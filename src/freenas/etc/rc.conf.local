@@ -778,6 +778,12 @@ _gen_conf()
 
 	# FreeNAS 9.10 uses zfsd
 	echo "zfsd_enable=\"YES\""
+
+	if $(/usr/local/bin/vmware-checkvm > /dev/null); then
+		echo "vmware_guestd_enable=\"YES\""
+	else
+		echo "vmware_guestd_enable=\"NO\""
+	fi
 }
 
 # Regenerate stale caches of rc.conf data.  We run multiple time
