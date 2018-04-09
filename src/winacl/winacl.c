@@ -115,7 +115,7 @@ copyarg(char **pptr, const char *src)
 		err(EX_USAGE, "NULL source");
 
 	ptr = *pptr;
-	len = strlen(src);
+	len = strlen(src) + 1;
 	strncpy(ptr, src, len);
 	ptr += len;
 	*ptr = '\n';
