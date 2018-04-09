@@ -15,7 +15,6 @@ import shutil
 import string
 import subprocess
 import time
-import re
 
 SKEL_PATH = '/usr/share/skel/'
 
@@ -158,7 +157,7 @@ class UserService(CRUDService):
         new_homedir = False
         home_mode = data.pop('home_mode')
         home_dir = data['home']
-        if home_dir and not re.match(r'^/nonexistent(/.*)?$', home_dir):
+        if home_dir and home_dir != '/nonexistent':
             try:
                 os.makedirs(home_dir, mode=int(home_mode, 8))
                 os.chown(home_dir, data['uid'], group['gid'])
@@ -267,9 +266,9 @@ class UserService(CRUDService):
 
         # Copy the home directory if it changed
         if (
-            'home' in data and data['home'] != user['home'] and
-            not data['home'].startswith(f'{user["home"]}/') and
-            not re.match(r'^/nonexistent(/.*)?$', data['home'])
+            'home' in data and
+            data['home'] not in (user['home'], '/nonexistent') and
+            not data['home'].startswith(f'{user["home"]}/')
         ):
             home_copy = True
             home_old = user['home']
@@ -426,7 +425,7 @@ class UserService(CRUDService):
         if 'home' in data:
             if ':' in data['home']:
                 verrors.add('home', '"Home Directory" cannot contain colons (:).')
-            if not data['home'].startswith('/mnt/') and not re.match(r'^/nonexistent(/.*)?$', data['home']):
+            if not data['home'].startswith('/mnt/') and data['home'] != '/nonexistent':
                 verrors.add(
                     'home',
                     '"Home Directory" must begin with /mnt/ or set to '
