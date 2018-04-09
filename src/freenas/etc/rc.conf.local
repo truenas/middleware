@@ -28,33 +28,32 @@
 
 . /etc/rc.freenas
 
-
-# Make our calls to middleware once, and store the results in variables.
-# Reference these variables in script to prevent from having to make \
-# duplicate middleware calls.
-
+# Redmine 31350
 is_licensed()
 {
-	local is_licensed=1
-	
+
 	if ! is_freenas; then
 		if [ `ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed` = "True" ]
         	then
                 	return 0
         	fi
 	fi
+	
+	return 0
 }
 
+# Redmine 31350
 ha_status()
 {
-	local ha_status=1
-	
+
 	if ! is_freenas; then
 		if [ `ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status` = "MASTER" ]
         	then
                 	return 0
         	fi
 	fi
+	
+	return 0
 }
 http_ssl_enabled()
 {
