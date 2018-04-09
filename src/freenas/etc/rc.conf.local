@@ -1,7 +1,6 @@
 #!/bin/sh
 # THIS FILE IS RESERVED FOR THE EXCLUSIVE USE OF FREENAS CONFIG SYSTEM.
 # Please edit /etc/rc.conf instead.
-
 #-
 # Copyright (c) 2010, 2011 iXsystems, Inc., All rights reserved.
 #
@@ -29,7 +28,33 @@
 
 . /etc/rc.freenas
 
+# Redmine 31350
+is_licensed()
+{
 
+	if ! is_freenas; then
+		if [ `ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed` = "True" ]
+        	then
+                	return 0
+        	fi
+	fi
+	
+	return 0
+}
+
+# Redmine 31350
+ha_status()
+{
+
+	if ! is_freenas; then
+		if [ `ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status` = "MASTER" ]
+        	then
+                	return 0
+        	fi
+	fi
+	
+	return 0
+}
 http_ssl_enabled()
 {
 	local ssl=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
@@ -104,7 +129,7 @@ _interface_config()
 	if ! is_freenas; then
 
 		if [ "$(ha_mode)" = "MANUAL" ]; then
-			if [ "$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
+			if is_licensed; then
 				configure_ifaces=0
 				echo "# Unable to determine HA hardware and node, skipping interfaces configuration" | tee /dev/console
 			fi
@@ -199,7 +224,7 @@ _interface_config()
 			else
 				int_passopt=""
 			fi
-			if [ $(ulimit -n 1000; LD_LIBRARY=/usr/local/lib /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status) = "MASTER" ]; then
+			if ha_status; then
 				carp1_skew="1"
 			fi
 			echo -n "ifconfig_${interface}_alias0=\"inet vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${int_vip}/32"
@@ -620,14 +645,13 @@ _gen_conf()
 
 	_count_config powerd_enable system_advanced adv_powerdaemon =1
 	if ! is_freenas; then
-		if [ "$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
+		if is_licensed; then
 			echo "failover_enable=\"YES\""
 			echo "pf_enable=\"YES\""
 		else
 			echo "failover_enable=\"NO\""
 		fi
-		local failover="$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status 2> /dev/null)"
-		if [ "${failover}" != "BACKUP" ]; then
+		if ha_status; then
 			echo "collectd_enable=\"YES\""
 		fi
 
@@ -733,13 +757,15 @@ _gen_conf()
 		fi
 	done
 
-	echo "geli_devices=\"`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT encrypted_provider FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
-		tr \\\n \  `\""
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT e.encrypted_provider,v.vol_encryptkey FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
-	while read -r provider key; do
-		_provider=`echo ${provider}|tr '/-' '_'`
-		echo "geli_${_provider}_flags=\"-p -k /data/geli/${key}.key\""
-	done
+	if ! is_licensed; then
+                echo "geli_devices=\"`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT encrypted_provider FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
+                        tr \\\n \  `\""
+                ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT e.encrypted_provider,v.vol_encryptkey FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
+                while read -r provider key; do
+                        _provider=`echo ${provider}|tr '/-' '_'`
+                        echo "geli_${_provider}_flags=\"-p -k /data/geli/${key}.key\""
+                done
+        fi
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lldp_intdesc, lldp_country, lldp_location FROM services_lldp ORDER BY -id LIMIT 1" | \
 	while read -r lldp_intdesc lldp_country lldp_location; do
