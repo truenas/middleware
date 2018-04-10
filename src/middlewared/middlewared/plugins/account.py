@@ -144,7 +144,7 @@ class UserService(CRUDService):
         # e.g. /, /root, /mnt/tank/my-dataset, etc ;).
         new_homedir = False
         home_mode = data.pop('home_mode')
-        if data['home'] != '/nonexistent':
+        if data['home'] and data['home'] != '/nonexistent':
             try:
                 os.makedirs(data['home'], mode=int(home_mode, 8))
                 os.chown(data['home'], data['uid'], group['gid'])
@@ -164,8 +164,8 @@ class UserService(CRUDService):
                 new_homedir = True
             if os.stat(data['home']).st_dev == os.stat('/mnt').st_dev:
                 raise CallError(
-                    f'Path for the home directory (data["home"]) '
-                    'must be under a volume or dataset'
+                    f'The path for the home directory "({data["home"]})" '
+                    'must include a volume or dataset.'
                 )
 
         if not data.get('uid'):
@@ -173,10 +173,9 @@ class UserService(CRUDService):
 
         pk = None  # Make sure pk exists to rollback in case of an error
         try:
-
             password = await self.__set_password(data)
-
             sshpubkey = data.pop('sshpubkey', None)  # datastore does not have sshpubkey
+
             pk = await self.middleware.call('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
 
             await self.__set_groups(pk, groups)
@@ -204,8 +203,8 @@ class UserService(CRUDService):
                     shutil.copyfile(os.path.join(SKEL_PATH, f), dest_file)
                     os.chown(dest_file, data['uid'], group['gid'])
 
-        data['sshpubkey'] = sshpubkey
-        await self.__update_sshpubkey(data, group['group'])
+            data['sshpubkey'] = sshpubkey
+            await self.__update_sshpubkey(data['home'], data, group['group'])
 
         return pk
 
@@ -253,32 +252,53 @@ class UserService(CRUDService):
         if (
             'home' in data and
             data['home'] not in (user['home'], '/nonexistent') and
-            not data["home"].startswith(f'{user["home"]}/')
+            not data['home'].startswith(f'{user["home"]}/')
         ):
             home_copy = True
             home_old = user['home']
         else:
             home_copy = False
 
+        # After this point user dict has values from data
         user.update(data)
 
-        password = await self.__set_password(user)
-
-        await self.__update_sshpubkey(user, group['bsdgrp_group'])
-        user.pop('sshpubkey', None)
+        if home_copy and not os.path.isdir(user['home']):
+            try:
+                os.makedirs(user['home'])
+                os.chown(user['home'], user['uid'], group['bsdgrp_gid'])
+            except OSError:
+                self.logger.warn('Failed to chown homedir', exc_info=True)
+            if not os.path.isdir(user['home']):
+                raise CallError(f'{user["home"]} is not a directory')
 
         home_mode = user.pop('home_mode', None)
-        if home_mode is not None:
-            if not user['builtin'] and os.path.exists(user['home']):
+        if user['builtin']:
+            home_mode = None
+
+        def set_home_mode():
+            if home_mode is not None:
                 try:
                     os.chmod(user['home'], int(home_mode, 8))
                 except OSError:
                     self.logger.warn('Failed to set homedir mode', exc_info=True)
 
         if home_copy:
+            await self.__update_sshpubkey(home_old, user, group['bsdgrp_group'])
+
             def do_home_copy():
-                subprocess.run(f"su - {user['username']} -c '/bin/cp -a {home_old}/* {user['home']}/'")
+                try:
+                    subprocess.run(f"/usr/bin/su - {user['username']} -c '/bin/cp -a {home_old}/ {user['home']}/'", shell=True, check=True)
+                except subprocess.CalledProcessError as e:
+                    self.logger.warn(f"Failed to copy homedir: {e}")
+                set_home_mode()
+
             asyncio.ensure_future(self.middleware.run_in_thread(do_home_copy))
+        else:
+            await self.__update_sshpubkey(user['home'], user, group['bsdgrp_group'])
+            set_home_mode()
+
+        user.pop('sshpubkey', None)
+        password = await self.__set_password(user)
 
         if 'groups' in user:
             groups = user.pop('groups')
@@ -422,39 +442,43 @@ class UserService(CRUDService):
                 {'prefix': 'bsdgrpmember_'}
             )
 
-    async def __update_sshpubkey(self, user, group):
+    async def __update_sshpubkey(self, homedir, user, group):
         if 'sshpubkey' not in user:
             return
-        keysfile = f'{user["home"]}/.ssh/authorized_keys'
-        pubkey = user.get('sshpubkey')
-        if pubkey is None:
-            if os.path.exists(keysfile):
-                try:
-                    os.unlink(keysfile)
-                except OSError:
-                    pass
-        else:
-            oldpubkey = ''
+        if not os.path.isdir(homedir):
+            return
+
+        sshpath = f'{homedir}/.ssh'
+        keysfile = f'{sshpath}/authorized_keys'
+
+        pubkey = user.get('sshpubkey') or ''
+        pubkey = pubkey.strip()
+        if pubkey == '':
             try:
-                with open(keysfile, 'r') as f:
-                    oldpubkey = f.read()
-            except Exception:
+                os.unlink(keysfile)
+            except OSError:
                 pass
-            pubkey = pubkey.strip() + '\n'
-            if pubkey != oldpubkey:
-                sshpath = f'{user["home"]}/.ssh'
-                if not os.path.isdir(sshpath):
-                    os.makedirs(sshpath)
-                    os.chmod(sshpath, 0o700)
-                if not os.path.isdir(sshpath):
-                    raise CallError(f'{sshpath} is not a directory')
-                if pubkey == '' and os.path.exists(keysfile):
-                    os.unlink(keysfile)
-                else:
-                    with open(keysfile, 'w') as f:
-                        f.write(pubkey)
-                    os.chmod(keysfile, 0o700)
-                    await run('chown', '-R', f'{user["username"]}:{group}', sshpath, check=False)
+            return
+
+        oldpubkey = ''
+        try:
+            with open(keysfile, 'r') as f:
+                oldpubkey = f.read().strip()
+        except Exception:
+            pass
+
+        if pubkey == oldpubkey:
+            return
+
+        if not os.path.isdir(sshpath):
+            os.mkdir(sshpath, mode=0o700)
+        if not os.path.isdir(sshpath):
+            raise CallError(f'{sshpath} is not a directory')
+        with open(keysfile, 'w') as f:
+            f.write(pubkey)
+            f.write('\n')
+        os.chmod(keysfile, 0o600)
+        await run('/usr/sbin/chown', '-R', f'{user["username"]}:{group}', sshpath, check=False)
 
 
 class GroupService(CRUDService):
