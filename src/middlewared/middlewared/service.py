@@ -247,25 +247,19 @@ class CRUDService(Service):
         return await self.middleware.call('datastore.query', self._config.datastore, filters, options)
 
     async def create(self, data):
-        if asyncio.iscoroutinefunction(self.do_create):
-            rv = await self.do_create(data)
-        else:
-            rv = await self.middleware.run_in_thread(self.do_create, data)
-        return rv
+        return await self.middleware._call(
+            f'{self._config.namespace}.create', self, self.do_create, [data]
+        )
 
     async def update(self, id, data):
-        if asyncio.iscoroutinefunction(self.do_update):
-            rv = await self.do_update(id, data)
-        else:
-            rv = await self.middleware.run_in_thread(self.do_update, id, data)
-        return rv
+        return await self.middleware._call(
+            f'{self._config.namespace}.update', self, self.do_update, [id, data]
+        )
 
     async def delete(self, id, *args):
-        if asyncio.iscoroutinefunction(self.do_delete):
-            rv = await self.do_delete(id, *args)
-        else:
-            rv = await self.middleware.run_in_thread(self.do_delete, id, *args)
-        return rv
+        return await self.middleware._call(
+            f'{self._config.namespace}.delete', self, self.do_delete, [id] + list(args)
+        )
 
     async def _get_instance(self, id):
         """
