@@ -23,5 +23,5 @@ def test_02_Cloning_a_new_boot_environment_newbe2():
 
 
 # Delete tests
-def test_01_Removing_a_boot_environment_newbe2():
+def test_03_Removing_a_boot_environment_newbe2():
     assert DELETE("/system/bootenv/newbe2/") == 204
