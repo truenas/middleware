@@ -156,13 +156,12 @@ class UserService(CRUDService):
         # e.g. /, /root, /mnt/tank/my-dataset, etc ;).
         new_homedir = False
         home_mode = data.pop('home_mode')
-        home_dir = data['home']
-        if home_dir and home_dir != '/nonexistent':
+        if data['home'] and data['home'] != '/nonexistent':
             try:
-                os.makedirs(home_dir, mode=int(home_mode, 8))
-                os.chown(home_dir, data['uid'], group['gid'])
+                os.makedirs(data['home'], mode=int(home_mode, 8))
+                os.chown(data['home'], data['uid'], group['gid'])
             except FileExistsError:
-                if not os.path.isdir(home_dir):
+                if not os.path.isdir(data['home']):
                     raise CallError(
                         'Path for home directory already '
                         'exists and is not a directory',
@@ -170,17 +169,17 @@ class UserService(CRUDService):
                     )
 
                 # If it exists, ensure the user is owner
-                os.chown(home_dir, data['uid'], group['gid'])
+                os.chown(data['home'], data['uid'], group['gid'])
             except OSError as oe:
                 raise CallError(
                     'Failed to create the home directory '
-                    f'({home_dir}) for user: {oe}'
+                    f'({data["home"]}) for user: {oe}'
                 )
             else:
                 new_homedir = True
-            if os.stat(home_dir).st_dev == os.stat('/mnt').st_dev:
+            if os.stat(data['home']).st_dev == os.stat('/mnt').st_dev:
                 raise CallError(
-                    f'The path for the home directory "({home_dir})" '
+                    f'The path for the home directory "({data["home"]})" '
                     'must include a volume or dataset.'
                 )
 
@@ -202,25 +201,25 @@ class UserService(CRUDService):
             if new_homedir:
                 # Be as atomic as possible when creating the user if
                 # commands failed to execute cleanly.
-                shutil.rmtree(home_dir)
+                shutil.rmtree(data['home'])
             raise
 
         await self.middleware.call('service.reload', 'user')
 
         await self.__set_smbpasswd(data['username'], password)
 
-        if os.path.exists(home_dir):
+        if os.path.exists(data['home']):
             for f in os.listdir(SKEL_PATH):
                 if f.startswith('dot'):
-                    dest_file = os.path.join(home_dir, f[3:])
+                    dest_file = os.path.join(data['home'], f[3:])
                 else:
-                    dest_file = os.path.join(home_dir, f)
+                    dest_file = os.path.join(data['home'], f)
                 if not os.path.exists(dest_file):
                     shutil.copyfile(os.path.join(SKEL_PATH, f), dest_file)
                     os.chown(dest_file, data['uid'], group['gid'])
 
             data['sshpubkey'] = sshpubkey
-            await self.__update_sshpubkey(data, group['group'])
+            await self.__update_sshpubkey(data['home'], data, group['group'])
 
         return pk
 
@@ -275,25 +274,46 @@ class UserService(CRUDService):
         else:
             home_copy = False
 
+        # After this point user dict has values from data
         user.update(data)
 
-        password = await self.__set_password(user)
+        if home_copy and not os.path.isdir(user['home']):
+            try:
+                os.makedirs(user['home'])
+                os.chown(user['home'], user['uid'], group['bsdgrp_gid'])
+            except OSError:
+                self.logger.warn('Failed to chown homedir', exc_info=True)
+            if not os.path.isdir(user['home']):
+                raise CallError(f'{user["home"]} is not a directory')
 
         home_mode = user.pop('home_mode', None)
-        if home_mode is not None:
-            if not user['builtin'] and os.path.exists(user['home']):
+        if user['builtin']:
+            home_mode = None
+
+        def set_home_mode():
+            if home_mode is not None:
                 try:
                     os.chmod(user['home'], int(home_mode, 8))
                 except OSError:
                     self.logger.warn('Failed to set homedir mode', exc_info=True)
 
         if home_copy:
-            def do_home_copy():
-                subprocess.run(f"su - {user['username']} -c '/bin/cp -a {home_old}/* {user['home']}/'")
-            asyncio.ensure_future(self.middleware.run_in_thread(do_home_copy))
+            await self.__update_sshpubkey(home_old, user, group['bsdgrp_group'])
 
-        await self.__update_sshpubkey(user, group['bsdgrp_group'])
+            def do_home_copy():
+                try:
+                    subprocess.run(f"/usr/bin/su - {user['username']} -c '/bin/cp -a {home_old}/ {user['home']}/'", shell=True, check=True)
+                except subprocess.CalledProcessError as e:
+                    self.logger.warn(f"Failed to copy homedir: {e}")
+                set_home_mode()
+
+            asyncio.ensure_future(self.middleware.run_in_thread(do_home_copy))
+        else:
+            await self.__update_sshpubkey(user['home'], user, group['bsdgrp_group'])
+            set_home_mode()
+
         user.pop('sshpubkey', None)
+        password = await self.__set_password(user)
 
         if 'groups' in user:
             groups = user.pop('groups')
@@ -491,10 +511,9 @@ class UserService(CRUDService):
                 {'prefix': 'bsdgrpmember_'}
             )
 
-    async def __update_sshpubkey(self, user, group):
+    async def __update_sshpubkey(self, homedir, user, group):
         if 'sshpubkey' not in user:
             return
-        homedir = user["home"]
         if not os.path.isdir(homedir):
             return
 
