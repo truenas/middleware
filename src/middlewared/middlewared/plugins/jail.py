@@ -31,13 +31,14 @@ class JailService(CRUDService):
     )
     def query(self, filters=None, options=None):
         options = options or {}
-        jails = []
-        try:
-            jails = [
-                list(jail.values())[0]
+        jail_identifier = options.pop("identifier", None)
+        recursive = False if jail_identifier is not None else True
 
-                for jail in ioc.IOCage().get("all", recursive=True)
-            ]
+        try:
+            jail_dicts = ioc.IOCage(
+                jail=jail_identifier).get('all', recursive=recursive)
+            jails = [list(jail.values())[0] for jail in jail_dicts
+                     ] if jail_identifier is None else [jail_dicts]
         except BaseException:
             # Brandon is working on fixing this generic except, till then I
             # am not going to make the perfect the enemy of the good enough!
