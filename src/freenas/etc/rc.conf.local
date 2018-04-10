@@ -621,6 +621,7 @@ _gen_conf()
 	_count_config powerd_enable system_advanced adv_powerdaemon =1
 	if ! is_freenas; then
 		if [ "$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
+			is_licensed="True"
 			echo "failover_enable=\"YES\""
 			echo "pf_enable=\"YES\""
 		else
@@ -733,13 +734,16 @@ _gen_conf()
 		fi
 	done
 
-	echo "geli_devices=\"`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT encrypted_provider FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
-		tr \\\n \  `\""
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT e.encrypted_provider,v.vol_encryptkey FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
-	while read -r provider key; do
-		_provider=`echo ${provider}|tr '/-' '_'`
-		echo "geli_${_provider}_flags=\"-p -k /data/geli/${key}.key\""
-	done
+	if [ "${is_licensed}" != "True" ]
+	then
+		echo "geli_devices=\"`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT encrypted_provider FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
+			tr \\\n \  `\""
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT e.encrypted_provider,v.vol_encryptkey FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
+		while read -r provider key; do
+			_provider=`echo ${provider}|tr '/-' '_'`
+			echo "geli_${_provider}_flags=\"-p -k /data/geli/${key}.key\""
+		done
+	fi
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lldp_intdesc, lldp_country, lldp_location FROM services_lldp ORDER BY -id LIMIT 1" | \
 	while read -r lldp_intdesc lldp_country lldp_location; do
