@@ -875,7 +875,7 @@ class Middleware(object):
         else:
             if asyncio.iscoroutinefunction(methodobj):
                 return await methodobj(*args)
-            elif not spawn_thread:
+            elif not spawn_thread and threading.get_ident() != self.__thread_id:
                 # If this method is already being called from a thread we dont need to spawn
                 # another one or we may run out of threads and deadlock.
                 # e.g. multiple concurrent calls to a threaded method which uses call_sync
