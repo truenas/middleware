@@ -520,7 +520,8 @@ class UserService(CRUDService):
         sshpath = f'{homedir}/.ssh'
         keysfile = f'{sshpath}/authorized_keys'
 
-        pubkey = user.get('sshpubkey', '').strip()
+        pubkey = user.get('sshpubkey') or ''
+        pubkey = pubkey.strip()
         if pubkey == '':
             try:
                 os.unlink(keysfile)
