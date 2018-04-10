@@ -1,6 +1,5 @@
 from collections import defaultdict, namedtuple
 
-import asyncio
 import errno
 import inspect
 import json
