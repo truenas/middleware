@@ -1,12 +1,16 @@
 import crypt
 import socket
+import random
 import subprocess
 import time
 import uuid
 
-from middlewared.schema import Dict, Int, Str, accepts
+from middlewared.schema import Dict, Int, List, Str, accepts
 from middlewared.service import Service, no_auth_required, pass_app, private
 from middlewared.utils import Popen
+
+from fido2.client import ClientData
+from fido2.ctap2 import AttestedCredentialData, AuthenticatorData
 
 
 class AuthTokens(object):
@@ -121,6 +125,96 @@ class AuthService(Service):
         if token:
             self.authtokens.pop_token(token["id"])
 
+        return True
+
+    @no_auth_required
+    @accepts(Str('username'))
+    @pass_app
+    async def authenticator_signin_challenge(self, app, username):
+        self.logger.error('AUTHENTICATOR CHALLENGE: %r %r' % (app, username))
+
+        try:
+            user = await self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_username', '=', username)], {'get': True})
+        except IndexError:
+            return False
+
+        credential = user['authenticator_credential']
+        if not credential:
+            return False
+
+        try:
+            credential, _ = AttestedCredentialData.unpack_from(credential)
+        except Exception as e:
+            self.logger.exception(e)
+            return False
+
+        challenge = random.choices(range(256), k=32)
+        app.authenticator_challenge = bytes(challenge)
+
+        return {
+            'rpId': 'localhost',    # XXX
+            'challenge': challenge,
+            'allowCredentials': [
+                {
+                    'type': 'public-key',
+                    'id': list(credential.credential_id),
+                },
+            ],
+            'timeout': 60000,
+        }
+
+    @no_auth_required
+    @accepts(
+        Str('username'),
+        List('authenticator_data'),
+        List('client_data'),
+        List('signature'),
+    )
+    @pass_app
+    async def authenticator_signin(self, app, username, authenticator_data, client_data, signature):
+        self.logger.error('username: %r' % (username,))
+        self.logger.error('authenticator_data: %r' % (authenticator_data,))
+        self.logger.error('client_data: %r' % (client_data,))
+        self.logger.error('signature: %r' % (signature,))
+
+        authenticator_data = bytes(bytearray(authenticator_data))
+        authenticator_data = AuthenticatorData(authenticator_data)
+
+        client_data = bytes(bytearray(client_data))
+        client_data = ClientData(client_data)
+
+        signature = bytes(bytearray(signature))
+
+        try:
+            user = await self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_username', '=', username)], {'get': True})
+        except IndexError:
+            return False
+
+        credential = user['authenticator_credential']
+        if not credential:
+            return False
+
+        try:
+            credential, _ = AttestedCredentialData.unpack_from(credential)
+        except Exception as e:
+            self.logger.exception(e)
+            return False
+
+        self.logger.error('authenticator_data: %r' % (authenticator_data,))
+        self.logger.error('client_data: %r' % (client_data,))
+        self.logger.error('signature: %r' % (signature,))
+
+        if client_data.challenge != app.authenticator_challenge:
+            self.logger.error('challenge mismatch in authenticator sign in')
+            return False
+
+        try:
+            credential.public_key.verify(authenticator_data + client_data.hash, signature)
+        except Exception as exc:
+            self.logger.exception(exc)
+            return False
+
+        app.authenticated = True
         return True
 
     @no_auth_required
