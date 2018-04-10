@@ -157,6 +157,12 @@ class bsdUsers(Model):
         default=None,
         editable=False,
     )
+    bsdusr_authenticator_credential = models.BinaryField(
+        default=None,
+        editable=False,
+        blank=True,
+        null=True,
+    )
 
     is_active = True
     is_staff = True

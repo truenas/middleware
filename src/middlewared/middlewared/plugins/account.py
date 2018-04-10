@@ -16,6 +16,9 @@ import string
 import subprocess
 import time
 
+from fido2.client import ClientData
+from fido2.ctap2 import AttestationObject
+
 SKEL_PATH = '/usr/share/skel/'
 
 
@@ -429,7 +432,8 @@ class UserService(CRUDService):
         self.logger.error('AUTHENTICATOR CHALLENGE: %r %r' % (app, pk))
         user = await self._get_instance(pk)
         self.logger.error('AUTHENTICATOR CHALLENGE: %r' % (user['username'],))
-        app.authenticator_challenge = random.choices(range(256), k=32)
+        challenge = random.choices(range(256), k=32)
+        app.authenticator_challenge = bytes(challenge)
 
         user_id = user['uid']
         user_id_array = []
@@ -438,7 +442,7 @@ class UserService(CRUDService):
             user_id = user_id >> 8
 
         return {
-            'challenge': app.authenticator_challenge,
+            'challenge': challenge,
             'rp': {
                 'id': 'localhost',  # XXX
                 'name': 'FreeNAS',  # XXX
@@ -458,6 +462,52 @@ class UserService(CRUDService):
             'attestation': 'direct',
             'timeout': 60000,
         }
+
+    @accepts(
+        Int('id'),
+        List('attestation_object'),
+        List('client_data')
+    )
+    @pass_app
+    async def authenticator_register(self, app, pk, attestation_object, client_data):
+        self.logger.error('pk: %r' % (pk,))
+        self.logger.error('attestation_object: %r' % (attestation_object,))
+        self.logger.error('client_data: %r' % (client_data,))
+
+        user = await self._get_instance(pk)
+        user.pop('group')
+
+        attestation_object = bytes(bytearray(attestation_object))
+        attestation_object = AttestationObject(attestation_object)
+
+        client_data = bytes(bytearray(client_data))
+        client_data = ClientData(client_data)
+
+        self.logger.error('attestation_object: %r' % (attestation_object,))
+        self.logger.error('client_data: %r' % (client_data,))
+
+        if client_data.challenge != app.authenticator_challenge:
+            self.logger.error('challenge mismatch in authenticator registration')
+            return False
+
+        try:
+            attestation_object.verify(client_data.hash)
+        except Exception as exc:
+            self.logger.error('signature verification failure during authenticator registration')
+            self.logger.exception(exc)
+            return False
+
+        credential = attestation_object.auth_data.credential_data
+
+        self.logger.error('cred data: %r' % (credential,))
+        self.logger.error('cred data: %d bytes' % (len(credential),))
+
+        user['authenticator_credential'] = bytes(credential)
+        result = await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
+        self.logger.error('update result: %r' % (result,))
+        user = await self._get_instance(pk)
+        self.logger.error('-> %r' % (user['authenticator_credential'],))
+        return True
 
     async def __common_validation(self, verrors, data, pk=None):
 
