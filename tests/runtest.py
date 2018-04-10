@@ -101,113 +101,113 @@ cfg_file.close()
 
 if api == "1.0":
     # Create test
-    call(["py.test-3.6", "--junitxml",
+    call(["py.test-3.6", "-v", "--junitxml",
           "%screate_network_result.xml" % results_xml,
           "api1/network.py"])
     if testName != 'network':
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%sssh_result.xml" % results_xml,
               "api1/ssh.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%sstorage_result.xml" % results_xml,
               "api1/storage.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%sntp_result.xml" % results_xml,
               "api1/ntp.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%sad_bsd_result.xml" % results_xml,
               "api1/ad_bsd.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%sad_osx_result.xml" % results_xml,
               "api1/ad_osx.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%safp_osx_result.xml" % results_xml,
               "api1/afp_osx.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%salerts_result.xml" % results_xml,
               "api1/alerts.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%sbootenv_result.xml" % results_xml,
               "api1/bootenv.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%scronjob_result.xml" % results_xml,
               "api1/cronjob.py"])
         # call(["python3.6", "api1/debug.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%sdomaincontroller_result.xml" % results_xml,
               "api1/domaincontroller.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%sdyndns_result.xml" % results_xml,
               "api1/dyndns.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%semails_result.xml" % results_xml,
               "api1/emails.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%suser_result.xml" % results_xml,
               "api1/user.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%sftp_result.xml" % results_xml,
               "api1/ftp.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%sgroup_result.xml" % results_xml,
               "api1/group.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%siscsi_result.xml" % results_xml,
               "api1/iscsi.py"])
         # jails API Broken
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%sjails_result.xml" % results_xml,
               "api1/jails.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%sldap_bsd_result.xml" % results_xml,
               "api1/ldap_bsd.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%sldap_osx_result.xml" % results_xml,
               "api1/ldap_osx.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%slldp_result.xml" % results_xml,
               "api1/lldp.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%snfs_result.xml" % results_xml,
               "api1/nfs.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%snis_bsd_result.xml" % results_xml,
               "api1/nis_bsd.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%srsync_result.xml" % results_xml,
               "api1/rsync.py"])
         # call(["python3.6", "api1/smarttest.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%ssmb_bsd_result.xml" % results_xml,
               "api1/smb_bsd.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%ssmb_osx_result.xml" % results_xml,
               "api1/smb_osx.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%ssnmp_result.xml" % results_xml,
               "api1/snmp.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%ssystem_result.xml" % results_xml,
               "api1/system.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%stftp_result.xml" % results_xml,
               "api1/tftp.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%sups_result.xml" % results_xml,
               "api1/ups.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%swebdav_bsd_result.xml" % results_xml,
               "api1/webdav_bsd.py"])
-        call(["py.test-3.6", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               "%swebdav_osx_result.xml" % results_xml,
               "api1/webdav_osx.py"])
 elif api == "2.0":
-    call(["py.test-3.6", "--junitxml",
+    call(["py.test-3.6", "-v", "--junitxml",
           "%sinterfaces_test_result.xml" % results_xml,
           "api2/interfaces.py"])
-    call(["py.test-3.6", "--junitxml",
+    call(["py.test-3.6", "-v", "--junitxml",
           "%snetwork_user_result.xml" % results_xml,
           "api2/network.py"])
-    call(["py.test-3.6", "--junitxml",
+    call(["py.test-3.6", "-v", "--junitxml",
           "%sdisk_test_result.xml" % results_xml,
           "api2/disk.py"])
