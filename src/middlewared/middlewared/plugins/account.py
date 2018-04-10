@@ -423,6 +423,42 @@ class UserService(CRUDService):
             last_uid = i['uid']
         return last_uid + 1
 
+    @accepts(Int('id'))
+    @pass_app
+    async def authenticator_challenge(self, app, pk):
+        self.logger.error('AUTHENTICATOR CHALLENGE: %r %r' % (app, pk))
+        user = await self._get_instance(pk)
+        self.logger.error('AUTHENTICATOR CHALLENGE: %r' % (user['username'],))
+        app.authenticator_challenge = random.choices(range(256), k=32)
+
+        user_id = user['uid']
+        user_id_array = []
+        for i in range(16):
+            user_id_array.append(user_id & 0xff)
+            user_id = user_id >> 8
+
+        return {
+            'challenge': app.authenticator_challenge,
+            'rp': {
+                'id': 'localhost',  # XXX
+                'name': 'FreeNAS',  # XXX
+            },
+            'user': {
+                'id': user_id_array,
+                'name': user['username'],
+                'displayName': user['full_name'],
+            },
+            'pubKeyCredParams': [
+                {
+                    'alg': -7,
+                    'type': 'public-key',
+                },
+            ],
+            'excludeCredentials': [],
+            'attestation': 'direct',
+            'timeout': 60000,
+        }
+
     async def __common_validation(self, verrors, data, pk=None):
 
         exclude_filter = [('id', '!=', pk)] if pk else []
