@@ -1,5 +1,7 @@
 from middlewared.schema import Bool, Dict, Str, accepts
-from middlewared.service import CallError, CRUDService, ValidationErrors, filterable, item_method
+from middlewared.service import (
+    CallError, CRUDService, ValidationErrors, filterable, item_method, job
+)
 from middlewared.utils import filter_list
 from middlewared.validators import Match
 
@@ -95,5 +97,6 @@ class BootEnvService(CRUDService):
             verrors.add(f'{schema}.name', f'The name "{name}" already exists', errno.EEXIST)
 
     @accepts(Str('id'))
-    def do_delete(self, oid):
+    @job(lock=lambda args: f'bootenv_delete_{args[0]}')
+    def do_delete(self, job, oid):
         return Update.DeleteClone(oid)
