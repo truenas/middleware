@@ -31,7 +31,12 @@ class JailService(CRUDService):
     )
     def query(self, filters=None, options=None):
         options = options or {}
-        jail_identifier = options.pop("identifier", None)
+        jail_identifier = None
+
+        if filters and len(filters) == 1 and list(
+                filters[0][:2]) == ['jail', '=']:
+            jail_identifier = filters[0].pop(2)
+
         recursive = False if jail_identifier is not None else True
 
         try:
