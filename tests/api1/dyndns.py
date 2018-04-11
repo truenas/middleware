@@ -27,4 +27,5 @@ def test_01_Updating_Settings_for_NO_IP(self):
                "ddns_username": NOIPUSERNAME,
                "ddns_provider": "default@no-ip.com",
                "ddns_domain": NOIPHOST}
-    assert PUT("/services/dynamicdns/", payload) == 200
+    results = PUT("/services/dynamicdns/", payload)
+    assert results.status_code == 200, results.text

@@ -14,16 +14,18 @@ from auto_config import ip
 
 
 def test_01_Configuring_rsyncd_service():
-    assert PUT("/services/rsyncd/", {"rsyncd_port": 873}) == 200
+    results = PUT("/services/rsyncd/", {"rsyncd_port": 873})
+    assert results.status_code == 200
 
 
 def test_02_Starting_rsyncd_service():
-    assert PUT("/services/services/rsync/", {"srv_enable": True}) == 200
+    results = PUT("/services/services/rsync/", {"srv_enable": True})
+    assert results.status_code == 200
 
 
 def test_03_Checking_to_see_if_rsync_service_is_enabled():
-    assert GET_OUTPUT("/services/services/rsync/",
-                      "srv_state") == "RUNNING"
+    results = GET_OUTPUT("/services/services/rsync/", "srv_state")
+    assert results == "RUNNING"
 
 
 # def test_04_Creating_rsync_resource():
@@ -44,8 +46,8 @@ def test_05_Testings_rsync_access():
 
 
 def test_07_Checking_to_see_if_rsync_service_is_enabled():
-    assert GET_OUTPUT("/services/services/rsync/",
-                      "srv_state") == "RUNNING"
+    results = GET_OUTPUT("/services/services/rsync/", "srv_state")
+    assert results == "RUNNING"
 
 
 # Delete tests

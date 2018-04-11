@@ -52,11 +52,13 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
 def test_01_Setting_auxilary_parameters_for_mount_smbfs():
     options = "lanman auth = yes\nntlm auth = yes \nraw NTLMv2 auth = yes"
     payload = {"cifs_srv_smb_options": options}
-    assert PUT("/services/cifs/", payload) == 200
+    results = PUT("/services/cifs/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_02_Creating_SMB_dataset():
-    assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
+    results = POST("/storage/volume/tank/datasets/", {"name": DATASET})
+    assert results.status_code == 201, results.text
 
 
 @ldap_test_cfg
@@ -68,13 +70,15 @@ def test_03_Enabling_LDAPd():
                "ldap_hostname": LDAPHOSTNAME,
                "ldap_has_samba_schema": True,
                "ldap_enable": True}
-    assert PUT("/directoryservice/ldap/1/", payload) == 200
+    results = PUT("/directoryservice/ldap/1/", payload)
+    assert results.status_code == 200, results.text
 
 
 # Check LDAP
 @ldap_test_cfg
 def test_04_Checking_LDAP():
-    assert GET_OUTPUT("/directoryservice/ldap/", "ldap_enable") is True
+    results = GET_OUTPUT("/directoryservice/ldap/", "ldap_enable")
+    assert results.status_code is True, results.text
 
 
 @ldap_test_cfg
@@ -83,17 +87,20 @@ def test_05_Enabling_SMB_service():
                "cifs_srv_guest": "nobody",
                "cifs_hostname_lookup": False,
                "cifs_srv_aio_enable": False}
-    assert PUT("/services/cifs/", payload) == 200
+    results = PUT("/services/cifs/", payload)
+    assert results.status_code == 200, results.text
 
 
 # Now start the service
 def test_06_Starting_SMB_service():
-    assert PUT("/services/services/cifs/", {"srv_enable": True}) == 200
+    results = PUT("/services/services/cifs/", {"srv_enable": True})
+    assert results.status_code == 200, results.text
 
 
 @ldap_test_cfg
 def test_07_Checking_to_see_if_SMB_service_is_enabled():
-    assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "RUNNING"
+    results = GET_OUTPUT("/services/services/cifs/", "srv_state")
+    assert results == "RUNNING"
 
 
 def test_08_Changing_permissions_on_SMB_PATH():
@@ -103,7 +110,8 @@ def test_08_Changing_permissions_on_SMB_PATH():
                "mp_user": "root",
                "mp_group": "wheel",
                "mp_recursive": True}
-    assert PUT("/storage/permission/", payload) == 201
+    results = PUT("/storage/permission/", payload)
+    assert results.status_code == 201, results.text
 
 
 def test_09_Creating_a_SMB_share_on_SMB_PATH():
@@ -112,7 +120,8 @@ def test_09_Creating_a_SMB_share_on_SMB_PATH():
                "cifs_name": SMB_NAME,
                "cifs_guestok": True,
                "cifs_vfsobjects": "streams_xattr"}
-    assert POST("/sharing/cifs/", payload) == 201
+    results = POST("/sharing/cifs/", payload)
+    assert results.status_code == 201, results.text
 
 
 # BSD test to be done when when SSH_TEST is functional
@@ -200,13 +209,15 @@ def test_21_Enabling_LDAPd():
                "ldap_hostname": LDAPHOSTNAME2,
                "ldap_has_samba_schema": True,
                "ldap_enable": True}
-    assert PUT("/directoryservice/ldap/1/", payload) == 200
+    results = PUT("/directoryservice/ldap/1/", payload)
+    assert results.status_code == 200, results.text
 
 
 # Check LDAP
 @up_ldap_test_cfg
 def test_22_Checking_LDAPd():
-    assert GET_OUTPUT("/directoryservice/ldap/", "ldap_enable") is True
+    results = GET_OUTPUT("/directoryservice/ldap/", "ldap_enable")
+    assert results is True
 
 
 @bsd_host_cfg
@@ -289,7 +300,8 @@ def test_33_Removing_SMB_share_on_SMB_PATH():
                "cifs_name": SMB_NAME,
                "cifs_guestok": "true",
                "cifs_vfsobjects": "streams_xattr"}
-    DELETE_ALL("/sharing/cifs/", payload) == 204
+    results = DELETE_ALL("/sharing/cifs/", payload)
+    assert results == 204
 
 
 # Disable LDAP
@@ -302,25 +314,30 @@ def test_34_Disabling_LDAPd():
                "ldap_hostname": LDAPHOSTNAME2,
                "ldap_has_samba_schema": True,
                "ldap_enable": False}
-    assert PUT("/directoryservice/ldap/1/", payload) == 200
+    results = PUT("/directoryservice/ldap/1/", payload)
+    assert results.status_code == 200, results.text
 
 
 # Now stop the SMB service
 def test_35_Stopping_SMB_service():
-    PUT("/services/services/cifs/", {"srv_enable": False}) == 200
+    results = PUT("/services/services/cifs/", {"srv_enable": False})
+    assert results.status_code == 200, results.text
 
 
 # Check LDAP
 @ldap_test_cfg
 def test_36_Verify_LDAP_is_disabled():
-    GET_OUTPUT("/directoryservice/ldap/", "ldap_enable") is False
+    results = GET_OUTPUT("/directoryservice/ldap/", "ldap_enable")
+    assert results is False
 
 
 @ldap_test_cfg
 def test_37_Verify_SMB_service_is_disabled():
-    GET_OUTPUT("/services/services/cifs/", "srv_state") == "STOPPED"
+    results = GET_OUTPUT("/services/services/cifs/", "srv_state")
+    assert results == "STOPPED"
 
 
 # Check destroying a SMB dataset
 def test_38_Destroying_SMB_dataset():
-    DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
+    results = DELETE("/storage/volume/1/datasets/%s/" % DATASET)
+    assert results.status_code == 204, results.text

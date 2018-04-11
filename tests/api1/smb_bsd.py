@@ -36,19 +36,23 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
 def test_01_Setting_auxilary_parameters_for_mount_smbfs():
     toload = "lanman auth = yes\nntlm auth = yes \nraw NTLMv2 auth = yes"
     payload = {"cifs_srv_smb_options": toload}
-    assert PUT("/services/cifs/", payload) == 200
+    results = PUT("/services/cifs/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_02_Creating_SMB_dataset():
-    assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
+    results = POST("/storage/volume/tank/datasets/", {"name": DATASET})
+    assert results.status_code == 201, results.text
 
 
 def test_03_Starting_SMB_service():
-    assert PUT("/services/services/cifs/", {"srv_enable": True}) == 200
+    results = PUT("/services/services/cifs/", {"srv_enable": True})
+    assert results.status_code == 200, results.text
 
 
 def test_04_Checking_to_see_if_SMB_service_is_running():
-    assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "RUNNING"
+    results = GET_OUTPUT("/services/services/cifs/", "srv_state")
+    assert results == "RUNNING"
 
 
 def test_05_Changing_permissions_on_SMB_PATH():
@@ -57,7 +61,8 @@ def test_05_Changing_permissions_on_SMB_PATH():
                "mp_mode": "777",
                "mp_user": "root",
                "mp_group": "wheel"}
-    assert PUT("/storage/permission/", payload) == 201
+    results = PUT("/storage/permission/", payload)
+    assert results.status_code == 201, results.text
 
 
 def test_06_Creating_a_SMB_share_on_SMB_PATH():
@@ -66,7 +71,8 @@ def test_06_Creating_a_SMB_share_on_SMB_PATH():
                "cifs_name": SMB_NAME,
                "cifs_guestok": True,
                "cifs_vfsobjects": "streams_xattr"}
-    assert POST("/sharing/cifs/", payload) == 201
+    results = POST("/sharing/cifs/", payload)
+    assert results.status_code == 201, results.text
 
 
 # Now check if we can mount SMB / create / rename / copy / delete / umount
@@ -192,18 +198,22 @@ def test_23_SMB_share_on_SMB_PATH():
                "cifs_name": SMB_NAME,
                "cifs_guestok": True,
                "cifs_vfsobjects": "streams_xattr"}
-    assert DELETE_ALL("/sharing/cifs/", payload) == 204
+    results = DELETE_ALL("/sharing/cifs/", payload)
+    assert results.status_code == 204, results.text
 
 
 # Now stop the service
 def test_24_Stopping_SMB_service():
-    assert PUT("/services/services/cifs/", {"srv_enable": False}) == 200
+    results = PUT("/services/services/cifs/", {"srv_enable": False})
+    assert results.status_code == 200, results.text
 
 
 def test_25_Verify_SMB_service_is_disabled():
-    assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "STOPPED"
+    results = GET_OUTPUT("/services/services/cifs/", "srv_state")
+    assert results == "STOPPED"
 
 
 # Check destroying a SMB dataset
 def test_26_Destroying_SMB_dataset():
-    assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
+    results = DELETE("/storage/volume/1/datasets/%s/" % DATASET)
+    assert results.status_code == 204, results.text

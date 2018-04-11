@@ -28,7 +28,8 @@ def test_01_configure_interface_dhcp():
     payload = {"int_dhcp": "true",
                "int_name": "ext",
                "int_interface": interface}
-    assert POST("/network/interface/", payload) == 201
+    results = POST("/network/interface/", payload)
+    assert results.status_code == 201, results.text
 
 
 @route_and_dns_cfg
@@ -37,4 +38,5 @@ def test_02_Setting_default_route_and_DNS():
                "gc_hostname": BRIDGEHOST,
                "gc_ipv4gateway": BRIDGEGW,
                "gc_nameserver1": BRIDGEDNS}
-    assert PUT("/network/globalconfiguration/", payload) == 200
+    results = PUT("/network/globalconfiguration/", payload)
+    assert results.status_code == 200, results.text

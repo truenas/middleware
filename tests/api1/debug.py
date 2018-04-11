@@ -13,8 +13,10 @@ from functions import POST, GET_OUTPUT
 
 def test_01_Creating_diagnostic_file():
     payload = {"name": "newbe1", "source": "default"}
-    assert POST("/system/debug/", payload) == 200
+    results = POST("/system/debug/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_02_Verify_that_API_returns_WWW_download_path():
-    assert GET_OUTPUT("/system/debug/", "url") == "/system/debug/download/"
+    results = GET_OUTPUT("/system/debug/", "url")
+    assert results == "/system/debug/download/"

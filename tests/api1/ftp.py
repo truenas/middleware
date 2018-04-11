@@ -16,16 +16,19 @@ from auto_config import ip
 # Delete tests
 def test_01_Configuring_ftp_service():
     payload = {"ftp_clients": 10, "ftp_rootlogin": "true"}
-    assert PUT("/services/ftp/", payload) == 200
+    results = PUT("/services/ftp/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_02_Starting_ftp_service():
     payload = {"srv_enable": "true"}
-    assert PUT("/services/services/ftp/", payload) == 200
+    results = PUT("/services/services/ftp/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_03_Checking_to_see_if_FTP_service_is_enabled():
-    assert GET_OUTPUT("/services/services/ftp/", "srv_state") == "RUNNING"
+    results = GET_OUTPUT("/services/services/ftp/", "srv_state")
+    assert results == "RUNNING"
 
 
 def test_04_Fetching_file_via_FTP():
@@ -35,16 +38,20 @@ def test_04_Fetching_file_via_FTP():
 
 # Update tests
 def test_05_Stopping_ftp_service():
-    assert PUT("/services/services/ftp/", {"srv_enable": False}) == 200
+    results = PUT("/services/services/ftp/", {"srv_enable": False})
+    assert results.status_code == 200, results.text
 
 
 def test_06_Updating_ftp_service():
-    assert PUT("/services/ftp/", {"ftp_clients": 20}) == 200
+    results = PUT("/services/ftp/", {"ftp_clients": 20})
+    assert results.status_code == 200, results.text
 
 
 def test_07_Starting_ftp_service():
-    assert PUT("/services/services/ftp/", {"srv_enable": True}) == 200
+    results = PUT("/services/services/ftp/", {"srv_enable": True})
+    assert results.status_code == 200, results.text
 
 
 def test_08_Checking_to_see_if_FTP_service_is_enabled():
-    assert GET_OUTPUT("/services/services/ftp/", "srv_state") == "RUNNING"
+    results = GET_OUTPUT("/services/services/ftp/", "srv_state")
+    assert results == "RUNNING"

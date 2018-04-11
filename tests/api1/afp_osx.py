@@ -34,21 +34,25 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 
 # Create tests
 def test_01_Creating_AFP_dataset():
-    assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
+    results = POST("/storage/volume/tank/datasets/", {"name": DATASET})
+    assert results.status_code == 201, results.text
 
 
 def test_02_Enabling_AFP_service():
     payload = {"afp_srv_guest": "true",
                "afp_srv_bindip": ip}
-    assert PUT("/services/afp/", payload) == 200
+    results = PUT("/services/afp/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_03_Starting_AFP_service():
-    assert PUT("/services/services/afp/", {"srv_enable": "true"}) == 200
+    results = PUT("/services/services/afp/", {"srv_enable": "true"})
+    assert results.status_code == 200, results.text
 
 
 def test_04_Checking_to_see_if_AFP_service_is_enabled():
-    assert GET_OUTPUT("/services/services/afp/", "srv_state") == "RUNNING"
+    results = GET_OUTPUT("/services/services/afp/", "srv_state")
+    assert results == "RUNNING"
 
 
 def test_05_Changing_permissions_on_AFP_PATH():
@@ -57,12 +61,14 @@ def test_05_Changing_permissions_on_AFP_PATH():
                "mp_mode": "777",
                "mp_user": "root",
                "mp_group": "wheel"}
-    assert PUT("/storage/permission/", payload) == 201
+    results = PUT("/storage/permission/", payload)
+    assert results.status_code == 201, results.text
 
 
 def test_06_Creating_a_AFP_share_on_AFP_PATH():
     payload = {"afp_name": AFP_NAME, "afp_path": AFP_PATH}
-    assert POST("/sharing/afp/", payload) == 201
+    results = POST("/sharing/afp/", payload)
+    assert results.status_code == 201, results.text
 
 
 # Mount share on OSX system and create a test file
@@ -180,14 +186,17 @@ def test_22_Removing_SMB_mountpoint():
 
 # Test disable AFP
 def test_23_Verify_AFP_service_can_be_disabled():
-    assert PUT("/services/afp/", {"afp_srv_guest": "false"}) == 200
+    results = PUT("/services/afp/", {"afp_srv_guest": "false"})
+    assert results.status_code == 200, results.text
 
 
 def test_24_Verify_delete_afp_name_and_afp_path():
     payload = {"afp_name": AFP_NAME, "afp_path": AFP_PATH}
-    assert DELETE_ALL("/sharing/afp/", payload) == 204
+    results = DELETE_ALL("/sharing/afp/", payload)
+    assert results.status_code == 204, results.text
 
 
 # Test delete AFP dataset
 # def test_25_Verify_AFP_dataset_can_be_destroyed():
-#     assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
+#     results = DELETE("/storage/volume/1/datasets/%s/" % DATASET)
+#     assert results.status_code == 204, results.text
