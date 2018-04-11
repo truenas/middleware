@@ -252,9 +252,6 @@ class AFP_ShareForm(MiddlewareModelForm, ModelForm):
         data['rw'] = data['rw'].split()
         data['hostsallow'] = data['hostsallow'].split()
         data['hostsdeny'] = data['hostsdeny'].split()
-        data['fperm'] = int(data['fperm'], 8)
-        data['dperm'] = int(data['dperm'], 8)
-        data['umask'] = int(data['umask'], 8)
 
         return data
 

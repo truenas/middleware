@@ -1,11 +1,10 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import (accepts, Bool, Dict, Dir, Int, List, Str,
-                                Patch, IPAddr)
+                                Patch, IPAddr, Unix)
 from middlewared.validators import IpAddress, Range
 from middlewared.service import (SystemServiceService, ValidationErrors,
                                  CRUDService, private)
 import os
-import ipaddress
 
 
 class AFPService(SystemServiceService):
@@ -67,9 +66,9 @@ class SharingAFPService(CRUDService):
         Bool('nodev'),
         Bool('nostat'),
         Bool('upriv'),
-        Int('fperm', validators=[Range(min=0, max=0o777)], default=0o644),
-        Int('dperm', validators=[Range(min=0, max=0o777)], default=0o755),
-        Int('umask', validators=[Range(min=0, max=0o777)], default=0),
+        Unix('fperm', default='644'),
+        Unix('dperm', default='755'),
+        Unix('umask', default='000'),
         List('hostsallow', items=[IPAddr('ip', cidr=True)]),
         List('hostsdeny', items=[IPAddr('ip', cidr=True)]),
         Str('auxparams'),
@@ -121,15 +120,15 @@ class SharingAFPService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        await self.clean(data, 'sharingafp_update', verrors, id=id)
-        await self.validate(data, 'sharingafp_update', verrors, old=old)
+        await self.clean(new, 'sharingafp_update', verrors, id=id)
+        await self.validate(new, 'sharingafp_update', verrors, old=old)
 
         if verrors:
             raise verrors
 
         await self.compress(new)
         await self.middleware.call(
-            'datastore.update', self._config.datastore, id, data,
+            'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
         await self.extend(new)
 
@@ -217,9 +216,6 @@ class SharingAFPService(CRUDService):
         data['rw'] = data['rw'].split()
         data['hostsallow'] = data['hostsallow'].split()
         data['hostsdeny'] = data['hostsdeny'].split()
-        data['fperm'] = int(data['fperm'], 8)
-        data['dperm'] = int(data['dperm'], 8)
-        data['umask'] = int(data['umask'], 8)
 
         return data
 
@@ -231,8 +227,5 @@ class SharingAFPService(CRUDService):
         data['rw'] = ' '.join(data['rw'])
         data['hostsallow'] = ' '.join(data['hostsallow'])
         data['hostsdeny'] = ' '.join(data['hostsdeny'])
-        data['fperm'] = f"{data['fperm']:o}"
-        data['dperm'] = f"{data['dperm']:o}"
-        data['umask'] = f"{data['umask']:o}"
 
         return data

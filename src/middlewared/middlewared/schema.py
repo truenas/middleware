@@ -555,3 +555,35 @@ def accepts(*schema):
 
         return nf
     return wrap
+
+
+class Unix(Attribute):
+
+    def __init__(self, *args, **kwargs):
+        self.perms = kwargs.pop('perms', False)   # Placeholder for perms
+        super().__init__(*args, **kwargs)
+
+    def clean(self, value):
+        if value is None and not self.required:
+            return self.default
+        return value
+
+    def validate(self, value):
+        try:
+            mode = int(value, 8)
+        except ValueError:
+            raise Error('mode',
+                        'Not a valid integer. Must be between 000 and 777')
+
+        if mode & 0o777 != mode:
+            raise Error('mode', 'Please supply a value between 000 and 777')
+        return super().validate(value)
+
+    def to_json_schema(self, parent=None):
+        schema = {
+            'type': ['unix', 'null'] if not self.required else 'unix',
+        }
+        if not parent:
+            schema['title'] = self.verbose
+            schema['_required_'] = self.required
+        return schema
