@@ -13,6 +13,14 @@ from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
 RE_CPUTEMP = re.compile(r'^cpu.*temp$', re.I)
 RE_SYSFAN = re.compile(r'^sys_fan\d+$', re.I)
 
+PS_FAILURES = [
+    (0x2, "Failure detected"),
+    (0x4, "Predictive failure"),
+    (0x8, "Power Supply AC lost"),
+    (0x10, "AC lost or out-of-range"),
+    (0x20, "AC out-of-range, but present"),
+]
+
 
 class SensorsAlertSource(ThreadedAlertSource):
     level = AlertLevel.CRITICAL
@@ -24,7 +32,14 @@ class SensorsAlertSource(ThreadedAlertSource):
             "-s",
             "baseboard-manufacturer",
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-        if proc.communicate()[0].split('\n', 1)[0].strip() != "GIGABYTE":
+        baseboard_manufacturer = proc.communicate()[0].split("\n", 1)[0].strip()
+
+        failover_hardware = self.middleware.call_sync("notifier.failover_hardware")
+
+        is_gigabyte = baseboard_manufacturer == "GIGABYTE"
+        is_m_series = baseboard_manufacturer == "Supermicro" and failover_hardware == "ECHOWARP"
+
+        if not (is_gigabyte or is_m_series):
             return
 
         proc = subprocess.Popen([
@@ -40,19 +55,20 @@ class SensorsAlertSource(ThreadedAlertSource):
             fields = [field.strip(' ') for field in line.split('|')]
             fields = [None if field == 'na' else field for field in fields]
 
-            if fields[1] is not None:
-                try:
-                    fields[1] = Decimal(fields[1])
-                except:
-                    fields[1] = None
-
-            for i, val in enumerate(fields[5:9]):
-                if val is None:
+            for index in [1, 5, 6, 7, 8]:
+                if fields[index] is None:
                     continue
-                try:
-                    fields[5 + i] = Decimal(val)
-                except:
-                    fields[5 + i] = None
+
+                if fields[index].startswith("0x"):
+                    try:
+                        fields[index] = int(fields[index], 16)
+                    except Exception:
+                        fields[index] = None
+                else:
+                    try:
+                        fields[index] = Decimal(fields[index])
+                    except:
+                        fields[index] = None
 
             name, value, desc, locrit, lowarn, hiwarn, hicrit = (
                 fields[0],
@@ -64,38 +80,58 @@ class SensorsAlertSource(ThreadedAlertSource):
                 fields[8],
             )
 
-            if value is None:
-                continue
+            if is_gigabyte:
+                if value is None:
+                    continue
 
-            if not(RE_CPUTEMP.match(name) or RE_SYSFAN.match(name)):
-                continue
+                if not(RE_CPUTEMP.match(name) or RE_SYSFAN.match(name)):
+                    continue
 
-            if lowarn and value < lowarn:
-                relative = 'below'
-                if value < locrit:
-                    level = 'critical'
+                if lowarn and value < lowarn:
+                    relative = 'below'
+                    if value < locrit:
+                        level = 'critical'
+                    else:
+                        level = 'recommended'
+
+                elif hiwarn and value > hiwarn:
+                    relative = 'above'
+                    if value > hicrit:
+                        level = 'critical'
+                    else:
+                        level = 'recommended'
                 else:
-                    level = 'recommended'
+                    continue
 
-            elif hiwarn and value > hiwarn:
-                relative = 'above'
-                if value > hicrit:
-                    level = 'critical'
-                else:
-                    level = 'recommended'
-            else:
-                continue
+                alerts.append(Alert(
+                    Alert.CRIT,
+                    'Sensor %s is %s %s value: %d %s',
+                    args=[
+                        name,
+                        relative,
+                        level,
+                        value,
+                        desc,
+                    ]
+                ))
 
-            alerts.append(Alert(
-                Alert.CRIT,
-                'Sensor %s is %s %s value: %d %s',
-                args=[
-                    name,
-                    relative,
-                    level,
-                    value,
-                    desc,
-                ]
-            ))
+            if is_m_series:
+                ps_match = re.match("(PS[0-9]+) Status", name)
+                if ps_match:
+                    errors = []
+                    if not (value & 0x1):
+                        errors.append("No presence detected")
+                    for b, title in PS_FAILURES:
+                        if value & b:
+                            errors.append(title)
+                    if errors:
+                        alerts.append(Alert(
+                            Alert.CRIT,
+                            "Power supply %s failed: %s",
+                            args=[
+                                ps_match.group(1),
+                                ", ".join(errors),
+                            ]
+                        ))
 
         return alerts

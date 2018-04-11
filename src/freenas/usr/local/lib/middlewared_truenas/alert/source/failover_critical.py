@@ -49,12 +49,12 @@ class FailoverCriticalAlertSource(ThreadedAlertSource):
                 carp = reg.group(1)
                 vhid = int(reg.group(2))
                 if carp not in ('MASTER', 'BACKUP'):
-                    alerts.append(Alert(Alert.CRIT, _(
+                    alerts.append(Alert(Alert.CRIT, (
                         'Interface "%s" is critical for failover but CARP '
                         'is not in a valid state.'
                     ) % iface.int_interface))
                 if vhid != iface.int_vhid:
-                    alerts.append(Alert(Alert.CRIT, _(
+                    alerts.append(Alert(Alert.CRIT, (
                         'Interface "%s" is configured with VHID %(vhid_real)d '
                         'as opposed to %(vhid)d.'
                     ) % {'vhid_real': vhid, 'vhid': iface.int_vhid}))
