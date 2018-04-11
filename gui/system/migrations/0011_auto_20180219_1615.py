@@ -5,6 +5,27 @@ from __future__ import unicode_literals
 from django.db import migrations, models
 
 
+class AddField(migrations.AddField):
+    def state_forwards(self, app_label, state):
+        if any(name == self.name for name, field in state.models[app_label, self.model_name_lower].fields):
+            return
+
+        return super().state_forwards(app_label, state)
+
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        pass
+
+
+def add_adv_sed_user(apps, schema_editor):
+    connection = schema_editor.connection
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute("ALTER TABLE \"system_advanced\" ADD COLUMN \"adv_sed_user\" varchar(120) NOT NULL DEFAULT \"user\"")
+        except Exception:
+            # Already migrated by 0017
+            pass
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -12,9 +33,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
+        AddField(
             model_name='advanced',
             name='adv_sed_user',
             field=models.CharField(choices=[('user', 'User'), ('master', 'Master')], default='user', help_text='User passed to camcontrol security -U for unlocking SEDs', max_length=120, verbose_name='camcontrol security user'),
         ),
+        migrations.RunPython(add_adv_sed_user),
     ]
