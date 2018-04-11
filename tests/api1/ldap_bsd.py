@@ -78,7 +78,7 @@ def test_03_Enabling_LDAPd():
 @ldap_test_cfg
 def test_04_Checking_LDAP():
     results = GET_OUTPUT("/directoryservice/ldap/", "ldap_enable")
-    assert results.status_code is True, results.text
+    assert results is True
 
 
 @ldap_test_cfg
@@ -301,7 +301,7 @@ def test_33_Removing_SMB_share_on_SMB_PATH():
                "cifs_guestok": "true",
                "cifs_vfsobjects": "streams_xattr"}
     results = DELETE_ALL("/sharing/cifs/", payload)
-    assert results == 204
+    assert results.status_code == 204, results.stat
 
 
 # Disable LDAP
