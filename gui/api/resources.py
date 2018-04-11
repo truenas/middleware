@@ -345,6 +345,9 @@ class DiskResourceMixin(object):
             del bundle.data['disk_number']
         if 'disk_subsystem' in bundle.data:
             del bundle.data['disk_subsystem']
+        if 'disk_passwd' in bundle.data:
+            if bundle.data['disk_passwd'] != '':
+                bundle.data['disk_passwd'] = '********'
         return bundle
 
 
