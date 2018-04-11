@@ -1,6 +1,6 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import (accepts, Bool, Dict, Dir, Int, List, Str,
-                                Patch, IPAddr, Unix)
+                                Patch, IPAddr, UnixPerm)
 from middlewared.validators import IpAddress, Range
 from middlewared.service import (SystemServiceService, ValidationErrors,
                                  CRUDService, private)
@@ -66,9 +66,9 @@ class SharingAFPService(CRUDService):
         Bool('nodev'),
         Bool('nostat'),
         Bool('upriv'),
-        Unix('fperm', default='644'),
-        Unix('dperm', default='755'),
-        Unix('umask', default='000'),
+        UnixPerm('fperm', default='644'),
+        UnixPerm('dperm', default='755'),
+        UnixPerm('umask', default='000'),
         List('hostsallow', items=[IPAddr('ip', cidr=True)]),
         List('hostsdeny', items=[IPAddr('ip', cidr=True)]),
         Str('auxparams'),
@@ -114,7 +114,7 @@ class SharingAFPService(CRUDService):
         old = await self.middleware.call(
             'datastore.query', self._config.datastore, [('id', '=', id)],
             {'extend': self._config.datastore_extend,
-            'prefix': self._config.datastore_prefix,
+             'prefix': self._config.datastore_prefix,
              'get': True})
 
         new = old.copy()

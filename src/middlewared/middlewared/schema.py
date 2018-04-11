@@ -557,11 +557,7 @@ def accepts(*schema):
     return wrap
 
 
-class Unix(Attribute):
-
-    def __init__(self, *args, **kwargs):
-        self.perms = kwargs.pop('perms', False)   # Placeholder for perms
-        super().__init__(*args, **kwargs)
+class UnixPerm(Attribute):
 
     def clean(self, value):
         if value is None and not self.required:
@@ -581,7 +577,7 @@ class Unix(Attribute):
 
     def to_json_schema(self, parent=None):
         schema = {
-            'type': ['unix', 'null'] if not self.required else 'unix',
+            'type': ['string', 'null'] if not self.required else 'string',
         }
         if not parent:
             schema['title'] = self.verbose
