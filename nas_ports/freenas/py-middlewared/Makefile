@@ -18,7 +18,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}aiohttp>0:www/py-aiohttp@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}aiohttp-wsgi>0:www/py-aiohttp-wsgi@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}Flask>0:www/py-flask@${FLAVOR} \
-		${PYTHON_PKGNAMEPREFIX}boto3>0:devel/py-boto3@${FLAVOR} \
+		${PYTHON_PKGNAMEPREFIX}boto3>0:www/py-boto3@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}netif>0:net/py-netif@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}bsd>0:freenas/py-bsd@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}raven>0:devel/py-raven@${FLAVOR} \
@@ -26,7 +26,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}mako>0:textproc/py-mako@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}psutil>0:sysutils/py-psutil@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}libzfs>0:devel/py-libzfs@${FLAVOR} \
-		${PYTHON_PKGNAMEPREFIX}netsnmpagent>0:devel/py-netsnmpagent@${FLAVOR} \
+		${PYTHON_PKGNAMEPREFIX}netsnmpagent>0:net/py-netsnmpagent@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}pydevd>0:devel/py-pydevd@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}zeroconf>0:net/py-zeroconf@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}google-cloud-storage>0:www/py-google-cloud-storage@${FLAVOR} \
