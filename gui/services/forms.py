@@ -23,9 +23,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import base64
 import glob
-import hashlib
 import logging
 import os
 import re
