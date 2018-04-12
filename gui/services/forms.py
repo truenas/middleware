@@ -229,6 +229,9 @@ class AFPForm(MiddlewareModelForm, ModelForm):
 
 class NFSForm(MiddlewareModelForm, ModelForm):
 
+    middleware_attr_map = {
+        'userd_manage_gids': 'nfs_srv_16',
+    }
     middleware_attr_prefix = "nfs_srv_"
     middleware_attr_schema = "nfs"
     middleware_plugin = "nfs"
@@ -289,6 +292,10 @@ class NFSForm(MiddlewareModelForm, ModelForm):
             )
         if self.instance.nfs_srv_v4_v3owner:
             self.fields['nfs_srv_16'].widget.attrs['disabled'] = 'disabled'
+
+    def middleware_clean(self, update):
+        update['userd_manage_gids'] = update.pop('16')
+        return update
 
 
 class FTPForm(MiddlewareModelForm, ModelForm):
