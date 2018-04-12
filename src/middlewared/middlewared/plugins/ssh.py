@@ -29,7 +29,7 @@ class SSHService(SystemServiceService):
                                        "LOCAL5", "LOCAL6", "LOCAL7"]),
         Str('options'),
     ))
-    async def update(self, data):
+    async def do_update(self, data):
         old = await self.config()
 
         new = old.copy()

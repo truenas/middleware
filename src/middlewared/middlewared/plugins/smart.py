@@ -28,7 +28,7 @@ class SmartService(SystemServiceService):
         Int('critical'),
         List('email', items=[Str('email', validators=[Email()])]),
     ))
-    async def update(self, data):
+    async def do_update(self, data):
         old = await self.config()
 
         new = old.copy()

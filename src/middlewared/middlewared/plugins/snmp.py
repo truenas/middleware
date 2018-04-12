@@ -24,7 +24,7 @@ class SNMPService(SystemServiceService):
         Int('loglevel', validators=[Range(min=0, max=7)]),
         Str('options'),
     ))
-    async def update(self, data):
+    async def do_update(self, data):
         old = await self.config()
 
         new = old.copy()
