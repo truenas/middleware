@@ -320,7 +320,12 @@ class RsyncForm(MiddlewareModelForm, ModelForm):
         return w
 
 
-class SMARTTestForm(ModelForm):
+class SMARTTestForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'smarttest_'
+    middleware_plugin = 'smart.test'
+    middleware_attr_schema = 'smart_test'
+    is_singletone = False
 
     class Meta:
         fields = '__all__'
@@ -370,9 +375,22 @@ class SMARTTestForm(ModelForm):
             1, 2, 3, 4, 5, 6, 7
         ])
 
-    def save(self):
-        super(SMARTTestForm, self).save()
-        notifier().restart("smartd")
+    def middleware_clean(self, data):
+        data['disks'] = [disk.pk for disk in data['disks']]
+        test_type = {
+            'L': 'LONG',
+            'S': 'SHORT',
+            'C': 'CONVEYANCE',
+            'O': 'OFFLINE',
+        }
+        data['type'] = test_type[data['type']]
+        data['schedule'] = {
+            'hour': data.pop('hour'),
+            'dom': data.pop('daymonth'),
+            'month': data.pop('month'),
+            'dow': data.pop('dayweek')
+        }
+        return data
 
     def clean_smarttest_hour(self):
         h = self.cleaned_data.get("smarttest_hour")
@@ -399,25 +417,3 @@ class SMARTTestForm(ModelForm):
         w = eval(self.cleaned_data.get("smarttest_dayweek"))
         w = ",".join(w)
         return w
-
-    def clean(self):
-        disks = self.cleaned_data.get("smarttest_disks", [])
-        test = self.cleaned_data.get("smarttest_type")
-        used_disks = []
-        for disk in disks:
-            qs = models.SMARTTest.objects.filter(
-                smarttest_disks__in=[disk],
-                smarttest_type=test,
-            )
-            if self.instance.id:
-                qs = qs.exclude(id=self.instance.id)
-            if qs.count() > 0:
-                used_disks.append(disk.disk_name)
-        if used_disks:
-            self._errors['smarttest_disks'] = self.error_class([_(
-                "The following disks already have tests for this type: %s" % (
-                    ', '.join(used_disks),
-                )),
-            ])
-            self.cleaned_data.pop("smarttest_disks", None)
-        return self.cleaned_data
