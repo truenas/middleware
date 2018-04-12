@@ -29,10 +29,10 @@ def handle_middleware_validation(form, excep):
                     list_index = int(field_name.split('.')[-2])
                     field_name = list_field_name
                     if isinstance(form.cleaned_data[field_name], list):
-                        l = form.cleaned_data[field_name]
+                        list_ = form.cleaned_data[field_name]
                     else:
-                        l = form.cleaned_data[field_name].split()
-                    error_message = repr(l[list_index]) + f": {error_message}"
+                        list_ = form.cleaned_data[field_name].split()
+                    error_message = repr(list_[list_index]) + f": {error_message}"
         if field_name not in form.fields:
             field_name = '__all__'
 
