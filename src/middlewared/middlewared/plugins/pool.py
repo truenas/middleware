@@ -10,7 +10,7 @@ import sysctl
 import bsd
 
 from middlewared.job import JobProgressBuffer
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str
+from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.service import (
     ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
 )
@@ -722,20 +722,14 @@ class PoolScrubService(CRUDService):
         datastore_prefix = 'scrub_'
         namespace = 'pool.scrub'
 
+    @private
     async def pool_scrub_extend(self, data):
         data['pool'] = data.pop('volume')
         data['pool'] = data['pool']['id']
-        if data['dayweek'] == '*':
-            data['dayweek'] = [str(value) for value in range(1, 8)]
-        else:
-            data['dayweek'] = data['dayweek'].split(',')
-
-        if data['month'] == '*':
-            data['month'] = [str(value) for value in range(1, 13)]
-        else:
-            data['month'] = data['month'].split(',')
+        Cron.convert_db_format_to_schedule(data)
         return data
 
+    @private
     async def validate_data(self, data, schema):
         verrors = ValidationErrors()
 
@@ -767,48 +761,16 @@ class PoolScrubService(CRUDService):
                         'A scrub with this pool already exists'
                     )
 
-        else:
-            verrors.add(
-                f'{schema}.pool',
-                'This field is required'
-            )
-
-        month = data.get('month')
-        if not month:
-            verrors.add(
-                f'{schema}.month',
-                'This field is required'
-            )
-        elif len(month) == 12:
-            data['month'] = '*'
-        else:
-            data['month'] = ','.join(month)
-
-        dayweek = data.get('dayweek')
-        if not dayweek:
-            verrors.add(
-                f'{schema}.dayweek',
-                'This field is required'
-            )
-        elif len(dayweek) == 7:
-            data['dayweek'] = '*'
-        else:
-            data['dayweek'] = ','.join(dayweek)
-
         return verrors, data
 
     @accepts(
         Dict(
             'pool_scrub_create',
-            Int('pool', validators=[Range(min=1)]),
+            Int('pool', validators=[Range(min=1)], required=True),
             Int('threshold', validators=[Range(min=0)]),
             Str('description'),
-            List('dayweek', items=[Str('dayweek')]),
-            List('month', items=[Str('month')]),
-            Str('daymonth'),
+            Cron('schedule'),
             Bool('enabled'),
-            Str('minute'),
-            Str('hour'),
             register=True
         )
     )
@@ -819,6 +781,8 @@ class PoolScrubService(CRUDService):
             raise verrors
 
         data['volume'] = data.pop('pool')
+        Cron.convert_schedule_to_db_format(data)
+
         data['id'] = await self.middleware.call(
             'datastore.insert',
             self._config.datastore,
@@ -849,8 +813,8 @@ class PoolScrubService(CRUDService):
             raise verrors
 
         task_data.pop('original_pool_id')
-        original_data['month'] = '*' if len(original_data['month']) == 12 else ','.join(original_data['month'])
-        original_data['dayweek'] = '*' if len(original_data['dayweek']) == 7 else ','.join(original_data['dayweek'])
+        Cron.convert_schedule_to_db_format(task_data)
+        Cron.convert_schedule_to_db_format(original_data)
 
         if len(set(task_data.items()) ^ set(original_data.items())) > 0:
 

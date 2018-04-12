@@ -2600,10 +2600,29 @@ class ScrubForm(MiddlewareModelForm, ModelForm):
             1, 2, 3, 4, 5, 6, 7
         ])
 
+    def clean_scrub_month(self):
+        m = self.data.getlist('scrub_month')
+        if len(m) == 12:
+            return '*'
+        else:
+            return ','.join(m)
+
+    def clean_scrub_dayweek(self):
+        w = self.data.getlist('scrub_dayweek')
+        if len(w) == 7:
+            return '*'
+        else:
+            return ','.join(w)
+
     def middleware_clean(self, update):
-        update['month'] = self.data.getlist('scrub_month')
-        update['dayweek'] = self.data.getlist('scrub_dayweek')
         update['pool'] = update.pop('volume')
+        update['schedule'] = {
+            'minute': update.pop('minute'),
+            'hour': update.pop('hour'),
+            'dom': update.pop('daymonth'),
+            'month': update.pop('month'),
+            'dow': update.pop('dayweek')
+        }
         return update
 
 
