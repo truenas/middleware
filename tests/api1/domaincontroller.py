@@ -25,25 +25,30 @@ adpsswd_test_cfg = pytest.mark.skipif(all(["ADPASSWORD" in locals()
 
 def Test_01_Setting_Realm_Name():
     payload = {"dc_realm": REALM}
-    assert PUT("/services/services/domaincontroller/", payload) == 200
+    results = PUT("/services/services/domaincontroller/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_02_Setting_Domain_name():
     payload = {"dc_domain": DOMAIN}
-    assert PUT("/services/services/domaincontroller/", payload) == 200
+    results = PUT("/services/services/domaincontroller/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_03_Setting_DNS_forwarder():
     payload = {"dc_dns_forwarder": DNSFORWARDER}
-    assert PUT("/services/services/domaincontroller/", payload) == 200
+    results = PUT("/services/services/domaincontroller/", payload)
+    assert results.status_code == 200, results.text
 
 
 @adpsswd_test_cfg
 def test_04_Setting_the_Admin_Password():
     payload = {"dc_passwd": ADPASSWORD}
-    assert PUT("/services/services/domaincontroller/", payload) == 200
+    results = PUT("/services/services/domaincontroller/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_05_Setting_the_Forest_level():
     payload = {"dc_forest_level": FORESTLEVEL}
-    assert PUT("/services/services/domaincontroller/", payload) == 200
+    results = PUT("/services/services/domaincontroller/", payload)
+    assert results.status_code == 200, results.text

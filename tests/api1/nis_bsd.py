@@ -25,59 +25,71 @@ nis_test_cfg = pytest.mark.skipif(all(["NISSERVER" in locals(),
 
 @nis_test_cfg
 def test_01_Setting_NIS_domain():
-    assert PUT("/directoryservice/nis/", {"nis_domain": NISDOMAIN}) == 200
+    results = PUT("/directoryservice/nis/", {"nis_domain": NISDOMAIN})
+    assert results.status_code == 200, results.text
 
 
 @nis_test_cfg
 def test_02_Setting_NIS_server():
-    assert PUT("/directoryservice/nis/", {"nis_servers": NISSERVER}) == 200
+    results = PUT("/directoryservice/nis/", {"nis_servers": NISSERVER})
+    assert results.status_code == 200, results.text
 
 
 @nis_test_cfg
 def test_03_Enabling_NIS_service():
-    assert PUT("/directoryservice/nis/", {"nis_enable": True}) == 200
+    results = PUT("/directoryservice/nis/", {"nis_enable": True})
+    assert results.status_code == 200, results.text
 
 
 @nis_test_cfg
 def test_04_Checking_if_NIS_service_is_enable():
-    assert GET_OUTPUT("/directoryservice/nis/", "nis_enable") is True
+    results = GET_OUTPUT("/directoryservice/nis/", "nis_enable")
+    assert results is True
 
 
 @nis_test_cfg
 def test_05_Creating_NIS_dataset():
-    assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
+    results = POST("/storage/volume/tank/datasets/", {"name": DATASET})
+    assert results.status_code == 201, results.text
 
 
 @nis_test_cfg
 def test_06_Enabling_secure_mode():
-    assert PUT("/directoryservice/nis/", {"nis_secure_mode": True}) == 200
+    results = PUT("/directoryservice/nis/", {"nis_secure_mode": True})
+    assert results.status_code == 200, results.text
 
 
 @nis_test_cfg
 def test_07_Checking_if_secure_mode_is_enable():
-    assert GET_OUTPUT("/directoryservice/nis/", "nis_secure_mode") is True
+    results = GET_OUTPUT("/directoryservice/nis/", "nis_secure_mode")
+    assert results is True
 
 
 @nis_test_cfg
 def test_08_Disabling_secure_mode():
-    assert PUT("/directoryservice/nis/", {"nis_secure_mode": False}) == 200
+    results = PUT("/directoryservice/nis/", {"nis_secure_mode": False})
+    assert results.status_code == 200, results.text
 
 
 @nis_test_cfg
 def test_09_Enabling_manycast():
-    assert PUT("/directoryservice/nis/", {"nis_manycast": True}) == 200
+    results = PUT("/directoryservice/nis/", {"nis_manycast": True})
+    assert results.status_code == 200, results.text
 
 
 @nis_test_cfg
 def test_10_Checking_if_manycast_is_enable():
-    assert GET_OUTPUT("/directoryservice/nis/", "nis_manycast") is True
+    results = GET_OUTPUT("/directoryservice/nis/", "nis_manycast")
+    assert results is True
 
 
 @nis_test_cfg
 def test_11_Disabling_manycast():
-    assert PUT("/directoryservice/nis/", {"nis_manycast": False}) == 200
+    results = PUT("/directoryservice/nis/", {"nis_manycast": False})
+    assert results.status_code == 200, results.text
 
 
 @nis_test_cfg
 def test_12_Disabling_NIS_service():
-    assert PUT("/directoryservice/nis/", {"nis_enable": False}) == 200
+    results = PUT("/directoryservice/nis/", {"nis_enable": False})
+    assert results.status_code == 200, results.text

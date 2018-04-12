@@ -14,13 +14,15 @@ from auto_config import user, password, ip
 
 
 def test_01_Checking_system_version():
-    assert GET("/system/version/") == 200
+    results = GET("/system/version/")
+    assert results.status_code == 200, results.text
 
 
 # Set the timezone
 def test_02_Setting_timezone():
     payload = {"stg_timezone": "America/New_York"}
-    assert PUT("/system/settings/", payload) == 200
+    results = PUT("/system/settings/", payload)
+    assert results.status_code == 200, results.text
 
 
 # Create loader tunable
@@ -29,7 +31,8 @@ def test_03_Creating_system_tunable_dummynet():
                "tun_enabled": True,
                "tun_value": "YES",
                "tun_type": "loader"}
-    assert POST("/system/tunable/", payload) == 201
+    results = POST("/system/tunable/", payload)
+    assert results.status_code == 201, results.text
 
 
 # Check loader tunable

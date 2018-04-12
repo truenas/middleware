@@ -17,7 +17,8 @@ GroupIdFile = "/tmp/.ixbuild_test_groupid"
 # Create tests
 def test_01_Creating_group_testgroup():
     payload = {"bsdgrp_gid": 1200, "bsdgrp_group": "testgroup"}
-    assert POST("/account/groups/", payload) == 201
+    results = POST("/account/groups/", payload)
+    assert results.status_code == 201, results.text
 
 
 # Update tests

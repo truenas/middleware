@@ -38,7 +38,8 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 
 # Create tests
 def test_01_creating_smb_dataset():
-    assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
+    results = POST("/storage/volume/tank/datasets/", {"name": DATASET})
+    assert results.status_code == 201, results.text
 
 
 @ad_test_cfg
@@ -49,18 +50,20 @@ def test_02_Enabling_Active_Directory():
                "ad_netbiosname_a": BRIDGEHOST,
                "ad_idmap_backend": "rid",
                "ad_enable": True}
-    assert PUT("/directoryservice/activedirectory/1/", payload) == 200
+    results = PUT("/directoryservice/activedirectory/1/", payload)
+    assert results.status_code == 200, results.text
 
 
 @ad_test_cfg
 def test_03_Checking_Active_Directory():
-    assert GET_OUTPUT("/directoryservice/activedirectory/",
-                      "ad_enable") is True
+    results = GET_OUTPUT("/directoryservice/activedirectory/", "ad_enable")
+    assert results is True
 
 
 @ad_test_cfg
 def test_04_Checking_to_see_if_SMB_service_is_enabled():
-    assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "RUNNING"
+    results = GET_OUTPUT("/services/services/cifs/", "srv_state")
+    assert results == "RUNNING"
 
 
 def test_05_Enabling_SMB_service():
@@ -68,12 +71,14 @@ def test_05_Enabling_SMB_service():
                "cifs_srv_guest": "nobody",
                "cifs_hostname_lookup": False,
                "cifs_srv_aio_enable": False}
-    assert PUT("/services/cifs/", payload) == 200
+    results = PUT("/services/cifs/", payload)
+    assert results.status_code == 200, results.text
 
 
 # Now start the service
 def test_06_Starting_SMB_service():
-    assert PUT("/services/services/cifs/", {"srv_enable": "true"}) == 200
+    results = PUT("/services/services/cifs/", {"srv_enable": "true"})
+    assert results.status_code == 200, results.text
 
 
 def test_07_Changing_permissions_on_SMB_PATH():
@@ -83,7 +88,8 @@ def test_07_Changing_permissions_on_SMB_PATH():
                "mp_user": "root",
                "mp_group": "wheel",
                "mp_recursive": True}
-    assert PUT("/storage/permission/", payload) == 201
+    results = PUT("/storage/permission/", payload)
+    assert results.status_code == 201, results.text
 
 
 def test_08_Creating_a_SMB_share_on_SMB_PATH():
@@ -92,7 +98,8 @@ def test_08_Creating_a_SMB_share_on_SMB_PATH():
                "cifs_name": SMB_NAME,
                "cifs_guestok": True,
                "cifs_vfsobjects": "streams_xattr"}
-    assert POST("/sharing/cifs/", payload) == 201
+    results = POST("/sharing/cifs/", payload)
+    assert results.status_code == 201, results.text
 
 
 # Mount share on OSX system and create a test file
@@ -219,21 +226,24 @@ def test_25_Disabling_Active_Directory():
                "ad_netbiosname_a": BRIDGEHOST,
                "ad_idmap_backend": "rid",
                "ad_enable": False}
-    assert PUT("/directoryservice/activedirectory/1/", payload) == 200
+    results = PUT("/directoryservice/activedirectory/1/", payload)
+    assert results.status_code == 200, results.text
 
 
 # Check Active Directory
 @ad_test_cfg
 def test_26_Verify_Active_Directory_is_disabled():
-    assert GET_OUTPUT("/directoryservice/activedirectory/",
-                      "ad_enable") is False
+    results = GET_OUTPUT("/directoryservice/activedirectory/", "ad_enable")
+    assert results is False
 
 
 @ad_test_cfg
 def test_27_Verify_SMB_service_is_disabled():
-    assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "STOPPED"
+    results = GET_OUTPUT("/services/services/cifs/", "srv_state")
+    assert results == "STOPPED"
 
 
 # Check destroying a SMB dataset
 # def test_28_Destroying_SMB_dataset():
-#     assert DELETE("/storage/volume/1/datasets/%s/" % DATASET) == 204
+#     results = DELETE("/storage/volume/1/datasets/%s/" % DATASET)
+#     assert results.status_code == 204, results.text

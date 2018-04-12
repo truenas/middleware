@@ -21,11 +21,13 @@ def test_01_Creating_new_cron_job_which_will_run_every_minute():
     payload = {"cron_user": "root",
                "cron_command": "touch '/tmp/.testFileCreatedViaCronjob'",
                "cron_minute": "*/1"}
-    assert POST("/tasks/cronjob/", payload) == 201
+    results = POST("/tasks/cronjob/", payload)
+    assert results.status_code == 201, results.text
 
 
 def test_02_Checking_to_see_if_cronjob_was_created_and_enabled():
-    assert GET_OUTPUT("/tasks/cronjob/1/", "cron_enabled") is True
+    results = GET_OUTPUT("/tasks/cronjob/1/", "cron_enabled")
+    assert results is True
 
 
 def test_03_Wait_a_minute():
@@ -41,27 +43,30 @@ def test_03_Wait_a_minute():
 # Update cronjob to disabled with new cron_command
 def test_05_Updating_cron_job_status_to_disabled_updating_command():
     payload = {"cron_enabled": False}
-    assert PUT("/tasks/cronjob/%s/" % CRONJOB_ID, payload) == 200
+    results = PUT("/tasks/cronjob/%s/" % CRONJOB_ID, payload)
+    assert results.status_code == 200, results.text
 
 
 # Check that cronjob is disabled
 def test_06_Checking_that_API_reports_the_cronjob_as_updated():
-    assert GET_OUTPUT("/tasks/cronjob/%s/" % CRONJOB_ID,
-                      "cron_enabled") is False
+    results = GET_OUTPUT("/tasks/cronjob/%s/" % CRONJOB_ID, "cron_enabled")
+    assert results is False
 
 
 # Delete test file so we can verify it is no longer being created later
 # in the delete/cronjob test
 def test_07_Deleting_test_file_created_by_cronjob():
-    SSH_TEST('rm -f "%s"' % TESTFILE, user, password, ip) is True
+    assert SSH_TEST('rm -f "%s"' % TESTFILE, user, password, ip) is True
 
 
 # Delete tests
 # Delete cronjob from API
 def test_08_Deleting_cron_job_which_will_run_every_minuted():
-    assert DELETE("/tasks/cronjob/1/") == 204
+    results = DELETE("/tasks/cronjob/1/")
+    assert results.status_code == 204, results.text
 
 
 # Check that cronjob was deleted from API
 def test_09_Check_that_the_API_reports_the_cronjob_as_deleted():
-    assert GET("/tasks/cronjob/1/") == 404
+    results = GET("/tasks/cronjob/1/")
+    assert results.status_code == 404, results.text

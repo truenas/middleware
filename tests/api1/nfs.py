@@ -43,7 +43,8 @@ def test_01_Creating_the_NFS_server():
                "nfs_srv_v4": False,
                "nfs_srv_v4_krb": False,
                "id": 1}
-    assert PUT("/services/nfs/", paylaod) == 200
+    results = PUT("/services/nfs/", paylaod)
+    assert results.status_code == 200, results.text
 
 
 # Check creating a NFS share
@@ -51,29 +52,32 @@ def test_02_Creating_a_NFS_share_on_NFS_PATH():
     paylaod = {"nfs_comment": "My Test Share",
                "nfs_paths": [NFS_PATH],
                "nfs_security": "sys"}
-    assert POST("/sharing/nfs/", paylaod) == 201
+    results = POST("/sharing/nfs/", paylaod)
+    assert results.status_code == 201, results.text
 
 
 # Now start the service
 def test_03_Starting_NFS_service():
-    assert PUT("/services/services/nfs/", {"srv_enable": True}) == 200
+    results = PUT("/services/services/nfs/", {"srv_enable": True})
+    assert results.status_code == 200, results.text
 
 
-def test_06_Checking_to_see_if_NFS_service_is_enabled():
-    assert GET_OUTPUT("/services/services/nfs/", "srv_state") == "RUNNING"
+def test_04_Checking_to_see_if_NFS_service_is_enabled():
+    results = GET_OUTPUT("/services/services/nfs/", "srv_state")
+    assert results == "RUNNING"
 
 
 @mount_test_cfg
 @bsd_host_cfg
 # Now check if we can mount NFS / create / rename / copy / delete / umount
-def test_07_Creating_NFS_mountpoint():
+def test_05_Creating_NFS_mountpoint():
     assert SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_08_Mounting_NFS():
+def test_06_Mounting_NFS():
     cmd = 'mount_nfs %s:%s %s' % (ip, NFS_PATH, MOUNTPOINT)
     # command below does not make sence
     # "umount '${MOUNTPOINT}' ; rmdir '${MOUNTPOINT}'" "60"
@@ -82,7 +86,7 @@ def test_08_Mounting_NFS():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_09_Creating_NFS_file():
+def test_07_Creating_NFS_file():
     cmd = 'touch "%s/testfile"' % MOUNTPOINT
     # 'umount "${MOUNTPOINT}"; rmdir "${MOUNTPOINT}"'
     assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
@@ -90,43 +94,45 @@ def test_09_Creating_NFS_file():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_10_Moving_NFS_file():
+def test_08_Moving_NFS_file():
     cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
     assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_11_Copying_NFS_file():
+def test_09_Copying_NFS_file():
     cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
     assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_12_Deleting_NFS_file():
+def test_10_Deleting_NFS_file():
     assert SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_13_Unmounting_NFS():
+def test_11_Unmounting_NFS():
     assert SSH_TEST('umount "%s"' % MOUNTPOINT,
                     BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_14_Removing_NFS_mountpoint():
+def test_12_Removing_NFS_mountpoint():
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
     assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
 
 
 # Update test
-def test_15_Updating_the_NFS_service():
-    assert PUT("/services/nfs/", {"nfs_srv_servers": "50"}) == 200
+def test_13_Updating_the_NFS_service():
+    results = PUT("/services/nfs/", {"nfs_srv_servers": "50"})
+    assert results.status_code == 200, results.text
 
 
-def test_16_Checking_to_see_if_NFS_service_is_enabled():
-    assert GET_OUTPUT("/services/services/nfs/", "srv_state") == "RUNNING"
+def test_14_Checking_to_see_if_NFS_service_is_enabled():
+    results = GET_OUTPUT("/services/services/nfs/", "srv_state")
+    assert results == "RUNNING"

@@ -42,18 +42,21 @@ def test_01_Add_iSCSI_initiator():
                "iscsi_target_initiator_comment": "",
                "iscsi_target_initiator_initiators": "ALL",
                "iscsi_target_initiator_tag": 1}
-    assert POST("/services/iscsi/authorizedinitiator/", payload) == 201
+    results = POST("/services/iscsi/authorizedinitiator/", payload)
+    assert results.status_code == 201, results.text
 
 
 def test_02_Add_ISCSI_portal():
     payload = {"iscsi_target_portal_ips": ["0.0.0.0:3620"]}
-    assert POST("/services/iscsi/portal/", payload) == 201
+    results = POST("/services/iscsi/portal/", payload)
+    assert results.status_code == 201, results.text
 
 
 # Add iSCSI target
 def test_03_Add_ISCSI_target():
     payload = {"iscsi_target_name": TARGET_NAME}
-    assert POST("/services/iscsi/target/", payload) == 201
+    results = POST("/services/iscsi/target/", payload)
+    assert results.status_code == 201
 
 
 # Add Target to groups
@@ -64,7 +67,8 @@ def test_04_Add_target_to_groups():
                "iscsi_target_initiatorgroup": "1",
                "iscsi_target_authtype": "None",
                "iscsi_target_initialdigest": "Auto"}'''
-    assert POSTNOJSON("/services/iscsi/targetgroup/", payload) == 201
+    results = POSTNOJSON("/services/iscsi/targetgroup/", payload)
+    assert results.status_code == 201
 
 
 # Add iSCSI extent
@@ -74,7 +78,8 @@ def test_05_Add_ISCSI_extent():
                "iscsi_target_extent_filesize": "50MB",
                "iscsi_target_extent_rpm": "SSD",
                "iscsi_target_extent_path": "/mnt/tank/dataset03/iscsi"}
-    assert POST("/services/iscsi/extent/", payload) == 201
+    results = POST("/services/iscsi/extent/", payload)
+    assert results.status_code == 201, results.text
 
 
 # Associate iSCSI target
@@ -83,18 +88,20 @@ def test_06_Associate_ISCSI_target():
                "iscsi_extent": 1,
                "iscsi_lunid": None,
                "iscsi_target": 1}
-    assert POST("/services/iscsi/targettoextent/", payload) == 201
+    results = POST("/services/iscsi/targettoextent/", payload)
+    assert results.status_code == 201, results.text
 
 
 # Enable the iSCSI service
 def test_07_Enable_iSCSI_service():
     payload = {"srv_enable": True}
-    assert PUT("/services/services/iscsitarget/", payload) == 200
+    results = PUT("/services/services/iscsitarget/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_08_Verify_the_iSCSI_service_is_enabled():
-    assert GET_OUTPUT("/services/services/iscsitarget/",
-                      "srv_state") == "RUNNING"
+    results = GET_OUTPUT("/services/services/iscsitarget/", "srv_state")
+    assert results == "RUNNING"
 
 
 # when SSH_TEST is functional test using it will need to be added
@@ -237,19 +244,22 @@ def test_25_Disconnect_iSCSI_target():
 # Disable the iSCSI service
 def test_26_Disable_iSCSI_service():
     payload = {"srv_enable": False}
-    assert PUT("/services/services/iscsitarget/", payload) == 200
+    results = PUT("/services/services/iscsitarget/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_27_Verify_the_iSCSI_service_is_Sdisabled():
-    assert GET_OUTPUT("/services/services/iscsitarget/",
-                      "srv_state") == "STOPPED"
+    results = GET_OUTPUT("/services/services/iscsitarget/", "srv_state")
+    assert results == "STOPPED"
 
 
 # Remove iSCSI target
 def test_28_Delete_iSCSI_target():
-    assert DELETE("/services/iscsi/target/1/") == 204
+    results = DELETE("/services/iscsi/target/1/")
+    assert results.status_code == 204, results.text
 
 
 # Remove iSCSI extent
 def test_29_Delete_iSCSI_extent():
-    assert DELETE("/services/iscsi/extent/1/") == 204
+    results = DELETE("/services/iscsi/extent/1/")
+    assert results.status_code == 204, results.text
