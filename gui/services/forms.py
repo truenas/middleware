@@ -396,7 +396,12 @@ class TFTPForm(MiddlewareModelForm, ModelForm):
         return "%.3o" % mask
 
 
-class SSHForm(ModelForm):
+class SSHForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'ssh_'
+    middleware_attr_schema = 'ssh'
+    middleware_plugin = 'ssh'
+    is_singletone = True
 
     class Meta:
         fields = '__all__'
@@ -409,27 +414,6 @@ class SSHForm(ModelForm):
         super(SSHForm, self).__init__(*args, **kwargs)
         self.fields['ssh_bindiface'].choices = list(choices.NICChoices(exclude_configured=False,
                                                     exclude_unconfigured_vlan_parent=True))
-
-    def save(self):
-        obj = super(SSHForm, self).save()
-        started = notifier().reload("ssh")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='ssh').srv_enable
-        ):
-            raise ServiceFailed("ssh", _("The SSH service failed to reload."))
-        else:
-            keyfile = "/usr/local/etc/ssh/ssh_host_ecdsa_key.pub"
-            if not os.path.exists(keyfile):
-                return obj
-            with open(keyfile, "rb") as f:
-                pubkey = f.read().strip().split(None, 3)[1]
-            decoded_key = base64.b64decode(pubkey)
-            key_digest = hashlib.sha256(decoded_key).digest()
-            ssh_fingerprint = (b"SHA256:" + base64.b64encode(key_digest).replace(b"=", b"")).decode("utf-8")
-            # using log.error since it logs to /var/log/messages, /var/log/debug.log as well as /dev/console all at once
-            log.error("ECDSA Fingerprint of the SSH KEY: " + ssh_fingerprint)
-        return obj
 
 
 class RsyncdForm(MiddlewareModelForm, ModelForm):
