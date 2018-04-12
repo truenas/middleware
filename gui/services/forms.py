@@ -293,7 +293,7 @@ class NFSForm(ModelForm):
         for ip in ips:
             try:
                 IPAddress(ip)
-            except:
+            except Exception:
                 raise forms.ValidationError(
                     "This is not a valid IP: %s" % (ip, )
                 )
