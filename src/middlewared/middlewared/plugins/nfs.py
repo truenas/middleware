@@ -49,7 +49,7 @@ class NFSService(SystemServiceService):
 
         if new["v4_v3owner"] and new["userd_manage_gids"]:
             verrors.add(
-                "nfs_update.userd_manage_gids", "This option is incompatible with NFSv3 ownership model for NFSv4:")
+                "nfs_update.userd_manage_gids", "This option is incompatible with NFSv3 ownership model for NFSv4")
 
         if verrors:
             raise verrors
