@@ -36,7 +36,7 @@ class NFSService(SystemServiceService):
         Bool('mountd_log'),
         Bool('statd_lockd_log'),
     ))
-    async def update(self, data):
+    async def do_update(self, data):
         old = await self.config()
 
         new = old.copy()
