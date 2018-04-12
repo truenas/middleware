@@ -24,7 +24,8 @@ jail_test_cfg = pytest.mark.skipif(all(["JAILIP" in locals(),
 def test_01_Configuring_jails():
     payload = {"jc_ipv4_network_start": JAILIP,
                "jc_path": "/mnt/tank/jails"}
-    assert PUT_TIMEOUT("/jails/configuration/", payload, 60) == 201
+    results = PUT_TIMEOUT("/jails/configuration/", payload, 60)
+    assert results.status_code == 201, results.text
 
 
 @jail_test_cfg
@@ -34,7 +35,8 @@ def test_02_Creating_jail_VNET_OFF():
                "jail_ipv4": JAILIP,
                "jail_ipv4_netmask": JAILNETMASK,
                "jail_vnet": True}
-    assert POST("/jails/jails/", payload) == 201
+    results = POST("/jails/jails/", payload)
+    assert results.status_code == 201, results.text
 
 
 @jail_test_cfg
@@ -44,19 +46,23 @@ def test_03_Mount_tank_share_into_jail():
                "mounted": True,
                "readonly": False,
                "source": "/mnt/tank/share"}
-    assert POST("/jails/mountpoints/", payload) == 201
+    results = POST("/jails/mountpoints/", payload)
+    assert results.status_code == 201, results.text
 
 
 @jail_test_cfg
 def test_04_Starting_jail():
-    assert POST("/jails/jails/1/start/", None) == 202
+    results = POST("/jails/jails/1/start/", None)
+    assert results.status_code == 202, results.text
 
 
 @jail_test_cfg
 def test_05_Restarting_jail():
-    assert POST("/jails/jails/1/restart/", None) == 202
+    results = POST("/jails/jails/1/restart/", None)
+    assert results.status_code == 202, results.text
 
 
 @jail_test_cfg
 def test_06_Stopping_jail():
-    assert POST("/jails/jails/1/stop/", None) == 202
+    results = POST("/jails/jails/1/stop/", None)
+    assert results.status_code == 202, results.text

@@ -4,6 +4,8 @@ import errno
 import ipaddress
 import os
 
+from croniter import croniter
+
 from middlewared.service_exception import ValidationErrors
 from middlewared.validators import ShouldBe
 
@@ -387,6 +389,67 @@ class Dict(Attribute):
         if self.register:
             middleware.add_schema(self)
         return self
+
+
+class Cron(Dict):
+
+    FIELDS = ['minute', 'hour', 'dom', 'month', 'dow']
+
+    def __init__(self, name, **kwargs):
+        self.additional_attrs = kwargs.pop('additional_attrs', False)
+        # Update property is used to disable requirement on all attributes
+        # as well to not populate default values for not specified attributes
+        self.update = kwargs.pop('update', False)
+        super(Cron, self).__init__(name, **kwargs)
+        self.attrs = {}
+        for i in Cron.FIELDS:
+            self.attrs[i] = Str(i)
+
+    @staticmethod
+    def convert_schedule_to_db_format(data_dict, schedule_name='schedule'):
+        if data_dict.get(schedule_name):
+            schedule = data_dict.pop(schedule_name)
+            db_fields = ['minute', 'hour', 'daymonth', 'month', 'dayweek']
+            for index, field in enumerate(Cron.FIELDS):
+                if field in schedule:
+                    data_dict[db_fields[index]] = schedule[field]
+
+    @staticmethod
+    def convert_db_format_to_schedule(data_dict, schedule_name='schedule'):
+        db_fields = ['minute', 'hour', 'daymonth', 'month', 'dayweek']
+        data_dict[schedule_name] = {}
+        for index, field in enumerate(db_fields):
+            if field in data_dict:
+                data_dict[schedule_name][Cron.FIELDS[index]] = data_dict.pop(field)
+
+    def validate(self, value):
+        verrors = ValidationErrors()
+
+        for attr in self.attrs.values():
+            if attr.name in value:
+                try:
+                    attr.validate(value[attr.name])
+                except ValidationErrors as e:
+                    verrors.add_child(self.name, e)
+
+        for v in value:
+            if v not in Cron.FIELDS:
+                verrors.add(self.name, f'Unexpected {v} value')
+
+        if verrors:
+            raise verrors
+
+        cron_expression = ''
+        for field in Cron.FIELDS:
+            cron_expression += value.get(field) + ' ' if value.get(field) else '* '
+
+        try:
+            croniter(cron_expression)
+        except Exception as e:
+            verrors.add(self.name, 'Please ensure fields match cron syntax - ' + str(e))
+
+        if verrors:
+            raise verrors
 
 
 class Ref(object):

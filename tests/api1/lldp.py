@@ -20,22 +20,30 @@ def test_01_Configuring_LLDP_service():
     payload = {"lldp_country": COUNTRY,
                "lldp_intdesc": INTDESC,
                "lldp_location": LOCATION}
-    assert PUT("/services/lldp/", payload) == 200
+
+    results = PUT("/services/lldp/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_02_Checking_that_API_reports_LLDP_service():
-    assert GET("/services/lldp/") == 200
+    results = GET("/services/lldp/")
+    assert results.status_code == 200, results.text
 
 
 def test_03_Checking_that_API_reports_LLDP_configuration_as_saved():
-    assert GET_OUTPUT("/services/lldp/", "lldp_country") == COUNTRY
-    assert GET_OUTPUT("/services/lldp/", "lldp_intdesc") == INTDESC
-    assert GET_OUTPUT("/services/lldp/", "lldp_location") == LOCATION
+    results = GET_OUTPUT("/services/lldp/", "lldp_country")
+    assert results == COUNTRY
+    results = GET_OUTPUT("/services/lldp/", "lldp_intdesc")
+    assert results == INTDESC
+    results = GET_OUTPUT("/services/lldp/", "lldp_location")
+    assert results == LOCATION
 
 
 def test_04_Enable_LLDP_service():
-    assert PUT("/services/services/lldp/", {"srv_enable": True}) == 200
+    results = PUT("/services/services/lldp/", {"srv_enable": True})
+    assert results.status_code == 200, results.text
 
 
 def test_05_Checking_to_see_if_LLDP_service_is_running():
-    assert GET_OUTPUT("/services/services/lldp/", "srv_state") == "RUNNING"
+    results = GET_OUTPUT("/services/services/lldp/", "srv_state")
+    assert results == "RUNNING"

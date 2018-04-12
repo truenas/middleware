@@ -12,22 +12,20 @@ sys.path.append(apifolder)
 from functions import POST, GET_OUTPUT
 
 
-def test_00_cleanup_tests():
+def test_01_Create_a_new_SMARTTest():
     disk_identifiers = GET_OUTPUT("/storage/disk", "disk_identifier")
     global disk_ident
     disk_indent = disk_identifiers.split()[0]
-
-
-def test_01_Create_a_new_SMARTTest():
-    payload = {"smarttest_disks": disk_ident,
+    payload = {"smarttest_disks": disk_indent,
                "smarttest_type": "L",
                "smarttest_hour": "*",
                "smarttest_daymonth": "*",
                "smarttest_month": "*",
                "smarttest_dayweek": "*"}
-    assert POST("/tasks/smarttest/", payload) == 201
+    results = POST("/tasks/smarttest/", payload)
+    assert results.status_code == 201, results.text
 
 
 def test_02_Check_that_API_reports_new_SMARTTest():
-    assert GET_OUTPUT("/tasks/smarttest/",
-                      "smarttest_disks") == disk_ident
+    results = GET_OUTPUT("/tasks/smarttest/", "smarttest_disks")
+    assert results == disk_ident

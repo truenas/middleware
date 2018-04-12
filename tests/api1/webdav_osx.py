@@ -20,7 +20,8 @@ SHARE_PASS = "davtest"
 
 # Create tests
 def test_01_Creating_dataset_for_WebDAV_use():
-    assert POST("/storage/volume/tank/datasets/", {"name": DATASET}) == 201
+    results = POST("/storage/volume/tank/datasets/", {"name": DATASET})
+    assert results.status_code == 201, results.text
 
 
 def test_02_Changing_permissions_on_DATASET_PATH():
@@ -29,32 +30,36 @@ def test_02_Changing_permissions_on_DATASET_PATH():
                "mp_mode": "777",
                "mp_user": "root",
                "mp_group": "wheel"}
-    assert PUT("/storage/permission/", payload) == 201
+    results = PUT("/storage/permission/", payload)
+    assert results.status_code == 201, results.text
 
 
 def test_03_Creating_WebDAV_share_on_DATASET_PATH():
     payload = {"webdav_name": SHARE_NAME,
                "webdav_comment": "Auto-created by API tests",
                "webdav_path": DATASET_PATH}
-    assert POST("/sharing/webdav/", payload) == 201
+    results = POST("/sharing/webdav/", payload)
+    assert results.status_code == 201, results.text
 
 
 def test_04_Starting_WebDAV_service():
-    assert PUT("/services/services/webdav/", {"srv_enable": True}) == 200
+    results = PUT("/services/services/webdav/", {"srv_enable": True})
+    assert results.status_code == 200, results.text
 
 
 def test_05_Verifying_that_the_WebDAV_service_has_started():
-    assert GET_OUTPUT("/services/services/webdav",
-                      "srv_state") == "RUNNING"
+    results = GET_OUTPUT("/services/services/webdav", "srv_state")
+    assert results == "RUNNING"
 
 
 def test_06_Stopping_WebDAV_service():
-    assert PUT("/services/services/webdav/", {"srv_enable": False}) == 200
+    results = PUT("/services/services/webdav/", {"srv_enable": False})
+    assert results.status_code == 200, results.text
 
 
 def test_07_Verifying_that_the_WebDAV_service_has_stopped():
-    assert GET_OUTPUT("/services/services/webdav",
-                      "srv_state") == "STOPPED"
+    results = GET_OUTPUT("/services/services/webdav", "srv_state")
+    assert results == "STOPPED"
 
 
 # Update tests
@@ -64,29 +69,34 @@ def test_08_Changing_permissions_on_DATASET_PATH():
                "mp_mode": "777",
                "mp_user": "root",
                "mp_group": "wheel"}
-    assert PUT("/storage/permission/", payload) == 201
+    results = PUT("/storage/permission/", payload)
+    assert results.status_code == 201, results.text
 
 
 def test_09_Creating_WebDAV_share_on_DATASET_PATH():
     payload = {"webdav_name": SHARE_NAME,
                "webdav_comment": "Auto-created by API tests",
                "webdav_path": DATASET_PATH}
-    assert POST("/sharing/webdav/", payload) == 201
+    results = POST("/sharing/webdav/", payload)
+    assert results.status_code == 201, results.text
 
 
 def test_10_Starting_WebDAV_service():
-    assert PUT("/services/services/webdav/", {"srv_enable": True}) == 200
+    results = PUT("/services/services/webdav/", {"srv_enable": True})
+    assert results.status_code == 200, results.text
 
 
 def test_11_Changing_password_for_webdev():
     payload = {"webdav_password": SHARE_PASS}
-    assert PUT("/services/services/webdav/", payload) == 200
+    results = PUT("/services/services/webdav/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_12_Stopping_WebDAV_service():
-    assert PUT("/services/services/webdav/", {"srv_enable": False}) == 200
+    results = PUT("/services/services/webdav/", {"srv_enable": False})
+    assert results.status_code == 200, results.text
 
 
 def test_13_Verifying_that_the_WebDAV_service_has_stopped():
-    assert GET_OUTPUT("/services/services/webdav",
-                      "srv_state") == "STOPPED"
+    results = GET_OUTPUT("/services/services/webdav", "srv_state")
+    assert results == "STOPPED"

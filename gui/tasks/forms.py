@@ -296,7 +296,28 @@ class RsyncForm(MiddlewareModelForm, ModelForm):
         update['month'] = self.data.getlist("rsync_month")
         update['dayweek'] = self.data.getlist("rsync_dayweek")
         update['extra'] = update["extra"].split()
+        update['schedule'] = {
+            'minute': update.pop('minute'),
+            'hour': update.pop('hour'),
+            'dom': update.pop('daymonth'),
+            'month': update.pop('month'),
+            'dow': update.pop('dayweek')
+        }
         return update
+
+    def clean_rsync_month(self):
+        m = self.data.getlist("rsync_month")
+        if len(m) == 12:
+            return '*'
+        m = ",".join(m)
+        return m
+
+    def clean_rsync_dayweek(self):
+        w = self.data.getlist("rsync_dayweek")
+        if len(w) == 7:
+            return '*'
+        w = ",".join(w)
+        return w
 
 
 class SMARTTestForm(ModelForm):

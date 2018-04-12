@@ -15,7 +15,8 @@ from functions import POST, GET_USER, DELETE, PUT
 # Create tests
 def test_01_Creating_home_dataset_tank_sur_testuser():
     payload = {"name": "testuser"}
-    assert POST("/storage/volume/tank/datasets/", payload) == 201
+    results = POST("/storage/volume/tank/datasets/", payload)
+    assert results.status_code == 201, results.text
 
 
 def test_02_Creating_user_testuser():
@@ -27,13 +28,15 @@ def test_02_Creating_user_testuser():
                "bsdusr_home": "/mnt/tank/testuser",
                "bsdusr_mode": "755",
                "bsdusr_shell": "/bin/csh"}
-    assert POST("/account/users/", payload) == 201
+    results = POST("/account/users/", payload)
+    assert results.status_code == 201, results.text
 
 
 def test_03_Setting_user_groups_wheel_ftp():
     payload = ["wheel", "ftp"]
     userid = GET_USER("testuser")
-    assert POST("/account/users/%s/groups/" % userid, payload) == 202
+    results = POST("/account/users/%s/groups/" % userid, payload)
+    assert results.status_code == 202, results.text
 
 
 # Update tests
@@ -47,7 +50,8 @@ def test_05_Updating_user_testuser():
                "bsdusr_home": "/mnt/tank/testuser",
                "bsdusr_mode": "755",
                "bsdusr_shell": "/bin/csh"}
-    assert PUT("/account/users/%s/" % userid, payload) == 200
+    results = PUT("/account/users/%s/" % userid, payload)
+    assert results.status_code == 200, results.text
 
 
 # Update password for testuser
@@ -55,10 +59,12 @@ def test_06_Updating_password_for_testuser():
     userid = GET_USER("testuser")
     payload = {"bsdusr_password": "newpasswd"}
     path = "/account/users/%s/password/" % userid
-    assert POST(path, payload) == 200
+    results = POST(path, payload)
+    assert results.status_code == 200, results.text
 
 
 # Delete the testuser
 def test_08_Deleting_user_testuser():
     userid = GET_USER("testuser")
-    assert DELETE("/account/users/%s/" % userid) == 204
+    results = DELETE("/account/users/%s/" % userid)
+    assert results.status_code == 204, results.text

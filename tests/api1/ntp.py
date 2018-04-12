@@ -23,13 +23,16 @@ def test_01_Changing_permissions_on_share():
                "ntp_prefer": "true",
                "pk": "1",
                "force": "true"}
-    assert PUT("/system/ntpserver/1/", payload) == 200
+    results = PUT("/system/ntpserver/1/", payload)
+    assert results.status_code == 200, results.text
 
 
 # Remove Other NTP Servers
 def test_02_Removing_non_AD_NTP_servers_1sur2():
-    assert DELETE("/system/ntpserver/2/") == 204
+    results = DELETE("/system/ntpserver/2/")
+    assert results.status_code == 204, results.text
 
 
 def test_03_Removing_non_AD_NTP_servers_2sur2():
-    assert DELETE("/system/ntpserver/3/") == 204
+    results = DELETE("/system/ntpserver/3/")
+    assert results.status_code == 204, results.text

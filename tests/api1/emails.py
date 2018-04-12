@@ -19,4 +19,5 @@ def test_01_Configuring_email_settings():
                "em_security": "plain",
                "em_smtp": "true",
                "em_user": "william.spam@ixsystems.com"}
-    assert PUT("/system/email/", payload) == 200
+    results = PUT("/system/email/", payload)
+    assert results.status_code == 200, results.text
