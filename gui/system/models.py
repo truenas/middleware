@@ -319,7 +319,7 @@ class Advanced(Model):
         editable=False,
     )
     adv_motd = models.TextField(
-        max_length=1024,
+        max_length=10240,
         verbose_name=_("MOTD banner"),
         default='Welcome',
         blank=True,
