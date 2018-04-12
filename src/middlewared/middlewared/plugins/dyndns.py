@@ -1,5 +1,3 @@
-import re
-
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import SystemServiceService, private
 

@@ -1,5 +1,3 @@
-import re
-
 from middlewared.schema import accepts, Dict, Int, List, Str
 from middlewared.validators import Email
 from middlewared.service import SystemServiceService, private

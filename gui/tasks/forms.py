@@ -1,6 +1,5 @@
 import json
 import logging
-import re
 
 from django.utils.translation import ugettext_lazy as _
 
