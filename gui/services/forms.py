@@ -455,8 +455,8 @@ class RsyncModForm(MiddlewareModelForm, ModelForm):
         model = models.RsyncMod
 
     def middleware_clean(self, update):
-        update['hostsallow'] = list(filter(None, re.split(r"\s+", update["hostsallow"])))
-        update['hostsdeny'] = list(filter(None, re.split(r"\s+", update["hostsdeny"])))
+        update['hostsallow'] = update["hostsallow"].split()
+        update['hostsdeny'] = update["hostsdeny"].split()
         return update
 
 
@@ -509,7 +509,7 @@ class DynamicDNSForm(MiddlewareModelForm, ModelForm):
         return cdata
 
     def middleware_clean(self, update):
-        update["domain"] = list(filter(None, re.split(r"\s+", update["domain"])))
+        update["domain"] = update["domain"].split()
         return update
 
 
@@ -1523,7 +1523,7 @@ class SMARTForm(MiddlewareModelForm, ModelForm):
 
     def middleware_clean(self, update):
         update["powermode"] = update["powermode"].upper()
-        update["email"] = list(filter(None, re.split(r"\s+", update["email"])))
+        update["email"] = update["email"].split()
         return update
 
 

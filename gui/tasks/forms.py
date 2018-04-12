@@ -295,7 +295,7 @@ class RsyncForm(MiddlewareModelForm, ModelForm):
     def middleware_clean(self, update):
         update['month'] = self.data.getlist("rsync_month")
         update['dayweek'] = self.data.getlist("rsync_dayweek")
-        update['extra'] = list(filter(None, re.split(r"\s+", update["extra"])))
+        update['extra'] = update["extra"].split()
         return update
 
 

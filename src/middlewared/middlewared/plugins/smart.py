@@ -16,7 +16,7 @@ class SmartService(SystemServiceService):
     @private
     async def smart_extend(self, smart):
         smart["powermode"] = smart["powermode"].upper()
-        smart["email"] = list(filter(None, re.split(r"\s+", smart["email"])))
+        smart["email"] = smart["email"].split()
         return smart
 
     @accepts(Dict(
