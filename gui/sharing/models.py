@@ -52,11 +52,7 @@ class CIFS_Share(Model):
         verbose_name=_("Comment"),
         blank=True,
     )
-    cifs_default_permissions = models.BooleanField(
-        verbose_name=_('Apply Default Permissions'),
-        help_text=_('Recursively set appropriate default Windows permissions on share'),
-        default=True
-    )
+
     cifs_ro = models.BooleanField(
         verbose_name=_('Export Read Only'),
         default=False,
