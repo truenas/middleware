@@ -203,13 +203,13 @@ define([
       });
 
       me._storeUsers = new ItemFileReadStore({
-        url: "/legacy/account/bsduser/json/?wizard=1",
+        url: "/api/v1.0/account/all_users/?wizard=1",
         clearOnClose: true
       });
       me._storeUsers.fetch();
 
       me._storeGroups = new ItemFileReadStore({
-        url: "/legacy/account/bsdgroup/json/?wizard=1",
+        url: "/api/v1.0/account/all_groups/?wizard=1",
         clearOnClose: true
       });
       me._storeGroups.fetch();
