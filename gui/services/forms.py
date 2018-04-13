@@ -225,7 +225,15 @@ class AFPForm(MiddlewareModelForm, ModelForm):
             self.fields['afp_srv_bindip'].initial = ('')
 
 
-class NFSForm(ModelForm):
+class NFSForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_map = {
+        'userd_manage_gids': 'nfs_srv_16',
+    }
+    middleware_attr_prefix = "nfs_srv_"
+    middleware_attr_schema = "nfs"
+    middleware_plugin = "nfs"
+    is_singletone = True
 
     class Meta:
         model = models.NFS
@@ -283,30 +291,9 @@ class NFSForm(ModelForm):
         if self.instance.nfs_srv_v4_v3owner:
             self.fields['nfs_srv_16'].widget.attrs['disabled'] = 'disabled'
 
-    def clean_nfs_srv_bindip(self):
-        ips = self.cleaned_data.get("nfs_srv_bindip")
-        if not ips:
-            return ''
-        bind = []
-        for ip in ips:
-            try:
-                IPAddress(ip)
-            except:
-                raise forms.ValidationError(
-                    "This is not a valid IP: %s" % (ip, )
-                )
-            bind.append(ip)
-        return bind
-
-    def save(self):
-        obj = super(NFSForm, self).save()
-        started = notifier().restart("nfs")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='nfs').srv_enable
-        ):
-            raise ServiceFailed("nfs", _("The NFS service failed to reload."))
-        return obj
+    def middleware_clean(self, update):
+        update['userd_manage_gids'] = update.pop('16')
+        return update
 
 
 class FTPForm(MiddlewareModelForm, ModelForm):
