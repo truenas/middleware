@@ -59,21 +59,24 @@ class FakeMiddleware(object):
             # the worker until thread finishes.
             executor.shutdown(wait=False)
 
-    async def _call(self, service_mod, service_name, method, args, job=None):
+    async def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, spawn_thread=True, job=None):
         with Client() as c:
             self.client = c
-            module = importlib.import_module(service_mod)
-            serviceobj = getattr(module, service_name)(self)
-            methodobj = getattr(serviceobj, method)
             job_options = getattr(methodobj, '_job', None)
-            if job_options:
-                args = list(args)
-                args.insert(0, FakeJob(job['id'], self.client))
+            if job and job_options:
+                params = list(params) if params else []
+                params.insert(0, FakeJob(job['id'], self.client))
             if asyncio.iscoroutinefunction(methodobj):
-                return await methodobj(*args)
+                return await methodobj(*params)
             else:
-                return methodobj(*args)
+                return methodobj(*params)
         self.client = None
+
+    async def _run(self, service_mod, service_name, method, args, job=None):
+        module = importlib.import_module(service_mod)
+        serviceobj = getattr(module, service_name)(self)
+        methodobj = getattr(serviceobj, method)
+        return await self._call(f'{service_name}.{method}', serviceobj, methodobj, params=args, job=job)
 
     async def call(self, method, *params, timeout=None, **kwargs):
         """
@@ -111,7 +114,7 @@ class FakeJob(object):
 def main_worker(*call_args):
     global MIDDLEWARE
     loop = asyncio.get_event_loop()
-    coro = MIDDLEWARE._call(*call_args)
+    coro = MIDDLEWARE._run(*call_args)
     try:
         res = loop.run_until_complete(coro)
     except SystemExit:
