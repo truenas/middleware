@@ -253,8 +253,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                 continue
             error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % iface)
             for vhid in list(output.split()):
-                log.warn("Setting CARP state to MASTER on %s" % iface)
-                run("ifconfig %s vhid %s state master advskew 1" % (iface, vhid))
+                run("ifconfig %s vhid %s advskew 1" % (iface, vhid))
         if not forcetakeover:
             sys.exit(0)
 
