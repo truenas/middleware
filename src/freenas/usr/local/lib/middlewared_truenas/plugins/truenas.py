@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime, timedelta
+import errno
 import json
 import os
 
@@ -12,7 +13,7 @@ from freenasUI.support.utils import get_license, ADDRESS, LICENSE_FILE
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import Service, private
 
-EULA_PENDING_PATH = "/data/truenas_license.pending"
+EULA_PENDING_PATH = "/data/truenas_eula_pending"
 REGISTER_URL = "https://%s/truenas/api/v1.0/register" % ADDRESS
 
 user_attrs = [
@@ -47,8 +48,11 @@ class TrueNASService(Service):
         return not os.path.exists(EULA_PENDING_PATH)
 
     async def accept_eula(self):
-        if os.path.exists(EULA_PENDING_PATH):
+        try:
             os.unlink(EULA_PENDING_PATH)
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise
 
     async def get_customer_information(self):
         result = await self.__fetch_customer_information()
