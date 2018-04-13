@@ -177,7 +177,7 @@ def main(subsystem, event):
                             for interface in fobj['groups'][group]:
                                 error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % interface)
                                 for vhid in output.split():
-                                    log.warn("Setting advskew to 0 on interface %s" interface)
+                                    log.warn("Setting advskew to 0 on interface %s" % interface)
                                     run("ifconfig %s vhid %s advskew 0" % (interface, vhid))
                         log.warn("Failover disabled.  Assuming active.")
                         run("touch %s" % FAILOVER_OVERRIDE)
