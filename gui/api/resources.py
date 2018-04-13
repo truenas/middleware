@@ -54,6 +54,21 @@ from freenasUI.account.forms import bsdUserToGroupForm
 from freenasUI.account.models import bsdUsers, bsdGroups, bsdGroupMembership
 from freenasUI.api.utils import DojoResource
 from freenasUI.common import humanize_size, humanize_number_si
+from freenasUI.common.freenascache import (
+    FLAGS_CACHE_READ_USER,
+    FLAGS_CACHE_WRITE_USER,
+    FLAGS_CACHE_READ_GROUP,
+    FLAGS_CACHE_WRITE_GROUP
+)
+from freenasUI.common.freenasldap import (
+    FLAGS_DBINIT,
+    FreeNAS_ActiveDirectory_Users,
+    FreeNAS_LDAP_Users,
+    FreeNAS_ActiveDirectory_Groups,
+    FreeNAS_LDAP_Groups
+)
+from freenasUI.common.freenasnis import FreeNAS_NIS_Users, FreeNAS_NIS_Groups
+from freenasUI.common.freenasusers import FreeNAS_Groups, FreeNAS_Users
 from freenasUI.common.system import (
     get_sw_login_version,
     get_sw_name,
@@ -4096,3 +4111,272 @@ class VMResourceMixin(object):
                 'state': state
             })
         return bundle
+
+
+class JsonUser(object):
+    def __init__(self, id, name, label):
+        self.id = id
+        self.name = name
+        self.label = label
+
+
+class JsonUserResource(DojoResource):
+
+    id = fields.CharField(attribute='id')
+    name = fields.CharField(attribute='name')
+    label = fields.CharField(attribute='label')
+
+    class Meta:
+        allowed_methods = ['get']
+        resource_name = 'account/all_users'
+        object_class = JsonUser
+        max_limit = 0
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/(?P<exclude>\w[\w,-]*\$?)%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('get_list'),
+                name="api_dispatch_list"
+            ),
+        ]
+
+    def get_list(self, request, **kwargs):
+        data = {
+            'identifier': 'id',
+            'label': 'name',
+            'items': [],
+        }
+        users = []
+        query = request.GET.get('q') or kwargs.get('q')
+        exclude = request.GET.get('exclude') or kwargs.get('exclude', [])
+        if exclude:
+            exclude = exclude.split(',')
+        for user in FreeNAS_Users(
+                flags=FLAGS_DBINIT | FLAGS_CACHE_READ_USER | FLAGS_CACHE_WRITE_USER
+        ):
+            if (
+                    (query is None or user.pw_name.startswith(query)) and
+                    user.pw_name not in exclude and not any(u for u in users if u.name == user.pw_name)
+            ):
+                users.append(
+                    JsonUser(
+                        id=user.pw_name,
+                        name=user.pw_name,
+                        label=user.pw_name
+                    )
+                )
+
+        # Show users for the directory service provided in the wizard
+        wizard_ds = request.session.get('wizard_ds')
+        if request.GET.get('wizard') == '1' and wizard_ds:
+            if wizard_ds.get('ds_type') == 'ad':
+                wizard_users = FreeNAS_ActiveDirectory_Users(
+                    domainname=wizard_ds.get('ds_ad_domainname'),
+                    bindname=wizard_ds.get('ds_ad_bindname'),
+                    bindpw=wizard_ds.get('ds_ad_bindpw'),
+                    flags=FLAGS_DBINIT,
+                )
+            elif wizard_ds.get('ds_type') == 'ldap':
+                wizard_users = FreeNAS_LDAP_Users(
+                    host=wizard_ds.get('ds_ldap_hostname'),
+                    basedn=wizard_ds.get('ds_ldap_basedn'),
+                    binddn=wizard_ds.get('ds_ldap_binddn'),
+                    bindpw=wizard_ds.get('ds_ldap_bindpw'),
+                    flags=FLAGS_DBINIT,
+                )
+            elif wizard_ds.get('ds_type') == 'nis':
+                wizard_users = FreeNAS_NIS_Users(
+                    domain=wizard_ds.get('ds_nis_domain'),
+                    servers=wizard_ds.get('ds_nis_servers'),
+                    secure_mode=wizard_ds.get('ds_nis_secure_mode'),
+                    manycast=wizard_ds.get('ds_nis_manycast'),
+                    flags=FLAGS_DBINIT,
+                )
+            else:
+                wizard_users = None
+
+            if wizard_users is not None:
+                # FIXME: code duplication with the block above
+                for user in wizard_users._get_uncached_usernames():
+                    if (
+                            (query is None or user.startswith(query)) and
+                            user not in exclude
+                    ):
+                        users.append(
+                            JsonUser(
+                                id='%s_%s' % (
+                                    wizard_ds.get('ds_type'),
+                                    user,
+                                ),
+                                name=user,
+                                label=user
+                            )
+                        )
+
+            del wizard_users
+
+        limit = self._meta.limit
+
+        if 'HTTP_RANGE' not in request.META:
+            limit = 50
+
+        paginator = self._meta.paginator_class(
+            request,
+            users,
+            resource_uri=self.get_resource_uri(),
+            limit=limit,
+            max_limit=self._meta.max_limit,
+            collection_name=self._meta.collection_name,
+        )
+
+        to_be_serialized = paginator.page()
+        # Dehydrate the bundles in preparation for serialization.
+        bundles = []
+
+        for obj in to_be_serialized[self._meta.collection_name]:
+            bundle = self.build_bundle(obj=obj, request=request)
+            bundles.append(self.full_dehydrate(bundle))
+
+        length = len(bundles)
+        to_be_serialized[self._meta.collection_name] = bundles
+        to_be_serialized = self.alter_list_data_to_serialize(
+            request,
+            to_be_serialized
+        )
+        data['items'] = to_be_serialized
+
+        response = self.create_response(request, data)
+        response['Content-Range'] = 'items %d-%d/%d' % (
+            paginator.offset,
+            paginator.offset + length - 1,
+            len(users)
+        )
+        return response
+
+
+class JsonGroup(object):
+    def __init__(self, id, name, label):
+        self.id = id
+        self.name = name
+        self.label = label
+
+
+class JsonGroupResource(DojoResource):
+
+    id = fields.CharField(attribute='id')
+    name = fields.CharField(attribute='name')
+    label = fields.CharField(attribute='label')
+
+    class Meta:
+        allowed_methods = ['get']
+        resource_name = 'account/all_groups'
+        object_class = JsonGroup
+        max_limit = 0
+
+    def get_list(self, request, **kwargs):
+        data = {
+            'identifier': 'id',
+            'label': 'name',
+            'items': [],
+        }
+        groups = []
+        query = request.GET.get('q', None)
+        for grp in FreeNAS_Groups(
+                flags=FLAGS_DBINIT | FLAGS_CACHE_READ_GROUP | FLAGS_CACHE_WRITE_GROUP
+        ):
+            if ((query is None or grp.gr_name.startswith(query)) and
+                    not any(g for g in groups if g.name == grp.gr_name)):
+                groups.append(
+                    JsonGroup(
+                        id=grp.gr_name,
+                        name=grp.gr_name,
+                        label=grp.gr_name
+                    )
+                )
+
+        # Show groups for the directory service provided in the wizard
+        wizard_ds = request.session.get('wizard_ds')
+        if request.GET.get('wizard') == '1' and wizard_ds:
+            if wizard_ds.get('ds_type') == 'ad':
+                wizard_groups = FreeNAS_ActiveDirectory_Groups(
+                    domainname=wizard_ds.get('ds_ad_domainname'),
+                    bindname=wizard_ds.get('ds_ad_bindname'),
+                    bindpw=wizard_ds.get('ds_ad_bindpw'),
+                    flags=FLAGS_DBINIT,
+                )
+            elif wizard_ds.get('ds_type') == 'ldap':
+                wizard_groups = FreeNAS_LDAP_Groups(
+                    host=wizard_ds.get('ds_ldap_hostname'),
+                    basedn=wizard_ds.get('ds_ldap_basedn'),
+                    binddn=wizard_ds.get('ds_ldap_binddn'),
+                    bindpw=wizard_ds.get('ds_ldap_bindpw'),
+                    flags=FLAGS_DBINIT,
+                )
+            elif wizard_ds.get('ds_type') == 'nis':
+                wizard_groups = FreeNAS_NIS_Groups(
+                    domain=wizard_ds.get('ds_nis_domain'),
+                    servers=wizard_ds.get('ds_nis_servers'),
+                    secure_mode=wizard_ds.get('ds_nis_secure_mode'),
+                    manycast=wizard_ds.get('ds_nis_manycast'),
+                    flags=FLAGS_DBINIT,
+                )
+            else:
+                wizard_groups = None
+
+            if wizard_groups:
+                # FIXME: code duplication with the block above
+                for group in wizard_groups._get_uncached_groupnames():
+                    if query is None or group.startswith(query):
+                        groups.append(
+                            JsonGroup(
+                                id='%s_%s' % (
+                                    wizard_ds.get('ds_type'),
+                                    group,
+                                ),
+                                name=group,
+                                label=group
+                            )
+                        )
+
+            del wizard_groups
+
+        limit = self._meta.limit
+
+        if 'HTTP_RANGE' not in request.META:
+            limit = 50
+
+        paginator = self._meta.paginator_class(
+            request,
+            groups,
+            resource_uri=self.get_resource_uri(),
+            limit=limit,
+            max_limit=self._meta.max_limit,
+            collection_name=self._meta.collection_name,
+        )
+
+        to_be_serialized = paginator.page()
+        # Dehydrate the bundles in preparation for serialization.
+        bundles = []
+
+        for obj in to_be_serialized[self._meta.collection_name]:
+            bundle = self.build_bundle(obj=obj, request=request)
+            bundles.append(self.full_dehydrate(bundle))
+
+        length = len(bundles)
+        to_be_serialized[self._meta.collection_name] = bundles
+        to_be_serialized = self.alter_list_data_to_serialize(
+            request,
+            to_be_serialized
+        )
+        data['items'] = to_be_serialized
+
+        response = self.create_response(request, data)
+        response['Content-Range'] = 'items %d-%d/%d' % (
+            paginator.offset,
+            paginator.offset + length - 1,
+            len(groups)
+        )
+        return response
