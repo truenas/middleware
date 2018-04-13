@@ -1,6 +1,7 @@
 import asyncio
 from collections import defaultdict
 from datetime import datetime, timedelta
+import errno
 import glob
 import os
 import re
@@ -17,6 +18,7 @@ from middlewared.common.smart.smartctl import get_smartctl_args
 from middlewared.schema import accepts, Dict, List, Bool, Str
 from middlewared.service import filterable, job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
+from middlewared.utils.asyncio_ import asyncio_map
 
 # FIXME: temporary import of SmartAlert until alert is implemented
 # in middlewared
@@ -26,6 +28,7 @@ from freenasUI.services.utils import SmartAlert
 
 DISK_EXPIRECACHE_DAYS = 7
 MIRROR_MAX = 5
+RE_CAMCONTROL_DRIVE_LOCKED = re.compile(r'^drive locked\s+yes$', re.M)
 RE_DA = re.compile('^da[0-9]+$')
 RE_DD = re.compile(r'^(\d+) bytes transferred .*\((\d+) bytes')
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
@@ -442,6 +445,92 @@ class DiskService(CRUDService):
                 # FIXME: use a truenas middleware plugin
                 await self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], True)
 
+    @private
+    async def sed_unlock_all(self):
+        advconfig = await self.middleware.call('system.advanced.config')
+        disks = await self.middleware.call('disk.query')
+
+        # If no SED password was found we can stop here
+        if not advconfig.get('sed_passwd') and not any([d['passwd'] for d in disks]):
+            return
+
+        args = [[disk['name'], disk, advconfig] for disk in disks]
+        result = await asyncio_map(lambda x: self.sed_unlock(*x), args, 16)
+        locked = list(filter(lambda x: x['locked'] is True, result))
+        if locked:
+            disk_names = ', '.join([i['name'] for i in locked])
+            self.logger.warn(f'Failed to unlock following SED disks: {disk_names}')
+            raise CallError('Failed to unlock SED disks', errno.EACCES)
+        return True
+
+    @private
+    async def sed_unlock(self, disk_name, disk=None, _advconfig=None):
+        if _advconfig is None:
+            _advconfig = await self.middleware.call('system.advanced.config')
+
+        devname = f'/dev/{disk_name}'
+        # We need two states to tell apart when disk was successfully unlocked
+        locked = None
+        unlocked = None
+        password = _advconfig.get('sed_passwd')
+
+        if disk is None:
+            disk = await self.middleware.call('disk.query', [('name', '=', disk_name)])
+            if disk and disk[0]['passwd']:
+                password = disk[0]['passwd']
+        elif disk.get('passwd'):
+            password = disk['passwd']
+
+        rv = {'name': disk_name, 'locked': None}
+
+        if not password:
+            # If there is no password no point in continuing
+            return rv
+
+        # Try unlocking TCG OPAL using sedutil
+        cp = await run('sedutil-cli', '--query', devname, check=False)
+        if cp.returncode == 0:
+            output = cp.stdout.decode(errors='ignore')
+            if 'Locked = Y' in output:
+                locked = True
+                cp = await run('sedutil-cli', '--setLockingRange', '0', 'RW', password, devname, check=False)
+                if cp.returncode == 0:
+                    locked = False
+                    unlocked = True
+            elif 'Locked = N' in output:
+                locked = False
+
+        # If sedutil failed to unlock or was not recognized try ATA Security
+        if locked in (True, None):
+            cp = await run('camcontrol', 'security', devname, check=False)
+            if cp.returncode == 0:
+                output = cp.stdout.decode()
+                if RE_CAMCONTROL_DRIVE_LOCKED.search(output):
+                    locked = True
+                    cp = await run(
+                        'camcontrol', 'security', devname,
+                        '-U', _advconfig['sed_user'],
+                        '-k', password,
+                        check=False,
+                    )
+                    if cp.returncode == 0:
+                        locked = False
+                        unlocked = True
+                else:
+                    locked = False
+
+        if unlocked:
+            try:
+                # Disk needs to be retasted after unlock
+                with open(devname, 'wb'):
+                    pass
+            except OSError:
+                pass
+        elif locked:
+            self.logger.error(f'Failed to unlock {disk_name}')
+        rv['locked'] = locked
+        return rv
+
     async def __multipath_create(self, name, consumers, mode=None):
         """
         Create an Active/Passive GEOM_MULTIPATH provider
@@ -856,6 +945,7 @@ async def _event_devfs(middleware, event_type, args):
         # This is a performance issue
         if os.path.exists('/tmp/.sync_disk_done'):
             await middleware.call('disk.sync', data['cdev'])
+            await middleware.call('disk.sed_unlock', data['cdev'])
             await middleware.call('disk.multipath_sync')
             try:
                 with SmartAlert() as sa:

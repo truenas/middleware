@@ -1144,11 +1144,20 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
     class Meta:
         fields = '__all__'
         model = models.Advanced
+        widgets = {
+            'adv_sed_passwd': forms.widgets.PasswordInput(),
+        }
 
     def __init__(self, *args, **kwargs):
         super(AdvancedForm, self).__init__(*args, **kwargs)
         self.fields['adv_motd'].strip = False
         self.original_instance = dict(self.instance.__dict__)
+
+    def clean_adv_sed_passwd(self):
+        passwd = self.cleaned_data.get('adv_sed_passwd')
+        if not passwd:
+            return self.instance.adv_sed_passwd
+        return passwd
 
     def middleware_clean(self, data):
         if data.get('sed_user'):

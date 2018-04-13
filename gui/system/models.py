@@ -27,7 +27,6 @@ import dateutil
 import logging
 import os
 import re
-import signal
 import time
 
 from dateutil import parser as dtparser
@@ -359,7 +358,13 @@ class Advanced(Model):
         default="user",
         help_text=_("User passed to camcontrol security -u "
                     "for unlocking SEDs"),
-        verbose_name=_("camcontrol security user")
+        verbose_name=_("ATA Security User")
+    )
+    adv_sed_passwd = models.CharField(
+        max_length=120,
+        blank=True,
+        help_text=_("Global password to unlock SED disks."),
+        verbose_name=_("SED Password"),
     )
 
     class Meta:
@@ -367,6 +372,22 @@ class Advanced(Model):
 
     class FreeAdmin:
         deletable = False
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.adv_sed_passwd:
+            try:
+                self.adv_sed_passwd = notifier().pwenc_decrypt(self.adv_sed_passwd)
+            except Exception:
+                log.debug('Failed to decrypt SED password', exc_info=True)
+                self.adv_sed_passwd = ''
+        self._adv_sed_passwd_encrypted = False
+
+    def save(self, *args, **kwargs):
+        if self.adv_sed_passwd and not self._adv_sed_passwd_encrypted:
+            self.adv_sed_passwd = notifier().pwenc_encrypt(self.adv_sed_passwd)
+            self._adv_sed_passwd_encrypted = True
+        return super().save(*args, **kwargs)
 
 
 class Email(Model):
