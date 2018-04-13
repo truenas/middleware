@@ -10,45 +10,7 @@
 
 unlock_drives()
 {
-	local IFS="|"
-	local f="disk_passwd"
-	local g="disk_name"
-	eval local $f
-	eval local $g
-	local sf=$(var_to_sf $f)
-	local sg=$(var_to_sf $g)
-	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
-	local user=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT adv_sed_user FROM system_advanced")
-	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
-
-	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
-	SELECT
-		$sg,$sf
-
-	FROM
-		storage_disk
-
-	WHERE (
-		$sf != ''
-	)
-
-	 " | \
-	while eval read $g $f
-	do
-		ret=$(/sbin/camcontrol security /dev/${disk_name} | awk '$1 == "drive" {print $3}')
-		if [ -n "${ret}" -a "${ret}" = "yes" ]; then
-			echo -n "Unlocking ${disk_name}: "
-			/sbin/camcontrol security /dev/${disk_name} -U ${user} -k "$(/usr/local/bin/midclt call notifier.pwenc_decrypt ${disk_passwd})" > /dev/null 2>&1
-			if [ $? -eq 0 ]; then
-				/usr/bin/true > /dev/${disk_name}
-				echo "Success"
-			else
-				echo "Failed"
-			fi
-		else
-			echo "Skipping ${disk_name}, already unlocked"
-		fi
-	done
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call disk.sed_unlock_all > /dev/null
 }
 
 name="ix-sed"

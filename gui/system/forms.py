@@ -1183,6 +1183,9 @@ class AdvancedForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.Advanced
+        widgets = {
+            'adv_sed_passwd': forms.widgets.PasswordInput(),
+        }
 
     def __init__(self, *args, **kwargs):
         super(AdvancedForm, self).__init__(*args, **kwargs)
@@ -1208,6 +1211,12 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_cpu_in_percentage = self.instance.adv_cpu_in_percentage
         self.instance._original_adv_graphite = self.instance.adv_graphite
         self.instance._original_adv_fqdn_syslog = self.instance.adv_fqdn_syslog
+
+    def clean_adv_sed_passwd(self):
+        passwd = self.cleaned_data.get('adv_sed_passwd')
+        if not passwd:
+            return self.instance.adv_sed_passwd
+        return passwd
 
     def save(self):
         super(AdvancedForm, self).save()
