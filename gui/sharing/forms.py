@@ -1,4 +1,4 @@
-#+
+#
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -53,7 +53,9 @@ class CIFS_ShareForm(ModelForm):
 
     cifs_default_permissions = forms.BooleanField(
         label=_('Apply Default Permissions'),
-        help_text=_('Recursively set appropriate default Windows permissions on share'),
+        help_text=_(
+            'Recursively set appropriate default Windows permissions on share'
+        ),
         required=False
     )
 
@@ -211,8 +213,7 @@ class CIFS_ShareForm(ModelForm):
                 (owner, group) = notifier().mp_get_owner(self.instance.cifs_path)
             except:
                 (owner, group) = ('root', 'wheel')
-            notifier().winacl_reset(path=self.instance.cifs_path,
-                owner=owner, group=group)
+            notifier().winacl_reset(path=self.instance.cifs_path, owner=owner, group=group)
 
 
 class AFP_ShareForm(ModelForm):
@@ -414,8 +415,8 @@ class NFS_ShareForm(ModelForm):
         return net
         if not net:
             return net
-        #only one address = CIDR or IP
-        #if net.find(" ") == -1:
+        # only one address = CIDR or IP
+        # if net.find(" ") == -1:
         #    try:
         #    except NetmaskValueError:
         #        IPAddress(net.encode('utf-8'))

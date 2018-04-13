@@ -130,7 +130,9 @@ class CIFS_Share(Model):
     cifs_auxsmbconf = models.TextField(
         verbose_name=_("Auxiliary Parameters"),
         blank=True,
-        help_text=_("These parameters are added to [Share] section of smb.conf")
+        help_text=_(
+            "These parameters are added to [Share] section of smb.conf"
+        )
     )
 
     def __str__(self):
@@ -223,7 +225,8 @@ class AFP_Share(Model):
         verbose_name=_('Time Machine Quota, GiB'),
         help_text=_(
             'Quota for each Time Machine backup on this share (in GiB). '
-            'Please note that this change will be applied only after share re-mount.'
+            'Please note that this change will be applied only after '
+            'share re-mount.'
         ),
         default=0,
     )
