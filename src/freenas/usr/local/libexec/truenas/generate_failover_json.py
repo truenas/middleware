@@ -56,6 +56,9 @@ def main():
                 vol_fstype='ZFS', vol_encrypt__exact=2
             )
         ],
+        'non_crit_interfaces': [
+            (i.int_interface) for i in Interfaces.objects.exclude(int_vip=None).exclude(int_vip='').exclude(int_critical=True)
+        ],
         'ips': [
             str(i.int_vip) for i in Interfaces.objects.exclude(int_vip=None).exclude(int_vip='')
         ],

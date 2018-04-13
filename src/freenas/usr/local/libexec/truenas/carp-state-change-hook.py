@@ -253,7 +253,8 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                 continue
             error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % iface)
             for vhid in list(output.split()):
-                run("ifconfig %s vhid %s advskew 1" % (iface, vhid))
+                log.warn("Setting CARP state to MASTER on %s" % iface)
+                run("ifconfig %s vhid %s state master advskew 1" % (iface, vhid))
         if not forcetakeover:
             sys.exit(0)
 
@@ -611,7 +612,13 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
             log.warn('Aquired failover backup lock')
             run('pkill -9 -f fenced')
 
-            for group in fobj['groups']:
+            for iface in fobj['non_crit_interfaces']:
+                error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % iface)
+                for vhid in output.split():
+                    log.warn("Setting advskew to 100 on non-critical interface %s" % iface)
+                    run("ifconfig %s vhid %s advskew 100" % (iface, vhid))
+
+            for group in fobj['groups']: 
                 for interface in fobj['groups'][group]:
                     error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % interface)
                     for vhid in output.split():
