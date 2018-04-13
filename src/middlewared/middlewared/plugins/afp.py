@@ -23,8 +23,8 @@ class AFPService(SystemServiceService):
         Str('global_aux'),
         Str('map_acls', enum=["rights", "mode", "none"]),
         Str('chmod_request', enum=["preserve", "simple", "ignore"]),
-    ), Bool('dry_run', default=False))
-    async def update(self, data, dry_run=False):
+    ))
+    async def do_update(self, data):
         old = await self.config()
 
         new = old.copy()
@@ -38,8 +38,7 @@ class AFPService(SystemServiceService):
         if verrors:
             raise verrors
 
-        if not dry_run:
-            await self._update_service(old, new)
+        await self._update_service(old, new)
 
         return new
 
