@@ -253,6 +253,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                 continue
             error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % iface)
             for vhid in list(output.split()):
+                log.warn("Setting advskew to 1 on interface %s" % iface)
                 run("ifconfig %s vhid %s advskew 1" % (iface, vhid))
         if not forcetakeover:
             sys.exit(0)
@@ -385,6 +386,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                         continue
                     error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % iface)
                     for vhid in list(output.split()):
+                        log.warn("Setting advskew to 1 on interface %s" % iface)
                         run("ifconfig %s vhid %s advskew 1" % (iface, vhid))
 
             open(IMPORTING_FILE, 'w').close()
@@ -621,6 +623,7 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
                 for interface in fobj['groups'][group]:
                     error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % interface)
                     for vhid in output.split():
+                        log.warn("Setting advskew to 100 on critical interface %s" % interface)
                         run("ifconfig %s vhid %s advskew 100" % (interface, vhid))
 
             run('/sbin/pfctl -ef /etc/pf.conf.block')
