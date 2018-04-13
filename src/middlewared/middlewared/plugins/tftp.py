@@ -19,7 +19,7 @@ class TFTPService(SystemServiceService):
         Str('umask', validators=[Match(r"^[0-7]{3}$")]),
         Str('options'),
     ))
-    async def update(self, data):
+    async def do_update(self, data):
         old = await self.config()
 
         new = old.copy()

@@ -29,7 +29,7 @@ class DynDNSService(SystemServiceService):
         Str('password'),
         Int('period'),
     ))
-    async def update(self, data):
+    async def do_update(self, data):
         old = await self.config()
 
         new = old.copy()

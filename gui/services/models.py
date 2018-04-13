@@ -24,7 +24,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import base64
 import hashlib
 import hmac
 import logging
@@ -1860,31 +1859,6 @@ class SSH(Model):
             'ssh_privatekey',
             'ssh_options',
         )
-
-    def __init__(self, *args, **kwargs):
-        super(SSH, self).__init__(*args, **kwargs)
-        self.__decoded = {}
-        # TODO: In case we ever decide to show the keys in the UI
-        # self._base64_decode('ssh_host_dsa_key_cert_pub')
-
-    def _base64_decode(self, field):
-        if self.__decoded.get(field) is not True:
-            data = getattr(self, field)
-            if data:
-                setattr(self, field, base64.b64decode(data))
-            self.__decoded[field] = True
-
-    def _base64_encode(self, field):
-        if self.__decoded.get(field) is True:
-            data = getattr(self, field)
-            if data:
-                setattr(self, field, base64.b64encode(data))
-            self.__decoded.pop(field, None)
-
-    def save(self, *args, **kwargs):
-        # TODO: In case we ever decide to show the keys in the UI
-        # self._base64_encode('ssh_host_dsa_key_cert_pub')
-        return super(SSH, self).save(*args, **kwargs)
 
 
 class LLDP(Model):

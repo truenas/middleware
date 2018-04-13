@@ -53,8 +53,8 @@ class FTPService(SystemServiceService):
         Bool('tls_opt_ip_address_required'),
         Int('ssltls_certificate'),
         Str('options'),
-    ), Bool('dry_run'))
-    async def update(self, data, dry_run=False):
+    ))
+    async def do_update(self, data):
         old = await self.config()
 
         new = old.copy()
@@ -80,10 +80,9 @@ class FTPService(SystemServiceService):
         if verrors:
             raise verrors
 
-        if not dry_run:
-            await self._update_service(old, new)
+        await self._update_service(old, new)
 
-            if not old['tls'] and new['tls']:
-                await self.middleware.call('service._start_ssl', 'proftpd')
+        if not old['tls'] and new['tls']:
+            await self.middleware.call('service._start_ssl', 'proftpd')
 
         return new

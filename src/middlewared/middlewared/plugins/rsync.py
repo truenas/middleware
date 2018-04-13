@@ -270,7 +270,7 @@ class RsyncdService(SystemServiceService):
         Int('port', validators=[Range(min=1, max=65535)]),
         Str('auxiliary')
     ))
-    async def update(self, data):
+    async def do_update(self, data):
         old = await self.config()
 
         new = old.copy()

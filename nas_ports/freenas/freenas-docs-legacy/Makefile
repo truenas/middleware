@@ -11,9 +11,9 @@ MAINTAINER=     dev@ixsystems.com
 COMMENT=        Userguide for legacy UI
 PRODUCT?=
 
-BUILD_DEPENDS=	sphinx-build:textproc/py-sphinx \
-		${PYTHON_PKGNAMEPREFIX}sphinxcontrib-httpdomain>0:textproc/py-sphinxcontrib-httpdomain \
-		${PYTHON_PKGNAMEPREFIX}sphinx_numfig>r0:textproc/py-sphinx_numfig
+BUILD_DEPENDS=	sphinx-build:textproc/py-sphinx@${PY_FLAVOR} \
+		${PYTHON_PKGNAMEPREFIX}sphinxcontrib-httpdomain>0:textproc/py-sphinxcontrib-httpdomain@${PY_FLAVOR} \
+		${PYTHON_PKGNAMEPREFIX}sphinx_numfig>0:textproc/py-sphinx_numfig@${PY_FLAVOR}
 
 USES=	perl5 python:build
 
