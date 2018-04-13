@@ -96,10 +96,6 @@ class CIFS_ShareForm(ModelForm):
 
         key_order(self, 4, 'cifs_default_permissions', instance=True)
 
-        self.fields['cifs_default_permissions'].widget.attrs['onChange'] = (
-            'javascript:toggleGeneric("id_cifs_guestok", '
-            '["id_cifs_guestonly"], true);')
-
         self.fields['cifs_guestok'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_cifs_guestok", '
             '["id_cifs_guestonly"], true);')
