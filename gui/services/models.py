@@ -2120,47 +2120,6 @@ class DomainController(Model):
 
     def __init__(self, *args, **kwargs):
         super(DomainController, self).__init__(*args, **kwargs)
-        self.svc = 'domaincontroller'
-
-        if self.dc_passwd:
-            try:
-                self.dc_passwd = notifier().pwenc_decrypt(self.dc_passwd)
-            except Exception:
-                log.debug('Failed to decrypt DC password', exc_info=True)
-                self.dc_passwd = ''
-        self._dc_passwd_encrypted = False
-
-    def save(self, *args, **kwargs):
-
-        if self.dc_passwd and not self._dc_passwd_encrypted:
-            self.dc_passwd = notifier().pwenc_encrypt(
-                self.dc_passwd
-            )
-            self._dc_passwd_encrypted = True
-
-        obj = super(DomainController, self).save(*args, **kwargs)
-
-        if not self.dc_kerberos_realm:
-            try:
-                from freenasUI.common.system import get_hostname
-
-                hostname = get_hostname()
-                dc_hostname = "%s.%s" % (hostname, self.dc_realm.lower())
-
-                kr = KerberosRealm()
-                kr.krb_realm = self.dc_realm.upper()
-                kr.krb_kdc = dc_hostname
-                kr.krb_admin_server = dc_hostname
-                kr.krb_kpasswd_server = dc_hostname
-                kr.save()
-
-                self.dc_kerberos_realm = kr
-                super(DomainController, self).save()
-
-            except Exception as e:
-                log.debug("DomainController: Unable to create kerberos realm: "
-                          "%s", e)
-        return obj
 
     class Meta:
         verbose_name = _("Domain Controller")
