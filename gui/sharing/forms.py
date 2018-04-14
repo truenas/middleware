@@ -1,4 +1,4 @@
-#+
+#
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -34,6 +34,7 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from freenasUI.common.forms import ModelForm
 from freenasUI.freeadmin.forms import SelectMultipleWidget
+from freenasUI.freeadmin.utils import key_order
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.form import MiddlewareModelForm
@@ -50,6 +51,14 @@ log = logging.getLogger('sharing.forms')
 
 
 class CIFS_ShareForm(ModelForm):
+
+    cifs_default_permissions = forms.BooleanField(
+        label=_('Apply Default Permissions'),
+        help_text=_(
+            'Recursively set appropriate default Windows permissions on share'
+        ),
+        required=False
+    )
 
     def _get_storage_tasks(self, cifs_path=None, cifs_home=False):
         p = pipeopen("zfs list -H -o mountpoint,name")
@@ -86,6 +95,8 @@ class CIFS_ShareForm(ModelForm):
         else:
             self._original_cifs_vfsobjects = []
 
+        key_order(self, 4, 'cifs_default_permissions', instance=True)
+
         self.fields['cifs_guestok'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_cifs_guestok", '
             '["id_cifs_guestonly"], true);')
@@ -95,8 +106,6 @@ class CIFS_ShareForm(ModelForm):
                     'disabled'
         elif self.instance.cifs_guestok is False:
             self.fields['cifs_guestonly'].widget.attrs['disabled'] = 'disabled'
-        self.instance._original_cifs_default_permissions = \
-            self.instance.cifs_default_permissions
         self.fields['cifs_name'].required = False
         self.fields['cifs_home'].widget.attrs['onChange'] = (
             "cifs_storage_task_toggle();"
@@ -183,10 +192,8 @@ class CIFS_ShareForm(ModelForm):
             task_list = []
             if path:
                 task_list = self._get_storage_tasks(cifs_path=path)
-
             elif home:
                 task_list = self._get_storage_tasks(cifs_home=home)
-
             if task_list:
                 obj.cifs_storage_task = task_list[0]
 
@@ -198,15 +205,12 @@ class CIFS_ShareForm(ModelForm):
         if not services.objects.get(srv_service='cifs').srv_enable:
             events.append('ask_service("cifs")')
         super(CIFS_ShareForm, self).done(request, events)
-        if self.instance._original_cifs_default_permissions != \
-            self.instance.cifs_default_permissions and \
-            self.instance.cifs_default_permissions is True:
+        if self.cleaned_data.get('cifs_default_permissions') is True:
             try:
                 (owner, group) = notifier().mp_get_owner(self.instance.cifs_path)
             except:
                 (owner, group) = ('root', 'wheel')
-            notifier().winacl_reset(path=self.instance.cifs_path,
-                owner=owner, group=group)
+            notifier().winacl_reset(path=self.instance.cifs_path, owner=owner, group=group)
 
 
 class AFP_ShareForm(MiddlewareModelForm, ModelForm):
@@ -311,8 +315,8 @@ class NFS_ShareForm(ModelForm):
         return net
         if not net:
             return net
-        #only one address = CIDR or IP
-        #if net.find(" ") == -1:
+        # only one address = CIDR or IP
+        # if net.find(" ") == -1:
         #    try:
         #    except NetmaskValueError:
         #        IPAddress(net.encode('utf-8'))
