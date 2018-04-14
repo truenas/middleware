@@ -193,7 +193,7 @@ def enable(request, svc):
 def services_cifs(request):
     try:
         cifs = models.CIFS.objects.all()[0]
-    except:
+    except Exception:
         cifs = models.CIFS()
 
     try:
@@ -344,7 +344,7 @@ def fibrechanneltotarget(request):
 def services_s3(request):
     try:
         s3 = models.S3.objects.all()[0]
-    except:
+    except Exception:
         s3 = models.S3()
 
     if request.method == "POST":

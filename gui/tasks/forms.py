@@ -1,6 +1,5 @@
 import json
 import logging
-import re
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -295,7 +294,9 @@ class RsyncForm(MiddlewareModelForm, ModelForm):
         )
 
     def middleware_clean(self, update):
-        update['extra'] = list(filter(None, re.split(r"\s+", update["extra"])))
+        update['month'] = self.data.getlist("rsync_month")
+        update['dayweek'] = self.data.getlist("rsync_dayweek")
+        update['extra'] = update["extra"].split()
         update['schedule'] = {
             'minute': update.pop('minute'),
             'hour': update.pop('hour'),
