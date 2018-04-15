@@ -28,16 +28,16 @@ from freenasUI.storage.models import Volume
 
 log = logging.getLogger('tools.haenc')
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help='sub-command help', dest='name')
-    subparsers.add_parser('clear', help='Clears passphrase')
+    subparsers.add_parser('clear', help='Clear the passphrase')
     subparsers.add_parser('synctopeer', help='Transfer local passphrase to remote system')
     subparsers.add_parser('syncfrompeer', help='Transfer remote passphrase to local system')
-    subparsers.add_parser('shutdown', help='Shuts down escrow daemon')
+    subparsers.add_parser('shutdown', help='Shutdown the escrow daemon')
     subparsers.add_parser('status', help='Inquiry escrow daemon status')
-    subparsers.add_parser('attachall', help='Attach volumes with the escrowed passphrase')
+    subparsers.add_parser('attachall', help='Attach all GELI providers with the escrowd passphrase')
+    subparsers.add_parser('detachall', help='Detach all GELI providers')
     iparser = subparsers.add_parser('interactive', help='Sets passphrase securely from the CLI')
     iparser.add_argument('-k', '--key-only', action='store_true', help='Set the key only, do not force failover')
 
@@ -53,10 +53,10 @@ if __name__ == "__main__":
     elif cmd == 'status':
         rv = escrowctl.status()
         if rv:
-            print("Escrow have the passphrase")
+            print("Escrowd has the passphrase")
             log.warn("Escrowd has the passphrase")
         else:
-            print("Escrow running without passphrase")
+            print("Escrowd is running without the passphrase")
             log.warn("Escrowd is running without the passphrase")
     elif cmd == 'attachall':
         with tempfile.NamedTemporaryFile(mode='w+') as tmp:
@@ -74,8 +74,8 @@ if __name__ == "__main__":
                         try:
                             open('/dev/%s' % ed.encrypted_disk.devname, 'w').close()
                         except Exception as e:
-                            print(('Failed to open dev %s to rescan' % ed.encrypted_disk.devname))
-                            log.warn('Failed to open dev %s to rescan' % ed.encrypted_disk.devname)
+                            print("Failed to open dev %s to rescan." % ed.encrypted_disk.devname)
+                            log.warn("Failed to open dev %s to rescan." % ed.encrypted_disk.devname)
                     provider = ed.encrypted_provider
                     if not os.path.exists('/dev/%s.eli' % provider):
                         proc = pipeopen("geli attach %s -k %s %s" % (
@@ -85,8 +85,8 @@ if __name__ == "__main__":
                 for proc in procs:
                     msg = proc.communicate()[1]
                     if proc.returncode != 0:
-                        print(("Unable to attach GELI provider: %s" % (msg)))
-                        log.warn("Unable to attach GELI provider: %s", (msg))
+                        print("Unable to attach GELI provider: %s" % msg)
+                        log.warn("Unable to attach GELI provider: %s" % msg)
                         failed_drive += 1
                 importcmd = "zpool import -f -R /mnt %s" % (vol.vol_name)
                 proc = pipeopen(importcmd)
@@ -94,7 +94,8 @@ if __name__ == "__main__":
                 if proc.returncode != 0:
                     failed_volume += 1
             if failed_drive > 0:
-                print("ERROR: %d drives can not be attached" % (failed_drive))
+                print("ERROR: %d can not be attached." % failed_drive)
+                log.warn("ERROR: %d can not be attached." % failed_drive)
             rv = (failed_volume == 0)
             try:
                 if rv:
@@ -109,6 +110,38 @@ if __name__ == "__main__":
                     file = open('/tmp/.failover_needop', 'w')
             except:
                 pass
+    elif cmd == 'detachall':
+        # Let us be very careful before we rip down the GELI providers
+        for vol in Volume.objects.filter(vol_encrypt__gte=1):
+            comms = []
+            master_status = False
+            status = os.system("zpool list -H %s > /dev/null" % vol.vol_name)
+            if status:
+                master_status = True
+                for ed in vol.encrypteddisk_set.all():
+                    provider = ed.encrypted_provider
+                    if not os.path.exists('/dev/%s.eli' % provider):
+                        print("No GELI providers detected.")
+                        log.warn("No GELI providers detected.")
+                        sys.exit(1)
+                    elif os.path.exists('/dev/%s.eli' % provider):
+                        comm = pipeopen("geli detach %s" % provider)
+                        comms.append(comm)
+                for comm in comms:
+                    geli = comm.communicate()[1]
+                    if comm.returncode == 0:
+                        print("Detaching GELI providers")
+                        log.warn("Detaching GELI providers")
+                        sys.exit(0)
+                    elif comm.returncode != 0:
+                        print("Unable to detach GELI providers")
+                        log.warn("Unable to detach GELI providers")
+                        sys.exit(1)
+            elif master_status == False:
+                print("Not detaching GELI providers because an encrypted zpool with name '%s' is still mounted!" % vol.vol_name)
+                log.warn("Not detaching GELI providers because an encrypted zpool with name '%s' is still mounted!" % vol.vol_name)
+                sys.exit(1)
+    
     elif cmd == 'interactive':
         passphrase = getpass.getpass()
         if passphrase:
@@ -117,7 +150,8 @@ if __name__ == "__main__":
                 with client as c:
                     c.call('failover.call_remote', 'failover.encryption_setkey', [passphrase])
             except:
-                print("Failed to set key on standby node, is it down?")
+                print("Failed to set the passphrase on the standby node.")
+                log.warn("Failed to set the passphrase on the standby node.")
             if not args.key_only:
                 notifier().failover_force_master()
     else:
@@ -127,7 +161,8 @@ if __name__ == "__main__":
                 with client as c:
                     c.call('failover.call_remote', 'failover.encryption_setkey', [passphrase])
             else:
-                print("ERROR: passphrase unavailable.")
+                print("ERROR: passphrase not detected.")
+                log.warn("ERROR: passphrase not detected.")
         elif cmd == 'syncfrompeer':
             with client as c:
                 passphrase = c.call('failover.call_remote', 'failover.encryption_getkey')
@@ -136,8 +171,8 @@ if __name__ == "__main__":
             print("Error")
 
     if rv:
-        print("Succeeded.")
+        print("Succeeded")
         sys.exit(0)
     else:
-        print("Failed.")
+        print("Failed")
         sys.exit(1)
