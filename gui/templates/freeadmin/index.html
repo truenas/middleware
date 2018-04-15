@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 
 {% block dojango_header_extra %}
+<script>
+{% if consolemsg %}msgEnabled = true;{% endif %}
+wizardShow = {% if wizard %}true{% else %}false{% endif %};
+wizardUrl = '{% url "system_initialwizard" %}';
+middlewareTokenUrl = '{% url "freeadmin_middleware_token" %}';
+</script>
 <script type="text/javascript" src="{% url "javascript_catalog" %}"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/freeadmin.js?cache={{ cache_hash }}"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/license.js?cache={{ cache_hash }}"></script>
@@ -29,12 +35,6 @@ menuSetURLs = function() {
     Menu.urlVcp = '{% url "vcp_home" %}';
 
 }
-
-{% if consolemsg %}msgEnabled = true;{% endif %}
-wizardShow = {% if wizard %}true{% else %}false{% endif %};
-wizardUrl = '{% url "system_initialwizard" %}';
-middlewareTokenUrl = '{% url "freeadmin_middleware_token" %}';
-
 </script>
 {% endblock %}
 
