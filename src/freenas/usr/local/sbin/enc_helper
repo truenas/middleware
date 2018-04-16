@@ -10,6 +10,7 @@ import argparse
 import logging
 import os
 import sys
+import subprocess
 import tempfile
 import getpass
 sys.path.append('/usr/local/www')
@@ -25,6 +26,18 @@ from freenasUI.failover.enc_helper import LocalEscrowCtl
 from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
+
+def run(cmd):
+    proc = subprocess.Popen(
+        cmd,
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        shell=True,
+        encoding='utf8',
+    )
+    output = proc.communicate()[0]
+    return (proc.returncode, output.strip('\n'))
+
 
 log = logging.getLogger('tools.haenc')
 
@@ -115,29 +128,20 @@ if __name__ == "__main__":
         for vol in Volume.objects.filter(vol_encrypt__gte=1):
             comms = []
             master_status = False
-            status = os.system("zpool list -H %s > /dev/null" % vol.vol_name)
-            if status:
+            error, output = run("zpool list -H %s" % vol.vol_name)
+            if error:
                 master_status = True
                 for ed in vol.encrypteddisk_set.all():
                     provider = ed.encrypted_provider
                     if not os.path.exists('/dev/%s.eli' % provider):
-                        print("No GELI providers detected.")
-                        log.warn("No GELI providers detected.")
-                        sys.exit(1)
-                    elif os.path.exists('/dev/%s.eli' % provider):
-                        comm = pipeopen("geli detach %s" % provider)
-                        comms.append(comm)
-                for comm in comms:
-                    geli = comm.communicate()[1]
-                    if comm.returncode == 0:
-                        print("Detaching GELI providers")
-                        log.warn("Detaching GELI providers")
-                        sys.exit(0)
-                    elif comm.returncode != 0:
-                        print("Unable to detach GELI providers")
-                        log.warn("Unable to detach GELI providers")
-                        sys.exit(1)
-            elif master_status == False:
+                        print("GELI provider %s not detected." % provider)
+                        log.warn("GELI provider %s not detected." % provider)
+                    else:
+                        error1, output1 = run("geli detach %s" % provider)
+                        if error1:
+                            print("Unable to detach GELI provider %s" % provider)
+                            log.warn("Unable to detach GELI provider %s" % provider)
+            else:
                 print("Not detaching GELI providers because an encrypted zpool with name '%s' is still mounted!" % vol.vol_name)
                 log.warn("Not detaching GELI providers because an encrypted zpool with name '%s' is still mounted!" % vol.vol_name)
                 sys.exit(1)
