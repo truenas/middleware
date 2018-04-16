@@ -8,7 +8,11 @@ from middlewared.service import private, SystemServiceService, ValidationErrors
 from middlewared.validators import Email
 
 
+DRIVER_BIN_DIR = '/usr/local/libexec/nut'
+
+
 class UPSService(SystemServiceService):
+    DRIVERS_AVAILABLE = set(os.listdir(DRIVER_BIN_DIR))
 
     class Config:
         datastore = 'services.ups'
@@ -42,6 +46,9 @@ class UPSService(SystemServiceService):
                     last = -3
                 else:
                     last = -1
+                driver = row[last].split()[0]
+                if driver not in self.DRIVERS_AVAILABLE:
+                    continue
                 if row[last].find(' (experimental)') != -1:
                     row[last] = row[last].replace(' (experimental)', '').strip()
                 for i, field in enumerate(list(row)):
