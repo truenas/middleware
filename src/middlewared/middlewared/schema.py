@@ -498,7 +498,9 @@ class Patch(object):
 
     def resolve(self, middleware):
         schema = middleware.get_schema(self.name)
-        if not isinstance(schema, Dict):
+        if not schema:
+            raise ResolverError(f'Schema {self.name} not found')
+        elif not isinstance(schema, Dict):
             raise ValueError('Patch non-dict is not allowed')
 
         schema = copy.deepcopy(schema)

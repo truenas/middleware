@@ -205,7 +205,8 @@ class DatastoreService(Service):
                 name = field.name.replace(prefix, '')
             else:
                 name = field.name
-            if name not in data:
+            if not data.get(name):
+                data.pop(name, None)
                 continue
             if isinstance(field, ForeignKey):
                 data[name] = field.rel.to.objects.get(pk=data[name])

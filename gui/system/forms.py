@@ -31,7 +31,6 @@ import logging
 import math
 import os
 import pickle as pickle
-import random
 import re
 import stat
 import subprocess
@@ -40,9 +39,6 @@ import time
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-from OpenSSL import SSL, crypto
-
-from common.ssl import CERT_CHAIN_REGEX
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.storage import FileSystemStorage
@@ -63,11 +59,6 @@ from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.common import humanize_number_si, humanize_size
 from freenasUI.common.forms import Form, ModelForm
 from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory, FreeNAS_LDAP
-from freenasUI.common.ssl import (create_certificate,
-                                  create_certificate_signing_request,
-                                  create_self_signed_CA, export_privatekey,
-                                  generate_key, load_certificate,
-                                  load_privatekey, sign_certificate)
 from freenasUI.directoryservice.forms import (ActiveDirectoryForm, LDAPForm,
                                               NISForm)
 from freenasUI.directoryservice.models import LDAP, NIS, ActiveDirectory
@@ -128,54 +119,6 @@ def clean_path_locked(mp):
                     obj.vol_name,
                 )
             )
-
-
-def clean_certificate(instance, certificate):
-    if not certificate:
-        raise forms.ValidationError(_("Empty Certificate!"))
-    nmatches = check_certificate(certificate)
-
-    if nmatches > 1:
-        instance.cert_chain = True
-
-    try:
-        load_certificate(certificate)
-    except crypto.Error:
-        raise forms.ValidationError(_(
-            "The certificate is not in Privacy Enhanced Mail (PEM) format."
-        ))
-
-    return certificate
-
-
-def validate_certificate_keys_match(public_key, private_key, passphrase=None):
-    try:
-        public_key_obj = crypto.load_certificate(crypto.FILETYPE_PEM, public_key)
-    except crypto.Error:
-        raise forms.ValidationError(_("Certificate invalid!"))
-
-    try:
-        private_key_obj = crypto.load_privatekey(crypto.FILETYPE_PEM, private_key,
-                                                 passphrase=lambda _: passphrase.encode() if passphrase else b"")
-    except crypto.Error:
-        raise forms.ValidationError(_("Invalid private key!"))
-
-    try:
-        context = SSL.Context(SSL.TLSv1_2_METHOD)
-        context.use_certificate(public_key_obj)
-        context.use_privatekey(private_key_obj)
-        context.check_privatekey()
-    except SSL.Error as e:
-        raise forms.ValidationError(_("Private key does not match certificate: %r") % e)
-
-
-def check_certificate(certificate):
-    matches = CERT_CHAIN_REGEX.findall(certificate)
-
-    nmatches = len(matches)
-    if not nmatches:
-        raise forms.ValidationError(_("Invalid certificate!"))
-    return nmatches
 
 
 class BootEnvAddForm(Form):
@@ -2403,17 +2346,13 @@ class UpdateForm(ModelForm):
         self.fields['curtrain'].initial = self._conf.CurrentTrain()
 
 
-class CertificateAuthorityForm(ModelForm):
-    class Meta:
-        fields = '__all__'
-        model = models.CertificateAuthority
+class CertificateAuthorityEditForm(MiddlewareModelForm, ModelForm):
 
-    def save(self):
-        super(CertificateAuthorityForm, self).save()
-        notifier().start("ix-ssl")
+    middleware_attr_prefix = 'cert_'
+    middleware_attr_schema = 'certificate_authority'
+    middleware_plugin = 'certificateauthority'
+    is_singletone = False
 
-
-class CertificateAuthorityEditForm(ModelForm):
     cert_name = forms.CharField(
         label=models.CertificateAuthority._meta.get_field('cert_name').verbose_name,
         required=True,
@@ -2431,9 +2370,9 @@ class CertificateAuthorityEditForm(ModelForm):
         help_text=models.CertificateAuthority._meta.get_field('cert_serial').help_text,
     )
 
-    def save(self):
-        super(CertificateAuthorityEditForm, self).save()
-        notifier().start("ix-ssl")
+    def middleware_clean(self, data):
+        data['serial'] = self.instance.cert_serial
+        return data
 
     class Meta:
         fields = [
@@ -2445,7 +2384,13 @@ class CertificateAuthorityEditForm(ModelForm):
         model = models.CertificateAuthority
 
 
-class CertificateAuthorityImportForm(ModelForm):
+class CertificateAuthorityImportForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'cert_'
+    middleware_attr_schema = 'certificate_authority'
+    middleware_plugin = 'certificateauthority'
+    is_singletone = False
+
     cert_name = forms.CharField(
         label=models.CertificateAuthority._meta.get_field('cert_name').verbose_name,
         required=True,
@@ -2474,89 +2419,10 @@ class CertificateAuthorityImportForm(ModelForm):
         help_text=models.CertificateAuthority._meta.get_field('cert_serial').help_text,
     )
 
-    def clean_cert_certificate(self):
-        return clean_certificate(self.instance, self.cleaned_data.get('cert_certificate'))
-
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.CertificateAuthority.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(_(
-                "A certificate with this name already exists."
-            ))
-        if name in ("external", "self-signed", "external - signature pending"):
-            raise forms.ValidationError(_(
-                "{0} is a reserved internal keyword for Certificate Management.".format(name)
-            ))
-        reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
-        if not reg:
-            raise forms.ValidationError(_(
-                'Use only alphanumeric characters, "_", and "-".'
-            ))
-        return name
-
-    def clean_cert_passphrase(self):
-        cdata = self.cleaned_data
-
-        passphrase = cdata.get('cert_passphrase')
-        privatekey = cdata.get('cert_privatekey')
-
-        if not privatekey:
-            return passphrase
-
-        try:
-            load_privatekey(
-                privatekey,
-                passphrase
-            )
-        except Exception:
-            raise forms.ValidationError(_("Incorrect passphrase."))
-
-        return passphrase
-
-    def clean_cert_passphrase2(self):
-        cdata = self.cleaned_data
-        passphrase = cdata.get('cert_passphrase')
-        passphrase2 = cdata.get('cert_passphrase2')
-
-        if passphrase and passphrase != passphrase2:
-            raise forms.ValidationError(_(
-                'Passphrase confirmation does not match.'
-            ))
-        return passphrase
-
-    def clean(self):
-        validate_certificate_keys_match(self.cleaned_data['cert_certificate'], self.cleaned_data['cert_privatekey'],
-                                        self.cleaned_data['cert_passphrase'])
-        return self.cleaned_data
-
-    def save(self):
-        self.instance.cert_type = models.CA_TYPE_EXISTING
-
-        cert_info = load_certificate(self.instance.cert_certificate)
-        self.instance.cert_country = cert_info['country']
-        self.instance.cert_state = cert_info['state']
-        self.instance.cert_city = cert_info['city']
-        self.instance.cert_organization = cert_info['organization']
-        self.instance.cert_common = cert_info['common']
-        self.instance.cert_san = cert_info['san']
-        self.instance.cert_email = cert_info['email']
-        self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
-
-        cert_privatekey = self.cleaned_data.get('cert_privatekey')
-        cert_passphrase = self.cleaned_data.get('cert_passphrase')
-
-        if cert_passphrase and cert_privatekey:
-            privatekey = export_privatekey(
-                cert_privatekey,
-                cert_passphrase
-            )
-            self.instance.cert_privatekey = privatekey
-
-        super(CertificateAuthorityImportForm, self).save()
-
-        notifier().start("ix-ssl")
+    def middleware_clean(self, data):
+        data['serial'] = self.instance.cert_serial
+        data['create_type'] = 'CA_CREATE_IMPORTED'
+        return data
 
     class Meta:
         fields = [
@@ -2570,7 +2436,13 @@ class CertificateAuthorityImportForm(ModelForm):
         model = models.CertificateAuthority
 
 
-class CertificateAuthorityCreateInternalForm(ModelForm):
+class CertificateAuthorityCreateInternalForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'cert_'
+    middleware_attr_schema = 'certificate_authority'
+    middleware_plugin = 'certificateauthority'
+    is_singletone = False
+
     cert_name = forms.CharField(
         label=models.CertificateAuthority._meta.get_field('cert_name').verbose_name,
         required=True,
@@ -2632,49 +2504,11 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
         help_text=models.CertificateAuthority._meta.get_field('cert_san').help_text
     )
 
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.CertificateAuthority.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(
-                "A certificate with this name already exists."
-            )
-        if name in ("external", "self-signed", "external - signature pending"):
-            raise forms.ValidationError(_(
-                "{0} is a reserved internal keyword for Certificate Management".format(name)
-            ))
-        reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
-        if not reg:
-            raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
-        return name
-
-    def save(self):
-        self.instance.cert_type = models.CA_TYPE_INTERNAL
-        cert_info = {
-            'key_length': self.instance.cert_key_length,
-            'country': self.instance.cert_country,
-            'state': self.instance.cert_state,
-            'city': self.instance.cert_city,
-            'organization': self.instance.cert_organization,
-            'common': self.instance.cert_common,
-            'san': self.instance.cert_san,
-            'email': self.instance.cert_email,
-            'serial': self.instance.cert_serial,
-            'lifetime': self.instance.cert_lifetime,
-            'digest_algorithm': self.instance.cert_digest_algorithm
-        }
-
-        (cert, key) = create_self_signed_CA(cert_info)
-        self.instance.cert_certificate = \
-            crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-        self.instance.cert_privatekey = \
-            crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
-        self.instance.cert_serial = 0o2
-
-        super(CertificateAuthorityCreateInternalForm, self).save()
-
-        notifier().start("ix-ssl")
+    def middleware_clean(self, data):
+        data['key_length'] = int(data['key_length'])
+        data['san'] = data['san'].split()
+        data['create_type'] = 'CA_CREATE_INTERNAL'
+        return data
 
     class Meta:
         fields = [
@@ -2693,7 +2527,13 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
         model = models.CertificateAuthority
 
 
-class CertificateAuthorityCreateIntermediateForm(ModelForm):
+class CertificateAuthorityCreateIntermediateForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'cert_'
+    middleware_attr_schema = 'certificate_authority'
+    middleware_plugin = 'certificateauthority'
+    is_singletone = False
+
     cert_name = forms.CharField(
         label=models.CertificateAuthority._meta.get_field('cert_name').verbose_name,
         required=True,
@@ -2771,67 +2611,11 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
             "javascript:CA_autopopulate();"
         )
 
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.CertificateAuthority.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(
-                "A certificate with this name already exists."
-            )
-        if name in ("external", "self-signed", "external - signature pending"):
-            raise forms.ValidationError(_(
-                "{0} is a reserved internal keyword for Certificate Management".format(name)
-            ))
-        reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
-        if not reg:
-            raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
-        return name
-
-    def save(self):
-        self.instance.cert_type = models.CA_TYPE_INTERMEDIATE
-        cert_info = {
-            'key_length': self.instance.cert_key_length,
-            'country': self.instance.cert_country,
-            'state': self.instance.cert_state,
-            'city': self.instance.cert_city,
-            'organization': self.instance.cert_organization,
-            'common': self.instance.cert_common,
-            'san': self.instance.cert_san,
-            'email': self.instance.cert_email,
-            'lifetime': self.instance.cert_lifetime,
-            'digest_algorithm': self.instance.cert_digest_algorithm
-        }
-
-        signing_cert = self.instance.cert_signedby
-
-        publickey = generate_key(self.instance.cert_key_length)
-        signkey = load_privatekey(signing_cert.cert_privatekey)
-
-        cert = create_certificate(cert_info)
-        cert.set_pubkey(publickey)
-        cacert = crypto.load_certificate(crypto.FILETYPE_PEM, signing_cert.cert_certificate)
-        cert.set_issuer(cacert.get_subject())
-        cert.add_extensions([
-            crypto.X509Extension(b"basicConstraints", True, b"CA:TRUE, pathlen:0"),
-            crypto.X509Extension(b"keyUsage", True, b"keyCertSign, cRLSign"),
-            crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=cert),
-        ])
-
-        cert.set_serial_number(signing_cert.cert_serial)
-        self.instance.cert_serial = 0o3
-        sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
-
-        self.instance.cert_certificate = \
-            crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-        self.instance.cert_privatekey = \
-            crypto.dump_privatekey(crypto.FILETYPE_PEM, publickey)
-
-        super(CertificateAuthorityCreateIntermediateForm, self).save()
-        ca = models.CertificateAuthority.objects.get(cert_name=self.instance.cert_signedby.cert_name)
-        ca.cert_serial = ca.cert_serial + 1
-        ca.save()
-        notifier().start("ix-ssl")
+    def middleware_clean(self, data):
+        data['key_length'] = int(data['key_length'])
+        data['san'] = data['san'].split()
+        data['create_type'] = 'CA_CREATE_INTERMEDIATE'
+        return data
 
     class Meta:
         fields = [
@@ -2851,54 +2635,25 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         model = models.CertificateAuthority
 
 
-class CertificateAuthoritySignCSRForm(ModelForm):
+class CertificateAuthoritySignCSRForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'cert_'
+    middleware_attr_schema = 'certificate_authority'
+    middleware_plugin = 'certificateauthority'
+    is_singletone = False
+    middleware_attr_map = {
+        'cert_CSRs': 'csr_cert_id'
+    }
+
     cert_CSRs = forms.ModelChoiceField(
         queryset=models.Certificate.objects.filter(cert_CSR__isnull=False),
         label=(_("CSRs"))
     )
 
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.Certificate.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(_(
-                "A certificate with this name already exists."
-            ))
-        reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
-        if not reg:
-            raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
-        return name
-
-    def save(self):
-        cdata = self.cleaned_data
-        choice = cdata.get('cert_CSRs').id
-        ca = models.Certificate.objects.get(pk=choice)
-        cert_info = crypto.load_certificate(crypto.FILETYPE_PEM, self.instance.cert_certificate)
-        PKey = crypto.load_privatekey(crypto.FILETYPE_PEM, self.instance.cert_privatekey)
-        csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, ca.cert_CSR)
-
-        cert = crypto.X509()
-        cert.set_serial_number(int(random.random() * (1 << 160)))
-        cert.gmtime_adj_notBefore(0)
-        cert.gmtime_adj_notAfter(86400 * 365 * 10)
-        cert.set_issuer(cert_info.get_subject())
-        cert.set_subject(csr.get_subject())
-        cert.set_pubkey(csr.get_pubkey())
-        cert.sign(PKey, self.instance.cert_digest_algorithm)
-
-        new_cert = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-        new_PKey = crypto.dump_privatekey(crypto.FILETYPE_PEM, PKey)
-        new_csr = models.Certificate(
-            cert_type=models.CERT_TYPE_INTERNAL,
-            cert_name=cdata.get('cert_name'),
-            cert_certificate=new_cert,
-            cert_privatekey=new_PKey,
-        )
-
-        new_csr.save()
-
-        notifier().start("ix-ssl")
+    def middleware_clean(self, data):
+        data['csr_cert_id'] = data.pop('CSRs')
+        data['create_type'] = 'CA_SIGN_CSR'
+        return data
 
     class Meta:
         fields = [
@@ -2908,17 +2663,13 @@ class CertificateAuthoritySignCSRForm(ModelForm):
         model = models.Certificate
 
 
-class CertificateForm(ModelForm):
-    class Meta:
-        fields = '__all__'
-        model = models.Certificate
+class CertificateEditForm(MiddlewareModelForm, ModelForm):
 
-    def save(self):
-        super(CertificateForm, self).save()
-        notifier().start("ix-ssl")
+    middleware_plugin = 'certificate'
+    middleware_attr_prefix = 'cert_'
+    middleware_attr_schema = 'certificate'
+    is_singletone = False
 
-
-class CertificateEditForm(ModelForm):
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
         required=True,
@@ -2931,10 +2682,6 @@ class CertificateEditForm(ModelForm):
         help_text=models.Certificate._meta.get_field('cert_certificate').help_text
     )
 
-    def save(self):
-        super(CertificateEditForm, self).save()
-        notifier().start("ix-ssl")
-
     class Meta:
         fields = [
             'cert_name',
@@ -2944,7 +2691,13 @@ class CertificateEditForm(ModelForm):
         model = models.Certificate
 
 
-class CertificateCSREditForm(ModelForm):
+class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
+
+    middleware_plugin = 'certificate'
+    middleware_attr_prefix = 'cert_'
+    middleware_attr_schema = 'certificate'
+    is_singletone = False
+
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
         required=True,
@@ -2969,18 +2722,6 @@ class CertificateCSREditForm(ModelForm):
         self.fields['cert_name'].widget.attrs['readonly'] = True
         self.fields['cert_CSR'].widget.attrs['readonly'] = True
 
-    def clean_cert_certificate(self):
-        return clean_certificate(self.instance, self.cleaned_data.get('cert_certificate'))
-
-    def clean(self):
-        validate_certificate_keys_match(self.cleaned_data['cert_certificate'], self.instance.cert_privatekey)
-        return self.cleaned_data
-
-    def save(self):
-        self.instance.cert_type = models.CERT_TYPE_EXISTING
-        super(CertificateCSREditForm, self).save()
-        notifier().start("ix-ssl")
-
     class Meta:
         fields = [
             'cert_name',
@@ -2990,7 +2731,13 @@ class CertificateCSREditForm(ModelForm):
         model = models.Certificate
 
 
-class CertificateImportForm(ModelForm):
+class CertificateImportForm(MiddlewareModelForm, ModelForm):
+
+    middleware_plugin = 'certificate'
+    middleware_attr_prefix = 'cert_'
+    middleware_attr_schema = 'certificate'
+    is_singletone = False
+
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
         required=True,
@@ -3024,84 +2771,9 @@ class CertificateImportForm(ModelForm):
         widget=forms.PasswordInput(render_value=True),
     )
 
-    def clean_cert_certificate(self):
-        return clean_certificate(self.instance, self.cleaned_data.get('cert_certificate'))
-
-    def clean_cert_passphrase(self):
-        cdata = self.cleaned_data
-
-        passphrase = cdata.get('cert_passphrase')
-        privatekey = cdata.get('cert_privatekey')
-
-        if not privatekey:
-            return passphrase
-
-        try:
-            load_privatekey(privatekey, passphrase)
-        except Exception:
-            raise forms.ValidationError(_("Incorrect passphrase"))
-
-        return passphrase
-
-    def clean_cert_passphrase2(self):
-        cdata = self.cleaned_data
-        passphrase = cdata.get('cert_passphrase')
-        passphrase2 = cdata.get('cert_passphrase2')
-
-        if passphrase and passphrase != passphrase2:
-            raise forms.ValidationError(_(
-                'Passphrase confirmation does not match.'
-            ))
-        return passphrase
-
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.Certificate.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(_(
-                "A certificate with this name already exists."
-            ))
-        if name in ("external", "self-signed", "external - signature pending"):
-            raise forms.ValidationError(_(
-                "{0} is a reserved internal keyword for Certificate Management".format(name)
-            ))
-        reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
-        if not reg:
-            raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
-        return name
-
-    def clean(self):
-        validate_certificate_keys_match(self.cleaned_data['cert_certificate'], self.cleaned_data['cert_privatekey'],
-                                        self.cleaned_data['cert_passphrase'])
-        return self.cleaned_data
-
-    def save(self):
-        self.instance.cert_type = models.CERT_TYPE_EXISTING
-
-        cert_info = load_certificate(self.instance.cert_certificate)
-        self.instance.cert_country = cert_info['country']
-        self.instance.cert_state = cert_info['state']
-        self.instance.cert_city = cert_info['city']
-        self.instance.cert_organization = cert_info['organization']
-        self.instance.cert_common = cert_info['common']
-        self.instance.cert_san = cert_info['san']
-        self.instance.cert_email = cert_info['email']
-        self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
-
-        cert_privatekey = self.cleaned_data.get('cert_privatekey')
-        cert_passphrase = self.cleaned_data.get('cert_passphrase')
-
-        if cert_passphrase and cert_privatekey:
-            privatekey = export_privatekey(
-                cert_privatekey,
-                cert_passphrase
-            )
-            self.instance.cert_privatekey = privatekey
-
-        super(CertificateImportForm, self).save()
-
-        notifier().start("ix-ssl")
+    def middleware_clean(self, data):
+        data['create_type'] = 'CERTIFICATE_CREATE_IMPORTED'
+        return data
 
     class Meta:
         fields = [
@@ -3113,7 +2785,13 @@ class CertificateImportForm(ModelForm):
         model = models.Certificate
 
 
-class CertificateCreateInternalForm(ModelForm):
+class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
+
+    middleware_plugin = 'certificate'
+    middleware_attr_prefix = 'cert_'
+    middleware_attr_schema = 'certificate'
+    is_singletone = False
+
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
         required=True,
@@ -3191,78 +2869,12 @@ class CertificateCreateInternalForm(ModelForm):
             "javascript:CA_autopopulate();"
         )
 
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.Certificate.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(
-                "A certificate with this name already exists."
-            )
-        if name in ("external", "self-signed", "external - signature pending"):
-            raise forms.ValidationError(_(
-                "{0} is a reserved internal keyword for Certificate Management".format(name)
-            ))
-        reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
-        if not reg:
-            raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
-        return name
-
-    def save(self):
-        self.instance.cert_type = models.CERT_TYPE_INTERNAL
-        cert_info = {
-            'key_length': self.instance.cert_key_length,
-            'country': self.instance.cert_country,
-            'state': self.instance.cert_state,
-            'city': self.instance.cert_city,
-            'organization': self.instance.cert_organization,
-            'common': self.instance.cert_common,
-            'san': self.instance.cert_san,
-            'email': self.instance.cert_email,
-            'lifetime': self.instance.cert_lifetime,
-            'digest_algorithm': self.instance.cert_digest_algorithm
-        }
-
-        signing_cert = self.instance.cert_signedby
-
-        publickey = generate_key(self.instance.cert_key_length)
-        signkey = crypto.load_privatekey(
-            crypto.FILETYPE_PEM,
-            signing_cert.cert_privatekey
-        )
-
-        cert = create_certificate(cert_info)
-        cert.set_pubkey(publickey)
-        cacert = crypto.load_certificate(crypto.FILETYPE_PEM, signing_cert.cert_certificate)
-        cert.set_issuer(cacert.get_subject())
-        cert.add_extensions([
-            crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=cert),
-        ])
-
-        cert_serial = signing_cert.cert_serial
-        if not cert_serial:
-            cert_serial = 1
-
-        cert.set_serial_number(cert_serial)
-        sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
-
-        self.instance.cert_certificate = \
-            crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-        self.instance.cert_privatekey = \
-            crypto.dump_privatekey(crypto.FILETYPE_PEM, publickey)
-
-        super(CertificateCreateInternalForm, self).save()
-        ca = models.CertificateAuthority.objects.get(cert_name=self.instance.cert_signedby.cert_name)
-
-        ca_cert_serial = ca.cert_serial
-        if not ca_cert_serial:
-            ca_cert_serial = cert_serial
-
-        ca_cert_serial += 1
-        ca.cert_serial = ca_cert_serial
-        ca.save()
-
-        notifier().start("ix-ssl")
+    def middleware_clean(self, data):
+        data['key_length'] = int(data['key_length'])
+        data['san'] = data['san'].split()
+        data['create_type'] = 'CERTIFICATE_CREATE_INTERNAL'
+        data['signedby'] = self.instance.cert_signedby.pk
+        return data
 
     class Meta:
         fields = [
@@ -3282,7 +2894,13 @@ class CertificateCreateInternalForm(ModelForm):
         model = models.Certificate
 
 
-class CertificateCreateCSRForm(ModelForm):
+class CertificateCreateCSRForm(MiddlewareModelForm, ModelForm):
+
+    middleware_plugin = 'certificate'
+    middleware_attr_prefix = 'cert_'
+    middleware_attr_schema = 'certificate'
+    is_singletone = False
+
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
         required=True,
@@ -3339,47 +2957,11 @@ class CertificateCreateCSRForm(ModelForm):
         help_text=models.Certificate._meta.get_field('cert_san').help_text
     )
 
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.Certificate.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(
-                "A certificate with this name already exists."
-            )
-        if name in ("external", "self-signed", "external - signature pending"):
-            raise forms.ValidationError(_(
-                "{0} is a reserved internal keyword for Certificate Management".format(name)
-            ))
-        reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
-        if not reg:
-            raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
-        return name
-
-    def save(self):
-        self.instance.cert_type = models.CERT_TYPE_CSR
-        req_info = {
-            'key_length': self.instance.cert_key_length,
-            'country': self.instance.cert_country,
-            'state': self.instance.cert_state,
-            'city': self.instance.cert_city,
-            'organization': self.instance.cert_organization,
-            'common': self.instance.cert_common,
-            'san': self.instance.cert_san,
-            'email': self.instance.cert_email,
-            'digest_algorithm': self.instance.cert_digest_algorithm
-        }
-
-        (req, key) = create_certificate_signing_request(req_info)
-
-        self.instance.cert_CSR = \
-            crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
-        self.instance.cert_privatekey = \
-            crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
-
-        super(CertificateCreateCSRForm, self).save()
-
-        notifier().start("ix-ssl")
+    def middleware_clean(self, data):
+        data['key_length'] = int(data['key_length'])
+        data['san'] = data['san'].split()
+        data['create_type'] = 'CERTIFICATE_CREATE_CSR'
+        return data
 
     class Meta:
         fields = [

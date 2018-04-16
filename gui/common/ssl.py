@@ -25,145 +25,21 @@
 #####################################################################
 import logging
 import re
-import ipaddress
 
 from OpenSSL import crypto
+
+from freenasUI.middleware.client import client, ClientException
 
 log = logging.getLogger('common.ssl')
 CERT_CHAIN_REGEX = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
 
 
-def generate_key(key_length):
-    k = crypto.PKey()
-    k.generate_key(crypto.TYPE_RSA, key_length)
-    return k
-
-
-def create_certificate(cert_info):
-    cert = crypto.X509()
-    cert.get_subject().C = cert_info['country']
-    cert.get_subject().ST = cert_info['state']
-    cert.get_subject().L = cert_info['city']
-    cert.get_subject().O = cert_info['organization']
-    cert.get_subject().CN = cert_info['common']
-    # Add subject alternate name in addition to CN
-    # first lets determine if an ip address was specified or
-    # a dns entry in the common name
-    default_san_type = 'DNS'
-    try:
-        ipaddress.ip_address(cert_info['common'])
-        default_san_type = 'IP'
-    except ValueError:
-        # This is raised if say we specified freenas.org in the Common name
-        pass
-    if cert_info['san']:
-        cert.add_extensions([crypto.X509Extension(b"subjectAltName", False, f"{default_san_type}:{cert_info['san']}".encode())])
-        cert.get_subject().subjectAltName = cert_info['san'].replace(" ", ", ")
-    cert.get_subject().emailAddress = cert_info['email']
-
-    serial = cert_info.get('serial')
-    if serial is not None:
-        cert.set_serial_number(serial)
-
-    cert.gmtime_adj_notBefore(0)
-    cert.gmtime_adj_notAfter(cert_info['lifetime'] * (60 * 60 * 24))
-
-    cert.set_issuer(cert.get_subject())
-    # Setting it to '2' actually results in a v3 cert
-    # openssl's cert x509 versions are zero-indexed!
-    # see: https://www.ietf.org/rfc/rfc3280.txt
-    cert.set_version(2)
-    return cert
-
-
-def create_self_signed_CA(cert_info):
-    key = generate_key(cert_info['key_length'])
-    cert = create_certificate(cert_info)
-    cert.set_pubkey(key)
-    cert.add_extensions([
-        crypto.X509Extension(b"basicConstraints", True, b"CA:TRUE"),
-        crypto.X509Extension(b"keyUsage", True, b"keyCertSign, cRLSign"),
-        crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=cert),
-    ])
-    cert.set_serial_number(0o1)
-    sign_certificate(cert, key, cert_info['digest_algorithm'])
-    return (cert, key)
-
-
-def sign_certificate(cert, key, digest_algorithm):
-    cert.sign(key, str(digest_algorithm))
-
-
-def create_certificate_signing_request(cert_info):
-    key = generate_key(cert_info['key_length'])
-
-    req = crypto.X509Req()
-    req.get_subject().C = cert_info['country']
-    req.get_subject().ST = cert_info['state']
-    req.get_subject().L = cert_info['city']
-    req.get_subject().O = cert_info['organization']
-    req.get_subject().CN = cert_info['common']
-    # first lets determine if an ip address was specified or
-    # a dns entry in the common name
-    default_san_type = 'DNS'
-    try:
-        ipaddress.ip_address(cert_info['common'])
-        default_san_type = 'IP'
-    except ValueError:
-        # This is raised if say we specified freenas.org in the Common name
-        pass
-    if cert_info['san']:
-        req.add_extensions([crypto.X509Extension(b"subjectAltName", False, f"{default_san_type}:{cert_info['san']}".encode())])
-        req.get_subject().subjectAltName = cert_info['san'].replace(" ", ", ")
-    req.get_subject().emailAddress = cert_info['email']
-
-    req.set_pubkey(key)
-    sign_certificate(req, key, cert_info['digest_algorithm'])
-
-    return (req, key)
-
-
 def load_certificate(buf):
-    cert = crypto.load_certificate(
-        crypto.FILETYPE_PEM,
-        buf
-    )
-
-    cert_info = {}
-    cert_info['country'] = cert.get_subject().C
-    cert_info['state'] = cert.get_subject().ST
-    cert_info['city'] = cert.get_subject().L
-    cert_info['organization'] = cert.get_subject().O
-    cert_info['common'] = cert.get_subject().CN
-    cert_info['san'] = cert.get_subject().subjectAltName
-    cert_info['email'] = cert.get_subject().emailAddress
-
-    signature_algorithm = cert.get_signature_algorithm().decode()
-    m = re.match('^(.+)[Ww]ith', signature_algorithm)
-    if m:
-        cert_info['digest_algorithm'] = m.group(1).upper()
-
-    return cert_info
-
-
-def load_certificate_signing_request(buf):
-    cert = crypto.load_certificate_request(crypto.FILETYPE_PEM, buf)
-
-    cert_info = {}
-    cert_info['country'] = cert.get_subject().C
-    cert_info['state'] = cert.get_subject().ST
-    cert_info['city'] = cert.get_subject().L
-    cert_info['organization'] = cert.get_subject().O
-    cert_info['common'] = cert.get_subject().CN
-    cert_info['san'] = cert.get_subject().subjectAltName
-    cert_info['email'] = cert.get_subject().emailAddress
-
-    signature_algorithm = cert.get_signature_algorithm().decode()
-    m = re.match('^(.+)[Ww]ith', signature_algorithm)
-    if m:
-        cert_info['digest_algorithm'] = m.group(1).upper()
-
-    return cert_info
+    with client as c:
+        try:
+            return c.call('certificate.load_certificate', buf)
+        except ClientException as e:
+            raise e
 
 
 #
@@ -175,12 +51,6 @@ def load_certificate_signing_request(buf):
 # will load if the correct passphrase is provided, otherwise it will
 # throw an exception.
 #
-def load_privatekey(buf, passphrase=None):
-    return crypto.load_privatekey(
-        crypto.FILETYPE_PEM,
-        buf,
-        passphrase=lambda x: passphrase.encode() if passphrase else b''
-    )
 
 
 def export_certificate_chain(buf):
@@ -218,7 +88,7 @@ def get_certificate_path(name):
     try:
         certificate = Certificate.objects.get(cert_name=name)
         path = certificate.get_certificate_path()
-    except:
+    except Exception:
         path = None
 
     return path
@@ -230,7 +100,7 @@ def get_privatekey_path(name):
     try:
         certificate = Certificate.objects.get(cert_name=name)
         path = certificate.get_privatekey_path()
-    except:
+    except Exception:
         path = None
 
     return path
@@ -242,7 +112,7 @@ def get_certificateauthority_path(name):
     try:
         certificate = CertificateAuthority.objects.get(cert_name=name)
         path = certificate.get_certificate_path()
-    except:
+    except Exception:
         path = None
 
     return path
@@ -254,7 +124,7 @@ def get_certificateauthority_privatekey_path(name):
     try:
         certificate = CertificateAuthority.objects.get(cert_name=name)
         path = certificate.get_privatekey_path()
-    except:
+    except Exception:
         path = None
 
     return path
