@@ -22,7 +22,7 @@ class SMARTDAlert(BaseAlert):
                 return None
             if hasattr(notifier, 'failover_status') and notifier().failover_status() != 'MASTER':
                 return None
-            p1 = subprocess.Popen(["/usr/sbin/service", "smartd", "status"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, encoding='utf8')
+            p1 = subprocess.Popen(["/usr/sbin/service", "smartd-daemon", "status"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, encoding='utf8')
             status = p1.communicate()[0]
             if p1.returncode == 1:
                 alerts.append(Alert(Alert.WARN, status))
