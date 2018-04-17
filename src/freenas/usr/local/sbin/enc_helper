@@ -130,14 +130,10 @@ if __name__ == "__main__":
             if error:
                 for ed in vol.encrypteddisk_set.all():
                     provider = ed.encrypted_provider
-                    if not os.path.exists('/dev/%s.eli' % provider):
-                        print("GELI provider %s not detected." % provider)
-                        log.warn("GELI provider %s not detected." % provider)
-                    else:
-                        error1, output1 = run("geli detach %s" % provider)
-                        if error1:
-                            print("Unable to detach GELI provider %s" % provider)
-                            log.warn("Unable to detach GELI provider %s" % provider)
+                    error1, output1 = run("geli detach %s" % provider)
+                    if error1:
+                        print("Unable to detach GELI provider %s" % provider)
+                        log.warn("Unable to detach GELI provider %s" % provider)
             else:
                 print("Not detaching GELI providers because an encrypted zpool with name '%s' is still mounted!" % vol.vol_name)
                 log.warn("Not detaching GELI providers because an encrypted zpool with name '%s' is still mounted!" % vol.vol_name)
