@@ -126,11 +126,8 @@ if __name__ == "__main__":
     elif cmd == 'detachall':
         # Let us be very careful before we rip down the GELI providers
         for vol in Volume.objects.filter(vol_encrypt__gte=1):
-            comms = []
-            master_status = False
             error, output = run("zpool list -H %s" % vol.vol_name)
             if error:
-                master_status = True
                 for ed in vol.encrypteddisk_set.all():
                     provider = ed.encrypted_provider
                     if not os.path.exists('/dev/%s.eli' % provider):
