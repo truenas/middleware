@@ -151,6 +151,7 @@ class SharingAFPService(CRUDService):
     @private
     async def home_exists(self, home, schema_name, verrors, old=None):
         home_filters = [('home', '=', True)]
+        home_result = None
 
         if home:
             if old and old['id'] is not None:
@@ -162,10 +163,6 @@ class SharingAFPService(CRUDService):
                     home_result = await self.middleware.call(
                         'datastore.query', self._config.datastore,
                         home_filters, {'prefix': self._config.datastore_prefix})
-
-        home_result = await self.middleware.call(
-            'datastore.query', self._config.datastore,
-            home_filters, {'prefix': self._config.datastore_prefix})
 
         if home_result:
             verrors.add(f'{schema_name}.home',
