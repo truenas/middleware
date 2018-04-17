@@ -91,8 +91,10 @@ class CIFS_ShareForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(CIFS_ShareForm, self).__init__(*args, **kwargs)
         if self.instance.id:
+            self.fields['cifs_default_permissions'].initial = False
             self._original_cifs_vfsobjects = self.instance.cifs_vfsobjects
         else:
+            self.fields['cifs_default_permissions'].initial = True
             self._original_cifs_vfsobjects = []
 
         key_order(self, 4, 'cifs_default_permissions', instance=True)
