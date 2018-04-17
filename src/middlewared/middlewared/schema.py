@@ -120,6 +120,8 @@ class Str(EnumMixin, Attribute):
         value = super(Str, self).clean(value)
         if value is None and not self.required:
             return self.default
+        if isinstance(value, int):
+            return str(value)
         if not isinstance(value, str):
             raise Error(self.name, 'Not a string')
         return value
