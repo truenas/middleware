@@ -1,4 +1,5 @@
 import asyncio
+import errno
 import inspect
 import os
 import signal
@@ -7,8 +8,8 @@ import threading
 import time
 from subprocess import DEVNULL, PIPE
 
-from middlewared.schema import accepts, Bool, Dict, Int, Ref, Str
-from middlewared.service import filterable, CRUDService
+from middlewared.schema import accepts, Bool, Dict, Ref, Str
+from middlewared.service import filterable, CallError, CRUDService
 from middlewared.utils import Popen, filter_list
 
 
@@ -127,21 +128,27 @@ class ServiceService(CRUDService):
         return filter_list(services, filters, options)
 
     @accepts(
-        Int('id'),
+        Str('id_or_name'),
         Dict(
             'service-update',
             Bool('enable', default=False),
         ),
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_or_name, data):
         """
-        Update service entry of `id`.
+        Update service entry of `id_or_name`.
 
         Currently it only accepts `enable` option which means whether the
         service should start on boot.
 
         """
-        return await self.middleware.call('datastore.update', 'services.services', id, {'srv_enable': data['enable']})
+        if not id_or_name.isdigit():
+            svc = await self.middleware.call('datastore.query', 'services.services', [('srv_service', '=', id_or_name)])
+            if not svc:
+                raise CallError(f'Service {id_or_name} not found.', errno.ENOENT)
+            id_or_name = svc[0]['id']
+
+        return await self.middleware.call('datastore.update', 'services.services', id_or_name, {'srv_enable': data['enable']})
 
     @accepts(
         Str('service'),
