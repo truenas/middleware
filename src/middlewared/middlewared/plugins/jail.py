@@ -47,28 +47,26 @@ class JailService(CRUDService):
             for jail in jail_dicts:
                 jail = list(jail.values())[0]
                 if jail['dhcp'] == 'on':
-                    interface = jail["interfaces"].split(',')[0].split(
-                        ':')[0]
                     uuid = jail['host_hostuuid']
 
-                    if interface == "vnet0":
-                        # Inside jails they are epairNb
-                        interface = \
-                            f"{interface.replace('vnet', 'epair')}b"
-
                     if jail['state'] == 'up':
-                        ip4_cmd = ["jexec", f"ioc-{uuid}",
-                                        "ifconfig", interface, "inet"]
+                        interface = jail['interfaces'].split(',')[0].split(
+                            ':')[0]
+                        if interface == 'vnet0':
+                            # Inside jails they are epair0b
+                            interface = 'epair0b'
+                        ip4_cmd = ['jexec', f'ioc-{uuid}', 'ifconfig',
+                                   interface, 'inet']
                         out = su.check_output(ip4_cmd)
-                        jail['ip4_address'] = f"{interface}|" \
-                            f"{out.splitlines()[2].split()[1].decode()}"
+                        jail['ip4_address'] = f'{interface}|' \
+                            f'{out.splitlines()[2].split()[1].decode()}'
                     else:
-                        jail['ip4_address'] = "DHCP (not running)"
+                        jail['ip4_address'] = 'DHCP (not running)'
                 jails.append(jail)
         except BaseException:
             # Brandon is working on fixing this generic except, till then I
             # am not going to make the perfect the enemy of the good enough!
-            self.logger.debug("iocage failed to fetch jails", exc_info=True)
+            self.logger.debug('iocage failed to fetch jails', exc_info=True)
             pass
 
         return filter_list(jails, filters, options)
