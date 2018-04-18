@@ -75,22 +75,25 @@ def test_06_Creating_a_AFP_share_on_AFP_PATH():
 @mount_test_cfg
 @osx_host_cfg
 def test_07_Create_mount_point_for_AFP_on_OSX_system():
-    assert SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
-                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
+                       OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @osx_host_cfg
 def test_08_Mount_AFP_share_on_OSX_system():
     cmd = 'mount -t afp "afp://%s/%s" "%s"' % (ip, AFP_NAME, MOUNTPOINT)
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @osx_host_cfg
 def test_10_Create_file_on_AFP_share_via_OSX_to_test_permissions():
-    assert SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
-                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
+                       OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Move test file to a new location on the AFP share
@@ -100,7 +103,8 @@ def test_11_Moving_AFP_test_file_into_a_new_directory():
     cmd = 'mkdir -p "%s/tmp" && ' % MOUNTPOINT
     cmd += 'mv "%s/testfile.txt" ' % MOUNTPOINT
     cmd += '"%s/tmp/testfile.txt"' % MOUNTPOINT
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Delete test file and test directory from AFP share
@@ -109,22 +113,25 @@ def test_11_Moving_AFP_test_file_into_a_new_directory():
 def test_12_Deleting_test_file_and_directory_from_AFP_share():
     cmd = 'rm -f "%s/tmp/testfile.txt" && ' % MOUNTPOINT
     cmd += 'rmdir "%s/tmp"' % MOUNTPOINT
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @osx_host_cfg
 def test_13_Verifying_test_file_directory_were_successfully_removed():
     cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Clean up mounted AFP share
 @mount_test_cfg
 @osx_host_cfg
 def test_14_Unmount_AFP_share():
-    assert SSH_TEST("umount -f '%s'" % MOUNTPOINT,
-                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST("umount -f '%s'" % MOUNTPOINT,
+                       OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Update tests
@@ -132,14 +139,16 @@ def test_14_Unmount_AFP_share():
 @osx_host_cfg
 def test_16_Mount_AFP_share_on_OSX_system():
     cmd = 'mount -t afp "afp://%s/%s" "%s"' % (ip, AFP_NAME, MOUNTPOINT)
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @osx_host_cfg
 def test_17_Create_file_on_AFP_share_via_OSX_to_test_permissions():
-    assert SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
-                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
+                       OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Move test file to a new location on the AFP share
@@ -149,7 +158,8 @@ def test_18_Moving_AFP_test_file_into_a_new_directory():
     cmd = 'mkdir -p "%s/tmp" && ' % MOUNTPOINT
     cmd += 'mv "%s/testfile.txt" ' % MOUNTPOINT
     cmd += '"%s/tmp/testfile.txt"' % MOUNTPOINT
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Delete test file and test directory from AFP share
@@ -158,22 +168,25 @@ def test_18_Moving_AFP_test_file_into_a_new_directory():
 def test_19_Deleting_test_file_and_directory_from_AFP_share():
     cmd = 'rm -f "%s/tmp/testfile.txt" && ' % MOUNTPOINT
     cmd += 'rmdir "%s/tmp"' % MOUNTPOINT
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @osx_host_cfg
 def test_20_Verifying_test_file_directory_were_successfully_removed():
     cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Clean up mounted AFP share
 @mount_test_cfg
 @osx_host_cfg
 def test_21_Unmount_AFP_share():
-    assert SSH_TEST('umount -f "%s"' % MOUNTPOINT,
-                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST('umount -f "%s"' % MOUNTPOINT,
+                       OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Delete tests
@@ -181,7 +194,8 @@ def test_21_Unmount_AFP_share():
 @osx_host_cfg
 def test_22_Removing_SMB_mountpoint():
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Test disable AFP

@@ -47,4 +47,5 @@ def test_03_Creating_system_tunable_dummynet():
 
 # Verify loader tunable
 def test_06_Verify_system_tunable_dummynet_load():
-    SSH_TEST('kldstat -m dummynet', user, password, ip)
+    results = SSH_TEST('kldstat -m dummynet', user, password, ip)
+    assert results['result'] is True, results['output']

@@ -38,7 +38,7 @@ def test_04_look_ftp_service_at_boot():
 
 def test_05_Starting_ftp_service():
     payload = {"service": "ftp", "service-control": {"onetime": True}}
-    results = POST("/service/restart", payload)
+    results = POST("/service/start", payload)
     assert results.status_code == 200, results.text
 
 

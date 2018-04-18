@@ -20,7 +20,8 @@ alert_file = "/tmp/self-test-alert"
 # Create tests
 def test_01_Create_an_alert_on_the_remote_system():
     cmd = 'echo "[%s] %s" > %s' % (alert_status, alert_msg, alert_file)
-    assert SSH_TEST(cmd, user, password, ip) is True
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
 
 
 # Update tests
