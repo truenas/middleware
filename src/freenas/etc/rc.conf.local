@@ -74,6 +74,8 @@ ftp_tls_enabled()
 
 _interface_config()
 {
+	local failover_status="${1}"
+	local failover_licensed=${2}
 	local saved_ifs="${IFS}"
 	local IFS=\|
 	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options
@@ -104,7 +106,7 @@ _interface_config()
 	if ! is_freenas; then
 
 		if [ "$(ha_mode)" = "MANUAL" ]; then
-			if [ "$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
+			if [ ${failover_licensed} -eq 1 ]; then
 				configure_ifaces=0
 				echo "# Unable to determine HA hardware and node, skipping interfaces configuration" | tee /dev/console
 			fi
@@ -199,7 +201,7 @@ _interface_config()
 			else
 				int_passopt=""
 			fi
-			if [ $(ulimit -n 1000; LD_LIBRARY=/usr/local/lib /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status) = "MASTER" ]; then
+			if [ "${failover_status}" = "MASTER" ]; then
 				carp1_skew="1"
 			fi
 			echo -n "ifconfig_${interface}_alias0=\"inet vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${int_vip}/32"
@@ -514,8 +516,16 @@ _sssd_config()
 
 _gen_conf()
 {
+	local failover_status="" failover_licensed=0
+	if ! is_freenas; then
+		if [ "$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
+			failover_licensed=1
+		fi
+		failover_status="$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status 2> /dev/null)"
+	fi
+
 	## First, import network interface configuration.
-	_interface_config
+	_interface_config ${failover_status} ${failover_licensed}
 	_host_config
 	_staticroute_config
 
@@ -620,15 +630,13 @@ _gen_conf()
 
 	_count_config powerd_enable system_advanced adv_powerdaemon =1
 	if ! is_freenas; then
-		if [ "$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
-			is_licensed="True"
+		if [ ${failover_licensed} -eq 1 ]; then
 			echo "failover_enable=\"YES\""
 			echo "pf_enable=\"YES\""
 		else
 			echo "failover_enable=\"NO\""
 		fi
-		local failover="$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status 2> /dev/null)"
-		if [ "${failover}" != "BACKUP" ]; then
+		if [ "${failover_status}" != "BACKUP" ]; then
 			echo "collectd_enable=\"YES\""
 		fi
 
@@ -734,7 +742,7 @@ _gen_conf()
 		fi
 	done
 
-	if [ "${is_licensed}" != "True" ]
+	if [ ${failover_licensed} -ne 1 ]
 	then
 		echo "geli_devices=\"`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT encrypted_provider FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
 			tr \\\n \  `\""
