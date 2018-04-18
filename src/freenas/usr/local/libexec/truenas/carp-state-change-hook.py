@@ -501,12 +501,6 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                 run('/usr/sbin/service netatalk forcestop')
                 run('/usr/sbin/service netatalk quietstart')
 
-            c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "netdata"')
-            ret = c.fetchone()
-            if ret and ret[0] == 1:
-                run('/usr/sbin/service netdata forcestop')
-                run('/usr/sbin/service netdata quietstart')
-
             conn.close()
             log.warn('Service restarts complete.')
 
@@ -543,6 +537,8 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             run('/usr/sbin/service syslog-ng quietrestart')
             run('/usr/sbin/service ix-smartd quietstart')
             run('/usr/sbin/service smartd quietrestart')
+            run('/usr/sbin/service netdata forcestop')
+            run('/usr/sbin/service netdata quietstart')
 
             log.warn('Failover event complete.')
     except AlreadyLocked:
