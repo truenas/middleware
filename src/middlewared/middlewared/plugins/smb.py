@@ -1,7 +1,9 @@
-from middlewared.schema import Bool, Dict, IPAddr, List, Str
-from middlewared.service import SystemServiceService, ValidationErrors, accepts, private
+from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
+from middlewared.service import (SystemServiceService, ValidationErrors,
+                                 accepts, private, CRUDService)
 
 import re
+import os
 
 
 LOGLEVEL_MAP = {
@@ -110,3 +112,255 @@ class SMBService(SystemServiceService):
         await self._update_service(old, new)
 
         return await self.config()
+
+
+class SharingCIFSService(CRUDService):
+    class Config:
+        namespace = 'sharing.cifs'
+        datastore = 'sharing.cifs_share'
+        datastore_prefix = 'cifs_'
+        datastore_extend = 'sharing.cifs.extend'
+
+    @accepts(Dict(
+        'sharingcifs_create',
+        Str('path'),
+        Bool('home'),
+        Str('name'),
+        Str('comment'),
+        Bool('ro'),
+        Bool('browsable'),
+        Bool('recyclebin'),
+        Bool('showhiddenfiles'),
+        Bool('guestok'),
+        Bool('guestonly'),
+        Bool('abe'),
+        List('hostsallow', items=[IPAddr('ip', cidr=True)]),
+        List('hostsdeny', items=[IPAddr('ip', cidr=True)]),
+        List('vfsobjects'),
+        Int('storage_task'),
+        Str('auxsmbconf'),
+        Bool('default_permissions'),
+        register=True
+    ))
+    async def do_create(self, data):
+        verrors = ValidationErrors()
+        path = data['path']
+        default_perms = data.pop('default_permissions', False)
+
+        await self.clean(data, 'sharingcifs_create', verrors)
+        await self.validate(data, 'sharingcifs_create', verrors)
+
+        if path and not os.path.exists(path):
+            try:
+                os.makedirs(path)
+            except OSError as e:
+                verrors.add('sharingcifs_create.path',
+                            f'Failed to create {path}: {e}')
+
+        if verrors:
+            raise verrors
+
+        await self.compress(data)
+        await self.save(data)
+        data['id'] = await self.middleware.call(
+            'datastore.insert', self._config.datastore, data,
+            {'prefix': self._config.datastore_prefix})
+        await self.extend(data)
+
+        await self.middleware.call('service.reload', 'cifs')
+        await self.done(default_perms, path)
+
+        return data
+
+    @accepts(
+        Int('id'),
+        Patch(
+            'sharingcifs_create',
+            'sharingcifs_update',
+            ('attr', {'update': True})
+        )
+    )
+    async def do_update(self, id, data):
+        verrors = ValidationErrors()
+        path = data['path']
+        default_perms = data.pop('default_permissions', False)
+
+        old = await self.middleware.call(
+            'datastore.query', self._config.datastore, [('id', '=', id)],
+            {'extend': self._config.datastore_extend,
+             'prefix': self._config.datastore_prefix,
+             'get': True})
+
+        new = old.copy()
+        new.update(data)
+
+        await self.clean(new, 'sharingcifs_update', verrors, id=id)
+        await self.validate(new, 'sharingcifs_update', verrors, old=old)
+
+        if path and not os.path.exists(path):
+            try:
+                os.makedirs(path)
+            except OSError as e:
+                verrors.add('sharingcifs_create.path',
+                            f'Failed to create {path}: {e}')
+
+        if verrors:
+            raise verrors
+
+        await self.compress(new)
+        await self.save(new)
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, id, new,
+            {'prefix': self._config.datastore_prefix})
+        await self.extend(new)
+
+        await self.middleware.call('service.reload', 'cifs')
+        await self.done(default_perms, path)
+
+        return new
+
+    @accepts(Int('id'))
+    async def do_delete(self, id):
+        return await self.middleware.call(
+            'datastore.delete', self._config.datastore, id)
+
+    @private
+    async def clean(self, data, schema_name, verrors, id=None):
+        data['name'] = await self.name_exists(data, schema_name, verrors, id)
+
+    @private
+    async def validate(self, data, schema_name, verrors, old=None):
+        home_result = await self.home_exists(
+            data['home'], schema_name, verrors, old)
+
+        if home_result:
+            verrors.add(f'{schema_name}.home',
+                        'Only one share is allowed to be a home share.')
+        elif not home_result and not data['path']:
+            verrors.add(f'{schema_name}.path', 'This field is required.')
+
+    @private
+    async def home_exists(self, home, schema_name, verrors, old=None):
+        home_filters = [('home', '=', True)]
+        home_result = None
+
+        if home:
+            if old and old['id'] is not None:
+                id = old['id']
+
+                if not old['home']:
+                    home_filters.append(('id', '!=', id))
+                    # The user already had this set as the home share
+                    home_result = await self.middleware.call(
+                        'datastore.query', self._config.datastore,
+                        home_filters, {'prefix': self._config.datastore_prefix})
+
+        return home_result
+
+    async def name_exists(self, data, schema_name, verrors, id=None):
+        name = data['name']
+        path = data['path']
+        name_filters = [('name', '=', name)]
+        path_filters = [('path', '=', path)]
+
+        if path and not name:
+            name = path.rsplit('/', 1)[-1]
+
+        if id is not None:
+            name_filters.append(('id', '!=', id))
+            path_filters.append(('id', '!=', id))
+
+        name_result = await self.middleware.call(
+            'datastore.query', self._config.datastore,
+            name_filters,
+            {'prefix': self._config.datastore_prefix})
+        path_result = await self.middleware.call(
+            'datastore.query', self._config.datastore,
+            path_filters,
+            {'prefix': self._config.datastore_prefix})
+
+        if name_result:
+            verrors.add(f'{schema_name}.name',
+                        'A share with this name already exists.')
+
+        if path_result:
+            verrors.add(f'{schema_name}.path',
+                        'A share with this path already exists.')
+
+        return name
+
+    @private
+    async def extend(self, data):
+        data['hostsallow'] = data['hostsallow'].split()
+        data['hostsdeny'] = data['hostsdeny'].split()
+
+        return data
+
+    @private
+    async def compress(self, data):
+        data['hostsallow'] = ' '.join(data['hostsallow'])
+        data['hostsdeny'] = ' '.join(data['hostsdeny'])
+
+        return data
+
+    @private
+    async def done(self, default_perms, path):
+        if default_perms:
+            try:
+                (owner, group) = await self.middleware.call(
+                    'notifier.mp_get_owner', path)
+            except Exception:
+                (owner, group) = ('root', 'wheel')
+
+            await self.middleware.call(
+                'notifier.winacl_reset', path, owner, group)
+
+    @private
+    async def get_storage_tasks(self, path=None, home=False):
+        zfs_datasets = await self.middleware.call('zfs.dataset.query')
+        task_list = []
+
+        if path:
+            for ds in zfs_datasets:
+                tasks = []
+                name = ds['name']
+                mountpoint = ds['properties']['mountpoint']['parsed']
+
+                if path == mountpoint or path.startswith(f'{mountpoint}/'):
+                    if mountpoint == path:
+                        tasks = await self.middleware.call(
+                            'datastore.query', 'storage.task',
+                            [['task_filesystem', '=', name]])
+                    else:
+                        tasks = await self.middleware.call(
+                            'datastore.query','storage.task',
+                            [['task_filesystem', '=', name],
+                             ['task_recursive', '=', 'True']])
+
+                for t in tasks:
+                    task_list.append(t)
+        elif home:
+            task_list = await self.middleware.call(
+                'datastore.query','storage.task',
+                [['task_recursive', '=', 'True']])
+
+        return task_list
+
+    @private
+    async def save(self, data):
+        task = data.get('storage_task', None)
+        home = data['home']
+        path = data['path']
+
+        if not task:
+            task_list = []
+
+            if path:
+                task_list = await self.get_storage_tasks(path=path)
+            elif home:
+                task_list = await self.get_storage_tasks(home=home)
+
+            if task_list:
+                data['storage_task'] = task_list[0]
+
+        return data
