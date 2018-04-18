@@ -12,7 +12,11 @@ RE_MTU = re.compile(r'\bmtu \d+\b')
 def lagg_mtu(apps, schema_editor):
     Interfaces = apps.get_model('network', 'Interfaces')
     for i in Interfaces.objects.filter(int_interface__startswith='lagg'):
-        if RE_MTU.search(i.int_options):
+        reg = RE_MTU.search(i.int_options)
+        if reg:
+            for member in i.lagginterface.lagginterfacemembers_set.all():
+                member.lagg_deviceoptions += f' {reg.group(0)}'
+                member.save()
             i.int_options = re.sub(RE_MTU, '', i.int_options)
             i.save()
 
