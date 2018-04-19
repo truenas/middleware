@@ -4,6 +4,7 @@ import libzfs
 import re
 import requests
 import subprocess
+import sys
 import tempfile
 import textwrap
 
@@ -67,13 +68,15 @@ class MiddlewareGDB(object):
 
     def run_gdb(self, dataset):
 
-        with open('/var/run/middlewared.pid', 'r') as f:
-            daemon_pid = int(f.read().strip())
-
-        proc = subprocess.Popen([
-            'pgrep', '-P', str(daemon_pid)
-        ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        middlewared_pid = int(proc.communicate()[0].strip())
+        proc = subprocess.Popen(
+            'pgrep -l -f "python: middlewared"|grep -v worker',
+            shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        )
+        try:
+            middlewared_pid = int(proc.communicate()[0].split()[0].strip())
+        except Exception:
+            print('Failed to find middlewared process', file=sys.stderr)
+            sys.exit(1)
 
         with tempfile.TemporaryDirectory() as td:
             with open(f'{td}/.gdbinit', 'w') as f:
@@ -105,8 +108,8 @@ class MiddlewareGDB(object):
 
             rv = {'local': outfile.name}
             try:
-                r = requests.post('http://sprunge.us', {
-                    'sprunge': output,
+                r = requests.post('http://ix.io', {
+                    'f:1': output,
                 })
                 rv['remote'] = r.text.strip()
             except Exception:
