@@ -145,7 +145,7 @@ class SharingCIFSService(CRUDService):
     async def do_create(self, data):
         verrors = ValidationErrors()
         path = data['path']
-        default_perms = data.pop('default_permissions', False)
+        default_perms = data.pop('default_permissions', True)
 
         await self.clean(data, 'sharingcifs_create', verrors)
         await self.validate(data, 'sharingcifs_create', verrors)
@@ -161,14 +161,14 @@ class SharingCIFSService(CRUDService):
             raise verrors
 
         await self.compress(data)
-        await self.save(data)
+        await self.set_storage_tasks(data)
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
         await self.extend(data)
 
         await self.middleware.call('service.reload', 'cifs')
-        await self.done(default_perms, path)
+        await self.apply_default_perms(default_perms, path)
 
         return data
 
@@ -208,14 +208,14 @@ class SharingCIFSService(CRUDService):
             raise verrors
 
         await self.compress(new)
-        await self.save(new)
+        await self.set_storage_tasks(new)
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
         await self.extend(new)
 
         await self.middleware.call('service.reload', 'cifs')
-        await self.done(default_perms, path)
+        await self.apply_default_perms(default_perms, path)
 
         return new
 
@@ -257,6 +257,7 @@ class SharingCIFSService(CRUDService):
 
         return home_result
 
+    @private
     async def name_exists(self, data, schema_name, verrors, id=None):
         name = data['name']
         path = data['path']
@@ -304,7 +305,7 @@ class SharingCIFSService(CRUDService):
         return data
 
     @private
-    async def done(self, default_perms, path):
+    async def apply_default_perms(self, default_perms, path):
         if default_perms:
             try:
                 (owner, group) = await self.middleware.call(
@@ -315,10 +316,10 @@ class SharingCIFSService(CRUDService):
             await self.middleware.call(
                 'notifier.winacl_reset', path, owner, group)
 
-    @private
     async def get_storage_tasks(self, path=None, home=False):
         zfs_datasets = await self.middleware.call('zfs.dataset.query')
         task_list = []
+        task_dict = {}
 
         if path:
             for ds in zfs_datasets:
@@ -344,23 +345,53 @@ class SharingCIFSService(CRUDService):
                 'datastore.query','storage.task',
                 [['task_recursive', '=', 'True']])
 
-        return task_list
+        if task_list:
+            for task in task_list:
+                task_id = task['id']
+                fs = task['task_filesystem']
+                retcount = task['task_ret_count']
+                retunit = task['task_ret_unit']
+                _interval = task['task_interval']
+                interval = dict(await self.middleware.call(
+                    'notifier.choices', 'TASK_INTERVAL'))[_interval]
+
+                msg = f'{fs} - every {interval} - {retcount}{retunit}'
+
+                task_dict[task_id] = msg
+
+        return task_dict
 
     @private
-    async def save(self, data):
+    async def set_storage_tasks(self, data):
         task = data.get('storage_task', None)
         home = data['home']
         path = data['path']
+        task_list = []
 
         if not task:
-            task_list = []
-
             if path:
                 task_list = await self.get_storage_tasks(path=path)
             elif home:
                 task_list = await self.get_storage_tasks(home=home)
 
-            if task_list:
-                data['storage_task'] = task_list[0]
+        if task_list:
+            data['storage_task'] = list(task_list.keys())[0]
 
         return data
+
+    @accepts()
+    def cifs_choices(self):
+        vfs_modules_path = '/usr/local/lib/shared-modules/vfs'
+        vfs_modules = []
+        vfs_exclude = {'shadow_copy2', 'recycle', 'aio_pthread'}
+
+        if os.path.exists(vfs_modules_path):
+            vfs_modules.extend(
+                filter(lambda m: m not in vfs_exclude,
+                       map(lambda f: f.rpartition('.')[0],
+                           os.listdir(vfs_modules_path)))
+            )
+        else:
+            vfs_modules.extend(['streams_xattr'])
+
+        return vfs_modules

@@ -86,21 +86,21 @@ class CIFS_ShareForm(MiddlewareModelForm, ModelForm):
         )
 
         if self.instance:
-            task_list = []
+            task_dict = {}
             if self.instance.cifs_path:
                 with client as c:
-                    task_list = c.call('sharing.cifs.get_storage_tasks',
+                    task_dict = c.call('sharing.cifs.get_storage_tasks',
                                        self.instance.cifs_path)
 
             elif self.instance.cifs_home:
                 with client as c:
-                    task_list = c.call('sharing.cifs.get_storage_tasks',
+                    task_dict = c.call('sharing.cifs.get_storage_tasks',
                                         None, self.instance.cifs_home)
 
-            if task_list:
+            if task_dict:
                 choices = [('', '-----')]
-                for task in task_list:
-                    choices.append((task.id, task))
+                for task_id, msg in task_dict.items():
+                    choices.append((task_id, msg))
                 self.fields['cifs_storage_task'].choices = choices
 
             else:
