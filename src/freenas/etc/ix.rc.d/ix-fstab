@@ -33,11 +33,12 @@ generate_fstab()
 	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 
-	if [ `stat -f "%d:%i" /conf/base/etc/fstab` = `stat -f "%d:%i" /etc/fstab` ]; then
-		# Hard link.  Let's remove /etc/fstab and copy /conf/base/etc/fstab to it
-		rm /etc/fstab
+	# That file is not supposed to exist anymore but lets keep backward compatibility for now
+	if [ -f /conf/base/etc/fstab ]; then
+		cp /conf/base/etc/fstab /etc/fstab
+	else
+		rm -f /etc/fstab
 	fi
-	cp /conf/base/etc/fstab /etc/fstab
 	generate_fstab_real >> /etc/fstab
 	generate_fstab_swap >> /etc/fstab
 	mount -uw /
