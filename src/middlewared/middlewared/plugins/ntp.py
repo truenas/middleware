@@ -1,6 +1,7 @@
 from middlewared.schema import accepts, Bool, Dict, Int, Str, Patch
 from middlewared.service import ValidationErrors, CRUDService, private
-from freenasUI.common.system import test_ntp_server
+
+import ntplib
 
 
 class NTPServerService(CRUDService):
@@ -21,7 +22,6 @@ class NTPServerService(CRUDService):
         register=True
     ))
     async def do_create(self, data):
-        print(data)
         await self.clean(data, 'ntpserver_create')
 
         data['id'] = await self.middleware.call(
@@ -42,11 +42,7 @@ class NTPServerService(CRUDService):
         )
     )
     async def do_update(self, id, data):
-        old = await self.middleware.call(
-            'datastore.query', self._config.datastore, [('id', '=', id)],
-            {'extend': self._config.datastore_extend,
-             'prefix': self._config.datastore_prefix,
-             'get': True})
+        old = await self._get_instance(id)
 
         new = old.copy()
         new.update(data)
@@ -67,13 +63,29 @@ class NTPServerService(CRUDService):
         return await self.middleware.call(
             'datastore.delete', self._config.datastore, id)
 
+
+    @private
+    @staticmethod
+    def test_ntp_server(addr):
+        client = ntplib.NTPClient()
+        server_alive = False
+        try:
+            response = client.request(addr)
+            if response.version:
+                server_alive = True
+        except Exception:
+            pass
+
+        return server_alive
+
     @private
     async def clean(self, data, schema_name):
         verrors = ValidationErrors()
         maxpoll = data['maxpoll']
         minpoll = data['minpoll']
         force = data.pop('force', False)
-        usable = True if test_ntp_server(data['address']) else False
+        usable = True if await self.middleware.run_in_io_thread(
+            self.test_ntp_server, data['address']) else False
 
         if not force and not usable:
             verrors.add(f'{schema_name}.address',

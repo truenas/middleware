@@ -1128,8 +1128,11 @@ class NTPForm(MiddlewareModelForm, ModelForm):
         fields = '__all__'
         model = models.NTPServer
 
-    def __init__(self, *args, **kwargs):
-        super(NTPForm, self).__init__(*args, **kwargs)
+    def middleware_clean(self, data):
+        data['force'] = self.cleaned_data.get('force')
+
+        return data
+
 
 class AdvancedForm(MiddlewareModelForm, ModelForm):
 
