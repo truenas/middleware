@@ -525,6 +525,13 @@ class PoolDatasetService(CRUDService):
                     dataset[i]['value'] = method(dataset[i]['value'])
             del dataset['properties']
 
+            if dataset['type'] == 'FILESYSTEM':
+                dataset['share_type'] = self.middleware.call_sync(
+                    'notifier.get_dataset_share_type', dataset['name'],
+                ).upper()
+            else:
+                dataset['share_type'] = None
+
             rv = []
             for child in dataset['children']:
                 rv.append(transform(child))
@@ -566,6 +573,7 @@ class PoolDatasetService(CRUDService):
             '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K', '256K', '512K', '1024K',
         ]),
         Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
+        Str('share_type', enum=['UNIX', 'WINDOWS', 'MAC'], default='UNIX'),
         register=True,
     ))
     async def do_create(self, data):
@@ -612,6 +620,11 @@ class PoolDatasetService(CRUDService):
             'properties': props,
         })
 
+        if data['type'] == 'FILESYSTEM':
+            await self.middleware.call(
+                'notifier.change_dataset_share_type', data['name'], data['share_type'].lower()
+            )
+
         await self.middleware.call('zfs.dataset.mount', data['name'])
 
     def _add_inherit(name):
@@ -634,6 +647,7 @@ class PoolDatasetService(CRUDService):
         ('edit', _add_inherit('readonly')),
         ('edit', _add_inherit('recordsize')),
         ('edit', _add_inherit('snapdir')),
+        ('attr', {'update': True}),
     ))
     async def do_update(self, id, data):
         """
@@ -677,7 +691,14 @@ class PoolDatasetService(CRUDService):
             else:
                 props[name] = {'value': data[i] if not transform else transform(data[i])}
 
-        return await self.middleware.call('zfs.dataset.update', id, {'properties': props})
+        rv = await self.middleware.call('zfs.dataset.update', id, {'properties': props})
+
+        if data['type'] == 'FILESYSTEM' and 'share_type' in data:
+            await self.middleware.call(
+                'notifier.change_dataset_share_type', id, data['share_type'].lower()
+            )
+
+        return rv
 
     async def __common_validation(self, verrors, schema, data, mode):
         assert mode in ('CREATE', 'UPDATE')
@@ -691,7 +712,7 @@ class PoolDatasetService(CRUDService):
                 verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
 
             for i in (
-                'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize',
+                'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize', 'share_type',
             ):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for VOLUME')
