@@ -273,10 +273,16 @@ class DatastoreService(Service):
         rv = None
         try:
             if params is None:
-                cursor.executelocal(query)
+                res = cursor.executelocal(query)
             else:
-                cursor.executelocal(query, params)
-            rv = cursor.fetchall()
+                res = cursor.executelocal(query, params)
+            rv = [
+                dict([
+                    (res.description[i][0], value)
+                    for i, value in enumerate(row)
+                ])
+                for row in cursor.fetchall()
+            ]
         except OperationalError as err:
             raise CallError(err)
         finally:

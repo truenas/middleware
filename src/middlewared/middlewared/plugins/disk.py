@@ -11,6 +11,9 @@ import sysctl
 import tempfile
 
 from bsd import geom, getswapinfo
+
+from middlewared.common.camcontrol import camcontrol_list
+from middlewared.common.smart.smartctl import get_smartctl_args
 from middlewared.schema import accepts, Dict, List, Bool, Str
 from middlewared.service import filterable, job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
@@ -196,116 +199,15 @@ class DiskService(CRUDService):
 
         return partitions
 
-    async def __camcontrol_list(self):
-        """
-        Parse camcontrol devlist -v output to gather
-        controller id, channel no and driver from a device
-
-        Returns:
-            dict(devname) = dict(drv, controller, channel)
-        """
-
-        """
-        Hacky workaround
-
-        It is known that at least some HPT controller have a bug in the
-        camcontrol devlist output with multiple controllers, all controllers
-        will be presented with the same driver with index 0
-        e.g. two hpt27xx0 instead of hpt27xx0 and hpt27xx1
-
-        What we do here is increase the controller id by its order of
-        appearance in the camcontrol output
-        """
-        hptctlr = defaultdict(int)
-
-        re_drv_cid = re.compile(r'.* on (?P<drv>.*?)(?P<cid>[0-9]+) bus', re.S | re.M)
-        re_tgt = re.compile(r'target (?P<tgt>[0-9]+) .*?lun (?P<lun>[0-9]+) .*\((?P<dv1>[a-z]+[0-9]+),(?P<dv2>[a-z]+[0-9]+)\)', re.S | re.M)
-        drv, cid, tgt, lun, dev, devtmp = (None, ) * 6
-
-        camcontrol = {}
-        proc = await Popen(['camcontrol', 'devlist', '-v'], stdout=subprocess.PIPE)
-        for line in (await proc.communicate())[0].splitlines():
-            line = line.decode()
-            if not line.startswith('<'):
-                reg = re_drv_cid.search(line)
-                if not reg:
-                    continue
-                drv = reg.group('drv')
-                if drv.startswith('hpt'):
-                    cid = hptctlr[drv]
-                    hptctlr[drv] += 1
-                else:
-                    cid = reg.group('cid')
-            else:
-                reg = re_tgt.search(line)
-                if not reg:
-                    continue
-                tgt = reg.group('tgt')
-                lun = reg.group('lun')
-                dev = reg.group('dv1')
-                devtmp = reg.group('dv2')
-                if dev.startswith('pass'):
-                    dev = devtmp
-                camcontrol[dev] = {
-                    'drv': drv,
-                    'controller': int(cid),
-                    'channel': int(tgt),
-                    'lun': int(lun)
-                }
-        return camcontrol
-
-    async def __get_twcli(self, controller):
-
-        re_port = re.compile(r'^p(?P<port>\d+).*?\bu(?P<unit>\d+)\b', re.S | re.M)
-        proc = await Popen(['/usr/local/sbin/tw_cli', f'/c{controller}', 'show'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        output = (await proc.communicate())[0].decode()
-
-        units = {}
-        for port, unit in re_port.findall(output):
-            units[int(unit)] = int(port)
-        return units
-
     async def __get_smartctl_args(self, devname):
-        args = [f'/dev/{devname}']
-        camcontrol = await self.__camcontrol_list()
-        info = camcontrol.get(devname)
-        if info is not None:
-            if info.get('drv') == 'rr274x_3x':
-                channel = info['channel'] + 1
-                if channel > 16:
-                    channel -= 16
-                elif channel > 8:
-                    channel -= 8
-                args = [
-                    '/dev/%s' % info['drv'],
-                    '-d',
-                    'hpt,%d/%d' % (info['controller'] + 1, channel)
-                ]
-            elif info.get('drv').startswith('arcmsr'):
-                args = [
-                    '/dev/%s%d' % (info['drv'], info['controller']),
-                    '-d',
-                    'areca,%d' % (info['lun'] + 1 + (info['channel'] * 8), )
-                ]
-            elif info.get('drv').startswith('hpt'):
-                args = [
-                    '/dev/%s' % info['drv'],
-                    '-d',
-                    'hpt,%d/%d' % (info['controller'] + 1, info['channel'] + 1)
-                ]
-            elif info.get('drv') == 'ciss':
-                args = [
-                    '/dev/%s%d' % (info['drv'], info['controller']),
-                    '-d',
-                    'cciss,%d' % (info['channel'], )
-                ]
-            elif info.get('drv') == 'twa':
-                twcli = await self.__get_twcli(info['controller'])
-                args = [
-                    '/dev/%s%d' % (info['drv'], info['controller']),
-                    '-d',
-                    '3ware,%d' % (twcli.get(info['channel'], -1), )
-                ]
+        camcontrol = await camcontrol_list()
+        if devname not in camcontrol:
+            raise CallError(f"Camcontrol did not report device {devname}")
+
+        args = await get_smartctl_args(devname, camcontrol[devname])
+        if args is None:
+            raise CallError(f"Unable to get smartctl args for device {devname}")
+
         return args
 
     @private
