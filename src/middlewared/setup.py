@@ -4,7 +4,7 @@ try:
 except ImportError:
     import sys
     print("fastentrypoints module not found. entry points will be slower.", file=sys.stderr)
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
 install_requires = [
@@ -39,15 +39,7 @@ def get_etc_files(*args, **kwargs):
 setup(
     name='middlewared',
     description='FreeNAS Middleware Daemon',
-    packages=[
-        'middlewared',
-        'middlewared.alert',
-        'middlewared.alert.service',
-        'middlewared.alert.source',
-        'middlewared.client',
-        'middlewared.plugins',
-        'middlewared.apidocs',
-    ],
+    packages=find_packages(),
     package_data={
         'middlewared.apidocs': [
             'templates/websocket/*',
