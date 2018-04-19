@@ -63,11 +63,18 @@ def Popen(args, **kwargs):
 
 
 async def run(*args, **kwargs):
+    if isinstance(args[0], list):
+        args = tuple(args[0])
     kwargs.setdefault('stdout', subprocess.PIPE)
     kwargs.setdefault('stderr', subprocess.PIPE)
     check = kwargs.pop('check', True)
     proc = await asyncio.create_subprocess_exec(*args, **kwargs)
     stdout, stderr = await proc.communicate()
+    if "encoding" in kwargs:
+        if stdout is not None:
+            stdout = stdout.decode(kwargs["encoding"])
+        if stderr is not None:
+            stderr = stderr.decode(kwargs["encoding"])
     cp = subprocess.CompletedProcess(args, proc.returncode, stdout=stdout, stderr=stderr)
     if check:
         cp.check_returncode()
