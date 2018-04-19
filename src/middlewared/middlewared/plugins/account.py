@@ -561,6 +561,7 @@ class GroupService(CRUDService):
     async def group_extend(self, group):
         # Get group membership
         group['users'] = [gm['user']['id'] for gm in await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [('group', '=', group['id'])], {'prefix': 'bsdgrpmember_'})]
+        group['users'] += [gmu['id'] for gmu in await self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_group_id', '=', group['id'])])]
         return group
 
     @accepts(Dict(
