@@ -677,9 +677,9 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
                 run('/usr/sbin/service collectd forcestop')
                 run_async('echo "$(date), $(hostname), assume backup" | mail -s "Failover" root')
 
+            run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper detachall')
+
             if fobj['phrasedvolumes']:
-                log.warn('Detaching GELI providers')
-                run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper detachall')
                 log.warn('Setting passphrase from master')
                 run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper syncfrompeer')
 
