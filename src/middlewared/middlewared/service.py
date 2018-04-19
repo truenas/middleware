@@ -225,7 +225,6 @@ class SystemServiceService(ConfigService):
         await self._service_change(self._config.service, self._config.service_verb)
 
 
-
 class CRUDService(ServiceChangeMixin, Service):
     """
     CRUD service abstract class
