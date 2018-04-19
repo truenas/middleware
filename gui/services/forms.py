@@ -1167,6 +1167,10 @@ class iSCSITargetExtentForm(ModelForm):
 
 class iSCSITargetPortalForm(MiddlewareModelForm, ModelForm):
 
+    middleware_attr_map = {
+        'discovery_authmethod': 'iscsi_target_portal_discoveryauthmethod',
+        'discovery_authgroup': 'iscsi_target_portal_discoveryauthgroup',
+    }
     middleware_attr_prefix = 'iscsi_target_portal_'
     middleware_attr_schema = 'iscsiportal'
     middleware_plugin = 'iscsi.portal'
