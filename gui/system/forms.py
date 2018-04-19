@@ -1089,7 +1089,7 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
             else:
                 protocol = self.instance.stg_guiprotocol
 
-            newurl = "%s://%s" % (
+            newurl = "%s://%s/legacy/" % (
                 protocol,
                 address
             )
