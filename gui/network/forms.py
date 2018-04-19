@@ -576,7 +576,7 @@ class GlobalConfigurationForm(MiddlewareModelForm, ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(GlobalConfigurationForm, self).__init__(*args, **kwargs)
-        self.original_instance = self.instance.__dict__
+        self.original_instance = dict(self.instance.__dict__)
 
         if hasattr(notifier, 'failover_licensed'):
             if not notifier().failover_licensed():

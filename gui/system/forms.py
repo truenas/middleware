@@ -1041,7 +1041,7 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(SettingsForm, self).__init__(*args, **kwargs)
-        self.original_instance = self.instance.__dict__
+        self.original_instance = dict(self.instance.__dict__)
 
         self.fields['stg_language'].choices = settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")
@@ -1177,7 +1177,7 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
     def __init__(self, *args, **kwargs):
         super(AdvancedForm, self).__init__(*args, **kwargs)
         self.fields['adv_motd'].strip = False
-        self.original_instance = self.instance.__dict__
+        self.original_instance = dict(self.instance.__dict__)
 
     def middleware_clean(self, data):
         if data.get('sed_user'):
