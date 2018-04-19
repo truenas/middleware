@@ -413,6 +413,7 @@ _nut_config() {
 		while read -r ups_mode ups_remotehost ups_remoteport ups_identifier; do
 			if [ "${ups_mode}" = "master" ]; then
 				echo "nut_enable=\"YES\""
+				echo "nut_upsshut=\"NO\""
 				echo "nut_upslog_ups=\"${ups_identifier}\""
 			else
 				echo "nut_upslog_ups=\"${ups_identifier}@${ups_remotehost}:${ups_remoteport}\""
