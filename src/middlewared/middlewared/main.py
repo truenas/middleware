@@ -65,7 +65,7 @@ class Application(object):
         self.__callbacks[name].append(method)
 
     def _send(self, data):
-        self.response.send_json(data, dumps=json.dumps)
+        asyncio.ensure_future(self.response.send_json(data, dumps=json.dumps), loop=self.loop)
 
     def _tb_error(self, exc_info):
         klass, exc, trace = exc_info
@@ -1118,8 +1118,14 @@ class Middleware(object):
         # Start up middleware worker process pool
         self.__procpool._start_queue_management_thread()
 
+        runner = web.AppRunner(app, handle_signals=False, access_log=None)
+        self.__loop.run_until_complete(runner.setup())
+        self.__loop.run_until_complete(
+            web.TCPSite(runner, '0.0.0.0', 6000, reuse_address=True, reuse_port=True).start()
+        )
+        self.__loop.run_until_complete(web.UnixSite(runner, '/var/run/middlewared.sock').start())
+
         self.logger.debug('Accepting connections')
-        web.run_app(app, host='0.0.0.0', port=6000, access_log=None)
 
         try:
             self.__loop.run_forever()
