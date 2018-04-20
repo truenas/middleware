@@ -34,7 +34,6 @@ import shutil
 import sqlite3
 import subprocess
 import time
-import ntplib
 from datetime import datetime, timedelta
 from django.utils.translation import ugettext_lazy as _
 from .log import log_traceback
@@ -630,16 +629,3 @@ def compare_netbios_names(netbiosname1, netbiosname2, validate_func=validate_net
                 return True
 
     return False
-
-
-def test_ntp_server(addr):
-    client = ntplib.NTPClient()
-    server_alive = False
-    try:
-        response = client.request(addr)
-        if response.version:
-            server_alive = True
-    except:
-        pass
-
-    return server_alive

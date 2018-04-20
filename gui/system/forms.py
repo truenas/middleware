@@ -68,7 +68,6 @@ from freenasUI.common.ssl import (create_certificate,
                                   create_self_signed_CA, export_privatekey,
                                   generate_key, load_certificate,
                                   load_privatekey, sign_certificate)
-from freenasUI.common.system import test_ntp_server
 from freenasUI.directoryservice.forms import (ActiveDirectoryForm, LDAPForm,
                                               NISForm)
 from freenasUI.directoryservice.models import LDAP, NIS, ActiveDirectory
@@ -1110,7 +1109,7 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
             timezone.activate(self.instance.stg_timezone)
 
 
-class NTPForm(ModelForm):
+class NTPForm(MiddlewareModelForm, ModelForm):
 
     force = forms.BooleanField(
         label=_("Force"),
@@ -1120,47 +1119,19 @@ class NTPForm(ModelForm):
         ),
     )
 
+    middleware_attr_prefix = "ntp_"
+    middleware_attr_schema = "ntp"
+    middleware_plugin = "system.ntpserver"
+    is_singletone = False
+
     class Meta:
         fields = '__all__'
         model = models.NTPServer
 
-    def __init__(self, *args, **kwargs):
-        super(NTPForm, self).__init__(*args, **kwargs)
-        self.usable = True
+    def middleware_clean(self, data):
+        data['force'] = self.cleaned_data.get('force')
 
-    def clean_ntp_address(self):
-        addr = self.cleaned_data.get("ntp_address")
-
-        ntp_test = test_ntp_server(addr)
-
-        if ntp_test is False:
-            self.usable = False
-
-        return addr
-
-    def clean_ntp_maxpoll(self):
-        maxp = self.cleaned_data.get("ntp_maxpoll")
-        minp = self.cleaned_data.get("ntp_minpoll")
-        if not maxp > minp:
-            raise forms.ValidationError(_(
-                "Max Poll should be higher than Min Poll"
-            ))
-        return maxp
-
-    def clean(self):
-        cdata = self.cleaned_data
-        if not cdata.get("force", False) and not self.usable:
-            self._errors['ntp_address'] = self.error_class([_(
-                "Server could not be reached. Check \"Force\" to continue "
-                "regardless."
-            )])
-            del cdata['ntp_address']
-        return cdata
-
-    def save(self):
-        super(NTPForm, self).save()
-        notifier().start("ix-ntpd")
-        notifier().restart("ntpd")
+        return data
 
 
 class AdvancedForm(MiddlewareModelForm, ModelForm):
