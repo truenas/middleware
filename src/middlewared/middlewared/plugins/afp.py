@@ -4,6 +4,7 @@ from middlewared.schema import (accepts, Bool, Dict, Dir, Int, List, Str,
 from middlewared.validators import IpAddress, Range
 from middlewared.service import (SystemServiceService, ValidationErrors,
                                  CRUDService, private)
+from middlewared.service_exception import CallError
 import os
 
 
@@ -80,15 +81,17 @@ class SharingAFPService(CRUDService):
         await self.clean(data, 'sharingafp_create', verrors)
         await self.validate(data, 'sharingafp_create', verrors)
 
+        await check_path_resides_within_volume(
+            verrors, self.middleware, "sharingafp_create.path", path)
+
+        if verrors:
+            raise verrors
+
         if path and not os.path.exists(path):
             try:
                 os.makedirs(path)
             except OSError as e:
-                verrors.add('sharingafp_create.path',
-                            f'Failed to create {path}: {e}')
-
-        if verrors:
-            raise verrors
+                raise CallError(f'Failed to create {path}: {e}')
 
         await self.compress(data)
         data['id'] = await self.middleware.call(
@@ -115,6 +118,7 @@ class SharingAFPService(CRUDService):
             {'extend': self._config.datastore_extend,
              'prefix': self._config.datastore_prefix,
              'get': True})
+        path = data['path']
 
         new = old.copy()
         new.update(data)
@@ -122,8 +126,17 @@ class SharingAFPService(CRUDService):
         await self.clean(new, 'sharingafp_update', verrors, id=id)
         await self.validate(new, 'sharingafp_update', verrors, old=old)
 
+        await check_path_resides_within_volume(
+            verrors, self.middleware, "sharingafp_create.path", path)
+
         if verrors:
             raise verrors
+
+        if path and not os.path.exists(path):
+            try:
+                os.makedirs(path)
+            except OSError as e:
+                raise CallError(f'Failed to create {path}: {e}')
 
         await self.compress(new)
         await self.middleware.call(
