@@ -41,6 +41,8 @@ from freenasUI.api.resources import (
     DatasetResource,
     DebugResource,
     FCPortsResource,
+    JsonUserResource,
+    JsonGroupResource,
     PermissionResource,
     RebootResource,
     ShutdownResource,
@@ -61,6 +63,8 @@ v1_api.register(DatasetResource())
 v1_api.register(DebugResource())
 v1_api.register(ConfigFactoryRestoreResource())
 v1_api.register(FCPortsResource())
+v1_api.register(JsonUserResource())
+v1_api.register(JsonGroupResource())
 v1_api.register(PermissionResource())
 v1_api.register(RebootResource())
 v1_api.register(ShutdownResource())

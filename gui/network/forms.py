@@ -42,7 +42,6 @@ from freenasUI.freeadmin.sqlite3_ha.base import DBSync
 from freenasUI.middleware.client import client
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
-from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.network import models
 from freenasUI.network.utils import configure_http_proxy
 from freenasUI.freeadmin.utils import key_order
@@ -577,7 +576,7 @@ class GlobalConfigurationForm(MiddlewareModelForm, ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(GlobalConfigurationForm, self).__init__(*args, **kwargs)
-        self.original_instance = self.instance.__dict__
+        self.original_instance = dict(self.instance.__dict__)
 
         if hasattr(notifier, 'failover_licensed'):
             if not notifier().failover_licensed():

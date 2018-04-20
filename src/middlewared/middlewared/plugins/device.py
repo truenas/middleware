@@ -8,7 +8,7 @@ from middlewared.service import Service
 
 from bsd import devinfo, geom
 
-DEVD_SOCKETFILE = '/var/run/devd.seqpacket.pipe'
+DEVD_SOCKETFILE = '/var/run/devd.pipe'
 
 
 class DeviceService(Service):
@@ -72,7 +72,7 @@ async def devd_loop(middleware):
 
 
 async def devd_listen(middleware):
-    s = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     s.connect(DEVD_SOCKETFILE)
     reader, writer = await asyncio.open_unix_connection(sock=s)
 

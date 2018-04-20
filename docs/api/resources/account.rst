@@ -485,3 +485,110 @@ Delete resource
       Content-Type: application/json
 
    :statuscode 204: no error
+
+
+All Users
+----------
+
+The All Users resource represents all unix users and users active via networking e.g ( Active Directory etc ).
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/account/all_users/
+
+   Returns a list of all users.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/account/all_users/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      {'identifier': 'id',
+       'items': [
+                  {
+                        'id': 'root',
+                        'label': 'root',
+                        'name': 'root',
+                  },
+                  {
+                        'id': 'bin',
+                        'label': 'bin',
+                        'name': 'bin',
+                  },
+                  {
+                        'id': 'ftp',
+                        'label': 'ftp',
+                        'name': 'ftp',
+                  },
+                 ],
+       'label': 'name'}
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 50
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+All Groups
+----------
+
+The All Groups resource represents all unix groups and groups active via networking e.g ( Active Directory etc ).
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/account/all_groups/
+
+   Returns a list of all groups.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/account/all_groups/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      {'identifier': 'id',
+       'items': [
+                  {
+                        'id': '_dhcp',
+                        'label': '_dhcp',
+                        'name': '_dhcp',
+                  },
+                  {
+                        'id': 'audit',
+                        'label': 'audit',
+                        'name': 'audit',
+                  },
+                  {
+                        'id': 'ftp',
+                        'label': 'ftp',
+                        'name': 'ftp',
+                  },
+                 ],
+       'label': 'name'}
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 50
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+

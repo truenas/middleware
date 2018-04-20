@@ -1,5 +1,6 @@
 import os
 import time
+import subprocess as su
 
 import iocage.lib.iocage as ioc
 import libzfs
@@ -31,17 +32,41 @@ class JailService(CRUDService):
     )
     def query(self, filters=None, options=None):
         options = options or {}
+        jail_identifier = None
         jails = []
-        try:
-            jails = [
-                list(jail.values())[0]
 
-                for jail in ioc.IOCage().get("all", recursive=True)
-            ]
+        if filters and len(filters) == 1 and list(
+                filters[0][:2]) == ['jail', '=']:
+            jail_identifier = filters[0].pop(2)
+
+        recursive = False if jail_identifier is not None else True
+
+        try:
+            jail_dicts = ioc.IOCage(
+                jail=jail_identifier).get('all', recursive=recursive)
+            for jail in jail_dicts:
+                jail = list(jail.values())[0]
+                if jail['dhcp'] == 'on':
+                    uuid = jail['host_hostuuid']
+
+                    if jail['state'] == 'up':
+                        interface = jail['interfaces'].split(',')[0].split(
+                            ':')[0]
+                        if interface == 'vnet0':
+                            # Inside jails they are epair0b
+                            interface = 'epair0b'
+                        ip4_cmd = ['jexec', f'ioc-{uuid}', 'ifconfig',
+                                   interface, 'inet']
+                        out = su.check_output(ip4_cmd)
+                        jail['ip4_address'] = f'{interface}|' \
+                            f'{out.splitlines()[2].split()[1].decode()}'
+                    else:
+                        jail['ip4_address'] = 'DHCP (not running)'
+                jails.append(jail)
         except BaseException:
             # Brandon is working on fixing this generic except, till then I
             # am not going to make the perfect the enemy of the good enough!
-            self.logger.debug("iocage failed to fetch jails", exc_info=True)
+            self.logger.debug('iocage failed to fetch jails', exc_info=True)
             pass
 
         return filter_list(jails, filters, options)

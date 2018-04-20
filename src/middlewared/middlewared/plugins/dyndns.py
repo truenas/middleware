@@ -1,5 +1,3 @@
-import re
-
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import SystemServiceService, private
 
@@ -14,7 +12,7 @@ class DynDNSService(SystemServiceService):
     @private
     async def dyndns_extend(self, dyndns):
         dyndns["password"] = await self.middleware.call("notifier.pwenc_decrypt", dyndns["password"])
-        dyndns["domain"] = list(filter(None, re.split(r"\s+", dyndns["domain"])))
+        dyndns["domain"] = dyndns["domain"].split()
         return dyndns
 
     @accepts(Dict(
@@ -31,7 +29,7 @@ class DynDNSService(SystemServiceService):
         Str('password'),
         Int('period'),
     ))
-    async def update(self, data):
+    async def do_update(self, data):
         old = await self.config()
 
         new = old.copy()

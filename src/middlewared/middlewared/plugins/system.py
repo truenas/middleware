@@ -625,9 +625,8 @@ class SystemGeneralService(ConfigService):
             ):
                 await self.middleware.call('service.restart', 'syslogd')
 
-            await self.middleware.call('service.reload', 'timeservices')
-
             if config['timezone'] != new_config['timezone']:
+                await self.middleware.call('service.reload', 'timeservices')
                 await self.middleware.call('service.restart', 'cron')
 
             await self.middleware.call('service._start_ssl', 'nginx')

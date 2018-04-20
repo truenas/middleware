@@ -4,6 +4,7 @@ from sqlite3 import OperationalError
 
 import os
 import sys
+from itertools import chain
 
 sys.path.append('/usr/local/www')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
@@ -16,7 +17,7 @@ if not apps.ready:
 from django.apps import apps
 from django.db import connection
 from django.db.models import Q
-from django.db.models.fields.related import ForeignKey
+from django.db.models.fields.related import ForeignKey, ManyToManyField
 
 # FIXME: django sqlite3_ha backend uses a thread to sync queries to the
 # standby node. That does not play very well with gevent+middleware
@@ -195,10 +196,11 @@ class DatastoreService(Service):
         Insert a new entry to `name`.
         """
         data = data.copy()
+        many_to_many_fields_data = {}
         options = options or {}
         prefix = options.get('prefix')
         model = self.__get_model(name)
-        for field in model._meta.fields:
+        for field in chain(model._meta.fields, model._meta.many_to_many):
             if prefix:
                 name = field.name.replace(prefix, '')
             else:
@@ -207,12 +209,20 @@ class DatastoreService(Service):
                 continue
             if isinstance(field, ForeignKey):
                 data[name] = field.rel.to.objects.get(pk=data[name])
-        if prefix:
-            for k, v in list(data.items()):
-                k_new = f'{prefix}{k}'
-                data[k_new] = data.pop(k)
+            if isinstance(field, ManyToManyField):
+                many_to_many_fields_data[field.name] = data.pop(name)
+            else:
+
+                # field.name is with prefix (if there's one) - we update data dict accordingly with db field names
+                data[field.name] = data.pop(name)
+
         obj = model(**data)
         await self.middleware.run_in_thread(obj.save)
+
+        for k, v in list(many_to_many_fields_data.items()):
+            field = getattr(obj, k)
+            field.add(*v)
+
         return obj.pk
 
     @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix')))
@@ -221,11 +231,12 @@ class DatastoreService(Service):
         Update an entry `id` in `name`.
         """
         data = data.copy()
+        many_to_many_fields_data = {}
         options = options or {}
         prefix = options.get('prefix')
         model = self.__get_model(name)
         obj = await self.middleware.run_in_thread(lambda oid: model.objects.get(pk=oid), id)
-        for field in model._meta.fields:
+        for field in chain(model._meta.fields, model._meta.many_to_many):
             if prefix:
                 name = field.name.replace(prefix, '')
             else:
@@ -234,11 +245,18 @@ class DatastoreService(Service):
                 continue
             if isinstance(field, ForeignKey):
                 data[name] = field.rel.to.objects.get(pk=data[name]) if data[name] is not None else None
-        for k, v in list(data.items()):
-            if prefix:
-                k = f'{prefix}{k}'
-            setattr(obj, k, v)
+            if isinstance(field, ManyToManyField):
+                many_to_many_fields_data[field.name] = data.pop(name)
+            else:
+                setattr(obj, field.name, data.pop(name))
+
         await self.middleware.run_in_thread(obj.save)
+
+        for k, v in list(many_to_many_fields_data.items()):
+            field = getattr(obj, k)
+            field.clear()
+            field.add(*v)
+
         return obj.pk
 
     @accepts(Str('name'), Any('id'))
@@ -255,10 +273,16 @@ class DatastoreService(Service):
         rv = None
         try:
             if params is None:
-                cursor.executelocal(query)
+                res = cursor.executelocal(query)
             else:
-                cursor.executelocal(query, params)
-            rv = cursor.fetchall()
+                res = cursor.executelocal(query, params)
+            rv = [
+                dict([
+                    (res.description[i][0], value)
+                    for i, value in enumerate(row)
+                ])
+                for row in cursor.fetchall()
+            ]
         except OperationalError as err:
             raise CallError(err)
         finally:

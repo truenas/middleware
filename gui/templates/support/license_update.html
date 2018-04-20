@@ -3,7 +3,7 @@
 {% block form %}
 {% if eula %}
 <tr>
-  <td colspan="2"><pre style="padding: 8px; margin: 4px; max-height: 300px; overflow: auto; width: 800px; white-space: pre-wrap;">{{ eula }}</pre></td>
+  <td colspan="2"><pre style="padding: 8px; margin: 4px; max-height: 300px; overflow: auto; width: 800px; white-space: normal;">{{ eula|safe }}</pre></td>
 </tr>
 {% endif %}
 {% if license.expired %}

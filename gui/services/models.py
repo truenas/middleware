@@ -24,7 +24,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import base64
 import hashlib
 import hmac
 import logging
@@ -524,7 +523,7 @@ def extent_serial():
         else:
             lid = 0
         return mac.strip() + "%.2d" % lid
-    except:
+    except Exception:
         return "10000001"
 
 
@@ -652,7 +651,7 @@ class iSCSITargetExtent(Model):
                     return "/dev/%s" % (
                         notifier().identifier_to_device(disk.disk_identifier),
                     )
-            except:
+            except Exception:
                 return self.iscsi_target_extent_path
 
     def delete(self):
@@ -870,7 +869,7 @@ class iSCSITargetAuthCredential(Model):
                 self.iscsi_target_auth_secret = notifier().pwenc_decrypt(
                     self.iscsi_target_auth_secret
                 )
-            except:
+            except Exception:
                 log.debug('Failed to decrypt auth access secret', exc_info=True)
                 self.iscsi_target_auth_secret = ''
         self._iscsi_target_auth_secret_encrypted = False
@@ -880,7 +879,7 @@ class iSCSITargetAuthCredential(Model):
                 self.iscsi_target_auth_peersecret = notifier().pwenc_decrypt(
                     self.iscsi_target_auth_peersecret
                 )
-            except:
+            except Exception:
                 log.debug('Failed to decrypt auth access peer secret', exc_info=True)
                 self.iscsi_target_auth_peersecret = ''
         self._iscsi_target_auth_peersecret_encrypted = False
@@ -1144,7 +1143,7 @@ class DynamicDNS(Model):
         if self.ddns_password:
             try:
                 self.ddns_password = notifier().pwenc_decrypt(self.ddns_password)
-            except:
+            except Exception:
                 log.debug('Failed to decrypt DDNS password', exc_info=True)
                 self.ddns_password = ''
 
@@ -1386,7 +1385,7 @@ class UPS(Model):
         if self.ups_monpwd:
             try:
                 self.ups_monpwd = notifier().pwenc_decrypt(self.ups_monpwd)
-            except:
+            except Exception:
                 log.debug('Failed to decrypt UPS mon password', exc_info=True)
                 self.ups_monpwd = ''
         self._ups_monpwd_encrypted = False
@@ -1861,31 +1860,6 @@ class SSH(Model):
             'ssh_options',
         )
 
-    def __init__(self, *args, **kwargs):
-        super(SSH, self).__init__(*args, **kwargs)
-        self.__decoded = {}
-        # TODO: In case we ever decide to show the keys in the UI
-        # self._base64_decode('ssh_host_dsa_key_cert_pub')
-
-    def _base64_decode(self, field):
-        if self.__decoded.get(field) is not True:
-            data = getattr(self, field)
-            if data:
-                setattr(self, field, base64.b64decode(data))
-            self.__decoded[field] = True
-
-    def _base64_encode(self, field):
-        if self.__decoded.get(field) is True:
-            data = getattr(self, field)
-            if data:
-                setattr(self, field, base64.b64encode(data))
-            self.__decoded.pop(field, None)
-
-    def save(self, *args, **kwargs):
-        # TODO: In case we ever decide to show the keys in the UI
-        # self._base64_encode('ssh_host_dsa_key_cert_pub')
-        return super(SSH, self).save(*args, **kwargs)
-
 
 class LLDP(Model):
     lldp_intdesc = models.BooleanField(
@@ -2065,7 +2039,7 @@ class SMART(Model):
         max_length=255,
         blank=True,
         help_text=_("Destination email address. Separate email addresses "
-                    "with commas."),
+                    "with spaces."),
     )
 
     class Meta:
@@ -2146,47 +2120,6 @@ class DomainController(Model):
 
     def __init__(self, *args, **kwargs):
         super(DomainController, self).__init__(*args, **kwargs)
-        self.svc = 'domaincontroller'
-
-        if self.dc_passwd:
-            try:
-                self.dc_passwd = notifier().pwenc_decrypt(self.dc_passwd)
-            except:
-                log.debug('Failed to decrypt DC password', exc_info=True)
-                self.dc_passwd = ''
-        self._dc_passwd_encrypted = False
-
-    def save(self, *args, **kwargs):
-
-        if self.dc_passwd and not self._dc_passwd_encrypted:
-            self.dc_passwd = notifier().pwenc_encrypt(
-                self.dc_passwd
-            )
-            self._dc_passwd_encrypted = True
-
-        obj = super(DomainController, self).save(*args, **kwargs)
-
-        if not self.dc_kerberos_realm:
-            try:
-                from freenasUI.common.system import get_hostname
-
-                hostname = get_hostname()
-                dc_hostname = "%s.%s" % (hostname, self.dc_realm.lower())
-
-                kr = KerberosRealm()
-                kr.krb_realm = self.dc_realm.upper()
-                kr.krb_kdc = dc_hostname
-                kr.krb_admin_server = dc_hostname
-                kr.krb_kpasswd_server = dc_hostname
-                kr.save()
-
-                self.dc_kerberos_realm = kr
-                super(DomainController, self).save()
-
-            except Exception as e:
-                log.debug("DomainController: Unable to create kerberos realm: "
-                          "%s", e)
-        return obj
 
     class Meta:
         verbose_name = _("Domain Controller")
@@ -2256,7 +2189,7 @@ class WebDAV(Model):
         if self.webdav_password:
             try:
                 self.webdav_password = notifier().pwenc_decrypt(self.webdav_password)
-            except:
+            except Exception:
                 log.debug('Failed to decrypt Webdav password', exc_info=True)
                 self.webdav_password = ''
         self._webdav_password_encrypted = False

@@ -1,6 +1,5 @@
 import json
 import logging
-import re
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -123,7 +122,11 @@ class CloudSyncForm(ModelForm):
             c.call('backup.delete', self.instance.id)
 
 
-class CronJobForm(ModelForm):
+class CronJobForm(MiddlewareModelForm, ModelForm):
+    middleware_attr_prefix = 'cron_'
+    middleware_plugin = 'cronjob'
+    middleware_attr_schema = 'cron_job'
+    is_singletone = False
 
     class Meta:
         fields = '__all__'
@@ -158,20 +161,12 @@ class CronJobForm(ModelForm):
             1, 2, 3, 4, 5, 6, 7
         ])
 
-    def clean_cron_user(self):
-        user = self.cleaned_data.get("cron_user")
-        # Windows users can have spaces in their usernames
-        # http://www.freebsd.org/cgi/query-pr.cgi?pr=164808
-        if ' ' in user:
-            raise forms.ValidationError("Usernames cannot have spaces")
-        return user
-
     def clean_cron_month(self):
         m = self.data.getlist("cron_month")
         if len(m) == 12:
             return '*'
-        m = ",".join(m)
-        return m
+        else:
+            return ','.join(m)
 
     def clean_cron_dayweek(self):
         w = self.data.getlist('cron_dayweek')
@@ -179,12 +174,18 @@ class CronJobForm(ModelForm):
             return w
         if len(w) == 7:
             return '*'
-        w = ",".join(w)
-        return w
+        else:
+            return ','.join(w)
 
-    def save(self):
-        super(CronJobForm, self).save()
-        notifier().restart("cron")
+    def middleware_clean(self, update):
+        update['schedule'] = {
+            'minute': update.pop('minute'),
+            'hour': update.pop('hour'),
+            'dom': update.pop('daymonth'),
+            'month': update.pop('month'),
+            'dow': update.pop('dayweek')
+        }
+        return update
 
 
 class InitShutdownForm(MiddlewareModelForm, ModelForm):
@@ -295,11 +296,37 @@ class RsyncForm(MiddlewareModelForm, ModelForm):
     def middleware_clean(self, update):
         update['month'] = self.data.getlist("rsync_month")
         update['dayweek'] = self.data.getlist("rsync_dayweek")
-        update['extra'] = list(filter(None, re.split(r"\s+", update["extra"])))
+        update['extra'] = update["extra"].split()
+        update['schedule'] = {
+            'minute': update.pop('minute'),
+            'hour': update.pop('hour'),
+            'dom': update.pop('daymonth'),
+            'month': update.pop('month'),
+            'dow': update.pop('dayweek')
+        }
         return update
 
+    def clean_rsync_month(self):
+        m = self.data.getlist("rsync_month")
+        if len(m) == 12:
+            return '*'
+        m = ",".join(m)
+        return m
 
-class SMARTTestForm(ModelForm):
+    def clean_rsync_dayweek(self):
+        w = self.data.getlist("rsync_dayweek")
+        if len(w) == 7:
+            return '*'
+        w = ",".join(w)
+        return w
+
+
+class SMARTTestForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'smarttest_'
+    middleware_plugin = 'smart.test'
+    middleware_attr_schema = 'smart_test'
+    is_singletone = False
 
     class Meta:
         fields = '__all__'
@@ -349,9 +376,22 @@ class SMARTTestForm(ModelForm):
             1, 2, 3, 4, 5, 6, 7
         ])
 
-    def save(self):
-        super(SMARTTestForm, self).save()
-        notifier().restart("smartd")
+    def middleware_clean(self, data):
+        data['disks'] = [disk.pk for disk in data['disks']]
+        test_type = {
+            'L': 'LONG',
+            'S': 'SHORT',
+            'C': 'CONVEYANCE',
+            'O': 'OFFLINE',
+        }
+        data['type'] = test_type[data['type']]
+        data['schedule'] = {
+            'hour': data.pop('hour'),
+            'dom': data.pop('daymonth'),
+            'month': data.pop('month'),
+            'dow': data.pop('dayweek')
+        }
+        return data
 
     def clean_smarttest_hour(self):
         h = self.cleaned_data.get("smarttest_hour")
@@ -378,25 +418,3 @@ class SMARTTestForm(ModelForm):
         w = eval(self.cleaned_data.get("smarttest_dayweek"))
         w = ",".join(w)
         return w
-
-    def clean(self):
-        disks = self.cleaned_data.get("smarttest_disks", [])
-        test = self.cleaned_data.get("smarttest_type")
-        used_disks = []
-        for disk in disks:
-            qs = models.SMARTTest.objects.filter(
-                smarttest_disks__in=[disk],
-                smarttest_type=test,
-            )
-            if self.instance.id:
-                qs = qs.exclude(id=self.instance.id)
-            if qs.count() > 0:
-                used_disks.append(disk.disk_name)
-        if used_disks:
-            self._errors['smarttest_disks'] = self.error_class([_(
-                "The following disks already have tests for this type: %s" % (
-                    ', '.join(used_disks),
-                )),
-            ])
-            self.cleaned_data.pop("smarttest_disks", None)
-        return self.cleaned_data

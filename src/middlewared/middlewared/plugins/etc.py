@@ -76,7 +76,10 @@ class EtcService(Service):
         ],
         's3': [
             {'type': 'py', 'path': 'local/minio/certificates'},
-        ]
+        ],
+        'smartd': [
+            {'type': 'py', 'path': 'smartd'},
+        ],
     }
 
     class Config:

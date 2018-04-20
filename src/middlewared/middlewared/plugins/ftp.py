@@ -1,6 +1,6 @@
-from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.async_validators import check_path_resides_within_volume, resolve_hostname
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, Str
-from middlewared.validators import Exact, IpAddress, Match, Or, Range
+from middlewared.validators import Exact, Match, Or, Range
 from middlewared.service import SystemServiceService, ValidationErrors
 
 
@@ -29,7 +29,7 @@ class FTPService(SystemServiceService):
         Bool('defaultroot'),
         Bool('ident'),
         Bool('reversedns'),
-        Str('masqaddress', validators=[Or(Exact(""), IpAddress())]),
+        Str('masqaddress'),
         Int('passiveportsmin', validators=[Or(Exact(0), Range(min=1024, max=65535))]),
         Int('passiveportsmax', validators=[Or(Exact(0), Range(min=1024, max=65535))]),
         Int('localuserbw', validators=[Range(min=0)]),
@@ -53,8 +53,8 @@ class FTPService(SystemServiceService):
         Bool('tls_opt_ip_address_required'),
         Int('ssltls_certificate'),
         Str('options'),
-    ), Bool('dry_run'))
-    async def update(self, data, dry_run=False):
+    ))
+    async def do_update(self, data):
         old = await self.config()
 
         new = old.copy()
@@ -77,13 +77,15 @@ class FTPService(SystemServiceService):
         if new["tls"] and new["ssltls_certificate"] == 0:
             verrors.add("ftp_update.ssltls_certificate", "This field is required when TLS is enabled")
 
+        if new["masqaddress"]:
+            await resolve_hostname(self.middleware, verrors, "ftp_update.masqaddress", new["masqaddress"])
+
         if verrors:
             raise verrors
 
-        if not dry_run:
-            await self._update_service(old, new)
+        await self._update_service(old, new)
 
-            if not old['tls'] and new['tls']:
-                await self.middleware.call('service._start_ssl', 'proftpd')
+        if not old['tls'] and new['tls']:
+            await self.middleware.call('service._start_ssl', 'proftpd')
 
         return new

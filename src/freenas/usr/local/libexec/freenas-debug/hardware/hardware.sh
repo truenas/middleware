@@ -93,8 +93,8 @@ hardware_func()
 	memcontrol list
 	section_footer
 
-	section_header "camcontrol devlist"
-	camcontrol devlist
+	section_header "camcontrol devlist -v"
+	camcontrol devlist -v
 	section_footer
 
 	for disk in $(get_physical_disks_list)

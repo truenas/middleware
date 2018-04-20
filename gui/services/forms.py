@@ -23,9 +23,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import base64
 import glob
-import hashlib
 import logging
 import os
 import re
@@ -43,7 +41,6 @@ from freenasUI import choices
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import Form, ModelForm
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
-from freenasUI.common.samba import Samba4
 from freenasUI.common.system import activedirectory_enabled, ldap_enabled
 from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
@@ -59,6 +56,7 @@ from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Disk, Volume
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import fc_enabled
+from middlewared.plugins.iscsi import AUTHMETHOD_LEGACY_MAP
 from middlewared.plugins.smb import LOGLEVEL_MAP
 
 log = logging.getLogger('services.form')
@@ -227,7 +225,15 @@ class AFPForm(MiddlewareModelForm, ModelForm):
             self.fields['afp_srv_bindip'].initial = ('')
 
 
-class NFSForm(ModelForm):
+class NFSForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_map = {
+        'userd_manage_gids': 'nfs_srv_16',
+    }
+    middleware_attr_prefix = "nfs_srv_"
+    middleware_attr_schema = "nfs"
+    middleware_plugin = "nfs"
+    is_singletone = True
 
     class Meta:
         model = models.NFS
@@ -285,30 +291,9 @@ class NFSForm(ModelForm):
         if self.instance.nfs_srv_v4_v3owner:
             self.fields['nfs_srv_16'].widget.attrs['disabled'] = 'disabled'
 
-    def clean_nfs_srv_bindip(self):
-        ips = self.cleaned_data.get("nfs_srv_bindip")
-        if not ips:
-            return ''
-        bind = []
-        for ip in ips:
-            try:
-                IPAddress(ip)
-            except:
-                raise forms.ValidationError(
-                    "This is not a valid IP: %s" % (ip, )
-                )
-            bind.append(ip)
-        return bind
-
-    def save(self):
-        obj = super(NFSForm, self).save()
-        started = notifier().restart("nfs")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='nfs').srv_enable
-        ):
-            raise ServiceFailed("nfs", _("The NFS service failed to reload."))
-        return obj
+    def middleware_clean(self, update):
+        update['userd_manage_gids'] = update.pop('16')
+        return update
 
 
 class FTPForm(MiddlewareModelForm, ModelForm):
@@ -396,7 +381,12 @@ class TFTPForm(MiddlewareModelForm, ModelForm):
         return "%.3o" % mask
 
 
-class SSHForm(ModelForm):
+class SSHForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'ssh_'
+    middleware_attr_schema = 'ssh'
+    middleware_plugin = 'ssh'
+    is_singletone = True
 
     class Meta:
         fields = '__all__'
@@ -409,27 +399,6 @@ class SSHForm(ModelForm):
         super(SSHForm, self).__init__(*args, **kwargs)
         self.fields['ssh_bindiface'].choices = list(choices.NICChoices(exclude_configured=False,
                                                     exclude_unconfigured_vlan_parent=True))
-
-    def save(self):
-        obj = super(SSHForm, self).save()
-        started = notifier().reload("ssh")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='ssh').srv_enable
-        ):
-            raise ServiceFailed("ssh", _("The SSH service failed to reload."))
-        else:
-            keyfile = "/usr/local/etc/ssh/ssh_host_ecdsa_key.pub"
-            if not os.path.exists(keyfile):
-                return obj
-            with open(keyfile, "rb") as f:
-                pubkey = f.read().strip().split(None, 3)[1]
-            decoded_key = base64.b64decode(pubkey)
-            key_digest = hashlib.sha256(decoded_key).digest()
-            ssh_fingerprint = (b"SHA256:" + base64.b64encode(key_digest).replace(b"=", b"")).decode("utf-8")
-            # using log.error since it logs to /var/log/messages, /var/log/debug.log as well as /dev/console all at once
-            log.error("ECDSA Fingerprint of the SSH KEY: " + ssh_fingerprint)
-        return obj
 
 
 class RsyncdForm(MiddlewareModelForm, ModelForm):
@@ -455,8 +424,8 @@ class RsyncModForm(MiddlewareModelForm, ModelForm):
         model = models.RsyncMod
 
     def middleware_clean(self, update):
-        update['hostsallow'] = list(filter(None, re.split(r"\s+", update["hostsallow"])))
-        update['hostsdeny'] = list(filter(None, re.split(r"\s+", update["hostsdeny"])))
+        update['hostsallow'] = update["hostsallow"].split()
+        update['hostsdeny'] = update["hostsdeny"].split()
         return update
 
 
@@ -509,7 +478,7 @@ class DynamicDNSForm(MiddlewareModelForm, ModelForm):
         return cdata
 
     def middleware_clean(self, update):
-        update["domain"] = list(filter(None, re.split(r"\s+", update["domain"])))
+        update["domain"] = update["domain"].split()
         return update
 
 
@@ -1196,7 +1165,17 @@ class iSCSITargetExtentForm(ModelForm):
         return oExtent
 
 
-class iSCSITargetPortalForm(ModelForm):
+class iSCSITargetPortalForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_map = {
+        'discovery_authmethod': 'iscsi_target_portal_discoveryauthmethod',
+        'discovery_authgroup': 'iscsi_target_portal_discoveryauthgroup',
+    }
+    middleware_attr_prefix = 'iscsi_target_portal_'
+    middleware_attr_schema = 'iscsiportal'
+    middleware_plugin = 'iscsi.portal'
+    is_singletone = False
+
     iscsi_target_portal_discoveryauthgroup = forms.ChoiceField(
         label=_("Discovery Auth Group")
     )
@@ -1210,36 +1189,28 @@ class iSCSITargetPortalForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetPortalForm, self).__init__(*args, **kwargs)
-        self.fields["iscsi_target_portal_tag"].initial = (
-            models.iSCSITargetPortal.objects.all().count() + 1)
+        self._listen = []
         self.fields['iscsi_target_portal_discoveryauthgroup'].required = False
-        self.fields['iscsi_target_portal_discoveryauthgroup'].choices = [('-1', _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
+        self.fields['iscsi_target_portal_discoveryauthgroup'].choices = [(None, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
 
-    def clean_iscsi_target_portal_discoveryauthgroup(self):
-        discoverymethod = self.cleaned_data['iscsi_target_portal_discoveryauthmethod']
-        discoverygroup = self.cleaned_data['iscsi_target_portal_discoveryauthgroup']
-        if discoverygroup in ('', None):
-            return None
-        if discoverymethod in ('CHAP', 'CHAP Mutual'):
-            if int(discoverygroup) == -1:
-                raise forms.ValidationError(_("This field is required if discovery method is set to CHAP or CHAP Mutual."))
-        elif int(discoverygroup) == -1:
-            return None
-        return discoverygroup
+    def cleanformset_iscsitargetportalip(self, fs, forms):
+        for form in forms:
+            if not hasattr(form, 'cleaned_data'):
+                continue
+            if form.cleaned_data.get('DELETE'):
+                continue
+            self._listen.append({
+                'ip': form.cleaned_data.get('iscsi_target_portalip_ip'),
+                'port': form.cleaned_data.get('iscsi_target_portalip_port'),
+            })
+        return True
 
-    def clean_iscsi_target_portal_tag(self):
-        tag = self.cleaned_data["iscsi_target_portal_tag"]
-        higher = models.iSCSITargetPortal.objects.all().count() + 1
-        if tag > higher:
-            raise forms.ValidationError(_("Your Portal Group ID cannot be higher than %d") % higher)
-        return tag
-
-    def done(self, *args, **kwargs):
-        super(iSCSITargetPortalForm, self).done(*args, **kwargs)
-        # This must be done here and not on save() because it saves foreign keys
-        started = notifier().reload("iscsitarget")
-        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
+    def middleware_clean(self, data):
+        data['listen'] = self._listen
+        data['discovery_authmethod'] = AUTHMETHOD_LEGACY_MAP.get(data.pop('discoveryauthmethod'))
+        data['discovery_authgroup'] = data.pop('discoveryauthgroup') or None
+        data.pop('tag', None)
+        return data
 
 
 class iSCSITargetPortalIPForm(ModelForm):
@@ -1275,20 +1246,11 @@ class iSCSITargetPortalIPForm(ModelForm):
             ) or (self.parent and not self.parent.instance.id):
                 self.fields['iscsi_target_portalip_ip'].initial = '0.0.0.0'
 
-    def clean(self):
-        ip = self.cleaned_data.get('iscsi_target_portalip_ip')
-        port = self.cleaned_data.get('iscsi_target_portalip_port')
-        qs = models.iSCSITargetPortalIP.objects.filter(
-            iscsi_target_portalip_ip=ip,
-            iscsi_target_portalip_port=port,
-        )
-        if self.instance.id:
-            qs = qs.exclude(id=self.instance.id)
-        if qs.exists():
-            self._errors['__all__'] = self.error_class([
-                _('This IP and port are already in use.'),
-            ])
-        return self.cleaned_data
+
+class iSCSITargetPortalIPInlineFormSet(FreeBaseInlineFormSet):
+    def save(self, *args, **kwargs):
+        # save is done in middleware using parent form
+        pass
 
 
 class iSCSITargetAuthorizedInitiatorForm(ModelForm):
@@ -1523,11 +1485,18 @@ class SMARTForm(MiddlewareModelForm, ModelForm):
 
     def middleware_clean(self, update):
         update["powermode"] = update["powermode"].upper()
-        update["email"] = list(filter(None, re.split(r"\s+", update["email"])))
+        update["email"] = update["email"].split()
         return update
 
 
-class DomainControllerForm(ModelForm):
+class DomainControllerForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "dc_"
+    middleware_attr_schema = "domaincontroller"
+    middleware_exclude_fields = ['passwd2']
+    middleware_plugin = "domaincontroller"
+    is_singletone = True
+
     dc_passwd2 = forms.CharField(
         max_length=50,
         label=_("Confirm Administrator Password"),
@@ -1551,43 +1520,12 @@ class DomainControllerForm(ModelForm):
             'dc_passwd': forms.widgets.PasswordInput(render_value=False),
         }
 
-    def __original_save(self):
-        for name in ('dc_realm', 'dc_domain', 'dc_role', 'dc_passwd', 'dc_forest_level'):
-            setattr(
-                self.instance,
-                "_original_%s" % name,
-                getattr(self.instance, name)
-            )
-
-    def __original_changed(self):
-        for name in ('dc_realm', 'dc_domain'):
-            original_value = getattr(self.instance, "_original_%s" % name)
-            instance_value = getattr(self.instance, name)
-            if original_value != instance_value:
-                return True
-        return False
-
-    def __dc_passwd_changed(self):
-        if self.instance._original_dc_passwd != self.instance.dc_passwd:
-            return True
-        return False
-
-    def __dc_forest_level_changed(self):
-        if self.instance._original_dc_forest_level != self.instance.dc_forest_level:
-            return True
-        return False
-
-    def __dc_domain_level_changed(self):
-        return False
-
     def __init__(self, *args, **kwargs):
         super(DomainControllerForm, self).__init__(*args, **kwargs)
         if self.instance.dc_passwd:
             self.fields['dc_passwd'].required = False
         if self._api is True:
             del self.fields['dc_passwd2']
-
-        self.__original_save()
 
     def clean_dc_passwd2(self):
         password1 = self.cleaned_data.get("dc_passwd")
@@ -1602,20 +1540,9 @@ class DomainControllerForm(ModelForm):
             cdata['dc_passwd'] = self.instance.dc_passwd
         return cdata
 
-    def save(self):
-        super(DomainControllerForm, self).save()
-
-        if self.__original_changed():
-            Samba4().domain_sentinel_file_remove()
-
-        notifier().restart("domaincontroller",
-                           timeout=_fs().services.domaincontroller.timeout.restart)
-
-        if self.__dc_forest_level_changed():
-            Samba4().change_forest_level(self.instance.dc_forest_level)
-
-        if self.__dc_passwd_changed():
-            Samba4().set_administrator_password()
+    def middleware_clean(self, data):
+        data['role'] = data['role'].upper()
+        return data
 
 
 class WebDAVForm(MiddlewareModelForm, ModelForm):

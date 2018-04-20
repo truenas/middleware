@@ -10,7 +10,7 @@ import sysctl
 import bsd
 
 from middlewared.job import JobProgressBuffer
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str
+from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.service import (
     ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
 )
@@ -525,6 +525,13 @@ class PoolDatasetService(CRUDService):
                     dataset[i]['value'] = method(dataset[i]['value'])
             del dataset['properties']
 
+            if dataset['type'] == 'FILESYSTEM':
+                dataset['share_type'] = self.middleware.call_sync(
+                    'notifier.get_dataset_share_type', dataset['name'],
+                ).upper()
+            else:
+                dataset['share_type'] = None
+
             rv = []
             for child in dataset['children']:
                 rv.append(transform(child))
@@ -566,6 +573,7 @@ class PoolDatasetService(CRUDService):
             '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K', '256K', '512K', '1024K',
         ]),
         Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
+        Str('share_type', enum=['UNIX', 'WINDOWS', 'MAC'], default='UNIX'),
         register=True,
     ))
     async def do_create(self, data):
@@ -612,6 +620,11 @@ class PoolDatasetService(CRUDService):
             'properties': props,
         })
 
+        if data['type'] == 'FILESYSTEM':
+            await self.middleware.call(
+                'notifier.change_dataset_share_type', data['name'], data['share_type'].lower()
+            )
+
         await self.middleware.call('zfs.dataset.mount', data['name'])
 
     def _add_inherit(name):
@@ -634,6 +647,7 @@ class PoolDatasetService(CRUDService):
         ('edit', _add_inherit('readonly')),
         ('edit', _add_inherit('recordsize')),
         ('edit', _add_inherit('snapdir')),
+        ('attr', {'update': True}),
     ))
     async def do_update(self, id, data):
         """
@@ -677,7 +691,14 @@ class PoolDatasetService(CRUDService):
             else:
                 props[name] = {'value': data[i] if not transform else transform(data[i])}
 
-        return await self.middleware.call('zfs.dataset.update', id, {'properties': props})
+        rv = await self.middleware.call('zfs.dataset.update', id, {'properties': props})
+
+        if data['type'] == 'FILESYSTEM' and 'share_type' in data:
+            await self.middleware.call(
+                'notifier.change_dataset_share_type', id, data['share_type'].lower()
+            )
+
+        return rv
 
     async def __common_validation(self, verrors, schema, data, mode):
         assert mode in ('CREATE', 'UPDATE')
@@ -691,7 +712,7 @@ class PoolDatasetService(CRUDService):
                 verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
 
             for i in (
-                'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize',
+                'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize', 'share_type',
             ):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for VOLUME')
@@ -722,20 +743,14 @@ class PoolScrubService(CRUDService):
         datastore_prefix = 'scrub_'
         namespace = 'pool.scrub'
 
+    @private
     async def pool_scrub_extend(self, data):
         data['pool'] = data.pop('volume')
         data['pool'] = data['pool']['id']
-        if data['dayweek'] == '*':
-            data['dayweek'] = [str(value) for value in range(1, 8)]
-        else:
-            data['dayweek'] = data['dayweek'].split(',')
-
-        if data['month'] == '*':
-            data['month'] = [str(value) for value in range(1, 13)]
-        else:
-            data['month'] = data['month'].split(',')
+        Cron.convert_db_format_to_schedule(data)
         return data
 
+    @private
     async def validate_data(self, data, schema):
         verrors = ValidationErrors()
 
@@ -767,48 +782,16 @@ class PoolScrubService(CRUDService):
                         'A scrub with this pool already exists'
                     )
 
-        else:
-            verrors.add(
-                f'{schema}.pool',
-                'This field is required'
-            )
-
-        month = data.get('month')
-        if not month:
-            verrors.add(
-                f'{schema}.month',
-                'This field is required'
-            )
-        elif len(month) == 12:
-            data['month'] = '*'
-        else:
-            data['month'] = ','.join(month)
-
-        dayweek = data.get('dayweek')
-        if not dayweek:
-            verrors.add(
-                f'{schema}.dayweek',
-                'This field is required'
-            )
-        elif len(dayweek) == 7:
-            data['dayweek'] = '*'
-        else:
-            data['dayweek'] = ','.join(dayweek)
-
         return verrors, data
 
     @accepts(
         Dict(
             'pool_scrub_create',
-            Int('pool', validators=[Range(min=1)]),
+            Int('pool', validators=[Range(min=1)], required=True),
             Int('threshold', validators=[Range(min=0)]),
             Str('description'),
-            List('dayweek', items=[Str('dayweek')]),
-            List('month', items=[Str('month')]),
-            Str('daymonth'),
+            Cron('schedule'),
             Bool('enabled'),
-            Str('minute'),
-            Str('hour'),
             register=True
         )
     )
@@ -819,6 +802,8 @@ class PoolScrubService(CRUDService):
             raise verrors
 
         data['volume'] = data.pop('pool')
+        Cron.convert_schedule_to_db_format(data)
+
         data['id'] = await self.middleware.call(
             'datastore.insert',
             self._config.datastore,
@@ -849,8 +834,8 @@ class PoolScrubService(CRUDService):
             raise verrors
 
         task_data.pop('original_pool_id')
-        original_data['month'] = '*' if len(original_data['month']) == 12 else ','.join(original_data['month'])
-        original_data['dayweek'] = '*' if len(original_data['dayweek']) == 7 else ','.join(original_data['dayweek'])
+        Cron.convert_schedule_to_db_format(task_data)
+        Cron.convert_schedule_to_db_format(original_data)
 
         if len(set(task_data.items()) ^ set(original_data.items())) > 0:
 

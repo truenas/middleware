@@ -120,6 +120,7 @@ copyarg(char **pptr, const char *src)
 	ptr += len;
 	*ptr = '\n';
 	ptr++;
+	*ptr = 0;
 
 	*pptr = ptr;
 }

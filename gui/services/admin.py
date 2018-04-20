@@ -97,6 +97,7 @@ class ISCSIPortalFAdmin(BaseFreeAdmin):
     inlines = [
         {
             'form': 'iSCSITargetPortalIPForm',
+            'formset': 'iSCSITargetPortalIPInlineFormSet',
             'prefix': 'portalip_set',
         },
     ]

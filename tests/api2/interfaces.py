@@ -28,4 +28,4 @@ def test_02_get_interfaces_ip():
 def test_03_get_interfaces_netmask():
     getinfo = GET_ALL_OUTPUT('/interfaces/query')
     getinfo = getinfo[0]['aliases'][1]['netmask']
-    assert getinfo == 24
+    assert getinfo == 23

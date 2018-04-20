@@ -1041,7 +1041,7 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(SettingsForm, self).__init__(*args, **kwargs)
-        self.original_instance = self.instance.__dict__
+        self.original_instance = dict(self.instance.__dict__)
 
         self.fields['stg_language'].choices = settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")
@@ -1089,7 +1089,7 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
             else:
                 protocol = self.instance.stg_guiprotocol
 
-            newurl = "%s://%s" % (
+            newurl = "%s://%s/legacy/" % (
                 protocol,
                 address
             )
@@ -1177,7 +1177,7 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
     def __init__(self, *args, **kwargs):
         super(AdvancedForm, self).__init__(*args, **kwargs)
         self.fields['adv_motd'].strip = False
-        self.original_instance = self.instance.__dict__
+        self.original_instance = dict(self.instance.__dict__)
 
     def middleware_clean(self, data):
         if data.get('sed_user'):
@@ -3431,6 +3431,11 @@ class CloudCredentialsForm(ModelForm):
         required=False,
         widget=forms.widgets.PasswordInput(render_value=True),
     )
+    AMAZON_endpoint = forms.CharField(
+        label=_('Endpoint URL'),
+        max_length=200,
+        required=False,
+    )
     AZURE_account_name = forms.CharField(
         label=_('Account Name'),
         max_length=200,
@@ -3460,7 +3465,7 @@ class CloudCredentialsForm(ModelForm):
     )
 
     PROVIDER_MAP = {
-        'AMAZON': ['access_key', 'secret_key'],
+        'AMAZON': ['access_key', 'secret_key', 'endpoint'],
         'AZURE': ['account_name', 'account_key'],
         'BACKBLAZE': ['account_id', 'app_key'],
         'GCLOUD': ['keyfile'],
@@ -3497,7 +3502,8 @@ class CloudCredentialsForm(ModelForm):
         if not provider:
             return self.cleaned_data
         for field in self.PROVIDER_MAP.get(provider, []):
-            if not self.cleaned_data.get(f'{provider}_{field}'):
+            if (f'{provider}_{field}' not in ['AMAZON_endpoint'] and
+                    not self.cleaned_data.get(f'{provider}_{field}')):
                 self._errors[f'{provider}_{field}'] = self.error_class([_('This field is required.')])
         return self.cleaned_data
 

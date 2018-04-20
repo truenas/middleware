@@ -1,6 +1,5 @@
 from collections import defaultdict, namedtuple
 
-import asyncio
 import errno
 import inspect
 import json
@@ -159,7 +158,19 @@ class Service(object, metaclass=ServiceBase):
         self.middleware = middleware
 
 
-class ConfigService(Service):
+class ServiceChangeMixin:
+    async def _service_change(self, service, verb):
+        enabled = (await self.middleware.call(
+            'datastore.query', 'services.services', [('srv_service', '=', service)], {'get': True}
+        ))['srv_enable']
+
+        started = await self.middleware.call(f'service.{verb}', service, {'onetime': False})
+
+        if enabled and not started:
+            raise CallError(f'The {service} service failed to start', CallError.ESERVICESTARTFAILURE)
+
+
+class ConfigService(ServiceChangeMixin, Service):
     """
     Config service abstract class
 
@@ -211,18 +222,10 @@ class SystemServiceService(ConfigService):
         await self.middleware.call('datastore.update',
                                    f'services.{self._config.service_model or self._config.service}', old['id'], new,
                                    {'prefix': self._config.datastore_prefix})
-
-        enabled = (await self.middleware.call(
-            'datastore.query', 'services.services', [('srv_service', '=', self._config.service)], {'get': True}
-        ))['srv_enable']
-
-        started = await self.middleware.call(f'service.{self._config.service_verb}', self._config.service, {'onetime': False})
-
-        if enabled and not started:
-            raise CallError(f'The {self._config.service} service failed to start', CallError.ESERVICESTARTFAILURE)
+        await self._service_change(self._config.service, self._config.service_verb)
 
 
-class CRUDService(Service):
+class CRUDService(ServiceChangeMixin, Service):
     """
     CRUD service abstract class
 
@@ -247,31 +250,25 @@ class CRUDService(Service):
         return await self.middleware.call('datastore.query', self._config.datastore, filters, options)
 
     async def create(self, data):
-        if asyncio.iscoroutinefunction(self.do_create):
-            rv = await self.do_create(data)
-        else:
-            rv = await self.middleware.run_in_thread(self.do_create, data)
-        return rv
+        return await self.middleware._call(
+            f'{self._config.namespace}.create', self, self.do_create, [data]
+        )
 
     async def update(self, id, data):
-        if asyncio.iscoroutinefunction(self.do_update):
-            rv = await self.do_update(id, data)
-        else:
-            rv = await self.middleware.run_in_thread(self.do_update, id, data)
-        return rv
+        return await self.middleware._call(
+            f'{self._config.namespace}.update', self, self.do_update, [id, data]
+        )
 
     async def delete(self, id, *args):
-        if asyncio.iscoroutinefunction(self.do_delete):
-            rv = await self.do_delete(id, *args)
-        else:
-            rv = await self.middleware.run_in_thread(self.do_delete, id, *args)
-        return rv
+        return await self.middleware._call(
+            f'{self._config.namespace}.delete', self, self.do_delete, [id] + list(args)
+        )
 
     async def _get_instance(self, id):
         """
         Helpher method to get an instance from a collection given the `id`.
         """
-        instance = await self.middleware.call('datastore.query', self._config.datastore, [('id', '=', id)], {'prefix': self._config.datastore_prefix})
+        instance = await self.middleware.call(f'{self._config.namespace}.query', [('id', '=', id)])
         if not instance:
             raise ValidationError(None, f'{self._config.verbose_name} {id} does not exist', errno.ENOENT)
         return instance[0]

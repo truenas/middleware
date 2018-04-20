@@ -1558,7 +1558,7 @@ require([
         var provider = registry.byId("id_provider").get('value');
 
         var PROVIDER_MAP = {
-          'AMAZON': ['access_key', 'secret_key'],
+          'AMAZON': ['access_key', 'secret_key', 'endpoint'],
           'AZURE': ['account_name', 'account_key'],
           'BACKBLAZE': ['account_id', 'app_key'],
           'GCLOUD': ['keyfile']

@@ -168,6 +168,8 @@ generate_nginx_conf()
 #    FreeNAS nginx configuration file
 #
 
+load_module /usr/local/libexec/nginx/ngx_http_uploadprogress_module.so;
+
 user www www;
 worker_processes  1;
 
