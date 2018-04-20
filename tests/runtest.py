@@ -203,11 +203,17 @@ if api == "1.0":
               "api1/webdav_osx.py"])
 elif api == "2.0":
     call(["py.test-3.6", "-v", "--junitxml",
-          "%sinterfaces_test_tests_result.xml" % results_xml,
+          "%sinterfaces_tests_result.xml" % results_xml,
           "api2/interfaces.py"])
     call(["py.test-3.6", "-v", "--junitxml",
-          "%snetwork_user_tests_result.xml" % results_xml,
+          "%snetwork_tests_result.xml" % results_xml,
           "api2/network.py"])
     call(["py.test-3.6", "-v", "--junitxml",
-          "%sdisk_test_tests_result.xml" % results_xml,
+          "%sdisk_tests_result.xml" % results_xml,
           "api2/disk.py"])
+    call(["py.test-3.6", "-v", "--junitxml",
+          "%sftp_tests_result.xml" % results_xml,
+          "api2/ftp.py"])
+    call(["py.test-3.6", "-v", "--junitxml",
+          "%sssh_tests_result.xml" % results_xml,
+          "api2/ssh.py"])

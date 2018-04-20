@@ -71,8 +71,9 @@ def test_04_Checking_to_see_if_NFS_service_is_enabled():
 @bsd_host_cfg
 # Now check if we can mount NFS / create / rename / copy / delete / umount
 def test_05_Creating_NFS_mountpoint():
-    assert SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
@@ -81,7 +82,8 @@ def test_06_Mounting_NFS():
     cmd = 'mount_nfs %s:%s %s' % (ip, NFS_PATH, MOUNTPOINT)
     # command below does not make sence
     # "umount '${MOUNTPOINT}' ; rmdir '${MOUNTPOINT}'" "60"
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
@@ -89,42 +91,48 @@ def test_06_Mounting_NFS():
 def test_07_Creating_NFS_file():
     cmd = 'touch "%s/testfile"' % MOUNTPOINT
     # 'umount "${MOUNTPOINT}"; rmdir "${MOUNTPOINT}"'
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_08_Moving_NFS_file():
     cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_09_Copying_NFS_file():
     cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_10_Deleting_NFS_file():
-    assert SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_11_Unmounting_NFS():
-    assert SSH_TEST('umount "%s"' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('umount "%s"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_12_Removing_NFS_mountpoint():
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Update test

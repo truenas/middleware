@@ -3,29 +3,31 @@
 # Author: Eric Turgeon
 # License: BSD
 
-
+import pytest
 import sys
 import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import interface, ip
-from functions import GET_ALL_OUTPUT
+from functions import GET
+from config import *
 
-RunTest = True
-TestName = "get interface information"
+BRIDGENETMASKReason = "BRIDGENETMASK not in ixautomation.conf"
 
 
 def test_01_get_interfaces_driver():
-    assert GET_ALL_OUTPUT('/interfaces/query')[0]['name'] == interface
+    assert GET('/interfaces/query').json()[0]['name'] == interface
 
 
 def test_02_get_interfaces_ip():
-    getip = GET_ALL_OUTPUT('/interfaces/query')[0]['aliases'][1]['address']
+    getip = GET('/interfaces/query').json()[0]['aliases'][1]['address']
     assert getip == ip
 
 
+@pytest.mark.skipif("BRIDGENETMASK" not in locals(),
+                    reason=BRIDGENETMASKReason)
 def test_03_get_interfaces_netmask():
-    getinfo = GET_ALL_OUTPUT('/interfaces/query')
+    getinfo = GET('/interfaces/query').json()
     getinfo = getinfo[0]['aliases'][1]['netmask']
-    assert getinfo == 23
+    assert str(getinfo) == BRIDGENETMASK

@@ -37,7 +37,8 @@ def test_03_Wait_a_minute():
 # Update tests
 # Ensure test file does exist
 # def test_04_Verify_cronjob_has_created_the_test_file():
-#     assert SSH_TEST('test -f "%s"' % TESTFILE, user, password, ip) == True
+#     results = SSH_TEST('test -f "%s"' % TESTFILE, user, password, ip)
+#     assert results['result'] is True, results['output']
 
 
 # Update cronjob to disabled with new cron_command
@@ -56,7 +57,8 @@ def test_06_Checking_that_API_reports_the_cronjob_as_updated():
 # Delete test file so we can verify it is no longer being created later
 # in the delete/cronjob test
 def test_07_Deleting_test_file_created_by_cronjob():
-    assert SSH_TEST('rm -f "%s"' % TESTFILE, user, password, ip) is True
+    results = SSH_TEST('rm -f "%s"' % TESTFILE, user, password, ip)
+    assert results['result'] is True, results['output']
 
 
 # Delete tests

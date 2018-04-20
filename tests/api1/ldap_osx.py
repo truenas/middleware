@@ -119,8 +119,9 @@ def test_08_Creating_a_SMB_share_on_SMB_PATH():
 @osx_host_cfg
 @ldap_test_cfg
 def test_09_Create_mount_point_for_SMB_on_OSX_system():
-    assert SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
-                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
+                       OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
@@ -128,14 +129,16 @@ def test_09_Create_mount_point_for_SMB_on_OSX_system():
 def test_10_Mount_SMB_share_on_OSX_system():
     cmd = 'mount -t smbfs "smb://ldapuser:12345678'
     cmd += '@%s/%s" %s' % (ip, SMB_NAME, MOUNTPOINT)
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
 @ldap_test_cfg
 def test_11_Create_file_on_SMB_share_via_OSX_to_test_permissions():
-    assert SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
-                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
+                       OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Move test file to a new location on the SMB share
@@ -145,7 +148,8 @@ def test_12_Moving_SMB_test_file_into_a_new_directory():
     cmd = 'mkdir -p "%s/tmp" && ' % MOUNTPOINT
     cmd += 'mv "%s/testfile.txt" ' % MOUNTPOINT
     cmd += '"%s/tmp/testfile.txt"' % MOUNTPOINT
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Delete test file and test directory from SMB share
@@ -154,22 +158,25 @@ def test_12_Moving_SMB_test_file_into_a_new_directory():
 def test_13_Deleting_test_file_and_directory_from_SMB_share():
     cmd = 'rm -f "%s/tmp/testfile.txt" && ' % MOUNTPOINT
     cmd += 'rmdir "%s/tmp"' % MOUNTPOINT
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
 @ldap_test_cfg
 def test_14_Verifying_test_file_directory_were_successfully_removed():
     cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Clean up mounted SMB share
 @osx_host_cfg
 @ldap_test_cfg
 def test_15_Unmount_SMB_share():
-    assert SSH_TEST('umount -f "%s"' % MOUNTPOINT,
-                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST('umount -f "%s"' % MOUNTPOINT,
+                       OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Update tests
@@ -199,14 +206,16 @@ def test_17_Checking_LDAP():
 def test_18_Mount_SMB_share_on_OSX_system():
     cmd = 'mount -t smbfs "smb://ldapuser:12345678'
     cmd += '@%s/%s" "%s"' % (ip, SMB_NAME, MOUNTPOINT)
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
 @up_ldap_test_cfg
 def test_20_Create_file_on_SMB_share_via_OSX_to_test_permissions():
-    assert SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
-                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
+                       OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Move test file to a new location on the SMB share
@@ -216,7 +225,8 @@ def test_21_Moving_SMB_test_file_into_a_new_directory():
     cmd = 'mkdir -p "%s/tmp" && ' % MOUNTPOINT
     cmd += 'mv "%s/testfile.txt" ' % MOUNTPOINT
     cmd += '"%s/tmp/testfile.txt"' % MOUNTPOINT
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Delete test file and test directory from SMB share
@@ -225,22 +235,25 @@ def test_21_Moving_SMB_test_file_into_a_new_directory():
 def test_22_Deleting_test_file_and_directory_from_SMB_share():
     cmd = 'rm -f "%s/tmp/testfile.txt" && ' % MOUNTPOINT
     cmd += 'rmdir "%s/tmp"' % MOUNTPOINT
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
 @up_ldap_test_cfg
 def test_23_Verifying_test_file_directory_were_successfully_removed():
     cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Clean up mounted SMB share
 @osx_host_cfg
 @up_ldap_test_cfg
 def test_24_Unmount_SMB_share():
-    assert SSH_TEST('umount -f "%s"' % MOUNTPOINT,
-                    OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST('umount -f "%s"' % MOUNTPOINT,
+                       OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Delete tests
@@ -248,7 +261,8 @@ def test_24_Unmount_SMB_share():
 @ldap_test_cfg
 def test_25_Removing_SMB_mountpoint():
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST) is True
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
 
 
 def test_26_Removing_SMB_share_on_SMB_PATH():

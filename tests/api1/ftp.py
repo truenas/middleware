@@ -13,7 +13,7 @@ from functions import PUT, GET_OUTPUT, RC_TEST
 from auto_config import ip
 
 
-# Delete tests
+# Create tests
 def test_01_Configuring_ftp_service():
     payload = {"ftp_clients": 10, "ftp_rootlogin": "true"}
     results = PUT("/services/ftp/", payload)
