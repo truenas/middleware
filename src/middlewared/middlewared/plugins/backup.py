@@ -258,6 +258,7 @@ class BackupS3Service(Service):
 
         client = boto3.client(
             's3',
+            endpoint_url=credential['attributes'].get('endpoint', '').strip() or None,
             aws_access_key_id=credential['attributes'].get('access_key'),
             aws_secret_access_key=credential['attributes'].get('secret_key'),
         )
@@ -268,7 +269,7 @@ class BackupS3Service(Service):
         """Returns buckets from a given S3 credential."""
         client = await self.get_client(id)
         buckets = []
-        for bucket in client.list_buckets()['Buckets']:
+        for bucket in (await self.middleware.run_in_io_thread(client.list_buckets))['Buckets']:
             buckets.append({
                 'name': bucket['Name'],
                 'creation_date': bucket['CreationDate'],
@@ -282,7 +283,7 @@ class BackupS3Service(Service):
         Returns bucket `name` location (region) from credential `id`.
         """
         client = await self.get_client(id)
-        response = client.get_bucket_location(Bucket=name)
+        response = (await self.middleware.run_in_io_thread(client.get_bucket_location, Bucket=name))
         return response['LocationConstraint']
 
     @private
@@ -299,11 +300,13 @@ class BackupS3Service(Service):
                 access_key_id = {access_key}
                 secret_access_key = {secret_key}
                 region = {region}
+                endpoint = {endpoint}
                 server_side_encryption = {encryption}
                 """).format(
                 access_key=credential['attributes']['access_key'],
                 secret_key=credential['attributes']['secret_key'],
                 region=backup['attributes']['region'] or '',
+                endpoint=credential['attributes'].get('endpoint') or '',
                 encryption=backup['attributes'].get('encryption') or '',
             ))
             f.flush()

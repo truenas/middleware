@@ -849,6 +849,13 @@ class Middleware(object):
     async def run_in_thread(self, method, *args, **kwargs):
         return await self.run_in_thread_pool(self.__threadpool, method, *args, **kwargs)
 
+    async def run_in_io_thread(self, method, *args, **kwargs):
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        try:
+            return await self.loop.run_in_executor(executor, functools.partial(method, *args, **kwargs))
+        finally:
+            executor.shutdown(wait=False)
+
     async def _call(self, name, serviceobj, methodobj, params, app=None, spawn_thread=True):
 
         args = []
