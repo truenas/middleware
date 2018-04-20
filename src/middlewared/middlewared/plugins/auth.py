@@ -1,4 +1,5 @@
 import crypt
+import socket
 import subprocess
 import time
 import uuid
@@ -176,6 +177,12 @@ async def check_permission(app):
     Authenticates connections comming from loopback and from
     root user.
     """
+    sock = app.request.transport.get_extra_info('socket')
+    if sock.family == socket.AF_UNIX:
+        # Unix socket is only allowed for root
+        app.authenticated = True
+        return
+
     remote_addr, remote_port = app.request.transport.get_extra_info('peername')
 
     if not (remote_addr.startswith('127.') or remote_addr == '::1'):

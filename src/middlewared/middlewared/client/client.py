@@ -291,7 +291,7 @@ class Client(object):
         self._pings = {}
         self._event_callbacks = {}
         if uri is None:
-            uri = 'ws://127.0.0.1:6000/websocket'
+            uri = 'ws+unix:///var/run/middlewared.sock'
         self._closed = Event()
         self._connected = Event()
         try:
@@ -301,6 +301,8 @@ class Client(object):
                 reserved_ports=reserved_ports,
                 reserved_ports_blacklist=reserved_ports_blacklist,
             )
+            if 'unix://' in uri:
+                self._ws.resource = '/websocket'
             self._ws.connect()
             self._connected.wait(10)
             if not self._connected.is_set():
