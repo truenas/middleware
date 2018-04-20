@@ -110,7 +110,8 @@ def test_08_Verify_the_iSCSI_service_is_enabled():
 @bsd_host_cfg
 def test_09_Connecting_to_iSCSI_target():
     cmd = 'iscsictl -A -p %s:3620 -t %s' % (ip, TARGET_NAME)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
@@ -118,7 +119,7 @@ def test_09_Connecting_to_iSCSI_target():
 def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name():
     while True:
         SSH_TEST('iscsictl -L', BSD_USERNAME, BSD_PASSWORD,
-                 BSD_HOST) is True
+                 BSD_HOST)
         state = 'cat /tmp/.sshCmdTestStdOut | '
         state += 'awk \'$2 == "%s:3620" {print $3}\'' % ip
         iscsi_state = return_output(state)
@@ -128,6 +129,7 @@ def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name():
             iscsi_dev = return_output(dev)
             global DEVICE_NAME
             DEVICE_NAME = iscsi_dev
+            assert True
             break
         sleep(3)
 
@@ -135,23 +137,25 @@ def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name():
 @mount_test_cfg
 @bsd_host_cfg
 def test_11_Format_the_target_volume():
-    assert SSH_TEST('newfs "/dev/%s"' % DEVICE_NAME,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('newfs "/dev/%s"' % DEVICE_NAME,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_12_Creating_iSCSI_mountpoint():
-    assert SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_13_Mount_the_target_volume():
     cmd = 'mount "/dev/%s" "%s"' % (DEVICE_NAME, MOUNTPOINT)
-    assert SSH_TEST(cmd,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
@@ -160,85 +164,97 @@ def test_14_Creating_file():
     cmd = 'touch "%s/testfile"' % MOUNTPOINT
     # The line under doesn't make sence
     # "umount '${MOUNTPOINT}'; rmdir '${MOUNTPOINT}'"
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_15_Moving_file():
     cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_16_Copying_file():
     cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_17_Deleting_file():
-    assert SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_18_Unmounting_iSCSI_volume():
-    assert SSH_TEST('umount "%s"' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('umount "%s"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_19_Mount_the_target_volume():
-    SSH_TEST('mount "/dev/%s" "%s"' % (DEVICE_NAME, MOUNTPOINT),
-             BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('mount "/dev/%s" "%s"' % (DEVICE_NAME, MOUNTPOINT),
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_20_Creating_45MB_file_to_verify_vzol_size_increase():
-    SSH_TEST('dd if=/dev/zero of=/tmp/45Mfile.img bs=1M count=45',
-             BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('dd if=/dev/zero of=/tmp/45Mfile.img bs=1M count=45',
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_21_Moving_45MB_file_to_verify_vzol_size_increase():
-    SSH_TEST('mv /tmp/45Mfile.img "%s/testfile1"' % MOUNTPOINT,
-             BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('mv /tmp/45Mfile.img "%s/testfile1"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_22_Deleting_file():
-    SSH_TEST('rm "%s/testfile1"' % MOUNTPOINT,
-             BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('rm "%s/testfile1"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_23_Unmounting_iSCSI_volume():
-    SSH_TEST('umount -f "%s"' % MOUNTPOINT,
-             BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('umount -f "%s"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Delete tests
 @mount_test_cfg
 @bsd_host_cfg
 def test_24_Removing_iSCSI_volume_mountpoint():
-    SSH_TEST('rm -rf "%s"' % MOUNTPOINT,
-             BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('rm -rf "%s"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @mount_test_cfg
 @bsd_host_cfg
 def test_25_Disconnect_iSCSI_target():
-    SSH_TEST('iscsictl -R -t %s' % TARGET_NAME,
-             BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('iscsictl -R -t %s' % TARGET_NAME,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Disable the iSCSI service

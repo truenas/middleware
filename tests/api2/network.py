@@ -33,9 +33,3 @@ def test_02_get_default_routes_info():
     getinfo = GET_ALL_OUTPUT("/network/general/summary")
     getinfo = getinfo['default_routes'][0]
     assert getinfo == BRIDGEGW
-
-
-@pytest.mark.skipif(RunTest is False, reason=Reason)
-def test_03_get_nameserver_info():
-    getinfo = GET_ALL_OUTPUT("/network/general/summary")['nameservers'][0]
-    assert getinfo == BRIDGEGW

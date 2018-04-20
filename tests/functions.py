@@ -98,17 +98,21 @@ def DELETE_ALL(testpath, payload):
 
 def SSH_TEST(command, username, passwrd, host):
     teststdout = "/tmp/.sshCmdTestStdOut"
-    cmd = "sshpass -p %s " % passwrd
+    if passwrd is None:
+        cmd = ""
+    else:
+        cmd = "sshpass -p %s " % passwrd
     cmd += "ssh -o StrictHostKeyChecking=no "
     cmd += "-o UserKnownHostsFile=/dev/null "
     cmd += "-o VerifyHostKeyDNS=no "
     cmd += "%s@%s '%s' " % (username, host, command)
     cmd += "> %s" % teststdout
     process = run(cmd, shell=True)
+    output = open(teststdout, 'r').read()
     if process.returncode != 0:
-        return False
+        return {'result': False, 'output': output}
     else:
-        return True
+        return {'result': True, 'output': output}
 
 
 def RC_TEST(command):

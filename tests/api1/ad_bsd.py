@@ -112,8 +112,9 @@ def test_08_Creating_a_SMB_share_on_SMB_PATH():
 @bsd_host_cfg
 @ad_test_cfg
 def test_09_creating_smb_mountpoint():
-    assert SSH_TEST('mkdir -p "%s" && sync' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('mkdir -p "%s" && sync' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 # The ADUSER user must exist in AD with this password
@@ -122,7 +123,8 @@ def test_09_creating_smb_mountpoint():
 def test_10_Store_AD_credentials_in_a_file_for_mount_smbfs():
     cmd = 'echo "[TESTNAS:ADUSER]" > ~/.nsmbrc && '
     cmd += 'echo "password=12345678" >> ~/.nsmbrc'
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
@@ -130,49 +132,56 @@ def test_10_Store_AD_credentials_in_a_file_for_mount_smbfs():
 def test_11_Mounting_SMB():
     cmd = 'mount_smbfs -N -I %s -W AD01 ' % ip
     cmd += '"//aduser@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
 @ad_test_cfg
 def test_13_Creating_SMB_file():
-    assert SSH_TEST('touch "%s/testfile"' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('touch "%s/testfile"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
 @ad_test_cfg
 def test_14_Moving_SMB_file():
     cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
 @ad_test_cfg
 def test_15_Copying_SMB_file():
     cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
 @ad_test_cfg
 def test_16_Deleting_SMB_file_1_2():
-    assert SSH_TEST('rm "%s/testfile"' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('rm "%s/testfile"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
 @ad_test_cfg
 def test_17_Deleting_SMB_file_2_2():
-    assert SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
 @ad_test_cfg
 def test_18_Unmounting_SMB():
-    assert SSH_TEST('umount "%s"' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('umount "%s"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Update tests
@@ -180,48 +189,55 @@ def test_18_Unmounting_SMB():
 def test_19_Mounting_SMB():
     cmd = 'mount_smbfs -N -I %s -W AD01 ' % ip
     cmd += '"//aduser@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
 @ad_test_cfg
 def test_20_Creating_SMB_file():
-    assert SSH_TEST('touch "%s/testfile"' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('touch "%s/testfile"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
 @ad_test_cfg
 def test_21_Moving_SMB_file():
     cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
 @ad_test_cfg
 def test_22_Copying_SMB_file():
     cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
 @ad_test_cfg
 def test_23_Deleting_SMB_file_1_2():
-    assert SSH_TEST('rm "%s/testfile"' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('rm "%s/testfile"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
 @ad_test_cfg
 def test_24_Deleting_SMB_file_2_2():
-    assert SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 @ad_test_cfg
 def test_25_Unmounting_SMB():
-    assert SSH_TEST('umount "%s"' % MOUNTPOINT,
-                    BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST('umount "%s"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Delete tests
@@ -229,7 +245,8 @@ def test_25_Unmounting_SMB():
 @ad_test_cfg
 def test_26_Removing_SMB_mountpoint():
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
-    assert SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST) is True
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
 
 
 # Disable Active Directory Directory
