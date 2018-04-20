@@ -22,16 +22,10 @@ def GET(testpath):
     return getit
 
 
-def GET_OUTPUT(testpath, inputs):
-    getit = requests.get(freenas_url + testpath, headers=header,
-                         auth=authentification)
-    return getit.json()[inputs]
-
-
 def GET_USER(username):
-    for uid in range(1, 1000):
-        if GET_OUTPUT("/account/users/%s/" % uid,
-                      "bsdusr_username") == username:
+    for uid in range(1, 10000):
+        results = GET("/account/users/%s/" % uid)
+        if results.json()["bsdusr_username"] == username:
             userid = uid
             break
     return userid

@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, SSH_TEST, DELETE
+from functions import PUT, POST, GET, SSH_TEST, DELETE
 from auto_config import ip
 from config import *
 
@@ -58,13 +58,8 @@ def test_02_enabling_active_directory():
 
 @ad_test_cfg
 def test_03_checking_active_directory():
-    results = GET_OUTPUT("/directoryservice/activedirectory/", "ad_enable")
-    assert results is True
-
-
-# @ad_test_cfg
-# def test_04_checking_to_see_if_smb_service_is_enabled():
-#     assert GET_OUTPUT("/services/services/cifs/", "srv_state") == "RUNNING"
+    results = GET("/directoryservice/activedirectory/")
+    assert results.json()["ad_enable"] is True, results.text
 
 
 def test_04_enabling_smb_service():
@@ -84,8 +79,8 @@ def test_05_Starting_SMB_service():
 
 @ad_test_cfg
 def test_06_checking_to_see_if_smb_service_is_enabled():
-    results = GET_OUTPUT("/services/services/cifs/", "srv_state")
-    assert results == "RUNNING"
+    results = GET("/services/services/cifs/")
+    assert results.json()["srv_state"] == "RUNNING", results.text
 
 
 def test_07_Changing_permissions_on_SMB_PATH():
@@ -265,14 +260,14 @@ def test_27_Disabling_Active_Directory():
 # Check Active Directory
 @ad_test_cfg
 def test_28_Verify_Active_Directory_is_disabled():
-    results = GET_OUTPUT("/directoryservice/activedirectory/", "ad_enable")
-    assert results is False
+    results = GET("/directoryservice/activedirectory/")
+    assert results.json()["ad_enable"] is False, results.text
 
 
 @ad_test_cfg
 def test_29_Verify_SMB_service_is_disabled():
-    results = GET_OUTPUT("/services/services/cifs/", "srv_state")
-    assert results == "STOPPED"
+    results = GET("/services/services/cifs/")
+    assert results.json()["srv_state"] == "STOPPED", results.text
 
 
 # Check destroying a SMB dataset

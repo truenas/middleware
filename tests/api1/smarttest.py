@@ -9,11 +9,11 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET_OUTPUT
+from functions import POST, GET
 
 
 def test_01_Create_a_new_SMARTTest():
-    disk_identifiers = GET_OUTPUT("/storage/disk", "disk_identifier")
+    disk_identifiers = GET("/storage/disk",).json()["disk_identifier"]
     global disk_ident
     disk_indent = disk_identifiers.split()[0]
     payload = {"smarttest_disks": disk_indent,
@@ -27,5 +27,5 @@ def test_01_Create_a_new_SMARTTest():
 
 
 def test_02_Check_that_API_reports_new_SMARTTest():
-    results = GET_OUTPUT("/tasks/smarttest/", "smarttest_disks")
-    assert results == disk_ident
+    results = GET("/tasks/smarttest/")
+    assert results.json()["smarttest_disks"] == disk_ident, results.text

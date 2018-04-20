@@ -9,8 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, GET, GET_OUTPUT
-
+from functions import PUT, GET
 LOCATION = "Maryville, TN"
 COUNTRY = "US"
 INTDESC = True
@@ -31,12 +30,12 @@ def test_02_Checking_that_API_reports_LLDP_service():
 
 
 def test_03_Checking_that_API_reports_LLDP_configuration_as_saved():
-    results = GET_OUTPUT("/services/lldp/", "lldp_country")
-    assert results == COUNTRY
-    results = GET_OUTPUT("/services/lldp/", "lldp_intdesc")
-    assert results == INTDESC
-    results = GET_OUTPUT("/services/lldp/", "lldp_location")
-    assert results == LOCATION
+    results = GET("/services/lldp/")
+    assert results.json()["lldp_country"] == COUNTRY
+    results = GET("/services/lldp/")
+    assert results.json()["lldp_intdesc"] == INTDESC
+    results = GET("/services/lldp/")
+    assert results.json()["lldp_location"] == LOCATION
 
 
 def test_04_Enable_LLDP_service():
@@ -45,5 +44,5 @@ def test_04_Enable_LLDP_service():
 
 
 def test_05_Checking_to_see_if_LLDP_service_is_running():
-    results = GET_OUTPUT("/services/services/lldp/", "srv_state")
-    assert results == "RUNNING"
+    results = GET("/services/services/lldp/")
+    assert results.json()["srv_state"] == "RUNNING"

@@ -9,7 +9,7 @@ from time import sleep
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET_OUTPUT, PUT, SSH_TEST, GET, DELETE
+from functions import POST, GET, PUT, SSH_TEST, GET, DELETE
 from auto_config import user, password, ip
 
 TESTFILE = "/tmp/.testFileCreatedViaCronjob"
@@ -26,8 +26,8 @@ def test_01_Creating_new_cron_job_which_will_run_every_minute():
 
 
 def test_02_Checking_to_see_if_cronjob_was_created_and_enabled():
-    results = GET_OUTPUT("/tasks/cronjob/1/", "cron_enabled")
-    assert results is True
+    results = GET("/tasks/cronjob/1/")
+    assert results.json()["cron_enabled"] is True
 
 
 def test_03_Wait_a_minute():
@@ -50,8 +50,8 @@ def test_05_Updating_cron_job_status_to_disabled_updating_command():
 
 # Check that cronjob is disabled
 def test_06_Checking_that_API_reports_the_cronjob_as_updated():
-    results = GET_OUTPUT("/tasks/cronjob/%s/" % CRONJOB_ID, "cron_enabled")
-    assert results is False
+    results = GET("/tasks/cronjob/%s/" % CRONJOB_ID)
+    assert results.json()["cron_enabled"] is False
 
 
 # Delete test file so we can verify it is no longer being created later

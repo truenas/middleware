@@ -10,7 +10,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, SSH_TEST
+from functions import PUT, POST, GET, DELETE, DELETE_ALL, SSH_TEST
 from auto_config import ip
 from config import *
 if "BRIDGEHOST" in locals():
@@ -51,8 +51,8 @@ def test_03_Starting_SMB_service():
 
 
 def test_04_Checking_to_see_if_SMB_service_is_running():
-    results = GET_OUTPUT("/services/services/cifs/", "srv_state")
-    assert results == "RUNNING"
+    results = GET("/services/services/cifs/")
+    assert results.json()["srv_state"] == "RUNNING", results.text
 
 
 def test_05_Changing_permissions_on_SMB_PATH():
@@ -225,8 +225,8 @@ def test_24_Stopping_SMB_service():
 
 
 def test_25_Verify_SMB_service_is_disabled():
-    results = GET_OUTPUT("/services/services/cifs/", "srv_state")
-    assert results == "STOPPED"
+    results = GET("/services/services/cifs/")
+    assert results.json()["srv_state"] == "STOPPED", results.text
 
 
 # Check destroying a SMB dataset

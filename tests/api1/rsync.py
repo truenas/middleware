@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, GET_OUTPUT, RC_TEST, DELETE  # , POST
+from functions import PUT, GET, RC_TEST  # , DELETE, POST
 from auto_config import ip
 
 
@@ -24,8 +24,8 @@ def test_02_Starting_rsyncd_service():
 
 
 def test_03_Checking_to_see_if_rsync_service_is_enabled():
-    results = GET_OUTPUT("/services/services/rsync/", "srv_state")
-    assert results == "RUNNING"
+    results = GET("/services/services/rsync/")
+    assert results.json()["srv_state"] == "RUNNING", results
 
 
 # def test_04_Creating_rsync_resource():
@@ -46,8 +46,8 @@ def test_05_Testings_rsync_access():
 
 
 def test_07_Checking_to_see_if_rsync_service_is_enabled():
-    results = GET_OUTPUT("/services/services/rsync/", "srv_state")
-    assert results == "RUNNING"
+    results = GET("/services/services/rsync/")
+    assert results.json()["srv_state"] == "RUNNING", results
 
 
 # Delete tests

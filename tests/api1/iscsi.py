@@ -11,7 +11,7 @@ import os
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, SSH_TEST, return_output, DELETE
+from functions import PUT, POST, GET, SSH_TEST, return_output, DELETE
 from functions import POSTNOJSON
 from auto_config import ip
 from config import *
@@ -100,8 +100,8 @@ def test_07_Enable_iSCSI_service():
 
 
 def test_08_Verify_the_iSCSI_service_is_enabled():
-    results = GET_OUTPUT("/services/services/iscsitarget/", "srv_state")
-    assert results == "RUNNING"
+    results = GET("/services/services/iscsitarget/")
+    assert results.json()["srv_state"] == "RUNNING", results.text
 
 
 # when SSH_TEST is functional test using it will need to be added
@@ -265,8 +265,8 @@ def test_26_Disable_iSCSI_service():
 
 
 def test_27_Verify_the_iSCSI_service_is_Sdisabled():
-    results = GET_OUTPUT("/services/services/iscsitarget/", "srv_state")
-    assert results == "STOPPED"
+    results = GET("/services/services/iscsitarget/")
+    assert results.json()["srv_state"] == "STOPPED", results.text
 
 
 # Remove iSCSI target

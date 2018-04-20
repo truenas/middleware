@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET_OUTPUT, PUT, SSH_TEST, DELETE
+from functions import POST, GET, PUT, SSH_TEST, DELETE
 from auto_config import ip
 from config import *
 
@@ -56,14 +56,14 @@ def test_02_Enabling_Active_Directory():
 
 @ad_test_cfg
 def test_03_Checking_Active_Directory():
-    results = GET_OUTPUT("/directoryservice/activedirectory/", "ad_enable")
-    assert results is True
+    results = GET("/directoryservice/activedirectory/")
+    assert results.json()["ad_enable"] is True, results.text
 
 
 @ad_test_cfg
 def test_04_Checking_to_see_if_SMB_service_is_enabled():
-    results = GET_OUTPUT("/services/services/cifs/", "srv_state")
-    assert results == "RUNNING"
+    results = GET("/services/services/cifs/")
+    assert results.json()["srv_state"] == "RUNNING", results.text
 
 
 def test_05_Enabling_SMB_service():
@@ -247,17 +247,17 @@ def test_25_Disabling_Active_Directory():
 # Check Active Directory
 @ad_test_cfg
 def test_26_Verify_Active_Directory_is_disabled():
-    results = GET_OUTPUT("/directoryservice/activedirectory/", "ad_enable")
-    assert results is False
+    results = GET("/directoryservice/activedirectory/")
+    assert results.json()["ad_enable"] is False, results.text
 
 
 @ad_test_cfg
 def test_27_Verify_SMB_service_is_disabled():
-    results = GET_OUTPUT("/services/services/cifs/", "srv_state")
-    assert results == "STOPPED"
+    results = GET("/services/services/cifs/")
+    assert results.json()["srv_state"] == "STOPPED", results.text
 
 
 # Check destroying a SMB dataset
-# def test_28_Destroying_SMB_dataset():
-#     results = DELETE("/storage/volume/1/datasets/%s/" % DATASET)
-#     assert results.status_code == 204, results.text
+def test_28_Destroying_SMB_dataset():
+    results = DELETE("/storage/volume/1/datasets/%s/" % DATASET)
+    assert results.status_code == 204, results.text

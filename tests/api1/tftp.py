@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, GET_OUTPUT, POST
+from functions import PUT, GET, POST
 
 TESTFILE_NAME = "tftp-testfile.txt"
 TESTFILE_PATH = "/tmp/"
@@ -45,5 +45,5 @@ def test_04_Starting_TFTP_service():
 
 
 def test_05_Checking_to_see_if_TFTP_service_is_enabled():
-    results = GET_OUTPUT("/services/services/tftp/", "srv_state")
-    assert results == "RUNNING"
+    results = GET("/services/services/tftp/")
+    assert results.json()["srv_state"] == "RUNNING", results.text

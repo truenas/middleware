@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, GET_OUTPUT, RC_TEST
+from functions import PUT, GET, RC_TEST
 from auto_config import ip
 
 
@@ -27,8 +27,8 @@ def test_02_Starting_ftp_service():
 
 
 def test_03_Checking_to_see_if_FTP_service_is_enabled():
-    results = GET_OUTPUT("/services/services/ftp/", "srv_state")
-    assert results == "RUNNING"
+    results = GET("/services/services/ftp/")
+    assert results.json()["srv_state"] == "RUNNING", results.text
 
 
 def test_04_Fetching_file_via_FTP():
@@ -53,5 +53,5 @@ def test_07_Starting_ftp_service():
 
 
 def test_08_Checking_to_see_if_FTP_service_is_enabled():
-    results = GET_OUTPUT("/services/services/ftp/", "srv_state")
-    assert results == "RUNNING"
+    results = GET("/services/services/ftp/")
+    assert results.json()["srv_state"] == "RUNNING", results.text

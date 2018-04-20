@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT
+from functions import PUT, POST, GET
 
 DATASET = "webdav-osx-share"
 DATASET_PATH = "/mnt/tank/%s/" % DATASET
@@ -48,8 +48,8 @@ def test_04_Starting_WebDAV_service():
 
 
 def test_05_Verifying_that_the_WebDAV_service_has_started():
-    results = GET_OUTPUT("/services/services/webdav", "srv_state")
-    assert results == "RUNNING"
+    results = GET("/services/services/webdav")
+    assert results.json()["srv_state"] == "RUNNING", results.text
 
 
 def test_06_Stopping_WebDAV_service():
@@ -58,8 +58,8 @@ def test_06_Stopping_WebDAV_service():
 
 
 def test_07_Verifying_that_the_WebDAV_service_has_stopped():
-    results = GET_OUTPUT("/services/services/webdav", "srv_state")
-    assert results == "STOPPED"
+    results = GET("/services/services/webdav")
+    assert results.json()["srv_state"] == "STOPPED", results.text
 
 
 # Update tests
@@ -98,5 +98,5 @@ def test_12_Stopping_WebDAV_service():
 
 
 def test_13_Verifying_that_the_WebDAV_service_has_stopped():
-    results = GET_OUTPUT("/services/services/webdav", "srv_state")
-    assert results == "STOPPED"
+    results = GET("/services/services/webdav")
+    assert results.json()["srv_state"] == "STOPPED", results.text
