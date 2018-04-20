@@ -28,29 +28,25 @@ import logging
 import os
 import re
 
-from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
 from freenasUI.common.forms import ModelForm
 from freenasUI.freeadmin.forms import SelectMultipleWidget
 from freenasUI.freeadmin.utils import key_order
+from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.form import MiddlewareModelForm
-from freenasUI.common.pipesubr import pipeopen
 from freenasUI.services.models import services, NFS
 from freenasUI.sharing import models
-from freenasUI.storage.models import Task
 from freenasUI.storage.widgets import UnixPermissionField
-from ipaddr import (
-    IPAddress, IPNetwork, AddressValueError, NetmaskValueError
-)
+from ipaddr import (IPNetwork, AddressValueError, NetmaskValueError)
 
 log = logging.getLogger('sharing.forms')
 
 
-class CIFS_ShareForm(ModelForm):
+class CIFS_ShareForm(MiddlewareModelForm, ModelForm):
 
     cifs_default_permissions = forms.BooleanField(
         label=_('Apply Default Permissions'),
@@ -59,34 +55,10 @@ class CIFS_ShareForm(ModelForm):
         ),
         required=False
     )
-
-    def _get_storage_tasks(self, cifs_path=None, cifs_home=False):
-        p = pipeopen("zfs list -H -o mountpoint,name")
-        zfsout = p.communicate()[0].split('\n')
-        if p.returncode != 0:
-            zfsout = []
-
-        task_list = []
-        if cifs_path:
-            for line in zfsout:
-                try:
-                    tasks = []
-                    zfs_mp, zfs_ds = line.split()
-                    if cifs_path == zfs_mp or cifs_path.startswith("%s/" % zfs_mp):
-                        if cifs_path == zfs_mp:
-                            tasks = Task.objects.filter(task_filesystem=zfs_ds)
-                        else:
-                            tasks = Task.objects.filter(Q(task_filesystem=zfs_ds) & Q(task_recursive=True))
-                    for t in tasks:
-                        task_list.append(t)
-
-                except:
-                    pass
-
-        elif cifs_home:
-            task_list = Task.objects.filter(Q(task_recursive=True))
-
-        return task_list
+    middleware_attr_prefix = "cifs_"
+    middleware_attr_schema = "cifs"
+    middleware_plugin = "sharing.cifs"
+    is_singletone = False
 
     def __init__(self, *args, **kwargs):
         super(CIFS_ShareForm, self).__init__(*args, **kwargs)
@@ -114,17 +86,21 @@ class CIFS_ShareForm(ModelForm):
         )
 
         if self.instance:
-            task_list = []
+            task_dict = {}
             if self.instance.cifs_path:
-                task_list = self._get_storage_tasks(cifs_path=self.instance.cifs_path)
+                with client as c:
+                    task_dict = c.call('sharing.cifs.get_storage_tasks',
+                                       self.instance.cifs_path)
 
             elif self.instance.cifs_home:
-                task_list = self._get_storage_tasks(cifs_home=self.instance.cifs_home)
+                with client as c:
+                    task_dict = c.call('sharing.cifs.get_storage_tasks',
+                                        None, self.instance.cifs_home)
 
-            if task_list:
+            if task_dict:
                 choices = [('', '-----')]
-                for task in task_list:
-                    choices.append((task.id, task))
+                for task_id, msg in task_dict.items():
+                    choices.append((task_id, msg))
                 self.fields['cifs_storage_task'].choices = choices
 
             else:
@@ -134,85 +110,19 @@ class CIFS_ShareForm(ModelForm):
         fields = '__all__'
         model = models.CIFS_Share
 
-    def clean_cifs_home(self):
-        home = self.cleaned_data.get('cifs_home')
-        if home:
-            qs = models.CIFS_Share.objects.filter(cifs_home=True)
-            if self.instance.id:
-                qs = qs.exclude(id=self.instance.id)
-            if qs.exists():
-                raise forms.ValidationError(_(
-                    'Only one share is allowed to be a home share.'
-                ))
-        return home
+    def middleware_clean(self, data):
+        data['hostsallow'] = data['hostsallow'].split()
+        data['hostsdeny'] = data['hostsdeny'].split()
 
-    def clean_cifs_name(self):
-        name = self.cleaned_data.get('cifs_name')
-        path = self.cleaned_data.get('cifs_path')
-        if path and not name:
-            name = path.rsplit('/', 1)[-1]
-        return name
+        if not data['storage_task']:
+            data.pop('storage_task')
 
-    def clean_cifs_hostsallow(self):
-        net = self.cleaned_data.get("cifs_hostsallow")
-        net = re.sub(r'\s{2,}|\n', ' ', net).strip()
-        return net
-
-    def clean_cifs_hostsdeny(self):
-        net = self.cleaned_data.get("cifs_hostsdeny")
-        net = re.sub(r'\s{2,}|\n', ' ', net).strip()
-        return net
-
-    def clean(self):
-        path = self.cleaned_data.get('cifs_path')
-        home = self.cleaned_data.get('cifs_home')
-
-        if not home and not path:
-            self._errors['cifs_path'] = self.error_class([
-                _('This field is required.')
-            ])
-
-        return self.cleaned_data
-
-    def save(self):
-        obj = super(CIFS_ShareForm, self).save(commit=False)
-        path = self.cleaned_data.get('cifs_path').encode('utf8')
-        if path and not os.path.exists(path):
-            try:
-                os.makedirs(path)
-            except OSError as e:
-                raise MiddlewareError(_(
-                    'Failed to create %(path)s: %(error)s' % {
-                        'path': path,
-                        'error': e,
-                    }
-                ))
-
-        home = self.cleaned_data.get('cifs_home')
-        task = self.cleaned_data.get('cifs_storage_task')
-        if not task:
-            task_list = []
-            if path:
-                task_list = self._get_storage_tasks(cifs_path=path)
-            elif home:
-                task_list = self._get_storage_tasks(cifs_home=home)
-            if task_list:
-                obj.cifs_storage_task = task_list[0]
-
-        obj.save()
-        notifier().reload("cifs")
-        return obj
+        return data
 
     def done(self, request, events):
         if not services.objects.get(srv_service='cifs').srv_enable:
             events.append('ask_service("cifs")')
         super(CIFS_ShareForm, self).done(request, events)
-        if self.cleaned_data.get('cifs_default_permissions') is True:
-            try:
-                (owner, group) = notifier().mp_get_owner(self.instance.cifs_path)
-            except:
-                (owner, group) = ('root', 'wheel')
-            notifier().winacl_reset(path=self.instance.cifs_path, owner=owner, group=group)
 
 
 class AFP_ShareForm(MiddlewareModelForm, ModelForm):

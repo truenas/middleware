@@ -1146,26 +1146,15 @@ class IDMAP_CHOICES(object):
 
 
 class CIFS_VFS_OBJECTS(object):
-    def __init__(self):
-        self.__vfs_modules_path = '/usr/local/lib/shared-modules/vfs'
-        self.__vfs_modules = []
-        self.__vfs_exclude = {'shadow_copy2', 'recycle', 'aio_pthread'}
-
-        if os.path.exists(self.__vfs_modules_path):
-            self.__vfs_modules.extend(
-                filter(
-                    lambda m: m not in self.__vfs_exclude,
-                    map(
-                        lambda f: f.rpartition('.')[0],
-                        os.listdir(self.__vfs_modules_path)
-                    )
-                )
-            )
-        else:
-            self.__vfs_modules.extend(['streams_xattr'])
-
     def __iter__(self):
-        return iter((m, m) for m in sorted(self.__vfs_modules))
+        try:
+            with client as c:
+                cifs_list = c.call('sharing.cifs.vfsobjects_choices')
+                for value in sorted(cifs_list):
+                    # This is really a fake tuple
+                    yield (value, value)
+        except Exception:
+            yield (None, None)
 
 
 AFP_MAP_ACLS_CHOICES = (
