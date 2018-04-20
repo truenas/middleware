@@ -1,6 +1,8 @@
-from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
+from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch, Dir
 from middlewared.service import (SystemServiceService, ValidationErrors,
                                  accepts, private, CRUDService)
+from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.service_exception import CallError
 
 import re
 import os
@@ -123,7 +125,7 @@ class SharingCIFSService(CRUDService):
 
     @accepts(Dict(
         'sharingcifs_create',
-        Str('path'),
+        Dir('path'),
         Bool('home'),
         Str('name'),
         Str('comment'),
@@ -145,20 +147,24 @@ class SharingCIFSService(CRUDService):
     async def do_create(self, data):
         verrors = ValidationErrors()
         path = data['path']
+
         default_perms = data.pop('default_permissions', True)
 
         await self.clean(data, 'sharingcifs_create', verrors)
         await self.validate(data, 'sharingcifs_create', verrors)
 
+        await check_path_resides_within_volume(
+            verrors, self.middleware, "sharingcifs_create.path", path)
+
+        if verrors:
+            raise verrors
+
         if path and not os.path.exists(path):
             try:
                 os.makedirs(path)
             except OSError as e:
-                verrors.add('sharingcifs_create.path',
-                            f'Failed to create {path}: {e}')
-
-        if verrors:
-            raise verrors
+                raise CallError('sharingcifs_create.path',
+                                f'Failed to create {path}: {e}')
 
         await self.compress(data)
         await self.set_storage_tasks(data)
@@ -197,15 +203,18 @@ class SharingCIFSService(CRUDService):
         await self.clean(new, 'sharingcifs_update', verrors, id=id)
         await self.validate(new, 'sharingcifs_update', verrors, old=old)
 
+        await check_path_resides_within_volume(
+            verrors, self.middleware, "sharingcifs_update.path", path)
+
+        if verrors:
+            raise verrors
+
         if path and not os.path.exists(path):
             try:
                 os.makedirs(path)
             except OSError as e:
-                verrors.add('sharingcifs_create.path',
-                            f'Failed to create {path}: {e}')
-
-        if verrors:
-            raise verrors
+                raise CallError('sharingcifs_create.path',
+                                f'Failed to create {path}: {e}')
 
         await self.compress(new)
         await self.set_storage_tasks(new)
@@ -334,7 +343,7 @@ class SharingCIFSService(CRUDService):
                             [['task_filesystem', '=', name]])
                     else:
                         tasks = await self.middleware.call(
-                            'datastore.query','storage.task',
+                            'datastore.query', 'storage.task',
                             [['task_filesystem', '=', name],
                              ['task_recursive', '=', 'True']])
 
@@ -342,7 +351,7 @@ class SharingCIFSService(CRUDService):
                     task_list.append(t)
         elif home:
             task_list = await self.middleware.call(
-                'datastore.query','storage.task',
+                'datastore.query', 'storage.task',
                 [['task_recursive', '=', 'True']])
 
         if task_list:
@@ -380,7 +389,7 @@ class SharingCIFSService(CRUDService):
         return data
 
     @accepts()
-    def cifs_choices(self):
+    def vfsobjects_choices(self):
         vfs_modules_path = '/usr/local/lib/shared-modules/vfs'
         vfs_modules = []
         vfs_exclude = {'shadow_copy2', 'recycle', 'aio_pthread'}
