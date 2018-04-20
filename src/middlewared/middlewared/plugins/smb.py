@@ -1,4 +1,4 @@
-from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch, Dir
+from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
 from middlewared.service import (SystemServiceService, ValidationErrors,
                                  accepts, private, CRUDService)
 from middlewared.async_validators import check_path_resides_within_volume
@@ -125,7 +125,7 @@ class SharingCIFSService(CRUDService):
 
     @accepts(Dict(
         'sharingcifs_create',
-        Dir('path'),
+        Str('path'),
         Bool('home'),
         Str('name'),
         Str('comment'),
@@ -163,8 +163,7 @@ class SharingCIFSService(CRUDService):
             try:
                 os.makedirs(path)
             except OSError as e:
-                raise CallError('sharingcifs_create.path',
-                                f'Failed to create {path}: {e}')
+                raise CallError(f'Failed to create {path}: {e}')
 
         await self.compress(data)
         await self.set_storage_tasks(data)
@@ -213,8 +212,7 @@ class SharingCIFSService(CRUDService):
             try:
                 os.makedirs(path)
             except OSError as e:
-                raise CallError('sharingcifs_create.path',
-                                f'Failed to create {path}: {e}')
+                raise CallError(f'Failed to create {path}: {e}')
 
         await self.compress(new)
         await self.set_storage_tasks(new)
