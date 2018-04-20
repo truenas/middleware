@@ -364,10 +364,17 @@ save_serial_settings() {
     USESERIAL=$((`sysctl -n debug.boothowto` & 0x1000))
     if [ "$USESERIAL" -eq 0 ] ; then return 0; fi
 
+    # BIOS has vidconsole, UEFI has efi.
+    if [ "$BOOTMODE" = "efi" ] ; then
+       videoconsole="efi"
+    else
+       videoconsole="vidconsole"
+    fi
+
     # Enable serial/internal for BSD loader
     echo 'boot_multicons="YES"' >> ${_mnt}/boot/loader.conf
     echo 'boot_serial="YES"' >> ${_mnt}/boot/loader.conf
-    echo 'console="comconsole,vidconsole"' >> ${_mnt}/boot/loader.conf
+    echo "console=\"comconsole,${videoconsole}\"" >> ${_mnt}/boot/loader.conf
 
     chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialconsole = 1"
     SERIALSPEED=`kenv hw.uart.console | sed -En 's/.*br:([0-9]+).*/\1/p'`

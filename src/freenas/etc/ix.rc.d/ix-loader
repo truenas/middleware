@@ -48,16 +48,26 @@ update_persistent_file()
 loader_serial()
 {
 	local serial_enable=0
+	local bootmethod
+	local videoconsole
 
 	serial_enable=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialconsole FROM system_advanced ORDER BY -id LIMIT 1")
 
 	if [ "${serial_enable}" != "0" ]; then
 		serial_port=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialport FROM system_advanced ORDER BY -id LIMIT 1")
 		serial_speed=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialspeed FROM system_advanced ORDER BY -id LIMIT 1")
+
+		bootmethod=`sysctl -n machdep.bootmethod`
+		if [ "$bootmethod" = "UEFI" ] ; then
+			videoconsole='efi'
+		else
+			videoconsole='vidconsole'
+		fi
+
 		echo "comconsole_port=\"${serial_port}\""
 		echo "comconsole_speed=\"${serial_speed}\""
 		echo 'boot_multicons="YES"'
-		echo 'console="comconsole,vidconsole"'
+		echo "console=\"comconsole,${videoconsole}\""
 		# Above lines do not work in GRUB, so we have to duplicate.
 		echo "hw.uart.console=\"io:${serial_port},br:${serial_speed}\""
 	fi
