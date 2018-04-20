@@ -1,6 +1,8 @@
 import binascii
 import errno
+import grp
 import os
+import pwd
 import select
 import shutil
 
@@ -85,6 +87,16 @@ class FilesystemService(Service):
             'inode': stat.st_ino,
             'nlink': stat.st_nlink,
         }
+
+        try:
+            stat['user'] = pwd.getpwuid(stat['uid']).pw_name
+        except KeyError:
+            stat['user'] = None
+
+        try:
+            stat['group'] = grp.getgrgid(stat['gid']).gr_name
+        except KeyError:
+            stat['group'] = None
 
         if os.path.exists(os.path.join(path, ".windows")):
             stat["acl"] = "windows"
