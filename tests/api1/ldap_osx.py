@@ -10,7 +10,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, SSH_TEST
+from functions import PUT, POST, GET, DELETE, DELETE_ALL, SSH_TEST
 from auto_config import ip
 from config import *
 
@@ -69,8 +69,8 @@ def test_02_Enabling_LDAPd():
 # Check LDAP
 @ldap_test_cfg
 def test_03_Checking_LDAP():
-    results = GET_OUTPUT("/directoryservice/ldap/", "ldap_enable")
-    assert results is True
+    results = GET("/directoryservice/ldap/")
+    assert results.json()["ldap_enable"] is True, results.text
 
 
 def test_04_Enabling_SMB_service():
@@ -90,8 +90,8 @@ def test_05_Starting_SMB_service():
 
 @ldap_test_cfg
 def test_06_Checking_to_see_if_SMB_service_is_enabled():
-    results = GET_OUTPUT("/services/services/cifs/", "srv_state")
-    assert results == "RUNNING"
+    results = GET("/services/services/cifs/")
+    assert results.json()["srv_state"] == "RUNNING", results.text
 
 
 def test_07_Changing_permissions_on_SMB_PATH():
@@ -197,8 +197,8 @@ def test_16_Enabling_LDAP():
 # Check LDAP
 @up_ldap_test_cfg
 def test_17_Checking_LDAP():
-    results = GET_OUTPUT("/directoryservice/ldap/", "ldap_enable")
-    assert results is True
+    results = GET("/directoryservice/ldap/")
+    assert results.json()["ldap_enable"] is True, results.text
 
 
 @osx_host_cfg
@@ -298,14 +298,14 @@ def test_28_Stopping_SMB_service():
 # Check LDAP
 @ldap_test_cfg
 def test_29_Verify_LDAP_is_disabledd():
-    results = GET_OUTPUT("/directoryservice/ldap/", "ldap_enable")
-    assert results is False
+    results = GET("/directoryservice/ldap/")
+    assert results.json()["ldap_enable"] is False, results.text
 
 
 @ldap_test_cfg
 def test_30_Verify_SMB_service_has_shut_down():
-    results = GET_OUTPUT("/services/services/cifs/", "srv_state")
-    assert results == "STOPPED"
+    results = GET("/services/services/cifs/")
+    assert results.json()["srv_state"] == "STOPPED", results.text
 
 
 # Check destroying a SMB dataset

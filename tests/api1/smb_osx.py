@@ -10,7 +10,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, DELETE, DELETE_ALL, SSH_TEST
+from functions import PUT, POST, GET, DELETE, DELETE_ALL, SSH_TEST
 from auto_config import ip
 from config import *
 
@@ -67,8 +67,8 @@ def test_04_Creating_a_SMB_share_on_SMB_PATH():
 
 
 def test_05_Checking_to_see_if_SMB_service_is_running():
-    results = GET_OUTPUT("/services/services/cifs/", "srv_state")
-    assert results == "RUNNING"
+    results = GET("/services/services/cifs/")
+    assert results.json()["srv_state"] == "RUNNING", results.text
 
 
 # Mount share on OSX system and create a test file
@@ -217,8 +217,8 @@ def test_15_Stopping_SMB_service():
 
 
 def test_16_Verify_SMB_service_is_disabled():
-    results = GET_OUTPUT("/services/services/cifs/", "srv_state")
-    assert results == "STOPPED"
+    results = GET("/services/services/cifs/")
+    assert results.json()["srv_state"] == "STOPPED", results.text
 
 
 # Check destroying a SMB dataset

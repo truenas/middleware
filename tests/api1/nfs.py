@@ -10,7 +10,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT, SSH_TEST
+from functions import PUT, POST, GET, SSH_TEST
 from auto_config import ip
 from config import *
 
@@ -63,8 +63,8 @@ def test_03_Starting_NFS_service():
 
 
 def test_04_Checking_to_see_if_NFS_service_is_enabled():
-    results = GET_OUTPUT("/services/services/nfs/", "srv_state")
-    assert results == "RUNNING"
+    results = GET("/services/services/nfs/")
+    assert results.json()["srv_state"] == "RUNNING", results.text
 
 
 @mount_test_cfg
@@ -142,5 +142,5 @@ def test_13_Updating_the_NFS_service():
 
 
 def test_14_Checking_to_see_if_NFS_service_is_enabled():
-    results = GET_OUTPUT("/services/services/nfs/", "srv_state")
-    assert results == "RUNNING"
+    results = GET("/services/services/nfs/")
+    assert results.json()["srv_state"] == "RUNNING", results.text

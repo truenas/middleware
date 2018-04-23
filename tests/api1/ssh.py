@@ -8,7 +8,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, GET_OUTPUT, is_agent_setup, if_key_listed
+from functions import PUT, GET, is_agent_setup, if_key_listed
 from auto_config import sshKey
 
 
@@ -25,8 +25,8 @@ def test_02_Enabling_ssh_service():
 
 
 def test_03_Checking_ssh_enabled():
-    results = GET_OUTPUT("/services/services/ssh/", 'srv_state')
-    assert results == "RUNNING"
+    results = GET("/services/services/ssh/")
+    assert results.json()['srv_state'] == "RUNNING", results.text
 
 
 def test_04_Ensure_ssh_agent_is_setup():

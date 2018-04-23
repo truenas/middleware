@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, GET_OUTPUT
+from functions import PUT, GET
 
 COMMUNITY = "public"
 TRAPS = False
@@ -35,30 +35,30 @@ def test_02_Enable_SNMP_service():
 
 
 def test_03_Validate_that_SNMP_service_is_running():
-    results = GET_OUTPUT("/services/services/snmp/", "srv_state")
-    assert results == "RUNNING"
+    results = GET("/services/services/snmp/")
+    assert results.json()["srv_state"] == "RUNNING", results.text
 
 
 def test_04_Validate_that_SNMP_snmp_community_setting_is_preserved():
-    results = GET_OUTPUT("/services/snmp/", "snmp_community")
-    assert results == COMMUNITY
+    results = GET("/services/snmp/")
+    assert results.json()["snmp_community"] == COMMUNITY, results.text
 
 
 def test_05_Validate_that_SNMP_snmp_traps_setting_is_preserved():
-    results = GET_OUTPUT("/services/snmp/", "snmp_traps")
-    assert results == TRAPS
+    results = GET("/services/snmp/")
+    assert results.json()["snmp_traps"] == TRAPS, results.text
 
 
 def test_06_Validate_that_SNMP_snmp_contact_setting_is_preserved():
-    results = GET_OUTPUT("/services/snmp/", "snmp_contact")
-    assert results == CONTACT
+    results = GET("/services/snmp/")
+    assert results.json()["snmp_contact"] == CONTACT, results.text
 
 
 def test_07_Validate_that_SNMP_snmp_location_setting_is_preserved():
-    results = GET_OUTPUT("/services/snmp/", "snmp_location")
-    assert results == LOCATION
+    results = GET("/services/snmp/")
+    assert results.json()["snmp_location"] == LOCATION, results.text
 
 
 def test_08_Validate_that_SNMP_snmp_v3_password_setting_is_preserved():
-    results = GET_OUTPUT("/services/snmp/", "snmp_v3_password")
-    assert results == PASSWORD
+    results = GET("/services/snmp/")
+    assert results.json()["snmp_v3_password"] == PASSWORD, results.text

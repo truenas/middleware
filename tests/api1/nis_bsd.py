@@ -10,7 +10,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET_OUTPUT
+from functions import PUT, POST, GET
 from config import *
 
 # define variables
@@ -43,8 +43,8 @@ def test_03_Enabling_NIS_service():
 
 @nis_test_cfg
 def test_04_Checking_if_NIS_service_is_enable():
-    results = GET_OUTPUT("/directoryservice/nis/", "nis_enable")
-    assert results is True
+    results = GET("/directoryservice/nis/")
+    assert results.json()["nis_enable"] is True, results.text
 
 
 @nis_test_cfg
@@ -61,8 +61,8 @@ def test_06_Enabling_secure_mode():
 
 @nis_test_cfg
 def test_07_Checking_if_secure_mode_is_enable():
-    results = GET_OUTPUT("/directoryservice/nis/", "nis_secure_mode")
-    assert results is True
+    results = GET("/directoryservice/nis/")
+    assert results.json()["nis_secure_mode"] is True, results.text
 
 
 @nis_test_cfg
@@ -79,8 +79,8 @@ def test_09_Enabling_manycast():
 
 @nis_test_cfg
 def test_10_Checking_if_manycast_is_enable():
-    results = GET_OUTPUT("/directoryservice/nis/", "nis_manycast")
-    assert results is True
+    results = GET("/directoryservice/nis/")
+    assert results.json()["nis_manycast"] is True, results.text
 
 
 @nis_test_cfg
