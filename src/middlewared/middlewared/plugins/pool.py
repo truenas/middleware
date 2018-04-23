@@ -573,7 +573,7 @@ class PoolDatasetService(CRUDService):
             '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K', '256K', '512K', '1024K',
         ]),
         Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
-        Str('share_type', enum=['UNIX', 'WINDOWS', 'MAC'], default='UNIX'),
+        Str('share_type', enum=['UNIX', 'WINDOWS', 'MAC']),
         register=True,
     ))
     async def do_create(self, data):
@@ -622,7 +622,7 @@ class PoolDatasetService(CRUDService):
 
         if data['type'] == 'FILESYSTEM':
             await self.middleware.call(
-                'notifier.change_dataset_share_type', data['name'], data['share_type'].lower()
+                'notifier.change_dataset_share_type', data['name'], data.get('share_type', 'UNIX').lower()
             )
 
         await self.middleware.call('zfs.dataset.mount', data['name'])
