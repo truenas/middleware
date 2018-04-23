@@ -502,7 +502,7 @@ class UserService(CRUDService):
         self.logger.error('cred data: %r' % (credential,))
         self.logger.error('cred data: %d bytes' % (len(credential),))
 
-        user['authenticator_credential'] = bytes(credential)
+        user['authenticator_credential'] = binascii.b2a_base64(bytes(credential))
         result = await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
         self.logger.error('update result: %r' % (result,))
         user = await self._get_instance(pk)

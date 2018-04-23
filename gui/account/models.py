@@ -157,7 +157,7 @@ class bsdUsers(Model):
         default=None,
         editable=False,
     )
-    bsdusr_authenticator_credential = models.BinaryField(
+    bsdusr_authenticator_credential = models.TextField(
         default=None,
         editable=False,
         blank=True,

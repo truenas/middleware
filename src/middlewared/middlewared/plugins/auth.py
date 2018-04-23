@@ -1,3 +1,4 @@
+import binascii
 import crypt
 import socket
 import random
@@ -142,6 +143,8 @@ class AuthService(Service):
         if not credential:
             return False
 
+        credential = binascii.a2b_base64(credential)
+
         try:
             credential, _ = AttestedCredentialData.unpack_from(credential)
         except Exception as e:
@@ -193,6 +196,8 @@ class AuthService(Service):
         credential = user['authenticator_credential']
         if not credential:
             return False
+
+        credential = binascii.a2b_base64(credential)
 
         try:
             credential, _ = AttestedCredentialData.unpack_from(credential)
