@@ -1,4 +1,5 @@
 import csv
+import glob
 import io
 import os
 import re
@@ -27,6 +28,13 @@ class UPSService(SystemServiceService):
         data['shutdown'] = data['shutdown'].upper()
         data['toemail'] = [v for v in data['toemail'].split(';') if v]
         return data
+
+    @accepts()
+    async def port_choices(self):
+        ports = [x for x in glob.glob('/dev/cua*') if x.find('.') == -1]
+        ports.extend(glob.glob('/dev/ugen*'))
+        ports.extend(glob.glob('/dev/uhid*'))
+        return ports
 
     @accepts()
     def driver_choices(self):
