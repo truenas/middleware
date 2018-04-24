@@ -63,6 +63,7 @@ pipeline {
       steps {
         echo 'Starting QA API testing'
         unstash 'iso'
+	sh 'ls /dev/vmm | xargs vm poweroff | true'
         sh 'ixautomation --destroy-all-vm'
         sh 'rm -rf ${WORKSPACE}/tests/results'
         sh 'mkdir -p ${WORKSPACE}/tests/results'
