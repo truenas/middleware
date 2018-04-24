@@ -780,12 +780,25 @@ SED_USER = (
 
 
 class UPSDRIVER_CHOICES(object):
+
     def __iter__(self):
         try:
             with client as c:
                 driver_choices_dict = c.call('ups.driver_choices')
                 for key, value in driver_choices_dict.items():
                     yield (key, value)
+        except Exception:
+            yield (None, None)
+
+
+class UPS_PORT_CHOICES(object):
+
+    def __iter__(self):
+        try:
+            with client as c:
+                port_choices = c.call('ups.port_choices')
+                for port in port_choices:
+                    yield (port, port)
         except Exception:
             yield (None, None)
 
