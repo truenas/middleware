@@ -103,7 +103,7 @@ async def render(service, middleware):
 
     config = ""
     for disk in filter(None, disks):
-        config += get_smartd_config(disk)
+        config += get_smartd_config(disk) + "\n"
 
     with open("/usr/local/etc/smartd.conf", "w") as f:
         f.write(config)
