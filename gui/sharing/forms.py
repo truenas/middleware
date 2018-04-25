@@ -514,27 +514,16 @@ class NFS_SharePathForm(ModelForm):
         return super(NFS_SharePathForm, self).save(*args, **kwargs)
 
 
-class WebDAV_ShareForm(ModelForm):
+class WebDAV_ShareForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_schema = 'webdav_share'
+    middleware_attr_prefix = 'webdav_'
+    middleware_plugin = 'webdav.share'
+    is_singletone = False
 
     class Meta:
         fields = '__all__'
         model = models.WebDAV_Share
-
-    def clean(self):
-        cdata = self.cleaned_data
-        if not cdata.get("webdav_name"):
-            cdata['webdav_name'] = self.instance.webdav_name
-        davname = self.cleaned_data.get("webdav_name")
-        if not davname.isalnum():
-            raise forms.ValidationError(_(
-                'Only AlphaNumeric characters are allowed.'
-            ))
-        return cdata
-
-    def save(self):
-        ret = super(WebDAV_ShareForm, self).save()
-        notifier().reload("webdav")
-        return ret
 
     def done(self, request, events):
         if not services.objects.get(srv_service='webdav').srv_enable:
