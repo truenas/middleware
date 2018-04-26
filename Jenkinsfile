@@ -18,7 +18,7 @@ pipeline {
 
     stage('ixbuild') {
       agent {
-        label 'FreeNAS-ISO-testing'
+        label 'FreeNAS-ISO'
       }
       post {
         success {
@@ -52,3 +52,31 @@ pipeline {
         sh '/root/freenas-update/release-pr-workspace.sh'
       }
     }
+
+    stage('API testing') {
+      agent {
+        label 'FreeNAS-QA'
+      }
+      post {
+        always {
+          junit 'tests/results/*.xml'
+        }
+      }
+      steps {
+        echo 'Starting QA API testing'
+        unstash 'iso'
+	sh 'ls /dev/vmm | xargs vm poweroff | true'
+        sh 'ixautomation --destroy-all-vm'
+        sh 'rm -rf ${WORKSPACE}/tests/results'
+        sh 'mkdir -p ${WORKSPACE}/tests/results'
+        sh 'rm -rf ${WORKSPACE}/tests/iso'
+        sh 'mkdir -p ${WORKSPACE}/tests/iso'
+        sh 'mv artifacts/iso/*.iso ${WORKSPACE}/tests/iso/'
+        sh 'touch ${WORKSPACE}/tests/iso/.keepme'
+        echo "ISO WORKSPACE: ${WORKSPACE}/tests/iso/"
+        sleep 30
+        sh 'ixautomation --run api-tests --systype freenas'
+      }
+    }
+  }
+}
