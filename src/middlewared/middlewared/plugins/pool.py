@@ -620,12 +620,12 @@ class PoolDatasetService(CRUDService):
             'properties': props,
         })
 
+        await self.middleware.call('zfs.dataset.mount', data['name'])
+
         if data['type'] == 'FILESYSTEM':
             await self.middleware.call(
                 'notifier.change_dataset_share_type', data['name'], data.get('share_type', 'UNIX').lower()
             )
-
-        await self.middleware.call('zfs.dataset.mount', data['name'])
 
     def _add_inherit(name):
         def add(attr):
