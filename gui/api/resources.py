@@ -2093,6 +2093,7 @@ class ISCSIPortalResourceMixin(object):
         if errors:
             form.errors.update(errors)
         bundle.errors = dict(form.errors)
+        valid &= form.is_valid(formsets={'formset_iscsitargetportalip': {'instance': formset}})
         return valid
 
     def save_m2m(self, m2m_bundle):
