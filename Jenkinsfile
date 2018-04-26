@@ -38,8 +38,6 @@ pipeline {
         sh '/ixbuild/jenkins.sh freenas freenas-pipeline'
       }
     }
-  }
-}
 
     stage('PR Staging') {
       agent {
