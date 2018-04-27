@@ -25,7 +25,6 @@ import os
 import queue
 import select
 import setproctitle
-import shutil
 import signal
 import sys
 import threading
@@ -324,8 +323,9 @@ class Application(object):
 
 class FileApplication(object):
 
-    def __init__(self, middleware):
+    def __init__(self, middleware, loop):
         self.middleware = middleware
+        self.loop = loop
         self.jobs = {}
 
     def register_job(self, job_id):
@@ -386,8 +386,15 @@ class FileApplication(object):
         })
         await resp.prepare(request)
 
+        def do_copy():
+            while True:
+                read = job.pipes.output.r.read(1048576)
+                if read == b'':
+                    break
+                asyncio.run_coroutine_threadsafe(resp.write(read), loop=self.loop).result()
+
         try:
-            await self.middleware.run_in_io_thread(shutil.copyfileobj, job.pipes.output.r, resp)
+            await self.middleware.run_in_io_thread(do_copy)
         finally:
             await self._cleanup_job(job_id)
 
@@ -1102,7 +1109,7 @@ class Middleware(object):
 
         app.router.add_route("*", "/api/docs{path_info:.*}", WSGIHandler(apidocs_app))
 
-        self.fileapp = FileApplication(self)
+        self.fileapp = FileApplication(self, self.__loop)
         app.router.add_route('*', '/_download{path_info:.*}', self.fileapp.download)
         app.router.add_route('*', '/_upload{path_info:.*}', self.fileapp.upload)
 
