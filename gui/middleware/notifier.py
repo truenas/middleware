@@ -34,7 +34,6 @@ command line utility, this helper class can also be used to do these
 actions.
 """
 
-from collections import OrderedDict
 from decimal import Decimal
 import base64
 from Crypto.Cipher import AES
@@ -874,22 +873,8 @@ class notifier(metaclass=HookMetaclass):
         return retval
 
     def list_zfs_fsvols(self, system=False):
-        proc = self._pipeopen("/sbin/zfs list -H -o name -t volume,filesystem")
-        out, err = proc.communicate()
-        out = out.split('\n')
-        retval = OrderedDict()
-        if system is False:
-            with client as c:
-                basename = c.call('systemdataset.config')['basename']
-        if proc.returncode == 0:
-            for line in out:
-                if not line:
-                    continue
-                if system is False and basename:
-                    if line == basename or line.startswith(basename + '/'):
-                        continue
-                retval[line] = line
-        return retval
+        with client as c:
+            return c.call('zfs.pool.list_zfs_fsvols', system=system)
 
     def repl_remote_snapshots(self, repl):
         """

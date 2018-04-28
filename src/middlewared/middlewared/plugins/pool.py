@@ -208,6 +208,14 @@ class PoolService(CRUDService):
         options['prefix'] = 'vol_'
         return await self.middleware.call('datastore.query', 'storage.volume', filters, options)
 
+    @accepts()
+    async def file_system_choices(self, ):
+        vol_names = [vol['name'] for vol in (await self.query())]
+        return [
+            y for y in list(await self.middleware.call('zfs.pool.list_zfs_fsvols'))
+            if y.split('/')[0] in vol_names
+        ]
+
     @private
     async def pool_extend(self, pool):
         pool.pop('fstype', None)

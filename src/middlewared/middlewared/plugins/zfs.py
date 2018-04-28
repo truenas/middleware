@@ -1,9 +1,11 @@
 import errno
 import os
 import socket
+import subprocess
 import textwrap
 import threading
 import time
+from collections import OrderedDict
 
 from bsd import getmntinfo, geom
 import humanfriendly
@@ -14,7 +16,7 @@ from middlewared.service import (
     CallError, CRUDService, Service, ValidationError, ValidationErrors,
     filterable, job, periodic,
 )
-from middlewared.utils import filter_list, start_daemon_thread
+from middlewared.utils import filter_list, start_daemon_thread, Popen
 
 SCAN_THREADS = {}
 
@@ -60,6 +62,33 @@ class ZFSPoolService(Service):
             else:
                 pools = [i.__getstate__() for i in zfs.pools]
         return filter_list(pools, filters, options)
+
+    @accepts(
+        Bool('system', default=False)
+    )
+    async def list_zfs_fsvols(self, system):
+        proc = await Popen(
+            "/sbin/zfs list -H -o name -t volume,filesystem", stdout=subprocess.PIPE,
+            stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, close_fds=True
+        )
+        out, err = await proc.communicate()
+        out = out.decode().split('\n')
+        retval = OrderedDict()
+        if system is False:
+            basename = (await self.middleware.call('systemdataset.config'))['basename']
+        if proc.returncode == 0:
+            for line in out:
+                if (
+                    not line or (
+                        system is False and
+                        basename and (
+                            line == basename or line.startswith(basename + '/')
+                        )
+                    )
+                ):
+                    continue
+                retval[line] = line
+        return retval
 
     @accepts(Str('pool'))
     async def get_disks(self, name):

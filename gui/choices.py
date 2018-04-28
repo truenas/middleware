@@ -803,6 +803,17 @@ class UPS_PORT_CHOICES(object):
             yield (None, None)
 
 
+class FILE_SYSTEM_CHOICES(object):
+
+    def __iter__(self):
+        try:
+            with client as c:
+                for v in c.call('pool.file_system_choices'):
+                    yield (v, v)
+        except Exception:
+            yield (None, None)
+
+
 LDAP_SSL_CHOICES = (
     ('off', _('Off')),
     ('on', _('SSL')),

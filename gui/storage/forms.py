@@ -2905,7 +2905,12 @@ class ReKeyForm(KeyForm):
         notifier().geli_rekey(self.volume)
 
 
-class VMWarePluginForm(ModelForm):
+class VMWarePluginForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_schema = 'vmware'
+    middleware_attr_prefix = ''
+    middleware_plugin = 'vmware'
+    is_singletone = False
 
     oid = forms.CharField(
         widget=forms.widgets.HiddenInput,
@@ -2931,49 +2936,10 @@ class VMWarePluginForm(ModelForm):
         self.fields['filesystem'] = forms.ChoiceField(
             label=self.fields['filesystem'].label,
         )
-        volnames = [o.vol_name for o in models.Volume.objects.all()]
-        self.fields['filesystem'].choices = [y for y in list(notifier().list_zfs_fsvols().items()) if y[0].split('/')[0] in volnames]
+        self.fields['filesystem'].choices = choices.FILE_SYSTEM_CHOICES()
         if self.instance.id:
             self.fields['oid'].initial = self.instance.id
 
-    def clean_password(self):
-        password = self.cleaned_data.get('password')
-        if not password:
-            if self.instance.id:
-                return self.instance.password
-            else:
-                raise forms.ValidationError(_('This field is required.'))
-        return password
-
-    def clean(self):
-        cdata = self.cleaned_data
-        if (
-            cdata.get('hostname') and cdata.get('username') and
-            cdata.get('password')
-        ):
-            try:
-                with client as c:
-                    ds = c.call('vmware.get_datastores', {
-                        'hostname': cdata.get('hostname'),
-                        'username': cdata.get('username'),
-                        'password': cdata.get('password'),
-                    })
-                datastores = []
-                for i in ds.values():
-                    datastores += i.keys()
-                if cdata.get('datastore') not in datastores:
-                    self._errors['datastore'] = self.error_class([_(
-                        'Datastore not found in the server.'
-                    )])
-            except Exception as e:
-                self._errors['__all__'] = self.error_class([_(
-                    'Failed to connect: %s'
-                ) % e])
-        return cdata
-
-    def save(self, *args, **kwargs):
-        kwargs['commit'] = False
-        obj = super(VMWarePluginForm, self).save(*args, **kwargs)
-        obj.set_password(self.cleaned_data.get('password'))
-        obj.save()
-        return obj
+    def middleware_clean(self, data):
+        data.pop('oid', None)
+        return data
