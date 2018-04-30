@@ -16,7 +16,8 @@ def main():
     license, error = get_license()
     if license is None or not license.system_serial_ha:
         print('False')
-    print('True')
+    else:
+        print('True')
 
 if __name__ == '__main__':
     main()
