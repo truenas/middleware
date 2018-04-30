@@ -126,9 +126,9 @@ if api == "1.0":
         call(["py.test-3.6", "-v", "--junitxml",
               "%salerts_tests_result.xml" % results_xml,
               "api1/alerts.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%sbootenv_tests_result.xml" % results_xml,
-              "api1/bootenv.py"])
+        # call(["py.test-3.6", "-v", "--junitxml",
+        #       "%sbootenv_tests_result.xml" % results_xml,
+        #       "api1/bootenv.py"])
         call(["py.test-3.6", "-v", "--junitxml",
               "%scronjob_tests_result.xml" % results_xml,
               "api1/cronjob.py"])
