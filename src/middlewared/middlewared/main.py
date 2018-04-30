@@ -533,7 +533,9 @@ class ShellWorkerThread(threading.Thread):
                 read = os.read(master_fd, 1024)
                 if read == b'':
                     break
-                self.ws.send_str(read.decode('utf8'))
+                asyncio.run_coroutine_threadsafe(
+                    self.ws.send_str(read.decode('utf8')), loop=self.loop
+                ).result()
 
         def writer():
             """
@@ -627,7 +629,7 @@ class ShellApplication(object):
 
                 token = await self.middleware.call('auth.get_token', token)
                 if not token:
-                    ws.send_json({
+                    await ws.send_json({
                         'msg': 'failed',
                         'error': {
                             'error': errno.EACCES,
@@ -637,7 +639,7 @@ class ShellApplication(object):
                     continue
 
                 authenticated = True
-                ws.send_json({
+                await ws.send_json({
                     'msg': 'connected',
                 })
 
