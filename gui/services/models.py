@@ -2178,7 +2178,7 @@ class WebDAV(Model):
     webdav_certssl = models.ForeignKey(
         Certificate,
         verbose_name=_("Webdav SSL Certificate"),
-        limit_choices_to={'cert_CSR__isnull': True},
+        limit_choices_to={'cert_certificate__isnull': False, 'cert_privatekey__isnull': False},
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
