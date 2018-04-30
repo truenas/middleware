@@ -332,6 +332,11 @@ class SharingCIFSService(CRUDService):
             for ds in zfs_datasets:
                 tasks = []
                 name = ds['name']
+                fs_type = ds['properties']['type']['parsed']
+
+                if fs_type != "filesystem":
+                    continue
+
                 mountpoint = ds['properties']['mountpoint']['parsed']
 
                 if path == mountpoint or path.startswith(f'{mountpoint}/'):
