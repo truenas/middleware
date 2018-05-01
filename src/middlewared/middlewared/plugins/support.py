@@ -174,6 +174,10 @@ class SupportService(Service):
 
             job.set_progress(80, 'Attaching debug file')
 
+            # 20M filesize limit
+            if os.path.getsize(debug_file) > 20971520:
+                raise CallError('Debug too large to attach', errno.EFBIG)
+
             t = {
                 'ticket': ticket,
                 'filename': debug_name,
