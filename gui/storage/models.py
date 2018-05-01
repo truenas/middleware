@@ -41,6 +41,7 @@ from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.client import client
 from freenasUI.freeadmin.models import Model, UserField
+from freenasUI.peers.models import Peer
 
 log = logging.getLogger('storage.models')
 REPL_RESULTFILE = '/tmp/.repl-result'
@@ -855,9 +856,21 @@ class ReplRemote(Model):
 
 class Replication(Model):
     repl_filesystem = models.CharField(
-        max_length=150,
-        verbose_name=_("Volume/Dataset"),
+         max_length=150,
+         verbose_name=_("Volume/Dataset"),
+         blank=True,
+    )
+    repl_snap_task = models.ForeignKey(
+        'storage.Task',
         blank=True,
+        null=True,
+        verbose_name=_("Remote Host"),
+    )
+    repl_peer = models.ForeignKey(
+        Peer,
+        blank=True,
+        null=True,
+        verbose_name=_("Remote Peer"),
     )
     repl_lastsnapshot = models.CharField(
         max_length=120,
@@ -915,6 +928,52 @@ class Replication(Model):
         help_text=_(
             'Disabling will not stop any replications which are in progress.'
         ),
+    )
+    new_repl_engine = models.BooleanField(
+        default=True,
+        verbose_name=_("New replication engine"),
+        help_text=_(
+            'New replication engine.'
+        ),
+    )
+    repl_resume = models.BooleanField(
+        default=True,
+        verbose_name=_("Resumable replication"),
+        help_text=_(
+            'Allow resumable replication.'
+        ),
+    )
+    repl_ssh_mbuffer = models.BooleanField(
+        default=False,
+        verbose_name=_("Enable mbuffer"),
+        help_text=_(
+            'Enable mbuffer for SSH transport'
+        ),
+    )
+    repl_type = models.CharField(
+        max_length=255,
+        choices=choices.Repl_Type,
+        default="onetime",
+        verbose_name=_("Replication type"),
+    )
+    repl_transport = models.CharField(
+        max_length=255,
+        choices=choices.Repl_Type,
+        default="local",
+        verbose_name=_("Replication type"),
+    )
+    repl_last_begin = models.DateTimeField(
+        null=True,
+        verbose_name=_("Last start time of the repl task")
+    )
+    repl_last_end = models.DateTimeField(
+        null=True,
+        verbose_name=_("Last end time of the repl task")
+    )
+    repl_result = models.CharField(
+        null=True,
+        max_length=255,
+        verbose_name=_("Last run result"),
     )
 
     class Meta:
@@ -987,6 +1046,13 @@ class Replication(Model):
 
 
 class Task(Model):
+
+    task_name = models.CharField(
+        max_length=150,
+        verbose_name=_("Task Name"),
+        null=True,
+        blank=True
+    )
     task_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Volume/Dataset"),
@@ -1049,6 +1115,15 @@ class Task(Model):
     task_enabled = models.BooleanField(
         default=True,
         verbose_name=_("Enabled"),
+    )
+    task_last_run = models.DateTimeField(
+        null=True,
+        verbose_name=_("Last run of the snap task")
+    )
+    vmware_snap_task_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("Snapshot lifetime value"),
     )
 
     def __str__(self):
