@@ -455,8 +455,12 @@ class AlertPlugins(metaclass=HookMetaclass):
     def get_alerts(self):
         if not os.path.exists(self.ALERT_FILE):
             return []
-        with open(self.ALERT_FILE, 'rb') as f:
-            return pickle.load(f)['alerts']
+
+        try:
+            with open(self.ALERT_FILE, 'rb') as f:
+                return pickle.load(f)['alerts']
+        except Exception:
+            log.debug('Failed to load alert state file', exc_info=True)
 
 
 alertPlugins = AlertPlugins()
