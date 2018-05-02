@@ -338,7 +338,7 @@ class Dict(Attribute):
                     raise Error(attr.name, 'This field is required')
 
                 if attr.name not in data and attr.has_default:
-                    data[attr.name] = attr.default
+                    data[attr.name] = copy.copy(attr.default)
 
         return data
 
