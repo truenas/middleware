@@ -643,7 +643,12 @@ class LLDPForm(MiddlewareModelForm, ModelForm):
     is_singletone = True
 
 
-class iSCSITargetAuthCredentialForm(ModelForm):
+class iSCSITargetAuthCredentialForm(MiddlewareModelForm, ModelForm):
+    middleware_attr_prefix = "iscsi_target_auth_"
+    middleware_attr_schema = "services.iscsi_targetauthcredential"
+    middleware_plugin = "iscsi.auth"
+    is_singletone = False
+
     iscsi_target_auth_secret2 = forms.CharField(
         label=_("Secret (Confirm)"),
         widget=forms.PasswordInput(render_value=True),
@@ -689,82 +694,11 @@ class iSCSITargetAuthCredentialForm(ModelForm):
             raise forms.ValidationError(_("Secret does not match"))
         return secret2
 
-    def clean_iscsi_target_auth_secret2(self):
-        if (
-            len(self._clean_secret_common("iscsi_target_auth_secret")) < 12 or
-            len(self._clean_secret_common("iscsi_target_auth_secret")) > 16
-        ):
-            raise forms.ValidationError(_("Secret must be between 12 and 16 characters."))
-        return self._clean_secret_common("iscsi_target_auth_secret")
+    def middleware_clean(self, data):
+        del data['secret2']
+        del data['peersecret2']
 
-    def clean_iscsi_target_auth_peersecret2(self):
-        if (len(self._clean_secret_common("iscsi_target_auth_peersecret")) > 0 and
-            (len(self._clean_secret_common("iscsi_target_auth_peersecret")) < 12 or
-             len(self._clean_secret_common("iscsi_target_auth_peersecret")) > 16)):
-            raise forms.ValidationError(_("Peer secret must be between 12 and 16 characters."))
-        return self._clean_secret_common("iscsi_target_auth_peersecret")
-
-    def clean(self):
-        cdata = self.cleaned_data
-
-        if len(cdata.get('iscsi_target_auth_peeruser', '')) > 0:
-            if len(cdata.get('iscsi_target_auth_peersecret', '')) == 0:
-                cdata.pop('iscsi_target_auth_peersecret', None)
-                self._errors['iscsi_target_auth_peersecret'] = (
-                    self.error_class([_(
-                        "The peer secret is required if you set a peer user."
-                    )])
-                )
-                self._errors['iscsi_target_auth_peersecret2'] = (
-                    self.error_class([_(
-                        "The peer secret is required if you set a peer user."
-                    )])
-                )
-            elif cdata.get('iscsi_target_auth_peersecret', '') == cdata.get(
-                'iscsi_target_auth_secret', ''
-            ):
-                del cdata['iscsi_target_auth_peersecret']
-                self._errors['iscsi_target_auth_peersecret'] = (
-                    self.error_class([_(
-                        "The peer secret cannot be the same as user secret."
-                    )])
-                )
-        else:
-            if len(cdata.get('iscsi_target_auth_peersecret', '')) > 0:
-                self._errors['iscsi_target_auth_peersecret'] = (
-                    self.error_class([_(
-                        "The peer user is required if you set a peer secret."
-                    )])
-                )
-                del cdata['iscsi_target_auth_peersecret']
-            if len(cdata.get('iscsi_target_auth_peersecret2', '')) > 0:
-                self._errors['iscsi_target_auth_peersecret2'] = (
-                    self.error_class([_(
-                        "The peer user is required if you set a peer secret."
-                    )])
-                )
-                del cdata['iscsi_target_auth_peersecret2']
-
-        return cdata
-
-    def save(self, commit=True):
-        obj = super(iSCSITargetAuthCredentialForm, self).save(commit=False)
-        obj.iscsi_target_auth_secret = self.cleaned_data.get(
-            'iscsi_target_auth_secret'
-        )
-        obj.iscsi_target_auth_peersecret = self.cleaned_data.get(
-            'iscsi_target_auth_peersecret'
-        )
-        if commit:
-            obj.save()
-        started = notifier().reload("iscsitarget")
-        if started is False and models.services.objects.get(
-            srv_service='iscsitarget'
-        ).srv_enable:
-            raise ServiceFailed(
-                "iscsitarget", _("The iSCSI service failed to reload.")
-            )
-        return obj
+        return data
 
 
 class iSCSITargetToExtentForm(ModelForm):

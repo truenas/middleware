@@ -862,46 +862,6 @@ class iSCSITargetAuthCredential(Model):
         verbose_name = _("Authorized Access")
         verbose_name_plural = _("Authorized Accesses")
 
-    def __init__(self, *args, **kwargs):
-        super(iSCSITargetAuthCredential, self).__init__(*args, **kwargs)
-        if self.iscsi_target_auth_secret:
-            try:
-                self.iscsi_target_auth_secret = notifier().pwenc_decrypt(
-                    self.iscsi_target_auth_secret
-                )
-            except Exception:
-                log.debug('Failed to decrypt auth access secret', exc_info=True)
-                self.iscsi_target_auth_secret = ''
-        self._iscsi_target_auth_secret_encrypted = False
-
-        if self.iscsi_target_auth_peersecret:
-            try:
-                self.iscsi_target_auth_peersecret = notifier().pwenc_decrypt(
-                    self.iscsi_target_auth_peersecret
-                )
-            except Exception:
-                log.debug('Failed to decrypt auth access peer secret', exc_info=True)
-                self.iscsi_target_auth_peersecret = ''
-        self._iscsi_target_auth_peersecret_encrypted = False
-
-    def save(self, *args, **kwargs):
-        if (
-            self.iscsi_target_auth_secret and
-            not self._iscsi_target_auth_secret_encrypted
-        ):
-            self.iscsi_target_auth_secret = notifier().pwenc_encrypt(
-                self.iscsi_target_auth_secret
-            )
-            self._iscsi_target_auth_secret_encrypted = True
-        if (
-            self.iscsi_target_auth_peersecret and
-            not self._iscsi_target_auth_peersecret_encrypted
-        ):
-            self.iscsi_target_auth_peersecret = notifier().pwenc_encrypt(
-                self.iscsi_target_auth_peersecret
-            )
-        super(iSCSITargetAuthCredential, self).save(*args, **kwargs)
-
     def __str__(self):
         return str(self.iscsi_target_auth_tag)
 

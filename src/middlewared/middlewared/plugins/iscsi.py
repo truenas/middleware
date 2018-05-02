@@ -251,3 +251,129 @@ class ISCSIPortalService(CRUDService):
         """
         await self.middleware.call('datastore.delete', self._config.datastore, id)
         # service is currently restarted by datastore/django model
+
+
+class iSCSITargetAuthCredentialService(CRUDService):
+    class Config:
+        namespace = 'iscsi.auth'
+        datastore = 'services.iscsitargetauthcredential'
+        datastore_prefix = 'iscsi_target_auth_'
+        datastore_extend = 'iscsi.auth.extend'
+
+    @accepts(Dict(
+        'iscsi_auth_create',
+        Int('tag'),
+        Str('user'),
+        Str('secret'),
+        Str('peeruser'),
+        Str('peersecret'),
+        register=True
+    ))
+    async def do_create(self, data):
+        verrors = ValidationErrors()
+        await self.validate(data, 'iscsi_auth_create', verrors)
+
+        if verrors:
+            raise verrors
+
+        await self.compress(data)
+        data['id'] = await self.middleware.call(
+            'datastore.insert', self._config.datastore, data,
+            {'prefix': self._config.datastore_prefix})
+        await self.extend(data)
+        await self.middleware.call('service.reload', 'iscsitarget')
+
+        return data
+
+    @accepts(
+        Int('id'),
+        Patch(
+            'iscsi_auth_create',
+            'iscsi_auth_update',
+            ('attr', {'update': True})
+        )
+    )
+    async def do_update(self, id, data):
+        verrors = ValidationErrors()
+        old = await self.middleware.call(
+            'datastore.query', self._config.datastore, [('id', '=', id)],
+            {'extend': self._config.datastore_extend,
+             'prefix': self._config.datastore_prefix,
+             'get': True})
+
+        new = old.copy()
+        new.update(data)
+
+        await self.validate(
+            new, 'iscsi_auth_update', verrors)
+
+        if verrors:
+            raise verrors
+
+        await self.compress(new)
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, id, new,
+            {'prefix': self._config.datastore_prefix})
+        await self.extend(new)
+
+        await self.middleware.call('service.reload', 'iscsitarget')
+
+        return new
+
+    @accepts(Int('id'))
+    async def do_delete(self, id):
+        return await self.middleware.call(
+            'datastore.delete', self._config.datastore, id)
+
+    @private
+    async def validate(self, data, schema_name, verrors):
+        secret = data.get('secret', '')
+        peer_secret = data.get('peersecret', '')
+        peer_user = data.get('peeruser', '')
+
+        if len(peer_user) > 0:
+            if len(peer_secret) == 0:
+                verrors.add(
+                    f'{schema_name}.peersecret',
+                    'The peer secret is required if you set a peer user.')
+            elif peer_secret == secret:
+                verrors.add(
+                    f'{schema_name}.peersecret',
+                    'The peer secret cannot be the same as user secret.')
+        else:
+            if len(peer_secret) > 0:
+                verrors.add(
+                    f'{schema_name}.peersecret',
+                    'The peer secret is required if you set a peer user.')
+
+        if len(secret) < 12 or len(secret) > 16:
+            verrors.add(f'{schema_name}.secret',
+                        'Secret must be between 12 and 16 characters.')
+
+        if len(peer_secret) < 12 or len(peer_secret) > 16:
+            verrors.add(f'{schema_name}.peersecret',
+                        'Secret must be between 12 and 16 characters.')
+
+    @private
+    async def extend(self, data):
+        secret = data.get('secret', '')
+        peersecret = data.get('peersecret', '')
+
+        data['secret'] = await self.middleware.call(
+            'notifier.pwenc_decrypt', secret)
+        data['peersecret'] = await self.middleware.call(
+            'notifier.pwenc_decrypt', peersecret)
+
+        return data
+
+    @private
+    async def compress(self, data):
+        secret = data.get('secret', '')
+        peersecret = data.get('peersecret', '')
+
+        data['secret'] = await self.middleware.call(
+            'notifier.pwenc_encrypt', secret)
+        data['peersecret'] = await self.middleware.call(
+            'notifier.pwenc_encrypt', peersecret)
+
+        return data
