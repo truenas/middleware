@@ -694,6 +694,12 @@ class iSCSITargetAuthCredentialForm(MiddlewareModelForm, ModelForm):
             raise forms.ValidationError(_("Secret does not match"))
         return secret2
 
+    def clean_iscsi_target_auth_secret2(self):
+        return self._clean_secret_common("iscsi_target_auth_secret")
+
+    def clean_iscsi_target_auth_peersecret2(self):
+        return self._clean_secret_common("iscsi_target_auth_peersecret")
+
     def middleware_clean(self, data):
         del data['secret2']
         del data['peersecret2']
