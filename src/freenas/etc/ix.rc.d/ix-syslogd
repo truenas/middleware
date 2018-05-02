@@ -58,6 +58,60 @@ __EOF__
 }
 
 
+generate_ha_syslog()
+{
+	local controller_port=7777
+	if [ "$(/usr/local/bin/python /usr/local/www/freenasUI/failover/licensed.py 2> /dev/null)" = "True" ]
+	then
+		if [ "$(ha_node)" = "A" ]
+		then
+			local controller_ip=169.254.10.1
+			local controller_other_ip=169.254.10.2
+			local controller_file="/root/syslog/controller_b"
+		elif [ "$(ha_node)" = "B" ]
+		then
+			local controller_ip=169.254.10.2
+			local controller_other_ip=169.254.10.1
+			local controller_file="/root/syslog/controller_a"
+		fi
+
+		if [ ! -d "/root/syslog" ]
+		then
+			mkdir -p /root/syslog
+		fi
+{
+cat << _EOF_
+
+
+# Redmine 32700
+source this_controller {
+udp(ip($controller_ip) port($controller_port));
+udp(default-facility(syslog) default-priority(emerg));
+};
+
+log {
+source(this_controller);
+destination(other_side);
+};
+
+destination other_side { file("$controller_file"); };
+destination loghost { udp("$controller_other_ip" port($controller_port)); };
+
+log { source(src); filter(f_not_mdnsresponder); filter(f_not_nginx); filter(f_not_consul); destination(loghost); };
+_EOF_
+} >> /etc/local/syslog-ng.conf
+
+{
+cat << _EOF_
+
+
+# Redmine 32700
+$controller_file		640  10	   200	@0101T JC
+_EOF_
+} >> /etc/newsyslog.conf
+	fi
+}
+
 use_syslog_dataset()
 {
 	local use
@@ -129,6 +183,9 @@ ix_syslogd_start()
 	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 	generate_syslog_conf
+
+	# Redmine 32700
+	generate_ha_syslog
 
 	if ! use_syslog_dataset
 	then
