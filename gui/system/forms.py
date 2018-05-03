@@ -2364,22 +2364,21 @@ class CertificateAuthorityEditForm(MiddlewareModelForm, ModelForm):
         required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_certificate').help_text
     )
-    cert_serial = forms.IntegerField(
-        label=models.CertificateAuthority._meta.get_field('cert_serial').verbose_name,
-        required=True,
-        help_text=models.CertificateAuthority._meta.get_field('cert_serial').help_text,
-    )
+
+    def __init__(self, *args, **kwargs):
+        super(CertificateAuthorityEditForm, self).__init__(*args, **kwargs)
+
+        self.fields['cert_certificate'].widget.attrs['readonly'] = True
+        self.fields['cert_privatekey'].widget.attrs['readonly'] = True
 
     def middleware_clean(self, data):
-        data['serial'] = self.instance.cert_serial
-        return data
+        return {'name': data['name']}
 
     class Meta:
         fields = [
             'cert_name',
             'cert_certificate',
             'cert_privatekey',
-            'cert_serial'
         ]
         model = models.CertificateAuthority
 
@@ -2413,15 +2412,21 @@ class CertificateAuthorityImportForm(MiddlewareModelForm, ModelForm):
         required=False,
         widget=forms.PasswordInput(render_value=True),
     )
-    cert_serial = forms.IntegerField(
-        label=models.CertificateAuthority._meta.get_field('cert_serial').verbose_name,
-        required=True,
-        help_text=models.CertificateAuthority._meta.get_field('cert_serial').help_text,
-    )
+
+    def clean_cert_passphrase2(self):
+        cdata = self.cleaned_data
+        passphrase = cdata.get('cert_passphrase')
+        passphrase2 = cdata.get('cert_passphrase2')
+
+        if passphrase and passphrase != passphrase2:
+            raise forms.ValidationError(_(
+                'Passphrase confirmation does not match.'
+            ))
+        return passphrase
 
     def middleware_clean(self, data):
-        data['serial'] = self.instance.cert_serial
         data['create_type'] = 'CA_CREATE_IMPORTED'
+        data.pop('passphrase2', None)
         return data
 
     class Meta:
@@ -2431,7 +2436,6 @@ class CertificateAuthorityImportForm(MiddlewareModelForm, ModelForm):
             'cert_privatekey',
             'cert_passphrase',
             'cert_passphrase2',
-            'cert_serial'
         ]
         model = models.CertificateAuthority
 
@@ -2682,6 +2686,15 @@ class CertificateEditForm(MiddlewareModelForm, ModelForm):
         help_text=models.Certificate._meta.get_field('cert_certificate').help_text
     )
 
+    def __init__(self, *args, **kwargs):
+        super(CertificateEditForm, self).__init__(*args, **kwargs)
+
+        self.fields['cert_certificate'].widget.attrs['readonly'] = True
+        self.fields['cert_privatekey'].widget.attrs['readonly'] = True
+
+    def middleware_clean(self, data):
+        return {'name': data['name']}
+
     class Meta:
         fields = [
             'cert_name',
@@ -2709,12 +2722,6 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_CSR').help_text
     )
-    cert_certificate = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_certificate').verbose_name,
-        widget=forms.Textarea(),
-        required=True,
-        help_text=models.Certificate._meta.get_field('cert_certificate').help_text
-    )
 
     def __init__(self, *args, **kwargs):
         super(CertificateCSREditForm, self).__init__(*args, **kwargs)
@@ -2726,7 +2733,6 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
         fields = [
             'cert_name',
             'cert_CSR',
-            'cert_certificate'
         ]
         model = models.Certificate
 
@@ -2771,8 +2777,20 @@ class CertificateImportForm(MiddlewareModelForm, ModelForm):
         widget=forms.PasswordInput(render_value=True),
     )
 
+    def clean_cert_passphrase2(self):
+        cdata = self.cleaned_data
+        passphrase = cdata.get('cert_passphrase')
+        passphrase2 = cdata.get('cert_passphrase2')
+
+        if passphrase and passphrase != passphrase2:
+            raise forms.ValidationError(_(
+                'Passphrase confirmation does not match.'
+            ))
+        return passphrase
+
     def middleware_clean(self, data):
         data['create_type'] = 'CERTIFICATE_CREATE_IMPORTED'
+        data.pop('passphrase2', None)
         return data
 
     class Meta:
