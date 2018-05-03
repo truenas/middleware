@@ -44,7 +44,7 @@ from dojango.forms.models import BaseInlineFormSet, inlineformset_factory
 from freenasUI.api import v1_api
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.middleware.exceptions import MiddlewareError
-from freenasUI.middleware.form import handle_middleware_validation
+from freenasUI.middleware.form import MiddlewareModelForm, handle_middleware_validation
 from freenasUI.services.exceptions import ServiceFailed
 from middlewared.client import ValidationErrors
 from tastypie.validation import FormValidation
@@ -575,8 +575,9 @@ class BaseFreeAdmin(object):
                         )
                 try:
                     mf.save()
-                    for name, fsinfo in list(formsets.items()):
-                        fsinfo['instance'].save()
+                    if not isinstance(mf, MiddlewareModelForm):
+                        for name, fsinfo in list(formsets.items()):
+                            fsinfo['instance'].save()
                     events = []
                     if hasattr(mf, "done") and callable(mf.done):
                         mf.done(request=request, events=events)
