@@ -1,6 +1,9 @@
-from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List
+import ipaddress
+import os
+
+from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
 from middlewared.validators import Range
-from middlewared.service import private, SystemServiceService, ValidationErrors
+from middlewared.service import private, CRUDService, SystemServiceService, ValidationErrors
 
 
 class NFSService(SystemServiceService):
@@ -61,3 +64,234 @@ class NFSService(SystemServiceService):
         self.nfs_extend(new)
 
         return new
+
+
+class SharingNFSService(CRUDService):
+    class Config:
+        namespace = "sharing.nfs"
+        datastore = "sharing.nfs_share"
+        datastore_prefix = "nfs_"
+        datastore_extend = "sharing.nfs.extend"
+
+    @accepts(Dict(
+        "sharingnfs_create",
+        List("paths", items=[Dir("path")]),
+        Str("comment"),
+        List("networks", items=[IPAddr("network", cidr=True)]),
+        List("hosts", items=[IPAddr("host")]),
+        Bool("alldirs"),
+        Bool("ro"),
+        Bool("quiet"),
+        Str("maproot_user", required=False),
+        Str("maproot_group", required=False),
+        Str("mapall_user", required=False),
+        Str("mapall_group", required=False),
+        List("security", items=[Str("provider", enum=["SYS", "KRB5", "KRB5I", "KRB5P"])]),
+        register=True,
+    ))
+    async def do_create(self, data):
+        verrors = ValidationErrors()
+
+        await self.validate(data, "sharingnfs_create", verrors)
+
+        if verrors:
+            raise verrors
+
+        await self.compress(data)
+        paths = data.pop("paths")
+        data["id"] = await self.middleware.call(
+            "datastore.insert", self._config.datastore, data,
+            {
+                "prefix": self._config.datastore_prefix
+            },
+        )
+        for path in paths:
+            await self.middleware.call(
+                "datastore.insert", "sharing.nfs_share_path",
+                {
+                    "share_id": data["id"],
+                    "path": path,
+                },
+            )
+        await self.extend(data)
+
+        await self.middleware.call("service.reload", "nfs")
+
+        return data
+
+    @accepts(
+        Int("id"),
+        Patch(
+            "sharingnfs_create",
+            "sharingnfs_update",
+            ("attr", {"update": True})
+        )
+    )
+    async def do_update(self, id, data):
+        verrors = ValidationErrors()
+        old = await self.middleware.call(
+            "datastore.query", self._config.datastore, [("id", "=", id)],
+            {
+                "extend": self._config.datastore_extend,
+                "prefix": self._config.datastore_prefix,
+                "get": True
+            },
+        )
+
+        new = old.copy()
+        new.update(data)
+
+        await self.validate(new, "sharingnfs_update", verrors, old=old)
+
+        if verrors:
+            raise verrors
+
+        await self.compress(new)
+        paths = new.pop("paths")
+        await self.middleware.call(
+            "datastore.update", self._config.datastore, id, new,
+            {
+                "prefix": self._config.datastore_prefix
+            }
+        )
+        await self.middleware.call("datastore.delete", "sharing.nfs_share_path", [["share_id", "=", id]])
+        for path in paths:
+            await self.middleware.call(
+                "datastore.insert", "sharing.nfs_share_path",
+                {
+                    "share_id": id,
+                    "path": path,
+                },
+            )
+
+        await self.extend(new)
+        new["paths"] = paths
+
+        await self.middleware.call("service.reload", "nfs")
+
+        return new
+
+    @accepts(Int("id"))
+    async def do_delete(self, id):
+        await self.middleware.call("datastore.delete", "sharing.nfs_share_path", [["share_id", "=", id]])
+        await self.middleware.call("datastore.delete", self._config.datastore, id)
+
+    @private
+    async def validate(self, data, schema_name, verrors, old=None):
+        if not data["paths"]:
+            verrors.add(f"{schema_name}.paths", "At least one path is required")
+
+        await self.middleware.run_in_io_thread(self.validate_paths, data, schema_name, verrors)
+
+        if not data["networks"]:
+            verrors.add(f"{schema_name}.networks", "At least one network is required")
+
+        for i, network1 in enumerate(data["networks"]):
+            network1 = ipaddress.ip_network(network1, strict=False)
+            for j, network2 in enumerate(data["networks"]):
+                if j > i:
+                    network2 = ipaddress.ip_network(network2, strict=False)
+                    if network1.overlaps(network2):
+                        verrors.add(f"{schema_name}.network.{j}", "Networks {network1} and {network2} overlap")
+
+        filters = []
+        if old:
+            filters.append(["id", "!=", old["id"]])
+        other_shares = await self.middleware.call("sharing.nfs.query", filters)
+        await self.middleware.run_in_io_thread(self.validate_user_networks, other_shares, data, schema_name, verrors)
+
+        for k in ["maproot", "mapall"]:
+            if not data[f"{k}_user"] and not data[f"{k}_group"]:
+                pass
+            elif not data[f"{k}_user"] and data[f"{k}_group"]:
+                verrors.add(f"{schema_name}.{k}_user", "This field is required when map group is specified")
+            elif data[f"{k}_user"] and not data[f"{k}_group"]:
+                verrors.add(f"{schema_name}.{k}_group", "This field is required when map user is specified")
+            else:
+                user = await self.middleware.call("user.query", [("username", "=", data[f"{k}_user"])])
+                if not user:
+                    verrors.add(f"{schema_name}.{k}_user", "User not found")
+
+                group = await self.middleware.call("group.query", [("group", "=", data[f"{k}_group"])])
+                if not group:
+                    verrors.add(f"{schema_name}.{k}_group", "Group not found")
+
+        if data["maproot_user"] and data["mapall_user"]:
+            verrors.add(f"{schema_name}.mapall_user", "maproot_user disqualifies mapall_user")
+
+        if data["security"]:
+            nfs_config = await self.middleware.call("nfs.config")
+            if not nfs_config["v4"]:
+                verrors.add(f"{schema_name}.security", "This is not allowed when NFS v4 is disabled")
+
+    @private
+    def validate_paths(self, data, schema_name, verrors):
+        dev = None
+        is_mountpoint = False
+        for i, path in enumerate(data["paths"]):
+            stat = os.stat(path)
+            if dev is None:
+                dev = stat.st_dev
+            else:
+                if dev != stat.st_dev:
+                    verrors.add(f"{schema_name}.paths.{i}",
+                                "Paths for a NFS share must reside within the same filesystem")
+
+            parent = os.path.abspath(os.path.join(path, ".."))
+            if os.stat(parent).st_dev != dev:
+                is_mountpoint = True
+                if any(os.path.abspath(p).startswith(parent + "/") for p in data["paths"] if p != path):
+                    verrors.add(f"{schema_name}.paths.{i}",
+                                "You cannot share a mount point and subdirectories all at once")
+
+        if not is_mountpoint and data["alldirs"]:
+            verrors.add(f"{schema_name}.alldirs", "This option can only be used for datasets")
+
+    @private
+    def validate_user_networks(self, other_shares, data, schema_name, verrors):
+        dev = os.stat(data["paths"][0]).st_dev
+
+        used_networks = []
+        for share in other_shares:
+            try:
+                share_dev = os.stat(share["paths"][0]).st_dev
+            except Exception:
+                self.logger.warning("Failed to stat first path for %r", share, exc_info=True)
+                continue
+
+            used_networks.extend([(network, share_dev) for network in share["networks"]])
+
+            if data["alldirs"] and share["alldirs"] and share_dev == dev:
+                verrors.add(f"{schema_name}.alldirs", "This option is only available once per mountpoint")
+
+        for i, network in enumerate(data["networks"]):
+            network = ipaddress.ip_network(network, strict=False)
+            for other_network, other_dev in used_networks:
+                try:
+                    other_network = ipaddress.ip_network(other_network, strict=False)
+                except Exception:
+                    self.logger.warning("Got invalid network %r", other_network)
+                    continue
+
+                if network.overlaps(other_network) and dev == other_dev:
+                    verrors.add(f"{schema_name}.networks.{i}",
+
+                                f"The network {network} is already being shared and cannot be used twice "
+                                "for the same filesystem")
+
+    @private
+    async def extend(self, data):
+        data["paths"] = [path["path"]
+                         for path in await self.middleware.call("datastore.query", "sharing.nfs_share_path",
+                                                                [["share_id", "=", data["id"]]])]
+        data["networks"] = data.pop("network").split()
+        data["hosts"] = data["hosts"].split()
+        data["security"] = [s.upper() for s in data["security"]]
+        return data
+
+    @private
+    async def compress(self, data):
+        data["network"] = " ".join(data["networks"])
+        data["hosts"] = " ".join(data["hosts"])
+        data["security"] = [s.lower() for s in data["security"]]
+        return data

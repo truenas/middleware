@@ -177,7 +177,14 @@ class AFP_ShareForm(MiddlewareModelForm, ModelForm):
         super(AFP_ShareForm, self).done(request, events)
 
 
-class NFS_ShareForm(ModelForm):
+class NFS_ShareForm(MiddlewareModelForm, ModelForm):
+    middleware_attr_prefix = "nfs_"
+    middleware_attr_schema = "sharingnfs"
+    middleware_plugin = "sharing.nfs"
+    is_singletone = False
+    middleware_attr_map = {
+        "networks": "nfs_network",
+    }
 
     class Meta:
         fields = '__all__'
@@ -195,201 +202,19 @@ class NFS_ShareForm(ModelForm):
         if not nfs.nfs_srv_v4:
             del self.fields['nfs_security']
 
-    def clean_nfs_network(self):
-        net = self.cleaned_data['nfs_network']
-        net = re.sub(r'\s{2,}|\n', ' ', net).strip()
-        if not net:
-            return net
-        seen_networks = []
-        for n in net.split(' '):
-            try:
-                netobj = IPNetwork(n)
-                if n.find("/") == -1:
-                    raise ValueError(n)
-                for i in seen_networks:
-                    if netobj.overlaps(i):
-                        raise forms.ValidationError(
-                            _('The following networks overlap: %(net1)s - %(net2)s') % {
-                                'net1': netobj,
-                                'net2': i,
-                            }
-                        )
-                seen_networks.append(netobj)
-            except (AddressValueError, NetmaskValueError, ValueError):
-                raise forms.ValidationError(
-                    _("This is not a valid network: %s") % n
-                )
-        return net
+    def middleware_clean(self, data):
+        data["paths"] = [
+            self.data[f"path_set-{i}-path"]
+            for i in range(int(self.data["path_set-TOTAL_FORMS"][0]))
+            if self.data[f"path_set-{i}-path"] and not self.data.get(f"path_set-{i}-DELETE")
+        ]
+        data["networks"] = data.pop("network").split() or ["0.0.0.0/0"]
+        data["hosts"] = data["hosts"].split()
+        data["security"] = [s.upper() for s in data.get("security", [])]
 
-    def clean_nfs_hosts(self):
-        net = self.cleaned_data['nfs_hosts']
-        net = re.sub(r'\s{2,}|\n', ' ', net).strip()
-        return net
-        if not net:
-            return net
-        # only one address = CIDR or IP
-        # if net.find(" ") == -1:
-        #    try:
-        #    except NetmaskValueError:
-        #        IPAddress(net.encode('utf-8'))
-        #    except (AddressValueError, ValueError):
-        #        raise forms.ValidationError(
-        #            )
-
-    def clean(self):
-        cdata = self.cleaned_data
-        for field in (
-            'nfs_maproot_user', 'nfs_maproot_group',
-            'nfs_mapall_user', 'nfs_mapall_group'
-        ):
-            if cdata.get(field, None) in ('', '-----'):
-                cdata[field] = None
-
-        if (
-            cdata.get('nfs_maproot_group', None) is not None
-            and
-            cdata.get('nfs_maproot_user', None) is None
-        ):
-            self._errors['nfs_maproot_group'] = self.error_class([
-                _("Maproot group requires Maproot user"),
-            ])
-        if (
-            cdata.get('nfs_mapall_group', None) is not None
-            and
-            cdata.get('nfs_mapall_user', None) is None
-        ):
-            self._errors['nfs_mapall_group'] = self.error_class([
-                _("Mapall group requires Mapall user"),
-            ])
-        if (
-            cdata.get('nfs_maproot_user', None) is not None
-            or
-            cdata.get('nfs_maproot_group', None) is not None
-        ):
-            if cdata.get('nfs_mapall_user', None) is not None:
-                self._errors['nfs_mapall_user'] = self.error_class([
-                    _("Maproot user/group disqualifies Mapall"),
-                ])
-                del cdata['nfs_mapall_user']
-            if cdata.get('nfs_mapall_group', None) is not None:
-                self._errors['nfs_mapall_group'] = self.error_class([
-                    _("Maproot user/group disqualifies Mapall"),
-                ])
-                del cdata['nfs_mapall_group']
-
-        return cdata
-
-    def cleanformset_nfs_share_path(self, formset, forms):
-        dev = None
-        valid = True
-        ismp = False
-        for form in forms:
-            if not hasattr(form, "cleaned_data"):
-                continue
-            path = form.cleaned_data.get("path")
-            if not path:
-                continue
-            parent = os.path.join(path, "..")
-            try:
-                stat = os.stat(path.encode("utf8"))
-                if dev is None:
-                    dev = stat.st_dev
-                elif dev != stat.st_dev:
-                    self._fserrors = self.error_class([
-                        _("Paths for a NFS share must reside within the same "
-                            "filesystem")
-                    ])
-                    valid = False
-                    break
-                if os.stat(parent.encode("utf8")).st_dev != stat.st_dev:
-                    ismp = True
-                if ismp and len(forms) > 1:
-                    self._fserrors = self.error_class([
-                        _("You cannot share a mount point and subdirectories "
-                            "all at once")
-                    ])
-                    valid = False
-                    break
-
-            except OSError:
-                pass
-
-        if not ismp and self.cleaned_data.get('nfs_alldirs'):
-            self._errors['nfs_alldirs'] = self.error_class([_(
-                "This option can only be used for datasets."
-            )])
-            valid = False
-
-        networks = self.cleaned_data.get("nfs_network", "")
-        if not networks:
-            networks = ['0.0.0.0/0']
-        else:
-            networks = networks.split(" ")
-
-        qs = models.NFS_Share.objects.all()
-        if self.instance.id:
-            qs = qs.exclude(id=self.instance.id)
-
-        used_networks = []
-        for share in qs:
-            try:
-                stdev = os.stat(share.paths.all()[0].path.encode("utf8")).st_dev
-            except:
-                continue
-            if share.nfs_network:
-                used_networks.extend(
-                    [(y, stdev) for y in share.nfs_network.split(" ")]
-                )
-            else:
-                used_networks.append(('0.0.0.0/0', stdev))
-            if (self.cleaned_data.get("nfs_alldirs") and share.nfs_alldirs
-                    and stdev == dev):
-                self._errors['nfs_alldirs'] = self.error_class([
-                    _("This option is only available once per mountpoint")
-                ])
-                valid = False
-                break
-
-        for network in networks:
-            networkobj = IPNetwork(network)
-            for unetwork, ustdev in used_networks:
-                try:
-                    unetworkobj = IPNetwork(unetwork)
-                except Exception:
-                    # If for some reason other values in db are not valid networks
-                    unetworkobj = IPNetwork('0.0.0.0/0')
-                if networkobj.overlaps(unetworkobj) and dev == ustdev:
-                    self._errors['nfs_network'] = self.error_class([
-                        _("The network %s is already being shared and cannot "
-                            "be used twice for the same filesystem") % (
-                                network,
-                            )
-                    ])
-                    valid = False
-                    break
-
-        return valid
-
-    def is_valid(self, formsets):
-        paths = formsets.get("formset_nfs_share_path")['instance']
-        valid = False
-        for form in paths:
-            if (
-                form.cleaned_data.get("path")
-                and
-                not form.cleaned_data.get("DELETE")
-            ):
-                valid = True
-                break
-        if not valid:
-            paths._non_form_errors = self.error_class([
-                _("You need at least one path for the share"),
-            ])
-            return valid
-        return super(NFS_ShareForm, self).is_valid(formsets)
+        return data
 
     def done(self, request, events):
-        notifier().reload("nfs")
         if not services.objects.get(srv_service='nfs').srv_enable:
             events.append('ask_service("nfs")')
         super(NFS_ShareForm, self).done(request, events)
