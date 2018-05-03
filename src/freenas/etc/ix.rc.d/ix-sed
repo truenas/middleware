@@ -10,6 +10,26 @@
 
 unlock_drives()
 {
+	# This block inserts data into the disk_passwd column that
+	# was saved out of the database prior to running storage/0009
+	# migration.
+	# This would only be needed if you manually added disk_passwd
+	# to the database in a version of FreeNAS prior to 11.2-R
+	# and wanted the data to be preserved when the migration ran.
+	if [ -f /data/seddata ]; then
+		# We are running very early, make / read-write.
+		mount -uw /
+		for i in `cat /data/seddata`
+		do
+			dn=$(echo $i | awk -F\| '{print $1}')
+			dp=$(echo $i | awk -F\| '{print $2}')
+                        ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "UPDATE storage_disk SET disk_passwd = \"${dp}\" WHERE disk_name = \"${dn}\" "
+		done
+		sync
+		sync
+		sleep 3
+		rm /data/seddata
+	fi
 	local IFS="|"
 	local f="disk_passwd"
 	local g="disk_name"
