@@ -178,17 +178,24 @@ class IPAddr(Str):
 
     def __init__(self, *args, **kwargs):
         self.cidr = kwargs.pop('cidr', False)
+        self.cidr_strict = kwargs.pop('cidr_strict', False)
         super(IPAddr, self).__init__(*args, **kwargs)
 
     def validate(self, value):
+        verrors = ValidationErrors()
+
         if value:
             try:
                 if self.cidr:
-                    ipaddress.ip_interface(value)
+                    ipaddress.ip_network(value, strict=self.cidr_strict)
                 else:
                     ipaddress.ip_address(value)
-            except ValueError:
-                raise Error(self.name, f'Not a valid IP Address: {value}')
+            except ValueError as e:
+                verrors.add(self.name, str(e), errno.EINVAL)
+
+        if verrors:
+            raise verrors
+
         return super().validate(value)
 
 
