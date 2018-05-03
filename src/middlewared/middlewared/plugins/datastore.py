@@ -259,13 +259,18 @@ class DatastoreService(Service):
 
         return obj.pk
 
-    @accepts(Str('name'), Any('id'))
-    async def delete(self, name, id):
+    @accepts(Str('name'), Any('id_or_filters'))
+    async def delete(self, name, id_or_filters):
         """
         Delete an entry `id` in `name`.
         """
         model = self.__get_model(name)
-        await self.middleware.run_in_thread(lambda oid: model.objects.get(pk=oid).delete(), id)
+        if isinstance(id_or_filters, list):
+            qs = model.objects.all()
+            qs = qs.filter(*self._filters_to_queryset(id_or_filters, None))
+            await self.middleware.run_in_thread(qs.delete)
+        else:
+            await self.middleware.run_in_thread(lambda oid: model.objects.get(pk=oid).delete(), id_or_filters)
         return True
 
     def sql(self, query, params=None):
