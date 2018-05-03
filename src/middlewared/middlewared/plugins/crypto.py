@@ -45,7 +45,7 @@ async def validate_cert_name(middleware, cert_name, datastore, verrors, name):
     if cert_name in ("external", "self-signed", "external - signature pending"):
         verrors.add(
             name,
-            '{0} is a reserved internal keyword for Certificate Management'.format(cert_name)
+            f'{cert_name} is a reserved internal keyword for Certificate Management'
         )
     reg = re.search(r'^[a-z0-9_\-]+$', cert_name or '', re.I)
     if not reg:
@@ -427,33 +427,29 @@ class CertificateService(CRUDService):
             ('rm', {'name': 'lifetime'})
         )
     )
-    async def create_certificate_signing_request(self, cert_info):
+    def create_certificate_signing_request(self, cert_info):
 
-        def _create_ssl_csr(cert_info):
+        cert_info['san'] = self.middleware.call_sync('certificate.san_to_string', cert_info.pop('san', []))
 
-            key = generate_key(cert_info['key_length'])
+        key = generate_key(cert_info['key_length'])
 
-            req = crypto.X509Req()
-            req.get_subject().C = cert_info['country']
-            req.get_subject().ST = cert_info['state']
-            req.get_subject().L = cert_info['city']
-            req.get_subject().O = cert_info['organization']
-            req.get_subject().CN = cert_info['common']
+        req = crypto.X509Req()
+        req.get_subject().C = cert_info['country']
+        req.get_subject().ST = cert_info['state']
+        req.get_subject().L = cert_info['city']
+        req.get_subject().O = cert_info['organization']
+        req.get_subject().CN = cert_info['common']
 
-            if cert_info['san']:
-                req.add_extensions(
-                    [crypto.X509Extension(b"subjectAltName", False, cert_info['san'].encode())])
-                req.get_subject().subjectAltName = cert_info['san']
-            req.get_subject().emailAddress = cert_info['email']
+        if cert_info['san']:
+            req.add_extensions(
+                [crypto.X509Extension(b"subjectAltName", False, cert_info['san'].encode())])
+            req.get_subject().subjectAltName = cert_info['san']
+        req.get_subject().emailAddress = cert_info['email']
 
-            req.set_pubkey(key)
-            req.sign(key, cert_info['digest_algorithm'])
+        req.set_pubkey(key)
+        req.sign(key, cert_info['digest_algorithm'])
 
-            return (req, key)
-
-        cert_info['san'] = await self.san_to_string(cert_info.pop('san', []))
-
-        return await self.middleware.run_in_io_thread(_create_ssl_csr, cert_info)
+        return (req, key)
 
     @private
     async def validate_common_attributes(self, data, schema_name):
@@ -545,7 +541,7 @@ class CertificateService(CRUDService):
 
         data['type'] = CERT_TYPE_CSR
 
-        req, key = await self.create_certificate_signing_request(cert_info)
+        req, key = await self.middleware.run_in_io_thread(self.create_certificate_signing_request, cert_info)
 
         data['CSR'] = crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
         data['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
@@ -611,39 +607,43 @@ class CertificateService(CRUDService):
         )
     )
     async def __create_internal(self, data):
-        cert_info = get_cert_info_from_data(data)
-        data['type'] = CERT_TYPE_INTERNAL
 
-        signing_cert = await self.middleware.call(
-            'certificateauthority.query',
-            [('id', '=', data['signedby'])],
-            {'get': True}
-        )
+        def _create_internal(data):
+            cert_info = get_cert_info_from_data(data)
+            data['type'] = CERT_TYPE_INTERNAL
 
-        public_key = generate_key(data['key_length'])
-        signkey = load_private_key(signing_cert['privatekey'])
+            signing_cert = self.middleware.call_sync(
+                'certificateauthority.query',
+                [('id', '=', data['signedby'])],
+                {'get': True}
+            )
 
-        cert = await self.create_certificate(cert_info)
-        cert.set_pubkey(public_key)
-        cacert = crypto.load_certificate(crypto.FILETYPE_PEM, signing_cert['certificate'])
-        cert.set_issuer(cacert.get_subject())
-        cert.add_extensions([
-            crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=cert),
-        ])
+            public_key = generate_key(data['key_length'])
+            signkey = load_private_key(signing_cert['privatekey'])
 
-        cert_serial = await self.middleware.call(
-            'certificateauthority.get_serial_for_certificate',
-            data['signedby']
-        )
+            cert = self.middleware.call_sync('certificate.create_certificate', cert_info)
+            cert.set_pubkey(public_key)
+            cacert = crypto.load_certificate(crypto.FILETYPE_PEM, signing_cert['certificate'])
+            cert.set_issuer(cacert.get_subject())
+            cert.add_extensions([
+                crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=cert),
+            ])
 
-        cert.set_serial_number(cert_serial)
-        cert.sign(signkey, data['digest_algorithm'])
+            cert_serial = self.middleware.call_sync(
+                'certificateauthority.get_serial_for_certificate',
+                data['signedby']
+            )
 
-        data['certificate'] = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-        data['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, public_key)
-        data['serial'] = cert_serial
+            cert.set_serial_number(cert_serial)
+            cert.sign(signkey, data['digest_algorithm'])
 
-        return data
+            data['certificate'] = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
+            data['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, public_key)
+            data['serial'] = cert_serial
+
+            return data
+
+        return await self.middleware.run_in_io_thread(_create_internal, data)
 
     @accepts(
         Int('id', required=True),
@@ -759,18 +759,23 @@ class CertificateAuthorityService(CRUDService):
         Ref('certificate_cert_info')
     )
     async def create_self_signed_CA(self, cert_info):
-        key = generate_key(cert_info['key_length'])
-        cert = await self.middleware.call('certificate.create_certificate', cert_info)
-        cert.set_pubkey(key)
-        cert.add_extensions([
-            crypto.X509Extension(b"basicConstraints", True, b"CA:TRUE"),
-            crypto.X509Extension(b"keyUsage", True, b"keyCertSign, cRLSign"),
-            crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=cert),
-        ])
-        serial = cert_info.get('serial')
-        cert.set_serial_number(serial or 0o1)
-        cert.sign(key, cert_info['digest_algorithm'])
-        return (cert, key)
+
+        def _create_CA(cert_info):
+            key = generate_key(cert_info['key_length'])
+            cert = self.middleware.call_sync('certificate.create_certificate', cert_info)
+            cert.set_pubkey(key)
+            cert.add_extensions([
+                crypto.X509Extension(b"basicConstraints", True, b"CA:TRUE"),
+                crypto.X509Extension(b"keyUsage", True, b"keyCertSign, cRLSign"),
+                crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=cert),
+            ])
+            serial = cert_info.get('serial')
+            cert.set_serial_number(serial or 0o1)
+            cert.sign(key, cert_info['digest_algorithm'])
+            return (cert, key)
+
+        return await self.middleware.run_in_io_thread(_create_CA, cert_info)
+
 
     def _set_enum(name):
         def set_enum(attr):
@@ -919,34 +924,39 @@ class CertificateAuthorityService(CRUDService):
         ),
     )
     async def __create_intermediate_ca(self, data):
-        data['type'] = CA_TYPE_INTERMEDIATE
-        cert_info = get_cert_info_from_data(data)
+
+        def _create_intermediate(data, signing_cert, serial):
+
+            data['type'] = CA_TYPE_INTERMEDIATE
+            cert_info = get_cert_info_from_data(data)
+
+            publickey = generate_key(data['key_length'])
+            signkey = load_private_key(signing_cert['privatekey'])
+
+            cert = self.middleware.call_sync('certificate.create_certificate', cert_info)
+            cert.set_pubkey(publickey)
+            cacert = crypto.load_certificate(crypto.FILETYPE_PEM, signing_cert['certificate'])
+            cert.set_issuer(cacert.get_subject())
+            cert.add_extensions([
+                crypto.X509Extension(b"basicConstraints", True, b"CA:TRUE, pathlen:0"),
+                crypto.X509Extension(b"keyUsage", True, b"keyCertSign, cRLSign"),
+                crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=cert),
+            ])
+
+            cert.set_serial_number(serial)
+            data['serial'] = serial
+            cert.sign(signkey, data['digest_algorithm'])
+
+            data['certificate'] = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
+            data['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, publickey)
+
+            return data
 
         signing_cert = await self._get_instance(data['signedby'])
 
-        publickey = generate_key(data['key_length'])
-        signkey = load_private_key(signing_cert['privatekey'])
-
-        cert = await self.middleware.call('certificate.create_certificate', cert_info)
-        cert.set_pubkey(publickey)
-        cacert = crypto.load_certificate(crypto.FILETYPE_PEM, signing_cert['certificate'])
-        cert.set_issuer(cacert.get_subject())
-        cert.add_extensions([
-            crypto.X509Extension(b"basicConstraints", True, b"CA:TRUE, pathlen:0"),
-            crypto.X509Extension(b"keyUsage", True, b"keyCertSign, cRLSign"),
-            crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=cert),
-        ])
-
         serial = await self.get_serial_for_certificate(signing_cert['id'])
 
-        cert.set_serial_number(serial)
-        data['serial'] = serial
-        cert.sign(signkey, data['digest_algorithm'])
-
-        data['certificate'] = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-        data['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, publickey)
-
-        return data
+        return await self.middleware.run_in_io_thread(_create_intermediate, data, signing_cert, serial)
 
     @accepts(
         Patch(
