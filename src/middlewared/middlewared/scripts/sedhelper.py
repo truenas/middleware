@@ -38,6 +38,14 @@ def setup(password):
                 print('No new SED disks detected')
 
 
+def unlock():
+    with Client() as c:
+        if c.call('disk.sed_unlock_all') is False:
+            print('SED disks failed to unlocked')
+        else:
+            print('All SED disks unlocked')
+
+
 def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help='sub-command help', dest='action')
@@ -45,9 +53,13 @@ def main():
     parser_setup = subparsers.add_parser('setup', help='Setup new SED disks')
     parser_setup.add_argument('password', help='Password to use on new disks')
 
+    subparsers.add_parser('unlock', help='Unlock SED disks')
+
     args = parser.parse_args()
     if args.action == 'setup':
         setup(args.password)
+    elif args.action == 'unlock':
+        unlock()
     else:
         parser.print_help()
 
