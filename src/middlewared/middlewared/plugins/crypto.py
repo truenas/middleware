@@ -5,8 +5,8 @@ import random
 import re
 
 from middlewared.async_validators import validate_country
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
-from middlewared.service import CRUDService, filterable, private, ValidationErrors
+from middlewared.schema import accepts, Dict, Int, List, Patch, Ref, Str
+from middlewared.service import CRUDService, private, ValidationErrors
 from middlewared.validators import Email, IpAddress, Range, ShouldBe
 from OpenSSL import crypto, SSL
 
@@ -190,7 +190,12 @@ class CertificateService(CRUDService):
     @private
     async def cert_extend(self, cert):
         """Extend certificate with some useful attributes."""
+
         if cert.get('signedby'):
+
+            # We query for signedby again to make sure it's keys do not have the "cert_" prefix and it has gone through
+            # the cert_extend method
+
             cert['signedby'] = await self.middleware.call(
                 'certificateauthority.query',
                 [('id', '=', cert['signedby']['id'])],
@@ -580,10 +585,7 @@ class CertificateService(CRUDService):
     def __create_imported_certificate(self, data):
         data['type'] = CERT_TYPE_EXISTING
 
-        data = self.middleware.call_sync(
-            'certificate.__create_certificate',
-            data
-        )
+        data = self.__create_certificate(data)
 
         data['chain'] = True if len(RE_CERTIFICATE.findall(data['certificate'])) > 1 else False
 
@@ -810,8 +812,7 @@ class CertificateAuthorityService(CRUDService):
         if verrors:
             raise verrors
 
-        data = await self.map_create_functions[data.pop('create_type')](data)
-        data = self.middleware.run_in_io_thread(
+        data = await self.middleware.run_in_io_thread(
             self.map_create_functions[data.pop('create_type')],
             data
         )
@@ -1031,7 +1032,11 @@ class CertificateAuthorityService(CRUDService):
 
         if data.pop('create_type', '') == 'CA_SIGN_CSR':
             data['ca_id'] = id
-            return await self.ca_sign_csr(data, 'certificate_authority_update')
+            return await self.middleware.run_in_io_thread(
+                self.ca_sign_csr,
+                data,
+                'certificate_authority_update'
+            )
 
         old = await self._get_instance(id)
         # signedby is changed back to integer from a dict
