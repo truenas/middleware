@@ -482,6 +482,31 @@ class DiskService(CRUDService):
         rv['locked'] = locked
         return rv
 
+    @private
+    async def sed_initial_setup(self, disk_name, password):
+        """
+        NO_SED - Does not support SED
+        ACCESS_GRANTED - Already setup and `password` is a valid password
+        SETUP_FAILED - Initial setup call failed
+        SUCCESS - Setup successfully completed
+        """
+        devname = f'/dev/{disk_name}'
+
+        cp = await run('sedutil-cli', '--isValidSED', devname, check=False)
+        if b' SED ' not in cp.stdout:
+            return 'NO_SED'
+
+        cp = await run('sedutil-cli', '--listLockingRange', '0', password, devname, check=False)
+        if cp.returncode == 0:
+            return 'ACCESS_GRANTED'
+
+        try:
+            await run('sedutil-cli', '--initialSetup', password, devname)
+        except subprocess.CalledProcessError as e:
+            self.logger.debug(f'initialSetup failed for {disk_name}:\n{e.stdout}{e.stderr}')
+            return 'SETUP_FAILED'
+        return 'SUCCESS'
+
     async def __multipath_create(self, name, consumers, mode=None):
         """
         Create an Active/Passive GEOM_MULTIPATH provider

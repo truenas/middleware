@@ -67,6 +67,7 @@ setup(
         'console_scripts': [
             'middlewared = middlewared.main:main',
             'midclt = middlewared.client.client:main',
+            'sedhelper = middlewared.scripts.sedhelper:main',
         ],
     },
 )
