@@ -191,6 +191,15 @@ class FailoverService(Service):
 
 
 async def ha_permission(app):
+    # Skip if session was already authenticated
+    if app.authenticated is True:
+        return
+
+    # We only care for remote connections (IPv4), in the interlink
+    sock = app.request.transport.get_extra_info('socket')
+    if sock.family != socket.AF_INET:
+        return
+
     remote_addr, remote_port = app.request.transport.get_extra_info('peername')
 
     if remote_port <= 1024 and remote_addr in (
