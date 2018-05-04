@@ -123,6 +123,9 @@ def filter_list(_list, filters=None, options=None):
         '=': lambda x, y: x == y,
         '!=': lambda x, y: x != y,
         'in': lambda x, y: x in y,
+        'nin': lambda x, y: x not in y,
+        'rin': lambda x, y: y in x,
+        'rnin': lambda x, y: y not in x,
     }
 
     if filters is None:

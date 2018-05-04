@@ -2,8 +2,9 @@ import errno
 import socket
 import ssl
 
-from middlewared.schema import Dict, Int, Str, accepts
-from middlewared.service import CallError, CRUDService, private
+from middlewared.async_validators import resolve_hostname
+from middlewared.schema import accepts, Dict, Int, Str, Patch
+from middlewared.service import CallError, CRUDService, private, ValidationErrors
 
 from pyVim import connect
 from pyVmomi import vim, vmodl
@@ -19,9 +20,115 @@ class VMWareService(CRUDService):
     async def item_extend(self, item):
         try:
             item['password'] = await self.middleware.call('notifier.pwenc_decrypt', item['password'])
-        except:
+        except Exception:
             self.logger.warn('Failed to decrypt password', exc_info=True)
         return item
+
+    @private
+    async def validate_data(self, data, schema_name):
+        verrors = ValidationErrors()
+
+        await resolve_hostname(self.middleware, verrors, f'{schema_name}.hostname', data['hostname'])
+
+        if data['filesystem'] not in (await self.middleware.call('pool.filesystem_choices')):
+            verrors.add(
+                f'{schema_name}.filesystem',
+                'Invalid ZFS filesystem'
+            )
+
+        datastore = data.get('datastore')
+        try:
+            ds = await self.middleware.run_in_io_thread(
+                self.get_datastores,
+                {
+                    'hostname': data.get('hostname'),
+                    'username': data.get('username'),
+                    'password': data.get('password'),
+                }
+            )
+
+            datastores = []
+            for i in ds.values():
+                datastores += i.keys()
+            if data.get('datastore') not in datastores:
+                verrors.add(
+                    f'{schema_name}.datastore',
+                    f'Datastore "{datastore}" not found on the server'
+                )
+        except Exception as e:
+            verrors.add(
+                f'{schema_name}.datastore',
+                'Failed to connect: ' + str(e)
+            )
+
+        if verrors:
+            raise verrors
+
+    @accepts(
+        Dict(
+            'vmware_create',
+            Str('datastore', required=True),
+            Str('filesystem', required=True),
+            Str('hostname', required=True),
+            Str('password', password=True, required=True),
+            Str('username', required=True),
+            register=True
+        )
+    )
+    async def do_create(self, data):
+        await self.validate_data(data, 'vmware_create')
+
+        data['password'] = await self.middleware.call(
+            'notifier.pwenc_encrypt',
+            data['password']
+        )
+
+        data['id'] = await self.middleware.call(
+            'datastore.insert',
+            self._config.datastore,
+            data
+        )
+
+        return await self._get_instance(data['id'])
+
+    @accepts(
+        Int('id', required=True),
+        Patch('vmware_create', 'vmware_update', ('attr', {'update': True}))
+    )
+    async def do_update(self, id, data):
+        old = await self._get_instance(id)
+        new = old.copy()
+
+        new.update(data)
+
+        await self.validate_data(new)
+
+        new['password'] = await self.middleware.call(
+            'notifier.pwenc_encrypt',
+            new['password']
+        )
+
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            id,
+            new,
+        )
+
+        return await self._get_instance(id)
+
+    @accepts(
+        Int('id')
+    )
+    async def do_delete(self, id):
+
+        response = await self.middleware.call(
+            'datastore.delete',
+            self._config.datastore,
+            id
+        )
+
+        return response
 
     @accepts(Dict(
         'vmware-creds',
