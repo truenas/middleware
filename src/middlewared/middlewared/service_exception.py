@@ -67,3 +67,7 @@ class ValidationErrors(CallException):
         for e in self.errors:
             output += str(e) + '\n'
         return output
+
+    def __contains__(self, item):
+        # check if an error exists for a given attribute ( item )
+        return item in [e.attribute for e in self.errors]

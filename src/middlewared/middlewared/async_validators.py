@@ -29,3 +29,11 @@ async def resolve_hostname(middleware, verrors, name, hostname):
             name,
             'Couldn\'t resolve hostname'
         )
+
+
+async def validate_country(middleware, country_name, verrors, v_field_name):
+    if country_name not in (await middleware.call('system.general.country_choices')):
+        verrors.add(
+            v_field_name,
+            f'{country_name} not in countries recognized by the system'
+        )

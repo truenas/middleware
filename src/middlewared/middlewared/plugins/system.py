@@ -4,6 +4,7 @@ from middlewared.service import ConfigService, no_auth_required, job, private, S
 from middlewared.utils import Popen, sw_version
 from middlewared.validators import Range
 
+import csv
 import os
 import re
 import socket
@@ -336,6 +337,7 @@ class SystemGeneralService(ConfigService):
         self._languages = self._initialize_system_languages()
         self._time_zones_list = None
         self._kbdmap_choices = None
+        self._country_choices = {}
 
     @private
     def general_system_extend(self, data):
@@ -353,6 +355,7 @@ class SystemGeneralService(ConfigService):
     def get_system_languages(self):
         return self._languages
 
+    @private
     def _initialize_system_languages(self):
         languagues = [
             ('af', 'Afrikaans'),
@@ -447,6 +450,7 @@ class SystemGeneralService(ConfigService):
         ]
         return dict(languagues)
 
+    @private
     async def _initialize_timezones_list(self):
         pipe = await Popen(
             'find /usr/share/zoneinfo/ -type f -not -name zone.tab -not -regex \'.*/Etc/GMT.*\'',
@@ -464,6 +468,43 @@ class SystemGeneralService(ConfigService):
             await self._initialize_timezones_list()
         return self._time_zones_list
 
+    @accepts()
+    async def country_choices(self):
+        if not self._country_choices:
+            await self._initialize_country_choices()
+        return self._country_choices
+
+    @private
+    async def _initialize_country_choices(self):
+
+        def _get_index(country_columns, column):
+            index = -1
+
+            i = 0
+            for c in country_columns:
+                if c.lower() == column.lower():
+                    index = i
+                    break
+
+                i += 1
+
+            return index
+
+        country_file = '/etc/iso_3166_2_countries.csv'
+        cni, two_li = None, None
+        with open(country_file, 'r', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile)
+
+            for index, row in enumerate(reader):
+                if index != 0:
+                    if row[cni] and row[two_li]:
+                        self._country_choices[row[two_li]] = row[cni]
+                else:
+                    # ONLY CNI AND TWO_LI ARE BEING CONSIDERED FROM THE CSV
+                    cni = _get_index(row, 'Common Name')
+                    two_li = _get_index(row, 'ISO 3166-1 2 Letter Code')
+
+    @private
     async def _initialize_kbdmap_choices(self):
         """Populate choices from /usr/share/vt/keymaps/INDEX.keymaps"""
         index = "/usr/share/vt/keymaps/INDEX.keymaps"
@@ -481,6 +522,7 @@ class SystemGeneralService(ConfigService):
             await self._initialize_kbdmap_choices()
         return self._kbdmap_choices
 
+    @private
     async def validate_general_settings(self, data, schema):
         verrors = ValidationErrors()
 
