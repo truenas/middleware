@@ -30,7 +30,7 @@ class VMWareService(CRUDService):
 
         await resolve_hostname(self.middleware, verrors, f'{schema_name}.hostname', data['hostname'])
 
-        if data['filesystem'] not in (await self.middleware.call('pool.file_system_choices')):
+        if data['filesystem'] not in (await self.middleware.call('pool.filesystem_choices')):
             verrors.add(
                 f'{schema_name}.filesystem',
                 'Invalid ZFS filesystem'
@@ -70,7 +70,7 @@ class VMWareService(CRUDService):
             Str('datastore', required=True),
             Str('filesystem', required=True),
             Str('hostname', required=True),
-            Str('password', required=True),
+            Str('password', password=True, required=True),
             Str('username', required=True),
             register=True
         )

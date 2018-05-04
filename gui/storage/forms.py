@@ -2936,7 +2936,7 @@ class VMWarePluginForm(MiddlewareModelForm, ModelForm):
         self.fields['filesystem'] = forms.ChoiceField(
             label=self.fields['filesystem'].label,
         )
-        self.fields['filesystem'].choices = choices.FILE_SYSTEM_CHOICES()
+        self.fields['filesystem'].choices = choices.FILESYSTEM_CHOICES()
         if self.instance.id:
             self.fields['oid'].initial = self.instance.id
 

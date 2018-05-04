@@ -803,12 +803,12 @@ class UPS_PORT_CHOICES(object):
             yield (None, None)
 
 
-class FILE_SYSTEM_CHOICES(object):
+class FILESYSTEM_CHOICES(object):
 
     def __iter__(self):
         try:
             with client as c:
-                for v in c.call('pool.file_system_choices'):
+                for v in c.call('pool.filesystem_choices'):
                     yield (v, v)
         except Exception:
             yield (None, None)
