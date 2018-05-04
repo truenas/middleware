@@ -209,11 +209,11 @@ class PoolService(CRUDService):
         return await self.middleware.call('datastore.query', 'storage.volume', filters, options)
 
     @accepts()
-    async def file_system_choices(self, ):
+    async def file_system_choices(self):
         vol_names = [vol['name'] for vol in (await self.query())]
         return [
-            y for y in list(await self.middleware.call('zfs.pool.list_zfs_fsvols'))
-            if y.split('/')[0] in vol_names
+            y['name'] for y in await self.middleware.call('zfs.dataset.query', [('name', 'rnin', '.system')])
+            if y['name'].split('/')[0] in vol_names
         ]
 
     @private

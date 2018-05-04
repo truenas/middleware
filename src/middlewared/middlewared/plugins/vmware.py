@@ -28,28 +28,25 @@ class VMWareService(CRUDService):
     async def validate_data(self, data, schema_name):
         verrors = ValidationErrors()
 
-        for r_field in data:
-            if not data[r_field]:
-                verrors.add(
-                    f'{schema_name}.{r_field}',
-                    'This field is required'
-                )
-
         await resolve_hostname(self.middleware, verrors, f'{schema_name}.hostname', data['hostname'])
 
         if data['filesystem'] not in (await self.middleware.call('pool.file_system_choices')):
             verrors.add(
                 f'{schema_name}.filesystem',
-                'Specified filesystem not in recognized ZFS filesystems'
+                'Invalid ZFS filesystem'
             )
 
         datastore = data.get('datastore')
         try:
-            ds = self.get_datastores({
-                'hostname': data.get('hostname'),
-                'username': data.get('username'),
-                'password': data.get('password'),
-            })
+            ds = await self.middleware.run_in_io_thread(
+                self.get_datastores,
+                {
+                    'hostname': data.get('hostname'),
+                    'username': data.get('username'),
+                    'password': data.get('password'),
+                }
+            )
+
             datastores = []
             for i in ds.values():
                 datastores += i.keys()
