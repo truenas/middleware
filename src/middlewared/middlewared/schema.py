@@ -404,15 +404,19 @@ class Cron(Dict):
 
     FIELDS = ['minute', 'hour', 'dom', 'month', 'dow']
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, *attrs, **kwargs):
         self.additional_attrs = kwargs.pop('additional_attrs', False)
         # Update property is used to disable requirement on all attributes
         # as well to not populate default values for not specified attributes
         self.update = kwargs.pop('update', False)
         super(Cron, self).__init__(name, **kwargs)
         self.attrs = {}
+        provided_attrs = {i.name: i for i in attrs}
         for i in Cron.FIELDS:
-            self.attrs[i] = Str(i)
+            attr = Str(i)
+            if provided_attrs.get(i):
+                attr = provided_attrs.get(i)
+            self.attrs[i] = attr
 
     @staticmethod
     def convert_schedule_to_db_format(data_dict, schedule_name='schedule'):
