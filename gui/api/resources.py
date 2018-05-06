@@ -2124,6 +2124,11 @@ class ISCSIPortalResourceMixin(object):
 
 class ISCSITargetToExtentResourceMixin(object):
 
+    SORTING_MAP = {
+        'iscsi_extent': lambda x: x.iscsi_extent.id,
+        'iscsi_target': lambda x: x.iscsi_target.id,
+    }
+
     class Meta:
         resource_name = 'services/iscsi/targettoextent'
 
