@@ -1999,29 +1999,27 @@ class PeriodicSnapForm(MiddlewareModelForm, ModelForm):
         self.fields['task_filesystem'] = forms.ChoiceField(
             label=self.fields['task_filesystem'].label,
         )
-        filesystem_choices = [choice for choice in choices.FILESYSTEM_CHOICES()]
+        filesystem_choices = list(choices.FILESYSTEM_CHOICES())
         if self.instance.id and self.instance.task_filesystem not in dict(filesystem_choices):
             filesystem_choices.append((self.instance.task_filesystem, self.instance.task_filesystem))
         self.fields['task_filesystem'].choices = filesystem_choices
         self.fields['task_repeat_unit'].widget = forms.HiddenInput()
 
     def clean_task_begin(self):
-        begin = self.data.get('task_begin')
+        begin = self.cleaned_data.get('task_begin')
         return begin.strftime('%H:%M')
 
     def clean_task_end(self):
-        end = self.data.get('task_end')
+        end = self.cleaned_data.get('task_end')
         return end.strftime('%H:%M')
 
     def clean_task_byweekday(self):
         bwd = self.data.getlist('task_byweekday')
-        return ','.join(bwd)
+        return bwd
 
     def middleware_clean(self, data):
-        data['schedule'] = {
-            'dow': data.pop('byweekday')
-        }
-        data['repeat_unit'] = data['repeat_unit'].upper()
+        data['dow'] = [int(day) for day in data.pop('byweekday')]
+        data.pop('repeat_unit', None)
         data['ret_unit'] = data['ret_unit'].upper()
         return data
 

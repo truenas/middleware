@@ -36,7 +36,7 @@ class EnumMixin(object):
             tmp = value
         for v in tmp:
             if v not in self.enum:
-                raise Error(self.name, 'Invalid choice: {0}'.format(value))
+                raise Error(self.name, f'Invalid choice: {value}')
         return value
 
 
@@ -218,9 +218,10 @@ class Bool(Attribute):
         return schema
 
 
-class Int(Attribute):
+class Int(EnumMixin, Attribute):
 
     def clean(self, value):
+        value = super(Int, self).clean(value)
         if value is None and not self.required:
             return self.default
         if not isinstance(value, int):
@@ -404,19 +405,15 @@ class Cron(Dict):
 
     FIELDS = ['minute', 'hour', 'dom', 'month', 'dow']
 
-    def __init__(self, name, *attrs, **kwargs):
+    def __init__(self, name, **kwargs):
         self.additional_attrs = kwargs.pop('additional_attrs', False)
         # Update property is used to disable requirement on all attributes
         # as well to not populate default values for not specified attributes
         self.update = kwargs.pop('update', False)
         super(Cron, self).__init__(name, **kwargs)
         self.attrs = {}
-        provided_attrs = {i.name: i for i in attrs}
         for i in Cron.FIELDS:
-            attr = Str(i)
-            if provided_attrs.get(i):
-                attr = provided_attrs.get(i)
-            self.attrs[i] = attr
+            self.attrs[i] = Str(i)
 
     @staticmethod
     def convert_schedule_to_db_format(data_dict, schedule_name='schedule'):

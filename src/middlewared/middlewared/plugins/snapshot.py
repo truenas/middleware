@@ -1,8 +1,8 @@
 from datetime import time
 
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, Patch, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str
 from middlewared.service import CRUDService, private, ValidationErrors
-from middlewared.validators import Time
+from middlewared.validators import Range, Time
 
 
 class PeriodicSnapshotService(CRUDService):
@@ -17,34 +17,25 @@ class PeriodicSnapshotService(CRUDService):
     def periodic_snapshot_extend(self, data):
         data['begin'] = str(data['begin'])
         data['end'] = str(data['end'])
-        data['repeat_unit'] = data['repeat_unit'].upper()
         data['ret_unit'] = data['ret_unit'].upper()
-        data['schedule'] = data.pop('byweekday')
+        data['dow'] = [int(day) for day in data.pop('byweekday').split(',')]
+        data.pop('repeat_unit', None)
         return data
 
     @private
     async def common_validation(self, data, schema_name):
         verrors = ValidationErrors()
 
-        interval_choices = [5, 10, 15, 30, 60, 120, 180, 240, 360, 720, 1440, 10080, 20160, 40320]
-
-        if data.get('interval') not in interval_choices:
-            verrors.add(
-                f'{schema_name}.interval',
-                'Please select a valid interval'
-            )
-
-        if data['repeat_unit'] == 'WEEKLY' and not data['schedule'].get('dow'):
+        if not data['dow']:
             verrors.add(
                 f'{schema_name}.dow',
                 'At least one day must be chosen'
             )
 
-        data['repeat_unit'] = data['repeat_unit'].lower()
         data['ret_unit'] = data['ret_unit'].lower()
         data['begin'] = time(*[int(value) for value in data['begin'].split(':')])
         data['end'] = time(*[int(value) for value in data['end'].split(':')])
-        data['byweekday'] = data.pop('schedule').get('dow')
+        data['byweekday'] = ','.join([str(day) for day in data.pop('dow')])
 
         return data, verrors
 
@@ -53,14 +44,20 @@ class PeriodicSnapshotService(CRUDService):
             'periodic_snapshot_create',
             Bool('enabled', default=True),
             Bool('recursive', default=False),
-            Cron('schedule'),
-            Int('interval', required=True),
+            Int('interval', enum=[
+                5, 10, 15, 30, 60, 120, 180, 240,
+                360, 720, 1440, 10080, 20160, 40320
+            ], required=True),
             Int('ret_count', required=True),
+            List('dow', items=[
+                Int('day', validators=[Range(min=1, max=7)])
+            ], required=True),
             Str('begin', validators=[Time()], required=True),
             Str('end', validators=[Time()], required=True),
             Str('filesystem', required=True),
-            Str('repeat_unit', enum=['DAILY', 'WEEKLY'], required=True),
-            Str('ret_unit', enum=['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'], required=True),
+            Str('ret_unit', enum=[
+                'HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'
+            ], required=True),
             register=True
         )
     )
@@ -103,6 +100,14 @@ class PeriodicSnapshotService(CRUDService):
         new.update(data)
 
         new, verrors = await self.common_validation(new, 'periodic_snapshot_update')
+
+        if old['filesystem'] != new['filesystem']:
+            if new['filesystem'] not in (await self.middleware.call('pool.filesystem_choices')):
+                verrors.add(
+                    'periodic_snapshot_update.filesystem',
+                    'Invalid ZFS filesystem'
+                )
+
         if verrors:
             raise verrors
 
