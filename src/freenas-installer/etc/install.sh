@@ -1069,7 +1069,15 @@ menu_install()
 	graid delete ${_disks}
       fi
 
-      BOOTMODE=`sysctl -n machdep.bootmethod`
+      if [ -n "$(kenv grub.platform 2>/dev/null)" ] ; then
+        if [ "$(kenv grub.platform)" = "efi" ] ; then
+          BOOTMODE="UEFI"
+        else
+          BOOTMODE="BIOS"
+	fi
+      else
+        BOOTMODE=$(sysctl -n machdep.bootmethod)
+      fi
       if ${INTERACTIVE}; then
         # Prompt for UEFI or BIOS mode
         if ask_boot_method
