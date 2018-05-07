@@ -405,8 +405,7 @@ class DiskService(CRUDService):
         if not advconfig.get('sed_passwd') and not any([d['passwd'] for d in disks]):
             return
 
-        args = [[disk['name'], disk, advconfig] for disk in disks]
-        result = await asyncio_map(lambda x: self.sed_unlock(*x), args, 16)
+        result = await asyncio_map(lambda disk: self.sed_unlock(disk['name'], disk, advconfig), disks, 16)
         locked = list(filter(lambda x: x['locked'] is True, result))
         if locked:
             disk_names = ', '.join([i['name'] for i in locked])
