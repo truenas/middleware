@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import argparse
+import errno
 
 from concurrent.futures import ThreadPoolExecutor
-from middlewared.client import Client
+from middlewared.client import Client, ClientException
 
 
 def setup(password):
@@ -23,7 +24,7 @@ def setup(password):
         no_sed = False
         granted = False
         with ThreadPoolExecutor(max_workers=12) as e:
-            for disk_name, rv in e.map(lambda x: sed_setup(*x), [[c, disk['name'], password] for disk in disks]):
+            for disk_name, rv in e.map(lambda disk: sed_setup(c, disk['name'], password), disks):
                 if rv == 'NO_SED':
                     no_sed = True
                 if rv in ('SUCCESS', 'SETUP_FAILED'):
@@ -40,8 +41,13 @@ def setup(password):
 
 def unlock():
     with Client() as c:
-        if c.call('disk.sed_unlock_all') is False:
-            print('SED disks failed to unlocked')
+        try:
+            c.call('disk.sed_unlock_all')
+        except ClientException as e:
+            if e.errno == errno.EACCES:
+                print('SED disks failed to unlocked')
+            else:
+                raise
         else:
             print('All SED disks unlocked')
 
