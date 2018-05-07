@@ -29,6 +29,8 @@ RE_DD = re.compile(r'^(\d+) bytes transferred .*\((\d+) bytes')
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd|pmem)[0-9]+$')
 RE_MPATH_NAME = re.compile(r'[a-z]+(\d+)')
+RE_SED_RDLOCK_EN = re.compile(r'(RLKEna = Y|ReadLockEnabled:\s*1)', re.M)
+RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
 
 
 class DiskService(CRUDService):
@@ -486,6 +488,7 @@ class DiskService(CRUDService):
         """
         NO_SED - Does not support SED
         ACCESS_GRANTED - Already setup and `password` is a valid password
+        LOCKING_DISABLED - Locking range is disabled
         SETUP_FAILED - Initial setup call failed
         SUCCESS - Setup successfully completed
         """
@@ -497,13 +500,25 @@ class DiskService(CRUDService):
 
         cp = await run('sedutil-cli', '--listLockingRange', '0', password, devname, check=False)
         if cp.returncode == 0:
-            return 'ACCESS_GRANTED'
+            output = cp.stdout.decode()
+            if RE_SED_RDLOCK_EN.search(output) and RE_SED_WRLOCK_EN.search(output):
+                return 'ACCESS_GRANTED'
+            else:
+                return 'LOCKING_DISABLED'
 
         try:
             await run('sedutil-cli', '--initialSetup', password, devname)
         except subprocess.CalledProcessError as e:
             self.logger.debug(f'initialSetup failed for {disk_name}:\n{e.stdout}{e.stderr}')
             return 'SETUP_FAILED'
+
+        # OPAL 2.0 disks do not enable locking range on setup like Enterprise does
+        try:
+            await run('sedutil-cli', '--enableLockingRange', '0', password, devname)
+        except subprocess.CalledProcessError as e:
+            self.logger.debug(f'enableLockingRange failed for {disk_name}:\n{e.stdout}{e.stderr}')
+            return 'SETUP_FAILED'
+
         return 'SUCCESS'
 
     async def __multipath_create(self, name, consumers, mode=None):
