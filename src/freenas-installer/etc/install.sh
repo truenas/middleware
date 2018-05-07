@@ -297,7 +297,7 @@ ask_boot_method()
 {
     # If we are not on efi, set BIOS as the default selected option
     dlgflags=""
-    if [ "$BOOTMODE" != "efi" ] ; then
+    if [ "$BOOTMODE" != "UEFI" ] ; then
       dlgflags="--defaultno"
     fi
 
@@ -330,15 +330,15 @@ install_loader() {
     if [ "${_upgrade_type}" = "inplace" ] ; then
        glabel list | grep -q 'efibsd'
       if [ $? -eq 0 ] ; then
-         _boottype="efi"
+         _boottype="UEFI"
       else
-         _boottype="bios"
+         _boottype="BIOS"
       fi
     fi
 
     for _disk in $_disks
     do
-	if [ "$_boottype" = "efi" ] ; then
+	if [ "$_boottype" = "UEFI" ] ; then
 	    echo "Stamping EFI loader on: ${_disk}"
 	    mkdir -p /tmp/efi
 	    mount -t msdosfs /dev/${_disk}p1 /tmp/efi
@@ -365,7 +365,7 @@ save_serial_settings() {
     if [ "$USESERIAL" -eq 0 ] ; then return 0; fi
 
     # BIOS has vidconsole, UEFI has efi.
-    if [ "$BOOTMODE" = "efi" ] ; then
+    if [ "$BOOTMODE" = "UEFI" ] ; then
        videoconsole="efi"
     else
        videoconsole="vidconsole"
@@ -401,16 +401,16 @@ mount_disk() {
 	mkdir -p ${_mnt}/data
 	return 0
 }
-	
+
 create_partitions() {
     local _disk="$1"
     local _size=""
-    
+
     if [ $# -eq 2 ]; then
 	_size="-s $2"
     fi
     if gpart create -s GPT -f active ${_disk}; then
-	if [ "$BOOTMODE" = "efi" ] ; then
+	if [ "$BOOTMODE" = "UEFI" ] ; then
 	  # EFI Mode
 	  sysctl kern.geom.debugflags=16
 	  sysctl kern.geom.label.disk_ident.enable=0
@@ -499,7 +499,7 @@ partition_disk() {
 
 	_disksparts=$(for _disk in ${_disks}; do
 	    create_partitions ${_disk} ${_minsize} >&2
-	    if [ "$BOOTMODE" != "efi" ] ; then
+	    if [ "$BOOTMODE" != "UEFI" ] ; then
 	      # Make the disk active
 	      gpart set -a active ${_disk} >&2
 	    fi
@@ -1069,14 +1069,14 @@ menu_install()
 	graid delete ${_disks}
       fi
 
-      BOOTMODE=`kenv grub.platform`
+      BOOTMODE=`sysctl -n machdep.bootmethod`
       if ${INTERACTIVE}; then
         # Prompt for UEFI or BIOS mode
         if ask_boot_method
         then
-          BOOTMODE="efi"
+          BOOTMODE="UEFI"
 	else
-	  BOOTMODE="bios"
+	  BOOTMODE="BIOS"
         fi
       fi
       export BOOTMODE
