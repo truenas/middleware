@@ -22,6 +22,8 @@ def setup(password):
 
     with Client() as c:
         disks = c.call('disk.query')
+        boot_disks = c.call('boot.get_disks')
+        disks = list(filter(lambda d: d['name'] not in boot_disks, disks))
         action = False
         no_sed = False
         granted = False
