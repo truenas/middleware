@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from middlewared.client import Client, ClientException
 
 
-def setup(password):
+def setup(password, disk=None):
 
     def sed_setup(client, disk_name, password):
         rv = client.call('disk.sed_initial_setup', disk_name, password)
@@ -21,9 +21,24 @@ def setup(password):
         return disk_name, rv
 
     with Client() as c:
-        disks = c.call('disk.query')
+
+        disk_filter = []
+        if disk:
+            disk_filter.append(('name', '=', disk))
+
+        disks = c.call('disk.query', disk_filter)
         boot_disks = c.call('boot.get_disks')
         disks = list(filter(lambda d: d['name'] not in boot_disks, disks))
+
+        if not disks:
+            print(f'Disk {disk} not found')
+            return
+
+        advconfig = c.call('system.advanced.config')
+        if advconfig['sed_passwd'] != password and not (disk and disks[0]['passwd'] == password):
+            print('Given password does not match saved one')
+            return
+
         action = False
         no_sed = False
         granted = False
@@ -61,13 +76,14 @@ def main():
     subparsers = parser.add_subparsers(help='sub-command help', dest='action')
 
     parser_setup = subparsers.add_parser('setup', help='Setup new SED disks')
+    parser_setup.add_argument('--disk', help='Perform action only on specified disk')
     parser_setup.add_argument('password', help='Password to use on new disks')
 
     subparsers.add_parser('unlock', help='Unlock SED disks')
 
     args = parser.parse_args()
     if args.action == 'setup':
-        setup(args.password)
+        setup(args.password, disk=args.disk)
     elif args.action == 'unlock':
         unlock()
     else:
