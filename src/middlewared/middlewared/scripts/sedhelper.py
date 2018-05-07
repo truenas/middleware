@@ -14,6 +14,8 @@ def setup(password):
             print(f'{disk_name}\t\t[\033[92mOK\x1B[0m]')
         elif rv == 'SETUP_FAILED':
             print(f'{disk_name}\t\t[\033[91mSETUP FAILED\x1B[0m]')
+        elif rv == 'LOCKING_DISABLED':
+            print(f'{disk_name}\t\t[\033[91mLOCKING DISABLED\x1B[0m]')
         elif rv in ('ACCESS_GRANTED', 'NO_SED'):
             pass
         return disk_name, rv
@@ -27,7 +29,7 @@ def setup(password):
             for disk_name, rv in e.map(lambda disk: sed_setup(c, disk['name'], password), disks):
                 if rv == 'NO_SED':
                     no_sed = True
-                if rv in ('SUCCESS', 'SETUP_FAILED'):
+                if rv in ('SUCCESS', 'SETUP_FAILED', 'LOCKING_DISABLED'):
                     action = True
                 if rv == 'ACCESS_GRANTED':
                     granted = True
