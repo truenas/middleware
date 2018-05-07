@@ -36,7 +36,7 @@ class EnumMixin(object):
             tmp = value
         for v in tmp:
             if v not in self.enum:
-                raise Error(self.name, 'Invalid choice: {0}'.format(value))
+                raise Error(self.name, f'Invalid choice: {value}')
         return value
 
 
@@ -218,9 +218,10 @@ class Bool(Attribute):
         return schema
 
 
-class Int(Attribute):
+class Int(EnumMixin, Attribute):
 
     def clean(self, value):
+        value = super(Int, self).clean(value)
         if value is None and not self.required:
             return self.default
         if not isinstance(value, int):

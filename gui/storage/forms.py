@@ -1966,7 +1966,15 @@ class ResilverForm(MiddlewareModelForm, ModelForm):
         return end.strftime('%H:%M')
 
 
-class PeriodicSnapForm(ModelForm):
+class PeriodicSnapForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_schema = 'periodic_snapshot'
+    middleware_attr_prefix = 'task_'
+    middleware_plugin = 'pool.snapshot'
+    middleware_attr_map = {
+        'dow': 'task_byweekday'
+    }
+    is_singletone = False
 
     class Meta:
         fields = '__all__'
@@ -1991,26 +1999,29 @@ class PeriodicSnapForm(ModelForm):
         self.fields['task_filesystem'] = forms.ChoiceField(
             label=self.fields['task_filesystem'].label,
         )
-        volnames = [o.vol_name for o in models.Volume.objects.all()]
-        choices = set([y for y in list(notifier().list_zfs_fsvols().items()) if y[0].split('/')[0] in volnames])
-        if self.instance.id:
-            choices.add((self.instance.task_filesystem, self.instance.task_filesystem))
-        self.fields['task_filesystem'].choices = list(choices)
+        filesystem_choices = list(choices.FILESYSTEM_CHOICES())
+        if self.instance.id and self.instance.task_filesystem not in dict(filesystem_choices):
+            filesystem_choices.append((self.instance.task_filesystem, self.instance.task_filesystem))
+        self.fields['task_filesystem'].choices = filesystem_choices
         self.fields['task_repeat_unit'].widget = forms.HiddenInput()
+
+    def clean_task_begin(self):
+        begin = self.cleaned_data.get('task_begin')
+        return begin.strftime('%H:%M')
+
+    def clean_task_end(self):
+        end = self.cleaned_data.get('task_end')
+        return end.strftime('%H:%M')
 
     def clean_task_byweekday(self):
         bwd = self.data.getlist('task_byweekday')
-        return ','.join(bwd)
+        return bwd
 
-    def clean(self):
-        cdata = self.cleaned_data
-        if cdata['task_repeat_unit'] == 'weekly' and \
-                len(cdata['task_byweekday']) == 0:
-            self._errors['task_byweekday'] = self.error_class([
-                _("At least one day must be chosen"),
-            ])
-            del cdata['task_byweekday']
-        return cdata
+    def middleware_clean(self, data):
+        data['dow'] = [int(day) for day in data.pop('byweekday')]
+        data.pop('repeat_unit', None)
+        data['ret_unit'] = data['ret_unit'].upper()
+        return data
 
 
 class ManualSnapshotForm(Form):
