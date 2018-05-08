@@ -32,6 +32,19 @@ def _null(x):
     return x
 
 
+def _upper(x, attribute):
+    if isinstance(x, dict):
+        for key in x:
+            if key == attribute and isinstance(x[key], str):
+                x[key] = x[key].upper()
+            else:
+                x[key] = _upper(x[key], attribute)
+    elif isinstance(x, list):
+        for i, entry in enumerate(x):
+            x[i] = _upper(x[i], attribute)
+    return x
+
+
 async def is_mounted(middleware, path):
     mounted = await middleware.run_in_thread(bsd.getmntinfo)
     return any(fs.dest == path for fs in mounted)
@@ -223,7 +236,6 @@ class PoolService(CRUDService):
 
     @private
     async def pool_extend(self, pool):
-        pool.pop('fstype', None)
 
         """
         If pool is encrypted we need to check if the pool is imported
@@ -237,10 +249,12 @@ class PoolService(CRUDService):
         if zpool:
             pool['status'] = zpool['status']
             pool['scan'] = zpool['scan']
+            pool['topology'] = _upper(zpool['groups'], 'type')
         else:
             pool.update({
                 'status': 'OFFLINE',
                 'scan': None,
+                'topology': None,
             })
 
         if pool['encrypt'] > 0:
