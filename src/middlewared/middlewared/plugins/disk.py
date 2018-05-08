@@ -501,8 +501,8 @@ class DiskService(CRUDService):
             elif 'Locked = N' in output:
                 locked = False
 
-        # If sedutil failed to unlock or was not recognized try ATA Security
-        if locked in (True, None):
+        # Try ATA Security if SED was not unlocked and its not locked by OPAL
+        if not unlocked and not locked:
             cp = await run('camcontrol', 'security', devname, check=False)
             if cp.returncode == 0:
                 output = cp.stdout.decode()
