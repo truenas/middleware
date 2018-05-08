@@ -63,16 +63,24 @@ class VcenterConfiguration(Model):
     vc_username = models.CharField(
         max_length=120,
         verbose_name=_(" vCenter Username"),
+        blank=True,
+        null=True
     )
     vc_password = models.CharField(
         max_length=120,
         verbose_name=_(" vCenter Password"),
+        blank=True,
+        null=True
     )
     vc_version = models.CharField(
         blank=True,
         null=True,
         max_length=120,
         verbose_name=_(" version"),
+    )
+    vc_state = models.CharField(
+        default='NOT INSTALLED',  # INSTALLED, NOT INSTALLED
+        max_length=120
     )
 
     class Meta:

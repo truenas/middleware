@@ -30,6 +30,7 @@ import logging
 from dojango import forms
 from django.utils.translation import ugettext_lazy as _
 from freenasUI.common.forms import ModelForm
+from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.vcp import models
 from django.forms import widgets
 from freenasUI.system.models import Settings
@@ -40,7 +41,12 @@ import freenasUI.vcp.plugin as plugin
 log = logging.getLogger('vcp.forms')
 
 
-class VcenterConfigurationForm(ModelForm):
+class VcenterConfigurationForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'vc_'
+    middleware_attr_schema = 'vcenter_'
+    middleware_plugin = 'vcenter'
+    is_singletone = False
 
     vcp_version = ''
     vcp_name = 'TrueNAS vCenter Plugin'
@@ -90,8 +96,6 @@ class VcenterConfigurationForm(ModelForm):
                     if status_flag is True:
                         self.vcp_is_installed = True
                         self.vcp_is_update_available = False
-                        # Just for cleaning purpose
-                        models.VcenterConfiguration.objects.all().delete()
                         return True
                     elif 'permission' in status_flag:
                         self.vcp_status = status_flag
@@ -128,8 +132,9 @@ class VcenterConfigurationForm(ModelForm):
                 status_flag = plug.uninstall_vCenter_plugin(
                     ip, username, password, port)
                 if status_flag is True:
-                    models.VcenterConfiguration.objects.all().delete()
                     self.vcp_is_installed = False
+                    obj.vc_state = 'NOT INSTALLED'
+                    obj.save()
                     return True
                 elif 'permission' in status_flag:
                     self.vcp_status = status_flag
@@ -138,7 +143,8 @@ class VcenterConfigurationForm(ModelForm):
                     self.vcp_status = 'Uninstall failed. Please contact support.'
                     return False
             elif 'does not exist' in status_flag:
-                models.VcenterConfiguration.objects.all().delete()
+                obj.vc_state = 'NOT INSTALLED'
+                obj.save()
                 self.vcp_is_installed = False
                 return True
             else:
@@ -266,7 +272,7 @@ class VcenterConfigurationForm(ModelForm):
             obj = models.VcenterConfiguration.objects.latest('id')
             version_old = obj.vc_version
             self.vcp_version = obj.vc_version
-            self.vcp_is_installed = True
+            self.vcp_is_installed = obj.vc_status == 'INSTALLED'
             if self.compare_version(version_new, version_old):
                 self.vcp_is_update_available = True
                 self.vcp_available_version = version_new
@@ -318,15 +324,7 @@ class VcenterConfigurationForm(ModelForm):
         return vcp_url
 
     def is_in_db(self):
-        try:
-            obj = models.VcenterConfiguration.objects.latest('id')
-            ip = str(obj.vc_ip)
-            if ip != '':
-                return True
-            else:
-                return False
-        except Exception:
-            return False
+        return models.VcenterConfiguration.objects.latest('id').vc_state == 'INSTALLED'
 
     def get_thumb_print(self, manage_ip, sys_guiprotocol):
         thumb_print = ''
@@ -338,13 +336,7 @@ class VcenterConfigurationForm(ModelForm):
         return thumb_print
 
     def get_aux_enable_https(self):
-        aux_enable_https = False
-        try:
-            aux_enable_https = models.VcenterAuxSettings.objects.latest(
-                'id').vc_enable_https
-            return aux_enable_https
-        except Exception:
-            return False
+        return models.VcenterAuxSettings.objects.latest('id').vc_enable_https
 
     def validate_vcp_param(self, ip, port, username, password, is_installed):
         try:
@@ -375,7 +367,7 @@ class VcenterConfigurationForm(ModelForm):
 
     class Meta:
         model = models.VcenterConfiguration
-        exclude = ['vc_version']
+        exclude = ['vc_version', 'vc_state']
         widgets = {
             'vc_password': forms.PasswordInput(),
         }
@@ -390,6 +382,8 @@ class VcenterConfigurationForm(ModelForm):
         ip_choices = utils.get_management_ips()
         self.fields['vc_management_ip'] = forms.ChoiceField(choices=list(zip(
             ip_choices, ip_choices)), label=_('TrueNAS Management IP Address'),)
+        obj = models.VcenterConfiguration.objects.latest('id')
+        self.vcp_is_installed = obj.vc_state == 'INSTALLED'
 
 
 class VcenterAuxSettingsForm(ModelForm):

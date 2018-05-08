@@ -38,18 +38,23 @@ from freenasUI.system.models import (
     Settings,
 )
 
-
+# TODO: CHANGE ALL OBJECTS.LATEST TO .GET(PK=1)
+# VCENTER MODEL FIELDS - vc_management_ip, vc_ip, vc_port, vc_username, vc_password, vc_version, vc_state
 def vcp_home(request):
-    aux_enable_https = models.VcenterAuxSettings.objects.latest('id').vc_enable_https
+    aux_enable_https = models.VcenterAuxSettings.objects.latest('id')
+    obj = models.VcenterConfiguration.objects.latest('id')
     if request.method == 'POST':
-        form = VcenterConfigurationForm(request.POST)
+        form = VcenterConfigurationForm(request.POST, instance=obj)
         if form.is_valid():
 
             if form.install_plugin():
-                form.save()
-                obj = models.VcenterConfiguration.objects.latest('id')
+                obj.vc_management_ip = form.cleaned_data.get('vc_management_ip')
+                obj.vc_ip = form.cleaned_data.get('vc_ip')
+                obj.vc_port = form.cleaned_data.get('vc_port')
+                obj.vc_username = form.cleaned_data.get('vc_username')
+                obj.vc_password = form.cleaned_data.get('vc_password')
                 obj.vc_version = utils.get_plugin_version()
-                obj.vc_password = ''
+                obj.vc_state = 'INSTALLED'
                 obj.save()
             else:
                 return JsonResp(
@@ -65,14 +70,12 @@ def vcp_home(request):
                     'aux_enable_https': aux_enable_https,
                 }
             )
-    try:
-        obj = models.VcenterConfiguration.objects.latest('id')
-        form = VcenterConfigurationForm(instance=obj)
+
+    form = VcenterConfigurationForm(instance=obj)
+    if obj.vc_state == 'INSTALLED':
         form.fields['vc_ip'].widget.attrs['readonly'] = True
-        form.is_update_needed()
-    except:
-        form = VcenterConfigurationForm()
-        form.is_update_needed()
+    form.is_update_needed()
+
     return render(
         request,
         "vcp/index.html",
