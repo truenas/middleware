@@ -42,9 +42,6 @@ from freenasUI.common.system import activedirectory_enabled, ldap_enabled
 from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.freeadmin.utils import key_order
-from freenasUI.jails.models import JailsConfiguration
-from freenasUI.middleware.client import client
-from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias, Interfaces
@@ -787,7 +784,11 @@ class iSCSITargetGlobalConfigurationForm(MiddlewareModelForm, ModelForm):
         return data
 
 
-class iSCSITargetExtentForm(ModelForm):
+class iSCSITargetExtentForm(MiddlewareModelForm, ModelForm):
+    middleware_attr_prefix = 'iscsi_target_extent_'
+    middleware_attr_schema = 'iscsi_extent'
+    middleware_plugin = 'iscsi.extent'
+    is_singletone = False
 
     iscsi_target_extent_type = forms.ChoiceField(
         choices=(
@@ -910,189 +911,38 @@ class iSCSITargetExtentForm(ModelForm):
                 diskchoices[devname] = "%s (%s)" % (devname, capacity)
         return list(diskchoices.items())
 
-    def clean_iscsi_target_extent_name(self):
-        name = self.cleaned_data.get('iscsi_target_extent_name')
-        if not name:
-            return name
-        if re.search(r'"', name):
-            raise forms.ValidationError(_("Double quotes are not allowed."))
-        qs = models.iSCSITargetExtent.objects.filter(
-            iscsi_target_extent_name=name
-        )
-        if self.instance.id:
-            qs = qs.exclude(id=self.instance.id)
-        if qs.exists():
-            raise forms.ValidationError(_('Extent name must be unique.'))
-        return name
-
-    def clean_iscsi_target_extent_serial(self):
-        serial = self.cleaned_data.get('iscsi_target_extent_serial')
-        if not serial:
-            return serial
-        if re.search(r'"', serial):
-            raise forms.ValidationError(_("Double quotes are not allowed."))
-        return serial
-
-    def clean_iscsi_target_extent_disk(self):
-        _type = self.cleaned_data.get('iscsi_target_extent_type')
-        disk = self.cleaned_data.get('iscsi_target_extent_disk')
-        if _type == 'Disk':
-            if not disk:
-                raise forms.ValidationError(_("This field is required"))
-            if disk.startswith('zvol') and not os.path.exists('/dev/' + disk):
-                raise forms.ValidationError(_('Zvol "%s" does not exist') % disk)
-        return disk
-
-    def clean_iscsi_target_extent_path(self):
-        _type = self.cleaned_data.get('iscsi_target_extent_type')
-        if _type is None:
-            return _type
-        if _type == 'Disk':
-            return ''
-        path = self.cleaned_data["iscsi_target_extent_path"]
-        if not path:
-            if _type == 'File':
-                raise forms.ValidationError(_('This field is required.'))
-            return None
-
-        # Avoid create an extent inside a jail root
-        jc = JailsConfiguration.objects.order_by("-id")
-        if jc.exists():
-            jc_path = jc[0].jc_path
-            if (os.path.realpath(jc_path) in os.path.realpath(path)):
-                raise forms.ValidationError(_("You need to specify a filepath outside of jail root."))
-
-        if (os.path.exists(path) and not os.path.isfile(path)) or path[-1] == '/':
-            raise forms.ValidationError(_("You need to specify a filepath, not a directory."))
-
-        valid = False
-        for v in Volume.objects.all():
-            mp_path = '/mnt/%s' % v.vol_name
-            if path == mp_path:
-                raise forms.ValidationError(
-                    _("You need to specify a file inside your volume/dataset.")
-                )
-            if path.startswith(mp_path + '/'):
-                valid = True
-
-        if not valid:
-            raise forms.ValidationError(_("Your path to the extent must reside inside a volume/dataset mount point."))
-        return path
-
     def clean_iscsi_target_extent_filesize(self):
         size = self.cleaned_data['iscsi_target_extent_filesize']
         try:
             int(size)
         except ValueError:
-            suffixes = ['KB', 'MB', 'GB', 'TB']
-            for x in suffixes:
+            suffixes = {
+                'PB': 1125899906842624,
+                'TB': 1099511627776,
+                'GB': 1073741824,
+                'MB': 1048576,
+                'KB': 1024,
+                'B': 1
+            }
+            for x in suffixes.keys():
                 if size.upper().endswith(x):
-                    m = re.match(r'(\d+)\s*?(%s)' % x, size)
-                    if m:
-                        return "%s%s" % (m.group(1), m.group(2))
+                    size = size.strip(x)
+
+                    if not size.isdigit():
+                        # They need to supply a real number
+                        break
+
+                    size = int(size) * suffixes[x]
+
+                    return size
             raise forms.ValidationError(_("This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"))
         return size
 
-    def clean(self):
-        cdata = self.cleaned_data
-        _type = cdata.get('iscsi_target_extent_type')
-        path = cdata.get("iscsi_target_extent_path")
-        size = cdata.get("iscsi_target_extent_filesize")
-        blocksize = cdata.get("iscsi_target_extent_blocksize")
-        if (
-            size == "0" and path and (not os.path.exists(path) or (
-                os.path.exists(path) and
-                not os.path.isfile(path)
-            ))
-        ):
-            self._errors['iscsi_target_extent_path'] = self.error_class([
-                _("The file must exist if the extent size is set to auto (0)")
-            ])
-            del cdata['iscsi_target_extent_path']
-        elif _type == 'file' and not path:
-            self._errors['iscsi_target_extent_path'] = self.error_class([
-                _("This field is required")
-            ])
+    def middleware_clean(self, data):
+        extent_type = data['type']
+        data['type'] = extent_type.upper()
 
-        if size and size != "0" and blocksize:
-            try:
-                size = float(size)
-                if (size / blocksize) % 1 != 0:
-                    self._errors['iscsi_target_extent_filesize'] = (
-                        self.error_class([
-                            _("File size must be a multiple of block size")
-                        ])
-                    )
-            except ValueError:
-                pass
-        return cdata
-
-    def save(self, commit=True):
-        oExtent = super(iSCSITargetExtentForm, self).save(commit=False)
-        if commit and self.cleaned_data["iscsi_target_extent_type"] == 'Disk':
-            if self.cleaned_data["iscsi_target_extent_disk"].startswith("zvol"):
-                oExtent.iscsi_target_extent_path = self.cleaned_data["iscsi_target_extent_disk"]
-                oExtent.iscsi_target_extent_type = 'ZVOL'
-            elif self.cleaned_data["iscsi_target_extent_disk"].startswith("multipath"):
-                notifier().unlabel_disk(str(self.cleaned_data["iscsi_target_extent_disk"]))
-                notifier().label_disk("extent_%s" % self.cleaned_data["iscsi_target_extent_disk"], self.cleaned_data["iscsi_target_extent_disk"])
-                mp_name = self.cleaned_data["iscsi_target_extent_disk"].split("/")[-1]
-                diskobj = models.Disk.objects.get(disk_multipath_name=mp_name)
-                oExtent.iscsi_target_extent_type = 'Disk'
-                oExtent.iscsi_target_extent_path = diskobj.pk
-            elif self.cleaned_data["iscsi_target_extent_disk"].startswith("hast"):
-                oExtent.iscsi_target_extent_type = 'HAST'
-                oExtent.iscsi_target_extent_path = self.cleaned_data["iscsi_target_extent_disk"]
-            else:
-                diskobj = models.Disk.objects.filter(
-                    disk_name=self.cleaned_data["iscsi_target_extent_disk"],
-                    disk_expiretime=None,
-                )[0]
-                # label it only if it is a real disk
-                if (
-                    diskobj.disk_identifier.startswith("{devicename}") or
-                    diskobj.disk_identifier.startswith("{uuid}")
-                ):
-                    success, msg = notifier().label_disk(
-                        "extent_%s" % self.cleaned_data["iscsi_target_extent_disk"],
-                        self.cleaned_data["iscsi_target_extent_disk"]
-                    )
-                    if success is False:
-                        raise MiddlewareError(_(
-                            "Serial not found and glabel failed for "
-                            "%(disk)s: %(error)s" % {
-                                'disk': self.cleaned_data["iscsi_target_extent_disk"],
-                                'error': msg,
-                            })
-                        )
-                    with client as c:
-                        c.call('disk.sync', self.cleaned_data["iscsi_target_extent_disk"].replace('/dev/', ''))
-                oExtent.iscsi_target_extent_type = 'Disk'
-                oExtent.iscsi_target_extent_path = diskobj.pk
-            oExtent.iscsi_target_extent_filesize = 0
-            oExtent.save()
-
-        elif commit and self.cleaned_data['iscsi_target_extent_type'] == 'File':
-            oExtent.iscsi_target_extent_type = 'File'
-            oExtent.save()
-
-            path = self.cleaned_data["iscsi_target_extent_path"]
-            dirs = "/".join(path.split("/")[:-1])
-            if not os.path.exists(dirs):
-                try:
-                    os.makedirs(dirs)
-                except Exception as e:
-                    log.error("Unable to create dirs for extent file: %s", e)
-            if not os.path.exists(path):
-                size = self.cleaned_data["iscsi_target_extent_filesize"]
-                if size.lower().endswith("b"):
-                    size = size[:-1]
-                os.system("truncate -s %s %s" % (size, path))
-
-        started = notifier().reload("iscsitarget")
-        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
-        return oExtent
+        return data
 
 
 class iSCSITargetPortalForm(MiddlewareModelForm, ModelForm):

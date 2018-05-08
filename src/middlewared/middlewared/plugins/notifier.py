@@ -269,3 +269,14 @@ class NotifierService(Service):
     def gui_languages(self):
         """Temporary wrapper to return available languages in django"""
         return settings.LANGUAGES
+
+    def humanize_size(self, number):
+        """Temporary wrapper to return a human readable bytesize"""
+        try:
+            return fcommon.humanize_size(number)
+        except Exception:
+            logger.debug(
+                'fcommon.humanize_size: Failed to translate sizes',
+                exc_info=True
+            )
+            return number
