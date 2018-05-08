@@ -32,6 +32,14 @@ zfs_help() { echo "Dump ZFS Configuration"; }
 zfs_directory() { echo "ZFS"; }
 zfs_func()
 {
+	section_header "zfs replication"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} -line "
+	SELECT *
+	FROM storage_replication
+	WHERE id >= '1'
+	ORDER BY +id"
+	section_footer
+	
 	section_header "zpool list"
 	zpool list
 	section_footer
