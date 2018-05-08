@@ -100,8 +100,8 @@ system_func()
 	/usr/local/bin/alertcli.py
 	section_footer
 
-	section_header "Middleware jobs - 'midclt call core.get_jobs'"
-	midclt call core.get_jobs
+	section_header "Middleware Jobs - 'midclt call core.get_jobs'"
+	midclt call core.get_jobs '[["state", "!=", "SUCCESS"]]' | jq	
 	section_footer
 
 	if [ -f /data/license ]; then

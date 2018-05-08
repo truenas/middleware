@@ -32,11 +32,32 @@ smart_help() { echo "Dump SMART Information"; }
 smart_directory() { echo "SMART"; }
 smart_func()
 {
-	section_header "SMART - 'smartctl -x'"
+
+	section_header "Scheduled SMART Jobs"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} -line "
+	SELECT *
+	FROM tasks_smarttest
+	WHERE id >= '1'
+	ORDER BY +id"
+	section_footer
+
+	section_header "Disks being checked by SMART"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} -line "
+	SELECT *
+	FROM tasks_smarttest_smarttest_disks
+	WHERE id >= '1'
+	ORDER BY +id"
+	section_footer
+
+	section_header "smartctl -a"
+	if [ -f /tmp/smart.out ]; then
+		rm -rf /tmp/smart.out
+	fi
 	for i in `sysctl -n kern.disks`
 	do
-	    echo /dev/$i
-	    smartctl -x /dev/$i
+    		smartctl -a /dev/$i >> /tmp/smart.out
 	done
+	cat /tmp/smart.out
+	${FREENAS_DEBUG_MODULEDIR}/smart/smart.nawk < /tmp/smart.out
 	section_footer
 }
