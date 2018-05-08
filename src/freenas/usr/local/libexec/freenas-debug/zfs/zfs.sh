@@ -39,6 +39,14 @@ zfs_func()
 	WHERE id >= '1'
 	ORDER BY +id"
 	section_footer
+
+	section_header "zpool scrub"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} -line "
+	SELECT *
+	FROM storage_scrub
+	WHERE id >= '1'
+	ORDER BY +id"
+	section_footer
 	
 	section_header "zpool list"
 	zpool list
