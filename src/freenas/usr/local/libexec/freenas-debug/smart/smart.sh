@@ -50,13 +50,14 @@ smart_func()
 	section_footer
 
 	section_header "SMART - 'smartctl -x'"
-	rm /tmp/smart.out
-	for i in `sysctl -n kern.disks`
-	do
-	    echo /dev/$i
-	    smartctl -a /dev/$i >> /tmp/smart.out
-	done
+	if [ -f /tmp/smart.out ]
+	then
+		for i in `sysctl -n kern.disks`
+		do
+	    		smartctl -a /dev/$i >> /tmp/smart.out
+		done
+	fi
 	cat /tmp/smart.out
-	${FREENAS_DEBUG_MODULEDIR}/smart/normalize_smart.nawk < /tmp/smart.out
+	${FREENAS_DEBUG_MODULEDIR}/smart/smart.nawk < /tmp/smart.out
 	section_footer
 }
