@@ -49,14 +49,14 @@ smart_func()
 	ORDER BY +id"
 	section_footer
 
-	section_header "SMART - 'smartctl -x'"
-	if [ -f /tmp/smart.out ]
-	then
-		for i in `sysctl -n kern.disks`
-		do
-	    		smartctl -a /dev/$i >> /tmp/smart.out
-		done
+	section_header "smartctl -a"
+	if [ -f /tmp/smart.out ]; then
+		rm -rf /tmp/smart.out
 	fi
+	for i in `sysctl -n kern.disks`
+	do
+    		smartctl -a /dev/$i >> /tmp/smart.out
+	done
 	cat /tmp/smart.out
 	${FREENAS_DEBUG_MODULEDIR}/smart/smart.nawk < /tmp/smart.out
 	section_footer
