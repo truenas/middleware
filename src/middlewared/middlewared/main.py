@@ -433,7 +433,6 @@ class FileApplication(object):
             resp.set_status(401)
             return resp
 
-        form = {}
         reader = await request.multipart()
 
         part = await reader.next()
