@@ -2,7 +2,9 @@ from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, CallError, Service
 
 import errno
+import os
 import re
+import shutil
 import socket
 import sys
 
@@ -14,7 +16,9 @@ from freenasOS.Exceptions import (
     UpdateIncompleteCacheException, UpdateInvalidCacheException,
     UpdateBusyCacheException,
 )
-from freenasOS.Update import CheckForUpdates, GetServiceDescription
+from freenasOS.Update import (
+    ApplyUpdate, CheckForUpdates, GetServiceDescription, ExtractFrozenUpdate,
+)
 
 
 class CheckUpdateHandler(object):
@@ -405,3 +409,64 @@ Changelog:
             await self.middleware.call('notifier.destroy_upload_location')
         except Exception:
             self.logger.warn('Failed to destroy upload location', exc_info=True)
+
+    @accepts(Dict(
+        'updatefile',
+        Str('destination'),
+    ))
+    @job(lock='updatemanual', pipes=['input'])
+    async def file(self, job, options):
+        """
+        Updates the system using the uploaded .tar file.
+
+        Use null `destination` to create a temporary location.
+        """
+
+        dest = options.get('destination')
+
+        if not dest:
+            try:
+                await self.middleware.call('notifier.create_upload_location')
+                dest = '/var/tmp/firmware'
+            except Exception as e:
+                raise CallError(str(e))
+        elif not dest.startswith('/mnt/'):
+            raise CallError('Destination must reside within a pool')
+
+        if not os.path.isdir(dest):
+            raise CallError('Destination is not a directory')
+
+        destfile = os.path.join(dest, 'manualupdate.tar')
+        dest_extracted = os.path.join(dest, '.update')
+
+        try:
+            job.set_progress(10, 'Writing uploaded file to disk')
+            with open(destfile, 'wb') as f:
+                await self.middleware.run_in_io_thread(
+                    shutil.copyfileobj, job.pipes.input.r, f, 1048576,
+                )
+
+            def do_update():
+                try:
+                    job.set_progress(30, 'Extracting uploaded file')
+                    ExtractFrozenUpdate(destfile, dest_extracted, verbose=True)
+                    job.set_progress(50, 'Applying update')
+                    ApplyUpdate(dest_extracted)
+                except Exception as e:
+                    raise CallError(str(e))
+
+            await self.middleware.run_in_io_thread(do_update)
+
+            job.set_progress(95, 'Cleaning up')
+
+        finally:
+            if os.path.exists(destfile):
+                os.unlink(destfile)
+
+            if os.path.exists(dest_extracted):
+                shutil.rmtree(dest_extracted, ignore_errors=True)
+
+        if dest == '/var/tmp/firmware':
+            await self.middleware.call('notifier.destroy_upload_location')
+
+        job.set_progress(100, 'Update completed')
