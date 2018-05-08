@@ -435,30 +435,48 @@ class FileApplication(object):
 
         form = {}
         reader = await request.multipart()
-        while True:
-            part = await reader.next()
-            if part is None:
-                break
-            form[part.name] = await part.read()  # FIXME: handle big files
 
-        if 'data' not in form or 'file' not in form:
-            resp = web.Response(status=405, reason='Expected data not on payload')
+        part = await reader.next()
+        if not part:
+            resp = web.Response(status=405, body='No part found on payload')
+            resp.set_status(405)
+            return resp
+
+        if part.name != 'data':
+            resp = web.Response(status=405, body='"data" part must be the first on payload')
             resp.set_status(405)
             return resp
 
         try:
-            data = json.loads(form['data'])
+            data = json.loads(await part.read())
         except Exception as e:
-            return web.Response(status=400, reason=str(e))
+            return web.Response(status=400, body=str(e))
 
         if 'method' not in data:
             return web.Response(status=422)
+
+        filepart = await reader.next()
+
+        if not filepart or filepart.name != 'file':
+            resp = web.Response(status=405, body='"file" not found as second part on payload')
+            resp.set_status(405)
+            return resp
+
+        def copy():
+            while True:
+                read = asyncio.run_coroutine_threadsafe(
+                    filepart.read_chunk(1048576),
+                    loop=self.loop,
+                ).result()
+                if read == b'':
+                    break
+                job.pipes.input.w.write(read)
 
         try:
             job = await self.middleware.call(data['method'], *(data.get('params') or []),
                                              pipes=Pipes(input=self.middleware.pipe()))
             try:
-                await self.middleware.run_in_io_thread(job.pipes.input.w.write, form['file'])
+                await self.middleware.run_in_io_thread(copy)
             finally:
                 await self.middleware.run_in_io_thread(job.pipes.input.w.close)
         except CallError as e:
@@ -466,9 +484,9 @@ class FileApplication(object):
                 status_code = 422
             else:
                 status_code = 412
-            return web.Response(status=status_code, reason=str(e))
+            return web.Response(status=status_code, body=str(e))
         except Exception as e:
-            return web.Response(status=500, reason=str(e))
+            return web.Response(status=500, body=str(e))
 
         resp = web.Response(
             status=200,
