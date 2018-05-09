@@ -700,25 +700,29 @@ class iSCSITargetExtentService(CRUDService):
                                      disk)
             elif not disk.startswith('hast') and not disk.startswith('zvol'):
                 disk_filters = [('name', '=', disk), ('expiretime', '=', None)]
-                disk_object = (await self.middleware.call('disk.query',
-                                                          disk_filters))[0]
-                disk_identifier = disk_object.get('identifier', None)
+                try:
+                    disk_object = (await self.middleware.call('disk.query',
+                                                              disk_filters))[0]
+                    disk_identifier = disk_object.get('identifier', None)
 
-                if disk_identifier.startswith(
-                    '{devicename}'or disk_identifier.startswith('{uuid}')
-                ):
-                    success, msg = await self.middleware.call(
-                        'notifier.label_disk', f'extent_{disk}', disk)
-                    if not success:
-                        verrors.add(
-                            f'{schema_name}.path',
-                            f'Serial not found and glabel failed for {disk}:'
-                            f' {msg}')
+                    if disk_identifier.startswith(
+                        '{devicename}'or disk_identifier.startswith('{uuid}')
+                    ):
+                        success, msg = await self.middleware.call(
+                            'notifier.label_disk', f'extent_{disk}', disk)
+                        if not success:
+                            verrors.add(
+                                f'{schema_name}.disk',
+                                f'Serial not found and glabel failed for {disk}:'
+                                f' {msg}')
 
-                        if verrors:
-                            raise verrors
-                    await self.middleware.call('disk.sync',
-                                               disk.replace('/dev/', ''))
+                            if verrors:
+                                raise verrors
+                        await self.middleware.call('disk.sync',
+                                                   disk.replace('/dev/', ''))
+                except IndexError:
+                    # It's not a disk, but a ZVOL
+                    pass
         elif extent_type == 'File':
             path = data['path']
             dirs = '/'.join(path.split('/')[:-1])
