@@ -215,9 +215,6 @@ class JailsFAdmin(BaseFreeAdmin):
         actions['storage'] = self._action_builder(
             'jail_storage_add', label=_("Add Storage")
         )
-        actions['plugins'] = self._action_builder(
-            'upload', icon='plugin_install', label=_("Upload Plugin")
-        )
         actions['start'] = self._action_builder('jail_start', label=_("Start"))
         actions['stop'] = self._action_builder('jail_stop', label=_("Stop"))
         actions['restart'] = self._action_builder(
