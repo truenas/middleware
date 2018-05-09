@@ -26,7 +26,6 @@
 from collections import namedtuple
 
 import ipaddress
-import json
 import logging
 import os
 import socket
@@ -34,36 +33,24 @@ import urllib.request
 
 from django.shortcuts import render
 from django.http import Http404, HttpResponse
-from django.utils.translation import ugettext as _
 
 from freenasUI.common.warden import (
     Warden,
     WardenJail,
     WARDEN_STATUS_RUNNING,
     WARDEN_STATUS_STOPPED,
-    WARDEN_EXTRACT_STATUS_FILE
 )
 from freenasUI.freeadmin.middleware import public
-from freenasUI.freeadmin.views import JsonResp
 from freenasUI.jails.models import (
     Jails,
     JailsConfiguration
 )
-from freenasUI.jails.utils import (
-    jail_path_configured,
-    jail_auto_configure,
-    guess_addresses,
-    new_default_plugin_jail
-)
-from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
-from freenasUI.plugins import models, forms, availablePlugins
-from freenasUI.plugins.plugin import PROGRESS_FILE
+from freenasUI.plugins import models
 from freenasUI.plugins.utils import (
     get_base_url,
     get_plugin_status,
-    get_plugin_stop
 )
 from freenasUI.plugins.utils.fcgi_client import FCGIApp
 
@@ -74,45 +61,14 @@ import freenasUI.plugins.api_calls
 log = logging.getLogger('plugins.views')
 
 
-def safe_unlink(path):
-    if os.path.exists(path):
-        os.unlink(path)
-
-
-def reset_plugin_progress():
-
-    if not jail_path_configured():
-        jail_auto_configure()
-
-    jc = JailsConfiguration.objects.order_by("-id")[0]
-    logfile = '%s/warden.log' % jc.jc_path
-
-    safe_unlink(logfile)
-    safe_unlink(WARDEN_EXTRACT_STATUS_FILE)
-    safe_unlink("/tmp/.plugin_upload_install")
-    safe_unlink("/tmp/.jailcreate")
-    safe_unlink(PROGRESS_FILE)
-    safe_unlink("/tmp/.fetchmtree")
-    safe_unlink("/tmp/.checkmtree")
-
-
 def home(request):
 
     try:
-        default_iface = notifier().get_default_interface()
-        conf = models.Configuration.objects.latest('id')
+        models.Configuration.objects.latest('id')
+    except Exception as e:
+        models.Configuration.objects.create()
 
-        reset_plugin_progress()
-    except MiddlewareError as e:
-        error = e.value
-        return render(request, "plugins/index_error.html", {
-            'error': error,
-        })
-
-    return render(request, "plugins/index.html", {
-        'conf': conf,
-        'default_iface': default_iface
-    })
+    return render(request, "plugins/index.html")
 
 
 def plugins(request):
@@ -167,363 +123,9 @@ def plugins(request):
                 jail_status=jail_status,
             )
 
-            plugin.update_available = availablePlugins.get_update_status(plugin.id)
-
     return render(request, "plugins/plugins.html", {
         'plugins': plugins,
     })
-
-
-def plugin_edit(request, plugin_id):
-    plugin = models.Plugins.objects.filter(id=plugin_id)[0]
-
-    if request.method == 'POST':
-        plugins_form = forms.PluginsForm(request.POST, instance=plugin)
-        if plugins_form.is_valid():
-            plugins_form.save()
-            return JsonResp(request, message=_("Plugin successfully updated."))
-        else:
-            plugin = None
-
-    else:
-        plugins_form = forms.PluginsForm(instance=plugin)
-
-    return render(request, 'plugins/plugin_edit.html', {
-        'plugin_id': plugin_id,
-        'form': plugins_form
-    })
-
-
-def plugin_info(request, plugin_id):
-    plugin = models.Plugins.objects.filter(id=plugin_id)[0]
-    return render(request, 'plugins/plugin_info.html', {
-        'plugin': plugin,
-    })
-
-
-def plugin_update(request, oid):
-    host = get_base_url(request)
-
-    reset_plugin_progress()
-
-    iplugin = models.Plugins.objects.filter(id=oid)
-    if not iplugin:
-        raise MiddlewareError(_("Plugin not installed"))
-    iplugin = iplugin[0]
-
-    rplugin = None
-    for rp in availablePlugins.get_remote(cache=True):
-        if rp.name.lower() == iplugin.plugin_name.lower():
-            rplugin = rp
-            break
-
-    if not rplugin:
-        raise MiddlewareError(_("Invalid plugin"))
-
-    (p, js, jail_status) = get_plugin_status([iplugin, host, request])
-    if js and js['status'] == 'RUNNING':
-        (p, js, jail_status) = get_plugin_stop([iplugin, host, request])
-
-    if request.method == "POST":
-        plugin_upload_path = notifier().get_plugin_upload_path()
-        notifier().change_upload_location(plugin_upload_path)
-
-        if not rplugin.download("/var/tmp/firmware/pbifile.pbi"):
-            raise MiddlewareError(_("Failed to download plugin"))
-
-        jail = Jails.objects.filter(jail_host=iplugin.plugin_jail)
-        if not jail:
-            raise MiddlewareError(_("Jail does not exist"))
-
-        if notifier().update_pbi(plugin=iplugin):
-            notifier()._start_plugins(
-                jail=iplugin.plugin_jail,
-                plugin=iplugin.plugin_name,
-            )
-
-        else:
-            raise MiddlewareError(_("Failed to update plugin"))
-
-        return JsonResp(
-            request,
-            message=_("Plugin successfully updated"),
-            events=['reloadHttpd()'],
-        )
-
-    return render(request, "plugins/plugin_update.html", {
-        'plugin': rplugin,
-    })
-
-
-def install_available(request, oid):
-
-    try:
-        jc = JailsConfiguration.objects.all()[0]
-    except IndexError:
-        jc = JailsConfiguration.objects.create()
-
-    try:
-        if not jail_path_configured():
-            jail_auto_configure()
-
-        if not jc.jc_ipv4_dhcp:
-            addrs = guess_addresses()
-            if not addrs['high_ipv4']:
-                raise MiddlewareError(_("No available IP addresses"))
-
-    except MiddlewareError as e:
-        return render(request, "plugins/install_error.html", {
-            'error': e.value,
-        })
-
-    if os.path.exists("/tmp/.plugin_upload_update"):
-        os.unlink("/tmp/.plugin_upload_update")
-    if os.path.exists(PROGRESS_FILE):
-        os.unlink(PROGRESS_FILE)
-
-    plugin = None
-    for p in availablePlugins.get_remote(cache=True):
-        if p.id == oid:
-            plugin = p
-            break
-
-    if not plugin:
-        raise MiddlewareError(_("Invalid plugin"))
-
-    if request.method == "POST":
-
-        plugin_upload_path = notifier().get_plugin_upload_path()
-        notifier().change_upload_location(plugin_upload_path)
-
-        if not plugin.download("/var/tmp/firmware/pbifile.pbi"):
-            raise MiddlewareError(_("Failed to download plugin"))
-
-        try:
-            jail = new_default_plugin_jail(plugin.unixname)
-        except IOError as e:
-            raise MiddlewareError(str(e))
-        except MiddlewareError as e:
-            raise e
-        except Exception as e:
-            raise MiddlewareError(str(e))
-
-        newplugin = []
-        if notifier().install_pbi(jail.jail_host, newplugin):
-            newplugin = newplugin[0]
-            notifier()._restart_plugins(
-                jail=newplugin.plugin_jail,
-                plugin=newplugin.plugin_name,
-            )
-        else:
-            jail.delete()
-
-        return JsonResp(
-            request,
-            message=_("Plugin successfully installed"),
-            events=['reloadHttpd()'],
-        )
-
-    return render(request, "plugins/available_install.html", {
-        'plugin': plugin,
-    })
-
-
-#
-# XXX This needs a better implementation.. but will do for now ;-)
-#
-def install_progress(request):
-    try:
-        jc = JailsConfiguration.objects.order_by("-id")[0]
-        logfile = '%s/warden.log' % jc.jc_path
-    except IndexError:
-        logfile = '/tmp/warden.log'
-    data = {}
-    if os.path.exists(PROGRESS_FILE):
-        data = {'step': 1}
-        with open(PROGRESS_FILE, 'r') as f:
-            current = 0
-            try:
-                read = f.readlines()
-                if read:
-                    current = int(read[-1].strip())
-            except:
-                log.debug('Failed to read progress file', exc_info=True)
-        data['percent'] = current
-        if current == 100:
-            safe_unlink(PROGRESS_FILE)
-
-    if os.path.exists("/tmp/.fetchmtree"):
-        data = {'step': 2}
-
-    if os.path.exists(WARDEN_EXTRACT_STATUS_FILE):
-        data = {'step': 3}
-        percent = 0
-        with open(WARDEN_EXTRACT_STATUS_FILE, 'r') as f:
-            try:
-                buf = f.readlines()[-1].strip()
-                parts = buf.split()
-                size = len(parts)
-                if size > 2:
-                    nbytes = float(parts[1])
-                    total = float(parts[2])
-                    percent = int((nbytes / total) * 100)
-            except Exception:
-                pass
-        data['percent'] = percent
-
-    if os.path.exists("/tmp/.checkmtree"):
-        safe_unlink(WARDEN_EXTRACT_STATUS_FILE)
-        data = {'step': 4}
-
-    if os.path.exists(logfile):
-        data = {'step': 5}
-        percent = 0
-        with open(logfile, 'r') as f:
-            for line in f:
-                if line.startswith('====='):
-                    parts = line.split()
-                    if len(parts) > 1:
-                        try:
-                            percent = int(parts[1][:-1])
-                        except:
-                            pass
-
-        if not percent:
-            percent = 0
-        data['percent'] = percent
-
-    if os.path.exists("/tmp/.plugin_upload_install"):
-        data = {'step': 6}
-
-    content = json.dumps(data)
-    return HttpResponse(content, content_type='application/json')
-
-
-def update_progress(request):
-    data = {}
-
-    if os.path.exists(PROGRESS_FILE):
-        data = {'step': 1}
-        with open(PROGRESS_FILE, 'r') as f:
-            try:
-                current = int(f.readlines()[-1].strip())
-            except:
-                pass
-        data['percent'] = current
-
-    if os.path.exists("/tmp/.plugin_upload_update"):
-        data = {'step': 2}
-
-    content = json.dumps(data)
-    return HttpResponse(content, content_type='application/json')
-
-
-def upload(request, jail_id=-1):
-    jail_id = int(jail_id)
-    try:
-        jc = JailsConfiguration.objects.all()[0]
-    except:
-        jc = None
-
-    # FIXME: duplicated code with available_install
-    try:
-        if not jail_path_configured():
-            jail_auto_configure()
-
-        if not jc:
-            jc = JailsConfiguration.objects.all()[0]
-
-        if not jc.jc_ipv4_dhcp:
-            addrs = guess_addresses()
-            if not addrs['high_ipv4']:
-                raise MiddlewareError(_("No available IP addresses"))
-
-    except MiddlewareError as e:
-        return render(request, "plugins/install_error.html", {
-            'error': e.value,
-        })
-
-    plugin_upload_path = notifier().get_plugin_upload_path()
-    notifier().change_upload_location(plugin_upload_path)
-
-    jail = None
-    if jail_id > 0:
-        try:
-            jail = Jails.objects.filter(pk=jail_id)[0]
-
-        except Exception as e:
-            log.debug("Failed to get jail %d: %s", jail_id, repr(e))
-            jail = None
-
-    if request.method == "POST":
-        jc = JailsConfiguration.objects.order_by("-id")[0]
-        logfile = '%s/warden.log' % jc.jc_path
-        if os.path.exists(logfile):
-            os.unlink(logfile)
-        if os.path.exists(WARDEN_EXTRACT_STATUS_FILE):
-            os.unlink(WARDEN_EXTRACT_STATUS_FILE)
-        if os.path.exists("/tmp/.plugin_upload_install"):
-            os.unlink("/tmp/.plugin_upload_install")
-        if os.path.exists("/tmp/.jailcreate"):
-            os.unlink("/tmp/.jailcreate")
-
-        form = forms.PBIUploadForm(request.POST, request.FILES, jail=jail)
-        if form.is_valid():
-            form.done()
-            return JsonResp(
-                request,
-                message=_('Plugin successfully installed'),
-                events=['reloadHttpd()'],
-            )
-        else:
-            resp = render(request, "plugins/upload.html", {
-                'form': form,
-            })
-            resp.content = (
-                "<html><body><textarea>"
-                + resp.content +
-                "</textarea></boby></html>"
-            )
-            return resp
-    else:
-        form = forms.PBIUploadForm(jail=jail)
-
-    return render(request, "plugins/upload.html", {
-        'form': form,
-    })
-
-
-def upload_nojail(request):
-    return upload(request)
-
-
-def upload_progress(request):
-    jc = JailsConfiguration.objects.order_by("-id")[0]
-    logfile = '%s/warden.log' % jc.jc_path
-
-    data = {}
-    if os.path.exists(logfile):
-        data['step'] = 2
-        percent = 0
-        with open(logfile, 'r') as f:
-            for line in f:
-                if line.startswith('====='):
-                    parts = line.split()
-                    if len(parts) > 1:
-                        try:
-                            percent = int(parts[1][:-1])
-                        except:
-                            pass
-
-        if not percent:
-            percent = 0
-        data['percent'] = percent
-
-    if os.path.exists("/tmp/.plugin_upload_install"):
-        data = {'step': 3}
-
-    content = json.dumps(data)
-    return HttpResponse(content, content_type='application/json')
 
 
 def default_icon():
@@ -539,14 +141,6 @@ def default_icon():
         icon = None
 
     return icon
-
-
-def plugin_available_icon(request, oid):
-    icon = availablePlugins.get_icon(None, oid)
-    if not icon:
-        icon = default_icon()
-
-    return HttpResponse(icon, content_type="image/png")
 
 
 def plugin_installed_icon(request, plugin_name, oid):
@@ -599,12 +193,13 @@ def get_ipv4_addr():
     if 'ipv4' in ii:
         ipv4_info = ii['ipv4']
         for i in ipv4_info:
-            ipv4addr =  str(i['inet'])
+            ipv4addr = str(i['inet'])
             netmask = str(hex_to_cidr(int(i['netmask'], 0)))
             ipv4_obj = ipaddress.ip_interface('%s/%s' % (ipv4addr, netmask))
             ipv4_network = ipv4_obj.network
             if ipv4gateway_obj in ipv4_network:
                 return ipv4addr
+
 
 @public
 def plugin_fcgi_client(request, name, oid, path):
@@ -638,7 +233,7 @@ def plugin_fcgi_client(request, name, oid, path):
 
     try:
         if os.path.exists(fastcgi_env_path):
-            plugin_fascgi_env = { }
+            plugin_fascgi_env = {}
             exec(compile(open(fastcgi_env_path).read(), fastcgi_env_path, 'exec'), {}, plugin_fascgi_env)
             env.update(plugin_fascgi_env)
 

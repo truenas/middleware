@@ -30,10 +30,7 @@ from collections import OrderedDict
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
-from freenasUI.api.resources import (
-    AvailablePluginsResource,
-    PluginsResourceMixin,
-)
+from freenasUI.api.resources import PluginsResourceMixin
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.plugins import models
@@ -53,37 +50,4 @@ class PluginsFAdmin(BaseFreeAdmin):
     )
 
 
-class AvailableFAdmin(BaseFreeAdmin):
-
-    icon_model = "PluginsIcon"
-
-    resource = AvailablePluginsResource
-
-    double_click = {
-        'label': _('Install'),
-        'field': '_install_url',
-    }
-
-    def get_actions(self):
-        actions = OrderedDict()
-        actions["Install"] = {
-            'button_name': _("Install"),
-            'on_click': """function() {
-                var mybtn = this;
-                for (var i in grid.selection) {
-                    var data = grid.row(i).data;
-                    editObject('%s', data._install_url, [mybtn,]);
-                }
-            }""" % (escapejs(_('Install plugin')), ),
-        }
-        return actions
-
-    def get_column_name_extra(self):
-        return {
-            'formatter': """function(value, obj) {
-                return '<img src="/plugins/plugin/available/icon/' + obj['id'] + '/" height="16" width="16"/> &nbsp; ' + value;
-            }"""
-        }
-
 site.register(models.Plugins, PluginsFAdmin)
-site.register(models.Available, AvailableFAdmin)

@@ -1,9 +1,0 @@
-{% extends "freeadmin/generic_model_datagrid.html" %}
-{% block actions_static_buttons %}
-  <button id="addPluginDG" data-dojo-type="dijit.form.Button">
-    <p>{% trans "Available Plugins" %}</p>
-    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-	viewModel('{% trans "Available Plugins"|escapejs %}', '{% url "freeadmin_plugins_available_datagrid" %}');
-    </script>
-  </button>
-{% endblock %}

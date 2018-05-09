@@ -25,6 +25,5 @@
 #####################################################################
 from freenasUI.freeadmin.apppool import appPool
 from .hook import PluginsHook
-from .plugin import Plugin, availablePlugins
 
 appPool.register(PluginsHook)

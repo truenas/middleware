@@ -25,7 +25,6 @@
 #
 #####################################################################
 import logging
-import urllib.request
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -55,29 +54,11 @@ BLACKLIST = [
 ]
 ORDER = 70
 
-O_ADDJAIL = 0
 O_ADDJAILTEMPLATE = 1
 O_VIEWJAIL = 2
 O_VIEWJAILTEMPLATE = 3
 O_JAILSCONFIGURATION = 4
 O_INDEX = 5
-
-
-class AddJail(TreeNode):
-    global O_ADDJAIL
-
-    gname = 'Jails.Add'
-    app_name = 'jails'
-    model = 'Jails'
-    name = _('Add Jail')
-    icon = 'JailAddIcon'
-    type = 'object'
-    view = 'freeadmin_jails_jails_add'
-    order = O_ADDJAIL
-
-    def __init__(self, *args, **kwargs):
-        super(AddJail, self).__init__(*args, **kwargs)
-        self.skip = not jail_path_configured()
 
 
 class AddJailTemplate(TreeNode):
@@ -132,36 +113,6 @@ class ViewJailsConfiguration(TreeNode):
     icon = 'SettingsIcon'
     type = 'openjails'
     order = O_JAILSCONFIGURATION
-
-
-def plugin_fetch(args):
-    plugin, host, request = args
-    data = None
-    url = "%s/plugins/%s/%d/_s/treemenu" % (
-        host,
-        plugin.plugin_name,
-        plugin.id
-    )
-    try:
-        opener = urllib.request.build_opener()
-        opener.addheaders = [(
-            'Cookie', 'sessionid=%s' % (
-                request.COOKIES.get("sessionid", ''),
-            )
-        )]
-        # TODO: Increase timeout based on number of plugins
-        response = opener.open(url, None, 5)
-        data = response.read()
-        if not data:
-            log.warn(_("Empty data returned from %s.") % (url,))
-
-    except Exception as e:
-        log.warn(_("Could not retrieve %(url)s: %(error)s.") % {
-            'url': url,
-            'error': e,
-        })
-
-    return plugin, url, data
 
 
 def init(tree_roots, nav, request):

@@ -31,7 +31,6 @@ NAME = _('Plugins')
 ICON = 'PluginIcon'
 BLACKLIST = [
     'Plugins',
-    'Available',
     'Configuration',
 ]
 TYPE = 'openplugins'
