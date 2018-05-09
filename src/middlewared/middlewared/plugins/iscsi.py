@@ -395,9 +395,9 @@ class iSCSITargetExtentService(CRUDService):
         'iscsi_extent_create',
         Str('name'),
         Str('type', enum=['DISK', 'FILE']),
-        Str('disk'),
+        Str('disk', default=None),
         Str('serial', default=None),
-        Str('path'),
+        Str('path', default=None),
         Int('filesize', default=0),
         Int('blocksize', enum=[512, 1024, 2048, 4096], default=512),
         Bool('pblocksize'),
@@ -505,7 +505,7 @@ class iSCSITargetExtentService(CRUDService):
             extent_size = data['filesize']
 
             # Legacy Compat for having 2[KB, MB, GB, etc] in database
-            if not extent_size.isdigit():
+            if not str(extent_size).isdigit():
                 suffixes = {
                     'PB': 1125899906842624,
                     'TB': 1099511627776,
@@ -575,6 +575,7 @@ class iSCSITargetExtentService(CRUDService):
         elif extent_type == 'File':
             if not path:
                 verrors.add(f'{schema_name}.path', 'This field is required')
+                raise verrors  # They need this for anything else
 
             if '/iocage' in path:
                     verrors.add(
