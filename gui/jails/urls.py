@@ -29,7 +29,7 @@ from django.conf.urls import url
 from .views import (
     jails_home, jailsconfiguration, jail_edit, jail_delete,
     jail_storage_add, jail_start, jail_stop,
-    jail_restart, jail_progress, jail_linuxprogress, jail_info,
+    jail_restart, jail_info,
     jail_template_info, jail_template_create, jail_template_edit,
     jail_template_delete, jailsconfiguration_info,
     jailsconfiguration_network_info,
@@ -44,8 +44,6 @@ urlpatterns = [
     url(r'^start/(?P<id>\d+)$', jail_start, name="jail_start"),
     url(r'^stop/(?P<id>\d+)$', jail_stop, name="jail_stop"),
     url(r'^restart/(?P<id>\d+)$', jail_restart, name="jail_restart"),
-    url(r'^progress/$', jail_progress, name="jail_progress"),
-    url(r'^linuxprogress/$', jail_linuxprogress, name="jail_linuxprogress"),
     url(r'^jail/info/(?P<id>\d+)/$', jail_info, name="jail_info"),
     url(r'^template/info/(?P<name>.+)/$', jail_template_info, name="jail_template_info"),
     url(r'^template/create/$', jail_template_create, name="jail_template_create"),

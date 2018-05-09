@@ -76,10 +76,9 @@ from freenasUI.common.system import (
 from freenasUI.common.warden import Warden
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.jails.forms import (
-    JailCreateForm, JailsEditForm, JailTemplateCreateForm, JailTemplateEditForm
+    JailsEditForm, JailTemplateCreateForm, JailTemplateEditForm
 )
-from freenasUI.jails.models import JailsConfiguration, JailTemplate
-from freenasUI.jails.utils import guess_ipv4_addresses
+from freenasUI.jails.models import JailTemplate
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -2332,7 +2331,7 @@ class JailMountPointResourceMixin(object):
 class JailsResourceMixin(NestedMixin):
 
     class Meta:
-        validation = FormValidation(form_class=JailCreateForm)
+        validation = FormValidation(form_class=JailsEditForm)
         put_validation = FormValidation(form_class=JailsEditForm)
 
     def prepend_urls(self):
@@ -2421,6 +2420,13 @@ class JailsResourceMixin(NestedMixin):
         self.__jls = proc.communicate()[0]
         return super(JailsResourceMixin, self).dispatch_list(request, **kwargs)
 
+    def post_list(self, request, **kwargs):
+        raise ImmediateHttpResponse(
+            response=self.error_response(request, {
+                'error': 'No longer possible to create jails using API 1.0',
+            })
+        )
+
     def post_form_save_hook(self, bundle, form):
         if form.errors:
             raise ImmediateHttpResponse(response=self.error_response(
@@ -2472,32 +2478,6 @@ class JailsResourceMixin(NestedMixin):
             })
             if bundle.obj.jail_ipv4:
                 bundle.data['jail_ipv4'] = bundle.obj.jail_ipv4.split('/')[0]
-
-        return bundle
-
-    def hydrate(self, bundle):
-        bundle = super(JailsResourceMixin, self).hydrate(bundle)
-        if bundle.request.method == 'POST':
-            # The way default values is provided in JailsCreateForm
-            # is not ideal since it relays in form data from UI.
-            # To workaround this lets do the same operation done in the form
-            # in case ipv4 not dhcp has been provided via API.
-            # See #14687
-            if 'jail_ipv4' not in bundle.data and not bundle.data.get('jail_ipv4_dhcp'):
-                jc = JailsConfiguration.objects.order_by("-id")[0]
-                if not jc.jc_ipv4_dhcp:
-                    ipv4_addrs = guess_ipv4_addresses()
-                    if ipv4_addrs['high_ipv4']:
-                        parts = str(ipv4_addrs['high_ipv4']).split('/')
-                        bundle.data['jail_ipv4'] = parts[0]
-                        if len(parts) > 1:
-                            bundle.data['jail_ipv4_netmask'] = parts[1]
-
-                    if ipv4_addrs['bridge_ipv4']:
-                        parts = str(ipv4_addrs['bridge_ipv4']).split('/')
-                        bundle.data['jail_bridge_ipv4'] = parts[0]
-                        if len(parts) > 1:
-                            bundle.data['jail_bridge_ipv4_netmask'] = parts[1]
 
         return bundle
 
