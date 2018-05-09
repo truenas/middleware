@@ -940,7 +940,9 @@ class iSCSITargetExtentForm(MiddlewareModelForm, ModelForm):
 
     def middleware_clean(self, data):
         extent_type = data['type']
+        extent_rpm = data['rpm']
         data['type'] = extent_type.upper()
+        data['rpm'] = extent_rpm.upper()
 
         return data
 

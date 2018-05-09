@@ -1,7 +1,10 @@
-from middlewared.schema import accepts, Bool, Dict, IPAddr, Int, List, Patch, Str
+from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
+                                Str)
 from middlewared.validators import Range
-from middlewared.service import CRUDService, SystemServiceService, ValidationErrors, private
+from middlewared.service import (CRUDService, SystemServiceService,
+                                 ValidationErrors, private)
 from middlewared.utils import run
+from middlewared.async_validators import check_path_resides_within_volume
 
 import bidict
 import errno
@@ -391,22 +394,20 @@ class iSCSITargetExtentService(CRUDService):
     @accepts(Dict(
         'iscsi_extent_create',
         Str('name'),
-        Str('type'),
+        Str('type', enum=['DISK', 'FILE']),
         Str('disk'),
         Str('serial', default=None),
         Str('path'),
         Int('filesize', default=0),
         Int('blocksize', enum=[512, 1024, 2048, 4096], default=512),
         Bool('pblocksize'),
-        Int('avail_threshold'),
+        Int('avail_threshold', validators=[Range(min=1, max=99)]),
         Str('comment'),
-        Str('naa'),
         Bool('insecure_tpc', default=True),
         Bool('xen'),
-        Str('rpm', enum=['Unknown', 'SSD', '5400', '7200', '10000', '15000'],
+        Str('rpm', enum=['UNKNOWN', 'SSD', '5400', '7200', '10000', '15000'],
             default='SSD'),
         Bool('ro'),
-        Bool('legacy'),
         register=True
     ))
     async def do_create(self, data):
@@ -449,7 +450,7 @@ class iSCSITargetExtentService(CRUDService):
         await self.validate(
             new, 'iscsi_extent_update', verrors)
         await self.clean(
-            new, 'iscsi_extent_update', verrors)
+            new, 'iscsi_extent_update', verrors, old=old)
 
         if verrors:
             raise verrors
@@ -475,6 +476,7 @@ class iSCSITargetExtentService(CRUDService):
     async def compress(self, data):
         extent_disk = data['disk']
         extent_type = data['type']
+        extent_rpm = data['rpm']
 
         if extent_type == 'DISK':
             if extent_disk.startswith('zvol'):
@@ -486,11 +488,15 @@ class iSCSITargetExtentService(CRUDService):
         elif extent_type == 'FILE':
             data['type'] = 'File'
 
+        if extent_rpm == 'UNKNOWN':
+            data['rpm'] = 'Unknown'
+
         return data
 
     @private
     async def extend(self, data):
         extent_type = data['type']
+        extent_rpm = data['rpm']
 
         if extent_type != 'File':
             # ZVOL and HAST are type DISK
@@ -516,18 +522,20 @@ class iSCSITargetExtentService(CRUDService):
                         data['filesize'] = extent_size
 
         data['type'] = extent_type.upper()
+        data['rpm'] = extent_rpm.upper()
 
         return data
 
     @private
-    async def clean(self, data, schema_name, verrors):
-        await self.clean_name(data, schema_name, verrors)
+    async def clean(self, data, schema_name, verrors, old=None):
+        await self.clean_name(data, schema_name, verrors, old=old)
         await self.clean_type_and_path(data, schema_name, verrors)
         await self.clean_size(data, schema_name, verrors)
 
     @private
-    async def clean_name(self, data, schema_name, verrors):
+    async def clean_name(self, data, schema_name, verrors, old=None):
         name = data['name']
+        old = old['name'] if old is not None else None
         serial = data['serial']
         name_filters = [('name', '=', name)]
 
@@ -538,28 +546,29 @@ class iSCSITargetExtentService(CRUDService):
             verrors.add(f'{schema_name}.serial',
                         'Double quotes are not allowed')
 
-        name_result = await self.middleware.call(
-            'datastore.query', self._config.datastore,
-            name_filters,
-            {'prefix': self._config.datastore_prefix})
+        if name != old or old is None:
+            name_result = await self.middleware.call(
+                'datastore.query', self._config.datastore,
+                name_filters,
+                {'prefix': self._config.datastore_prefix})
 
-        if name_result:
-            verrors.add(f'{schema_name}.name', 'Extent name must be unique')
+            if name_result:
+                verrors.add(f'{schema_name}.name',
+                            'Extent name must be unique')
 
     @private
     async def clean_type_and_path(self, data, schema_name, verrors):
         extent_type = data['type']
         disk = data['disk']
         path = data['path']
-        pools = await self.middleware.call('pool.query')
-        valid = False
 
         if extent_type is None:
             return data
 
         if extent_type == 'Disk':
             if not disk:
-                verrors.add(f'{schema_name}.type', 'This field is required')
+                verrors.add(f'{schema_name}.disk', 'This field is required')
+        elif extent_type == 'ZVOL':
             if disk.startswith('zvol') and not os.path.exists(f'/dev/{disk}'):
                 verrors.add(f'{schema_name}.disk',
                             f'ZVOL {disk} does not exist')
@@ -567,7 +576,7 @@ class iSCSITargetExtentService(CRUDService):
             if not path:
                 verrors.add(f'{schema_name}.path', 'This field is required')
 
-            if 'iocage' in path:
+            if '/iocage' in path:
                     verrors.add(
                         f'{schema_name}.path',
                         'You need to specify a filepath outside of a jail root'
@@ -578,21 +587,8 @@ class iSCSITargetExtentService(CRUDService):
                 verrors.add(f'{schema_name}.path',
                             'You need to specify a filepath not a directory')
 
-            for p in pools:
-                mp_path = f'/mnt/{p["name"]}'
-                if path == mp_path:
-                    verrors.add(
-                        f'{schema_name}',
-                        'You need to specify a file inside your volume/dataset'
-                    )
-                if path.startswith(f'{mp_path}/'):
-                    valid = True
-
-            if not valid:
-                verrors.add(
-                    f'{schema_name}.path',
-                    'Your path to the extent must reside inside a'
-                    ' volume/dataset mountpoint.')
+            await check_path_resides_within_volume(verrors, self.middleware,
+                                                   schema_name, path)
 
         return data
 
@@ -648,7 +644,7 @@ class iSCSITargetExtentService(CRUDService):
             return serial
 
     @accepts()
-    async def populate_disk_choice(self):
+    async def disk_choices(self):
         diskchoices = {}
         disk_query = await self.query([('type', '=', 'Disk')])
 
