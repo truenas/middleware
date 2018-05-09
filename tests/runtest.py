@@ -220,7 +220,10 @@ elif api == "2.0":
     call(["py.test-3.6", "-v", "--junitxml",
           "%sssh_tests_result.xml" % results_xml,
           "api2/ssh.py"])
+    # call(["py.test-3.6", "-v", "--junitxml",
+    #       "%sdomaicontroller_tests_result.xml" % results_xml,
+    #       "api2/domaincontroller.py"])
     call(["py.test-3.6", "-v", "--junitxml",
-          "%sdomaicontroller_tests_result.xml" % results_xml,
-          "api2/domaincontroller.py"])
+          "%suser_tests_result.xml" % results_xml,
+          "api2/user.py"])
 
