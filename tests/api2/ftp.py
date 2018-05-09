@@ -27,13 +27,13 @@ def test_02_Look_at_ftp_cofiguration():
 
 def test_03_enable_ftp_service_at_boot():
     payload = {"enable": True}
-    results = PUT('/service/id/6', payload)
+    results = PUT('/service/id/ftp', payload)
     assert results.status_code == 200, results.text
 
 
 def test_04_look_ftp_service_at_boot():
-    results = GET('/service')
-    assert results.json()[3]["enable"] == True
+    results = GET('/service?service=ftp')
+    assert results.json()[0]["enable"] == True
 
 
 def test_05_Starting_ftp_service():
@@ -43,8 +43,8 @@ def test_05_Starting_ftp_service():
 
 
 def test_06_Checking_to_see_if_FTP_service_is_enabled():
-    results = GET('/service')
-    assert results.json()[3]["state"] == "RUNNING"
+    results = GET('/service?service=ftp')
+    assert results.json()[0]["state"] == "RUNNING"
 
 
 # def test_04_Fetching_file_via_FTP():
