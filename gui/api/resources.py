@@ -1474,7 +1474,10 @@ class VolumeImportResource(DojoResource):
                 response=self.error_response(request, form.errors)
             )
         volume = form.cleaned_data['volume']
-        notifier().volume_import(volume['label'], volume['id'])
+        with client as c:
+            c.call('pool.import_pool', {
+                'guid': volume['guid'],
+            }, job=True)
         return self.create_response(
             request,
             'Volume imported.',
