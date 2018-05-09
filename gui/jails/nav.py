@@ -54,29 +54,11 @@ BLACKLIST = [
 ]
 ORDER = 70
 
-O_ADDJAIL = 0
 O_ADDJAILTEMPLATE = 1
 O_VIEWJAIL = 2
 O_VIEWJAILTEMPLATE = 3
 O_JAILSCONFIGURATION = 4
 O_INDEX = 5
-
-
-class AddJail(TreeNode):
-    global O_ADDJAIL
-
-    gname = 'Jails.Add'
-    app_name = 'jails'
-    model = 'Jails'
-    name = _('Add Jail')
-    icon = 'JailAddIcon'
-    type = 'object'
-    view = 'freeadmin_jails_jails_add'
-    order = O_ADDJAIL
-
-    def __init__(self, *args, **kwargs):
-        super(AddJail, self).__init__(*args, **kwargs)
-        self.skip = not jail_path_configured()
 
 
 class AddJailTemplate(TreeNode):

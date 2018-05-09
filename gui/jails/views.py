@@ -28,7 +28,6 @@ import logging
 import os
 import time
 
-from wsgiref.util import FileWrapper
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
@@ -37,10 +36,7 @@ from freenasUI.freeadmin.views import JsonResp
 from freenasUI.jails import forms, models
 from freenasUI.jails.utils import get_jails_index
 from freenasUI.common.sipcalc import sipcalc_type
-from freenasUI.common.warden import (
-    Warden,
-    WARDEN_EXPORT_FLAGS_DIR
-)
+from freenasUI.common.warden import Warden
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -224,44 +220,6 @@ def jail_delete(request, id):
         })
 
 
-def jail_export(request, id):
-
-    jail = models.Jails.objects.get(id=id)
-    jailsconf = models.JailsConfiguration.objects.order_by("-id")[0]
-
-    dir = jailsconf.jc_path
-    filename = "%s/%s.wdn" % (dir, jail.jail_host)
-
-    Warden().export(
-        jail=jail.jail_host, path=dir, flags=WARDEN_EXPORT_FLAGS_DIR
-    )
-
-    freenas_build = "UNKNOWN"
-    # FIXME
-    """
-    try:
-        with open(VERSION_FILE) as d:
-            freenas_build = d.read().strip()
-    except:
-        pass
-    """
-
-    wrapper = FileWrapper(file(filename))
-    response = HttpResponse(wrapper, content_type='application/octet-stream')
-    response['Content-Length'] = os.path.getsize(filename)
-    response['Content-Disposition'] = \
-        'attachment; filename=%s-%s-%s.wdn' % (
-            jail.jail_host.encode('utf-8'),
-            freenas_build,
-            time.strftime('%Y%m%d%H%M%S'))
-
-    return response
-
-jail_progress_estimated_time = 600
-jail_progress_start_time = 0
-jail_progress_percent = 0
-
-
 def jail_progress(request):
     global jail_progress_estimated_time
     global jail_progress_start_time
@@ -336,6 +294,7 @@ def jail_progress(request):
             jail_progress_percent = 0
 
     return HttpResponse(json.dumps(data), content_type="application/json")
+
 
 linux_jail_progress_estimated_time = 600
 linux_jail_progress_start_time = 0
@@ -423,81 +382,6 @@ def jail_linuxprogress(request):
             linux_jail_progress_percent = 0
 
     return HttpResponse(json.dumps(data), content_type="application/json")
-
-
-def jail_import(request):
-    log.debug("XXX: jail_import()")
-    return render(request, 'jails/import.html', {})
-
-
-def jail_auto(request, id):
-    log.debug("XXX: jail_auto()")
-    return render(request, 'jails/auto.html', {})
-
-
-def jail_checkup(request, id):
-    log.debug("XXX: jail_checkup()")
-    return render(request, 'jails/checkup.html', {})
-
-
-def jail_details(request, id):
-    log.debug("XXX: jail_details()")
-    return render(request, 'jails/details.html', {})
-
-
-def jail_options(request, id):
-    log.debug("XXX: jail_options()")
-    return render(request, 'jails/options.html', {})
-
-
-def jail_pkgs(request, id):
-    log.debug("XXX: jail_pkgs()")
-    return render(request, 'jails/pkgs.html', {})
-
-
-def jail_pbis(request, id):
-    log.debug("XXX: jail_pbis()")
-    return render(request, 'jails/pbis.html', {})
-
-
-def jail_zfsmksnap(request, id):
-    log.debug("XXX: jail_zfsmksnap()")
-    return render(request, 'jails/zfsmksnap.html', {})
-
-
-def jail_zfslistclone(request, id):
-    log.debug("XXX: jail_zfslistclone()")
-    return render(request, 'jails/zfslistclone.html', {})
-
-
-def jail_zfslistsnap(request, id):
-    log.debug("XXX: jail_zfslistsnap()")
-    return render(request, 'jails/zfslistsnap.html', {})
-
-
-def jail_zfsclonesnap(request, id):
-    log.debug("XXX: jail_zfsclonesnap()")
-    return render(request, 'jails/zfsclonesnap.html', {})
-
-
-def jail_zfscronsnap(request, id):
-    log.debug("XXX: jail_zfscronsnap()")
-    return render(request, 'jails/zfscronsnap.html', {})
-
-
-def jail_zfsrevertsnap(request, id):
-    log.debug("XXX: jail_zfsrevertsnap()")
-    return render(request, 'jails/zfsrevertsnap.html', {})
-
-
-def jail_zfsrmclonesnap(request, id):
-    log.debug("XXX: jail_zfsrmclonesnap()")
-    return render(request, 'jails/zfsrmclonesnap.html', {})
-
-
-def jail_zfsrmsnap(request, id):
-    log.debug("XXX: jail_zfsrmsnap()")
-    return render(request, 'jails/zfsrmsnap.html', {})
 
 
 def jail_info(request, id):
