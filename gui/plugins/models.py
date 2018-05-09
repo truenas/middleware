@@ -225,27 +225,6 @@ class Kmod(Model):
         super(Kmod, self).save(*args, **kwargs)
 
 
-class Available(models.Model):
-
-    name = models.CharField(
-        verbose_name=_("Name"),
-        max_length=200,
-    )
-
-    description = models.CharField(
-        verbose_name=_("Description"),
-        max_length=200,
-    )
-
-    version = models.CharField(
-        verbose_name=_("Version"),
-        max_length=200,
-    )
-
-    class Meta:
-        abstract = True
-
-
 class Configuration(Model):
 
     repourl = models.CharField(

@@ -32,7 +32,6 @@ import os
 import re
 import subprocess
 import urllib.parse
-import signal
 import sysctl
 
 from collections import OrderedDict
@@ -88,7 +87,6 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.util import run_alerts
 from freenasUI.network.forms import AliasForm
 from freenasUI.network.models import Alias, Interfaces
-from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url, get_plugin_status
 from freenasUI.services.forms import iSCSITargetPortalIPForm
@@ -2460,9 +2458,6 @@ class JailsResourceMixin(NestedMixin):
             bundle.data['_jail_storage_add_url'] = reverse(
                 'jail_storage_add', kwargs={'jail_id': bundle.obj.id}
             )
-            bundle.data['_upload_url'] = reverse('plugins_upload', kwargs={
-                'jail_id': bundle.obj.id
-            })
             bundle.data['_jail_export_url'] = reverse('jail_export', kwargs={
                 'id': bundle.obj.id
             })
@@ -2825,74 +2820,6 @@ class SnapshotResource(DojoResource):
                     'snapname': bundle.obj.name,
                 }),
             }
-        return bundle
-
-
-class AvailablePluginsResource(DojoResource):
-
-    id = fields.CharField(attribute='id')
-    name = fields.CharField(attribute='name')
-    description = fields.CharField(attribute='description')
-    version = fields.CharField(attribute='version')
-
-    class Meta:
-        object_class = Plugin
-        resource_name = 'plugins/available'
-
-    def get_list(self, request, **kwargs):
-        results = availablePlugins.get_remote()
-
-        for sfield in self._apply_sorting(request.GET):
-            if sfield.startswith('-'):
-                field = sfield[1:]
-                reverse = True
-            else:
-                field = sfield
-                reverse = False
-            results.sort(
-                key=lambda item: getattr(item, field),
-                reverse=reverse)
-        paginator = self._meta.paginator_class(
-            request,
-            results,
-            resource_uri=self.get_resource_uri(),
-            limit=self._meta.limit,
-            max_limit=self._meta.max_limit,
-            collection_name=self._meta.collection_name,
-        )
-        to_be_serialized = paginator.page()
-        # Dehydrate the bundles in preparation for serialization.
-        bundles = []
-
-        for obj in to_be_serialized[self._meta.collection_name]:
-            bundle = self.build_bundle(obj=obj, request=request)
-            bundles.append(self.full_dehydrate(bundle))
-
-        length = len(bundles)
-        to_be_serialized[self._meta.collection_name] = bundles
-        to_be_serialized = self.alter_list_data_to_serialize(
-            request,
-            to_be_serialized
-        )
-        response = self.create_response(request, to_be_serialized)
-        response['Content-Range'] = 'items %d-%d/%d' % (
-            paginator.offset,
-            paginator.offset + length - 1,
-            len(results)
-        )
-        return response
-
-    def dehydrate(self, bundle):
-        if self.is_webclient(bundle.request):
-            bundle.data['_install_url'] = reverse(
-                'plugins_install_available',
-                kwargs={'oid': bundle.obj.id},
-            )
-            bundle.data['_update_url'] = reverse(
-                'plugin_update',
-                kwargs={'oid': bundle.obj.id},
-            )
-        bundle.data['icon'] = bundle.obj.icon
         return bundle
 
 

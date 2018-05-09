@@ -25,7 +25,6 @@
 #
 #####################################################################
 import logging
-import urllib.request
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -132,36 +131,6 @@ class ViewJailsConfiguration(TreeNode):
     icon = 'SettingsIcon'
     type = 'openjails'
     order = O_JAILSCONFIGURATION
-
-
-def plugin_fetch(args):
-    plugin, host, request = args
-    data = None
-    url = "%s/plugins/%s/%d/_s/treemenu" % (
-        host,
-        plugin.plugin_name,
-        plugin.id
-    )
-    try:
-        opener = urllib.request.build_opener()
-        opener.addheaders = [(
-            'Cookie', 'sessionid=%s' % (
-                request.COOKIES.get("sessionid", ''),
-            )
-        )]
-        # TODO: Increase timeout based on number of plugins
-        response = opener.open(url, None, 5)
-        data = response.read()
-        if not data:
-            log.warn(_("Empty data returned from %s.") % (url,))
-
-    except Exception as e:
-        log.warn(_("Could not retrieve %(url)s: %(error)s.") % {
-            'url': url,
-            'error': e,
-        })
-
-    return plugin, url, data
 
 
 def init(tree_roots, nav, request):

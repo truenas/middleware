@@ -24,20 +24,14 @@
 #
 #####################################################################
 import logging
-import requests
-import shutil
 
-from django.forms import FileField, MultipleChoiceField
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
-from freenasUI.common import pbi
-from freenasUI.common.forms import ModelForm, Form
-from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.common.forms import ModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import models
-from freenasUI.jails.utils import new_default_plugin_jail
 
 log = logging.getLogger('plugins.forms')
 
@@ -75,150 +69,3 @@ class PluginsForm(ModelForm):
         super(PluginsForm, self).delete(request=request, events=events)
         if events is not None:
             events.append('reloadHttpd()')
-
-
-class PBIUploadForm(Form):
-    pbifile = FileField(
-        label=_("PBI file to be installed"),
-        required=True
-    )
-
-    def __init__(self, *args, **kwargs):
-        self.jail = None
-        if kwargs and 'jail' in kwargs:
-            self.jail = kwargs.pop('jail')
-
-        super(PBIUploadForm, self).__init__(*args, **kwargs)
-
-        if self.jail:
-            self.fields['pjail'] = forms.ChoiceField(
-                label=_("Plugin Jail"),
-                help_text=_("The plugin jail that the PBI is to be installed in."),
-                choices=(
-                    (self.jail.jail_host, self.jail.jail_host),
-                ),
-                widget=forms.Select(attrs={
-                    'class': (
-                        'requireddijitDisabled dijitTextBoxDisabled '
-                        'dijitValidationTextBoxDisabled'
-                    ),
-                    'readonly': True,
-                }),
-                required=False,
-            )
-
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        filename = '/var/tmp/firmware/pbifile.pbi'
-        if cleaned_data.get('pbifile'):
-            if hasattr(cleaned_data['pbifile'], 'temporary_file_path'):
-                shutil.move(
-                    cleaned_data['pbifile'].temporary_file_path(),
-                    filename
-                )
-            else:
-                with open(filename, 'wb+') as sp:
-                    for c in cleaned_data['pbifile'].chunks():
-                        sp.write(c)
-        else:
-            self._errors["pbifile"] = self.error_class([
-                _("This field is required."),
-            ])
-        return cleaned_data
-
-    def done(self, *args, **kwargs):
-        newplugin = []
-        pjail = self.cleaned_data.get('pjail')
-        jail = None
-        if not pjail:
-            # FIXME: Better base name, using pbi_info
-            try:
-                jail = new_default_plugin_jail("customplugin")
-            except MiddlewareError as e:
-                raise e
-            except Exception as e:
-                raise MiddlewareError(str(e))
-
-            pjail = jail.jail_host
-        if notifier().install_pbi(pjail, newplugin):
-            newplugin = newplugin[0]
-            notifier()._restart_plugins(
-                jail=newplugin.plugin_jail,
-                plugin=newplugin.plugin_name,
-            )
-        elif jail:
-            jail.delete()
-
-
-class PBIUpdateForm(PBIUploadForm):
-    def __init__(self, *args, **kwargs):
-        self.plugin = None
-        if kwargs and 'plugin' in kwargs:
-            self.plugin = kwargs.pop('plugin')
-
-        super(PBIUpdateForm, self).__init__(*args, **kwargs)
-
-        self.fields['pjail'].initial = self.plugin.plugin_jail
-        self.fields['pjail'].widget.attrs = {
-            'readonly': True,
-            'class': (
-                'dijitDisabled dijitTextBoxDisabled'
-                ' dijitValidationTextBoxDisabled'
-            ),
-        }
-
-    def done(self, *args, **kwargs):
-        notifier().update_pbi(self.plugin)
-        notifier()._restart_plugins(
-            jail=self.plugin.plugin_jail,
-            plugin=self.plugin.plugin_name)
-
-
-class PluginUpdateForm(Form):
-    jails = MultipleChoiceField(required=True)
-
-    def __init__(self, *args, **kwargs):
-        kwargs.pop('oid')
-        super(PluginUpdateForm, self).__init__(*args, **kwargs)
-
-        # plugins = get_installed_plugins_by_remote_oid(oid)
-        # self.fields['jails'].choices = [(p.plugin_jail, p.plugin_jail) for p in plugins]
-
-
-class ConfigurationForm(ModelForm):
-
-    class Meta:
-        fields = '__all__'
-        model = models.Configuration
-
-    def __init__(self, *args, **kwargs):
-        super(ConfigurationForm, self).__init__(*args, **kwargs)
-        if self.instance.id:
-            self._orig = dict(self.instance.__dict__)
-        else:
-            self._orig = {}
-
-    def clean_repourl(self):
-        repourl = self.cleaned_data.get('repourl')
-        if self._orig.get('repourl') != repourl:
-            try:
-                r = requests.get(repourl, stream=True, verify=False, timeout=5)
-                with open('/var/tmp/plugins.rpo', 'wb') as f:
-                    for chunk in r.iter_content(chunk_size=1024):
-                        if chunk:
-                            f.write(chunk)
-            except Exception as e:
-                raise forms.ValidationError(
-                    _('Unable to set repository: %s') % e
-                )
-        return repourl
-
-    def save(self, *args, **kwargs):
-        obj = super(ConfigurationForm, self).save(*args, **kwargs)
-        if self._orig.get('repourl') != obj.repourl:
-            p = pbi.PBI()
-            p.set_appdir("/var/pbi")
-            for repoid, name in p.listrepo():
-                p.deleterepo(repoid=repoid)
-            p.addrepo(repofile='/var/tmp/plugins.rpo')
-        return obj

@@ -1,7 +1,6 @@
 import logging
 import os
 import platform
-import shutil
 import time
 
 from django.utils.translation import ugettext as _
@@ -10,11 +9,7 @@ from freenasUI.account.models import bsdUsers
 from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common import warden
-from freenasUI.jails.models import (
-    Jails,
-    JailsConfiguration,
-    JailTemplate
-)
+from freenasUI.jails.models import JailsConfiguration
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.zfs import list_datasets
@@ -602,154 +597,6 @@ def guess_addresses():
     addresses.update(ipv6_addresses)
 
     return addresses
-
-
-def new_default_plugin_jail(basename):
-    from freenasUI.jails.forms import generate_randomMAC, is_jail_mac_duplicate
-    jc = JailsConfiguration.objects.order_by("-id")[0]
-    logfile = "%s/warden.log" % jc.jc_path
-
-    if not jc.jc_ipv4_dhcp or not jc.jc_ipv6_autoconf:
-        addrs = guess_addresses()
-
-    if not jc.jc_ipv4_dhcp:
-        if not addrs['high_ipv4']:
-            raise MiddlewareError(_(
-                "Unable to determine IPv4 settings for this plugin."
-            ))
-
-    if (jc.jc_ipv6_autoconf or jc.jc_ipv6_network):
-        if not jc.jc_ipv6_autoconf:
-            if not addrs['high_ipv6']:
-                raise MiddlewareError(_(
-                    "Unable to determine IPv6 settings for this plugin."
-                ))
-
-    jailname = None
-    for i in range(1, 1000):
-        tmpname = "%s_%d" % (basename, i)
-        jails = Jails.objects.filter(jail_host=tmpname)
-        if not jails:
-            jailname = tmpname
-            break
-
-    w = warden.Warden()
-    template_create_args = {}
-
-    template = JailTemplate.objects.get(jt_name='pluginjail')
-    template_create_args['nick'] = template.jt_name
-    template_create_args['tar'] = template.jt_url
-    template_create_args['flags'] = warden.WARDEN_TEMPLATE_FLAGS_CREATE | \
-        warden.WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
-        warden.WARDEN_TEMPLATE_CREATE_FLAGS_TAR
-    if template.jt_mtree:
-        template_create_args['mtree'] = template.jt_mtree
-        template_create_args['flags'] = template_create_args['flags'] | \
-            warden.WARDEN_TEMPLATE_CREATE_FLAGS_MTREE
-
-    template = None
-    template_list_flags = {}
-    template_list_flags['flags'] = warden.WARDEN_TEMPLATE_FLAGS_LIST
-    templates = w.template(**template_list_flags)
-    for t in templates:
-        if t['nick'] == template_create_args['nick']:
-            template = t
-            break
-
-    os.environ['EXTRACT_TARBALL_STATUSFILE'] = warden.WARDEN_EXTRACT_STATUS_FILE
-    createfile = "/var/tmp/.templatecreate"
-    if not template:
-
-        # If for some reason warden does not list the template but the path
-        # exists, we shall try to nuke it
-        template_path = '{}/.warden-template-pluginjail'.format(jc.jc_path)
-        if os.path.exists(template_path):
-            try:
-                notifier().destroy_zfs_dataset(template_path.replace('/mnt/', ''))
-            except:
-                pass
-            try:
-                shutil.rmtree(template_path)
-            except OSError:
-                pass
-
-        try:
-            cf = open(createfile, "a+")
-            cf.close()
-            w.template(**template_create_args)
-
-        except Exception as e:
-            if os.path.exists(createfile):
-                os.unlink(createfile)
-            raise MiddlewareError(str(e))
-
-        template_list_flags = {}
-        template_list_flags['flags'] = warden.WARDEN_TEMPLATE_FLAGS_LIST
-        templates = w.template(**template_list_flags)
-        for t in templates:
-            if t['nick'] == template_create_args['nick']:
-                template = t
-                break
-
-    if not template:
-        raise MiddlewareError(_('Unable to find template!'))
-
-    try:
-        high_ipv4 = "DHCP"
-        if not jc.jc_ipv4_dhcp:
-            high_ipv4 = addrs['high_ipv4']
-
-        high_ipv6 = "AUTOCONF"
-        if not jc.jc_ipv6_autoconf:
-            high_ipv6 = addrs['high_ipv6']
-
-        create_args = {
-            'jail': jailname,
-            'ipv4': high_ipv4,
-            'ipv6': high_ipv6,
-            'flags': (
-                warden.WARDEN_CREATE_FLAGS_LOGFILE |
-                warden.WARDEN_CREATE_FLAGS_TEMPLATE |
-                warden.WARDEN_CREATE_FLAGS_VANILLA |
-                warden.WARDEN_CREATE_FLAGS_SYSLOG |
-                warden.WARDEN_CREATE_FLAGS_IPV4 |
-                warden.WARDEN_CREATE_FLAGS_IPV6
-            ),
-            'template': 'pluginjail',
-            'logfile': logfile
-        }
-
-        w.create(**create_args)
-
-    except Exception as e:
-        raise MiddlewareError(_("Failed to install plugin: %s") % e)
-
-    jaildir = "%s/%s" % (jc.jc_path, jailname)
-    with open('%s/.plugins/PLUGIN' % jaildir, 'w') as f:
-        f.close()
-
-    w.auto(jail=jailname)
-
-    # Make sure we generate an unique mac address for the plugin jail
-    while True:
-        mac = generate_randomMAC()
-        if not is_jail_mac_duplicate(mac):
-            break
-    w.set(
-        jail=jailname,
-        mac=mac,
-        flags=warden.WARDEN_SET_FLAGS_MAC,
-    )
-    # Setting vnet and mac at the same time seems to confuse Warden wrapper
-    w.set(
-        jail=jailname,
-        flags=warden.WARDEN_SET_FLAGS_VNET_ENABLE,
-    )
-    w.start(jail=jailname)
-
-    obj = Jails.objects.get(jail_host=jailname)
-    add_media_user_and_group(obj.jail_path)
-    return obj
 
 
 def jail_path_configured():
