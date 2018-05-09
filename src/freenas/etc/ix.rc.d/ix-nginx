@@ -392,6 +392,8 @@ __EOF__
 
         location /_upload {
             proxy_pass http://127.0.0.1:6000;
+            # make sure nginx does not buffer the upload and pass directly to middlewared
+            proxy_request_buffering off;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr \$remote_addr;
             proxy_set_header X-Real-Remote-Port \$remote_port;

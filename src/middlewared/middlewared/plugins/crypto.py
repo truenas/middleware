@@ -840,10 +840,17 @@ class CertificateAuthorityService(CRUDService):
             Int('ca_id', required=True),
             Int('csr_cert_id', required=True),
             Str('name', required=True),
-        ),
+            register=True
+        )
+    )
+    def ca_sign_csr(self, data):
+        return self.__ca_sign_csr(data)
+
+    @accepts(
+        Ref('ca_sign_csr'),
         Str('schema_name', default='certificate_authority_update')
     )
-    def ca_sign_csr(self, data, schema_name):
+    def __ca_sign_csr(self, data, schema_name):
         verrors = ValidationErrors()
 
         ca_data = self.middleware.call_sync(
@@ -1033,7 +1040,7 @@ class CertificateAuthorityService(CRUDService):
         if data.pop('create_type', '') == 'CA_SIGN_CSR':
             data['ca_id'] = id
             return await self.middleware.run_in_io_thread(
-                self.ca_sign_csr,
+                self.__ca_sign_csr,
                 data,
                 'certificate_authority_update'
             )

@@ -40,13 +40,13 @@ def upload_job_and_wait(fileobj, method_name, *args):
         token = c.call('auth.generate_token')
         r = requests.post(
             'http://127.0.0.1/_upload/',
-            files={
-                'file': fileobj,
-                'data': json.dumps({
+            files=[
+                ('data', json.dumps({
                     'method': method_name,
                     'params': args,
-                }),
-            },
+                })),
+                ('file', fileobj),
+            ],
             headers={
                 'Authorization': f'Token {token}',
             },
