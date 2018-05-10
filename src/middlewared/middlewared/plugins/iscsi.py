@@ -1,6 +1,7 @@
 from middlewared.schema import accepts, Bool, Dict, IPAddr, Int, List, Patch, Str
 from middlewared.validators import Range
 from middlewared.service import CRUDService, SystemServiceService, ValidationErrors, private
+from ipaddr import AddressValueError, IPAddress, IPNetwork, NetmaskValueError
 
 import bidict
 import errno
@@ -377,3 +378,116 @@ class iSCSITargetAuthCredentialService(CRUDService):
             'notifier.pwenc_encrypt', peersecret)
 
         return data
+
+
+class iSCSITargetAuthorizedInitiator(CRUDService):
+    class Config:
+        namespace = 'iscsi.initiator'
+        datastore = 'services.iscsitargetauthorizedinitiator'
+        datastore_prefix = 'iscsi_target_initiator_'
+        datastore_extend = 'iscsi.initiator.extend'
+
+    @accepts(Dict(
+        'iscsi_initiator_create',
+        Int('tag'),
+        Str('initiators', default='ALL'),
+        Str('auth_network', default='ALL'),
+        Str('comment'),
+        register=True
+    ))
+    async def do_create(self, data):
+        verrors = ValidationErrors()
+        await self.compress(data)
+        await self.validate(data, 'iscsi_initiator_create', verrors)
+
+        if verrors:
+            raise verrors
+
+        await self.extend(data)
+        data['tag'] = (await self.query())[-1]['tag'] + 1
+        data['id'] = await self.middleware.call(
+            'datastore.insert', self._config.datastore, data,
+            {'prefix': self._config.datastore_prefix})
+        await self.middleware.call('service.reload', 'iscsitarget')
+
+        return data
+
+    @accepts(
+        Int('id'),
+        Patch(
+            'iscsi_initiator_create',
+            'iscsi_initiator_update',
+            ('attr', {'update': True})
+        )
+    )
+    async def do_update(self, id, data):
+        verrors = ValidationErrors()
+        old = await self.middleware.call(
+            'datastore.query', self._config.datastore, [('id', '=', id)],
+            {'extend': self._config.datastore_extend,
+             'prefix': self._config.datastore_prefix,
+             'get': True})
+
+        new = old.copy()
+        new.update(data)
+
+        await self.compress(new)
+        await self.validate(
+            new, 'iscsi_initiator_update', verrors)
+
+        if verrors:
+            raise verrors
+
+        await self.extend(new)
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, id, new,
+            {'prefix': self._config.datastore_prefix})
+
+        await self.middleware.call('service.reload', 'iscsitarget')
+
+        return new
+
+    @private
+    async def compress(self, data):
+        nets = data['auth_network'].split()
+        data['auth_network'] = nets
+
+        return data
+
+    @private
+    async def extend(self, data):
+        nets = data['auth_network']
+
+        if isinstance(nets, str):
+            nets = nets.split()  # Query
+
+        data['auth_network'] = '\n'.join(nets)
+
+        return data
+
+    @accepts(Int('id'))
+    async def do_delete(self, id):
+        return await self.middleware.call(
+            'datastore.delete', self._config.datastore, id)
+
+    @private
+    async def validate(self, data, schema_name, verrors):
+        auth_network = data['auth_network']
+        for net in auth_network:
+            net = net.strip().upper()
+
+            if net == 'ALL':
+                continue
+
+            try:
+                IPNetwork(net)
+            except (NetmaskValueError, ValueError):
+                try:
+                    IPAddress(net)
+                except (AddressValueError, ValueError):
+                    verrors.add(
+                        f'{schema_name}.auth_network',
+                        'The field is a not a valid IP address or network.'
+                        ' The keyword "ALL" can be used to allow '
+                        'everything.'
+                    )
