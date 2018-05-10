@@ -58,4 +58,3 @@ def test_09_test_ssh_key():
     cmd = 'ls -la'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-
