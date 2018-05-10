@@ -466,9 +466,9 @@ if len(mp_to_task_map) > 0:
                                     " Possibly using PT devices. Skipping.",
                                     vm.name, vmsnapobj.datastore, fs)
                             snapvmskips[vmsnapobj].append(vm.config.uuid)
-                    except:
-                        log.warn("Snapshot of VM %s failed", vm.name)
-                        snapvmfails[vmsnapobj].append((vm.config.uuid, vm.name))
+                    except Exception as e:
+                        log.warn("Snapshot of VM %s failed", vm.name, exc_info=True)
+                        snapvmfails[vmsnapobj].append((vm.config.uuid, vm.name, str(e)))
                     snapvms[vmsnapobj].append(vm.config.uuid)
             connect.Disconnect(si)
         # At this point we've completed snapshotting VMs.
@@ -492,7 +492,7 @@ if len(mp_to_task_map) > 0:
                 except:
                     fails = {}
                 # vmitem.get_property('path') is the reverse of server.get_vm_by_path(vm)
-                fails[snapname] = [i[1] for i in snapvmfails[vmsnapobj]]
+                fails[snapname] = [f'{i[1]}: {i[2]}' for i in snapvmfails[vmsnapobj]]
                 with LockFile(VMWARE_FAILS) as lock:
                     with open(VMWARE_FAILS, 'wb') as f:
                         pickle.dump(fails, f)
@@ -564,7 +564,7 @@ Hello,
                 if not vm:
                     log.debug("Could not find VM %s", vm_uuid)
                     continue
-                if (vm_uuid, vm.name) not in snapvmfails[vmsnapobj] and vm_uuid not in snapvmskips[vmsnapobj]:
+                if (vm_uuid, vm.name) not in [(i[0], i[1]) for i in snapvmfails[vmsnapobj]] and vm_uuid not in snapvmskips[vmsnapobj]:
                     # The test above is paranoia.  It shouldn't be possible for a vm to
                     # be in more than one of the three dictionaries.
                     snap = doesVMSnapshotByNameExists(vm, vmsnapname)
