@@ -226,4 +226,6 @@ elif api == "2.0":
     call(["py.test-3.6", "-v", "--junitxml",
           "%suser_tests_result.xml" % results_xml,
           "api2/user.py"])
-
+    call(["py.test-3.6", "-v", "--junitxml",
+          "%sgroup_tests_result.xml" % results_xml,
+          "api2/group.py"])
