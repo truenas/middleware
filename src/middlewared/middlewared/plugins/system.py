@@ -37,6 +37,9 @@ class SytemAdvancedService(ConfigService):
 
     @accepts()
     async def serial_port_choices(self):
+        """
+        Get available choices for `serialport` attribute in `system.advanced.update`.
+        """
         if(
             not await self.middleware.call('system.is_freenas') and
             await self.middleware.call('notifier.failover_hardware') == 'ECHOSTREAM'
@@ -52,12 +55,13 @@ class SytemAdvancedService(ConfigService):
 
         return ports
 
+    @private
     async def system_advanced_extend(self, data):
         if data.get('sed_user'):
             data['sed_user'] = data.get('sed_user').upper()
         return data
 
-    async def validate_fields(self, schema, data):
+    async def __validate_fields(self, schema, data):
         verrors = ValidationErrors()
 
         user = data.get('periodic_notifyuser')
@@ -113,7 +117,7 @@ class SytemAdvancedService(ConfigService):
         original_data = config_data.copy()
         config_data.update(data)
 
-        verrors, config_data = await self.validate_fields('advanced_settings_update', config_data)
+        verrors, config_data = await self.__validate_fields('advanced_settings_update', config_data)
         if verrors:
             raise verrors
 
