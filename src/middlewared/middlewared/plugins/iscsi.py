@@ -515,8 +515,8 @@ class iSCSITargetExtentService(CRUDService):
                     'B': 1
                 }
                 for x in suffixes.keys():
-                    if extent_size.upper().endswith(x):
-                        extent_size = extent_size.upper().strip(x)
+                    if str(extent_size).upper().endswith(x):
+                        extent_size = str(extent_size).upper().strip(x)
                         extent_size = int(extent_size) * suffixes[x]
 
                         data['filesize'] = extent_size
