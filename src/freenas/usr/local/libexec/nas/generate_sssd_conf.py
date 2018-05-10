@@ -675,14 +675,14 @@ def add_ldap_section(client, sc):
 
     if ldap.ldap_ssl == 'on':
         ca = client.call('certificateauthority.query', [('id', '=', ldap.ldap_certificate.id)], {'get': True})
-        certpath = ca['cert_certificate_path']
+        certpath = ca['certificate_path']
         if certpath:
             ldap_section.ldap_tls_cacert = certpath
 
     elif ldap.ldap_ssl == 'start_tls':
         ldap_section.tls_reqcert = 'demand'
         ca = client.call('certificateauthority.query', [('id', '=', ldap.ldap_certificate.id)], {'get': True})
-        certpath = ca['cert_certificate_path']
+        certpath = ca['certificate_path']
         if certpath:
             ldap_section.ldap_tls_cacert = certpath
         ldap_section.ldap_id_use_start_tls = 'true'
