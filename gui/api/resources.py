@@ -32,7 +32,6 @@ import os
 import re
 import subprocess
 import urllib.parse
-import signal
 import sysctl
 
 from collections import OrderedDict
@@ -77,10 +76,9 @@ from freenasUI.common.system import (
 from freenasUI.common.warden import Warden
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.jails.forms import (
-    JailCreateForm, JailsEditForm, JailTemplateCreateForm, JailTemplateEditForm
+    JailsEditForm, JailTemplateCreateForm, JailTemplateEditForm
 )
-from freenasUI.jails.models import JailsConfiguration, JailTemplate
-from freenasUI.jails.utils import guess_ipv4_addresses
+from freenasUI.jails.models import JailTemplate
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -88,7 +86,6 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.util import run_alerts
 from freenasUI.network.forms import AliasForm
 from freenasUI.network.models import Alias, Interfaces
-from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url, get_plugin_status
 from freenasUI.services.forms import iSCSITargetPortalIPForm
@@ -2334,7 +2331,7 @@ class JailMountPointResourceMixin(object):
 class JailsResourceMixin(NestedMixin):
 
     class Meta:
-        validation = FormValidation(form_class=JailCreateForm)
+        validation = FormValidation(form_class=JailsEditForm)
         put_validation = FormValidation(form_class=JailsEditForm)
 
     def prepend_urls(self):
@@ -2423,6 +2420,13 @@ class JailsResourceMixin(NestedMixin):
         self.__jls = proc.communicate()[0]
         return super(JailsResourceMixin, self).dispatch_list(request, **kwargs)
 
+    def post_list(self, request, **kwargs):
+        raise ImmediateHttpResponse(
+            response=self.error_response(request, {
+                'error': 'No longer possible to create jails using API 1.0',
+            })
+        )
+
     def post_form_save_hook(self, bundle, form):
         if form.errors:
             raise ImmediateHttpResponse(response=self.error_response(
@@ -2460,13 +2464,6 @@ class JailsResourceMixin(NestedMixin):
             bundle.data['_jail_storage_add_url'] = reverse(
                 'jail_storage_add', kwargs={'jail_id': bundle.obj.id}
             )
-            bundle.data['_upload_url'] = reverse('plugins_upload', kwargs={
-                'jail_id': bundle.obj.id
-            })
-            bundle.data['_jail_export_url'] = reverse('jail_export', kwargs={
-                'id': bundle.obj.id
-            })
-            bundle.data['_jail_import_url'] = reverse('jail_import', kwargs={})
             bundle.data['_jail_start_url'] = reverse('jail_start', kwargs={
                 'id': bundle.obj.id
             })
@@ -2481,32 +2478,6 @@ class JailsResourceMixin(NestedMixin):
             })
             if bundle.obj.jail_ipv4:
                 bundle.data['jail_ipv4'] = bundle.obj.jail_ipv4.split('/')[0]
-
-        return bundle
-
-    def hydrate(self, bundle):
-        bundle = super(JailsResourceMixin, self).hydrate(bundle)
-        if bundle.request.method == 'POST':
-            # The way default values is provided in JailsCreateForm
-            # is not ideal since it relays in form data from UI.
-            # To workaround this lets do the same operation done in the form
-            # in case ipv4 not dhcp has been provided via API.
-            # See #14687
-            if 'jail_ipv4' not in bundle.data and not bundle.data.get('jail_ipv4_dhcp'):
-                jc = JailsConfiguration.objects.order_by("-id")[0]
-                if not jc.jc_ipv4_dhcp:
-                    ipv4_addrs = guess_ipv4_addresses()
-                    if ipv4_addrs['high_ipv4']:
-                        parts = str(ipv4_addrs['high_ipv4']).split('/')
-                        bundle.data['jail_ipv4'] = parts[0]
-                        if len(parts) > 1:
-                            bundle.data['jail_ipv4_netmask'] = parts[1]
-
-                    if ipv4_addrs['bridge_ipv4']:
-                        parts = str(ipv4_addrs['bridge_ipv4']).split('/')
-                        bundle.data['jail_bridge_ipv4'] = parts[0]
-                        if len(parts) > 1:
-                            bundle.data['jail_bridge_ipv4_netmask'] = parts[1]
 
         return bundle
 
@@ -2825,74 +2796,6 @@ class SnapshotResource(DojoResource):
                     'snapname': bundle.obj.name,
                 }),
             }
-        return bundle
-
-
-class AvailablePluginsResource(DojoResource):
-
-    id = fields.CharField(attribute='id')
-    name = fields.CharField(attribute='name')
-    description = fields.CharField(attribute='description')
-    version = fields.CharField(attribute='version')
-
-    class Meta:
-        object_class = Plugin
-        resource_name = 'plugins/available'
-
-    def get_list(self, request, **kwargs):
-        results = availablePlugins.get_remote()
-
-        for sfield in self._apply_sorting(request.GET):
-            if sfield.startswith('-'):
-                field = sfield[1:]
-                reverse = True
-            else:
-                field = sfield
-                reverse = False
-            results.sort(
-                key=lambda item: getattr(item, field),
-                reverse=reverse)
-        paginator = self._meta.paginator_class(
-            request,
-            results,
-            resource_uri=self.get_resource_uri(),
-            limit=self._meta.limit,
-            max_limit=self._meta.max_limit,
-            collection_name=self._meta.collection_name,
-        )
-        to_be_serialized = paginator.page()
-        # Dehydrate the bundles in preparation for serialization.
-        bundles = []
-
-        for obj in to_be_serialized[self._meta.collection_name]:
-            bundle = self.build_bundle(obj=obj, request=request)
-            bundles.append(self.full_dehydrate(bundle))
-
-        length = len(bundles)
-        to_be_serialized[self._meta.collection_name] = bundles
-        to_be_serialized = self.alter_list_data_to_serialize(
-            request,
-            to_be_serialized
-        )
-        response = self.create_response(request, to_be_serialized)
-        response['Content-Range'] = 'items %d-%d/%d' % (
-            paginator.offset,
-            paginator.offset + length - 1,
-            len(results)
-        )
-        return response
-
-    def dehydrate(self, bundle):
-        if self.is_webclient(bundle.request):
-            bundle.data['_install_url'] = reverse(
-                'plugins_install_available',
-                kwargs={'oid': bundle.obj.id},
-            )
-            bundle.data['_update_url'] = reverse(
-                'plugin_update',
-                kwargs={'oid': bundle.obj.id},
-            )
-        bundle.data['icon'] = bundle.obj.icon
         return bundle
 
 
