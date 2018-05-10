@@ -247,7 +247,22 @@ class CRUDService(ServiceChangeMixin, Service):
             options['prefix'] = self._config.datastore_prefix
         if self._config.datastore_extend:
             options['extend'] = self._config.datastore_extend
-        return await self.middleware.call('datastore.query', self._config.datastore, filters, options)
+        # In case we are extending which may transform the result in numerous ways
+        # we can only filter the final result.
+        if 'extend' in options:
+            datastore_options = options.copy()
+            datastore_options.pop('count', None)
+            datastore_options.pop('get', None)
+            result = await self.middleware.call(
+                'datastore.query', self._config.datastore, [], datastore_options
+            )
+            return await self.middleware.run_in_io_thread(
+                filter_list, result, filters, options
+            )
+        else:
+            return await self.middleware.call(
+                'datastore.query', self._config.datastore, filters, options,
+            )
 
     async def create(self, data):
         return await self.middleware._call(
