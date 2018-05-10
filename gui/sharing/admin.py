@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext as _
 
-from freenasUI.api.resources import NFSShareResourceMixin
+from freenasUI.api.resources import CIFSResourceMixin, NFSShareResourceMixin
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.sharing import models
@@ -68,7 +68,7 @@ class CIFSShareFAdmin(BaseFreeAdmin):
         'cifs_browsable',
         'cifs_guestok'
     )
-    resource_name = 'sharing/cifs'
+    resource_mixin = CIFSResourceMixin
 
     def get_confirm_message(self, action, **kwargs):
         if action not in ('add', 'edit'):
