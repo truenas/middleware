@@ -52,6 +52,7 @@ from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import fc_enabled
 from middlewared.plugins.iscsi import AUTHMETHOD_LEGACY_MAP
 from middlewared.plugins.smb import LOGLEVEL_MAP
+from middlewared.client import Client
 
 log = logging.getLogger('services.form')
 
@@ -828,21 +829,31 @@ class iSCSITargetExtentForm(MiddlewareModelForm, ModelForm):
         key_order(self, 2, 'iscsi_target_extent_disk', instance=True)
 
         if self.instance.id:
+            with Client() as c:
+                e = self.instance.iscsi_target_extent_path
+                exclude = [e] if not self._api else []
+
+                disk_choices = self.__sanitize_disk_choices(
+                    c.call('iscsi.extent.disk_choices', exclude))
 
             if self.instance.iscsi_target_extent_type == 'File':
                 self.fields['iscsi_target_extent_type'].initial = 'File'
             else:
                 self.fields['iscsi_target_extent_type'].initial = 'Disk'
             if not self._api:
-                self.fields['iscsi_target_extent_disk'].choices = self._populate_disk_choices(exclude=self.instance)
+                self.fields['iscsi_target_extent_disk'].choices = disk_choices
             if self.instance.iscsi_target_extent_type in ('ZVOL', 'HAST'):
-                self.fields['iscsi_target_extent_disk'].initial = self.instance.iscsi_target_extent_path
+                self.fields['iscsi_target_extent_disk'].initial = disk_choices
             else:
                 self.fields['iscsi_target_extent_disk'].initial = self.instance.get_device()[5:]
             self._path = self.instance.iscsi_target_extent_path
             self._name = self.instance.iscsi_target_extent_name
         elif not self._api:
-            self.fields['iscsi_target_extent_disk'].choices = self._populate_disk_choices()
+            with Client() as c:
+                disk_choices = self.__sanitize_disk_choices(
+                    c.call('iscsi.extent.disk_choices'))
+
+            self.fields['iscsi_target_extent_disk'].choices = disk_choices
         self.fields['iscsi_target_extent_type'].widget.attrs['onChange'] = "iscsiExtentToggle();extentZvolToggle();"
         self.fields['iscsi_target_extent_path'].required = False
 
@@ -850,66 +861,12 @@ class iSCSITargetExtentForm(MiddlewareModelForm, ModelForm):
             'extentZvolToggle();'
         )
 
-    def _populate_disk_choices(self, exclude=None):
+    def __sanitize_disk_choices(self, disk_choices):
+        disk_choices_lst = []
+        for name, disk in disk_choices.items():
+            disk_choices_lst.append((name, disk))
 
-        diskchoices = OrderedDict()
-
-        qs = models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
-        if exclude:
-            qs = qs.exclude(id=exclude.id)
-        diskids = [i[0] for i in qs.values_list('iscsi_target_extent_path')]
-        used_disks = [d.disk_name for d in Disk.objects.filter(disk_identifier__in=diskids)]
-
-        qs = models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='ZVOL')
-        if exclude:
-            qs = qs.exclude(id=exclude.id)
-        used_zvol = [i[0] for i in qs.values_list('iscsi_target_extent_path')]
-
-        for v in Volume.objects.all():
-            used_disks.extend(v.get_disks())
-
-        _notifier = notifier()
-        zsnapshots = _notifier.zfs_snapshot_list(sort='name')
-        snaps = []
-        for volume in Volume.objects.all():
-            zvols = _notifier.list_zfs_vols(volume.vol_name, sort='name')
-            for zvol, attrs in list(zvols.items()):
-                if "zvol/" + zvol not in used_zvol:
-                    diskchoices["zvol/" + zvol] = "%s (%s)" % (
-                        zvol,
-                        humanize_size(attrs['volsize']))
-                if zvol not in zsnapshots:
-                    continue
-                snaps.extend(zsnapshots.get(zvol))
-        for snap in snaps:
-            diskchoices["zvol/" + snap.fullname] = "%s (%s) [ro]" % (
-                snap.fullname,
-                humanize_size(attrs['volsize']))
-
-        # Grab partition list
-        # NOTE: This approach may fail if device nodes are not accessible.
-        disks = _notifier.get_disks()
-        for name, disk in list(disks.items()):
-            if name in used_disks:
-                continue
-            capacity = humanize_size(disk['capacity'])
-            diskchoices[name] = "%s (%s)" % (name, capacity)
-
-        # HAST Devices through GEOM GATE
-        gate_pipe = subprocess.Popen(
-            """/usr/sbin/diskinfo `/sbin/geom gate status -s"""
-            """| /usr/bin/cut -d" " -f1` | /usr/bin/cut -f1,3""",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            encoding='utf8')
-        gate_diskinfo = gate_pipe.communicate()[0].strip().split('\n')
-        for disk in gate_diskinfo:
-            if disk:
-                devname, capacity = disk.split('\t')
-                capacity = humanize_size(capacity)
-                diskchoices[devname] = "%s (%s)" % (devname, capacity)
-        return list(diskchoices.items())
+        return disk_choices_lst
 
     def clean_iscsi_target_extent_filesize(self):
         size = self.cleaned_data['iscsi_target_extent_filesize']

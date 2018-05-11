@@ -436,6 +436,7 @@ class iSCSITargetExtentService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        import pdb; pdb.set_trace()
         verrors = ValidationErrors()
         old = await self.middleware.call(
             'datastore.query', self._config.datastore, [('id', '=', id)],
@@ -446,7 +447,7 @@ class iSCSITargetExtentService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        await self.compress(data)
+        await self.compress(new)
         await self.validate(
             new, 'iscsi_extent_update', verrors)
         await self.clean(
@@ -459,7 +460,7 @@ class iSCSITargetExtentService(CRUDService):
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
-        await self.extend(data)
+        await self.extend(new)
 
         return new
 
@@ -495,12 +496,12 @@ class iSCSITargetExtentService(CRUDService):
 
     @private
     async def extend(self, data):
-        extent_type = data['type']
-        extent_rpm = data['rpm']
+        extent_type = data['type'].upper()
+        extent_rpm = data['rpm'].upper()
 
-        if extent_type != 'File':
+        if extent_type != 'FILE':
             # ZVOL and HAST are type DISK
-            data['type'] = 'DISK'
+            extent_type = 'DISK'
         else:
             extent_size = data['filesize']
 
@@ -521,8 +522,8 @@ class iSCSITargetExtentService(CRUDService):
 
                         data['filesize'] = extent_size
 
-        data['type'] = extent_type.upper()
-        data['rpm'] = extent_rpm.upper()
+        data['rpm'] = extent_rpm
+        data['type'] = extent_type
 
         return data
 
@@ -600,6 +601,9 @@ class iSCSITargetExtentService(CRUDService):
         size = data['filesize']
         blocksize = data['blocksize']
 
+        if extent_type != 'FILE':
+            return data
+
         if (
             size == 0 and path and (not os.path.exists(path) or (
                 os.path.exists(path) and not
@@ -609,7 +613,7 @@ class iSCSITargetExtentService(CRUDService):
             verrors.add(
                 f'{schema_name}.path',
                 'The file must exist if the extent size is set to auto (0)')
-        elif extent_type == 'file' and not path:
+        elif extent_type == 'FILE' and not path:
             verrors.add(f'{schema_name}.path', 'This field is required')
 
         if size and size != 0 and blocksize:
@@ -644,26 +648,39 @@ class iSCSITargetExtentService(CRUDService):
         else:
             return serial
 
-    @accepts()
-    async def disk_choices(self):
+    @accepts(List('exclude'))
+    async def disk_choices(self, exclude):
+        """
+        Exclude will exclude the path from being in the used_zvols list,
+        allowing the user to keep the same item on update
+        """
         diskchoices = {}
-        disk_query = await self.query([('type', '=', 'Disk')])
+        disk_query = await self.query([('type', '=', 'DISK')])
 
         diskids = [i['path'] for i in disk_query]
         used_disks = [d['name'] for d in await self.middleware.call(
             'disk.query', [('identifier', 'in', diskids)])]
 
-        zvol_query = await self.query([('type', '=', 'ZVOL')])
+        zvol_query_filters = [('type', '=', 'ZVOL')]
+
+        for e in exclude:
+            if e:
+                zvol_query_filters.append(('path', '!=', e))
+
+        zvol_query = await self.query(zvol_query_filters)
+
         used_zvols = [i['path'] for i in zvol_query]
 
         async for pdisk in await self.middleware.call('pool.get_disks'):
-            used_disks.extend(pdisk)
+            used_disks.append(pdisk)
 
         zfs_snaps = await self.middleware.call('zfs.snapshot.query', [],
                                                {'order_by': ['name']})
 
         zvols = await self.middleware.call('pool.dataset.query',
                                            [('type', '=', 'VOLUME')])
+        zvol_list = [ds['name'] for ds in zvols]
+
         for zvol in zvols:
             zvol_name = zvol['name']
             zvol_size = zvol['volsize']['value']
@@ -671,10 +688,15 @@ class iSCSITargetExtentService(CRUDService):
                 diskchoices[f'zvol/{zvol_name}'] = f'{zvol_name} ({zvol_size})'
 
         for snap in zfs_snaps:
+            ds_name, snap_name = snap['properties']['name'][
+                'value'].rsplit('@', 1)
+            full_name = f'{ds_name}@{snap_name}'
             snap_name = snap['properties']['name']['value']
             snap_size = snap['properties']['referenced']['value']
-            diskchoices[f'zvol/{snap_name}'] = f'{snap_name} ({snap_size})'\
-                ' [ro]'
+
+            if ds_name in zvol_list:
+                diskchoices[f'zvol/{full_name}'] = \
+                    f'{full_name} ({snap_size}) [ro]'
 
         notifier_disks = await self.middleware.call('notifier.get_disks')
         for name, disk in notifier_disks.items():
@@ -691,8 +713,27 @@ class iSCSITargetExtentService(CRUDService):
         extent_type = data['type']
         disk = data.pop('disk', None)
 
-        if extent_type == 'Disk':
+        if extent_type == 'File':
+            path = data['path']
+            dirs = '/'.join(path.split('/')[:-1])
+
+            if not os.path.exists(dirs):
+                try:
+                    os.makedirs(dirs)
+                except Exception as e:
+                    self.logger.error(
+                        'Unable to create dirs for extent file: {e}')
+
+            if not os.path.exists(path):
+                extent_size = data['filesize']
+
+                await run(['truncate', '-s', str(extent_size), path])
+
+            await self.middleware.call('service.reload', 'iscsitarget')
+        else:
+            serial = f'{{serial}}{data["serial"]}'
             data['path'] = disk
+            data['serial'] = serial
 
             if disk.startswith('multipath'):
                 self.middleware.call('notifier.unlabel_disk', disk)
@@ -704,6 +745,7 @@ class iSCSITargetExtentService(CRUDService):
                     disk_object = (await self.middleware.call('disk.query',
                                                               disk_filters))[0]
                     disk_identifier = disk_object.get('identifier', None)
+                    data['path'] = disk_identifier
 
                     if disk_identifier.startswith(
                         '{devicename}'or disk_identifier.startswith('{uuid}')
@@ -723,23 +765,6 @@ class iSCSITargetExtentService(CRUDService):
                 except IndexError:
                     # It's not a disk, but a ZVOL
                     pass
-        elif extent_type == 'File':
-            path = data['path']
-            dirs = '/'.join(path.split('/')[:-1])
-
-            if not os.path.exists(dirs):
-                try:
-                    os.makedirs(dirs)
-                except Exception as e:
-                    self.logger.error(
-                        'Unable to create dirs for extent file: {e}')
-
-            if not os.path.exists(path):
-                extent_size = data['filesize']
-
-                await run(['truncate', '-s', str(extent_size), path])
-
-            await self.middleware.call('service.reload', 'iscsitarget')
 
 
 class iSCSITargetAuthorizedInitiator(CRUDService):
