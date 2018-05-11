@@ -2151,8 +2151,6 @@ class ISCSITargetToExtentResourceMixin(object):
             bundle
         )
         if self.is_webclient(bundle.request):
-            if bundle.obj.iscsi_lunid is None:
-                bundle.data['iscsi_lunid'] = 'Auto'
             bundle.data['iscsi_target'] = bundle.obj.iscsi_target
             bundle.data['iscsi_extent'] = bundle.obj.iscsi_extent
         else:
