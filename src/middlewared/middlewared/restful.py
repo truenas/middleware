@@ -8,6 +8,7 @@ import copy
 import types
 
 from .client import ejson as json
+from .job import Job
 
 
 async def authenticate(middleware, req):
@@ -486,5 +487,7 @@ class Resource(object):
             result = list(result)
         elif isinstance(result, types.AsyncGeneratorType):
             result = [i async for i in result]
+        elif isinstance(result, Job):
+            result = result.id
         resp.text = json.dumps(result, indent=True)
         return resp
