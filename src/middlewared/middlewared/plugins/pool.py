@@ -213,13 +213,10 @@ class PoolService(CRUDService):
 
     GELI_KEYPATH = '/data/geli'
 
-    @filterable
-    async def query(self, filters=None, options=None):
-        filters = filters or []
-        options = options or {}
-        options['extend'] = 'pool.pool_extend'
-        options['prefix'] = 'vol_'
-        return await self.middleware.call('datastore.query', 'storage.volume', filters, options)
+    class Config:
+        datastore = 'storage.volume'
+        datastore_extend = 'pool.pool_extend'
+        datastore_prefix = 'vol_'
 
     @accepts()
     async def filesystem_choices(self):
