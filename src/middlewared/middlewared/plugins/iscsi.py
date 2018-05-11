@@ -436,7 +436,6 @@ class iSCSITargetExtentService(CRUDService):
         )
     )
     async def do_update(self, id, data):
-        import pdb; pdb.set_trace()
         verrors = ValidationErrors()
         old = await self.middleware.call(
             'datastore.query', self._config.datastore, [('id', '=', id)],
@@ -655,7 +654,7 @@ class iSCSITargetExtentService(CRUDService):
         allowing the user to keep the same item on update
         """
         diskchoices = {}
-        disk_query = await self.query([('type', '=', 'DISK')])
+        disk_query = await self.query([('type', '=', 'Disk')])
 
         diskids = [i['path'] for i in disk_query]
         used_disks = [d['name'] for d in await self.middleware.call(
@@ -731,9 +730,7 @@ class iSCSITargetExtentService(CRUDService):
 
             await self.middleware.call('service.reload', 'iscsitarget')
         else:
-            serial = f'{{serial}}{data["serial"]}'
             data['path'] = disk
-            data['serial'] = serial
 
             if disk.startswith('multipath'):
                 self.middleware.call('notifier.unlabel_disk', disk)

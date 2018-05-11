@@ -833,8 +833,8 @@ class iSCSITargetExtentForm(MiddlewareModelForm, ModelForm):
                 e = self.instance.iscsi_target_extent_path
                 exclude = [e] if not self._api else []
 
-                disk_choices = self.__sanitize_disk_choices(
-                    c.call('iscsi.extent.disk_choices', exclude))
+                disk_choices = list(c.call(
+                    'iscsi.extent.disk_choices', exclude).items())
 
             if self.instance.iscsi_target_extent_type == 'File':
                 self.fields['iscsi_target_extent_type'].initial = 'File'
@@ -850,8 +850,8 @@ class iSCSITargetExtentForm(MiddlewareModelForm, ModelForm):
             self._name = self.instance.iscsi_target_extent_name
         elif not self._api:
             with Client() as c:
-                disk_choices = self.__sanitize_disk_choices(
-                    c.call('iscsi.extent.disk_choices'))
+                disk_choices = list(c.call(
+                    'iscsi.extent.disk_choices').items())
 
             self.fields['iscsi_target_extent_disk'].choices = disk_choices
         self.fields['iscsi_target_extent_type'].widget.attrs['onChange'] = "iscsiExtentToggle();extentZvolToggle();"
@@ -860,13 +860,6 @@ class iSCSITargetExtentForm(MiddlewareModelForm, ModelForm):
         self.fields['iscsi_target_extent_disk'].widget.attrs['onChange'] = (
             'extentZvolToggle();'
         )
-
-    def __sanitize_disk_choices(self, disk_choices):
-        disk_choices_lst = []
-        for name, disk in disk_choices.items():
-            disk_choices_lst.append((name, disk))
-
-        return disk_choices_lst
 
     def clean_iscsi_target_extent_filesize(self):
         size = self.cleaned_data['iscsi_target_extent_filesize']
