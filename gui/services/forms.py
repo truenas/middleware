@@ -720,17 +720,12 @@ class iSCSITargetToExtentForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(iSCSITargetToExtentForm, self).__init__(*args, **kwargs)
         self.fields['iscsi_lunid'].initial = 0
-        self.fields['iscsi_lunid'].required = False
+        self.fields['iscsi_lunid'].required = True
 
     def clean_iscsi_lunid(self):
         lunid = self.cleaned_data.get('iscsi_lunid')
-        if not lunid:
-            return None
-        if isinstance(lunid, str) and not lunid.isdigit():
-            raise forms.ValidationError(_("LUN ID must be a positive integer"))
-        lunid_int = int(lunid)
         lun_map_size = sysctl.filter('kern.cam.ctl.lun_map_size')[0].value
-        if lunid_int < 0 or lunid_int > lun_map_size - 1:
+        if lunid < 0 or lunid > lun_map_size - 1:
             raise forms.ValidationError(_('LUN ID must be a positive integer and lower than %d') % (lun_map_size - 1))
         return lunid
 
