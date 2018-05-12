@@ -1197,6 +1197,19 @@ class iSCSITargetAuthorizedInitiatorForm(MiddlewareModelForm, ModelForm):
             'iscsi_target_initiator_tag',
         )
 
+    def middleware_clean(self, data):
+        initiators = data['initiators']
+        auth_network = data['auth_network']
+
+        if initiators == 'ALL':
+            initiators = []
+
+        if auth_network == 'ALL':
+            auth_network = []
+
+        data['initiators'] = initiators
+        data['auth_network'] = auth_network
+
 
 class iSCSITargetGroupsInlineFormSet(FreeBaseInlineFormSet):
 

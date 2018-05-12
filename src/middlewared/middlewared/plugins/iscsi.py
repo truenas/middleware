@@ -389,25 +389,27 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
 
     @accepts(Dict(
         'iscsi_initiator_create',
-        Int('tag'),
-        Str('initiators', default='ALL'),
-        Str('auth_network', default='ALL'),
+        Int('tag', default=0),
+        List('initiators', items=[IPAddr('ip', cidr=True)], default=[]),
+        List('auth_network', items=[IPAddr('ip', cidr=True)], default=[]),
         Str('comment'),
         register=True
     ))
     async def do_create(self, data):
-        verrors = ValidationErrors()
+        if data['tag'] == 0:
+            i = len((await self.query())) + 1
+            while True:
+                tag_result = await self.query(['tag', '=', i])
+                if not tag_result:
+                    break
+                i += 1
+            data['tag'] = i
+
         await self.compress(data)
-        await self.validate(data, 'iscsi_initiator_create', verrors)
-
-        if verrors:
-            raise verrors
-
-        await self.extend(data)
-        data['tag'] = (await self.query())[-1]['tag'] + 1
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
+        await self.extend(data)
         await self.middleware.call('service.reload', 'iscsitarget')
 
         return data
@@ -421,7 +423,6 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         )
     )
     async def do_update(self, id, data):
-        verrors = ValidationErrors()
         old = await self.middleware.call(
             'datastore.query', self._config.datastore, [('id', '=', id)],
             {'extend': self._config.datastore_extend,
@@ -431,39 +432,15 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         new = old.copy()
         new.update(data)
 
-        await self.compress(new)
-        await self.validate(
-            new, 'iscsi_initiator_update', verrors)
-
-        if verrors:
-            raise verrors
-
-        await self.extend(new)
+        await self.compress(data)
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
+        await self.extend(data)
 
         await self.middleware.call('service.reload', 'iscsitarget')
 
         return new
-
-    @private
-    async def compress(self, data):
-        nets = data['auth_network'].split()
-        data['auth_network'] = nets
-
-        return data
-
-    @private
-    async def extend(self, data):
-        nets = data['auth_network']
-
-        if isinstance(nets, str):
-            nets = nets.split()  # Query
-
-        data['auth_network'] = '\n'.join(nets)
-
-        return data
 
     @accepts(Int('id'))
     async def do_delete(self, id):
@@ -471,23 +448,37 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
             'datastore.delete', self._config.datastore, id)
 
     @private
-    async def validate(self, data, schema_name, verrors):
+    async def compress(self, data):
+        initiators = data['initiators']
         auth_network = data['auth_network']
-        for net in auth_network:
-            net = net.strip().upper()
 
-            if net == 'ALL':
-                continue
+        if not initiators:
+            initiators = 'ALL'
 
-            try:
-                IPNetwork(net)
-            except (NetmaskValueError, ValueError):
-                try:
-                    IPAddress(net)
-                except (AddressValueError, ValueError):
-                    verrors.add(
-                        f'{schema_name}.auth_network',
-                        'The field is a not a valid IP address or network.'
-                        ' The keyword "ALL" can be used to allow '
-                        'everything.'
-                    )
+        if not auth_network:
+            auth_network = 'ALL'
+
+        data['initiators'] = initiators
+        data['auth_network'] = auth_network
+
+        return data
+
+    @private
+    async def extend(self, data):
+        initiators = data['initiators']
+        auth_network = data['auth_network']
+
+        if initiators == 'ALL':
+            initiators = ['ALL']
+        else:
+            initiators = '\n'.join(initiators)
+
+        if auth_network == 'ALL':
+            auth_network = ['ALL']
+        else:
+            auth_network = '\n'.join(auth_network)
+
+        data['initiators'] = initiators
+        data['auth_network'] = auth_network
+
+        return data
