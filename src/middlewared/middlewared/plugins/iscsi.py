@@ -1,7 +1,7 @@
 from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
                                 Str)
 from middlewared.validators import Range
-from middlewared.service import (CRUDService, SystemServiceService,
+from middlewared.service import (CallError, CRUDService, SystemServiceService,
                                  ValidationErrors, private)
 from middlewared.utils import run
 from middlewared.async_validators import check_path_resides_within_volume
@@ -463,8 +463,24 @@ class iSCSITargetExtentService(CRUDService):
 
         return new
 
-    @accepts(Int('id'))
-    async def do_delete(self, id):
+    @accepts(
+        Int('id'),
+        Dict(
+            'iscsi_extent_delete',
+            Bool('remove'),
+            Str('type'),
+            Str('path')
+        )
+    )
+    async def do_delete(self, id, data):
+        remove = data.pop('remove', False)
+
+        if remove:
+            delete = await self.remove_extent_file(data)
+
+            if delete is not True:
+                raise CallError('Failed to remove extent file', str(delete))
+
         return await self.middleware.call(
             'datastore.delete', self._config.datastore, id)
 
@@ -762,6 +778,20 @@ class iSCSITargetExtentService(CRUDService):
                 except IndexError:
                     # It's not a disk, but a ZVOL
                     pass
+
+    @accepts(Dict(
+        'iscsi_extent_remove_extent_file',
+        Str('type'),
+        Str('path')
+    ))
+    async def remove_extent_file(self, data):
+        if data['type'] == 'File':
+            try:
+                os.unlink(data['path'])
+            except Exception as e:
+                return e
+
+        return True
 
 
 class iSCSITargetAuthorizedInitiator(CRUDService):

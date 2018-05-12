@@ -1174,7 +1174,12 @@ class ExtentDelete(Form):
             self.cleaned_data['delete'] and
             os.path.exists(self.instance.iscsi_target_extent_path)
         ):
-            os.unlink(self.instance.iscsi_target_extent_path)
+            data = {}
+            data['type'] = self.instance.iscsi_target_extent_type
+            data['path'] = self.instance.iscsi_target_extent_path
+
+            with Client() as c:
+                c.call('iscsi.extent.remove_extent_file', data)
 
 
 class SMARTForm(MiddlewareModelForm, ModelForm):
