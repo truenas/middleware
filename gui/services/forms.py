@@ -1201,14 +1201,13 @@ class iSCSITargetAuthorizedInitiatorForm(MiddlewareModelForm, ModelForm):
         initiators = data['initiators']
         auth_network = data['auth_network']
 
-        if initiators == 'ALL':
-            initiators = []
-
-        if auth_network == 'ALL':
-            auth_network = []
+        initiators = [] if initiators == 'ALL' else initiators.split()
+        auth_network = [] if auth_network == 'ALL' else auth_network.split()
 
         data['initiators'] = initiators
         data['auth_network'] = auth_network
+
+        return data
 
 
 class iSCSITargetGroupsInlineFormSet(FreeBaseInlineFormSet):

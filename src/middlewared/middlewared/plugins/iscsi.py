@@ -431,11 +431,11 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         new = old.copy()
         new.update(data)
 
-        await self.compress(data)
+        await self.compress(new)
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
-        await self.extend(data)
+        await self.extend(new)
 
         await self.middleware.call('service.reload', 'iscsitarget')
 
@@ -451,11 +451,8 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         initiators = data['initiators']
         auth_network = data['auth_network']
 
-        if not initiators:
-            initiators = 'ALL'
-
-        if not auth_network:
-            auth_network = 'ALL'
+        initiators = 'ALL' if not initiators else '\n'.join(initiators)
+        auth_network = 'ALL' if not auth_network else '\n'.join(auth_network)
 
         data['initiators'] = initiators
         data['auth_network'] = auth_network
@@ -467,15 +464,8 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         initiators = data['initiators']
         auth_network = data['auth_network']
 
-        if initiators == 'ALL':
-            initiators = []
-        else:
-            initiators = '\n'.join(initiators)
-
-        if auth_network == 'ALL':
-            auth_network = []
-        else:
-            auth_network = '\n'.join(auth_network)
+        initiators = [] if initiators == 'ALL' else initiators.split()
+        auth_network = [] if auth_network == 'ALL' else auth_network.split()
 
         data['initiators'] = initiators
         data['auth_network'] = auth_network
