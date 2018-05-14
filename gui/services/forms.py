@@ -26,8 +26,6 @@
 import logging
 import os
 import re
-import subprocess
-from collections import OrderedDict
 
 import sysctl
 from django.db.models import Q
@@ -35,7 +33,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from freenasUI import choices
-from freenasUI.common import humanize_size
 from freenasUI.common.forms import Form, ModelForm
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.system import activedirectory_enabled, ldap_enabled
@@ -47,7 +44,6 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.services import models
 from freenasUI.services.exceptions import ServiceFailed
-from freenasUI.storage.models import Disk, Volume
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import fc_enabled
 from middlewared.plugins.iscsi import AUTHMETHOD_LEGACY_MAP
