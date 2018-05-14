@@ -1583,6 +1583,20 @@ class TaskResourceMixin(object):
         return bundle
 
 
+class CIFSResourceMixin(object):
+
+    class Meta:
+        resource_name = 'sharing/cifs'
+
+    def dehydrate(self, bundle):
+        bundle = super().dehydrate(bundle)
+        if bundle.obj.cifs_storage_task:
+            bundle.data['cifs_storage_task'] = bundle.obj.cifs_storage_task.id
+        else:
+            bundle.data['cifs_storage_task'] = None
+        return bundle
+
+
 class NFSResourceMixin(object):
 
     def hydrate(self, bundle):
@@ -2137,8 +2151,6 @@ class ISCSITargetToExtentResourceMixin(object):
             bundle
         )
         if self.is_webclient(bundle.request):
-            if bundle.obj.iscsi_lunid is None:
-                bundle.data['iscsi_lunid'] = 'Auto'
             bundle.data['iscsi_target'] = bundle.obj.iscsi_target
             bundle.data['iscsi_extent'] = bundle.obj.iscsi_extent
         else:

@@ -973,7 +973,7 @@ class iSCSITargetToExtent(Model):
     )
     iscsi_lunid = models.IntegerField(
         verbose_name=_('LUN ID'),
-        null=True,
+        null=False,
     )
     iscsi_extent = models.ForeignKey(
         iSCSITargetExtent,

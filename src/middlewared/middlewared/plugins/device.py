@@ -54,7 +54,8 @@ class DeviceService(Service):
                 'sectorsize': g.provider.sectorsize,
                 'stripesize': g.provider.stripesize,
             }
-            disk.update(g.provider.config)
+            if g.provider.config:
+                disk.update(g.provider.config)
             disks[g.name] = disk
         return disks
 

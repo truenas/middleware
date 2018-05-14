@@ -1005,6 +1005,9 @@ async def _event_devfs(middleware, event_type, args):
                     sa.device_delete(data['cdev'])
             except Exception:
                 pass
+            # If a disk dies we need to reconfigure swaps so we are not left
+            # with a single disk mirror swap, which may be a point of failure.
+            await middleware.call('disk.swaps_configure')
 
 
 def setup(middleware):
