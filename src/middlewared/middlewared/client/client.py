@@ -294,7 +294,8 @@ class Client(object):
             if not self._connected.is_set():
                 raise ClientException('Failed connection handshake')
         except Exception as e:
-            del self._ws
+            if hasattr(self, '_ws'):
+                del self._ws
             raise e
 
     def __enter__(self):
