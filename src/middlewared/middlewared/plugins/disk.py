@@ -858,6 +858,8 @@ class DiskService(CRUDService):
             devname = f'{p.name}.eli'
             if devname in swapinfo_devs:
                 await run('swapoff', f'/dev/{devname}')
+            if os.path.exists(f'/dev/{devname}'):
+                await run('geli', 'detach', devname)
 
     @private
     async def wipe_quick(self, dev, size=None):
