@@ -48,7 +48,7 @@ from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import fc_enabled
 from middlewared.plugins.iscsi import AUTHMETHOD_LEGACY_MAP
 from middlewared.plugins.smb import LOGLEVEL_MAP
-from middlewared.client import Client
+from freenasUI.middleware.client import client
 
 log = logging.getLogger('services.form')
 
@@ -825,7 +825,7 @@ class iSCSITargetExtentForm(MiddlewareModelForm, ModelForm):
         key_order(self, 2, 'iscsi_target_extent_disk', instance=True)
 
         if self.instance.id:
-            with Client() as c:
+            with client as c:
                 e = self.instance.iscsi_target_extent_path
                 exclude = [e] if not self._api else []
 
@@ -845,7 +845,7 @@ class iSCSITargetExtentForm(MiddlewareModelForm, ModelForm):
             self._path = self.instance.iscsi_target_extent_path
             self._name = self.instance.iscsi_target_extent_name
         elif not self._api:
-            with Client() as c:
+            with client as c:
                 disk_choices = list(c.call(
                     'iscsi.extent.disk_choices').items())
 
@@ -1174,7 +1174,7 @@ class ExtentDelete(Form):
             data['type'] = self.instance.iscsi_target_extent_type
             data['path'] = self.instance.iscsi_target_extent_path
 
-            with Client() as c:
+            with client as c:
                 c.call('iscsi.extent.remove_extent_file', data)
 
 

@@ -465,21 +465,17 @@ class iSCSITargetExtentService(CRUDService):
 
     @accepts(
         Int('id'),
-        Dict(
-            'iscsi_extent_delete',
-            Bool('remove'),
-            Str('type'),
-            Str('path')
-        )
+        Bool('remove', default=False),
     )
-    async def do_delete(self, id, data):
-        remove = data.pop('remove', False)
+    async def do_delete(self, id, remove):
+        data = await self._get_instance(id)
 
         if remove:
+            await self.compress(data)
             delete = await self.remove_extent_file(data)
 
             if delete is not True:
-                raise CallError('Failed to remove extent file', str(delete))
+                raise CallError('Failed to remove extent file')
 
         return await self.middleware.call(
             'datastore.delete', self._config.datastore, id)
@@ -490,11 +486,12 @@ class iSCSITargetExtentService(CRUDService):
 
     @private
     async def compress(self, data):
-        extent_disk = data['disk']
         extent_type = data['type']
         extent_rpm = data['rpm']
 
         if extent_type == 'DISK':
+            extent_disk = data['disk']
+
             if extent_disk.startswith('zvol'):
                 data['type'] = 'ZVOL'
             elif extent_disk.startswith('hast'):
@@ -779,11 +776,7 @@ class iSCSITargetExtentService(CRUDService):
                     # It's not a disk, but a ZVOL
                     pass
 
-    @accepts(Dict(
-        'iscsi_extent_remove_extent_file',
-        Str('type'),
-        Str('path')
-    ))
+    @private
     async def remove_extent_file(self, data):
         if data['type'] == 'File':
             try:
