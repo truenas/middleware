@@ -761,9 +761,10 @@ class CertificateBase(Model):
         verbose_name=_("Subject Alternate Names"),
         help_text=_("Multi-domain support. Enter additional space separated domains")
     )
-    cert_serial = models.IntegerField(
+    cert_serial = models.CharField(
         blank=True,
         null=True,
+        max_length=120,
         verbose_name=_("Serial"),
         help_text=_("Serial for next certificate"),
     )

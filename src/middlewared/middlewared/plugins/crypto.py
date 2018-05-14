@@ -1,3 +1,4 @@
+import ctypes
 import dateutil
 import dateutil.parser
 import os
@@ -758,7 +759,7 @@ class CertificateAuthorityService(CRUDService):
         ])
 
         if not ca_signed_certs:
-            return (await self._get_instance(ca_id))['serial'] + 1
+            return ctypes.c_ulong((await self._get_instance(ca_id))['serial']) + 1
         else:
             return max(ca_signed_certs) + 1
 
