@@ -1,7 +1,6 @@
 from middlewared.schema import accepts, Bool, Dict, IPAddr, Int, List, Patch, Str
 from middlewared.validators import Range
 from middlewared.service import CRUDService, SystemServiceService, ValidationErrors, private
-from ipaddr import AddressValueError, IPAddress, IPNetwork, NetmaskValueError
 
 import bidict
 import errno
@@ -390,7 +389,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
     @accepts(Dict(
         'iscsi_initiator_create',
         Int('tag', default=0),
-        List('initiators', items=[IPAddr('ip', cidr=True)], default=[]),
+        List('initiators', default=[]),
         List('auth_network', items=[IPAddr('ip', cidr=True)], default=[]),
         Str('comment'),
         register=True
@@ -399,7 +398,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         if data['tag'] == 0:
             i = len((await self.query())) + 1
             while True:
-                tag_result = await self.query(['tag', '=', i])
+                tag_result = await self.query([('tag', '=', i)])
                 if not tag_result:
                     break
                 i += 1
@@ -469,12 +468,12 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         auth_network = data['auth_network']
 
         if initiators == 'ALL':
-            initiators = ['ALL']
+            initiators = []
         else:
             initiators = '\n'.join(initiators)
 
         if auth_network == 'ALL':
-            auth_network = ['ALL']
+            auth_network = []
         else:
             auth_network = '\n'.join(auth_network)
 
