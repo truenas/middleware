@@ -1,6 +1,6 @@
 from middlewared.client import ejson as json
 from middlewared.schema import Dict, Int, List, Str, accepts
-from middlewared.service import Service
+from middlewared.service import Service, ValidationError
 from middlewared.utils import Popen
 
 import glob
@@ -67,7 +67,7 @@ class StatsService(Service):
         return info
 
     @accepts(
-        List('stats-list', items=[
+        List('stats_list', items=[
             Dict(
                 'stats-data',
                 Str('source'),
@@ -88,6 +88,8 @@ class StatsService(Service):
         """
         Get data points from rrd files.
         """
+        if not data_list:
+            raise ValidationError('stats_list', 'This parameter cannot be empty')
 
         defs = []
         names_pair = []
