@@ -204,6 +204,7 @@ class CertificateService(CRUDService):
 
         # convert san to list
         cert['san'] = (cert.pop('san', '') or '').split()
+        cert['serial'] = str(cert['serial'])
 
         if cert['type'] in (
                 CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE
