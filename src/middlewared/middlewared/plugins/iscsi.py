@@ -377,3 +377,97 @@ class iSCSITargetAuthCredentialService(CRUDService):
             'notifier.pwenc_encrypt', peersecret)
 
         return data
+
+
+class iSCSITargetAuthorizedInitiator(CRUDService):
+    class Config:
+        namespace = 'iscsi.initiator'
+        datastore = 'services.iscsitargetauthorizedinitiator'
+        datastore_prefix = 'iscsi_target_initiator_'
+        datastore_extend = 'iscsi.initiator.extend'
+
+    @accepts(Dict(
+        'iscsi_initiator_create',
+        Int('tag', default=0),
+        List('initiators', default=[]),
+        List('auth_network', items=[IPAddr('ip', cidr=True)], default=[]),
+        Str('comment'),
+        register=True
+    ))
+    async def do_create(self, data):
+        if data['tag'] == 0:
+            i = len((await self.query())) + 1
+            while True:
+                tag_result = await self.query([('tag', '=', i)])
+                if not tag_result:
+                    break
+                i += 1
+            data['tag'] = i
+
+        await self.compress(data)
+        data['id'] = await self.middleware.call(
+            'datastore.insert', self._config.datastore, data,
+            {'prefix': self._config.datastore_prefix})
+        await self.extend(data)
+        await self.middleware.call('service.reload', 'iscsitarget')
+
+        return data
+
+    @accepts(
+        Int('id'),
+        Patch(
+            'iscsi_initiator_create',
+            'iscsi_initiator_update',
+            ('attr', {'update': True})
+        )
+    )
+    async def do_update(self, id, data):
+        old = await self.middleware.call(
+            'datastore.query', self._config.datastore, [('id', '=', id)],
+            {'extend': self._config.datastore_extend,
+             'prefix': self._config.datastore_prefix,
+             'get': True})
+
+        new = old.copy()
+        new.update(data)
+
+        await self.compress(new)
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, id, new,
+            {'prefix': self._config.datastore_prefix})
+        await self.extend(new)
+
+        await self.middleware.call('service.reload', 'iscsitarget')
+
+        return new
+
+    @accepts(Int('id'))
+    async def do_delete(self, id):
+        return await self.middleware.call(
+            'datastore.delete', self._config.datastore, id)
+
+    @private
+    async def compress(self, data):
+        initiators = data['initiators']
+        auth_network = data['auth_network']
+
+        initiators = 'ALL' if not initiators else '\n'.join(initiators)
+        auth_network = 'ALL' if not auth_network else '\n'.join(auth_network)
+
+        data['initiators'] = initiators
+        data['auth_network'] = auth_network
+
+        return data
+
+    @private
+    async def extend(self, data):
+        initiators = data['initiators']
+        auth_network = data['auth_network']
+
+        initiators = [] if initiators == 'ALL' else initiators.split()
+        auth_network = [] if auth_network == 'ALL' else auth_network.split()
+
+        data['initiators'] = initiators
+        data['auth_network'] = auth_network
+
+        return data

@@ -29,8 +29,6 @@ import re
 import subprocess
 from collections import OrderedDict
 
-from ipaddr import AddressValueError, IPAddress, IPNetwork, NetmaskValueError
-
 import sysctl
 from django.db.models import Q
 from django.utils.safestring import mark_safe
@@ -1185,7 +1183,12 @@ class iSCSITargetPortalIPInlineFormSet(FreeBaseInlineFormSet):
         pass
 
 
-class iSCSITargetAuthorizedInitiatorForm(ModelForm):
+class iSCSITargetAuthorizedInitiatorForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'iscsi_target_initiator_'
+    middleware_attr_schema = 'iscsi_initiator'
+    middleware_plugin = 'iscsi.initiator'
+    is_singletone = False
 
     class Meta:
         fields = '__all__'
@@ -1194,49 +1197,17 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
             'iscsi_target_initiator_tag',
         )
 
-    def clean_iscsi_target_initiator_auth_network(self):
-        field = self.cleaned_data.get(
-            'iscsi_target_initiator_auth_network',
-            '').strip().upper()
-        nets = re.findall(r'\S+', field)
+    def middleware_clean(self, data):
+        initiators = data['initiators']
+        auth_network = data['auth_network']
 
-        for auth_network in nets:
-            if auth_network == 'ALL':
-                continue
-            try:
-                IPNetwork(auth_network)
-            except (NetmaskValueError, ValueError):
-                try:
-                    IPAddress(auth_network)
-                except (AddressValueError, ValueError):
-                    raise forms.ValidationError(
-                        _(
-                            "The field is a not a valid IP address or network."
-                            " The keyword \"ALL\" can be used to allow "
-                            "everything.")
-                    )
-        return '\n'.join(nets)
+        initiators = [] if initiators == 'ALL' else initiators.split()
+        auth_network = [] if auth_network == 'ALL' else auth_network.split()
 
-    def save(self):
-        o = super(iSCSITargetAuthorizedInitiatorForm, self).save(commit=False)
-        if self.instance.id is None:
-            i = models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
-            while True:
-                qs = models.iSCSITargetAuthorizedInitiator.objects.filter(
-                    iscsi_target_initiator_tag=i
-                )
-                if not qs.exists():
-                    break
-                i += 1
-            o.iscsi_target_initiator_tag = i
-        o.save()
-        started = notifier().reload("iscsitarget")
-        if started is False and models.services.objects.get(
-            srv_service='iscsitarget'
-        ).srv_enable:
-            raise ServiceFailed(
-                "iscsitarget", _("The iSCSI service failed to reload.")
-            )
+        data['initiators'] = initiators
+        data['auth_network'] = auth_network
+
+        return data
 
 
 class iSCSITargetGroupsInlineFormSet(FreeBaseInlineFormSet):
