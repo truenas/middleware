@@ -764,7 +764,7 @@ class CertificateBase(Model):
     cert_serial = models.CharField(
         blank=True,
         null=True,
-        max_length=120,
+        max_length=48,
         verbose_name=_("Serial"),
         help_text=_("Serial for next certificate"),
     )
