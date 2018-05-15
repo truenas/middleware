@@ -36,6 +36,8 @@ class DomainControllerService(SystemServiceService):
         old = await self.config()
 
         new = old.copy()
+        if new["kerberos_realm"] is not None:
+            new["kerberos_realm"] = new["kerberos_realm"]["id"]
         new.update(data)
 
         if new["kerberos_realm"] is None:
