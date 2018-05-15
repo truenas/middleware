@@ -117,7 +117,7 @@ class NetworkConfigurationService(ConfigService):
             Str('domain', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
             List('domains', items=[Str('domains')]),
             IPAddr('ipv4gateway'),
-            IPAddr('ipv6gateway'),
+            IPAddr('ipv6gateway', allow_zone_index=True),
             IPAddr('nameserver1'),
             IPAddr('nameserver2'),
             IPAddr('nameserver3'),
