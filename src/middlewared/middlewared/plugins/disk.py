@@ -236,6 +236,12 @@ class DiskService(CRUDService):
             search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
             if search:
                 return search.group('serial')
+
+        await self.middleware.run_in_thread(geom.scan)
+        g = geom.geom_by_name('DISK', name)
+        if g and g.provider.config.get('ident'):
+            return g.provider.config['ident']
+
         return None
 
     @private
