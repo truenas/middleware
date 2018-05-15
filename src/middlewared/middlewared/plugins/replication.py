@@ -1,17 +1,279 @@
-from middlewared.schema import accepts, Dict, Int, Str
-from middlewared.service import private, CallError, Service
+from middlewared.async_validators import resolve_hostname
+from middlewared.client import Client
+from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
+from middlewared.service import private, CallError, CRUDService, ValidationErrors
 from middlewared.utils import Popen
+from middlewared.validators import Range, Time
 
 import base64
 import errno
 import os
+import pickle
+import re
 import subprocess
+
+from datetime import time
 
 
 REPLICATION_KEY = '/data/ssh/replication.pub'
+REPL_RESULTFILE = '/tmp/.repl-result'
 
 
-class ReplicationService(Service):
+class ReplicationService(CRUDService):
+
+    class Config:
+        datastore = 'storage.replication'
+        datastore_prefix = 'repl_'
+        datastore_extend = 'replication.replication_extend'
+
+    @private
+    async def replication_extend(self, data):
+
+        remote_data = data.pop('remote')
+        data['remote'] = remote_data['id']
+        data['remote_dedicateduser_enabled'] = remote_data['ssh_remote_dedicateduser_enabled']
+        data['remote_port'] = remote_data['ssh_remote_port']
+        data['remote_cipher'] = remote_data['ssh_cipher'].upper()
+        data['remote_dedicateduser'] = remote_data['ssh_remote_dedicateduser']
+        data['remote_hostkey'] = remote_data['ssh_remote_hostkey']
+        data['remote_hostname'] = remote_data['ssh_remote_hostname']
+
+        if not os.path.exists(REPL_RESULTFILE):
+            data['lastresult'] = {'msg': 'Waiting'}
+        else:
+            with open(REPL_RESULTFILE, 'rb') as f:
+                file_data = f.read()
+            try:
+                results = pickle.loads(file_data)
+                data['lastresult'] = results[data['id']]
+            except Exception:
+                data['lastresult'] = {'msg': None}
+
+        progressfile = f'/tmp/.repl_progress_{data["id"]}'
+        if os.path.exists(progressfile):
+            with open(progressfile, 'r') as f:
+                pid = int(f.read())
+            title = await self.middleware.call('notifier.get_proc_title', pid)
+            if title:
+                reg = re.search(r'sending (\S+) \((\d+)%', title)
+                if reg:
+                    data['status'] = f'Sending {reg.groups()[0]}s {reg.groups()[1]}s'
+                else:
+                    data['status'] = 'Sending'
+
+        if 'status' not in data:
+            data['status'] = data['lastresult']
+
+        data['begin'] = str(data['begin'])
+        data['end'] = str(data['end'])
+        data['compression'] = data['compression'].upper()
+
+        return data
+
+    @private
+    async def validate_data(self, data, schema_name):
+        verrors = ValidationErrors()
+
+        remote_hostname = data.pop('remote_hostname')
+        await resolve_hostname(
+            self.middleware, verrors, f'{schema_name}.remote_hostname', remote_hostname
+        )
+
+        remote_dedicated_user_enabled = data.pop('remote_dedicateduser_enabled', False)
+        remote_dedicated_user = data.pop('remote_dedicateduser', None)
+        if remote_dedicated_user_enabled and not remote_dedicated_user:
+            verrors.add(
+                f'{schema_name}.remote_dedicateduser',
+                'You must select a user when remote dedicated user is enabled'
+            )
+
+        if data.get('filesystem') not in [
+            o['filesystem'] for o in (await self.middleware.call('pool.snapshot.query'))
+        ]:
+            verrors.add(
+                f'{schema_name}.filesystem',
+                'INVALID Filesystem'
+            )
+
+        if verrors:
+            raise verrors
+
+        remote_mode = data.pop('remote_mode', 'MANUAL')
+
+        remote_port = data.pop('remote_port')
+        remote_uri = f'ws{"s" if data.pop("remote_https", False) else ""}://{remote_hostname}:{remote_port}/websocket'
+
+        repl_remote_dict = {
+            'ssh_remote_hostname': remote_hostname,
+            'ssh_remote_dedicateduser_enabled': remote_dedicated_user_enabled,
+            'ssh_remote_dedicateduser': remote_dedicated_user,
+            'ssh_cipher': data.pop('remote_cipher', 'STANDARD').lower()
+        }
+
+        if remote_mode == 'SEMIAUTOMATIC':
+            token = data.pop('remote_token', None)
+            if not token:
+                verrors.add(
+                    f'{schema_name}.remote_token',
+                    'This field is required'
+                )
+            else:
+                try:
+                    with Client(remote_uri) as c:
+                        if not c.call('auth.token', token):
+                                verrors.add(
+                                    f'{schema_name}.remote_token',
+                                    'Please provide a valid token'
+                                )
+                        else:
+                            try:
+                                with open(REPLICATION_KEY, 'r') as f:
+                                    publickey = f.read()
+                                call_data = c.call('replication.pair', {
+                                    'hostname': remote_hostname,
+                                    'public-key': publickey,
+                                    'user': remote_dedicated_user,
+                                })
+                            except Exception as e:
+                                verrors.add(
+                                    f'{schema_name}.remote_hostname',
+                                    'Failed to set up replication ' + str(e)
+                                )
+                            else:
+                                repl_remote_dict['ssh_remote_port'] = call_data['ssh_port']
+                                repl_remote_dict['ssh_remote_hostkey'] = call_data['ssh_hostkey']
+                except Exception as e:
+                    verrors.add(
+                        f'{schema_name}.remote_token',
+                        f'Failed to connect to remote host {remote_uri} with following exception {e}'
+                    )
+        else:
+            remote_host_key = data.pop('remote_hostkey', None)
+            if not remote_host_key:
+                verrors.add(
+                    f'{schema_name}.remote_hostkey',
+                    'This field is required'
+                )
+            else:
+                repl_remote_dict['ssh_remote_port'] = remote_port
+                repl_remote_dict['ssh_remote_hostkey'] = remote_host_key
+
+        if verrors:
+            raise verrors
+
+        remote_pk = data.get('remote')
+        if remote_pk:
+            await self.middleware.call(
+                'datastore.update',
+                'storage.replremote',
+                remote_pk,
+                repl_remote_dict
+            )
+        else:
+            remote_pk = await self.middleware.call(
+                'datastore.insert',
+                'storage.replremote',
+                repl_remote_dict
+            )
+
+        await self.middleware.call(
+            'service.reload',
+            'ssh',
+            {'onetime': False}
+        )
+
+        data['remote'] = remote_pk
+
+        data['begin'] = time(*[int(v) for v in data.pop('begin').split(':')])
+        data['end'] = time(*[int(v) for v in data.pop('end').split(':')])
+
+        data['compression'] = data['compression'].lower()
+
+        data.pop('remote_hostkey', None)
+        data.pop('remote_token', None)
+
+        return data
+
+    @accepts(
+        Dict(
+            'replication_create',
+            Bool('enabled', default=True),
+            Bool('followdelete', default=False),
+            Bool('remote_dedicateduser_enabled', default=False),
+            Bool('remote_https'),
+            Bool('userepl', default=False),
+            Int('limit', default=0, validators=[Range(min=0)]),
+            Int('remote_port', default=22, required=True),
+            Str('begin', validators=[Time()]),
+            Str('compression', enum=['OFF', 'LZ4', 'PIGZ', 'PLZIP']),
+            Str('end', validators=[Time()]),
+            Str('filesystem', required=True),
+            Str('remote_cipher', enum=['STANDARD', 'FAST', 'DISABLED']),
+            Str('remote_dedicateduser'),
+            Str('remote_hostkey'),
+            Str('remote_hostname', required=True),
+            Str('remote_mode', enum=['SEMIAUTOMATIC', 'MANUAL'], required=True),
+            Str('remote_token'),
+            Str('zfs', required=True),
+            register=True
+        )
+    )
+    async def do_create(self, data):
+
+        data = await self.validate_data(data, 'replication_create')
+
+        pk = await self.middleware.call(
+            'datastore.insert',
+            self._config.datastore,
+            data,
+            {'prefix': self._config.datastore_prefix}
+        )
+
+        return await self._get_instance(pk)
+
+    @accepts(
+        Int('id', required=True),
+        Patch(
+            'replication_create', 'replication_update',
+            ('attr', {'update': True}),
+            ('rm', {'name': 'remote_mode'}),
+            ('rm', {'name': 'remote_https'}),
+            ('rm', {'name': 'remote_token'}),
+        )
+    )
+    async def do_update(self, id, data):
+
+        old = await self._get_instance(id)
+        new = old.copy()
+        new.update(data)
+
+        new = await self.validate_data(new, 'replication_update')
+
+        new.pop('status')
+        new.pop('lastresult')
+
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            id,
+            new,
+            {'prefix': self._config.datastore_prefix}
+        )
+
+        return await self._get_instance(id)
+
+    @accepts(
+        Int('id')
+    )
+    async def do_delete(self, id):
+
+        response = await self.middleware.call(
+            'datastore.delete',
+            self._config.datastore,
+            id
+        )
+
+        return response
 
     @accepts()
     def public_key(self):
