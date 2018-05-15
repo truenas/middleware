@@ -12,7 +12,7 @@ class SNMPService(SystemServiceService):
     @accepts(Dict(
         'snmp_update',
         Str('location'),
-        Str('contact', validators=[Or(Email(), Match(r'^[-_a-zA-Z0-9\s]+$'))]),
+        Str('contact', validators=[Or(Email(), Match(r'^[-_a-zA-Z0-9\s]*$'))]),
         Bool('traps'),
         Bool('v3', default=False),
         Str('community', validators=[Match(r'^[-_.a-zA-Z0-9\s]*$')]),
