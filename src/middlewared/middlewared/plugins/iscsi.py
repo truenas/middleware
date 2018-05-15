@@ -1,11 +1,16 @@
-from middlewared.schema import accepts, Bool, Dict, IPAddr, Int, List, Patch, Str
+from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
+                                Str)
 from middlewared.validators import Range
-from middlewared.service import CRUDService, SystemServiceService, ValidationErrors, private
+from middlewared.service import (CallError, CRUDService, SystemServiceService,
+                                 ValidationErrors, private)
+from middlewared.utils import run
+from middlewared.async_validators import check_path_resides_within_volume
 
 import bidict
 import errno
 import ipaddress
 import re
+import os
 
 AUTHMETHOD_LEGACY_MAP = bidict.bidict({
     'None': 'NONE',
@@ -377,6 +382,409 @@ class iSCSITargetAuthCredentialService(CRUDService):
             'notifier.pwenc_encrypt', peersecret)
 
         return data
+
+
+class iSCSITargetExtentService(CRUDService):
+    class Config:
+        namespace = 'iscsi.extent'
+        datastore = 'services.iscsitargetextent'
+        datastore_prefix = 'iscsi_target_extent_'
+        datastore_extend = 'iscsi.extent.extend'
+
+    @accepts(Dict(
+        'iscsi_extent_create',
+        Str('name'),
+        Str('type', enum=['DISK', 'FILE']),
+        Str('disk', default=None),
+        Str('serial', default=None),
+        Str('path', default=None),
+        Int('filesize', default=0),
+        Int('blocksize', enum=[512, 1024, 2048, 4096], default=512),
+        Bool('pblocksize'),
+        Int('avail_threshold', validators=[Range(min=1, max=99)]),
+        Str('comment'),
+        Bool('insecure_tpc', default=True),
+        Bool('xen'),
+        Str('rpm', enum=['UNKNOWN', 'SSD', '5400', '7200', '10000', '15000'],
+            default='SSD'),
+        Bool('ro'),
+        register=True
+    ))
+    async def do_create(self, data):
+        verrors = ValidationErrors()
+        await self.compress(data)
+        await self.validate(data, 'iscsi_extent_create', verrors)
+        await self.clean(data, 'iscsi_extent_create', verrors)
+
+        if verrors:
+            raise verrors
+
+        await self.save(data, 'iscsi_extent_create', verrors)
+        data['id'] = await self.middleware.call(
+            'datastore.insert', self._config.datastore, data,
+            {'prefix': self._config.datastore_prefix})
+        await self.extend(data)
+
+        return data
+
+    @accepts(
+        Int('id'),
+        Patch(
+            'iscsi_extent_create',
+            'iscsi_extent_update',
+            ('attr', {'update': True})
+        )
+    )
+    async def do_update(self, id, data):
+        verrors = ValidationErrors()
+        old = await self.middleware.call(
+            'datastore.query', self._config.datastore, [('id', '=', id)],
+            {'extend': self._config.datastore_extend,
+             'prefix': self._config.datastore_prefix,
+             'get': True})
+
+        new = old.copy()
+        new.update(data)
+
+        await self.compress(new)
+        await self.validate(
+            new, 'iscsi_extent_update', verrors)
+        await self.clean(
+            new, 'iscsi_extent_update', verrors, old=old)
+
+        if verrors:
+            raise verrors
+
+        await self.save(data, 'iscsi_extent_update', verrors)
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, id, new,
+            {'prefix': self._config.datastore_prefix})
+        await self.extend(new)
+
+        return new
+
+    @accepts(
+        Int('id'),
+        Bool('remove', default=False),
+    )
+    async def do_delete(self, id, remove):
+        data = await self._get_instance(id)
+
+        if remove:
+            await self.compress(data)
+            delete = await self.remove_extent_file(data)
+
+            if delete is not True:
+                raise CallError('Failed to remove extent file')
+
+        return await self.middleware.call(
+            'datastore.delete', self._config.datastore, id)
+
+    @private
+    async def validate(self, data, schema_name, verrors):
+        await self.extent_serial(data['serial'])
+
+    @private
+    async def compress(self, data):
+        extent_type = data['type']
+        extent_rpm = data['rpm']
+
+        if extent_type == 'DISK':
+            extent_disk = data['disk']
+
+            if extent_disk.startswith('zvol'):
+                data['type'] = 'ZVOL'
+            elif extent_disk.startswith('hast'):
+                data['type'] = 'HAST'
+            else:
+                data['type'] = 'Disk'
+        elif extent_type == 'FILE':
+            data['type'] = 'File'
+
+        if extent_rpm == 'UNKNOWN':
+            data['rpm'] = 'Unknown'
+
+        return data
+
+    @private
+    async def extend(self, data):
+        extent_type = data['type'].upper()
+        extent_rpm = data['rpm'].upper()
+
+        if extent_type != 'FILE':
+            # ZVOL and HAST are type DISK
+            extent_type = 'DISK'
+        else:
+            extent_size = data['filesize']
+
+            # Legacy Compat for having 2[KB, MB, GB, etc] in database
+            if not str(extent_size).isdigit():
+                suffixes = {
+                    'PB': 1125899906842624,
+                    'TB': 1099511627776,
+                    'GB': 1073741824,
+                    'MB': 1048576,
+                    'KB': 1024,
+                    'B': 1
+                }
+                for x in suffixes.keys():
+                    if str(extent_size).upper().endswith(x):
+                        extent_size = str(extent_size).upper().strip(x)
+                        extent_size = int(extent_size) * suffixes[x]
+
+                        data['filesize'] = extent_size
+
+        data['rpm'] = extent_rpm
+        data['type'] = extent_type
+
+        return data
+
+    @private
+    async def clean(self, data, schema_name, verrors, old=None):
+        await self.clean_name(data, schema_name, verrors, old=old)
+        await self.clean_type_and_path(data, schema_name, verrors)
+        await self.clean_size(data, schema_name, verrors)
+
+    @private
+    async def clean_name(self, data, schema_name, verrors, old=None):
+        name = data['name']
+        old = old['name'] if old is not None else None
+        serial = data['serial']
+        name_filters = [('name', '=', name)]
+
+        if '"' in name:
+            verrors.add(f'{schema_name}.name', 'Double quotes are not allowed')
+
+        if '"' in serial:
+            verrors.add(f'{schema_name}.serial',
+                        'Double quotes are not allowed')
+
+        if name != old or old is None:
+            name_result = await self.middleware.call(
+                'datastore.query', self._config.datastore,
+                name_filters,
+                {'prefix': self._config.datastore_prefix})
+
+            if name_result:
+                verrors.add(f'{schema_name}.name',
+                            'Extent name must be unique')
+
+    @private
+    async def clean_type_and_path(self, data, schema_name, verrors):
+        extent_type = data['type']
+        disk = data['disk']
+        path = data['path']
+
+        if extent_type is None:
+            return data
+
+        if extent_type == 'Disk':
+            if not disk:
+                verrors.add(f'{schema_name}.disk', 'This field is required')
+        elif extent_type == 'ZVOL':
+            if disk.startswith('zvol') and not os.path.exists(f'/dev/{disk}'):
+                verrors.add(f'{schema_name}.disk',
+                            f'ZVOL {disk} does not exist')
+        elif extent_type == 'File':
+            if not path:
+                verrors.add(f'{schema_name}.path', 'This field is required')
+                raise verrors  # They need this for anything else
+
+            if '/iocage' in path:
+                    verrors.add(
+                        f'{schema_name}.path',
+                        'You need to specify a filepath outside of a jail root'
+                    )
+
+            if (os.path.exists(path) and not
+                    os.path.isfile(path)) or path[-1] == '/':
+                verrors.add(f'{schema_name}.path',
+                            'You need to specify a filepath not a directory')
+
+            await check_path_resides_within_volume(verrors, self.middleware,
+                                                   schema_name, path)
+
+        return data
+
+    @private
+    async def clean_size(self, data, schema_name, verrors):
+        extent_type = data['type']
+        path = data['path']
+        size = data['filesize']
+        blocksize = data['blocksize']
+
+        if extent_type != 'FILE':
+            return data
+
+        if (
+            size == 0 and path and (not os.path.exists(path) or (
+                os.path.exists(path) and not
+                os.path.isfile(path)
+            ))
+        ):
+            verrors.add(
+                f'{schema_name}.path',
+                'The file must exist if the extent size is set to auto (0)')
+        elif extent_type == 'FILE' and not path:
+            verrors.add(f'{schema_name}.path', 'This field is required')
+
+        if size and size != 0 and blocksize:
+            if (float(size) / blocksize) % 1 != 0:
+                verrors.add(f'{schema_name}.filesize',
+                            'File size must be a multiple of block size')
+
+        return data
+
+    @private
+    async def extent_serial(self, serial):
+        # TODO Just ported, let's do something different later? - Brandon
+        if serial is None:
+            try:
+                nic = (await self.middleware.call('interfaces.query',
+                                                  [['name', 'rnin', 'vlan'],
+                                                   ['name', 'rnin', 'lagg'],
+                                                   ['name', 'rnin', 'epair'],
+                                                   ['name', 'rnin', 'vnet'],
+                                                   ['name', 'rnin', 'bridge']])
+                       )[0]
+                mac = nic['link_address'].replace(':', '')
+
+                ltg = await self.query()
+                if len(ltg) > 0:
+                    lid = ltg[0]['id']
+                else:
+                    lid = 0
+                return f'{mac.strip()}{lid:02}'
+            except Exception:
+                return '10000001'
+        else:
+            return serial
+
+    @accepts(List('exclude'))
+    async def disk_choices(self, exclude):
+        """
+        Exclude will exclude the path from being in the used_zvols list,
+        allowing the user to keep the same item on update
+        """
+        diskchoices = {}
+        disk_query = await self.query([('type', '=', 'Disk')])
+
+        diskids = [i['path'] for i in disk_query]
+        used_disks = [d['name'] for d in await self.middleware.call(
+            'disk.query', [('identifier', 'in', diskids)])]
+
+        zvol_query_filters = [('type', '=', 'ZVOL')]
+
+        for e in exclude:
+            if e:
+                zvol_query_filters.append(('path', '!=', e))
+
+        zvol_query = await self.query(zvol_query_filters)
+
+        used_zvols = [i['path'] for i in zvol_query]
+
+        async for pdisk in await self.middleware.call('pool.get_disks'):
+            used_disks.append(pdisk)
+
+        zfs_snaps = await self.middleware.call('zfs.snapshot.query', [],
+                                               {'order_by': ['name']})
+
+        zvols = await self.middleware.call('pool.dataset.query',
+                                           [('type', '=', 'VOLUME')])
+        zvol_list = [ds['name'] for ds in zvols]
+
+        for zvol in zvols:
+            zvol_name = zvol['name']
+            zvol_size = zvol['volsize']['value']
+            if f'zvol/{zvol_name}' not in used_zvols:
+                diskchoices[f'zvol/{zvol_name}'] = f'{zvol_name} ({zvol_size})'
+
+        for snap in zfs_snaps:
+            ds_name, snap_name = snap['properties']['name'][
+                'value'].rsplit('@', 1)
+            full_name = f'{ds_name}@{snap_name}'
+            snap_name = snap['properties']['name']['value']
+            snap_size = snap['properties']['referenced']['value']
+
+            if ds_name in zvol_list:
+                diskchoices[f'zvol/{full_name}'] = \
+                    f'{full_name} ({snap_size}) [ro]'
+
+        notifier_disks = await self.middleware.call('notifier.get_disks')
+        for name, disk in notifier_disks.items():
+            if name in used_disks:
+                continue
+            size = await self.middleware.call('notifier.humanize_size',
+                                              disk['capacity'])
+            diskchoices[name] = f'{name} ({size})'
+
+        return diskchoices
+
+    @private
+    async def save(self, data, schema_name, verrors):
+        extent_type = data['type']
+        disk = data.pop('disk', None)
+
+        if extent_type == 'File':
+            path = data['path']
+            dirs = '/'.join(path.split('/')[:-1])
+
+            if not os.path.exists(dirs):
+                try:
+                    os.makedirs(dirs)
+                except Exception as e:
+                    self.logger.error(
+                        'Unable to create dirs for extent file: {e}')
+
+            if not os.path.exists(path):
+                extent_size = data['filesize']
+
+                await run(['truncate', '-s', str(extent_size), path])
+
+            await self.middleware.call('service.reload', 'iscsitarget')
+        else:
+            data['path'] = disk
+
+            if disk.startswith('multipath'):
+                self.middleware.call('notifier.unlabel_disk', disk)
+                self.middleware.call('notifier.label_disk', f'extent_{disk}',
+                                     disk)
+            elif not disk.startswith('hast') and not disk.startswith('zvol'):
+                disk_filters = [('name', '=', disk), ('expiretime', '=', None)]
+                try:
+                    disk_object = (await self.middleware.call('disk.query',
+                                                              disk_filters))[0]
+                    disk_identifier = disk_object.get('identifier', None)
+                    data['path'] = disk_identifier
+
+                    if disk_identifier.startswith(
+                        '{devicename}'or disk_identifier.startswith('{uuid}')
+                    ):
+                        success, msg = await self.middleware.call(
+                            'notifier.label_disk', f'extent_{disk}', disk)
+                        if not success:
+                            verrors.add(
+                                f'{schema_name}.disk',
+                                f'Serial not found and glabel failed for {disk}:'
+                                f' {msg}')
+
+                            if verrors:
+                                raise verrors
+                        await self.middleware.call('disk.sync',
+                                                   disk.replace('/dev/', ''))
+                except IndexError:
+                    # It's not a disk, but a ZVOL
+                    pass
+
+    @private
+    async def remove_extent_file(self, data):
+        if data['type'] == 'File':
+            try:
+                os.unlink(data['path'])
+            except Exception as e:
+                return e
+
+        return True
 
 
 class iSCSITargetAuthorizedInitiator(CRUDService):
