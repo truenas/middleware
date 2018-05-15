@@ -16,11 +16,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='certificate',
             name='cert_serial',
-            field=models.CharField(blank=True, help_text='Serial for next certificate', max_length=120, null=True, verbose_name='Serial'),
+            field=models.CharField(blank=True, help_text='Serial for next certificate', max_length=48, null=True, verbose_name='Serial'),
         ),
         migrations.AlterField(
             model_name='certificateauthority',
             name='cert_serial',
-            field=models.CharField(blank=True, help_text='Serial for next certificate', max_length=120, null=True, verbose_name='Serial'),
+            field=models.CharField(blank=True, help_text='Serial for next certificate', max_length=48, null=True, verbose_name='Serial'),
         ),
     ]
