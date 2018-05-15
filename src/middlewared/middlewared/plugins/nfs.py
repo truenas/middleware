@@ -291,7 +291,7 @@ class SharingNFSService(CRUDService):
 
     @private
     async def compress(self, data):
-        data["network"] = " ".join(data["networks"])
+        data["network"] = " ".join(data.pop("networks"))
         data["hosts"] = " ".join(data["hosts"])
         data["security"] = [s.lower() for s in data["security"]]
         return data
