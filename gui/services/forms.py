@@ -25,7 +25,6 @@
 #####################################################################
 import logging
 import os
-import re
 
 import sysctl
 from django.db.models import Q
@@ -1021,7 +1020,12 @@ class iSCSITargetGroupsInlineFormSet(FreeBaseInlineFormSet):
         return rv
 
 
-class iSCSITargetForm(ModelForm):
+class iSCSITargetForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "iscsi_target_"
+    middleware_attr_schema = "iscsi_target_"
+    middleware_plugin = "iscsi.target"
+    is_singletone = False
 
     class Meta:
         fields = '__all__'
@@ -1032,6 +1036,7 @@ class iSCSITargetForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetForm, self).__init__(*args, **kwargs)
+        self._groups = []
         self.fields['iscsi_target_mode'].widget.attrs['onChange'] = (
             'targetMode();'
         )
@@ -1039,41 +1044,35 @@ class iSCSITargetForm(ModelForm):
             self.fields['iscsi_target_mode'].initial = 'iscsi'
             self.fields['iscsi_target_mode'].widget = forms.widgets.HiddenInput()
 
-    def clean_iscsi_target_name(self):
-        name = self.cleaned_data.get("iscsi_target_name").lower()
-        if not re.search(r'^[-a-z0-9\.:]+$', name):
-            raise forms.ValidationError(_("Use alphanumeric characters, \".\", \"-\" and \":\"."))
-        qs = models.iSCSITarget.objects.filter(iscsi_target_name=name)
-        if self.instance.id:
-            qs = qs.exclude(id=self.instance.id)
-        if qs.exists():
-            raise forms.ValidationError(
-                _('A target with that name already exists.')
-            )
-        return name
+    def cleanformset_iscsitargetgroups(self, fs, forms):
+        for form in forms:
+            if not hasattr(form, 'cleaned_data'):
+                continue
+            if form.cleaned_data.get('DELETE'):
+                continue
+            data = {
+                'authmethod': AUTHMETHOD_LEGACY_MAP.get(
+                    form.cleaned_data.get('iscsi_target_authtype')
+                ),
+            }
+            for i in ('portal', 'auth', 'initiator'):
+                group = form.cleaned_data.get(f'iscsi_target_{i}group')
+                if group == '-1':
+                    group = None
+                if group:
+                    if hasattr(group, 'id'):
+                        data[i] = group.id
+                    else:
+                        data[i] = int(group)
+                else:
+                    data[i] = None
+            self._groups.append(data)
+        return True
 
-    def clean_iscsi_target_alias(self):
-        alias = self.cleaned_data['iscsi_target_alias']
-        if re.search(r'"', alias):
-            raise forms.ValidationError(_("Double quotes are not allowed."))
-        qs = models.iSCSITarget.objects.filter(
-            iscsi_target_alias=alias
-        )
-        if self.instance.id:
-            qs = qs.exclude(id=self.instance.id)
-        if qs.exists():
-            raise forms.ValidationError(_('Alias name must be unique.'))
-        if not alias:
-            alias = None
-        elif alias.lower() == "target":
-            raise forms.ValidationError(_("target is a reserved word, please choose a different name for this alias."))
-        return alias
-
-    def done(self, *args, **kwargs):
-        super(iSCSITargetForm, self).done(*args, **kwargs)
-        started = notifier().reload("iscsitarget")
-        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
+    def middleware_clean(self, data):
+        data['mode'] = data['mode'].upper()
+        data['groups'] = self._groups
+        return data
 
 
 class iSCSITargetGroupsForm(ModelForm):
@@ -1089,25 +1088,6 @@ class iSCSITargetGroupsForm(ModelForm):
         super(iSCSITargetGroupsForm, self).__init__(*args, **kwargs)
         self.fields['iscsi_target_authgroup'].required = False
         self.fields['iscsi_target_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
-
-    def clean_iscsi_target_authgroup(self):
-        method = self.cleaned_data['iscsi_target_authtype']
-        group = self.cleaned_data.get('iscsi_target_authgroup')
-        if group in ('', None):
-            return None
-        if method in ('CHAP', 'CHAP Mutual'):
-            if group != '' and int(group) == -1:
-                raise forms.ValidationError(_("This field is required."))
-        elif group != '' and int(group) == -1:
-            return None
-        if method == 'CHAP Mutual' and group:
-            auths = models.iSCSITargetAuthCredential.objects.filter(iscsi_target_auth_tag=group)
-            for auth in auths:
-                if not auth.iscsi_target_auth_peeruser:
-                    raise forms.ValidationError(_(
-                        'This authentication group does not support CHAP MUTUAL'
-                    ))
-        return int(group)
 
 
 class TargetExtentDelete(Form):
