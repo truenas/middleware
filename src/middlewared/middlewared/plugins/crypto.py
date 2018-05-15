@@ -204,6 +204,7 @@ class CertificateService(CRUDService):
 
         # convert san to list
         cert['san'] = (cert.pop('san', '') or '').split()
+        cert['serial'] = str(cert['serial'])
 
         if cert['type'] in (
                 CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE
@@ -758,7 +759,7 @@ class CertificateAuthorityService(CRUDService):
         ])
 
         if not ca_signed_certs:
-            return (await self._get_instance(ca_id))['serial'] + 1
+            return int((await self._get_instance(ca_id))['serial']) + 1
         else:
             return max(ca_signed_certs) + 1
 
