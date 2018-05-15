@@ -39,14 +39,16 @@ class IpAddress:
 class Time:
     def __call__(self, value):
         try:
-            times = value.split(':')
-            if len(times) < 2:
-                raise TypeError()
-            time(*[int(v) for v in times])
-        except TypeError:
+            hours, minutes = value.split(':')
+        except ValueError:
             raise ShouldBe('Time should be in 24 hour format like "18:00"')
-        except ValueError as v:
-            raise ShouldBe(str(v))
+        else:
+            try:
+                time(int(hours), int(minutes))
+            except TypeError:
+                raise ShouldBe('Time should be in 24 hour format like "18:00"')
+            except ValueError as v:
+                raise ShouldBe(str(v))
 
 
 class Match:

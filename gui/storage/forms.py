@@ -2436,21 +2436,23 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
         return port
 
     def clean_repl_begin(self):
-        return str(self.cleaned_data.get('repl_begin'))
+        return self.cleaned_data.get('repl_begin').strftime('%H:%M')
 
     def clean_repl_end(self):
-        return str(self.cleaned_data.get('repl_end'))
+        return self.cleaned_data.get('repl_end').strftime('%H:%M')
 
     def middleware_clean(self, data):
 
         data['compression'] = data['compression'].upper()
         data['remote_cipher'] = data['remote_cipher'].upper()
+        remote_http_port = int(data.pop('remote_http_port', 80))
+        remote_port = int(data.pop('remote_port', 22))
 
         mode = data.get('remote_mode', 'MANUAL')
         if mode == 'SEMIAUTOMATIC':
-            data['remote_port'] = int(data.pop('remote_http_port'))
+            data['remote_port'] = remote_http_port
         else:
-            data['remote_port'] = int(data.pop('remote_port'))
+            data['remote_port'] = remote_port
 
         return data
 

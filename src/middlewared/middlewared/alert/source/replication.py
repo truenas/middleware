@@ -17,7 +17,7 @@ class ReplicationAlertSource(AlertSource):
                 {
                     "replication": "%s -> %s:%s" % (
                         replication["filesystem"],
-                        replication["remote"]["ssh_remote_hostname"],
+                        replication["remote_hostname"],
                         replication["zfs"],
                     ),
                     "message": message,
