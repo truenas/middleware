@@ -691,4 +691,8 @@ async def _event_system_ready(middleware, event_type, args):
 
 
 def setup(middleware):
+    global SYSTEM_READY
+    if os.path.exists("/tmp/.bootready"):
+        SYSTEM_READY = True
+
     middleware.event_subscribe('system', _event_system_ready)
