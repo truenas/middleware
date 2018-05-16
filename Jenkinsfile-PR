@@ -14,7 +14,7 @@ pipeline {
       steps {
         checkout scm
         echo '*** Checking out build repo ***'
-        sh '(mount | grep 'on /freenas-pr' | awk \'{print $3}\' | sort -r | xargs umount -f ) || true'
+        sh '(mount | grep "on /freenas-pr" | awk \'{print $3}\' | sort -r | xargs umount -f ) || true'
         sh 'rm -rf /freenas-pr'
         sh 'chflags -R noschg /freenas-pr || true'
         sh 'rm -rf /freenas-pr'
