@@ -10,7 +10,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, DELETE_ALL, SSH_TEST
+from functions import PUT, POST, GET, DELETE, SSH_TEST
 from auto_config import ip
 from config import *
 
@@ -271,7 +271,7 @@ def test_26_Removing_SMB_share_on_SMB_PATH():
                "cifs_name": SMB_NAME,
                "cifs_guestok": True,
                "cifs_vfsobjects": "streams_xattr"}
-    results = DELETE_ALL("/sharing/cifs/", payload)
+    results = DELETE("/sharing/cifs/", payload)
     assert results.status_code == 204, results.text
 
 
@@ -310,5 +310,5 @@ def test_30_Verify_SMB_service_has_shut_down():
 
 # Check destroying a SMB dataset
 def test_31_Destroying_SMB_dataset():
-    results = DELETE("/storage/volume/1/datasets/%s/" % DATASET)
+    results = DELETE("/storage/volume/1/datasets/%s/" % DATASET, None)
     assert results.status_code == 204, results.text

@@ -71,17 +71,17 @@ def PUT_TIMEOUT(testpath, payload, timeOut):
     return putit
 
 
-def DELETE(testpath):
-    deleteit = requests.delete(freenas_url + testpath, headers=header,
-                               auth=authentification)
+def DELETE(testpath, payload):
+    if payload is None:
+        pass
+        deleteit = requests.delete(freenas_url + testpath, headers=header,
+                                   auth=authentification)
+        return deleteit
+    else:
+        deleteit = requests.delete(freenas_url + testpath, headers=header,
+                                   auth=authentification,
+                                   data=json.dumps(payload))
     return deleteit
-
-
-def DELETE_ALL(testpath, payload):
-    deleteitall = requests.delete(freenas_url + testpath, headers=header,
-                                  auth=authentification,
-                                  data=json.dumps(payload))
-    return deleteitall
 
 
 def SSH_TEST(command, username, passwrd, host):

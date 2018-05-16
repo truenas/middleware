@@ -26,5 +26,5 @@ def test_02_Cloning_a_new_boot_environment_newbe2():
 
 # Delete tests
 def test_03_Removing_a_boot_environment_newbe2():
-    results = DELETE("/system/bootenv/newbe2/")
+    results = DELETE("/system/bootenv/newbe2/", None)
     assert results.status_code == 204, results.text
