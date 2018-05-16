@@ -172,7 +172,7 @@ def format_alerts(alerts, gone_alerts, new_alerts):
 
 
 def format_alert(alert):
-    return alert.formatted + (" (on node {alert.node)" if alert.node != "A" else "")
+    return alert.formatted + (f" (on node {alert.node})" if alert.node != "A" else "")
 
 
 def ellipsis(s, l):
