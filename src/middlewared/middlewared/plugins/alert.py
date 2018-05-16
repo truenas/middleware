@@ -153,6 +153,9 @@ class AlertService(Service):
     @periodic(60)
     @job(lock="process_alerts")
     async def process_alerts(self, job):
+        if not await self.middleware.call("system.ready"):
+            return
+
         if not await self.middleware.call("system.is_freenas"):
             if await self.middleware.call("notifier.failover_node") == "B":
                 return
