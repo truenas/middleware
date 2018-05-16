@@ -9,7 +9,7 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, SSH_TEST, DELETE_ALL, DELETE
+from functions import PUT, POST, GET, SSH_TEST, DELETE
 from auto_config import ip
 from config import *
 
@@ -206,11 +206,11 @@ def test_23_Verify_AFP_service_can_be_disabled():
 
 def test_24_Verify_delete_afp_name_and_afp_path():
     payload = {"afp_name": AFP_NAME, "afp_path": AFP_PATH}
-    results = DELETE_ALL("/sharing/afp/", payload)
+    results = DELETE("/sharing/afp/", payload)
     assert results.status_code == 204, results.text
 
 
 # Test delete AFP dataset
 def test_25_Verify_AFP_dataset_can_be_destroyed():
-    results = DELETE("/storage/volume/1/datasets/%s/" % DATASET)
+    results = DELETE("/storage/volume/1/datasets/%s/" % DATASET, None)
     assert results.status_code == 204, results.text

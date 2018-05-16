@@ -56,5 +56,5 @@ def test_08_Add_ssh_ky_to_root():
 
 def test_09_test_ssh_key():
     cmd = 'ls -la'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, None, ip)
     assert results['result'] is True, results['output']

@@ -29,10 +29,10 @@ def test_01_Changing_permissions_on_share():
 
 # Remove Other NTP Servers
 def test_02_Removing_non_AD_NTP_servers_1sur2():
-    results = DELETE("/system/ntpserver/2/")
+    results = DELETE("/system/ntpserver/2/", None)
     assert results.status_code == 204, results.text
 
 
 def test_03_Removing_non_AD_NTP_servers_2sur2():
-    results = DELETE("/system/ntpserver/3/")
+    results = DELETE("/system/ntpserver/3/", None)
     assert results.status_code == 204, results.text
