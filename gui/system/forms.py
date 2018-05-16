@@ -287,7 +287,8 @@ class BootEnvPoolReplaceForm(Form):
         with client as c:
             try:
                 c.call('boot.replace', self.label, devname)
-            except ClientException:
+            except ClientException as e:
+                self._errors['__all__'] = self.error_class([str(e)])
                 return False
         return True
 
