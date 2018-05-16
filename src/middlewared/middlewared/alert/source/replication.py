@@ -7,9 +7,8 @@ class ReplicationAlertSource(AlertSource):
 
     async def check(self):
         alerts = []
-        for replication in await self.middleware.call("datastore.query", "storage.replication",
-                                                      [["repl_enabled", "=", True]]):
-            message = replication["repl_lastresult"].get("msg")
+        for replication in await self.middleware.call("replication.query", [["enabled", "=", True]]):
+            message = replication["lastresult"].get("msg")
             if message in ("Succeeded", "Up to date", "Waiting", "Running", "", None):
                 continue
 
@@ -17,9 +16,9 @@ class ReplicationAlertSource(AlertSource):
                 "Replication %(replication)s failed: %(message)s",
                 {
                     "replication": "%s -> %s:%s" % (
-                        replication["repl_filesystem"],
-                        replication["repl_remote"]["ssh_remote_hostname"],
-                        replication["repl_zfs"],
+                        replication["filesystem"],
+                        replication["remote_hostname"],
+                        replication["zfs"],
                     ),
                     "message": message,
                 },
