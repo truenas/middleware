@@ -540,7 +540,7 @@ class InterfacesService(Service):
                     'netmask': data['int_v6netmaskbit'],
                 }))
         else:
-            if data[ipv4_field]:
+            if data[ipv4_field] and not data['int_dhcp']:
                 addrs_database.add(self.alias_to_addr({
                     'address': data[ipv4_field],
                     'netmask': data['int_v4netmaskbit'],
@@ -594,9 +594,6 @@ class InterfacesService(Service):
         else:
             iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.IFDISABLED}
             iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
-
-        if data['int_dhcp']:
-            addrs_database = set()
 
         # Remove addresses configured and not in database
         for addr in (addrs_configured - addrs_database):
