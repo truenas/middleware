@@ -1,0 +1,67 @@
+pipeline {
+  agent {
+    label 'FreeNAS-PR'
+  }
+
+  environment {
+    GH_ORG = 'freenas'
+    GH_REPO = 'freenas'
+    GH_BUILD_BRANCH = 'master'
+  }
+  stages {
+
+    stage('Init') {
+      steps {
+        checkout scm
+        echo '*** Checking out build repo ***'
+        sh '(mount | grep 'on /freenas-pr' | awk \'{print $3}\' | sort -r | xargs umount -f ) || true'
+        sh 'rm -rf /freenas-pr'
+        sh 'chflags -R noschg /freenas-pr || true'
+        sh 'rm -rf /freenas-pr'
+        sh 'git clone --depth=1 -b ${GH_BUILD_BRANCH} https://github.com/freenas/build.git /freenas-pr'
+      }
+    }
+
+    stage('Checkout') {
+      steps {
+        echo '*** Performing make checkout ***'
+        sh 'cd /freenas-pr && make checkout'
+        sh 'rm -rf /freenas-pr/_BE/freenas/freenas'
+        sh 'mv ${WORKSPACE} /freenas-pr/_BE/freenas/freenas'
+      }
+    }
+
+    stage('release') {
+      environment {
+         POUDRIERE_JOBS=36
+         BUILDWORLD_JOBS=36
+         LINT=
+      }
+      post {
+        success {
+          archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
+        }
+      }
+      steps {
+        echo '*** Performing make release ***'
+        sh 'sed -i "" "s|USE_TMPFS=yes|USE_TMPFS=all|g" /freenas-pr/build/config/templates/poudriere.conf'
+        sh 'cd /freenas-pr && make release TRAIN=freenas-pr'
+        echo '*** Staging artifacts ***'
+        sh 'mkdir -p ${WORKSPACE}/artifacts'
+        sh 'mv /freenas-pr/freenas/_BE/release/* ${WORKSPACE}/artifacts/'
+      }
+    }
+  }
+  post {
+    always {
+      sh 'rm -rf /usr/obj/freenas-pr'
+      sh '(mount | grep 'on /freenas-pr' | awk \'{print $3}\' | sort -r | xargs umount -f ) || true'
+      sh 'rm -rf /freenas-pr'
+      sh 'chflags -R noschg /freenas-pr || true'
+      sh 'rm -rf /freenas-pr'
+      script {
+        cleanWs notFailBuild: true
+      }
+    }
+  }
+}
