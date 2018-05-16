@@ -465,6 +465,7 @@ class AlertServiceService(CRUDService):
 
         test_alert = Alert(
             title="Test alert",
+            node="A",
             datetime=datetime.utcnow(),
             level=AlertLevel.INFO,
         )
