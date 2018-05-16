@@ -595,6 +595,9 @@ class InterfacesService(Service):
             iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.IFDISABLED}
             iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
 
+        if data['int_dhcp']:
+            addrs_database = set()
+
         # Remove addresses configured and not in database
         for addr in (addrs_configured - addrs_database):
             if has_ipv6 and str(addr.address).startswith('fe80::'):
