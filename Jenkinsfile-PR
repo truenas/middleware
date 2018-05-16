@@ -33,9 +33,9 @@ pipeline {
 
     stage('release') {
       environment {
-         POUDRIERE_JOBS=36
-         BUILDWORLD_JOBS=36
-         LINT=
+         POUDRIERE_JOBS = '36' 
+         BUILDWORLD_JOBS = '36'
+         LINT = ''
       }
       post {
         success {
