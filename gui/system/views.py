@@ -495,8 +495,7 @@ def bootenv_pool_attach(request):
     label = request.GET.get('label')
     if request.method == 'POST':
         form = forms.BootEnvPoolAttachForm(request.POST, label=label)
-        if form.is_valid():
-            form.done()
+        if form.is_valid() and form.done():
             return JsonResp(
                 request,
                 message=_('Disk successfully attached.'),
