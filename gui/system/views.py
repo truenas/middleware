@@ -552,8 +552,7 @@ def bootenv_pool_detach(request, label):
 def bootenv_pool_replace(request, label):
     if request.method == 'POST':
         form = forms.BootEnvPoolReplaceForm(request.POST, label=label)
-        if form.is_valid():
-            form.done()
+        if form.is_valid() and form.done():
             return JsonResp(
                 request,
                 message=_('Disk is being replaced.'),
