@@ -368,8 +368,9 @@ class BaseFreeAdmin(object):
                         )
                 try:
                     mf.save()
-                    for name, fsinfo in list(formsets.items()):
-                        fsinfo['instance'].save()
+                    if not isinstance(mf, MiddlewareModelForm):
+                        for name, fsinfo in list(formsets.items()):
+                            fsinfo['instance'].save()
                     events = []
                     if hasattr(mf, "done") and callable(mf.done):
                         mf.done(request=request, events=events)

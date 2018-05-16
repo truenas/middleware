@@ -174,12 +174,6 @@ adctl_stop()
 		adctl_cmd ${service} ix-sssd start
 	fi
 
-	adctl_cmd ${service} ix-kerberos quietstop
-	adctl_cmd ${service} ix-nsswitch quietstop
-	adctl_cmd ${service} ix-pam quietstop
-	adctl_cmd ${service} ix-activedirectory forcestop
-	adctl_cmd "${service} ix-cache quietstop &"
-
 	if [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "0" ]
 	then
 		adctl_cmd ${service} samba_server forcestop
@@ -214,7 +208,11 @@ adctl_stop()
 	rm -f "${status_file}"
 
 	adctl_cmd ${service} ix-hostname quietstart
-
+	adctl_cmd ${service} ix-kerberos restart
+	adctl_cmd ${service} ix-nsswitch quietstop
+	adctl_cmd ${service} ix-pam quietstop
+	adctl_cmd "${service} ix-cache quietstop &"
+	
 	AD_remove_config
 	return 0
 }

@@ -207,32 +207,41 @@ class DiskService(CRUDService):
     async def __get_smartctl_args(self, devname):
         camcontrol = await camcontrol_list()
         if devname not in camcontrol:
-            raise CallError(f"Camcontrol did not report device {devname}")
+            return
 
         args = await get_smartctl_args(devname, camcontrol[devname])
         if args is None:
-            raise CallError(f"Unable to get smartctl args for device {devname}")
+            return
 
         return args
 
     @private
     async def toggle_smart_off(self, devname):
         args = await self.__get_smartctl_args(devname)
-        await run('/usr/local/sbin/smartctl', '--smart=off', *args, check=False)
+        if args:
+            await run('/usr/local/sbin/smartctl', '--smart=off', *args, check=False)
 
     @private
     async def toggle_smart_on(self, devname):
         args = await self.__get_smartctl_args(devname)
-        await run('/usr/local/sbin/smartctl', '--smart=on', *args, check=False)
+        if args:
+            await run('/usr/local/sbin/smartctl', '--smart=on', *args, check=False)
 
     @private
     async def serial_from_device(self, name):
         args = await self.__get_smartctl_args(name)
-        p1 = await Popen(['smartctl', '-i'] + args, stdout=subprocess.PIPE)
-        output = (await p1.communicate())[0].decode()
-        search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
-        if search:
-            return search.group('serial')
+        if args:
+            p1 = await Popen(['smartctl', '-i'] + args, stdout=subprocess.PIPE)
+            output = (await p1.communicate())[0].decode()
+            search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
+            if search:
+                return search.group('serial')
+
+        await self.middleware.run_in_thread(geom.scan)
+        g = geom.geom_by_name('DISK', name)
+        if g and g.provider.config.get('ident'):
+            return g.provider.config['ident']
+
         return None
 
     @private
@@ -858,6 +867,8 @@ class DiskService(CRUDService):
             devname = f'{p.name}.eli'
             if devname in swapinfo_devs:
                 await run('swapoff', f'/dev/{devname}')
+            if os.path.exists(f'/dev/{devname}'):
+                await run('geli', 'detach', devname)
 
     @private
     async def wipe_quick(self, dev, size=None):
