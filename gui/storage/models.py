@@ -204,6 +204,7 @@ class Volume(Model):
             'nfs': [],
             'iscsitarget': [],
             'jails': [],
+            'jails_ng': [],
             'collectd': [],
             'vm': [],
         }
@@ -242,6 +243,10 @@ class Volume(Model):
         if vms_attached:
             for vm_attached in vms_attached:
                 attachments['vm'].append(vm_attached.get('device_id'))
+
+        with client as c:
+            attachments['jails_ng'] = [
+                ij['host_hostuuid'] for ij in c.call('jail.query')]
 
         return attachments
 
@@ -286,6 +291,11 @@ class Volume(Model):
         if attachments['vm']:
             for device_id in attachments['vm']:
                 Device.objects.filter(id=device_id).delete()
+
+        if attachments['jails_ng']:
+            with client as c:
+                for ioc_j in attachments['jails_ng']:
+                    c.call('jail.stop', ioc_j)
 
         return (reload_cifs, reload_afp, reload_nfs, reload_iscsi,
                 reload_jails, reload_collectd)
