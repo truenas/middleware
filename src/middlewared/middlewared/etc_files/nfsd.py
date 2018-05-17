@@ -41,10 +41,16 @@ def build_share(config, share, networks_pool):
         if share["quiet"]:
             result.append("-quiet")
 
-        if share["mapall_user"] and share["mapall_group"]:
-            result.append(f'-mapall="{share["mapall_user"]}":"{share["mapall_group"]}"')
-        elif share["maproot_user"] and share["maproot_group"]:
-            result.append(f'-maproot="{share["maproot_user"]}":"{share["maproot_group"]}"')
+        if share["mapall_user"]:
+            s = f'-mapall="{share["mapall_user"]}"'
+            if share["mapall_group"]:
+                s += f':"{share["mapall_group"]}"'
+            result.append(s)
+        elif share["maproot_user"]:
+            s = f'-maproot="{share["maproot_user"]}"'
+            if share["maproot_group"]:
+                s += f':"{share["maproot_group"]}"'
+            result.append(s)
 
         if config["v4"] and share["security"]:
             result.append("-sec=" + ":".join([s.lower() for s in share["security"]]))
@@ -117,7 +123,7 @@ async def render(service, middleware):
             with open("/etc/nfsd.virtualhost", "w") as f:
                 f.write(f'{gc["gc_hostname_virtual"]}.{gc["gc_domain"]}')
 
-            await run("service nfsd restart", check=False)
-            await run("service gssd restart", check=False)
+            await run("service", "nfsd", "restart", check=False)
+            await run("service", "gssd", "restart", check=False)
 
-    await run("service mountd quietreload", check=False)
+    await run("service", "mountd", "quietreload", check=False)

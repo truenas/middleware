@@ -207,16 +207,15 @@ class SharingNFSService(CRUDService):
                 pass
             elif not data[f"{k}_user"] and data[f"{k}_group"]:
                 verrors.add(f"{schema_name}.{k}_user", "This field is required when map group is specified")
-            elif data[f"{k}_user"] and not data[f"{k}_group"]:
-                verrors.add(f"{schema_name}.{k}_group", "This field is required when map user is specified")
             else:
                 user = await self.middleware.call("user.query", [("username", "=", data[f"{k}_user"])])
                 if not user:
                     verrors.add(f"{schema_name}.{k}_user", "User not found")
 
-                group = await self.middleware.call("group.query", [("group", "=", data[f"{k}_group"])])
-                if not group:
-                    verrors.add(f"{schema_name}.{k}_group", "Group not found")
+                if data[f"{k}_group"]:
+                    group = await self.middleware.call("group.query", [("group", "=", data[f"{k}_group"])])
+                    if not group:
+                        verrors.add(f"{schema_name}.{k}_group", "Group not found")
 
         if data["maproot_user"] and data["mapall_user"]:
             verrors.add(f"{schema_name}.mapall_user", "maproot_user disqualifies mapall_user")
