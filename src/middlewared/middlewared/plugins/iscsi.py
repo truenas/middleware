@@ -1100,9 +1100,9 @@ class iSCSITargetToExtentService(CRUDService):
 
     @accepts(Dict(
         'iscsi_targetextent_create',
-        Int('target'),
+        Int('target', required=True),
         Int('lunid', default=0),
-        Int('extent'),
+        Int('extent', required=True),
         register=True
     ))
     async def do_create(self, data):
@@ -1150,17 +1150,7 @@ class iSCSITargetToExtentService(CRUDService):
         return await self.middleware.call(
             'datastore.delete', self._config.datastore, id)
 
-    @private
-    async def compress(self, data):
-        data['target'] = data['target']['id']
-        data['extent'] = data['extent']['id']
-
-        return data
-
     async def extend(self, data):
-        print('+'*50)
-        print(data)
-        print('+'*50)
         data['target'] = data['target']['id']
         data['extent'] = data['extent']['id']
 
@@ -1173,9 +1163,6 @@ class iSCSITargetToExtentService(CRUDService):
 
         lunid = data['lunid']
         old_lunid = old.get('lunid')
-        print('*'*50)
-        print(old_lunid)
-        print('*'*50)
         target = data['target']
         old_target = old.get('target')
         extent = data['extent']
@@ -1188,18 +1175,18 @@ class iSCSITargetToExtentService(CRUDService):
                         f' {lun_map_size - 1}')
 
         if lunid and target:
-            filters = [('id', '=', lunid), ('target', '=', target)]
-            result = self.query(filters)
+            filters = [('lunid', '=', lunid), ('target', '=', target)]
+            result = await self.query(filters)
 
             if old_lunid != lunid and result:
-                    verrors.add(f'{schema_name}.lunid',
-                                'LUN ID is already being used for this target.'
-                                )
+                verrors.add(f'{schema_name}.lunid',
+                            'LUN ID is already being used for this target.'
+                            )
 
         if target and extent:
             filters = [('target', '=', target), ('extent', '=', extent)]
-            result = self.query(filters)
+            result = await self.query(filters)
 
             if old_target != target and result:
-                    verrors.add(f'{schema_name}.target',
-                                'Extent is already in this target.')
+                verrors.add(f'{schema_name}.target',
+                            'Extent is already in this target.')

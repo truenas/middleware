@@ -26,7 +26,6 @@
 import logging
 import os
 
-import sysctl
 from django.db.models import Q
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
@@ -42,7 +41,6 @@ from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.services import models
-from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import fc_enabled
 from middlewared.plugins.iscsi import AUTHMETHOD_LEGACY_MAP
@@ -700,7 +698,7 @@ class iSCSITargetAuthCredentialForm(MiddlewareModelForm, ModelForm):
 
 class iSCSITargetToExtentForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = "iscsi_"
-    middleware_attr_schema = "services.iscsi_targetextent"
+    middleware_attr_schema = "iscsi_targetextent"
     middleware_plugin = "iscsi.targetextent"
     is_singletone = False
 
