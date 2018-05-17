@@ -11,6 +11,7 @@ import errno
 import ipaddress
 import re
 import os
+import sysctl
 
 AUTHMETHOD_LEGACY_MAP = bidict.bidict({
     'None': 'NONE',
@@ -1088,3 +1089,104 @@ class iSCSITargetService(CRUDService):
         for group in data['groups']:
             group['authmethod'] = AUTHMETHOD_LEGACY_MAP.inv.get(group.pop('authmethod'), 'NONE')
         return data
+
+
+class iSCSITargetToExtentService(CRUDService):
+    class Config:
+        namespace = 'iscsi.targetextent'
+        datastore = 'services.iscsitargettoextent'
+        datastore_prefix = 'iscsi_'
+        datastore_extend = 'iscsi.targetextent.extend'
+
+    @accepts(Dict(
+        'iscsi_targetextent_create',
+        Int('target', required=True),
+        Int('lunid', default=0),
+        Int('extent', required=True),
+        register=True
+    ))
+    async def do_create(self, data):
+        verrors = ValidationErrors()
+
+        await self.validate(data, 'iscsi_targetextent_create', verrors)
+
+        data['id'] = await self.middleware.call(
+            'datastore.insert', self._config.datastore, data,
+            {'prefix': self._config.datastore_prefix})
+        await self.middleware.call('service.reload', 'iscsitarget')
+
+        return data
+
+    @accepts(
+        Int('id'),
+        Patch(
+            'iscsi_targetextent_create',
+            'iscsi_targetextent_update',
+            ('attr', {'update': True})
+        )
+    )
+    async def do_update(self, id, data):
+        verrors = ValidationErrors()
+        old = await self.middleware.call(
+            'datastore.query', self._config.datastore, [('id', '=', id)],
+            {'prefix': self._config.datastore_prefix,
+             'get': True})
+
+        new = old.copy()
+        new.update(data)
+
+        await self.validate(new, 'iscsi_targetextent_update', verrors, old)
+
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, id, new,
+            {'prefix': self._config.datastore_prefix})
+
+        await self.middleware.call('service.reload', 'iscsitarget')
+
+        return new
+
+    @accepts(Int('id'))
+    async def do_delete(self, id):
+        return await self.middleware.call(
+            'datastore.delete', self._config.datastore, id)
+
+    async def extend(self, data):
+        data['target'] = data['target']['id']
+        data['extent'] = data['extent']['id']
+
+        return data
+
+    @private
+    async def validate(self, data, schema_name, verrors, old=None):
+        if old is None:
+            old = {}
+
+        lunid = data['lunid']
+        old_lunid = old.get('lunid')
+        target = data['target']
+        old_target = old.get('target')
+        extent = data['extent']
+
+        lun_map_size = sysctl.filter('kern.cam.ctl.lun_map_size')[0].value
+
+        if lunid < 0 or lunid > lun_map_size - 1:
+            verrors.add(f'{schema_name}.lunid',
+                        'LUN ID must be a positive integer and lower than'
+                        f' {lun_map_size - 1}')
+
+        if lunid and target:
+            filters = [('lunid', '=', lunid), ('target', '=', target)]
+            result = await self.query(filters)
+
+            if old_lunid != lunid and result:
+                verrors.add(f'{schema_name}.lunid',
+                            'LUN ID is already being used for this target.'
+                            )
+
+        if target and extent:
+            filters = [('target', '=', target), ('extent', '=', extent)]
+            result = await self.query(filters)
+
+            if old_target != target and result:
+                verrors.add(f'{schema_name}.target',
+                            'Extent is already in this target.')
