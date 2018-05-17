@@ -179,6 +179,28 @@ class IPAddr(Str):
     def __init__(self, *args, **kwargs):
         self.cidr = kwargs.pop('cidr', False)
         self.cidr_strict = kwargs.pop('cidr_strict', False)
+
+        self.v4 = kwargs.pop('v4', True)
+        self.v6 = kwargs.pop('v6', True)
+
+        if self.v4 and self.v6:
+            if self.cidr:
+                self.factory = ipaddress.ip_network
+            else:
+                self.factory = ipaddress.ip_address
+        elif self.v4:
+            if self.cidr:
+                self.factory = ipaddress.IPv4Network
+            else:
+                self.factory = ipaddress.IPv4Address
+        elif self.v6:
+            if self.cidr:
+                self.factory = ipaddress.IPv6Network
+            else:
+                self.factory = ipaddress.IPv6Address
+        else:
+            raise ValueError("Either IPv4 or IPv6 should be allowed")
+
         super(IPAddr, self).__init__(*args, **kwargs)
 
     def validate(self, value):
@@ -187,9 +209,9 @@ class IPAddr(Str):
         if value:
             try:
                 if self.cidr:
-                    ipaddress.ip_network(value, strict=self.cidr_strict)
+                    self.factory(value, strict=self.cidr_strict)
                 else:
-                    ipaddress.ip_address(value)
+                    self.factory(value)
             except ValueError as e:
                 verrors.add(self.name, str(e), errno.EINVAL)
 

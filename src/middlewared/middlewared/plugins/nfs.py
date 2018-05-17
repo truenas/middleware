@@ -79,7 +79,7 @@ class SharingNFSService(CRUDService):
         "sharingnfs_create",
         List("paths", items=[Dir("path")]),
         Str("comment"),
-        List("networks", items=[IPAddr("network", cidr=True)]),
+        List("networks", items=[IPAddr("network", cidr=True, v6=False)]),
         List("hosts", items=[Str("host")]),
         Bool("alldirs"),
         Bool("ro"),
@@ -189,10 +189,10 @@ class SharingNFSService(CRUDService):
             verrors.add(f"{schema_name}.networks", "At least one network is required")
 
         for i, network1 in enumerate(data["networks"]):
-            network1 = ipaddress.ip_network(network1, strict=False)
+            network1 = ipaddress.IPv4Network(network1, strict=False)
             for j, network2 in enumerate(data["networks"]):
                 if j > i:
-                    network2 = ipaddress.ip_network(network2, strict=False)
+                    network2 = ipaddress.IPv4Network(network2, strict=False)
                     if network1.overlaps(network2):
                         verrors.add(f"{schema_name}.network.{j}", "Networks {network1} and {network2} overlap")
 
@@ -270,7 +270,7 @@ class SharingNFSService(CRUDService):
                         continue
 
                     try:
-                        network = ipaddress.ip_network(f"{host}/32")
+                        network = ipaddress.IPv4Network(f"{host}/32")
                     except Exception:
                         self.logger.warning("Got invalid host %r", host)
                         continue
@@ -279,7 +279,7 @@ class SharingNFSService(CRUDService):
 
                 for network in share["networks"]:
                     try:
-                        network = ipaddress.ip_network(network, strict=False)
+                        network = ipaddress.IPv4Network(network, strict=False)
                     except Exception:
                         self.logger.warning("Got invalid network %r", network)
                         continue
@@ -296,7 +296,7 @@ class SharingNFSService(CRUDService):
                 verrors.add(f"{schema_name}.hosts.{i}", "Unable to resolve host")
                 continue
 
-            network = ipaddress.ip_network(f"{host}/32")
+            network = ipaddress.IPv4Network(f"{host}/32")
             used_networks[network] += 1
 
             if used_networks[network] > 1:
@@ -304,7 +304,7 @@ class SharingNFSService(CRUDService):
                             "You can't share same filesystem with same host more than once")
 
         for i, network in enumerate(data["networks"]):
-            network = ipaddress.ip_network(network, strict=False)
+            network = ipaddress.IPv4Network(network, strict=False)
             used_networks[network] += 1
 
             count = 2 ** (32 - network.prefixlen)

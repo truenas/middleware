@@ -79,7 +79,7 @@ def build_share_targets(share, networks_pool):
     else:
         for network in share["networks"]:
             try:
-                network = ipaddress.ip_network(network, strict=False)
+                network = ipaddress.IPv4Network(network, strict=False)
             except Exception as e:
                 logger.warning(f"Invalid network: {network} ({e})")
             else:
@@ -97,7 +97,7 @@ def build_share_targets(share, networks_pool):
                 continue
 
             try:
-                network = ipaddress.ip_network(f"{host}/32")
+                network = ipaddress.IPv4Network(f"{host}/32")
             except Exception as e:
                 logger.warning(f"Invalid IP address: {host} ({e})")
             else:
