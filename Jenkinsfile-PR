@@ -27,14 +27,15 @@ pipeline {
         echo '*** Performing make checkout ***'
         sh 'cd /freenas-pr && make checkout'
         sh 'rm -rf /freenas-pr/freenas/_BE/freenas'
-        sh 'mv ${WORKSPACE} /freenas-pr/freenas/_BE/freenas'
+        sh 'mkdir /freenas-pr/freenas/_BE/freenas'
+        sh 'tar cf -C ${WORKSPACE} . | tar xpf - -C /freenas-pr/freenas/_BE/freenas'
       }
     }
 
     stage('release') {
       environment {
-         POUDRIERE_JOBS = '36' 
-         BUILDWORLD_JOBS = '36'
+         POUDRIERE_JOBS = '32' 
+         BUILDWORLD_JOBS = '32'
          LINT = ''
       }
       post {
@@ -44,7 +45,6 @@ pipeline {
       }
       steps {
         echo '*** Performing make release ***'
-        sh 'sed -i "" "s|USE_TMPFS=yes|USE_TMPFS=all|g" /freenas-pr/build/config/templates/poudriere.conf'
         sh 'cd /freenas-pr && make release TRAIN=freenas-pr'
         echo '*** Staging artifacts ***'
         sh 'mkdir -p ${WORKSPACE}/artifacts'
