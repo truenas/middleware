@@ -295,6 +295,19 @@ class DiskService(CRUDService):
         return ''
 
     @private
+    def label_to_dev(self, label):
+        if label.endswith('.nop'):
+            label = label[:-4]
+        elif label.endswith('.eli'):
+            label = label[:-4]
+
+        geom.scan()
+        klass = geom.class_by_name('LABEL')
+        prov = klass.xml.find(f'.//provider[name="{label}"]/../name')
+        if prov is not None:
+            return prov.text
+
+    @private
     @accepts(Str('name'))
     async def sync(self, name):
         """
