@@ -151,6 +151,7 @@ elif api == "2.0":
         'user',
         'group',
         'nfs',
+        'lldp',
     ):
         if testName is not None and testName != i:
             continue
