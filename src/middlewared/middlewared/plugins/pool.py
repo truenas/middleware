@@ -218,7 +218,7 @@ class PoolService(CRUDService):
             )
         ]
 
-    def _topology(self, x):
+    def _topology(self, x, geom_scan=True):
         """
         Transform topology output from libzfs to add `device` and make `type` uppercase.
         """
@@ -227,16 +227,16 @@ class PoolService(CRUDService):
             if path is not None:
                 device = None
                 if path.startswith('/dev/'):
-                    device = self.middleware.call_sync('disk.label_to_dev', path[5:])
+                    device = self.middleware.call_sync('disk.label_to_dev', path[5:], geom_scan)
                 x['device'] = device
             for key in x:
                 if key == 'type' and isinstance(x[key], str):
                     x[key] = x[key].upper()
                 else:
-                    x[key] = self._topology(x[key])
+                    x[key] = self._topology(x[key], False)
         elif isinstance(x, list):
             for i, entry in enumerate(x):
-                x[i] = self._topology(x[i])
+                x[i] = self._topology(x[i], False)
         return x
 
     @private
