@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix_pf_late
-# REQUIRE: ix-smbpasswd ix-nfsd
+# REQUIRE: ix-smbpasswd
 # KEYWORD: nojail shutdown
 
 . /etc/rc.subr

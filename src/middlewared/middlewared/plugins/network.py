@@ -207,7 +207,7 @@ class NetworkConfigurationService(ConfigService):
                             (srv_service_obj and srv_service_obj.srv_enable) and
                             (nfs_object and (nfs_object.nfs_srv_v4 and nfs_object.nfs_srv_v4_krb))
                     ):
-                        await self.middleware.call('service.restart', 'ix-nfsd', {'onetime': False})
+                        await self.middleware.call("etc.generate", "nfsd")
                         services_to_reload.append('mountd')
 
             for service_to_reload in services_to_reload:
