@@ -27,13 +27,14 @@ pipeline {
         echo '*** Performing make checkout ***'
         sh 'cd /freenas-pr && make checkout'
         sh 'rm -rf /freenas-pr/freenas/_BE/freenas'
-        sh 'ln -s ${WORKSPACE} /freenas-pr/freenas/_BE/freenas'
+        sh 'mkdir -p /freenas-pr/freenas/_BE/freenas'
+        sh 'tar cf - -C "${WORKSPACE}" . | tar xf - -C "/freenas-pr/freenas/_BE/freenas"'
       }
     }
 
     stage('release') {
       environment {
-         POUDRIERE_JOBS = '32' 
+         POUDRIERE_JOBS = '32'
          BUILDWORLD_JOBS = '32'
          LINT = ''
       }
