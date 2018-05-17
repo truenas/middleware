@@ -1,3 +1,4 @@
+from collections import defaultdict
 import ipaddress
 import os
 
@@ -198,7 +199,8 @@ class SharingNFSService(CRUDService):
         if old:
             filters.append(["id", "!=", old["id"]])
         other_shares = await self.middleware.call("sharing.nfs.query", filters)
-        await self.middleware.run_in_io_thread(self.validate_user_networks, other_shares, data, schema_name, verrors)
+        await self.middleware.run_in_io_thread(self.validate_hosts_and_networks, other_shares, data, schema_name,
+                                               verrors)
 
         for k in ["maproot", "mapall"]:
             if not data[f"{k}_user"] and not data[f"{k}_group"]:
@@ -248,10 +250,10 @@ class SharingNFSService(CRUDService):
             verrors.add(f"{schema_name}.alldirs", "This option can only be used for datasets")
 
     @private
-    def validate_user_networks(self, other_shares, data, schema_name, verrors):
+    def validate_hosts_and_networks(self, other_shares, data, schema_name, verrors):
         dev = os.stat(data["paths"][0]).st_dev
 
-        used_networks = []
+        used_networks = defaultdict(lambda: 0)
         for share in other_shares:
             try:
                 share_dev = os.stat(share["paths"][0]).st_dev
@@ -259,25 +261,48 @@ class SharingNFSService(CRUDService):
                 self.logger.warning("Failed to stat first path for %r", share, exc_info=True)
                 continue
 
-            used_networks.extend([(network, share_dev) for network in share["networks"]])
+            if share_dev == dev:
+                for host in share["hosts"]:
+                    try:
+                        network = ipaddress.ip_network(f"{host}/32")
+                    except Exception:
+                        self.logger.warning("Got invalid host %r", host)
+                        continue
+                    else:
+                        used_networks[network] += 1
 
-            if data["alldirs"] and share["alldirs"] and share_dev == dev:
-                verrors.add(f"{schema_name}.alldirs", "This option is only available once per mountpoint")
+                for network in share["networks"]:
+                    try:
+                        network = ipaddress.ip_network(network, strict=False)
+                    except Exception:
+                        self.logger.warning("Got invalid network %r", network)
+                        continue
+                    else:
+                        used_networks[network] += 1
+
+                if share["alldirs"] and data["alldirs"]:
+                    verrors.add(f"{schema_name}.alldirs", "This option is only available once per mountpoint")
+
+        for i, host in enumerate(data["hosts"]):
+            network = ipaddress.ip_network(f"{host}/32")
+            used_networks[network] += 1
+
+            print(used_networks)
+
+            count = 2 ** (32 - network.prefixlen)
+            if used_networks[network] > count:
+                verrors.add(f"{schema_name}.hosts.{i}",
+                            "You can't share same filesystem with same host more than once")
 
         for i, network in enumerate(data["networks"]):
             network = ipaddress.ip_network(network, strict=False)
-            for other_network, other_dev in used_networks:
-                try:
-                    other_network = ipaddress.ip_network(other_network, strict=False)
-                except Exception:
-                    self.logger.warning("Got invalid network %r", other_network)
-                    continue
+            used_networks[network] += 1
 
-                if network.overlaps(other_network) and dev == other_dev:
-                    verrors.add(f"{schema_name}.networks.{i}",
-
-                                f"The network {network} is already being shared and cannot be used twice "
-                                "for the same filesystem")
+            count = 2 ** (32 - network.prefixlen)
+            if used_networks[network] > count:
+                verrors.add(f"{schema_name}.networks.{i}",
+                            f"You can't share same filesystem with same /{network.prefixlen} network more than "
+                            f"{count} times")
 
     @private
     async def extend(self, data):
