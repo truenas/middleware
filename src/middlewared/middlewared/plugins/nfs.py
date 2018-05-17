@@ -1,6 +1,7 @@
 from collections import defaultdict
 import ipaddress
 import os
+import socket
 
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
 from middlewared.validators import Range
@@ -79,7 +80,7 @@ class SharingNFSService(CRUDService):
         List("paths", items=[Dir("path")]),
         Str("comment"),
         List("networks", items=[IPAddr("network", cidr=True)]),
-        List("hosts", items=[IPAddr("host")]),
+        List("hosts", items=[Str("host")]),
         Bool("alldirs"),
         Bool("ro"),
         Bool("quiet"),
@@ -263,6 +264,12 @@ class SharingNFSService(CRUDService):
             if share_dev == dev:
                 for host in share["hosts"]:
                     try:
+                        host = socket.gethostbyname(host)
+                    except Exception:
+                        self.logger.warning("Unable to resolve host %r", host)
+                        continue
+
+                    try:
                         network = ipaddress.ip_network(f"{host}/32")
                     except Exception:
                         self.logger.warning("Got invalid host %r", host)
@@ -283,6 +290,12 @@ class SharingNFSService(CRUDService):
                     verrors.add(f"{schema_name}.alldirs", "This option is only available once per mountpoint")
 
         for i, host in enumerate(data["hosts"]):
+            try:
+                host = socket.gethostbyname(host)
+            except Exception:
+                verrors.add(f"{schema_name}.hosts.{i}", "Unable to resolve host")
+                continue
+
             network = ipaddress.ip_network(f"{host}/32")
             used_networks[network] += 1
 

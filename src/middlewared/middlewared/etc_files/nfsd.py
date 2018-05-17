@@ -2,10 +2,16 @@ from collections import defaultdict
 import ipaddress
 import logging
 import os
+import re
 
 from middlewared.utils import run
 
 logger = logging.getLogger(__name__)
+
+IP_REGEX = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
+
+HOSTNAME_REGEX = ("^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*"
+                  "([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
 
 
 async def get_exports(config, shares, kerberos_keytabs):
@@ -86,6 +92,10 @@ def build_share_targets(share, networks_pool):
                 result.append("-network " + str(network.network_address + inc) + "/" + str(network.prefixlen))
 
         for host in share["hosts"]:
+            if re.match(HOSTNAME_REGEX, host) and not re.match(IP_REGEX, host):
+                result.append(host)
+                continue
+
             try:
                 network = ipaddress.ip_network(f"{host}/32")
             except Exception as e:
