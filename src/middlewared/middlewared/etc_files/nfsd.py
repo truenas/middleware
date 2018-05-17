@@ -92,7 +92,7 @@ def build_share_targets(share, networks_pool):
                 logger.warning(f"Invalid IP address: {host} ({e})")
             else:
                 networks_pool[dev][network] += 1
-                if networks_pool[dev][network] > 2 ** (32 - network.prefixlen):
+                if networks_pool[dev][network] > 1:
                     logger.warning(f"No space for host {host} on path {share['paths'][0]}")
                     continue
 

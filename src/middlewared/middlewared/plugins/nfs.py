@@ -286,8 +286,7 @@ class SharingNFSService(CRUDService):
             network = ipaddress.ip_network(f"{host}/32")
             used_networks[network] += 1
 
-            count = 2 ** (32 - network.prefixlen)
-            if used_networks[network] > count:
+            if used_networks[network] > 1:
                 verrors.add(f"{schema_name}.hosts.{i}",
                             "You can't share same filesystem with same host more than once")
 
