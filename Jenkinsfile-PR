@@ -26,8 +26,8 @@ pipeline {
       steps {
         echo '*** Performing make checkout ***'
         sh 'cd /freenas-pr && make checkout'
-        sh 'rm -rf /freenas-pr/_BE/freenas/freenas'
-        sh 'mv ${WORKSPACE} /freenas-pr/_BE/freenas/freenas'
+        sh 'rm -rf /freenas-pr/freenas/_BE/freenas'
+        sh 'mv ${WORKSPACE} /freenas-pr/freenas/_BE/freenas'
       }
     }
 
