@@ -698,7 +698,12 @@ class iSCSITargetAuthCredentialForm(MiddlewareModelForm, ModelForm):
         return data
 
 
-class iSCSITargetToExtentForm(ModelForm):
+class iSCSITargetToExtentForm(MiddlewareModelForm, ModelForm):
+    middleware_attr_prefix = "iscsi_"
+    middleware_attr_schema = "services.iscsi_targetextent"
+    middleware_plugin = "iscsi.targetextent"
+    is_singletone = False
+
     class Meta:
         fields = '__all__'
         model = models.iSCSITargetToExtent
@@ -712,47 +717,6 @@ class iSCSITargetToExtentForm(ModelForm):
         super(iSCSITargetToExtentForm, self).__init__(*args, **kwargs)
         self.fields['iscsi_lunid'].initial = 0
         self.fields['iscsi_lunid'].required = True
-
-    def clean_iscsi_lunid(self):
-        lunid = self.cleaned_data.get('iscsi_lunid')
-        lun_map_size = sysctl.filter('kern.cam.ctl.lun_map_size')[0].value
-        if lunid < 0 or lunid > lun_map_size - 1:
-            raise forms.ValidationError(_('LUN ID must be a positive integer and lower than %d') % (lun_map_size - 1))
-        return lunid
-
-    def clean(self):
-        lunid = self.cleaned_data.get('iscsi_lunid')
-        target = self.cleaned_data.get('iscsi_target')
-        extent = self.cleaned_data.get('iscsi_extent')
-        if lunid and target:
-            qs = models.iSCSITargetToExtent.objects.filter(
-                iscsi_lunid=lunid,
-                iscsi_target__id=target.id,
-            )
-            if self.instance.id:
-                qs = qs.exclude(id=self.instance.id)
-            if qs.exists():
-                raise forms.ValidationError(
-                    _("LUN ID is already being used for this target.")
-                )
-        if target and extent:
-            qs = models.iSCSITargetToExtent.objects.filter(
-                iscsi_target__id=target.id,
-                iscsi_extent__id=extent.id
-            )
-            if self.instance.id:
-                qs = qs.exclude(id=self.instance.id)
-            if qs.exists():
-                raise forms.ValidationError(
-                    _("Extent is already in this target.")
-                )
-        return self.cleaned_data
-
-    def save(self):
-        super(iSCSITargetToExtentForm, self).save()
-        started = notifier().reload("iscsitarget")
-        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 
 
 class iSCSITargetGlobalConfigurationForm(MiddlewareModelForm, ModelForm):
