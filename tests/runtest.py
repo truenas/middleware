@@ -229,3 +229,6 @@ elif api == "2.0":
     call(["py.test-3.6", "-v", "--junitxml",
           "%sgroup_tests_result.xml" % results_xml,
           "api2/group.py"])
+    call(["py.test-3.6", "-v", "--junitxml",
+          "%snfs_tests_result.xml" % results_xml,
+          "api2/nfs.py"])

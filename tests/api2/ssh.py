@@ -9,7 +9,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, is_agent_setup, if_key_listed, SSH_TEST
-from auto_config import sshKey, password, user, ip
+from auto_config import sshKey, user, ip
 
 
 def test_01_Configuring_ssh_settings_for_root_login():
