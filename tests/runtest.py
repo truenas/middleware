@@ -62,7 +62,7 @@ for output, arg in myopts:
 if interface == "vtnet0":
     disk = 'disk1 = "vtbd1"\ndisk2 = "vtbd2"'
 else:
-    disk = 'disk1 "da1"\ndisk2 = "da2"'
+    disk = 'disk1 = "da1"\ndisk2 = "da2"'
 
 cfg_content = """#!/usr/bin/env python3.6
 
