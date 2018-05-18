@@ -100,6 +100,7 @@ from freenasUI.storage.forms import (
     MountPointAccessForm,
     ReKeyForm,
     CreatePassphraseForm,
+    ChangePassphraseForm,
     UnlockPassphraseForm,
     VolumeAutoImportForm,
     VolumeManagerForm,
@@ -953,7 +954,7 @@ class VolumeResourceMixin(NestedMixin):
         return HttpResponse('Volume has been rekeyed.', status=202)
 
     def keypassphrase(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
+        self.method_check(request, allowed=['post', 'put'])
 
         bundle, obj = self._get_parent(request, kwargs)
 
@@ -962,14 +963,34 @@ class VolumeResourceMixin(NestedMixin):
             request.body,
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
-        form = CreatePassphraseForm(deserialized)
-        if not form.is_valid():
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, form.errors)
-            )
-        else:
-            form.done(obj)
-        return HttpResponse('Volume passphrase has been set.', status=201)
+
+        if request.method == 'POST':
+
+            form = CreatePassphraseForm(deserialized)
+            if not form.is_valid():
+                raise ImmediateHttpResponse(
+                    response=self.error_response(request, form.errors)
+                )
+            else:
+                form.done(obj)
+
+        elif request.method == 'PUT':
+
+            if 'passphrase2' not in deserialized:
+                deserialized['passphrase2'] = deserialized.get('passphrase')
+
+            form = ChangePassphraseForm(deserialized)
+            if not form.is_valid():
+                raise ImmediateHttpResponse(
+                    response=self.error_response(request, form.errors)
+                )
+            else:
+                form.done(obj)
+
+            if deserialized.get('remove'):
+                return HttpResponse('Volume passphrase has been removed', status=201)
+
+        return HttpResponse('Volume passphrase has been set', status=201)
 
     def status(self, request, **kwargs):
         self.method_check(request, allowed=['get'])

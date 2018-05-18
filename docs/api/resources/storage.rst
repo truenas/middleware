@@ -964,7 +964,7 @@ Key Passphrase
 
 .. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/keypassphrase/
 
-   Creatre key passphrase for volume `id`.
+   Create key passphrase for volume `id`.
 
    **Example request**:
 
@@ -986,7 +986,61 @@ Key Passphrase
       Vary: Accept
       Content-Type: application/json
 
-        Volume passphrase has been set.
+        Volume passphrase has been set
+
+   :resheader Content-Type: content type of the response
+   :statuscode 201: no error
+
+.. http:put:: /api/v1.0/storage/volume/(int:id|string:name)/keypassphrase/
+
+   Change key passphrase for volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/storage/volume/tank/keypassphrase/ HTTP/1.1
+      Content-Type: application/json
+
+      {
+        "adminpw": "freenas",
+        "passphrase": "mypassphrase",
+      }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        Volume passphrase has been set
+
+   :resheader Content-Type: content type of the response
+   :statuscode 201: no error
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/storage/volume/tank/keypassphrase/ HTTP/1.1
+      Content-Type: application/json
+
+      {
+        "adminpw": "freenas",
+        "remove": True,
+      }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        Volume passphrase has been removed
 
    :resheader Content-Type: content type of the response
    :statuscode 201: no error
