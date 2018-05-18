@@ -1,4 +1,5 @@
-from middlewared.schema import Bool, Dict, File, Int, Patch, Str, ValidationErrors, accepts
+from middlewared.schema import (Bool, Dict, File, Int, Patch, Str,
+                                ValidationErrors, accepts)
 from middlewared.service import CRUDService, private
 
 
@@ -11,10 +12,10 @@ class InitShutdownScriptService(CRUDService):
 
     @accepts(Dict(
         'init_shutdown_script_create',
-        Str('type', enum=['COMMAND', 'SCRIPT']),
+        Str('type', enum=['COMMAND', 'SCRIPT'], required=True),
         Str('command'),
         File('script'),
-        Str('when', enum=['PREINIT', 'POSTINIT', 'SHUTDOWN']),
+        Str('when', enum=['PREINIT', 'POSTINIT', 'SHUTDOWN'], required=True),
         Bool('enabled', default=True),
         register=True,
     ))
@@ -23,12 +24,16 @@ class InitShutdownScriptService(CRUDService):
 
         await self.init_shutdown_script_compress(data)
 
-        data["id"] = await self.middleware.call('datastore.insert', self._config.datastore, data,
-                                                {'prefix': self._config.datastore_prefix})
+        data['id'] = await self.middleware.call(
+            'datastore.insert',
+            self._config.datastore,
+            data,
+            {'prefix': self._config.datastore_prefix}
+        )
 
         await self.init_shutdown_script_extend(data)
 
-        return data
+        return await self._get_instance(data['id'])
 
     @accepts(Int('id'), Patch(
         'init_shutdown_script_create',
@@ -36,52 +41,59 @@ class InitShutdownScriptService(CRUDService):
         ('attr', {'update': True}),
     ))
     async def do_update(self, id, data):
-        old = await self.middleware.call('datastore.query', self._config.datastore, [('id', '=', id)],
-                                         {'extend': self._config.datastore_extend,
-                                          'prefix': self._config.datastore_prefix,
-                                          'get': True})
-
+        old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
 
-        await self.validate(data, 'init_shutdown_script_update')
+        await self.validate(new, 'init_shutdown_script_update')
 
-        await self.init_shutdown_script_compress(data)
+        await self.init_shutdown_script_compress(new)
 
-        await self.middleware.call('datastore.update', self._config.datastore, id, data,
-                                   {'prefix': self._config.datastore_prefix})
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            id,
+            data,
+            {'prefix': self._config.datastore_prefix}
+        )
 
         await self.init_shutdown_script_extend(new)
 
-        return new
+        return await self._get_instance(new['id'])
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        return await self.middleware.call('datastore.delete', self._config.datastore, id)
+        return await self.middleware.call(
+            'datastore.delete',
+            self._config.datastore,
+            id
+        )
 
     @private
-    async def init_shutdown_script_extend(self, init_shutdown_script):
-        init_shutdown_script["type"] = init_shutdown_script["type"].upper()
-        init_shutdown_script["when"] = init_shutdown_script["when"].upper()
-        return init_shutdown_script
+    async def init_shutdown_script_extend(self, data):
+        data['type'] = data['type'].upper()
+        data['when'] = data['when'].upper()
+
+        return data
 
     @private
-    async def init_shutdown_script_compress(self, init_shutdown_script):
-        init_shutdown_script["type"] = init_shutdown_script["type"].lower()
-        init_shutdown_script["when"] = init_shutdown_script["when"].lower()
-        return init_shutdown_script
+    async def init_shutdown_script_compress(self, data):
+        data['type'] = data['type'].lower()
+        data['when'] = data['when'].lower()
+
+        return data
 
     @private
-    async def validate(self, init_shutdown_script, schema_name):
+    async def validate(self, data, schema_name):
         verrors = ValidationErrors()
 
-        if init_shutdown_script["type"] == "COMMAND":
-            if not init_shutdown_script["command"]:
-                verrors.add("%s.command" % schema_name, "This field is required")
+        if data['type'] == 'COMMAND':
+            if not data.get('command'):
+                verrors.add(f'{schema_name}.command', 'This field is required')
 
-        if init_shutdown_script["type"] == "SCRIPT":
-            if not init_shutdown_script["script"]:
-                verrors.add("%s.script" % schema_name, "This field is required")
+        if data['type'] == 'SCRIPT':
+            if not data.get('script'):
+                verrors.add(f'{schema_name}.script', 'This field is required')
 
         if verrors:
             raise verrors
