@@ -561,7 +561,7 @@ class SystemGeneralService(ConfigService):
 
         language = data.get('language')
         if language:
-            system_languages = self.get_system_languages()
+            system_languages = self.language_choices()
             if language not in system_languages.keys():
                 verrors.add(
                     f'{schema}.language',
@@ -572,7 +572,7 @@ class SystemGeneralService(ConfigService):
 
         timezone = data.get('timezone')
         if timezone:
-            timezones = await self.get_timezones()
+            timezones = await self.timezone_choices()
             if timezone not in timezones:
                 verrors.add(
                     f'{schema}.timezone',
