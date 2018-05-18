@@ -2700,8 +2700,8 @@ class ChangePassphraseForm(Form):
     def clean(self):
         cdata = self.cleaned_data
         if cdata.get("remove"):
-            del self._errors['passphrase']
-            del self._errors['passphrase2']
+            self._errors.pop('passphrase', None)
+            self._errors.pop('passphrase2', None)
         return cdata
 
     def done(self, volume):
