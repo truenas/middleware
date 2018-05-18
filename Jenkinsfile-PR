@@ -65,6 +65,9 @@ pipeline {
         echo '*** Staging artifacts ***'
         sh 'mkdir -p ${WORKSPACE}/artifacts'
         sh 'mv /freenas-pr/freenas/_BE/release/* ${WORKSPACE}/artifacts/'
+        sh 'rm ${WORKSPACE}/artifacts/LATEST || true'
+        sh 'mv /freenas-pr/freenas/_BE/objs/logs ${WORKSPACE}/artifacts/logs'
+        sh 'mv /freenas-pr/freenas/_BE/objs/ports/data/logs/bulk ${WORKSPACE}/artifacts/port-logs'
       }
     }
   }
