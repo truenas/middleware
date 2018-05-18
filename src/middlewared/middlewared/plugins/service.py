@@ -772,7 +772,6 @@ class ServiceService(CRUDService):
         await self.middleware.call("etc.generate", "nfsd")
 
     async def _restart_nfs(self, **kwargs):
-        await self.middleware.call("etc.generate", "nfsd")
         await self._stop_nfs(**kwargs)
         await self._start_nfs(**kwargs)
 
