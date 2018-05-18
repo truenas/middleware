@@ -723,6 +723,12 @@ class VolumeResourceMixin(NestedMixin):
                 self.wrap_view('offline_disk')
             ),
             url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/online%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('online_disk')
+            ),
+            url(
                 r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/detach%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
@@ -815,6 +821,19 @@ class VolumeResourceMixin(NestedMixin):
         )
         notifier().zfs_offline_disk(obj, deserialized.get('label'))
         return HttpResponse('Disk offline\'d.', status=202)
+
+    def online_disk(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        notifier().zfs_online_disk(obj, deserialized.get('label'))
+        return HttpResponse('Disk online\'d.', status=202)
 
     def detach_disk(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
