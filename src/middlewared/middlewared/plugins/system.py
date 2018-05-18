@@ -368,8 +368,8 @@ class SystemGeneralService(ConfigService):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._languages = self._initialize_system_languages()
-        self._time_zones_list = None
+        self._language_choices = self._initialize_languages()
+        self._timezone_choices = None
         self._kbdmap_choices = None
         self._country_choices = {}
 
@@ -386,11 +386,11 @@ class SystemGeneralService(ConfigService):
         return data
 
     @accepts()
-    def get_system_languages(self):
-        return self._languages
+    def language_choices(self):
+        return self._language_choices
 
     @private
-    def _initialize_system_languages(self):
+    def _initialize_languages(self):
         languagues = [
             ('af', 'Afrikaans'),
             ('ar', 'Arabic'),
@@ -485,22 +485,21 @@ class SystemGeneralService(ConfigService):
         return dict(languagues)
 
     @private
-    async def _initialize_timezones_list(self):
+    async def _initialize_timezone_choices(self):
         pipe = await Popen(
             'find /usr/share/zoneinfo/ -type f -not -name zone.tab -not -regex \'.*/Etc/GMT.*\'',
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=True
         )
-        self._time_zones_list = (await pipe.communicate())[0].decode().strip().split('\n')
-        self._time_zones_list = [x[20:] for x in self._time_zones_list]
-        self._time_zones_list.sort()
+        self._timezone_choices = (await pipe.communicate())[0].decode().strip().split('\n')
+        self._timezone_choices = {x[20:]: x[20:] for x in self._timezone_choices}
 
     @accepts()
-    async def get_timezones(self):
-        if not self._time_zones_list:
-            await self._initialize_timezones_list()
-        return self._time_zones_list
+    async def timezone_choices(self):
+        if not self._timezone_choices:
+            await self._initialize_timezone_choices()
+        return self._timezone_choices
 
     @accepts()
     async def country_choices(self):
@@ -548,10 +547,10 @@ class SystemGeneralService(ConfigService):
         with open(index, 'rb') as f:
             d = f.read().decode('utf8', 'ignore')
         _all = re.findall(r'^(?P<name>[^#\s]+?)\.kbd:en:(?P<desc>.+)$', d, re.M)
-        self._kbdmap_choices = [(name, desc) for name, desc in _all]
+        self._kbdmap_choices = {name: desc for name, desc in _all}
 
     @accepts()
-    async def get_kbdmap_choices(self):
+    async def kbdmap_choices(self):
         if not self._kbdmap_choices:
             await self._initialize_kbdmap_choices()
         return self._kbdmap_choices
