@@ -1,5 +1,5 @@
+import asyncio
 from collections import defaultdict
-import concurrent.futures
 import ipaddress
 import os
 import socket
@@ -258,17 +258,14 @@ class SharingNFSService(CRUDService):
     async def resolve_hostnames(self, hostnames):
         hostnames = list(set(hostnames))
 
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=8)
-
         async def resolve(hostname):
             try:
-                return await self.middleware.loop.run_in_executor(executor, socket.gethostbyname, hostname)
+                return await asyncio.wait_for(self.middleware.run_in_io_thread(socket.gethostbyname, hostname), 5)
             except Exception as e:
-                self.logger.warning("Unable to resolve host %r: %e", hostname, e)
+                self.logger.warning("Unable to resolve host %r: %r", hostname, e)
                 return None
 
-        resolved_hostnames = await asyncio_map(resolve, hostnames)
-        executor.shutdown()
+        resolved_hostnames = await asyncio_map(resolve, hostnames, 8)
 
         return dict(zip(hostnames, resolved_hostnames))
 
