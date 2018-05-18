@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, POST, PUT, DELETE_ALL
+from functions import GET, POST, PUT, DELETE
 
 GroupIdFile = "/tmp/.ixbuild_test_groupid"
 
@@ -81,7 +81,7 @@ def test_12_look_user_new_uid():
 # Delete the group
 def test_13_delete_group_testgroup_newgroup():
     groupid = GET('/group?group=newgroup').json()[0]['id']
-    results = DELETE_ALL("/group/id/%s" % groupid, {"delete_users": True})
+    results = DELETE("/group/id/%s" % groupid, {"delete_users": True})
     assert results.status_code == 200, results.text
 
 

@@ -905,7 +905,7 @@ class VolumeResourceMixin(NestedMixin):
             reckey = notifier().geli_recoverykey_add(obj)
             with open(reckey, 'rb') as f:
                 data = f.read()
-            data = base64.b64encode(data)
+            data = base64.b64encode(data).decode()
             return HttpResponse(json.dumps({
                 'message': 'New recovery key has been added.',
                 'content': data,

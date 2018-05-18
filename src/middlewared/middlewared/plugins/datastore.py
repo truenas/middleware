@@ -207,7 +207,7 @@ class DatastoreService(Service):
                 name = field.name
             if name not in data:
                 continue
-            if isinstance(field, ForeignKey):
+            if isinstance(field, ForeignKey) and data[name] is not None:
                 data[name] = field.rel.to.objects.get(pk=data[name])
             if isinstance(field, ManyToManyField):
                 many_to_many_fields_data[field.name] = data.pop(name)

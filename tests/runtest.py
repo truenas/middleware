@@ -62,7 +62,7 @@ for output, arg in myopts:
 if interface == "vtnet0":
     disk = 'disk1 = "vtbd1"\ndisk2 = "vtbd2"'
 else:
-    disk = 'disk1 "da1"\ndisk2 = "da2"'
+    disk = 'disk1 = "da1"\ndisk2 = "da2"'
 
 cfg_content = """#!/usr/bin/env python3.6
 
@@ -100,132 +100,61 @@ cfg_file.writelines('sshKey = "%s"\n' % Key)
 cfg_file.close()
 
 if api == "1.0":
-    # Create test
-    call(["py.test-3.6", "-v", "--junitxml",
-          "%snetwork_tests_result.xml" % results_xml,
-          "api1/network.py"])
-    if testName != 'network':
+    for i in (
+        'network',
+        'ssh',
+        'storage',
+        'ntp',
+        'ad_bsd',
+        'ad_osx',
+        'afp_osx',
+        'alerts',
+        #'bootenv',
+        'cronjob',
+        'domaincontroller',
+        'dyndns',
+        'emails',
+        'user',
+        'ftp',
+        'group',
+        'iscsi',
+        'jails',  # jails API Broken
+        'ldap_bsd',
+        'ldap_osx',
+        'lldp',
+        'nfs',
+        'nis_bsd',
+        'rsync',
+        'smb_bsd',
+        'smb_osx',
+        'snmp',
+        'system',
+        'tftp',
+        'ups',
+        'webdav_bsd',
+        'webdav_osx',
+    ):
+        if testName is not None and testName != i:
+            continue
         call(["py.test-3.6", "-v", "--junitxml",
-              "%sssh_tests_result.xml" % results_xml,
-              "api1/ssh.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%sstorage_tests_result.xml" % results_xml,
-              "api1/storage.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%sntp_tests_result.xml" % results_xml,
-              "api1/ntp.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%sad_bsd_tests_result.xml" % results_xml,
-              "api1/ad_bsd.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%sad_osx_tests_result.xml" % results_xml,
-              "api1/ad_osx.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%safp_osx_tests_result.xml" % results_xml,
-              "api1/afp_osx.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%salerts_tests_result.xml" % results_xml,
-              "api1/alerts.py"])
-        # call(["py.test-3.6", "-v", "--junitxml",
-        #       "%sbootenv_tests_result.xml" % results_xml,
-        #       "api1/bootenv.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%scronjob_tests_result.xml" % results_xml,
-              "api1/cronjob.py"])
-        # call(["python3.6", "api1/debug.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%sdomaincontroller_tests_result.xml" % results_xml,
-              "api1/domaincontroller.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%sdyndns_tests_result.xml" % results_xml,
-              "api1/dyndns.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%semails_tests_result.xml" % results_xml,
-              "api1/emails.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%suser_tests_result.xml" % results_xml,
-              "api1/user.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%sftp_tests_result.xml" % results_xml,
-              "api1/ftp.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%sgroup_tests_result.xml" % results_xml,
-              "api1/group.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%siscsi_tests_result.xml" % results_xml,
-              "api1/iscsi.py"])
-        # jails API Broken
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%sjails_tests_result.xml" % results_xml,
-              "api1/jails.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%sldap_bsd_tests_result.xml" % results_xml,
-              "api1/ldap_bsd.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%sldap_osx_tests_result.xml" % results_xml,
-              "api1/ldap_osx.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%slldp_tests_result.xml" % results_xml,
-              "api1/lldp.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%snfs_tests_result.xml" % results_xml,
-              "api1/nfs.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%snis_bsd_tests_result.xml" % results_xml,
-              "api1/nis_bsd.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%srsync_tests_result.xml" % results_xml,
-              "api1/rsync.py"])
-        # call(["python3.6", "api1/smarttest.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%ssmb_bsd_tests_result.xml" % results_xml,
-              "api1/smb_bsd.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%ssmb_osx_tests_result.xml" % results_xml,
-              "api1/smb_osx.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%ssnmp_tests_result.xml" % results_xml,
-              "api1/snmp.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%ssystem_tests_result.xml" % results_xml,
-              "api1/system.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%stftp_tests_result.xml" % results_xml,
-              "api1/tftp.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%sups_tests_result.xml" % results_xml,
-              "api1/ups.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%swebdav_bsd_tests_result.xml" % results_xml,
-              "api1/webdav_bsd.py"])
-        call(["py.test-3.6", "-v", "--junitxml",
-              "%swebdav_osx_tests_result.xml" % results_xml,
-              "api1/webdav_osx.py"])
+              f"{results_xml}{i}_tests_result.xml",
+              f"api1/{i}.py"])
 elif api == "2.0":
-    call(["py.test-3.6", "-v", "--junitxml",
-          "%sinterfaces_tests_result.xml" % results_xml,
-          "api2/interfaces.py"])
-    call(["py.test-3.6", "-v", "--junitxml",
-          "%snetwork_tests_result.xml" % results_xml,
-          "api2/network.py"])
-    call(["py.test-3.6", "-v", "--junitxml",
-          "%sdisk_tests_result.xml" % results_xml,
-          "api2/disk.py"])
-    call(["py.test-3.6", "-v", "--junitxml",
-          "%smail_tests_result.xml" % results_xml,
-          "api2/mail.py"])
-    call(["py.test-3.6", "-v", "--junitxml",
-          "%sftp_tests_result.xml" % results_xml,
-          "api2/ftp.py"])
-    call(["py.test-3.6", "-v", "--junitxml",
-          "%sssh_tests_result.xml" % results_xml,
-          "api2/ssh.py"])
-    # call(["py.test-3.6", "-v", "--junitxml",
-    #       "%sdomaicontroller_tests_result.xml" % results_xml,
-    #       "api2/domaincontroller.py"])
-    call(["py.test-3.6", "-v", "--junitxml",
-          "%suser_tests_result.xml" % results_xml,
-          "api2/user.py"])
-    call(["py.test-3.6", "-v", "--junitxml",
-          "%sgroup_tests_result.xml" % results_xml,
-          "api2/group.py"])
+    for i in (
+        'interfaces',
+        'network',
+        'disk',
+        'mail',
+        'ftp',
+        'ssh',
+        #'domaincontroller',
+        'user',
+        'group',
+        'nfs',
+        'lldp',
+    ):
+        if testName is not None and testName != i:
+            continue
+        call(["py.test-3.6", "-v", "--junitxml",
+              f"{results_xml}{i}_tests_result.xml",
+              f"api2/{i}.py"])

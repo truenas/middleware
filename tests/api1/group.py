@@ -42,4 +42,4 @@ def test_01_Creating_group_testgroup():
 # Delete tests
 # Delete the testgroup
 # def test_01_Delete_group_testgroup_newgroup():
-#     assert DELETE("/account/groups/1/") == 204
+#     assert DELETE("/account/groups/1/", None) == 204

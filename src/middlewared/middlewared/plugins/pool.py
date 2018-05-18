@@ -32,19 +32,6 @@ def _null(x):
     return x
 
 
-def _upper(x, attribute):
-    if isinstance(x, dict):
-        for key in x:
-            if key == attribute and isinstance(x[key], str):
-                x[key] = x[key].upper()
-            else:
-                x[key] = _upper(x[key], attribute)
-    elif isinstance(x, list):
-        for i, entry in enumerate(x):
-            x[i] = _upper(x[i], attribute)
-    return x
-
-
 async def is_mounted(middleware, path):
     mounted = await middleware.run_in_thread(bsd.getmntinfo)
     return any(fs.dest == path for fs in mounted)
@@ -231,22 +218,43 @@ class PoolService(CRUDService):
             )
         ]
 
+    def _topology(self, x, geom_scan=True):
+        """
+        Transform topology output from libzfs to add `device` and make `type` uppercase.
+        """
+        if isinstance(x, dict):
+            path = x.get('path')
+            if path is not None:
+                device = None
+                if path.startswith('/dev/'):
+                    device = self.middleware.call_sync('disk.label_to_dev', path[5:], geom_scan)
+                x['device'] = device
+            for key in x:
+                if key == 'type' and isinstance(x[key], str):
+                    x[key] = x[key].upper()
+                else:
+                    x[key] = self._topology(x[key], False)
+        elif isinstance(x, list):
+            for i, entry in enumerate(x):
+                x[i] = self._topology(x[i], False)
+        return x
+
     @private
-    async def pool_extend(self, pool):
+    def pool_extend(self, pool):
 
         """
         If pool is encrypted we need to check if the pool is imported
         or if all geli providers exist.
         """
         try:
-            zpool = (await self.middleware.call('zfs.pool.query', [('id', '=', pool['name'])]))[0]
+            zpool = self.middleware.call_sync('zfs.pool.query', [('id', '=', pool['name'])])[0]
         except Exception:
             zpool = None
 
         if zpool:
             pool['status'] = zpool['status']
             pool['scan'] = zpool['scan']
-            pool['topology'] = _upper(zpool['groups'], 'type')
+            pool['topology'] = self._topology(zpool['groups'])
         else:
             pool.update({
                 'status': 'OFFLINE',
@@ -259,7 +267,7 @@ class PoolService(CRUDService):
                 pool['is_decrypted'] = True
             else:
                 decrypted = True
-                for ed in await self.middleware.call('datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]):
+                for ed in self.middleware.call_sync('datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]):
                     if not os.path.exists(f'/dev/{ed["encrypted_provider"]}.eli'):
                         decrypted = False
                         break

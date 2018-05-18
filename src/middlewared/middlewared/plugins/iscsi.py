@@ -11,6 +11,7 @@ import errno
 import ipaddress
 import re
 import os
+import sysctl
 
 AUTHMETHOD_LEGACY_MAP = bidict.bidict({
     'None': 'NONE',
@@ -18,6 +19,7 @@ AUTHMETHOD_LEGACY_MAP = bidict.bidict({
     'CHAP Mutual': 'CHAP_MUTUAL',
 })
 RE_IP_PORT = re.compile(r'^(.+?)(:[0-9]+)?$')
+RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
 
 
 class ISCSIGlobalService(SystemServiceService):
@@ -879,3 +881,312 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         data['auth_network'] = auth_network
 
         return data
+
+
+class iSCSITargetService(CRUDService):
+
+    class Config:
+        namespace = 'iscsi.target'
+        datastore = 'services.iscsitarget'
+        datastore_prefix = 'iscsi_target_'
+        datastore_extend = 'iscsi.target.extend'
+
+    @private
+    async def extend(self, data):
+        data['mode'] = data['mode'].upper()
+        data['groups'] = await self.middleware.call(
+            'datastore.query',
+            'services.iscsitargetgroups',
+            [('iscsi_target', '=', data['id'])],
+        )
+        for group in data['groups']:
+            group.pop('id')
+            group.pop('iscsi_target')
+            group.pop('iscsi_target_initialdigest')
+            for i in ('portal', 'initiator'):
+                val = group.pop(f'iscsi_target_{i}group')
+                if val:
+                    val = val['id']
+                group[i] = val
+            group['auth'] = group.pop('iscsi_target_authgroup')
+            group['authmethod'] = AUTHMETHOD_LEGACY_MAP.get(
+                group.pop('iscsi_target_authtype')
+            )
+        return data
+
+    @accepts(Dict(
+        'iscsi_target_create',
+        Str('name', required=True),
+        Str('alias'),
+        Str('mode', enum=['ISCSI', 'FC', 'BOTH'], default='ISCSI'),
+        List('groups', default=[], items=[
+            Dict(
+                'group',
+                Int('portal', required=True),
+                Int('initiator', default=None),
+                Str('authmethod', enum=['NONE', 'CHAP', 'CHAP_MUTUAL'], default='NONE'),
+                Int('auth', default=None),
+            ),
+        ]),
+        register=True
+    ))
+    async def do_create(self, data):
+        verrors = ValidationErrors()
+        await self.__validate(verrors, data, 'iscsi_target_create')
+        if verrors:
+            raise verrors
+
+        await self.compress(data)
+        groups = data.pop('groups')
+        pk = await self.middleware.call(
+            'datastore.insert', self._config.datastore, data,
+            {'prefix': self._config.datastore_prefix})
+        try:
+            await self.__save_groups(pk, groups)
+        except Exception as e:
+            await self.middleware.call('datastore.delete', self._config.datastore, pk)
+            raise e
+
+        await self._service_change('iscsitarget', 'reload')
+
+        return await self._get_instance(pk)
+
+    async def __save_groups(self, pk, new, old=None):
+        """
+        Update database with a set of new target groups.
+        It will delete no longer existing groups and add new ones.
+        """
+        new_set = set([tuple(i.items()) for i in new])
+        old_set = set([tuple(i.items()) for i in old]) if old else set()
+
+        for i in old_set - new_set:
+            i = dict(i)
+            targetgroup = await self.middleware.call(
+                'datastore.query',
+                'services.iscsitargetgroups',
+                [
+                    ('iscsi_target', '=', pk),
+                    ('iscsi_target_portalgroup', '=', i['portal']),
+                    ('iscsi_target_initiatorgroup', '=', i['initiator']),
+                    ('iscsi_target_authtype', '=', i['authmethod']),
+                    ('iscsi_target_authgroup', '=', i['auth']),
+                ],
+            )
+            if targetgroup:
+                await self.middleware.call(
+                    'datastore.delete', 'services.iscsitargetgroups', targetgroup[0]['id']
+                )
+
+        for i in new_set - old_set:
+            i = dict(i)
+            await self.middleware.call(
+                'datastore.insert',
+                'services.iscsitargetgroups',
+                {
+                    'iscsi_target': pk,
+                    'iscsi_target_portalgroup': i['portal'],
+                    'iscsi_target_initiatorgroup': i['initiator'],
+                    'iscsi_target_authtype': i['authmethod'],
+                    'iscsi_target_authgroup': i['auth'],
+                },
+            )
+
+    async def __validate(self, verrors, data, schema_name, old=None):
+
+        if not RE_TARGET_NAME.search(data['name']):
+            verrors.add(f'{schema_name}.name', 'Use alphanumeric characters, ".", "-" and ":".')
+        else:
+            filters = [('name', '=', data['name'])]
+            if old:
+                filters.append(('id', '!=', old['id']))
+            names = await self.middleware.call(f'{self._config.namespace}.query', filters)
+            if names:
+                verrors.add(f'{schema_name}.name', 'Target name already exists')
+
+        if data.get('alias'):
+            if '"' in data['alias']:
+                verrors.add(f'{schema_name}.alias', 'Double quotes are not allowed')
+            elif data['alias'] == 'target':
+                verrors.add(f'{schema_name}.alias', 'target is a reserved word')
+            else:
+                filters = [('alias', '=', data['alias'])]
+                if old:
+                    filters.append(('id', '!=', old['id']))
+                aliases = await self.middleware.call(f'{self._config.namespace}.query', filters)
+                if aliases:
+                    verrors.add(f'{schema_name}.alias', 'Alias already exists')
+
+        if (
+            data['mode'] != 'ISCSI' and
+            not await self.middleware.call('system.feature_enabled', 'FIBRECHANNEL')
+        ):
+            verrors.add(f'{schema_name}.mode', 'Fibre Channel not enabled')
+
+        if not data['groups']:
+            verrors.add(f'{schema_name}.groups', 'At least one group is required')
+
+        portals = []
+        for i, group in enumerate(data['groups']):
+            if group['portal'] in portals:
+                verrors.add(f'{schema_name}.groups.{i}.portal', f'Portal {group["portal"]} cannot be duplicated on a target')
+            else:
+                portals.append(group['portal'])
+
+            if not group['auth'] and group['authmethod'] in ('CHAP', 'CHAP_MUTUAL'):
+                verrors.add(f'{schema_name}.groups.{i}.auth', 'Authentication group is required for CHAP and CHAP Mutual')
+            elif group['auth'] and group['authmethod'] == 'CHAP_MUTUAL':
+                auth = await self.middleware.call('iscsi.auth.query', [('id', '=', group['auth'])])
+                if not auth:
+                    verrors.add(f'{schema_name}.groups.{i}.auth', 'Authentication group not found', errno.ENOENT)
+                else:
+                    if not auth[0]['peeruser']:
+                        verrors.add(f'{schema_name}.groups.{i}.auth', f'Authentication group {group["auth"]} does not support CHAP Mutual')
+
+    @accepts(
+        Int('id'),
+        Patch(
+            'iscsi_target_create',
+            'iscsi_target_update',
+            ('attr', {'update': True})
+        )
+    )
+    async def do_update(self, id, data):
+        old = await self._get_instance(id)
+        new = old.copy()
+        new.update(data)
+
+        verrors = ValidationErrors()
+        await self.__validate(verrors, new, 'iscsi_target_create', old=old)
+        if verrors:
+            raise verrors
+
+        await self.compress(new)
+        groups = data.pop('groups')
+
+        oldgroups = old.copy()
+        await self.compress(oldgroups)
+        oldgroups = oldgroups['groups']
+
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, id, new,
+            {'prefix': self._config.datastore_prefix})
+        await self.__save_groups(id, groups, oldgroups)
+
+        await self._service_change('iscsitarget', 'reload')
+
+        return await self._get_instance(id)
+
+    @accepts(Int('id'))
+    async def do_delete(self, id):
+        rv = await self.middleware.call(
+            'datastore.delete', self._config.datastore, id)
+        await self._service_change('iscsitarget', 'reload')
+        return rv
+
+    @private
+    async def compress(self, data):
+        data['mode'] = data['mode'].lower()
+        for group in data['groups']:
+            group['authmethod'] = AUTHMETHOD_LEGACY_MAP.inv.get(group.pop('authmethod'), 'NONE')
+        return data
+
+
+class iSCSITargetToExtentService(CRUDService):
+    class Config:
+        namespace = 'iscsi.targetextent'
+        datastore = 'services.iscsitargettoextent'
+        datastore_prefix = 'iscsi_'
+        datastore_extend = 'iscsi.targetextent.extend'
+
+    @accepts(Dict(
+        'iscsi_targetextent_create',
+        Int('target', required=True),
+        Int('lunid', default=0),
+        Int('extent', required=True),
+        register=True
+    ))
+    async def do_create(self, data):
+        verrors = ValidationErrors()
+
+        await self.validate(data, 'iscsi_targetextent_create', verrors)
+
+        data['id'] = await self.middleware.call(
+            'datastore.insert', self._config.datastore, data,
+            {'prefix': self._config.datastore_prefix})
+        await self.middleware.call('service.reload', 'iscsitarget')
+
+        return data
+
+    @accepts(
+        Int('id'),
+        Patch(
+            'iscsi_targetextent_create',
+            'iscsi_targetextent_update',
+            ('attr', {'update': True})
+        )
+    )
+    async def do_update(self, id, data):
+        verrors = ValidationErrors()
+        old = await self.middleware.call(
+            'datastore.query', self._config.datastore, [('id', '=', id)],
+            {'prefix': self._config.datastore_prefix,
+             'get': True})
+
+        new = old.copy()
+        new.update(data)
+
+        await self.validate(new, 'iscsi_targetextent_update', verrors, old)
+
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, id, new,
+            {'prefix': self._config.datastore_prefix})
+
+        await self.middleware.call('service.reload', 'iscsitarget')
+
+        return new
+
+    @accepts(Int('id'))
+    async def do_delete(self, id):
+        return await self.middleware.call(
+            'datastore.delete', self._config.datastore, id)
+
+    async def extend(self, data):
+        data['target'] = data['target']['id']
+        data['extent'] = data['extent']['id']
+
+        return data
+
+    @private
+    async def validate(self, data, schema_name, verrors, old=None):
+        if old is None:
+            old = {}
+
+        lunid = data['lunid']
+        old_lunid = old.get('lunid')
+        target = data['target']
+        old_target = old.get('target')
+        extent = data['extent']
+
+        lun_map_size = sysctl.filter('kern.cam.ctl.lun_map_size')[0].value
+
+        if lunid < 0 or lunid > lun_map_size - 1:
+            verrors.add(f'{schema_name}.lunid',
+                        'LUN ID must be a positive integer and lower than'
+                        f' {lun_map_size - 1}')
+
+        if lunid and target:
+            filters = [('lunid', '=', lunid), ('target', '=', target)]
+            result = await self.query(filters)
+
+            if old_lunid != lunid and result:
+                verrors.add(f'{schema_name}.lunid',
+                            'LUN ID is already being used for this target.'
+                            )
+
+        if target and extent:
+            filters = [('target', '=', target), ('extent', '=', extent)]
+            result = await self.query(filters)
+
+            if old_target != target and result:
+                verrors.add(f'{schema_name}.target',
+                            'Extent is already in this target.')

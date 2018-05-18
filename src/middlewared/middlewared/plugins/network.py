@@ -117,7 +117,7 @@ class NetworkConfigurationService(ConfigService):
             Str('domain', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
             List('domains', items=[Str('domains')]),
             IPAddr('ipv4gateway'),
-            IPAddr('ipv6gateway'),
+            IPAddr('ipv6gateway', allow_zone_index=True),
             IPAddr('nameserver1'),
             IPAddr('nameserver2'),
             IPAddr('nameserver3'),
@@ -540,7 +540,7 @@ class InterfacesService(Service):
                     'netmask': data['int_v6netmaskbit'],
                 }))
         else:
-            if data[ipv4_field]:
+            if data[ipv4_field] and not data['int_dhcp']:
                 addrs_database.add(self.alias_to_addr({
                     'address': data[ipv4_field],
                     'netmask': data['int_v4netmaskbit'],

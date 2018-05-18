@@ -60,7 +60,7 @@ def test_08_activate_bootenv03():
 
 # Delete tests
 def test_09_removing_a_boot_environment_02():
-    results = DELETE("/bootenv/id/bootenv02")
+    results = DELETE("/bootenv/id/bootenv02", None)
     assert results.status_code == 200, results.text
 
 
@@ -77,5 +77,5 @@ def test_11_activate_default():
 
 
 def test_12_removing_a_boot_environment_01():
-    results = DELETE("/bootenv/id/bootenv03")
+    results = DELETE("/bootenv/id/bootenv03", None)
     assert results.status_code == 200, results.text
