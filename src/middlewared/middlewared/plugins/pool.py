@@ -664,7 +664,7 @@ class PoolDatasetService(CRUDService):
             attr.enum.append('INHERIT')
         return {'name': name, 'method': add}
 
-    @accepts(Str('id'), Patch(
+    @accepts(Str('id', required=True), Patch(
         'pool_dataset_create', 'pool_dataset_update',
         ('rm', {'name': 'name'}),
         ('rm', {'name': 'type'}),
