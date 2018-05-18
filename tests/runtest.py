@@ -69,6 +69,11 @@ for output, arg in myopts:
         api = arg
         print(api)
 
+if 'ip' not in locals() and 'password' not in locals() and 'interface' not in locals():
+    print("Mandatory option missing!\n")
+    print(error_msg)
+    exit()
+
 if interface == "vtnet0":
     disk = 'disk1 = "vtbd1"\ndisk2 = "vtbd2"'
 else:
