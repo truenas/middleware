@@ -162,13 +162,15 @@ elif api == "2.0":
         'mail',
         'ftp',
         'ssh',
-        #'domaincontroller',
+        'domaincontroller',
+        'bootenv',
         'user',
         'group',
         'nfs',
         'lldp',
         'tunable',
         'system_general',
+        'afp',
     ):
         if testName is not None and testName != i:
             continue
