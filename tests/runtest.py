@@ -152,6 +152,7 @@ elif api == "2.0":
         'group',
         'nfs',
         'lldp',
+        'tunable'
     ):
         if testName is not None and testName != i:
             continue

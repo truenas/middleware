@@ -13,11 +13,11 @@ class TunableService(CRUDService):
 
     @accepts(Dict(
         'tunable_create',
-        Str('var'),
-        Str('value'),
-        Str('type', enum=['LOADER', 'RC', 'SYSCTL']),
+        Str('var', required=True),
+        Str('value', required=True),
+        Str('type', enum=['LOADER', 'RC', 'SYSCTL'], required=True),
         Str('comment'),
-        Bool('enabled'),
+        Bool('enabled', default=True),
         register=True
     ))
     async def do_create(self, data):
@@ -26,13 +26,15 @@ class TunableService(CRUDService):
         await self.lower(data)
 
         data['id'] = await self.middleware.call(
-            'datastore.insert', self._config.datastore, data,
-            {'prefix': self._config.datastore_prefix})
+            'datastore.insert',
+            self._config.datastore,
+            data,
+            {'prefix': self._config.datastore_prefix}
+        )
 
         await self.middleware.call('service.reload', data['type'])
-        await self.upper(data)
 
-        return data
+        return await self._get_instance(data['id'])
 
     @accepts(
         Int('id'),
@@ -43,34 +45,36 @@ class TunableService(CRUDService):
         )
     )
     async def do_update(self, id, data):
-        old = await self.middleware.call(
-            'datastore.query', self._config.datastore, [('id', '=', id)],
-            {'extend': self._config.datastore_extend,
-             'prefix': self._config.datastore_prefix,
-             'get': True})
+        old = await self._get_instance(id)
 
         new = old.copy()
         new.update(data)
 
-        await self.clean(data, 'tunable_update', old=old)
-        await self.validate(data, 'tunable_update')
+        await self.clean(new, 'tunable_update', old=old)
+        await self.validate(new, 'tunable_update')
 
-        await self.lower(data)
+        await self.lower(new)
 
         await self.middleware.call(
-            'datastore.update', self._config.datastore, id, data,
-            {'prefix': self._config.datastore_prefix})
+            'datastore.update',
+            self._config.datastore,
+            id,
+            new,
+            {'prefix': self._config.datastore_prefix}
+        )
 
-        await self.middleware.call('service.reload', data['type'].lower())
+        await self.middleware.call('service.reload', new['type'])
 
-        await self.upper(new)
-
-        return new
+        return await self._get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+
         return await self.middleware.call(
-            'datastore.delete', self._config.datastore, id)
+            'datastore.delete',
+            self._config.datastore,
+            id
+        )
 
     @private
     async def lower(self, data):
@@ -133,20 +137,11 @@ class TunableService(CRUDService):
         tun_type = tunable['type'].lower()
 
         if tun_type == 'loader' or tun_type == 'rc':
-            err_msg = """Variable name must:<br />
-1. Start with a letter.<br />
-2. End with a letter or number.<br />
-3. Can contain a combination of alphanumeric characters, numbers and/or
-\ underscores.
-"""
+            err_msg = "Value can start with a letter and end with an alphanumeric. Aphanumeric and underscore" \
+                      " characters are allowed"
         else:
-            err_msg = """Variable name must:<br />
-1. Start with a letter.<br />
-2. Contain at least one period.<br />
-3. End with a letter or number.<br />
-4. Can contain a combination of alphanumeric characters, numbers and/or
-\ underscores.
-"""
+            err_msg = 'Value can start with a letter and end with an alphanumeric. A period (.) once is a must.' \
+                      ' Alphanumeric and underscore characters are allowed'
 
         if (
             tun_type in ('loader', 'rc') and
@@ -155,7 +150,7 @@ class TunableService(CRUDService):
             tun_type == 'sysctl' and
             not sysctl_re.match(tun_var)
         ):
-            verrors.add(f"{schema_name}.value", err_msg)
+            verrors.add(f"{schema_name}.var", err_msg)
 
         if verrors:
             raise verrors
