@@ -142,6 +142,7 @@ def test__sharing_nfs_service__validate_hosts_and_networks__same_device_multiple
             },
             "sharingnfs_update",
             verrors,
+            {},
         )
 
         verrors.add.assert_called_once_with("sharingnfs_update.alldirs", ANY)
@@ -173,6 +174,7 @@ def test__sharing_nfs_service__validate_hosts_and_networks__can_share_twice():
             },
             "sharingnfs_update",
             verrors,
+            {},
         )
 
         assert not verrors.add.called
@@ -211,6 +213,7 @@ def test__sharing_nfs_service__validate_hosts_and_networks__cant_share_three_tim
             },
             "sharingnfs_update",
             verrors,
+            {},
         )
 
         verrors.add.assert_called_once_with("sharingnfs_update.networks.0", ANY)
@@ -242,6 +245,9 @@ def test__sharing_nfs_service__validate_hosts_and_networks__host_is_32_network()
             },
             "sharingnfs_update",
             verrors,
+            {
+                "192.168.0.1": "192.168.0.1",
+            },
         )
 
         verrors.add.assert_called_once_with("sharingnfs_update.hosts.0", ANY)

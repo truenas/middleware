@@ -1,4 +1,5 @@
 from collections import defaultdict
+import concurrent.futures
 import ipaddress
 import os
 import socket
@@ -6,6 +7,7 @@ import socket
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
 from middlewared.validators import Range
 from middlewared.service import private, CRUDService, SystemServiceService, ValidationErrors
+from middlewared.utils.asyncio_ import asyncio_map
 
 
 class NFSService(SystemServiceService):
@@ -200,8 +202,11 @@ class SharingNFSService(CRUDService):
         if old:
             filters.append(["id", "!=", old["id"]])
         other_shares = await self.middleware.call("sharing.nfs.query", filters)
+        dns_cache = await self.resolve_hostnames(
+            sum([share["hosts"] for share in other_shares], []) + data["hosts"]
+        )
         await self.middleware.run_in_io_thread(self.validate_hosts_and_networks, other_shares, data, schema_name,
-                                               verrors)
+                                               verrors, dns_cache)
 
         for k in ["maproot", "mapall"]:
             if not data[f"{k}_user"] and not data[f"{k}_group"]:
@@ -250,7 +255,25 @@ class SharingNFSService(CRUDService):
             verrors.add(f"{schema_name}.alldirs", "This option can only be used for datasets")
 
     @private
-    def validate_hosts_and_networks(self, other_shares, data, schema_name, verrors):
+    async def resolve_hostnames(self, hostnames):
+        hostnames = list(set(hostnames))
+
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=8)
+
+        async def resolve(hostname):
+            try:
+                return await self.middleware.loop.run_in_executor(executor, socket.gethostbyname, hostname)
+            except Exception as e:
+                self.logger.warning("Unable to resolve host %r: %e", hostname, e)
+                return None
+
+        resolved_hostnames = await asyncio_map(resolve, hostnames)
+        executor.shutdown()
+
+        return dict(zip(hostnames, resolved_hostnames))
+
+    @private
+    def validate_hosts_and_networks(self, other_shares, data, schema_name, verrors, dns_cache):
         dev = os.stat(data["paths"][0]).st_dev
 
         used_networks = defaultdict(lambda: 0)
@@ -263,10 +286,8 @@ class SharingNFSService(CRUDService):
 
             if share_dev == dev:
                 for host in share["hosts"]:
-                    try:
-                        host = socket.gethostbyname(host)
-                    except Exception:
-                        self.logger.warning("Unable to resolve host %r", host)
+                    host = dns_cache[host]
+                    if host is None:
                         continue
 
                     try:
@@ -290,9 +311,8 @@ class SharingNFSService(CRUDService):
                     verrors.add(f"{schema_name}.alldirs", "This option is only available once per mountpoint")
 
         for i, host in enumerate(data["hosts"]):
-            try:
-                host = socket.gethostbyname(host)
-            except Exception:
+            host = dns_cache[host]
+            if host is None:
                 verrors.add(f"{schema_name}.hosts.{i}", "Unable to resolve host")
                 continue
 
