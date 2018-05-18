@@ -23,6 +23,22 @@ pipeline {
     }
 
     stage('Checkout') {
+      environment {
+         REPO_OS_URL = 'git://10.20.21.137/os'
+         REPO_FREENAS_URL = 'git://10.20.21.137/freenas'
+         REPO_WEBUI_URL = 'git://10.20.21.137/webui'
+         REPO_MDNSRESPONDER_URL = 'git://10.20.21.137/mDNSResponder'
+         REPO_FREENAS_DOCS_URL = 'git://10.20.21.137/freenas-docs'
+         REPO_FREENAS_DOCS_LEGACY_URL = 'git://10.20.21.137/freenas-docs'
+         REPO_FREENAS_PKGTOOLS_URL = 'git://10.20.21.137/freenas-pkgtools'
+         REPO_PORTS_URL = 'git://10.20.21.137/ports'
+         REPO_SAMBA_URL = 'git://10.20.21.137/samba'
+         REPO_NETATALK_URL = 'git://10.20.21.137/Netatalk'
+         REPO_IX_INSTALLER_URL = 'git://10.20.21.137/ix-installer'
+         REPO_PY_LIBZFS_URL = 'git://10.20.21.137/py-libzfs'
+         REPO_PY_BSD_URL = 'git://10.20.21.137/py-bsd'
+         REPO_IOCAGE_URL = 'git://10.20.21.137/iocage'
+      }
       steps {
         echo '*** Performing make checkout ***'
         sh 'cd /freenas-pr && make checkout'
