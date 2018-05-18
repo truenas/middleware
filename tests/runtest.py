@@ -17,6 +17,16 @@ localHome = path.expanduser('~')
 dotsshPath = localHome + '/.ssh'
 keyPath = localHome + '/.ssh/test_id_rsa'
 
+ixautomationdotconfurl = "https://raw.githubusercontent.com/iXsystems/"
+ixautomationdotconfurl += "ixautomation/master/src/etc/ixautomation.conf.dist"
+config_file_msg = "Pleale add config.py to freenas/tests witch can be empty or"
+config_file_msg += "contain setting from %s" % ixautomationdotconfurl
+
+try:
+    import config
+except ImportError:
+    raise ImportError(config_file_msg)
+
 error_msg = """Usage for %s:
 Mandatory option
     --ip <###.###.###.###>     - IP of the FreeNAS
