@@ -45,6 +45,7 @@ pipeline {
         sh 'rm -rf /freenas-pr/freenas/_BE/freenas'
         sh 'mkdir -p /freenas-pr/freenas/_BE/freenas'
         sh 'tar cf - -C "${WORKSPACE}" . | tar xf - -C "/freenas-pr/freenas/_BE/freenas"'
+        sh '${WORKSPACE}/jenkins/Jenkins-depends.sh'
       }
     }
 
