@@ -72,7 +72,7 @@ get_depends()
      tproject=`echo $tgt | cut -d '/' -f 1`
      trepo=`echo $tgt | cut -d '/' -f 2`
      tbranch=`echo $tgt | cut -d '/' -f 3-`
-     tbranch=`echo $tbranch | sed 's|^tree/||g'`
+     tbranch=`echo $tbranch | sed 's|^tree/||g' | tr -d '\n\r' | tr -d '\n'`
 
      if [ -d "/freenas-pr/freenas/_BE/${trepo}" ] ; then
        rm -rf /freenas-pr/freenas/_BE/${trepo}
