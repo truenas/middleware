@@ -80,12 +80,14 @@ get_depends()
        echo "*** Warning, no such git repo currently checked out: $trepo***"
      fi
 
+     # TODO, maybe skip git and use fetch to download from githum ala:
+     # fetch https://github.com/freenas/os/archive/sef-icp-amd64-test.tar.gz
      echo "*** Cloning DEPENDS repo https://github.com/$tproject/$trepo $tbranch***"
      git clone --depth=1 -b ${tbranch} https://github.com/${tproject}/${trepo} /freenas-pr/freenas/_BE/${trepo} 2>/tmp/.ghClone.$$ >/tmp/.ghClone.$$
      if [ $? -ne 0 ] ; then
 	cat /tmp/.ghClone.$$
 	rm /tmp/.ghClone.$$
-	echo "**** ERROR: Failed to clone the repo https://github.com/$tproject/$trepo -b $tbranch****"
+	echo "**** ERROR: Failed: git clone --depth=1 -b $tbranch https://github.com/$tproject/$trepo /freenas-pr/freenas/_BE/${trepo} ****"
 	exit 1
      fi
      rm /tmp/.ghClone.$$
