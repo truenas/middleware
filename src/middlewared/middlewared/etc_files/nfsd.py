@@ -51,12 +51,9 @@ def build_share(config, share):
         if config["v4"] and share["security"]:
             result.append("-sec=" + ":".join([s.lower() for s in share["security"]]))
 
-        targets = build_share_targets(share)
+        result.extend(build_share_targets(share))
 
-        if targets:
-            result.extend(targets)
-
-            return " ".join(result)
+        return " ".join(result)
 
 
 def build_share_targets(share):

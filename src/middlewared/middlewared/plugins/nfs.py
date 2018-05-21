@@ -1,5 +1,4 @@
 import asyncio
-from collections import defaultdict
 import ipaddress
 import os
 import socket
@@ -187,9 +186,6 @@ class SharingNFSService(CRUDService):
 
         await self.middleware.run_in_io_thread(self.validate_paths, data, schema_name, verrors)
 
-        if not data["networks"] and not data["hosts"]:
-            verrors.add(f"{schema_name}.networks", "At least one host or network is required")
-
         filters = []
         if old:
             filters.append(["id", "!=", old["id"]])
@@ -299,6 +295,9 @@ class SharingNFSService(CRUDService):
                     else:
                         used_networks.add(network)
 
+                if not share["hosts"] and not share["networks"]:
+                    used_networks.add(ipaddress.IPv4Network("0.0.0.0/0"))
+
                 if share["alldirs"] and data["alldirs"]:
                     verrors.add(f"{schema_name}.alldirs", "This option is only available once per mountpoint")
 
@@ -335,6 +334,14 @@ class SharingNFSService(CRUDService):
                     had_explanation = True
 
             used_networks.add(network)
+
+        if not data["hosts"] and not data["networks"]:
+            if used_networks:
+                verrors.add(
+                    f"{schema_name}.networks",
+                    (f"You can't share same filesystem with all hosts twice" +
+                     ("" if had_explanation else explanation))
+                )
 
     @private
     async def extend(self, data):

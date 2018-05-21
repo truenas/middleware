@@ -187,7 +187,7 @@ def test__sharing_nfs_service__validate_hosts_and_networks__cant_share_overlappi
         ]
 
 
-def test__sharing_nfs_service__validate_hosts_and_networks__cant_share_overlapping_new ():
+def test__sharing_nfs_service__validate_hosts_and_networks__cant_share_overlapping_new():
     with patch("middlewared.plugins.nfs.os.stat", lambda dev: {
         "/mnt/data/a": Mock(st_dev=1),
         "/mnt/data/b": Mock(st_dev=1),
@@ -251,3 +251,71 @@ def test__sharing_nfs_service__validate_hosts_and_networks__host_is_32_network()
         )
 
         verrors.add.assert_called_once_with("sharingnfs_update.hosts.0", ANY)
+
+
+def test__sharing_nfs_service__validate_hosts_and_networks__new_for_everyone():
+    with patch("middlewared.plugins.nfs.os.stat", lambda dev: {
+        "/mnt/data/a": Mock(st_dev=1),
+        "/mnt/data/b": Mock(st_dev=1),
+    }[dev]):
+        middleware = Mock()
+
+        verrors = Mock()
+
+        SharingNFSService(middleware).validate_hosts_and_networks(
+            [
+                {
+                    "paths": ["/mnt/data/a"],
+                    "hosts": ["192.168.0.1"],
+                    "networks": [],
+                    "alldirs": False,
+                },
+            ],
+            {
+                "paths": ["/mnt/data/b"],
+                "hosts": [],
+                "networks": [],
+                "alldirs": False,
+            },
+            "sharingnfs_update",
+            verrors,
+            {
+                "192.168.0.1": "192.168.0.1",
+            },
+        )
+
+        verrors.add.assert_called_once_with("sharingnfs_update.networks", ANY)
+
+
+def test__sharing_nfs_service__validate_hosts_and_networks__existing_for_everyone():
+    with patch("middlewared.plugins.nfs.os.stat", lambda dev: {
+        "/mnt/data/a": Mock(st_dev=1),
+        "/mnt/data/b": Mock(st_dev=1),
+    }[dev]):
+        middleware = Mock()
+
+        verrors = Mock()
+
+        SharingNFSService(middleware).validate_hosts_and_networks(
+            [
+                {
+                    "paths": ["/mnt/data/a"],
+                    "hosts": [],
+                    "networks": [],
+                    "alldirs": False,
+                },
+            ],
+            {
+                "paths": ["/mnt/data/b"],
+                "hosts": [],
+                "networks": ["192.168.0.0/24"],
+                "alldirs": False,
+            },
+            "sharingnfs_update",
+            verrors,
+            {
+                "192.168.0.1": "192.168.0.1",
+            },
+        )
+
+        verrors.add.assert_called_once_with("sharingnfs_update.networks.0", ANY)

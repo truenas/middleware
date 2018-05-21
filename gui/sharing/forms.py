@@ -208,7 +208,7 @@ class NFS_ShareForm(MiddlewareModelForm, ModelForm):
             for i in range(int(self.data["path_set-TOTAL_FORMS"][0]))
             if self.data[f"path_set-{i}-path"] and not self.data.get(f"path_set-{i}-DELETE")
         ]
-        data["networks"] = data.pop("network").split() or ["0.0.0.0/0"]
+        data["networks"] = data.pop("network").split()
         data["hosts"] = data["hosts"].split()
         data["security"] = [s.upper() for s in data.get("security", [])]
 
