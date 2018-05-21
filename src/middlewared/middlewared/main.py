@@ -905,10 +905,10 @@ class Middleware(object):
     async def run_in_proc(self, method, *args, **kwargs):
         return await self.run_in_executor(self.__procpool, method, *args, **kwargs)
 
-    async def run_in_io_thread(self, method, *args):
+    async def run_in_io_thread(self, method, *args, **kwargs):
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
         try:
-            return await self.loop.run_in_executor(executor, method, *args)
+            return await self.loop.run_in_executor(executor, functools.partial(method, *args, **kwargs))
         finally:
             executor.shutdown(wait=False)
 
