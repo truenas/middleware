@@ -1145,14 +1145,6 @@ AFP_CHMOD_REQUEST_CHOICES = (
 )
 
 
-CLOUD_PROVIDERS = (
-    ('AMAZON', _('Amazon S3')),
-    ('AZURE', _('Azure Blob Storage')),
-    ('BACKBLAZE', _('Backblaze B2')),
-    ('GCLOUD', _('Google Cloud Storage')),
-)
-
-
 VM_BOOTLOADER = (
     # ('BHYVELOAD', _('Bhyve Load')),
     ('UEFI', _('UEFI')),

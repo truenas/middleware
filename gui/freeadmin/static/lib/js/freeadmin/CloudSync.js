@@ -60,7 +60,11 @@ define([
       initial: "",
       url: "",
       credentials: "",
+      buckets: {},
+      taskSchemas: {},
       templateString: template,
+      _buckets: null,
+      _folder: null,
       postCreate: function() {
 
         var me = this, credentials = [];
@@ -76,6 +80,8 @@ define([
 
         for(var i=0;i<credentials.length;i++) {
           creds.push({label: credentials[i][0], value: credentials[i][1]});
+          this.buckets[credentials[i][1]] = credentials[i][2];
+          this.taskSchemas[credentials[i][1]] = credentials[i][3];
         }
 
         if(!gettext) {
@@ -96,18 +102,26 @@ define([
         if(this.initial.credential) this._credential.set('value', this.initial.credential);
 
         on(this._credential, 'change', function(value) {
-          me.hideAll();
           if(value != '') {
-            me._showLoading();
-            Middleware.call(
-              'datastore.query', ['system.cloudcredentials', [['id', '=', value]], {get: true} ],
-              function(result) {
-                if(result.provider == 'AMAZON') me.showAmazon(result);
-                if(result.provider == 'AZURE') me.showAzure(result);
-                if(result.provider == 'BACKBLAZE') me.showBackblaze(result);
-                if(result.provider == 'GCLOUD') me.showGcloud(result);
-              }
-            );
+            if (me.buckets[value]) {
+              me._showLoading();
+              Middleware.call(
+                'cloudsync.list_buckets', [value],
+                function(result) {
+                  me._hideLoading();
+                  me.setupProviderAttributes(value, result);
+                },
+                function(error) {
+                  me._hideLoading();
+                  me.dapProviderError.innerHTML = "Error " + error.error + "<pre style='white-space: pre-wrap;'>" + entities.encode(error.reason) + "</pre>";
+                  domStyle.set(me.dapProviderError, "display", "");
+                }
+              )
+            } else {
+              me.setupProviderAttributes(value);
+            }
+          } else {
+            this.hideAll();
           }
         });
 
@@ -133,157 +147,83 @@ define([
       },
       hideAll: function() {
         domStyle.set(this.dapProviderError, "display", "none");
-        domStyle.set(this.dapAmazon, "display", "none");
-        domStyle.set(this.dapAzure, "display", "none");
-        domStyle.set(this.dapBackblaze, "display", "none");
-        domStyle.set(this.dapGcloud, "display", "none");
       },
-      showAmazon: function(credential) {
-        var me = this;
-        Middleware.call(
-          'backup.s3.get_buckets', [credential.id],
-          function(result) {
-            var options = [{label: "-----", value: ""}];
-            for(var i=0;i<result.length;i++) {
-              options.push({label: result[i].name, value: result[i].name});
-            }
-            domStyle.set(me.dapAmazon, "display", "table-row");
-            me._buckets = new Select({
+      setupProviderAttributes: function(credentialId, buckets) {
+        if (this.buckets[credentialId]) {
+          var options = [{label: "-----", value: ""}];
+          for(var i=0;i<buckets.length;i++) {
+            options.push({label: buckets[i].Name, value: buckets[i].Name});
+          }
+          domStyle.set(this.dapBucket, "display", "block");
+          if (this._buckets == null) {
+            this._buckets = new Select({
               name: "bucket",
               options: options,
               value: ''
-            }, me.dapAmazonBuckets);
-            if(me.initial.bucket) me._buckets.set('value', me.initial.bucket);
-
-            me._folder = new TextBox({
-              name: "folder"
-            }, me.dapAmazonFolder);
-            if(me.initial.folder) me._folder.set('value', me.initial.folder);
-
-            me._encryption = new Select({
-              name: "encryption",
-              options: [
-                {label: "None", value: ""},
-                {label: "AES-256", value: "AES256"},
-              ],
-              value: "",
-            }, me.dapAmazonEncryption);
-            if(me.initial.encryption) me._encryption.set('value', me.initial.encryption);
-
-            me._hideLoading();
-          },
-          function(err) {
-            me.dapProviderError.innerHTML = "Error " + err.error + "<pre style='white-space: pre-wrap;'>" + entities.encode(err.reason) + "</pre>";
-            domStyle.set(me.dapProviderError, "display", "");
-            me._hideLoading();
+            }, this.dapBuckets);
           }
-        );
-      },
-      showAzure: function(credential) {
-        var me = this;
-        Middleware.call(
-          'backup.azure.get_buckets', [credential.id],
-          function(result) {
-            var options = [{label: "-----", value: ""}];
-            for(var i=0;i<result.length;i++) {
-              options.push({label: result[i], value: result[i]});
+          this._buckets.set('options', options);
+          if(this.initial.bucket) this._buckets.set('value', this.initial.bucket);
+        } else {
+          domStyle.set(this.dapBucket, "display", "none");
+        }
+
+        if (this._folder == null) {
+          this._folder = new TextBox({
+            name: "folder"
+          }, this.dapFolder);
+        }
+        if(this.initial.folder) this._folder.set('value', this.initial.folder);
+
+        var html = "";
+        for (var i = 0; i < this.taskSchemas[credentialId].length; i++)
+        {
+            var property = this.taskSchemas[credentialId][i];
+
+            var id = "id_attributes_" + property.property;
+            var input = "<input type='text' id='" + id + "'>";
+            if (property.schema.enum)
+            {
+                input = "<select id='" + id + "'>";
+                for (var i = 0; i < property.schema.enum.length; i++)
+                {
+                    input += '<option>' + property.schema.enum[i] + '</option>';
+                }
+                input += '</select>';
             }
-            domStyle.set(me.dapAzure, "display", "table-row");
-            me._buckets = new Select({
-              name: "bucket",
-              options: options,
-              value: ''
-            }, me.dapAzureBuckets);
-            if(me.initial.bucket) me._buckets.set('value', me.initial.bucket);
 
-            me._folder = new TextBox({
-              name: "folder"
-            }, me.dapAzureFolder);
-            if(me.initial.folder) me._folder.set('value', me.initial.folder);
+            html += '<div style="margin-bottom: 5px;"><div>' + property.schema.title + '</div><div>' + input + '</div></div>';
+        }
+        this.dapEtc.innerHTML = html;
+        for (var i = 0; i < this.taskSchemas[credentialId].length; i++)
+        {
+            var property = this.taskSchemas[credentialId][i];
 
-            me._hideLoading();
-          },
-          function(err) {
-            me.dapProviderError.innerHTML = "Error " + err.error + "<pre style='white-space: pre-wrap;'>" + entities.encode(err.reason) + "</pre>";
-            domStyle.set(me.dapProviderError, "display", "");
-            me._hideLoading();
-          }
-        );
-      },
-      showBackblaze: function(credential) {
-        var me = this;
-        Middleware.call(
-          'backup.b2.get_buckets', [credential.id],
-          function(result) {
-            var options = [{label: "-----", value: ""}];
-            for(var i=0;i<result.length;i++) {
-              options.push({label: result[i].bucketName, value: result[i].bucketName});
-            }
-            domStyle.set(me.dapBackblaze, "display", "table-row");
-            me._buckets = new Select({
-              name: "bucket",
-              options: options,
-              value: ''
-            }, me.dapBackblazeBuckets);
-            if(me.initial.bucket) me._buckets.set('value', me.initial.bucket);
+            var id = "id_attributes_" + property.property;
 
-            me._folder = new TextBox({
-              name: "folder"
-            }, me.dapBackblazeFolder);
-            if(me.initial.folder) me._folder.set('value', me.initial.folder);
-
-            me._hideLoading();
-          },
-          function(err) {
-            me.dapProviderError.innerHTML = "Error " + err.error + "<pre style='white-space: pre-wrap;'>" + entities.encode(err.reason) + "</pre>";
-            domStyle.set(me.dapProviderError, "display", "");
-            me._hideLoading();
-          }
-        );
-      },
-      showGcloud: function(credential) {
-        var me = this;
-        Middleware.call(
-          'backup.gcs.get_buckets', [credential.id],
-          function(result) {
-            var options = [{label: "-----", value: ""}];
-            for(var i=0;i<result.length;i++) {
-              options.push({label: result[i].name, value: result[i].name});
-            }
-            domStyle.set(me.dapGcloud, "display", "table-row");
-            me._buckets = new Select({
-              name: "bucket",
-              options: options,
-              value: ''
-            }, me.dapGcloudBuckets);
-            if(me.initial.bucket) me._buckets.set('value', me.initial.bucket);
-
-            me._folder = new TextBox({
-              name: "folder"
-            }, me.dapGcloudFolder);
-            if(me.initial.folder) me._folder.set('value', me.initial.folder);
-
-            me._hideLoading();
-          },
-          function(err) {
-            me.dapProviderError.innerHTML = "Error " + err.error + "<pre style='white-space: pre-wrap;'>" + entities.encode(err.reason) + "</pre>";
-            domStyle.set(me.dapProviderError, "display", "");
-            me._hideLoading();
-          }
-        );
+            document.getElementById(id).value = this.initial[property.property];
+        }
       },
       _getValueAttr: function() {
         var value = {};
         if(this._credential) value['credential'] = this._credential.get('value');
-        if(this._buckets) value['bucket'] = this._buckets.get('value');
-        if(this._folder) value['folder'] = this._folder.get('value');
-        if(domStyle.get(this.dapAmazon, 'display') == 'table-row' && this._encryption) {
-          if(this._encryption.get('value') == '') {
-            value['encryption'] = null;
-          } else {
-            value['encryption'] = this._encryption.get('value');
+        if(value.credential) {
+          if (this.buckets[value.credential]) {
+            if(this._buckets) value['bucket'] = this._buckets.get('value');
           }
-         }
+          for (var i = 0; i < this.taskSchemas[value.credential].length; i++)
+          {
+            var property = this.taskSchemas[value.credential][i];
+            var id = "id_attributes_" + property.property;
+            if (document.getElementById(id)) {
+              value[property.property] = document.getElementById(id).value;
+              if (value[property.property] === "null") {
+                value[property.property] = null;
+              }
+            }
+          }
+        }
+        if(this._folder) value['folder'] = this._folder.get('value');
         return json.stringify(value);
       }
     });

@@ -30,6 +30,8 @@ from dojango.forms.widgets import DojoWidgetMixin
 
 import json
 
+from freenasUI.middleware.client import client
+
 
 class CloudSyncWidget(DojoWidgetMixin, Widget):
     dojo_type = 'freeadmin.CloudSync'
@@ -38,11 +40,15 @@ class CloudSyncWidget(DojoWidgetMixin, Widget):
         from freenasUI.system.models import CloudCredentials
         if value is None:
             value = ''
+        with client as c:
+            providers = c.call("cloudsync.providers")
+        buckets = {provider["name"]: provider["buckets"] for provider in providers}
+        task_schemas = {provider["name"]: provider["task_schema"] for provider in providers}
         extra_attrs = {
             'data-dojo-name': name,
             'data-dojo-props': mark_safe("credentials: '{}', initial: '{}'".format(
                 json.dumps([
-                    (str(i), i.id)
+                    (str(i), i.id, buckets[i.provider], task_schemas[i.provider])
                     for i in CloudCredentials.objects.all()
                 ]),
                 json.dumps(value),

@@ -1886,7 +1886,7 @@ class CloudSyncResourceMixin(NestedMixin):
     def dispatch_list(self, request, **kwargs):
         with client as c:
             self.__jobs = {}
-            for job in c.call('core.get_jobs', [('method', '=', 'backup.sync')], {'order_by': ['id']}):
+            for job in c.call('core.get_jobs', [('method', '=', 'cloudsync.sync')], {'order_by': ['id']}):
                 if job['arguments']:
                     if job['arguments'][0] in self.__jobs and self.__jobs[job['arguments'][0]]['state'] == 'RUNNING':
                         continue
