@@ -60,6 +60,9 @@ class EtcService(Service):
         'network': [
             {'type': 'mako', 'path': 'dhclient.conf'},
         ],
+        'nfsd': [
+            {'type': 'py', 'path': 'nfsd'},
+        ],
         'nss': [
             {'type': 'mako', 'path': 'nsswitch.conf'},
             {'type': 'mako', 'path': 'local/nss_ldap.conf'},

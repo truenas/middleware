@@ -179,7 +179,30 @@ class IPAddr(Str):
     def __init__(self, *args, **kwargs):
         self.cidr = kwargs.pop('cidr', False)
         self.cidr_strict = kwargs.pop('cidr_strict', False)
+
+        self.v4 = kwargs.pop('v4', True)
+        self.v6 = kwargs.pop('v6', True)
+
+        if self.v4 and self.v6:
+            if self.cidr:
+                self.factory = ipaddress.ip_network
+            else:
+                self.factory = ipaddress.ip_address
+        elif self.v4:
+            if self.cidr:
+                self.factory = ipaddress.IPv4Network
+            else:
+                self.factory = ipaddress.IPv4Address
+        elif self.v6:
+            if self.cidr:
+                self.factory = ipaddress.IPv6Network
+            else:
+                self.factory = ipaddress.IPv6Address
+        else:
+            raise ValueError("Either IPv4 or IPv6 should be allowed")
+
         self.allow_zone_index = kwargs.pop('allow_zone_index', False)
+
         super(IPAddr, self).__init__(*args, **kwargs)
 
     def validate(self, value):
@@ -188,14 +211,14 @@ class IPAddr(Str):
         if value:
             try:
                 if self.cidr:
-                    ipaddress.ip_network(value, strict=self.cidr_strict)
+                    self.factory(value, strict=self.cidr_strict)
                 else:
                     has_zone_index = False
                     if self.allow_zone_index and "%" in value:
                         has_zone_index = True
                         value = value[:value.rindex("%")]
 
-                    addr = ipaddress.ip_address(value)
+                    addr = self.factory(value)
 
                     if has_zone_index and not isinstance(addr, ipaddress.IPv6Address):
                         raise ValueError("Zone index is allowed only for IPv6 addresses")
