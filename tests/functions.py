@@ -4,7 +4,7 @@
 # License: BSD
 
 import requests
-from auto_config import freenas_url, user, password
+from auto_config import default_api_url, api1_url, api2_url, user, password
 import json
 import os
 from subprocess import run, Popen, PIPE
@@ -16,8 +16,18 @@ global authentification
 authentification = (user, password)
 
 
-def GET(testpath):
-    getit = requests.get(freenas_url + testpath, headers=header,
+def GET(testpath, **optional):
+    if "api" in optional:
+        api_v = optional.get('api', None)
+        if api_v == "1":
+            api_url = api1_url
+        elif api_v == "2":
+            api_url = api2_url
+        else:
+            raise ValueError('api parameter should be "1" or "2"')
+    else:
+        api_url = default_api_url
+    getit = requests.get(api_url + testpath, headers=header,
                          auth=authentification)
     return getit
 
@@ -31,54 +41,114 @@ def GET_USER(username):
     return userid
 
 
-def POST(testpath, payload):
+def POST(testpath, payload, **optional):
+    if "api" in optional:
+        api_v = optional.get('api', None)
+        if api_v == "1":
+            api_url = api1_url
+        elif api_v == "2":
+            api_url = api2_url
+        else:
+            raise ValueError('api parameter should be "1" or "2"')
+    else:
+        api_url = default_api_url
     if payload is None:
-        postit = requests.post(freenas_url + testpath, headers=header,
+        postit = requests.post(api_url + testpath, headers=header,
                                auth=authentification)
     else:
-        postit = requests.post(freenas_url + testpath, headers=header,
+        postit = requests.post(api_url + testpath, headers=header,
                                auth=authentification, data=json.dumps(payload))
     return postit
 
 
-def POST_TIMEOUT(testpath, payload, timeOut):
+def POST_TIMEOUT(testpath, payload, timeOut, **optional):
+    if "api" in optional:
+        api_v = optional.get('api', None)
+        if api_v == "1":
+            api_url = api1_url
+        elif api_v == "2":
+            api_url = api2_url
+        else:
+            raise ValueError('api parameter should be "1" or "2"')
+    else:
+        api_url = default_api_url
     if payload is None:
-        postit = requests.post(freenas_url + testpath, headers=header,
+        postit = requests.post(api_url + testpath, headers=header,
                                auth=authentification, timeout=timeOut)
     else:
-        postit = requests.post(freenas_url + testpath, headers=header,
+        postit = requests.post(api_url + testpath, headers=header,
                                auth=authentification, data=json.dumps(payload),
                                timeout=timeOut)
     return postit
 
 
-def POSTNOJSON(testpath, payload):
-    postit = requests.post(freenas_url + testpath, headers=header,
+def POSTNOJSON(testpath, payload, **optional):
+    if "api" in optional:
+        api_v = optional.get('api', None)
+        if api_v == "1":
+            api_url = api1_url
+        elif api_v == "2":
+            api_url = api2_url
+        else:
+            raise ValueError('api parameter should be "1" or "2"')
+    else:
+        api_url = default_api_url
+    postit = requests.post(api_url + testpath, headers=header,
                            auth=authentification, data=payload)
     return postit
 
 
-def PUT(testpath, payload):
-    putit = requests.put(freenas_url + testpath, headers=header,
+def PUT(testpath, payload, **optional):
+    if "api" in optional:
+        api_v = optional.get('api', None)
+        if api_v == "1":
+            api_url = api1_url
+        elif api_v == "2":
+            api_url = api2_url
+        else:
+            raise ValueError('api parameter should be "1" or "2"')
+    else:
+        api_url = default_api_url
+    putit = requests.put(api_url + testpath, headers=header,
                          auth=authentification, data=json.dumps(payload))
     return putit
 
 
-def PUT_TIMEOUT(testpath, payload, timeOut):
-    putit = requests.put(freenas_url + testpath, headers=header,
+def PUT_TIMEOUT(testpath, payload, timeOut, **optional):
+    if "api" in optional:
+        api_v = optional.get('api', None)
+        if api_v == "1":
+            api_url = api1_url
+        elif api_v == "2":
+            api_url = api2_url
+        else:
+            raise ValueError('api parameter should be "1" or "2"')
+    else:
+        api_url = default_api_url
+    putit = requests.put(api_url + testpath, headers=header,
                          auth=authentification, data=json.dumps(payload),
                          timeout=timeOut)
     return putit
 
 
-def DELETE(testpath, payload):
+def DELETE(testpath, payload, **optional):
+    if "api" in optional:
+        api_v = optional.get('api', None)
+        if api_v == "1":
+            api_url = api1_url
+        elif api_v == "2":
+            api_url = api2_url
+        else:
+            raise ValueError('api parameter should be "1" or "2"')
+    else:
+        api_url = default_api_url
     if payload is None:
         pass
-        deleteit = requests.delete(freenas_url + testpath, headers=header,
+        deleteit = requests.delete(api_url + testpath, headers=header,
                                    auth=authentification)
         return deleteit
     else:
-        deleteit = requests.delete(freenas_url + testpath, headers=header,
+        deleteit = requests.delete(api_url + testpath, headers=header,
                                    auth=authentification,
                                    data=json.dumps(payload))
     return deleteit
