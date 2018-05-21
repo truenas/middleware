@@ -1,22 +1,12 @@
-from collections import defaultdict
-import ipaddress
 import logging
 import os
-import re
 
 from middlewared.utils import run
 
 logger = logging.getLogger(__name__)
 
-IP_REGEX = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
-
-HOSTNAME_REGEX = ("^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*"
-                  "([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
-
 
 async def get_exports(config, shares, kerberos_keytabs):
-    networks_pool = defaultdict(lambda: defaultdict(lambda: 0))
-
     result = []
 
     if config["v4"]:
@@ -27,14 +17,14 @@ async def get_exports(config, shares, kerberos_keytabs):
 
     for share in shares:
         if share["paths"]:
-            share = build_share(config, share, networks_pool)
+            share = build_share(config, share)
             if share:
                 result.append(share)
 
     return "\n".join(result) + "\n"
 
 
-def build_share(config, share, networks_pool):
+def build_share(config, share):
     if share["paths"]:
         result = list(share["paths"])
 
@@ -61,7 +51,7 @@ def build_share(config, share, networks_pool):
         if config["v4"] and share["security"]:
             result.append("-sec=" + ":".join([s.lower() for s in share["security"]]))
 
-        targets = build_share_targets(share, networks_pool)
+        targets = build_share_targets(share)
 
         if targets:
             result.extend(targets)
@@ -69,45 +59,14 @@ def build_share(config, share, networks_pool):
             return " ".join(result)
 
 
-def build_share_targets(share, networks_pool):
+def build_share_targets(share):
     result = []
 
-    try:
-        dev = os.stat(share["paths"][0]).st_dev
-    except Exception as e:
-        logger.warning("Unable to stat {share['paths'][0]:r}: {e}")
-    else:
-        for network in share["networks"]:
-            try:
-                network = ipaddress.IPv4Network(network, strict=False)
-            except Exception as e:
-                logger.warning(f"Invalid network: {network} ({e})")
-            else:
-                inc = networks_pool[dev][network]
-                networks_pool[dev][network] += 1
-                if networks_pool[dev][network] > 2 ** (32 - network.prefixlen):
-                    logger.warning(f"No space for network {network} on path {share['paths'][0]}")
-                    continue
+    for network in share["networks"]:
+        result.append("-network " + network)
 
-                result.append("-network " + str(network.network_address + inc) + "/" + str(network.prefixlen))
-
-        for host in share["hosts"]:
-            if re.match(HOSTNAME_REGEX, host) and not re.match(IP_REGEX, host):
-                result.append(host)
-                continue
-
-            try:
-                network = ipaddress.IPv4Network(f"{host}/32")
-            except Exception as e:
-                logger.warning(f"Invalid IP address: {host} ({e})")
-            else:
-                networks_pool[dev][network] += 1
-                if networks_pool[dev][network] > 1:
-                    logger.warning(f"No space for host {host} on path {share['paths'][0]}")
-                    continue
-
-                networks_pool[dev][network] += 1
-                result.append(host)
+    for host in share["hosts"]:
+        result.append(host)
 
     return result
 

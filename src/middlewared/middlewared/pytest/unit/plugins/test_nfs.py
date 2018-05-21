@@ -1,4 +1,4 @@
-from mock import ANY, Mock, patch
+from mock import ANY, Mock, call, patch
 
 from middlewared.plugins.nfs import SharingNFSService
 
@@ -148,7 +148,7 @@ def test__sharing_nfs_service__validate_hosts_and_networks__same_device_multiple
         verrors.add.assert_called_once_with("sharingnfs_update.alldirs", ANY)
 
 
-def test__sharing_nfs_service__validate_hosts_and_networks__can_share_twice():
+def test__sharing_nfs_service__validate_hosts_and_networks__cant_share_overlapping():
     with patch("middlewared.plugins.nfs.os.stat", lambda dev: {
         "/mnt/data/a": Mock(st_dev=1),
         "/mnt/data/b": Mock(st_dev=1),
@@ -162,14 +162,14 @@ def test__sharing_nfs_service__validate_hosts_and_networks__can_share_twice():
                 {
                     "paths": ["/mnt/data/a"],
                     "hosts": [],
-                    "networks": ["192.168.100.0/31"],
+                    "networks": ["192.168.100.0/24"],
                     "alldirs": False,
                 }
             ],
             {
                 "paths": ["/mnt/data/b"],
                 "hosts": [],
-                "networks": ["192.168.100.0/31"],
+                "networks": ["192.168.100.0/25", "192.168.100.128/25"],
                 "alldirs": False,
             },
             "sharingnfs_update",
@@ -177,14 +177,20 @@ def test__sharing_nfs_service__validate_hosts_and_networks__can_share_twice():
             {},
         )
 
-        assert not verrors.add.called
+        assert verrors.add.call_args_list == [
+            call('sharingnfs_update.networks.0',
+                 "You can't share same filesystem with overlapping networks 192.168.100.0/25 and 192.168.100.0/24. "
+                 "This is so because /etc/exports does not act like ACL and it is undefined which rule among all "
+                 "overlapping networks will be applied."),
+            call('sharingnfs_update.networks.1',
+                 "You can't share same filesystem with overlapping networks 192.168.100.128/25 and 192.168.100.0/24")
+        ]
 
 
-def test__sharing_nfs_service__validate_hosts_and_networks__cant_share_three_times():
+def test__sharing_nfs_service__validate_hosts_and_networks__cant_share_overlapping_new ():
     with patch("middlewared.plugins.nfs.os.stat", lambda dev: {
         "/mnt/data/a": Mock(st_dev=1),
         "/mnt/data/b": Mock(st_dev=1),
-        "/mnt/data/c": Mock(st_dev=1),
     }[dev]):
         middleware = Mock()
 
@@ -195,20 +201,14 @@ def test__sharing_nfs_service__validate_hosts_and_networks__cant_share_three_tim
                 {
                     "paths": ["/mnt/data/a"],
                     "hosts": [],
-                    "networks": ["192.168.100.0/31"],
-                    "alldirs": False,
-                },
-                {
-                    "paths": ["/mnt/data/c"],
-                    "hosts": [],
-                    "networks": ["192.168.100.0/31"],
+                    "networks": ["192.168.100.0/24"],
                     "alldirs": False,
                 }
             ],
             {
                 "paths": ["/mnt/data/b"],
                 "hosts": [],
-                "networks": ["192.168.100.0/31"],
+                "networks": ["192.168.200.0/24", "192.168.200.0/25"],
                 "alldirs": False,
             },
             "sharingnfs_update",
@@ -216,7 +216,7 @@ def test__sharing_nfs_service__validate_hosts_and_networks__cant_share_three_tim
             {},
         )
 
-        verrors.add.assert_called_once_with("sharingnfs_update.networks.0", ANY)
+        verrors.add.assert_called_once_with("sharingnfs_update.networks.1", ANY)
 
 
 def test__sharing_nfs_service__validate_hosts_and_networks__host_is_32_network():

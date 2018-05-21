@@ -187,16 +187,8 @@ class SharingNFSService(CRUDService):
 
         await self.middleware.run_in_io_thread(self.validate_paths, data, schema_name, verrors)
 
-        if not data["networks"]:
-            verrors.add(f"{schema_name}.networks", "At least one network is required")
-
-        for i, network1 in enumerate(data["networks"]):
-            network1 = ipaddress.IPv4Network(network1, strict=False)
-            for j, network2 in enumerate(data["networks"]):
-                if j > i:
-                    network2 = ipaddress.IPv4Network(network2, strict=False)
-                    if network1.overlaps(network2):
-                        verrors.add(f"{schema_name}.network.{j}", "Networks {network1} and {network2} overlap")
+        if not data["networks"] and not data["hosts"]:
+            verrors.add(f"{schema_name}.networks", "At least one host or network is required")
 
         filters = []
         if old:
@@ -271,9 +263,12 @@ class SharingNFSService(CRUDService):
 
     @private
     def validate_hosts_and_networks(self, other_shares, data, schema_name, verrors, dns_cache):
+        explanation = (". This is so because /etc/exports does not act like ACL and it is undefined which rule among "
+                       "all overlapping networks will be applied.")
+
         dev = os.stat(data["paths"][0]).st_dev
 
-        used_networks = defaultdict(lambda: 0)
+        used_networks = set()
         for share in other_shares:
             try:
                 share_dev = os.stat(share["paths"][0]).st_dev
@@ -293,7 +288,7 @@ class SharingNFSService(CRUDService):
                         self.logger.warning("Got invalid host %r", host)
                         continue
                     else:
-                        used_networks[network] += 1
+                        used_networks.add(network)
 
                 for network in share["networks"]:
                     try:
@@ -302,11 +297,12 @@ class SharingNFSService(CRUDService):
                         self.logger.warning("Got invalid network %r", network)
                         continue
                     else:
-                        used_networks[network] += 1
+                        used_networks.add(network)
 
                 if share["alldirs"] and data["alldirs"]:
                     verrors.add(f"{schema_name}.alldirs", "This option is only available once per mountpoint")
 
+        had_explanation = False
         for i, host in enumerate(data["hosts"]):
             host = dns_cache[host]
             if host is None:
@@ -314,21 +310,31 @@ class SharingNFSService(CRUDService):
                 continue
 
             network = ipaddress.IPv4Network(f"{host}/32")
-            used_networks[network] += 1
+            for another_network in used_networks:
+                if network.overlaps(another_network):
+                    verrors.add(
+                        f"{schema_name}.hosts.{i}",
+                        (f"You can't share same filesystem with overlapping networks {network} and {another_network}" +
+                         ("" if had_explanation else explanation))
+                    )
+                    had_explanation = True
 
-            if used_networks[network] > 1:
-                verrors.add(f"{schema_name}.hosts.{i}",
-                            "You can't share same filesystem with same host more than once")
+            used_networks.add(network)
 
+        had_explanation = False
         for i, network in enumerate(data["networks"]):
             network = ipaddress.IPv4Network(network, strict=False)
-            used_networks[network] += 1
 
-            count = 2 ** (32 - network.prefixlen)
-            if used_networks[network] > count:
-                verrors.add(f"{schema_name}.networks.{i}",
-                            f"You can't share same filesystem with same /{network.prefixlen} network more than "
-                            f"{count} times")
+            for another_network in used_networks:
+                if network.overlaps(another_network):
+                    verrors.add(
+                        f"{schema_name}.networks.{i}",
+                        (f"You can't share same filesystem with overlapping networks {network} and {another_network}" +
+                         ("" if had_explanation else explanation))
+                    )
+                    had_explanation = True
+
+            used_networks.add(network)
 
     @private
     async def extend(self, data):
