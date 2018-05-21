@@ -486,10 +486,10 @@ class NFS_ShareForm(ModelForm):
             valid = False
 
         networks = self.cleaned_data.get("nfs_network", "")
-        if not networks:
+        if not networks and not self.cleaned_data.get("nfs_hosts"):
             networks = ['0.0.0.0/0']
         else:
-            networks = networks.split(" ")
+            networks = networks.split()
 
         qs = models.NFS_Share.objects.all()
         if self.instance.id:
@@ -505,7 +505,7 @@ class NFS_ShareForm(ModelForm):
                 used_networks.extend(
                     [(y, stdev) for y in share.nfs_network.split(" ")]
                 )
-            else:
+            elif not share.nfs_hosts:
                 used_networks.append(('0.0.0.0/0', stdev))
             if (self.cleaned_data.get("nfs_alldirs") and share.nfs_alldirs
                     and stdev == dev):
