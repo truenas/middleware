@@ -9,6 +9,8 @@ import types
 
 from .client import ejson as json
 from .job import Job
+from .schema import Error as SchemaError
+from .service import CallError, ValidationError, ValidationErrors
 
 
 async def authenticate(middleware, req):
@@ -482,7 +484,25 @@ class Resource(object):
         if method.get('item_method') is True:
             method_args.insert(0, kwargs['id'])
 
-        result = await self.middleware.call(methodname, *method_args)
+        try:
+            result = await self.middleware.call(methodname, *method_args)
+        except CallError as e:
+            resp = web.Response(status=400)
+            result = {
+                'message': e.errmsg,
+                'errno': e.errno,
+            }
+        except (SchemaError, ValidationError, ValidationErrors) as e:
+            if isinstance(e, (SchemaError, ValidationError)):
+                e = [(e.attribute, e.errmsg, e.errno)]
+            result = defaultdict(list)
+            for attr, errmsg, errno in e:
+                result[attr].append({
+                    'message': errmsg,
+                    'errno': errno,
+                })
+            resp = web.Response(status=422)
+
         if isinstance(result, types.GeneratorType):
             result = list(result)
         elif isinstance(result, types.AsyncGeneratorType):
