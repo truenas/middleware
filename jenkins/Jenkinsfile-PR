@@ -89,7 +89,7 @@ pipeline {
       steps {
         echo '*** Staging the update ***'
         unstash 'upgrade'
-        sh 'cd /root/freenas-release && ./release-fn-pr.sh ${WORKSPACE}'
+        sh 'cd /root/freenas-update && ./release-fn-pr.sh ${WORKSPACE}'
       }
     }
   }
