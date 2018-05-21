@@ -489,7 +489,7 @@ class NFS_ShareForm(ModelForm):
         if not networks and not self.cleaned_data.get("nfs_hosts"):
             networks = ['0.0.0.0/0']
         else:
-            networks = networks.split(" ")
+            networks = networks.split()
 
         qs = models.NFS_Share.objects.all()
         if self.instance.id:
