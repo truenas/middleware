@@ -486,7 +486,7 @@ class NFS_ShareForm(ModelForm):
             valid = False
 
         networks = self.cleaned_data.get("nfs_network", "")
-        if not networks:
+        if not networks and not self.cleaned_data.get("nfs_hosts"):
             networks = ['0.0.0.0/0']
         else:
             networks = networks.split(" ")
@@ -518,14 +518,11 @@ class NFS_ShareForm(ModelForm):
         for network in networks:
             networkobj = IPNetwork(network)
             for unetwork, ustdev in used_networks:
-                if share.nfs_network:
-                    break
-                else
-                    try:
-                        unetworkobj = IPNetwork(unetwork)
-                    except Exception:
-                        # If for some reason other values in db are not valid networks
-                        unetworkobj = IPNetwork('0.0.0.0/0')
+                try:
+                    unetworkobj = IPNetwork(unetwork)
+                except Exception:
+                    # If for some reason other values in db are not valid networks
+                    unetworkobj = IPNetwork('0.0.0.0/0')
                 if networkobj.overlaps(unetworkobj) and dev == ustdev:
                     self._errors['nfs_network'] = self.error_class([
                         _("The network %s is already being shared and cannot "
