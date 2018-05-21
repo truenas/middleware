@@ -65,10 +65,31 @@ pipeline {
           sh 'mv /freenas-pr/freenas/_BE/objs/ports/data/logs/bulk ${WORKSPACE}/artifacts/port-logs || true'
           archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
         }
+	success {
+	  stash includes: 'artifacts/**', name: 'upgrade'
+        }
       }
       steps {
         echo '*** Performing make release ***'
-        sh 'cd /freenas-pr && make release TRAIN=freenas-pr'
+        sh 'cd /freenas-pr && make release TRAIN=freenas-pr-${$CHANGE_ID}'
+      }
+    }
+
+    stage('Update Stage') {
+      post {
+        always {
+          script {
+            cleanWs notFailBuild: true
+          }
+        }
+      }
+      agent {
+        label 'FreeNAS-Update'
+      }
+      steps {
+        echo '*** Staging the update ***'
+        unstash 'upgrade'
+        sh 'cd /root/freenas-release && ./release-fn-pr.sh ${WORKSPACE}'
       }
     }
   }
