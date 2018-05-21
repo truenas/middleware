@@ -71,7 +71,7 @@ pipeline {
       }
       steps {
         echo '*** Performing make release ***'
-        sh 'cd /freenas-pr && make release TRAIN=freenas-pr-${$CHANGE_ID}'
+        sh 'cd /freenas-pr && make release TRAIN=freenas-pr-${CHANGE_ID}'
       }
     }
 
