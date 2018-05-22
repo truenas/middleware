@@ -749,10 +749,6 @@ class Disk(Model):
         blank=True
     )
 
-    def __init__(self, *args, **kwargs):
-        super(Disk, self).__init__(*args, **kwargs)
-        self._original_state = dict(self.__dict__)
-
     def identifier_to_device(self):
         """
         Get the corresponding device name from disk_identifier field

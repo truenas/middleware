@@ -63,6 +63,8 @@ class DiskService(CRUDService):
             'notifier.pwenc_decrypt',
             disk['passwd']
         )
+        for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
+            disk[key] = disk[key].upper()
         return disk
 
     @accepts(
@@ -71,16 +73,16 @@ class DiskService(CRUDService):
             'disk_update',
             Bool('togglesmart'),
             Str('acousticlevel', enum=[
-                'Disabled', 'Minimum', 'Medium', 'Maximum'
+                'DISABLED', 'MINIMUM', 'MEDIUM', 'MAXIMUM'
             ]),
             Str('advpowermgmt', enum=[
-                'Disabled', '1', '64', '127', '128', '192', '254'
+                'DISABLED', '1', '64', '127', '128', '192', '254'
             ]),
             Str('description'),
             Str('hddstandby', enum=[
-                'Always On', '5', '10', '20', '30', '60', '120', '180', '240', '300', '330'
+                'ALWAYS ON', '5', '10', '20', '30', '60', '120', '180', '240', '300', '330'
             ]),
-            Str('passwd'),
+            Str('passwd', password=True),
             Str('smartoptions'),
             register=True
         )
@@ -102,6 +104,9 @@ class DiskService(CRUDService):
                 'notifier.pwenc_encrypt',
                 new['passwd']
             )
+
+        for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
+            new[key] = new[key].title()
 
         await self.middleware.call(
             'datastore.update',

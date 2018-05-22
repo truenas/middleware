@@ -1079,8 +1079,6 @@ class DiskFormPartial(MiddlewareModelForm, ModelForm):
         return password2
 
     def clean(self):
-        # TODO: RIGHT NOW THERE IS NO WAY THE USER CAN REMOVE THE PASSWORD HE/SHE HAS SET. WE MAKE SURE OF THAT HERE.
-        # SHOULD THIS BE CHANGED ?
         cdata = self.cleaned_data
         if not cdata.get("disk_passwd"):
             cdata['disk_passwd'] = self.instance.disk_passwd
@@ -1091,6 +1089,9 @@ class DiskFormPartial(MiddlewareModelForm, ModelForm):
         data.pop('name')
         data.pop('passwd2', None)
         data.pop('serial')
+        for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
+            if data.get(key):
+                data[key] = data[key].upper()
         return data
 
 
@@ -1158,23 +1159,26 @@ class DiskEditBulkForm(Form):
             self.fields[key].initial = val
 
     def save(self):
-        for disk in self._disks:
+        data = {
+            # This is not a choice field, an empty value should reset all
+            'smartoptions': self.cleaned_data.get('disk_smartoptions'),
+            'togglesmart': self.cleaned_data.get('disk_togglesmart')
+        }
 
-            for opt in (
+        for opt in (
                 'disk_hddstandby',
                 'disk_advpowermgmt',
                 'disk_acousticlevel',
-            ):
-                if self.cleaned_data.get(opt):
-                    setattr(disk, opt, self.cleaned_data.get(opt))
+        ):
+            if self.cleaned_data.get(opt):
+                data[opt[5:]] = self.cleaned_data.get(opt).upper()
 
-            disk.disk_togglesmart = self.cleaned_data.get(
-                "disk_togglesmart")
-            # This is not a choice field, an empty value should reset all
-            disk.disk_smartoptions = self.cleaned_data.get(
-                "disk_smartoptions")
-            disk.save()
-        return self._disks
+        primary_keys = [str(d.pk) for d in self._disks]
+
+        with client as c:
+            c.call('core.bulk', 'disk.update', [[key, data] for key in primary_keys], job=True)
+
+        return models.Disk.objects.filter(pk__in=primary_keys)
 
 
 class ZFSDatasetCommonForm(Form):
