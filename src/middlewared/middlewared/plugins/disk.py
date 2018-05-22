@@ -15,7 +15,7 @@ from bsd import geom, getswapinfo
 
 from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import get_smartctl_args
-from middlewared.schema import accepts, Dict, List, Bool, Str
+from middlewared.schema import accepts, Bool, Dict, List, Str
 from middlewared.service import filterable, job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
@@ -40,6 +40,11 @@ RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
 
 class DiskService(CRUDService):
 
+    class Config:
+        datastore = 'storage.disk'
+        datastore_prefix = 'disk_'
+        datastore_extend = 'disk.disk_extend'
+
     @filterable
     async def query(self, filters=None, options=None):
         if filters is None:
@@ -52,9 +57,84 @@ class DiskService(CRUDService):
         return await self.middleware.call('datastore.query', 'storage.disk', filters, options)
 
     @private
-    def disk_extend(self, disk):
+    async def disk_extend(self, disk):
         disk.pop('enabled', None)
+        disk['passwd'] = await self.middleware.call(
+            'notifier.pwenc_decrypt',
+            disk['passwd']
+        )
+        for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
+            disk[key] = disk[key].upper()
         return disk
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'disk_update',
+            Bool('togglesmart'),
+            Str('acousticlevel', enum=[
+                'DISABLED', 'MINIMUM', 'MEDIUM', 'MAXIMUM'
+            ]),
+            Str('advpowermgmt', enum=[
+                'DISABLED', '1', '64', '127', '128', '192', '254'
+            ]),
+            Str('description'),
+            Str('hddstandby', enum=[
+                'ALWAYS ON', '5', '10', '20', '30', '60', '120', '180', '240', '300', '330'
+            ]),
+            Str('passwd', password=True),
+            Str('smartoptions'),
+            register=True
+        )
+    )
+    async def do_update(self, id, data):
+
+        old = await self.middleware.call(
+            'datastore.query',
+            self._config.datastore,
+            [('identifier', '=', id)],
+            {'prefix': self._config.datastore_prefix, 'get': True}
+        )
+        old.pop('enabled', None)
+        new = old.copy()
+        new.update(data)
+
+        if old['passwd'] != new['passwd']:
+            new['passwd'] = await self.middleware.call(
+                'notifier.pwenc_encrypt',
+                new['passwd']
+            )
+
+        for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
+            new[key] = new[key].title()
+
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            id,
+            new,
+            {'prefix': self._config.datastore_prefix}
+        )
+
+        if any(new[key] != old[key] for key in ['hddstandby', 'advpowermgmt', 'acousticlevel']):
+            await self.middleware.call('notifier.start_ataidle', new['name'])
+
+        if any(new[key] != old[key] for key in ['togglesmart', 'smartoptions']):
+
+            if new['togglesmart']:
+                await self.toggle_smart_on(new['name'])
+            else:
+                await self.toggle_smart_off(new['name'])
+
+            await self._service_change('smartd', 'restart')
+
+        updated_data = await self.query(
+            [('identifier', '=', id)],
+            {'get': True}
+        )
+        updated_data['id'] = id
+
+        return updated_data
 
     @private
     def get_name(self, disk):

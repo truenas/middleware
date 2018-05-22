@@ -61,7 +61,6 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.util import JobAborted, JobFailed, upload_job_and_wait
-from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent, services
 from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
@@ -1031,7 +1030,13 @@ class VolumeAutoImportForm(Form):
         return cleaned_data
 
 
-class DiskFormPartial(ModelForm):
+class DiskFormPartial(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "disk_"
+    middleware_attr_schema = "disk_"
+    middleware_plugin = "disk"
+    is_singletone = False
+
     disk_passwd2 = forms.CharField(
         max_length=50,
         label=_("Confirm SED Password"),
@@ -1074,40 +1079,20 @@ class DiskFormPartial(ModelForm):
         return password2
 
     def clean(self):
-            cdata = self.cleaned_data
-            if not cdata.get("disk_passwd"):
-                cdata['disk_passwd'] = self.instance.disk_passwd
-            return cdata
+        cdata = self.cleaned_data
+        if not cdata.get("disk_passwd"):
+            cdata['disk_passwd'] = self.instance.disk_passwd
+        return cdata
 
-    def save(self, *args, **kwargs):
-        obj = super(DiskFormPartial, self).save(*args, **kwargs)
-        # Commit ataidle changes, if any
-        if (
-            obj.disk_hddstandby != obj._original_state['disk_hddstandby'] or
-            obj.disk_advpowermgmt != obj._original_state['disk_advpowermgmt'] or
-            obj.disk_acousticlevel != obj._original_state['disk_acousticlevel']
-        ):
-            notifier().start_ataidle(obj.disk_name)
-
-        if (
-            obj.disk_togglesmart != self._original_smart_en or
-            obj.disk_smartoptions != self._original_smart_opts
-        ):
-            with client as c:
-                if obj.disk_togglesmart == 0:
-                    c.call('disk.toggle_smart_off', obj.disk_name)
-                else:
-                    c.call('disk.toggle_smart_on', obj.disk_name)
-            started = notifier().restart("smartd")
-            if (
-                started is False and
-                services.objects.get(srv_service='smartd').srv_enable
-            ):
-                raise ServiceFailed(
-                    "smartd",
-                    _("The SMART service failed to restart.")
-                )
-        return obj
+    def middleware_clean(self, data):
+        self.instance.id = self.instance.pk
+        data.pop('name')
+        data.pop('passwd2', None)
+        data.pop('serial')
+        for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
+            if data.get(key):
+                data[key] = data[key].upper()
+        return data
 
 
 class DiskEditBulkForm(Form):
@@ -1174,23 +1159,26 @@ class DiskEditBulkForm(Form):
             self.fields[key].initial = val
 
     def save(self):
-        for disk in self._disks:
+        data = {
+            # This is not a choice field, an empty value should reset all
+            'smartoptions': self.cleaned_data.get('disk_smartoptions'),
+            'togglesmart': self.cleaned_data.get('disk_togglesmart')
+        }
 
-            for opt in (
+        for opt in (
                 'disk_hddstandby',
                 'disk_advpowermgmt',
                 'disk_acousticlevel',
-            ):
-                if self.cleaned_data.get(opt):
-                    setattr(disk, opt, self.cleaned_data.get(opt))
+        ):
+            if self.cleaned_data.get(opt):
+                data[opt[5:]] = self.cleaned_data.get(opt).upper()
 
-            disk.disk_togglesmart = self.cleaned_data.get(
-                "disk_togglesmart")
-            # This is not a choice field, an empty value should reset all
-            disk.disk_smartoptions = self.cleaned_data.get(
-                "disk_smartoptions")
-            disk.save()
-        return self._disks
+        primary_keys = [str(d.pk) for d in self._disks]
+
+        with client as c:
+            c.call('core.bulk', 'disk.update', [[key, data] for key in primary_keys], job=True)
+
+        return models.Disk.objects.filter(pk__in=primary_keys)
 
 
 class ZFSDatasetCommonForm(Form):
