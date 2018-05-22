@@ -17,8 +17,8 @@ from config import *
 if "BRIDGEHOST" in locals():
     MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
 
-DATASET = "nfs"
-NFS_PATH = "/mnt/tank/" + DATASET
+DATASET = "tank/nfs"
+NFS_PATH = "/mnt/" + DATASET
 Reason = "BRIDGEHOST is missing in ixautomation.conf"
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 
@@ -50,7 +50,7 @@ def test_01_creating_the_nfs_server():
 def test_02_creating_dataset_nfs():
     payload = {"name": DATASET}
     results = POST("/pool/dataset", payload)
-    assert results.status_code == 201, results.text
+    assert results.status_code == 200, results.text
 
 
 def test_03_changing_permissions_on_nfs():
