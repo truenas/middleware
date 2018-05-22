@@ -59,7 +59,7 @@ def test_03_changing_permissions_on_nfs():
                "mp_mode": "777",
                "mp_user": "root",
                "mp_group": "wheel"}
-    results = PUT("/storage/permission/", payload, api=1)
+    results = PUT("/storage/permission/", payload, api="1")
     assert results.status_code == 201, results.text
 
 
