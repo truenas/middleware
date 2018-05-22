@@ -5,9 +5,10 @@
 
 from subprocess import call
 from sys import argv
-from os import path, getcwd, makedirs
+from os import path, getcwd, makedirs, listdir
 import getopt
 import sys
+import re
 
 apifolder = getcwd()
 sys.path.append(apifolder)
@@ -19,8 +20,8 @@ keyPath = localHome + '/.ssh/test_id_rsa'
 
 ixautomationdotconfurl = "https://raw.githubusercontent.com/iXsystems/"
 ixautomationdotconfurl += "ixautomation/master/src/etc/ixautomation.conf.dist"
-config_file_msg = "Pleale add config.py to freenas/tests witch can be empty or"
-config_file_msg += "contain setting from %s" % ixautomationdotconfurl
+config_file_msg = "Please add config.py to freenas/tests which can be empty " \
+     f"or contain settings from {ixautomationdotconfurl}"
 
 try:
     import config
@@ -116,65 +117,38 @@ cfg_file = open("auto_config.py", 'a')
 cfg_file.writelines('sshKey = "%s"\n' % Key)
 cfg_file.close()
 
+
+def get_tests():
+    rv = []
+    skip_tests = []
+
+    if api == '1.0':
+        skip_tests = ['bootenv', 'jails']
+        apidir = 'api1/'
+        rv = ['network', 'ssh', 'storage']
+    elif api == '2.0':
+        apidir = 'api2/'
+        rv = ['interfaces', 'network', 'disk']
+
+    for filename in listdir(apidir):
+        if filename.endswith('.py') and \
+                not filename.startswith('__init__'):
+            filename = re.sub('.py$', '', filename)
+            if filename not in skip_tests and filename not in rv:
+                rv.append(filename)
+
+    return rv
+
+
 if api == "1.0":
-    for i in (
-        'network',
-        'ssh',
-        'storage',
-        'ntp',
-        'ad_bsd',
-        'ad_osx',
-        'afp_osx',
-        'alerts',
-        #'bootenv',
-        'cronjob',
-        'domaincontroller',
-        'dyndns',
-        'emails',
-        'user',
-        'ftp',
-        'group',
-        'iscsi',
-        'jails',  # jails API Broken
-        'ldap_bsd',
-        'ldap_osx',
-        'lldp',
-        'nfs',
-        'nis_bsd',
-        'rsync',
-        'smb_bsd',
-        'smb_osx',
-        'snmp',
-        'system',
-        'tftp',
-        'ups',
-        'webdav_bsd',
-        'webdav_osx',
-    ):
+    for i in get_tests():
         if testName is not None and testName != i:
             continue
         call(["py.test-3.6", "-v", "--junitxml",
               f"{results_xml}{i}_tests_result.xml",
               f"api1/{i}.py"])
 elif api == "2.0":
-    for i in (
-        'interfaces',
-        'network',
-        'disk',
-        'mail',
-        'ftp',
-        'ssh',
-        'domaincontroller',
-        'bootenv',
-        'user',
-        'group',
-        'nfs',
-        'lldp',
-        'tunable',
-        'system_general',
-        'afp',
-        'cronjob'
-    ):
+    for i in get_tests():
         if testName is not None and testName != i:
             continue
         call(["py.test-3.6", "-v", "--junitxml",
