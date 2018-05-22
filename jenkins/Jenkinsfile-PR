@@ -84,7 +84,7 @@ pipeline {
         }
       }
       agent {
-        label 'FreeNAS-Update'
+        label 'FreeNAS-Update-Stage'
       }
       steps {
         echo '*** Staging the update ***'
