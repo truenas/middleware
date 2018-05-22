@@ -753,16 +753,6 @@ class Disk(Model):
         super(Disk, self).__init__(*args, **kwargs)
         self._original_state = dict(self.__dict__)
 
-        if self.disk_passwd:
-            try:
-                self.disk_passwd = notifier().pwenc_decrypt(self.disk_passwd)
-            except:
-                log.debug('Failed to decrypt SED password for disk %s' %
-                          self.disk_name, exc_info=True)
-                self.disk_passwd = ''
-
-        self._disk_passwd_encrypted = False
-
     def identifier_to_device(self):
         """
         Get the corresponding device name from disk_identifier field
@@ -775,15 +765,6 @@ class Disk(Model):
             return "multipath/%s" % self.disk_multipath_name
         else:
             return self.disk_name
-
-    def save(self, *args, **kwargs):
-        if self.pk and self._original_state.get("disk_togglesmart", None) != \
-                self.__dict__.get("disk_togglesmart"):
-            notifier().restart("smartd")
-        if self.disk_passwd and not self._disk_passwd_encrypted:
-            self.disk_passwd = notifier().pwenc_encrypt(self.disk_passwd)
-            self._disk_passwd_encrypted = True
-        super(Disk, self).save(*args, **kwargs)
 
     def delete(self):
         from freenasUI.services.models import iSCSITargetExtent
