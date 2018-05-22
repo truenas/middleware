@@ -1629,11 +1629,12 @@ def update_check(request):
     else:
         # If it is HA run update check on the other node
         if not notifier().is_freenas() and notifier().failover_licensed():
+            network = True
+            error = None
+            error_trace = None
             try:
                 with client as c:
                     error = False
-                    network = False
-                    error_trace = None
                     update_check = c.call('failover.call_remote', 'update.check_available')
             except Exception as e:
                 if isinstance(e, ClientException):
