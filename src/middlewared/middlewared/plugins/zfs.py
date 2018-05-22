@@ -285,9 +285,13 @@ class ZFSDatasetService(CRUDService):
                         if prop:
                             if v.get('source') == 'INHERIT':
                                 prop.inherit()
-                            elif 'value' in v and prop.value != v['value']:
+                            elif 'value' in v and (
+                                prop.value != v['value'] or prop.source.name == 'INHERITED'
+                            ):
                                 prop.value = v['value']
-                            elif 'parsed' in v and prop.parsed != v['parsed']:
+                            elif 'parsed' in v and (
+                                prop.parsed != v['parsed'] or prop.source.name == 'INHERITED'
+                            ):
                                 prop.parsed = v['parsed']
                         else:
                             if 'value' not in v:
