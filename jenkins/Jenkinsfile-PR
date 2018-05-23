@@ -10,6 +10,15 @@ pipeline {
   }
   stages {
 
+   stage('Queued') {
+        agent {
+        label 'FreeNAS-PR'
+      }
+      steps {
+        echo "Build queued"
+      }
+    }
+
     stage('Init') {
       steps {
         checkout scm
