@@ -43,7 +43,7 @@ nfs_func()
 	SELECT
 		srv_enable
 	FROM
-		service_services
+		services_services
 	WHERE
 		srv_service = 'nfs'
 	")
