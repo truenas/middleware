@@ -1704,7 +1704,9 @@ def main():
                 smb4_tdb,
                 privatedir + "/passdb.tdb"
             )
-            smb4_grant_rights()
+            if role != 'member':
+                smb4_grant_rights()
+
             client.call('notifier.samba4', 'user_import_sentinel_file_create')
 
         smb4_map_groups(client)
