@@ -131,7 +131,7 @@ def PUT_TIMEOUT(testpath, payload, timeOut, **optional):
     return putit
 
 
-def DELETE(testpath, payload, **optional):
+def DELETE(testpath, payload=None, **optional):
     if "api" in optional:
         api_v = optional.get('api', None)
         if api_v == "1":
@@ -142,15 +142,9 @@ def DELETE(testpath, payload, **optional):
             raise ValueError('api parameter should be "1" or "2"')
     else:
         api_url = default_api_url
-    if payload is None:
-        pass
-        deleteit = requests.delete(api_url + testpath, headers=header,
-                                   auth=authentification)
-        return deleteit
-    else:
-        deleteit = requests.delete(api_url + testpath, headers=header,
-                                   auth=authentification,
-                                   data=json.dumps(payload))
+    deleteit = requests.delete(api_url + testpath, headers=header,
+                               auth=authentification,
+                               data=json.dumps(payload) if payload else None)
     return deleteit
 
 
