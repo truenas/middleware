@@ -288,24 +288,20 @@ class FreeNAS_LDAP_Directory(object):
 
         if self._handle:
             res = None
-            self._handle.protocol_version = FREENAS_LDAP_VERSION
-            self._handle.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
-            self._handle.set_option(ldap.OPT_NETWORK_TIMEOUT, 10.0)
+            ldap.protocol_version = FREENAS_LDAP_VERSION
+            ldap.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
+            ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, 10.0)
 
             if self.ssl in (FREENAS_LDAP_USESSL, FREENAS_LDAP_USETLS):
-                self._handle.set_option(ldap.OPT_X_TLS_ALLOW, 1)
+                ldap.set_option(ldap.OPT_X_TLS_ALLOW, 1)
                 if self.certfile:
-                    self._handle.set_option(
+                    ldap.set_option(
                         ldap.OPT_X_TLS_CACERTFILE,
                         self.certfile
                     )
-                self._handle.set_option(
+                ldap.set_option(
                     ldap.OPT_X_TLS_REQUIRE_CERT,
-                    ldap.OPT_X_TLS_DEMAND
-                )
-                self._handle.set_option(
-                    ldap.OPT_X_TLS_NEWCTX,
-                    ldap.OPT_X_TLS_DEMAND
+                    ldap.OPT_X_TLS_ALLOW
                 )
 
             if self.ssl == FREENAS_LDAP_USETLS:
