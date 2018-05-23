@@ -15,6 +15,7 @@ if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
 from freenasOS import Configuration
 
+BUILDTIME = None
 VERSION = None
 
 
@@ -173,6 +174,16 @@ def filter_list(_list, filters=None, options=None):
         return rv[0]
 
     return rv
+
+
+def sw_buildtime():
+    global BUILDTIME
+    if BUILDTIME is None:
+        conf = Configuration.Configuration()
+        sys_mani = conf.SystemManifest()
+        if sys_mani:
+            BUILDTIME = sys_mani.TimeStamp()
+    return BUILDTIME
 
 
 def sw_version():

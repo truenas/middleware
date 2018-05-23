@@ -1,7 +1,7 @@
 from datetime import datetime, date
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, Str
 from middlewared.service import ConfigService, no_auth_required, job, private, Service, ValidationErrors
-from middlewared.utils import Popen, sw_version
+from middlewared.utils import Popen, sw_buildtime, sw_version
 from middlewared.validators import Range
 
 import csv
@@ -247,6 +247,10 @@ class SystemService(Service):
         """
         Returns basic system information.
         """
+        buildtime = sw_buildtime()
+        if buildtime:
+            buildtime = datetime.fromtimestamp(int(buildtime)),
+
         uptime = (await (await Popen(
             "env -u TZ uptime | awk -F', load averages:' '{ print $1 }'",
             stdout=subprocess.PIPE,
@@ -267,6 +271,7 @@ class SystemService(Service):
 
         return {
             'version': self.version(),
+            'buildtime': buildtime,
             'hostname': socket.gethostname(),
             'physmem': sysctl.filter('hw.physmem')[0].value,
             'model': sysctl.filter('hw.model')[0].value,
