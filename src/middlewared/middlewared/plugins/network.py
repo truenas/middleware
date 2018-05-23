@@ -837,14 +837,13 @@ class StaticRouteService(CRUDService):
     async def do_create(self, data):
         await self.lower(data)
 
-        data['id'] = await self.middleware.call(
+        id = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
 
         await self.middleware.call('service.start', 'routing')
-        await self.upper(data)
 
-        return data
+        return await self._get_instance(id)
 
     @accepts(
         Int('id'),
@@ -855,12 +854,7 @@ class StaticRouteService(CRUDService):
         )
     )
     async def do_update(self, id, data):
-        old = await self.middleware.call(
-            'datastore.query', self._config.datastore, [('id', '=', id)],
-            {'extend': self._config.datastore_extend,
-             'prefix': self._config.datastore_prefix,
-             'get': True})
-
+        old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
 
@@ -870,9 +864,8 @@ class StaticRouteService(CRUDService):
             {'prefix': self._config.datastore_prefix})
 
         await self.middleware.call('service.start', 'routing')
-        await self.upper(new)
 
-        return new
+        return await self._get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
@@ -882,12 +875,12 @@ class StaticRouteService(CRUDService):
     @private
     async def lower(self, data):
         data['description'] = data['description'].lower()
-
         return data
 
     @private
     async def upper(self, data):
         data['description'] = data['description'].upper()
+        return data
 
 
 class DNSService(Service):
