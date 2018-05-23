@@ -24,9 +24,11 @@ pipeline {
         checkout scm
         echo '*** Checking out build repo ***'
         sh '(mount | grep "on /freenas-pr" | awk \'{print $3}\' | sort -r | xargs umount -f ) || true'
-        sh 'rm -rf /freenas-pr || true'
-        sh 'chflags -R noschg /freenas-pr || true'
-        sh 'rm -rf /freenas-pr || true'
+	sh 'zfs destroy -r tank1/usr/obj 2>/dev/null || true'
+	sh 'zfs destroy tank1/freenas-pr 2>/dev/null || true'
+	sh 'zfs create -o mountpoint=/usr/obj tank1/usr/obj'
+	sh 'zfs create -o mountpoint=/usr/obj/freenas-pr tank1/usr/obj/freenas-pr'
+	sh 'zfs create -o mountpoint=/freenas-pr tank1/freenas-pr'
         sh 'git clone --depth=1 -b ${GH_BUILD_BRANCH} https://github.com/freenas/build.git /freenas-pr'
       }
     }
@@ -104,11 +106,9 @@ pipeline {
   }
   post {
     always {
-      sh 'rm -rf /usr/obj/freenas-pr'
+      sh 'zfs destroy -r tank1/usr/obj || true'
       sh '(mount | grep "on /freenas-pr" | awk \'{print $3}\' | sort -r | xargs umount -f ) || true'
-      sh 'rm -rf /freenas-pr || true'
-      sh 'chflags -R noschg /freenas-pr || true'
-      sh 'rm -rf /freenas-pr || true'
+      sh 'zfs destroy tank1/freenas-pr || true'
       script {
         cleanWs notFailBuild: true
       }
