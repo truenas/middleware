@@ -24,7 +24,7 @@ auth		requisite	pam_opieaccess.so	no_warn allow_local
 auth		sufficient	/usr/local/lib/pam_winbind.so	silent try_first_pass krb5_auth krb5_ccache_type=FILE 
 % endif
 % if ldap_enabled:
-auth		sufficient	/usr/local/lib/pam_sss.so ignore_authinfo_unavail
+auth		sufficient	/usr/local/lib/pam_sss.so ignore_authinfo_unavail quiet
 % endif
 #auth		sufficient	pam_krb5.so		no_warn
 #auth		sufficient	pam_ssh.so		no_warn try_first_pass
@@ -36,7 +36,7 @@ account		required	pam_nologin.so
 account		sufficient	/usr/local/lib/pam_winbind.so krb5_auth krb5_ccache_type=FILE
 % endif
 % if ldap_enabled:
-account		sufficient	/usr/local/lib/pam_sss.so ignore_authinfo_unavail
+account		sufficient	/usr/local/lib/pam_sss.so ignore_authinfo_unavail quiet
 % endif
 #account	required	pam_krb5.so
 account		required	pam_unix.so
