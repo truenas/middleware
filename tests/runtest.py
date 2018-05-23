@@ -78,7 +78,7 @@ if 'ip' not in locals() and 'password' not in locals() and 'interface' not in lo
 if interface == "vtnet0":
     disk = 'disk1 = "vtbd1"\ndisk2 = "vtbd2"'
 else:
-    disk = 'disk1 = "da1"\ndisk2 = "da2"'
+    disk = 'disk1 = "ada1"\ndisk2 = "ada2"'
 
 cfg_content = """#!/usr/bin/env python3.6
 
