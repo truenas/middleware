@@ -22,7 +22,7 @@ auth		sufficient	pam_self.so		no_warn
 auth		sufficient	/usr/local/lib/pam_winbind.so silent try_first_pass krb5_auth krb5_ccache_type=FILE
 % endif
 % if ldap_enabled:
-auth		sufficient	/usr/local/lib/pam_sss.so
+auth		sufficient	/usr/local/lib/pam_sss.so quiet
 % endif
 auth		include		system
 
@@ -33,7 +33,7 @@ account		required	pam_nologin.so
 account		sufficient	/usr/local/lib/pam_winbind.so krb5_auth krb5_ccache_type=FILE
 % endif
 % if ldap_enabled:
-account		sufficient	/usr/local/lib/pam_sss.so
+account		sufficient	/usr/local/lib/pam_sss.so quiet
 % endif
 account		include		system
 

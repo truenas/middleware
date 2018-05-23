@@ -18,7 +18,7 @@
 auth		sufficient	pam_opie.so		no_warn no_fake_prompts
 auth		requisite	pam_opieaccess.so	no_warn allow_local
 % if ldap_enabled:
-auth		sufficient	/usr/local/lib/pam_sss.so
+auth		sufficient	/usr/local/lib/pam_sss.so quiet
 % endif
 auth		required	pam_unix.so		no_warn try_first_pass
 
@@ -26,7 +26,7 @@ auth		required	pam_unix.so		no_warn try_first_pass
 account		required	pam_nologin.so
 account		required	pam_login_access.so
 % if ldap_enabled:
-account		sufficient	/usr/local/lib/pam_sss.so
+account		sufficient	/usr/local/lib/pam_sss.so quiet
 % endif
 account		required	pam_unix.so
 
@@ -35,6 +35,6 @@ session		required	pam_permit.so
 
 # password
 % if ldap_enabled:
-password	sufficient	/usr/local/lib/pam_sss.so use_authtok
+password	sufficient	/usr/local/lib/pam_sss.so use_authtok quiet
 % endif
 password	required	pam_unix.so		no_warn try_first_pass
