@@ -1,14 +1,21 @@
 import configparser
 import os
+import requests
 import shutil
+import ssl
 import zipfile
 
 
 from contextlib import closing
+from datetime import datetime
 
-from middlewared.schema import Bool, Dict, Int, Patch, Str
-from middlewared.service import accepts, ConfigService, private, ValidationErrors
+from middlewared.schema import Bool, Dict, Int, Patch, Ref, Str
+from middlewared.service import accepts, ConfigService, private, Service, ValidationErrors
 from middlewared.validators import IpAddress
+
+
+from pyVim.connect import SmartConnect
+from pyVmomi import vim
 
 from pprint import pprint
 
@@ -146,3 +153,299 @@ class VCenterService(ConfigService):
                 'plugin_version_new',
                 data['plugin_version_new'])
             config.write(config_file)
+    
+
+class VCenterPluginService(Service):
+
+    PRIVATE_GROUP_NAME = 'iXSystems'
+
+    @private
+    async def property_file_path(self):
+        return os.path.join(
+            (await self.middleware.call('notifier.gui_base_path')),
+            'vcp/Extensionconfig.ini.dist'
+        )
+
+    @private
+    async def resource_folder_path(self):
+        return os.path.join(
+            (await self.middleware.call('notifier.gui_base_path')),
+            'vcp/vcp_locales'
+        )
+
+    @private
+    def create_event_keyvalue_pairs(self):
+        try:
+            eri_list = []
+            resource_folder_path = self.middleware.call_sync('vcenterplugin.resource_folder_path')
+            for file in os.listdir(resource_folder_path):
+                eri = vim.Extension.ResourceInfo()
+
+                #Read locale file from vcp_locale
+                eri.module = file.split("_")[0]
+                with open(os.path.join(resource_folder_path, file), 'r') as file:
+                    for line in file:
+                        if len(line) > 2 and '=' in line:
+                            if 'locale' in line:
+                                eri.locale = line.split('=')[1].lstrip().rstrip()
+                            else:
+                                prop = line.split('=')
+                                key_val = vim.KeyValue()
+                                key_val.key = prop[0].lstrip().rstrip()
+                                key_val.value = prop[1].lstrip().rstrip()
+                                eri.data.append(key_val)
+                eri_list.append(eri)
+            return eri_list
+        except Exception as e:
+            return f'Can not read locales : {e}'
+
+    @private
+    def get_extension_key(self):
+        cp = configparser.ConfigParser()
+        cp.read(self.middleware.call_sync('vcenterplugin.property_file_path'))
+        return cp.get('RegisterParam', 'key')
+
+    @accepts(
+        Dict(
+            'install_vcenter_plugin',
+            Int('port', required=True),
+            Str('fingerprint', required=True),
+            Str('client_url', required=True),
+            Str('ip', required=True),  # HOST IP
+            Str('password', password=True, required=True),  # Password should be decrypted
+            Str('username', required=True),
+            register=True
+        )
+    )
+    def __install_vcenter_plugin(self, data):
+        try:
+            # TODO: SHOULD THE CONTEXT OBJECT BE MOVED TO CRYPTO.PY ?
+            try:
+                ssl._create_default_https_context = ssl._create_unverified_context
+            except AttributeError:
+                pass
+            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+            context.verify_mode = ssl.CERT_NONE
+
+            si = SmartConnect(
+                "https", data['ip'], data['port'],
+                data['username'], data['password'], sslContext=context
+            )
+            ext = self.get_extension(data['client_url'], data['fingerprint'])
+
+            if isinstance(ext, vim.Extension):
+                si.RetrieveServiceContent().extensionManager.RegisterExtension(ext)
+                return True
+            else:
+                # TODO: WHAT DOES THIS ACHIEVE ?
+                return ext
+
+        except vim.fault.NoPermission:
+            # TODO: HOW SHOULD THE EXCEPTION BE HANDLED ?
+            return 'vCenter user has no permission to install the plugin.'
+
+        except Exception as ex:
+            # TODO: SHOULD THIS BE REMOVED ?
+            return str(ex).replace("'", "").replace("<", "").replace(">", "")
+
+    @accepts(
+        Patch(
+            'install_vcenter_plugin', 'uninstall_vcenter_plugin',
+            ('rm', {'name': 'fingerprint'}),
+            ('rm', {'name': 'client_url'}),
+            register=True
+        )
+    )
+    def __uninstall_vcenter_plugin(self, data):
+        try:
+            # TODO: SHOULD THE CONTEXT BE MOVED TO CRYPTO ?
+            try:
+                ssl._create_default_https_context = ssl._create_unverified_context
+            except AttributeError:
+                pass
+            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+            context.verify_mode = ssl.CERT_NONE
+
+            si = SmartConnect(
+                "https", data['ip'], data['port'],
+                data['username'], data['password'], sslContext=context
+            )
+            extkey = self.get_extension_key()
+            si.RetrieveServiceContent().extensionManager.UnregisterExtension(extkey)
+            return True
+        except vim.fault.NoPermission:
+            # TODO: HOW SHOULD THE EXCEPTION BE HANDLED ?
+            return 'vCenter user has no permission to uninstall the plugin.'
+
+        except Exception as ex:
+            # TODO: SHOULD THIS BE REMOVED ?
+            return str(ex).replace("'", "").replace("<", "").replace(">", "")
+
+    @accepts(
+        Ref('install_vcenter_plugin')
+    )
+    def __upgrade_vcenter_plugin(self, data):
+        try:
+            # TODO: SHOULD THE CONTEXT BE MOVED TO CRYPTO ?
+            try:
+                ssl._create_default_https_context = ssl._create_unverified_context
+            except AttributeError:
+                print('Error ssl')
+            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+            context.verify_mode = ssl.CERT_NONE
+
+            si = SmartConnect(
+                "https", data['ip'], data['port'],
+                data['username'], data['password'], sslContext=context
+            )
+            ext = self.get_extension(data['client_url'], data['fingerprint'])
+            if isinstance(ext, vim.Extension):
+                si.RetrieveServiceContent().extensionManager.UpdateExtension(ext)
+                return True
+            else:
+                return ext
+        except vim.fault.NoPermission:
+            # TODO: HOW SHOULD THE EXCEPTION BE HANDLED ?
+            return 'vCenter user has no permission to upgrade the plugin.'
+
+        except Exception as ex:
+            # TODO: SHOULD THIS BE REMOVED ?
+            return str(ex).replace("'", "").replace("<", "").replace(">", "")
+
+    @accepts(
+        Ref('uninstall_vcenter_plugin')
+    )
+    def __find_plugin(self, data):
+        try:
+            # TODO: SHOULD THE CONTEXT BE MOVED TO CRYPTO ?
+            try:
+                ssl._create_default_https_context = ssl._create_unverified_context
+            except AttributeError:
+                print('Error ssl')
+            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+            context.verify_mode = ssl.CERT_NONE
+
+            si = SmartConnect(
+                "https", data['ip'], data['port'],
+                data['username'], data['password'], sslContext=context
+            )
+            extkey = self.get_extension_key()
+            ext = si.RetrieveServiceContent().extensionManager.FindExtension(extkey)
+            if ext is None:
+                return False
+            else:
+                # TODO: REFINE THIS
+                try:
+                    return 'TruNAS System : ' + ext.client[0].url.split('/')[2]
+                except:
+                    return 'TruNAS System :'
+        except vim.fault.NoPermission:
+            # TODO: HOW SHOULD THE EXCEPTION BE HANDLED ?
+            return 'vCenter user does not have permission to perform this operation.'
+
+        except Exception as ex:
+            # TODO: SHOULD THIS BE REMOVED ?
+            return str(ex).replace("'", "").replace("<", "").replace(">", "")
+
+    @accepts(
+        Ref('uninstall_vcenter_plugin')
+    )
+    def check_credentials(self, data):
+        try:
+            # TODO: SHOULD THE CONTEXT BE MOVED TO CRYPTO ?
+            try:
+                ssl._create_default_https_context = ssl._create_unverified_context
+            except AttributeError:
+                print('Error ssl')
+            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+            context.verify_mode = ssl.CERT_NONE
+
+            si = SmartConnect(
+                "https", data['ip'], data['port'],
+                data['username'], data['password'], sslContext=context
+            )
+            if si is None:
+                return False
+            else:
+                return True
+
+        # TODO: CHECK EXCEPTION HANDLING - PROBABLY USE VALIDATION ERRORS
+        except requests.exceptions.ConnectionError:
+            return 'Provided vCenter Hostname/IP and port are not valid. '
+        except vim.fault.InvalidLogin:
+            return 'Provided vCenter credentials are not valid.'
+        except vim.fault.NoPermission:
+            return 'vCenter user does not have permission to perform this operation.'
+        except Exception:
+            return 'Internal Error. Please contact support.'
+
+    @private
+    def get_extension(self, vcp_url, fingerprint):
+        try:
+            cp = configparser.ConfigParser()
+            cp.read(self.middleware.call_sync('vcenterplugin.property_file_path'))
+            version = self.middleware.call_sync('vcenter.get_plugin_version')
+
+            description = vim.Description()
+            description.label = cp.get('RegisterParam', 'label')
+            description.summary = cp.get('RegisterParam', 'description')
+
+            ext = vim.Extension()
+            ext.company = cp.get('RegisterParam', 'company')
+            ext.version = version
+            ext.key = cp.get('RegisterParam', 'key')
+            ext.description = description
+            ext.lastHeartbeatTime = datetime.now()
+
+            server_info = vim.Extension.ServerInfo()
+            server_info.serverThumbprint = fingerprint
+            server_info.type = vcp_url.split(':')[0].upper()  # sysgui protocol
+            server_info.url = vcp_url
+            server_info.description = description
+            server_info.company = cp.get('RegisterParam', 'company')
+            server_info.adminEmail = ['ADMIN EMAIL']
+            ext.server = [server_info]
+
+            client = vim.Extension.ClientInfo()
+            client.url = vcp_url
+            client.company = cp.get('RegisterParam', 'company')
+            client.version = version
+            client.description = description
+            client.type = "vsphere-client-serenity"
+            ext.client = [client]
+
+            event_info = []
+            for e in cp.get('RegisterParam', 'events').split(","):
+                ext_event_type_info = vim.Extension.EventTypeInfo()
+                ext_event_type_info.eventID = e
+                event_info.append(ext_event_type_info)
+
+            task_info = []
+            for t in cp.get('RegisterParam', 'tasks').split(","):
+                ext_type_info = vim.Extension.TaskTypeInfo()
+                ext_type_info.taskID = t
+                task_info.append(ext_type_info)
+
+            # Register custom privileges required for vcp RBAC
+            priv_info = []
+            for priv in cp.get('RegisterParam', 'auth').split(","):
+                ext_type_info = vim.Extension.PrivilegeInfo()
+                ext_type_info.privID = priv
+                ext_type_info.privGroupName = self.PRIVATE_GROUP_NAME
+                priv_info.append(ext_type_info)
+
+            ext.taskList = task_info
+            ext.eventList = event_info
+            ext.privilegeList = priv_info
+
+            resource_list = self.create_event_keyvalue_pairs()
+            if isinstance(resource_list, str):  # TODO: WHAT IS THE ROLE OF RESOURCE LIST IF IT IS RETURNED ?
+                return resource_list  # THIS HAPPENS IN CASE OF AN EXCEPTION IN THE KEY VALUE PAIR FUNCTION
+            # HOW SHOULD THE EXCEPTIONS BE TAKEN CARE OF ?
+
+            ext.resourceList = resource_list
+
+            return ext
+        except configparser.NoOptionError as e:
+            f'Property Missing : {e}'
+
