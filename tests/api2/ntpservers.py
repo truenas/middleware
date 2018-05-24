@@ -57,7 +57,7 @@ def test_05_Removing_non_AD_NTP_servers(ntp_dict):
     for k in list(ntp_dict['servers'].keys()):
         if k == 1:
             continue
-        results = DELETE(f'/system/ntpserver/id/{k}/', None)
+        results = DELETE(f'/system/ntpserver/id/{k}/')
         assert results.status_code == 200, results.text
         ntp_dict['servers'].pop(k)
 

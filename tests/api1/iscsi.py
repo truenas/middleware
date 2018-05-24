@@ -271,11 +271,11 @@ def test_27_Verify_the_iSCSI_service_is_Sdisabled():
 
 # Remove iSCSI target
 def test_28_Delete_iSCSI_target():
-    results = DELETE("/services/iscsi/target/1/", None)
+    results = DELETE("/services/iscsi/target/1/")
     assert results.status_code == 204, results.text
 
 
 # Remove iSCSI extent
 def test_29_Delete_iSCSI_extent():
-    results = DELETE("/services/iscsi/extent/1/", None)
+    results = DELETE("/services/iscsi/extent/1/")
     assert results.status_code == 204, results.text

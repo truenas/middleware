@@ -64,7 +64,7 @@ def test_07_Deleting_test_file_created_by_cronjob():
 # Delete tests
 # Delete cronjob from API
 def test_08_Deleting_cron_job_which_will_run_every_minuted():
-    results = DELETE("/tasks/cronjob/1/", None)
+    results = DELETE("/tasks/cronjob/1/")
     assert results.status_code == 204, results.text
 
 

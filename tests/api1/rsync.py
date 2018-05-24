@@ -52,4 +52,4 @@ def test_07_Checking_to_see_if_rsync_service_is_enabled():
 
 # Delete tests
 # def test_08_Delete_rsync_resource():
-#     assert DELETE("/services/rsyncmod/1/", None) == 204
+#     assert DELETE("/services/rsyncmod/1/") == 204

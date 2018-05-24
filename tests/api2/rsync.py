@@ -78,7 +78,7 @@ def test_10_Check_that_API_reports_the_rsync_task_as_disabled(rsynctask_dict):
 
 def test_11_Delete_rsync_task(rsynctask_dict):
     id = rsynctask_dict['id']
-    results = DELETE(f'/rsynctask/id/{id}', None)
+    results = DELETE(f'/rsynctask/id/{id}')
     assert results.status_code == 200, results.text
 
 

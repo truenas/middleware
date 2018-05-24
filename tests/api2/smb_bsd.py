@@ -55,28 +55,28 @@ def test_03_Changing_permissions_on_SMB_PATH():
     assert results.status_code == 201, results.text
 
 
-def test_03_starting_cifs_service_at_boot():
+def test_04_starting_cifs_service_at_boot():
     results = PUT("/service/id/cifs", {"enable": True})
     assert results.status_code == 200, results.text
 
 
-def test_06_checking_to_see_if_clif_service_is_enabled_at_boot():
+def test_05_checking_to_see_if_clif_service_is_enabled_at_boot():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] == True, results.text
 
 
-def test_07_starting_cifs_service():
+def test_06_starting_cifs_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/start", payload)
     assert results.status_code == 200, results.text
 
 
-def test_08_checking_to_see_if_nfs_service_is_running():
+def test_07_checking_to_see_if_nfs_service_is_running():
     results = GET("/service?service=cifs")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-def test_06_Creating_a_cifs_share_on_SMB_PATH():
+def test_08_Creating_a_cifs_share_on_SMB_PATH():
     payload = {"comment": "My Test SMB Share",
                "path": SMB_PATH,
                "name": SMB_NAME,
@@ -89,7 +89,7 @@ def test_06_Creating_a_cifs_share_on_SMB_PATH():
 # Now check if we can mount SMB / create / rename / copy / delete / umount
 @mount_test_cfg
 @bsd_host_cfg
-def test_07_Creating_SMB_mountpoint():
+def test_09_Creating_SMB_mountpoint():
     cmd = f'mkdir -p "{MOUNTPOINT}" && sync'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -97,7 +97,7 @@ def test_07_Creating_SMB_mountpoint():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_08_Mounting_SMB():
+def test_10_Mounting_SMB():
     cmd = f'mount_smbfs -N -I {ip} ' \
           f'"//guest@testnas/{SMB_NAME}" "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -106,7 +106,7 @@ def test_08_Mounting_SMB():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_09_Creating_SMB_file():
+def test_11_Creating_SMB_file():
     cmd = f"touch {MOUNTPOINT}/testfile"
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -114,7 +114,7 @@ def test_09_Creating_SMB_file():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_10_Moving_SMB_file():
+def test_12_Moving_SMB_file():
     cmd = f'mv {MOUNTPOINT}/testfile {MOUNTPOINT}/testfile2'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -122,7 +122,7 @@ def test_10_Moving_SMB_file():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_11_Copying_SMB_file():
+def test_13_Copying_SMB_file():
     cmd = f'cp {MOUNTPOINT}/testfile2 {MOUNTPOINT}/testfile'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -130,7 +130,7 @@ def test_11_Copying_SMB_file():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_12_Deleting_SMB_file_1_2():
+def test_14_Deleting_SMB_file_1_2():
     cmd = f'rm "{MOUNTPOINT}/testfile"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -138,7 +138,7 @@ def test_12_Deleting_SMB_file_1_2():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_13_Deleting_SMB_file_2_2():
+def test_15_Deleting_SMB_file_2_2():
     cmd = f'rm "{MOUNTPOINT}/testfile2"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -146,7 +146,7 @@ def test_13_Deleting_SMB_file_2_2():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_14_Unmounting_SMB():
+def test_16_Unmounting_SMB():
     cmd = f'umount -f {MOUNTPOINT}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -155,7 +155,7 @@ def test_14_Unmounting_SMB():
 # Update tests
 @mount_test_cfg
 @bsd_host_cfg
-def test_15_Mounting_SMB():
+def test_17_Mounting_SMB():
     cmd = f'mount_smbfs -N -I {ip} ' \
           f'"//guest@testnas/{SMB_NAME}" "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -164,7 +164,7 @@ def test_15_Mounting_SMB():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_16_Creating_SMB_file():
+def test_18_Creating_SMB_file():
     cmd = f'touch {MOUNTPOINT}/testfile'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -172,7 +172,7 @@ def test_16_Creating_SMB_file():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_17_Moving_SMB_file():
+def test_19_Moving_SMB_file():
     cmd = f'mv {MOUNTPOINT}/testfile {MOUNTPOINT}/testfile2'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -180,7 +180,7 @@ def test_17_Moving_SMB_file():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_18_Copying_SMB_file():
+def test_20_Copying_SMB_file():
     cmd = f'cp {MOUNTPOINT}/testfile2 {MOUNTPOINT}/testfile'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -188,7 +188,7 @@ def test_18_Copying_SMB_file():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_19_Deleting_SMB_file_1_2():
+def test_21_Deleting_SMB_file_1_2():
     cmd = f'rm {MOUNTPOINT}/testfile'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -196,7 +196,7 @@ def test_19_Deleting_SMB_file_1_2():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_20_Deleting_SMB_file_2_2():
+def test_22_Deleting_SMB_file_2_2():
     cmd = f'rm {MOUNTPOINT}/testfile2'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -204,7 +204,7 @@ def test_20_Deleting_SMB_file_2_2():
 
 @mount_test_cfg
 @bsd_host_cfg
-def test_21_Unmounting_SMB():
+def test_23_Unmounting_SMB():
     cmd = f'umount -f {MOUNTPOINT}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -213,13 +213,13 @@ def test_21_Unmounting_SMB():
 # Delete tests
 @mount_test_cfg
 @bsd_host_cfg
-def test_22_Removing_SMB_mountpoint():
+def test_24_Removing_SMB_mountpoint():
     cmd = f'test -d "{MOUNTPOINT}" && rmdir "{MOUNTPOINT}" || exit 0'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
-def test_23_SMB_share_on_SMB_PATH():
+def test_25_SMB_share_on_SMB_PATH():
     payload = {"comment": "My Test SMB Share",
                "path": SMB_PATH,
                "name": SMB_NAME,
@@ -230,23 +230,23 @@ def test_23_SMB_share_on_SMB_PATH():
 
 
 # Now stop the service
-def test_24_Stopping_SMB_service():
+def test_26_Stopping_SMB_service():
     results = PUT("/service/id/cifs", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_26_checking_to_see_if_clif_service_is_enabled_at_boot():
+def test_27_checking_to_see_if_clif_service_is_enabled_at_boot():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] == False, results.text
 
 
-def test_25_stoping_clif_service():
+def test_28_stoping_clif_service():
     payload = {"service": "clif", "service-control": {"onetime": True}}
     results = POST("/service/stop", payload)
     assert results.status_code == 200, results.text
 
 
 # Check destroying a SMB dataset
-def test_27_Destroying_SMB_dataset():
+def test_29_Destroying_SMB_dataset():
     results = DELETE(f"/pool/dataset/id/{DATASET}")
     assert results.status_code == 204, results.text

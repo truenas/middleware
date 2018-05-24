@@ -66,5 +66,5 @@ def test_06_Updating_password_for_testuser():
 # Delete the testuser
 def test_08_Deleting_user_testuser():
     userid = GET_USER("testuser")
-    results = DELETE("/account/users/%s/" % userid, None)
+    results = DELETE("/account/users/%s/" % userid)
     assert results.status_code == 204, results.text

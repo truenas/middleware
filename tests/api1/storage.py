@@ -108,17 +108,17 @@ def test_13_Rolling_back_ZFS_snapshot_tank_test():
 # Delete tests
 # Check destroying a ZFS snapshot
 def test_15_Destroying_ZFS_snapshot_IXBUILD_ROOT_ZVOL_test():
-    results = DELETE("/storage/snapshot/tank@test/", None)
+    results = DELETE("/storage/snapshot/tank@test/")
     assert results.status_code == 204, results.text
 
 
 # Check destroying a ZVOL 1/2
 def test_16_Destroying_ZVOL_01_02():
-    results = DELETE("/storage/volume/tank/zvols/testzvol1/", None)
+    results = DELETE("/storage/volume/tank/zvols/testzvol1/")
     assert results.status_code == 204, results.text
 
 
 # Check destroying a ZVOL 2/2
 def test_17_Destroying_ZVOL_02_02():
-    results = DELETE("/storage/volume/tank/zvols/testzvol2/", None)
+    results = DELETE("/storage/volume/tank/zvols/testzvol2/")
     assert results.status_code == 204, results.text

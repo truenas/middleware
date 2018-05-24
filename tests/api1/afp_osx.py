@@ -212,5 +212,5 @@ def test_24_Verify_delete_afp_name_and_afp_path():
 
 # Test delete AFP dataset
 def test_25_Verify_AFP_dataset_can_be_destroyed():
-    results = DELETE("/storage/volume/1/datasets/%s/" % DATASET, None)
+    results = DELETE("/storage/volume/1/datasets/%s/" % DATASET)
     assert results.status_code == 204, results.text

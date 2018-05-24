@@ -41,7 +41,7 @@ def GET_USER(username):
     return userid
 
 
-def POST(testpath, payload, **optional):
+def POST(testpath, payload=None, **optional):
     if "api" in optional:
         api_v = optional.get('api', None)
         if api_v == "1":

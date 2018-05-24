@@ -87,13 +87,13 @@ def test_08_Delete_script_file():
 
 def test_09_Delete_initshutdown_command(initshutdowncmd_dict):
     id = initshutdowncmd_dict['id']
-    results = DELETE(f'/initshutdownscript/id/{id}', None)
+    results = DELETE(f'/initshutdownscript/id/{id}')
     assert results.status_code == 200, results.text
 
 
 def test_10_Delete_initshutdown_script(initshutdownsc_dict):
     id = initshutdownsc_dict['id']
-    results = DELETE(f'/initshutdownscript/id/{id}', None)
+    results = DELETE(f'/initshutdownscript/id/{id}')
     assert results.status_code == 200, results.text
 
 
