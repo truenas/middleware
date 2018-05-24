@@ -1,7 +1,5 @@
 pipeline {
-  agent {
-    label 'FreeNAS-PR'
-  }
+ agent none
 
   environment {
     GH_ORG = 'freenas'
@@ -12,7 +10,7 @@ pipeline {
 
    stage('Queued') {
         agent {
-        label 'FreeNAS-PR'
+        label 'FreeNAS-PR-HOLD'
       }
       steps {
         echo "Build queued"
@@ -20,6 +18,9 @@ pipeline {
     }
 
     stage('Init') {
+      agent {
+        label 'FreeNAS-PR'
+      }
       steps {
         checkout scm
         echo '*** Checking out build repo ***'
