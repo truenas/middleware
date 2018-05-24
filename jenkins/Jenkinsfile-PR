@@ -1,7 +1,5 @@
 pipeline {
-  agent {
-    label 'FreeNAS-PR'
-  }
+ agent none
 
   environment {
     GH_ORG = 'freenas'
@@ -12,7 +10,7 @@ pipeline {
 
    stage('Queued') {
         agent {
-        label 'FreeNAS-PR'
+        label 'FreeNAS-PR-HOLD'
       }
       steps {
         echo "Build queued"
@@ -20,6 +18,9 @@ pipeline {
     }
 
     stage('Init') {
+      agent {
+        label 'FreeNAS-PR'
+      }
       steps {
         checkout scm
         echo '*** Checking out build repo ***'
@@ -34,6 +35,9 @@ pipeline {
     }
 
     stage('Checkout') {
+     agent {
+        label 'FreeNAS-PR'
+      }
       environment {
          REPO_OS_URL = 'git://10.20.21.137/os'
          REPO_FREENAS_URL = 'git://10.20.21.137/freenas'
@@ -61,6 +65,9 @@ pipeline {
     }
 
     stage('release') {
+     agent {
+        label 'FreeNAS-PR'
+      }
       environment {
          POUDRIERE_JOBS = '32'
          BUILDWORLD_JOBS = '32'
