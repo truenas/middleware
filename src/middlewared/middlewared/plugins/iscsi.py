@@ -1003,7 +1003,7 @@ class iSCSITargetService(CRUDService):
             if names:
                 verrors.add(f'{schema_name}.name', 'Target name already exists')
 
-        if data.get('alias'):
+        if data.get('alias') is not None:
             if '"' in data['alias']:
                 verrors.add(f'{schema_name}.alias', 'Double quotes are not allowed')
             elif data['alias'] == 'target':
@@ -1022,8 +1022,9 @@ class iSCSITargetService(CRUDService):
         ):
             verrors.add(f'{schema_name}.mode', 'Fibre Channel not enabled')
 
-        if not data['groups']:
-            verrors.add(f'{schema_name}.groups', 'At least one group is required')
+        # Creating target without groups should be allowed for API 1.0 compat
+        # if not data['groups']:
+        #    verrors.add(f'{schema_name}.groups', 'At least one group is required')
 
         portals = []
         for i, group in enumerate(data['groups']):

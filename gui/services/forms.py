@@ -1034,6 +1034,7 @@ class iSCSITargetForm(MiddlewareModelForm, ModelForm):
     def middleware_clean(self, data):
         data['mode'] = data['mode'].upper()
         data['groups'] = self._groups
+        data['alias'] = data.get('alias') or None
         return data
 
 
