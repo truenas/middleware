@@ -41,8 +41,7 @@ def test_01_creating_the_nfs_server():
                "udp": False,
                "rpcstatd_port": 871,
                "rpclockd_port": 32803,
-               "v4": False,
-               "v4_krb": False}
+               "v4": True}
     results = PUT("/nfs", paylaod)
     assert results.status_code == 200, results.text
 
@@ -98,7 +97,7 @@ def test_08_checking_to_see_if_nfs_service_is_running():
 @bsd_host_cfg
 # Now check if we can mount NFS / create / rename / copy / delete / umount
 def test_09_creating_nfs_mountpoint():
-    results = SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
+    results = SSH_TEST(f'mkdir -p "{MOUNTPOINT}"',
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
@@ -106,7 +105,7 @@ def test_09_creating_nfs_mountpoint():
 @mount_test_cfg
 @bsd_host_cfg
 def test_10_mounting_nfs():
-    cmd = 'mount_nfs %s:%s %s' % (ip, NFS_PATH, MOUNTPOINT)
+    cmd = f'mount_nfs {ip}:{NFS_PATH} {MOUNTPOINT}'
     # command below does not make sence
     # "umount '${MOUNTPOINT}' ; rmdir '${MOUNTPOINT}'" "60"
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
