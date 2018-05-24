@@ -94,7 +94,7 @@ class ServiceMonitorThread(threading.Thread):
             if service == 'activedirectory':
                 service = 'ad'
             ssl_enabled = ds["%s_ssl" % service]
- 
+
             # Make three attempts to get SRV records from DNS
             for i in range(0, max_tries):
                 try:
@@ -111,7 +111,7 @@ class ServiceMonitorThread(threading.Thread):
                 except:
                     self.logger.debug("[ServiceMonitorThread] DNS query for LDAP SRV records for %s failed" % (host))
                     if i == max_tries:
-                        return False 
+                        return False
 
         else:
             # Future services that need monitoring (???) will need an explicit configuration
@@ -127,7 +127,7 @@ class ServiceMonitorThread(threading.Thread):
                 s.connect((str(h.target), h.port))
                 connected = True
                 self.logger.debug("[ServiceMonitorThread] Connected: %s:%d" % (str(h.target), h.port))
-                return connected 
+                return connected
 
             except Exception as e:
                 self.logger.debug("[ServiceMonitorThread] Cannot connect: %s:%d with error: %s" % (str(h.target), h.port, e))
