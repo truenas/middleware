@@ -3,6 +3,7 @@ import dateutil.parser
 import os
 import random
 import re
+import ssl
 
 from middlewared.async_validators import validate_country
 from middlewared.schema import accepts, Dict, Int, List, Patch, Ref, Str
@@ -309,6 +310,20 @@ class CertificateService(CRUDService):
     # HELPER METHODS
 
     @accepts(
+        Str('hostname', required=True),
+        Int('port', required=True)
+    )
+    def get_host_certificates_thumbprint(self, hostname, port):
+        try:
+            conn = ssl.create_connection((hostname, port))
+            context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+            sock = context.wrap_socket(conn, server_hostname=hostname)
+            certificate = ssl.DER_cert_to_PEM_cert(sock.getpeercert(True))
+            return self.fingerprint(certificate)
+        except ConnectionRefusedError:
+            return None
+
+    @accepts(
         Str('certificate', required=True)
     )
     def load_certificate(self, certificate):
@@ -338,16 +353,21 @@ class CertificateService(CRUDService):
 
             return cert_info
 
-    @accepts(
-        Int('certificate_id', required=True)
-    )
-    async def get_fingerprint(self, certificate_id):
+    @private
+    async def get_fingerprint_of_cert(self, certificate_id):
         certificate_list = await self.query(filters=[('id', '=', certificate_id)])
         if len(certificate_list) == 0:
             return None
         else:
-            cert_certificate = certificate_list[0]['certificate']
+            return await self.middleware.run_in_io_thread(
+                self.fingerprint,
+                certificate_list[0]['certificate']
+            )
 
+    @accepts(
+        Str('cert_certificate', required=True)
+    )
+    def fingerprint(self, cert_certificate):
         # getting fingerprint of certificate
         try:
             certificate = crypto.load_certificate(

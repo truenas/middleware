@@ -635,7 +635,7 @@ class SystemGeneralService(ConfigService):
                 else:
                     # getting fingerprint for certificate
                     fingerprint = await self.middleware.call(
-                        'certificate.get_fingerprint',
+                        'certificate.get_fingerprint_of_cert',
                         certificate_id
                     )
                     if fingerprint:

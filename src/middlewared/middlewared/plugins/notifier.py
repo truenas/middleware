@@ -270,6 +270,9 @@ class NotifierService(Service):
         """Temporary wrapper to return available languages in django"""
         return settings.LANGUAGES
 
+    def gui_static_root(self):
+        return settings.STATIC_ROOT
+
     def humanize_size(self, number):
         """Temporary wrapper to return a human readable bytesize"""
         try:
