@@ -800,6 +800,7 @@ class VolumeResourceMixin(NestedMixin):
             label=deserialized.get('label'),
             data={
                 'replace_disk': deserialized.get('replace_disk'),
+                'force': deserialized.get('force', False),
             },
         )
         if not form.is_valid():
