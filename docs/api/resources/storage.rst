@@ -699,7 +699,8 @@ Replace disk
 
         {
                 "label": "gptid/7c4dd4f1-1a1f-11e3-9786-080027c5e4f4",
-                "replace_disk": "ada4"
+                "replace_disk": "ada4",
+                "force": true
         }
 
    **Example response**:
@@ -714,6 +715,7 @@ Replace disk
 
    :json string label: zfs label of the device
    :json string replace_disk: name of the new disk
+   :json bool force: force replacement of the new disk
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
