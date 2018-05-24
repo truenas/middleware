@@ -5,6 +5,7 @@ import sys
 import threading
 import time
 import tempfile
+import dns.resolver
 
 from middlewared.service import Service, private
 
@@ -86,27 +87,55 @@ class ServiceMonitorThread(threading.Thread):
         max_tries = 3
         connected = False
 
+        host_list = []
+        if self.name in ('activedirectory', 'ldap'):
+            service = self.name
+            ds = self.middleware.call_sync('datastore.query', 'directoryservice.%s' % service)[0]
+            if service == 'activedirectory':
+                service = 'ad'
+            ssl_enabled = ds["%s_ssl" % service]
+ 
+            # Make three attempts to get SRV records from DNS
+            for i in range(0, max_tries):
+                try:
+                    # Use SRV records to identify LDAP servers in domain. Then check if SSL is enabled.
+                    # If SSL is enabled, use LDAPS port
+                    answers = dns.resolver.query('_ldap._tcp.' + host, 'SRV')
+                    for rdata in answers:
+                        if ssl_enabled == 'on':
+                            rdata.port = 636
+                        else:
+                            rdata.port = 389
+
+                        host_list.append(rdata)
+                except:
+                    self.logger.debug("[ServiceMonitorThread] DNS query for LDAP SRV records for %s failed" % (host))
+                    if i == max_tries:
+                        return False 
+
+        else:
+            # Future services that need monitoring (???) will need an explicit configuration
+            self.logger.debug("[ServiceMonitorThread] no monitoring has been written for %s " % self.name)
+            return False
+
         timeout = _fs().middlewared.plugins.service_monitor.socket_timeout
 
-        for i in range(0, max_tries):
-            # XXX What about UDP?
+        for h in host_list:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(timeout)
-
             try:
-                s.connect((host, port))
+                s.connect((str(h.target), h.port))
                 connected = True
+                self.logger.debug("[ServiceMonitorThread] Connected: %s:%d" % (str(h.target), h.port))
+                return connected 
 
             except Exception as e:
-                self.logger.debug("[ServiceMonitorThread] Cannot connect: %s:%d with error: %s" % (host, port, e))
+                self.logger.debug("[ServiceMonitorThread] Cannot connect: %s:%d with error: %s" % (str(h.target), h.port, e))
                 connected = False
 
             finally:
                 s.settimeout(None)
                 s.close()
-
-            if connected:
-                break
 
         return connected
 
@@ -189,6 +218,7 @@ class ServiceMonitorThread(threading.Thread):
             # Clear all intermediate alerts
             ServiceMonitorThread.reset_alerts(service)
             # We gave up to restore service here
+            
             self.alert(service, "Failed to recover service %s after %d tries" % (service, ntries))
             # Disable monitoring here?
 
