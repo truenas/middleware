@@ -138,7 +138,7 @@ class SharingCIFSService(CRUDService):
         Bool('abe', default=False),
         List('hostsallow', items=[IPAddr('ip', cidr=True)]),
         List('hostsdeny', items=[IPAddr('ip', cidr=True)]),
-        List('vfsobjects', default=['zfs_space,zfsacl,streams_xattr']),
+        List('vfsobjects', default=['zfs_space', 'zfsacl', 'streams_xattr']),
         Int('storage_task'),
         Str('auxsmbconf'),
         Bool('default_permissions'),
