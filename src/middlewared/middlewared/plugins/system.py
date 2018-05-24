@@ -1,6 +1,6 @@
 from datetime import datetime
 from middlewared.schema import accepts, Dict, Int
-from middlewared.service import no_auth_required, job, Service
+from middlewared.service import no_auth_required, job, private, ConfigService, Service
 from middlewared.utils import Popen, sw_version
 
 import os
@@ -21,6 +21,21 @@ from freenasUI.system.utils import debug_get_settings, debug_run
 
 # Flag telling whether the system completed boot and is ready to use
 SYSTEM_READY = False
+
+
+class SytemAdvancedService(ConfigService):
+
+    class Config:
+        datastore = 'system.advanced'
+        datastore_prefix = 'adv_'
+        datastore_extend = 'system.advanced.system_advanced_extend'
+        namespace = 'system.advanced'
+
+    @private
+    async def system_advanced_extend(self, data):
+        if data.get('sed_user'):
+            data['sed_user'] = data.get('sed_user').upper()
+        return data
 
 
 class SystemService(Service):
