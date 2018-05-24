@@ -37,8 +37,7 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
 # Create tests
 # Add iSCSI initator
 def test_01_Add_iSCSI_initiator():
-    payload = {"id": 1,
-               "iscsi_target_initiator_auth_network": "ALL",
+    payload = {"iscsi_target_initiator_auth_network": "ALL",
                "iscsi_target_initiator_comment": "",
                "iscsi_target_initiator_initiators": "ALL",
                "iscsi_target_initiator_tag": 1}
@@ -56,7 +55,7 @@ def test_02_Add_ISCSI_portal():
 def test_03_Add_ISCSI_target():
     payload = {"iscsi_target_name": TARGET_NAME}
     results = POST("/services/iscsi/target/", payload)
-    assert results.status_code == 201
+    assert results.status_code == 201, results.text
 
 
 # Add Target to groups
@@ -68,7 +67,7 @@ def test_04_Add_target_to_groups():
                "iscsi_target_authtype": "None",
                "iscsi_target_initialdigest": "Auto"}'''
     results = POSTNOJSON("/services/iscsi/targetgroup/", payload)
-    assert results.status_code == 201
+    assert results.status_code == 201, results.text
 
 
 # Add iSCSI extent
@@ -278,4 +277,9 @@ def test_28_Delete_iSCSI_target():
 # Remove iSCSI extent
 def test_29_Delete_iSCSI_extent():
     results = DELETE("/services/iscsi/extent/1/")
+    assert results.status_code == 204, results.text
+
+# Remove iSCSI portal
+def test_29_Delete_iSCSI_extent():
+    results = DELETE("/services/iscsi/portal/1/", None)
     assert results.status_code == 204, results.text
