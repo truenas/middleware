@@ -5,7 +5,6 @@ import sys
 import threading
 import time
 import tempfile
-import dns.resolver
 
 from middlewared.service import Service, private
 
@@ -19,6 +18,11 @@ if not apps.ready:
     django.setup()
 
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
+from freenasUI.common.freenasldap import (
+    FreeNAS_ActiveDirectory,
+    FLAGS_DBINIT
+)
+
 
 
 class ServiceMonitorThread(threading.Thread):
@@ -83,33 +87,21 @@ class ServiceMonitorThread(threading.Thread):
         return enabled
 
     @private
-    def tryConnect(self, host, port):
+    def tryConnect(self, host, port, freenasldap_class):
         max_tries = 3
         connected = False
 
         host_list = []
-        if self.name in ('activedirectory', 'ldap'):
-            service = self.name
-            ds = self.middleware.call_sync('datastore.query', 'directoryservice.%s' % service)[0]
-            if service == 'activedirectory':
-                service = 'ad'
-            ssl_enabled = ds["%s_ssl" % service]
-
+        if self.name == 'activedirectory':
             # Make three attempts to get SRV records from DNS
             for i in range(0, max_tries):
-                try:
-                    # Use SRV records to identify LDAP servers in domain. Then check if SSL is enabled.
-                    # If SSL is enabled, use LDAPS port
-                    answers = dns.resolver.query('_ldap._tcp.' + host, 'SRV')
-                    for rdata in answers:
-                        if ssl_enabled == 'on':
-                            rdata.port = 636
-                        else:
-                            rdata.port = 389
+                try:  
+                    # Use SRV records to identify LDAP servers in domain. 
+                    host_list = freenasldap_class.get_ldap_servers(host) 
+                    break 
 
-                        host_list.append(rdata)
-                except:
-                    self.logger.debug("[ServiceMonitorThread] DNS query for LDAP SRV records for %s failed" % (host))
+                except Exception:
+                    self.logger.debug("[ServiceMonitorThread] Query for SRV records for %s failed" % (host))
                     if i == max_tries:
                         return False
 
@@ -154,13 +146,20 @@ class ServiceMonitorThread(threading.Thread):
         ntries = 0
         service = self.name
 
+        if service == 'activedirectory':
+            freenasldap_class = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+        elif service == 'ldap':
+            freenasldap_class = FreeNAS_LDAP(flags=FLABS_DBINIT)
+        else:
+            freenasldap_class = None      
+
         while True:
             self.finished.wait(self.frequency)
             #
             # We should probably have a configurable threshold for number of
             # failures before starting or stopping the service
             #
-            connected = self.tryConnect(self.host, self.port)
+            connected = self.tryConnect(self.host, self.port, freenasldap_class)
             started = self.getStarted(service)
             enabled = self.isEnabled(service)
 
@@ -218,7 +217,7 @@ class ServiceMonitorThread(threading.Thread):
             # Clear all intermediate alerts
             ServiceMonitorThread.reset_alerts(service)
             # We gave up to restore service here
-            
+
             self.alert(service, "Failed to recover service %s after %d tries" % (service, ntries))
             # Disable monitoring here?
 
