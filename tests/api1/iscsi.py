@@ -60,13 +60,13 @@ def test_03_Add_ISCSI_target():
 
 # Add Target to groups
 def test_04_Add_target_to_groups():
-    payload = '''{"iscsi_target": "1",
-               "iscsi_target_authgroup": null,
+    payload = {"iscsi_target": 1,
+               "iscsi_target_authgroup": None,
                "iscsi_target_portalgroup": 1,
-               "iscsi_target_initiatorgroup": "1",
+               "iscsi_target_initiatorgroup": 1,
                "iscsi_target_authtype": "None",
-               "iscsi_target_initialdigest": "Auto"}'''
-    results = POSTNOJSON("/services/iscsi/targetgroup/", payload)
+               "iscsi_target_initialdigest": "Auto"}
+    results = POST("/services/iscsi/targetgroup/", payload)
     assert results.status_code == 201, results.text
 
 
@@ -83,9 +83,8 @@ def test_05_Add_ISCSI_extent():
 
 # Associate iSCSI target
 def test_06_Associate_ISCSI_target():
-    payload = {"id": 1,
-               "iscsi_extent": 1,
-               "iscsi_lunid": None,
+    payload = {"iscsi_extent": 1,
+               "iscsi_lunid": 1,
                "iscsi_target": 1}
     results = POST("/services/iscsi/targettoextent/", payload)
     assert results.status_code == 201, results.text
