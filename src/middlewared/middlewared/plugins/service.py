@@ -249,10 +249,7 @@ class ServiceService(CRUDService):
         if running:
             state = 'RUNNING'
         else:
-            if service['enable']:
-                state = 'CRASHED'
-            else:
-                state = 'STOPPED'
+            state = 'STOPPED'
 
         service['state'] = state
         service['pids'] = pids
