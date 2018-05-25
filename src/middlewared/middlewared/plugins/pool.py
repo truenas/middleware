@@ -11,7 +11,7 @@ import bsd
 
 from middlewared.job import JobProgressBuffer
 from middlewared.schema import (accepts, Bool, Cron, Dict, Int, List, Patch,
-                                Str, UnixPerm, Dir)
+                                Str, UnixPerm)
 from middlewared.service import (
     ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
 )
@@ -768,8 +768,8 @@ class PoolDatasetService(CRUDService):
         return await self.middleware.call('zfs.dataset.promote', id)
 
     @accepts(
+        Str('id', default=None, required=True),
         Dict('pool_dataset_permission',
-             Dir('path', default=None, required=True),
              Str('user'),
              Str('group'),
              UnixPerm('mode'),
@@ -777,9 +777,10 @@ class PoolDatasetService(CRUDService):
              Bool('recursive', default=False)
              )
     )
-    async def permission(self, data):
+    @item_method
+    async def permission(self, id, data):
 
-        path = data['path']
+        path = (await self._get_instance(id))['mountpoint']
         user = data.get('user', None)
         group = data.get('group', None)
         mode = data.get('mode', None)
