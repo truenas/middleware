@@ -192,8 +192,8 @@ def test_20_verifying_test_file_directory_were_successfully_removed():
 @mount_test_cfg
 @osx_host_cfg
 def test_21_unmount_afp_share():
-    results = SSH_TEST(f'umount -f "{MOUNTPOINT}"',
-                       OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    cmd = f'umount -f "{MOUNTPOINT}"'
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
