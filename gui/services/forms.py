@@ -1038,7 +1038,11 @@ class iSCSITargetForm(MiddlewareModelForm, ModelForm):
         return data
 
 
-class iSCSITargetGroupsForm(ModelForm):
+class iSCSITargetGroupsForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "iscsi_target_"
+    middleware_plugin = "iscsi.target"
+    is_singletone = False
 
     iscsi_target_authgroup = forms.ChoiceField(label=_("Authentication Group number"))
 
@@ -1051,6 +1055,39 @@ class iSCSITargetGroupsForm(ModelForm):
         super(iSCSITargetGroupsForm, self).__init__(*args, **kwargs)
         self.fields['iscsi_target_authgroup'].required = False
         self.fields['iscsi_target_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
+
+    def middleware_clean(self, data):
+        targetobj = self.cleaned_data.get('iscsi_target')
+        with client as c:
+            target = c.call('iscsi.target.query', [('id', '=', targetobj.id)], {'get': True})
+
+        data['auth'] = data.pop('authgroup') or None
+        data['authmethod'] = AUTHMETHOD_LEGACY_MAP.get(data.pop('authtype'))
+        data['initiator'] = data.pop('initiatorgroup')
+        data['portal'] = data.pop('portalgroup')
+
+        if self.instance.id:
+            orig = models.iSCSITargetGroups.objects.get(pk=self.instance.id).__dict__
+            old = {
+                'authmethod': AUTHMETHOD_LEGACY_MAP.get(orig['iscsi_target_authtype']),
+                'portal': orig['iscsi_target_portalgroup_id'],
+                'initiator': orig['iscsi_target_initiatorgroup_id'],
+                'auth': orig['iscsi_target_authgroup'],
+            }
+            for idx, i in enumerate(target['groups']):
+                if (
+                    i['portal'] == old['portal'] and i['initiator'] == old['initiator'] and
+                    i['auth'] == old['auth'] and i['authmethod'] == old['authmethod']
+                ):
+                    break
+            else:
+                raise forms.ValidationError('Target group not found')
+            target['groups'][idx] = data
+        else:
+            target['groups'].append(data)
+        self.instance.id = targetobj.id
+        target.pop('id')
+        return target
 
 
 class TargetExtentDelete(Form):
