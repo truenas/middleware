@@ -87,7 +87,7 @@ class ServiceMonitorThread(threading.Thread):
         return enabled
 
     @private
-    def tryConnect(self, host, port, freenasldap_class):
+    def tryConnect(self, host, port, fnldap):
         max_tries = 3
         connected = False
 
@@ -97,7 +97,7 @@ class ServiceMonitorThread(threading.Thread):
             for i in range(0, max_tries):
                 try:  
                     # Use SRV records to identify LDAP servers in domain. 
-                    host_list = freenasldap_class.get_ldap_servers(host) 
+                    host_list = fnldap.get_ldap_servers(host) 
                     break 
 
                 except Exception:
@@ -147,11 +147,11 @@ class ServiceMonitorThread(threading.Thread):
         service = self.name
 
         if service == 'activedirectory':
-            freenasldap_class = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+            fnldap = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
         elif service == 'ldap':
-            freenasldap_class = FreeNAS_LDAP(flags=FLABS_DBINIT)
+            fnldap = FreeNAS_LDAP(flags=FLABS_DBINIT)
         else:
-            freenasldap_class = None      
+            fnldap = None      
 
         while True:
             self.finished.wait(self.frequency)
@@ -159,7 +159,7 @@ class ServiceMonitorThread(threading.Thread):
             # We should probably have a configurable threshold for number of
             # failures before starting or stopping the service
             #
-            connected = self.tryConnect(self.host, self.port, freenasldap_class)
+            connected = self.tryConnect(self.host, self.port, fnldap)
             started = self.getStarted(service)
             enabled = self.isEnabled(service)
 
