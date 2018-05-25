@@ -2,15 +2,15 @@ import configparser
 import os
 import requests
 import shutil
-import ssl
 import zipfile
 
 
 from contextlib import closing
 from datetime import datetime
 
+from middlewared.plugins.crypto import get_context_object
 from middlewared.schema import Bool, Dict, Int, Patch, Ref, Str
-from middlewared.service import accepts, ConfigService, private, Service, ValidationErrors
+from middlewared.service import accepts, ConfigService, private, Service, ValidationError, ValidationErrors
 from middlewared.validators import IpAddress
 
 
@@ -94,7 +94,7 @@ class VCenterService(ConfigService):
             register=True
         )
     )
-    def __update_plugin_zipfile(self, data):
+    def _update_plugin_zipfile(self, data):
         file_name = self.get_plugin_file_name()
         plugin_root_path = self.middleware.call_sync('vcenter.plugin_root_path')
 
@@ -141,8 +141,8 @@ class VCenterService(ConfigService):
             config.add_section('installation_parameter')
             config.set('installation_parameter', 'ip', data['ip'])
             config.set('installation_parameter', 'username', data['username'])
-            config.set('installation_parameter', 'port', data['port'])
-            config.set('installation_parameter', 'password', data['enc_key'])
+            config.set('installation_parameter', 'port', str(data['port']))
+            config.set('installation_parameter', 'password', data['password'])
             config.set('installation_parameter', 'install_mode', data['install_mode'])
             config.set(
                 'installation_parameter',
@@ -197,7 +197,10 @@ class VCenterPluginService(Service):
                 eri_list.append(eri)
             return eri_list
         except Exception as e:
-            return f'Can not read locales : {e}'
+            raise ValidationError(
+                'vcenterplugin.create_event_keyvalue_pairs',
+                f'Can not read locales : {e}'
+            )
 
     @private
     def get_extension_key(self):
@@ -217,36 +220,21 @@ class VCenterPluginService(Service):
             register=True
         )
     )
-    def __install_vcenter_plugin(self, data):
+    def install_vcenter_plugin(self, data):
         try:
-            # TODO: SHOULD THE CONTEXT OBJECT BE MOVED TO CRYPTO.PY ?
-            try:
-                ssl._create_default_https_context = ssl._create_unverified_context
-            except AttributeError:
-                pass
-            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-            context.verify_mode = ssl.CERT_NONE
-
             si = SmartConnect(
                 "https", data['ip'], data['port'],
-                data['username'], data['password'], sslContext=context
+                data['username'], data['password'], sslContext=get_context_object()
             )
             ext = self.get_extension(data['client_url'], data['fingerprint'])
 
-            if isinstance(ext, vim.Extension):
-                si.RetrieveServiceContent().extensionManager.RegisterExtension(ext)
-                return True
-            else:
-                # TODO: WHAT DOES THIS ACHIEVE ?
-                return ext
+            si.RetrieveServiceContent().extensionManager.RegisterExtension(ext)
 
         except vim.fault.NoPermission:
-            # TODO: HOW SHOULD THE EXCEPTION BE HANDLED ?
-            return 'vCenter user has no permission to install the plugin.'
-
-        except Exception as ex:
-            # TODO: SHOULD THIS BE REMOVED ?
-            return str(ex).replace("'", "").replace("<", "").replace(">", "")
+            raise ValidationError(
+                'vcenterplugin.install_vcenter_plugin',
+                'VCenter user has no permission to install the plugin'
+            )
 
     @accepts(
         Patch(
@@ -256,78 +244,47 @@ class VCenterPluginService(Service):
             register=True
         )
     )
-    def __uninstall_vcenter_plugin(self, data):
+    def uninstall_vcenter_plugin(self, data):
         try:
-            # TODO: SHOULD THE CONTEXT BE MOVED TO CRYPTO ?
-            try:
-                ssl._create_default_https_context = ssl._create_unverified_context
-            except AttributeError:
-                pass
-            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-            context.verify_mode = ssl.CERT_NONE
-
             si = SmartConnect(
                 "https", data['ip'], data['port'],
-                data['username'], data['password'], sslContext=context
+                data['username'], data['password'], sslContext=get_context_object()
             )
             extkey = self.get_extension_key()
-            si.RetrieveServiceContent().extensionManager.UnregisterExtension(extkey)
-            return True
-        except vim.fault.NoPermission:
-            # TODO: HOW SHOULD THE EXCEPTION BE HANDLED ?
-            return 'vCenter user has no permission to uninstall the plugin.'
 
-        except Exception as ex:
-            # TODO: SHOULD THIS BE REMOVED ?
-            return str(ex).replace("'", "").replace("<", "").replace(">", "")
+            si.RetrieveServiceContent().extensionManager.UnregisterExtension(extkey)
+        except vim.fault.NoPermission:
+            raise ValidationError(
+                'vcenterplugin.uninstall_vcenter_plugin',
+                'VCenter user has no permission to uninstall the plugin'
+            )
 
     @accepts(
         Ref('install_vcenter_plugin')
     )
-    def __upgrade_vcenter_plugin(self, data):
+    def upgrade_vcenter_plugin(self, data):
         try:
-            # TODO: SHOULD THE CONTEXT BE MOVED TO CRYPTO ?
-            try:
-                ssl._create_default_https_context = ssl._create_unverified_context
-            except AttributeError:
-                print('Error ssl')
-            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-            context.verify_mode = ssl.CERT_NONE
-
             si = SmartConnect(
                 "https", data['ip'], data['port'],
-                data['username'], data['password'], sslContext=context
+                data['username'], data['password'], sslContext=get_context_object()
             )
             ext = self.get_extension(data['client_url'], data['fingerprint'])
-            if isinstance(ext, vim.Extension):
-                si.RetrieveServiceContent().extensionManager.UpdateExtension(ext)
-                return True
-            else:
-                return ext
-        except vim.fault.NoPermission:
-            # TODO: HOW SHOULD THE EXCEPTION BE HANDLED ?
-            return 'vCenter user has no permission to upgrade the plugin.'
 
-        except Exception as ex:
-            # TODO: SHOULD THIS BE REMOVED ?
-            return str(ex).replace("'", "").replace("<", "").replace(">", "")
+            si.RetrieveServiceContent().extensionManager.UpdateExtension(ext)
+        except vim.fault.NoPermission:
+            raise ValidationError(
+                'vcenterplugin.upgrade_vcenter_plugin',
+                'VCenter user has no permission to upgrade the plugin'
+            )
 
     @accepts(
         Ref('uninstall_vcenter_plugin')
     )
-    def __find_plugin(self, data):
+    def find_plugin(self, data):
         try:
-            # TODO: SHOULD THE CONTEXT BE MOVED TO CRYPTO ?
-            try:
-                ssl._create_default_https_context = ssl._create_unverified_context
-            except AttributeError:
-                print('Error ssl')
-            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-            context.verify_mode = ssl.CERT_NONE
-
             si = SmartConnect(
                 "https", data['ip'], data['port'],
-                data['username'], data['password'], sslContext=context
+                data['username'], data['password'], sslContext=get_context_object()
             )
             extkey = self.get_extension_key()
             ext = si.RetrieveServiceContent().extensionManager.FindExtension(extkey)
@@ -337,47 +294,50 @@ class VCenterPluginService(Service):
                 # TODO: REFINE THIS
                 try:
                     return 'TruNAS System : ' + ext.client[0].url.split('/')[2]
-                except:
+                except Exception:
                     return 'TruNAS System :'
         except vim.fault.NoPermission:
-            # TODO: HOW SHOULD THE EXCEPTION BE HANDLED ?
-            return 'vCenter user does not have permission to perform this operation.'
-
-        except Exception as ex:
-            # TODO: SHOULD THIS BE REMOVED ?
-            return str(ex).replace("'", "").replace("<", "").replace(">", "")
+            raise ValidationError(
+                'vcenterplugin.uninstall_vcenter_plugin',
+                'VCenter user has no permission to perform this operation'
+            )
 
     @accepts(
         Ref('uninstall_vcenter_plugin')
     )
     def check_credentials(self, data):
         try:
-            # TODO: SHOULD THE CONTEXT BE MOVED TO CRYPTO ?
-            try:
-                ssl._create_default_https_context = ssl._create_unverified_context
-            except AttributeError:
-                print('Error ssl')
-            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-            context.verify_mode = ssl.CERT_NONE
-
             si = SmartConnect(
                 "https", data['ip'], data['port'],
-                data['username'], data['password'], sslContext=context
+                data['username'], data['password'], sslContext=get_context_object()
             )
             if si is None:
                 return False
             else:
                 return True
 
-        # TODO: CHECK EXCEPTION HANDLING - PROBABLY USE VALIDATION ERRORS
         except requests.exceptions.ConnectionError:
-            return 'Provided vCenter Hostname/IP and port are not valid. '
+            raise ValidationError(
+                'vcenterplugin.ip',
+                'Provided vCenter Hostname/IP or port are not valid'
+            )
         except vim.fault.InvalidLogin:
-            return 'Provided vCenter credentials are not valid.'
+            raise ValidationError(
+                'vcenterplugin.username',
+                'Provided vCenter credentials are not valid ( username or password )'
+            )
         except vim.fault.NoPermission:
-            return 'vCenter user does not have permission to perform this operation.'
-        except Exception:
-            return 'Internal Error. Please contact support.'
+            raise ValidationError(
+                'vcenterplugin.check_credentials',
+                'vCenter user does not have permission to perform this operation'
+            )
+        except Exception as e:
+            # TODO: SHOULD AN EXCEPTION BE LOGGED TO MIDDLEWARED LOGS ?
+            raise ValidationError(
+                'vcenterplugin.check_credentials',
+                str(e)
+            )
+            #return 'Internal Error. Please contact support.'
 
     @private
     def get_extension(self, vcp_url, fingerprint):
@@ -439,13 +399,12 @@ class VCenterPluginService(Service):
             ext.privilegeList = priv_info
 
             resource_list = self.create_event_keyvalue_pairs()
-            if isinstance(resource_list, str):  # TODO: WHAT IS THE ROLE OF RESOURCE LIST IF IT IS RETURNED ?
-                return resource_list  # THIS HAPPENS IN CASE OF AN EXCEPTION IN THE KEY VALUE PAIR FUNCTION
-            # HOW SHOULD THE EXCEPTIONS BE TAKEN CARE OF ?
-
             ext.resourceList = resource_list
 
             return ext
         except configparser.NoOptionError as e:
-            f'Property Missing : {e}'
+            raise ValidationError(
+                'vcenterplugin.get_extension',
+                f'Property Missing : {e}'
+            )
 

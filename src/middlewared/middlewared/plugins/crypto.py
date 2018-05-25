@@ -24,6 +24,18 @@ CERT_CA_ROOT_PATH = '/etc/certificates/CA'
 RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
 
 
+def get_context_object():
+    # BEING USED IN VCENTERPLUGIN SERVICE
+    try:
+        # TODO: WHY IS THIS BEING USED ?
+        ssl._create_default_https_context = ssl._create_unverified_context
+    except AttributeError:
+        pass
+    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+    context.verify_mode = ssl.CERT_NONE
+    return context
+
+
 def get_cert_info_from_data(data):
     cert_info_keys = ['key_length', 'country', 'state', 'city', 'organization', 'common',
                       'san', 'serial', 'email', 'lifetime', 'digest_algorithm']
