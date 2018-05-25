@@ -375,7 +375,10 @@ __EOF__
         }
 
         location /api/v2.0 {
-            proxy_pass http://127.0.0.1:6000/api/v2.0;
+	    # do not add the path to proxy_pass because of automatic url decoding
+	    # e.g. /api/v2.0/pool/dataset/id/tank%2Ffoo/ would become
+	    #      /api/v2.0/pool/dataset/id/tank/foo/
+            proxy_pass http://127.0.0.1:6000;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr \$remote_addr;
             proxy_set_header X-Real-Remote-Port \$remote_port;
