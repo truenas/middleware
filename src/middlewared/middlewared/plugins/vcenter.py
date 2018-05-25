@@ -160,14 +160,33 @@ class VCenterService(ConfigService):
             else:
 
                 try:
-                    repair_dict = install_dict.copy()
-                    repair_dict['install_mode'] = 'REPAIR'
-                    await self.middleware.run_in_io_thread(
-                        self.__install_vcenter_plugin,
-                        repair_dict
+                    credential_dict = install_dict.copy()
+                    credential_dict.pop('management_ip')
+                    credential_dict.pop('fingerprint')
+
+                    found_plugin = await self.middleware.run_in_io_thread(
+                        self.__find_plugin,
+                        credential_dict
                     )
+                    if found_plugin:
+                        verrors.add(
+                            f'{schema_name}.action',
+                            'Plugin repair is not required'
+                        )
+                        raise verrors
                 except ValidationError as e:
                     verrors.add_validation_error(e)
+                else:
+
+                    try:
+                        repair_dict = install_dict.copy()
+                        repair_dict['install_mode'] = 'REPAIR'
+                        await self.middleware.run_in_io_thread(
+                            self.__install_vcenter_plugin,
+                            repair_dict
+                        )
+                    except ValidationError as e:
+                        verrors.add_validation_error(e)
 
         elif action == 'UNINSTALL':
 
@@ -554,6 +573,8 @@ class VCenterService(ConfigService):
     def remove_directory(self, dest_path):
         if os.path.exists(dest_path):
             shutil.rmtree(dest_path)
+
+    # TODO: WORK ON EXCEPTION HANDLING AND MESSAGES
 
     @accepts(
         Dict(
