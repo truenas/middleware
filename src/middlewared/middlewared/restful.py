@@ -86,6 +86,9 @@ class RESTfulAPI(object):
             subresource = None
             if service['type'] == 'crud':
                 kwargs = {}
+                get = f'{name}.query'
+                if get in self._methods:
+                    kwargs['get'] = get
                 delete = f'{name}.delete'
                 if delete in self._methods:
                     kwargs['delete'] = delete
@@ -473,7 +476,13 @@ class Resource(object):
                     })
                     return resp
             elif http_method == 'get' and method['filterable']:
-                method_args = self._filterable_args(req)
+                if self.parent and 'id' in kwargs:
+                    filterid = kwargs['id']
+                    if filterid.isdigit():
+                        filterid = int(filterid)
+                    method_args = [[('id', '=', filterid)], {'get': True}]
+                else:
+                    method_args = self._filterable_args(req)
             else:
                 method_args = []
 
