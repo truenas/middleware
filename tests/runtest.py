@@ -46,7 +46,7 @@ if len(argv) == 1:
 
 # look if all the argument are there.
 try:
-    myopts, args = getopt.getopt(argv[1:], 'aipIt', ["api=", "ip=",
+    myopts, args = getopt.getopt(argv[1:], 'aipItk:', ["api=", "ip=",
                                                      "password=", "interface=",
                                                      'test='])
 except getopt.GetoptError as e:
@@ -56,6 +56,7 @@ except getopt.GetoptError as e:
 
 testName = None
 api = "1.0"
+testexpr = None
 
 for output, arg in myopts:
     if output in ('-i', '--ip'):
@@ -69,6 +70,8 @@ for output, arg in myopts:
     elif output in ('-a', '--api'):
         api = arg
         print(api)
+    elif output == '-k':
+        testexpr = arg
 
 if 'ip' not in locals() and 'password' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
@@ -145,12 +148,14 @@ if api == "1.0":
         if testName is not None and testName != i:
             continue
         call(["py.test-3.6", "-v", "--junitxml",
-              f"{results_xml}{i}_tests_result.xml",
-              f"api1/{i}.py"])
+              f"{results_xml}{i}_tests_result.xml"] + (
+                  ["-k", testexpr] if testexpr else []
+              ) + [f"api1/{i}.py"])
 elif api == "2.0":
     for i in get_tests():
         if testName is not None and testName != i:
             continue
         call(["py.test-3.6", "-v", "--junitxml",
-              f"{results_xml}{i}_tests_result.xml",
-              f"api2/{i}.py"])
+              f"{results_xml}{i}_tests_result.xml"] + (
+                  ["-k", testexpr] if testexpr else []
+              ) + [f"api2/{i}.py"])
