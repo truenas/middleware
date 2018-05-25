@@ -223,5 +223,5 @@ def test_16_Verify_SMB_service_is_disabled():
 
 # Check destroying a SMB dataset
 def test_17_Destroying_SMB_dataset():
-    results = DELETE("/storage/volume/1/datasets/%s/" % DATASET, None)
+    results = DELETE("/storage/volume/1/datasets/%s/" % DATASET)
     assert results.status_code == 204, results.text
