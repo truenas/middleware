@@ -24,6 +24,7 @@ from freenasUI.common.freenasldap import (
     FLAGS_DBINIT
 )
 
+
 class ServiceMonitorThread(threading.Thread):
     def __init__(self, **kwargs):
         super(ServiceMonitorThread, self).__init__()
@@ -96,7 +97,7 @@ class ServiceMonitorThread(threading.Thread):
             for i in range(0, max_tries):
                 try:
                     # Use SRV records to identify LDAP servers in domain.
-                    host_list = fnldap.get_ldap_servers(host) 
+                    host_list = fnldap.get_ldap_servers(host)
                     break
 
                 except Exception:
