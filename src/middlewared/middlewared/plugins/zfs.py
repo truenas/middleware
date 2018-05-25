@@ -309,6 +309,10 @@ class ZFSDatasetService(CRUDService):
         try:
             with libzfs.ZFS() as zfs:
                 ds = zfs.get_dataset(id)
+
+                if ds.type == libzfs.DatasetType.FILESYSTEM:
+                    ds.umount()
+
                 ds.delete()
         except libzfs.ZFSException as e:
             self.logger.error('Failed to delete dataset', exc_info=True)
