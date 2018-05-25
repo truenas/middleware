@@ -78,9 +78,8 @@ class VcenterConfiguration(Model):
         max_length=120,
         verbose_name=_(" version"),
     )
-    vc_state = models.CharField(
-        default='NOT INSTALLED',  # INSTALLED, NOT INSTALLED
-        max_length=120
+    vc_installed = models.BooleanField(
+        default=False,
     )
 
     class Meta:

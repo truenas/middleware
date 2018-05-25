@@ -326,6 +326,7 @@ class CertificateService(CRUDService):
         Int('port', required=True)
     )
     def get_host_certificates_thumbprint(self, hostname, port):
+        # FIXME: THROWS NASTY EXCEPTION WHEN GETTING CERTIFICATE FOR CURRENT MACHINE - MODIFY AS NEEDED
         try:
             conn = ssl.create_connection((hostname, port))
             context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)

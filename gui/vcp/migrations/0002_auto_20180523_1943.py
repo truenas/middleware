@@ -21,8 +21,8 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='vcenterconfiguration',
-            name='vc_state',
-            field=models.CharField(default='NOT INSTALLED', max_length=120),
+            name='vc_installed',
+            field=models.BooleanField(default=False),
         ),
         migrations.AlterField(
             model_name='vcenterconfiguration',
@@ -34,6 +34,7 @@ class Migration(migrations.Migration):
             name='vc_username',
             field=models.CharField(blank=True, max_length=120, null=True, verbose_name=' vCenter Username'),
         ),
+        # TODO: MAKE SURE THAT THERE ARE NO PRE-EXISTING VCP MODEL OBJECTS WHEN THE MIGRATIONS RUN
         migrations.RunPython(
             populate_vcp_models
         )

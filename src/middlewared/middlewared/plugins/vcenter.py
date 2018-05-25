@@ -8,6 +8,7 @@ import zipfile
 from contextlib import closing
 from datetime import datetime
 
+from middlewared.async_validators import resolve_hostname
 from middlewared.plugins.crypto import get_context_object
 from middlewared.schema import Bool, Dict, Int, Patch, Ref, Str
 from middlewared.service import accepts, ConfigService, private, Service, ValidationError, ValidationErrors
@@ -22,23 +23,221 @@ from pprint import pprint
 
 class VCenterService(ConfigService):
 
+    PRIVATE_GROUP_NAME = 'iXSystems'
+
     class Config:
         datastore = 'vcp.vcenterconfiguration'
         datastore_prefix = 'vc_'
-        datastore_extend = ''
+        datastore_extend = 'vcenter.vcenter_extend'
 
+    @private
+    async def common_validation(self, data, schema_name):
+        verrors = ValidationErrors()
+
+        ip = data.get('ip')
+        if ip:
+            # FIXME: RESOLVE HOSTNAME RAISES NO EXCEPTION WHEN AN INVALID IP IS PROVIDED
+            # METHOD NEEDS TO ACCOMMODATE SOCKET.GETHOSTBYADDR METHOD
+            await resolve_hostname(self.middleware, verrors, f'{schema_name}.ip', ip)
+
+        management_ip = data.get('management_ip')
+        if management_ip and management_ip not in (await self.get_management_ip_choices()):
+            verrors.add(
+                f'{schema_name}.management_ip',
+                'Please select a valid IP for your TrueNAS system'
+            )
+
+        action = data.get('action')
+        if action and action != 'UNINSTALL':
+            if (
+                not (await self.middleware.call('vcenteraux.config'))['enable_https'] and
+                (await self.middleware.call('system.general.config'))['ui_protocol'].upper() == 'HTTPS'
+            ):
+                verrors.add(
+                    f'{schema_name}.action',
+                    'Please enable vCenter plugin over HTTPS'
+                )
+
+        return verrors
+
+    @private
+    async def vcenter_extend(self, data):
+        data['password'] = await self.middleware.call('notifier.pwenc_decrypt', data['password'])
+        return data
+
+    @accepts(
+        Dict(
+            'vcenter_update_dict',
+            Int('port'),  # TODO: RANGE VALIDATOR
+            Str('action', enum=['INSTALL', 'REPAIR', 'UNINSTALL', 'UPGRADE'], required=True),
+            Str('management_ip'),
+            Str('ip'),  # HOST IP
+            Str('password', password=True),  # Password should be encrypted when saving
+            Str('username'),
+        )
+    )
     async def do_update(self, data):
         old = await self.config()
-        pprint(old)
-        return old
+        new = old.copy()
+        new.update(data)
+
+        schema_name = 'vcenter_update'
+        verrors = await self.common_validation(new, schema_name)
+        if verrors:
+            raise verrors
+
+        action = new.pop('action')
+        system_general = await self.middleware.call('system.general.config')
+        ui_protocol = system_general['ui_protocol']
+        ui_port = system_general['ui_port'] if ui_protocol.lower() != 'https' else system_general['ui_httpsport']
+        #fingerprint = await self.middleware.call(
+        #    'certificate.get_host_certificates_thumbprint',
+        #    data['management_ip'], data['port']
+        #)
+        fingerprint = ''
+        plugin_file_name = await self.middleware.run_in_io_thread(
+            self.get_plugin_file_name
+        )
+        management_addr = f'{ui_protocol}://{new["management_ip"]}:{ui_port}/static/{plugin_file_name}'
+
+        install_dict = {
+            'port': new['port'],
+            'fingerprint': fingerprint,
+            'management_ip': management_addr,
+            'ip': new['ip'],
+            'password': new['password'],
+            'username': new['username']
+        }
+
+        # TODO: ARE NESTED TRY CATCH THE BEST THING ? EAFP ?
+        if action == 'INSTALL':
+
+            if new['installed']:
+                verrors.add(
+                    f'{schema_name}.action',
+                    'Plugin is already installed'
+                )
+            else:
+                # Make sure the plugin doesn't exist already on the system
+                try:
+                    credential_dict = install_dict.copy()
+                    credential_dict.pop('management_ip')
+                    credential_dict.pop('fingerprint')
+
+                    found_plugin = await self.middleware.run_in_io_thread(
+                        self.__find_plugin,
+                        credential_dict
+                    )
+                    if found_plugin:
+                        verrors.add(
+                            f'{schema_name}.action',
+                            'Plugin is already installed'
+                        )
+                except ValidationError as e:
+                    verrors.add_validation_error(e)
+                else:
+
+                    if verrors:
+                        raise verrors
+                    try:
+                        await self.middleware.run_in_io_thread(
+                            self.__install_vcenter_plugin,
+                            install_dict
+                        )
+                    except ValidationError as e:
+                        verrors.add_validation_error(e)
+                    else:
+                        new['version'] = await self.middleware.run_in_io_thread(self.get_plugin_version)
+                        new['installed'] = True
+
+        elif action == 'REPAIR':
+
+            if not new['installed']:
+                verrors.add(
+                    f'{schema_name}.action',
+                    'Plugin is not installed. Please install it first'
+                )
+            else:
+
+                try:
+                    repair_dict = install_dict.copy()
+                    repair_dict['install_mode'] = 'REPAIR'
+                    await self.middleware.run_in_io_thread(
+                        self.__install_vcenter_plugin,
+                        repair_dict
+                    )
+                except ValidationError as e:
+                    verrors.add_validation_error(e)
+
+        elif action == 'UNINSTALL':
+
+            if not new['installed']:
+                verrors.add(
+                    f'{schema_name}.action',
+                    'Plugin is not installed on the system'
+                )
+            else:
+
+                try:
+                    uninstall_dict = install_dict.copy()
+                    uninstall_dict.pop('management_ip')
+                    uninstall_dict.pop('fingerprint')
+                    await self.middleware.run_in_io_thread(
+                        self.__uninstall_vcenter_plugin,
+                        uninstall_dict
+                    )
+                except ValidationError as e:
+                    verrors.add_validation_error(e)
+                else:
+                    new['installed'] = False
+                    for key in new:
+                        # flushing existing object with empty values
+                        if key not in ('installed', 'id'):
+                            new[key] = ''
+
+        else:
+
+            if not new['installed']:
+                verrors.add(
+                    f'{schema_name}.action',
+                    'Plugin not installed'
+                )
+            else:
+
+                try:
+                    await self.middleware.run_in_io_thread(
+                        self.__upgrade_vcenter_plugin,
+                        install_dict
+                    )
+                except ValidationError as e:
+                    verrors.add_validation_error(e)
+                else:
+                    new['version'] = await self.middleware.run_in_io_thread(self.get_plugin_version)
+
+        if verrors:
+            raise verrors
+
+        new['password'] = await self.middleware.call('notifier.pwenc_encrypt', new['password'])
+
+        print('\n\nupdating database')
+        pprint(new)
+
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            new['id'],
+            new,
+            {'prefix': self._config.datastore_prefix}
+        )
+
+        return await self.config()
 
     async def plugin_root_path(self):
         return await self.middleware.call('notifier.gui_static_root')
     
     @private
     async def get_management_ip_choices(self):
-        # TODO: Make sure this returns all the relevant management ips
-        ip_list = self.middleware.call(
+        ip_list = await self.middleware.call(
             'interfaces.ip_in_use', {
                 'ipv4': True
             }
@@ -58,108 +257,6 @@ class VCenterService(ConfigService):
         return file_name.split('_')[1]
 
     @private
-    def extract_zip(self, src_path, dest_path):
-        if not os.path.exists(dest_path):
-            os.makedirs(dest_path)
-        with zipfile.ZipFile(src_path) as zip_f:
-            zip_f.extractall(dest_path)
-
-    @private
-    def zipdir(self, src_path, dest_path):
-        # TODO: CAN THIS BE IMPROVED ?
-        assert os.path.isdir(src_path)
-        with closing(zipfile.ZipFile(dest_path, "w")) as z:
-
-            for root, dirs, files in os.walk(src_path):
-                for fn in files:
-                    absfn = os.path.join(root, fn)
-                    zfn = absfn[len(src_path) + len(os.sep):]
-                    z.write(absfn, zfn)
-
-    @private
-    def remove_directory(self, dest_path):
-        if os.path.exists(dest_path):
-            shutil.rmtree(dest_path)
-    
-    @accepts(
-        Dict(
-            'update_vcp_plugin_zipfile',
-            Int('port', required=True),
-            Str('ip', required=True, validators=[IpAddress()]),
-            Str('install_mode', required=True),  # TODO: Would this require an enum ?
-            Str('plugin_version_old', required=True),
-            Str('plugin_version_new', required=True),
-            Str('password', required=True, password=True),  # should be encrypted
-            Str('username', required=True),
-            register=True
-        )
-    )
-    def _update_plugin_zipfile(self, data):
-        file_name = self.get_plugin_file_name()
-        plugin_root_path = self.middleware.call_sync('vcenter.plugin_root_path')
-
-        self.extract_zip(
-            os.path.join(plugin_root_path, file_name),
-            os.path.join(plugin_root_path, 'plugin')
-        )
-        self.extract_zip(
-            os.path.join(plugin_root_path, 'plugin/plugins/ixsystems-vcp-service.jar'),
-            os.path.join(plugin_root_path, 'plugin/plugins/ixsystems-vcp-service')
-        )
-
-        data['fpath'] = os.path.join(
-            plugin_root_path,
-            'plugin/plugins/ixsystems-vcp-service/META-INF/config/install.properties'
-        )
-
-        self.__create_property_file(data)
-        self.zipdir(
-            os.path.join(plugin_root_path, 'plugin/plugins/ixsystems-vcp-service'),
-            os.path.join(plugin_root_path, 'plugin/plugins/ixsystems-vcp-service.jar')
-        )
-        self.remove_directory(os.path.join(plugin_root_path, 'plugin/plugins/ixsystems-vcp-service'))
-
-        shutil.make_archive(
-            os.path.join(plugin_root_path, file_name[0:-4]),
-            'zip',
-            os.path.join(plugin_root_path, 'plugin')
-        )
-
-        self.remove_directory(os.path.join(plugin_root_path, 'plugin'))
-
-    @accepts(
-        Patch(
-            'update_vcp_plugin_zipfile', '__create_property_file',
-            ('add', {'name': 'fpath', 'type': 'str'}),
-        )
-    )
-    def __create_property_file(self, data):
-        # Password encrypted using notifier.pwenc_encrypt
-
-        config = configparser.ConfigParser()
-        with open(data['fpath'], 'w') as config_file:
-            config.add_section('installation_parameter')
-            config.set('installation_parameter', 'ip', data['ip'])
-            config.set('installation_parameter', 'username', data['username'])
-            config.set('installation_parameter', 'port', str(data['port']))
-            config.set('installation_parameter', 'password', data['password'])
-            config.set('installation_parameter', 'install_mode', data['install_mode'])
-            config.set(
-                'installation_parameter',
-                'plugin_version_old',
-                data['plugin_version_old'])
-            config.set(
-                'installation_parameter',
-                'plugin_version_new',
-                data['plugin_version_new'])
-            config.write(config_file)
-    
-
-class VCenterPluginService(Service):
-
-    PRIVATE_GROUP_NAME = 'iXSystems'
-
-    @private
     async def property_file_path(self):
         return os.path.join(
             (await self.middleware.call('notifier.gui_base_path')),
@@ -176,12 +273,13 @@ class VCenterPluginService(Service):
     @private
     def create_event_keyvalue_pairs(self):
         try:
+            # TODO: CAN THIS BE REFINED ?
             eri_list = []
-            resource_folder_path = self.middleware.call_sync('vcenterplugin.resource_folder_path')
+            resource_folder_path = self.middleware.call_sync('vcenter.resource_folder_path')
             for file in os.listdir(resource_folder_path):
                 eri = vim.Extension.ResourceInfo()
 
-                #Read locale file from vcp_locale
+                # Read locale file from vcp_locale
                 eri.module = file.split("_")[0]
                 with open(os.path.join(resource_folder_path, file), 'r') as file:
                     for line in file:
@@ -198,41 +296,59 @@ class VCenterPluginService(Service):
             return eri_list
         except Exception as e:
             raise ValidationError(
-                'vcenterplugin.create_event_keyvalue_pairs',
+                'vcenter_update.create_event_keyvalue_pairs',
                 f'Can not read locales : {e}'
             )
 
     @private
     def get_extension_key(self):
         cp = configparser.ConfigParser()
-        cp.read(self.middleware.call_sync('vcenterplugin.property_file_path'))
+        cp.read(self.middleware.call_sync('vcenter.property_file_path'))
         return cp.get('RegisterParam', 'key')
+
+    # TODO: SHOULD A VALIDATION ERROR BE RAISED FROM THE PLUGIN METHODS ? AND IS IT NECESSARY TO CHECK FOR PERMISSION
+    # IN EACH METHOD ? CAN PERMISSIONS BE DIFFERENT ON EACH ACTION ? ( MOST PROBABLY YES )
 
     @accepts(
         Dict(
             'install_vcenter_plugin',
             Int('port', required=True),
             Str('fingerprint', required=True),
-            Str('client_url', required=True),
+            Str('management_ip', required=True),
+            Str('install_mode', enum=['NEW', 'REPAIR'], required=False, default='NEW'),  # HOST IP
             Str('ip', required=True),  # HOST IP
             Str('password', password=True, required=True),  # Password should be decrypted
             Str('username', required=True),
             register=True
         )
     )
-    def install_vcenter_plugin(self, data):
+    def __install_vcenter_plugin(self, data):
+
+        current_plugin_version = self.get_plugin_version()
+        encrypted_password = self.middleware.call_sync('notifier.pwenc_encrypt', data['password'])
+
+        update_zipfile_dict = data.copy()
+        update_zipfile_dict.pop('management_ip')
+        update_zipfile_dict.pop('fingerprint')
+        update_zipfile_dict['password'] = encrypted_password
+        update_zipfile_dict['plugin_version_old'] = 'null'
+        update_zipfile_dict['plugin_version_new'] = current_plugin_version
+        self.__update_plugin_zipfile(update_zipfile_dict)
+
+        data.pop('install_mode')
+
         try:
-            si = SmartConnect(
-                "https", data['ip'], data['port'],
-                data['username'], data['password'], sslContext=get_context_object()
-            )
-            ext = self.get_extension(data['client_url'], data['fingerprint'])
+            ext = self.get_extension(data['management_ip'], data['fingerprint'])
+
+            data.pop('fingerprint')
+            data.pop('management_ip')
+            si = self.__check_credentials(data)
 
             si.RetrieveServiceContent().extensionManager.RegisterExtension(ext)
 
         except vim.fault.NoPermission:
             raise ValidationError(
-                'vcenterplugin.install_vcenter_plugin',
+                'vcenter_update.username',
                 'VCenter user has no permission to install the plugin'
             )
 
@@ -240,110 +356,117 @@ class VCenterPluginService(Service):
         Patch(
             'install_vcenter_plugin', 'uninstall_vcenter_plugin',
             ('rm', {'name': 'fingerprint'}),
-            ('rm', {'name': 'client_url'}),
+            ('rm', {'name': 'install_mode'}),
+            ('rm', {'name': 'management_ip'}),
             register=True
         )
     )
-    def uninstall_vcenter_plugin(self, data):
+    def __uninstall_vcenter_plugin(self, data):
         try:
-            si = SmartConnect(
-                "https", data['ip'], data['port'],
-                data['username'], data['password'], sslContext=get_context_object()
-            )
             extkey = self.get_extension_key()
 
+            si = self.__check_credentials(data)
             si.RetrieveServiceContent().extensionManager.UnregisterExtension(extkey)
+
         except vim.fault.NoPermission:
             raise ValidationError(
-                'vcenterplugin.uninstall_vcenter_plugin',
+                'vcenter_update.username',
                 'VCenter user has no permission to uninstall the plugin'
             )
 
     @accepts(
-        Ref('install_vcenter_plugin')
+        Patch(
+            'install_vcenter_plugin', 'upgrade_vcenter_plugin',
+            ('rm', {'name': 'install_mode'})
+        )
     )
-    def upgrade_vcenter_plugin(self, data):
+    def __upgrade_vcenter_plugin(self, data):
+
+        update_zipfile_dict = data.copy()
+        update_zipfile_dict.pop('management_ip')
+        update_zipfile_dict.pop('fingerprint')
+        update_zipfile_dict['install_mode'] = 'UPGRADE'
+        update_zipfile_dict['password'] = self.middleware.call_sync('notifier.pwenc_encrypt', data['password'])
+        update_zipfile_dict['plugin_version_old'] = str((self.middleware.call_sync('vcenter.config'))['version'])
+        update_zipfile_dict['plugin_version_new'] = self.middleware.call_sync('vcenter.get_plugin_version')
+        self.__update_plugin_zipfile(update_zipfile_dict)
+
         try:
-            si = SmartConnect(
-                "https", data['ip'], data['port'],
-                data['username'], data['password'], sslContext=get_context_object()
-            )
-            ext = self.get_extension(data['client_url'], data['fingerprint'])
+            ext = self.get_extension(data['management_ip'], data['fingerprint'])
+
+            data.pop('fingerprint')
+            data.pop('management_ip')
+            si = self.__check_credentials(data)
 
             si.RetrieveServiceContent().extensionManager.UpdateExtension(ext)
+
         except vim.fault.NoPermission:
             raise ValidationError(
-                'vcenterplugin.upgrade_vcenter_plugin',
+                'vcenter_update.username',
                 'VCenter user has no permission to upgrade the plugin'
             )
 
     @accepts(
         Ref('uninstall_vcenter_plugin')
     )
-    def find_plugin(self, data):
+    def __find_plugin(self, data):
         try:
-            si = SmartConnect(
-                "https", data['ip'], data['port'],
-                data['username'], data['password'], sslContext=get_context_object()
-            )
+            si = self.__check_credentials(data)
+
             extkey = self.get_extension_key()
             ext = si.RetrieveServiceContent().extensionManager.FindExtension(extkey)
+
             if ext is None:
                 return False
             else:
-                # TODO: REFINE THIS
-                try:
-                    return 'TruNAS System : ' + ext.client[0].url.split('/')[2]
-                except Exception:
-                    return 'TruNAS System :'
+                return f'TrueNAS System : {ext.client[0].url.split("/")[2]}'
         except vim.fault.NoPermission:
             raise ValidationError(
-                'vcenterplugin.uninstall_vcenter_plugin',
+                'vcenter_update.username',
                 'VCenter user has no permission to perform this operation'
             )
 
     @accepts(
         Ref('uninstall_vcenter_plugin')
     )
-    def check_credentials(self, data):
+    def __check_credentials(self, data):
         try:
             si = SmartConnect(
                 "https", data['ip'], data['port'],
                 data['username'], data['password'], sslContext=get_context_object()
             )
-            if si is None:
-                return False
-            else:
-                return True
+
+            if si:
+                return si
 
         except requests.exceptions.ConnectionError:
             raise ValidationError(
-                'vcenterplugin.ip',
+                'vcenter_update.ip',
                 'Provided vCenter Hostname/IP or port are not valid'
             )
         except vim.fault.InvalidLogin:
             raise ValidationError(
-                'vcenterplugin.username',
+                'vcenter_update.username',
                 'Provided vCenter credentials are not valid ( username or password )'
             )
         except vim.fault.NoPermission:
             raise ValidationError(
-                'vcenterplugin.check_credentials',
+                'vcenter_update.username',
                 'vCenter user does not have permission to perform this operation'
             )
         except Exception as e:
             # TODO: SHOULD AN EXCEPTION BE LOGGED TO MIDDLEWARED LOGS ?
             raise ValidationError(
-                'vcenterplugin.check_credentials',
+                'vcenter_update.check_credentials',
                 str(e)
             )
-            #return 'Internal Error. Please contact support.'
+            # return 'Internal Error. Please contact support.'
 
     @private
     def get_extension(self, vcp_url, fingerprint):
         try:
             cp = configparser.ConfigParser()
-            cp.read(self.middleware.call_sync('vcenterplugin.property_file_path'))
+            cp.read(self.middleware.call_sync('vcenter.property_file_path'))
             version = self.middleware.call_sync('vcenter.get_plugin_version')
 
             description = vim.Description()
@@ -404,7 +527,110 @@ class VCenterPluginService(Service):
             return ext
         except configparser.NoOptionError as e:
             raise ValidationError(
-                'vcenterplugin.get_extension',
+                'vcenter_update.get_extension',
                 f'Property Missing : {e}'
             )
 
+    @private
+    def extract_zip(self, src_path, dest_path):
+        if not os.path.exists(dest_path):
+            os.makedirs(dest_path)
+        with zipfile.ZipFile(src_path) as zip_f:
+            zip_f.extractall(dest_path)
+
+    @private
+    def zipdir(self, src_path, dest_path):
+        # TODO: CAN THIS BE IMPROVED ?
+        assert os.path.isdir(src_path)
+        with closing(zipfile.ZipFile(dest_path, "w")) as z:
+
+            for root, dirs, files in os.walk(src_path):
+                for fn in files:
+                    absfn = os.path.join(root, fn)
+                    zfn = absfn[len(src_path) + len(os.sep):]
+                    z.write(absfn, zfn)
+
+    @private
+    def remove_directory(self, dest_path):
+        if os.path.exists(dest_path):
+            shutil.rmtree(dest_path)
+
+    @accepts(
+        Dict(
+            'update_vcp_plugin_zipfile',
+            Int('port', required=True),
+            Str('ip', required=True, validators=[IpAddress()]),
+            Str('install_mode', enum=['NEW', 'REPAIR', 'UPGRADE'], required=True),
+            Str('plugin_version_old', required=True),
+            Str('plugin_version_new', required=True),
+            Str('password', required=True, password=True),  # should be encrypted
+            Str('username', required=True),
+            register=True
+        )
+    )
+    def __update_plugin_zipfile(self, data):
+        file_name = self.middleware.call_sync('vcenter.get_plugin_file_name')
+        plugin_root_path = self.middleware.call_sync('vcenter.plugin_root_path')
+
+        self.extract_zip(
+            os.path.join(plugin_root_path, file_name),
+            os.path.join(plugin_root_path, 'plugin')
+        )
+        self.extract_zip(
+            os.path.join(plugin_root_path, 'plugin/plugins/ixsystems-vcp-service.jar'),
+            os.path.join(plugin_root_path, 'plugin/plugins/ixsystems-vcp-service')
+        )
+
+        data['fpath'] = os.path.join(
+            plugin_root_path,
+            'plugin/plugins/ixsystems-vcp-service/META-INF/config/install.properties'
+        )
+
+        self.__create_property_file(data)
+        self.zipdir(
+            os.path.join(plugin_root_path, 'plugin/plugins/ixsystems-vcp-service'),
+            os.path.join(plugin_root_path, 'plugin/plugins/ixsystems-vcp-service.jar')
+        )
+        self.remove_directory(os.path.join(plugin_root_path, 'plugin/plugins/ixsystems-vcp-service'))
+
+        shutil.make_archive(
+            os.path.join(plugin_root_path, file_name[0:-4]),
+            'zip',
+            os.path.join(plugin_root_path, 'plugin')
+        )
+
+        self.remove_directory(os.path.join(plugin_root_path, 'plugin'))
+
+    @accepts(
+        Patch(
+            'update_vcp_plugin_zipfile', '__create_property_file',
+            ('add', {'name': 'fpath', 'type': 'str'}),
+        )
+    )
+    def __create_property_file(self, data):
+        # Password encrypted using notifier.pwenc_encrypt
+
+        config = configparser.ConfigParser()
+        with open(data['fpath'], 'w') as config_file:
+            config.add_section('installation_parameter')
+            config.set('installation_parameter', 'ip', data['ip'])
+            config.set('installation_parameter', 'username', data['username'])
+            config.set('installation_parameter', 'port', str(data['port']))
+            config.set('installation_parameter', 'password', data['password'])
+            config.set('installation_parameter', 'install_mode', data['install_mode'])
+            config.set(
+                'installation_parameter',
+                'plugin_version_old',
+                data['plugin_version_old'])
+            config.set(
+                'installation_parameter',
+                'plugin_version_new',
+                data['plugin_version_new'])
+            config.write(config_file)
+
+
+class VCenterAuxService(ConfigService):
+
+    class Config:
+        datastore = 'vcp.vcenterauxsettings'
+        datastore_prefix = 'vc_'
