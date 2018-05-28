@@ -312,7 +312,7 @@ class VcenterConfigurationForm(ModelForm):
 
     def get_vcp_url(self, manage_ip, sys_guiprotocol):
         sys_guiport = self.get_sys_port()
-        file_address = 'static/' + utils.get_plugin_file_name()
+        file_address = 'legacy/static/' + utils.get_plugin_file_name()
         vcp_url = sys_guiprotocol + '://' + manage_ip + \
             ':' + sys_guiport + '/' + file_address
         return vcp_url
