@@ -1,22 +1,23 @@
 import configparser
 import os
-import requests
 import shutil
+import socket
 import zipfile
 
 
 from contextlib import closing
 from datetime import datetime
+from pkg_resources import parse_version
+from pyVim.connect import SmartConnect
+from pyVmomi import vim
+
 
 from middlewared.async_validators import resolve_hostname
 from middlewared.plugins.crypto import get_context_object
 from middlewared.schema import Bool, Dict, Int, Patch, Ref, Str
-from middlewared.service import accepts, ConfigService, private, Service, ValidationError, ValidationErrors
-from middlewared.validators import IpAddress
+from middlewared.service import accepts, ConfigService, private, ValidationError, ValidationErrors
+from middlewared.validators import IpAddress, Port
 
-
-from pyVim.connect import SmartConnect
-from pyVmomi import vim
 
 from pprint import pprint
 
@@ -36,8 +37,6 @@ class VCenterService(ConfigService):
 
         ip = data.get('ip')
         if ip:
-            # FIXME: RESOLVE HOSTNAME RAISES NO EXCEPTION WHEN AN INVALID IP IS PROVIDED
-            # METHOD NEEDS TO ACCOMMODATE SOCKET.GETHOSTBYADDR METHOD
             await resolve_hostname(self.middleware, verrors, f'{schema_name}.ip', ip)
 
         management_ip = data.get('management_ip')
@@ -63,16 +62,17 @@ class VCenterService(ConfigService):
     @private
     async def vcenter_extend(self, data):
         data['password'] = await self.middleware.call('notifier.pwenc_decrypt', data['password'])
+        data['port'] = int(data['port']) if data['port'] else 443  # Defaulting to 443
         return data
 
     @accepts(
         Dict(
             'vcenter_update_dict',
-            Int('port'),  # TODO: RANGE VALIDATOR
+            Int('port', validators=[Port()]),
             Str('action', enum=['INSTALL', 'REPAIR', 'UNINSTALL', 'UPGRADE'], required=True),
             Str('management_ip'),
             Str('ip'),  # HOST IP
-            Str('password', password=True),  # Password should be encrypted when saving
+            Str('password', password=True),
             Str('username'),
         )
     )
@@ -90,11 +90,10 @@ class VCenterService(ConfigService):
         system_general = await self.middleware.call('system.general.config')
         ui_protocol = system_general['ui_protocol']
         ui_port = system_general['ui_port'] if ui_protocol.lower() != 'https' else system_general['ui_httpsport']
-        #fingerprint = await self.middleware.call(
-        #    'certificate.get_host_certificates_thumbprint',
-        #    data['management_ip'], data['port']
-        #)
-        fingerprint = ''
+        fingerprint = await self.middleware.call(
+            'certificate.get_host_certificates_thumbprint',
+            new['management_ip'], new['port']
+        )
         plugin_file_name = await self.middleware.run_in_io_thread(
             self.get_plugin_file_name
         )
@@ -109,7 +108,6 @@ class VCenterService(ConfigService):
             'username': new['username']
         }
 
-        # TODO: ARE NESTED TRY CATCH THE BEST THING ? EAFP ?
         if action == 'INSTALL':
 
             if new['installed']:
@@ -118,6 +116,14 @@ class VCenterService(ConfigService):
                     'Plugin is already installed'
                 )
             else:
+
+                for r_key in ('management_ip', 'ip', 'password', 'port', 'username'):
+                    if not new[r_key]:
+                        verrors.add(
+                            f'{schema_name}.{r_key}',
+                            'This field is required to install the plugin'
+                        )
+
                 # Make sure the plugin doesn't exist already on the system
                 try:
                     credential_dict = install_dict.copy()
@@ -125,7 +131,7 @@ class VCenterService(ConfigService):
                     credential_dict.pop('fingerprint')
 
                     found_plugin = await self.middleware.run_in_io_thread(
-                        self.__find_plugin,
+                        self._find_plugin,
                         credential_dict
                     )
                     if found_plugin:
@@ -158,6 +164,9 @@ class VCenterService(ConfigService):
                     'Plugin is not installed. Please install it first'
                 )
             else:
+                
+                # FROM MY UNDERSTANDING REPAIR IS CALLED WHEN THE DATABASE APPARENTLY TELLS THAT THE PLUGIN IS PRESENT
+                # BUT THE SYSTEM FAILS TO RECOGNIZE THE PLUGIN EXTENSION
 
                 try:
                     credential_dict = install_dict.copy()
@@ -165,7 +174,7 @@ class VCenterService(ConfigService):
                     credential_dict.pop('fingerprint')
 
                     found_plugin = await self.middleware.run_in_io_thread(
-                        self.__find_plugin,
+                        self._find_plugin,
                         credential_dict
                     )
                     if found_plugin:
@@ -173,10 +182,12 @@ class VCenterService(ConfigService):
                             f'{schema_name}.action',
                             'Plugin repair is not required'
                         )
-                        raise verrors
                 except ValidationError as e:
                     verrors.add_validation_error(e)
                 else:
+                    
+                    if verrors:
+                        raise verrors
 
                     try:
                         repair_dict = install_dict.copy()
@@ -209,9 +220,10 @@ class VCenterService(ConfigService):
                     verrors.add_validation_error(e)
                 else:
                     new['installed'] = False
+                    new['port'] = 443
                     for key in new:
                         # flushing existing object with empty values
-                        if key not in ('installed', 'id'):
+                        if key not in ('installed', 'id', 'port'):
                             new[key] = ''
 
         else:
@@ -220,6 +232,11 @@ class VCenterService(ConfigService):
                 verrors.add(
                     f'{schema_name}.action',
                     'Plugin not installed'
+                )
+            elif not (await self.is_update_available()):
+                verrors.add(
+                    f'{schema_name}.action',
+                    'No update is available for vCenter plugin'
                 )
             else:
 
@@ -250,10 +267,15 @@ class VCenterService(ConfigService):
         )
 
         return await self.config()
+    
+    async def is_update_available(self):
+        latest_version = await self.middleware.run_in_io_thread(self.get_plugin_version)
+        current_version = (await self.config())['version']
+        return latest_version if parse_version(latest_version) > parse_version(current_version) else None
 
     async def plugin_root_path(self):
         return await self.middleware.call('notifier.gui_static_root')
-    
+
     @private
     async def get_management_ip_choices(self):
         ip_list = await self.middleware.call(
@@ -263,7 +285,7 @@ class VCenterService(ConfigService):
         )
 
         return [ip_dict['address'] for ip_dict in ip_list]
-    
+
     @private
     def get_plugin_file_name(self):
         # TODO: The path to the plugin should be moved over to middlewared from django
@@ -292,7 +314,7 @@ class VCenterService(ConfigService):
     @private
     def create_event_keyvalue_pairs(self):
         try:
-            # TODO: CAN THIS BE REFINED ?
+
             eri_list = []
             resource_folder_path = self.middleware.call_sync('vcenter.resource_folder_path')
             for file in os.listdir(resource_folder_path):
@@ -325,16 +347,13 @@ class VCenterService(ConfigService):
         cp.read(self.middleware.call_sync('vcenter.property_file_path'))
         return cp.get('RegisterParam', 'key')
 
-    # TODO: SHOULD A VALIDATION ERROR BE RAISED FROM THE PLUGIN METHODS ? AND IS IT NECESSARY TO CHECK FOR PERMISSION
-    # IN EACH METHOD ? CAN PERMISSIONS BE DIFFERENT ON EACH ACTION ? ( MOST PROBABLY YES )
-
     @accepts(
         Dict(
             'install_vcenter_plugin',
             Int('port', required=True),
             Str('fingerprint', required=True),
             Str('management_ip', required=True),
-            Str('install_mode', enum=['NEW', 'REPAIR'], required=False, default='NEW'),  # HOST IP
+            Str('install_mode', enum=['NEW', 'REPAIR'], required=False, default='NEW'),
             Str('ip', required=True),  # HOST IP
             Str('password', password=True, required=True),  # Password should be decrypted
             Str('username', required=True),
@@ -343,7 +362,6 @@ class VCenterService(ConfigService):
     )
     def __install_vcenter_plugin(self, data):
 
-        current_plugin_version = self.get_plugin_version()
         encrypted_password = self.middleware.call_sync('notifier.pwenc_encrypt', data['password'])
 
         update_zipfile_dict = data.copy()
@@ -351,7 +369,7 @@ class VCenterService(ConfigService):
         update_zipfile_dict.pop('fingerprint')
         update_zipfile_dict['password'] = encrypted_password
         update_zipfile_dict['plugin_version_old'] = 'null'
-        update_zipfile_dict['plugin_version_new'] = current_plugin_version
+        update_zipfile_dict['plugin_version_new'] = self.get_plugin_version()
         self.__update_plugin_zipfile(update_zipfile_dict)
 
         data.pop('install_mode')
@@ -390,7 +408,7 @@ class VCenterService(ConfigService):
         except vim.fault.NoPermission:
             raise ValidationError(
                 'vcenter_update.username',
-                'VCenter user has no permission to uninstall the plugin'
+                'VCenter user does not have necessary permission to uninstall the plugin'
             )
 
     @accepts(
@@ -428,7 +446,7 @@ class VCenterService(ConfigService):
     @accepts(
         Ref('uninstall_vcenter_plugin')
     )
-    def __find_plugin(self, data):
+    def _find_plugin(self, data):
         try:
             si = self.__check_credentials(data)
 
@@ -442,7 +460,7 @@ class VCenterService(ConfigService):
         except vim.fault.NoPermission:
             raise ValidationError(
                 'vcenter_update.username',
-                'VCenter user has no permission to perform this operation'
+                'VCenter user has no permission to find the plugin on this system'
             )
 
     @accepts(
@@ -458,7 +476,9 @@ class VCenterService(ConfigService):
             if si:
                 return si
 
-        except requests.exceptions.ConnectionError:
+        # TODO: IN CASE A WRONG PORT IS PROVIDED, THE CONNECTION DOES NOT TIME OUT UNTIL A CALLTIMEOUT EXCEPTION IS
+        # INITIATED - LOOK INTO POSSIBLE SOLUTIONS
+        except socket.gaierror:
             raise ValidationError(
                 'vcenter_update.ip',
                 'Provided vCenter Hostname/IP or port are not valid'
@@ -474,12 +494,19 @@ class VCenterService(ConfigService):
                 'vCenter user does not have permission to perform this operation'
             )
         except Exception as e:
-            # TODO: SHOULD AN EXCEPTION BE LOGGED TO MIDDLEWARED LOGS ?
-            raise ValidationError(
-                'vcenter_update.check_credentials',
-                str(e)
-            )
-            # return 'Internal Error. Please contact support.'
+
+            if 'not a vim server' in str(e).lower():
+                # In case an IP is provided for a server which is not a VIM server - then Exception is raised with
+                # following text
+                # Exception: 10.XX.XX.XX:443 is not a VIM server
+
+                raise ValidationError(
+                    'vcenter_update.ip',
+                    'Provided Hostname/IP is not a VIM server'
+                )
+
+            else:
+                raise e
 
     @private
     def get_extension(self, vcp_url, fingerprint):
@@ -559,7 +586,7 @@ class VCenterService(ConfigService):
 
     @private
     def zipdir(self, src_path, dest_path):
-        # TODO: CAN THIS BE IMPROVED ?
+
         assert os.path.isdir(src_path)
         with closing(zipfile.ZipFile(dest_path, "w")) as z:
 
@@ -573,8 +600,6 @@ class VCenterService(ConfigService):
     def remove_directory(self, dest_path):
         if os.path.exists(dest_path):
             shutil.rmtree(dest_path)
-
-    # TODO: WORK ON EXCEPTION HANDLING AND MESSAGES
 
     @accepts(
         Dict(
@@ -614,6 +639,7 @@ class VCenterService(ConfigService):
         )
         self.remove_directory(os.path.join(plugin_root_path, 'plugin/plugins/ixsystems-vcp-service'))
 
+        # TODO: GOT A STALE NFS HANDLE ERROR - UNABLE TO RECREATE IT FOR NOW - DO LOOK INTO WHAT CAUSED THE ISSUE
         shutil.make_archive(
             os.path.join(plugin_root_path, file_name[0:-4]),
             'zip',
@@ -655,3 +681,23 @@ class VCenterAuxService(ConfigService):
     class Config:
         datastore = 'vcp.vcenterauxsettings'
         datastore_prefix = 'vc_'
+
+    @accepts(
+        Dict(
+            'vcenter_aux_settings_update',
+            Bool('enable_https')
+        )
+    )
+    async def do_update(self, data):
+        old = await self.config()
+        new = old.copy()
+        new.update(data)
+
+        await self.middleware.call(
+            'datastore.update',
+            new['id'],
+            new,
+            {'prefix': self._config.datastore_prefix}
+        )
+
+        return await self.config()

@@ -3,6 +3,9 @@ import os
 import socket
 
 
+from middlewared.validators import ShouldBe, IpAddress
+
+
 async def check_path_resides_within_volume(verrors, middleware, name, path):
     vol_names = [vol["vol_name"] for vol in await middleware.call("datastore.query", "storage.volume")]
     vol_paths = [os.path.join("/mnt", vol_name) for vol_name in vol_names]
@@ -14,7 +17,13 @@ async def resolve_hostname(middleware, verrors, name, hostname):
 
     def resolve_host_name_thread(hostname):
         try:
-            return socket.gethostbyname(hostname)
+            try:
+                ip = IpAddress()
+                ip(hostname)
+            except ShouldBe:
+                return socket.gethostbyname(hostname)
+            else:
+                return socket.gethostbyaddr(hostname)
         except Exception:
             return False
 

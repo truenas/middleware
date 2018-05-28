@@ -48,7 +48,6 @@ class ValidationErrors(CallException):
         self.errors.append(ValidationError(attribute, errmsg, errno))
     
     def add_validation_error(self, validation_error):
-        # TODO: IS THIS THE BEST WAY?
         self.errors.append(validation_error)
 
     def add_child(self, attribute, child):

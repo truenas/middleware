@@ -3,6 +3,7 @@ import dateutil.parser
 import os
 import random
 import re
+import socket
 import ssl
 
 from middlewared.async_validators import validate_country
@@ -326,7 +327,6 @@ class CertificateService(CRUDService):
         Int('port', required=True)
     )
     def get_host_certificates_thumbprint(self, hostname, port):
-        # FIXME: THROWS NASTY EXCEPTION WHEN GETTING CERTIFICATE FOR CURRENT MACHINE - MODIFY AS NEEDED
         try:
             conn = ssl.create_connection((hostname, port))
             context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
@@ -334,7 +334,9 @@ class CertificateService(CRUDService):
             certificate = ssl.DER_cert_to_PEM_cert(sock.getpeercert(True))
             return self.fingerprint(certificate)
         except ConnectionRefusedError:
-            return None
+            return ''
+        except socket.gaierror:
+            return ''
 
     @accepts(
         Str('certificate', required=True)
