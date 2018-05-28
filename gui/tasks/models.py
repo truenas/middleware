@@ -801,7 +801,7 @@ class SMARTTest(Model):
 
     def get_human_dayweek(self):
         weeks = self.smarttest_dayweek.split(',')
-        if len(weeks) == 7:
+        if len(weeks) == 7 or self.smarttest_dayweek == '*':
             return _('Everyday')
         if weeks == list(map(str, range(1, 6))):
             return _('Weekdays')

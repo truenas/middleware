@@ -71,6 +71,8 @@ def get_smartd_schedule(disk):
 
 
 def get_smartd_schedule_piece(value, min, max):
+    if value == "*":
+        return "."
     m = re.match("\*/([0-9]+)", value)
     if m:
         d = int(m.group(1))
