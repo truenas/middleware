@@ -593,7 +593,7 @@ class ZFSQuoteService(Service):
         }
 
     async def terminate(self):
-        await self.middleware.call('datastore.sql', 'DELETE FROM storage_quotaexcess')
+        await self.middleware.call('datastore.delete', 'storage.quotaexcess', [])
 
         if self.excesses is not None:
             for excess in self.excesses.values():
