@@ -342,7 +342,7 @@ class AlertService(Service):
 
     @periodic(3600)
     async def flush_alerts(self):
-        await self.middleware.call("datastore.sql", "DELETE FROM system_alert")
+        await self.middleware.call("datastore.delete", "system.alert", [])
 
         for alert in self.__get_all_alerts():
             d = alert.__dict__.copy()
