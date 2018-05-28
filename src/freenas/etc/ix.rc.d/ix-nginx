@@ -394,6 +394,8 @@ __EOF__
         }
 
         location /_upload {
+            # Allow uploads of any size. Its middlewared job to handle size.
+            client_max_body_size 0;
             proxy_pass http://127.0.0.1:6000;
             # make sure nginx does not buffer the upload and pass directly to middlewared
             proxy_request_buffering off;
