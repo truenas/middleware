@@ -33,7 +33,7 @@ def test_disk_sync(conn):
 
 
 def test_disk_sync_all(conn):
-    conn.ws.call('disk.sync_all')
+    conn.ws.call('disk.sync_all', job=True)
 
 
 def test_disk_multipath_sync(conn):
