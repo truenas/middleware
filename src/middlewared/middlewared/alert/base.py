@@ -65,7 +65,7 @@ class AlertSource:
     onetime = False
     schedule = IntervalSchedule(timedelta())
 
-    run_on_passive_node = True
+    run_on_backup_node = True
 
     def __init__(self, middleware):
         self.middleware = middleware
