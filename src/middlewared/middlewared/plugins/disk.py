@@ -467,9 +467,11 @@ class DiskService(CRUDService):
         await self.middleware.run_in_thread(geom.scan)
         for disk in (await self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})):
 
+            original_disk = disk.copy()
+
             name = await self.middleware.call('notifier.identifier_to_device', disk['disk_identifier'])
             if not name or name in seen_disks:
-                # If we cant translate the indentifier to a device, give up
+                # If we cant translate the identifier to a device, give up
                 # If name has already been seen once then we are probably
                 # dealing with with multipath here
                 if not disk['disk_expiretime']:
@@ -505,7 +507,10 @@ class DiskService(CRUDService):
             # mark it to expire.
             if name not in sys_disks and not disk['disk_expiretime']:
                     disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=DISK_EXPIRECACHE_DAYS)
-            await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+            # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
+            # when lots of drives are present
+            if disk != original_disk:
+                await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
 
             # FIXME: use a truenas middleware plugin
             await self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], False)
@@ -521,6 +526,7 @@ class DiskService(CRUDService):
                 else:
                     new = True
                     disk = {'disk_identifier': disk_identifier}
+                original_disk = disk.copy()
                 disk['disk_name'] = name
                 serial = ''
                 g = geom.geom_by_name('DISK', name)
@@ -544,7 +550,10 @@ class DiskService(CRUDService):
                     disk['disk_number'] = int(reg.group(2))
 
                 if not new:
-                    await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                    # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
+                    # when lots of drives are present
+                    if disk != original_disk:
+                        await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                 else:
                     disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
                 # FIXME: use a truenas middleware plugin
