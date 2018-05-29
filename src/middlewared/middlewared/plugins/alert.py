@@ -156,9 +156,12 @@ class AlertService(Service):
         if not await self.middleware.call("system.ready"):
             return
 
-        if not await self.middleware.call("system.is_freenas"):
-            if await self.middleware.call("notifier.failover_node") == "B":
-                return
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('notifier.failover_licensed') and
+            await self.middleware.call('notifier.failover_status') == 'BACKUP'
+        ):
+            return
 
         await self.__run_alerts()
 
@@ -342,6 +345,13 @@ class AlertService(Service):
 
     @periodic(3600)
     async def flush_alerts(self):
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('notifier.failover_licensed') and
+            await self.middleware.call('notifier.failover_status') == 'BACKUP'
+        ):
+            return
+
         await self.middleware.call("datastore.delete", "system.alert", [])
 
         for alert in self.__get_all_alerts():
