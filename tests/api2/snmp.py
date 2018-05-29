@@ -6,7 +6,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, GET
+from functions import PUT, GET, POST
 
 COMMUNITY = 'public'
 TRAPS = False
@@ -25,17 +25,33 @@ def test_01_Configure_SNMP():
     assert results.status_code == 200, results.text
 
 
-def test_02_Enable_SNMP_service():
+def test_02_Enable_SNMP_service_at_boot():
     results = PUT('/service/id/snmp', {'enable': True})
     assert results.status_code == 200, results.text
 
 
-def test_03_Validate_that_SNMP_service_is_running():
+def test_03_checking_to_see_if_snmp_service_is_enabled_at_boot():
+    results = GET("/service?service=snmp")
+    assert results.json()[0]["enable"] == True, results.text
+
+
+def test_04_starting_snmp_service():
+    payload = {"service": "snmp", "service-control": {"onetime": True}}
+    results = POST("/service/start", payload)
+    assert results.status_code == 200, results.text
+
+
+def test_05_checking_to_see_if_snmp_service_is_running():
+    results = GET("/service?service=snmp")
+    assert results.json()[0]["state"] == "RUNNING", results.text
+
+
+def test_06_Validate_that_SNMP_service_is_running():
     results = GET('/service?service=snmp')
     assert results.json()[0]['state'] == 'RUNNING', results.text
 
 
-def test_04_Validate_that_SNMP_settings_are_preserved():
+def test_07_Validate_that_SNMP_settings_are_preserved():
     results = GET('/snmp')
     assert results.status_code == 200, results.text
     data = results.json()
