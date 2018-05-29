@@ -18,6 +18,7 @@ if "BRIDGEHOST" in locals():
     MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
 
 DATASET = "tank/nfs"
+urlDataset = "tank%2Fnfs"
 NFS_PATH = "/mnt/" + DATASET
 Reason = "BRIDGEHOST is missing in ixautomation.conf"
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
@@ -249,3 +250,8 @@ def test_25_stoping_nfs_service():
 def test_26_checking_to_see_if_nfs_service_is_stop():
     results = GET("/service?service=nfs")
     assert results.json()[0]["state"] == "STOPPED", results.text
+
+# Check destroying a SMB dataset
+def test_27_destroying_smb_dataset():
+    results = DELETE(f"/pool/dataset/id/{urlDataset}/")
+    assert results.status_code == 200, results.text

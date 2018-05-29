@@ -16,6 +16,7 @@ from config import *
 if "BRIDGEHOST" in locals():
     MOUNTPOINT = "/tmp/smb-cifs" + BRIDGEHOST
 DATASET = "tank/smb-cifs"
+urlDataset = "tank%2Fsmb-cifs"
 SMB_NAME = "TestCifsSMB"
 SMB_PATH = "/mnt/" + DATASET
 VOL_GROUP = "wheel"
@@ -352,7 +353,7 @@ def test_38_Removing_smb_mountpoint_on_osx():
 
 
 def test_39_delete_cifs_share():
-    cifsid = GET('/sharing/cifs?name=TestSMB').json()[0]['id']
+    cifsid = GET(f'/sharing/cifs?name={SMB_NAME}').json()[0]['id']
     results = DELETE(f"/sharing/cifs/id/{cifsid}")
     assert results.status_code == 200, results.text
 
@@ -376,5 +377,5 @@ def test_42_stoping_clif_service():
 
 # Check destroying a SMB dataset
 def test_43_destroying_smb_dataset():
-    results = DELETE(f"/pool/dataset/id/{DATASET}")
+    results = DELETE(f"/pool/dataset/id/{urlDataset}/")
     assert results.status_code == 200, results.text

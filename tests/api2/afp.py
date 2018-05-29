@@ -16,6 +16,7 @@ from config import *
 if "BRIDGEHOST" in locals():
     MOUNTPOINT = f"/tmp/afp{BRIDGEHOST}"
 DATASET = "tank/afp"
+urlDataset = "tank%2Fafp"
 AFP_NAME = "MyAFPShare"
 AFP_PATH = f"/mnt/{DATASET}"
 VOL_GROUP = "wheel"
@@ -228,5 +229,5 @@ def test_24_checking_afp_disable_at_boot():
     assert results.json()[0]['enable'] == False, results.text
 
 def test_29_destroying_afp_dataset():
-    results = DELETE(f"/pool/dataset/id/{DATASET}")
+    results = DELETE(f"/pool/dataset/id/{urlDataset}/")
     assert results.status_code == 200, results.text
