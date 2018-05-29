@@ -816,7 +816,40 @@ Detach disk
 
    :json string label: zfs label of the device
    :resheader Content-Type: content type of the response
-   :statuscode 200: no error
+   :statuscode 202: no error
+
+
+Remove disk
++++++++++++
+
+.. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/remove/
+
+   Remove a disk of volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume/tank/remove/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "label": "gptid/7c4dd4f1-1a1f-11e3-9786-080027c5e4f4",
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      Disk removed.
+
+   :json string label: zfs label of the device
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
 
 
 Unlock
