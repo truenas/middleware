@@ -3,11 +3,9 @@
 
 import os
 import sys
-
-from functions import GET, PUT
-
 apifolder = os.getcwd()
 sys.path.append(apifolder)
+from functions import GET, PUT
 
 
 def test_01_Enabling_UPS_Service():

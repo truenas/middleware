@@ -6,7 +6,6 @@
 
 import sys
 import os
-
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, PUT

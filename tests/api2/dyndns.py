@@ -6,11 +6,12 @@ import sys
 
 import pytest
 
+apifolder = os.getcwd()
+sys.path.append(apifolder)
+
 from config import *
 from functions import GET, POST, PUT
 
-apifolder = os.getcwd()
-sys.path.append(apifolder)
 Reason = 'NOIPUSERNAME, NOIPPASSWORD and NOIPHOST' \
     ' are missing in ixautomation.conf'
 
