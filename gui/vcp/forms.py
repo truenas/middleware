@@ -29,15 +29,14 @@ import logging
 
 from dojango import forms
 from django.utils.translation import ugettext_lazy as _
+
+
 from freenasUI.common.forms import ModelForm
+from freenasUI.choices import IPChoices
 from freenasUI.middleware.client import client
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.vcp import models
-from django.forms import widgets
-from freenasUI.system.models import Settings
 
-import freenasUI.vcp.utils as utils
-import freenasUI.vcp.plugin as plugin
 
 log = logging.getLogger('vcp.forms')
 
@@ -45,7 +44,7 @@ log = logging.getLogger('vcp.forms')
 class VcenterConfigurationForm(MiddlewareModelForm, ModelForm):
 
     middleware_attr_prefix = 'vc_'
-    middleware_attr_schema = 'vcenter_'
+    middleware_attr_schema = 'vcenter'
     middleware_plugin = 'vcenter'
     is_singletone = True
 
@@ -60,23 +59,24 @@ class VcenterConfigurationForm(MiddlewareModelForm, ModelForm):
     def is_update_needed(self):
         with client as c:
             update = c.call('vcenter.is_update_available')
-        if update:
+            version = c.call('vcenter.get_plugin_version')
+        if update and self.instance.vc_installed:
             self.vcp_is_update_available = True
+        else:
+            self.vcp_is_update_available = False
+
+        self.vcp_available_version = version
+        self.vcp_version = self.instance.vc_version
+
+        return self.vcp_is_update_available
 
     def middleware_clean(self, data):
         data['action'] = self.vcp_action
         return data
 
     def get_sys_protocol(self):
-        # FIXME:
-        try:
-            obj = Settings.objects.latest('id')
-            sys_guiprotocol = obj.stg_guiprotocol
-            if sys_guiprotocol == 'httphttps':
-                sys_guiprotocol = 'http'
-            return sys_guiprotocol
-        except:
-            return 'http'
+        with client as c:
+            return c.call('system.general.config')['ui_protocol']
 
     class Meta:
         model = models.VcenterConfiguration
@@ -87,19 +87,23 @@ class VcenterConfigurationForm(MiddlewareModelForm, ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(VcenterConfigurationForm, self).__init__(*args, **kwargs)
-        sys_guiprotocol = self.get_sys_protocol()
-        if sys_guiprotocol.upper() == "HTTPS":
-            self.is_https = True
-        else:
-            self.is_https = False
-        ip_choices = utils.get_management_ips()
-        self.fields['vc_management_ip'] = forms.ChoiceField(choices=list(zip(
-            ip_choices, ip_choices)), label=_('TrueNAS Management IP Address'),)
-        obj = models.VcenterConfiguration.objects.latest('id')
-        self.vcp_is_installed = obj.vc_installed
+
+        self.fields['vc_management_ip'] = forms.ChoiceField(
+            choices=list(IPChoices()),
+            label=_('TrueNAS Management IP Address')
+        )
+
+        self.is_https = True if 'https' in self.get_sys_protocol().lower() else False
+        self.vcp_is_installed = self.instance.vc_installed
+        self.is_update_needed()
 
 
-class VcenterAuxSettingsForm(ModelForm):
+class VcenterAuxSettingsForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'vc_'
+    middleware_attr_schema = 'vcenter_aux'
+    middleware_plugin = 'vcenteraux'
+    is_singletone = True
 
     class Meta:
         fields = '__all__'
@@ -107,29 +111,27 @@ class VcenterAuxSettingsForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(VcenterAuxSettingsForm, self).__init__(*args, **kwargs)
-        self.instance._original_vc_enable_https = self.instance.vc_enable_https
+        self.original_https_val = self.instance.vc_enable_https
         self.fields["vc_enable_https"].widget.attrs["onChange"] = (
             "vcenter_https_enable_check();"
         )
 
     def get_sys_url(self, request_address):
-        obj = Settings.objects.latest('id')
-        proto = obj.stg_guiprotocol
-        if proto == 'httphttps':
-            proto = 'http'
-        if obj.stg_guiaddress == '0.0.0.0':
-            address = request_address
-        else:
-            address = obj.stg_guiaddress
-        newurl = '{0}://{1}'.format(proto, address)
-        if obj.stg_guiport and proto == 'http':
-            newurl += ':{0}'.format(obj.stg_guiport)
-        elif obj.stg_guihttpsport and proto == 'https':
-            newurl += ':{0}'.format(obj.stg_guihttpsport)
+        with client as c:
+            sys_config = c.call('system.general.config')
+
+        proto = sys_config['ui_protocol'] if sys_config['ui_protocol'].lower() != 'httphttps' else 'http'
+        address = request_address if sys_config['ui_address'] == '0.0.0.0' else sys_config['ui_address']
+        newurl = f'{proto}://{address}'
+
+        if sys_config['ui_port'] and proto == 'http':
+            newurl += f':{sys_config["ui_port"]}'
+        elif sys_config['ui_httpsport'] and proto == 'https':
+            newurl += f':{sys_config["ui_httpsport"]}'
         return newurl
 
     def done(self, request, events):
-        if (self.instance._original_vc_enable_https != self.instance.vc_enable_https):
+        if self.original_https_val != self.instance.vc_enable_https:
             events.append(
                 "restartHttpd('{0}')".format(
                     self.get_sys_url(request.META['HTTP_HOST'].split(':')[0])

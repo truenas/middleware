@@ -8,8 +8,6 @@ from django.db import migrations, models
 def populate_vcp_models(apps, schema_editor):
     vcenter_configuration_model = apps.get_model('vcp', 'vcenterconfiguration')
     vcenter_configuration_model.objects.create()
-    vcenter_aux_settings_model = apps.get_model('vcp', 'vcenterauxsettings')
-    vcenter_aux_settings_model.objects.create()
 
 
 class Migration(migrations.Migration):
@@ -34,7 +32,6 @@ class Migration(migrations.Migration):
             name='vc_username',
             field=models.CharField(blank=True, max_length=120, null=True, verbose_name=' vCenter Username'),
         ),
-        # TODO: MAKE SURE THAT THERE ARE NO PRE-EXISTING VCP MODEL OBJECTS WHEN THE MIGRATIONS RUN
         migrations.RunPython(
             populate_vcp_models
         )

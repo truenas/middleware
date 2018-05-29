@@ -19,9 +19,6 @@ from middlewared.service import accepts, ConfigService, private, ValidationError
 from middlewared.validators import IpAddress, Port
 
 
-from pprint import pprint
-
-
 class VCenterService(ConfigService):
 
     PRIVATE_GROUP_NAME = 'iXSystems'
@@ -97,7 +94,8 @@ class VCenterService(ConfigService):
         plugin_file_name = await self.middleware.run_in_io_thread(
             self.get_plugin_file_name
         )
-        management_addr = f'{ui_protocol}://{new["management_ip"]}:{ui_port}/static/{plugin_file_name}'
+        # TODO: Is legacy valid in the mgmt addr ?
+        management_addr = f'{ui_protocol}://{new["management_ip"]}:{ui_port}/legacy/static/{plugin_file_name}'
 
         install_dict = {
             'port': new['port'],
@@ -124,37 +122,19 @@ class VCenterService(ConfigService):
                             'This field is required to install the plugin'
                         )
 
-                # Make sure the plugin doesn't exist already on the system
-                try:
-                    credential_dict = install_dict.copy()
-                    credential_dict.pop('management_ip')
-                    credential_dict.pop('fingerprint')
+                if verrors:
+                    raise verrors
 
-                    found_plugin = await self.middleware.run_in_io_thread(
-                        self._find_plugin,
-                        credential_dict
+                try:
+                    await self.middleware.run_in_io_thread(
+                        self.__install_vcenter_plugin,
+                        install_dict
                     )
-                    if found_plugin:
-                        verrors.add(
-                            f'{schema_name}.action',
-                            'Plugin is already installed'
-                        )
                 except ValidationError as e:
                     verrors.add_validation_error(e)
                 else:
-
-                    if verrors:
-                        raise verrors
-                    try:
-                        await self.middleware.run_in_io_thread(
-                            self.__install_vcenter_plugin,
-                            install_dict
-                        )
-                    except ValidationError as e:
-                        verrors.add_validation_error(e)
-                    else:
-                        new['version'] = await self.middleware.run_in_io_thread(self.get_plugin_version)
-                        new['installed'] = True
+                    new['version'] = await self.middleware.run_in_io_thread(self.get_plugin_version)
+                    new['installed'] = True
 
         elif action == 'REPAIR':
 
@@ -254,9 +234,6 @@ class VCenterService(ConfigService):
             raise verrors
 
         new['password'] = await self.middleware.call('notifier.pwenc_encrypt', new['password'])
-
-        print('\n\nupdating database')
-        pprint(new)
 
         await self.middleware.call(
             'datastore.update',
@@ -476,9 +453,7 @@ class VCenterService(ConfigService):
             if si:
                 return si
 
-        # TODO: IN CASE A WRONG PORT IS PROVIDED, THE CONNECTION DOES NOT TIME OUT UNTIL A CALLTIMEOUT EXCEPTION IS
-        # INITIATED - LOOK INTO POSSIBLE SOLUTIONS
-        except socket.gaierror:
+        except (socket.gaierror, TimeoutError):
             raise ValidationError(
                 'vcenter_update.ip',
                 'Provided vCenter Hostname/IP or port are not valid'
@@ -639,7 +614,8 @@ class VCenterService(ConfigService):
         )
         self.remove_directory(os.path.join(plugin_root_path, 'plugin/plugins/ixsystems-vcp-service'))
 
-        # TODO: GOT A STALE NFS HANDLE ERROR - UNABLE TO RECREATE IT FOR NOW - DO LOOK INTO WHAT CAUSED THE ISSUE
+        # TODO: GOT A STALE NFS HANDLE ERROR ONCE WHEN TRYING DIFFERENT SCENARIOS WITH THIS METHOD 
+        # - UNABLE TO RECREATE IT FOR NOW - DO LOOK INTO WHAT CAUSED THE ISSUE
         shutil.make_archive(
             os.path.join(plugin_root_path, file_name[0:-4]),
             'zip',
@@ -695,6 +671,7 @@ class VCenterAuxService(ConfigService):
 
         await self.middleware.call(
             'datastore.update',
+            self._config.datastore,
             new['id'],
             new,
             {'prefix': self._config.datastore_prefix}

@@ -28,7 +28,6 @@ RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", r
 def get_context_object():
     # BEING USED IN VCENTERPLUGIN SERVICE
     try:
-        # TODO: WHY IS THIS BEING USED ?
         ssl._create_default_https_context = ssl._create_unverified_context
     except AttributeError:
         pass
