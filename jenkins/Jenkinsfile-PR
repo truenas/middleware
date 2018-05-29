@@ -10,7 +10,7 @@ pipeline {
 
    stage('Queued') {
         agent {
-        label 'JenkinsMaster'
+        label 'FreeNAS-PR-HOLD'
       }
       steps {
         echo "Build queued"
