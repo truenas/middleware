@@ -954,7 +954,7 @@ async def _event_devfs(middleware, event_type, args):
         # TODO: hack so every disk is not synced independently during boot
         # This is a performance issue
         if os.path.exists('/tmp/.sync_disk_done'):
-            await (await middleware.call('disk.sync_all'))
+            await (await middleware.call('disk.sync_all')).wait()
             await middleware.call('disk.multipath_sync')
             try:
                 with SmartAlert() as sa:
