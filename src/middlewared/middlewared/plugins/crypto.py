@@ -407,7 +407,6 @@ class CertificateService(CRUDService):
                 san_string += f'IP: {san}, '
         return san_string[:-2] if san_list else ''
 
-
     @accepts(
         Dict(
             'certificate_cert_info',
