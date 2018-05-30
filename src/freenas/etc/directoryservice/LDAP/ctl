@@ -47,6 +47,31 @@ sssd_restart()
 	return $?
 }
 
+nslcd_running()
+{
+	${service} nslcd onestatus >/dev/null 2>&1
+	return $?
+}
+
+nslcd_start()
+{
+	ldapctl_cmd ${service} nslcd onestart
+	return $?
+}
+
+nslcd_stop()
+{
+	ldapctl_cmd ${service} nslcd onestop
+	return $?
+}
+
+nslcd_restart()
+{
+	ldapctl_cmd ${service} nslcd onestop
+	ldapctl_cmd ${service} nslcd onestart
+	return $?
+}
+
 cifs_enabled()
 {
 	srv_enabled cifs && return 0
@@ -128,7 +153,16 @@ ldapctl_start()
 		else
 			sssd_start
 		fi
-	
+
+	elif [ "${anonbind}" = "1" ]
+	then
+		ldapctl_cmd ${service} ix-pam quietstart
+		if nslcd_running
+		then
+			nslcd_restart
+		else
+			nslcd_start
+		fi
 	fi
 
 	if ! ldapctl_cmd ${service} ix-ldap status
@@ -163,6 +197,11 @@ ldapctl_stop()
 	then
 		sssd_stop
 		ldapctl_cmd ${service} ix-sssd start
+	fi
+	if nslcd_running
+	then
+		nslcd_stop
+		ldapctl_cmd ${service} ix-nslcd start
 	fi
 
 	ldapctl_cmd ${service} ix-ldap forcestop
