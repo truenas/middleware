@@ -1,14 +1,13 @@
+from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
                                 Str)
-from middlewared.validators import Range
 from middlewared.service import (CallError, CRUDService, SystemServiceService,
                                  ValidationErrors, private)
 from middlewared.utils import run
-from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.validators import IpAddress, Range, ShouldBe
 
 import bidict
 import errno
-import ipaddress
 import re
 import os
 import sysctl
@@ -62,9 +61,10 @@ class ISCSIGlobalService(SystemServiceService):
                 if ip and ip[0] == '[' and ip[-1] == ']':
                     ip = ip[1:-1]
                 try:
-                    ipaddress.ip_address(ip)
+                    ip_validator = IpAddress()
+                    ip_validator(ip)
                     continue
-                except ValueError:
+                except ShouldBe:
                     pass
             verrors.add('iscsiglobal_update.isns_servers', f'Server "{server}" is not a valid IP(:PORT)? tuple.')
 
@@ -122,7 +122,7 @@ class ISCSIPortalService(CRUDService):
                 if await self.middleware.call(
                     'datastore.query', 'services.iscsitargetportalip', filters
                 ):
-                    verrors.add('{schema}.listen', f'{i["ip"]}:{i["port"]} already in use.')
+                    verrors.add(f'{schema}.listen', f'{i["ip"]}:{i["port"]} already in use.')
 
         if data['discovery_authgroup']:
             if not await self.middleware.call(
@@ -131,11 +131,12 @@ class ISCSIPortalService(CRUDService):
             ):
                 verrors.add(
                     f'{schema}.discovery_authgroup',
-                    'Auth Group "{data["discovery_authgroup"]}" not found.',
+                    f'Auth Group "{data["discovery_authgroup"]}" not found.',
                     errno.ENOENT,
                 )
         elif data['discovery_authmethod'] in ('CHAP', 'CHAP_MUTUAL'):
-            verrors.add(f'{schema}.discovery_authgroup', 'This field is required if discovery method is set to CHAP or CHAP Mutual.')
+            verrors.add(f'{schema}.discovery_authgroup', 'This field is required if discovery method is '
+                                                         'set to CHAP or CHAP Mutual.')
 
     @accepts(Dict(
         'iscsiportal_create',
@@ -261,6 +262,7 @@ class ISCSIPortalService(CRUDService):
 
 
 class iSCSITargetAuthCredentialService(CRUDService):
+
     class Config:
         namespace = 'iscsi.auth'
         datastore = 'services.iscsitargetauthcredential'
@@ -287,10 +289,10 @@ class iSCSITargetAuthCredentialService(CRUDService):
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
-        await self.extend(data)
+
         await self.middleware.call('service.reload', 'iscsitarget')
 
-        return data
+        return await self._get_instance(data['id'])
 
     @accepts(
         Int('id'),
@@ -302,17 +304,14 @@ class iSCSITargetAuthCredentialService(CRUDService):
     )
     async def do_update(self, id, data):
         verrors = ValidationErrors()
-        old = await self.middleware.call(
-            'datastore.query', self._config.datastore, [('id', '=', id)],
-            {'extend': self._config.datastore_extend,
-             'prefix': self._config.datastore_prefix,
-             'get': True})
+        old = await self._get_instance(id)
 
         new = old.copy()
         new.update(data)
 
         await self.validate(
-            new, 'iscsi_auth_update', verrors)
+            new, 'iscsi_auth_update', verrors
+        )
 
         if verrors:
             raise verrors
@@ -321,25 +320,25 @@ class iSCSITargetAuthCredentialService(CRUDService):
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
-        await self.extend(new)
 
         await self.middleware.call('service.reload', 'iscsitarget')
 
-        return new
+        return await self._get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
         return await self.middleware.call(
-            'datastore.delete', self._config.datastore, id)
+            'datastore.delete', self._config.datastore, id
+        )
 
     @private
     async def validate(self, data, schema_name, verrors):
-        secret = data.get('secret', '')
-        peer_secret = data.get('peersecret', '')
+        secret = data.get('secret') or ''  # In case None is provided for secret or peer secret
+        peer_secret = data.get('peersecret') or ''
         peer_user = data.get('peeruser', '')
 
-        if len(peer_user) > 0:
-            if len(peer_secret) == 0:
+        if peer_user:
+            if not peer_secret:
                 verrors.add(
                     f'{schema_name}.peersecret',
                     'The peer secret is required if you set a peer user.')
@@ -348,10 +347,10 @@ class iSCSITargetAuthCredentialService(CRUDService):
                     f'{schema_name}.peersecret',
                     'The peer secret cannot be the same as user secret.')
         else:
-            if len(peer_secret) > 0:
+            if peer_secret:
                 verrors.add(
                     f'{schema_name}.peersecret',
-                    'The peer secret is required if you set a peer user.')
+                    'The peer user is required if you set a peer secret.')
 
         if len(secret) < 12 or len(secret) > 16:
             verrors.add(f'{schema_name}.secret',
@@ -359,7 +358,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
         if len(peer_secret) < 12 or len(peer_secret) > 16:
             verrors.add(f'{schema_name}.peersecret',
-                        'Secret must be between 12 and 16 characters.')
+                        'Peer Secret must be between 12 and 16 characters.')
 
     @private
     async def extend(self, data):
@@ -375,8 +374,8 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
     @private
     async def compress(self, data):
-        secret = data.get('secret', '')
-        peersecret = data.get('peersecret', '')
+        secret = data.get('secret') or ''
+        peersecret = data.get('peersecret') or ''
 
         data['secret'] = await self.middleware.call(
             'notifier.pwenc_encrypt', secret)
@@ -387,6 +386,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
 
 class iSCSITargetExtentService(CRUDService):
+
     class Config:
         namespace = 'iscsi.extent'
         datastore = 'services.iscsitargetextent'
@@ -395,8 +395,8 @@ class iSCSITargetExtentService(CRUDService):
 
     @accepts(Dict(
         'iscsi_extent_create',
-        Str('name'),
-        Str('type', enum=['DISK', 'FILE']),
+        Str('name', default=''),
+        Str('type', enum=['DISK', 'FILE'], default='DISK'),
         Str('disk', default=None),
         Str('serial', default=None),
         Str('path', default=None),
@@ -415,7 +415,7 @@ class iSCSITargetExtentService(CRUDService):
     async def do_create(self, data):
         verrors = ValidationErrors()
         await self.compress(data)
-        await self.validate(data, 'iscsi_extent_create', verrors)
+        await self.validate(data)
         await self.clean(data, 'iscsi_extent_create', verrors)
 
         if verrors:
@@ -425,9 +425,8 @@ class iSCSITargetExtentService(CRUDService):
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
-        await self.extend(data)
 
-        return data
+        return await self._get_instance(data['id'])
 
     @accepts(
         Int('id'),
@@ -439,18 +438,13 @@ class iSCSITargetExtentService(CRUDService):
     )
     async def do_update(self, id, data):
         verrors = ValidationErrors()
-        old = await self.middleware.call(
-            'datastore.query', self._config.datastore, [('id', '=', id)],
-            {'extend': self._config.datastore_extend,
-             'prefix': self._config.datastore_prefix,
-             'get': True})
+        old = await self._get_instance(id)
 
         new = old.copy()
         new.update(data)
 
         await self.compress(new)
-        await self.validate(
-            new, 'iscsi_extent_update', verrors)
+        await self.validate(new)
         await self.clean(
             new, 'iscsi_extent_update', verrors, old=old)
 
@@ -461,9 +455,8 @@ class iSCSITargetExtentService(CRUDService):
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
-        await self.extend(new)
 
-        return new
+        return await self._get_instance(id)
 
     @accepts(
         Int('id'),
@@ -480,11 +473,12 @@ class iSCSITargetExtentService(CRUDService):
                 raise CallError('Failed to remove extent file')
 
         return await self.middleware.call(
-            'datastore.delete', self._config.datastore, id)
+            'datastore.delete', self._config.datastore, id
+        )
 
     @private
-    async def validate(self, data, schema_name, verrors):
-        await self.extent_serial(data['serial'])
+    async def validate(self, data):
+        data['serial'] = await self.extent_serial(data['serial'])
 
     @private
     async def compress(self, data):
@@ -558,8 +552,7 @@ class iSCSITargetExtentService(CRUDService):
             verrors.add(f'{schema_name}.name', 'Double quotes are not allowed')
 
         if '"' in serial:
-            verrors.add(f'{schema_name}.serial',
-                        'Double quotes are not allowed')
+            verrors.add(f'{schema_name}.serial', 'Double quotes are not allowed')
 
         if name != old or old is None:
             name_result = await self.middleware.call(
@@ -631,7 +624,7 @@ class iSCSITargetExtentService(CRUDService):
             verrors.add(f'{schema_name}.path', 'This field is required')
 
         if size and size != 0 and blocksize:
-            if (float(size) / blocksize) % 1 != 0:
+            if float(size) % blocksize:
                 verrors.add(f'{schema_name}.filesize',
                             'File size must be a multiple of block size')
 
@@ -691,8 +684,11 @@ class iSCSITargetExtentService(CRUDService):
         zfs_snaps = await self.middleware.call('zfs.snapshot.query', [],
                                                {'order_by': ['name']})
 
-        zvols = await self.middleware.call('pool.dataset.query',
-                                           [('type', '=', 'VOLUME')])
+        zvols = await self.middleware.call(
+            'pool.dataset.query',
+            [('type', '=', 'VOLUME')]
+        )
+
         zvol_list = [ds['name'] for ds in zvols]
 
         for zvol in zvols:
@@ -705,7 +701,6 @@ class iSCSITargetExtentService(CRUDService):
             ds_name, snap_name = snap['properties']['name'][
                 'value'].rsplit('@', 1)
             full_name = f'{ds_name}@{snap_name}'
-            snap_name = snap['properties']['name']['value']
             snap_size = snap['properties']['referenced']['value']
 
             if ds_name in zvol_list:
@@ -724,6 +719,7 @@ class iSCSITargetExtentService(CRUDService):
 
     @private
     async def save(self, data, schema_name, verrors):
+        # TODO: SHOULD THIS BE A SIMPLE METHOD INSTEAD OF AN ASYNCHRONOUS ONE ?
         extent_type = data['type']
         disk = data.pop('disk', None)
 
@@ -736,7 +732,7 @@ class iSCSITargetExtentService(CRUDService):
                     os.makedirs(dirs)
                 except Exception as e:
                     self.logger.error(
-                        'Unable to create dirs for extent file: {e}')
+                        f'Unable to create dirs for extent file: {e}')
 
             if not os.path.exists(path):
                 extent_size = data['filesize']
@@ -749,8 +745,9 @@ class iSCSITargetExtentService(CRUDService):
 
             if disk.startswith('multipath'):
                 self.middleware.call('notifier.unlabel_disk', disk)
-                self.middleware.call('notifier.label_disk', f'extent_{disk}',
-                                     disk)
+                self.middleware.call(
+                    'notifier.label_disk', f'extent_{disk}', disk
+                )
             elif not disk.startswith('hast') and not disk.startswith('zvol'):
                 disk_filters = [('name', '=', disk), ('expiretime', '=', None)]
                 try:
@@ -772,14 +769,16 @@ class iSCSITargetExtentService(CRUDService):
 
                             if verrors:
                                 raise verrors
-                        await self.middleware.call('disk.sync',
-                                                   disk.replace('/dev/', ''))
+                        await self.middleware.call(
+                            'disk.sync', disk.replace('/dev/', '')
+                        )
                 except IndexError:
                     # It's not a disk, but a ZVOL
                     pass
 
     @private
     async def remove_extent_file(self, data):
+        # TODO: SHOULD THIS BE A SIMPLE METHOD RATHER THEN AN ASYNCHRONOUS ONE ?
         if data['type'] == 'File':
             try:
                 os.unlink(data['path'])
@@ -790,6 +789,7 @@ class iSCSITargetExtentService(CRUDService):
 
 
 class iSCSITargetAuthorizedInitiator(CRUDService):
+
     class Config:
         namespace = 'iscsi.initiator'
         datastore = 'services.iscsitargetauthorizedinitiator'
@@ -815,13 +815,14 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
             data['tag'] = i
 
         await self.compress(data)
+
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
-        await self.extend(data)
+
         await self.middleware.call('service.reload', 'iscsitarget')
 
-        return data
+        return await self._get_instance(data['id'])
 
     @accepts(
         Int('id'),
@@ -832,11 +833,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         )
     )
     async def do_update(self, id, data):
-        old = await self.middleware.call(
-            'datastore.query', self._config.datastore, [('id', '=', id)],
-            {'extend': self._config.datastore_extend,
-             'prefix': self._config.datastore_prefix,
-             'get': True})
+        old = await self._get_instance(id)
 
         new = old.copy()
         new.update(data)
@@ -845,16 +842,16 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
-        await self.extend(new)
 
         await self.middleware.call('service.reload', 'iscsitarget')
 
-        return new
+        return await self._get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
         return await self.middleware.call(
-            'datastore.delete', self._config.datastore, id)
+            'datastore.delete', self._config.datastore, id
+        )
 
     @private
     async def compress(self, data):
@@ -1029,19 +1026,22 @@ class iSCSITargetService(CRUDService):
         portals = []
         for i, group in enumerate(data['groups']):
             if group['portal'] in portals:
-                verrors.add(f'{schema_name}.groups.{i}.portal', f'Portal {group["portal"]} cannot be duplicated on a target')
+                verrors.add(f'{schema_name}.groups.{i}.portal', f'Portal {group["portal"]} cannot be '
+                                                                f'duplicated on a target')
             else:
                 portals.append(group['portal'])
 
             if not group['auth'] and group['authmethod'] in ('CHAP', 'CHAP_MUTUAL'):
-                verrors.add(f'{schema_name}.groups.{i}.auth', 'Authentication group is required for CHAP and CHAP Mutual')
+                verrors.add(f'{schema_name}.groups.{i}.auth', 'Authentication group is required for '
+                                                              'CHAP and CHAP Mutual')
             elif group['auth'] and group['authmethod'] == 'CHAP_MUTUAL':
                 auth = await self.middleware.call('iscsi.auth.query', [('id', '=', group['auth'])])
                 if not auth:
                     verrors.add(f'{schema_name}.groups.{i}.auth', 'Authentication group not found', errno.ENOENT)
                 else:
                     if not auth[0]['peeruser']:
-                        verrors.add(f'{schema_name}.groups.{i}.auth', f'Authentication group {group["auth"]} does not support CHAP Mutual')
+                        verrors.add(f'{schema_name}.groups.{i}.auth', f'Authentication group {group["auth"]} '
+                                                                      f'does not support CHAP Mutual')
 
     @accepts(
         Int('id'),
@@ -1070,7 +1070,9 @@ class iSCSITargetService(CRUDService):
 
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
-            {'prefix': self._config.datastore_prefix})
+            {'prefix': self._config.datastore_prefix}
+        )
+
         await self.__save_groups(id, groups, oldgroups)
 
         await self._service_change('iscsitarget', 'reload')
@@ -1093,6 +1095,7 @@ class iSCSITargetService(CRUDService):
 
 
 class iSCSITargetToExtentService(CRUDService):
+
     class Config:
         namespace = 'iscsi.targetextent'
         datastore = 'services.iscsitargettoextent'
@@ -1113,10 +1116,12 @@ class iSCSITargetToExtentService(CRUDService):
 
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
-            {'prefix': self._config.datastore_prefix})
+            {'prefix': self._config.datastore_prefix}
+        )
+
         await self.middleware.call('service.reload', 'iscsitarget')
 
-        return data
+        return await self._get_instance(data['id'])
 
     @accepts(
         Int('id'),
@@ -1128,10 +1133,7 @@ class iSCSITargetToExtentService(CRUDService):
     )
     async def do_update(self, id, data):
         verrors = ValidationErrors()
-        old = await self.middleware.call(
-            'datastore.query', self._config.datastore, [('id', '=', id)],
-            {'prefix': self._config.datastore_prefix,
-             'get': True})
+        old = await self._get_instance(id)
 
         new = old.copy()
         new.update(data)
@@ -1144,12 +1146,13 @@ class iSCSITargetToExtentService(CRUDService):
 
         await self.middleware.call('service.reload', 'iscsitarget')
 
-        return new
+        return await self._get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
         return await self.middleware.call(
-            'datastore.delete', self._config.datastore, id)
+            'datastore.delete', self._config.datastore, id
+        )
 
     async def extend(self, data):
         data['target'] = data['target']['id']
