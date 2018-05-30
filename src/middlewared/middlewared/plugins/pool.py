@@ -536,6 +536,7 @@ class PoolDatasetService(CRUDService):
                 ('exec', None, str.upper),
                 ('sync', None, str.upper),
                 ('compression', None, str.upper),
+                ('compressratio', None, None),
                 ('origin', None, None),
                 ('quota', None, _null),
                 ('refquota', None, _null),
