@@ -395,7 +395,7 @@ class iSCSITargetExtentService(CRUDService):
 
     @accepts(Dict(
         'iscsi_extent_create',
-        Str('name', default=''),
+        Str('name', required=True),
         Str('type', enum=['DISK', 'FILE'], default='DISK'),
         Str('disk', default=None),
         Str('serial', default=None),
@@ -719,7 +719,7 @@ class iSCSITargetExtentService(CRUDService):
 
     @private
     async def save(self, data, schema_name, verrors):
-        # TODO: SHOULD THIS BE A SIMPLE METHOD INSTEAD OF AN ASYNCHRONOUS ONE ?
+
         extent_type = data['type']
         disk = data.pop('disk', None)
 
@@ -744,8 +744,8 @@ class iSCSITargetExtentService(CRUDService):
             data['path'] = disk
 
             if disk.startswith('multipath'):
-                self.middleware.call('notifier.unlabel_disk', disk)
-                self.middleware.call(
+                await self.middleware.call('notifier.unlabel_disk', disk)
+                await self.middleware.call(
                     'notifier.label_disk', f'extent_{disk}', disk
                 )
             elif not disk.startswith('hast') and not disk.startswith('zvol'):
@@ -778,7 +778,6 @@ class iSCSITargetExtentService(CRUDService):
 
     @private
     async def remove_extent_file(self, data):
-        # TODO: SHOULD THIS BE A SIMPLE METHOD RATHER THEN AN ASYNCHRONOUS ONE ?
         if data['type'] == 'File':
             try:
                 os.unlink(data['path'])
@@ -1027,7 +1026,7 @@ class iSCSITargetService(CRUDService):
         for i, group in enumerate(data['groups']):
             if group['portal'] in portals:
                 verrors.add(f'{schema_name}.groups.{i}.portal', f'Portal {group["portal"]} cannot be '
-                                                                f'duplicated on a target')
+                                                                'duplicated on a target')
             else:
                 portals.append(group['portal'])
 
@@ -1041,7 +1040,7 @@ class iSCSITargetService(CRUDService):
                 else:
                     if not auth[0]['peeruser']:
                         verrors.add(f'{schema_name}.groups.{i}.auth', f'Authentication group {group["auth"]} '
-                                                                      f'does not support CHAP Mutual')
+                                                                      'does not support CHAP Mutual')
 
     @accepts(
         Int('id'),
