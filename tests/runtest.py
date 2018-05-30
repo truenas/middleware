@@ -131,7 +131,7 @@ def get_tests():
         rv = ['network', 'ssh', 'storage']
     elif api == '2.0':
         apidir = 'api2/'
-        rv = ['interfaces', 'network', 'ssh', 'volume']
+        rv = ['interfaces', 'network', 'ssh', 'system_general', 'volume']
 
     for filename in listdir(apidir):
         if filename.endswith('.py') and \

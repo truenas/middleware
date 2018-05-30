@@ -73,7 +73,7 @@ def test_06_look_smartd_service_at_boot():
 
 
 def test_07_starting_smartd_service():
-    results = POST("/service/start", {"service": "smartd", "service-control": {"onetime": True}})
+    results = POST("/service/start/", {"service": "smartd", "service-control": {"onetime": True}})
     assert results.status_code == 200, results.text
 
 

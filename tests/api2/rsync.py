@@ -27,7 +27,7 @@ def test_02_Checking_that_API_reports_rsyncd_service():
 
 
 def test_03_Creating_rsync_task(rsynctask_dict):
-    results = POST('/rsynctask', {'user': 'foo', 'mode': 'bar',
+    results = POST('/rsynctask', {'user': 'root', 'mode': 'bar',
                                   'remotehost': 'foobar'})
     assert results.status_code == 200, results.text
     rsynctask_dict.update(results.json())
@@ -35,9 +35,7 @@ def test_03_Creating_rsync_task(rsynctask_dict):
 
 
 def test_04_Enable_rsyncd_service():
-    results = PUT(f'/service/id/rsync', {
-        'enable': True
-    })
+    results = PUT('/service/id/rsync', {'enable': True})
     assert results.status_code == 200, results.text
 
 
