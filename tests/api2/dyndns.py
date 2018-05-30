@@ -52,6 +52,7 @@ def test_01_Updating_Settings_for_Custom_Provider():
 
     test = 'CUSTOM'
 
+
 def test_02_Check_that_API_reports_dyndns_service():
     results = GET('/dyndns')
     assert results.status_code == 200, results.text
