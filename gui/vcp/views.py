@@ -25,133 +25,176 @@
 #
 #####################################################################
 
-import freenasUI.vcp.utils as utils
 
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.client import CallTimeout, ValidationErrors
+from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.vcp.forms import VcenterConfigurationForm, VcenterAuxSettingsForm
 from freenasUI.vcp import models
-from django.http import HttpResponseRedirect
-
-from freenasUI.system.models import (
-    Settings,
-)
 
 
 def vcp_home(request):
-    aux_enable_https = models.VcenterAuxSettings.objects.latest('id').vc_enable_https
+    aux_enable_https = models.VcenterAuxSettings.objects.latest('id')
+    obj = models.VcenterConfiguration.objects.latest('id')
     if request.method == 'POST':
-        form = VcenterConfigurationForm(request.POST)
-        if form.is_valid():
 
-            if form.install_plugin():
+        form = VcenterConfigurationForm(request.POST, instance=obj)
+        if form.is_valid():
+            form.vcp_action = 'INSTALL'
+            try:
                 form.save()
-                obj = models.VcenterConfiguration.objects.latest('id')
-                obj.vc_version = utils.get_plugin_version()
-                obj.vc_password = ''
-                obj.save()
-            else:
                 return JsonResp(
-                    request, error=True, message=_(
-                        form.vcp_status))
-        else:
-            form.is_update_needed()
-            return render(
-                request,
-                "vcp/index.html",
-                {
-                    'form': form,
-                    'aux_enable_https': aux_enable_https,
-                }
-            )
-    try:
-        obj = models.VcenterConfiguration.objects.latest('id')
-        form = VcenterConfigurationForm(instance=obj)
-        form.fields['vc_ip'].widget.attrs['readonly'] = True
-        form.is_update_needed()
-    except:
-        form = VcenterConfigurationForm()
-        form.is_update_needed()
-    return render(
-        request,
-        "vcp/index.html",
-        {
-            'form': form,
-            'aux_enable_https': aux_enable_https,
-        }
-    )
+                    request,
+                    message=_("The plugin has been successfully installed"),
+                )
+            except CallTimeout:
+                return JsonResp(
+                    request,
+                    message=_("The plugin could not be installed because of timeout."
+                              " Most probably the port provided was incorrect"),
+                )
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
 
-
-def vcp_vcenterauxsettings(request):
-    vcpaux = models.VcenterAuxSettings.objects.latest('id')
-
-    if request.method == "POST":
-        form = VcenterAuxSettingsForm(request.POST, instance=vcpaux)
-        if form.is_valid():
-            form.save()
-            events = []
-            form.done(request, events)
-            return JsonResp(
-                request,
-                message=_("vCenter Auxiliary Settings successfully edited."),
-                events=events,
-            )
-        else:
-            return JsonResp(request, form=form)
+        return JsonResp(
+            request,
+            form=form
+        )
     else:
-        form = VcenterAuxSettingsForm(instance=vcpaux)
-    return render(request, 'vcp/aux_settings.html', {'form': form})
+
+        form = VcenterConfigurationForm(instance=obj)
+        if obj.vc_installed:
+            form.fields['vc_ip'].widget.attrs['readonly'] = True
+
+        return render(
+            request,
+            "vcp/index.html",
+            {
+                'form': form,
+                'aux_enable_https': aux_enable_https,
+            }
+        )
 
 
 def vcp_upgrade(request):
+    obj = models.VcenterConfiguration.objects.latest('id')
     if request.method == 'POST':
-        form = VcenterConfigurationForm(request.POST)
+        form = VcenterConfigurationForm(request.POST, instance=obj)
         if form.is_valid():
-            form.is_update_needed()
-            if form.vcp_is_update_available is False:
+
+            if not form.is_update_needed():
                 return JsonResp(
                     request, error=True, message=_(
                         "There are No updates available at this time."))
-            if form.upgrade_plugin():
-                return HttpResponseRedirect("/legacy/vcp/home")
             else:
-                return JsonResp(
-                    request, error=True, message=_(
-                        form.vcp_status))
-        else:
-            form.is_update_needed()
-            form.fields['vc_ip'].widget.attrs['readonly'] = True
-    return render(request, "vcp/index.html", {'form': form})
+
+                form.vcp_action = 'UPGRADE'
+                try:
+                    form.save()
+                    return JsonResp(
+                        request,
+                        message=_("The plugin has been successfully upgraded"),
+                    )
+                except CallTimeout:
+                    return JsonResp(
+                        request,
+                        message=_("The plugin could not be installed because of timeout."
+                                  " Most probably the port provided was incorrect"),
+                    )
+                except ValidationErrors as e:
+                    handle_middleware_validation(form, e)
+
+        return JsonResp(
+            request,
+            form=form
+        )
 
 
 def vcp_uninstall(request):
+    obj = models.VcenterConfiguration.objects.latest('id')
     if request.method == 'POST':
-        form = VcenterConfigurationForm(request.POST)
+        form = VcenterConfigurationForm(request.POST, instance=obj)
         if form.is_valid():
-            if form.uninstall_plugin():
-                return HttpResponseRedirect("/legacy/vcp/home")
-            else:
+
+            form.vcp_action = 'UNINSTALL'
+            try:
+                form.save()
+
+                # TODO: THE UI DISPLAYS OLD CREDENTIALS AFTER UN-INSTALLATION, THAT NEEDS BE CHANGED
                 return JsonResp(
-                    request, error=True, message=_(
-                        form.vcp_status))
-        else:
-            form.is_update_needed()
-            form.fields['vc_ip'].widget.attrs['readonly'] = True
-    return render(request, "vcp/index.html", {'form': form})
+                    request,
+                    message=_("The plugin has been successfully uninstalled"),
+                )
+            except CallTimeout:
+                return JsonResp(
+                    request,
+                    message=_("The plugin could not be installed because of timeout."
+                              " Most probably the port provided was incorrect"),
+                )
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
+
+        return JsonResp(
+            request,
+            form=form
+        )
 
 
 def vcp_repair(request):
+    obj = models.VcenterConfiguration.objects.latest('id')
     if request.method == 'POST':
-        form = VcenterConfigurationForm(request.POST)
+        form = VcenterConfigurationForm(request.POST, instance=obj)
         if form.is_valid():
-            if form.repair_plugin():
-                return HttpResponseRedirect("/legacy/vcp/home")
-            else:
+            form.vcp_action = 'REPAIR'
+            try:
+                form.save()
+
                 return JsonResp(
-                    request, error=True, message=_(
-                        form.vcp_status))
-        else:
-            form.is_update_needed()
-            form.fields['vc_ip'].widget.attrs['readonly'] = True
-    return render(request, "vcp/index.html", {'form': form})
+                    request,
+                    message=_("The plugin has been successfully installed"),
+                )
+            except CallTimeout:
+                return JsonResp(
+                    request,
+                    message=_("The plugin could not be installed because of timeout."
+                              " Most probably the port provided was incorrect"),
+                )
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
+
+        return JsonResp(
+            request,
+            form=form
+        )
+
+
+def vcp_vcenterauxsettings(request):
+
+    vcpaux = models.VcenterAuxSettings.objects.latest('id')
+
+    if request.method == "POST":
+
+        form = VcenterAuxSettingsForm(request.POST, instance=vcpaux)
+        if form.is_valid():
+            try:
+                form.save()
+                events = []
+                form.done(request, events)
+                return JsonResp(
+                    request,
+                    message=_("vCenter Auxiliary Settings successfully edited."),
+                    events=events,
+                )
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
+
+        return JsonResp(
+            request,
+            form=form
+        )
+
+    else:
+        form = VcenterAuxSettingsForm(instance=vcpaux)
+    return render(request, 'vcp/aux_settings.html', {'form': form})

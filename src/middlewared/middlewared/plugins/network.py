@@ -701,7 +701,7 @@ class InterfacesService(Service):
         ipv4 = choices['ipv4'] if choices.get('ipv4') else False
         ipv6 = choices['ipv6'] if choices.get('ipv6') else False
         list_of_ip = []
-        ignore_nics = ('lo', 'bridge', 'tap', 'epair')
+        ignore_nics = ('lo', 'bridge', 'tap', 'epair', 'pflog')
         for if_name, iface in list(netif.list_interfaces().items()):
             if not if_name.startswith(ignore_nics):
                 aliases_list = iface.__getstate__()['aliases']
