@@ -492,12 +492,30 @@ _ssl_config()
 	echo "ixssl_list=\"${ssl_list}\""
 }
 
-_sssd_config()
+_ldap_config()
 {
+
+	# Should we ditch sssd now that we have nslcd in? TBD
 	sssd_enable="NO"
+	nslcd_enable="NO"
+
 	if dirsrv_enabled ldap ; then
+		local anonymous_bind=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+			SELECT
+				ldap_anonbind
+			FROM
+				directoryservice_ldap
+			ORDER BY
+				-id
+			LIMIT 1
+		")
+		if [ "${anonymous_bind}" = "1" ]; then
+			nslcd_enable="YES"
+		fi
 		sssd_enable="YES"
 	fi
+
+	# This needs to go away, winbind is perfectly fine for this use case nowdays
 	if dirsrv_enabled activedirectory; then
 		local ad_unix=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 			SELECT
@@ -513,6 +531,7 @@ _sssd_config()
 		fi
 	fi
 	echo "sssd_enable=\"${sssd_enable}\""
+	echo "nslcd_enable=\"${nslcd_enable}\""
 }
 
 _gen_conf()
@@ -565,7 +584,7 @@ _gen_conf()
 
 	_snmp_config
 
-	_sssd_config
+	_ldap_config
 	_nut_config
 
 	# Workaround: we don't enable ZFS by default but still want /etc/zfs/exports
