@@ -5,7 +5,7 @@
 
 # PROVIDE: ix-ldap
 # REQUIRE: root ix-ssl NETWORK
-# BEFORE: SERVERS
+# BEFORE: SERVERS nslcd
 
 . /etc/rc.freenas
 
