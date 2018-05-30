@@ -96,7 +96,7 @@ parse_devlist()
 
 	if [ "$propdev" != "" ]; then
 		local IFS=" "
-		if ! /usr/local/sbin/smartctl -i ${propdev} | grep -v nvd | egrep -i "^.*SMART.*abled" > /dev/null 2>&1; then
+		if ! /usr/local/sbin/smartctl -i ${propdev} | egrep -i "^.*SMART.*abled" > /dev/null 2>&1; then
 			propdev=/dev/$disk
 		fi
 	fi
@@ -130,87 +130,102 @@ EOF
 	TMPFILE=`mktemp /tmp/camcontrol.XXXXXX` || exit 1
 	print_devlist > ${TMPFILE}
 
+	had_nvme=false
+
 	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT $sf FROM services_smart ORDER by -id LIMIT 1" |
 	while eval read $f; do
 
 		${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT $sf2 FROM storage_disk d LEFT JOIN tasks_smarttest_smarttest_disks sd ON sd.disk_id=d.disk_identifier LEFT JOIN tasks_smarttest s ON sd.smarttest_id=s.id WHERE disk_togglesmart=1 AND disk_expiretime IS NULL" |
 		while eval read -r $f2; do
 			case "$disk_name" in
-			None|*zvol*|*nvd*)
+			None|*zvol*)
 				continue
 				;;
-			esac
-			prop_dev=`get_prop_dev ${disk_name} ${TMPFILE}`
-			if [ "$prop_dev" == "" ]; then
-				continue
-			fi
-			/usr/local/sbin/smartctl -i ${prop_dev} > /dev/null 2>&1
-			if [ $? -eq 0 ]; then
-				if ! /usr/local/sbin/smartctl -i ${prop_dev} | egrep -i "^.*SMART.*Enabled" > /dev/null 2>&1; then
-					eval "/usr/local/sbin/smartctl -s on ${prop_dev} > /dev/null 2>&1" || continue
+			*nvd*)
+				if [ "$had_nvme" == "true" ]; then
+					continue
 				fi
-			fi
-			echo -n "${prop_dev} -a"
-			echo -n " -n ${smart_powermode}"
-			echo -n " -W ${smart_difference},${smart_informational},${smart_critical}"
-			if [ -n "${smart_email}" ]; then
-				echo -n " -m ${smart_email}"
-			else
-				echo -n " -m root"
-			fi
-			echo -n " -M exec /usr/local/www/freenasUI/tools/smart_alert.py"
-			if [ -n "${smarttest_type}" ]; then
+				prop_devs=`find /dev -maxdepth 1 -regex ".*/nvme[0-9]\{1,\}"`
+				had_nvme=true
+				;;
+			*)
+				prop_devs=`get_prop_dev ${disk_name} ${TMPFILE}`
+				if [ "$prop_devs" == "" ]; then
+					continue
+				fi
+			esac
 
-			nhour=$(echo "${smarttest_hour}"|awk -F ',' '{ if($0 ~ /^\*\/[0-9]+$/) {
-				printf "(";
-				num = int(substr($0, 3));
-				for(i=0;i<24;i+=num) {
-					printf "%.2d", i;
-					if(i+num < 24) printf "|"
-				}
-				printf ")"
-			} else if($0 == "*") {
-				printf "..";
-			} else if($0 != "..") {
-				printf "(";
-				for(i=1;i<NF+1;i++) {
-					printf "%.2d", $i;
-					if(i != NF) printf "|"
-				};
-				printf ")"
-			} else printf $0 }')
-			ndayweek=$(echo "${smarttest_dayweek}"|tr -s "," "|"|awk '{if($0 != "..") printf "(%s)", $0; else printf $0 }')
-			nmonth=$(echo "${smarttest_month}"|awk -F ',' '{ if($0 != "..") {
-				printf "(";
-				for(i=1;i<NF+1;i++) {
-					printf "%.2d", $i;
-					if(i != NF) printf "|"
-				};
-				printf ")"
-			} else printf $0 }')
-			ndaymonth=$(echo "${smarttest_daymonth}"|awk -F ',' '{ if($0 ~ /^\*\/[0-9]+$/) {
-				printf "(";
-				num = int(substr($0, 3));
-				for(i=1;i<32;i+=num) {
-					printf "%.2d", i;
-					if(i+num < 32) printf "|"
-				}
-				printf ")"
-			} else if($0 == "*") {
-				printf "..";
-			} else if($0 != "..") {
-				printf "(";
-				for(i=1;i<NF+1;i++) {
-					printf "%.2d", $i;
-					if(i != NF) printf "|"
-				};
-				printf ")"
-			} else printf $0 }')
+			local IFS=$'\n'
+			for prop_dev in $prop_devs; do
+				/usr/local/sbin/smartctl -i ${prop_dev} > /dev/null 2>&1
+				if [ $? -eq 0 ]; then
+					if ! /usr/local/sbin/smartctl -i ${prop_dev} | egrep -i "^.*SMART.*Enabled" > /dev/null 2>&1; then
+						eval "/usr/local/sbin/smartctl -s on ${prop_dev} > /dev/null 2>&1" || continue
+					fi
+				fi
+				echo -n "${prop_dev} -a"
+				echo -n " -n ${smart_powermode}"
+				echo -n " -W ${smart_difference},${smart_informational},${smart_critical}"
+				if [ -n "${smart_email}" ]; then
+					echo -n " -m ${smart_email}"
+				else
+					echo -n " -m root"
+				fi
+				echo -n " -M exec /usr/local/www/freenasUI/tools/smart_alert.py"
+				if [ -n "${smarttest_type}" ]; then
 
-			echo "\\"
-			echo "-s ${smarttest_type}/${nmonth}/${ndaymonth}/${ndayweek}/${nhour}\\"
-			fi
-			echo " $disk_smartoptions"
+				nhour=$(echo "${smarttest_hour}"|awk -F ',' '{ if($0 ~ /^\*\/[0-9]+$/) {
+					printf "(";
+					num = int(substr($0, 3));
+					for(i=0;i<24;i+=num) {
+						printf "%.2d", i;
+						if(i+num < 24) printf "|"
+					}
+					printf ")"
+				} else if($0 == "*") {
+					printf "..";
+				} else if($0 != "..") {
+					printf "(";
+					for(i=1;i<NF+1;i++) {
+						printf "%.2d", $i;
+						if(i != NF) printf "|"
+					};
+					printf ")"
+				} else printf $0 }')
+				ndayweek=$(echo "${smarttest_dayweek}"|tr -s "," "|"|awk '{if($0 != "..") printf "(%s)", $0; else printf $0 }')
+				nmonth=$(echo "${smarttest_month}"|awk -F ',' '{ if($0 != "..") {
+					printf "(";
+					for(i=1;i<NF+1;i++) {
+						printf "%.2d", $i;
+						if(i != NF) printf "|"
+					};
+					printf ")"
+				} else printf $0 }')
+				ndaymonth=$(echo "${smarttest_daymonth}"|awk -F ',' '{ if($0 ~ /^\*\/[0-9]+$/) {
+					printf "(";
+					num = int(substr($0, 3));
+					for(i=1;i<32;i+=num) {
+						printf "%.2d", i;
+						if(i+num < 32) printf "|"
+					}
+					printf ")"
+				} else if($0 == "*") {
+					printf "..";
+				} else if($0 != "..") {
+					printf "(";
+					for(i=1;i<NF+1;i++) {
+						printf "%.2d", $i;
+						if(i != NF) printf "|"
+					};
+					printf ")"
+				} else printf $0 }')
+
+				echo "\\"
+				echo "-s ${smarttest_type}/${nmonth}/${ndaymonth}/${ndayweek}/${nhour}\\"
+				fi
+				echo " $disk_smartoptions"
+			done
+			local IFS="|"
 		done
 	done
 	rm -f ${TMPFILE}
