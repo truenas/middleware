@@ -1,10 +1,13 @@
 from mako import exceptions
 from mako.template import Template
+from mako.lookup import TemplateLookup
 from middlewared.service import Service
 
+import grp
 import hashlib
 import imp
 import os
+import pwd
 
 
 class MakoRenderer(object):
@@ -16,8 +19,19 @@ class MakoRenderer(object):
         try:
             # Mako is not asyncio friendly so run it within a thread
             def do():
-                tmpl = Template(filename=path)
+                # Split the path into template name and directory
+                name = os.path.basename(path)
+                dir = os.path.dirname(path)
+
+                # This will be where we search for templates
+                lookup = TemplateLookup(directories=[dir], module_directory="/tmp/mako/%s" % dir)
+
+                # Get the template by its relative path
+                tmpl = lookup.get_template(name)
+
+                # Render the template
                 return tmpl.render(middleware=self.service.middleware)
+
             return await self.service.middleware.run_in_thread(do)
         except Exception:
             self.service.logger.debug('Failed to render mako template: {0}'.format(
@@ -65,6 +79,8 @@ class EtcService(Service):
         ],
         'nss': [
             {'type': 'mako', 'path': 'nsswitch.conf'},
+            {'type': 'mako', 'path': 'local/nslcd.conf',
+                'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0644 },
             {'type': 'mako', 'path': 'local/nss_ldap.conf'},
         ],
         'pam': [
@@ -120,19 +136,52 @@ class EtcService(Service):
                 continue
 
             outfile = '/etc/{0}'.format(entry['path'])
+            changes = False
 
             # Check hash of generated and existing file
             # Do not rewrite if they are the same
             if os.path.exists(outfile):
                 with open(outfile, 'rb') as f:
                     existing_hash = hashlib.sha256(f.read()).hexdigest()
-                new_hash = hashlib.sha256(rendered.encode('utf-8')).hexdigest()
-                if existing_hash == new_hash:
-                    self.logger.debug(f'No new changes for {outfile}')
-                    continue
 
-            with open(outfile, 'w') as f:
-                f.write(rendered)
+                new_hash = hashlib.sha256(rendered.encode('utf-8')).hexdigest()
+                if existing_hash != new_hash:
+                    with open(outfile, 'w') as f:
+                        f.write(rendered)
+                        changes = True
+
+            if not os.path.exists(outfile):
+                continue
+
+            # If ownership or permissions are specified, see if 
+            # they need to be changed.
+            st = os.stat(outfile)
+            if 'owner' in entry and entry['owner']:
+                try:
+                    pw = pwd.getpwnam(entry['owner'])
+                    if st.st_uid != pw.pw_uid:
+                        os.chown(outfile, pw.pw_uid, -1)
+                        changes = True
+                except: 
+                    pass
+            if 'group' in entry and entry['group']:
+                try:
+                    gr = grp.getgrnam(entry['group'])
+                    if st.st_gid != gr.gr_gid:
+                        os.chown(outfile, -1, gr.gr_gid)
+                        changes = True
+                except: 
+                    pass
+            if 'mode' in entry and entry['mode']:
+                try:
+                    if (st.st_mode & 0x3FF) != entry['mode']:
+                        os.chmod(outfile, entry['mode'])
+                        changes = True
+                except: 
+                    pass
+
+            if not changes: 
+                self.logger.debug(f'No new changes for {outfile}')
 
     async def generate_all(self):
         """
