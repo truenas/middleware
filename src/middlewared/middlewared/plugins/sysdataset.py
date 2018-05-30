@@ -111,7 +111,7 @@ class SystemDatasetService(ConfigService):
 
         if not await self.middleware.call('system.is_freenas'):
             if await self.middleware.call('notifier.failover_status') == 'BACKUP' and \
-                ('basename' in config and config['basename'] and config['basename'] != 'freenas-boot/.system'):
+                    ('basename' in config and config['basename'] and config['basename'] != 'freenas-boot/.system'):
                 try:
                     os.unlink(SYSDATASET_PATH)
                 except OSError:

@@ -55,18 +55,18 @@ class PyRenderer(object):
 class EtcService(Service):
 
     GROUPS = {
-        #'user': [
+        # 'user': [
         #    {'type': 'mako', 'path': 'master.passwd'},
         #    {'type': 'py', 'path': 'pwd_db'},
-        #],
+        # ],
 
         #
         # Coming soon
         #
-        #'kerberos': [
+        # 'kerberos': [
         #    {'type': 'mako', 'path': 'krb5.conf'},
         #    {'type': 'mako', 'path': 'krb5.keytab'},
-        #],
+        # ],
 
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
@@ -80,7 +80,7 @@ class EtcService(Service):
         'nss': [
             {'type': 'mako', 'path': 'nsswitch.conf'},
             {'type': 'mako', 'path': 'local/nslcd.conf',
-                'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0644 },
+                'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0644},
             {'type': 'mako', 'path': 'local/nss_ldap.conf'},
         ],
         'pam': [
@@ -153,7 +153,7 @@ class EtcService(Service):
             if not os.path.exists(outfile):
                 continue
 
-            # If ownership or permissions are specified, see if 
+            # If ownership or permissions are specified, see if
             # they need to be changed.
             st = os.stat(outfile)
             if 'owner' in entry and entry['owner']:
@@ -162,7 +162,7 @@ class EtcService(Service):
                     if st.st_uid != pw.pw_uid:
                         os.chown(outfile, pw.pw_uid, -1)
                         changes = True
-                except: 
+                except Exception as e:
                     pass
             if 'group' in entry and entry['group']:
                 try:
@@ -170,17 +170,17 @@ class EtcService(Service):
                     if st.st_gid != gr.gr_gid:
                         os.chown(outfile, -1, gr.gr_gid)
                         changes = True
-                except: 
+                except Exception as e:
                     pass
             if 'mode' in entry and entry['mode']:
                 try:
                     if (st.st_mode & 0x3FF) != entry['mode']:
                         os.chmod(outfile, entry['mode'])
                         changes = True
-                except: 
+                except Exception as e:
                     pass
 
-            if not changes: 
+            if not changes:
                 self.logger.debug(f'No new changes for {outfile}')
 
     async def generate_all(self):

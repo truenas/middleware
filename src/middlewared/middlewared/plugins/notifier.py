@@ -84,7 +84,7 @@ class NotifierService(Service):
         """
         try:
             return notifier().pwenc_decrypt(encrypted)
-        except:
+        except Exception as e:
             logger.debug(
                 'notifier.pwenc_decrypt: Failed to decrypt the pass for {0}'.format(encrypted),
                 exc_info=True
@@ -98,7 +98,7 @@ class NotifierService(Service):
         """
         try:
             return notifier().pwenc_encrypt(decrypted)
-        except:
+        except Exception as e:
             logger.debug(
                 'notifier.pwenc_encrypt: Failed to encrypt the pass for {0}'.format(decrypted),
                 exc_info=True
@@ -180,7 +180,7 @@ class NotifierService(Service):
             if f.isOpen():
                 ret = True
             f.close()
-        except:
+        except Exception as e:
             pass
 
         return ret
@@ -189,7 +189,7 @@ class NotifierService(Service):
         ret = False
         try:
             ret = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT).connected()
-        except:
+        except Exception as e:
             pass
         return ret
 
