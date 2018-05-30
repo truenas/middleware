@@ -94,7 +94,7 @@ class VCenterService(ConfigService):
         plugin_file_name = await self.middleware.run_in_io_thread(
             self.get_plugin_file_name
         )
-        # TODO: Is legacy valid in the mgmt addr ?
+        # TODO: URL will change once the plugin file's location is shifted
         management_addr = f'{ui_protocol}://{new["management_ip"]}:{ui_port}/legacy/static/{plugin_file_name}'
 
         install_dict = {
@@ -244,12 +244,14 @@ class VCenterService(ConfigService):
         )
 
         return await self.config()
-    
+
+    @private
     async def is_update_available(self):
         latest_version = await self.middleware.run_in_io_thread(self.get_plugin_version)
         current_version = (await self.config())['version']
         return latest_version if parse_version(latest_version) > parse_version(current_version) else None
 
+    @private
     async def plugin_root_path(self):
         return await self.middleware.call('notifier.gui_static_root')
 
@@ -614,8 +616,6 @@ class VCenterService(ConfigService):
         )
         self.remove_directory(os.path.join(plugin_root_path, 'plugin/plugins/ixsystems-vcp-service'))
 
-        # TODO: GOT A STALE NFS HANDLE ERROR ONCE WHEN TRYING DIFFERENT SCENARIOS WITH THIS METHOD 
-        # - UNABLE TO RECREATE IT FOR NOW - DO LOOK INTO WHAT CAUSED THE ISSUE
         shutil.make_archive(
             os.path.join(plugin_root_path, file_name[0:-4]),
             'zip',

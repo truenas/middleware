@@ -7,7 +7,8 @@ from django.db import migrations, models
 
 def populate_vcp_models(apps, schema_editor):
     vcenter_configuration_model = apps.get_model('vcp', 'vcenterconfiguration')
-    vcenter_configuration_model.objects.create()
+    if not vcenter_configuration_model.objects.all().count():
+        vcenter_configuration_model.objects.create()
 
 
 class Migration(migrations.Migration):
