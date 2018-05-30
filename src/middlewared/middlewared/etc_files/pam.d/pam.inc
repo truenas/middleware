@@ -87,7 +87,7 @@
 
             if self.__anonymous_bind():
                 module = self.pam_ldap
-                args = ["use_first_pass", "ignore_unknown_user",
+                args = ["try_first_pass", "ignore_unknown_user",
                     "ignore_authinfo_unavail", "no_warn"]
 
             module_args = " ".join(args)
