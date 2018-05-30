@@ -10,7 +10,8 @@ import sysctl
 import bsd
 
 from middlewared.job import JobProgressBuffer
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
+from middlewared.schema import (accepts, Bool, Cron, Dict, Int, List, Patch,
+                                Str, UnixPerm)
 from middlewared.service import (
     ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
 )
@@ -766,6 +767,38 @@ class PoolDatasetService(CRUDService):
         if not dataset[0]['properties']['origin']['value']:
             raise CallError('Only cloned datasets can be promoted.', errno.EBADMSG)
         return await self.middleware.call('zfs.dataset.promote', id)
+
+    @accepts(
+        Str('id', default=None, required=True),
+        Dict('pool_dataset_permission',
+             Str('user'),
+             Str('group'),
+             UnixPerm('mode'),
+             Str('acl', enum=['UNIX', 'MAC', 'WINDOWS'], default='UNIX'),
+             Bool('recursive', default=False)
+             )
+    )
+    @item_method
+    async def permission(self, id, data):
+
+        path = (await self._get_instance(id))['mountpoint']
+        user = data.get('user', None)
+        group = data.get('group', None)
+        mode = data.get('mode', None)
+        recursive = data.get('recursive', False)
+        acl = data['acl']
+        verrors = ValidationErrors()
+
+        if (acl == 'UNIX' or acl == 'MAC') and mode is None:
+            verrors.add('pool_dataset_permission.mode',
+                        'This field is required')
+
+        if verrors:
+            raise verrors
+
+        await self.middleware.call('notifier.mp_change_permission', path, user,
+                                   group, mode, recursive, acl.lower())
+        return data
 
 
 class PoolScrubService(CRUDService):
