@@ -80,7 +80,7 @@ class EtcService(Service):
         'nss': [
             {'type': 'mako', 'path': 'nsswitch.conf'},
             {'type': 'mako', 'path': 'local/nslcd.conf',
-                'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0644},
+                'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0400},
             {'type': 'mako', 'path': 'local/nss_ldap.conf'},
         ],
         'pam': [
