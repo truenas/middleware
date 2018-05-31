@@ -1,4 +1,5 @@
 from azure.storage import CloudStorageAccount
+from botocore.parsers import ResponseParserError
 from google.cloud import storage
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, Str
@@ -368,11 +369,14 @@ class BackupS3Service(Service):
         """Returns buckets from a given S3 credential."""
         client = await self.get_client(id)
         buckets = []
-        for bucket in (await self.middleware.run_in_io_thread(client.list_buckets))['Buckets']:
-            buckets.append({
-                'name': bucket['Name'],
-                'creation_date': bucket['CreationDate'],
-            })
+        try:
+            for bucket in (await self.middleware.run_in_io_thread(client.list_buckets))['Buckets']:
+                buckets.append({
+                    'name': bucket['Name'],
+                    'creation_date': bucket['CreationDate'],
+                })
+        except ResponseParserError as e:
+            raise CallError(e.args[0].split("\n")[0].rstrip(":"))
 
         return buckets
 
