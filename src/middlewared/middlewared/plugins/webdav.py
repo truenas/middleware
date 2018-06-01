@@ -142,7 +142,7 @@ class WebDAVService(SystemServiceService):
 
         secure_protocol = False if new['protocol'] == 'HTTP' else True
 
-        if new['certssl'] != 'NONE' and secure_protocol:
+        if new['certssl'] != 'None' and secure_protocol:
             await self.middleware.call('notifier.start_ssl', 'webdav')
 
         return new
@@ -165,15 +165,15 @@ class WebDAVService(SystemServiceService):
     async def validate(self, data, schema_name):
         verrors = ValidationErrors()
 
-        if (data.get('protocol') == 'HTTPHTTPS' and
-                data.get('tcpport') == data.get('tcpportssl')):
+        if (data.get('protocol') == 'httphttps' and data.get(
+                'tcpport') == data.get('tcpportssl')):
             verrors.add(f"{schema_name}.tcpportssl",
                         'The HTTP and HTTPS ports cannot be the same!')
 
-        if (data.get('protocol') != 'HTTP' and data.get('certssl') is None):
+        if (data.get('protocol') != 'http' and data.get('certssl') is None):
             verrors.add(
                 f"{schema_name}.certssl",
-                'Webdav SSL protocol specified without choosing a certificate'
+                'WebDAV SSL protocol specified without choosing a certificate'
             )
 
         if verrors:
