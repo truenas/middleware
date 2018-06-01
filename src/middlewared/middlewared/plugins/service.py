@@ -885,6 +885,12 @@ class ServiceService(CRUDService):
         await self._service("samba_server", "stop", force=True, **kwargs)
         await self._service("ix-post-samba", "start", quiet=True, **kwargs)
 
+    async def _started_cifs(self, **kwargs):
+        if await self._system('/usr/sbin/service samba_server status') !=0:
+            return False, []
+        else:
+            return True, []
+
     async def _start_snmp(self, **kwargs):
         await self._service("ix-snmpd", "start", quiet=True, **kwargs)
         await self._service("snmpd", "start", quiet=True, **kwargs)
