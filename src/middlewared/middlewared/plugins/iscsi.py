@@ -142,7 +142,7 @@ class ISCSIPortalService(CRUDService):
         'iscsiportal_create',
         Str('comment'),
         Str('discovery_authmethod', default='NONE', enum=['NONE', 'CHAP', 'CHAP_MUTUAL']),
-        Int('discovery_authgroup'),
+        Int('discovery_authgroup', default=None),
         List('listen', required=True, items=[
             Dict(
                 'listen',
@@ -257,7 +257,7 @@ class ISCSIPortalService(CRUDService):
         """
         Delete iSCSI Portal `id`.
         """
-        await self.middleware.call('datastore.delete', self._config.datastore, id)
+        return await self.middleware.call('datastore.delete', self._config.datastore, id)
         # service is currently restarted by datastore/django model
 
 
@@ -1153,6 +1153,7 @@ class iSCSITargetToExtentService(CRUDService):
             'datastore.delete', self._config.datastore, id
         )
 
+    @private
     async def extend(self, data):
         data['target'] = data['target']['id']
         data['extent'] = data['extent']['id']
