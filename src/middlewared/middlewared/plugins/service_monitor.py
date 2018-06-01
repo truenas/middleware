@@ -118,6 +118,7 @@ class ServiceMonitorThread(threading.Thread):
             if service == 'activedirectory':
                 if not self.middleware.call_sync('service.started', 'cifs'):
                     self.logger.debug("[ServiceMonitorThread] restarting Samba service")
+                    self.middleware.call_sync('service.start', 'cifs')
             if self.middleware.call_sync('service.started', service):
                 return True
             time.sleep(1)
