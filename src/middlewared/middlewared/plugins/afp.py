@@ -118,7 +118,7 @@ class SharingAFPService(CRUDService):
             {'extend': self._config.datastore_extend,
              'prefix': self._config.datastore_prefix,
              'get': True})
-        path = data['path']
+        path = data.get('path')
 
         new = old.copy()
         new.update(data)
@@ -126,8 +126,9 @@ class SharingAFPService(CRUDService):
         await self.clean(new, 'sharingafp_update', verrors, id=id)
         await self.validate(new, 'sharingafp_update', verrors, old=old)
 
-        await check_path_resides_within_volume(
-            verrors, self.middleware, "sharingafp_create.path", path)
+        if path:
+            await check_path_resides_within_volume(
+                verrors, self.middleware, "sharingafp_create.path", path)
 
         if verrors:
             raise verrors
