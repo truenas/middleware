@@ -91,19 +91,20 @@ class ServiceMonitorThread(threading.Thread):
         max_tries = 3
         connected = False
 
-        host_list = []
         if self.name == 'activedirectory':
-            # Make three attempts to get SRV records from DNS
-            for i in range(0, max_tries):
-                try:
-                    # Use SRV records to identify LDAP servers in domain.
-                    host_list = fnldap.get_ldap_servers(host)
-                    break
+            host_list = []
 
-                except Exception:
-                    self.logger.debug("[ServiceMonitorThread] Query for SRV records for %s failed" % (host))
-                    if i == max_tries:
-                        return False
+            for i in range(0, max_tries):
+                # Make three attempts to get SRV records from DNS
+                host_list = fnldap.get_ldap_servers(host)
+                if host_list:
+                    break
+                else:
+                    self.logger.debug("[ServiceMonitorThread] Attempt %d to query SRV records failed " % (i))
+
+            if not host_list:
+                self.logger.debug("[ServiceMonitorThread] Query for SRV records for %s failed" % (host))
+                return False
 
         else:
             # Future services that need monitoring (???) will need an explicit configuration
@@ -113,21 +114,12 @@ class ServiceMonitorThread(threading.Thread):
         timeout = _fs().middlewared.plugins.service_monitor.socket_timeout
 
         for h in host_list:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(timeout)
-            try:
-                s.connect((str(h.target), h.port))
-                connected = True
-                self.logger.debug("[ServiceMonitorThread] Connected: %s:%d" % (str(h.target), h.port))
-                return connected
-
-            except Exception as e:
-                self.logger.debug("[ServiceMonitorThread] Cannot connect: %s:%d with error: %s" % (str(h.target), h.port, e))
+            port_is_listening = fnldap.port_is_listening(str(h.target), h.port, errors=[])
+            if port_is_listening:
+                return True
+            else:
+                self.logger.debug("[ServiceMonitorThread] Cannot connect: %s:%d " % (str(h.target), h.port))
                 connected = False
-
-            finally:
-                s.settimeout(None)
-                s.close()
 
         return connected
 
