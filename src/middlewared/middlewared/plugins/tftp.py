@@ -1,7 +1,7 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, Str
-from middlewared.validators import Match, Range
 from middlewared.service import SystemServiceService, ValidationErrors
+from middlewared.validators import Match, Port
 
 
 class TFTPService(SystemServiceService):
@@ -12,12 +12,12 @@ class TFTPService(SystemServiceService):
 
     @accepts(Dict(
         'tftp_update',
-        Dir('directory'),
         Bool('newfiles'),
-        Int('port', validators=[Range(min=1, max=65535)]),
-        Str('username'),
-        Str('umask', validators=[Match(r"^[0-7]{3}$")]),
+        Dir('directory'),
+        Int('port', validators=[Port()]),
         Str('options'),
+        Str('umask', validators=[Match(r"^[0-7]{3}$")]),
+        Str('username')
     ))
     async def do_update(self, data):
         old = await self.config()
@@ -35,4 +35,4 @@ class TFTPService(SystemServiceService):
 
         await self._update_service(old, new)
 
-        return new
+        return await self.config()
