@@ -3483,6 +3483,14 @@ class CloudCredentialsForm(ModelForm):
         max_length=200,
         required=False,
     )
+    AMAZON_skip_region = forms.BooleanField(
+        label=_('No regions'),
+        required=False,
+    )
+    AMAZON_signatures_v2 = forms.BooleanField(
+        label=_('Use v2 signatures'),
+        required=False,
+    )
     AZURE_account_name = forms.CharField(
         label=_('Account Name'),
         max_length=200,
@@ -3509,7 +3517,7 @@ class CloudCredentialsForm(ModelForm):
     )
 
     PROVIDER_MAP = {
-        'AMAZON': ['access_key', 'secret_key', 'endpoint'],
+        'AMAZON': ['access_key', 'secret_key', 'endpoint', 'skip_region', 'signatures_v2'],
         'AZURE': ['account_name', 'account_key'],
         'BACKBLAZE': ['account_id', 'app_key'],
         'GCLOUD': ['keyfile'],
@@ -3546,7 +3554,7 @@ class CloudCredentialsForm(ModelForm):
         if not provider:
             return self.cleaned_data
         for field in self.PROVIDER_MAP.get(provider, []):
-            if (f'{provider}_{field}' not in ['AMAZON_endpoint'] and
+            if (f'{provider}_{field}' not in ['AMAZON_endpoint', 'AMAZON_skip_region', 'AMAZON_signatures_v2'] and
                     not self.cleaned_data.get(f'{provider}_{field}')):
                 self._errors[f'{provider}_{field}'] = self.error_class([_('This field is required.')])
         return self.cleaned_data
