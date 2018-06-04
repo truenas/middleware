@@ -109,5 +109,5 @@ class Range:
 class Port:
 
     def __call__(self, value):
-        range_validator = Range(min=0, max=65535)
+        range_validator = Range(min=1, max=65535)
         range_validator(value)
