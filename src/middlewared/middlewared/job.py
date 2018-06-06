@@ -90,12 +90,16 @@ class JobsQueue(object):
         self.deque.add(job)
         self.queue.append(job)
 
-        self.middleware.send_event('core.get_jobs', 'ADDED', id=job.id, fields=job.__encode__())
+        if not job.options["transient"]:
+            self.middleware.send_event('core.get_jobs', 'ADDED', id=job.id, fields=job.__encode__())
 
         # A job has been added to the queue, let the queue scheduler run
         self.queue_event.set()
 
         return job
+
+    def remove(self, job_id):
+        self.deque.remove(job_id)
 
     def get_lock(self, job):
         """
@@ -187,12 +191,15 @@ class JobsDeque(object):
         if len(self.__dict) > self.maxlen:
             for old_job_id, old_job in self.__dict.items():
                 if old_job.state in (State.SUCCESS, State.FAILED, State.ABORTED):
-                    self.__dict[old_job_id].cleanup()
-                    del self.__dict[old_job_id]
+                    self.remove(old_job_id)
                     break
             else:
                 logger.warning("There are %d jobs waiting or running", len(self.__dict))
         self.__dict[job.id] = job
+
+    def remove(self, job_id):
+        self.__dict[job_id].cleanup()
+        del self.__dict[job_id]
 
 
 class Job(object):
@@ -334,7 +341,10 @@ class Job(object):
 
             queue.release_lock(self)
             self._finished.set()
-            self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
+            if self.options['transient']:
+                queue.remove(self.id)
+            else:
+                self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
     async def __run_body(self):
         """

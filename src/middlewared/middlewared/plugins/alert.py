@@ -151,7 +151,7 @@ class AlertService(Service):
         alert.dismissed = False
 
     @periodic(60)
-    @job(lock="process_alerts")
+    @job(lock="process_alerts", transient=True)
     async def process_alerts(self, job):
         if not await self.middleware.call("system.ready"):
             return
