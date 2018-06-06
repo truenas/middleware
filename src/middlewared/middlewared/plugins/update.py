@@ -11,6 +11,8 @@ import sys
 if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
 
+import humanfriendly
+
 from freenasOS import Configuration, Manifest, Update, Train
 from freenasOS.Exceptions import (
     UpdateIncompleteCacheException, UpdateInvalidCacheException,
@@ -104,16 +106,39 @@ class UpdateHandler(object):
         if self._current_package_index is None or self._packages_count is None or not progress:
             return
 
+        if size:
+            try:
+                size = humanfriendly.format_size(int(size))
+            except Exception:
+                pass
+
+        if download_rate:
+            try:
+                download_rate = humanfriendly.format_size(int(download_rate)) + "/s"
+            except Exception:
+                pass
+
+        job_progress = (
+            ((self._current_package_index + progress / 100) / self._packages_count) * self.download_proportion)
         filename = filename.rsplit('/', 1)[-1]
-        self.job.set_progress(
-            ((self._current_package_index + progress / 100) / self._packages_count) * self.download_proportion,
-            'Downloading {} {} ({}%) {}/s'.format(
-                filename,
-                size if size else '',
-                progress,
-                download_rate if download_rate else '',
+        if size and download_rate:
+            self.job.set_progress(
+                job_progress,
+                'Downloading {}: {} ({}%) at {}'.format(
+                    filename,
+                    size,
+                    progress,
+                    download_rate,
+                )
             )
-        )
+        else:
+            self.job.set_progress(
+                job_progress,
+                'Downloading {} ({}%)'.format(
+                    filename,
+                    progress,
+                )
+            )
 
     def install_handler(self, index, name, packages):
         total = len(packages)
