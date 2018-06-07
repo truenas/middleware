@@ -37,8 +37,7 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
 # Create tests
 # Add iSCSI initator
 def test_01_Add_iSCSI_initiator():
-    payload = {"id": 1,
-               "iscsi_target_initiator_auth_network": "ALL",
+    payload = {"iscsi_target_initiator_auth_network": "ALL",
                "iscsi_target_initiator_comment": "",
                "iscsi_target_initiator_initiators": "ALL",
                "iscsi_target_initiator_tag": 1}
@@ -56,19 +55,19 @@ def test_02_Add_ISCSI_portal():
 def test_03_Add_ISCSI_target():
     payload = {"iscsi_target_name": TARGET_NAME}
     results = POST("/services/iscsi/target/", payload)
-    assert results.status_code == 201
+    assert results.status_code == 201, results.text
 
 
 # Add Target to groups
 def test_04_Add_target_to_groups():
-    payload = '''{"iscsi_target": "1",
-               "iscsi_target_authgroup": null,
+    payload = {"iscsi_target": 1,
+               "iscsi_target_authgroup": None,
                "iscsi_target_portalgroup": 1,
-               "iscsi_target_initiatorgroup": "1",
+               "iscsi_target_initiatorgroup": 1,
                "iscsi_target_authtype": "None",
-               "iscsi_target_initialdigest": "Auto"}'''
-    results = POSTNOJSON("/services/iscsi/targetgroup/", payload)
-    assert results.status_code == 201
+               "iscsi_target_initialdigest": "Auto"}
+    results = POST("/services/iscsi/targetgroup/", payload)
+    assert results.status_code == 201, results.text
 
 
 # Add iSCSI extent
@@ -84,9 +83,8 @@ def test_05_Add_ISCSI_extent():
 
 # Associate iSCSI target
 def test_06_Associate_ISCSI_target():
-    payload = {"id": 1,
-               "iscsi_extent": 1,
-               "iscsi_lunid": None,
+    payload = {"iscsi_extent": 1,
+               "iscsi_lunid": 1,
                "iscsi_target": 1}
     results = POST("/services/iscsi/targettoextent/", payload)
     assert results.status_code == 201, results.text
@@ -278,4 +276,9 @@ def test_28_Delete_iSCSI_target():
 # Remove iSCSI extent
 def test_29_Delete_iSCSI_extent():
     results = DELETE("/services/iscsi/extent/1/")
+    assert results.status_code == 204, results.text
+
+# Remove iSCSI portal
+def test_29_Delete_iSCSI_extent():
+    results = DELETE("/services/iscsi/portal/1/", None)
     assert results.status_code == 204, results.text

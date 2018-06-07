@@ -15,7 +15,7 @@ from bsd import geom, getswapinfo
 
 from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import get_smartctl_args
-from middlewared.schema import accepts, Dict, List, Bool, Str
+from middlewared.schema import accepts, Bool, Dict, List, Str
 from middlewared.service import filterable, job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
@@ -40,6 +40,11 @@ RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
 
 class DiskService(CRUDService):
 
+    class Config:
+        datastore = 'storage.disk'
+        datastore_prefix = 'disk_'
+        datastore_extend = 'disk.disk_extend'
+
     @filterable
     async def query(self, filters=None, options=None):
         if filters is None:
@@ -52,9 +57,84 @@ class DiskService(CRUDService):
         return await self.middleware.call('datastore.query', 'storage.disk', filters, options)
 
     @private
-    def disk_extend(self, disk):
+    async def disk_extend(self, disk):
         disk.pop('enabled', None)
+        disk['passwd'] = await self.middleware.call(
+            'notifier.pwenc_decrypt',
+            disk['passwd']
+        )
+        for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
+            disk[key] = disk[key].upper()
         return disk
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'disk_update',
+            Bool('togglesmart'),
+            Str('acousticlevel', enum=[
+                'DISABLED', 'MINIMUM', 'MEDIUM', 'MAXIMUM'
+            ]),
+            Str('advpowermgmt', enum=[
+                'DISABLED', '1', '64', '127', '128', '192', '254'
+            ]),
+            Str('description'),
+            Str('hddstandby', enum=[
+                'ALWAYS ON', '5', '10', '20', '30', '60', '120', '180', '240', '300', '330'
+            ]),
+            Str('passwd', password=True),
+            Str('smartoptions'),
+            register=True
+        )
+    )
+    async def do_update(self, id, data):
+
+        old = await self.middleware.call(
+            'datastore.query',
+            self._config.datastore,
+            [('identifier', '=', id)],
+            {'prefix': self._config.datastore_prefix, 'get': True}
+        )
+        old.pop('enabled', None)
+        new = old.copy()
+        new.update(data)
+
+        if old['passwd'] != new['passwd']:
+            new['passwd'] = await self.middleware.call(
+                'notifier.pwenc_encrypt',
+                new['passwd']
+            )
+
+        for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
+            new[key] = new[key].title()
+
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            id,
+            new,
+            {'prefix': self._config.datastore_prefix}
+        )
+
+        if any(new[key] != old[key] for key in ['hddstandby', 'advpowermgmt', 'acousticlevel']):
+            await self.middleware.call('notifier.start_ataidle', new['name'])
+
+        if any(new[key] != old[key] for key in ['togglesmart', 'smartoptions']):
+
+            if new['togglesmart']:
+                await self.toggle_smart_on(new['name'])
+            else:
+                await self.toggle_smart_off(new['name'])
+
+            await self._service_change('smartd', 'restart')
+
+        updated_data = await self.query(
+            [('identifier', '=', id)],
+            {'get': True}
+        )
+        updated_data['id'] = id
+
+        return updated_data
 
     @private
     def get_name(self, disk):
@@ -207,32 +287,41 @@ class DiskService(CRUDService):
     async def __get_smartctl_args(self, devname):
         camcontrol = await camcontrol_list()
         if devname not in camcontrol:
-            raise CallError(f"Camcontrol did not report device {devname}")
+            return
 
         args = await get_smartctl_args(devname, camcontrol[devname])
         if args is None:
-            raise CallError(f"Unable to get smartctl args for device {devname}")
+            return
 
         return args
 
     @private
     async def toggle_smart_off(self, devname):
         args = await self.__get_smartctl_args(devname)
-        await run('/usr/local/sbin/smartctl', '--smart=off', *args, check=False)
+        if args:
+            await run('/usr/local/sbin/smartctl', '--smart=off', *args, check=False)
 
     @private
     async def toggle_smart_on(self, devname):
         args = await self.__get_smartctl_args(devname)
-        await run('/usr/local/sbin/smartctl', '--smart=on', *args, check=False)
+        if args:
+            await run('/usr/local/sbin/smartctl', '--smart=on', *args, check=False)
 
     @private
     async def serial_from_device(self, name):
         args = await self.__get_smartctl_args(name)
-        p1 = await Popen(['smartctl', '-i'] + args, stdout=subprocess.PIPE)
-        output = (await p1.communicate())[0].decode()
-        search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
-        if search:
-            return search.group('serial')
+        if args:
+            p1 = await Popen(['smartctl', '-i'] + args, stdout=subprocess.PIPE)
+            output = (await p1.communicate())[0].decode()
+            search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
+            if search:
+                return search.group('serial')
+
+        await self.middleware.run_in_thread(geom.scan)
+        g = geom.geom_by_name('DISK', name)
+        if g and g.provider.config.get('ident'):
+            return g.provider.config['ident']
+
         return None
 
     @private
@@ -284,6 +373,20 @@ class DiskService(CRUDService):
             return f'{{devicename}}{name}'
 
         return ''
+
+    @private
+    def label_to_dev(self, label, geom_scan=True):
+        if label.endswith('.nop'):
+            label = label[:-4]
+        elif label.endswith('.eli'):
+            label = label[:-4]
+
+        if geom_scan:
+            geom.scan()
+        klass = geom.class_by_name('LABEL')
+        prov = klass.xml.find(f'.//provider[name="{label}"]/../name')
+        if prov is not None:
+            return prov.text
 
     @private
     @accepts(Str('name'))
@@ -345,7 +448,8 @@ class DiskService(CRUDService):
 
     @private
     @accepts()
-    async def sync_all(self):
+    @job(lock="disk.sync_all")
+    async def sync_all(self, job):
         """
         Synchronyze all disks with the cache in database.
         """
@@ -364,9 +468,11 @@ class DiskService(CRUDService):
         await self.middleware.run_in_thread(geom.scan)
         for disk in (await self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})):
 
+            original_disk = disk.copy()
+
             name = await self.middleware.call('notifier.identifier_to_device', disk['disk_identifier'])
             if not name or name in seen_disks:
-                # If we cant translate the indentifier to a device, give up
+                # If we cant translate the identifier to a device, give up
                 # If name has already been seen once then we are probably
                 # dealing with with multipath here
                 if not disk['disk_expiretime']:
@@ -402,7 +508,10 @@ class DiskService(CRUDService):
             # mark it to expire.
             if name not in sys_disks and not disk['disk_expiretime']:
                     disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=DISK_EXPIRECACHE_DAYS)
-            await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+            # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
+            # when lots of drives are present
+            if disk != original_disk:
+                await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
 
             # FIXME: use a truenas middleware plugin
             await self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], False)
@@ -418,6 +527,7 @@ class DiskService(CRUDService):
                 else:
                     new = True
                     disk = {'disk_identifier': disk_identifier}
+                original_disk = disk.copy()
                 disk['disk_name'] = name
                 serial = ''
                 g = geom.geom_by_name('DISK', name)
@@ -441,11 +551,16 @@ class DiskService(CRUDService):
                     disk['disk_number'] = int(reg.group(2))
 
                 if not new:
-                    await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                    # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
+                    # when lots of drives are present
+                    if disk != original_disk:
+                        await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                 else:
                     disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
                 # FIXME: use a truenas middleware plugin
                 await self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], True)
+
+        return "OK"
 
     @private
     async def sed_unlock_all(self):
@@ -858,6 +973,8 @@ class DiskService(CRUDService):
             devname = f'{p.name}.eli'
             if devname in swapinfo_devs:
                 await run('swapoff', f'/dev/{devname}')
+            if os.path.exists(f'/dev/{devname}'):
+                await run('geli', 'detach', devname)
 
     @private
     async def wipe_quick(self, dev, size=None):
@@ -998,13 +1115,16 @@ async def _event_devfs(middleware, event_type, args):
         # TODO: hack so every disk is not synced independently during boot
         # This is a performance issue
         if os.path.exists('/tmp/.sync_disk_done'):
-            await middleware.call('disk.sync_all')
+            await (await middleware.call('disk.sync_all')).wait()
             await middleware.call('disk.multipath_sync')
             try:
                 with SmartAlert() as sa:
                     sa.device_delete(data['cdev'])
             except Exception:
                 pass
+            # If a disk dies we need to reconfigure swaps so we are not left
+            # with a single disk mirror swap, which may be a point of failure.
+            await middleware.call('disk.swaps_configure')
 
 
 def setup(middleware):

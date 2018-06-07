@@ -61,12 +61,10 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.util import JobAborted, JobFailed, upload_job_and_wait
-from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent, services
 from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import dedup_enabled
-from middlewared.client import Client
 from pyVim import connect, task as VimTask
 from pyVmomi import vim
 
@@ -1032,7 +1030,13 @@ class VolumeAutoImportForm(Form):
         return cleaned_data
 
 
-class DiskFormPartial(ModelForm):
+class DiskFormPartial(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "disk_"
+    middleware_attr_schema = "disk_"
+    middleware_plugin = "disk"
+    is_singletone = False
+
     disk_passwd2 = forms.CharField(
         max_length=50,
         label=_("Confirm SED Password"),
@@ -1075,40 +1079,20 @@ class DiskFormPartial(ModelForm):
         return password2
 
     def clean(self):
-            cdata = self.cleaned_data
-            if not cdata.get("disk_passwd"):
-                cdata['disk_passwd'] = self.instance.disk_passwd
-            return cdata
+        cdata = self.cleaned_data
+        if not cdata.get("disk_passwd"):
+            cdata['disk_passwd'] = self.instance.disk_passwd
+        return cdata
 
-    def save(self, *args, **kwargs):
-        obj = super(DiskFormPartial, self).save(*args, **kwargs)
-        # Commit ataidle changes, if any
-        if (
-            obj.disk_hddstandby != obj._original_state['disk_hddstandby'] or
-            obj.disk_advpowermgmt != obj._original_state['disk_advpowermgmt'] or
-            obj.disk_acousticlevel != obj._original_state['disk_acousticlevel']
-        ):
-            notifier().start_ataidle(obj.disk_name)
-
-        if (
-            obj.disk_togglesmart != self._original_smart_en or
-            obj.disk_smartoptions != self._original_smart_opts
-        ):
-            with client as c:
-                if obj.disk_togglesmart == 0:
-                    c.call('disk.toggle_smart_off', obj.disk_name)
-                else:
-                    c.call('disk.toggle_smart_on', obj.disk_name)
-            started = notifier().restart("smartd")
-            if (
-                started is False and
-                services.objects.get(srv_service='smartd').srv_enable
-            ):
-                raise ServiceFailed(
-                    "smartd",
-                    _("The SMART service failed to restart.")
-                )
-        return obj
+    def middleware_clean(self, data):
+        self.instance.id = self.instance.pk
+        data.pop('name')
+        data.pop('passwd2', None)
+        data.pop('serial')
+        for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
+            if data.get(key):
+                data[key] = data[key].upper()
+        return data
 
 
 class DiskEditBulkForm(Form):
@@ -1175,23 +1159,26 @@ class DiskEditBulkForm(Form):
             self.fields[key].initial = val
 
     def save(self):
-        for disk in self._disks:
+        data = {
+            # This is not a choice field, an empty value should reset all
+            'smartoptions': self.cleaned_data.get('disk_smartoptions'),
+            'togglesmart': self.cleaned_data.get('disk_togglesmart')
+        }
 
-            for opt in (
+        for opt in (
                 'disk_hddstandby',
                 'disk_advpowermgmt',
                 'disk_acousticlevel',
-            ):
-                if self.cleaned_data.get(opt):
-                    setattr(disk, opt, self.cleaned_data.get(opt))
+        ):
+            if self.cleaned_data.get(opt):
+                data[opt[5:]] = self.cleaned_data.get(opt).upper()
 
-            disk.disk_togglesmart = self.cleaned_data.get(
-                "disk_togglesmart")
-            # This is not a choice field, an empty value should reset all
-            disk.disk_smartoptions = self.cleaned_data.get(
-                "disk_smartoptions")
-            disk.save()
-        return self._disks
+        primary_keys = [str(d.pk) for d in self._disks]
+
+        with client as c:
+            c.call('core.bulk', 'disk.update', [[key, data] for key in primary_keys], job=True)
+
+        return models.Disk.objects.filter(pk__in=primary_keys)
 
 
 class ZFSDatasetCommonForm(Form):
@@ -2279,7 +2266,13 @@ class ZFSDiskReplacementForm(Form):
             return False
 
 
-class ReplicationForm(ModelForm):
+class ReplicationForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "repl_"
+    middleware_attr_schema = "replication"
+    middleware_plugin = "replication"
+    is_singletone = False
+
     repl_remote_mode = forms.ChoiceField(
         label=_('Setup mode'),
         choices=(
@@ -2423,89 +2416,33 @@ class ReplicationForm(ModelForm):
             return 22
         return port
 
-    def clean_repl_remote_dedicateduser(self):
-        en = self.cleaned_data.get("repl_remote_dedicateduser_enabled")
-        user = self.cleaned_data.get("repl_remote_dedicateduser")
-        if en and user is None:
-            raise forms.ValidationError("You must select a valid user")
-        return user
-
-    def _build_uri(self):
-        hostname = self.cleaned_data.get('repl_remote_hostname')
-        http_port = self.cleaned_data.get('repl_remote_http_port')
-        https = self.cleaned_data.get('repl_remote_https')
-        return 'ws{}://{}:{}/websocket'.format(
-            's' if https else '',
-            hostname,
-            http_port,
-        )
-
-    def clean_repl_remote_token(self):
+    def clean_repl_remote_http_port(self):
+        port = self.cleaned_data.get('repl_remote_http_port')
         mode = self.cleaned_data.get('repl_remote_mode')
-        token = self.cleaned_data.get('repl_remote_token')
-        if mode != 'SEMIAUTOMATIC':
-            return token
+        if mode == 'SEMIAUTOMATIC' and not port:
+            return 80
+        return port
 
-        if not token:
-            raise forms.ValidationError(_('This field is required'))
+    def clean_repl_begin(self):
+        return self.cleaned_data.get('repl_begin').strftime('%H:%M')
 
-        try:
-            with Client(self._build_uri()) as c:
-                if not c.call('auth.token', token):
-                    raise forms.ValidationError(_('Token is invalid.'))
-        except forms.ValidationError:
-            raise
-        except Exception as e:
-            raise forms.ValidationError(_('Failed to connect to remote: %s' % e))
-        return token
+    def clean_repl_end(self):
+        return self.cleaned_data.get('repl_end').strftime('%H:%M')
 
-    def clean_repl_remote_hostkey(self):
-        hostkey = self.cleaned_data.get('repl_remote_hostkey')
-        mode = self.cleaned_data.get('repl_remote_mode')
-        if mode == 'MANUAL' and not hostkey:
-            raise forms.ValidationError(_('This field is required'))
-        return hostkey
+    def middleware_clean(self, data):
 
-    def save(self):
+        data['compression'] = data['compression'].upper()
+        data['remote_cipher'] = data['remote_cipher'].upper()
+        remote_http_port = int(data.pop('remote_http_port', 80))
+        remote_port = int(data.pop('remote_port', 22))
 
-        mode = self.cleaned_data.get('repl_remote_mode')
-
-        if self.instance.id is None:
-            r = models.ReplRemote()
-        else:
-            r = self.instance.repl_remote
-
-        r.ssh_remote_hostname = self.cleaned_data.get("repl_remote_hostname")
-        r.ssh_remote_dedicateduser_enabled = self.cleaned_data.get(
-            "repl_remote_dedicateduser_enabled")
-        r.ssh_remote_dedicateduser = self.cleaned_data.get(
-            "repl_remote_dedicateduser")
-        r.ssh_cipher = self.cleaned_data.get("repl_remote_cipher")
-
+        mode = data.get('remote_mode', 'MANUAL')
         if mode == 'SEMIAUTOMATIC':
-            try:
-                with Client(self._build_uri()) as c:
-                    if not c.call('auth.token', self.cleaned_data.get('repl_remote_token')):
-                        raise ValueError('Invalid token')
-                    with open('/data/ssh/replication.pub', 'r') as f:
-                        publickey = f.read()
-                    data = c.call('replication.pair', {
-                        'hostname': self.cleaned_data.get("repl_remote_hostname"),
-                        'public-key': publickey,
-                        'user': r.ssh_remote_dedicateduser if r.ssh_remote_dedicateduser_enabled else None,
-                    })
-                    r.ssh_remote_port = data['ssh_port']
-                    r.ssh_remote_hostkey = data['ssh_hostkey']
-            except Exception as e:
-                raise MiddlewareError('Failed to setup replication: %s' % e)
+            data['remote_port'] = remote_http_port
         else:
-            r.ssh_remote_port = self.cleaned_data.get("repl_remote_port")
-            r.ssh_remote_hostkey = self.cleaned_data.get("repl_remote_hostkey")
-        r.save()
-        notifier().reload("ssh")
-        self.instance.repl_remote = r
-        rv = super(ReplicationForm, self).save()
-        return rv
+            data['remote_port'] = remote_port
+
+        return data
 
 
 class ReplRemoteForm(ModelForm):
@@ -2751,8 +2688,8 @@ class ChangePassphraseForm(Form):
     def clean(self):
         cdata = self.cleaned_data
         if cdata.get("remove"):
-            del self._errors['passphrase']
-            del self._errors['passphrase2']
+            self._errors.pop('passphrase', None)
+            self._errors.pop('passphrase2', None)
         return cdata
 
     def done(self, volume):

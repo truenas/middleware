@@ -3,30 +3,23 @@
 #
 # PAM configuration for the "sudo" service
 #
+<%namespace name="pam" file="pam.inc" />
 <%
-        def safe_call(*args):
-            try:
-                val = middleware.call_sync(*args)
-            except:
-                val = False
-            return val
-
-        ldap_enabled = safe_call('notifier.common', 'system', 'ldap_enabled')
+    dsp = pam.getDirectoryServicePam(middleware=middleware, file='sudo')
 %>
-
 # auth
 auth		sufficient	pam_opie.so		no_warn no_fake_prompts
 auth		requisite	pam_opieaccess.so	no_warn allow_local
-% if ldap_enabled:
-auth		sufficient	/usr/local/lib/pam_sss.so
+% if dsp.enabled() and dsp.name() == 'LDAP':
+${dsp.pam_auth()}
 % endif
 auth		required	pam_unix.so		no_warn try_first_pass
 
 # account
 account		required	pam_nologin.so
 account		required	pam_login_access.so
-% if ldap_enabled:
-account		sufficient	/usr/local/lib/pam_sss.so
+% if dsp.enabled() and dsp.name() == 'LDAP':
+${dsp.pam_account()}
 % endif
 account		required	pam_unix.so
 
@@ -34,7 +27,7 @@ account		required	pam_unix.so
 session		required	pam_permit.so
 
 # password
-% if ldap_enabled:
-password	sufficient	/usr/local/lib/pam_sss.so use_authtok
+% if dsp.enabled() and dsp.name() == 'LDAP':
+${dsp.pam_password()}
 % endif
 password	required	pam_unix.so		no_warn try_first_pass

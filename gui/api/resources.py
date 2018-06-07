@@ -100,6 +100,7 @@ from freenasUI.storage.forms import (
     MountPointAccessForm,
     ReKeyForm,
     CreatePassphraseForm,
+    ChangePassphraseForm,
     UnlockPassphraseForm,
     VolumeAutoImportForm,
     VolumeManagerForm,
@@ -723,10 +724,22 @@ class VolumeResourceMixin(NestedMixin):
                 self.wrap_view('offline_disk')
             ),
             url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/online%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('online_disk')
+            ),
+            url(
                 r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/detach%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('detach_disk')
+            ),
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/remove%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('remove_disk')
             ),
             url(
                 r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/scrub%s$" % (
@@ -793,6 +806,7 @@ class VolumeResourceMixin(NestedMixin):
             label=deserialized.get('label'),
             data={
                 'replace_disk': deserialized.get('replace_disk'),
+                'force': deserialized.get('force', False),
             },
         )
         if not form.is_valid():
@@ -816,6 +830,19 @@ class VolumeResourceMixin(NestedMixin):
         notifier().zfs_offline_disk(obj, deserialized.get('label'))
         return HttpResponse('Disk offline\'d.', status=202)
 
+    def online_disk(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        notifier().zfs_online_disk(obj, deserialized.get('label'))
+        return HttpResponse('Disk online\'d.', status=202)
+
     def detach_disk(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
 
@@ -828,6 +855,19 @@ class VolumeResourceMixin(NestedMixin):
         )
         notifier().zfs_detach_disk(obj, deserialized.get('label'))
         return HttpResponse('Disk detached.', status=202)
+
+    def remove_disk(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        notifier().zfs_remove_disk(obj, deserialized.get('label'))
+        return HttpResponse('Disk removed.', status=202)
 
     def scrub(self, request, **kwargs):
         self.method_check(request, allowed=['post', 'delete'])
@@ -905,7 +945,7 @@ class VolumeResourceMixin(NestedMixin):
             reckey = notifier().geli_recoverykey_add(obj)
             with open(reckey, 'rb') as f:
                 data = f.read()
-            data = base64.b64encode(data)
+            data = base64.b64encode(data).decode()
             return HttpResponse(json.dumps({
                 'message': 'New recovery key has been added.',
                 'content': data,
@@ -934,7 +974,7 @@ class VolumeResourceMixin(NestedMixin):
         return HttpResponse('Volume has been rekeyed.', status=202)
 
     def keypassphrase(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
+        self.method_check(request, allowed=['post', 'put'])
 
         bundle, obj = self._get_parent(request, kwargs)
 
@@ -943,14 +983,34 @@ class VolumeResourceMixin(NestedMixin):
             request.body,
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
-        form = CreatePassphraseForm(deserialized)
-        if not form.is_valid():
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, form.errors)
-            )
-        else:
-            form.done(obj)
-        return HttpResponse('Volume passphrase has been set.', status=201)
+
+        if request.method == 'POST':
+
+            form = CreatePassphraseForm(deserialized)
+            if not form.is_valid():
+                raise ImmediateHttpResponse(
+                    response=self.error_response(request, form.errors)
+                )
+            else:
+                form.done(obj)
+
+        elif request.method == 'PUT':
+
+            if 'passphrase2' not in deserialized:
+                deserialized['passphrase2'] = deserialized.get('passphrase')
+
+            form = ChangePassphraseForm(deserialized)
+            if not form.is_valid():
+                raise ImmediateHttpResponse(
+                    response=self.error_response(request, form.errors)
+                )
+            else:
+                form.done(obj)
+
+            if deserialized.get('remove'):
+                return HttpResponse('Volume passphrase has been removed', status=201)
+
+        return HttpResponse('Volume passphrase has been set', status=201)
 
     def status(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
@@ -2151,8 +2211,6 @@ class ISCSITargetToExtentResourceMixin(object):
             bundle
         )
         if self.is_webclient(bundle.request):
-            if bundle.obj.iscsi_lunid is None:
-                bundle.data['iscsi_lunid'] = 'Auto'
             bundle.data['iscsi_target'] = bundle.obj.iscsi_target
             bundle.data['iscsi_extent'] = bundle.obj.iscsi_extent
         else:

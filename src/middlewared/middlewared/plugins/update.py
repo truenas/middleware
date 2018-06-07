@@ -77,9 +77,11 @@ class CheckUpdateHandler(object):
 
 class UpdateHandler(object):
 
-    def __init__(self, service, job):
+    def __init__(self, service, job, download_proportion=50):
         self.service = service
         self.job = job
+
+        self.download_proportion = download_proportion
 
         self._current_package_index = None
         self._packages_count = None
@@ -93,7 +95,7 @@ class UpdateHandler(object):
             pkg.Version(),
         )
 
-        self.job.set_progress((self._current_package_index / self._packages_count) * 50,
+        self.job.set_progress((self._current_package_index / self._packages_count) * self.download_proportion,
                               'Downloading {}'.format(pkgname))
 
     def get_handler(
@@ -104,7 +106,7 @@ class UpdateHandler(object):
 
         filename = filename.rsplit('/', 1)[-1]
         self.job.set_progress(
-            ((self._current_package_index + progress / 100) / self._packages_count) * 50,
+            ((self._current_package_index + progress / 100) / self._packages_count) * self.download_proportion,
             'Downloading {} {} ({}%) {}/s'.format(
                 filename,
                 size if size else '',
@@ -116,7 +118,7 @@ class UpdateHandler(object):
     def install_handler(self, index, name, packages):
         total = len(packages)
         self.job.set_progress(
-            50 + (index / total) * 50,
+            self.download_proportion + (index / total) * (100 - self.download_proportion),
             'Installing {} ({}/{})'.format(name, index, total),
         )
 
@@ -349,9 +351,15 @@ class UpdateService(Service):
         train = self.middleware.call_sync('update.get_trains')['selected']
         location = self.middleware.call_sync('notifier.get_update_location')
 
+        job.set_progress(0, 'Retrieving update manifest')
+
+        handler = UpdateHandler(self, job, 100)
+
         Update.DownloadUpdate(
             train,
             location,
+            check_handler=handler.check_handler,
+            get_handler=handler.get_handler,
         )
         update = Update.CheckForUpdates(train=train, cache_dir=location)
 

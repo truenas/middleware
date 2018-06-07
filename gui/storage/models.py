@@ -204,6 +204,7 @@ class Volume(Model):
             'nfs': [],
             'iscsitarget': [],
             'jails': [],
+            'jails_ng': [],
             'collectd': [],
             'vm': [],
         }
@@ -242,6 +243,10 @@ class Volume(Model):
         if vms_attached:
             for vm_attached in vms_attached:
                 attachments['vm'].append(vm_attached.get('device_id'))
+
+        with client as c:
+            attachments['jails_ng'] = [
+                ij['host_hostuuid'] for ij in c.call('jail.query')]
 
         return attachments
 
@@ -286,6 +291,11 @@ class Volume(Model):
         if attachments['vm']:
             for device_id in attachments['vm']:
                 Device.objects.filter(id=device_id).delete()
+
+        if attachments['jails_ng']:
+            with client as c:
+                for ioc_j in attachments['jails_ng']:
+                    c.call('jail.stop', ioc_j)
 
         return (reload_cifs, reload_afp, reload_nfs, reload_iscsi,
                 reload_jails, reload_collectd)
@@ -739,20 +749,6 @@ class Disk(Model):
         blank=True
     )
 
-    def __init__(self, *args, **kwargs):
-        super(Disk, self).__init__(*args, **kwargs)
-        self._original_state = dict(self.__dict__)
-
-        if self.disk_passwd:
-            try:
-                self.disk_passwd = notifier().pwenc_decrypt(self.disk_passwd)
-            except:
-                log.debug('Failed to decrypt SED password for disk %s' %
-                          self.disk_name, exc_info=True)
-                self.disk_passwd = ''
-
-        self._disk_passwd_encrypted = False
-
     def identifier_to_device(self):
         """
         Get the corresponding device name from disk_identifier field
@@ -765,15 +761,6 @@ class Disk(Model):
             return "multipath/%s" % self.disk_multipath_name
         else:
             return self.disk_name
-
-    def save(self, *args, **kwargs):
-        if self.pk and self._original_state.get("disk_togglesmart", None) != \
-                self.__dict__.get("disk_togglesmart"):
-            notifier().restart("smartd")
-        if self.disk_passwd and not self._disk_passwd_encrypted:
-            self.disk_passwd = notifier().pwenc_encrypt(self.disk_passwd)
-            self._disk_passwd_encrypted = True
-        super(Disk, self).save(*args, **kwargs)
 
     def delete(self):
         from freenasUI.services.models import iSCSITargetExtent
@@ -894,10 +881,10 @@ class Replication(Model):
     )
     repl_limit = models.IntegerField(
         default=0,
-        verbose_name=_("Limit (kB/s)"),
+        verbose_name=_("Limit (kbps)"),
         help_text=_(
             "Limit the replication speed. Unit in "
-            "kilobytes/seconds. 0 = unlimited."),
+            "kilobits/second. 0 = unlimited."),
     )
     repl_begin = models.TimeField(
         default=time(hour=0),

@@ -54,18 +54,18 @@ class SharingAFPService(CRUDService):
     @accepts(Dict(
         'sharingafp_create',
         Str('path'),
-        Bool('home'),
+        Bool('home', default=False),
         Str('name'),
         Str('comment'),
         List('allow'),
         List('deny'),
         List('ro'),
         List('rw'),
-        Bool('timemachine'),
-        Int('timemachine_quota'),
-        Bool('nodev'),
-        Bool('nostat'),
-        Bool('upriv'),
+        Bool('timemachine', default=False),
+        Int('timemachine_quota', default=0),
+        Bool('nodev', default=False),
+        Bool('nostat', default=False),
+        Bool('upriv', default=True),
         UnixPerm('fperm', default='644'),
         UnixPerm('dperm', default='755'),
         UnixPerm('umask', default='000'),
@@ -118,7 +118,7 @@ class SharingAFPService(CRUDService):
             {'extend': self._config.datastore_extend,
              'prefix': self._config.datastore_prefix,
              'get': True})
-        path = data['path']
+        path = data.get('path')
 
         new = old.copy()
         new.update(data)
@@ -126,8 +126,9 @@ class SharingAFPService(CRUDService):
         await self.clean(new, 'sharingafp_update', verrors, id=id)
         await self.validate(new, 'sharingafp_update', verrors, old=old)
 
-        await check_path_resides_within_volume(
-            verrors, self.middleware, "sharingafp_create.path", path)
+        if path:
+            await check_path_resides_within_volume(
+                verrors, self.middleware, "sharingafp_create.path", path)
 
         if verrors:
             raise verrors

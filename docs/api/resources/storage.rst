@@ -699,7 +699,8 @@ Replace disk
 
         {
                 "label": "gptid/7c4dd4f1-1a1f-11e3-9786-080027c5e4f4",
-                "replace_disk": "ada4"
+                "replace_disk": "ada4",
+                "force": true
         }
 
    **Example response**:
@@ -714,12 +715,79 @@ Replace disk
 
    :json string label: zfs label of the device
    :json string replace_disk: name of the new disk
+   :json bool force: force replacement of the new disk
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
 
+Offline disk
+++++++++++++
+
+.. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/offline/
+
+   Offline a disk of volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume/tank/offline/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "label": "gptid/7c4dd4f1-1a1f-11e3-9786-080027c5e4f4"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      Disk offline'd.
+
+   :json string label: zfs label or guid of the device
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
+
+
+Online disk
++++++++++++
+
+.. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/online/
+
+   Online a disk of volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume/tank/online/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "label": "gptid/7c4dd4f1-1a1f-11e3-9786-080027c5e4f4"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      Disk online'd.
+
+   :json string label: zfs label or guid of the device
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
+
+
 Detach disk
-+++++++++++++
++++++++++++
 
 .. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/detach/
 
@@ -748,7 +816,40 @@ Detach disk
 
    :json string label: zfs label of the device
    :resheader Content-Type: content type of the response
-   :statuscode 200: no error
+   :statuscode 202: no error
+
+
+Remove disk
++++++++++++
+
+.. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/remove/
+
+   Remove a disk of volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume/tank/remove/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "label": "gptid/7c4dd4f1-1a1f-11e3-9786-080027c5e4f4",
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      Disk removed.
+
+   :json string label: zfs label of the device
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
 
 
 Unlock
@@ -898,7 +999,7 @@ Key Passphrase
 
 .. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/keypassphrase/
 
-   Creatre key passphrase for volume `id`.
+   Create key passphrase for volume `id`.
 
    **Example request**:
 
@@ -920,7 +1021,61 @@ Key Passphrase
       Vary: Accept
       Content-Type: application/json
 
-        Volume passphrase has been set.
+        Volume passphrase has been set
+
+   :resheader Content-Type: content type of the response
+   :statuscode 201: no error
+
+.. http:put:: /api/v1.0/storage/volume/(int:id|string:name)/keypassphrase/
+
+   Change key passphrase for volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/storage/volume/tank/keypassphrase/ HTTP/1.1
+      Content-Type: application/json
+
+      {
+        "adminpw": "freenas",
+        "passphrase": "mypassphrase",
+      }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        Volume passphrase has been set
+
+   :resheader Content-Type: content type of the response
+   :statuscode 201: no error
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/storage/volume/tank/keypassphrase/ HTTP/1.1
+      Content-Type: application/json
+
+      {
+        "adminpw": "freenas",
+        "remove": True,
+      }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        Volume passphrase has been removed
 
    :resheader Content-Type: content type of the response
    :statuscode 201: no error

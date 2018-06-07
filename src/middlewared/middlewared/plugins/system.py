@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, date
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, Str
 from middlewared.service import ConfigService, no_auth_required, job, private, Service, ValidationErrors
-from middlewared.utils import Popen, sw_version
+from middlewared.utils import Popen, sw_buildtime, sw_version
 from middlewared.validators import Range
 
 import csv
@@ -15,7 +15,7 @@ import sysctl
 import syslog
 import time
 
-from licenselib.license import ContractType
+from licenselib.license import ContractType, Features
 
 # FIXME: Temporary imports until debug lives in middlewared
 if '/usr/local/www' not in sys.path:
@@ -218,11 +218,39 @@ class SystemService(Service):
         """
         return SYSTEM_READY
 
+    async def __get_license(self):
+        licenseobj = get_license()[0]
+        if not licenseobj:
+            return
+        license = {
+            "system_serial": licenseobj.system_serial,
+            "system_serial_ha": licenseobj.system_serial_ha,
+            "contract_type": ContractType(licenseobj.contract_type).name.upper(),
+            "contract_end": licenseobj.contract_end,
+            "features": [],
+        }
+        for feature in licenseobj.features:
+            license["features"].append(feature.name.upper())
+        # Licenses issued before 2017-04-14 had a bug in the feature bit
+        # for fibre channel, which means they were issued having
+        # dedup+jails instead.
+        if (
+            licenseobj.contract_start < date(2017, 4, 14) and
+            Features.dedup in licenseobj.features and
+            Features.jails in licenseobj.features
+        ):
+            license["features"].append(Features.fibrechannel.name.upper())
+        return license
+
     @accepts()
     async def info(self):
         """
         Returns basic system information.
         """
+        buildtime = sw_buildtime()
+        if buildtime:
+            buildtime = datetime.fromtimestamp(int(buildtime)),
+
         uptime = (await (await Popen(
             "env -u TZ uptime | awk -F', load averages:' '{ print $1 }'",
             stdout=subprocess.PIPE,
@@ -241,17 +269,9 @@ class SystemService(Service):
             stdout=subprocess.PIPE,
         )).communicate())[0].decode().strip() or None
 
-        license = get_license()[0]
-        if license:
-            license = {
-                "system_serial": license.system_serial,
-                "system_serial_ha": license.system_serial_ha,
-                "contract_type": ContractType(license.contract_type).name.upper(),
-                "contract_end": license.contract_end,
-            }
-
         return {
             'version': self.version(),
+            'buildtime': buildtime,
             'hostname': socket.gethostname(),
             'physmem': sysctl.filter('hw.physmem')[0].value,
             'model': sysctl.filter('hw.model')[0].value,
@@ -261,7 +281,7 @@ class SystemService(Service):
             'uptime_seconds': time.clock_gettime(5),  # CLOCK_UPTIME = 5
             'system_serial': serial,
             'system_product': product,
-            'license': license,
+            'license': await self.__get_license(),
             'boottime': datetime.fromtimestamp(
                 struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
             ),
@@ -269,6 +289,21 @@ class SystemService(Service):
             'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
             'system_manufacturer': manufacturer,
         }
+
+    @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'JAILS', 'VM']))
+    async def feature_enabled(self, name):
+        """
+        Returns whether the `feature` is enabled or not
+        """
+        is_freenas = await self.middleware.call('system.is_freenas')
+        if name == 'FIBRECHANNEL' and is_freenas:
+            return False
+        elif is_freenas:
+            return True
+        license = await self.__get_license()
+        if license and name in license['features']:
+            return True
+        return False
 
     @private
     async def _system_serial(self):
@@ -338,8 +373,8 @@ class SystemGeneralService(ConfigService):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._languages = self._initialize_system_languages()
-        self._time_zones_list = None
+        self._language_choices = self._initialize_languages()
+        self._timezone_choices = None
         self._kbdmap_choices = None
         self._country_choices = {}
 
@@ -356,11 +391,11 @@ class SystemGeneralService(ConfigService):
         return data
 
     @accepts()
-    def get_system_languages(self):
-        return self._languages
+    def language_choices(self):
+        return self._language_choices
 
     @private
-    def _initialize_system_languages(self):
+    def _initialize_languages(self):
         languagues = [
             ('af', 'Afrikaans'),
             ('ar', 'Arabic'),
@@ -455,22 +490,21 @@ class SystemGeneralService(ConfigService):
         return dict(languagues)
 
     @private
-    async def _initialize_timezones_list(self):
+    async def _initialize_timezone_choices(self):
         pipe = await Popen(
             'find /usr/share/zoneinfo/ -type f -not -name zone.tab -not -regex \'.*/Etc/GMT.*\'',
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=True
         )
-        self._time_zones_list = (await pipe.communicate())[0].decode().strip().split('\n')
-        self._time_zones_list = [x[20:] for x in self._time_zones_list]
-        self._time_zones_list.sort()
+        self._timezone_choices = (await pipe.communicate())[0].decode().strip().split('\n')
+        self._timezone_choices = {x[20:]: x[20:] for x in self._timezone_choices}
 
     @accepts()
-    async def get_timezones(self):
-        if not self._time_zones_list:
-            await self._initialize_timezones_list()
-        return self._time_zones_list
+    async def timezone_choices(self):
+        if not self._timezone_choices:
+            await self._initialize_timezone_choices()
+        return self._timezone_choices
 
     @accepts()
     async def country_choices(self):
@@ -518,10 +552,10 @@ class SystemGeneralService(ConfigService):
         with open(index, 'rb') as f:
             d = f.read().decode('utf8', 'ignore')
         _all = re.findall(r'^(?P<name>[^#\s]+?)\.kbd:en:(?P<desc>.+)$', d, re.M)
-        self._kbdmap_choices = [(name, desc) for name, desc in _all]
+        self._kbdmap_choices = {name: desc for name, desc in _all}
 
     @accepts()
-    async def get_kbdmap_choices(self):
+    async def kbdmap_choices(self):
         if not self._kbdmap_choices:
             await self._initialize_kbdmap_choices()
         return self._kbdmap_choices
@@ -532,7 +566,7 @@ class SystemGeneralService(ConfigService):
 
         language = data.get('language')
         if language:
-            system_languages = self.get_system_languages()
+            system_languages = self.language_choices()
             if language not in system_languages.keys():
                 verrors.add(
                     f'{schema}.language',
@@ -543,7 +577,7 @@ class SystemGeneralService(ConfigService):
 
         timezone = data.get('timezone')
         if timezone:
-            timezones = await self.get_timezones()
+            timezones = await self.timezone_choices()
             if timezone not in timezones:
                 verrors.add(
                     f'{schema}.timezone',
@@ -606,7 +640,7 @@ class SystemGeneralService(ConfigService):
                 else:
                     # getting fingerprint for certificate
                     fingerprint = await self.middleware.call(
-                        'certificate.get_fingerprint',
+                        'certificate.get_fingerprint_of_cert',
                         certificate_id
                     )
                     if fingerprint:
@@ -691,4 +725,8 @@ async def _event_system_ready(middleware, event_type, args):
 
 
 def setup(middleware):
+    global SYSTEM_READY
+    if os.path.exists("/tmp/.bootready"):
+        SYSTEM_READY = True
+
     middleware.event_subscribe('system', _event_system_ready)

@@ -9,6 +9,8 @@ from .service import CallError, CallException, ValidationError, ValidationErrors
 from .utils import start_daemon_thread, load_modules, load_classes
 from .worker import ProcessPoolExecutor, main_worker
 from aiohttp import web
+from aiohttp.web_exceptions import HTTPPermanentRedirect
+from aiohttp.web_middlewares import normalize_path_middleware
 from aiohttp_wsgi import WSGIHandler
 from collections import defaultdict
 
@@ -1123,7 +1125,9 @@ class Middleware(object):
         self.__loop.add_signal_handler(signal.SIGTERM, self.terminate)
         self.__loop.add_signal_handler(signal.SIGUSR1, self.pdb)
 
-        app = web.Application(loop=self.__loop)
+        app = web.Application(middlewares=[
+            normalize_path_middleware(redirect_class=HTTPPermanentRedirect)
+        ], loop=self.__loop)
         app.router.add_route('GET', '/websocket', self.ws_handler)
 
         app.router.add_route("*", "/api/docs{path_info:.*}", WSGIHandler(apidocs_app))

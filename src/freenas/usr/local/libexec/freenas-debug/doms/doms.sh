@@ -33,20 +33,23 @@ doms_directory() { echo "DOMS"; }
 doms_func()
 {
     section_header "SATA DOMS"
-    PRODUCT=$( dmidecode | grep "Product Name:" )
+    PRODUCT=$( dmidecode -s system-product-name )
     if echo ${PRODUCT} | grep -q 'TRUENAS.*Z'
     then
         for i in /dev/ada0 /dev/ada1
         do
-           echo ${i}
-           smartctl -a ${i} | grep 'Device Model'
-           SPEED=$(dd if=${i} of=/dev/null bs=64k count=500 2>&1 | tail -1 | sed 's/^.*secs..//' | sed 's/bytes.*//')
-           MBS=$( printf "%10.3f" $( echo ${SPEED} / 1048576  | bc -l ) )
-           IMBS=$( echo ${MBS} | sed 's/\..*//' )
-           echo ${MBS} MB per second
-           if [ ${IMBS} -lt 3 ]; then
-              echo WARNING: ${i} is slow and might be a candidate for SATA DOM replacement.
-           fi
+           if [ -c ${i} ]
+           then
+               echo ${i}
+               smartctl -a ${i} | grep 'Device Model'
+               SPEED=$(dd if=${i} of=/dev/null bs=64k count=500 2>&1 | tail -1 | sed 's/^.*secs..//' | sed 's/bytes.*//')
+               MBS=$( printf "%10.3f" $( echo ${SPEED} / 1048576  | bc -l ) )
+               IMBS=$( echo ${MBS} | sed 's/\..*//' )
+               echo ${MBS} MB per second
+               if [ ${IMBS} -lt 3 ]; then
+                  echo WARNING: ${i} is slow and might be a candidate for SATA DOM replacement.
+               fi
+            fi
         done
     else
         echo ${PRODUCT} does not use SATA DOMS.  Exiting.

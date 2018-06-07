@@ -43,7 +43,10 @@ from freenasUI.common.log import log_traceback
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.models.fields import DictField, MultiSelectField
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.services.exceptions import ServiceFailed
+
+from middlewared.client import ValidationErrors
 
 from tastypie.authentication import (
     Authentication, BasicAuthentication, MultiAuthentication
@@ -408,7 +411,15 @@ class DojoModelResource(ResourceMixin, ModelResource):
         the changes until the transaction is committed.
         # with transaction.atomic():
         """
-        form.save()
+        try:
+            form.save()
+        except ValidationErrors as e:
+            handle_middleware_validation(form, e)
+            raise ImmediateHttpResponse(response=self.error_response(
+                bundle.request,
+                form._errors,
+                response_class=http.HttpConflict,
+            ))
         self.post_form_save_hook(bundle, form)
         bundle.obj = form.instance
         bundle.objects_saved.add(self.create_identifier(bundle.obj))

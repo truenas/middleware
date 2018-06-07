@@ -52,17 +52,17 @@ def test_03_Mount_tank_share_into_jail():
 
 @jail_test_cfg
 def test_04_Starting_jail():
-    results = POST("/jails/jails/1/start/", None)
+    results = POST("/jails/jails/1/start/")
     assert results.status_code == 202, results.text
 
 
 @jail_test_cfg
 def test_05_Restarting_jail():
-    results = POST("/jails/jails/1/restart/", None)
+    results = POST("/jails/jails/1/restart/")
     assert results.status_code == 202, results.text
 
 
 @jail_test_cfg
 def test_06_Stopping_jail():
-    results = POST("/jails/jails/1/stop/", None)
+    results = POST("/jails/jails/1/stop/")
     assert results.status_code == 202, results.text

@@ -153,9 +153,15 @@ class AlertService(Service):
     @periodic(60)
     @job(lock="process_alerts")
     async def process_alerts(self, job):
-        if not await self.middleware.call("system.is_freenas"):
-            if await self.middleware.call("notifier.failover_node") == "B":
-                return
+        if not await self.middleware.call("system.ready"):
+            return
+
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('notifier.failover_licensed') and
+            await self.middleware.call('notifier.failover_status') == 'BACKUP'
+        ):
+            return
 
         await self.__run_alerts()
 
@@ -250,18 +256,23 @@ class AlertService(Service):
                                     self.logger.error(f"Failed to create a support ticket", exc_info=True)
 
     async def __run_alerts(self):
-        run_on_passive_node = False
+        master_node = "A"
+        backup_node = "B"
+        run_on_backup_node = False
         if not await self.middleware.call("system.is_freenas"):
             if await self.middleware.call("notifier.failover_licensed"):
+                master_node = await self.middleware.call("failover.node")
                 try:
+                    backup_node = await self.middleware.call("failover.call_remote", "failover.node")
                     remote_version = await self.middleware.call("failover.call_remote", "system.version")
-                    failover_status = await self.middleware.call("failover.call_remote", "notifier.failover_status")
+                    remote_failover_status = await self.middleware.call("failover.call_remote",
+                                                                        "notifier.failover_status")
                 except Exception:
                     pass
                 else:
                     if remote_version == await self.middleware.call("system.version"):
-                        if failover_status == "BACKUP":
-                            run_on_passive_node = True
+                        if remote_failover_status == "BACKUP":
+                            run_on_backup_node = True
 
         for alert_source in ALERT_SOURCES.values():
             if not alert_source.schedule.should_run(datetime.utcnow(), self.alert_source_last_run[alert_source.name]):
@@ -273,17 +284,19 @@ class AlertService(Service):
 
             alerts_a = await self.__run_source(alert_source.name)
             for alert in alerts_a:
-                alert.node = "A"
+                alert.node = master_node
 
             alerts_b = []
-            if run_on_passive_node and alert_source.run_on_passive_node:
+            if run_on_backup_node and alert_source.run_on_backup_node:
                 try:
-                    alerts_b = [Alert(**alert)
+                    alerts_b = [Alert(**dict(alert,
+                                             level=(AlertLevel(alert["level"]) if alert["level"] is not None
+                                                    else alert["level"])))
                                 for alert in (await self.middleware.call("failover.call_remote", "alert.run_source",
-                                                                         alert_source.name))]
+                                                                         [alert_source.name]))]
                 except Exception:
                     alerts_b = [
-                        Alert(title="Unable to run alert source %(source_name)r on passive node\n%(traceback)s",
+                        Alert(title="Unable to run alert source %(source_name)r on backup node\n%(traceback)s",
                               args={
                                   "source_name": alert_source.name,
                                   "traceback": traceback.format_exc(),
@@ -292,7 +305,7 @@ class AlertService(Service):
                               level=AlertLevel.CRITICAL)
                     ]
             for alert in alerts_b:
-                alert.node = "B"
+                alert.node = backup_node
 
             for alert in alerts_a + alerts_b:
                 existing_alert = self.alerts[alert.node][alert_source.name].get(alert.key)
@@ -314,7 +327,8 @@ class AlertService(Service):
 
     @private
     async def run_source(self, source_name):
-        return [alert.__dict__ for alert in await self.__run_source(source_name)]
+        return [dict(alert.__dict__, level=alert.level.value if alert.level is not None else alert.level)
+                for alert in await self.__run_source(source_name)]
 
     async def __run_source(self, source_name):
         alert_source = ALERT_SOURCES[source_name]
@@ -339,7 +353,14 @@ class AlertService(Service):
 
     @periodic(3600)
     async def flush_alerts(self):
-        await self.middleware.call("datastore.sql", "DELETE FROM system_alert")
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('notifier.failover_licensed') and
+            await self.middleware.call('notifier.failover_status') == 'BACKUP'
+        ):
+            return
+
+        await self.middleware.call("datastore.delete", "system.alert", [])
 
         for alert in self.__get_all_alerts():
             d = alert.__dict__.copy()
@@ -465,6 +486,7 @@ class AlertServiceService(CRUDService):
 
         test_alert = Alert(
             title="Test alert",
+            node="A",
             datetime=datetime.utcnow(),
             level=AlertLevel.INFO,
         )

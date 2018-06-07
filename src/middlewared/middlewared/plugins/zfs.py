@@ -285,9 +285,13 @@ class ZFSDatasetService(CRUDService):
                         if prop:
                             if v.get('source') == 'INHERIT':
                                 prop.inherit()
-                            elif 'value' in v and prop.value != v['value']:
+                            elif 'value' in v and (
+                                prop.value != v['value'] or prop.source.name == 'INHERITED'
+                            ):
                                 prop.value = v['value']
-                            elif 'parsed' in v and prop.parsed != v['parsed']:
+                            elif 'parsed' in v and (
+                                prop.parsed != v['parsed'] or prop.source.name == 'INHERITED'
+                            ):
                                 prop.parsed = v['parsed']
                         else:
                             if 'value' not in v:
@@ -305,6 +309,10 @@ class ZFSDatasetService(CRUDService):
         try:
             with libzfs.ZFS() as zfs:
                 ds = zfs.get_dataset(id)
+
+                if ds.type == libzfs.DatasetType.FILESYSTEM:
+                    ds.umount()
+
                 ds.delete()
         except libzfs.ZFSException as e:
             self.logger.error('Failed to delete dataset', exc_info=True)
@@ -589,7 +597,7 @@ class ZFSQuoteService(Service):
         }
 
     async def terminate(self):
-        await self.middleware.call('datastore.sql', 'DELETE FROM storage_quotaexcess')
+        await self.middleware.call('datastore.delete', 'storage.quotaexcess', [])
 
         if self.excesses is not None:
             for excess in self.excesses.values():

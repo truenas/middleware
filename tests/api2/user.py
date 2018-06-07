@@ -6,10 +6,9 @@
 
 import sys
 import os
-
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET, DELETE_ALL, PUT
+from functions import POST, GET, DELETE, PUT
 
 
 def test_01_get_next_uid():
@@ -127,7 +126,7 @@ def test_19_add_new_team_to_special_atribute():
 # Delete the testuser
 def test_20_deleting_user_testuser():
     userid = GET('/user?username=testuser').json()[0]['id']
-    results = DELETE_ALL("/user/id/%s" % userid, {"delete_group": True})
+    results = DELETE("/user/id/%s" % userid, {"delete_group": True})
     assert results.status_code == 200, results.text
 
 

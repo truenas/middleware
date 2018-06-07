@@ -1,9 +1,12 @@
+import asyncio
 import ipaddress
 import os
+import socket
 
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
 from middlewared.validators import Range
 from middlewared.service import private, CRUDService, SystemServiceService, ValidationErrors
+from middlewared.utils.asyncio_ import asyncio_map
 
 
 class NFSService(SystemServiceService):
@@ -77,15 +80,15 @@ class SharingNFSService(CRUDService):
         "sharingnfs_create",
         List("paths", items=[Dir("path")]),
         Str("comment"),
-        List("networks", items=[IPAddr("network", cidr=True)]),
-        List("hosts", items=[IPAddr("host")]),
+        List("networks", items=[IPAddr("network", cidr=True, v6=False)]),
+        List("hosts", items=[Str("host")]),
         Bool("alldirs"),
         Bool("ro"),
         Bool("quiet"),
-        Str("maproot_user", required=False),
-        Str("maproot_group", required=False),
-        Str("mapall_user", required=False),
-        Str("mapall_group", required=False),
+        Str("maproot_user", required=False, default=None),
+        Str("maproot_group", required=False, default=None),
+        Str("mapall_user", required=False, default=None),
+        Str("mapall_group", required=False, default=None),
         List("security", items=[Str("provider", enum=["SYS", "KRB5", "KRB5I", "KRB5P"])]),
         register=True,
     ))
@@ -183,38 +186,30 @@ class SharingNFSService(CRUDService):
 
         await self.middleware.run_in_io_thread(self.validate_paths, data, schema_name, verrors)
 
-        if not data["networks"]:
-            verrors.add(f"{schema_name}.networks", "At least one network is required")
-
-        for i, network1 in enumerate(data["networks"]):
-            network1 = ipaddress.ip_network(network1, strict=False)
-            for j, network2 in enumerate(data["networks"]):
-                if j > i:
-                    network2 = ipaddress.ip_network(network2, strict=False)
-                    if network1.overlaps(network2):
-                        verrors.add(f"{schema_name}.network.{j}", "Networks {network1} and {network2} overlap")
-
         filters = []
         if old:
             filters.append(["id", "!=", old["id"]])
         other_shares = await self.middleware.call("sharing.nfs.query", filters)
-        await self.middleware.run_in_io_thread(self.validate_user_networks, other_shares, data, schema_name, verrors)
+        dns_cache = await self.resolve_hostnames(
+            sum([share["hosts"] for share in other_shares], []) + data["hosts"]
+        )
+        await self.middleware.run_in_io_thread(self.validate_hosts_and_networks, other_shares, data, schema_name,
+                                               verrors, dns_cache)
 
         for k in ["maproot", "mapall"]:
             if not data[f"{k}_user"] and not data[f"{k}_group"]:
                 pass
             elif not data[f"{k}_user"] and data[f"{k}_group"]:
                 verrors.add(f"{schema_name}.{k}_user", "This field is required when map group is specified")
-            elif data[f"{k}_user"] and not data[f"{k}_group"]:
-                verrors.add(f"{schema_name}.{k}_group", "This field is required when map user is specified")
             else:
                 user = await self.middleware.call("user.query", [("username", "=", data[f"{k}_user"])])
                 if not user:
                     verrors.add(f"{schema_name}.{k}_user", "User not found")
 
-                group = await self.middleware.call("group.query", [("group", "=", data[f"{k}_group"])])
-                if not group:
-                    verrors.add(f"{schema_name}.{k}_group", "Group not found")
+                if data[f"{k}_group"]:
+                    group = await self.middleware.call("group.query", [("group", "=", data[f"{k}_group"])])
+                    if not group:
+                        verrors.add(f"{schema_name}.{k}_group", "Group not found")
 
         if data["maproot_user"] and data["mapall_user"]:
             verrors.add(f"{schema_name}.mapall_user", "maproot_user disqualifies mapall_user")
@@ -248,10 +243,28 @@ class SharingNFSService(CRUDService):
             verrors.add(f"{schema_name}.alldirs", "This option can only be used for datasets")
 
     @private
-    def validate_user_networks(self, other_shares, data, schema_name, verrors):
+    async def resolve_hostnames(self, hostnames):
+        hostnames = list(set(hostnames))
+
+        async def resolve(hostname):
+            try:
+                return await asyncio.wait_for(self.middleware.run_in_io_thread(socket.gethostbyname, hostname), 5)
+            except Exception as e:
+                self.logger.warning("Unable to resolve host %r: %r", hostname, e)
+                return None
+
+        resolved_hostnames = await asyncio_map(resolve, hostnames, 8)
+
+        return dict(zip(hostnames, resolved_hostnames))
+
+    @private
+    def validate_hosts_and_networks(self, other_shares, data, schema_name, verrors, dns_cache):
+        explanation = (". This is so because /etc/exports does not act like ACL and it is undefined which rule among "
+                       "all overlapping networks will be applied.")
+
         dev = os.stat(data["paths"][0]).st_dev
 
-        used_networks = []
+        used_networks = set()
         for share in other_shares:
             try:
                 share_dev = os.stat(share["paths"][0]).st_dev
@@ -259,25 +272,76 @@ class SharingNFSService(CRUDService):
                 self.logger.warning("Failed to stat first path for %r", share, exc_info=True)
                 continue
 
-            used_networks.extend([(network, share_dev) for network in share["networks"]])
+            if share_dev == dev:
+                for host in share["hosts"]:
+                    host = dns_cache[host]
+                    if host is None:
+                        continue
 
-            if data["alldirs"] and share["alldirs"] and share_dev == dev:
-                verrors.add(f"{schema_name}.alldirs", "This option is only available once per mountpoint")
+                    try:
+                        network = ipaddress.IPv4Network(f"{host}/32")
+                    except Exception:
+                        self.logger.warning("Got invalid host %r", host)
+                        continue
+                    else:
+                        used_networks.add(network)
 
+                for network in share["networks"]:
+                    try:
+                        network = ipaddress.IPv4Network(network, strict=False)
+                    except Exception:
+                        self.logger.warning("Got invalid network %r", network)
+                        continue
+                    else:
+                        used_networks.add(network)
+
+                if not share["hosts"] and not share["networks"]:
+                    used_networks.add(ipaddress.IPv4Network("0.0.0.0/0"))
+
+                if share["alldirs"] and data["alldirs"]:
+                    verrors.add(f"{schema_name}.alldirs", "This option is only available once per mountpoint")
+
+        had_explanation = False
+        for i, host in enumerate(data["hosts"]):
+            host = dns_cache[host]
+            if host is None:
+                verrors.add(f"{schema_name}.hosts.{i}", "Unable to resolve host")
+                continue
+
+            network = ipaddress.IPv4Network(f"{host}/32")
+            for another_network in used_networks:
+                if network.overlaps(another_network):
+                    verrors.add(
+                        f"{schema_name}.hosts.{i}",
+                        (f"You can't share same filesystem with overlapping networks {network} and {another_network}" +
+                         ("" if had_explanation else explanation))
+                    )
+                    had_explanation = True
+
+            used_networks.add(network)
+
+        had_explanation = False
         for i, network in enumerate(data["networks"]):
-            network = ipaddress.ip_network(network, strict=False)
-            for other_network, other_dev in used_networks:
-                try:
-                    other_network = ipaddress.ip_network(other_network, strict=False)
-                except Exception:
-                    self.logger.warning("Got invalid network %r", other_network)
-                    continue
+            network = ipaddress.IPv4Network(network, strict=False)
 
-                if network.overlaps(other_network) and dev == other_dev:
-                    verrors.add(f"{schema_name}.networks.{i}",
+            for another_network in used_networks:
+                if network.overlaps(another_network):
+                    verrors.add(
+                        f"{schema_name}.networks.{i}",
+                        (f"You can't share same filesystem with overlapping networks {network} and {another_network}" +
+                         ("" if had_explanation else explanation))
+                    )
+                    had_explanation = True
 
-                                f"The network {network} is already being shared and cannot be used twice "
-                                "for the same filesystem")
+            used_networks.add(network)
+
+        if not data["hosts"] and not data["networks"]:
+            if used_networks:
+                verrors.add(
+                    f"{schema_name}.networks",
+                    (f"You can't share same filesystem with all hosts twice" +
+                     ("" if had_explanation else explanation))
+                )
 
     @private
     async def extend(self, data):
@@ -291,7 +355,7 @@ class SharingNFSService(CRUDService):
 
     @private
     async def compress(self, data):
-        data["network"] = " ".join(data["networks"])
+        data["network"] = " ".join(data.pop("networks"))
         data["hosts"] = " ".join(data["hosts"])
         data["security"] = [s.lower() for s in data["security"]]
         return data

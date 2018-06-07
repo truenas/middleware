@@ -9,6 +9,8 @@ import types
 
 from .client import ejson as json
 from .job import Job
+from .schema import Error as SchemaError
+from .service import CallError, ValidationError, ValidationErrors
 
 
 async def authenticate(middleware, req):
@@ -84,6 +86,9 @@ class RESTfulAPI(object):
             subresource = None
             if service['type'] == 'crud':
                 kwargs = {}
+                get = f'{name}.query'
+                if get in self._methods:
+                    kwargs['get'] = get
                 delete = f'{name}.delete'
                 if delete in self._methods:
                     kwargs['delete'] = delete
@@ -121,7 +126,7 @@ class OpenAPIResource(object):
 
     def __init__(self, rest):
         self.rest = rest
-        self.rest.app.router.add_route('GET', '/api/v2.0', self.get)
+        self.rest.app.router.add_route('GET', '/api/v2.0/', self.get)
         self.rest.app.router.add_route('GET', '/api/v2.0/openapi.json', self.get)
         self._paths = defaultdict(dict)
         self._schemas = dict()
@@ -316,7 +321,7 @@ class Resource(object):
             operation = getattr(self, i)
             if operation is None:
                 continue
-            self.rest.app.router.add_route(i.upper(), '/api/v2.0/' + path, getattr(self, f'on_{i}'))
+            self.rest.app.router.add_route(i.upper(), f'/api/v2.0/{path}/', getattr(self, f'on_{i}'))
             self.rest._openapi.add_path(path, i, operation)
             self.__map_method_params(operation)
 
@@ -471,7 +476,13 @@ class Resource(object):
                     })
                     return resp
             elif http_method == 'get' and method['filterable']:
-                method_args = self._filterable_args(req)
+                if self.parent and 'id' in kwargs:
+                    filterid = kwargs['id']
+                    if filterid.isdigit():
+                        filterid = int(filterid)
+                    method_args = [[('id', '=', filterid)], {'get': True}]
+                else:
+                    method_args = self._filterable_args(req)
             else:
                 method_args = []
 
@@ -482,7 +493,25 @@ class Resource(object):
         if method.get('item_method') is True:
             method_args.insert(0, kwargs['id'])
 
-        result = await self.middleware.call(methodname, *method_args)
+        try:
+            result = await self.middleware.call(methodname, *method_args)
+        except CallError as e:
+            resp = web.Response(status=400)
+            result = {
+                'message': e.errmsg,
+                'errno': e.errno,
+            }
+        except (SchemaError, ValidationError, ValidationErrors) as e:
+            if isinstance(e, (SchemaError, ValidationError)):
+                e = [(e.attribute, e.errmsg, e.errno)]
+            result = defaultdict(list)
+            for attr, errmsg, errno in e:
+                result[attr].append({
+                    'message': errmsg,
+                    'errno': errno,
+                })
+            resp = web.Response(status=422)
+
         if isinstance(result, types.GeneratorType):
             result = list(result)
         elif isinstance(result, types.AsyncGeneratorType):

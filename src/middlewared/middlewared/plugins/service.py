@@ -249,10 +249,7 @@ class ServiceService(CRUDService):
         if running:
             state = 'RUNNING'
         else:
-            if service['enable']:
-                state = 'CRASHED'
-            else:
-                state = 'STOPPED'
+            state = 'STOPPED'
 
         service['state'] = state
         service['pids'] = pids
@@ -769,7 +766,7 @@ class ServiceService(CRUDService):
         await self._system("killall -1 netatalk")
 
     async def _reload_nfs(self, **kwargs):
-        await self._service("ix-nfsd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "nfsd")
 
     async def _restart_nfs(self, **kwargs):
         await self._stop_nfs(**kwargs)
@@ -788,7 +785,7 @@ class ServiceService(CRUDService):
 
     async def _start_nfs(self, **kwargs):
         nfs = await self.middleware.call('datastore.config', 'services.nfs')
-        await self._service("ix-nfsd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "nfsd")
         await self._service("rpcbind", "start", quiet=True, **kwargs)
         await self._service("gssd", "start", quiet=True, **kwargs)
         # Workaround to work with "onetime", since the rc scripts depend on rc flags.

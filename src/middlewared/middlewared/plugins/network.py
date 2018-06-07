@@ -117,7 +117,7 @@ class NetworkConfigurationService(ConfigService):
             Str('domain', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
             List('domains', items=[Str('domains')]),
             IPAddr('ipv4gateway'),
-            IPAddr('ipv6gateway'),
+            IPAddr('ipv6gateway', allow_zone_index=True),
             IPAddr('nameserver1'),
             IPAddr('nameserver2'),
             IPAddr('nameserver3'),
@@ -207,7 +207,7 @@ class NetworkConfigurationService(ConfigService):
                             (srv_service_obj and srv_service_obj.srv_enable) and
                             (nfs_object and (nfs_object.nfs_srv_v4 and nfs_object.nfs_srv_v4_krb))
                     ):
-                        await self.middleware.call('service.restart', 'ix-nfsd', {'onetime': False})
+                        await self.middleware.call("etc.generate", "nfsd")
                         services_to_reload.append('mountd')
 
             for service_to_reload in services_to_reload:
@@ -540,7 +540,7 @@ class InterfacesService(Service):
                     'netmask': data['int_v6netmaskbit'],
                 }))
         else:
-            if data[ipv4_field]:
+            if data[ipv4_field] and not data['int_dhcp']:
                 addrs_database.add(self.alias_to_addr({
                     'address': data[ipv4_field],
                     'netmask': data['int_v4netmaskbit'],
@@ -701,7 +701,7 @@ class InterfacesService(Service):
         ipv4 = choices['ipv4'] if choices.get('ipv4') else False
         ipv6 = choices['ipv6'] if choices.get('ipv6') else False
         list_of_ip = []
-        ignore_nics = ('lo', 'bridge', 'tap', 'epair')
+        ignore_nics = ('lo', 'bridge', 'tap', 'epair', 'pflog')
         for if_name, iface in list(netif.list_interfaces().items()):
             if not if_name.startswith(ignore_nics):
                 aliases_list = iface.__getstate__()['aliases']
@@ -837,14 +837,13 @@ class StaticRouteService(CRUDService):
     async def do_create(self, data):
         await self.lower(data)
 
-        data['id'] = await self.middleware.call(
+        id = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
 
         await self.middleware.call('service.start', 'routing')
-        await self.upper(data)
 
-        return data
+        return await self._get_instance(id)
 
     @accepts(
         Int('id'),
@@ -855,12 +854,7 @@ class StaticRouteService(CRUDService):
         )
     )
     async def do_update(self, id, data):
-        old = await self.middleware.call(
-            'datastore.query', self._config.datastore, [('id', '=', id)],
-            {'extend': self._config.datastore_extend,
-             'prefix': self._config.datastore_prefix,
-             'get': True})
-
+        old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
 
@@ -870,9 +864,8 @@ class StaticRouteService(CRUDService):
             {'prefix': self._config.datastore_prefix})
 
         await self.middleware.call('service.start', 'routing')
-        await self.upper(new)
 
-        return new
+        return await self._get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
@@ -882,12 +875,12 @@ class StaticRouteService(CRUDService):
     @private
     async def lower(self, data):
         data['description'] = data['description'].lower()
-
         return data
 
     @private
     async def upper(self, data):
         data['description'] = data['description'].upper()
+        return data
 
 
 class DNSService(Service):

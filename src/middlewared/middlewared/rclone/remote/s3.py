@@ -38,5 +38,5 @@ class S3RcloneRemote(BaseRcloneRemote):
                                                           Bucket=task["attributes"]["bucket"])
         task["attributes"]["region"] = response["LocationConstraint"] or "us-east-1"
 
-    def get_task_extra(self, task):
-        return dict(server_side_encryption=task["attributes"]["encryption"] or "")
+    def get_remote_extra(self, task):
+        return dict(server_side_encryption=task.get("encryption"))

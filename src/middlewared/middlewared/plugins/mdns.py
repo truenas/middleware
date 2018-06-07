@@ -6,6 +6,7 @@ import queue
 import re
 import select
 import socket
+import subprocess
 import threading
 
 from pybonjour import (
@@ -20,6 +21,8 @@ from middlewared.service import Service, private
 class mDNSDaemonMonitor(object):
     def __init__(self, *args, **kwargs):
         super(mDNSDaemonMonitor, self).__init__()
+        self.middleware = kwargs.get('middleware')
+        self.logger = self.middleware.logger
         self.mdnsd_pidfile = "/var/run/mdnsd.pid"
         self.mdnsd_piddir = "/var/run/"
 
@@ -51,8 +54,15 @@ class mDNSDaemonMonitor(object):
 
         return alive
 
-    def wait(self):
+    def start(self):
+        p = subprocess.Popen(["/usr/local/etc/rc.d/mdnsd", "onestart"])
+        p.wait()
+        return p.returncode == 0
+
+    def wait(self, timeout=0):
+        max_nevents = 1024
         alive = False
+        t = 0
 
         if self.is_alive():
             return True
@@ -66,23 +76,43 @@ class mDNSDaemonMonitor(object):
             fflags=select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND
         )]
 
+        # This initializes kevent structure
         events = kq.control(events, 0, 0)
         if not self.is_alive() and self.pidfile_exists():
             os.unlink(self.mdnsd_pidfile)
 
+        #
+        # Sleep for 1 second intervals and check if we have any events. If
+        # a timeout is specified and there are no events within it, break
+        # out of the loop.
+        #
         while (not alive):
-            proc_events = kq.control([], 1)
+            proc_events = kq.control([], max_nevents, 1)
             for event in proc_events:
                 if ((event.fflags & select.KQ_NOTE_WRITE) or
                         (event.fflags & select.KQ_NOTE_EXTEND)):
                     if self.pidfile_exists() and self.is_alive():
                         alive = True
                         break
+            if timeout > 0 and t >= timeout:
+                break
+            t += 1
 
         kq.close()
         os.close(fd)
 
-        return True
+        #
+        # If we have got this far and still no mdnsd, start it ourselves.
+        # This is a temporary workaround until we have a supervisor, which
+        # we will be getting when we migrate to OpenRC.
+        #
+        if not alive:
+            if self.start():
+                self.middleware.call_sync('mdnsadvertise.restart')
+                self.middleware.call_sync('mdnsbrowser.restart')
+                alive = True
+
+        return alive
 
 
 class mDNSObject(object):
@@ -148,11 +178,12 @@ class mDNSThread(threading.Thread):
     def __init__(self, **kwargs):
         super(mDNSThread, self).__init__()
         self.setDaemon(True)
-        self.logger = kwargs.get('logger')
+        self.middleware = kwargs.get('middleware')
+        self.logger = self.middleware.logger
         self.timeout = kwargs.get('timeout', 30)
 
-        self.mdnsd = mDNSDaemonMonitor()
-        self.mdnsd.wait()
+        self.mdnsd = mDNSDaemonMonitor(middleware=self.middleware)
+        self.mdnsd.wait(timeout=10)
 
     def active(self, sdRef):
         return (bool(sdRef) and sdRef.fileno() != -1)
@@ -184,6 +215,9 @@ class DiscoverThread(mDNSThread):
         )
 
     def run(self):
+        if not self.mdnsd.is_alive():
+            self.mdnsd.wait(timeout=10)
+
         sdRef = pybonjour.DNSServiceBrowse(
             regtype=self.regtype,
             callBack=self.on_discover
@@ -195,7 +229,12 @@ class DiscoverThread(mDNSThread):
                 break
 
             for ref in r:
-                pybonjour.DNSServiceProcessResult(ref)
+                try:
+                    pybonjour.DNSServiceProcessResult(ref)
+
+                # mdnsd was probaly killed, so just continue since this thread will be restarted
+                except pybonjour.BonjourError:
+                    continue
 
             if self.finished.is_set():
                 break
@@ -259,6 +298,9 @@ class ServicesThread(mDNSThread):
 
     def run(self):
         while True:
+            if not self.mdnsd.is_alive():
+                self.mdnsd.wait(timeout=10)
+
             try:
                 obj = self.queue.get(block=True, timeout=self.timeout)
             except queue.Empty:
@@ -332,6 +374,9 @@ class ResolveThread(mDNSThread):
 
     def run(self):
         while True:
+            if not self.mdnsd.is_alive():
+                self.mdnsd.wait(timeout=10)
+
             try:
                 obj = self.queue.get(block=True, timeout=self.timeout)
             except queue.Empty:
@@ -436,8 +481,8 @@ class ResolveThread(mDNSThread):
 
 
 class mDNSBrowserService(Service):
-    def __init__(self, *args):
-        super(mDNSBrowserService, self).__init__(*args)
+    def __init__(self, *args, **kwargs):
+        super(mDNSBrowserService, self).__init__(*args, **kwargs)
         self.threads = {}
         self.dq = None
         self.sq = None
@@ -472,9 +517,9 @@ class mDNSBrowserService(Service):
         self.dq = queue.Queue()
         self.sq = queue.Queue()
 
-        self.dthread = DiscoverThread(queue=self.dq, logger=self.middleware.logger, timeout=5)
-        self.sthread = ServicesThread(queue=self.dq, service_queue=self.sq, logger=self.middleware.logger, timeout=5)
-        self.rthread = ResolveThread(queue=self.sq, logger=self.middleware.logger, timeout=5)
+        self.dthread = DiscoverThread(queue=self.dq, middleware=self.middleware, timeout=5)
+        self.sthread = ServicesThread(queue=self.dq, service_queue=self.sq, middleware=self.middleware, timeout=5)
+        self.rthread = ResolveThread(queue=self.sq, middleware=self.middleware, timeout=5)
 
         self.dthread.start()
         self.sthread.start()
@@ -510,7 +555,7 @@ class mDNSServiceThread(threading.Thread):
         self.setDaemon(True)
         self.service = kwargs.get('service')
         self.middleware = kwargs.get('middleware')
-        self.logger = kwargs.get('logger')
+        self.logger = self.middleware.logger
         self.hostname = kwargs.get('hostname')
         self.service = kwargs.get('service')
         self.regtype = kwargs.get('regtype')
@@ -543,7 +588,10 @@ class mDNSServiceThread(threading.Thread):
             self._register(self.hostname, self.regtype, self.port)
 
     def run(self):
-        self.register()
+        try:
+            self.register()
+        except pybonjour.BonjourError:
+            self.logger.trace("ServiceThread: failed to register '%s', is mdnsd running?", self.service)
 
     def setup(self):
         pass
@@ -639,12 +687,12 @@ class mDNSServiceMiddlewareSSLThread(mDNSServiceThread):
 
 
 class mDNSAdvertiseService(Service):
-    def __init__(self, *args):
-        super(mDNSAdvertiseService, self).__init__(*args)
+    def __init__(self, *args, **kwargs):
+        super(mDNSAdvertiseService, self).__init__(*args, **kwargs)
         self.threads = {}
         self.initialized = False
         self.lock = threading.Lock()
-        self.mdnsd = mDNSDaemonMonitor()
+        self.mdnsd = mDNSDaemonMonitor(middleware=self.middleware)
 
     @private
     def start(self):
@@ -654,7 +702,7 @@ class mDNSAdvertiseService(Service):
             return
         self.lock.release()
 
-        self.mdnsd.wait()
+        self.mdnsd.wait(timeout=10)
 
         try:
             hostname = socket.gethostname().split('.')[0]
@@ -671,7 +719,7 @@ class mDNSAdvertiseService(Service):
         ]
 
         for service in mdns_advertise_services:
-            thread = service(middleware=self.middleware, logger=self.logger, hostname=hostname)
+            thread = service(middleware=self.middleware, hostname=hostname)
             thread.setup()
             thread_name = thread.service
             self.threads[thread_name] = thread
@@ -697,10 +745,6 @@ class mDNSAdvertiseService(Service):
     def restart(self):
         self.stop()
         self.start()
-
-
-class mDNSService(Service):
-    pass
 
 
 def setup(middleware):

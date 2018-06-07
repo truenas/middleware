@@ -495,8 +495,7 @@ def bootenv_pool_attach(request):
     label = request.GET.get('label')
     if request.method == 'POST':
         form = forms.BootEnvPoolAttachForm(request.POST, label=label)
-        if form.is_valid():
-            form.done()
+        if form.is_valid() and form.done():
             return JsonResp(
                 request,
                 message=_('Disk successfully attached.'),
@@ -553,8 +552,7 @@ def bootenv_pool_detach(request, label):
 def bootenv_pool_replace(request, label):
     if request.method == 'POST':
         form = forms.BootEnvPoolReplaceForm(request.POST, label=label)
-        if form.is_valid():
-            form.done()
+        if form.is_valid() and form.done():
             return JsonResp(
                 request,
                 message=_('Disk is being replaced.'),
@@ -1631,11 +1629,12 @@ def update_check(request):
     else:
         # If it is HA run update check on the other node
         if not notifier().is_freenas() and notifier().failover_licensed():
+            network = True
+            error = None
+            error_trace = None
             try:
                 with client as c:
                     error = False
-                    network = False
-                    error_trace = None
                     update_check = c.call('failover.call_remote', 'update.check_available')
             except Exception as e:
                 if isinstance(e, ClientException):

@@ -263,7 +263,7 @@ def config_share_for_zfs(share):
 # for fruit, and if catia and fruit are used, catia comes before fruit
 #
 def order_vfs_objects(vfs_objects):
-    vfs_objects_special = ('catia', 'fruit', 'streams_xattr', 'recycle', 'aio_pthread')
+    vfs_objects_special = ('catia', 'zfs_space', 'zfsacl', 'fruit', 'streams_xattr', 'recycle', 'aio_pthread')
     vfs_objects_ordered = []
 
     if 'fruit' in vfs_objects:

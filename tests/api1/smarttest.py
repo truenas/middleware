@@ -13,7 +13,7 @@ from functions import POST, GET
 
 
 def test_01_Create_a_new_SMARTTest():
-    disk_identifiers = GET("/storage/disk",).json()["disk_identifier"]
+    disk_identifiers = GET("/storage/disk").json()["disk_identifier"]
     global disk_ident
     disk_indent = disk_identifiers.split()[0]
     payload = {"smarttest_disks": disk_indent,

@@ -375,7 +375,10 @@ __EOF__
         }
 
         location /api/v2.0 {
-            proxy_pass http://127.0.0.1:6000/api/v2.0;
+	    # do not add the path to proxy_pass because of automatic url decoding
+	    # e.g. /api/v2.0/pool/dataset/id/tank%2Ffoo/ would become
+	    #      /api/v2.0/pool/dataset/id/tank/foo/
+            proxy_pass http://127.0.0.1:6000;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr \$remote_addr;
             proxy_set_header X-Real-Remote-Port \$remote_port;
@@ -391,6 +394,8 @@ __EOF__
         }
 
         location /_upload {
+            # Allow uploads of any size. Its middlewared job to handle size.
+            client_max_body_size 0;
             proxy_pass http://127.0.0.1:6000;
             # make sure nginx does not buffer the upload and pass directly to middlewared
             proxy_request_buffering off;

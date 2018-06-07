@@ -10,7 +10,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, SSH_TEST, DELETE_ALL, DELETE
+from functions import PUT, POST, GET, SSH_TEST, DELETE
 from auto_config import ip
 from config import *
 
@@ -320,7 +320,7 @@ def test_33_Removing_SMB_share_on_SMB_PATH():
                "cifs_name": SMB_NAME,
                "cifs_guestok": "true",
                "cifs_vfsobjects": "streams_xattr"}
-    results = DELETE_ALL("/sharing/cifs/", payload)
+    results = DELETE("/sharing/cifs/", payload)
     assert results.status_code == 204, results.stat
 
 

@@ -984,8 +984,9 @@ class notifier(metaclass=HookMetaclass):
 
         if force:
             try:
-                self.disk_wipe(devname.replace('/dev/', ''), mode='quick')
-            except:
+                with client as c:
+                    c.call('disk.wipe', devname.replace('/dev/', ''), 'QUICK', job=True)
+            except Exception:
                 log.debug('Failed to wipe disk {}'.format(to_disk), exc_info=True)
 
         p1 = self._pipeopen('/sbin/zpool replace %s%s %s %s' % ('-f ' if force else '', volume.vol_name, from_label, devname))

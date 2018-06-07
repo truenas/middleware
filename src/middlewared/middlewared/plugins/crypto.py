@@ -3,6 +3,8 @@ import dateutil.parser
 import os
 import random
 import re
+import socket
+import ssl
 
 from middlewared.async_validators import validate_country
 from middlewared.schema import accepts, Dict, Int, List, Patch, Ref, Str
@@ -21,6 +23,17 @@ CERT_TYPE_CSR = 0x20
 CERT_ROOT_PATH = '/etc/certificates'
 CERT_CA_ROOT_PATH = '/etc/certificates/CA'
 RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
+
+
+def get_context_object():
+    # BEING USED IN VCENTERPLUGIN SERVICE
+    try:
+        ssl._create_default_https_context = ssl._create_unverified_context
+    except AttributeError:
+        pass
+    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+    context.verify_mode = ssl.CERT_NONE
+    return context
 
 
 def get_cert_info_from_data(data):
@@ -204,6 +217,8 @@ class CertificateService(CRUDService):
 
         # convert san to list
         cert['san'] = (cert.pop('san', '') or '').split()
+        if cert['serial'] is not None:
+            cert['serial'] = int(cert['serial'])
 
         if cert['type'] in (
                 CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE
@@ -307,6 +322,22 @@ class CertificateService(CRUDService):
     # HELPER METHODS
 
     @accepts(
+        Str('hostname', required=True),
+        Int('port', required=True)
+    )
+    def get_host_certificates_thumbprint(self, hostname, port):
+        try:
+            conn = ssl.create_connection((hostname, port))
+            context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+            sock = context.wrap_socket(conn, server_hostname=hostname)
+            certificate = ssl.DER_cert_to_PEM_cert(sock.getpeercert(True))
+            return self.fingerprint(certificate)
+        except ConnectionRefusedError:
+            return ''
+        except socket.gaierror:
+            return ''
+
+    @accepts(
         Str('certificate', required=True)
     )
     def load_certificate(self, certificate):
@@ -336,16 +367,21 @@ class CertificateService(CRUDService):
 
             return cert_info
 
-    @accepts(
-        Int('certificate_id', required=True)
-    )
-    async def get_fingerprint(self, certificate_id):
+    @private
+    async def get_fingerprint_of_cert(self, certificate_id):
         certificate_list = await self.query(filters=[('id', '=', certificate_id)])
         if len(certificate_list) == 0:
             return None
         else:
-            cert_certificate = certificate_list[0]['certificate']
+            return await self.middleware.run_in_io_thread(
+                self.fingerprint,
+                certificate_list[0]['certificate']
+            )
 
+    @accepts(
+        Str('cert_certificate', required=True)
+    )
+    def fingerprint(self, cert_certificate):
         # getting fingerprint of certificate
         try:
             certificate = crypto.load_certificate(
@@ -370,7 +406,6 @@ class CertificateService(CRUDService):
             else:
                 san_string += f'IP: {san}, '
         return san_string[:-2] if san_list else ''
-
 
     @accepts(
         Dict(
@@ -758,7 +793,7 @@ class CertificateAuthorityService(CRUDService):
         ])
 
         if not ca_signed_certs:
-            return (await self._get_instance(ca_id))['serial'] + 1
+            return int((await self._get_instance(ca_id))['serial']) + 1
         else:
             return max(ca_signed_certs) + 1
 

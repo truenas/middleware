@@ -219,7 +219,11 @@ class UserService(CRUDService):
                     os.chown(dest_file, data['uid'], group['gid'])
 
             data['sshpubkey'] = sshpubkey
-            await self.__update_sshpubkey(data['home'], data, group['group'])
+            try:
+                await self.__update_sshpubkey(data['home'], data, group['group'])
+            except PermissionError as e:
+                self.logger.warn('Failed to update authorized keys', exc_info=True)
+                raise CallError(f'Failed to update authorized keys: {e}')
 
         return pk
 
@@ -297,9 +301,15 @@ class UserService(CRUDService):
                 except OSError:
                     self.logger.warn('Failed to set homedir mode', exc_info=True)
 
-        if home_copy:
-            await self.__update_sshpubkey(home_old, user, group['bsdgrp_group'])
+        try:
+            await self.__update_sshpubkey(
+                home_old if home_copy else user['home'], user, group['bsdgrp_group'],
+            )
+        except PermissionError as e:
+            self.logger.warn('Failed to update authorized keys', exc_info=True)
+            raise CallError(f'Failed to update authorized keys: {e}')
 
+        if home_copy:
             def do_home_copy():
                 try:
                     subprocess.run(f"/usr/bin/su - {user['username']} -c '/bin/cp -a {home_old}/ {user['home']}/'", shell=True, check=True)
@@ -307,9 +317,8 @@ class UserService(CRUDService):
                     self.logger.warn(f"Failed to copy homedir: {e}")
                 set_home_mode()
 
-            asyncio.ensure_future(self.middleware.run_in_thread(do_home_copy))
+            asyncio.ensure_future(self.middleware.run_in_io_thread(do_home_copy))
         else:
-            await self.__update_sshpubkey(user['home'], user, group['bsdgrp_group'])
             set_home_mode()
 
         user.pop('sshpubkey', None)
