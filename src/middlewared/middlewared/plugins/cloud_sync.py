@@ -19,7 +19,7 @@ import re
 import tempfile
 
 CHUNK_SIZE = 5 * 1024 * 1024
-RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
+RE_TRANSF = re.compile(r"Transferred:\s*?(.+)$", re.S)
 
 REMOTES = {}
 
@@ -36,7 +36,7 @@ class RcloneConfig:
         self.path = None
 
     def __enter__(self):
-        self.tmp_file = tempfile.NamedTemporaryFile(mode='w+')
+        self.tmp_file = tempfile.NamedTemporaryFile(mode="w+")
 
         # Make sure only root can read it as there is sensitive data
         os.chmod(self.tmp_file.name, 0o600)
@@ -84,17 +84,17 @@ async def rclone(job, cloud_sync):
     # Use a temporary file to store rclone file
     with RcloneConfig(cloud_sync) as config:
         args = [
-            '/usr/local/bin/rclone',
-            '--config', config.config_path,
-            '-v',
-            '--stats', '1s',
-            cloud_sync['transfer_mode'].lower(),
+            "/usr/local/bin/rclone",
+            "--config", config.config_path,
+            "-v",
+            "--stats", "1s",
+            cloud_sync["transfer_mode"].lower(),
         ]
 
-        if cloud_sync['direction'] == 'PUSH':
-            args.extend([cloud_sync['path'], config.remote_path])
+        if cloud_sync["direction"] == "PUSH":
+            args.extend([cloud_sync["path"], config.remote_path])
         else:
-            args.extend([config.remote_path, cloud_sync['path']])
+            args.extend([config.remote_path, cloud_sync["path"]])
 
         proc = await Popen(
             args,
@@ -113,7 +113,7 @@ async def rclone_check_progress(job, proc):
     while True:
         read = (await proc.stdout.readline()).decode()
         job.logs_fd.write(read.encode("utf-8", "ignore"))
-        if read == '':
+        if read == "":
             break
         reg = RE_TRANSF.search(read)
         if reg:
@@ -156,45 +156,45 @@ def validate_attributes(schema, data, additional_attrs=False):
 class CredentialsService(CRUDService):
 
     class Config:
-        namespace = 'cloudsync.credentials'
+        namespace = "cloudsync.credentials"
 
-        datastore = 'system.cloudcredentials'
+        datastore = "system.cloudcredentials"
 
     @accepts(Dict(
-        'cloud_sync_credentials',
-        Str('name'),
-        Str('provider'),
-        Dict('attributes', additional_attrs=True),
+        "cloud_sync_credentials",
+        Str("name"),
+        Str("provider"),
+        Dict("attributes", additional_attrs=True),
         register=True,
     ))
     async def do_create(self, data):
         self._validate("cloud_sync_credentials", data)
 
         data["id"] = await self.middleware.call(
-            'datastore.insert',
-            'system.cloudcredentials',
+            "datastore.insert",
+            "system.cloudcredentials",
             data,
         )
         return data
 
-    @accepts(Int('id'), Ref('cloud_sync_credentials'))
+    @accepts(Int("id"), Ref("cloud_sync_credentials"))
     async def do_update(self, id, data):
         self._validate("cloud_sync_credentials", data)
 
         await self.middleware.call(
-            'datastore.update',
-            'system.cloudcredentials',
+            "datastore.update",
+            "system.cloudcredentials",
             id,
             data,
         )
 
         return data
 
-    @accepts(Int('id'))
+    @accepts(Int("id"))
     async def do_delete(self, id):
         await self.middleware.call(
-            'datastore.delete',
-            'system.cloudcredentials',
+            "datastore.delete",
+            "system.cloudcredentials",
             id,
         )
 
@@ -216,19 +216,19 @@ class CredentialsService(CRUDService):
 class CloudSyncService(CRUDService):
 
     class Config:
-        datastore = 'tasks.cloudsync'
-        datastore_extend = 'cloudsync._extend'
+        datastore = "tasks.cloudsync"
+        datastore_extend = "cloudsync._extend"
 
     @private
     async def _extend(self, cloud_sync):
-        cloud_sync['credentials'] = cloud_sync.pop('credential')
+        cloud_sync["credentials"] = cloud_sync.pop("credential")
 
-        if 'encryption_password' in cloud_sync:
-            cloud_sync['encryption_password'] = await self.middleware.call(
-                'notifier.pwenc_decrypt', cloud_sync['encryption_password'])
-        if 'encryption_salt' in cloud_sync:
-            cloud_sync['encryption_salt'] = await self.middleware.call(
-                'notifier.pwenc_decrypt', cloud_sync['encryption_salt'])
+        if "encryption_password" in cloud_sync:
+            cloud_sync["encryption_password"] = await self.middleware.call(
+                "notifier.pwenc_decrypt", cloud_sync["encryption_password"])
+        if "encryption_salt" in cloud_sync:
+            cloud_sync["encryption_salt"] = await self.middleware.call(
+                "notifier.pwenc_decrypt", cloud_sync["encryption_salt"])
 
         Cron.convert_db_format_to_schedule(cloud_sync)
 
@@ -236,15 +236,15 @@ class CloudSyncService(CRUDService):
 
     @private
     async def _compress(self, cloud_sync):
-        if 'credentials' in cloud_sync:
-            cloud_sync['credential'] = cloud_sync.pop('credentials')
+        if "credentials" in cloud_sync:
+            cloud_sync["credential"] = cloud_sync.pop("credentials")
 
-        if 'encryption_password' in cloud_sync:
-            cloud_sync['encryption_password'] = await self.middleware.call(
-                'notifier.pwenc_encrypt', cloud_sync['encryption_password'])
-        if 'encryption_salt' in cloud_sync:
-            cloud_sync['encryption_salt'] = await self.middleware.call(
-                'notifier.pwenc_encrypt', cloud_sync['encryption_salt'])
+        if "encryption_password" in cloud_sync:
+            cloud_sync["encryption_password"] = await self.middleware.call(
+                "notifier.pwenc_encrypt", cloud_sync["encryption_password"])
+        if "encryption_salt" in cloud_sync:
+            cloud_sync["encryption_salt"] = await self.middleware.call(
+                "notifier.pwenc_encrypt", cloud_sync["encryption_salt"])
 
         Cron.convert_schedule_to_db_format(cloud_sync)
 
@@ -252,19 +252,19 @@ class CloudSyncService(CRUDService):
 
     @private
     async def _get_credentials(self, credentials_id):
-        return await self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', credentials_id)],
-                                          {'get': True})
+        return await self.middleware.call("datastore.query", "system.cloudcredentials", [("id", "=", credentials_id)],
+                                          {"get": True})
 
     @private
     async def _validate(self, verrors, name, data):
-        if data['encryption']:
-            if not data['encryption_password']:
-                verrors.add(f'{name}.encryption_password', 'This field is required when encryption is enabled')
+        if data["encryption"]:
+            if not data["encryption_password"]:
+                verrors.add(f"{name}.encryption_password", "This field is required when encryption is enabled")
 
-            if not data['encryption_salt']:
-                verrors.add(f'{name}.encryption_salt', 'This field is required when encryption is enabled')
+            if not data["encryption_salt"]:
+                verrors.add(f"{name}.encryption_salt", "This field is required when encryption is enabled")
 
-        credentials = await self._get_credentials(data['credentials'])
+        credentials = await self._get_credentials(data["credentials"])
         provider = REMOTES[credentials["provider"]]
 
         schema = []
@@ -316,19 +316,19 @@ class CloudSyncService(CRUDService):
                 verrors.add(f"{name}.direction", "This remote is read-only")
 
     @accepts(Dict(
-        'cloud_sync',
-        Str('description'),
-        Str('direction', enum=['PUSH', 'PULL'], required=True),
-        Str('transfer_mode', enum=['SYNC', 'COPY', 'MOVE'], required=True),
-        Str('path', required=True),
-        Int('credentials', required=True),
-        Bool('encryption', default=False),
-        Bool('filename_encryption', default=False),
-        Str('encryption_password'),
-        Str('encryption_salt'),
-        Cron('schedule'),
-        Dict('attributes', additional_attrs=True),
-        Bool('enabled', default=True),
+        "cloud_sync",
+        Str("description"),
+        Str("direction", enum=["PUSH", "PULL"], required=True),
+        Str("transfer_mode", enum=["SYNC", "COPY", "MOVE"], required=True),
+        Str("path", required=True),
+        Int("credentials", required=True),
+        Bool("encryption", default=False),
+        Bool("filename_encryption", default=False),
+        Str("encryption_password"),
+        Str("encryption_salt"),
+        Cron("schedule"),
+        Dict("attributes", additional_attrs=True),
+        Bool("enabled", default=True),
         register=True,
     ))
     async def do_create(self, cloud_sync):
@@ -363,25 +363,25 @@ class CloudSyncService(CRUDService):
 
         verrors = ValidationErrors()
 
-        await self._validate(verrors, 'cloud_sync', cloud_sync)
+        await self._validate(verrors, "cloud_sync", cloud_sync)
 
         if verrors:
             raise verrors
 
-        await self._validate_folder(verrors, 'cloud_sync', cloud_sync)
+        await self._validate_folder(verrors, "cloud_sync", cloud_sync)
 
         if verrors:
             raise verrors
 
         cloud_sync = await self._compress(cloud_sync)
 
-        cloud_sync["id"] = await self.middleware.call('datastore.insert', 'tasks.cloudsync', cloud_sync)
-        await self.middleware.call('service.restart', 'cron')
+        cloud_sync["id"] = await self.middleware.call("datastore.insert", "tasks.cloudsync", cloud_sync)
+        await self.middleware.call("service.restart", "cron")
 
         cloud_sync = await self._extend(cloud_sync)
         return cloud_sync
 
-    @accepts(Int('id'), Patch('cloud_sync', 'cloud_sync_update', ('attr', {'update': True})))
+    @accepts(Int("id"), Patch("cloud_sync", "cloud_sync_update", ("attr", {"update": True})))
     async def do_update(self, id, data):
         """
         Updates the cloud_sync entry `id` with `data`.
@@ -389,38 +389,38 @@ class CloudSyncService(CRUDService):
         cloud_sync = await self._get_instance(id)
 
         # credentials is a foreign key for now
-        if cloud_sync['credentials']:
-            cloud_sync['credentials'] = cloud_sync['credentials']['id']
+        if cloud_sync["credentials"]:
+            cloud_sync["credentials"] = cloud_sync["credentials"]["id"]
 
         cloud_sync.update(data)
 
         verrors = ValidationErrors()
 
-        await self._validate(verrors, 'cloud_sync_update', cloud_sync)
+        await self._validate(verrors, "cloud_sync_update", cloud_sync)
 
         if verrors:
             raise verrors
 
-        await self._validate_folder(verrors, 'cloud_sync_update', cloud_sync)
+        await self._validate_folder(verrors, "cloud_sync_update", cloud_sync)
 
         if verrors:
             raise verrors
 
         cloud_sync = await self._compress(cloud_sync)
 
-        await self.middleware.call('datastore.update', 'tasks.cloudsync', id, cloud_sync)
-        await self.middleware.call('service.restart', 'cron')
+        await self.middleware.call("datastore.update", "tasks.cloudsync", id, cloud_sync)
+        await self.middleware.call("service.restart", "cron")
 
         cloud_sync = await self._extend(cloud_sync)
         return cloud_sync
 
-    @accepts(Int('id'))
+    @accepts(Int("id"))
     async def do_delete(self, id):
         """
         Deletes cloud_sync entry `id`.
         """
-        await self.middleware.call('datastore.delete', 'tasks.cloudsync', id)
-        await self.middleware.call('service.restart', 'cron')
+        await self.middleware.call("datastore.delete", "tasks.cloudsync", id)
+        await self.middleware.call("service.restart", "cron")
 
     @accepts(Int("credentials_id"))
     async def list_buckets(self, credentials_id):
@@ -434,26 +434,26 @@ class CloudSyncService(CRUDService):
         return await self.ls({"credentials": credentials}, "")
 
     @accepts(Dict(
-        'cloud_sync_ls',
-        Int('credentials'),
-        Bool('encryption', default=False),
-        Bool('filename_encryption', default=False),
-        Str('encryption_password'),
-        Str('encryption_salt'),
-        Dict('attributes', additional_attrs=True),
+        "cloud_sync_ls",
+        Int("credentials"),
+        Bool("encryption", default=False),
+        Bool("filename_encryption", default=False),
+        Str("encryption_password"),
+        Str("encryption_salt"),
+        Dict("attributes", additional_attrs=True),
     ))
     async def list_directory(self, cloud_sync):
         verrors = ValidationErrors()
 
-        await self._validate(verrors, 'cloud_sync', cloud_sync)
+        await self._validate(verrors, "cloud_sync", cloud_sync)
 
         if verrors:
             raise verrors
 
-        credentials = await self._get_credentials(cloud_sync['credentials'])
+        credentials = await self._get_credentials(cloud_sync["credentials"])
 
         if REMOTES[credentials["provider"]].buckets:
-            path = f'{cloud_sync["attributes"]["bucket"]}/{cloud_sync["attributes"]["folder"]}'
+            path = f"{cloud_sync['attributes']['bucket']}/{cloud_sync['attributes']['folder']}"
         else:
             path = cloud_sync["attributes"]["folder"]
 
@@ -470,14 +470,14 @@ class CloudSyncService(CRUDService):
                 raise CallError(proc.stderr)
 
     @item_method
-    @accepts(Int('id'))
-    @job(lock=lambda args: 'cloud_sync:{}'.format(args[-1]), lock_queue_size=1, logs=True)
+    @accepts(Int("id"))
+    @job(lock=lambda args: "cloud_sync:{}".format(args[-1]), lock_queue_size=1, logs=True)
     async def sync(self, job, id):
         """
         Run the cloud_sync job `id`, syncing the local data to remote.
         """
 
-        cloud_sync = await self._get_cloud_sync(id)
+        cloud_sync = await self._get_instance(id)
 
         return await rclone(job, cloud_sync)
 

@@ -9,12 +9,12 @@ from middlewared.service import (
 class BackupCredentialService(CRUDService):
 
     class Config:
-        namespace = 'backup.credential'
+        namespace = "backup.credential"
 
     @filterable
     async def query(self, filters=None, options=None):
         result = []
-        for data in await self.middleware.call('cloudsync.credentials.query', filters, options):
+        for data in await self.middleware.call("cloudsync.credentials.query", filters, options):
             provider = data["provider"]
             attributes = data["attributes"]
 
@@ -57,27 +57,27 @@ class BackupCredentialService(CRUDService):
         return result
 
     @accepts(Dict(
-        'backup-credential',
-        Str('name'),
-        Str('provider', enum=[
-            'AMAZON',
-            'AZURE',
-            'BACKBLAZE',
-            'GCLOUD',
+        "backup-credential",
+        Str("name"),
+        Str("provider", enum=[
+            "AMAZON",
+            "AZURE",
+            "BACKBLAZE",
+            "GCLOUD",
         ]),
-        Dict('attributes', additional_attrs=True),
+        Dict("attributes", additional_attrs=True),
         register=True,
     ))
     async def do_create(self, data):
-        return (await self.middleware.call('cloudsync.credentials.create', self._proxy(data)))["id"]
+        return (await self.middleware.call("cloudsync.credentials.create", self._proxy(data)))["id"]
 
-    @accepts(Int('id'), Ref('backup-credential'))
+    @accepts(Int("id"), Ref("backup-credential"))
     async def do_update(self, id, data):
-        return (await self.middleware.call('cloudsync.credentials.update', id, self._proxy(data)))["id"]
+        return (await self.middleware.call("cloudsync.credentials.update", id, self._proxy(data)))["id"]
 
-    @accepts(Int('id'))
+    @accepts(Int("id"))
     async def do_delete(self, id):
-        await self.middleware.call('cloudsync.credential.delete', id)
+        await self.middleware.call("cloudsync.credential.delete", id)
 
     @private
     def _proxy(self, data):
@@ -121,12 +121,12 @@ class BackupCredentialService(CRUDService):
 class BackupService(CRUDService):
 
     class Config:
-        datastore = 'tasks.cloudsync'
+        datastore = "tasks.cloudsync"
 
     async def query(self, filters=None, options=None):
         result = []
-        for data in await self.middleware.call('cloudsync.query', filters, options):
-            data['credential'] = data.pop('credentials')
+        for data in await self.middleware.call("cloudsync.query", filters, options):
+            data["credential"] = data.pop("credentials")
 
             data["minute"] = data["schedule"].pop("minute"),
             data["hour"] = data["schedule"].pop("hour"),
@@ -139,27 +139,27 @@ class BackupService(CRUDService):
         return result
 
     @accepts(Dict(
-        'backup',
-        Str('description'),
-        Str('direction', enum=['PUSH', 'PULL']),
-        Str('transfer_mode', enum=['SYNC', 'COPY', 'MOVE']),
-        Str('path'),
-        Int('credential'),
-        Bool('encryption', default=False),
-        Bool('filename_encryption', default=False),
-        Str('encryption_password'),
-        Str('encryption_salt'),
-        Str('minute'),
-        Str('hour'),
-        Str('daymonth'),
-        Str('dayweek'),
-        Str('month'),
-        Dict('attributes', additional_attrs=True),
-        Bool('enabled', default=True),
+        "backup",
+        Str("description"),
+        Str("direction", enum=["PUSH", "PULL"]),
+        Str("transfer_mode", enum=["SYNC", "COPY", "MOVE"]),
+        Str("path"),
+        Int("credential"),
+        Bool("encryption", default=False),
+        Bool("filename_encryption", default=False),
+        Str("encryption_password"),
+        Str("encryption_salt"),
+        Str("minute"),
+        Str("hour"),
+        Str("daymonth"),
+        Str("dayweek"),
+        Str("month"),
+        Dict("attributes", additional_attrs=True),
+        Bool("enabled", default=True),
         register=True,
     ))
     async def do_create(self, backup):
-        backup['credentials'] = backup.pop('credential')
+        backup["credentials"] = backup.pop("credential")
 
         backup["schedule"] = {
             "minute": backup.pop("minute"),
@@ -169,14 +169,14 @@ class BackupService(CRUDService):
             "dow": backup.pop("dayweek")
         }
 
-        return (await self.middleware.call('cloudsync.create', backup))["id"]
+        return (await self.middleware.call("cloudsync.create", backup))["id"]
 
-    @accepts(Int('id'), Patch('backup', 'backup_update', ('attr', {'update': True})))
+    @accepts(Int("id"), Patch("backup", "backup_update", ("attr", {"update": True})))
     async def do_update(self, id, data):
-        if 'credential' in data:
-            data['credentials'] = data.pop('credential')
+        if "credential" in data:
+            data["credentials"] = data.pop("credential")
 
-        if 'minute' in data and 'hour' in data and 'daymonth' in data and 'month' in data and 'dayweek' in data:
+        if "minute" in data and "hour" in data and "daymonth" in data and "month" in data and "dayweek" in data:
             data["schedule"] = {
                 "minute": data.pop("minute"),
                 "hour": data.pop("hour"),
@@ -185,68 +185,68 @@ class BackupService(CRUDService):
                 "dow": data.pop("dayweek")
             }
 
-        return (await self.middleware.call('cloudsync.update', id, data))["id"]
+        return (await self.middleware.call("cloudsync.update", id, data))["id"]
 
-    @accepts(Int('id'))
+    @accepts(Int("id"))
     async def do_delete(self, id):
-        await self.middleware.call('cloudsync.delete', id)
+        await self.middleware.call("cloudsync.delete", id)
 
 
 class BackupS3Service(Service):
 
     class Config:
-        namespace = 'backup.s3'
+        namespace = "backup.s3"
 
-    @accepts(Int('id'))
+    @accepts(Int("id"))
     async def get_buckets(self, id):
         return [
             {
-                'bucketName': bucket['Name'],
+                "bucketName": bucket["Name"],
             }
-            for bucket in await self.middleware.call('cloudsync.list_buckets', id)
+            for bucket in await self.middleware.call("cloudsync.list_buckets", id)
         ]
 
 
 class BackupB2Service(Service):
 
     class Config:
-        namespace = 'backup.b2'
+        namespace = "backup.b2"
 
-    @accepts(Int('id'))
+    @accepts(Int("id"))
     async def get_buckets(self, id):
         return [
             {
-                'bucketName': bucket['Name'],
+                "bucketName": bucket["Name"],
             }
-            for bucket in await self.middleware.call('cloudsync.list_buckets', id)
+            for bucket in await self.middleware.call("cloudsync.list_buckets", id)
         ]
 
 
 class BackupGCSService(Service):
 
     class Config:
-        namespace = 'backup.gcs'
+        namespace = "backup.gcs"
 
-    @accepts(Int('id'))
+    @accepts(Int("id"))
     async def get_buckets(self, id):
         return [
             {
-                'bucketName': bucket['Name'],
+                "bucketName": bucket["Name"],
             }
-            for bucket in await self.middleware.call('cloudsync.list_buckets', id)
+            for bucket in await self.middleware.call("cloudsync.list_buckets", id)
         ]
 
 
 class BackupAzureService(Service):
 
     class Config:
-        namespace = 'backup.azure'
+        namespace = "backup.azure"
 
-    @accepts(Int('id'))
+    @accepts(Int("id"))
     async def get_buckets(self, id):
         return [
             {
-                'bucketName': bucket['Name'],
+                "bucketName": bucket["Name"],
             }
-            for bucket in await self.middleware.call('cloudsync.list_buckets', id)
+            for bucket in await self.middleware.call("cloudsync.list_buckets", id)
         ]
