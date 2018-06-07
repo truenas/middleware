@@ -1,7 +1,7 @@
 from middlewared.rclone.base import BaseRcloneRemote
 from middlewared.schema import accepts, Bool, Cron, Dict, Error, Int, Patch, Ref, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, item_method, filterable, job, private
+    CallError, CRUDService, ValidationErrors, item_method, job, private
 )
 from middlewared.utils import load_modules, load_classes, Popen, run
 
@@ -19,6 +19,7 @@ import re
 import tempfile
 
 CHUNK_SIZE = 5 * 1024 * 1024
+RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
 
 REMOTES = {}
 
@@ -56,11 +57,13 @@ class RcloneConfig:
             if self.cloud_sync.get("encryption"):
                 self.tmp_file.write("[encrypted]\n")
                 self.tmp_file.write("type = crypt\n")
-                self.tmp_file.write("remote = %s\n" % remote_path)
-                self.tmp_file.write("filename_encryption = %s\n" % ("standard" if self.cloud_sync["filename_encryption"]
-                                                                    else "off"))
-                self.tmp_file.write("password = %s\n" % rclone_encrypt_password(self.cloud_sync["encryption_password"]))
-                self.tmp_file.write("password2 = %s\n" % rclone_encrypt_password(self.cloud_sync["encryption_salt"]))
+                self.tmp_file.write(f"remote = {remote_path}\n")
+                self.tmp_file.write("filename_encryption = {}\n".format(
+                    "standard" if self.cloud_sync["filename_encryption"] else "off"))
+                self.tmp_file.write("password = {}\n".format(
+                    rclone_encrypt_password(self.cloud_sync["encryption_password"])))
+                self.tmp_file.write("password2 = {}\n".format(
+                    rclone_encrypt_password(self.cloud_sync["encryption_salt"])))
 
                 remote_path = "encrypted:/"
 
@@ -107,7 +110,6 @@ async def rclone(job, cloud_sync):
 
 
 async def rclone_check_progress(job, proc):
-    RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
     while True:
         read = (await proc.stdout.readline()).decode()
         job.logs_fd.write(read.encode("utf-8", "ignore"))
@@ -156,9 +158,7 @@ class CredentialsService(CRUDService):
     class Config:
         namespace = 'cloudsync.credentials'
 
-    @filterable
-    async def query(self, filters=None, options=None):
-        return await self.middleware.call('datastore.query', 'system.cloudcredentials', filters, options)
+        datastore = 'system.cloudcredentials'
 
     @accepts(Dict(
         'cloud_sync_credentials',
@@ -199,13 +199,13 @@ class CredentialsService(CRUDService):
         )
 
     def _validate(self, schema_name, data):
-        provider = REMOTES[data["provider"]]
-
         verrors = ValidationErrors()
 
         if data["provider"] not in REMOTES:
             verrors.add(f"{schema_name}.provider", "Invalid provider")
         else:
+            provider = REMOTES[data["provider"]]
+
             attributes_verrors = validate_attributes(provider.credentials_schema, data)
             verrors.add_child(f"{schema_name}.attributes", attributes_verrors)
 
@@ -318,10 +318,10 @@ class CloudSyncService(CRUDService):
     @accepts(Dict(
         'cloud_sync',
         Str('description'),
-        Str('direction', enum=['PUSH', 'PULL']),
-        Str('transfer_mode', enum=['SYNC', 'COPY', 'MOVE']),
-        Str('path'),
-        Int('credentials'),
+        Str('direction', enum=['PUSH', 'PULL'], required=True),
+        Str('transfer_mode', enum=['SYNC', 'COPY', 'MOVE'], required=True),
+        Str('path', required=True),
+        Int('credentials', required=True),
         Bool('encryption', default=False),
         Bool('filename_encryption', default=False),
         Str('encryption_password'),
@@ -376,7 +376,7 @@ class CloudSyncService(CRUDService):
         cloud_sync = await self._compress(cloud_sync)
 
         cloud_sync["id"] = await self.middleware.call('datastore.insert', 'tasks.cloudsync', cloud_sync)
-        await self.middleware.call('notifier.restart', 'cron')
+        await self.middleware.call('service.restart', 'cron')
 
         cloud_sync = await self._extend(cloud_sync)
         return cloud_sync
@@ -409,7 +409,7 @@ class CloudSyncService(CRUDService):
         cloud_sync = await self._compress(cloud_sync)
 
         await self.middleware.call('datastore.update', 'tasks.cloudsync', id, cloud_sync)
-        await self.middleware.call('notifier.restart', 'cron')
+        await self.middleware.call('service.restart', 'cron')
 
         cloud_sync = await self._extend(cloud_sync)
         return cloud_sync
@@ -420,7 +420,7 @@ class CloudSyncService(CRUDService):
         Deletes cloud_sync entry `id`.
         """
         await self.middleware.call('datastore.delete', 'tasks.cloudsync', id)
-        await self.middleware.call('notifier.restart', 'cron')
+        await self.middleware.call('service.restart', 'cron')
 
     @accepts(Int("credentials_id"))
     async def list_buckets(self, credentials_id):
