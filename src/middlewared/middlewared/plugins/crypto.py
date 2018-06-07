@@ -210,9 +210,14 @@ class CertificateService(CRUDService):
             # the cert_extend method
 
             cert['signedby'] = await self.middleware.call(
-                'certificateauthority.query',
+                'datastore.query',
+                'system.certificateauthority',
                 [('id', '=', cert['signedby']['id'])],
-                {'get': True}
+                {
+                    'prefix': 'cert_',
+                    'extend': 'certificate.cert_extend',
+                    'get': True
+                }
             )
 
         # convert san to list
@@ -321,6 +326,7 @@ class CertificateService(CRUDService):
 
     # HELPER METHODS
 
+    @private
     @accepts(
         Str('hostname', required=True),
         Int('port', required=True)
@@ -337,6 +343,7 @@ class CertificateService(CRUDService):
         except socket.gaierror:
             return ''
 
+    @private
     @accepts(
         Str('certificate', required=True)
     )
@@ -378,6 +385,7 @@ class CertificateService(CRUDService):
                 certificate_list[0]['certificate']
             )
 
+    @private
     @accepts(
         Str('cert_certificate', required=True)
     )
@@ -407,6 +415,7 @@ class CertificateService(CRUDService):
                 san_string += f'IP: {san}, '
         return san_string[:-2] if san_list else ''
 
+    @private
     @accepts(
         Dict(
             'certificate_cert_info',
@@ -460,6 +469,7 @@ class CertificateService(CRUDService):
         cert.set_version(2)
         return cert
 
+    @private
     @accepts(
         Patch(
             'certificate_cert_info', 'certificate_signing_request',
@@ -777,26 +787,51 @@ class CertificateAuthorityService(CRUDService):
     @private
     async def get_serial_for_certificate(self, ca_id):
 
-        ca_signed_certs = [
-            data['serial'] for data in
-            await self.middleware.call(
-                'certificate.query',
-                [('signedby', '=', ca_id)]
-            )
-        ]
+        ca_data = await self._get_instance(ca_id)
 
-        ca_signed_certs.extend([
-            data['serial'] for data in
-            await self.query(
-                [('signedby', '=', ca_id)]
-            )
-        ])
-
-        if not ca_signed_certs:
-            return int((await self._get_instance(ca_id))['serial']) + 1
+        if ca_data.get('signedby'):
+            # Recursively call the same function for it's parent and let the function gather all serials in a chain
+            return await self.get_serial_for_certificate(ca_data['signedby']['id'])
         else:
-            return max(ca_signed_certs) + 1
 
+            async def cert_serials(ca_id):
+                return [
+                    data['serial'] for data in
+                    await self.middleware.call(
+                        'datastore.query',
+                        'system.certificate',
+                        [('signedby', '=', ca_id)],
+                        {
+                            'prefix': self._config.datastore_prefix,
+                            'extend': self._config.datastore_extend
+                        }
+                    )
+                ]
+
+            ca_signed_certs = await cert_serials(ca_id)
+
+            async def child_serials(ca_id):
+                serials = []
+                children = await self.query(
+                    [('signedby', '=', ca_id)]
+                )
+
+                for child in children:
+                    serials.extend((await child_serials(child['id'])))
+
+                serials.extend((await cert_serials(ca_id)))
+                serials.append((await self._get_instance(ca_id))['serial'])
+
+                return serials
+
+            ca_signed_certs.extend((await child_serials(ca_id)))
+
+            if not ca_signed_certs:
+                return int((await self._get_instance(ca_id))['serial']) + 1
+            else:
+                return max(ca_signed_certs) + 1
+
+    @private
     @accepts(
         Ref('certificate_cert_info')
     )
@@ -955,8 +990,9 @@ class CertificateAuthorityService(CRUDService):
             'name': data['name'],
             'certificate': new_cert,
             'privatekey': csr_cert_data['privatekey'],
-            'create_type': 'CERTIFICATE_CREATE'
-        }
+            'create_type': 'CERTIFICATE_CREATE',
+            'signedby': ca_data['id']   # Is this the right step ? If a CA signs a CSR, should it be the signedby
+        }                               # entity for that certificate
 
         new_csr_dict = self.middleware.call_sync(
             'certificate.create',
@@ -968,7 +1004,7 @@ class CertificateAuthorityService(CRUDService):
     @accepts(
         Patch(
             'ca_create_interal', 'ca_create_intermediate',
-            ('add', {'name': 'signedby', 'type': 'str', 'required': True}),
+            ('add', {'name': 'signedby', 'type': 'int', 'required': True}),
         ),
     )
     def __create_intermediate_ca(self, data):
