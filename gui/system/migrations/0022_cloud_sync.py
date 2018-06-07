@@ -95,7 +95,7 @@ def migrate_cloud_credentials(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0021_merge_20180507_1315'),
+        ('system', '0022_cert_serial'),
     ]
 
     operations = [
