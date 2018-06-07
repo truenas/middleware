@@ -105,6 +105,13 @@ class CloudSyncForm(ModelForm):
         with client as c:
             cdata = self.cleaned_data
             cdata['credentials'] = cdata['attributes'].pop('credential')
+            cdata['schedule'] = {
+                'minute': cdata.pop('minute'),
+                'hour': cdata.pop('hour'),
+                'dom': cdata.pop('daymonth'),
+                'month': cdata.pop('month'),
+                'dow': cdata.pop('dayweek')
+            }
             if self.instance.id:
                 c.call('cloudsync.update', self.instance.id, cdata)
             else:

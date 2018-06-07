@@ -1,5 +1,5 @@
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import accepts, Bool, Dict, Error, Int, Patch, Ref, Str
+from middlewared.schema import accepts, Bool, Cron, Dict, Error, Int, Patch, Ref, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, item_method, filterable, job, private
 )
@@ -230,6 +230,8 @@ class CloudSyncService(CRUDService):
             cloud_sync['encryption_salt'] = await self.middleware.call(
                 'notifier.pwenc_decrypt', cloud_sync['encryption_salt'])
 
+        Cron.convert_db_format_to_schedule(cloud_sync)
+
         return cloud_sync
 
     @private
@@ -244,11 +246,9 @@ class CloudSyncService(CRUDService):
             cloud_sync['encryption_salt'] = await self.middleware.call(
                 'notifier.pwenc_encrypt', cloud_sync['encryption_salt'])
 
-        return cloud_sync
+        Cron.convert_schedule_to_db_format(cloud_sync)
 
-    @private
-    async def _get_cloud_sync(self, id):
-        return await self.middleware.call('cloudsync.query', [('id', '=', id)], {'get': True})
+        return cloud_sync
 
     @private
     async def _get_credentials(self, credentials_id):
@@ -326,11 +326,7 @@ class CloudSyncService(CRUDService):
         Bool('filename_encryption', default=False),
         Str('encryption_password'),
         Str('encryption_salt'),
-        Str('minute'),
-        Str('hour'),
-        Str('daymonth'),
-        Str('dayweek'),
-        Str('month'),
+        Cron('schedule'),
         Dict('attributes', additional_attrs=True),
         Bool('enabled', default=True),
         register=True,
@@ -390,7 +386,7 @@ class CloudSyncService(CRUDService):
         """
         Updates the cloud_sync entry `id` with `data`.
         """
-        cloud_sync = await self._get_cloud_sync(id)
+        cloud_sync = await self._get_instance(id)
 
         # credentials is a foreign key for now
         if cloud_sync['credentials']:

@@ -127,6 +127,14 @@ class BackupService(CRUDService):
         result = []
         for data in await self.middleware.call('cloudsync.query', filters, options):
             data['credential'] = data.pop('credentials')
+
+            data["minute"] = data["schedule"].pop("minute"),
+            data["hour"] = data["schedule"].pop("hour"),
+            data["daymonth"] = data["schedule"].pop("dom"),
+            data["month"] = data["schedule"].pop("month"),
+            data["dayweek"] = data["schedule"].pop("dow")
+            data.pop("schedule")
+
             result.append(data)
         return result
 
@@ -152,12 +160,31 @@ class BackupService(CRUDService):
     ))
     async def do_create(self, backup):
         backup['credentials'] = backup.pop('credential')
+
+        backup["schedule"] = {
+            "minute": backup.pop("minute"),
+            "hour": backup.pop("hour"),
+            "dom": backup.pop("daymonth"),
+            "month": backup.pop("month"),
+            "dow": backup.pop("dayweek")
+        }
+
         return (await self.middleware.call('cloudsync.create', backup))["id"]
 
     @accepts(Int('id'), Patch('backup', 'backup_update', ('attr', {'update': True})))
     async def do_update(self, id, data):
         if 'credential' in data:
             data['credentials'] = data.pop('credential')
+
+        if 'minute' in data and 'hour' in data and 'daymonth' in data and 'month' in data and 'dayweek' in data:
+            data["schedule"] = {
+                "minute": data.pop("minute"),
+                "hour": data.pop("hour"),
+                "dom": data.pop("daymonth"),
+                "month": data.pop("month"),
+                "dow": data.pop("dayweek")
+            }
+
         return (await self.middleware.call('cloudsync.update', id, data))["id"]
 
     @accepts(Int('id'))
