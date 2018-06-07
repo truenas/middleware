@@ -108,7 +108,7 @@ class CloudSyncForm(ModelForm):
             if self.instance.id:
                 c.call('cloudsync.update', self.instance.id, cdata)
             else:
-                self.instance = models.CloudSync.objects.get(pk=c.call('cloudsync.create', cdata))
+                self.instance = models.CloudSync.objects.get(pk=c.call('cloudsync.create', cdata)['id'])
         return self.instance
 
     def delete(self, **kwargs):

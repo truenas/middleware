@@ -3046,7 +3046,7 @@ class CloudCredentialsForm(ModelForm):
                 c.call('cloudsync.credentials.update', self.instance.id, data)
             else:
                 self.instance = models.CloudCredentials.objects.get(
-                    pk=c.call('cloudsync.credentials.create', data)
+                    pk=c.call('cloudsync.credentials.create', data)['id']
                 )
 
         return self.instance
