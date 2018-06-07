@@ -201,7 +201,10 @@ define([
 
             var id = "id_attributes_" + property.property;
 
-            document.getElementById(id).value = this.initial[property.property];
+            if (this.initial[property.property] !== undefined)
+            {
+                document.getElementById(id).value = this.initial[property.property];
+            }
         }
       },
       _getValueAttr: function() {
