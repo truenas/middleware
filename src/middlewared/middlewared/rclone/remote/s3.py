@@ -24,9 +24,9 @@ class S3RcloneRemote(BaseRcloneRemote):
     def _get_client(self, credentials):
         client = boto3.client(
             "s3",
-            endpoint_url=credentials.get("endpoint", "").strip() or None,
-            aws_access_key_id=credentials.get("access_key"),
-            aws_secret_access_key=credentials.get("secret_key"),
+            endpoint_url=credentials["attributes"].get("endpoint", "").strip() or None,
+            aws_access_key_id=credentials["attributes"]["access_key_id"],
+            aws_secret_access_key=credentials["attributes"]["secret_access_key"],
         )
         return client
 
