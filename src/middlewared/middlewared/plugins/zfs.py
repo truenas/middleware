@@ -457,6 +457,13 @@ class ZFSQuoteService(Service):
 
     @periodic(60)
     async def notify_quota_excess(self):
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('notifier.failover_licensed') and
+            await self.middleware.call('notifier.failover_status') == 'BACKUP'
+        ):
+            return
+
         if self.excesses is None:
             self.excesses = {
                 excess["dataset_name"]: excess
@@ -597,6 +604,13 @@ class ZFSQuoteService(Service):
         }
 
     async def terminate(self):
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('notifier.failover_licensed') and
+            await self.middleware.call('notifier.failover_status') == 'BACKUP'
+        ):
+            return
+
         await self.middleware.call('datastore.delete', 'storage.quotaexcess', [])
 
         if self.excesses is not None:
