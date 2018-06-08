@@ -16,7 +16,6 @@ from django.apps import apps
 if not apps.ready:
     django.setup()
 
-from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
     FreeNAS_LDAP,
