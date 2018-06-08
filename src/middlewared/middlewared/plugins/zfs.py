@@ -466,7 +466,7 @@ class ZFSQuoteService(Service):
 
         if self.excesses is None:
             self.excesses = {
-                excess["dataset_name"]: excess
+                self.__excess_key(excess): excess
                 for excess in await self.middleware.call('datastore.query', 'storage.quotaexcess')
             }
 
@@ -475,7 +475,7 @@ class ZFSQuoteService(Service):
         # Remove gone excesses
         self.excesses = dict(
             filter(
-                lambda item: any(excess["dataset_name"] == item[0] for excess in excesses),
+                lambda item: any(self.__excess_key(excess) == item[0] for excess in excesses),
                 self.excesses.items()
             )
         )
@@ -483,14 +483,14 @@ class ZFSQuoteService(Service):
         # Insert/update present excesses
         for excess in excesses:
             notify = False
-            existing_excess = self.excesses.get(excess["dataset_name"])
+            existing_excess = self.excesses.get(self.__excess_key(excess))
             if existing_excess is None:
                 notify = True
             else:
                 if existing_excess["level"] < excess["level"]:
                     notify = True
 
-            self.excesses[excess["dataset_name"]] = excess
+            self.excesses[self.__excess_key(excess)] = excess
 
             if notify:
                 try:
@@ -602,6 +602,9 @@ class ZFSQuoteService(Service):
             "percent_used": percent_used,
             "uid": uid,
         }
+
+    def __excess_key(self, excess):
+        return excess["dataset_name"], excess["quota_type"]
 
     async def terminate(self):
         if (
