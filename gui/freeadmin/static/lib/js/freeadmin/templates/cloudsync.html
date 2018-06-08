@@ -13,68 +13,16 @@
     <tr>
       <td data-dojo-attach-point="dapProvider" style="min-height: 100px;">
        <div style="display: none; color: red; max-width: 300px;" data-dojo-attach-point="dapProviderError"></div>
-       <table style="padding-left: 0px;" data-dojo-attach-point="dapAmazon">
-          <tr>
-            <td>
-              <div>Amazon S3 Buckets</div>
-              <div data-dojo-attach-point="dapAmazonBuckets" name="buckets"></div>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div>Folder</div>
-              <div data-dojo-attach-point="dapAmazonFolder" name="folder"></div>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div>Server Side Encryption</div>
-              <div data-dojo-attach-point="dapAmazonEncryption" name="encryption"></div>
-            </td>
-          </tr>
-       </table>
-       <table style="padding-left: 0px;" data-dojo-attach-point="dapAzure">
-          <tr>
-            <td>
-              <div>Azure Container</div>
-              <div data-dojo-attach-point="dapAzureBuckets" name="buckets"></div>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div>Folder</div>
-              <div data-dojo-attach-point="dapAzureFolder" name="folder"></div>
-            </td>
-          </tr>
-       </table>
-       <table style="padding-left: 0px;" data-dojo-attach-point="dapBackblaze">
-          <tr>
-            <td>
-              <div>Backblaze B2 Buckets</div>
-              <div data-dojo-attach-point="dapBackblazeBuckets" name="buckets"></div>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div>Folder</div>
-              <div data-dojo-attach-point="dapBackblazeFolder" name="folder"></div>
-            </td>
-          </tr>
-       </table>
-       <table style="padding-left: 0px;" data-dojo-attach-point="dapGcloud">
-          <tr>
-            <td>
-              <div>Google Cloud Storage Buckets</div>
-              <div data-dojo-attach-point="dapGcloudBuckets" name="buckets"></div>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div>Folder</div>
-              <div data-dojo-attach-point="dapGcloudFolder" name="folder"></div>
-            </td>
-          </tr>
-       </table>
+       <div data-dojo-attach-point="dapBucket" style="margin-bottom: 5px;">
+         <div>Bucket</div>
+         <div data-dojo-attach-point="dapBuckets" name="buckets"></div>
+       </div>
+       <div style="margin-bottom: 5px;">
+         <div>Folder</div>
+         <div data-dojo-attach-point="dapFolder" name="folder"></div>
+       </div>
+       <div data-dojo-attach-point="dapEtc">
+       </div>
       </td>
     </tr>
   <table>

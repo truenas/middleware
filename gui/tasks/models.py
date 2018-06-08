@@ -207,7 +207,7 @@ class CloudSync(Model):
 
     def run(self):
         with client as c:
-            jid = c.call('backup.sync', self.id)
+            jid = c.call('cloudsync.sync', self.id)
         return jid
 
 

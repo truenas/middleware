@@ -1062,11 +1062,9 @@ class CloudCredentials(Model):
     provider = models.CharField(
         verbose_name=_('Provider'),
         max_length=50,
-        choices=choices.CLOUD_PROVIDERS,
+        choices=(),
     )
-    attributes = EncryptedDictField(
-        editable=False,
-    )
+    attributes = EncryptedDictField()
 
     def __str__(self):
         return self.name

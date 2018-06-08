@@ -3001,122 +3001,59 @@ class CertificateCreateCSRForm(MiddlewareModelForm, ModelForm):
 
 class CloudCredentialsForm(ModelForm):
 
-    AMAZON_access_key = forms.CharField(
-        label=_('Access Key'),
-        max_length=200,
-        required=False,
-        widget=forms.widgets.PasswordInput(render_value=True),
+    provider = forms.ChoiceField(
+        choices=(),
     )
-    AMAZON_secret_key = forms.CharField(
-        label=_('Secret Key'),
-        max_length=200,
-        required=False,
-        widget=forms.widgets.PasswordInput(render_value=True),
+    attributes = forms.CharField(
+        widget=forms.widgets.HiddenInput,
     )
-    AMAZON_endpoint = forms.CharField(
-        label=_('Endpoint URL'),
-        max_length=200,
-        required=False,
+    credentials_schemas = forms.CharField(
+        widget=forms.widgets.HiddenInput,
     )
-    AZURE_account_name = forms.CharField(
-        label=_('Account Name'),
-        max_length=200,
-        required=False,
-    )
-    AZURE_account_key = forms.CharField(
-        label=_('Account Key'),
-        max_length=200,
-        required=False,
-        widget=forms.widgets.PasswordInput(render_value=True),
-    )
-    BACKBLAZE_account_id = forms.CharField(
-        label=_('Account ID'),
-        max_length=200,
-        required=False,
-    )
-    BACKBLAZE_app_key = forms.CharField(
-        label=_('Application Key'),
-        max_length=200,
-        required=False,
-        widget=forms.widgets.PasswordInput(render_value=True),
-    )
-    GCLOUD_keyfile = FileField(
-        label=_('JSON Service Account Key'),
-        required=False,
-        widget=forms.widgets.PasswordInput(render_value=True),
-    )
-
-    PROVIDER_MAP = {
-        'AMAZON': ['access_key', 'secret_key', 'endpoint'],
-        'AZURE': ['account_name', 'account_key'],
-        'BACKBLAZE': ['account_id', 'app_key'],
-        'GCLOUD': ['keyfile'],
-    }
 
     class Meta:
+        fields = [
+            'name',
+            'provider',
+        ]
         model = models.CloudCredentials
-        exclude = (
-            'attributes',
-        )
 
     def __init__(self, *args, **kwargs):
         super(CloudCredentialsForm, self).__init__(*args, **kwargs)
         self.fields['provider'].widget.attrs['onChange'] = (
             'cloudCredentialsProvider();'
         )
-        if self.instance.id:
-            for field in self.PROVIDER_MAP.get(self.instance.provider, []):
-                self.fields[f'{self.instance.provider}_{field}'].initial = self.instance.attributes.get(field)
-
-    def clean_GCLOUD_keyfile(self):
-        provider = self.cleaned_data.get('provider')
-        keyfile = self.cleaned_data.get('GCLOUD_keyfile')
-        if not keyfile or provider != 'GCLOUD':
-            return None
-        keyfile = keyfile.read()
-        try:
-            return json.loads(keyfile)
-        except Exception as e:
-            raise forms.ValodationError(_('Failed to load key file: %s') % e)
-
-    def clean(self):
-        provider = self.cleaned_data.get('provider')
-        if not provider:
-            return self.cleaned_data
-        for field in self.PROVIDER_MAP.get(provider, []):
-            if (f'{provider}_{field}' not in ['AMAZON_endpoint'] and
-                    not self.cleaned_data.get(f'{provider}_{field}')):
-                self._errors[f'{provider}_{field}'] = self.error_class([_('This field is required.')])
-        return self.cleaned_data
+        with client as c:
+            providers = c.call("cloudsync.providers")
+        self.fields["provider"].choices = [
+            (provider["name"], provider["title"])
+            for provider in providers
+        ]
+        self.fields["attributes"].initial = json.dumps(self.instance.attributes if self.instance else {})
+        self.fields["credentials_schemas"].initial = json.dumps({
+            provider["name"]: provider["credentials_schema"]
+            for provider in providers
+        })
 
     def save(self, *args, **kwargs):
         with client as c:
-            provider = self.cleaned_data.get('provider')
-            fields = self.PROVIDER_MAP.get(provider)
-            if not fields:
-                raise MiddlewareError(f'Unknown provider {provider}')
-
-            attributes = {}
-
-            for field in fields:
-                attributes[field] = self.cleaned_data.get(f'{provider}_{field}')
-
             data = {
                 'name': self.cleaned_data.get('name'),
-                'provider': provider,
-                'attributes': attributes,
+                'provider': self.cleaned_data.get('provider'),
+                'attributes': json.loads(self.cleaned_data.get('attributes')),
             }
             if self.instance.id:
-                c.call('backup.credential.update', self.instance.id, data)
+                c.call('cloudsync.credentials.update', self.instance.id, data)
             else:
                 self.instance = models.CloudCredentials.objects.get(
-                    pk=c.call('backup.credential.create', data)
+                    pk=c.call('cloudsync.credentials.create', data)['id']
                 )
+
         return self.instance
 
     def delete(self, *args, **kwargs):
         with client as c:
-            c.call('backup.credential.delete', self.instance.id)
+            c.call('cloudsync.credentials.delete', self.instance.id)
 
 
 class BackupForm(Form):

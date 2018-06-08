@@ -51,6 +51,17 @@ class CloudSyncForm(ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        if "instance" in kwargs:
+            kwargs.setdefault("initial", {})
+            try:
+                kwargs["initial"]["encryption_password"] = notifier().pwenc_decrypt(
+                    kwargs["instance"].encryption_password)
+            except Exception:
+                pass
+            try:
+                kwargs["initial"]["encryption_salt"] = notifier().pwenc_decrypt(kwargs["instance"].encryption_salt)
+            except Exception:
+                pass
         super(CloudSyncForm, self).__init__(*args, **kwargs)
         key_order(self, 2, 'attributes', instance=True)
         mchoicefield(self, 'month', [
@@ -79,16 +90,6 @@ class CloudSyncForm(ModelForm):
         if not qs.exists():
             raise forms.ValidationError(_('Invalid credential.'))
 
-        if not attributes.get('bucket'):
-            raise forms.ValidationError(_('Bucket is required.'))
-
-        direction = self.cleaned_data.get('direction')
-        folder = attributes.get('folder').strip('/')
-        if direction == 'PULL' and folder:
-            with client as c:
-                if not c.call('backup.is_dir', credential, attributes['bucket'], folder):
-                    raise forms.ValidationError(_('Folder "%s" does not exist.') % folder)
-
         return attributes
 
     def clean_month(self):
@@ -110,16 +111,23 @@ class CloudSyncForm(ModelForm):
     def save(self, **kwargs):
         with client as c:
             cdata = self.cleaned_data
-            cdata['credential'] = cdata['attributes'].pop('credential')
+            cdata['credentials'] = cdata['attributes'].pop('credential')
+            cdata['schedule'] = {
+                'minute': cdata.pop('minute'),
+                'hour': cdata.pop('hour'),
+                'dom': cdata.pop('daymonth'),
+                'month': cdata.pop('month'),
+                'dow': cdata.pop('dayweek')
+            }
             if self.instance.id:
-                c.call('backup.update', self.instance.id, cdata)
+                c.call('cloudsync.update', self.instance.id, cdata)
             else:
-                self.instance = models.CloudSync.objects.get(pk=c.call('backup.create', cdata))
+                self.instance = models.CloudSync.objects.get(pk=c.call('cloudsync.create', cdata)['id'])
         return self.instance
 
     def delete(self, **kwargs):
         with client as c:
-            c.call('backup.delete', self.instance.id)
+            c.call('cloudsync.delete', self.instance.id)
 
 
 class CronJobForm(MiddlewareModelForm, ModelForm):
