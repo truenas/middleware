@@ -53,8 +53,15 @@ class CloudSyncForm(ModelForm):
     def __init__(self, *args, **kwargs):
         if "instance" in kwargs:
             kwargs.setdefault("initial", {})
-            kwargs["initial"]["encryption_password"] = notifier().pwenc_decrypt(kwargs["instance"].encryption_password)
-            kwargs["initial"]["encryption_salt"] = notifier().pwenc_decrypt(kwargs["instance"].encryption_salt)
+            try:
+                kwargs["initial"]["encryption_password"] = notifier().pwenc_decrypt(
+                    kwargs["instance"].encryption_password)
+            except Exception:
+                pass
+            try:
+                kwargs["initial"]["encryption_salt"] = notifier().pwenc_decrypt(kwargs["instance"].encryption_salt)
+            except Exception:
+                pass
         super(CloudSyncForm, self).__init__(*args, **kwargs)
         key_order(self, 2, 'attributes', instance=True)
         mchoicefield(self, 'month', [
