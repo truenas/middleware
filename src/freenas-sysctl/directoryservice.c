@@ -149,7 +149,7 @@ directoryservice_init(void)
 	SYSCTL_ADD_LONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree2), OID_AUTO,
 		"timeout", CTLFLAG_RW,  &g_directoryservice->activedirectory.dns.timeout, "DNS timeout");
 
-	g_directoryservice->activedirectory.dns.timeout = 5;
+	g_directoryservice->activedirectory.dns.timeout = 1;
 	g_directoryservice->activedirectory.dns.lifetime = 5;
 
 

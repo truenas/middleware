@@ -609,13 +609,9 @@ class ServiceService(CRUDService):
         await self._system("/bin/rm -f /etc/directoryservice/ActiveDirectory/config")
 
     async def _started_activedirectory(self, **kwargs):
-        for srv in ('kinit', 'activedirectory', ):
-            if await self._system('/usr/sbin/service ix-%s status' % (srv, )) != 0:
-                self.logger.debug(f'AD monitor: Failed to get ix-{srv} status')
-                return False, []
-        if await self._system('/usr/local/bin/wbinfo -p') != 0:
-                self.logger.debug('AD monitor: wbinfo -p failed')
-                return False, []
+        # Perform a wbinfo -t because it's the most accurate single test we have to
+        # detect problems with AD join. The default winbind timeout is 60 seconds (as of Samba 4.7).
+        # This can be controlled by the smb4.conf parameter "winbind request timeout = "
         if await self._system('/usr/local/bin/wbinfo -t') != 0:
                 self.logger.debug('AD monitor: wbinfo -t failed')
                 return False, []
@@ -638,6 +634,14 @@ class ServiceService(CRUDService):
         if not await self._system("/etc/directoryservice/ActiveDirectory/ctl restart"):
             res = True
         return res
+
+    async def _reload_activedirectory(self, **kwargs):
+        # Steps required to force winbind to connect to new DC if DC it's connected to goes down
+        # We may need to expand the list of operations below to include fresh kinit. Some
+        # information about winbind connection is stored in samba's gencache. In test cases, flushing
+        # gencache (net cache flush) was not required to do this.
+        await self._service("samba_server", "stop", force=True, **kwargs)
+        await self._service("samba_server", "start", quiet=True, **kwargs)
 
     async def _started_domaincontroller(self, **kwargs):
         res = False
