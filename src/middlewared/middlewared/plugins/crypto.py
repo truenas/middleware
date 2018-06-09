@@ -305,7 +305,7 @@ class CertificateService(CRUDService):
         if cert['type'] == CERT_TYPE_CSR:
             obj = csr_obj
         elif cert_obj:
-            obj = cert_obj
+            obj = crypto.load_certificate(crypto.FILETYPE_PEM, cert['certificate'])
             notBefore = obj.get_notBefore()
             t1 = dateutil.parser.parse(notBefore)
             t2 = t1.astimezone(dateutil.tz.tzutc())
