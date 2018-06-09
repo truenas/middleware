@@ -1149,7 +1149,7 @@ class FreeNAS_ActiveDirectory_Base(object):
 
         r = resolver.Resolver()
         r.lifetime = _fs().directoryservice.activedirectory.dns.lifetime
-        r.timeout = r.lifetime / 3 
+        r.timeout = r.lifetime / 3
 
         try:
 
