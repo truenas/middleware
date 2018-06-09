@@ -1548,13 +1548,13 @@ def smb4_import_groups(client):
 
 def smb4_is_disallowed_group(groupmap, group):
     disallowed_list = []
-    # Ticket # 23435 In order for local groups to be available through samba, they need to 
+    # Ticket # 23435 In order for local groups to be available through samba, they need to
     # be properly mapped to NT groups in the group_mapping.tdb file. This file should:
     # (1) contain no duplicate or inconsistent entries
     # (2) contain no group names that are identical to usernames
     # (3) prevent duplicate entries for NT names associated with builtin/well-known sids.
 
-    default_builtin_groups = ['Users','Administrators']
+    default_builtin_groups = ['Users', 'Administrators']
     localusers = list(pwd.getpwall())
     for localuser in localusers:
         disallowed_list.append(localuser[0].upper())
