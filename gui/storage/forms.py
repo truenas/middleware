@@ -1044,6 +1044,13 @@ class DiskFormPartial(MiddlewareModelForm, ModelForm):
         required=False,
     )
 
+    disk_reset_password = forms.BooleanField(
+        label='Reset Password',
+        required=False,
+        initial=False,
+        help_text=_('Click this box to reset SED password'),
+    )
+
     class Meta:
         model = models.Disk
         widgets = {
@@ -1067,6 +1074,7 @@ class DiskFormPartial(MiddlewareModelForm, ModelForm):
             self.fields['disk_serial'].widget.attrs['class'] = (
                 'dijitDisabled dijitTextBoxDisabled '
                 'dijitValidationTextBoxDisabled')
+            self.original_instance = instance.__dict__
 
     def clean_disk_name(self):
         return self.instance.disk_name
@@ -1080,7 +1088,9 @@ class DiskFormPartial(MiddlewareModelForm, ModelForm):
 
     def clean(self):
         cdata = self.cleaned_data
-        if not cdata.get("disk_passwd"):
+        if cdata.get('disk_reset_password'):
+            cdata['disk_passwd'] = ''
+        elif not cdata.get("disk_passwd"):
             cdata['disk_passwd'] = self.instance.disk_passwd
         return cdata
 
@@ -1088,7 +1098,13 @@ class DiskFormPartial(MiddlewareModelForm, ModelForm):
         self.instance.id = self.instance.pk
         data.pop('name')
         data.pop('passwd2', None)
+        data.pop('reset_password', None)
         data.pop('serial')
+
+        sed_passwd = data.get('passwd', '')
+        if self.original_instance['disk_passwd'] != sed_passwd:
+            data['passwd'] = notifier().pwenc_decrypt(sed_passwd)
+
         for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
             if data.get(key):
                 data[key] = data[key].upper()

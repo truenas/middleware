@@ -59,6 +59,10 @@ class SytemAdvancedService(ConfigService):
     async def system_advanced_extend(self, data):
         if data.get('sed_user'):
             data['sed_user'] = data.get('sed_user').upper()
+        data['sed_passwd'] = await self.middleware.call(
+            'notifier.pwenc_decrypt',
+            data['sed_passwd']
+        )
         return data
 
     async def __validate_fields(self, schema, data):
@@ -126,6 +130,11 @@ class SytemAdvancedService(ConfigService):
                 original_data['sed_user'] = original_data['sed_user'].lower()
             if config_data.get('sed_user'):
                 config_data['sed_user'] = config_data['sed_user'].lower()
+            if config_data['sed_passwd'] != original_data['sed_passwd'] and config_data['sed_passwd']:
+                config_data['sed_passwd'] = await self.middleware.call(
+                    'notifier.pwenc_encrypt',
+                    config_data['sed_passwd']
+                )
 
             await self.middleware.call(
                 'datastore.update',

@@ -1086,25 +1086,42 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
     middleware_plugin = 'system.advanced'
     is_singletone = True
 
+    adv_reset_sed_password = forms.BooleanField(
+        label='Reset SED Password',
+        required=False,
+        initial=False,
+        help_text=_('Click this box to reset global SED password'),
+    )
+
     class Meta:
         fields = '__all__'
         model = models.Advanced
         widgets = {
-            'adv_sed_passwd': forms.widgets.PasswordInput(),
+            'adv_sed_passwd': forms.widgets.PasswordInput(render_value=False),
         }
 
     def __init__(self, *args, **kwargs):
         super(AdvancedForm, self).__init__(*args, **kwargs)
         self.fields['adv_motd'].strip = False
-        self.original_instance = dict(self.instance.__dict__)
+        self.original_instance = self.instance.__dict__
 
-    def clean_adv_sed_passwd(self):
-        passwd = self.cleaned_data.get('adv_sed_passwd')
-        if not passwd:
-            return self.instance.adv_sed_passwd
-        return passwd
+    def clean(self):
+
+        cdata = self.cleaned_data
+        if cdata.get('adv_reset_sed_password'):
+            cdata['adv_sed_passwd'] = ''
+        elif not cdata.get('adv_sed_passwd'):
+            cdata['adv_sed_passwd'] = self.instance.adv_sed_passwd
+
+        return cdata
 
     def middleware_clean(self, data):
+
+        data.pop('reset_sed_password', None)
+        sed_passwd = data.get('sed_passwd', '')
+        if self.original_instance['adv_sed_passwd'] != sed_passwd:
+            data['sed_passwd'] = notifier().pwenc_decrypt(sed_passwd)
+
         if data.get('sed_user'):
             data['sed_user'] = data['sed_user'].upper()
 
