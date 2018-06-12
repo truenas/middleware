@@ -2307,6 +2307,15 @@ class InitialWizardSystemForm(Form):
             self.fields[fname] = field
             field.initial = getattr(self._instance, fname, None)
             field.required = False
+
+        with client as c:
+            root_user = c.call(
+                'user.query',
+                [('username', '=', 'root')],
+                {'get': True}
+            )
+            self.fields['sys_email'].initial = root_user['email']
+
         try:
             adv = models.Advanced.objects.order_by('-id')[0]
         except IndexError:
