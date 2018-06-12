@@ -1074,7 +1074,11 @@ class DiskFormPartial(MiddlewareModelForm, ModelForm):
             self.fields['disk_serial'].widget.attrs['class'] = (
                 'dijitDisabled dijitTextBoxDisabled '
                 'dijitValidationTextBoxDisabled')
-            self.original_instance = instance.__dict__
+
+            self.fields['disk_reset_password'].widget.attrs['onChange'] = (
+                'toggleGeneric("id_disk_reset_password", ["id_disk_passwd",'
+                ' "id_disk_passwd2"], false);'
+            )
 
     def clean_disk_name(self):
         return self.instance.disk_name
@@ -1086,24 +1090,18 @@ class DiskFormPartial(MiddlewareModelForm, ModelForm):
             raise forms.ValidationError(_("The two password fields didn't match."))
         return password2
 
-    def clean(self):
-        cdata = self.cleaned_data
-        if cdata.get('disk_reset_password'):
-            cdata['disk_passwd'] = ''
-        elif not cdata.get("disk_passwd"):
-            cdata['disk_passwd'] = self.instance.disk_passwd
-        return cdata
-
     def middleware_clean(self, data):
         self.instance.id = self.instance.pk
         data.pop('name')
         data.pop('passwd2', None)
-        data.pop('reset_password', None)
+        reset_passwd = data.pop('reset_password', None)
         data.pop('serial')
 
-        sed_passwd = data.get('passwd', '')
-        if self.original_instance['disk_passwd'] != sed_passwd:
-            data['passwd'] = notifier().pwenc_decrypt(sed_passwd)
+        sed_passwd = data.pop('passwd', '')
+        if reset_passwd:
+            data['passwd'] = ''
+        elif sed_passwd:
+            data['passwd'] = sed_passwd
 
         for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
             if data.get(key):

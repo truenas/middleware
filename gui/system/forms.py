@@ -1105,6 +1105,10 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
         self.fields['adv_motd'].strip = False
         self.original_instance = self.instance.__dict__
 
+        self.fields['adv_reset_sed_password'].widget.attrs['onChange'] = (
+            'toggleGeneric("id_adv_reset_sed_password", ["id_adv_sed_passwd"], false);'
+        )
+
     def clean(self):
 
         cdata = self.cleaned_data
@@ -1118,9 +1122,6 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
     def middleware_clean(self, data):
 
         data.pop('reset_sed_password', None)
-        sed_passwd = data.get('sed_passwd', '')
-        if self.original_instance['adv_sed_passwd'] != sed_passwd:
-            data['sed_passwd'] = notifier().pwenc_decrypt(sed_passwd)
 
         if data.get('sed_user'):
             data['sed_user'] = data['sed_user'].upper()
