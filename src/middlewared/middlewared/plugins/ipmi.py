@@ -86,7 +86,7 @@ class IPMIService(CRUDService):
             rv |= (await run(*args, 'netmask', data['netmask'], check=False)).returncode
             rv |= (await run(*args, 'defgw', 'ipaddr', data['gateway'], check=False)).returncode
         rv |= (await run(
-            *args, 'vlan', 'id', data['vlan'] if data.get('vlan') else 'off'
+            *args, 'vlan', 'id', str(data['vlan']) if data.get('vlan') else 'off'
         )).returncode
 
         rv |= (await run(*args, 'access', 'on', check=False)).returncode
