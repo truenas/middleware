@@ -93,7 +93,7 @@ class ServiceMonitorThread(threading.Thread):
             host_list = []
 
             for i in range(0, max_tries):
-                # Make three attempts to get SRV records from DNS
+                # Make max_tries attempts to get SRV records from DNS
                 host_list = fnldap.get_ldap_servers(host)
                 if host_list:
                     break
