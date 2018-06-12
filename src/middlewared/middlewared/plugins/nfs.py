@@ -80,7 +80,7 @@ class SharingNFSService(CRUDService):
         "sharingnfs_create",
         List("paths", items=[Dir("path")]),
         Str("comment"),
-        List("networks", items=[IPAddr("network", cidr=True, v6=False)]),
+        List("networks", items=[IPAddr("network", cidr=True)]),
         List("hosts", items=[Str("host")]),
         Bool("alldirs"),
         Bool("ro"),
@@ -248,7 +248,9 @@ class SharingNFSService(CRUDService):
 
         async def resolve(hostname):
             try:
-                return await asyncio.wait_for(self.middleware.run_in_io_thread(socket.gethostbyname, hostname), 5)
+                return (
+                    await asyncio.wait_for(self.middleware.run_in_io_thread(socket.getaddrinfo, hostname, None), 5)
+                )[0][4][0]
             except Exception as e:
                 self.logger.warning("Unable to resolve host %r: %r", hostname, e)
                 return None
@@ -279,7 +281,7 @@ class SharingNFSService(CRUDService):
                         continue
 
                     try:
-                        network = ipaddress.IPv4Network(f"{host}/32")
+                        network = ipaddress.ip_network(host)
                     except Exception:
                         self.logger.warning("Got invalid host %r", host)
                         continue
@@ -288,7 +290,7 @@ class SharingNFSService(CRUDService):
 
                 for network in share["networks"]:
                     try:
-                        network = ipaddress.IPv4Network(network, strict=False)
+                        network = ipaddress.ip_network(network, strict=False)
                     except Exception:
                         self.logger.warning("Got invalid network %r", network)
                         continue
@@ -296,7 +298,8 @@ class SharingNFSService(CRUDService):
                         used_networks.add(network)
 
                 if not share["hosts"] and not share["networks"]:
-                    used_networks.add(ipaddress.IPv4Network("0.0.0.0/0"))
+                    used_networks.add(ipaddress.ip_network("0.0.0.0/0"))
+                    used_networks.add(ipaddress.ip_network("::/0"))
 
                 if share["alldirs"] and data["alldirs"]:
                     verrors.add(f"{schema_name}.alldirs", "This option is only available once per mountpoint")
@@ -308,7 +311,7 @@ class SharingNFSService(CRUDService):
                 verrors.add(f"{schema_name}.hosts.{i}", "Unable to resolve host")
                 continue
 
-            network = ipaddress.IPv4Network(f"{host}/32")
+            network = ipaddress.ip_network(host)
             for another_network in used_networks:
                 if network.overlaps(another_network):
                     verrors.add(
@@ -322,7 +325,7 @@ class SharingNFSService(CRUDService):
 
         had_explanation = False
         for i, network in enumerate(data["networks"]):
-            network = ipaddress.IPv4Network(network, strict=False)
+            network = ipaddress.ip_network(network, strict=False)
 
             for another_network in used_networks:
                 if network.overlaps(another_network):
