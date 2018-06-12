@@ -160,7 +160,10 @@ class JailService(CRUDService):
         for prop, val in options.items():
             p = f"{prop}={val}"
 
-            iocage.set(p, plugin)
+            try:
+                iocage.set(p, plugin)
+            except RuntimeError as err:
+                raise CallError(err)
 
         if name:
             iocage.rename(name)
