@@ -125,7 +125,7 @@ class SharingCIFSService(CRUDService):
 
     @accepts(Dict(
         'sharingcifs_create',
-        Str('path'),
+        Str('path', required=True),
         Bool('home', default=False),
         Str('name'),
         Str('comment'),
@@ -187,7 +187,7 @@ class SharingCIFSService(CRUDService):
     )
     async def do_update(self, id, data):
         verrors = ValidationErrors()
-        path = data['path']
+        path = data.get('path')
         default_perms = data.pop('default_permissions', False)
 
         old = await self.middleware.call(
@@ -202,8 +202,9 @@ class SharingCIFSService(CRUDService):
         await self.clean(new, 'sharingcifs_update', verrors, id=id)
         await self.validate(new, 'sharingcifs_update', verrors, old=old)
 
-        await check_path_resides_within_volume(
-            verrors, self.middleware, "sharingcifs_update.path", path)
+        if path:
+            await check_path_resides_within_volume(
+                verrors, self.middleware, "sharingcifs_update.path", path)
 
         if verrors:
             raise verrors
