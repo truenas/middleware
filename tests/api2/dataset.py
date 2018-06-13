@@ -19,11 +19,6 @@ def test_01_check_dataset_endpoint():
 
 
 def test_02_create_dataset():
-    payload = {"volume_name": "tank",
-               "layout": [{"vdevtype": "stripe", "disks": [disk1, disk2]}]}
-    results = POST("/storage/volume/", payload, api="1")
-    assert results.status_code == 201, results.text
-
     result = POST(
         '/pool/dataset', {
             'name': DATASET_NAME.replace('%2F', '/')
