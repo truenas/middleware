@@ -5,13 +5,13 @@ from middlewared.service import CRUDService, private, ValidationErrors
 from middlewared.validators import Range, Time
 
 
-class PeriodicSnapshotService(CRUDService):
+class PeriodicSnapshotTaskService(CRUDService):
 
     class Config:
         datastore = 'storage.task'
         datastore_prefix = 'task_'
         datastore_extend = 'pool.snapshot.periodic_snapshot_extend'
-        namespace = 'pool.snapshot'
+        namespace = 'pool.snapshottask'
 
     @private
     def periodic_snapshot_extend(self, data):
