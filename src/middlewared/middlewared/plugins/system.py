@@ -391,6 +391,7 @@ class SystemGeneralService(ConfigService):
 
         data['sysloglevel'] = data['sysloglevel'].upper()
         data['sysloglevel'] = data['sysloglevel'].upper()
+        data['ui_protocol'] = data['ui_protocol'].upper()
         data['ui_certificate'] = data['ui_certificate']['id'] if data['ui_certificate'] else None
         return data
 
