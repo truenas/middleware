@@ -99,7 +99,7 @@ class DiskService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        if old['passwd'] != new['passwd']:
+        if old['passwd'] != new['passwd'] and new['passwd']:
             new['passwd'] = await self.middleware.call(
                 'notifier.pwenc_encrypt',
                 new['passwd']
