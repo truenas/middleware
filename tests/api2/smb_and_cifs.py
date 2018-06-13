@@ -248,10 +248,10 @@ def test_27_update_smb():
     assert results.status_code == 200, results.text
 
 
-def test_28_update_cifs_share():
-    cifsid = GET(f'/sharing/cifs?name={SMB_NAME}').json()[0]['id']
-    results = PUT(f"/sharing/cifs/id/{cifsid}", {"home": False})
-    assert results.status_code == 200, results.text
+# def test_28_update_cifs_share():
+#     cifsid = GET(f'/sharing/cifs?name={SMB_NAME}').json()[0]['id']
+#     results = PUT(f"/sharing/cifs/id/{cifsid}", {"home": False})
+#     assert results.status_code == 200, results.text
 
 
 def test_29_starting_cifs_service():
