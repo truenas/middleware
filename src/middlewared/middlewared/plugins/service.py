@@ -104,7 +104,8 @@ class ServiceService(CRUDService):
             asyncio.ensure_future(self._get_status(entry)): entry
             for entry in services
         }
-        await asyncio.wait(list(jobs.keys()), timeout=15)
+        if jobs:
+            await asyncio.wait(list(jobs.keys()), timeout=15)
 
         def result(task):
             """
