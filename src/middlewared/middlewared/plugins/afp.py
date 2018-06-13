@@ -182,6 +182,7 @@ class SharingAFPService(CRUDService):
             verrors.add(f'{schema_name}.home',
                         'Only one share is allowed to be a home share.')
 
+    @private
     async def name_exists(self, data, schema_name, verrors, id=None):
         name = data['name']
         path = data['path']
