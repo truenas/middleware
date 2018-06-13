@@ -10,6 +10,7 @@ from middlewared.utils import Popen
 
 import asyncio
 import boto3
+from botocore.client import Config
 import errno
 import json
 import os
@@ -100,7 +101,9 @@ class BackupService(CRUDService):
             return
 
         if credential['provider'] == 'AMAZON':
-            data['attributes']['region'] = await self.middleware.call('backup.s3.get_bucket_location', credential['id'], data['attributes']['bucket'])
+            if not credential['attributes'].get('skip_region', False):
+                data['attributes']['region'] = await self.middleware.call(
+                    'backup.s3.get_bucket_location', credential['id'], data['attributes']['bucket'])
         elif credential['provider'] in ('AZURE', 'BACKBLAZE', 'GCLOUD'):
             # AZURE|BACKBLAZE|GCLOUD does not need validation nor new data at this stage
             pass
@@ -256,8 +259,15 @@ class BackupS3Service(Service):
     async def get_client(self, id):
         credential = await self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', id)], {'get': True})
 
+        config = None
+
+        if credential['attributes'].get('signatures_v2', False):
+            config = Config(signature_version='s3')
+
         client = boto3.client(
             's3',
+            config=config,
+            endpoint_url=credential['attributes'].get('endpoint', '').strip() or None,
             aws_access_key_id=credential['attributes'].get('access_key'),
             aws_secret_access_key=credential['attributes'].get('secret_key'),
         )
@@ -268,7 +278,7 @@ class BackupS3Service(Service):
         """Returns buckets from a given S3 credential."""
         client = await self.get_client(id)
         buckets = []
-        for bucket in client.list_buckets()['Buckets']:
+        for bucket in (await self.middleware.run_in_io_thread(client.list_buckets))['Buckets']:
             buckets.append({
                 'name': bucket['Name'],
                 'creation_date': bucket['CreationDate'],
@@ -282,7 +292,7 @@ class BackupS3Service(Service):
         Returns bucket `name` location (region) from credential `id`.
         """
         client = await self.get_client(id)
-        response = client.get_bucket_location(Bucket=name)
+        response = (await self.middleware.run_in_io_thread(client.get_bucket_location, Bucket=name))
         return response['LocationConstraint']
 
     @private
@@ -292,6 +302,14 @@ class BackupS3Service(Service):
             # Make sure only root can read it ad there is sensitive data
             os.chmod(f.name, 0o600)
 
+            if credential['attributes'].get('skip_region', False):
+                if credential['attributes'].get('signatures_v2', False):
+                    region = 'other-v2-signature'
+                else:
+                    region = 'other-v4-signature'
+            else:
+                region = backup['attributes']['region'] or ''
+
             f.write(textwrap.dedent("""
                 [remote]
                 type = s3
@@ -299,11 +317,13 @@ class BackupS3Service(Service):
                 access_key_id = {access_key}
                 secret_access_key = {secret_key}
                 region = {region}
+                endpoint = {endpoint}
                 server_side_encryption = {encryption}
                 """).format(
                 access_key=credential['attributes']['access_key'],
                 secret_key=credential['attributes']['secret_key'],
-                region=backup['attributes']['region'] or '',
+                region=region,
+                endpoint=credential['attributes'].get('endpoint') or '',
                 encryption=backup['attributes'].get('encryption') or '',
             ))
             f.flush()
