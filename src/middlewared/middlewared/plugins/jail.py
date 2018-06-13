@@ -80,14 +80,14 @@ class JailService(CRUDService):
 
     @accepts(
         Dict("options",
-             Str("release"),
+             Str("release", required=True),
              Str("template"),
              Str("pkglist"),
              Str("uuid"),
              Bool("basejail", default=False),
              Bool("empty", default=False),
              Bool("short", default=False),
-             List("props")))
+             List("props", default=[])))
     async def do_create(self, options):
         """Creates a jail."""
         # Typically one would return the created jail's id in this
@@ -104,14 +104,14 @@ class JailService(CRUDService):
     @private
     @accepts(
         Dict("options",
-             Str("release"),
+             Str("release", required=True),
              Str("template"),
              Str("pkglist"),
              Str("uuid"),
              Bool("basejail", default=False),
              Bool("empty", default=False),
              Bool("short", default=False),
-             List("props")))
+             List("props", default=[])))
     @job()
     def create_job(self, job, options):
         iocage = ioc.IOCage(skip_jails=True)
@@ -301,13 +301,13 @@ class JailService(CRUDService):
         Str("jail"),
         Dict(
             "options",
-            Str("action", enum=["ADD", "EDIT", "REMOVE", "REPLACE", "LIST"]),
-            Str("source"),
-            Str("destination"),
-            Str("fstype"),
-            Str("fsoptions"),
-            Str("dump"),
-            Str("pass"),
+            Str("action", enum=["ADD", "EDIT", "REMOVE", "REPLACE", "LIST"], required=True),
+            Str("source", required=True),
+            Str("destination", required=True),
+            Str("fstype", required=True),
+            Str("fsoptions", required=True),
+            Str("dump", required=True),
+            Str("pass", required=True),
             Int("index", default=None),
         ))
     def fstab(self, jail, options):
@@ -367,8 +367,6 @@ class JailService(CRUDService):
             IOCClean().clean_jails()
         elif ds_type == "ALL":
             IOCClean().clean_all()
-        elif ds_type == "RELEASE":
-            pass
         elif ds_type == "TEMPLATE":
             IOCClean().clean_templates()
 
