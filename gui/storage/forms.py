@@ -1971,7 +1971,7 @@ class PeriodicSnapForm(MiddlewareModelForm, ModelForm):
 
     middleware_attr_schema = 'periodic_snapshot'
     middleware_attr_prefix = 'task_'
-    middleware_plugin = 'pool.snapshot'
+    middleware_plugin = 'pool.snapshottask'
     middleware_attr_map = {
         'dow': 'task_byweekday'
     }
