@@ -1012,10 +1012,17 @@ def volume_unlock(request, object_id):
     if request.method == "POST":
         form = forms.UnlockPassphraseForm(request.POST, request.FILES)
         if form.is_valid():
-            form.done(volume=volume)
-            return JsonResp(
-                request,
-                message=_("Volume unlocked"))
+            try:
+                form.done(volume)
+            except MiddlewareError as e:
+                form._errors['__all__'] = form.error_class([
+                    _(str(e))
+                ])
+                return JsonResp(request, form=form)
+            else:
+                return JsonResp(
+                    request,
+                    message=_("Volume unlocked"))
         else:
             return JsonResp(request, form=form)
     else:
