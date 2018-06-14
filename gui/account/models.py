@@ -157,12 +157,6 @@ class bsdUsers(Model):
         default=None,
         editable=False,
     )
-    bsdusr_authenticator_credential = models.TextField(
-        default=None,
-        editable=False,
-        blank=True,
-        null=True,
-    )
 
     is_active = True
     is_staff = True
