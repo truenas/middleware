@@ -491,8 +491,7 @@ class UserService(CRUDService):
         credential = attestation_object.auth_data.credential_data
 
         user['authenticator_credential'] = binascii.b2a_base64(bytes(credential))
-        result = await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
-        user = await self._get_instance(pk)
+        await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
         return True
 
     async def __common_validation(self, verrors, data, pk=None):
