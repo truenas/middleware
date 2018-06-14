@@ -62,8 +62,9 @@ class RcloneConfig:
                     "standard" if self.cloud_sync["filename_encryption"] else "off"))
                 self.tmp_file.write("password = {}\n".format(
                     rclone_encrypt_password(self.cloud_sync["encryption_password"])))
-                self.tmp_file.write("password2 = {}\n".format(
-                    rclone_encrypt_password(self.cloud_sync["encryption_salt"])))
+                if self.cloud_sync.get("encryption_salt"):
+                    self.tmp_file.write("password2 = {}\n".format(
+                        rclone_encrypt_password(self.cloud_sync["encryption_salt"])))
 
                 remote_path = "encrypted:/"
 
@@ -261,9 +262,6 @@ class CloudSyncService(CRUDService):
             if not data["encryption_password"]:
                 verrors.add(f"{name}.encryption_password", "This field is required when encryption is enabled")
 
-            if not data["encryption_salt"]:
-                verrors.add(f"{name}.encryption_salt", "This field is required when encryption is enabled")
-
         credentials = await self._get_credentials(data["credentials"])
         provider = REMOTES[credentials["provider"]]
 
@@ -293,10 +291,10 @@ class CloudSyncService(CRUDService):
                 folder_basename = os.path.basename(data["attributes"]["folder"].strip("/"))
                 ls = await self.list_directory(dict(
                     credentials=data["credentials"],
-                    encryption=data["encryption"],
-                    filename_encryption=data["filename_encryption"],
-                    encryption_password=data["encryption_password"],
-                    encryption_salt=data["encryption_salt"],
+                    encryption=data.get("encryption"),
+                    filename_encryption=data.get("filename_encryption"),
+                    encryption_password=data.get("encryption_password"),
+                    encryption_salt=data.get("encryption_salt"),
                     attributes=dict(data["attributes"], folder=folder_parent)
                 ))
                 for item in ls:
