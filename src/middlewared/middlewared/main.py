@@ -49,6 +49,7 @@ class Application(object):
         self.handshake = False
         self.logger = logger.Logger('application').getLogger()
         self.sessionid = str(uuid.uuid4())
+        self.authenticator_challenge = None
 
         """
         Callback index registered by services. They are blocking.
