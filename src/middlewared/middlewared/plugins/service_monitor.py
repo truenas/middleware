@@ -17,8 +17,7 @@ if not apps.ready:
     django.setup()
 
 from freenasUI.common.freenasldap import (
-    FreeNAS_ActiveDirectory,
-    FreeNAS_LDAP,
+    FreeNAS_ActiveDirectory_Base,
     FLAGS_DBINIT
 )
 
@@ -88,35 +87,36 @@ class ServiceMonitorThread(threading.Thread):
     def tryConnect(self, host, port, fnldap):
         max_tries = 3
         connected = False
+        host_list = []
 
         if self.name == 'activedirectory':
             host_list = []
 
             for i in range(0, max_tries):
                 # Make max_tries attempts to get SRV records from DNS
-                host_list = fnldap.get_ldap_servers(host)
+                host_list = FreeNAS_ActiveDirectory_Base.get_ldap_servers(host)
                 if host_list:
                     break
                 else:
-                    self.logger.debug("[ServiceMonitorThread] Attempt %d to query SRV records failed " % (i))
+                    self.logger.debug(f'[ServiceMonitorThread] Attempt {i} to query SRV records failed')
 
             if not host_list:
-                self.logger.debug("[ServiceMonitorThread] Query for SRV records for %s failed" % (host))
+                self.logger.debug(f'[ServiceMonitorThread] Query for SRV records for {host} failed')
                 return False
 
+            for h in host_list:
+                port_is_listening = FreeNAS_ActiveDirectory_Base.port_is_listening(str(h.target), h.port, errors=[])
+                if port_is_listening:
+                    return True
+                else:
+                    self.logger.debug(f'[ServiceMonitorThread] Cannot connect: {h.target}:{h.port}')
+                    connected = False
+
+            return connected
+
         else:
-            self.logger.debug("[ServiceMonitorThread] no monitoring has been written for %s " % self.name)
+            self.logger.debug(f'[ServiceMonitorThread] no monitoring has been written for {self.name}')
             return False
-
-        for h in host_list:
-            port_is_listening = fnldap.port_is_listening(str(h.target), h.port, errors=[])
-            if port_is_listening:
-                return True
-            else:
-                self.logger.debug("[ServiceMonitorThread] Cannot connect: %s:%d " % (str(h.target), h.port))
-                connected = False
-
-        return connected
 
     @private
     def getStarted(self, service):
@@ -133,20 +133,13 @@ class ServiceMonitorThread(threading.Thread):
         ntries = 0
         service = self.name
 
-        if service == 'activedirectory':
-            fnldap = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
-        elif service == 'ldap':
-            fnldap = FreeNAS_LDAP(flags=FLAGS_DBINIT)
-        else:
-            fnldap = None
-
         while True:
             self.finished.wait(self.frequency)
             #
             # We should probably have a configurable threshold for number of
             # failures before starting or stopping the service
             #
-            connected = self.tryConnect(self.host, self.port, fnldap)
+            connected = self.tryConnect(self.host, self.port)
             started = self.getStarted(service)
             enabled = self.isEnabled(service)
 
