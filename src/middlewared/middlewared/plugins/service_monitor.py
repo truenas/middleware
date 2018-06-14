@@ -84,7 +84,7 @@ class ServiceMonitorThread(threading.Thread):
         return enabled
 
     @private
-    def tryConnect(self, host, port, fnldap):
+    def tryConnect(self, host, port):
         max_tries = 3
         connected = False
         host_list = []
