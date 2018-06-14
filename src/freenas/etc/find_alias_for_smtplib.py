@@ -21,7 +21,7 @@ django.setup()
 from freenasUI.common.system import get_sw_name, send_mail
 from freenasUI.system.models import Email
 
-ALIASES = re.compile(r'^(?P<from>[^#]\S+?):\s*(?P<to>\S+)$')
+ALIASES = re.compile(r'^(?P<from>[^#]\S*?):\s*(?P<to>\S+)$')
 
 
 def do_sendmail(msg, to_addrs=None, parse_recipients=False):
