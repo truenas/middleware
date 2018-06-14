@@ -322,8 +322,8 @@ services_init(void)
 		FAILRET("Failed to add smb timeout node.\n", -1);
 	}
 
-	g_services->smb.config.server_min_protocol = -1;
-	g_services->smb.config.server_max_protocol = -1;
+	g_services->smb.config.server_min_protocol = SMB2;
+	g_services->smb.config.server_max_protocol = SMB3;
 
 	if ((tmptree2 = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
 		SYSCTL_CHILDREN(tmptree), OID_AUTO,
