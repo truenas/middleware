@@ -59,7 +59,7 @@ class FakeMiddleware(object):
             # the worker until thread finishes.
             executor.shutdown(wait=False)
 
-    async def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, spawn_thread=True, job=None):
+    async def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, io_thread=False, job=None):
         with Client() as c:
             self.client = c
             job_options = getattr(methodobj, '_job', None)
