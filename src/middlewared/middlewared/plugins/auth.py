@@ -132,8 +132,6 @@ class AuthService(Service):
     @accepts(Str('username'))
     @pass_app
     async def authenticator_signin_challenge(self, app, username):
-        self.logger.error('AUTHENTICATOR CHALLENGE: %r %r' % (app, username))
-
         try:
             user = await self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_username', '=', username)], {'get': True})
         except IndexError:
@@ -175,11 +173,6 @@ class AuthService(Service):
     )
     @pass_app
     async def authenticator_signin(self, app, username, authenticator_data, client_data, signature):
-        self.logger.error('username: %r' % (username,))
-        self.logger.error('authenticator_data: %r' % (authenticator_data,))
-        self.logger.error('client_data: %r' % (client_data,))
-        self.logger.error('signature: %r' % (signature,))
-
         authenticator_data = bytes(bytearray(authenticator_data))
         authenticator_data = AuthenticatorData(authenticator_data)
 
@@ -204,10 +197,6 @@ class AuthService(Service):
         except Exception as e:
             self.logger.exception(e)
             return False
-
-        self.logger.error('authenticator_data: %r' % (authenticator_data,))
-        self.logger.error('client_data: %r' % (client_data,))
-        self.logger.error('signature: %r' % (signature,))
 
         if client_data.challenge != app.authenticator_challenge:
             self.logger.error('challenge mismatch in authenticator sign in')

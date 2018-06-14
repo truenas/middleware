@@ -429,9 +429,7 @@ class UserService(CRUDService):
     @accepts(Int('id'))
     @pass_app
     async def authenticator_challenge(self, app, pk):
-        self.logger.error('AUTHENTICATOR CHALLENGE: %r %r' % (app, pk))
         user = await self._get_instance(pk)
-        self.logger.error('AUTHENTICATOR CHALLENGE: %r' % (user['username'],))
         challenge = random.choices(range(256), k=32)
         app.authenticator_challenge = bytes(challenge)
 
@@ -470,10 +468,6 @@ class UserService(CRUDService):
     )
     @pass_app
     async def authenticator_register(self, app, pk, attestation_object, client_data):
-        self.logger.error('pk: %r' % (pk,))
-        self.logger.error('attestation_object: %r' % (attestation_object,))
-        self.logger.error('client_data: %r' % (client_data,))
-
         user = await self._get_instance(pk)
         user.pop('group')
 
@@ -482,9 +476,6 @@ class UserService(CRUDService):
 
         client_data = bytes(bytearray(client_data))
         client_data = ClientData(client_data)
-
-        self.logger.error('attestation_object: %r' % (attestation_object,))
-        self.logger.error('client_data: %r' % (client_data,))
 
         if client_data.challenge != app.authenticator_challenge:
             self.logger.error('challenge mismatch in authenticator registration')
@@ -499,14 +490,9 @@ class UserService(CRUDService):
 
         credential = attestation_object.auth_data.credential_data
 
-        self.logger.error('cred data: %r' % (credential,))
-        self.logger.error('cred data: %d bytes' % (len(credential),))
-
         user['authenticator_credential'] = binascii.b2a_base64(bytes(credential))
         result = await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
-        self.logger.error('update result: %r' % (result,))
         user = await self._get_instance(pk)
-        self.logger.error('-> %r' % (user['authenticator_credential'],))
         return True
 
     async def __common_validation(self, verrors, data, pk=None):
