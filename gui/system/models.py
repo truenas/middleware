@@ -40,7 +40,7 @@ from django.utils.translation import ugettext_lazy as _
 from OpenSSL import crypto
 
 from freenasUI import choices
-from freenasUI.freeadmin.models import DictField, Model, UserField
+from freenasUI.freeadmin.models import DictField, EncryptedDictField, Model, UserField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.support.utils import get_license
 from licenselib.license import ContractType
@@ -1049,7 +1049,7 @@ class CloudCredentials(Model):
         max_length=50,
         choices=choices.CLOUD_PROVIDERS,
     )
-    attributes = DictField(
+    attributes = EncryptedDictField(
         editable=False,
     )
 
