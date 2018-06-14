@@ -197,6 +197,27 @@ class idmap_ad(idmap_base):
         ),
         default='rfc2307'
     )
+    idmap_ad_unix_primary_group = models.BooleanField(
+        verbose_name=_("UNIX Primary Group"),
+        help_text=_(
+            'Defines whether the user\'s primary group is fetched from the SFU '
+            'attributes or the AD primary group. If set to yes the primary group '
+            'membership is fetched from the LDAP attributes (gidNumber). If set '
+            'to no the primary group membership is calculated via the '
+            '"primaryGroupID" LDAP attribute.'
+        ),
+        default=False
+    )
+    idmap_ad_unix_nss_info = models.BooleanField(
+        verbose_name=_("UNIX NSS Info"),
+        help_text=_(
+            'If set to yes winbind will retrieve the login shell and home '
+            'directory from the LDAP attributes. If set to no the or the AD LDAP '
+            'entry lacks the SFU attributes the options template shell and '
+            'template homedir are used.'
+        ),
+        default=False
+    ) 
 
     def __init__(self, *args, **kwargs):
         super(idmap_ad, self).__init__(*args, **kwargs)
