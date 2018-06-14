@@ -1169,6 +1169,13 @@ class SMARTForm(MiddlewareModelForm, ModelForm):
         fields = '__all__'
         model = models.SMART
 
+    def __init__(self, *args, **kwargs):
+        if "instance" in kwargs:
+            kwargs.setdefault("initial", {})
+            kwargs["initial"]["smart_email"] = " ".join(kwargs["instance"].smart_email.split(","))
+
+        super(SMARTForm, self).__init__(*args, **kwargs)
+
     def middleware_clean(self, update):
         update["powermode"] = update["powermode"].upper()
         update["email"] = update["email"].split()

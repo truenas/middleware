@@ -36,33 +36,39 @@ class JailService(CRUDService):
         jails = []
 
         if filters and len(filters) == 1 and list(
-                filters[0][:2]) == ['jail', '=']:
-            jail_identifier = filters[0].pop(2)
+                filters[0][:2]) == ['host_hostuuid', '=']:
+            jail_identifier = filters[0][2]
 
-        recursive = False if jail_identifier is not None else True
+        recursive = False if jail_identifier == 'default' else True
 
         try:
             jail_dicts = ioc.IOCage(
                 jail=jail_identifier).get('all', recursive=recursive)
-            for jail in jail_dicts:
-                jail = list(jail.values())[0]
-                if jail['dhcp'] == 'on':
-                    uuid = jail['host_hostuuid']
 
-                    if jail['state'] == 'up':
-                        interface = jail['interfaces'].split(',')[0].split(
-                            ':')[0]
-                        if interface == 'vnet0':
-                            # Inside jails they are epair0b
-                            interface = 'epair0b'
-                        ip4_cmd = ['jexec', f'ioc-{uuid}', 'ifconfig',
-                                   interface, 'inet']
-                        out = su.check_output(ip4_cmd)
-                        jail['ip4_addr'] = f'{interface}|' \
-                            f'{out.splitlines()[2].split()[1].decode()}'
-                    else:
-                        jail['ip4_address'] = 'DHCP (not running)'
-                jails.append(jail)
+            if jail_identifier == 'default':
+                jail_dicts['host_hostuuid'] = 'default'
+                jails.append(jail_dicts)
+
+            else:
+                for jail in jail_dicts:
+                    jail = list(jail.values())[0]
+                    if jail['dhcp'] == 'on':
+                        uuid = jail['host_hostuuid']
+
+                        if jail['state'] == 'up':
+                            interface = jail['interfaces'].split(',')[0].split(
+                                ':')[0]
+                            if interface == 'vnet0':
+                                # Inside jails they are epair0b
+                                interface = 'epair0b'
+                            ip4_cmd = ['jexec', f'ioc-{uuid}', 'ifconfig',
+                                       interface, 'inet']
+                            out = su.check_output(ip4_cmd)
+                            jail['ip4_addr'] = f'{interface}|' \
+                                f'{out.splitlines()[2].split()[1].decode()}'
+                        else:
+                            jail['ip4_address'] = 'DHCP (not running)'
+                    jails.append(jail)
         except BaseException:
             # Brandon is working on fixing this generic except, till then I
             # am not going to make the perfect the enemy of the good enough!
@@ -74,14 +80,14 @@ class JailService(CRUDService):
 
     @accepts(
         Dict("options",
-             Str("release"),
+             Str("release", required=True),
              Str("template"),
              Str("pkglist"),
              Str("uuid"),
              Bool("basejail", default=False),
              Bool("empty", default=False),
              Bool("short", default=False),
-             List("props")))
+             List("props", default=[])))
     async def do_create(self, options):
         """Creates a jail."""
         # Typically one would return the created jail's id in this
@@ -98,14 +104,14 @@ class JailService(CRUDService):
     @private
     @accepts(
         Dict("options",
-             Str("release"),
+             Str("release", required=True),
              Str("template"),
              Str("pkglist"),
              Str("uuid"),
              Bool("basejail", default=False),
              Bool("empty", default=False),
              Bool("short", default=False),
-             List("props")))
+             List("props", default=[])))
     @job()
     def create_job(self, job, options):
         iocage = ioc.IOCage(skip_jails=True)
@@ -295,13 +301,13 @@ class JailService(CRUDService):
         Str("jail"),
         Dict(
             "options",
-            Str("action", enum=["ADD", "EDIT", "REMOVE", "REPLACE", "LIST"]),
-            Str("source"),
-            Str("destination"),
-            Str("fstype"),
-            Str("fsoptions"),
-            Str("dump"),
-            Str("pass"),
+            Str("action", enum=["ADD", "EDIT", "REMOVE", "REPLACE", "LIST"], required=True),
+            Str("source", required=True),
+            Str("destination", required=True),
+            Str("fstype", required=True),
+            Str("fsoptions", required=True),
+            Str("dump", required=True),
+            Str("pass", required=True),
             Int("index", default=None),
         ))
     def fstab(self, jail, options):
@@ -361,8 +367,6 @@ class JailService(CRUDService):
             IOCClean().clean_jails()
         elif ds_type == "ALL":
             IOCClean().clean_all()
-        elif ds_type == "RELEASE":
-            pass
         elif ds_type == "TEMPLATE":
             IOCClean().clean_templates()
 

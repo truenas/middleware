@@ -104,7 +104,8 @@ class ServiceService(CRUDService):
             asyncio.ensure_future(self._get_status(entry)): entry
             for entry in services
         }
-        await asyncio.wait(list(jobs.keys()), timeout=15)
+        if jobs:
+            await asyncio.wait(list(jobs.keys()), timeout=15)
 
         def result(task):
             """
@@ -884,6 +885,12 @@ class ServiceService(CRUDService):
     async def _stop_cifs(self, **kwargs):
         await self._service("samba_server", "stop", force=True, **kwargs)
         await self._service("ix-post-samba", "start", quiet=True, **kwargs)
+
+    async def _started_cifs(self, **kwargs):
+        if await self._service("samba_server", "status", quiet=True, **kwargs):
+            return False, []
+        else:
+            return True, []
 
     async def _start_snmp(self, **kwargs):
         await self._service("ix-snmpd", "start", quiet=True, **kwargs)
