@@ -226,9 +226,6 @@ def test_24_removing_smb_mountpoint_on_bsd():
     assert results['result'] is True, results['output']
 
 
-# TO DO adding some osx update test for smb and cifs
-
-
 def test_25_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop", payload)

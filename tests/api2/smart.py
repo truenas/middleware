@@ -8,7 +8,12 @@ import sys
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, POST, PUT, GET
+from auto_config import disk1
 
+disk0 = disk1[:-1] + '0'
+Reason = f"{disk0} is not real ATA disk"
+
+not_real_disk = pytest.mark.skipif(disk0 == "vtbd0", reason=Reason)
 
 @pytest.fixture(scope='module')
 def smart_dict():
@@ -72,11 +77,13 @@ def test_06_look_smartd_service_at_boot():
     assert results.json()[0]["enable"] is True, results.text
 
 
+@not_real_disk
 def test_07_starting_smartd_service():
-    results = POST("/service/start/", {"service": "smartd", "service-control": {"onetime": True}})
+    payload = {"service": "smartd", "service-control": {"onetime": True}}
+    results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
 
-
+@not_real_disk
 def test_08_checking_to_see_if_smartd_service_is_running():
     results = GET('/service/?service=smartd')
     assert results.json()[0]["state"] == "RUNNING", results.text
