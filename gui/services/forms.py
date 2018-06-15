@@ -690,9 +690,8 @@ class iSCSITargetAuthCredentialForm(MiddlewareModelForm, ModelForm):
         return self._clean_secret_common("iscsi_target_auth_peersecret")
 
     def middleware_clean(self, data):
-        del data['secret2']
-        del data['peersecret2']
-
+        data.pop('secret2', None)
+        data.pop('peersecret2', None)
         return data
 
 
