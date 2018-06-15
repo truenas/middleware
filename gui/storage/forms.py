@@ -1368,7 +1368,10 @@ class ZFSDatasetCommonForm(Form):
         try:
             return int(rs)
         except ValueError:
-            if rs[-1].lower() == 'k':
+            if rs[-1].lower() == 'm':
+                rs = int(rs[:-1]) * 1024 * 1024
+                return rs
+            elif rs[-1].lower() == 'k':
                 rs = int(rs[:-1]) * 1024
                 return rs
 
