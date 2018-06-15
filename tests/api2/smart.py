@@ -72,11 +72,11 @@ def test_06_look_smartd_service_at_boot():
     assert results.json()[0]["enable"] is True, results.text
 
 
-# def test_07_starting_smartd_service():
-#     results = POST("/service/start/", {"service": "smartd", "service-control": {"onetime": True}})
-#     assert results.status_code == 200, results.text
+def test_07_starting_smartd_service():
+    results = POST("/service/start/", {"service": "smartd", "service-control": {"onetime": True}})
+    assert results.status_code == 200, results.text
 
 
-# def test_08_checking_to_see_if_smartd_service_is_running():
-#     results = GET('/service/?service=smartd')
-#     assert results.json()[0]["state"] == "RUNNING", results.text
+def test_08_checking_to_see_if_smartd_service_is_running():
+    results = GET('/service/?service=smartd')
+    assert results.json()[0]["state"] == "RUNNING", results.text

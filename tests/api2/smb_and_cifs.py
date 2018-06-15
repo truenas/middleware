@@ -93,7 +93,6 @@ def test_08_Creating_a_cifs_share_on_smb_PATH():
     assert results.status_code == 200, results.text
 
 
-
 @mount_test_cfg
 @bsd_host_cfg
 def test_09_creating_smb_mountpoint_on_bsd():
@@ -248,10 +247,10 @@ def test_27_update_smb():
     assert results.status_code == 200, results.text
 
 
-# def test_28_update_cifs_share():
-#     smbid = GET(f'/sharing/smb/?name={SMB_NAME}').json()[0]['id']
-#     results = PUT(f"/sharing/smb/id/{smbid}", {"home": False})
-#     assert results.status_code == 200, results.text
+def test_28_update_cifs_share():
+    smbid = GET(f'/sharing/smb/?name={SMB_NAME}').json()[0]['id']
+    results = PUT(f"/sharing/smb/id/{smbid}", {"home": False})
+    assert results.status_code == 200, results.text
 
 
 def test_29_starting_cifs_service():
