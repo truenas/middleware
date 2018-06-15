@@ -324,53 +324,41 @@ class SharingSMBService(CRUDService):
             await self.middleware.call(
                 'notifier.winacl_reset', path, owner, group)
 
-    async def get_storage_tasks(self, path=None, home=False):
-        zfs_datasets = await self.middleware.call('zfs.dataset.query')
+    @accepts(Str('path', required=True))
+    async def get_storage_tasks(self, path):
+        zfs_datasets = await self.middleware.call('zfs.dataset.query', [('type', '=', 'FILESYSTEM')])
         task_list = []
         task_dict = {}
 
-        if path:
-            for ds in zfs_datasets:
-                tasks = []
-                name = ds['name']
-                fs_type = ds['properties']['type']['parsed']
+        for ds in zfs_datasets:
+            tasks = []
+            name = ds['name']
+            mountpoint = ds['properties']['mountpoint']['parsed']
 
-                if fs_type != "filesystem":
-                    continue
+            if path == mountpoint:
+                tasks = await self.middleware.call(
+                    'datastore.query', 'storage.task',
+                    [['task_filesystem', '=', name]])
+            elif path.startswith(f'{mountpoint}/'):
+                tasks = await self.middleware.call(
+                    'datastore.query', 'storage.task',
+                    [['task_filesystem', '=', name],
+                     ['task_recursive', '=', 'True']])
 
-                mountpoint = ds['properties']['mountpoint']['parsed']
+            task_list.extend(tasks)
 
-                if path == mountpoint or path.startswith(f'{mountpoint}/'):
-                    if mountpoint == path:
-                        tasks = await self.middleware.call(
-                            'datastore.query', 'storage.task',
-                            [['task_filesystem', '=', name]])
-                    else:
-                        tasks = await self.middleware.call(
-                            'datastore.query', 'storage.task',
-                            [['task_filesystem', '=', name],
-                             ['task_recursive', '=', 'True']])
+        for task in task_list:
+            task_id = task['id']
+            fs = task['task_filesystem']
+            retcount = task['task_ret_count']
+            retunit = task['task_ret_unit']
+            _interval = task['task_interval']
+            interval = dict(await self.middleware.call(
+                'notifier.choices', 'TASK_INTERVAL'))[_interval]
 
-                for t in tasks:
-                    task_list.append(t)
-        elif home:
-            task_list = await self.middleware.call(
-                'datastore.query', 'storage.task',
-                [['task_recursive', '=', 'True']])
+            msg = f'{fs} - every {interval} - {retcount}{retunit}'
 
-        if task_list:
-            for task in task_list:
-                task_id = task['id']
-                fs = task['task_filesystem']
-                retcount = task['task_ret_count']
-                retunit = task['task_ret_unit']
-                _interval = task['task_interval']
-                interval = dict(await self.middleware.call(
-                    'notifier.choices', 'TASK_INTERVAL'))[_interval]
-
-                msg = f'{fs} - every {interval} - {retcount}{retunit}'
-
-                task_dict[task_id] = msg
+            task_dict[task_id] = msg
 
         return task_dict
 
