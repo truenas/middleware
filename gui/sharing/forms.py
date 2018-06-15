@@ -26,7 +26,6 @@
 #####################################################################
 import logging
 import os
-import re
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -36,12 +35,10 @@ from freenasUI.freeadmin.forms import SelectMultipleWidget
 from freenasUI.freeadmin.utils import key_order
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
-from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.services.models import services, NFS
 from freenasUI.sharing import models
 from freenasUI.storage.widgets import UnixPermissionField
-from ipaddr import (IPNetwork, AddressValueError, NetmaskValueError)
 
 log = logging.getLogger('sharing.forms')
 
@@ -91,11 +88,6 @@ class CIFS_ShareForm(MiddlewareModelForm, ModelForm):
                 with client as c:
                     task_dict = c.call('sharing.smb.get_storage_tasks',
                                        self.instance.cifs_path)
-
-            elif self.instance.cifs_home:
-                with client as c:
-                    task_dict = c.call('sharing.smb.get_storage_tasks',
-                                        None, self.instance.cifs_home)
 
             if task_dict:
                 choices = [('', '-----')]
