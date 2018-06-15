@@ -887,7 +887,7 @@ class ServiceService(CRUDService):
         await self._service("ix-post-samba", "start", quiet=True, **kwargs)
 
     async def _started_cifs(self, **kwargs):
-        if await self._service("samba_server", "status", quiet=True, **kwargs):
+        if await self._service("samba_server", "status", quiet=True, onetime=True, **kwargs):
             return False, []
         else:
             return True, []

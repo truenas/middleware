@@ -116,15 +116,15 @@ class SMBService(SystemServiceService):
         return await self.config()
 
 
-class SharingCIFSService(CRUDService):
+class SharingSMBService(CRUDService):
     class Config:
-        namespace = 'sharing.cifs'
+        namespace = 'sharing.smb'
         datastore = 'sharing.cifs_share'
         datastore_prefix = 'cifs_'
-        datastore_extend = 'sharing.cifs.extend'
+        datastore_extend = 'sharing.smb.extend'
 
     @accepts(Dict(
-        'sharingcifs_create',
+        'sharingsmb_create',
         Str('path', required=True),
         Bool('home', default=False),
         Str('name'),
@@ -150,11 +150,11 @@ class SharingCIFSService(CRUDService):
 
         default_perms = data.pop('default_permissions', True)
 
-        await self.clean(data, 'sharingcifs_create', verrors)
-        await self.validate(data, 'sharingcifs_create', verrors)
+        await self.clean(data, 'sharingsmb_create', verrors)
+        await self.validate(data, 'sharingsmb_create', verrors)
 
         await check_path_resides_within_volume(
-            verrors, self.middleware, "sharingcifs_create.path", path)
+            verrors, self.middleware, "sharingsmb_create.path", path)
 
         if verrors:
             raise verrors
@@ -180,8 +180,8 @@ class SharingCIFSService(CRUDService):
     @accepts(
         Int('id'),
         Patch(
-            'sharingcifs_create',
-            'sharingcifs_update',
+            'sharingsmb_create',
+            'sharingsmb_update',
             ('attr', {'update': True})
         )
     )
@@ -199,12 +199,12 @@ class SharingCIFSService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        await self.clean(new, 'sharingcifs_update', verrors, id=id)
-        await self.validate(new, 'sharingcifs_update', verrors, old=old)
+        await self.clean(new, 'sharingsmb_update', verrors, id=id)
+        await self.validate(new, 'sharingsmb_update', verrors, old=old)
 
         if path:
             await check_path_resides_within_volume(
-                verrors, self.middleware, "sharingcifs_update.path", path)
+                verrors, self.middleware, "sharingsmb_update.path", path)
 
         if verrors:
             raise verrors
