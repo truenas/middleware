@@ -463,12 +463,19 @@ class Resource(object):
                             method_args = []
                             for p, options in sorted(params.items(), key=lambda x: x[1]['order']):
                                 if p not in data and options['required']:
+                                    resp.set_status(400)
                                     resp.body = json.dumps({
                                         'message': f'{p} attribute expected.',
                                     })
                                     return resp
                                 elif p in data:
-                                    method_args.append(data[p])
+                                    method_args.append(data.pop(p))
+                            if data:
+                                resp.set_status(400)
+                                resp.body = json.dumps({
+                                    'message': f'The following attributes are not expected: {", ".join(data.keys())}',
+                                })
+                                return resp
                 except Exception as e:
                     resp.set_status(400)
                     resp.body = json.dumps({
