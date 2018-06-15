@@ -9,8 +9,8 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('system', '0015_alert'),
-        ('system', '0021_merge_20180507_1315'),
         ('system', '0021_merge_20180612_2332'),
+        ('system', '0022_cloud_sync'),
     ]
 
     operations = [
