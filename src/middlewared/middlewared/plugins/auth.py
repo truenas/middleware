@@ -131,9 +131,9 @@ class AuthService(Service):
     @no_auth_required
     @accepts(Str('username'))
     @pass_app
-    async def authenticator_signin_challenge(self, app, username):
+    def authenticator_signin_challenge(self, app, username):
         try:
-            user = await self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_username', '=', username)], {'get': True})
+            user = self.middleware.call_sync('user.query', [('username', '=', username)], {'get': True})
         except IndexError:
             return False
 
@@ -144,9 +144,9 @@ class AuthService(Service):
         credential = binascii.a2b_base64(credential)
 
         try:
-            credential, _ = AttestedCredentialData.unpack_from(credential)
+            credential = AttestedCredentialData.unpack_from(credential)[0]
         except Exception as e:
-            self.logger.exception(e)
+            self.logger.warn(f'Failed to unpack credential: {e}', exc_info=True)
             return False
 
         challenge = random.choices(range(256), k=32)
@@ -172,7 +172,7 @@ class AuthService(Service):
         List('signature'),
     )
     @pass_app
-    async def authenticator_signin(self, app, username, authenticator_data, client_data, signature):
+    def authenticator_signin(self, app, username, authenticator_data, client_data, signature):
         authenticator_data = bytes(bytearray(authenticator_data))
         authenticator_data = AuthenticatorData(authenticator_data)
 
@@ -182,7 +182,7 @@ class AuthService(Service):
         signature = bytes(bytearray(signature))
 
         try:
-            user = await self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_username', '=', username)], {'get': True})
+            user = self.middleware.call_sync('user.query', [('username', '=', username)], {'get': True})
         except IndexError:
             return False
 
@@ -193,9 +193,9 @@ class AuthService(Service):
         credential = binascii.a2b_base64(credential)
 
         try:
-            credential, _ = AttestedCredentialData.unpack_from(credential)
+            credential = AttestedCredentialData.unpack_from(credential)[0]
         except Exception as e:
-            self.logger.exception(e)
+            self.logger.warn(f'Failed to unpack credential: {e}', exc_info=True)
             return False
 
         if client_data.challenge != app.authenticator_challenge:
@@ -205,7 +205,7 @@ class AuthService(Service):
         try:
             credential.public_key.verify(authenticator_data + client_data.hash, signature)
         except Exception as exc:
-            self.logger.exception(exc)
+            self.logger.error('Failed to verify credential public key', exc_info=True)
             return False
 
         app.authenticated = True
