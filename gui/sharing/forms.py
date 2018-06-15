@@ -56,8 +56,8 @@ class CIFS_ShareForm(MiddlewareModelForm, ModelForm):
         required=False
     )
     middleware_attr_prefix = "cifs_"
-    middleware_attr_schema = "cifs"
-    middleware_plugin = "sharing.cifs"
+    middleware_attr_schema = "sharingsmb"
+    middleware_plugin = "sharing.smb"
     is_singletone = False
 
     def __init__(self, *args, **kwargs):
@@ -89,12 +89,12 @@ class CIFS_ShareForm(MiddlewareModelForm, ModelForm):
             task_dict = {}
             if self.instance.cifs_path:
                 with client as c:
-                    task_dict = c.call('sharing.cifs.get_storage_tasks',
+                    task_dict = c.call('sharing.smb.get_storage_tasks',
                                        self.instance.cifs_path)
 
             elif self.instance.cifs_home:
                 with client as c:
-                    task_dict = c.call('sharing.cifs.get_storage_tasks',
+                    task_dict = c.call('sharing.smb.get_storage_tasks',
                                         None, self.instance.cifs_home)
 
             if task_dict:
