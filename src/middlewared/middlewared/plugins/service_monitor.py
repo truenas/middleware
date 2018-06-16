@@ -16,8 +16,9 @@ from django.apps import apps
 if not apps.ready:
     django.setup()
 
+from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.freenasldap import (
-    FreeNAS_ActiveDirectory_Base,
+    FreeNAS_ActiveDirectory,
     FLAGS_DBINIT
 )
 
@@ -87,6 +88,7 @@ class ServiceMonitorThread(threading.Thread):
     def tryConnect(self, host, port):
         max_tries = 3
         connected = False
+        timeout = _fs().middlewared.plugins.service_monitor.socket_timeout
         host_list = []
 
         if self.name == 'activedirectory':
@@ -94,7 +96,7 @@ class ServiceMonitorThread(threading.Thread):
 
             for i in range(0, max_tries):
                 # Make max_tries attempts to get SRV records from DNS
-                host_list = FreeNAS_ActiveDirectory_Base.get_ldap_servers(host)
+                host_list = FreeNAS_ActiveDirectory.get_ldap_servers(host)
                 if host_list:
                     break
                 else:
@@ -105,7 +107,7 @@ class ServiceMonitorThread(threading.Thread):
                 return False
 
             for h in host_list:
-                port_is_listening = FreeNAS_ActiveDirectory_Base.port_is_listening(str(h.target), h.port, errors=[])
+                port_is_listening = FreeNAS_ActiveDirectory.port_is_listening(str(h.target), h.port, errors=[], sm_timeout=timeout)
                 if port_is_listening:
                     return True
                 else:
