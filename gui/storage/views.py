@@ -763,7 +763,7 @@ def zpool_scrub(request, vid):
             _('Pool output could not be parsed. Is the pool imported?')
         )
     if request.method == "POST":
-        if request.POST.get("scrub") == 'IN_PROGRESS':
+        if request.POST.get("scrub") in ['IN_PROGRESS', 'PAUSED']:
             notifier().zfs_scrub(str(volume.vol_name), stop=True)
             return JsonResp(
                 request,
