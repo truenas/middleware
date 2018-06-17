@@ -2,7 +2,7 @@
 {% block form %}
     <tr>
         <td>
-        {% if scrub.status == 'IN_PROGRESS' %}
+        {% if scrub.status == 'IN_PROGRESS' or scrub.status == 'PAUSED' %}
         {{ volume.vol_name }}: {% trans "Scrub is currently running! Are you sure you want to STOP the scrub process?" %}
         {% else %}
         {{ volume.vol_name }}: {% trans "Are you sure you want to scrub?" %}<br />{% trans "This will increase system overhead while in progress" %}
