@@ -14,8 +14,9 @@ from Crypto.Cipher import AES
 from Crypto.Util import Counter
 import json
 import os
-import subprocess
 import re
+import shlex
+import subprocess
 import tempfile
 
 CHUNK_SIZE = 5 * 1024 * 1024
@@ -89,6 +90,7 @@ async def rclone(job, cloud_sync):
             "--config", config.config_path,
             "-v",
             "--stats", "1s",
+        ] + shlex.split(cloud_sync["args"]) + [
             cloud_sync["transfer_mode"].lower(),
         ]
 
@@ -281,6 +283,11 @@ class CloudSyncService(CRUDService):
 
         verrors.add_child(f"{name}.attributes", attributes_verrors)
 
+        try:
+            shlex.split(data["args"])
+        except ValueError as e:
+            verrors.add(f"{name}.args", f"Parse error: {e.args[0]}")
+
     @private
     async def _validate_folder(self, verrors, name, data):
         if data["direction"] == "PULL":
@@ -326,6 +333,7 @@ class CloudSyncService(CRUDService):
         Str("encryption_salt"),
         Cron("schedule"),
         Dict("attributes", additional_attrs=True),
+        Str("args"),
         Bool("enabled", default=True),
         register=True,
     ))

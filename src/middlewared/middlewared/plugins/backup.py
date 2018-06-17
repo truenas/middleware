@@ -155,6 +155,7 @@ class BackupService(CRUDService):
         Str("dayweek"),
         Str("month"),
         Dict("attributes", additional_attrs=True),
+        Str("args"),
         Bool("enabled", default=True),
         register=True,
     ))
