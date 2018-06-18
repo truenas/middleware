@@ -126,6 +126,7 @@ class OpenAPIResource(object):
 
     def __init__(self, rest):
         self.rest = rest
+        self.rest.app.router.add_route('GET', '/api/v2.0', self.get)
         self.rest.app.router.add_route('GET', '/api/v2.0/', self.get)
         self.rest.app.router.add_route('GET', '/api/v2.0/openapi.json', self.get)
         self._paths = defaultdict(dict)
@@ -321,6 +322,7 @@ class Resource(object):
             operation = getattr(self, i)
             if operation is None:
                 continue
+            self.rest.app.router.add_route(i.upper(), f'/api/v2.0/{path}', getattr(self, f'on_{i}'))
             self.rest.app.router.add_route(i.upper(), f'/api/v2.0/{path}/', getattr(self, f'on_{i}'))
             self.rest._openapi.add_path(path, i, operation)
             self.__map_method_params(operation)
