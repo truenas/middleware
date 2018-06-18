@@ -253,8 +253,11 @@ class CloudSyncService(CRUDService):
 
     @private
     async def _get_credentials(self, credentials_id):
-        return await self.middleware.call("datastore.query", "system.cloudcredentials", [("id", "=", credentials_id)],
-                                          {"get": True})
+        try:
+            return await self.middleware.call("datastore.query", "system.cloudcredentials",
+                                              [("id", "=", credentials_id)], {"get": True})
+        except IndexError:
+            return None
 
     @private
     async def _validate(self, verrors, name, data):
@@ -263,6 +266,12 @@ class CloudSyncService(CRUDService):
                 verrors.add(f"{name}.encryption_password", "This field is required when encryption is enabled")
 
         credentials = await self._get_credentials(data["credentials"])
+        if not credentials:
+            verrors.add(f"{name}.credentials", "Invalid credentials")
+
+        if verrors:
+            raise verrors
+
         provider = REMOTES[credentials["provider"]]
 
         schema = []
@@ -423,6 +432,8 @@ class CloudSyncService(CRUDService):
     @accepts(Int("credentials_id"))
     async def list_buckets(self, credentials_id):
         credentials = await self._get_credentials(credentials_id)
+        if not credentials:
+            raise CallError("Invalid credentials")
 
         provider = REMOTES[credentials["provider"]]
 
