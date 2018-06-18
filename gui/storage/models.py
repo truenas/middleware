@@ -1111,14 +1111,16 @@ class VMWarePlugin(Model):
         return notifier().pwenc_decrypt(self.password)
 
 
-class QuotaExcess(Model):
-    class Meta:
-        unique_together = (("dataset_name", "quota_type"),)
+class RootDataset(Model):
+    quota_warning = models.FloatField()
+    quota_critical = models.FloatField()
+    refquota_warning = models.FloatField()
+    refquota_critical = models.FloatField()
 
-    dataset_name = models.CharField(max_length=256)
-    quota_type = models.CharField(max_length=32)
-    quota_value = models.IntegerField()
-    level = models.IntegerField()
-    used = models.IntegerField()
-    percent_used = models.FloatField()
-    uid = models.IntegerField()
+
+class Dataset(Model):
+    name = models.CharField(max_length=256, unique=True)
+    quota_warning = models.FloatField(null=True)
+    quota_critical = models.FloatField(null=True)
+    refquota_warning = models.FloatField(null=True)
+    refquota_critical = models.FloatField(null=True)
