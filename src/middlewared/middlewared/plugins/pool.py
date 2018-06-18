@@ -735,6 +735,9 @@ class PoolDatasetService(CRUDService):
             await self.middleware.call(
                 'notifier.change_dataset_share_type', id, data['share_type'].lower()
             )
+        elif data['type'] == 'VOLUME' and 'volsize' in data:
+            if await self.middleware.call('iscsi.extent.query', [('path', '=', f'zvol/{id}')]):
+                await self.middleware.call('service.reload', 'iscsitarget')
 
         return rv
 
