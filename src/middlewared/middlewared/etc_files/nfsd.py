@@ -10,8 +10,10 @@ async def get_exports(config, shares, kerberos_keytabs):
     result = []
 
     if config["v4"]:
-        if config["v4_krb"] or kerberos_keytabs:
+        if config["v4_krb"]:
             result.append("V4: / -sec=krb5:krb5i:krb5p")
+        elif kerberos_keytabs:
+            result.append("V4: / -sec=sys:krb5:krb5i:krb5p")
         else:
             result.append("V4: / -sec=sys")
 
