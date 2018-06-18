@@ -581,11 +581,12 @@ class PoolDatasetService(CRUDService):
         'pool_dataset_create',
         Str('name', required=True),
         Str('type', enum=['FILESYSTEM', 'VOLUME'], default='FILESYSTEM'),
-        Int('volsize'),
+        Int('volsize'),  # IN BYTES
         Str('volblocksize', enum=[
             '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K',
         ]),
         Bool('sparse'),
+        Bool('force_size', default=False),
         Str('comments'),
         Str('sync', enum=[
             'STANDARD', 'ALWAYS', 'DISABLED',
@@ -619,6 +620,49 @@ class PoolDatasetService(CRUDService):
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE')
+
+        if '/' not in data['name']:
+            verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
+        else:
+            parent = await self.middleware.call(
+                'zfs.dataset.query',
+                [('id', '=', data['name'].split('/')[0])]
+            )
+
+            if not parent:
+                verrors.add(
+                    'pool_dataset_create.name',
+                    'Please specify a pool which exists for the dataset/volume to be created'
+                )
+            else:
+                parent = parent[0]
+
+                if data['type'] == 'VOLUME' and 'volsize' in data:
+
+                    avail_mem = int(parent['properties']['available']['rawvalue'])
+
+                    if (
+                        data['volsize'] > (avail_mem * 0.80) and
+                        not data['force_size']
+                    ):
+                        verrors.add(
+                            'pool_dataset_create.volsize',
+                            'It is not recommended to use more than 80% of your available space for VOLUME'
+                        )
+
+                    if 'volblocksize' in data:
+
+                        if data['volblocksize'].isdigit():
+                            block_size = int(data['volblocksize'])
+                        else:
+                            block_size = int(data['volblocksize'][:-1]) * 1024
+
+                        if not data['volsize'] % block_size:
+                            verrors.add(
+                                'pool_dataset_create.volsize',
+                                'Volume size should be a multiple of volume block size'
+                            )
+
         if verrors:
             raise verrors
 
@@ -742,7 +786,7 @@ class PoolDatasetService(CRUDService):
         assert mode in ('CREATE', 'UPDATE')
 
         if data['type'] == 'FILESYSTEM':
-            for i in ('sparse', 'volsize', 'volblocksize'):
+            for i in ('force_size', 'sparse', 'volsize', 'volblocksize'):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for FILESYSTEM')
         elif data['type'] == 'VOLUME':
