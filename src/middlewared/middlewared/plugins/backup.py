@@ -17,6 +17,7 @@ import os
 import subprocess
 import re
 import requests
+import shlex
 import tempfile
 import textwrap
 
@@ -114,6 +115,11 @@ class BackupService(CRUDService):
             if data['attributes'].get('encryption') not in (None, 'AES256'):
                 verrors.add(f'{name}.attributes.encryption', 'Encryption should be null or "AES256"')
 
+        try:
+            shlex.split(data['args'])
+        except ValueError as e:
+            verrors.add(f'{name}.args', f'Parse error: {e.args[0]}')
+
     @accepts(Dict(
         'backup',
         Str('description'),
@@ -127,6 +133,7 @@ class BackupService(CRUDService):
         Str('dayweek'),
         Str('month'),
         Dict('attributes', additional_attrs=True),
+        Str('args'),
         Bool('enabled'),
         register=True,
     ))
@@ -333,6 +340,7 @@ class BackupS3Service(Service):
                 '--config', f.name,
                 '-v',
                 '--stats', '1s',
+            ] + shlex.split(backup['args']) + [
                 backup['transfer_mode'].lower(),
             ]
 
@@ -504,6 +512,7 @@ class BackupB2Service(Service):
                 '--config', f.name,
                 '-v',
                 '--stats', '1s',
+            ] + shlex.split(backup['args']) + [
                 backup['transfer_mode'].lower(),
             ]
 
@@ -619,6 +628,7 @@ service_account_file = {keyfile}
                 '--config', f.name,
                 '-v',
                 '--stats', '1s',
+            ] + shlex.split(backup['args']) + [
                 backup['transfer_mode'].lower(),
             ]
 
@@ -698,6 +708,7 @@ class BackupAzureService(Service):
                 '--config', f.name,
                 '-v',
                 '--stats', '1s',
+            ] + shlex.split(backup['args']) + [
                 backup['transfer_mode'].lower(),
             ]
 
