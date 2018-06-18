@@ -26,6 +26,7 @@ def test_02_creating_dataset_backup():
     assert results.status_code == 200, results.text
 
 
+@pytest.mark.skip(reason="No ready yet")
 def test_03_creating_backup_backup():
     payload = {"description": "Test backup",
                "direction": "PULL",
