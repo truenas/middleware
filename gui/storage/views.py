@@ -963,11 +963,26 @@ def volume_lock(request, object_id):
         _n = notifier()
         if '__confirm' not in request.POST and not _n.is_freenas() and _n.failover_licensed():
             remaining_volumes = [v for v in models.Volume.objects.exclude(pk=object_id) if v.is_decrypted()]
+            with client as c:
+                running_jails = c.call('jail.query', [('state', '=', 'up')])
+
             if not remaining_volumes:
                 message = render_to_string('freeadmin/generic_model_confirm.html', {
                     'message': 'Warning: Locking this volume will prevent failover from functioning correctly.<br />Do you want to continue?',
                 })
                 return JsonResp(request, confirm=message)
+            if not running_jails:
+                message = render_to_string('freeadmin/generic_model_confirm.html', {
+                    'message': 'Warning: Locking this volume will stop all jails.<br />Do you want to continue?',
+                })
+                return JsonResp(request, confirm=message)
+
+        with client as c:
+            jails = c.call('jail.query', [('state', '=', 'up')])
+
+            for j in jails:
+                _jail = j['host_hostuuid']
+                c.call('jail.stop', _jail)
 
         notifier().volume_detach(volume)
         if hasattr(notifier, 'failover_status') and notifier().failover_status() == 'MASTER':
