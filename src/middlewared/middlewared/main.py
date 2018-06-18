@@ -1010,11 +1010,11 @@ class Middleware(object):
             app.send_error(message, errno.EACCES, 'Not authenticated')
             return
 
-        return await self._call(message['method'], serviceobj, methodobj, params, app=app)
+        return await self._call(message['method'], serviceobj, methodobj, params, app=app, io_thread=False)
 
     async def call(self, name, *params, pipes=None):
         serviceobj, methodobj = self._method_lookup(name)
-        return await self._call(name, serviceobj, methodobj, params, pipes=pipes)
+        return await self._call(name, serviceobj, methodobj, params, pipes=pipes, io_thread=True)
 
     def call_sync(self, name, *params):
         """
