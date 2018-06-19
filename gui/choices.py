@@ -1123,7 +1123,7 @@ class CIFS_VFS_OBJECTS(object):
     def __iter__(self):
         try:
             with client as c:
-                cifs_list = c.call('sharing.cifs.vfsobjects_choices')
+                cifs_list = c.call('sharing.smb.vfsobjects_choices')
                 for value in sorted(cifs_list):
                     # This is really a fake tuple
                     yield (value, value)
