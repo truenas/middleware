@@ -586,7 +586,7 @@ class PoolDatasetService(CRUDService):
             '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K',
         ]),
         Bool('sparse'),
-        Bool('force_size', default=False),
+        Bool('force_size'),
         Str('comments'),
         Str('sync', enum=[
             'STANDARD', 'ALWAYS', 'DISABLED',
@@ -619,49 +619,11 @@ class PoolDatasetService(CRUDService):
         """
 
         verrors = ValidationErrors()
-        await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE')
 
         if '/' not in data['name']:
             verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
         else:
-            parent = await self.middleware.call(
-                'zfs.dataset.query',
-                [('id', '=', data['name'].split('/')[0])]
-            )
-
-            if not parent:
-                verrors.add(
-                    'pool_dataset_create.name',
-                    'Please specify a pool which exists for the dataset/volume to be created'
-                )
-            else:
-                parent = parent[0]
-
-                if data['type'] == 'VOLUME' and 'volsize' in data:
-
-                    avail_mem = int(parent['properties']['available']['rawvalue'])
-
-                    if (
-                        data['volsize'] > (avail_mem * 0.80) and
-                        not data['force_size']
-                    ):
-                        verrors.add(
-                            'pool_dataset_create.volsize',
-                            'It is not recommended to use more than 80% of your available space for VOLUME'
-                        )
-
-                    if 'volblocksize' in data:
-
-                        if data['volblocksize'].isdigit():
-                            block_size = int(data['volblocksize'])
-                        else:
-                            block_size = int(data['volblocksize'][:-1]) * 1024
-
-                        if not data['volsize'] % block_size:
-                            verrors.add(
-                                'pool_dataset_create.volsize',
-                                'Volume size should be a multiple of volume block size'
-                            )
+            await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE')
 
         if verrors:
             raise verrors
@@ -743,6 +705,9 @@ class PoolDatasetService(CRUDService):
             verrors.add('id', f'{id} does not exist', errno.ENOENT)
         else:
             data['type'] = dataset[0]['type']
+            data['name'] = dataset[0]['name']
+            if data['type'] == 'VOLUME':
+                data['volblocksize'] = dataset[0]['properties']['volblocksize']['value']
             await self.__common_validation(verrors, 'pool_dataset_update', data, 'UPDATE')
         if verrors:
             raise verrors
@@ -785,6 +750,19 @@ class PoolDatasetService(CRUDService):
     async def __common_validation(self, verrors, schema, data, mode):
         assert mode in ('CREATE', 'UPDATE')
 
+        parent = await self.middleware.call(
+            'zfs.dataset.query',
+            [('id', '=', data['name'].rsplit('/')[0])]
+        )
+
+        if not parent:
+            verrors.add(
+                f'{schema}.name',
+                'Please specify a pool which exists for the dataset/volume to be created'
+            )
+        else:
+            parent = parent[0]
+
         if data['type'] == 'FILESYSTEM':
             for i in ('force_size', 'sparse', 'volsize', 'volblocksize'):
                 if i in data:
@@ -798,6 +776,38 @@ class PoolDatasetService(CRUDService):
             ):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for VOLUME')
+
+            if 'volsize' in data and parent:
+
+                avail_mem = int(parent['properties']['available']['rawvalue'])
+
+                if mode == 'UPDATE':
+                    avail_mem += int((await self.middleware.call(
+                        'zfs.dataset.query',
+                        ['id', '=', data['name']]
+                    ))[0]['properties']['used']['rawvalue'])
+
+                if (
+                    data['volsize'] > (avail_mem * 0.80) and
+                    not data.get('force_size', False)
+                ):
+                    verrors.add(
+                        f'{schema}.volsize',
+                        'It is not recommended to use more than 80% of your available space for VOLUME'
+                    )
+
+                if 'volblocksize' in data:
+
+                    if data['volblocksize'].isdigit():
+                        block_size = int(data['volblocksize'])
+                    else:
+                        block_size = int(data['volblocksize'][:-1]) * 1024
+
+                    if data['volsize'] % block_size:
+                        verrors.add(
+                            f'{schema}.volsize',
+                            'Volume size should be a multiple of volume block size'
+                        )
 
     @accepts(Str('id'))
     async def do_delete(self, id):
