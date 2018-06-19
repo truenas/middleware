@@ -17,10 +17,7 @@ if not apps.ready:
     django.setup()
 
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
-from freenasUI.common.freenasldap import (
-    FreeNAS_ActiveDirectory,
-    FLAGS_DBINIT
-)
+from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory
 
 
 class ServiceMonitorThread(threading.Thread):
