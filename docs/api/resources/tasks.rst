@@ -733,7 +733,7 @@ Create resource
       Content-Type: application/json
 
         {
-                "smarttest_disks": ["{devicename}vtbd3"],
+                "smarttest_disks": ["{serial}VBcb6ca06c-657f8756"],
                 "smarttest_type": "L",
                 "smarttest_hour": "*",
                 "smarttest_daymonth": "*",
