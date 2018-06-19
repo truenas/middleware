@@ -4,6 +4,7 @@ import subprocess as su
 
 import iocage.lib.iocage as ioc
 import libzfs
+import requests
 import itertools
 from iocage.lib.ioc_check import IOCCheck
 from iocage.lib.ioc_clean import IOCClean
@@ -17,6 +18,7 @@ from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
+from middlewared.client import ClientException
 
 
 class JailService(CRUDService):
@@ -49,7 +51,6 @@ class JailService(CRUDService):
             if jail_identifier == 'default':
                 jail_dicts['host_hostuuid'] = 'default'
                 jails.append(jail_dicts)
-
             else:
                 for jail in jail_dicts:
                     jail = list(jail.values())[0]
@@ -484,3 +485,68 @@ class JailService(CRUDService):
         IOCImage().import_jail(jail)
 
         return True
+
+    @accepts()
+    def get_plugin_versions(self):
+        """
+        Fetches a list of pkg's from the http://pkg.cdn.trueos.org/iocage/
+        repo and returns a dictionary for each plugin
+        """
+        try:
+            pkgs = self.middleware.call_sync('cache.get', 'iocage_plugin_pkgs')
+
+            return pkgs
+        except ClientException as e:
+            # The jail plugin runs in another process, it's seen as a client
+            if e.trace and e.trace['class'] == 'KeyError':
+                pass  # It's either new or past cache date
+            else:
+                raise(e)
+
+        r_pkgs = requests.get('http://pkg.cdn.trueos.org/iocage/All')
+        r_pkgs.raise_for_status()
+
+        r_plugins = requests.get(
+            'https://raw.githubusercontent.com/freenas/'
+            'iocage-ix-plugins/master/INDEX'
+        )
+        r_plugins.raise_for_status()
+        r_plugins = r_plugins.json()
+
+        pkgs = {
+            'bruserver': ('N/A', '1'),
+            'sickrage': ('Git branch - master', '1')
+        }
+        pkg_dict = {}
+
+        for i in r_pkgs.iter_lines():
+            i = i.decode().split('"')
+
+            try:
+                pkg, version = i[1].rsplit('-', 1)
+                pkg_dict[pkg] = version
+            except (ValueError, IndexError):
+                continue  # It's not a pkg
+
+        for plugin, p_dict in r_plugins.items():
+            try:
+                primary_pkg = p_dict['primary_pkg'].split('/', 1)[-1]
+            except KeyError:
+                continue  # Plugin doesn't have a pkg, like bruserver
+
+            if primary_pkg in pkg_dict:
+                version = pkg_dict[primary_pkg]
+                pkgs[plugin] = (
+                    version.rsplit('%2', 1)[0].replace('.txz', ''),
+                    '1'
+                )
+            else:
+                if plugin not in pkgs:
+                    pkgs[plugin] = ('N/A', 'N/A')
+
+        self.middleware.call_sync(
+            'cache.put', 'iocage_plugin_pkgs', pkgs,
+            1209600
+        )
+
+        return pkgs
