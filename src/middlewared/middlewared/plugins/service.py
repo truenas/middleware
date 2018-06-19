@@ -781,8 +781,6 @@ class ServiceService(CRUDService):
         await self._service("nfsuserd", "stop", force=True, **kwargs)
         await self._service("gssd", "stop", force=True, **kwargs)
         await self._service("rpcbind", "stop", force=True, **kwargs)
-        if not await self.middleware.call('system.is_freenas'):
-            await self._service("vaaiserver", "stop", force=True, **kwargs)
 
     async def _start_nfs(self, **kwargs):
         nfs = await self.middleware.call('datastore.config', 'services.nfs')
@@ -810,8 +808,6 @@ class ServiceService(CRUDService):
         await self._service("nfsd", "start", quiet=True, **kwargs)
         await self._service("statd", "start", quiet=True, **kwargs)
         await self._service("lockd", "start", quiet=True, **kwargs)
-        if not await self.middleware.call('system.is_freenas'):
-            await self._service("vaaiserver", "start", quiet=True, **kwargs)
 
     async def _force_stop_jail(self, **kwargs):
         await self._service("jail", "stop", force=True, **kwargs)

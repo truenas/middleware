@@ -19,9 +19,7 @@ async def get_exports(config, shares, kerberos_keytabs):
 
     for share in shares:
         if share["paths"]:
-            share = build_share(config, share)
-            if share:
-                result.append(share)
+            result.extend(build_share(config, share))
 
     return "\n".join(result) + "\n"
 
@@ -53,9 +51,14 @@ def build_share(config, share):
         if config["v4"] and share["security"]:
             result.append("-sec=" + ":".join([s.lower() for s in share["security"]]))
 
-        result.extend(build_share_targets(share))
+        targets = build_share_targets(share)
+        if targets:
+            return [" ".join(result + [target])
+                    for target in targets]
+        else:
+            return [" ".join(result)]
 
-        return " ".join(result)
+    return []
 
 
 def build_share_targets(share):
@@ -64,8 +67,8 @@ def build_share_targets(share):
     for network in share["networks"]:
         result.append("-network " + network)
 
-    for host in share["hosts"]:
-        result.append(host)
+    if share["hosts"]:
+        result.append(" ".join(share["hosts"]))
 
     return result
 

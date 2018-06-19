@@ -224,6 +224,18 @@ class OpenAPIResource(object):
         if _type == 'object':
             for key, val in schema['properties'].items():
                 schema['properties'][key] = self._convert_schema(val)
+        elif _type == 'array':
+            items = schema.get('items')
+            for i, item in enumerate(list(items)):
+                if item.get('type') == 'null':
+                    items.remove(item)
+            if isinstance(items, list):
+                if len(items) > 1:
+                    schema['items'] = {'oneOf': items}
+                elif len(items) > 0:
+                    schema['items'] = items[0]
+                else:
+                    schema['items'] = {}
         return schema
 
     def _accepts_to_request(self, methodname, method, schemas):

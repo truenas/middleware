@@ -77,7 +77,7 @@ class BackupCredentialService(CRUDService):
 
     @accepts(Int("id"))
     async def do_delete(self, id):
-        await self.middleware.call("cloudsync.credential.delete", id)
+        await self.middleware.call("cloudsync.credentials.delete", id)
 
     @private
     def _proxy(self, data):

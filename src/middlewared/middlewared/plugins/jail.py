@@ -5,6 +5,7 @@ import subprocess as su
 import iocage.lib.iocage as ioc
 import libzfs
 import requests
+import itertools
 from iocage.lib.ioc_check import IOCCheck
 from iocage.lib.ioc_clean import IOCClean
 from iocage.lib.ioc_fetch import IOCFetch
@@ -384,14 +385,17 @@ class JailService(CRUDService):
         host_user = options["host_user"]
         jail_user = options.get("jail_user", None)
 
+        if isinstance(command[0], list):
+            # iocage wants a flat list, not a list inside a list
+            command = list(itertools.chain.from_iterable(command))
+
         # We may be getting ';', '&&' and so forth. Adding the shell for
         # safety.
-
         if len(command) == 1:
             command = ["/bin/sh", "-c"] + command
 
         host_user = "" if jail_user and host_user == "root" else host_user
-        msg = iocage.exec(command, host_user, jail_user, return_msg=True)
+        msg = iocage.exec(command, host_user, jail_user, msg_return=True)
 
         return msg.decode("utf-8")
 
