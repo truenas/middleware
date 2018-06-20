@@ -8,7 +8,10 @@ import functools
 import importlib
 import logging
 import multiprocessing
+import os
+import select
 import setproctitle
+import threading
 
 MIDDLEWARE = None
 
@@ -122,7 +125,33 @@ def main_worker(*call_args):
     return res
 
 
+def watch_parent():
+    """
+    Thread to watch for the parent pid.
+    If this process has been orphaned it means middlewared process has crashed
+    and there is nothing left to do here other than commit suicide!
+    """
+    kqueue = select.kqueue()
+    kqueue.control([
+        select.kevent(
+            os.getppid(),
+            filter=select.KQ_FILTER_PROC,
+            flags=select.KQ_EV_ADD,
+            fflags=select.KQ_NOTE_EXIT,
+        )
+    ], 0, 0)
+
+    while True:
+        ppid = os.getppid()
+        if ppid == 1:
+            break
+        kqueue.control(None, 1)
+
+    os._exit(1)
+
+
 def init():
     global MIDDLEWARE
     MIDDLEWARE = FakeMiddleware()
     setproctitle.setproctitle('middlewared (worker)')
+    threading.Thread(target=watch_parent, daemon=True).start()
