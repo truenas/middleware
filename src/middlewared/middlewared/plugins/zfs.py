@@ -12,7 +12,7 @@ from middlewared.service import (
     CallError, CRUDService, Service, ValidationError, ValidationErrors,
     filterable, job,
 )
-from middlewared.utils import filter_list, run, start_daemon_thread
+from middlewared.utils import filter_list, start_daemon_thread
 
 SCAN_THREADS = {}
 
