@@ -1362,12 +1362,18 @@ class ZFSDatasetCommonForm(Form):
             if not self.cleaned_data["quota_warning"].isdigit():
                 raise forms.ValidationError("Not a valid integer")
 
+            if not (0 <= int(self.cleaned_data["quota_warning"]) <= 100):
+                raise forms.ValidationError("Should be between 0 and 100")
+
         return self.cleaned_data["quota_warning"]
 
     def clean_quota_critical(self):
         if self.cleaned_data["quota_critical"]:
             if not self.cleaned_data["quota_critical"].isdigit():
                 raise forms.ValidationError("Not a valid integer")
+
+            if not (0 <= int(self.cleaned_data["quota_critical"]) <= 100):
+                raise forms.ValidationError("Should be between 0 and 100")
 
         return self.cleaned_data["quota_critical"]
 
@@ -1376,12 +1382,18 @@ class ZFSDatasetCommonForm(Form):
             if not self.cleaned_data["refquota_warning"].isdigit():
                 raise forms.ValidationError("Not a valid integer")
 
+            if not (0 <= int(self.cleaned_data["refquota_warning"]) <= 100):
+                raise forms.ValidationError("Should be between 0 and 100")
+
         return self.cleaned_data["refquota_warning"]
 
     def clean_refquota_critical(self):
         if self.cleaned_data["refquota_critical"]:
             if not self.cleaned_data["refquota_critical"].isdigit():
                 raise forms.ValidationError("Not a valid integer")
+
+            if not (0 <= int(self.cleaned_data["refquota_critical"]) <= 100):
+                raise forms.ValidationError("Should be between 0 and 100")
 
         return self.cleaned_data["refquota_critical"]
 
@@ -1576,13 +1588,12 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
 
         data['dataset_share_type'] = notifier().get_dataset_share_type(fs)
 
-        with client as c:
-            for k in ['quota_warning', 'quota_critical', 'refquota_warning', 'refquota_critical']:
-                if f'org.freenas:{k}' in zdata and zdata[f'org.freenas:{k}'][2] == 'local':
-                    try:
-                        data[k] = int(float(zdata[f'org.freenas:{k}'][0]) * 100)
-                    except ValueError:
-                        pass
+        for k in ['quota_warning', 'quota_critical', 'refquota_warning', 'refquota_critical']:
+            if f'org.freenas:{k}' in zdata and zdata[f'org.freenas:{k}'][2] == 'local':
+                try:
+                    data[k] = int(float(zdata[f'org.freenas:{k}'][0]) * 100)
+                except ValueError:
+                    pass
 
         return data
 
