@@ -293,27 +293,6 @@ class Float(EnumMixin, Attribute):
         return schema
 
 
-class Inheritable(EnumMixin, Attribute):
-    def __init__(self, *args, **kwargs):
-        self.value = kwargs.pop('value')
-        super(Inheritable, self).__init__(*args, **kwargs)
-
-    def clean(self, value):
-        if value == 'INHERIT':
-            return value
-
-        return self.value.clean(value)
-
-    def validate(self, value):
-        if value == 'INHERIT':
-            return
-
-        return self.value.validate(value)
-
-    def to_json_schema(self, parent=None):
-        return self.value.to_json_schema(parent)
-
-
 class List(EnumMixin, Attribute):
 
     def __init__(self, *args, **kwargs):

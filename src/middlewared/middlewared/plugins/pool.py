@@ -10,7 +10,7 @@ import sysctl
 import bsd
 
 from middlewared.job import JobProgressBuffer
-from middlewared.schema import (accepts, Bool, Cron, Dict, Float, Inheritable, Int, List, Patch,
+from middlewared.schema import (accepts, Attribute, Bool, Cron, Dict, EnumMixin, Float, Int, List, Patch,
                                 Str, UnixPerm)
 from middlewared.service import (
     ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
@@ -19,6 +19,27 @@ from middlewared.utils import Popen, filter_list, run
 from middlewared.validators import Range, Time
 
 logger = logging.getLogger(__name__)
+
+
+class Inheritable(EnumMixin, Attribute):
+    def __init__(self, *args, **kwargs):
+        self.value = kwargs.pop('value')
+        super(Inheritable, self).__init__(*args, **kwargs)
+
+    def clean(self, value):
+        if value == 'INHERIT':
+            return value
+
+        return self.value.clean(value)
+
+    def validate(self, value):
+        if value == 'INHERIT':
+            return
+
+        return self.value.validate(value)
+
+    def to_json_schema(self, parent=None):
+        return self.value.to_json_schema(parent)
 
 
 def _none(x):
