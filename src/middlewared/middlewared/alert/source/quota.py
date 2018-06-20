@@ -37,10 +37,10 @@ class QuotaAlertSource(ThreadedAlertSource):
         for d in datasets:
             d["name"] = d["name"]["rawvalue"]
 
-            for k, default in [("org.freenas:quota_warning", 0.8), ("org.freenas:quota_critical", 0.95),
-                               ("org.freenas:refquota_warning", 0.8), ("org.freenas:refquota_critical", 0.95)]:
+            for k, default in [("org.freenas:quota_warning", 80), ("org.freenas:quota_critical", 95),
+                               ("org.freenas:refquota_warning", 80), ("org.freenas:refquota_critical", 95)]:
                 try:
-                    d[k] = float(d[k]["rawvalue"])
+                    d[k] = int(d[k]["rawvalue"])
                 except (KeyError, ValueError):
                     d[k] = default
 
@@ -61,9 +61,9 @@ class QuotaAlertSource(ThreadedAlertSource):
 
                 used = int(dataset[used_property]["rawvalue"])
                 try:
-                    used_fraction = used / quota_value
+                    used_fraction = 100 * used / quota_value
                 except ZeroDivisionError:
-                    used_fraction = 1.0
+                    used_fraction = 100
 
                 critical_threshold = dataset[f"org.freenas:{quota_property}_critical"]
                 warning_threshold = dataset[f"org.freenas:{quota_property}_warning"]
@@ -79,11 +79,11 @@ class QuotaAlertSource(ThreadedAlertSource):
                 hostname = socket.gethostname()
 
                 title = ("%(name)s exceed on dataset %(dataset)s. "
-                         "Used %(percent_used).2f%% (%(used)s of %(quota_value)s)")
+                         "Used %(used_fraction).2f%% (%(used)s of %(quota_value)s)")
                 args = {
                     "name": quota_name,
                     "dataset": dataset["name"],
-                    "percent_used": used_fraction * 100,
+                    "used_fraction": used_fraction,
                     "used": humanfriendly.format_size(used),
                     "quota_value": humanfriendly.format_size(quota_value),
                 }

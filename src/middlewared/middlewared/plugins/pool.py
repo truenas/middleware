@@ -10,7 +10,7 @@ import sysctl
 import bsd
 
 from middlewared.job import JobProgressBuffer
-from middlewared.schema import (accepts, Attribute, Bool, Cron, Dict, EnumMixin, Float, Int, List, Patch,
+from middlewared.schema import (accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch,
                                 Str, UnixPerm)
 from middlewared.service import (
     ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
@@ -621,11 +621,11 @@ class PoolDatasetService(CRUDService):
         Str('atime', enum=['ON', 'OFF']),
         Str('exec', enum=['ON', 'OFF']),
         Int('quota'),
-        Float('quota_warning', validators=[Range(0.0, 1.0)]),
-        Float('quota_critical', validators=[Range(0.0, 1.0)]),
+        Int('quota_warning', validators=[Range(0, 100)]),
+        Int('quota_critical', validators=[Range(0, 100)]),
         Int('refquota'),
-        Float('refquota_warning', validators=[Range(0.0, 1.0)]),
-        Float('refquota_critical', validators=[Range(0.0, 1.0)]),
+        Int('refquota_warning', validators=[Range(0, 100)]),
+        Int('refquota_critical', validators=[Range(0, 100)]),
         Int('reservation'),
         Int('refreservation'),
         Int('copies'),
@@ -718,10 +718,10 @@ class PoolDatasetService(CRUDService):
         ('edit', _add_inherit('readonly')),
         ('edit', _add_inherit('recordsize')),
         ('edit', _add_inherit('snapdir')),
-        ('add', Inheritable('quota_warning', value=Float('quota_warning', validators=[Range(0.0, 1.0)]))),
-        ('add', Inheritable('quota_critical', value=Float('quota_critical', validators=[Range(0.0, 1.0)]))),
-        ('add', Inheritable('refquota_warning', value=Float('refquota_warning', validators=[Range(0.0, 1.0)]))),
-        ('add', Inheritable('refquota_critical', value=Float('refquota_critical', validators=[Range(0.0, 1.0)]))),
+        ('add', Inheritable('quota_warning', value=Int('quota_warning', validators=[Range(0, 100)]))),
+        ('add', Inheritable('quota_critical', value=Int('quota_critical', validators=[Range(0, 100)]))),
+        ('add', Inheritable('refquota_warning', value=Int('refquota_warning', validators=[Range(0, 100)]))),
+        ('add', Inheritable('refquota_critical', value=Int('refquota_critical', validators=[Range(0, 100)]))),
         ('attr', {'update': True}),
     ))
     async def do_update(self, id, data):

@@ -1428,7 +1428,7 @@ class ZFSDatasetCommonForm(Form):
         with client as c:
             c.call('pool.dataset.update', name, {
                 k: (
-                    float(self.cleaned_data.get(k)) / 100
+                    int(self.cleaned_data.get(k))
                     if self.cleaned_data.get(k)
                     else 'INHERIT'
                 )
@@ -1591,7 +1591,7 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
         for k in ['quota_warning', 'quota_critical', 'refquota_warning', 'refquota_critical']:
             if f'org.freenas:{k}' in zdata and zdata[f'org.freenas:{k}'][2] == 'local':
                 try:
-                    data[k] = int(float(zdata[f'org.freenas:{k}'][0]) * 100)
+                    data[k] = int(zdata[f'org.freenas:{k}'][0])
                 except ValueError:
                     pass
 
