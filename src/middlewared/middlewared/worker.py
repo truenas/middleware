@@ -132,14 +132,18 @@ def watch_parent():
     and there is nothing left to do here other than commit suicide!
     """
     kqueue = select.kqueue()
-    kqueue.control([
-        select.kevent(
-            os.getppid(),
-            filter=select.KQ_FILTER_PROC,
-            flags=select.KQ_EV_ADD,
-            fflags=select.KQ_NOTE_EXIT,
-        )
-    ], 0, 0)
+
+    try:
+        kqueue.control([
+            select.kevent(
+                os.getppid(),
+                filter=select.KQ_FILTER_PROC,
+                flags=select.KQ_EV_ADD,
+                fflags=select.KQ_NOTE_EXIT,
+            )
+        ], 0, 0)
+    except ProcessLookupError:
+        os._exit(1)
 
     while True:
         ppid = os.getppid()
