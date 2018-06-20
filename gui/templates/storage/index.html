@@ -14,13 +14,6 @@
   refreshOnShow: true" class="objrefresh data_storage_Task" tab="storage.Task.View" id="tab_Task">
   </div>
 
-  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Quota Alerts"|escapejs %}'
-  {% if focused_tab == "storage.RootDataset.View" %}, selected: true{% endif %},
-  doLayout: false,
-  href: '{{ rootdataset_edit_url }}',
-  refreshOnShow: true" class="objrefresh data_storage_RootDataset" tab="storage.RootDataset.View" id="tab_RootDataset">
-  </div>
-
   <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Replication Tasks"|escapejs %}'
   {% if focused_tab == "storage.Replication.View" %}, selected: true{% endif %},
   doLayout: false,

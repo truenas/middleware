@@ -507,29 +507,6 @@ class PoolService(CRUDService):
             self.dismissed_import_disk_jobs.add(current_import_job["id"])
 
 
-class RootDatasetService(ConfigService):
-    class Config:
-        namespace = "pool.root_dataset"
-        datastore = "storage.rootdataset"
-
-    @accepts(Dict(
-        "root_dataset_update",
-        Float("quota_warning", required=False, default=None),
-        Float("quota_critical", required=False, default=None),
-        Float("refquota_warning", required=False, default=None),
-        Float("refquota_critical", required=False, default=None),
-    ))
-    async def do_update(self, data):
-        old = await self.config()
-
-        new = old.copy()
-        new.update(data)
-
-        await self.middleware.call("datastore.update", self._config.datastore, old["id"], new)
-
-        return new
-
-
 class PoolDatasetService(CRUDService):
 
     DB_DEFAULTS = {
