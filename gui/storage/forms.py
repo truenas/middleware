@@ -2044,6 +2044,29 @@ class ResilverForm(MiddlewareModelForm, ModelForm):
         return end.strftime('%H:%M')
 
 
+class RootDatasetForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_schema = 'root_dataset'
+    middleware_attr_prefix = ''
+    middleware_plugin = 'pool.root_dataset'
+    is_singletone = True
+
+    class Meta:
+        fields = '__all__'
+        model = models.RootDataset
+
+    def __init__(self, *args, **kwargs):
+        if "instance" in kwargs:
+            kwargs.setdefault("initial", {})
+            for k in ["quota_warning", "quota_critical", "refquota_warning", "refquota_critical"]:
+                kwargs["initial"][k] = int(getattr(kwargs["instance"], k) * 100)
+
+        super(RootDatasetForm, self).__init__(*args, **kwargs)
+
+    def middleware_clean(self, data):
+        return {k: v / 100 for k, v in data.items()}
+
+
 class PeriodicSnapForm(MiddlewareModelForm, ModelForm):
 
     middleware_attr_schema = 'periodic_snapshot'

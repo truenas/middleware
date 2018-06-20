@@ -1112,10 +1112,20 @@ class VMWarePlugin(Model):
 
 
 class RootDataset(Model):
-    quota_warning = models.FloatField()
-    quota_critical = models.FloatField()
-    refquota_warning = models.FloatField()
-    refquota_critical = models.FloatField()
+    quota_warning = models.FloatField(verbose_name=_('Quota warning at, %'), help_text=_('0=Disabled'))
+    quota_critical = models.FloatField(verbose_name=_('Quota critical alert at, %'), help_text=_('0=Disabled'))
+    refquota_warning = models.FloatField(verbose_name=_('Refquota warning at, %'), help_text=_('0=Disabled'))
+    refquota_critical = models.FloatField(verbose_name=_('Refquota critical alert at, %'), help_text=_('0=Disabled'))
+
+    class Meta:
+        verbose_name = _("Quota Alerts")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = "AlertServiceIcon"
+        icon_object = "AlertServiceIcon"
+        icon_view = "AlertServiceIcon"
+        icon_add = "AlertServiceIcon"
 
 
 class Dataset(Model):
