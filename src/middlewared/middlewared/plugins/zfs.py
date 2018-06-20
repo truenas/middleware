@@ -1,18 +1,16 @@
 import errno
-import os
 import socket
-import textwrap
+import subprocess
 import threading
 import time
 
-from bsd import getmntinfo, geom
-import humanfriendly
+from bsd import geom
 import libzfs
 
 from middlewared.schema import Dict, List, Str, Bool, Int, accepts
 from middlewared.service import (
     CallError, CRUDService, Service, ValidationError, ValidationErrors,
-    filterable, job, periodic,
+    filterable, job,
 )
 from middlewared.utils import filter_list, start_daemon_thread
 
@@ -284,7 +282,11 @@ class ZFSDatasetService(CRUDService):
                         prop = dataset.properties.get(k)
                         if prop:
                             if v.get('source') == 'INHERIT':
-                                prop.inherit()
+                                if isinstance(prop, libzfs.ZFSUserProperty):
+                                    # Workaround because libzfs crashes when trying to inherit user property
+                                    subprocess.check_call(["zfs", "inherit", k, id])
+                                else:
+                                    prop.inherit()
                             elif 'value' in v and (
                                 prop.value != v['value'] or prop.source.name == 'INHERITED'
                             ):
@@ -294,12 +296,15 @@ class ZFSDatasetService(CRUDService):
                             ):
                                 prop.parsed = v['parsed']
                         else:
-                            if 'value' not in v:
-                                raise ValidationError('properties', f'properties.{k} needs a "value" attribute')
-                            if ':' not in k:
-                                raise ValidationError('properties', f'User property needs a colon (:) in its name`')
-                            prop = libzfs.ZFSUserProperty(v['value'])
-                            dataset.properties[k] = prop
+                            if v.get('source') == 'INHERIT':
+                                pass
+                            else:
+                                if 'value' not in v:
+                                    raise ValidationError('properties', f'properties.{k} needs a "value" attribute')
+                                if ':' not in k:
+                                    raise ValidationError('properties', f'User property needs a colon (:) in its name`')
+                                prop = libzfs.ZFSUserProperty(v['value'])
+                                dataset.properties[k] = prop
 
         except libzfs.ZFSException as e:
             self.logger.error('Failed to update dataset', exc_info=True)
@@ -443,182 +448,6 @@ class ZFSSnapshot(CRUDService):
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
             return False
-
-
-class ZFSQuoteService(Service):
-
-    class Config:
-        namespace = 'zfs.quota'
-        private = True
-
-    def __init__(self, middleware):
-        super().__init__(middleware)
-        self.excesses = None
-
-    @periodic(60)
-    async def notify_quota_excess(self):
-        if (
-            not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('notifier.failover_licensed') and
-            await self.middleware.call('notifier.failover_status') == 'BACKUP'
-        ):
-            return
-
-        if self.excesses is None:
-            self.excesses = {
-                self.__excess_key(excess): excess
-                for excess in await self.middleware.call('datastore.query', 'storage.quotaexcess')
-            }
-
-        excesses = await self.__get_quota_excesses()
-
-        # Remove gone excesses
-        self.excesses = dict(
-            filter(
-                lambda item: any(self.__excess_key(excess) == item[0] for excess in excesses),
-                self.excesses.items()
-            )
-        )
-
-        # Insert/update present excesses
-        for excess in excesses:
-            notify = False
-            existing_excess = self.excesses.get(self.__excess_key(excess))
-            if existing_excess is None:
-                notify = True
-            else:
-                if existing_excess["level"] < excess["level"]:
-                    notify = True
-
-            self.excesses[self.__excess_key(excess)] = excess
-
-            if notify:
-                try:
-                    bsduser = await self.middleware.call(
-                        'datastore.query',
-                        'account.bsdusers',
-                        [('bsdusr_uid', '=', excess['uid'])],
-                        {'get': True},
-                    )
-                    to = bsduser['bsdusr_email'] or None
-                except IndexError:
-                    self.logger.warning('Unable to query bsduser with uid %r', excess['uid'])
-                    to = None
-
-                hostname = socket.gethostname()
-
-                try:
-                    # FIXME: Translation
-                    human_quota_type = excess["quota_type"][0].upper() + excess["quota_type"][1:]
-                    await (await self.middleware.call('mail.send', {
-                        'to': to,
-                        'subject': '{}: {} exceed on dataset {}'.format(hostname, human_quota_type,
-                                                                        excess["dataset_name"]),
-                        'text': textwrap.dedent('''\
-                            %(quota_type)s exceed on dataset %(dataset_name)s.
-                            Used %(percent_used).2f%% (%(used)s of %(quota_value)s)
-                        ''') % {
-                            "quota_type": human_quota_type,
-                            "dataset_name": excess["dataset_name"],
-                            "percent_used": excess["percent_used"],
-                            "used": humanfriendly.format_size(excess["used"]),
-                            "quota_value": humanfriendly.format_size(excess["quota_value"]),
-                        },
-                    })).wait()
-                except Exception:
-                    self.logger.warning('Failed to send email about quota excess', exc_info=True)
-
-    async def __get_quota_excesses(self):
-
-        def get_props():
-            with libzfs.ZFS() as zfs:
-                return [
-                    {k: v.__getstate__() for k, v in i.properties.items()}
-                    for i in zfs.datasets
-                ]
-
-        excesses = []
-        for properties in await self.middleware.run_in_thread(get_props):
-            quota = await self.__get_quota_excess(properties, "quota", "quota", "used")
-            if quota:
-                excesses.append(quota)
-
-            refquota = await self.__get_quota_excess(properties, "refquota", "refquota", "usedbydataset")
-            if refquota:
-                excesses.append(refquota)
-
-        return excesses
-
-    async def __get_quota_excess(self, properties, quota_type, quota_property, used_property):
-        try:
-            quota_value = int(properties[quota_property]["rawvalue"])
-        except (AttributeError, KeyError, ValueError):
-            return None
-
-        if quota_value == 0:
-            return
-
-        used = int(properties[used_property]["rawvalue"])
-        try:
-            percent_used = 100 * used / quota_value
-        except ZeroDivisionError:
-            percent_used = 100
-
-        if percent_used >= 95:
-            level = 2
-        elif percent_used >= 80:
-            level = 1
-        else:
-            return None
-
-        mountpoint = None
-        if properties["mounted"]["value"] == "yes":
-            if properties["mountpoint"]["value"] == "legacy":
-                for m in await self.middleware.run_in_thread(getmntinfo):
-                    if m.source == properties["name"]["value"]:
-                        mountpoint = m.dest
-                        break
-            else:
-                mountpoint = properties["mountpoint"]["value"]
-        if mountpoint is None:
-            self.logger.debug("Unable to get mountpoint for dataset %r, assuming owner = root",
-                              properties["name"]["value"])
-            uid = 0
-        else:
-            try:
-                stat_info = await self.middleware.run_in_thread(os.stat, mountpoint)
-            except Exception:
-                self.logger.warning("Unable to stat mountpoint %r, assuming owner = root", mountpoint)
-                uid = 0
-            else:
-                uid = stat_info.st_uid
-
-        return {
-            "dataset_name": properties["name"]["value"],
-            "quota_type": quota_type,
-            "quota_value": quota_value,
-            "level": level,
-            "used": used,
-            "percent_used": percent_used,
-            "uid": uid,
-        }
-
-    def __excess_key(self, excess):
-        return excess["dataset_name"], excess["quota_type"]
-
-    async def terminate(self):
-        if (
-            not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('notifier.failover_licensed') and
-            await self.middleware.call('notifier.failover_status') == 'BACKUP'
-        ):
-            return
-
-        await self.middleware.call('datastore.delete', 'storage.quotaexcess', [])
-
-        if self.excesses is not None:
-            for excess in self.excesses.values():
-                await self.middleware.call('datastore.insert', 'storage.quotaexcess', excess)
 
 
 class ScanWatch(object):

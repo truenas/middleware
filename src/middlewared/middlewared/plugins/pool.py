@@ -10,7 +10,7 @@ import sysctl
 import bsd
 
 from middlewared.job import JobProgressBuffer
-from middlewared.schema import (accepts, Bool, Cron, Dict, Int, List, Patch,
+from middlewared.schema import (accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch,
                                 Str, UnixPerm)
 from middlewared.service import (
     ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
@@ -19,6 +19,29 @@ from middlewared.utils import Popen, filter_list, run
 from middlewared.validators import Range, Time
 
 logger = logging.getLogger(__name__)
+
+
+class Inheritable(EnumMixin, Attribute):
+    def __init__(self, *args, **kwargs):
+        self.value = kwargs.pop('value')
+        super(Inheritable, self).__init__(*args, **kwargs)
+
+    def clean(self, value):
+        if value == 'INHERIT':
+            return value
+
+        return self.value.clean(value)
+
+    def validate(self, value):
+        if value == 'INHERIT':
+            return
+
+        return self.value.validate(value)
+
+    def to_json_schema(self, parent=None):
+        schema = self.value.to_json_schema(parent)
+        schema['anyOf'] = [{'type': schema.pop('type')}, {'type': 'string', 'enum': ['INHERIT']}]
+        return schema
 
 
 def _none(x):
@@ -512,7 +535,7 @@ class PoolDatasetService(CRUDService):
         namespace = 'pool.dataset'
 
     @filterable
-    def query(self, filters, options):
+    def query(self, filters=None, options=None):
         # Otimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
         for f in filters:
@@ -527,10 +550,13 @@ class PoolDatasetService(CRUDService):
         We need to transform the data zfs gives us to make it consistent/user-friendly,
         making it match whatever pool.dataset.{create,update} uses as input.
         """
-
         def transform(dataset):
             for orig_name, new_name, method in (
                 ('org.freenas:description', 'comments', None),
+                ('org.freenas:quota_warning', 'quota_warning', None),
+                ('org.freenas:quota_critical', 'quota_critical', None),
+                ('org.freenas:refquota_warning', 'refquota_warning', None),
+                ('org.freenas:refquota_critical', 'refquota_critical', None),
                 ('dedup', 'deduplication', str.upper),
                 ('atime', None, str.upper),
                 ('casesensitivity', None, str.upper),
@@ -570,6 +596,7 @@ class PoolDatasetService(CRUDService):
             for child in dataset['children']:
                 rv.append(transform(child))
             dataset['children'] = rv
+
             return dataset
 
         rv = []
@@ -597,7 +624,11 @@ class PoolDatasetService(CRUDService):
         Str('atime', enum=['ON', 'OFF']),
         Str('exec', enum=['ON', 'OFF']),
         Int('quota'),
+        Int('quota_warning', validators=[Range(0, 100)]),
+        Int('quota_critical', validators=[Range(0, 100)]),
         Int('refquota'),
+        Int('refquota_warning', validators=[Range(0, 100)]),
+        Int('refquota_critical', validators=[Range(0, 100)]),
         Int('reservation'),
         Int('refreservation'),
         Int('copies'),
@@ -638,9 +669,13 @@ class PoolDatasetService(CRUDService):
             ('deduplication', 'dedup', str.lower),
             ('exec', None, str.lower),
             ('quota', None, _none),
+            ('quota_warning', 'org.freenas:quota_warning', None),
+            ('quota_critical', 'org.freenas:quota_critical', None),
             ('readonly', None, str.lower),
             ('recordsize', None, None),
             ('refquota', None, _none),
+            ('refquota_warning', 'org.freenas:refquota_warning', None),
+            ('refquota_critical', 'org.freenas:refquota_critical', None),
             ('refreservation', None, _none),
             ('reservation', None, _none),
             ('snapdir', None, str.lower),
@@ -691,6 +726,10 @@ class PoolDatasetService(CRUDService):
         ('edit', _add_inherit('readonly')),
         ('edit', _add_inherit('recordsize')),
         ('edit', _add_inherit('snapdir')),
+        ('add', Inheritable('quota_warning', value=Int('quota_warning', validators=[Range(0, 100)]))),
+        ('add', Inheritable('quota_critical', value=Int('quota_critical', validators=[Range(0, 100)]))),
+        ('add', Inheritable('refquota_warning', value=Int('refquota_warning', validators=[Range(0, 100)]))),
+        ('add', Inheritable('refquota_critical', value=Int('refquota_critical', validators=[Range(0, 100)]))),
         ('attr', {'update': True}),
     ))
     async def do_update(self, id, data):
@@ -721,7 +760,11 @@ class PoolDatasetService(CRUDService):
             ('deduplication', 'dedup', str.lower, True),
             ('exec', None, str.lower, True),
             ('quota', None, _none, False),
+            ('quota_warning', 'org.freenas:quota_warning', _none, True),
+            ('quota_critical', 'org.freenas:quota_critical', _none, True),
             ('refquota', None, _none, False),
+            ('refquota_warning', 'org.freenas:refquota_warning', _none, True),
+            ('refquota_critical', 'org.freenas:refquota_critical', _none, True),
             ('reservation', None, _none, False),
             ('refreservation', None, _none, False),
             ('copies', None, None, False),

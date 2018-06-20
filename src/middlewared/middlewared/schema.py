@@ -272,6 +272,27 @@ class Int(EnumMixin, Attribute):
         return schema
 
 
+class Float(EnumMixin, Attribute):
+
+    def clean(self, value):
+        value = super(Float, self).clean(value)
+        if value is None and not self.required:
+            return self.default
+        try:
+            return float(value)
+        except ValueError:
+            raise Error(self.name, 'Not an floating point number')
+
+    def to_json_schema(self, parent=None):
+        schema = {
+            'type': ['float', 'null'] if not self.required else 'float',
+        }
+        if not parent:
+            schema['title'] = self.verbose
+            schema['_required_'] = self.required
+        return schema
+
+
 class List(EnumMixin, Attribute):
 
     def __init__(self, *args, **kwargs):
@@ -552,7 +573,10 @@ class Patch(object):
         schema.name = self.newname
         for operation, patch in self.patches:
             if operation == 'add':
-                new = self.convert(dict(patch))
+                if isinstance(patch, dict):
+                    new = self.convert(dict(patch))
+                else:
+                    new = copy.deepcopy(patch)
                 schema.attrs[new.name] = new
             elif operation == 'rm':
                 del schema.attrs[patch['name']]

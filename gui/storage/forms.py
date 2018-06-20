@@ -1225,11 +1225,31 @@ class ZFSDatasetCommonForm(Form):
         initial=0,
         label=_('Quota for this dataset'),
         help_text=_('0=Unlimited; example: 1 GiB'))
+    refquota_warning = forms.CharField(
+        required=False,
+        initial=None,
+        label=_('Quota warning alert at, %'),
+        help_text=_('0=Disabled, blank=inherit'))
+    refquota_critical = forms.CharField(
+        required=False,
+        initial=None,
+        label=_('Quota critical alert at, %'),
+        help_text=_('0=Disabled, blank=inherit'))
     dataset_quota = forms.CharField(
         max_length=128,
         initial=0,
         label=_('Quota for this dataset and all children'),
         help_text=_('0=Unlimited; example: 1 GiB'))
+    quota_warning = forms.CharField(
+        required=False,
+        initial=None,
+        label=_('Quota warning alert at, %'),
+        help_text=_('0=Disabled, blank=inherit'))
+    quota_critical = forms.CharField(
+        required=False,
+        initial=None,
+        label=_('Quota critical alert at, %'),
+        help_text=_('0=Disabled, blank=inherit'))
     dataset_refreservation = forms.CharField(
         max_length=128,
         initial=0,
@@ -1273,7 +1293,11 @@ class ZFSDatasetCommonForm(Form):
     advanced_fields = (
         'dataset_readonly',
         'dataset_refquota',
+        'refquota_warning',
+        'refquota_critical',
         'dataset_quota',
+        'quota_warning',
+        'quota_critical',
         'dataset_refreservation',
         'dataset_reservation',
         'dataset_recordsize',
@@ -1333,6 +1357,46 @@ class ZFSDatasetCommonForm(Form):
 
         return name
 
+    def clean_quota_warning(self):
+        if self.cleaned_data["quota_warning"]:
+            if not self.cleaned_data["quota_warning"].isdigit():
+                raise forms.ValidationError("Not a valid integer")
+
+            if not (0 <= int(self.cleaned_data["quota_warning"]) <= 100):
+                raise forms.ValidationError("Should be between 0 and 100")
+
+        return self.cleaned_data["quota_warning"]
+
+    def clean_quota_critical(self):
+        if self.cleaned_data["quota_critical"]:
+            if not self.cleaned_data["quota_critical"].isdigit():
+                raise forms.ValidationError("Not a valid integer")
+
+            if not (0 <= int(self.cleaned_data["quota_critical"]) <= 100):
+                raise forms.ValidationError("Should be between 0 and 100")
+
+        return self.cleaned_data["quota_critical"]
+
+    def clean_refquota_warning(self):
+        if self.cleaned_data["refquota_warning"]:
+            if not self.cleaned_data["refquota_warning"].isdigit():
+                raise forms.ValidationError("Not a valid integer")
+
+            if not (0 <= int(self.cleaned_data["refquota_warning"]) <= 100):
+                raise forms.ValidationError("Should be between 0 and 100")
+
+        return self.cleaned_data["refquota_warning"]
+
+    def clean_refquota_critical(self):
+        if self.cleaned_data["refquota_critical"]:
+            if not self.cleaned_data["refquota_critical"].isdigit():
+                raise forms.ValidationError("Not a valid integer")
+
+            if not (0 <= int(self.cleaned_data["refquota_critical"]) <= 100):
+                raise forms.ValidationError("Should be between 0 and 100")
+
+        return self.cleaned_data["refquota_critical"]
+
     def clean_data_to_props(self):
         props = dict()
         for prop in self.zfs_size_fields:
@@ -1359,6 +1423,17 @@ class ZFSDatasetCommonForm(Form):
                 props[prop] = value
 
         return props
+
+    def _update_quotas(self, name):
+        with client as c:
+            c.call('pool.dataset.update', name, {
+                k: (
+                    int(self.cleaned_data.get(k))
+                    if self.cleaned_data.get(k)
+                    else 'INHERIT'
+                )
+                for k in ['quota_warning', 'quota_critical', 'refquota_warning', 'refquota_critical']
+            })
 
     def clean_dataset_recordsize(self):
         rs = self.cleaned_data.get("dataset_recordsize")
@@ -1423,6 +1498,8 @@ class ZFSDatasetCreateForm(ZFSDatasetCommonForm):
         if err:
             self._errors['__all__'] = self.error_class([msg])
             return False
+
+        self._update_quotas(path)
 
         notifier().change_dataset_share_type(path, self.cleaned_data.get('dataset_share_type'))
 
@@ -1511,6 +1588,13 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
 
         data['dataset_share_type'] = notifier().get_dataset_share_type(fs)
 
+        for k in ['quota_warning', 'quota_critical', 'refquota_warning', 'refquota_critical']:
+            if f'org.freenas:{k}' in zdata and zdata[f'org.freenas:{k}'][2] == 'local':
+                try:
+                    data[k] = int(zdata[f'org.freenas:{k}'][0])
+                except ValueError:
+                    pass
+
         return data
 
     def clean(self):
@@ -1538,6 +1622,8 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
             if not success:
                 error = True
                 errors[f'dataset_{item}'] = msg
+
+        self._update_quotas(name)
 
         notifier().change_dataset_share_type(name, self.cleaned_data.get('dataset_share_type'))
 
