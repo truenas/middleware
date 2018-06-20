@@ -1,5 +1,6 @@
 import errno
 import socket
+import subprocess
 import threading
 import time
 
@@ -268,7 +269,7 @@ class ZFSDatasetService(CRUDService):
             ),
         ),
     )
-    async def do_update(self, id, data):
+    def do_update(self, id, data):
         try:
             with libzfs.ZFS() as zfs:
                 dataset = zfs.get_dataset(id)
@@ -283,7 +284,7 @@ class ZFSDatasetService(CRUDService):
                             if v.get('source') == 'INHERIT':
                                 if isinstance(prop, libzfs.ZFSUserProperty):
                                     # Workaround because libzfs crashes when trying to inherit user property
-                                    await run("zfs", "inherit", k, id)
+                                    subprocess.check_call(["zfs", "inherit", k, id])
                                 else:
                                     prop.inherit()
                             elif 'value' in v and (
