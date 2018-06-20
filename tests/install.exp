@@ -7,25 +7,6 @@ set timeout 1800
 set PID [spawn vm console "$vm"]
 send_user "Spawned PID: $PID \n"
 
-# Grub2 menu item selection - second entry enables Serial Output for the installer
-expect {
-  "The highlighted entry will be executed automatically" {
-    # Sending down-arrow key with "send {^[[B}" does not work, so instead fall back to the
-    # emacs-like key bindings that grub allows: Ctrl+P = Up, Ctrl+N = Down (mnemonic: up/down)
-    sleep .5
-    # Ctrl+N
-    send \003N
-    send "\r"
-  }
-}
-
-expect {
-  "Press any key to continue..." {
-    sleep .5
-    send "\r"
-  }
-}
-
 # Install menu, options being:
 # 1) Install, 2) Shell, 3) Reboot, 4) Shutdown
 # Options: [O]K, [C]ancel
