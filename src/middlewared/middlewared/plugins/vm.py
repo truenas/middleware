@@ -828,7 +828,7 @@ class VMService(CRUDService):
             setvmem = await self.__set_guest_vmemory(guest_memory)
             if setvmem is False:
                 self.logger.warn("===> Cannot guarantee memory for guest id: {}".format(id))
-                setvmem = "ENOMEM"
+                setvmem = errno.ENOMEM
             return setvmem
 
         else:
