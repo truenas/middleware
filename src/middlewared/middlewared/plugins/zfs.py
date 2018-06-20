@@ -62,14 +62,14 @@ class ZFSPoolService(Service):
         return filter_list(pools, filters, options)
 
     @accepts(Str('pool'))
-    async def get_disks(self, name):
+    def get_disks(self, name):
         try:
             with libzfs.ZFS() as zfs:
                 disks = list(zfs.get(name).disks)
         except libzfs.ZFSException as e:
             raise CallError(str(e), errno.ENOENT)
 
-        await self.middleware.run_in_thread(geom.scan)
+        geom.scan()
         labelclass = geom.class_by_name('LABEL')
         for absdev in disks:
             dev = absdev.replace('/dev/', '').replace('.eli', '')
@@ -211,7 +211,7 @@ class ZFSDatasetService(CRUDService):
         private = True
 
     @filterable
-    def query(self, filters, options):
+    def query(self, filters=None, options=None):
         with libzfs.ZFS() as zfs:
             # Handle `id` filter specially to avoiding getting all datasets
             if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
@@ -343,7 +343,7 @@ class ZFSSnapshot(CRUDService):
         namespace = 'zfs.snapshot'
 
     @filterable
-    def query(self, filters, options):
+    def query(self, filters=None, options=None):
         with libzfs.ZFS() as zfs:
             snapshots = [i.__getstate__() for i in list(zfs.snapshots)]
         # FIXME: awful performance with hundreds/thousands of snapshots
@@ -357,7 +357,7 @@ class ZFSSnapshot(CRUDService):
         Int('vmsnaps_count'),
         Dict('properties', additional_attrs=True)
     ))
-    async def do_create(self, data):
+    def do_create(self, data):
         """
         Take a snapshot from a given dataset.
 
@@ -394,7 +394,7 @@ class ZFSSnapshot(CRUDService):
         Str('name', required=True),
         Bool('defer_delete')
     ))
-    async def remove(self, data):
+    def remove(self, data):
         """
         Remove a snapshot from a given dataset.
 
@@ -420,7 +420,7 @@ class ZFSSnapshot(CRUDService):
         Str('snapshot'),
         Str('dataset_dst'),
     ))
-    async def clone(self, data):
+    def clone(self, data):
         """
         Clone a given snapshot to a new dataset.
 
