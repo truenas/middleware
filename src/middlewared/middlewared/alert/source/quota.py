@@ -22,23 +22,27 @@ class QuotaAlertSource(ThreadedAlertSource):
     def check_sync(self):
         alerts = []
 
-        quotas = {}
-        for dataset in self.middleware.call_sync("datastore.query", "storage.dataset"):
-            quotas[dataset["name"]] = dataset
-        quotas[""] = self.middleware.call_sync("datastore.query", "storage.rootdataset", [], {"get": True})
-
         with libzfs.ZFS() as zfs:
             datasets = [
                 {
                     k: v.__getstate__()
                     for k, v in i.properties.items()
-                    if k in ["name", "quota", "used", "refquota", "usedbydataset", "mounted", "mountpoint"]
+                    if k in ["name", "quota", "used", "refquota", "usedbydataset", "mounted", "mountpoint",
+                             "org.freenas:quota_warning", "org.freenas:quota_critical",
+                             "org.freenas:refquota_warning", "org.freenas:refquota_critical"]
                 }
                 for i in zfs.datasets
             ]
 
         for d in datasets:
             d["name"] = d["name"]["rawvalue"]
+
+            for k, default in [("org.freenas:quota_warning", 0.8), ("org.freenas:quota_critical", 0.95),
+                               ("org.freenas:refquota_warning", 0.8), ("org.freenas:refquota_critical", 0.95)]:
+                try:
+                    d[k] = float(d[k]["rawvalue"])
+                except (KeyError, ValueError):
+                    d[k] = default
 
         datasets = sorted(datasets, key=lambda ds: ds["name"])
 
@@ -61,8 +65,8 @@ class QuotaAlertSource(ThreadedAlertSource):
                 except ZeroDivisionError:
                     used_fraction = 1.0
 
-                critical_threshold = self._get_quota(quotas, dataset["name"], f"{quota_property}_critical")
-                warning_threshold = self._get_quota(quotas, dataset["name"], f"{quota_property}_warning")
+                critical_threshold = dataset[f"org.freenas:{quota_property}_critical"]
+                warning_threshold = dataset[f"org.freenas:{quota_property}_warning"]
                 if critical_threshold != 0 and used_fraction >= critical_threshold:
                     level = AlertLevel.CRITICAL
                 elif warning_threshold != 0 and used_fraction >= warning_threshold:
@@ -115,12 +119,6 @@ class QuotaAlertSource(ThreadedAlertSource):
                 ))
 
         return alerts
-
-    def _get_quota(self, quotas, name, key):
-        if name in quotas and quotas[name][key] is not None:
-            return quotas[name][key]
-
-        return self._get_quota(quotas, os.path.dirname(name), key)
 
     def _get_owner(self, dataset):
         mountpoint = None

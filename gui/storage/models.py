@@ -1109,18 +1109,3 @@ class VMWarePlugin(Model):
 
     def get_password(self):
         return notifier().pwenc_decrypt(self.password)
-
-
-class RootDataset(Model):
-    quota_warning = models.FloatField()
-    quota_critical = models.FloatField()
-    refquota_warning = models.FloatField()
-    refquota_critical = models.FloatField()
-
-
-class Dataset(Model):
-    name = models.CharField(max_length=256, unique=True)
-    quota_warning = models.FloatField(null=True)
-    quota_critical = models.FloatField(null=True)
-    refquota_warning = models.FloatField(null=True)
-    refquota_critical = models.FloatField(null=True)

@@ -1418,7 +1418,7 @@ class ZFSDatasetCommonForm(Form):
                 k: (
                     float(self.cleaned_data.get(k)) / 100
                     if self.cleaned_data.get(k)
-                    else None
+                    else 'INHERIT'
                 )
                 for k in ['quota_warning', 'quota_critical', 'refquota_warning', 'refquota_critical']
             })
@@ -1577,11 +1577,12 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
         data['dataset_share_type'] = notifier().get_dataset_share_type(fs)
 
         with client as c:
-            mdata = c.call('pool.dataset.query', [['name', '=', fs]], {'get': True})
             for k in ['quota_warning', 'quota_critical', 'refquota_warning', 'refquota_critical']:
-                data[k] = mdata[k]
-                if data[k]:
-                    data[k] = int(data[k] * 100)
+                if f'org.freenas:{k}' in zdata and zdata[f'org.freenas:{k}'][2] == 'local':
+                    try:
+                        data[k] = int(float(zdata[f'org.freenas:{k}'][0]) * 100)
+                    except ValueError:
+                        pass
 
         return data
 

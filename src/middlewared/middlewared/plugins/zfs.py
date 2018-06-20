@@ -11,7 +11,7 @@ from middlewared.service import (
     CallError, CRUDService, Service, ValidationError, ValidationErrors,
     filterable, job,
 )
-from middlewared.utils import filter_list, start_daemon_thread
+from middlewared.utils import filter_list, run, start_daemon_thread
 
 SCAN_THREADS = {}
 
@@ -268,7 +268,7 @@ class ZFSDatasetService(CRUDService):
             ),
         ),
     )
-    def do_update(self, id, data):
+    async def do_update(self, id, data):
         try:
             with libzfs.ZFS() as zfs:
                 dataset = zfs.get_dataset(id)
@@ -281,7 +281,11 @@ class ZFSDatasetService(CRUDService):
                         prop = dataset.properties.get(k)
                         if prop:
                             if v.get('source') == 'INHERIT':
-                                prop.inherit()
+                                if isinstance(prop, libzfs.ZFSUserProperty):
+                                    # Workaround because libzfs crashes when trying to inherit user property
+                                    await run("zfs", "inherit", k, id)
+                                else:
+                                    prop.inherit()
                             elif 'value' in v and (
                                 prop.value != v['value'] or prop.source.name == 'INHERITED'
                             ):
@@ -291,12 +295,15 @@ class ZFSDatasetService(CRUDService):
                             ):
                                 prop.parsed = v['parsed']
                         else:
-                            if 'value' not in v:
-                                raise ValidationError('properties', f'properties.{k} needs a "value" attribute')
-                            if ':' not in k:
-                                raise ValidationError('properties', f'User property needs a colon (:) in its name`')
-                            prop = libzfs.ZFSUserProperty(v['value'])
-                            dataset.properties[k] = prop
+                            if v.get('source') == 'INHERIT':
+                                pass
+                            else:
+                                if 'value' not in v:
+                                    raise ValidationError('properties', f'properties.{k} needs a "value" attribute')
+                                if ':' not in k:
+                                    raise ValidationError('properties', f'User property needs a colon (:) in its name`')
+                                prop = libzfs.ZFSUserProperty(v['value'])
+                                dataset.properties[k] = prop
 
         except libzfs.ZFSException as e:
             self.logger.error('Failed to update dataset', exc_info=True)

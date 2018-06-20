@@ -1,5 +1,4 @@
 import asyncio
-from collections import defaultdict
 import errno
 import logging
 from datetime import datetime, time
@@ -11,7 +10,7 @@ import sysctl
 import bsd
 
 from middlewared.job import JobProgressBuffer
-from middlewared.schema import (accepts, Bool, Cron, Dict, Float, Int, List, Patch,
+from middlewared.schema import (accepts, Bool, Cron, Dict, Float, Inheritable, Int, List, Patch,
                                 Str, UnixPerm)
 from middlewared.service import (
     ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
@@ -509,13 +508,6 @@ class PoolService(CRUDService):
 
 class PoolDatasetService(CRUDService):
 
-    DB_DEFAULTS = {
-        "quota_warning": 0,
-        "quota_critical": 0,
-        "refquota_warning": 0,
-        "refquota_critical": 0,
-    }
-
     class Config:
         namespace = 'pool.dataset'
 
@@ -535,14 +527,13 @@ class PoolDatasetService(CRUDService):
         We need to transform the data zfs gives us to make it consistent/user-friendly,
         making it match whatever pool.dataset.{create,update} uses as input.
         """
-        db_datasets = defaultdict(lambda: self.DB_DEFAULTS, **{
-            ds["name"]: {k: ds[k] for k in self.DB_DEFAULTS}
-            for ds in self.middleware.call_sync('datastore.query', 'storage.dataset')
-        })
-
         def transform(dataset):
             for orig_name, new_name, method in (
                 ('org.freenas:description', 'comments', None),
+                ('org.freenas:quota_warning', 'quota_warning', None),
+                ('org.freenas:quota_critical', 'quota_critical', None),
+                ('org.freenas:refquota_warning', 'refquota_warning', None),
+                ('org.freenas:refquota_critical', 'refquota_critical', None),
                 ('dedup', 'deduplication', str.upper),
                 ('atime', None, str.upper),
                 ('casesensitivity', None, str.upper),
@@ -583,8 +574,6 @@ class PoolDatasetService(CRUDService):
                 rv.append(transform(child))
             dataset['children'] = rv
 
-            dataset.update(db_datasets[dataset['name']])
-
             return dataset
 
         rv = []
@@ -611,11 +600,11 @@ class PoolDatasetService(CRUDService):
         Str('atime', enum=['ON', 'OFF']),
         Str('exec', enum=['ON', 'OFF']),
         Int('quota'),
-        Float('quota_warning', required=False, default=None),
-        Float('quota_critical', required=False, default=None),
+        Float('quota_warning', validators=[Range(0.0, 1.0)]),
+        Float('quota_critical', validators=[Range(0.0, 1.0)]),
         Int('refquota'),
-        Float('refquota_warning', required=False, default=None),
-        Float('refquota_critical', required=False, default=None),
+        Float('refquota_warning', validators=[Range(0.0, 1.0)]),
+        Float('refquota_critical', validators=[Range(0.0, 1.0)]),
         Int('reservation'),
         Int('refreservation'),
         Int('copies'),
@@ -651,9 +640,13 @@ class PoolDatasetService(CRUDService):
             ('deduplication', 'dedup', str.lower),
             ('exec', None, str.lower),
             ('quota', None, _none),
+            ('quota_warning', 'org.freenas:quota_warning', None),
+            ('quota_critical', 'org.freenas:quota_critical', None),
             ('readonly', None, str.lower),
             ('recordsize', None, None),
             ('refquota', None, _none),
+            ('refquota_warning', 'org.freenas:refquota_warning', None),
+            ('refquota_critical', 'org.freenas:refquota_critical', None),
             ('refreservation', None, _none),
             ('reservation', None, _none),
             ('snapdir', None, str.lower),
@@ -682,8 +675,6 @@ class PoolDatasetService(CRUDService):
                 'notifier.change_dataset_share_type', data['name'], data.get('share_type', 'UNIX').lower()
             )
 
-        await self.upsert(data['name'], data)
-
         return await self._get_instance(data['id'])
 
     def _add_inherit(name):
@@ -706,6 +697,10 @@ class PoolDatasetService(CRUDService):
         ('edit', _add_inherit('readonly')),
         ('edit', _add_inherit('recordsize')),
         ('edit', _add_inherit('snapdir')),
+        ('add', Inheritable('quota_warning', value=Float('quota_warning', validators=[Range(0.0, 1.0)]))),
+        ('add', Inheritable('quota_critical', value=Float('quota_critical', validators=[Range(0.0, 1.0)]))),
+        ('add', Inheritable('refquota_warning', value=Float('refquota_warning', validators=[Range(0.0, 1.0)]))),
+        ('add', Inheritable('refquota_critical', value=Float('refquota_critical', validators=[Range(0.0, 1.0)]))),
         ('attr', {'update': True}),
     ))
     async def do_update(self, id, data):
@@ -733,7 +728,11 @@ class PoolDatasetService(CRUDService):
             ('deduplication', 'dedup', str.lower, True),
             ('exec', None, str.lower, True),
             ('quota', None, _none, False),
+            ('quota_warning', 'org.freenas:quota_warning', _none, True),
+            ('quota_critical', 'org.freenas:quota_critical', _none, True),
             ('refquota', None, _none, False),
+            ('refquota_warning', 'org.freenas:refquota_warning', _none, True),
+            ('refquota_critical', 'org.freenas:refquota_critical', _none, True),
             ('reservation', None, _none, False),
             ('refreservation', None, _none, False),
             ('copies', None, None, False),
@@ -757,8 +756,6 @@ class PoolDatasetService(CRUDService):
                 'notifier.change_dataset_share_type', id, data['share_type'].lower()
             )
 
-        await self.upsert(dataset[0]['name'], data)
-
         return rv
 
     async def __common_validation(self, verrors, schema, data, mode):
@@ -777,26 +774,6 @@ class PoolDatasetService(CRUDService):
             ):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for VOLUME')
-
-    @private
-    async def upsert(self, name, data):
-        try:
-            existing = await self.middleware.call('datastore.query', 'storage.dataset', [['name', '=', name]],
-                                                  {'get': True})
-        except IndexError:
-            existing = None
-
-        update = {
-            k: data[k]
-            for k in self.DB_DEFAULTS
-            if k in data
-        }
-        if existing:
-            if update:
-                await self.middleware.call('datastore.update', 'storage.dataset', existing['id'], update)
-        else:
-            await self.middleware.call('datastore.insert', 'storage.dataset', dict(self.DB_DEFAULTS, **update,
-                                                                                   name=name))
 
     @accepts(Str('id'))
     async def do_delete(self, id):
