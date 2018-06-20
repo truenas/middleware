@@ -249,6 +249,19 @@ class JailService(CRUDService):
 
         if resource == "plugin":
             if remote:
+                try:
+                    resource_list = self.middleware.call_sync(
+                        'cache.get', 'iocage_remote_plugins')
+
+                    return resource_list
+                except ClientException as e:
+                    # The jail plugin runs in another process, it's seen as
+                    # a client
+                    if e.trace and e.trace['class'] == 'KeyError':
+                        pass  # It's either new or past cache date
+                    else:
+                        raise(e)
+
                 resource_list = iocage.fetch(list=True, plugins=True,
                                              header=False)
             else:
@@ -258,8 +271,35 @@ class JailService(CRUDService):
                 for i, elem in enumerate(plugin):
                     # iocage returns - for None
                     plugin[i] = elem if elem != "-" else None
+
+                if remote:
+                    pv = self.get_plugin_version(plugin[2])
+                    resource_list[resource_list.index(plugin)] = plugin + pv
+
+            if remote:
+                self.middleware.call_sync(
+                    'cache.put', 'iocage_remote_plugins', resource_list,
+                    86400
+                )
         elif resource == "base":
+            try:
+                resource_list = self.middleware.call_sync(
+                    'cache.get', 'iocage_remote_releases')
+
+                return resource_list
+            except ClientException as e:
+                # The jail plugin runs in another process, it's seen as
+                # a client
+                if e.trace and e.trace['class'] == 'KeyError':
+                    pass  # It's either new or past cache date
+                else:
+                    raise(e)
             resource_list = iocage.fetch(list=True, remote=remote, http=True)
+
+            self.middleware.call_sync(
+                'cache.put', 'iocage_remote_releases', resource_list,
+                86400
+            )
         else:
             resource_list = iocage.list(resource)
 
@@ -486,67 +526,60 @@ class JailService(CRUDService):
 
         return True
 
-    @accepts()
-    def get_plugin_versions(self):
+    @private
+    def get_plugin_version(self, pkg):
         """
         Fetches a list of pkg's from the http://pkg.cdn.trueos.org/iocage/
-        repo and returns a dictionary for each plugin
+        repo and returns a list with the pkg version and plugin revision
         """
         try:
-            pkgs = self.middleware.call_sync('cache.get', 'iocage_plugin_pkgs')
-
-            return pkgs
+            pkg_dict = self.middleware.call_sync('cache.get', 'iocage_rpkgdict')
+            r_plugins = self.middleware.call_sync('cache.get',
+                                                  'iocage_rplugins')
         except ClientException as e:
             # The jail plugin runs in another process, it's seen as a client
             if e.trace and e.trace['class'] == 'KeyError':
-                pass  # It's either new or past cache date
+                r_pkgs = requests.get('http://pkg.cdn.trueos.org/iocage/All')
+                r_pkgs.raise_for_status()
+                pkg_dict = {}
+                for i in r_pkgs.iter_lines():
+                    i = i.decode().split('"')
+
+                    try:
+                        pkg, version = i[1].rsplit('-', 1)
+                        pkg_dict[pkg] = version
+                    except (ValueError, IndexError):
+                        continue  # It's not a pkg
+                self.middleware.call_sync(
+                    'cache.put', 'iocage_rpkgdict', pkg_dict,
+                    86400
+                )
+
+                r_plugins = requests.get(
+                    'https://raw.githubusercontent.com/freenas/'
+                    'iocage-ix-plugins/master/INDEX'
+                )
+                r_plugins.raise_for_status()
+
+                r_plugins = r_plugins.json()
+                self.middleware.call_sync(
+                    'cache.put', 'iocage_rplugins', r_plugins,
+                    86400
+                )
             else:
                 raise(e)
 
-        r_pkgs = requests.get('http://pkg.cdn.trueos.org/iocage/All')
-        r_pkgs.raise_for_status()
+        if pkg == 'bru-server':
+            return ['N/A', '1']
+        elif pkg == 'sickrage':
+            return ['Git branch - master', '1']
 
-        r_plugins = requests.get(
-            'https://raw.githubusercontent.com/freenas/'
-            'iocage-ix-plugins/master/INDEX'
-        )
-        r_plugins.raise_for_status()
-        r_plugins = r_plugins.json()
+        try:
+            primary_pkg = r_plugins[pkg]['primary_pkg'].split('/', 1)[-1]
 
-        pkgs = {
-            'bruserver': ('N/A', '1'),
-            'sickrage': ('Git branch - master', '1')
-        }
-        pkg_dict = {}
+            version = pkg_dict[primary_pkg]
+            version = [version.rsplit('%2', 1)[0].replace('.txz', ''), '1']
+        except KeyError:
+            version = ['N/A', 'N/A']
 
-        for i in r_pkgs.iter_lines():
-            i = i.decode().split('"')
-
-            try:
-                pkg, version = i[1].rsplit('-', 1)
-                pkg_dict[pkg] = version
-            except (ValueError, IndexError):
-                continue  # It's not a pkg
-
-        for plugin, p_dict in r_plugins.items():
-            try:
-                primary_pkg = p_dict['primary_pkg'].split('/', 1)[-1]
-            except KeyError:
-                continue  # Plugin doesn't have a pkg, like bruserver
-
-            if primary_pkg in pkg_dict:
-                version = pkg_dict[primary_pkg]
-                pkgs[plugin] = (
-                    version.rsplit('%2', 1)[0].replace('.txz', ''),
-                    '1'
-                )
-            else:
-                if plugin not in pkgs:
-                    pkgs[plugin] = ('N/A', 'N/A')
-
-        self.middleware.call_sync(
-            'cache.put', 'iocage_plugin_pkgs', pkgs,
-            1209600
-        )
-
-        return pkgs
+        return version
