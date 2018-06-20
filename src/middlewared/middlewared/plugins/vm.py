@@ -827,7 +827,10 @@ class VMService(CRUDService):
         if guest_status.get('state') != "RUNNING":
             setvmem = await self.__set_guest_vmemory(guest_memory)
             if setvmem is False:
-                raise CallError(f'===> Cannot guarantee memory for guest id: {id}', errno.ENOMEM)
+                self.logger.warn("===> Cannot guarantee memory for guest id: {}".format(id))
+                setvmem = errno.ENOMEM
+            return setvmem
+
         else:
             self.logger.debug("===> bhyve process is running, we won't allocate memory")
             return False
@@ -978,12 +981,11 @@ class VMService(CRUDService):
     async def start(self, id):
         """Start a VM."""
         try:
-            try:
-                await self.__init_guest_vmemory(id)
-            except CallError as e:
-                return e.errno
-            else:
+            vmemory_arc = await self.__init_guest_vmemory(id)
+            if vmemory_arc is True:
                 return await self._manager.start(id)
+            else:
+                return vmemory_arc
         except Exception as err:
             self.logger.error("===> {0}".format(err))
             return False
