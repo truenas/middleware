@@ -228,13 +228,16 @@ class CloudSyncService(CRUDService):
 
         jobs = {}
         for j in await self.middleware.call("core.get_jobs", [("method", "=", "cloudsync.sync")],
-                                              {"order_by": ["id"]}):
-            if j["arguments"]:
-                task_id = j["arguments"][0]
-                if task_id in jobs and jobs[task_id]["state"] == "RUNNING":
-                    continue
+                                            {"order_by": ["id"]}):
+            try:
+                task_id = int(j["arguments"][0])
+            except (IndexError, ValueError):
+                continue
 
-                jobs[task_id] = job
+            if task_id in jobs and jobs[task_id]["state"] == "RUNNING":
+                continue
+
+            jobs[task_id] = j
 
         if isinstance(tasks_or_task, list):
             for task in tasks_or_task:
