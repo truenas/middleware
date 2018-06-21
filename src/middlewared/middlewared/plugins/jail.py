@@ -260,7 +260,7 @@ class JailService(CRUDService):
                     if e.trace and e.trace['class'] == 'KeyError':
                         pass  # It's either new or past cache date
                     else:
-                        raise(e)
+                        raise
 
                 resource_list = iocage.fetch(list=True, plugins=True,
                                              header=False)
@@ -293,7 +293,7 @@ class JailService(CRUDService):
                 if e.trace and e.trace['class'] == 'KeyError':
                     pass  # It's either new or past cache date
                 else:
-                    raise(e)
+                    raise
             resource_list = iocage.fetch(list=True, remote=remote, http=True)
 
             self.middleware.call_sync(
@@ -567,7 +567,7 @@ class JailService(CRUDService):
                     86400
                 )
             else:
-                raise(e)
+                raise
 
         if pkg == 'bru-server':
             return ['N/A', '1']
