@@ -1,11 +1,13 @@
 from datetime import datetime, date
+from middlewared.event import EventSource
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, Str
 from middlewared.service import ConfigService, no_auth_required, job, private, Service, ValidationErrors
-from middlewared.utils import Popen, sw_buildtime, sw_version
+from middlewared.utils import Popen, start_daemon_thread, sw_buildtime, sw_version
 from middlewared.validators import Range
 
 import csv
 import os
+import psutil
 import re
 import socket
 import struct
@@ -25,6 +27,8 @@ from freenasUI.system.utils import debug_get_settings, debug_run
 
 # Flag telling whether the system completed boot and is ready to use
 SYSTEM_READY = False
+
+CACHE_POOLS_STATUSES = 'system.system_health_pools'
 
 
 class SytemAdvancedService(ConfigService):
@@ -744,9 +748,80 @@ async def _event_system_ready(middleware, event_type, args):
         SYSTEM_READY = True
 
 
+async def _event_zfs_status(middleware, event_type, args):
+    """
+    This is so we can invalidate the CACHE_POOLS_STATUSES cache
+    when pool status changes
+    """
+    data = args['data']
+    if data.get('type') == 'misc.fs.zfs.vdev_statechange':
+        await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
+
+
+class SystemHealthEventSource(EventSource):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._check_update = None
+        start_daemon_thread(target=self.check_update)
+
+    def check_update(self):
+        while not self._cancel.is_set():
+            self._check_update = self.middleware.call_sync('update.check_available')['status']
+            self._cancel.wait(timeout=60 * 60 * 24)
+
+    def pools_statuses(self):
+        return {
+            p['name']: {'status': p['status']}
+            for p in self.middleware.call_sync('pool.query')
+        }
+
+    def run(self):
+
+        try:
+            if self.arg:
+                delay = int(self.arg)
+            else:
+                delay = 10
+        except ValueError:
+            return
+
+        # Delay too slow
+        if delay < 5:
+            return
+
+        cp_time = sysctl.filter('kern.cp_time')[0].value
+        cp_old = cp_time
+
+        while not self._cancel.is_set():
+            time.sleep(delay)
+
+            cp_time = sysctl.filter('kern.cp_time')[0].value
+            cp_diff = list(map(lambda x: x[0] - x[1], zip(cp_time, cp_old)))
+            cp_old = cp_time
+
+            cpu_percent = round((sum(cp_diff[:3]) / sum(cp_diff)) * 100, 2)
+
+            pools = self.middleware.call_sync(
+                'cache.get_or_put',
+                CACHE_POOLS_STATUSES,
+                1800,
+                self.pools_statuses,
+            )
+
+            self.send_event('ADDED', fields={
+                'cpu_percent': cpu_percent,
+                'memory': psutil.virtual_memory()._asdict(),
+                'pools': pools,
+                'update': self._check_update,
+            })
+
+
 def setup(middleware):
     global SYSTEM_READY
     if os.path.exists("/tmp/.bootready"):
         SYSTEM_READY = True
 
     middleware.event_subscribe('system', _event_system_ready)
+    middleware.event_subscribe('devd.zfs', _event_zfs_status)
+    middleware.register_event_source('system.health', SystemHealthEventSource)
