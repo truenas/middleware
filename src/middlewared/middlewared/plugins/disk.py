@@ -647,6 +647,34 @@ class DiskService(CRUDService):
         rv['locked'] = locked
         return rv
 
+    @accepts(
+        Str('enclosure')
+    )
+    async def getencstat(self, enclosure):
+        ge = await run('getencstat', '-v', enclosure, check=False)
+        ge_dict = {}
+
+        if ge.returncode == 0:
+            ge_output = ge.stdout.decode(errors='ignore')
+
+        for line in ge_output:
+            split_line = line.split()
+
+            if len(split_line) < 13:
+                continue
+
+            status = split_line[6]
+            disk_type = split_line[12].strip("'")
+
+            if disk_type == 'Disk' and status == 'OK':
+                # Only add installed drives to this dictionary
+                disk_location = split_line[13].strip("',#")
+                device = split_line[-1].split(',')[0].strip("'")
+
+                ge_dict[device] = disk_location
+
+        return ge_dict
+
     @private
     async def sed_initial_setup(self, disk_name, password):
         """
