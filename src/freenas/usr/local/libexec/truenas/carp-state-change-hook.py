@@ -536,7 +536,8 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             run('/usr/sbin/service ix-syslogd quietstart')
             run('/usr/sbin/service syslog-ng quietrestart')
             run('/usr/sbin/service ix-smartd quietstart')
-            run('/usr/sbin/service smartd quietrestart')
+            # we restart smartd-daemon because of ticket 35545
+            run('/usr/sbin/service smartd-daemon quietrestart')
             run('/usr/sbin/service netdata forcestop')
             run('/usr/sbin/service netdata quietstart')
 
@@ -673,6 +674,8 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
                 run('/usr/sbin/service syslog-ng quietrestart')
                 run('/usr/sbin/service ix-crontab quietstart')
                 run('/usr/sbin/service ix-collectd quietstart')
+                # we are stopping smartd-daemon because of ticket 35545
+                run('/usr/sbin/service smartd-daemon forcestop')
                 run('/usr/sbin/service netdata forcestop')
                 run('/usr/sbin/service collectd forcestop')
                 run_async('echo "$(date), $(hostname), assume backup" | mail -s "Failover" root')
