@@ -707,7 +707,7 @@ class PoolDatasetService(CRUDService):
             data['type'] = dataset[0]['type']
             data['name'] = dataset[0]['name']
             if data['type'] == 'VOLUME':
-                data['volblocksize'] = dataset[0]['properties']['volblocksize']['value']
+                data['volblocksize'] = dataset[0]['volblocksize']['value']
             await self.__common_validation(verrors, 'pool_dataset_update', data, 'UPDATE')
         if verrors:
             raise verrors
