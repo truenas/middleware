@@ -2,7 +2,7 @@
 
 {% block dojango_header_extra %}
 <script>
-{% if consolemsg %}msgEnabled = true;{% endif %}
+msgEnabled = {% if consolemsg %}true{% else %}false{% endif %};
 wizardShow = {% if wizard %}true{% else %}false{% endif %};
 wizardUrl = '{% url "system_initialwizard" %}';
 middlewareTokenUrl = '{% url "freeadmin_middleware_token" %}';

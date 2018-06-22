@@ -25,8 +25,6 @@
  *
  */
 
-msgEnabled = false;
-
 require([
     "dojo/dom",
     "dojo/dom-style",
