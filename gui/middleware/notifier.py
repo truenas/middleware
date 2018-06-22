@@ -2219,11 +2219,9 @@ class notifier(metaclass=HookMetaclass):
                 raise MiddlewareError('Failed to remove mountpoint %s: %s'
                                       % (path, str(ose), ))
 
-    def zfs_scrub(self, name, stop=False, pause=False):
+    def zfs_scrub(self, name, stop=False):
         if stop:
             imp = self._pipeopen('zpool scrub -s %s' % str(name))
-        elif pause:
-            imp = self._pipeopen('zpool scrub -p %s' % str(name))
         else:
             imp = self._pipeopen('zpool scrub %s' % str(name))
         stdout, stderr = imp.communicate()

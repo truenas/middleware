@@ -21,7 +21,7 @@
     <strong>{% trans "Scrub" %}</strong><br />
     <p style="padding: 3px;">{% trans "Status" %}: {{ pool.scrub.status_verbose }}</p>
       <!-- comment this till one can find a auto refresh method
-      {% if pool.scrub.status == "IN_PROGRESS" or if pool.scrub.status == "PAUSED" %}
+      {% if pool.scrub.status == "IN_PROGRESS" %}
       <p style="padding: 3px;">
         {% if pool.scrub.progress %}{% trans "Progress" %}: {{ pool.scrub.progress }}% &nbsp; &nbsp; {% endif %}
         {% if pool.scrub.scanned %}{% trans "Scan" %}: {% blocktrans with scanned=pool.scrub.scanned total=pool.scrub.total %}{{ scanned }} out of {{ total }}{% endblocktrans %} &nbsp; &nbsp; {% endif %}
