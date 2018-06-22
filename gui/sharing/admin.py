@@ -81,12 +81,6 @@ class CIFSShareFAdmin(BaseFreeAdmin):
                 'Setting default permissions will reset the permissions '
                 'of this share and any others within its path. '
                 'Are you sure?'))
-        full_audit_form = 'full_audit' in form.cleaned_data.get('cifs_vfsobjects')
-        full_audit_instance = 'full_audit' in form._original_cifs_vfsobjects
-        if full_audit_form and not full_audit_instance:
-            warn.append(_(
-                'full_audit VFS object is known to have file transfer issues '
-                'with Windows 10. Do you wish to continue?'))
         if warn:
             return ('<br/><br/>\n' + _('Also,') + '<br/><br/>\n').join(warn)
 
