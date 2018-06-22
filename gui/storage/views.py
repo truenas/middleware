@@ -763,15 +763,15 @@ def zpool_scrub(request, vid):
             _('Pool output could not be parsed. Is the pool imported?')
         )
     if request.method == "POST":
-        if request.POST.get("scrub") == 'IN_PROGRESS':
-            notifier().zfs_scrub(str(volume.vol_name), stop=True)
-            return JsonResp(
-                request,
-                message=_("The scrub process has stopped"),
-            )
-        else:
+        if request.POST["action"] == "start":
             notifier().zfs_scrub(str(volume.vol_name))
-            return JsonResp(request, message=_("The scrub process has begun"))
+            return JsonResp(request, message=_("The scrub process has been started"))
+        elif request.POST["action"] == "stop":
+            notifier().zfs_scrub(str(volume.vol_name), stop=True)
+            return JsonResp(request, message=_("The scrub process has been stopped"))
+        elif request.POST["action"] == "pause":
+            notifier().zfs_scrub(str(volume.vol_name), pause=True)
+            return JsonResp(request, message=_("The scrub process has been paused"))
 
     return render(request, 'storage/scrub_confirm.html', {
         'volume': volume,
