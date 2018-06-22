@@ -1945,7 +1945,12 @@ class CloudSyncResourceMixin(NestedMixin):
 
     def dispatch_list(self, request, **kwargs):
         with client as c:
-            self.__tasks = {task["id"]: task for task in c.call("cloudsync.query")}
+            self.__jobs = {}
+            for job in c.call('core.get_jobs', [('method', '=', 'cloudsync.sync')], {'order_by': ['id']}):
+                if job['arguments']:
+                    if job['arguments'][0] in self.__jobs and self.__jobs[job['arguments'][0]]['state'] == 'RUNNING':
+                        continue
+                    self.__jobs[job['arguments'][0]] = job
         return super(CloudSyncResourceMixin, self).dispatch_list(request, **kwargs)
 
     def dehydrate(self, bundle):
@@ -1956,7 +1961,7 @@ class CloudSyncResourceMixin(NestedMixin):
                 'oid': bundle.obj.id
             })
             bundle.data['credential'] = str(bundle.obj.credential)
-        job = self.__tasks.get(bundle.obj.id, {}).get("job")
+        job = self.__jobs.get(bundle.obj.id)
         if job:
             if job['state'] == 'RUNNING':
                 bundle.data['status'] = '{}{}'.format(
