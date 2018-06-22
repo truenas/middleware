@@ -658,7 +658,7 @@ def parse_status(name, doc, data):
     scrub = {}
     if scan:
         scan = scan.group(1)
-        if scan.find('in progress') != -1 or scan.find('scrub paused') != -1:
+        if scan.find('in progress') != -1:
             scrub.update({
                 'progress': None,
                 'repaired': None,
@@ -666,13 +666,8 @@ def parse_status(name, doc, data):
                 'total': None,
                 'togo': None,
             })
-            if scan.find('in progress') != -1:
-                scrub_status = 'IN_PROGRESS'
-                scrub_statusv = _('In Progress')
-            else:
-                scrub_status = 'PAUSED'
-                scrub_statusv = _('Paused')
-
+            scrub_status = 'IN_PROGRESS'
+            scrub_statusv = _('In Progress')
             reg = re.search(r'(\S+)% done', scan)
             if reg:
                 scrub['progress'] = Decimal(reg.group(1))
