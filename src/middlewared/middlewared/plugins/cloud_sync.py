@@ -1,7 +1,7 @@
 from middlewared.rclone.base import BaseRcloneRemote
 from middlewared.schema import accepts, Bool, Cron, Dict, Error, Int, Patch, Ref, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, item_method, job, private
+    CallError, CRUDService, ValidationErrors, filterable, item_method, job, private
 )
 from middlewared.utils import load_modules, load_classes, Popen, run
 
@@ -221,6 +221,31 @@ class CloudSyncService(CRUDService):
     class Config:
         datastore = "tasks.cloudsync"
         datastore_extend = "cloudsync._extend"
+
+    @filterable
+    async def query(self, filters=None, options=None):
+        tasks_or_task = await super().query(filters, options)
+
+        jobs = {}
+        for j in await self.middleware.call("core.get_jobs", [("method", "=", "cloudsync.sync")],
+                                            {"order_by": ["id"]}):
+            try:
+                task_id = int(j["arguments"][0])
+            except (IndexError, ValueError):
+                continue
+
+            if task_id in jobs and jobs[task_id]["state"] == "RUNNING":
+                continue
+
+            jobs[task_id] = j
+
+        if isinstance(tasks_or_task, list):
+            for task in tasks_or_task:
+                task["job"] = jobs.get(task["id"])
+        else:
+            tasks_or_task["job"] = jobs.get(tasks_or_task["id"])
+
+        return tasks_or_task
 
     @private
     async def _extend(self, cloud_sync):
