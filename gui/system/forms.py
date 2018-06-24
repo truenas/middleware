@@ -2755,8 +2755,12 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
     def __init__(self, *args, **kwargs):
         super(CertificateCSREditForm, self).__init__(*args, **kwargs)
 
-        self.fields['cert_name'].widget.attrs['readonly'] = True
+        self.fields['cert_name'].widget.attrs['readonly'] = False
         self.fields['cert_CSR'].widget.attrs['readonly'] = True
+
+    def middleware_clean(self, data):
+        data.pop('CSR', None)
+        return data
 
     class Meta:
         fields = [
