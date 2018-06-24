@@ -34,6 +34,14 @@ class StartNotify(threading.Thread):
     def __init__(self, pidfile, verb, *args, **kwargs):
         self._pidfile = pidfile
         self._verb = verb
+
+        if self._pidfile:
+            try:
+                with open(self._pidfile) as f:
+                    self._pid = f.read()
+            except IOError:
+                self._pid = None
+
         super(StartNotify, self).__init__(*args, **kwargs)
 
     def run(self):
@@ -55,11 +63,19 @@ class StartNotify(threading.Thread):
                     # The file might have been created but it may take a
                     # little bit for the daemon to write the PID
                     time.sleep(0.1)
-                if (
-                    os.path.exists(self._pidfile) and
-                    os.stat(self._pidfile).st_size > 0
-                ):
-                    break
+                try:
+                    with open(self._pidfile) as f:
+                        pid = f.read()
+                except IOError:
+                    pid = None
+
+                if pid:
+                    if self._verb == 'start':
+                        break
+                    if self._verb == 'restart':
+                        if pid != self._pid:
+                            break
+                        # Otherwise, service has not restarted yet
             elif self._verb == "stop" and not os.path.exists(self._pidfile):
                 break
             tries += 1

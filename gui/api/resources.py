@@ -324,7 +324,7 @@ class DiskResourceMixin(object):
     def obj_update(self, bundle, skip_errors=False, **kwargs):
         try:
             return super(DiskResourceMixin, self).obj_update(bundle, skip_errors=skip_errors, **kwargs)
-        except:
+        except Exception:
             raise ImmediateHttpResponse(response=HttpNotFound())
 
     def dispatch_list(self, request, **kwargs):
@@ -925,7 +925,7 @@ class VolumeResourceMixin(NestedMixin):
         errmsg = _('Pool output could not be parsed. Is the pool imported?')
         try:
             notifier().zpool_version(obj.vol_name)
-        except:
+        except Exception:
             raise ImmediateHttpResponse(
                 response=self.error_response(request, errmsg)
             )
@@ -1459,7 +1459,7 @@ class VolumeResourceMixin(NestedMixin):
 
         try:
             uid = self._uid
-        except:
+        except Exception:
             uid = Uid(bundle.obj.id * 1000)
 
         bundle.data['children'] = self._get_children(
@@ -2517,7 +2517,7 @@ class JailsResourceMixin(NestedMixin):
                     self.__jls,
                 )
                 bundle.data['jail_jid'] = int(reg.groups()[0])
-            except:
+            except Exception:
                 bundle.data['jail_jid'] = None
 
             bundle.data['jail_os'] = 'FreeBSD'
@@ -2888,7 +2888,7 @@ class FTPResourceMixin(object):
                     fmask = int(fmask, 8)
                     fmask = (~fmask & 0o666)
                     bundle.data['ftp_filemask'] = oct(fmask)[2:]
-                except:
+                except Exception:
                     pass
 
             if 'ftp_dirmask' in bundle.data:
@@ -2898,7 +2898,7 @@ class FTPResourceMixin(object):
                     dmask = int(dmask, 8)
                     dmask = (~dmask & 0o777)
                     bundle.data['ftp_dirmask'] = oct(dmask)[2:]
-                except:
+                except Exception:
                     pass
         return bundle
 
@@ -3326,7 +3326,7 @@ class CertificateResourceMixin(object):
                         'id': bundle.obj.id
                     }
                 )
-        except:
+        except Exception:
             # There was an error parsing this Certificate object
             # Creating a sentinel file for the alertmod to pick it up
             with open('/tmp/alert_invalidcert_{0}'.format(bundle.obj.cert_name),
@@ -4053,7 +4053,7 @@ class VMResourceMixin(object):
                 status = c.call('vm.status', bundle.obj.id)
                 state = status['state']
                 info += 'State: {}<br />'.format(status['state'])
-        except:
+        except Exception:
             log.warn('Failed to get status', exc_info=True)
         finally:
             if self.is_webclient(bundle.request):
