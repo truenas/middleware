@@ -524,6 +524,7 @@ class CertificateService(CRUDService):
     @accepts(
         Dict(
             'certificate_create',
+            Int('csr_id'),
             Int('signedby'),
             Int('key_length'),
             Int('type'),
@@ -559,6 +560,8 @@ class CertificateService(CRUDService):
 
         if verrors:
             raise verrors
+
+        # TODO: ENFORCE THAT THE RIGHT PARAMETERS GO TO THE NEXT CREATE FUNCTION
 
         data = await self.middleware.run_in_io_thread(
             self.map_functions[data.pop('create_type')],
@@ -623,11 +626,38 @@ class CertificateService(CRUDService):
         Patch(
             'certificate_create', 'certificate_create_imported',
             ('edit', _set_required('certificate')),
-            ('edit', _set_required('privatekey')),
             ('rm', {'name': 'create_type'})
         )
     )
     def __create_imported_certificate(self, data):
+        verrors = ValidationErrors()
+
+        csr_id = data.pop('csr_id', None)
+        if csr_id:
+            csr_obj = self.middleware.call_sync(
+                'certificate.query',
+                [
+                    ['id', '=', csr_id],
+                    ['CSR', '!=', None]
+                ]
+            )
+            if not csr_obj:
+                verrors.add(
+                    'certificate_create.csr_id',
+                    f'No CSR exists with id {csr_id}'
+                )
+            else:
+                data['privatekey'] = csr_obj[0]['privatekey']
+                data.pop('passphrase', None)
+        elif not data.get('privatekey'):
+            verrors.add(
+                'certificate_create.privatekey',
+                'Private key is required when importing a certificate'
+            )
+
+        if verrors:
+            raise verrors
+
         data['type'] = CERT_TYPE_EXISTING
 
         data = self.__create_certificate(data)

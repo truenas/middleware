@@ -2773,6 +2773,33 @@ class CertificateImportForm(MiddlewareModelForm, ModelForm):
     middleware_attr_schema = 'certificate'
     is_singletone = False
 
+    class Meta:
+        fields = [
+            'cert_name',
+            'cert_csr',
+            'cert_csr_id',
+            'cert_certificate',
+            'cert_privatekey',
+            'cert_passphrase'
+        ]
+        model = models.Certificate
+
+    cert_csr = forms.BooleanField(
+        required=False,
+        initial=False,
+        label='CSR exists on FreeNAS',
+        help_text=_(
+            'Check this box if importing a certificate for which a CSR '
+            'exists on the FreeNAS system'
+        )
+    )
+
+    cert_csr_id = forms.ModelChoiceField(
+        queryset=models.Certificate.objects.filter(cert_CSR__isnull=False),
+        label=(_("CSRs")),
+        required=False
+    )
+
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
         required=True,
@@ -2791,7 +2818,7 @@ class CertificateImportForm(MiddlewareModelForm, ModelForm):
     cert_privatekey = forms.CharField(
         label=models.Certificate._meta.get_field('cert_privatekey').verbose_name,
         widget=forms.Textarea(),
-        required=True,
+        required=False,
         help_text=models.Certificate._meta.get_field('cert_privatekey').help_text
     )
     cert_passphrase = forms.CharField(
@@ -2805,6 +2832,15 @@ class CertificateImportForm(MiddlewareModelForm, ModelForm):
         required=False,
         widget=forms.PasswordInput(render_value=True),
     )
+
+    def __init__(self, *args, **kwargs):
+        super(CertificateImportForm, self).__init__(*args, **kwargs)
+
+        self.fields['cert_csr'].widget.attrs['onChange'] = (
+            'toggleGeneric("id_cert_csr", ["id_cert_passphrase",'
+            ' "id_cert_passphrase2", "id_cert_privatekey"], false); '
+            'toggleGeneric("id_cert_csr", ["id_cert_csr_id"], true);'
+        )
 
     def clean_cert_passphrase2(self):
         cdata = self.cleaned_data
@@ -2820,16 +2856,12 @@ class CertificateImportForm(MiddlewareModelForm, ModelForm):
     def middleware_clean(self, data):
         data['create_type'] = 'CERTIFICATE_CREATE_IMPORTED'
         data.pop('passphrase2', None)
-        return data
+        if data.pop('csr', False):
+            data.pop('passphrase', None)
+        else:
+            data.pop('csr_id', None)
 
-    class Meta:
-        fields = [
-            'cert_name',
-            'cert_certificate',
-            'cert_privatekey',
-            'cert_passphrase'
-        ]
-        model = models.Certificate
+        return data
 
 
 class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
