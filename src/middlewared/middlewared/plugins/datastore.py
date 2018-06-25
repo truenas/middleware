@@ -91,15 +91,16 @@ class DatastoreService(Service):
 
     @accepts(
         Str('name'),
-        List('query-filters', register=True),
+        List('query-filters', null=True, register=True),
         Dict(
             'query-options',
-            Str('extend'),
+            Str('extend', null=True),
             Dict('extra', additional_attrs=True),
             List('order_by'),
-            Bool('count'),
-            Bool('get'),
+            Bool('count', default=False),
+            Bool('get', default=False),
             Str('prefix'),
+            null=True,
             register=True,
         ),
     )

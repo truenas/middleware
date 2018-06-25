@@ -143,8 +143,8 @@ class DiskService(CRUDService):
         else:
             return disk["name"]
 
-    @accepts(Bool("join_partitions"))
-    async def get_unused(self, join_partitions=False):
+    @accepts(Bool("join_partitions", default=False))
+    async def get_unused(self, join_partitions):
         """
         Helper method to get all disks that are not in use, either by the boot
         pool or the user pools.
