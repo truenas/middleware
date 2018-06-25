@@ -11,7 +11,7 @@ import subprocess
 import time
 import urllib.parse
 
-DATASET = "data/import"
+DATASET = "tank/import"
 DATASET_PATH = os.path.join("/mnt", DATASET)
 
 IMAGES = {}
