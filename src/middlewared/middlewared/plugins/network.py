@@ -692,7 +692,7 @@ class InterfacesService(Service):
         ]
 
         """
-        if choices is None:
+        if not choices:
             choices = {
                 'ipv4': True,
                 'ipv6': True
