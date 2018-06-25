@@ -301,8 +301,8 @@ class PoolService(CRUDService):
         return pool
 
     @item_method
-    @accepts(Int('id', required=False))
-    async def get_disks(self, oid=None):
+    @accepts(Int('id', required=False, null=True))
+    async def get_disks(self, oid):
         """
         Get all disks in use by pools.
         If `id` is provided only the disks from the given pool `id` will be returned.

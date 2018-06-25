@@ -345,7 +345,7 @@ class CoreService(Service):
             }
         return services
 
-    @accepts(Str('service'))
+    @accepts(Str('service', null=True))
     def get_methods(self, service=None):
         """Return methods metadata of every available service.
 
