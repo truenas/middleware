@@ -1080,6 +1080,13 @@ class DiskFormPartial(ModelForm):
         required=False,
     )
 
+    disk_reset_password = forms.BooleanField(
+        label='Reset Password',
+        required=False,
+        initial=False,
+        help_text=_('Click this box to reset SED password'),
+    )
+
     class Meta:
         model = models.Disk
         widgets = {
@@ -1104,6 +1111,11 @@ class DiskFormPartial(ModelForm):
                 'dijitDisabled dijitTextBoxDisabled '
                 'dijitValidationTextBoxDisabled')
 
+            self.fields['disk_reset_password'].widget.attrs['onChange'] = (
+                'toggleGeneric("id_disk_reset_password", ["id_disk_passwd",'
+                ' "id_disk_passwd2"], false);'
+            )
+
     def clean_disk_name(self):
         return self.instance.disk_name
 
@@ -1115,10 +1127,13 @@ class DiskFormPartial(ModelForm):
         return password2
 
     def clean(self):
-            cdata = self.cleaned_data
-            if not cdata.get("disk_passwd"):
-                cdata['disk_passwd'] = self.instance.disk_passwd
-            return cdata
+        cdata = self.cleaned_data
+        reset_password = cdata.get('disk_reset_password', False)
+        if reset_password:
+            cdata['disk_passwd'] = ''
+        elif not cdata.get("disk_passwd"):
+            cdata['disk_passwd'] = self.instance.disk_passwd
+        return cdata
 
     def save(self, *args, **kwargs):
         obj = super(DiskFormPartial, self).save(*args, **kwargs)

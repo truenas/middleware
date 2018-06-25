@@ -1180,6 +1180,14 @@ class NTPForm(ModelForm):
 
 
 class AdvancedForm(ModelForm):
+
+    adv_reset_sed_password = forms.BooleanField(
+        label='Reset SED Password',
+        required=False,
+        initial=False,
+        help_text=_('Click this box to reset global SED password'),
+    )
+
     class Meta:
         fields = '__all__'
         model = models.Advanced
@@ -1212,11 +1220,20 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_graphite = self.instance.adv_graphite
         self.instance._original_adv_fqdn_syslog = self.instance.adv_fqdn_syslog
 
-    def clean_adv_sed_passwd(self):
-        passwd = self.cleaned_data.get('adv_sed_passwd')
-        if not passwd:
-            return self.instance.adv_sed_passwd
-        return passwd
+        self.fields['adv_reset_sed_password'].widget.attrs['onChange'] = (
+            'toggleGeneric("id_adv_reset_sed_password", ["id_adv_sed_passwd"], false);'
+        )
+
+    def clean(self):
+        cdata = self.cleaned_data
+        reset_password = cdata.get('adv_reset_sed_password', False)
+        passwd = cdata.get('adv_sed_passwd')
+        if reset_password:
+            cdata['adv_sed_passwd'] = ''
+        elif not passwd:
+            cdata['adv_sed_passwd'] = self.instance.adv_sed_passwd
+
+        return cdata
 
     def save(self):
         super(AdvancedForm, self).save()
