@@ -9,6 +9,8 @@ from croniter import croniter
 from middlewared.service_exception import ValidationErrors
 from middlewared.validators import ShouldBe
 
+NOT_PROVIDED = object()
+
 
 class Error(Exception):
 
@@ -28,6 +30,7 @@ class EnumMixin(object):
         super(EnumMixin, self).__init__(*args, **kwargs)
 
     def clean(self, value):
+        value = super().clean(value)
         if self.enum is None:
             return value
         if not isinstance(value, (list, tuple)):
@@ -42,17 +45,28 @@ class EnumMixin(object):
 
 class Attribute(object):
 
-    def __init__(self, name, verbose=None, required=False, private=False, validators=None, register=False, **kwargs):
+    def __init__(self, name, verbose=None, required=False, null=False, private=False,
+                 validators=None, register=False, **kwargs):
         self.name = name
         self.has_default = 'default' in kwargs
         self.default = kwargs.pop('default', None)
         self.required = required
+        self.null = null
         self.private = private
         self.verbose = verbose or name
         self.validators = validators or []
         self.register = register
 
     def clean(self, value):
+        if value is None and self.null is False:
+            raise Error(self.name, 'null not allowed')
+        if value is NOT_PROVIDED:
+            if self.has_default:
+                return copy.copy(self.default)
+            elif self.null is True:
+                return None
+            else:
+                raise Error(self.name, 'attribute required')
         return value
 
     def dump(self, value):
@@ -118,9 +132,9 @@ class Str(EnumMixin, Attribute):
 
     def clean(self, value):
         value = super(Str, self).clean(value)
-        if value is None and not self.required:
-            return self.default
-        if isinstance(value, int):
+        if value is None:
+            return value
+        if isinstance(value, int) and not isinstance(value, bool):
             return str(value)
         if not isinstance(value, str):
             raise Error(self.name, 'Not a string')
@@ -234,8 +248,9 @@ class IPAddr(Str):
 class Bool(Attribute):
 
     def clean(self, value):
-        if value is None and not self.required:
-            return self.default
+        value = super().clean(value)
+        if value is None:
+            return value
         if not isinstance(value, bool):
             raise Error(self.name, 'Not a boolean')
         return value
@@ -254,9 +269,9 @@ class Int(EnumMixin, Attribute):
 
     def clean(self, value):
         value = super(Int, self).clean(value)
-        if value is None and not self.required:
-            return self.default
-        if not isinstance(value, int):
+        if value is None:
+            return value
+        if not isinstance(value, int) or isinstance(value, bool):
             if isinstance(value, str) and value.isdigit():
                 return int(value)
             raise Error(self.name, 'Not an integer')
@@ -303,7 +318,7 @@ class List(EnumMixin, Attribute):
 
     def clean(self, value):
         value = super(List, self).clean(value)
-        if value is None and not self.required:
+        if value is None:
             return copy.copy(self.default)
         if not isinstance(value, list):
             raise Error(self.name, 'Not a list')
@@ -327,6 +342,8 @@ class List(EnumMixin, Attribute):
         return value
 
     def validate(self, value):
+        if value is None:
+            return
         verrors = ValidationErrors()
 
         for i, v in enumerate(value):
@@ -379,14 +396,18 @@ class Dict(Attribute):
         # Update property is used to disable requirement on all attributes
         # as well to not populate default values for not specified attributes
         self.update = kwargs.pop('update', False)
+        if 'default' not in kwargs:
+            kwargs['default'] = {}
         super(Dict, self).__init__(name, **kwargs)
         self.attrs = {}
         for i in attrs:
             self.attrs[i.name] = i
 
     def clean(self, data):
-        if data is None and not self.required:
-            data = {}
+        data = super().clean(data)
+
+        if data is None:
+            return copy.copy(self.default)
 
         self.errors = []
         if not isinstance(data, dict):
@@ -406,12 +427,10 @@ class Dict(Attribute):
         # Do not make any field and required and not populate default values
         if not self.update:
             for attr in list(self.attrs.values()):
-
-                if attr.required and attr.name not in data:
-                    raise Error(attr.name, 'This field is required')
-
-                if attr.name not in data and attr.has_default:
-                    data[attr.name] = copy.copy(attr.default)
+                if attr.name not in data and (
+                    attr.required or attr.null is True or attr.has_default
+                ):
+                    data[attr.name] = attr.clean(NOT_PROVIDED)
 
         return data
 
@@ -433,6 +452,9 @@ class Dict(Attribute):
         return value
 
     def validate(self, value):
+        if value is None:
+            return
+
         verrors = ValidationErrors()
 
         for attr in self.attrs.values():
@@ -482,8 +504,8 @@ class Cron(Dict):
 
     @staticmethod
     def convert_schedule_to_db_format(data_dict, schedule_name='schedule'):
-        if data_dict.get(schedule_name):
-            schedule = data_dict.pop(schedule_name)
+        schedule = data_dict.pop(schedule_name, None)
+        if schedule:
             db_fields = ['minute', 'hour', 'daymonth', 'month', 'dayweek']
             for index, field in enumerate(Cron.FIELDS):
                 if field in schedule:
@@ -657,8 +679,7 @@ def accepts(*schema):
                 elif len(nf.accepts) >= i + args_index:
                     attr = nf.accepts[i]
                     i += 1
-
-                    value = None
+                    value = NOT_PROVIDED
                 else:
                     i += 1
                     continue
@@ -703,8 +724,9 @@ def accepts(*schema):
 class UnixPerm(Attribute):
 
     def clean(self, value):
-        if value is None and not self.required:
-            return self.default
+        value = super().clean(value)
+        if value is None:
+            return None
         return value
 
     def validate(self, value):
