@@ -62,7 +62,7 @@ class Attribute(object):
             raise Error(self.name, 'null not allowed')
         if value is NOT_PROVIDED:
             if self.has_default:
-                return copy.copy(self.default)
+                return copy.deepcopy(self.default)
             elif self.null is True:
                 return None
             else:
@@ -157,6 +157,9 @@ class Str(EnumMixin, Attribute):
 class Dir(Str):
 
     def validate(self, value):
+        if value is None:
+            return
+
         verrors = ValidationErrors()
 
         if value:
@@ -174,6 +177,9 @@ class Dir(Str):
 class File(Str):
 
     def validate(self, value):
+        if value is None:
+            return
+
         verrors = ValidationErrors()
 
         if value:
@@ -220,6 +226,9 @@ class IPAddr(Str):
         super(IPAddr, self).__init__(*args, **kwargs)
 
     def validate(self, value):
+        if value is None:
+            return
+
         verrors = ValidationErrors()
 
         if value:
@@ -319,7 +328,7 @@ class List(EnumMixin, Attribute):
     def clean(self, value):
         value = super(List, self).clean(value)
         if value is None:
-            return copy.copy(self.default)
+            return copy.deepcopy(self.default)
         if not isinstance(value, list):
             raise Error(self.name, 'Not a list')
         if self.items:
@@ -344,6 +353,7 @@ class List(EnumMixin, Attribute):
     def validate(self, value):
         if value is None:
             return
+
         verrors = ValidationErrors()
 
         for i, v in enumerate(value):
@@ -407,7 +417,7 @@ class Dict(Attribute):
         data = super().clean(data)
 
         if data is None:
-            return copy.copy(self.default)
+            return copy.deepcopy(self.default)
 
         self.errors = []
         if not isinstance(data, dict):
@@ -721,15 +731,12 @@ def accepts(*schema):
     return wrap
 
 
-class UnixPerm(Attribute):
-
-    def clean(self, value):
-        value = super().clean(value)
-        if value is None:
-            return None
-        return value
+class UnixPerm(Str):
 
     def validate(self, value):
+        if value is None:
+            return
+
         try:
             mode = int(value, 8)
         except ValueError:
