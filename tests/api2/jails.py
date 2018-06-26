@@ -12,8 +12,7 @@ from functions import DELETE, GET, POST, PUT, PUT_TIMEOUT
 from config import *
 
 
-IOCAGE_POOL = 'jails'
-IOCAGE_POOL = 'vol1'
+IOCAGE_POOL = 'tank'
 JOB_ID = None
 RELEASE = None
 JAIL_NAME = 'jail1'
