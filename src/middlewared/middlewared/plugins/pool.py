@@ -748,6 +748,10 @@ class PoolDatasetService(CRUDService):
             if data['type'] == 'VOLUME':
                 data['volblocksize'] = dataset[0]['properties']['volblocksize']['value']
             await self.__common_validation(verrors, 'pool_dataset_update', data, 'UPDATE')
+            if 'volsize' in data:
+                if data['volsize'] < dataset[0]['volsize']['parsed']:
+                    verrors.add('pool_dataset_update.volsize',
+                                'You cannot shrink a zvol from GUI, this may lead to data loss.')
         if verrors:
             raise verrors
 
