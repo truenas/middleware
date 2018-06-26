@@ -619,7 +619,7 @@ class PoolDatasetService(CRUDService):
             'STANDARD', 'ALWAYS', 'DISABLED',
         ]),
         Str('compression', enum=[
-            'OFF', 'LZ4', 'GZIP-1', 'GZIP-6', 'GZIP-9', 'ZLE', 'LZJB',
+            'OFF', 'LZ4', 'GZIP', 'GZIP-1', 'GZIP-9', 'ZLE', 'LZJB',
         ]),
         Str('atime', enum=['ON', 'OFF']),
         Str('exec', enum=['ON', 'OFF']),
