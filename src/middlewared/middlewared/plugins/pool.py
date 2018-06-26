@@ -834,7 +834,7 @@ class PoolDatasetService(CRUDService):
                 if mode == 'UPDATE':
                     avail_mem += int((await self.middleware.call(
                         'zfs.dataset.query',
-                        ['id', '=', data['name']]
+                        [['id', '=', data['name']]]
                     ))[0]['properties']['used']['rawvalue'])
 
                 if (
