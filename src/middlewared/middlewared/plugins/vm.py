@@ -828,6 +828,7 @@ class VMService(CRUDService):
             setvmem = await self.__set_guest_vmemory(guest_memory)
             if setvmem is False:
                 self.logger.warn("===> Cannot guarantee memory for guest id: {}".format(id))
+                setvmem = errno.ENOMEM
             return setvmem
 
         else:
@@ -980,10 +981,11 @@ class VMService(CRUDService):
     async def start(self, id):
         """Start a VM."""
         try:
-            if await self.__init_guest_vmemory(id):
+            vmemory_arc = await self.__init_guest_vmemory(id)
+            if vmemory_arc is True:
                 return await self._manager.start(id)
             else:
-                return False
+                return vmemory_arc
         except Exception as err:
             self.logger.error("===> {0}".format(err))
             return False
