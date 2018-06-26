@@ -303,9 +303,13 @@ class Float(EnumMixin, Attribute):
         if value is None and not self.required:
             return self.default
         try:
+            # float(False) = 0.0
+            # float(True) = 1.0
+            if isinstance(value, bool):
+                raise TypeError()
             return float(value)
-        except ValueError:
-            raise Error(self.name, 'Not an floating point number')
+        except (TypeError, ValueError):
+            raise Error(self.name, 'Not a floating point number')
 
     def to_json_schema(self, parent=None):
         schema = {
