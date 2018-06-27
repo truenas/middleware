@@ -325,8 +325,6 @@ class List(EnumMixin, Attribute):
 
     def __init__(self, *args, **kwargs):
         self.items = kwargs.pop('items', [])
-        if 'default' not in kwargs:
-            kwargs['default'] = []
         super(List, self).__init__(*args, **kwargs)
 
     def clean(self, value):

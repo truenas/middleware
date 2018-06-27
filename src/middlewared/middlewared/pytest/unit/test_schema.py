@@ -242,9 +242,10 @@ def test__schema_dict_not_null_args(value, expected):
 
 
 @pytest.mark.parametrize("value,expected", [
-    ({'foo': 'foo', 'bar': False}, {'foo': 'foo', 'bar': False}),
+    ({'foo': 'foo', 'bar': False, 'list': []}, {'foo': 'foo', 'bar': False, 'list': []}),
     ({'foo': 'foo'}, Error),
     ({'bar': False}, Error),
+    ({'foo': 'foo', 'bar': False}, Error),
 ])
 def test__schema_dict_required_args(value, expected):
 
@@ -252,6 +253,7 @@ def test__schema_dict_required_args(value, expected):
         'data',
         Str('foo', required=True),
         Bool('bar', required=True),
+        List('list', required=True),
     ))
     def dictargs(self, data):
         return data
@@ -269,6 +271,9 @@ def test__schema_dict_required_args(value, expected):
 @pytest.mark.parametrize("value,expected,msg", [
     ({'foo': 'foo', 'bar': False}, {'foo': 'foo', 'bar': False}, None),
     ({'foo': 'foo', 'bar': False, 'num': 5}, {'foo': 'foo', 'bar': False, 'num': 5}, None),
+    ({'foo': 'foo'}, {'foo': 'foo', 'bar': None}, None),
+    ({'foo': 'foo', 'list': ['listitem']}, {'foo': 'foo', 'bar': None, 'list': ['listitem']}, None),
+    ({'foo': 'foo', 'list': 5}, Error, 'Not a list'),
     ({'foo': 'foo', 'bar': False, 'num': None}, Error, 'null not allowed'),
     ({'foo': None}, Error, 'null not allowed'),
     ({'bar': None}, Error, 'attribute required'),
@@ -280,6 +285,7 @@ def test__schema_dict_mixed_args(value, expected, msg):
         Str('foo', required=True),
         Bool('bar', null=True),
         Int('num'),
+        List('list', items=[Str('listitem')]),
     ))
     def dictargs(self, data):
         return data
@@ -294,7 +300,11 @@ def test__schema_dict_mixed_args(value, expected, msg):
         assert dictargs(self, value) == expected
 
 
-def test__schema_list_null():
+@pytest.mark.parametrize("args", [
+    [None],
+    [],
+])
+def test__schema_list_null(args):
 
     @accepts(List('data', null=True))
     def listnull(self, data):
@@ -302,7 +312,7 @@ def test__schema_list_null():
 
     self = Mock()
 
-    assert listnull(self, None) == []
+    assert listnull(self, *args) == None
 
 
 def test__schema_list_not_null():
@@ -315,6 +325,19 @@ def test__schema_list_not_null():
 
     with pytest.raises(Error):
         assert listnotnull(self, None) != []
+
+
+def test__schema_list_noarg_not_null():
+
+    @accepts(List('data', null=False))
+    def listnotnull(self, data):
+        return data
+
+    self = Mock()
+
+    with pytest.raises(Error) as ei:
+        listnotnull(self)
+    assert ei.value.errmsg == 'attribute required'
 
 
 @pytest.mark.parametrize("value,expected", [
@@ -412,7 +435,7 @@ def test__schema_ipaddr(value, expected):
     self = Mock()
 
     if expected is ValidationErrors:
-        with pytest.raises(ValidationErrors) as ei:
+        with pytest.raises(ValidationErrors):
             ipaddrv(self, value)
     else:
         assert ipaddrv(self, value) == expected
@@ -436,7 +459,7 @@ def test__schema_ipaddr_cidr(value, expected):
     self = Mock()
 
     if expected is ValidationErrors:
-        with pytest.raises(ValidationErrors) as ei:
+        with pytest.raises(ValidationErrors):
             ipaddrv(self, value)
     else:
         assert ipaddrv(self, value) == expected

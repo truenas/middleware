@@ -87,7 +87,7 @@ class ZFSPoolService(Service):
 
     @accepts(
         Str('name'),
-        List('new'),
+        List('new', null=True),
         List('existing', items=[
             Dict(
                 'attachvdev',

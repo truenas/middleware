@@ -135,7 +135,7 @@ class UserService(CRUDService):
         if verrors:
             raise verrors
 
-        groups = data.pop('groups') or []
+        groups = data.pop('groups', None) or []
         create = data.pop('group_create')
 
         if create:

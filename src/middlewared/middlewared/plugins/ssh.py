@@ -17,7 +17,7 @@ class SSHService(SystemServiceService):
 
     @accepts(Dict(
         'ssh_update',
-        List('bindiface', items=[Str('iface')]),
+        List('bindiface', items=[Str('iface')], default=[]),
         Int('tcpport', validators=[Range(min=1, max=65535)]),
         Bool('rootlogin'),
         Bool('passwordauth'),

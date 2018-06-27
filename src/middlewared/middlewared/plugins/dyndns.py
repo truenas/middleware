@@ -24,7 +24,7 @@ class DynDNSService(SystemServiceService):
         Bool('ssl'),
         Str('custom_ddns_server'),
         Str('custom_ddns_path'),
-        List('domain', items=[Str('domain')]),
+        List('domain', items=[Str('domain')], default=[]),
         Str('username'),
         Str('password'),
         Int('period'),
