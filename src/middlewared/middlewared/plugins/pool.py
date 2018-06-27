@@ -656,6 +656,10 @@ class PoolDatasetService(CRUDService):
         else:
             await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE')
 
+        mountpoint = os.path.join('/mnt', data['name'])
+        if os.path.exists(mountpoint):
+            verrors.add('pool_dataset_create.name', f'Path {mountpoint} already exists')
+
         if verrors:
             raise verrors
 
