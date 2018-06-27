@@ -32,7 +32,6 @@ afp_directory() { echo "AFP"; }
 afp_func()
 {
 	local afp_onoff
-	local afp_enabled="DISABLED"
 	
 	afp_onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
@@ -56,13 +55,6 @@ afp_func()
 	echo "AFP is ${afp_enabled}"
 	section_footer
 
-	#
-	#	If AFP is disabled, there is no reason to run this module
-	#
-	if [ "${afp_onoff}" = "0" ]
-	then
-		exit 0
-	fi
 	#
 	#	Dump AFP version info
 	#

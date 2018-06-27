@@ -33,28 +33,31 @@ nfs_directory() { echo "NFS"; }
 nfs_func()
 {
 	
-	#
-	#	If NFS is disabled, exit.
-	#
+	local onoff
 
-	local nfs_enabled
 
-	nfs_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		srv_enable
-	FROM
-		services_services
-	WHERE
-		srv_service = 'nfs'
-	")
+        onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+        SELECT
+                srv_enable
+        FROM
+                services_services
+        WHERE
+                srv_service = 'nfs'
+        ORDER BY
+                -id
+        LIMIT 1
+        ")
+
+        enabled="DISABLED"
+        if [ "${onoff}" = "1" ]
+        then
+                enabled="ENABLED"
+        fi
+
+        section_header "NFS Status"
+        echo "NFS is ${enabled}"
+        section_footer
 	
-	section_header "NFS Status"	
-	if [ "${nfs_enabled}" = "0" ]
-	then
-		echo "NFS is DISABLED"
-		exit 0
-	fi
-
 	section_header "/etc/hosts"
 	sc "/etc/hosts"
 	section_footer

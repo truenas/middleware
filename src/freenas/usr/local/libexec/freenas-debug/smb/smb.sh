@@ -66,10 +66,10 @@ smb_func()
 	#
 	#	If SMB is disabled, exit
 	#
-	if [ "${onoff}" = "0" ]
-	then
-		exit 0
-	fi
+	# if [ "${onoff}" = "0" ]
+	# then
+		# exit 0
+	# fi
 	
 	#
 	#	Dump samba version
