@@ -179,6 +179,14 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
                 'Please provide a valid signing authority'
             )
 
+    csr = data.get('CSR')
+    if csr:
+        if not await middleware.call('certificate.load_certificate_request', csr):
+            verrors.add(
+                f'{schema_name}.CSR',
+                'Please provide a valid CSR'
+            )
+
     await middleware.run_in_io_thread(
         _validate_certificate_with_key, certificate, private_key, schema_name, verrors
     )
@@ -196,6 +204,7 @@ class CertificateService(CRUDService):
         self.map_functions = {
             'CERTIFICATE_CREATE_INTERNAL': self.__create_internal,
             'CERTIFICATE_CREATE_IMPORTED': self.__create_imported_certificate,
+            'CERTIFICATE_CREATE_IMPORTED_CSR': self.__create_imported_csr,
             'CERTIFICATE_CREATE': self.__create_certificate,
             'CERTIFICATE_CREATE_CSR': self.__create_csr
         }
@@ -275,10 +284,11 @@ class CertificateService(CRUDService):
                 # XXX Why load certificate if we are going to dump it right after?
                 # Maybe just to verify its integrity?
                 # Logic copied from freenasUI
-                cert_obj = crypto.load_certificate(crypto.FILETYPE_PEM, c)
-                cert['chain_list'].append(
-                    crypto.dump_certificate(crypto.FILETYPE_PEM, cert_obj).decode()
-                )
+                if c:
+                    cert_obj = crypto.load_certificate(crypto.FILETYPE_PEM, c)
+                    cert['chain_list'].append(
+                        crypto.dump_certificate(crypto.FILETYPE_PEM, cert_obj).decode()
+                    )
         except Exception:
             self.logger.debug('Failed to load certificate {0}'.format(cert['name']), exc_info=True)
 
@@ -356,16 +366,8 @@ class CertificateService(CRUDService):
         except crypto.Error:
             return {}
         else:
-            cert_info = {
-                'country': cert.get_subject().C,
-                'state': cert.get_subject().ST,
-                'city': cert.get_subject().L,
-                'organization': cert.get_subject().O,
-                'common': cert.get_subject().CN,
-                'san': cert.get_subject().subjectAltName,
-                'email': cert.get_subject().emailAddress,
-                'serial': cert.get_serial_number()
-            }
+            cert_info = self.get_x509_subject(cert)
+            cert_info['serial'] = cert.get_serial_number()
 
             signature_algorithm = cert.get_signature_algorithm().decode()
             m = re.match('^(.+)[Ww]ith', signature_algorithm)
@@ -373,6 +375,30 @@ class CertificateService(CRUDService):
                 cert_info['digest_algorithm'] = m.group(1).upper()
 
             return cert_info
+
+    @private
+    def get_x509_subject(self, obj):
+        return {
+            'country': obj.get_subject().C,
+            'state': obj.get_subject().ST,
+            'city': obj.get_subject().L,
+            'organization': obj.get_subject().O,
+            'common': obj.get_subject().CN,
+            'san': obj.get_subject().subjectAltName,
+            'email': obj.get_subject().emailAddress,
+        }
+
+    @private
+    @accepts(
+        Str('csr', required=True)
+    )
+    def load_certificate_request(self, csr):
+        try:
+            csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, csr)
+        except crypto.Error:
+            return {}
+        else:
+            return self.get_x509_subject(csr)
 
     @private
     async def get_fingerprint_of_cert(self, certificate_id):
@@ -515,15 +541,17 @@ class CertificateService(CRUDService):
     # "do_create" IS CALLED FIRST AND THEN BASED ON THE TYPE OF THE CERTIFICATE WHICH IS TO BE CREATED THE
     # APPROPRIATE METHOD IS CALLED
     # FOLLOWING TYPES ARE SUPPORTED
-    # CREATE_TYPE ( STRING )      - METHOD CALLED
-    # CERTIFICATE_CREATE_INTERNAL - __create_internal
-    # CERTIFICATE_CREATE_IMPORTED - __create_imported_certificate
-    # CERTIFICATE_CREATE          - __create_certificate
-    # CERTIFICATE_CREATE_CSR      - __create_csr
+    # CREATE_TYPE ( STRING )          - METHOD CALLED
+    # CERTIFICATE_CREATE_INTERNAL     - __create_internal
+    # CERTIFICATE_CREATE_IMPORTED     - __create_imported_certificate
+    # CERTIFICATE_CREATE_IMPORTED_CSR - __create_imported_csr
+    # CERTIFICATE_CREATE              - __create_certificate
+    # CERTIFICATE_CREATE_CSR          - __create_csr
 
     @accepts(
         Dict(
             'certificate_create',
+            Int('csr_id'),
             Int('signedby'),
             Int('key_length'),
             Int('type'),
@@ -542,13 +570,16 @@ class CertificateService(CRUDService):
             Str('state'),
             Str('create_type', enum=[
                 'CERTIFICATE_CREATE_INTERNAL', 'CERTIFICATE_CREATE_IMPORTED',
-                'CERTIFICATE_CREATE', 'CERTIFICATE_CREATE_CSR'], required=True),
+                'CERTIFICATE_CREATE', 'CERTIFICATE_CREATE_CSR',
+                'CERTIFICATE_CREATE_IMPORTED_CSR'], required=True),
             Str('digest_algorithm', enum=['SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512']),
             List('san', items=[Str('san')]),
             register=True
         )
     )
     async def do_create(self, data):
+        if not data.get('san'):
+            data.pop('san')
 
         verrors = await self.validate_common_attributes(data, 'certificate_create')
 
@@ -559,6 +590,8 @@ class CertificateService(CRUDService):
 
         if verrors:
             raise verrors
+
+        # TODO: ENFORCE THAT THE RIGHT PARAMETERS GO TO THE NEXT CREATE FUNCTION
 
         data = await self.middleware.run_in_io_thread(
             self.map_functions[data.pop('create_type')],
@@ -604,6 +637,32 @@ class CertificateService(CRUDService):
         return data
 
     @accepts(
+        Dict(
+            'create_imported_csr',
+            Str('CSR', required=True),
+            Str('name'),
+            Str('privatekey', required=True),
+            Str('passphrase')
+        )
+    )
+    def __create_imported_csr(self, data):
+
+        data['type'] = CERT_TYPE_CSR
+
+        for k, v in self.load_certificate_request(data['CSR']).items():
+            data[k] = v
+
+        if 'passphrase' in data:
+            data['privatekey'] = export_private_key(
+                data['privatekey'],
+                data['passphrase']
+            )
+
+        data.pop('passphrase', None)
+
+        return data
+
+    @accepts(
         Patch(
             'certificate_create', 'create_certificate',
             ('edit', _set_required('certificate')),
@@ -620,14 +679,44 @@ class CertificateService(CRUDService):
         return data
 
     @accepts(
-        Patch(
-            'certificate_create', 'certificate_create_imported',
-            ('edit', _set_required('certificate')),
-            ('edit', _set_required('privatekey')),
-            ('rm', {'name': 'create_type'})
+        Dict(
+            'certificate_create_imported',
+            Int('csr_id'),
+            Str('certificate', required=True),
+            Str('name'),
+            Str('passphrase'),
+            Str('privatekey')
         )
     )
     def __create_imported_certificate(self, data):
+        verrors = ValidationErrors()
+
+        csr_id = data.pop('csr_id', None)
+        if csr_id:
+            csr_obj = self.middleware.call_sync(
+                'certificate.query',
+                [
+                    ['id', '=', csr_id],
+                    ['CSR', '!=', None]
+                ]
+            )
+            if not csr_obj:
+                verrors.add(
+                    'certificate_create.csr_id',
+                    f'No CSR exists with id {csr_id}'
+                )
+            else:
+                data['privatekey'] = csr_obj[0]['privatekey']
+                data.pop('passphrase', None)
+        elif not data.get('privatekey'):
+            verrors.add(
+                'certificate_create.privatekey',
+                'Private key is required when importing a certificate'
+            )
+
+        if verrors:
+            raise verrors
+
         data['type'] = CERT_TYPE_EXISTING
 
         data = self.__create_certificate(data)
@@ -991,8 +1080,8 @@ class CertificateAuthorityService(CRUDService):
             'certificate': new_cert,
             'privatekey': csr_cert_data['privatekey'],
             'create_type': 'CERTIFICATE_CREATE',
-            'signedby': ca_data['id']   # Is this the right step ? If a CA signs a CSR, should it be the signedby
-        }                               # entity for that certificate
+            'signedby': ca_data['id']
+        }
 
         new_csr_dict = self.middleware.call_sync(
             'certificate.create',
