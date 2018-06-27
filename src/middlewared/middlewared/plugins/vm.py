@@ -890,17 +890,48 @@ class VMService(CRUDService):
         List("devices"),
         Str('vm_type'),
         Bool('autostart'),
+        Bool('create_zvol', required=False),
+        Str('zvol_name', required=False),
+        Str('zvol_type', required=False),
+        Str('zvol_volsize', required=False),
         register=True,
     ))
     async def do_create(self, data):
         """Create a VM."""
-
         devices = data.pop('devices')
+        create_zvol = data.pop('create_zvol')
+        ds_options = {
+            'name': data.pop('zvol_name'),
+            'type': data.pop('zvol_type'),
+            'volsize': data.pop('zvol_volsize')
+        }
+
         pk = await self.middleware.call('datastore.insert', 'vm.vm', data)
 
         for device in devices:
             device['vm'] = pk
+
+            if create_zvol and device['dtype'] == 'DISK':
+                if not all(ds_options.values()):
+                    raise CallError(
+                        'Must supply zvol_name, zvol_type and zvol_volsize'
+                        ' when creating a zvol.', errno.EINVAL
+                    )
+
+                self.logger.debug(
+                    f'===> Creating ZVOL {ds_options["name"]} with volsize'
+                    f' {ds_options["volsize"]}')
+
+                zvol_blocksize = await self.middleware.call(
+                    'pool.dataset.recommended_zvol_blocksize',
+                    ds_options['name'].split('/', 1)[0]
+                )
+                ds_options['volblocksize'] = zvol_blocksize
+
+                await self.middleware.call('pool.dataset.create', ds_options)
+
             await self.middleware.call('datastore.insert', 'vm.device', device)
+
         return pk
 
     async def __do_update_devices(self, id, devices):
