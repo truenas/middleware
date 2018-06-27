@@ -409,7 +409,7 @@ class PoolService(CRUDService):
         Str('guid', required=True),
         Str('name'),
         Str('passphrase', private=True),
-        List('devices', items=[Str('device')]),
+        List('devices', items=[Str('device')], default=[]),
     ))
     @job(lock='import_pool', pipes=['input'], check_pipes=False)
     async def import_pool(self, job, data):
