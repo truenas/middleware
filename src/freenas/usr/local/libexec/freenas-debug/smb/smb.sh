@@ -62,14 +62,6 @@ smb_func()
 	section_header "SMB Status"
 	echo "SMB is ${enabled}"
 	section_footer
-
-	#
-	#	If SMB is disabled, exit
-	#
-	# if [ "${onoff}" = "0" ]
-	# then
-		# exit 0
-	# fi
 	
 	#
 	#	Dump samba version
