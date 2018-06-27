@@ -149,7 +149,7 @@ class ISCSIPortalService(CRUDService):
                 IPAddr('ip', required=True),
                 Int('port', default=3260, validators=[Range(min=1, max=65535)]),
             ),
-        ]),
+        ], default=[]),
         register=True,
     ))
     async def do_create(self, data):
@@ -655,7 +655,7 @@ class iSCSITargetExtentService(CRUDService):
         else:
             return serial
 
-    @accepts(List('exclude'))
+    @accepts(List('exclude', default=[]))
     async def disk_choices(self, exclude):
         """
         Exclude will exclude the path from being in the used_zvols list,

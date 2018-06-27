@@ -72,7 +72,7 @@ class SMBService(SystemServiceService):
         Bool('allow_execute_always'),
         Bool('obey_pam_restrictions'),
         Bool('ntlmv1_auth'),
-        List('bindip', items=[IPAddr('ip')]),
+        List('bindip', items=[IPAddr('ip')], default=[]),
         Str('smb_options'),
         update=True,
     ))

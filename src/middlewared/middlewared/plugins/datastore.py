@@ -96,7 +96,7 @@ class DatastoreService(Service):
             'query-options',
             Str('extend', null=True),
             Dict('extra', additional_attrs=True),
-            List('order_by'),
+            List('order_by', default=[]),
             Bool('count', default=False),
             Bool('get', default=False),
             Str('prefix'),

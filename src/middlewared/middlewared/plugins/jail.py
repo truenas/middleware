@@ -30,7 +30,7 @@ class JailService(CRUDService):
     # using `process_pool`
     # @filterable
     @accepts(
-        List('query-filters'),
+        List('query-filters', default=[]),
         Dict('query-options', additional_attrs=True),
     )
     def query(self, filters=None, options=None):
@@ -221,7 +221,7 @@ class JailService(CRUDService):
              Str("password", default="anonymous@"),
              Str("name", default=None),
              Bool("accept", default=False),
-             List("props"),
+             List("props", default=[]),
              List(
                  "files",
                  default=["MANIFEST", "base.txz", "lib32.txz", "doc.txz"])))
@@ -376,7 +376,7 @@ class JailService(CRUDService):
 
     @accepts(
         Str("jail"),
-        List("command"),
+        List("command", default=[]),
         Dict("options", Str("host_user", default="root"), Str("jail_user")))
     def exec(self, jail, command, options):
         """Issues a command inside a jail."""

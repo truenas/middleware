@@ -296,8 +296,8 @@ class RsyncModService(CRUDService):
         Int('maxconn'),
         Str('user'),
         Str('group'),
-        List('hostsallow', items=[Str('hostsallow')]),
-        List('hostsdeny', items=[Str('hostdeny')]),
+        List('hostsallow', items=[Str('hostsallow')], default=[]),
+        List('hostsdeny', items=[Str('hostdeny')], default=[]),
         Str('auxiliary'),
         register=True,
     ))

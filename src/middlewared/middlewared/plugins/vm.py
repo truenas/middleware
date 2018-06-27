@@ -887,7 +887,7 @@ class VMService(CRUDService):
         Int('vcpus'),
         Int('memory'),
         Str('bootloader'),
-        List("devices"),
+        List("devices", default=[]),
         Str('vm_type'),
         Bool('autostart'),
         register=True,
