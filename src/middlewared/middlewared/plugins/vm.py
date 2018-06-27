@@ -22,10 +22,10 @@ import signal
 logger = middlewared.logger.Logger('vm').getLogger()
 
 CONTAINER_IMAGES = {
-    "RancherOS": {
-        "URL": "http://download.freenas.org/bhyve-templates/rancheros-bhyve-v1.1.3/rancheros-bhyve-v1.1.3.img.gz",
-        "GZIPFILE": "rancheros-bhyve-v1.1.3.img.gz",
-        "SHA256": "e9288df573e01f5468c1f7e4609fbeab481caa3ffc5855af9d003b49557dde84",
+    'RancherOS': {
+        'URL': 'http://download.freenas.org/bhyve-templates/rancheros-bhyve-v1.1.3/rancheros-bhyve-v1.1.3.img.gz',
+        'GZIPFILE': 'rancheros-bhyve-v1.1.3.img.gz',
+        'SHA256': 'e9288df573e01f5468c1f7e4609fbeab481caa3ffc5855af9d003b49557dde84',
     }
 }
 BUFSIZE = 65536
@@ -85,7 +85,7 @@ class VMManager(object):
             vm = await self.service.query([('id', '=', id)], {'get': True})
             return vm
         except IndexError:
-            self.logger.error("VM does not exist.")
+            self.logger.error('VM does not exist.')
             return None
 
 
@@ -131,9 +131,9 @@ class VMSupervisor(object):
 
                 disk_sector_size = device['attributes'].get('sectorsize', 0)
                 if disk_sector_size > 0:
-                    sectorsize_args = ",sectorsize=" + str(disk_sector_size)
+                    sectorsize_args = ',sectorsize=' + str(disk_sector_size)
                 else:
-                    sectorsize_args = ""
+                    sectorsize_args = ''
 
                 if device['attributes'].get('type') == 'AHCI':
                     args += ['-s', '{},ahci-hd,{}{}'.format(nid(), device['attributes']['path'], sectorsize_args)]
@@ -147,7 +147,7 @@ class VMSupervisor(object):
                     device_map_file = self.vmutils.ctn_device_map(shared_fs, self.vm['id'], self.vm['name'], device)
                     grub_dir = self.vmutils.ctn_grub(shared_fs, self.vm['id'], self.vm['name'], device, device['attributes'].get('rootpwd', None), None)
                     grub_boot_device = True
-                    self.logger.debug("==> Boot Disk: {0}".format(device))
+                    self.logger.debug('==> Boot Disk: {0}'.format(device))
 
             elif device['dtype'] == 'CDROM':
                 args += ['-s', '{},ahci-cd,{}'.format(nid(), device['attributes']['path'])]
@@ -170,7 +170,7 @@ class VMSupervisor(object):
 
                 # By default we add one NIC and the MAC address is an empty string.
                 # Issue: 24222
-                if mac_address == "":
+                if mac_address == '':
                     mac_address = None
 
                 if mac_address == '00:a0:98:FF:FF:FF' or mac_address is None:
@@ -190,9 +190,9 @@ class VMSupervisor(object):
                 vnc_password = device['attributes'].get('vnc_password', None)
                 vnc_web = device['attributes'].get('vnc_web', None)
 
-                vnc_password_args = ""
+                vnc_password_args = ''
                 if vnc_password:
-                    vnc_password_args = "password=" + vnc_password
+                    vnc_password_args = 'password=' + vnc_password
 
                 if vnc_resolution is None:
                     width = 1024
@@ -218,7 +218,7 @@ class VMSupervisor(object):
 
             #  If container has no boot device, we should stop.
             if grub_boot_device is False:
-                self.logger.error("===> There is no boot disk for vm: {0}".format(self.vm['name']))
+                self.logger.error('===> There is no boot disk for vm: {0}'.format(self.vm['name']))
                 return False
 
             self.logger.debug('Starting grub-bhyve: {}'.format(' '.join(grub_bhyve_args)))
@@ -244,7 +244,7 @@ class VMSupervisor(object):
                                          '/usr/local/libexec/novnc/', '--wrap-mode=ignore',
                                          web_bind, '{}:{}'.format(vnc_bind, vnc_port)],
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            self.logger.debug("==> Start WEBVNC at port {} with pid number {}".format(vnc_web_port, self.web_proc.pid))
+            self.logger.debug('==> Start WEBVNC at port {} with pid number {}'.format(vnc_web_port, self.web_proc.pid))
 
         while True:
             line = await self.proc.stdout.readline()
@@ -260,25 +260,25 @@ class VMSupervisor(object):
         # all other non-zero status codes are errors
         self.bhyve_error = await self.proc.wait()
         if self.bhyve_error == 0:
-            self.logger.info("===> Rebooting VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.logger.info('===> Rebooting VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
             await self.manager.restart(self.vm['id'])
             await self.manager.start(self.vm['id'])
         elif self.bhyve_error == 1:
             # XXX: Need a better way to handle the vmm destroy.
-            self.logger.info("===> Powered off VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.logger.info('===> Powered off VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
             await self.__teardown_guest_vmemory(self.vm['id'])
             await self.destroy_vm()
         elif self.bhyve_error in (2, 3):
-            self.logger.info("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.logger.info('===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
             await self.__teardown_guest_vmemory(self.vm['id'])
             await self.manager.stop(self.vm['id'])
         elif self.bhyve_error not in (0, 1, 2, 3, None):
-            self.logger.info("===> Error VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.logger.info('===> Error VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
             await self.__teardown_guest_vmemory(self.vm['id'])
             await self.destroy_vm()
 
     async def destroy_vm(self):
-        self.logger.warn("===> Destroying VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+        self.logger.warn('===> Destroying VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
         # XXX: We need to catch the bhyvectl return error.
         await (await Popen(['bhyvectl', '--destroy', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.manager._vm.pop(self.vm['id'], None)
@@ -292,13 +292,13 @@ class VMSupervisor(object):
         max_arc = sysctl.filter('vfs.zfs.arc_max')
         resize_arc = max_arc[0].value + guest_memory
 
-        if guest_status.get('state') == "STOPPED":
+        if guest_status.get('state') == 'STOPPED':
             if resize_arc <= ZFS_ARC_MAX:
                 sysctl.filter('vfs.zfs.arc_max')[0].value = max_arc[0].value + guest_memory
-                self.logger.debug("===> Give back guest memory to ARC.: {}".format(guest_memory))
+                self.logger.debug('===> Give back guest memory to ARC.: {}'.format(guest_memory))
             elif resize_arc > ZFS_ARC_MAX and max_arc[0].value < ZFS_ARC_MAX:
                 sysctl.filter('vfs.zfs.arc_max')[0].value = ZFS_ARC_MAX
-                self.logger.debug("===> Enough guest memory to set ARC back to its original limit.")
+                self.logger.debug('===> Enough guest memory to set ARC back to its original limit.')
             return True
         return False
 
@@ -362,7 +362,7 @@ class VMSupervisor(object):
     async def kill_bhyve_web(self):
         if self.web_proc:
             try:
-                self.logger.debug("==> Killing WEBVNC: {}".format(self.web_proc.pid))
+                self.logger.debug('==> Killing WEBVNC: {}'.format(self.web_proc.pid))
                 os.kill(self.web_proc.pid, signal.SIGTERM)
             except ProcessLookupError as e:
                 if e.errno != errno.ESRCH:
@@ -371,19 +371,19 @@ class VMSupervisor(object):
 
     async def restart(self):
         bhyve_error = await (await Popen(['bhyvectl', '--force-reset', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
-        self.logger.debug("==> Reset VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], bhyve_error))
+        self.logger.debug('==> Reset VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], bhyve_error))
         self.destroy_tap()
         await self.kill_bhyve_web()
 
     async def stop(self, force=False):
         if force:
             bhyve_error = await (await Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
-            self.logger.debug("===> Force Stop VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.logger.debug('===> Force Stop VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
             if bhyve_error:
-                self.logger.error("===> Stopping VM error: {0}".format(bhyve_error))
+                self.logger.error('===> Stopping VM error: {0}'.format(bhyve_error))
         else:
             os.kill(self.proc.pid, signal.SIGTERM)
-            self.logger.debug("===> Soft Stop VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.logger.debug('===> Soft Stop VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
 
         self.destroy_tap()
         return await self.kill_bhyve_pid()
@@ -395,7 +395,7 @@ class VMSupervisor(object):
                 try:
                     os.kill(self.proc.pid, 0)
                 except OSError:
-                    self.logger.error("===> VMM {0} is running without bhyve process.".format(self.vm['name']))
+                    self.logger.error('===> VMM {0} is running without bhyve process.'.format(self.vm['name']))
                     return False
                 return True
             else:
@@ -466,7 +466,7 @@ class VMUtils(object):
         ]
 
         grub_additional_args = {
-            "RancherOS": ['linux /boot/vmlinuz-4.9.75-rancher rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.resize_device=/dev/sda'.format(quote(password)),
+            'RancherOS': ['linux /boot/vmlinuz-4.9.75-rancher rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.resize_device=/dev/sda'.format(quote(password)),
                           'initrd /boot/initrd-v1.1.3']
         }
 
@@ -498,7 +498,7 @@ class VMUtils(object):
                         break
 
             with open(grub_file, 'w') as cfg_dst:
-                cfg_dst.write(" ".join(src_data))
+                cfg_dst.write(' '.join(src_data))
 
         return vm_private_dir
 
@@ -624,7 +624,7 @@ class VMService(CRUDService):
                     auto_generate = False
                     split_port = int(str(vnc_port)[:2]) - 1
                     vnc_web = int(str(split_port) + str(vnc_port)[2:])
-                    vnc_attr = {"vnc_port": vnc_port, "vnc_web": vnc_web}
+                    vnc_attr = {'vnc_port': vnc_port, 'vnc_web': vnc_web}
         else:
             return None
         return vnc_attr
@@ -707,7 +707,7 @@ class VMService(CRUDService):
             guest_status = None
 
         if guest_status and guest_status['state'] == 'RUNNING':
-            device = "/dev/nmdm{0}B".format(id)
+            device = '/dev/nmdm{0}B'.format(id)
             if stat.S_ISCHR(os.stat(device).st_mode) is True:
                     return device
 
@@ -724,14 +724,14 @@ class VMService(CRUDService):
 
         if pool_exist is False:
             try:
-                self.logger.debug("===> Trying to create: {0}".format(new_fs))
+                self.logger.debug('===> Trying to create: {0}'.format(new_fs))
                 self.middleware.call_sync('zfs.dataset.create', {
                     'name': new_fs,
                     'type': 'FILESYSTEM',
                     'properties': {'sparse': False},
                 })
             except Exception as e:
-                self.logger.error("Failed to create dataset", exc_info=True)
+                self.logger.error('Failed to create dataset', exc_info=True)
                 raise e
             self.middleware.call_sync('zfs.dataset.mount', new_fs)
             mountpoint = self.middleware.call_sync('zfs.dataset.query', [('id', '=', new_fs)])[0]['mountpoint']
@@ -761,7 +761,7 @@ class VMService(CRUDService):
             if pool_name:
                 return self.__activate_sharefs(pool_name)
             else:
-                self.logger.error("===> There is no pool available to activate a shared fs.")
+                self.logger.error('===> There is no pool available to activate a shared fs.')
                 return False
 
     @accepts()
@@ -814,7 +814,7 @@ class VMService(CRUDService):
         if vms_memory <= throttled_user_mem:
             if max_arc[0].value > throttled_arc_max:
                 if max(max_arc[0].value - memory, 0) != 0:
-                    self.logger.info("===> Setting ARC FROM: {} TO: {}".format(max_arc[0].value, max_arc[0].value - memory))
+                    self.logger.info('===> Setting ARC FROM: {} TO: {}'.format(max_arc[0].value, max_arc[0].value - memory))
                     sysctl.filter('vfs.zfs.arc_max')[0].value = max_arc[0].value - memory
             return True
         else:
@@ -824,10 +824,10 @@ class VMService(CRUDService):
         vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
         guest_memory = vm[0].get('memory', None)
         guest_status = await self.status(id)
-        if guest_status.get('state') != "RUNNING":
+        if guest_status.get('state') != 'RUNNING':
             setvmem = await self.__set_guest_vmemory(guest_memory)
             if setvmem is False:
-                self.logger.warn("===> Cannot guarantee memory for guest id: {}".format(id))
+                self.logger.warn('===> Cannot guarantee memory for guest id: {}'.format(id))
             return setvmem
 
         else:
@@ -863,7 +863,7 @@ class VMService(CRUDService):
             self.logger.debug('===> DISK: {0} resize to: {1}'.format(raw_path, expand_size))
             error = await (await Popen(truncate_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
             if error:
-                self.logger.debug("===> Error to resize disk: {0} with size: {1}".format(raw_path, expand_size))
+                self.logger.debug('===> Error to resize disk: {0} with size: {1}'.format(raw_path, expand_size))
                 return False
             else:
                 return True
@@ -878,7 +878,7 @@ class VMService(CRUDService):
                 str: with six groups of two hexadecimal digits
         """
         mac_address = [0x00, 0xa0, 0x98, random.randint(0x00, 0x7f), random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
-        return ':'.join(["%02x" % x for x in mac_address])
+        return ':'.join(['%02x' % x for x in mac_address])
 
     @accepts(Dict(
         'vm_create',
@@ -887,7 +887,7 @@ class VMService(CRUDService):
         Int('vcpus'),
         Int('memory'),
         Str('bootloader'),
-        List("devices"),
+        List('devices'),
         Str('vm_type'),
         Bool('autostart'),
         Bool('create_zvol', required=False),
@@ -979,7 +979,7 @@ class VMService(CRUDService):
         devices = data.get('devices', None)
 
         if devices:
-            devices[0].update({"vm": id})
+            devices[0].update({'vm': id})
             dtype = devices[0].get('dtype', None)
             if dtype in devices_type and isinstance(devices, list) is True:
                 devices = devices[0]
@@ -995,7 +995,7 @@ class VMService(CRUDService):
         """Delete a VM."""
         status = await self.status(id)
         if isinstance(status, dict):
-            if status.get('state') == "RUNNING":
+            if status.get('state') == 'RUNNING':
                 await self.stop(id)
         try:
             vm_data = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
@@ -1003,7 +1003,7 @@ class VMService(CRUDService):
                 await self.middleware.call('vm.rm_container_conf', id)
             return await self.middleware.call('datastore.delete', 'vm.vm', id)
         except Exception as err:
-            self.logger.error("===> {0}".format(err))
+            self.logger.error('===> {0}'.format(err))
             return False
 
     @item_method
@@ -1016,7 +1016,7 @@ class VMService(CRUDService):
             else:
                 return False
         except Exception as err:
-            self.logger.error("===> {0}".format(err))
+            self.logger.error('===> {0}'.format(err))
             return False
 
     @item_method
@@ -1026,7 +1026,7 @@ class VMService(CRUDService):
         try:
             return await self._manager.stop(id, force)
         except Exception as err:
-            self.logger.error("===> {0}".format(err))
+            self.logger.error('===> {0}'.format(err))
             return False
 
     @item_method
@@ -1036,7 +1036,7 @@ class VMService(CRUDService):
         try:
             return await self._manager.restart(id)
         except Exception as err:
-            self.logger.error("===> {0}".format(err))
+            self.logger.error('===> {0}'.format(err))
             return False
 
     @item_method
@@ -1046,7 +1046,7 @@ class VMService(CRUDService):
         try:
             return await self._manager.status(id)
         except Exception as err:
-            self.logger.error("===> {0}".format(err))
+            self.logger.error('===> {0}'.format(err))
             return False
 
     def fetch_hookreport(self, blocknum, blocksize, totalsize, job, file_name):
@@ -1063,7 +1063,7 @@ class VMService(CRUDService):
         vm_os = CONTAINER_IMAGES.get(vmOS)
         url = vm_os['URL']
 
-        self.logger.debug("==> IMAGE: {0}".format(vm_os))
+        self.logger.debug('==> IMAGE: {0}'.format(vm_os))
 
         sharefs = await self.middleware.call('vm.get_sharefs')
         vm_os_file = vm_os['GZIPFILE']
@@ -1071,7 +1071,7 @@ class VMService(CRUDService):
         file_path = iso_path + vm_os_file
 
         if os.path.exists(file_path) is False and force is False:
-            logger.debug("===> Downloading: %s" % (url))
+            logger.debug('===> Downloading: %s' % (url))
             await self.middleware.run_in_thread(lambda: urlretrieve(
                 url,
                 file_path,
@@ -1101,10 +1101,10 @@ class VMService(CRUDService):
             file_path = sharefs + '/iso_files/' + image_file
             if os.path.exists(file_path):
                 if self.vmutils.check_sha256(file_path, vmOS):
-                    self.logger.debug("===> Checksum OK: {}".format(file_path))
+                    self.logger.debug('===> Checksum OK: {}'.format(file_path))
                     return file_path
                 else:
-                    self.logger.debug("===> Checksum NOK, removing file: {}".format(file_path))
+                    self.logger.debug('===> Checksum NOK, removing file: {}'.format(file_path))
                     os.remove(file_path)
                     return False
             else:
@@ -1115,22 +1115,22 @@ class VMService(CRUDService):
     @accepts(Str('src'), Str('dst'))
     def decompress_gzip(self, src, dst):
         if os.path.exists(dst):
-            self.logger.error("===> DST: {0} exist, we stop here.".format(dst))
+            self.logger.error('===> DST: {0} exist, we stop here.'.format(dst))
             return False
 
         if self.vmutils.is_gzip(src) is True:
-            self.logger.debug("===> SRC: {0} DST: {1}".format(src, dst))
+            self.logger.debug('===> SRC: {0} DST: {1}'.format(src, dst))
             with gzip.open(src, 'rb') as src_file, open(dst, 'wb') as dst_file:
                 shutil.copyfileobj(src_file, dst_file)
             return True
         else:
-            self.logger.error("===> SRC: {0} does not exists or is broken.".format(src))
+            self.logger.error('===> SRC: {0} does not exists or is broken.'.format(src))
             return False
 
     async def __find_clone(self, name):
         data = await self.middleware.call('vm.query', [], {'order_by': ['name']})
         clone_index = 0
-        next_name = ""
+        next_name = ''
         for vm_name in data:
             if name in vm_name['name'] and '_clone' in vm_name['name']:
                 name_index = int(vm_name['name'][-1])
@@ -1179,10 +1179,10 @@ class VMService(CRUDService):
                 item['attributes']['path'] = '/dev/zvol/' + clone_dst_path
             if item['dtype'] == 'RAW':
                 item['attributes']['path'] = ''
-                self.logger.warn("For RAW disk you need copy it manually inside your NAS.")
+                self.logger.warn('For RAW disk you need copy it manually inside your NAS.')
 
         await self.create(vm)
-        self.logger.info("VM cloned from {0} to {1}".format(origin_name, vm['name']))
+        self.logger.info('VM cloned from {0} to {1}'.format(origin_name, vm['name']))
 
         return True
 
