@@ -343,7 +343,7 @@ class CloudSyncService(CRUDService):
         Str("encryption_salt"),
         Cron("schedule"),
         Dict("attributes", additional_attrs=True),
-        Str("args"),
+        Str("args", default=""),
         Bool("enabled", default=True),
         register=True,
     ))
