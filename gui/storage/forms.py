@@ -46,17 +46,17 @@ from dojango import forms
 from dojango.forms import CheckboxSelectMultiple
 from freenasUI import choices
 from freenasUI.account.models import bsdUsers
-from freenasUI.common import humanize_number_si, humansize_to_bytes
+from freenasUI.common import humanize_number_si
 from freenasUI.common.forms import ModelForm, Form, mchoicefield
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.forms import (
     CronMultiple, UserField, GroupField, WarningSelect,
-    PathField,
+    PathField, SizeField,
 )
 from freenasUI.freeadmin.utils import key_order
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
-from freenasUI.middleware.client import client
+from freenasUI.middleware.client import client, ClientException, ValidationErrors
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
@@ -1638,8 +1638,7 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
 
 class CommonZVol(Form):
     zvol_comments = forms.CharField(max_length=120, label=_('Comments'), required=False)
-    zvol_volsize = forms.CharField(
-        max_length=128,
+    zvol_volsize = SizeField(
         label=_('Size for this zvol'),
         help_text=_('Example: 1 GiB'),
     )
@@ -1672,15 +1671,15 @@ class CommonZVol(Form):
         if hasattr(self, 'parentdata'):
             self.fields['zvol_sync'].choices = _inherit_choices(
                 choices.ZFS_SyncChoices,
-                self.parentdata['sync'][0]
+                self.parentdata['sync']['value'].lower()
             )
             self.fields['zvol_compression'].choices = _inherit_choices(
                 choices.ZFS_CompressionChoices,
-                self.parentdata['compression'][0]
+                self.parentdata['compression']['value'].lower()
             )
             self.fields['zvol_dedup'].choices = _inherit_choices(
                 choices.ZFS_DEDUP_INHERIT,
-                self.parentdata['dedup'][0]
+                self.parentdata['deduplication']['value'].lower()
             )
 
         if not dedup_enabled():
@@ -1694,48 +1693,15 @@ class CommonZVol(Form):
                 'assistance.</span><br />'
             )
 
-    def _zvol_force(self):
-        if self._force:
-            if not self.cleaned_data.get('zvol_force'):
-                self._errors['zvol_volsize'] = self.error_class([
-                    'It is not recommended to use more than 80% of your '
-                    'available space for your zvol!'
-                ])
 
-    def clean_zvol_volsize(self):
-        size = self.cleaned_data.get('zvol_volsize').replace(' ', '')
-        reg = re.search(r'^(\d+(?:\.\d+)?)([BKMGTP](?:iB)?)$', size, re.I)
-        if not reg:
-            raise forms.ValidationError(
-                _('Specify the size with IEC suffixes, e.g. 10 GiB')
-            )
-
-        number, suffix = reg.groups()
-        if suffix.lower().endswith('ib'):
-            size = '%s%s' % (number, suffix[0])
-
-        zlist = zfs.zfs_list(path=self.parentds, include_root=True, recursive=True, hierarchical=False)
-        if zlist:
-            dataset = zlist.get(self.parentds)
-            _map = {
-                'P': 1125899906842624,
-                'T': 1099511627776,
-                'G': 1073741824,
-                'M': 1048576,
-            }
-            if suffix in _map:
-                cmpsize = Decimal(number) * _map.get(suffix)
-            else:
-                cmpsize = Decimal(number)
-            avail = dataset.avail
-            if hasattr(self, 'name'):
-                zvol = zlist.get(self.name)
-                if zvol:
-                    avail += zvol.used
-            if cmpsize > avail * 0.80:
-                self._force = True
-
-        return size
+ZVOL_COMMON_MAPPING = [
+    ('zvol_comments', 'comments', None),
+    ('zvol_sync', 'sync', str.upper),
+    ('zvol_compression', 'compression', str.upper),
+    ('zvol_dedup', 'deduplication', str.upper),
+    ('zvol_volsize', 'volsize', None),
+    ('zvol_force', 'force_size', None),
+]
 
 
 class ZVol_EditForm(CommonZVol):
@@ -1744,28 +1710,28 @@ class ZVol_EditForm(CommonZVol):
         # parentds is required for CommonZVol
         self.name = kwargs.pop('name')
         self.parentds = self.name.rsplit('/', 1)[0]
-        _n = notifier()
-        self.parentdata = _n.zfs_get_options(self.parentds)
+        with client as c:
+            self.zdata = c.call('pool.dataset.query', [['name', '=', self.name]], {'get': True})
+            self.parentdata = c.call('pool.dataset.query', [['name', '=', self.parentds]], {'get': True})
         super(ZVol_EditForm, self).__init__(*args, **kwargs)
 
-        self.zdata = _n.zfs_get_options(self.name)
-        if 'org.freenas:description' in self.zdata and self.zdata['org.freenas:description'][2] == 'local':
-            self.fields['zvol_comments'].initial = self.zdata['org.freenas:description'][0]
-        if self.zdata['sync'][2] == 'inherit':
+        if self.zdata['comments']['source'] == 'LOCAL':
+            self.fields['zvol_comments'].initial = self.zdata['comments']['value']
+        if self.zdata['sync']['source'] == 'INHERITED':
             self.fields['zvol_sync'].initial = 'inherit'
         else:
-            self.fields['zvol_sync'].initial = self.zdata['sync'][0]
-        if self.zdata['compression'][2] == 'inherit':
+            self.fields['zvol_sync'].initial = self.zdata['sync']['value'].lower()
+        if self.zdata['compression']['source'] == 'INHERITED':
             self.fields['zvol_compression'].initial = 'inherit'
         else:
-            self.fields['zvol_compression'].initial = self.zdata['compression'][0]
-        self.fields['zvol_volsize'].initial = self.zdata['volsize'][0]
+            self.fields['zvol_compression'].initial = self.zdata['compression']['value'].lower()
+        self.fields['zvol_volsize'].initial = self.zdata['volsize']['parsed']
 
-        if self.zdata['dedup'][2] == 'inherit':
+        if self.zdata['deduplication']['source'] == 'INHERITED':
             self.fields['zvol_dedup'].initial = 'inherit'
-        elif self.zdata['dedup'][0] in ('on', 'off', 'verify'):
-            self.fields['zvol_dedup'].initial = self.zdata['dedup'][0]
-        elif self.zdata['dedup'][0] == 'sha256,verify':
+        elif self.zdata['deduplication']['value'] in ('ON', 'OFF', 'VERIFY'):
+            self.fields['zvol_dedup'].initial = self.zdata['deduplication']['value'].lower()
+        elif self.zdata['deduplication']['value'] == 'SHA256,VERIFY':
             self.fields['zvol_dedup'].initial = 'verify'
         else:
             self.fields['zvol_dedup'].initial = 'off'
@@ -1781,51 +1747,49 @@ class ZVol_EditForm(CommonZVol):
                 'assistance.</span><br />'
             )
 
-    def clean(self):
-        cleaned_data = _clean_zfssize_fields(self, ('volsize', ), "zvol_")
-        volsize = cleaned_data.get('zvol_volsize')
-        if volsize and 'zvol_volsize' not in self._errors:
-            if humansize_to_bytes(self.zdata['volsize'][0]) > humansize_to_bytes(volsize):
-                self._errors['zvol_volsize'] = self.error_class([
-                    _('You cannot shrink a zvol from GUI, this may lead to data loss.')
-                ])
-        self._zvol_force()
-        return cleaned_data
-
     def save(self):
-        _n = notifier()
-        error = False
-        for attr, formfield, can_inherit in (
-            ('org.freenas:description', 'zvol_comments', False),
-            ('sync', None, True),
-            ('compression', None, True),
-            ('dedup', None, True),
-            ('volsize', None, True),
-        ):
-            if not formfield:
-                formfield = f'zvol_{attr}'
-            if can_inherit and self.cleaned_data[formfield] == 'inherit':
-                success, err = _n.zfs_inherit_option(self.name, attr)
-            else:
-                success, err = _n.zfs_set_option(
-                    self.name, attr, self.cleaned_data[formfield]
-                )
-            if not success:
-                error = True
-                self._errors[formfield] = self.error_class([err])
+        data = {}
+        for old, new, save in ZVOL_COMMON_MAPPING:
+            data[new] = (save or (lambda x: x))(self.cleaned_data[old])
 
-        if error:
+        if data['volsize'] == self.zdata['volsize']['parsed']:
+            data.pop('volsize')
+
+        try:
+            with client as c:
+                c.call('pool.dataset.update', self.name, data)
+
+            return True
+        except ClientException as e:
+            field_name = '__all__'
+            error_message = e.error
+
+            if field_name not in self._errors:
+                self._errors[field_name] = self.error_class([error_message])
+            else:
+                self._errors[field_name] += [error_message]
+        except ValidationErrors as e:
+            m = {new: old for old, new, save in ZVOL_COMMON_MAPPING}
+            for err in e.errors:
+                field_name = m.get(err.attribute.split('.', 1)[-1])
+                error_message = err.errmsg
+
+                if field_name not in self.fields:
+                    field_name = '__all__'
+
+                if field_name not in self._errors:
+                    self._errors[field_name] = self.error_class([error_message])
+                else:
+                    self._errors[field_name] += [error_message]
+
             return False
-        extents = iSCSITargetExtent.objects.filter(
-            iscsi_target_extent_type='ZVOL',
-            iscsi_target_extent_path=f'zvol/{self.name}')
-        if (
-            'volsize' in self.zdata and self.zdata['volsize'][0] and
-            self.zdata['volsize'][0] != self.cleaned_data.get('zvol_volsize', '').upper() and
-            extents.exists()
-        ):
-            _n.reload('iscsitarget')
-        return True
+
+
+ZVOL_IMMUTABLE_MAPPING = [
+    ('zvol_name', 'name', None),
+    ('zvol_sparse', 'sparse', None),
+    ('zvol_blocksize', 'volblocksize', str.upper),
+]
 
 
 class ZVol_CreateForm(CommonZVol):
@@ -1857,80 +1821,43 @@ class ZVol_CreateForm(CommonZVol):
 
     def __init__(self, *args, **kwargs):
         self.parentds = kwargs.pop('parentds')
-        self.parentdata = notifier().zfs_get_options(self.parentds)
-        zpool = notifier().zpool_parse(self.parentds.split('/')[0])
-        numdisks = 4
-        for vdev in zpool.data:
-            if vdev.type in (
-                'cache',
-                'spare',
-                'log',
-                'log mirror',
-            ):
-                continue
-            if vdev.type == 'raidz':
-                num = len(list(iter(vdev))) - 1
-            elif vdev.type == 'raidz2':
-                num = len(list(iter(vdev))) - 2
-            elif vdev.type == 'raidz3':
-                num = len(list(iter(vdev))) - 3
-            elif vdev.type == 'mirror':
-                num = 1
-            else:
-                num = len(list(iter(vdev)))
-            if num > numdisks:
-                numdisks = num
+        with client as c:
+            self.parentdata = c.call('pool.dataset.query', [['name', '=', self.parentds]], {'get': True})
+            size = c.call('pool.dataset.recommended_zvol_blocksize', self.parentds)
         super(ZVol_CreateForm, self).__init__(*args, **kwargs)
         key_order(self, 0, 'zvol_name', instance=True)
-        size = '%dK' % 2 ** ((numdisks * 4) - 1).bit_length()
 
         if size in [y[0] for y in choices.ZFS_VOLBLOCKSIZE]:
             self.fields['zvol_blocksize'].initial = size
 
-    def clean_zvol_name(self):
-        name = self.cleaned_data["zvol_name"]
-        if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:.]*$', name):
-            raise forms.ValidationError(_(
-                "ZFS Volume names must begin with "
-                "an alphanumeric character and may only contain "
-                "(-), (_), (:) and (.)."))
-        return name
-
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        full_zvol_name = "%s/%s" % (
-            self.parentds,
-            cleaned_data.get("zvol_name"))
-        if len(zfs.list_datasets(path=full_zvol_name)) > 0:
-            msg = _("You already have a dataset with the same name")
-            self._errors["zvol_name"] = self.error_class([msg])
-            del cleaned_data["zvol_name"]
-
-        self._zvol_force()
-        return cleaned_data
-
     def save(self):
-        props = {}
-        zvol_volsize = self.cleaned_data.get('zvol_volsize')
-        zvol_blocksize = self.cleaned_data.get("zvol_blocksize")
-        zvol_name = f"{self.parentds}/{self.cleaned_data.get('zvol_name')}"
-        zvol_comments = self.cleaned_data.get('zvol_comments')
-        zvol_sync = self.cleaned_data.get('zvol_sync')
-        zvol_compression = self.cleaned_data.get('zvol_compression')
-        props['sync'] = str(zvol_sync)
-        props['compression'] = str(zvol_compression)
-        if zvol_blocksize:
-            props['volblocksize'] = zvol_blocksize
-        errno, errmsg = notifier().create_zfs_vol(
-            name=str(zvol_name),
-            size=str(zvol_volsize),
-            sparse=self.cleaned_data.get("zvol_sparse", False),
-            props=props)
-        notifier().zfs_set_option(name=str(zvol_name), item="org.freenas:description", value=zvol_comments)
-        if errno != 0:
-            self._errors['__all__'] = self.error_class([errmsg])
+        data = {}
+        for old, new, save in ZVOL_IMMUTABLE_MAPPING + ZVOL_COMMON_MAPPING:
+            v = (save or (lambda x: x))(self.cleaned_data[old])
+            if v != 'INHERIT':
+                data[new] = v
+
+        try:
+            with client as c:
+                c.call('pool.dataset.create', dict(data, name=f"{self.parentds}/{self.cleaned_data['zvol_name']}",
+                                                   type="VOLUME"))
+
+            return True
+        except ValidationErrors as e:
+            m = {new: old for old, new, save in ZVOL_COMMON_MAPPING}
+            for err in e.errors:
+                field_name = m.get(err.attribute.split('.', 1)[-1])
+                error_message = err.errmsg
+
+                if field_name not in self.fields:
+                    field_name = '__all__'
+
+                if field_name not in self._errors:
+                    self._errors[field_name] = self.error_class([error_message])
+                else:
+                    self._errors[field_name] += [error_message]
+
             return False
-        return True
 
 
 class MountPointAccessForm(Form):

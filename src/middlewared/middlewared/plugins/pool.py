@@ -619,7 +619,7 @@ class PoolDatasetService(CRUDService):
             'STANDARD', 'ALWAYS', 'DISABLED',
         ]),
         Str('compression', enum=[
-            'OFF', 'LZ4', 'GZIP-1', 'GZIP-6', 'GZIP-9', 'ZLE', 'LZJB',
+            'OFF', 'LZ4', 'GZIP', 'GZIP-1', 'GZIP-9', 'ZLE', 'LZJB',
         ]),
         Str('atime', enum=['ON', 'OFF']),
         Str('exec', enum=['ON', 'OFF']),
@@ -748,6 +748,10 @@ class PoolDatasetService(CRUDService):
             if data['type'] == 'VOLUME':
                 data['volblocksize'] = dataset[0]['properties']['volblocksize']['value']
             await self.__common_validation(verrors, 'pool_dataset_update', data, 'UPDATE')
+            if 'volsize' in data:
+                if data['volsize'] < dataset[0]['volsize']['parsed']:
+                    verrors.add('pool_dataset_update.volsize',
+                                'You cannot shrink a zvol from GUI, this may lead to data loss.')
         if verrors:
             raise verrors
 
@@ -830,7 +834,7 @@ class PoolDatasetService(CRUDService):
                 if mode == 'UPDATE':
                     avail_mem += int((await self.middleware.call(
                         'zfs.dataset.query',
-                        ['id', '=', data['name']]
+                        [['id', '=', data['name']]]
                     ))[0]['properties']['used']['rawvalue'])
 
                 if (
@@ -857,6 +861,13 @@ class PoolDatasetService(CRUDService):
 
     @accepts(Str('id'))
     async def do_delete(self, id):
+        iscsi_target_extents = await self.middleware.call('iscsi.extent.query', [
+            ['type', '=', 'DISK'],
+            ['path', '=', f'zvol/{id}']
+        ])
+        if iscsi_target_extents:
+            raise CallError("This volume is in use by iSCSI extent, please remove it first.")
+
         return await self.middleware.call('zfs.dataset.delete', id)
 
     @item_method
@@ -903,6 +914,25 @@ class PoolDatasetService(CRUDService):
         await self.middleware.call('notifier.mp_change_permission', path, user,
                                    group, mode, recursive, acl.lower())
         return data
+
+    @accepts(Str('pool'))
+    async def recommended_zvol_blocksize(self, pool):
+        pool = await self.middleware.call('pool.query', [['name', '=', pool]], {'get': True})
+        numdisks = 4
+        for vdev in pool['topology']['data']:
+            if vdev['type'] == 'RAIDZ':
+                num = len(vdev['children']) - 1
+            elif vdev['type'] == 'RAIDZ2':
+                num = len(vdev['children']) - 2
+            elif vdev['type'] == 'RAIDZ3':
+                num = len(vdev['children']) - 3
+            elif vdev['type'] == 'MIRROR':
+                num = 1
+            else:
+                num = len(vdev['children'])
+            if num > numdisks:
+                numdisks = num
+        return '%dK' % 2 ** ((numdisks * 4) - 1).bit_length()
 
 
 class PoolScrubService(CRUDService):
