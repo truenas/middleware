@@ -150,6 +150,8 @@ def filter_list(_list, filters=None, options=None):
                     if not opmap[op](source, value):
                         valid = False
                         break
+                else:
+                    raise ValueError("Invalid filter {0}".format(f))
             if not valid:
                 continue
             rv.append(i)
