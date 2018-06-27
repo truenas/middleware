@@ -191,6 +191,8 @@ class CredentialsService(CRUDService):
             data,
         )
 
+        data["id"] = id
+
         return data
 
     @accepts(Int("id"))
