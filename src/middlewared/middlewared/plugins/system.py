@@ -658,22 +658,36 @@ class SystemGeneralService(ConfigService):
                         'Protocol has been selected as HTTPS, certificate is required'
                     )
                 else:
-                    # getting fingerprint for certificate
-                    fingerprint = await self.middleware.call(
-                        'certificate.get_fingerprint_of_cert',
-                        certificate_id
+                    cert = await self.middleware.call(
+                        'certificate.query',
+                        [
+                            ["id", "=", certificate_id],
+                            ["CSR", "=", None]
+                        ]
                     )
-                    if fingerprint:
-                        syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
-                        syslog.syslog(syslog.LOG_ERR, 'Fingerprint of the certificate used in UI : ' + fingerprint)
-                        syslog.closelog()
-                    else:
-                        # Two reasons value is None - certificate not found - error while parsing the certificate for
-                        # fingerprint
+                    if not cert:
                         verrors.add(
                             f'{schema}.ui_certificate',
-                            'Kindly check if the certificate has been added to the system and it is a valid certificate'
+                            'Please specify a valid certificate which exists on the FreeNAS system'
                         )
+                    else:
+                        # getting fingerprint for certificate
+                        fingerprint = await self.middleware.call(
+                            'certificate.get_fingerprint_of_cert',
+                            certificate_id
+                        )
+                        if fingerprint:
+                            syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
+                            syslog.syslog(syslog.LOG_ERR, 'Fingerprint of the certificate used in UI : ' + fingerprint)
+                            syslog.closelog()
+                        else:
+                            # Two reasons value is None - certificate not found - error while parsing the certificate
+                            # for fingerprint
+                            verrors.add(
+                                f'{schema}.ui_certificate',
+                                'Kindly check if the certificate has been added to the system and it is a '
+                                'valid certificate'
+                            )
         return verrors
 
     @accepts(

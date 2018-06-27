@@ -2766,6 +2766,71 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
         model = models.Certificate
 
 
+class CertificateCSRImportForm(MiddlewareModelForm, ModelForm):
+
+    middleware_plugin = 'certificate'
+    middleware_attr_prefix = 'cert_'
+    middleware_attr_schema = 'certificate'
+    is_singletone = False
+
+    class Meta:
+        fields = [
+            'cert_name',
+            'cert_csr',
+            'cert_privatekey',
+            'cert_passphrase'
+        ]
+        model = models.Certificate
+
+    cert_name = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_name').verbose_name,
+        required=True,
+        help_text=models.Certificate._meta.get_field('cert_name').help_text
+    )
+    cert_csr = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_CSR').verbose_name,
+        widget=forms.Textarea(),
+        required=True,
+        help_text=_(
+            'Cut and paste the contents of your certificate signing request here'
+        )
+    )
+    cert_privatekey = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_privatekey').verbose_name,
+        widget=forms.Textarea(),
+        required=True,
+        help_text=models.Certificate._meta.get_field('cert_privatekey').help_text
+    )
+    cert_passphrase = forms.CharField(
+        label=_("Passphrase"),
+        required=False,
+        help_text=_("Passphrase for encrypted private keys"),
+        widget=forms.PasswordInput(render_value=True),
+    )
+    cert_passphrase2 = forms.CharField(
+        label=_("Confirm Passphrase"),
+        required=False,
+        widget=forms.PasswordInput(render_value=True),
+    )
+
+    def clean_cert_passphrase2(self):
+        cdata = self.cleaned_data
+        passphrase = cdata.get('cert_passphrase')
+        passphrase2 = cdata.get('cert_passphrase2')
+
+        if passphrase and passphrase != passphrase2:
+            raise forms.ValidationError(_(
+                'Passphrase confirmation does not match.'
+            ))
+        return passphrase
+
+    def middleware_clean(self, data):
+        data['create_type'] = 'CERTIFICATE_CREATE_IMPORTED_CSR'
+        data.pop('passphrase2', None)
+        data['CSR'] = data.pop('csr')
+        return data
+
+
 class CertificateImportForm(MiddlewareModelForm, ModelForm):
 
     middleware_plugin = 'certificate'

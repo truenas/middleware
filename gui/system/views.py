@@ -1975,6 +1975,29 @@ def CA_export_privatekey(request, id):
     return response
 
 
+def certificate_csr_import(request):
+
+    if request.method == "POST":
+        form = forms.CertificateCSRImportForm(request.POST)
+        if form.is_valid():
+            try:
+                form.save()
+                return JsonResp(
+                    request,
+                    message=_("Certificate Signing Request successfully imported.")
+                )
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
+        return JsonResp(request, form=form)
+
+    else:
+        form = forms.CertificateCSRImportForm()
+
+    return render(request, "system/certificate/CSR_import.html", {
+        'form': form
+    })
+
+
 def certificate_import(request):
 
     if request.method == "POST":
