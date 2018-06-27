@@ -469,7 +469,7 @@ class CoreService(Service):
 
     @accepts(
         Str('method'),
-        List('args'),
+        List('args', default=[]),
         Str('filename'),
     )
     async def download(self, method, args, filename):
@@ -576,7 +576,7 @@ class CoreService(Service):
             pydevd.stoptrace()
             pydevd.settrace(host=options['host'])
 
-    @accepts(Str("method"), List("params"))
+    @accepts(Str("method"), List("params", default=[]))
     @job(lock=lambda args: f"bulk:{args[0]}")
     async def bulk(self, job, method, params):
         """
