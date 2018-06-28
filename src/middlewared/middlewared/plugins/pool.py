@@ -300,6 +300,146 @@ class PoolService(CRUDService):
             pool['is_decrypted'] = True
         return pool
 
+    @accepts(Dict(
+        'pool_create',
+        Str('name', required=True),
+        Bool('encryption', default=False),
+        Dict(
+            'topology',
+            List('data', items=[
+                Dict(
+                    'datavdevs',
+                    Str('type', enum=['RAIDZ', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'], required=True),
+                    List('disks', items=[Str('disk')], required=True),
+                ),
+            ], required=True),
+            List('cache', items=[
+                Dict(
+                    'cachevdevs',
+                    Str('type', enum=['STRIPE'], required=True),
+                    List('disks', items=[Str('disk')], required=True),
+                ),
+            ]),
+            List('log', items=[
+                Dict(
+                    'logvdevs',
+                    Str('type', enum=['STRIPE', 'MIRROR'], required=True),
+                    List('disks', items=[Str('disk')], required=True),
+                ),
+            ]),
+            List('spares', items=[Str('disk')], default=[]),
+            required=True,
+        )
+    ))
+    async def do_create(self, data):
+
+        verrors = ValidationErrors()
+
+        if await self.middleware.call('pool.query', [('name', '=', data['name'])]):
+            verrors.add('pool_create.name', 'A pool with this name already exists.', errno.EEXIST)
+
+        if not data['topology']['data']:
+            verrors.add('pool_create.topology.data', 'At least one data vdev is required')
+
+        lastdatatype = None
+        for i, vdev in enumerate(data['topology']['data']):
+            numdisks = len(vdev['disks'])
+            minmap = {
+                'STRIPE': 1,
+                'MIRROR': 2,
+                'RAIDZ': 3,
+                'RAIDZ2': 4,
+                'RAIDZ3': 5,
+            }
+            mindisks = minmap[vdev['type']]
+            if numdisks < mindisks:
+                verrors.add(
+                    f'pool_create.topology.data.{i}.disks',
+                    f'You need at least {mindisks} disk(s) for this vdev type.',
+                )
+
+            if lastdatatype and lastdatatype != vdev['type']:
+                verrors.add(
+                    f'pool_create.topology.data.{i}.type',
+                    'You are not allowed to create a pool with different data vdev types '
+                    f'({lastdatatype} and {vdev["type"]}).',
+                )
+            lastdatatype = vdev['type']
+
+        for i in ('cache', 'log', 'spare'):
+            value = data['topology'].get(i)
+            if value and len(value) > 1:
+                verrors.add(
+                    f'pool_create.{i}',
+                    f'Only one row for the virtual device of type {i} is allowed.',
+                )
+
+        if verrors:
+            raise verrors
+
+        disks = {}
+        vdevs = []
+        for i in ('data', 'cache', 'log'):
+            t_vdevs = data['topology'].get(i)
+            if not t_vdevs:
+                continue
+            for t_vdev in t_vdevs:
+                vdev_devs_list = []
+                vdev = {
+                    'root': i.upper(),
+                    'type': t_vdev['type'],
+                    'devices': vdev_devs_list,
+                }
+                vdevs.append(vdev)
+                for disk in t_vdev['disks']:
+                    disks[disk] = vdev_devs_list
+
+        if data['topology']['spares']:
+            vdev_devs_list = []
+            vdevs.append({
+                'root': 'SPARE',
+                'type': 'STRIPE',
+                'devices': vdev_devs_list,
+            })
+            for disk in data['topology']['spares']:
+                disks[disk] = vdev_devs_list
+
+        swapgb = (await self.middleware.call('system.advanced.config'))['swapondrive']
+
+        for disk, vdev_devs_list in disks.items():
+            await self.middleware.call('disk.format', disk, swapgb)
+            devname = await self.middleware.call('disk.gptid_from_part_type', disk, 'freebsd-zfs')
+            if data['encryption']:
+                raise CallError('Encryption not yet implemented')
+                # devname = await self.middleware.call('disk.encrypt', devname)
+            vdev_devs_list.append(f'/dev/{devname}')
+
+        options = {
+            'feature@lz4_compress': 'enabled',
+            'altroot': '/mnt',
+            'cachefile': '/data/zfs/zpool.cache',
+            'failmode': 'continue',
+            'autoexpand': 'on',
+        }
+
+        fsoptions = {
+            'compression': 'lz4',
+            'aclmode': 'passthrough',
+            'aclinherit': 'passthrough',
+            'mountpoint': f'/{data["name"]}',
+        }
+
+        await self.middleware.call('zfs.pool.create', {
+            'name': data['name'],
+            'vdevs': vdevs,
+            'options': options,
+            'fsoptions': fsoptions,
+        })
+
+        await self.middleware.call('zfs.dataset.mount', data['name'])
+
+        return data
+
     @item_method
     @accepts(Int('id', required=False, null=True))
     async def get_disks(self, oid):
