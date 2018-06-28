@@ -56,7 +56,7 @@ class DatastoreService(Service):
                 if field_prefix and name != 'id':
                     name = field_prefix + name
                 if op not in opmap:
-                    raise Exception("Invalid operation: {0}".format(op))
+                    raise ValueError("Invalid operation: {0}".format(op))
                 q = Q(**{'{0}__{1}'.format(name, opmap[op]): value})
                 if op in ('!=', 'nin'):
                     q.negate()
@@ -74,7 +74,7 @@ class DatastoreService(Service):
                 else:
                     raise ValueError('Invalid operation: {0}'.format(op))
             else:
-                raise Exception("Invalid filter {0}".format(f))
+                raise ValueError("Invalid filter {0}".format(f))
         return rv
 
     def __get_model(self, name):
@@ -91,15 +91,16 @@ class DatastoreService(Service):
 
     @accepts(
         Str('name'),
-        List('query-filters', register=True),
+        List('query-filters', null=True, register=True),
         Dict(
             'query-options',
-            Str('extend'),
+            Str('extend', null=True),
             Dict('extra', additional_attrs=True),
-            List('order_by'),
-            Bool('count'),
-            Bool('get'),
+            List('order_by', default=[]),
+            Bool('count', default=False),
+            Bool('get', default=False),
             Str('prefix'),
+            null=True,
             register=True,
         ),
     )

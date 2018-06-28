@@ -34,7 +34,7 @@ class NFSService(SystemServiceService):
         Bool('v4'),
         Bool('v4_v3owner'),
         Bool('v4_krb'),
-        List('bindip', items=[IPAddr('ip')]),
+        List('bindip', items=[IPAddr('ip')], default=[]),
         Int('mountd_port', required=False, validators=[Range(min=1, max=65535)]),
         Int('rpcstatd_port', required=False, validators=[Range(min=1, max=65535)]),
         Int('rpclockd_port', required=False, validators=[Range(min=1, max=65535)]),
@@ -78,10 +78,10 @@ class SharingNFSService(CRUDService):
 
     @accepts(Dict(
         "sharingnfs_create",
-        List("paths", items=[Dir("path")]),
+        List("paths", items=[Dir("path")], default=[]),
         Str("comment"),
-        List("networks", items=[IPAddr("network", cidr=True)]),
-        List("hosts", items=[Str("host")]),
+        List("networks", items=[IPAddr("network", cidr=True)], default=[]),
+        List("hosts", items=[Str("host")], default=[]),
         Bool("alldirs"),
         Bool("ro"),
         Bool("quiet"),
@@ -89,7 +89,11 @@ class SharingNFSService(CRUDService):
         Str("maproot_group", required=False, default=None),
         Str("mapall_user", required=False, default=None),
         Str("mapall_group", required=False, default=None),
-        List("security", items=[Str("provider", enum=["SYS", "KRB5", "KRB5I", "KRB5P"])]),
+        List(
+            "security",
+            default=[],
+            items=[Str("provider", enum=["SYS", "KRB5", "KRB5I", "KRB5P"])],
+        ),
         register=True,
     ))
     async def do_create(self, data):

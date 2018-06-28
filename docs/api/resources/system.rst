@@ -1129,8 +1129,8 @@ Create CSR
    :statuscode 201: no error
 
 
-Import CA
-+++++++++
+Import Certificate
+++++++++++++++++++
 
 .. http:post:: /api/v1.0/system/certificate/import/
 
@@ -1164,6 +1164,45 @@ Import CA
    :json string cert_certificate: encoded certificate
    :json string cert_privatekey: encoded private key (if any)
    :json integer cert_serial: certificate serial
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 201: no error
+
+
+Import Certificate Signing Request (CSR)
+++++++++++++++++++++++++++++++++++++++++
+
+.. http:post:: /api/v1.0/system/certificate/import_csr/
+
+   Imports a Certificate Signing Request and returns the object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/certificate/import_csr/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "cert_name": "importcsr",
+                "cert_csr": "-----BEGIN CERTIFICATE REQUEST-----\nMIICqTCCAZECAQAwZDELMAkGA1UEBhMCVVMxDTALBgNVBAgMBGFzZGYxDDAKBgNV\nBAcMA3NkZjEMMAoGA1UECgwDc2RmMQ0wCwYDVQQDDARhc2RmMRswGQYJKoZIhvcN\nAQkBFgxzZGZAYXNkZi5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIB\nAQDHIrhXrroBsEIY6CaUWJ2sdDBbSvzuaicMym8Nb2C6evkqK9J2hbiK1B+pWogk\nLmVLoHQMtj0CNBu4cVo6YTAo0xqBIkyRv9DTw0JASXfFEE9BDQRBlAVtkCdkzLeH\nf1GEbn7tIHd7wbsVGTxirHF3rcntc3knHScVtZL97b9OO5vhWkPtfaqHR/AD81ch\nnlAdStInbWl0b4siGtff4M7OFsqAy/nGycAzUc0A8GaUcV0mWyJqFQqs450fHA/c\nodzxPd7vT//9wYpxpo6UMwxl82VGYuTZWvX3TqZ5St3/WAt7lxgPpI1PGRSCaEn+\nVkuLbwfgh1gdnsI/XVPQ+biTAgMBAAGgADANBgkqhkiG9w0BAQsFAAOCAQEAdiDc\ndXBOO9MvbkQgdk3vwGbMq+kmDYGaxkf/fTNa19Xo4TPfa5MEZk/SfavD/5tiFeH/\ngcv6S6u6NhPlwADMqmpbvZ/zWhJPVkVvhzSKzZLWPvOF3TTjwogmKLQcPXdspYw1\n0f3nNOic9xNY9HJW7OMmzR/cUEHWbDcUiDiabvUPj07bygrpNQmOcbYtOHdt28c9\nx+vgolcGeLqCLQde1MRYnhEAATIhLzLtbBE2+hHOtf3Elc/Gm5LwtMLGGGW8r5p9\nyhkqSgOfFCBNm/Ca2BvWFB2mDkRA0wRsS5MLK0TCUqhPfw5S7taZ9e9Uyht0XNEd\nf+pIkpzHNmIbtxnHxA==\n-----END CERTIFICATE REQUEST-----\n",
+                "cert_privatekey": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDPqiTYdULo+X8T\nO/rudmdyDKvpRLnjv1vMixFdku5dLw0gSVVtOUg4A4NChtcRme4CGDiA2TkppTjI\nCDv2koTpVsoFCzQMjWRQuORQQvtn0d32nfXC8ZQklCY/Acwsyd+bPLLwzhv5ul5J\np+OOTfM6ikE/b+Ylydj/ir9CL76WRjvLP4ZbdiAcvdyHZeSgDVD6gw3f25n4ecaG\naOKIjJ/Bu2AJF+zDvRuDbReyu+df2VIAVnIDOBi3qc/gyzbtneEIW5ebTlrMz3+W\nhNlT756DFHesn2P3HN38U5bk9hcIWHtSIwoo9ZCNiLiK3YbI8CyuTIeCyuS4g0Qp\nAnt+Yci/AgMBAAECggEBAKiE2zepGO40obG7J+vhvBqqO8ul0PAHtvgrFqGH/dUy\nvIUp3aAwLvH9r8QJ5nfLIYEjpJ6zKJcqFAUH4Zk7143/txsWt1tEVlbHY8faQ2hB\nv81E7E4RevWgH9VboRPrkoDIZjHSIJOscJ13F8vAaBRmY4KWTP73aRgewQx18ETD\nLJ/uwL/XD4wQ0GzxTregJYdjg6ePB4tVoTwR0jxF/8QUj/xHluGGxqhkwkSpTCMY\n6o0L1hj6Zqvq1kkH/xkOqiP6Bs8o0Aa+i8jqbm4o6575LAPnoJ1Dq5TdIK/ph1Jx\n4zKnNbo7ep8gY6mcznzF6bWmKlip4KUwddaZcA+sNAkCgYEA+VOSjXsbX9RQWVNH\nf20qi7d2/gHYeiErfhWZQU7/tRFF3vsfmI9bpqdimrSf3ItEyIBjz28fZzk3dvCF\nVVg0pwD8KL8HhITJh1fouT2QivDQVoCnAxTl72Xn20FnvMUK7cPtGzl0Ai14PxNJ\ndp8GPFSfWPaEvp2zQNFYVeErKG0CgYEA1TkY86ByFxmOa6bnhHfRGCnVXEIaLRJg\nh0m+be+PWivQklr0mjoev8lmnKi4C9RoHAyPVJl+sJF1M21T/67ANPd2kDLGBmoS\nXe3RYYjdgEWYu5/VpCiaHcW9VuymKMx+UiiFp2E3TEW9KE42jyDgd9+kvSVaokew\nXle4mBXF0lsCgYAeH3i/WzZNd6tVf3hN7vSK+NmJitOKveMxUo63k0HVsIaOkCyb\nFAbwtZx2MIh37uOajdiBQV277O/EkP6q9wM1gir1CU9xNVHb5kUZzFRgVQP2z4he\nGPJG4DsJBHfyGKRfYaKN/X0EnlW+2SexCzmHpHm0F+Sl2wvDMwfHKHM8aQKBgQCe\nPUKcQ52IMSo2EGbPM5CU6y7xygjdHD9RB9RwiBIOLGgcxa2z66A4WwJxDvGPrfIZ\npuSUN1oDNeAR63gkT49Lf7+Y4mV+CyhYVw9F4CnqcTwZOlR2AL/nioGqyfPCYYj5\n9iLChm5gh30LNYheDlsn+2yqBtfNiYCFc3qGO9pU8wKBgQC/XpN2+wUQp+pv4YgC\np/Is/Lve2C/Rp/C3Za7Dx05uqTG9xnktISufXTuM0jU3EP7ismjtNQOy+alcu+7t\n27nuoLf6EWiUeIIEPovFLNxvKnHaIdjNpuIyY1oup7RSSGx1IfeuRdBi+3e4pi2N\njJOOCAmlr2acAI3jR3ZLOsSPzA==\n-----END PRIVATE KEY-----\n",
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+        Certificate Signing Request imported.
+
+   :json string cert_name: identifier
+   :json string cert_csr: encoded certificate signing request
+   :json string cert_privatekey: encoded private key
+   :json string cert_passphrase: passphrase for the private key ( if any )
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error

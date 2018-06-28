@@ -301,8 +301,8 @@ class PoolService(CRUDService):
         return pool
 
     @item_method
-    @accepts(Int('id', required=False))
-    async def get_disks(self, oid=None):
+    @accepts(Int('id', required=False, null=True))
+    async def get_disks(self, oid):
         """
         Get all disks in use by pools.
         If `id` is provided only the disks from the given pool `id` will be returned.
@@ -409,7 +409,7 @@ class PoolService(CRUDService):
         Str('guid', required=True),
         Str('name'),
         Str('passphrase', private=True),
-        List('devices', items=[Str('device')]),
+        List('devices', items=[Str('device')], default=[]),
     ))
     @job(lock='import_pool', pipes=['input'], check_pipes=False)
     async def import_pool(self, job, data):

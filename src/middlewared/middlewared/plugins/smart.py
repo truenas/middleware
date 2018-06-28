@@ -62,7 +62,7 @@ class SMARTTestService(CRUDService):
             'smart_task_create',
             Cron('schedule'),
             Str('desc'),
-            List('disks', items=[Str('disk')], required=True),
+            List('disks', items=[Str('disk')], default=[], required=True),
             Str('type', enum=['LONG', 'SHORT', 'CONVEYANCE', 'OFFLINE'], required=True),
             register=True
         )
@@ -177,7 +177,7 @@ class SmartService(SystemServiceService):
         Int('difference'),
         Int('informational'),
         Int('critical'),
-        List('email', items=[Str('email', validators=[Email()])]),
+        List('email', items=[Str('email', validators=[Email()])], default=[]),
     ))
     async def do_update(self, data):
         old = await self.config()

@@ -2755,8 +2755,12 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
     def __init__(self, *args, **kwargs):
         super(CertificateCSREditForm, self).__init__(*args, **kwargs)
 
-        self.fields['cert_name'].widget.attrs['readonly'] = True
+        self.fields['cert_name'].widget.attrs['readonly'] = False
         self.fields['cert_CSR'].widget.attrs['readonly'] = True
+
+    def middleware_clean(self, data):
+        data.pop('CSR', None)
+        return data
 
     class Meta:
         fields = [
@@ -2766,27 +2770,34 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
         model = models.Certificate
 
 
-class CertificateImportForm(MiddlewareModelForm, ModelForm):
+class CertificateCSRImportForm(MiddlewareModelForm, ModelForm):
 
     middleware_plugin = 'certificate'
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
 
+    class Meta:
+        fields = [
+            'cert_name',
+            'cert_csr',
+            'cert_privatekey',
+            'cert_passphrase'
+        ]
+        model = models.Certificate
+
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
         required=True,
         help_text=models.Certificate._meta.get_field('cert_name').help_text
     )
-    cert_certificate = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_certificate').verbose_name,
+    cert_csr = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_CSR').verbose_name,
         widget=forms.Textarea(),
         required=True,
         help_text=_(
-            "Cut and paste the contents of your certificate here.<br>"
-            "Order in which you should paste this: <br>"
-            "The Primary Certificate.<br>The Intermediate CA's Certificate(s) (optional)."
-            "<br>The Root CA Certificate (optional)"),
+            'Cut and paste the contents of your certificate signing request here'
+        )
     )
     cert_privatekey = forms.CharField(
         label=models.Certificate._meta.get_field('cert_privatekey').verbose_name,
@@ -2818,18 +2829,108 @@ class CertificateImportForm(MiddlewareModelForm, ModelForm):
         return passphrase
 
     def middleware_clean(self, data):
-        data['create_type'] = 'CERTIFICATE_CREATE_IMPORTED'
+        data['create_type'] = 'CERTIFICATE_CREATE_IMPORTED_CSR'
         data.pop('passphrase2', None)
+        data['CSR'] = data.pop('csr')
         return data
+
+
+class CertificateImportForm(MiddlewareModelForm, ModelForm):
+
+    middleware_plugin = 'certificate'
+    middleware_attr_prefix = 'cert_'
+    middleware_attr_schema = 'certificate'
+    is_singletone = False
 
     class Meta:
         fields = [
             'cert_name',
+            'cert_csr',
+            'cert_csr_id',
             'cert_certificate',
             'cert_privatekey',
             'cert_passphrase'
         ]
         model = models.Certificate
+
+    cert_csr = forms.BooleanField(
+        required=False,
+        initial=False,
+        label='CSR exists on FreeNAS',
+        help_text=_(
+            'Check this box if importing a certificate for which a CSR '
+            'exists on the FreeNAS system'
+        )
+    )
+
+    cert_csr_id = forms.ModelChoiceField(
+        queryset=models.Certificate.objects.filter(cert_CSR__isnull=False),
+        label=(_("CSRs")),
+        required=False
+    )
+
+    cert_name = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_name').verbose_name,
+        required=True,
+        help_text=models.Certificate._meta.get_field('cert_name').help_text
+    )
+    cert_certificate = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_certificate').verbose_name,
+        widget=forms.Textarea(),
+        required=True,
+        help_text=_(
+            "Cut and paste the contents of your certificate here.<br>"
+            "Order in which you should paste this: <br>"
+            "The Primary Certificate.<br>The Intermediate CA's Certificate(s) (optional)."
+            "<br>The Root CA Certificate (optional)"),
+    )
+    cert_privatekey = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_privatekey').verbose_name,
+        widget=forms.Textarea(),
+        required=False,
+        help_text=models.Certificate._meta.get_field('cert_privatekey').help_text
+    )
+    cert_passphrase = forms.CharField(
+        label=_("Passphrase"),
+        required=False,
+        help_text=_("Passphrase for encrypted private keys"),
+        widget=forms.PasswordInput(render_value=True),
+    )
+    cert_passphrase2 = forms.CharField(
+        label=_("Confirm Passphrase"),
+        required=False,
+        widget=forms.PasswordInput(render_value=True),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(CertificateImportForm, self).__init__(*args, **kwargs)
+
+        self.fields['cert_csr'].widget.attrs['onChange'] = (
+            'toggleGeneric("id_cert_csr", ["id_cert_passphrase",'
+            ' "id_cert_passphrase2", "id_cert_privatekey"], false); '
+            'toggleGeneric("id_cert_csr", ["id_cert_csr_id"], true);'
+        )
+
+    def clean_cert_passphrase2(self):
+        cdata = self.cleaned_data
+        passphrase = cdata.get('cert_passphrase')
+        passphrase2 = cdata.get('cert_passphrase2')
+
+        if passphrase and passphrase != passphrase2:
+            raise forms.ValidationError(_(
+                'Passphrase confirmation does not match.'
+            ))
+        return passphrase
+
+    def middleware_clean(self, data):
+        data['create_type'] = 'CERTIFICATE_CREATE_IMPORTED'
+        data.pop('passphrase2', None)
+        if data.pop('csr', False):
+            data.pop('passphrase', None)
+        else:
+            data.pop('csr_id', None)
+
+        return data
 
 
 class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):

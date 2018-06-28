@@ -120,6 +120,7 @@ from freenasUI.system.forms import (
     CertificateCreateCSRForm,
     CertificateCreateInternalForm,
     CertificateImportForm,
+    CertificateCSRImportForm,
     ManualUpdateTemporaryLocationForm,
     ManualUpdateUploadForm,
     ManualUpdateWizard,
@@ -3080,6 +3081,9 @@ class CertificateAuthorityResourceMixin(object):
         else:
             deserialized = {}
 
+        if 'cert_passphrase2' not in deserialized and 'cert_passphrase' in deserialized:
+            deserialized['cert_passphrase2'] = deserialized.get('cert_passphrase')
+
         form = CertificateAuthorityImportForm(data=deserialized)
         if not form.is_valid():
             raise ImmediateHttpResponse(
@@ -3205,12 +3209,43 @@ class CertificateResourceMixin(object):
                 self.wrap_view('importcert'),
             ),
             url(
+                r"^(?P<resource_name>%s)/import_csr%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('import_csr'),
+            ),
+            url(
                 r"^(?P<resource_name>%s)/internal%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('internal'),
             ),
         ]
+
+    def import_csr(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
+
+        if 'cert_passphrase2' not in deserialized and 'cert_passphrase' in deserialized:
+            deserialized['cert_passphrase2'] = deserialized.get('cert_passphrase')
+
+        form = CertificateCSRImportForm(data=deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('Certificate Signing Request imported.', status=201)
 
     def csr(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
@@ -3246,6 +3281,9 @@ class CertificateResourceMixin(object):
             )
         else:
             deserialized = {}
+
+        if 'cert_passphrase2' not in deserialized and 'cert_passphrase' in deserialized:
+            deserialized['cert_passphrase2'] = deserialized.get('cert_passphrase')
 
         form = CertificateImportForm(data=deserialized)
         if not form.is_valid():
