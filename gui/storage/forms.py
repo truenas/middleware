@@ -348,21 +348,6 @@ class VolumeVdevForm(Form):
         widget=forms.widgets.SelectMultiple(),
     )
 
-    def clean_disks(self):
-        vdev = self.cleaned_data.get("vdevtype")
-        # TODO: Safe?
-        disks = eval(self.cleaned_data.get("disks"))
-        errmsg = _("You need at least %d disks")
-        if vdev == "mirror" and len(disks) < 2:
-            raise forms.ValidationError(errmsg % 2)
-        elif vdev == "raidz" and len(disks) < 3:
-            raise forms.ValidationError(errmsg % 3)
-        elif vdev == "raidz2" and len(disks) < 4:
-            raise forms.ValidationError(errmsg % 4)
-        elif vdev == "raidz3" and len(disks) < 5:
-            raise forms.ValidationError(errmsg % 5)
-        return disks
-
     def clean(self):
         if (
             self.cleaned_data.get("vdevtype") == "log" and
@@ -374,25 +359,6 @@ class VolumeVdevForm(Form):
 
 class VdevFormSet(BaseFormSet):
 
-    def _clean_vdevtype(self, vdevfound, vdevtype):
-        if vdevtype in (
-            'cache',
-            'log',
-            'log mirror',
-            'spare',
-        ):
-            if vdevtype == 'log mirror':
-                name = 'log'
-            else:
-                name = vdevtype
-            if vdevfound[name] is True:
-                raise forms.ValidationError(_(
-                    'Only one row for the vitual device of type %s'
-                    ' is allowed.'
-                ) % name)
-            else:
-                vdevfound[name] = True
-
     def clean(self):
         if any(self.errors):
             # Don't bother validating the formset unless each form
@@ -400,35 +366,7 @@ class VdevFormSet(BaseFormSet):
             return
 
         vdevfound = defaultdict(lambda: False)
-        if not self.pform.cleaned_data.get("volume_add"):
-            """
-            We need to make sure at least one vdev is a
-            data vdev (non-log/cache/spare)
-            """
-            has_datavdev = False
-            datatype = None
-            for i in range(0, self.total_form_count()):
-                form = self.forms[i]
-                vdevtype = form.cleaned_data.get('vdevtype')
-                if vdevtype in (
-                    'mirror', 'stripe', 'raidz', 'raidz2', 'raidz3'
-                ):
-                    has_datavdev = True
-                    if datatype is not None and datatype != vdevtype:
-                        raise forms.ValidationError(_(
-                            "You are not allowed to create a volume with "
-                            "different data vdev types (%(vdev1)s and "
-                            "%(vdev2)s)"
-                        ) % {
-                            'vdev1': datatype,
-                            'vdev2': vdevtype,
-                        })
-                    datatype = vdevtype
-                    continue
-                self._clean_vdevtype(vdevfound, vdevtype)
-            if not has_datavdev:
-                raise forms.ValidationError(_("You need a data disk group"))
-        else:
+        if self.pform.cleaned_data.get("volume_add"):
             zpool = notifier().zpool_parse(
                 self.pform.cleaned_data.get("volume_add")
             )
