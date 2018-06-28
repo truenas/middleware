@@ -122,6 +122,9 @@ class VMSupervisor(object):
                 '-l', 'bootrom,/usr/local/share/uefi-firmware/BHYVE_UEFI{}.fd'.format('_CSM' if self.vm['bootloader'] == 'UEFI_CSM' else ''),
             ]
 
+        if self.vm['time'] == 'UTC':
+            args += ['-u']
+
         nid = Nid(3)
         device_map_file = None
         grub_dir = None
@@ -890,6 +893,7 @@ class VMService(CRUDService):
         List("devices", default=[]),
         Str('vm_type'),
         Bool('autostart'),
+        Str('time', enum=['LOCAL', 'UTC'], default='LOCAL'),
         register=True,
     ))
     async def do_create(self, data):
