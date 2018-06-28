@@ -230,7 +230,7 @@ class Job(object):
         }
         self.time_started = datetime.now()
         self.time_finished = None
-        self.loop = None
+        self.loop = asyncio.get_event_loop()
         self.future = None
 
         self.logs_path = None
@@ -327,7 +327,6 @@ class Job(object):
 
         self.set_state('RUNNING')
         try:
-            self.loop = asyncio.get_event_loop()
             self.future = asyncio.ensure_future(self.__run_body())
             await self.future
         except asyncio.CancelledError:
