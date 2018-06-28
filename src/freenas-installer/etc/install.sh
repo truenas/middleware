@@ -768,7 +768,7 @@ create_be()
 	  mount -t zfs freenas-boot/ROOT/${_be} ${_cDir}
 	  if [ -e ${_cDir}/etc/fstab ] ; then
 	      cp ${_cDir}/etc/fstab ${_cDir}/etc/fstab.oldGRUB
-	      cat ${_cDir}/etc/fstab.oldGRUB | grep -v "^freenas-boot/grub" > ${_cDir}/etc/fstab
+	      grep -v "^freenas-boot/grub" ${_cDir}/etc/fstab.oldGRUB > ${_cDir}/etc/fstab || true
 	  fi
 	  umount -f ${_cDir}
       done
