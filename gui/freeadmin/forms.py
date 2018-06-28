@@ -314,6 +314,9 @@ class SizeField(forms.CharField):
     widget = SizeWidget
 
     def to_python(self, value):
+        if not self.required and value.strip() in ['', '0']:
+            return 0
+
         value = value.replace(' ', '')
         reg = re.search(r'^(\d+(?:\.\d+)?)([BKMGTP](?:iB)?)$', value, re.I)
         if not reg:
