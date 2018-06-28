@@ -868,6 +868,7 @@ Unlock
 
         {
                 "passphrase": "mypassphrase",
+                "recovery_key": "Ik9mXRNr2zj9CZF8kFoC9w7sUyQxo5kAAgWjeVtNDfTgFm0tERqS90OdJYzCaCr75V9LnKgLlRBmzJ0oj7F3nw=="
         }
 
    **Example response**:
@@ -881,6 +882,8 @@ Unlock
       Volume has been unlocked.
 
    :json string passphrase: passphrase to unlock the volume
+   :json string recovery_key: recovery key in base64 encoded string to unlock the volume ( Either passphrase
+                              or recovery key are needed to unlock the volume )
    :resheader Content-Type: content type of the response
    :statuscode 202: no error
 

@@ -26,6 +26,8 @@
 from collections import defaultdict, OrderedDict
 from datetime import datetime, time
 from decimal import Decimal
+
+import base64
 import logging
 import os
 import re
@@ -2752,6 +2754,10 @@ class UnlockPassphraseForm(Form):
         initial=['afp', 'cifs', 'ftp', 'iscsitarget', 'jails', 'nfs', 'webdav'],
         required=False,
     )
+    recovery_key = forms.CharField(  # added for api v1 support
+        required=False,
+        widget=forms.HiddenInput()
+    )
 
     def __init__(self, *args, **kwargs):
         super(UnlockPassphraseForm, self).__init__(*args, **kwargs)
@@ -2773,7 +2779,8 @@ class UnlockPassphraseForm(Form):
     def clean(self):
         passphrase = self.cleaned_data.get("passphrase")
         key = self.cleaned_data.get("key")
-        if not passphrase and key is None:
+        recovery_key = self.cleaned_data.get('recovery_key')
+        if not passphrase and key is None and not recovery_key:
             self._errors['__all__'] = self.error_class([
                 _("You need either a passphrase or a recovery key to unlock")
             ])
@@ -2781,7 +2788,7 @@ class UnlockPassphraseForm(Form):
 
     def done(self, volume):
         passphrase = self.cleaned_data.get("passphrase")
-        key = self.cleaned_data.get("key")
+        key = self.cleaned_data.get("key") or self.cleaned_data.get('recovery_key')
         if passphrase:
             passfile = tempfile.mktemp(dir='/tmp/')
             with open(passfile, 'w') as f:
@@ -2793,7 +2800,7 @@ class UnlockPassphraseForm(Form):
             keyfile = tempfile.mktemp(dir='/tmp/')
             with open(keyfile, 'wb') as f:
                 os.chmod(keyfile, 600)
-                f.write(key.read())
+                f.write(key.read() if not isinstance(key, str) else base64.b64decode(key))
             failed = notifier().geli_attach(
                 volume,
                 passphrase=None,
