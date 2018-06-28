@@ -16,6 +16,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='cifs',
             name='cifs_srv_ntlmv1_auth',
-            field=models.BooleanField(default=False, help_text='This parameter determines whether or not smbd(8) will attempt toauthenticate users using the NTLMv1 encrypted password response', verbose_name='NTLMv1 auth'),
+            field=models.BooleanField(default=False, help_text='This parameter determines whether or not smbd(8) will attempt to authenticate users using the NTLMv1 encrypted password response. Not recommended because the encryption is weak and easily defeated.', verbose_name='NTLMv1 auth'),
         ),
     ]
