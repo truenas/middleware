@@ -8,7 +8,7 @@ class WebDAVSharingService(CRUDService):
     class Config:
         datastore = 'sharing.webdav_share'
         datastore_prefix = 'webdav_'
-        namespace = 'webdav.share'
+        namespace = 'sharing.webdav'
 
     @private
     async def validate_data(self, data, schema):
