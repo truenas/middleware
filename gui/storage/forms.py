@@ -1844,7 +1844,7 @@ class ZVol_CreateForm(CommonZVol):
 
             return True
         except ValidationErrors as e:
-            m = {new: old for old, new, save in ZVOL_COMMON_MAPPING}
+            m = {new: old for old, new, save in ZVOL_IMMUTABLE_MAPPING + ZVOL_COMMON_MAPPING}
             for err in e.errors:
                 field_name = m.get(err.attribute.split('.', 1)[-1])
                 error_message = err.errmsg
