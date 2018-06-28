@@ -890,26 +890,21 @@ class VMService(CRUDService):
         List('devices'),
         Str('vm_type'),
         Bool('autostart'),
-        Bool('create_zvol', required=False),
-        Str('zvol_name', required=False),
-        Str('zvol_type', required=False),
-        Str('zvol_volsize', required=False),
         register=True,
     ))
     async def do_create(self, data):
         """Create a VM."""
         devices = data.pop('devices')
-        create_zvol = data.pop('create_zvol')
-        ds_options = {
-            'name': data.pop('zvol_name'),
-            'type': data.pop('zvol_type'),
-            'volsize': data.pop('zvol_volsize')
-        }
-
         pk = await self.middleware.call('datastore.insert', 'vm.vm', data)
 
         for device in devices:
             device['vm'] = pk
+            create_zvol = device['attributes'].pop('create_zvol', False)
+            ds_options = {
+                'name': device['attributes'].pop('zvol_name', None),
+                'type': "VOLUME",
+                'volsize': device['attributes'].pop('zvol_volsize', None)
+            }
 
             if create_zvol and device['dtype'] == 'DISK':
                 if not all(ds_options.values()):
