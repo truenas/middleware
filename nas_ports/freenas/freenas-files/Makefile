@@ -39,6 +39,8 @@ MAKE_JOBS_UNSAFE=yes
 do-build:
 	${MAKE} -C ${WRKSRC}/extract-tarball   obj
 	${MAKE} -C ${WRKSRC}/extract-tarball  all
+	${MAKE} -C ${WRKSRC}/fix_afp_ea obj
+	${MAKE} -C ${WRKSRC}/fix_afp_ea all
 	${MAKE} -C ${WRKSRC}/freenas-sysctl obj
 	${MAKE} -C ${WRKSRC}/freenas-sysctl all
 	${MAKE} -C ${WRKSRC}/winacl   obj
@@ -49,6 +51,7 @@ do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/boot/modules
 
 	${MAKE} -C ${WRKSRC}/extract-tarball  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
+	${MAKE} -C ${WRKSRC}/fix_afp_ea  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
 	${MAKE} -C ${WRKSRC}/winacl  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
 	${MAKE} -C ${WRKSRC}/freenas-sysctl KMODDIR=${STAGEDIR}${PREFIX}/boot/modules install
 	#
