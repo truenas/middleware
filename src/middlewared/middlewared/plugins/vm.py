@@ -42,11 +42,8 @@ class VMManager(object):
     async def start(self, id):
         vm = await self.service.query([('id', '=', id)], {'get': True})
         self._vm[id] = VMSupervisor(self, vm)
-        try:
-            asyncio.ensure_future(self._vm[id].run())
-            return True
-        except:
-            raise
+
+        await asyncio.ensure_future(self._vm[id].run())
 
     async def stop(self, id, force=False):
         supervisor = self._vm.get(id)
@@ -248,8 +245,15 @@ class VMSupervisor(object):
 
         while True:
             line = await self.proc.stdout.readline()
+
+            if self.proc.returncode:
+                await self.__teardown_guest_vmemory(self.vm['id'])
+                await self.destroy_vm()
+                raise CallError(line.decode())
+
             if line == b'':
                 break
+
             self.logger.debug('{}: {}'.format(self.vm['name'], line.decode()))
 
         # bhyve returns the following status code:
@@ -273,9 +277,9 @@ class VMSupervisor(object):
             await self.__teardown_guest_vmemory(self.vm['id'])
             await self.manager.stop(self.vm['id'])
         elif self.bhyve_error not in (0, 1, 2, 3, None):
-            self.logger.info("===> Error VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             await self.__teardown_guest_vmemory(self.vm['id'])
             await self.destroy_vm()
+            raise CallError("===> Error VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
 
     async def destroy_vm(self):
         self.logger.warn("===> Destroying VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
@@ -381,6 +385,8 @@ class VMSupervisor(object):
             self.logger.debug("===> Force Stop VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             if bhyve_error:
                 self.logger.error("===> Stopping VM error: {0}".format(bhyve_error))
+            await self.__teardown_guest_vmemory(self.vm['id'])
+            await self.destroy_vm()
         else:
             os.kill(self.proc.pid, signal.SIGTERM)
             self.logger.debug("===> Soft Stop VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
@@ -981,12 +987,16 @@ class VMService(CRUDService):
         """Start a VM."""
         try:
             if await self.__init_guest_vmemory(id):
-                return await self._manager.start(id)
+                # Hack until rewrite for 11.3
+                await asyncio.wait_for(self._manager.start(id), timeout=10)
             else:
                 return False
-        except Exception as err:
-            self.logger.error("===> {0}".format(err))
-            return False
+        except asyncio.TimeoutError:
+            # The VM is running
+            return True
+        except Exception:
+            # Something happened
+            raise
 
     @item_method
     @accepts(Int('id'), Bool('force', default=False),)
