@@ -3,14 +3,14 @@ import socket
 import subprocess
 import threading
 import time
+from collections import defaultdict
 
 from bsd import geom
 import libzfs
 
 from middlewared.schema import Dict, List, Str, Bool, Int, accepts
 from middlewared.service import (
-    CallError, CRUDService, Service, ValidationError, ValidationErrors,
-    filterable, job,
+    CallError, CRUDService, ValidationError, ValidationErrors, filterable, job,
 )
 from middlewared.utils import filter_list, start_daemon_thread
 
@@ -40,7 +40,7 @@ def find_vdev(pool, vname):
         children += list(child.children)
 
 
-class ZFSPoolService(Service):
+class ZFSPoolService(CRUDService):
 
     class Config:
         namespace = 'zfs.pool'
@@ -58,6 +58,45 @@ class ZFSPoolService(Service):
             else:
                 pools = [i.__getstate__() for i in zfs.pools]
         return filter_list(pools, filters, options)
+
+    @accepts(
+        Dict(
+            'zfspool_create',
+            Str('name', required=True),
+            List('vdevs', items=[
+                Dict(
+                    'vdev',
+                    Str('root', enum=['DATA', 'CACHE', 'LOG', 'SPARE'], required=True),
+                    Str('type', enum=['RAIDZ', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'], required=True),
+                    List('devices', items=[Str('disk')], required=True),
+                ),
+            ], required=True),
+            Dict('options', additional_attrs=True),
+            Dict('fsoptions', additional_attrs=True),
+        ),
+    )
+    def do_create(self, data):
+        topology = defaultdict(list)
+        with libzfs.ZFS() as zfs:
+            for vdev in data['vdevs']:
+                children = []
+                for device in vdev['devices']:
+                    z_cvdev = libzfs.ZFSVdev(zfs, 'disk')
+                    z_cvdev.type = 'disk'
+                    z_cvdev.path = device
+                    children.append(z_cvdev)
+
+                if vdev['type'] == 'STRIPE':
+                    topology[vdev['root'].lower()].extend(children)
+                else:
+                    z_vdev = libzfs.ZFSVdev(zfs, 'disk')
+                    z_vdev.type = vdev['type'].lower()
+                    z_vdev.children = children
+                    topology[vdev['root'].lower()].append(z_vdev)
+
+            zfs.create(data['name'], topology, data['options'], data['fsoptions'])
+
+        return self.middleware.call_sync('zfs.pool._get_instance', data['name'])
 
     @accepts(Str('pool'))
     def get_disks(self, name):
