@@ -215,6 +215,46 @@ class DiskService(CRUDService):
 
         return providers
 
+    def __create_keyfile(self, keyfile, size=64, force=False):
+        if force or not os.path.exists(keyfile):
+            keypath = os.path.dirname(keyfile)
+            if not os.path.exists(keypath):
+                os.makedirs(keypath)
+            subprocess.run(
+                ['dd', 'if=/dev/random', f'of={keyfile}', f'bs={size}', 'count=1'],
+                check=True,
+            )
+
+    def __geli_setmetadata(self, dev, keyfile, passphrase=None):
+        self.__create_keyfile(keyfile)
+        _passphrase = "-J %s" % passphrase if passphrase else "-P"
+        cp = subprocess.run([
+            'geli', 'init', '-s', '4096', '-l', '256', '-B', 'none',
+        ] + (
+            ['-J', passphrase] if passphrase else ['-P']
+        ) + ['-K', keyfile, dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if cp.stderr:
+            raise CallError(f'Unable to set geli metadata on {dev}: {cp.stderr.decode()}')
+
+    @private
+    def geli_attach_single(self, dev, key, passphrase=None, skip_existing=False):
+        if skip_existing or not os.path.exists(f'/dev/{dev}.eli'):
+            cp = subprocess.run([
+                'geli', 'attach',
+            ] + (['-j', passphrase] if passphrase else ['-p']) + [
+                '-k', key, dev,
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if cp.stderr or not os.path.exists(f'/dev/{dev}.eli'):
+                raise Callrror(f'Unable to geli attach {dev}: {cp.stderr.decode()}')
+        else:
+            self.logger.debug(f'{dev} already attached')
+
+    @private
+    def encrypt(self, devname, keypath, passphrase=None):
+        self.__geli_setmetadata(devname, keypath, passphrase)
+        self.geli_attach_single(devname, keypath, passphrase)
+        return f'{devname}.eli'
+
     @accepts(
         List('devices', items=[Str('device')]),
         Str('passphrase', private=True),
@@ -256,7 +296,7 @@ class DiskService(CRUDService):
 
     @private
     async def get_reserved(self):
-        reserved = [i async for i in await self.middleware.call('boot.get_disks')]
+        reserved = list(await self.middleware.call('boot.get_disks'))
         reserved += [i async for i in await self.middleware.call('pool.get_disks')]
         reserved += [i async for i in self.__get_iscsi_targets()]
         return reserved
