@@ -752,28 +752,6 @@ create_be()
   # fresh into that, so old datasets are not lost
   zpool import -N -f freenas-boot || return 1
 
-  # First we need to nuke any old grub dataset
-  if zfs list freenas-boot/grub >/dev/null 2>/dev/null ; then
-      echo "Removing GRUB dataset"
-      zfs destroy -R -f freenas-boot/grub
-
-      _cDir="/tmp/_beClean"
-      if [ ! -e "${_cDir}" ] ; then
-          mkdir ${_cDir}
-      fi
-
-      # Sanitize the old BE's by removing grub fstab entries
-      for _be in `zfs list -H -d 1 freenas-boot/ROOT | awk '{print $1}' | cut -d '/' -f 3`
-      do
-	  mount -t zfs freenas-boot/ROOT/${_be} ${_cDir}
-	  if [ -e ${_cDir}/etc/fstab ] ; then
-	      cp ${_cDir}/etc/fstab ${_cDir}/etc/fstab.oldGRUB
-	      cat ${_cDir}/etc/fstab.oldGRUB | grep -v "^freenas-boot/grub" > ${_cDir}/etc/fstab
-	  fi
-	  umount -f ${_cDir}
-      done
-  fi
-
   # Create the new BE
   zfs create -o mountpoint=legacy freenas-boot/ROOT/${BENAME} || return 1
 
