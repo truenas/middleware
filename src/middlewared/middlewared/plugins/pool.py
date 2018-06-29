@@ -538,7 +538,7 @@ class PoolDatasetService(CRUDService):
     def query(self, filters=None, options=None):
         # Otimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
-        for f in filters:
+        for f in filters or []:
             if len(f) == 3:
                 if f[0] in ('id', 'name', 'pool', 'type'):
                     zfsfilters.append(f)
