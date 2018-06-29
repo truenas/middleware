@@ -863,8 +863,8 @@ class PoolDatasetService(CRUDService):
                             'Volume size should be a multiple of volume block size'
                         )
 
-    @accepts(Str('id'))
-    async def do_delete(self, id):
+    @accepts(Str('id'), Bool('recursive', default=False))
+    async def do_delete(self, id, recursive):
         iscsi_target_extents = await self.middleware.call('iscsi.extent.query', [
             ['type', '=', 'DISK'],
             ['path', '=', f'zvol/{id}']
@@ -872,7 +872,7 @@ class PoolDatasetService(CRUDService):
         if iscsi_target_extents:
             raise CallError("This volume is in use by iSCSI extent, please remove it first.")
 
-        return await self.middleware.call('zfs.dataset.delete', id)
+        return await self.middleware.call('zfs.dataset.delete', id, recursive)
 
     @item_method
     @accepts(Str('id'))
