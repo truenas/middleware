@@ -219,16 +219,27 @@ __EOF__
 		local validcert=0
 		${OPENSSL} x509 -in "${httpdcert}" -noout -text -dates -purpose > /dev/null 2>&1
 		let "validcert |= $?" > /dev/null
+
+		local keylength=0
 		${OPENSSL} rsa -in "${httpdkey}" -check -noout > /dev/null 2>&1
 		let "validcert |= $?" > /dev/null
-		# Checking if the key bit lenght is greater than or equal to 1024
-		local safecert=$(${OPENSSL} rsa -in "${httpdkey}" -text -noout | grep "Private-Key" | egrep -o '[0-9]' | tr -d "\n")
-
-		if [ ${validcert} -eq 0 -a ${safecert} -ge 1024 ]; then
+		if [ ${validcert} -eq 0 ]; then
+            		# Checking if the key bit length is greater than or equal to 1024
+			local safecert=$(${OPENSSL} rsa -in "${httpdkey}" -text -noout | grep "Private-Key" | egrep -o '[0-9]' | tr -d "\n")
+			keylength=1024
+		else
+			keylength=163
+			${OPENSSL} ec -in "${httpdkey}" -text -noout > /dev/null 2>&1
+			if [ $? -eq 0 ]; then
+				validcert=0
+			fi
+			local safecert=$(${OPENSSL} ec -in "${httpdkey}" -text -noout | grep "Private-Key" | egrep -o '[0-9]' | tr -d "\n")
+		fi
+		if [ ${validcert} -eq 0 -a ${safecert} -ge ${keylength} ]; then
 			working_ssl=true
 			# Delete this file (if it exists) now that we have a valid cert (else the alert ui keeps complaining)
 			if [ -f /tmp/alert_invalid_ssl_nginx ]; then
-			    rm /tmp/alert_invalid_ssl_nginx
+				rm /tmp/alert_invalid_ssl_nginx
 			fi
 
 			cat << __EOF__
@@ -257,7 +268,7 @@ __EOF__
 			port=80
 			touch /tmp/alert_invalid_ssl_nginx
 			# The below to inform the user why his cert was invalidated (if it was invalidated on the basis of key length)
-			if [ ${safecert} -lt 1024 ]; then
+			if [ ${safecert} -lt ${keylength} ]; then
 			    echo "${safecert}" > /tmp/alert_invalid_ssl_nginx
 			fi
 		fi
@@ -621,6 +632,6 @@ ix_nginx_start()
 name="ix-nginx"
 start_cmd='ix_nginx_start'
 stop_cmd=':'
-            
+
 load_rc_config $name
 run_rc_command "$1"
