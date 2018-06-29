@@ -10,7 +10,7 @@
 
 migrate_bsd_loader()
 {
-	grep -q "grub" /conf/base/etc/fstab
+	kenv -q grub.platform >/dev/null
 	if [ $? -ne 0 ] ; then
 		# Nothing to do
 		return 0

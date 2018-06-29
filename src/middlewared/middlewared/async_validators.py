@@ -20,10 +20,9 @@ async def resolve_hostname(middleware, verrors, name, hostname):
             try:
                 ip = IpAddress()
                 ip(hostname)
+                return hostname
             except ShouldBe:
                 return socket.gethostbyname(hostname)
-            else:
-                return socket.gethostbyaddr(hostname)
         except Exception:
             return False
 

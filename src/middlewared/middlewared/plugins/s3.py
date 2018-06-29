@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, Str
-from middlewared.validators import Range
+from middlewared.validators import Match, Range
 from middlewared.service import SystemServiceService, ValidationErrors, private
 
 import os
@@ -22,8 +22,8 @@ class S3Service(SystemServiceService):
         's3_update',
         Str('bindip'),
         Int('bindport', validators=[Range(min=1, max=65535)]),
-        Str('access_key'),
-        Str('secret_key'),
+        Str('access_key', validators=[Match("^\w+$")]),
+        Str('secret_key', validators=[Match("^\w+$")]),
         Bool('browser'),
         Dir('storage_path'),
         Int('certificate'),

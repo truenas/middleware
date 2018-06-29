@@ -191,6 +191,8 @@ class CredentialsService(CRUDService):
             data,
         )
 
+        data["id"] = id
+
         return data
 
     @accepts(Int("id"))
@@ -311,7 +313,8 @@ class CloudSyncService(CRUDService):
                     filename_encryption=data.get("filename_encryption"),
                     encryption_password=data.get("encryption_password"),
                     encryption_salt=data.get("encryption_salt"),
-                    attributes=dict(data["attributes"], folder=folder_parent)
+                    attributes=dict(data["attributes"], folder=folder_parent),
+                    args=data.get("args"),
                 ))
                 for item in ls:
                     if item["Name"] == folder_basename:
@@ -342,7 +345,7 @@ class CloudSyncService(CRUDService):
         Str("encryption_salt"),
         Cron("schedule"),
         Dict("attributes", additional_attrs=True),
-        Str("args"),
+        Str("args", default=""),
         Bool("enabled", default=True),
         register=True,
     ))
@@ -458,6 +461,7 @@ class CloudSyncService(CRUDService):
         Str("encryption_password"),
         Str("encryption_salt"),
         Dict("attributes", additional_attrs=True),
+        Str("args"),
     ))
     async def list_directory(self, cloud_sync):
         verrors = ValidationErrors()
