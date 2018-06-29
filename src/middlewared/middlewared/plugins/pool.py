@@ -828,9 +828,9 @@ class PoolDatasetService(CRUDService):
                             'Volume size should be a multiple of volume block size'
                         )
 
-    @accepts(Str('id'))
-    async def do_delete(self, id):
-        return await self.middleware.call('zfs.dataset.delete', id)
+    @accepts(Str('id'), Bool('recursive', default=False))
+    async def do_delete(self, id, recursive):
+        return await self.middleware.call('zfs.dataset.delete', id, recursive)
 
     @item_method
     @accepts(Str('id'))
