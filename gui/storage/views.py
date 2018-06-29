@@ -518,18 +518,19 @@ def mp_permission(request, path):
 
 
 def dataset_delete(request, name):
-
-    datasets = zfs.list_datasets(path=name, recursive=True)
+    with client as c:
+        datasets = c.call("pool.dataset.query", [["name", "=", name]], {"get": True})["children"]
     if request.method == 'POST':
         form = forms.Dataset_Destroy(request.POST, fs=name, datasets=datasets)
         if form.is_valid():
-            retval = notifier().destroy_zfs_dataset(path=name, recursive=True)
-            if retval == '':
-                return JsonResp(
-                    request,
-                    message=_("Dataset successfully destroyed."))
-            else:
-                return JsonResp(request, error=True, message=retval)
+            with client as c:
+                try:
+                    c.call("pool.dataset.delete", name, True)
+                    return JsonResp(
+                        request,
+                        message=_("Dataset successfully destroyed."))
+                except ClientException as e:
+                    return JsonResp(request, error=True, message=e.error)
     else:
         form = forms.Dataset_Destroy(fs=name, datasets=datasets)
     return render(request, 'storage/dataset_confirm_delete.html', {
