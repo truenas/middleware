@@ -17,6 +17,26 @@ from middlewared.utils import filter_list, start_daemon_thread
 SCAN_THREADS = {}
 
 
+def convert_topology(zfs, vdevs):
+    topology = defaultdict(list)
+    for vdev in vdevs:
+        children = []
+        for device in vdev['devices']:
+            z_cvdev = libzfs.ZFSVdev(zfs, 'disk')
+            z_cvdev.type = 'disk'
+            z_cvdev.path = device
+            children.append(z_cvdev)
+
+        if vdev['type'] == 'STRIPE':
+            topology[vdev['root'].lower()].extend(children)
+        else:
+            z_vdev = libzfs.ZFSVdev(zfs, 'disk')
+            z_vdev.type = vdev['type'].lower()
+            z_vdev.children = children
+            topology[vdev['root'].lower()].append(z_vdev)
+    return topology
+
+
 def find_vdev(pool, vname):
     """
     Find a vdev in the given `pool` using `vname` looking for
@@ -76,24 +96,8 @@ class ZFSPoolService(CRUDService):
         ),
     )
     def do_create(self, data):
-        topology = defaultdict(list)
         with libzfs.ZFS() as zfs:
-            for vdev in data['vdevs']:
-                children = []
-                for device in vdev['devices']:
-                    z_cvdev = libzfs.ZFSVdev(zfs, 'disk')
-                    z_cvdev.type = 'disk'
-                    z_cvdev.path = device
-                    children.append(z_cvdev)
-
-                if vdev['type'] == 'STRIPE':
-                    topology[vdev['root'].lower()].extend(children)
-                else:
-                    z_vdev = libzfs.ZFSVdev(zfs, 'disk')
-                    z_vdev.type = vdev['type'].lower()
-                    z_vdev.children = children
-                    topology[vdev['root'].lower()].append(z_vdev)
-
+            topology = convert_topology(zfs, data['vdevs'])
             zfs.create(data['name'], topology, data['options'], data['fsoptions'])
 
         return self.middleware.call_sync('zfs.pool._get_instance', data['name'])
@@ -157,12 +161,13 @@ class ZFSPoolService(CRUDService):
         if new is None and existing is None:
             raise CallError('New or existing vdevs must be provided', errno.EINVAL)
 
-        if new:
-            raise CallError('Adding new vdev is not implemented yet')
-
         try:
             with libzfs.ZFS() as zfs:
                 pool = zfs.get(name)
+
+                if new:
+                    topology = convert_topology(zfs, new)
+                    pool.attach_vdevs(topology)
 
                 # Make sure we can find all target vdev
                 for i in (existing or []):
