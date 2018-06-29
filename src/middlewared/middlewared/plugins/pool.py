@@ -333,7 +333,8 @@ class PoolService(CRUDService):
             ]),
             List('spares', items=[Str('disk')], default=[]),
             required=True,
-        )
+        ),
+        register=True,
     ))
     async def do_create(self, data):
 
@@ -345,103 +346,9 @@ class PoolService(CRUDService):
         if not data['topology']['data']:
             verrors.add('pool_create.topology.data', 'At least one data vdev is required')
 
-        lastdatatype = None
-        for i, vdev in enumerate(data['topology']['data']):
-            numdisks = len(vdev['disks'])
-            minmap = {
-                'STRIPE': 1,
-                'MIRROR': 2,
-                'RAIDZ': 3,
-                'RAIDZ2': 4,
-                'RAIDZ3': 5,
-            }
-            mindisks = minmap[vdev['type']]
-            if numdisks < mindisks:
-                verrors.add(
-                    f'pool_create.topology.data.{i}.disks',
-                    f'You need at least {mindisks} disk(s) for this vdev type.',
-                )
-
-            if lastdatatype and lastdatatype != vdev['type']:
-                verrors.add(
-                    f'pool_create.topology.data.{i}.type',
-                    'You are not allowed to create a pool with different data vdev types '
-                    f'({lastdatatype} and {vdev["type"]}).',
-                )
-            lastdatatype = vdev['type']
-
-        for i in ('cache', 'log', 'spare'):
-            value = data['topology'].get(i)
-            if value and len(value) > 1:
-                verrors.add(
-                    f'pool_create.{i}',
-                    f'Only one row for the virtual device of type {i} is allowed.',
-                )
-
-        # We do two things here:
-        # 1. Gather all disks transversing the topology
-        # 2. Keep track of the vdev each disk is supposed to be located
-        #    along with a flag whether we should use swap partition in said vdev
-        # This is required so we can format all disks in one pass, allowing it
-        # to be performed in parellel if we wish to do so.
-        disks = {}
-        vdevs = []
-        for i in ('data', 'cache', 'log'):
-            t_vdevs = data['topology'].get(i)
-            if not t_vdevs:
-                continue
-            for t_vdev in t_vdevs:
-                vdev_devs_list = []
-                vdev = {
-                    'root': i.upper(),
-                    'type': t_vdev['type'],
-                    'devices': vdev_devs_list,
-                }
-                vdevs.append(vdev)
-                # cache and log devices should not have a swap
-                create_swap = True if i == 'data' else False
-                for disk in t_vdev['disks']:
-                    disks[disk] = {'vdev': vdev_devs_list, 'create_swap': create_swap}
-
-        if data['topology']['spares']:
-            vdev_devs_list = []
-            vdevs.append({
-                'root': 'SPARE',
-                'type': 'STRIPE',
-                'devices': vdev_devs_list,
-            })
-            for disk in data['topology']['spares']:
-                disks[disk] = {'vdev': vdev_devs_list, 'create_swap': True}
-
-        # Lets make sure the disks provided are available
-        disks_cache = dict(map(
-            lambda x: (x['name'], x),
-            await self.middleware.call(
-                'disk.query', [('name', 'in', list(disks.keys()))]
-            )
-        ))
-        disks_cache.update(dict(map(
-            lambda x: (x['name'], x),
-            await self.middleware.call(
-                'disk.query', [('multipath_name', 'in', list(disks.keys()))]
-            )
-        )))
-
-        disks_set = set(disks.keys())
-        disks_not_in_cache = disks_set - set(disks_cache.keys())
-        if disks_not_in_cache:
-            verrors.add(
-                'pool_create.topology',
-                f'The following disks were not found in system: {"," .join(disks_not_in_cache)}.'
-            )
-
-        disks_reserved = await self.middleware.call('disk.get_reserved')
-        disks_reserved = disks_set - (disks_set - set(disks_reserved))
-        if disks_reserved:
-            verrors.add(
-                'pool_create.topology',
-                f'The following disks are already in use: {"," .join(disks_reserved)}.'
-            )
+        await self.__common_validation(verrors, data)
+        disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
+        disks_cache = await self.__check_disks_availability(verrors, disks)
 
         if verrors:
             raise verrors
@@ -449,22 +356,11 @@ class PoolService(CRUDService):
         if data['encryption']:
             enc_key = str(uuid.uuid4())
             enc_keypath = os.path.join(GELI_KEYPATH, f'{enc_key}.key')
-            enc_disks = []
+        else:
+            enc_key = ''
+            enc_keypath = None
 
-        # At this stage we will format all disks, putting all freebsd-zfs partitions created
-        # into their respectives vdevs.
-        # TODO: Make this work in parallel for speed, may take a long time with dozens of drives
-        swapgb = (await self.middleware.call('system.advanced.config'))['swapondrive']
-        for disk, config in disks.items():
-            await self.middleware.call('disk.format', disk, swapgb if config['create_swap'] else 0)
-            devname = await self.middleware.call('disk.gptid_from_part_type', disk, 'freebsd-zfs')
-            if data['encryption']:
-                enc_disks.append({
-                    'disk': disk,
-                    'devname': devname,
-                })
-                devname = await self.middleware.call('disk.encrypt', devname, enc_keypath)
-            config['vdev'].append(f'/dev/{devname}')
+        enc_disks = await self.__format_disks(disks, enc_keypath)
 
         options = {
             'feature@lz4_compress': 'enabled',
@@ -507,7 +403,7 @@ class PoolService(CRUDService):
                 'name': data['name'],
                 'guid': z_pool['guid'],
                 'encrypt': int(data['encryption']),
-                'encryptkey': enc_key if data['encryption'] else '',
+                'encryptkey': enc_key,
             }
             pool_id = await self.middleware.call(
                 'datastore.insert',
@@ -516,18 +412,7 @@ class PoolService(CRUDService):
                 {'prefix': 'vol_'},
             )
 
-            if data['encryption']:
-                for enc_disk in enc_disks:
-                    await self.middleware.call(
-                        'datastore.insert',
-                        'storage.encrypteddisk',
-                        {
-                            'volume': pool_id,
-                            'disk': disks_cache[enc_disk['disk']]['identifier'],
-                            'provider': enc_disk['devname'],
-                        },
-                        {'prefix': 'encrypted_'},
-                    )
+            await self.__save_encrypteddisks(pool_id, enc_disks, disks_cache)
 
             await self.middleware.call(
                 'datastore.insert',
@@ -551,14 +436,202 @@ class PoolService(CRUDService):
             await self.middleware.call('service.reload', 'disk')
             await self.middleware.call('service.start', 'ix-syslogd')
             await self.middleware.call('service.restart', 'system_datasets')
+            # regenerate crontab because of scrub
             await self.middleware.call('service.restart', 'cron')
+            # restart smartd to enable monitoring for any new drives added
             smartd = await self.middleware.call('service.query', [('service', '=', 'smartd')])
             if smartd and smartd[0]['state'] == 'RUNNING':
                 await self.middleware.call('service.restart', 'smartd')
 
         asyncio.ensure_future(restart_services())
 
-        return data
+        pool = await self._get_instance(pool_id)
+        await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
+        return pool
+
+    @accepts(Int('id'), Patch(
+        'pool_create', 'pool_update',
+        ('rm', {'name': 'name'}),
+        ('rm', {'name': 'encryption'}),
+    ))
+    async def do_update(self, id, data):
+
+        pool = await self._get_instance(id)
+
+        verrors = ValidationErrors()
+
+        await self.__common_validation(verrors, data)
+        disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
+        disks_cache = await self.__check_disks_availability(verrors, disks)
+
+        if verrors:
+            raise verrors
+
+        if pool['encryptkey']:
+            enc_keypath = os.path.join(GELI_KEYPATH, f'{pool["encryptkey"]}.key')
+        else:
+            enc_keypath = None
+
+        enc_disks = await self.__format_disks(disks, enc_keypath)
+
+        await (await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)).wait()
+
+        await self.__save_encrypteddisks(id, enc_disks, disks_cache)
+
+        if pool['encrypt'] >= 2:
+            # FIXME: ask current passphrase and validate
+            await self.middleware.call('notifier.geli_passphrase', id, None)
+            await self.middleware.call(
+                'datastore.update', 'storage.volume', id, {'encrypt': 1}, {'prefix': 'vol_'},
+            )
+
+        pool = await self._get_instance(id)
+        await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
+        return pool
+
+    async def __common_validation(self, verrors, data):
+        lastdatatype = None
+        for i, vdev in enumerate(data['topology']['data']):
+            numdisks = len(vdev['disks'])
+            minmap = {
+                'STRIPE': 1,
+                'MIRROR': 2,
+                'RAIDZ': 3,
+                'RAIDZ2': 4,
+                'RAIDZ3': 5,
+            }
+            mindisks = minmap[vdev['type']]
+            if numdisks < mindisks:
+                verrors.add(
+                    f'pool_create.topology.data.{i}.disks',
+                    f'You need at least {mindisks} disk(s) for this vdev type.',
+                )
+
+            if lastdatatype and lastdatatype != vdev['type']:
+                verrors.add(
+                    f'pool_create.topology.data.{i}.type',
+                    'You are not allowed to create a pool with different data vdev types '
+                    f'({lastdatatype} and {vdev["type"]}).',
+                )
+            lastdatatype = vdev['type']
+
+        for i in ('cache', 'log', 'spare'):
+            value = data['topology'].get(i)
+            if value and len(value) > 1:
+                verrors.add(
+                    f'pool_create.{i}',
+                    f'Only one row for the virtual device of type {i} is allowed.',
+                )
+
+    async def __convert_topology_to_vdevs(self, topology):
+        # We do two things here:
+        # 1. Gather all disks transversing the topology
+        # 2. Keep track of the vdev each disk is supposed to be located
+        #    along with a flag whether we should use swap partition in said vdev
+        # This is required so we can format all disks in one pass, allowing it
+        # to be performed in parellel if we wish to do so.
+        disks = {}
+        vdevs = []
+        for i in ('data', 'cache', 'log'):
+            t_vdevs = topology.get(i)
+            if not t_vdevs:
+                continue
+            for t_vdev in t_vdevs:
+                vdev_devs_list = []
+                vdev = {
+                    'root': i.upper(),
+                    'type': t_vdev['type'],
+                    'devices': vdev_devs_list,
+                }
+                vdevs.append(vdev)
+                # cache and log devices should not have a swap
+                create_swap = True if i == 'data' else False
+                for disk in t_vdev['disks']:
+                    disks[disk] = {'vdev': vdev_devs_list, 'create_swap': create_swap}
+
+        if topology['spares']:
+            vdev_devs_list = []
+            vdevs.append({
+                'root': 'SPARE',
+                'type': 'STRIPE',
+                'devices': vdev_devs_list,
+            })
+            for disk in topology['spares']:
+                disks[disk] = {'vdev': vdev_devs_list, 'create_swap': True}
+
+        return disks, vdevs
+
+    async def __check_disks_availability(self, verrors, disks):
+        """
+        Makes sure the disks are present in the system and not reserved
+        by anything else (boot, pool, iscsi, etc).
+
+        Returns:
+            dict - disk.query for all disks
+        """
+        disks_cache = dict(map(
+            lambda x: (x['name'], x),
+            await self.middleware.call(
+                'disk.query', [('name', 'in', list(disks.keys()))]
+            )
+        ))
+        disks_cache.update(dict(map(
+            lambda x: (x['multipath_name'], x),
+            await self.middleware.call(
+                'disk.query', [('multipath_name', 'in', list(disks.keys()))]
+            )
+        )))
+
+        disks_set = set(disks.keys())
+        disks_not_in_cache = disks_set - set(disks_cache.keys())
+        if disks_not_in_cache:
+            verrors.add(
+                'pool_create.topology',
+                f'The following disks were not found in system: {"," .join(disks_not_in_cache)}.'
+            )
+
+        disks_reserved = await self.middleware.call('disk.get_reserved')
+        disks_reserved = disks_set - (disks_set - set(disks_reserved))
+        if disks_reserved:
+            verrors.add(
+                'pool_create.topology',
+                f'The following disks are already in use: {"," .join(disks_reserved)}.'
+            )
+        return disks_cache
+
+    async def __format_disks(self, disks, enc_keypath):
+        """
+        Format all disks, putting all freebsd-zfs partitions created
+        into their respectives vdevs.
+        """
+        enc_disks = []
+
+        # TODO: Make this work in parallel for speed, may take a long time with dozens of drives
+        swapgb = (await self.middleware.call('system.advanced.config'))['swapondrive']
+        for disk, config in disks.items():
+            await self.middleware.call('disk.format', disk, swapgb if config['create_swap'] else 0)
+            devname = await self.middleware.call('disk.gptid_from_part_type', disk, 'freebsd-zfs')
+            if enc_keypath:
+                enc_disks.append({
+                    'disk': disk,
+                    'devname': devname,
+                })
+                devname = await self.middleware.call('disk.encrypt', devname, enc_keypath)
+            config['vdev'].append(f'/dev/{devname}')
+        return enc_disks
+
+    async def __save_encrypteddisks(self, pool_id, enc_disks, disks_cache):
+        for enc_disk in enc_disks:
+            await self.middleware.call(
+                'datastore.insert',
+                'storage.encrypteddisk',
+                {
+                    'volume': pool_id,
+                    'disk': disks_cache[enc_disk['disk']]['identifier'],
+                    'provider': enc_disk['devname'],
+                },
+                {'prefix': 'encrypted_'},
+            )
 
     @item_method
     @accepts(Int('id', required=False, null=True))

@@ -448,6 +448,9 @@ class notifier(metaclass=HookMetaclass):
         Raises:
             MiddlewareError
         """
+        from freenasUI.storage.models import Volume
+        if isinstance(volume, int):
+            volume = Volume.objects.get(id=volume)
         geli_keyfile = volume.get_geli_keyfile()
         for ed in volume.encrypteddisk_set.all():
             dev = ed.encrypted_provider
