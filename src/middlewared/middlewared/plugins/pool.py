@@ -20,6 +20,8 @@ from middlewared.validators import Range, Time
 
 logger = logging.getLogger(__name__)
 
+ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
+
 
 class Inheritable(EnumMixin, Attribute):
     def __init__(self, *args, **kwargs):
@@ -377,6 +379,12 @@ class PoolService(CRUDService):
         if verrors:
             raise verrors
 
+        # We do two things here:
+        # 1. Gather all disks transversing the topology
+        # 2. Keep track of the vdev each disk is supposed to be located
+        #    along with a flag whether we should use swap partition in said vdev
+        # This is required so we can format all disks in one pass, allowing it
+        # to be performed in parellel if we wish to do so.
         disks = {}
         vdevs = []
         for i in ('data', 'cache', 'log'):
@@ -391,8 +399,10 @@ class PoolService(CRUDService):
                     'devices': vdev_devs_list,
                 }
                 vdevs.append(vdev)
+                # cache and log devices should not have a swap
+                create_swap = True if i == 'data' else False
                 for disk in t_vdev['disks']:
-                    disks[disk] = vdev_devs_list
+                    disks[disk] = {'vdev': vdev_devs_list, 'create_swap': create_swap}
 
         if data['topology']['spares']:
             vdev_devs_list = []
@@ -402,22 +412,24 @@ class PoolService(CRUDService):
                 'devices': vdev_devs_list,
             })
             for disk in data['topology']['spares']:
-                disks[disk] = vdev_devs_list
+                disks[disk] = {'vdev': vdev_devs_list, 'create_swap': True}
 
+        # At this stage we will format all disks, putting all freebsd-zfs partitions created
+        # into their respectives vdevs.
+        # TODO: Make this work in parallel for speed, may take a long time with dozens of drives
         swapgb = (await self.middleware.call('system.advanced.config'))['swapondrive']
-
-        for disk, vdev_devs_list in disks.items():
-            await self.middleware.call('disk.format', disk, swapgb)
+        for disk, config in disks.items():
+            await self.middleware.call('disk.format', disk, swapgb if config['create_swap'] else 0)
             devname = await self.middleware.call('disk.gptid_from_part_type', disk, 'freebsd-zfs')
             if data['encryption']:
                 raise CallError('Encryption not yet implemented')
                 # devname = await self.middleware.call('disk.encrypt', devname)
-            vdev_devs_list.append(f'/dev/{devname}')
+            config['vdev'].append(f'/dev/{devname}')
 
         options = {
             'feature@lz4_compress': 'enabled',
             'altroot': '/mnt',
-            'cachefile': '/data/zfs/zpool.cache',
+            'cachefile': ZPOOL_CACHE_FILE,
             'failmode': 'continue',
             'autoexpand': 'on',
         }
@@ -429,14 +441,67 @@ class PoolService(CRUDService):
             'mountpoint': f'/{data["name"]}',
         }
 
-        await self.middleware.call('zfs.pool.create', {
+        cachefile_dir = os.path.dirname(ZPOOL_CACHE_FILE)
+        if not os.path.isdir(cachefile_dir):
+            os.makedirs(cachefile_dir)
+
+        z_pool = await self.middleware.call('zfs.pool.create', {
             'name': data['name'],
             'vdevs': vdevs,
             'options': options,
             'fsoptions': fsoptions,
         })
 
-        await self.middleware.call('zfs.dataset.mount', data['name'])
+        pool_id = None
+        try:
+            # Inherit mountpoint after create because we set mountpoint on creation
+            # making it a "local" source.
+            await self.middleware.call('zfs.dataset.update', data['name'], {
+                'properties': {
+                    'mountpoint': {'source': 'INHERIT'},
+                },
+            })
+            await self.middleware.call('zfs.dataset.mount', data['name'])
+
+            pool = {
+                'name': data['name'],
+                'guid': z_pool['guid'],
+                'encrypt': int(data['encryption']),
+            }
+            pool_id = await self.middleware.call(
+                'datastore.insert',
+                'storage.volume',
+                pool,
+                {'prefix': 'vol_'},
+            )
+            await self.middleware.call(
+                'datastore.insert',
+                'storage.scrub',
+                {'volume': pool_id},
+                {'prefix': 'scrub_'},
+            )
+        except Exception as e:
+            # Something wrong happened, we need to rollback and destroy pool.
+            try:
+                await self.middleware.call('zfs.pool.delete', data['name'])
+            except Exception:
+                self.logger.warn('Failed to delete pool on pool.create rollback', exc_info=True)
+            if pool_id:
+                await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
+            raise e
+
+        # There is really no point in waiting all these services to reload so do them
+        # in background.
+        async def restart_services():
+            await self.middleware.call('service.reload', 'disk')
+            await self.middleware.call('service.start', 'ix-syslogd')
+            await self.middleware.call('service.restart', 'system_datasets')
+            await self.middleware.call('service.restart', 'cron')
+            smartd = await self.middleware.call('service.query', [('service', '=', 'smartd')])
+            if smartd and smartd[0]['state'] == 'RUNNING':
+                await self.middleware.call('service.restart', 'smartd')
+
+        asyncio.ensure_future(restart_services())
 
         return data
 
