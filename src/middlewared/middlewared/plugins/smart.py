@@ -177,7 +177,8 @@ class SmartService(SystemServiceService):
         Int('difference'),
         Int('informational'),
         Int('critical'),
-        List('email', items=[Str('email', validators=[Email()])], default=[]),
+        List('email', items=[Str('email', validators=[Email()])]),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()

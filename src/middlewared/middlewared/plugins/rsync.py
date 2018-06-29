@@ -37,7 +37,7 @@ import glob
 import asyncio
 
 from collections import defaultdict
-from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, Ref, List, Patch
+from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch
 from middlewared.validators import Range, Match
 from middlewared.service import (
     Service, job, CallError, CRUDService, private, SystemServiceService, ValidationErrors
@@ -268,7 +268,8 @@ class RsyncdService(SystemServiceService):
     @accepts(Dict(
         'rsyncd_update',
         Int('port', validators=[Range(min=1, max=65535)]),
-        Str('auxiliary')
+        Str('auxiliary'),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()
@@ -288,7 +289,7 @@ class RsyncModService(CRUDService):
         datastore_prefix = 'rsyncmod_'
 
     @accepts(Dict(
-        'rsyncmod',
+        'rsyncmod_create',
         Str('name', validators=[Match(r'[^/\]]')]),
         Str('comment'),
         Str('path'),
@@ -321,7 +322,7 @@ class RsyncModService(CRUDService):
         await self.middleware.call('service.reload', 'rsync')
         return data
 
-    @accepts(Int('id'), Ref('rsyncmod'))
+    @accepts(Int('id'), Patch('rsyncmod_create', 'rsyncmod_update', ('attr', {'update': True})))
     async def do_update(self, id, data):
         module = await self.middleware.call(
             'datastore.query',

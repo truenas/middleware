@@ -40,7 +40,8 @@ class ISCSIGlobalService(SystemServiceService):
         Str('basename'),
         List('isns_servers', items=[Str('server')]),
         Int('pool_avail_threshold', validators=[Range(min=1, max=99)]),
-        Bool('alua', default=False),
+        Bool('alua'),
+        update=True
     ))
     async def do_update(self, data):
         """

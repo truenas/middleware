@@ -18,12 +18,13 @@ class AFPService(SystemServiceService):
         'afp_update',
         Bool('guest'),
         Str('guest_user'),
-        List('bindip', items=[Str('ip', validators=[IpAddress()])], default=[]),
+        List('bindip', items=[Str('ip', validators=[IpAddress()])]),
         Int('connections_limit', validators=[Range(min=1, max=65535)]),
         Dir('dbpath'),
         Str('global_aux'),
         Str('map_acls', enum=["rights", "mode", "none"]),
         Str('chmod_request', enum=["preserve", "simple", "ignore"]),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()

@@ -96,9 +96,10 @@ class MailService(ConfigService):
         Str('outgoingserver'),
         Int('port'),
         Str('security', enum=['PLAIN', 'SSL', 'TLS']),
-        Bool('smtp', default=False),
+        Bool('smtp'),
         Str('user'),
         Str('pass'),
+        update=True
     ))
     async def do_update(self, data):
         config = await self.config()

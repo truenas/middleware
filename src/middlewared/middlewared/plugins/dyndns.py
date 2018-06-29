@@ -24,10 +24,11 @@ class DynDNSService(SystemServiceService):
         Bool('ssl'),
         Str('custom_ddns_server'),
         Str('custom_ddns_path'),
-        List('domain', items=[Str('domain')], default=[]),
+        List('domain', items=[Str('domain')]),
         Str('username'),
         Str('password'),
         Int('period'),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()
