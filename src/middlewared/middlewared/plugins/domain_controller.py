@@ -30,7 +30,8 @@ class DomainControllerService(SystemServiceService):
         Str('dns_forwarder'),
         Str('forest_level', enum=["2000", "2003", "2008", "2008_R2", "2012", "2012_R2"]),
         Str('passwd', private=True),
-        Int('kerberos_realm', required=False),
+        Int('kerberos_realm', null=True),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()

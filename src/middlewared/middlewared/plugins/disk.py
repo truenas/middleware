@@ -84,7 +84,7 @@ class DiskService(CRUDService):
             ]),
             Str('passwd', password=True),
             Str('smartoptions'),
-            register=True
+            update=True
         )
     )
     async def do_update(self, id, data):

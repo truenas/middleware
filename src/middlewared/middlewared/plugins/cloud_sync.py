@@ -1,5 +1,5 @@
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import accepts, Bool, Cron, Dict, Error, Int, Patch, Ref, Str
+from middlewared.schema import accepts, Bool, Cron, Dict, Error, Int, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, item_method, job, private
 )
@@ -164,7 +164,7 @@ class CredentialsService(CRUDService):
         datastore = "system.cloudcredentials"
 
     @accepts(Dict(
-        "cloud_sync_credentials",
+        "cloud_sync_credentials_create",
         Str("name"),
         Str("provider"),
         Dict("attributes", additional_attrs=True),
@@ -180,15 +180,27 @@ class CredentialsService(CRUDService):
         )
         return data
 
-    @accepts(Int("id"), Ref("cloud_sync_credentials"))
+    @accepts(
+        Int("id"),
+        Patch(
+            "cloud_sync_credentials_create",
+            "cloud_sync_credentials_update",
+            ("attr", {"update": True})
+        )
+    )
     async def do_update(self, id, data):
-        self._validate("cloud_sync_credentials", data)
+        old = await self._get_instance(id)
+
+        new = old.copy()
+        new.update(data)
+
+        self._validate("cloud_sync_credentials", new)
 
         await self.middleware.call(
             "datastore.update",
             "system.cloudcredentials",
             id,
-            data,
+            new,
         )
 
         return data
@@ -330,7 +342,7 @@ class CloudSyncService(CRUDService):
                 verrors.add(f"{name}.direction", "This remote is read-only")
 
     @accepts(Dict(
-        "cloud_sync",
+        "cloud_sync_create",
         Str("description"),
         Str("direction", enum=["PUSH", "PULL"], required=True),
         Str("transfer_mode", enum=["SYNC", "COPY", "MOVE"], required=True),
@@ -396,7 +408,7 @@ class CloudSyncService(CRUDService):
         cloud_sync = await self._extend(cloud_sync)
         return cloud_sync
 
-    @accepts(Int("id"), Patch("cloud_sync", "cloud_sync_update", ("attr", {"update": True})))
+    @accepts(Int("id"), Patch("cloud_sync_create", "cloud_sync_update", ("attr", {"update": True})))
     async def do_update(self, id, data):
         """
         Updates the cloud_sync entry `id` with `data`.

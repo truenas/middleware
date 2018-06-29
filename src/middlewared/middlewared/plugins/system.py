@@ -127,6 +127,7 @@ class SytemAdvancedService(ConfigService):
             Bool('anonstats'),
             Str('sed_user', enum=['USER', 'MASTER']),
             Str('sed_passwd', password=True),
+            update=True
         )
     )
     async def do_update(self, data):

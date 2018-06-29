@@ -17,7 +17,7 @@ class SSHService(SystemServiceService):
 
     @accepts(Dict(
         'ssh_update',
-        List('bindiface', items=[Str('iface')], default=[]),
+        List('bindiface', items=[Str('iface')]),
         Int('tcpport', validators=[Range(min=1, max=65535)]),
         Bool('rootlogin'),
         Bool('passwordauth'),
@@ -28,6 +28,7 @@ class SSHService(SystemServiceService):
         Str('sftp_log_facility', enum=["", "DAEMON", "USER", "AUTH", "LOCAL0", "LOCAL1", "LOCAL2", "LOCAL3", "LOCAL4",
                                        "LOCAL5", "LOCAL6", "LOCAL7"]),
         Str('options'),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()

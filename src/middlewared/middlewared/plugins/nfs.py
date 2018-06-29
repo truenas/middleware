@@ -34,13 +34,14 @@ class NFSService(SystemServiceService):
         Bool('v4'),
         Bool('v4_v3owner'),
         Bool('v4_krb'),
-        List('bindip', items=[IPAddr('ip')], default=[]),
-        Int('mountd_port', required=False, validators=[Range(min=1, max=65535)]),
-        Int('rpcstatd_port', required=False, validators=[Range(min=1, max=65535)]),
-        Int('rpclockd_port', required=False, validators=[Range(min=1, max=65535)]),
+        List('bindip', items=[IPAddr('ip')]),
+        Int('mountd_port', null=True, validators=[Range(min=1, max=65535)]),
+        Int('rpcstatd_port', null=True, validators=[Range(min=1, max=65535)]),
+        Int('rpclockd_port', null=True, validators=[Range(min=1, max=65535)]),
         Bool('userd_manage_gids'),
         Bool('mountd_log'),
         Bool('statd_lockd_log'),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()

@@ -127,7 +127,8 @@ class WebDAVService(SystemServiceService):
         Int('tcpportssl'),
         Str('password'),
         Str('htauth', enum=['NONE', 'BASIC', 'DIGEST']),
-        Int('certssl')
+        Int('certssl'),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()

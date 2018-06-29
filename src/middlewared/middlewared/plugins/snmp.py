@@ -14,16 +14,17 @@ class SNMPService(SystemServiceService):
         Str('location'),
         Str('contact', validators=[Or(Email(), Match(r'^[-_a-zA-Z0-9\s]*$'))]),
         Bool('traps'),
-        Bool('v3', default=False),
+        Bool('v3'),
         Str('community', validators=[Match(r'^[-_.a-zA-Z0-9\s]*$')],
             default='public'),
         Str('v3_username'),
-        Str('v3_authtype', enum=['', 'MD5', 'SHA'], default='SHA'),
+        Str('v3_authtype', enum=['', 'MD5', 'SHA']),
         Str('v3_password'),
-        Str('v3_privproto', enum=[None, 'AES', 'DES'], default=None),
-        Str('v3_privpassphrase', default=None),
+        Str('v3_privproto', enum=[None, 'AES', 'DES'], null=True),
+        Str('v3_privpassphrase'),
         Int('loglevel', validators=[Range(min=0, max=7)]),
         Str('options'),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()
