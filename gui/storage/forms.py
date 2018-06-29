@@ -225,83 +225,59 @@ class VolumeManagerForm(VolumeMixin, Form):
     def save(self):
         formset = self._formset
         volume_name = self.cleaned_data.get("volume_name")
-        init_rand = self.cleaned_data.get("encryption_inirand", False)
-        if self.cleaned_data.get("encryption", False):
-            volume_encrypt = 1
+        encryption = self.cleaned_data.get("encryption", False)
+
+        volume = models.Volume.objects.filter(vol_name=volume_name)
+        if volume.count() > 0:
+            add = volume[0]
         else:
-            volume_encrypt = 0
-        dedup = self.cleaned_data.get("dedup", False)
+            add = False
 
-        volume = scrub = None
-        try:
-            vols = models.Volume.objects.filter(vol_name=volume_name)
-            if vols.count() > 0:
-                volume = vols[0]
-                add = True
-            else:
-                add = False
-                volume = models.Volume(vol_name=volume_name, vol_encrypt=volume_encrypt)
-                volume.save()
+        topology = defaultdict(list)
+        for i, form in enumerate(formset):
+            if not form.cleaned_data.get('vdevtype'):
+                continue
 
-            self.volume = volume
-
-            grouped = OrderedDict()
-            # FIXME: Make log as log mirror
-            for i, form in enumerate(formset):
-                if not form.cleaned_data.get('vdevtype'):
-                    continue
-                grouped[i] = {
-                    'type': form.cleaned_data.get("vdevtype"),
+            vdevtype = form.cleaned_data.get("vdevtype")
+            if vdevtype in ('raidz', 'raidz2', 'raidz3', 'mirror', 'stripe'):
+                topology['data'].append({
+                    'type': 'RAIDZ1' if vdevtype == 'raidz' else vdevtype.upper(),
                     'disks': form.cleaned_data.get("disks"),
-                }
+                })
+            elif vdevtype == 'cache':
+                topology['cache'].append({
+                    'type': 'STRIPE',
+                    'disks': form.cleaned_data.get("disks"),
+                })
+            elif vdevtype == 'log':
+                topology['log'].append({
+                    'type': 'STRIPE',
+                    'disks': form.cleaned_data.get("disks"),
+                })
+            elif vdevtype == 'log mirror':
+                topology['log'].append({
+                    'type': 'MIRROR',
+                    'disks': form.cleaned_data.get("disks"),
+                })
+            elif vdevtype == 'spare':
+                topology['spares'].extend(form.cleaned_data.get("disks"))
 
-            if add:
-                for gtype, group in list(grouped.items()):
-                    notifier().zfs_volume_attach_group(
-                        volume,
-                        group)
-
-            else:
-                notifier().create_volume(volume, groups=grouped, init_rand=init_rand)
-
-                if dedup:
-                    notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
-
-                scrub = models.Scrub.objects.create(scrub_volume=volume)
-        except Exception as e:
-            if not add and volume:
-                volume.delete(destroy=False, cascade=False)
-            if scrub:
-                scrub.delete()
-            raise e
-
-        if volume.vol_encrypt >= 2 and add:
-            # FIXME: ask current passphrase to the user
-            notifier().geli_passphrase(volume, None)
-            volume.vol_encrypt = 1
-            volume.save()
-
-        # Send geli keyfile to the other node
-        _n = notifier()
-        if volume_encrypt > 0 and not _n.is_freenas() and _n.failover_licensed():
-            with client as c:
-                _n.sync_file_send(c, volume.get_geli_keyfile())
-
-        # This must be outside transaction block to make sure the changes
-        # are committed before the call of ix-fstab
-        notifier().reload("disk")
-        if not add:
-            notifier().start("ix-syslogd")
-            notifier().restart("system_datasets")
-        # For scrub cronjob
-        notifier().restart("cron")
-
-        # restart smartd to enable monitoring for any new drives added
-        if (services.objects.get(srv_service='smartd').srv_enable):
-            notifier().restart("smartd")
+        with client as c:
+            try:
+                if add:
+                    pool = c.call('pool.update', add.id, {'topology': topology})
+                else:
+                    pool = c.call('pool.create', {
+                        'name': volume_name,
+                        'encryption': encryption,
+                        'topology': topology,
+                    })
+            except ValidationErrors as e:
+                self._errors['__all__'] = self.error_class([err.errmsg for err in e.errors])
+                return False
 
         # ModelForm compatibility layer for API framework
-        self.instance = volume
+        self.instance = self.volume = models.Volume.objects.filter(pk=pool['id'])
 
         return volume
 
@@ -314,6 +290,12 @@ class VolumeVdevForm(Form):
         max_length=800,
         widget=forms.widgets.SelectMultiple(),
     )
+
+    def clean_disks(self):
+        vdev = self.cleaned_data.get("vdevtype")
+        # TODO: Safe?
+        disks = eval(self.cleaned_data.get("disks"))
+        return disks
 
     def clean(self):
         if (
@@ -331,67 +313,6 @@ class VdevFormSet(BaseFormSet):
             # Don't bother validating the formset unless each form
             # is valid on its own
             return
-
-        vdevfound = defaultdict(lambda: False)
-        if self.pform.cleaned_data.get("volume_add"):
-            zpool = notifier().zpool_parse(
-                self.pform.cleaned_data.get("volume_add")
-            )
-
-            for i in range(0, self.total_form_count()):
-                form = self.forms[i]
-                vdevtype = form.cleaned_data.get('vdevtype')
-                if not vdevtype:
-                    continue
-
-                if vdevtype in (
-                    'cache',
-                    'log',
-                    'log mirror',
-                    'spare',
-                ):
-                    self._clean_vdevtype(vdevfound, vdevtype)
-
-            for vdev in zpool.data:
-
-                for i in range(0, self.total_form_count()):
-                    errors = []
-                    form = self.forms[i]
-                    vdevtype = form.cleaned_data.get('vdevtype')
-                    if not vdevtype:
-                        continue
-
-                    if vdevtype in (
-                        'cache',
-                        'log',
-                        'log mirror',
-                        'spare',
-                    ):
-                        continue
-
-                    disks = form.cleaned_data.get('disks')
-
-                    if vdev.type != vdevtype:
-                        errors.append(_(
-                            "You are trying to add a virtual device of type "
-                            "'%(addtype)s' in a pool that has a virtual "
-                            "device of type '%(vdevtype)s'"
-                        ) % {
-                            'addtype': vdevtype,
-                            'vdevtype': vdev.type,
-                        })
-
-                    if len(disks) != len(list(iter(vdev))):
-                        errors.append(_(
-                            "You are trying to add a virtual device consisting"
-                            " of %(addnum)s device(s) in a pool that has a "
-                            "virtual device consisting of %(vdevnum)s device(s)"
-                        ) % {
-                            'addnum': len(disks),
-                            'vdevnum': len(list(iter(vdev))),
-                        })
-                    if errors:
-                        raise forms.ValidationError(errors[0])
 
 
 class ZFSVolumeWizardForm(Form):
