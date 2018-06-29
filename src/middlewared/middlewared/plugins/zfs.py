@@ -98,6 +98,18 @@ class ZFSPoolService(CRUDService):
 
         return self.middleware.call_sync('zfs.pool._get_instance', data['name'])
 
+    @accepts(Str('pool'), Dict(
+        'options',
+        Bool('force', default=False),
+    ))
+    def do_delete(self, name, options):
+        try:
+            with libzfs.ZFS() as zfs:
+                # FIXME: force not yet implemented
+                zfs.destroy(name)
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
+
     @accepts(Str('pool'))
     def get_disks(self, name):
         try:
