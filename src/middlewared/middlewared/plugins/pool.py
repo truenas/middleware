@@ -6,6 +6,7 @@ import os
 import re
 import subprocess
 import sysctl
+import uuid
 
 import bsd
 
@@ -20,6 +21,7 @@ from middlewared.validators import Range, Time
 
 logger = logging.getLogger(__name__)
 
+GELI_KEYPATH = '/data/geli'
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 
 
@@ -376,9 +378,6 @@ class PoolService(CRUDService):
                     f'Only one row for the virtual device of type {i} is allowed.',
                 )
 
-        if verrors:
-            raise verrors
-
         # We do two things here:
         # 1. Gather all disks transversing the topology
         # 2. Keep track of the vdev each disk is supposed to be located
@@ -414,6 +413,44 @@ class PoolService(CRUDService):
             for disk in data['topology']['spares']:
                 disks[disk] = {'vdev': vdev_devs_list, 'create_swap': True}
 
+        # Lets make sure the disks provided are available
+        disks_cache = dict(map(
+            lambda x: (x['name'], x),
+            await self.middleware.call(
+                'disk.query', [('name', 'in', list(disks.keys()))]
+            )
+        ))
+        disks_cache.update(dict(map(
+            lambda x: (x['name'], x),
+            await self.middleware.call(
+                'disk.query', [('multipath_name', 'in', list(disks.keys()))]
+            )
+        )))
+
+        disks_set = set(disks.keys())
+        disks_not_in_cache = disks_set - set(disks_cache.keys())
+        if disks_not_in_cache:
+            verrors.add(
+                'pool_create.topology',
+                f'The following disks were not found in system: {"," .join(disks_not_in_cache)}.'
+            )
+
+        disks_reserved = await self.middleware.call('disk.get_reserved')
+        disks_reserved = disks_set - (disks_set - set(disks_reserved))
+        if disks_reserved:
+            verrors.add(
+                'pool_create.topology',
+                f'The following disks are already in use: {"," .join(disks_reserved)}.'
+            )
+
+        if verrors:
+            raise verrors
+
+        if data['encryption']:
+            enc_key = str(uuid.uuid4())
+            enc_keypath = os.path.join(GELI_KEYPATH, f'{enc_key}.key')
+            enc_disks = []
+
         # At this stage we will format all disks, putting all freebsd-zfs partitions created
         # into their respectives vdevs.
         # TODO: Make this work in parallel for speed, may take a long time with dozens of drives
@@ -422,8 +459,11 @@ class PoolService(CRUDService):
             await self.middleware.call('disk.format', disk, swapgb if config['create_swap'] else 0)
             devname = await self.middleware.call('disk.gptid_from_part_type', disk, 'freebsd-zfs')
             if data['encryption']:
-                raise CallError('Encryption not yet implemented')
-                # devname = await self.middleware.call('disk.encrypt', devname)
+                enc_disks.append({
+                    'disk': disk,
+                    'devname': devname,
+                })
+                devname = await self.middleware.call('disk.encrypt', devname, enc_keypath)
             config['vdev'].append(f'/dev/{devname}')
 
         options = {
@@ -467,6 +507,7 @@ class PoolService(CRUDService):
                 'name': data['name'],
                 'guid': z_pool['guid'],
                 'encrypt': int(data['encryption']),
+                'encryptkey': enc_key if data['encryption'] else '',
             }
             pool_id = await self.middleware.call(
                 'datastore.insert',
@@ -474,6 +515,20 @@ class PoolService(CRUDService):
                 pool,
                 {'prefix': 'vol_'},
             )
+
+            if data['encryption']:
+                for enc_disk in enc_disks:
+                    await self.middleware.call(
+                        'datastore.insert',
+                        'storage.encrypteddisk',
+                        {
+                            'volume': pool_id,
+                            'disk': disks_cache[enc_disk['disk']]['identifier'],
+                            'provider': enc_disk['devname'],
+                        },
+                        {'prefix': 'encrypted_'},
+                    )
+
             await self.middleware.call(
                 'datastore.insert',
                 'storage.scrub',
@@ -517,7 +572,7 @@ class PoolService(CRUDService):
             filters.append(('id', '=', oid))
         for pool in await self.query(filters):
             if pool['is_decrypted']:
-                async for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
+                for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
                     yield i
             else:
                 for encrypted_disk in await self.middleware.call('datastore.query', 'storage.encrypteddisk',
