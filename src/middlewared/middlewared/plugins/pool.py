@@ -538,7 +538,7 @@ class PoolDatasetService(CRUDService):
     def query(self, filters=None, options=None):
         # Otimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
-        for f in filters:
+        for f in filters or []:
             if len(f) == 3:
                 if f[0] in ('id', 'name', 'pool', 'type'):
                     zfsfilters.append(f)
@@ -623,10 +623,10 @@ class PoolDatasetService(CRUDService):
         ]),
         Str('atime', enum=['ON', 'OFF']),
         Str('exec', enum=['ON', 'OFF']),
-        Int('quota'),
+        Int('quota', null=True),
         Int('quota_warning', validators=[Range(0, 100)]),
         Int('quota_critical', validators=[Range(0, 100)]),
-        Int('refquota'),
+        Int('refquota', null=True),
         Int('refquota_warning', validators=[Range(0, 100)]),
         Int('refquota_critical', validators=[Range(0, 100)]),
         Int('reservation'),
@@ -656,6 +656,10 @@ class PoolDatasetService(CRUDService):
         else:
             await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE')
 
+        mountpoint = os.path.join('/mnt', data['name'])
+        if os.path.exists(mountpoint):
+            verrors.add('pool_dataset_create.name', f'Path {mountpoint} already exists')
+
         if verrors:
             raise verrors
 
@@ -669,13 +673,13 @@ class PoolDatasetService(CRUDService):
             ('deduplication', 'dedup', str.lower),
             ('exec', None, str.lower),
             ('quota', None, _none),
-            ('quota_warning', 'org.freenas:quota_warning', None),
-            ('quota_critical', 'org.freenas:quota_critical', None),
+            ('quota_warning', 'org.freenas:quota_warning', str),
+            ('quota_critical', 'org.freenas:quota_critical', str),
             ('readonly', None, str.lower),
             ('recordsize', None, None),
             ('refquota', None, _none),
-            ('refquota_warning', 'org.freenas:refquota_warning', None),
-            ('refquota_critical', 'org.freenas:refquota_critical', None),
+            ('refquota_warning', 'org.freenas:refquota_warning', str),
+            ('refquota_critical', 'org.freenas:refquota_critical', str),
             ('refreservation', None, _none),
             ('reservation', None, _none),
             ('snapdir', None, str.lower),
@@ -764,11 +768,11 @@ class PoolDatasetService(CRUDService):
             ('deduplication', 'dedup', str.lower, True),
             ('exec', None, str.lower, True),
             ('quota', None, _none, False),
-            ('quota_warning', 'org.freenas:quota_warning', _none, True),
-            ('quota_critical', 'org.freenas:quota_critical', _none, True),
+            ('quota_warning', 'org.freenas:quota_warning', str, True),
+            ('quota_critical', 'org.freenas:quota_critical', str, True),
             ('refquota', None, _none, False),
-            ('refquota_warning', 'org.freenas:refquota_warning', _none, True),
-            ('refquota_critical', 'org.freenas:refquota_critical', _none, True),
+            ('refquota_warning', 'org.freenas:refquota_warning', str, True),
+            ('refquota_critical', 'org.freenas:refquota_critical', str, True),
             ('reservation', None, _none, False),
             ('refreservation', None, _none, False),
             ('copies', None, None, False),
@@ -859,8 +863,8 @@ class PoolDatasetService(CRUDService):
                             'Volume size should be a multiple of volume block size'
                         )
 
-    @accepts(Str('id'))
-    async def do_delete(self, id):
+    @accepts(Str('id'), Bool('recursive', default=False))
+    async def do_delete(self, id, recursive):
         iscsi_target_extents = await self.middleware.call('iscsi.extent.query', [
             ['type', '=', 'DISK'],
             ['path', '=', f'zvol/{id}']
@@ -868,7 +872,7 @@ class PoolDatasetService(CRUDService):
         if iscsi_target_extents:
             raise CallError("This volume is in use by iSCSI extent, please remove it first.")
 
-        return await self.middleware.call('zfs.dataset.delete', id)
+        return await self.middleware.call('zfs.dataset.delete', id, recursive)
 
     @item_method
     @accepts(Str('id'))

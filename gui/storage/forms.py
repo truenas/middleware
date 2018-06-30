@@ -25,7 +25,6 @@
 #####################################################################
 from collections import defaultdict, OrderedDict
 from datetime import datetime, time
-from decimal import Decimal
 import logging
 import os
 import re
@@ -55,7 +54,6 @@ from freenasUI.freeadmin.forms import (
 )
 from freenasUI.freeadmin.utils import key_order
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client, ClientException, ValidationErrors
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
@@ -131,37 +129,6 @@ class Disk(object):
     def __iter__(self):
         yield self.dev
         yield str(self)
-
-
-def _clean_zfssize_fields(form, attrs, prefix):
-
-    cdata = form.cleaned_data
-    for field in [prefix + x for x in attrs]:
-        if field not in cdata:
-            cdata[field] = ''
-
-    r = re.compile(r'^(\d+(?:\.\d+)?)([BKMGTP](?:iB)?)?$', re.I)
-    msg = _("Specify the size with IEC suffixes or 0, e.g. 10 GiB")
-
-    for attr in attrs:
-        formfield = '%s%s' % (prefix, attr)
-        match = r.match(cdata[formfield].replace(' ', ''))
-
-        if not match and cdata[formfield] != "0":
-            form._errors[formfield] = form.error_class([msg])
-            del cdata[formfield]
-        elif match:
-            number, suffix = match.groups()
-            if suffix and suffix.lower().endswith('ib'):
-                cdata[formfield] = '%s%s' % (number, suffix[0])
-            try:
-                Decimal(number)
-            except Exception:
-                form._errors[formfield] = form.error_class([
-                    _("%s is not a valid number") % (number, ),
-                ])
-                del cdata[formfield]
-    return cdata
 
 
 def _inherit_choices(choices, inheritvalue):
@@ -1195,6 +1162,27 @@ class DiskEditBulkForm(Form):
         return models.Disk.objects.filter(pk__in=primary_keys)
 
 
+DATASET_COMMON_MAPPING = [
+    ('dataset_comments', 'comments', None),
+    ('dataset_sync', 'sync', str.upper),
+    ('dataset_compression', 'compression', str.upper),
+    ('dataset_share_type', 'share_type', str.upper),
+    ('dataset_atime', 'atime', str.upper),
+    ('dataset_refquota', 'refquota', lambda v: v or None),
+    ('refquota_warning', 'refquota_warning', None),
+    ('refquota_critical', 'refquota_critical', None),
+    ('dataset_quota', 'quota', lambda v: v or None),
+    ('quota_warning', 'quota_warning', None),
+    ('quota_critical', 'quota_critical', None),
+    ('dataset_refreservation', 'refreservation', None),
+    ('dataset_reservation', 'reservation', None),
+    ('dataset_dedup', 'deduplication', str.upper),
+    ('dataset_readonly', 'readonly', str.upper),
+    ('dataset_exec', 'exec', str.upper),
+    ('dataset_recordsize', 'recordsize', str.upper),
+]
+
+
 class ZFSDatasetCommonForm(Form):
     dataset_comments = forms.CharField(
         max_length=1024,
@@ -1220,8 +1208,8 @@ class ZFSDatasetCommonForm(Form):
         widget=forms.RadioSelect(attrs=attrs_dict),
         label=_('Enable atime'),
         initial=choices.ZFS_AtimeChoices[0][0])
-    dataset_refquota = forms.CharField(
-        max_length=128,
+    dataset_refquota = SizeField(
+        required=False,
         initial=0,
         label=_('Quota for this dataset'),
         help_text=_('0=Unlimited; example: 1 GiB'))
@@ -1235,8 +1223,8 @@ class ZFSDatasetCommonForm(Form):
         initial=None,
         label=_('Quota critical alert at, %'),
         help_text=_('0=Disabled, blank=inherit'))
-    dataset_quota = forms.CharField(
-        max_length=128,
+    dataset_quota = SizeField(
+        required=False,
         initial=0,
         label=_('Quota for this dataset and all children'),
         help_text=_('0=Unlimited; example: 1 GiB'))
@@ -1250,13 +1238,13 @@ class ZFSDatasetCommonForm(Form):
         initial=None,
         label=_('Quota critical alert at, %'),
         help_text=_('0=Disabled, blank=inherit'))
-    dataset_refreservation = forms.CharField(
-        max_length=128,
+    dataset_refreservation = SizeField(
+        required=False,
         initial=0,
         label=_('Reserved space for this dataset'),
         help_text=_('0=None; example: 1 GiB'))
-    dataset_reservation = forms.CharField(
-        max_length=128,
+    dataset_reservation = SizeField(
+        required=False,
         initial=0,
         label=_('Reserved space for this dataset and all children'),
         help_text=_('0=None; example: 1 GiB'))
@@ -1277,15 +1265,15 @@ class ZFSDatasetCommonForm(Form):
         initial=choices.ZFS_ExecChoices[0][0],
     )
     dataset_recordsize = forms.ChoiceField(
-        choices=(('inherit', _('Inherit')), ) + choices.ZFS_RECORDSIZE,
         label=_('Record Size'),
-        initial="",
+        choices=choices.ZFS_RECORDSIZE,
+        initial=choices.ZFS_RECORDSIZE[0][0],
         required=False,
         help_text=_(
             "Specifies a suggested block size for files in the file system. "
             "This property is designed solely for use with database workloads "
-            "that access files in fixed-size records.  ZFS automatically tunes"
-            " block sizes according to internal algorithms optimized for "
+            "that access files in fixed-size records.  ZFS automatically tunes "
+            "block sizes according to internal algorithms optimized for "
             "typical access patterns."
         )
     )
@@ -1304,8 +1292,6 @@ class ZFSDatasetCommonForm(Form):
         'dataset_exec',
     )
 
-    zfs_size_fields = ['quota', 'refquota', 'reservation', 'refreservation']
-
     def __init__(self, *args, fs=None, **kwargs):
         self._fs = fs
         super(ZFSDatasetCommonForm, self).__init__(*args, **kwargs)
@@ -1313,27 +1299,31 @@ class ZFSDatasetCommonForm(Form):
         if hasattr(self, 'parentdata'):
             self.fields['dataset_atime'].choices = _inherit_choices(
                 choices.ZFS_AtimeChoices,
-                self.parentdata['atime'][0]
+                self.parentdata['atime']['value'].lower()
             )
             self.fields['dataset_sync'].choices = _inherit_choices(
                 choices.ZFS_SyncChoices,
-                self.parentdata['sync'][0]
+                self.parentdata['sync']['value'].lower()
             )
             self.fields['dataset_compression'].choices = _inherit_choices(
                 choices.ZFS_CompressionChoices,
-                self.parentdata['compression'][0]
+                self.parentdata['compression']['value'].lower()
             )
             self.fields['dataset_dedup'].choices = _inherit_choices(
                 choices.ZFS_DEDUP_INHERIT,
-                self.parentdata['dedup'][0]
+                self.parentdata['deduplication']['value'].lower()
             )
             self.fields['dataset_readonly'].choices = _inherit_choices(
                 choices.ZFS_ReadonlyChoices,
-                self.parentdata['readonly'][0]
+                self.parentdata['readonly']['value'].lower()
             )
             self.fields['dataset_exec'].choices = _inherit_choices(
                 choices.ZFS_ExecChoices,
-                self.parentdata['exec'][0]
+                self.parentdata['exec']['value'].lower()
+            )
+            self.fields['dataset_recordsize'].choices = _inherit_choices(
+                choices.ZFS_RECORDSIZE,
+                self.parentdata['recordsize']['value']
             )
 
         if not dedup_enabled():
@@ -1347,16 +1337,6 @@ class ZFSDatasetCommonForm(Form):
                 'assistance.</span><br />'
             )
 
-    def clean_dataset_name(self):
-        name = self.cleaned_data["dataset_name"]
-        if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:. ]*$', name):
-            raise forms.ValidationError(_(
-                "Dataset names must begin with an "
-                "alphanumeric character and may only contain "
-                "\"-\", \"_\", \":\", \" \" and \".\"."))
-
-        return name
-
     def clean_quota_warning(self):
         if self.cleaned_data["quota_warning"]:
             if not self.cleaned_data["quota_warning"].isdigit():
@@ -1365,7 +1345,9 @@ class ZFSDatasetCommonForm(Form):
             if not (0 <= int(self.cleaned_data["quota_warning"]) <= 100):
                 raise forms.ValidationError("Should be between 0 and 100")
 
-        return self.cleaned_data["quota_warning"]
+            return int(self.cleaned_data["quota_warning"])
+
+        return 'INHERIT'
 
     def clean_quota_critical(self):
         if self.cleaned_data["quota_critical"]:
@@ -1375,7 +1357,9 @@ class ZFSDatasetCommonForm(Form):
             if not (0 <= int(self.cleaned_data["quota_critical"]) <= 100):
                 raise forms.ValidationError("Should be between 0 and 100")
 
-        return self.cleaned_data["quota_critical"]
+            return int(self.cleaned_data["quota_critical"])
+
+        return 'INHERIT'
 
     def clean_refquota_warning(self):
         if self.cleaned_data["refquota_warning"]:
@@ -1385,7 +1369,9 @@ class ZFSDatasetCommonForm(Form):
             if not (0 <= int(self.cleaned_data["refquota_warning"]) <= 100):
                 raise forms.ValidationError("Should be between 0 and 100")
 
-        return self.cleaned_data["refquota_warning"]
+            return int(self.cleaned_data["refquota_warning"])
+
+        return 'INHERIT'
 
     def clean_refquota_critical(self):
         if self.cleaned_data["refquota_critical"]:
@@ -1395,62 +1381,14 @@ class ZFSDatasetCommonForm(Form):
             if not (0 <= int(self.cleaned_data["refquota_critical"]) <= 100):
                 raise forms.ValidationError("Should be between 0 and 100")
 
-        return self.cleaned_data["refquota_critical"]
+            return int(self.cleaned_data["refquota_critical"])
 
-    def clean_data_to_props(self):
-        props = dict()
-        for prop in self.zfs_size_fields:
-            value = self.cleaned_data.get('dataset_%s' % prop)
-            if value and value == '0':
-                value = 'none'
+        return 'INHERIT'
 
-            props[prop] = value
 
-        for prop in (
-            'org.freenas:description', 'sync', 'compression', 'atime', 'dedup',
-            'aclmode', 'recordsize', 'casesensitivity', 'readonly', 'exec',
-        ):
-            if prop == 'org.freenas:description':
-                value = self.cleaned_data.get('dataset_comments')
-            elif prop == 'recordsize':
-                value = self.clean_dataset_recordsize()
-            elif prop == 'casesensitivity':
-                value = self.cleaned_data.get('dataset_case_sensitivity')
-            else:
-                value = self.cleaned_data.get('dataset_%s' % prop)
-
-            if value:
-                props[prop] = value
-
-        return props
-
-    def _update_quotas(self, name):
-        with client as c:
-            c.call('pool.dataset.update', name, {
-                k: (
-                    int(self.cleaned_data.get(k))
-                    if self.cleaned_data.get(k)
-                    else 'INHERIT'
-                )
-                for k in ['quota_warning', 'quota_critical', 'refquota_warning', 'refquota_critical']
-            })
-
-    def clean_dataset_recordsize(self):
-        rs = self.cleaned_data.get("dataset_recordsize")
-        if not rs or rs == 'inherit':
-            return 'inherit'
-
-        try:
-            return int(rs)
-        except ValueError:
-            if rs[-1].lower() == 'm':
-                rs = int(rs[:-1]) * 1024 * 1024
-                return rs
-            elif rs[-1].lower() == 'k':
-                rs = int(rs[:-1]) * 1024
-                return rs
-
-        raise forms.ValidationError(_('invalid recordsize provided'))
+DATASET_IMMUTABLE_MAPPING = [
+    ('dataset_case_sensitivity', 'casesensitivity', str.upper),
+]
 
 
 class ZFSDatasetCreateForm(ZFSDatasetCommonForm):
@@ -1468,172 +1406,153 @@ class ZFSDatasetCreateForm(ZFSDatasetCommonForm):
     def __init__(self, *args, fs=None, **kwargs):
         # Common form expects a parentdata
         # We use `fs` as parent data because thats where we inherit props from
-        self.parentdata = notifier().zfs_get_options(fs)
+        with client as c:
+            self.parentdata = c.call('pool.dataset.query', [['name', '=', fs]], {'get': True})
         super(ZFSDatasetCreateForm, self).__init__(*args, fs=fs, **kwargs)
 
-    def clean(self):
-        cleaned_data = _clean_zfssize_fields(
-            self,
-            self.zfs_size_fields,
-            'dataset_')
-
-        full_dataset_name = "%s/%s" % (self._fs, cleaned_data.get("dataset_name"))
-
-        path = f'/mnt/{full_dataset_name}'
-        if os.path.exists(path):
-            raise forms.ValidationError(_('The path %s already exists.') % path)
-
-        if len(zfs.list_datasets(path=full_dataset_name)) > 0:
-            msg = _("You already have a dataset with the same name")
-            self._errors["dataset_name"] = self.error_class([msg])
-            del cleaned_data["dataset_name"]
-
-        return cleaned_data
-
     def save(self):
-        props = self.clean_data_to_props()
-        path = '%s/%s' % (self._fs, self.cleaned_data.get('dataset_name'))
+        data = {}
+        for old, new, save in DATASET_IMMUTABLE_MAPPING + DATASET_COMMON_MAPPING:
+            v = (save or (lambda x: x))(self.cleaned_data[old])
+            if v != 'INHERIT':
+                data[new] = v
 
-        err, msg = notifier().create_zfs_dataset(path=path, props=props)
-        if err:
-            self._errors['__all__'] = self.error_class([msg])
+        try:
+            with client as c:
+                c.call('pool.dataset.create', dict(
+                    data, name=f"{self.parentdata['name']}/{self.cleaned_data['dataset_name']}", type="FILESYSTEM"))
+
+            return True
+        except ValidationErrors as e:
+            m = {new: old for old, new, save in DATASET_IMMUTABLE_MAPPING + DATASET_COMMON_MAPPING}
+            for err in e.errors:
+                field_name = m.get(err.attribute.split('.', 1)[-1])
+                error_message = err.errmsg
+
+                if field_name not in self.fields:
+                    field_name = '__all__'
+
+                if field_name not in self._errors:
+                    self._errors[field_name] = self.error_class([error_message])
+                else:
+                    self._errors[field_name] += [error_message]
+
             return False
-
-        self._update_quotas(path)
-
-        notifier().change_dataset_share_type(path, self.cleaned_data.get('dataset_share_type'))
-
-        return True
 
 
 class ZFSDatasetEditForm(ZFSDatasetCommonForm):
 
     def __init__(self, *args, fs=None, **kwargs):
-        # Common form expects a parentdata
-        # We use parent `fs` as parent data because thats where we inherit props from
-        self.parentdata = notifier().zfs_get_options(fs.rsplit('/', 1)[0])
+        with client as c:
+            zdata = c.call('pool.dataset.query', [['name', '=', fs]], {'get': True})
+            self.parentdata = c.call('pool.dataset.query', [['name', '=', fs.rsplit('/', 1)[0]]], {'get': True})
+
         super(ZFSDatasetEditForm, self).__init__(*args, fs=fs, **kwargs)
 
-        zdata = notifier().zfs_get_options(self._fs)
+        if 'comments' in zdata and zdata['comments']['source'] == 'LOCAL':
+            self.fields['dataset_comments'].initial = zdata['comments']['value']
 
-        if 'org.freenas:description' in zdata and zdata['org.freenas:description'][2] == 'local':
-            self.fields['dataset_comments'].initial = zdata['org.freenas:description'][0]
-
-        for k, v in self.get_initial_data(self._fs).items():
+        for k, v in self.get_initial_data(zdata).items():
             self.fields[k].initial = v
 
     @classmethod
-    def get_initial_data(cls, fs):
+    def get_initial_data(cls, zdata):
         """
         Method to get initial data for the form.
         This is a separate method to share with API code.
         """
-        zdata = notifier().zfs_get_options(fs)
         data = {}
 
-        if 'org.freenas:description' in zdata and zdata['org.freenas:description'][2] == 'local':
-            data['dataset_comments'] = zdata['org.freenas:description'][0]
-        for prop in cls.zfs_size_fields:
+        for prop in ['quota', 'refquota', 'reservation', 'refreservation']:
             field_name = f'dataset_{prop}'
-            if zdata[prop][0] == '0' or zdata[prop][0] == 'none':
+            if zdata[prop]['value'] == '0' or zdata[prop]['value'] == 'none':
                 data[field_name] = 0
             else:
-                if zdata[prop][2] == 'local':
-                    data[field_name] = zdata[prop][0]
+                if zdata[prop]['source'] == 'LOCAL':
+                    data[field_name] = zdata[prop]['value']
 
-        if zdata['dedup'][2] == 'inherit':
+        if zdata['deduplication']['source'] in ['DEFAULT', 'INHERITED']:
             data['dataset_dedup'] = 'inherit'
-        elif zdata['dedup'][0] in ('on', 'off', 'verify'):
-            data['dataset_dedup'] = zdata['dedup'][0]
-        elif zdata['dedup'][0] == 'sha256,verify':
+        elif zdata['deduplication']['value'] in ('ON', 'OFF', 'VERIFY'):
+            data['dataset_dedup'] = zdata['deduplication']['value'].lower()
+        elif zdata['deduplication']['value'] == 'SHA256,VERIFY':
             data['dataset_dedup'] = 'verify'
         else:
             data['dataset_dedup'] = 'off'
 
-        if zdata['sync'][2] == 'inherit':
+        if zdata['sync']['source'] in ['DEFAULT', 'INHERITED']:
             data['dataset_sync'] = 'inherit'
         else:
-            data['dataset_sync'] = zdata['sync'][0]
+            data['dataset_sync'] = zdata['sync']['value'].lower()
 
-        if zdata['compression'][2] == 'inherit':
+        if zdata['compression']['source'] in ['DEFAULT', 'INHERITED']:
             data['dataset_compression'] = 'inherit'
         else:
-            data['dataset_compression'] = zdata['compression'][0]
+            data['dataset_compression'] = zdata['compression']['value'].lower()
 
-        if zdata['atime'][2] == 'inherit':
+        if zdata['atime']['source'] in ['DEFAULT', 'INHERITED']:
             data['dataset_atime'] = 'inherit'
-        elif zdata['atime'][0] in ('on', 'off'):
-            data['dataset_atime'] = zdata['atime'][0]
+        elif zdata['atime']['value'] in ('ON', 'OFF'):
+            data['dataset_atime'] = zdata['atime']['value'].lower()
         else:
             data['dataset_atime'] = 'off'
 
-        if zdata['readonly'][2] == 'inherit':
+        if zdata['readonly']['source'] in ['DEFAULT', 'INHERITED']:
             data['dataset_readonly'] = 'inherit'
-        elif zdata['readonly'][0] in ('on', 'off'):
-            data['dataset_readonly'] = zdata['readonly'][0]
+        elif zdata['readonly']['value'] in ('ON', 'OFF'):
+            data['dataset_readonly'] = zdata['readonly']['value'].lower()
         else:
             data['dataset_readonly'] = 'off'
 
-        if zdata['exec'][2] == 'inherit':
+        if zdata['exec']['source'] in ['DEFAULT', 'INHERITED']:
             data['dataset_exec'] = 'inherit'
-        elif zdata['exec'][0] in ('on', 'off'):
-            data['dataset_exec'] = zdata['exec'][0]
+        elif zdata['exec']['value'] in ('ON', 'OFF'):
+            data['dataset_exec'] = zdata['exec']['value'].lower()
         else:
             data['dataset_exec'] = 'off'
 
-        if zdata['recordsize'][2] == 'inherit':
+        if zdata['recordsize']['source'] in ['DEFAULT', 'INHERITED']:
             data['dataset_recordsize'] = 'inherit'
         else:
-            data['dataset_recordsize'] = zdata['recordsize'][0]
+            data['dataset_recordsize'] = zdata['recordsize']['value']
 
-        data['dataset_share_type'] = notifier().get_dataset_share_type(fs)
+        data['dataset_share_type'] = zdata['share_type'].lower()
 
         for k in ['quota_warning', 'quota_critical', 'refquota_warning', 'refquota_critical']:
-            if f'org.freenas:{k}' in zdata and zdata[f'org.freenas:{k}'][2] == 'local':
+            if k in zdata and zdata[k]['source'] == 'LOCAL':
                 try:
-                    data[k] = int(zdata[f'org.freenas:{k}'][0])
+                    data[k] = int(zdata[k]['value'])
                 except ValueError:
                     pass
 
         return data
 
-    def clean(self):
-        cleaned_data = _clean_zfssize_fields(
-            self,
-            self.zfs_size_fields,
-            'dataset_')
-
-        return cleaned_data
-
     def save(self):
-        props = self.clean_data_to_props()
-        name = self._fs
+        data = {}
+        for old, new, save in DATASET_COMMON_MAPPING:
+            v = (save or (lambda x: x))(self.cleaned_data[old])
+            data[new] = v
 
-        error = False
-        errors = dict()
+        try:
+            with client as c:
+                c.call('pool.dataset.update', self._fs, data)
 
-        for item, value in props.items():
-            if value == 'inherit':
-                success, msg = notifier().zfs_inherit_option(name, item)
-            else:
-                success, msg = notifier().zfs_set_option(name, item, value)
+            return True
+        except ValidationErrors as e:
+            m = {new: old for old, new, save in DATASET_COMMON_MAPPING}
+            for err in e.errors:
+                field_name = m.get(err.attribute.split('.', 1)[-1])
+                error_message = err.errmsg
 
-            error |= not success
-            if not success:
-                error = True
-                errors[f'dataset_{item}'] = msg
+                if field_name not in self.fields:
+                    field_name = '__all__'
 
-        self._update_quotas(name)
+                if field_name not in self._errors:
+                    self._errors[field_name] = self.error_class([error_message])
+                else:
+                    self._errors[field_name] += [error_message]
 
-        notifier().change_dataset_share_type(name, self.cleaned_data.get('dataset_share_type'))
-
-        for field, err in list(errors.items()):
-            self._errors[field] = self.error_class([err])
-
-        if error:
             return False
-
-        return True
 
 
 class CommonZVol(Form):
@@ -1717,17 +1636,17 @@ class ZVol_EditForm(CommonZVol):
 
         if self.zdata['comments']['source'] == 'LOCAL':
             self.fields['zvol_comments'].initial = self.zdata['comments']['value']
-        if self.zdata['sync']['source'] == 'INHERITED':
+        if self.zdata['sync']['source'] in ['DEFAULT', 'INHERITED']:
             self.fields['zvol_sync'].initial = 'inherit'
         else:
             self.fields['zvol_sync'].initial = self.zdata['sync']['value'].lower()
-        if self.zdata['compression']['source'] == 'INHERITED':
+        if self.zdata['compression']['source'] in ['DEFAULT', 'INHERITED']:
             self.fields['zvol_compression'].initial = 'inherit'
         else:
             self.fields['zvol_compression'].initial = self.zdata['compression']['value'].lower()
         self.fields['zvol_volsize'].initial = self.zdata['volsize']['parsed']
 
-        if self.zdata['deduplication']['source'] == 'INHERITED':
+        if self.zdata['deduplication']['source'] in ['DEFAULT', 'INHERITED']:
             self.fields['zvol_dedup'].initial = 'inherit'
         elif self.zdata['deduplication']['value'] in ('ON', 'OFF', 'VERIFY'):
             self.fields['zvol_dedup'].initial = self.zdata['deduplication']['value'].lower()
@@ -1844,7 +1763,7 @@ class ZVol_CreateForm(CommonZVol):
 
             return True
         except ValidationErrors as e:
-            m = {new: old for old, new, save in ZVOL_COMMON_MAPPING}
+            m = {new: old for old, new, save in ZVOL_IMMUTABLE_MAPPING + ZVOL_COMMON_MAPPING}
             for err in e.errors:
                 field_name = m.get(err.attribute.split('.', 1)[-1])
                 error_message = err.errmsg
@@ -2514,8 +2433,9 @@ class Dataset_Destroy(Form):
         self.fs = kwargs.pop('fs')
         self.datasets = kwargs.pop('datasets', [])
         super(Dataset_Destroy, self).__init__(*args, **kwargs)
-        snaps = notifier().zfs_snapshot_list(path=self.fs)
-        if len(snaps.get(self.fs, [])) > 0:
+        with client as c:
+            snaps = c.call("zfs.snapshot.query", [["dataset", "=", self.fs]])
+        if len(snaps) > 0:
             label = ungettext(
                 "I'm aware this will destroy snapshots within this dataset",
                 ("I'm aware this will destroy all child datasets and "

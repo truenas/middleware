@@ -52,15 +52,16 @@ class Time:
 
 
 class Match:
-    def __init__(self, pattern, flags=0):
+    def __init__(self, pattern, flags=0, explanation=None):
         self.pattern = pattern
         self.flags = flags
+        self.explanation = explanation
 
         self.regex = re.compile(pattern, flags)
 
     def __call__(self, value):
         if not self.regex.match(value):
-            raise ShouldBe(f"{self.pattern}")
+            raise ShouldBe(self.explanation or f"{self.pattern}")
 
     def __deepcopy__(self, memo):
         return Match(self.pattern, self.flags)

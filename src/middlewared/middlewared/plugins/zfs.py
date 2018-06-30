@@ -310,13 +310,17 @@ class ZFSDatasetService(CRUDService):
             self.logger.error('Failed to update dataset', exc_info=True)
             raise CallError(f'Failed to update dataset: {e}')
 
-    def do_delete(self, id):
+    def do_delete(self, id, recursive=False):
         try:
             with libzfs.ZFS() as zfs:
                 ds = zfs.get_dataset(id)
 
                 if ds.type == libzfs.DatasetType.FILESYSTEM:
                     ds.umount()
+
+                if recursive:
+                    for dependent in ds.dependents:
+                        dependent.delete()
 
                 ds.delete()
         except libzfs.ZFSException as e:

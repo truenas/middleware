@@ -908,6 +908,7 @@ FTP_TLS_POLICY_CHOICES = (
 
 
 ZFS_RECORDSIZE = (
+    ('inherit', _('Inherit')),
     ('512', '512'),
     ('1K', '1K'),
     ('2K', '2K'),
