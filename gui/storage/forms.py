@@ -2037,20 +2037,22 @@ class ManualSnapshotForm(Form):
         initial=False,
         required=False,
         label=_('Recursive snapshot'))
+
     ms_name = forms.CharField(label=_('Snapshot Name'))
+
+    vmwaresync = forms.BooleanField(
+        required=False,
+        label=_('VMware Sync'),
+        initial=True,
+    )
 
     def __init__(self, *args, **kwargs):
         self._fs = kwargs.pop('fs', None)
         super(ManualSnapshotForm, self).__init__(*args, **kwargs)
         self.fields['ms_name'].initial = datetime.today().strftime(
             'manual-%Y%m%d')
-
-        if models.VMWarePlugin.objects.filter(filesystem=self._fs).exists():
-            self.fields['vmwaresync'] = forms.BooleanField(
-                required=False,
-                label=_('VMware Sync'),
-                initial=True,
-            )
+        if not models.VMWarePlugin.objects.filter(filesystem=self._fs).exists():
+            self.fields.pop('vmwaresync')
 
     def clean_ms_name(self):
         regex = re.compile('^[-a-zA-Z0-9_. ]+$')
@@ -2070,29 +2072,29 @@ class ManualSnapshotForm(Form):
         vmsnapname = str(uuid.uuid4())
         vmsnapdescription = str(datetime.now()).split('.')[0] + " FreeNAS Created Snapshot"
         snapvms = []
-        for obj in models.VMWarePlugin.objects.filter(filesystem=self._fs):
-            try:
-                ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-                ssl_context.verify_mode = ssl.CERT_NONE
+        if self.cleaned_data.get('vmwaresync'):
+            for obj in models.VMWarePlugin.objects.filter(filesystem=self._fs):
+                try:
+                    ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+                    ssl_context.verify_mode = ssl.CERT_NONE
 
-                si = connect.SmartConnect(host=obj.hostname, user=obj.username, pwd=obj.get_password(), sslContext=ssl_context)
-            except Exception:
-                continue
-            content = si.RetrieveContent()
-            vm_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
-            for vm in vm_view.view:
-                if vm.summary.runtime.powerState != 'poweredOn':
+                    si = connect.SmartConnect(host=obj.hostname, user=obj.username, pwd=obj.get_password(), sslContext=ssl_context)
+                except Exception:
                     continue
-                for i in vm.datastore:
-                    if i.info.name == obj.datastore:
-                        VimTask.WaitForTask(vm.CreateSnapshot_Task(
-                            name=vmsnapname,
-                            description=vmsnapdescription,
-                            memory=False, quiesce=False,
-                        ))
-                        snapvms.append(vm)
-                        break
-
+                content = si.RetrieveContent()
+                vm_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
+                for vm in vm_view.view:
+                    if vm.summary.runtime.powerState != 'poweredOn':
+                        continue
+                    for i in vm.datastore:
+                        if i.info.name == obj.datastore:
+                            VimTask.WaitForTask(vm.CreateSnapshot_Task(
+                                name=vmsnapname,
+                                description=vmsnapdescription,
+                                memory=False, quiesce=False,
+                            ))
+                            snapvms.append(vm)
+                            break
         try:
             notifier().zfs_mksnap(
                 fs,

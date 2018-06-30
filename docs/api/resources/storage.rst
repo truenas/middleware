@@ -1461,7 +1461,8 @@ Create resource
         {
                 "dataset": "tank",
                 "name": "test",
-                "recursive": true
+                "recursive": true,
+                "vmware_sync": true
         }
 
    **Example response**:
@@ -1486,6 +1487,7 @@ Create resource
    :json string dataset: name of dataset to snapshot
    :json string name: name of the snapshot
    :json boolean recursive: True if you want it to recursively snapshot the dataset
+   :json boolean vmware_sync: True if you want to coordinate snapshots when using FreeNAS® as a VMware datastore
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error

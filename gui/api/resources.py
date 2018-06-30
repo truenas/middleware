@@ -101,6 +101,7 @@ from freenasUI.storage.forms import (
     ReKeyForm,
     CreatePassphraseForm,
     ChangePassphraseForm,
+    ManualSnapshotForm,
     UnlockPassphraseForm,
     VolumeAutoImportForm,
     VolumeManagerForm,
@@ -2789,26 +2790,37 @@ class SnapshotResource(DojoResource):
             request.body,
             format=request.META.get('CONTENT_TYPE', 'application/json')
         )
-        try:
-            notifier().zfs_mksnap(**deserialized)
-        except MiddlewareError as e:
+        form = ManualSnapshotForm(data={
+            'ms_recursively': deserialized.get('recursive', False),
+            'ms_name': deserialized.get('name'),
+            'vmwaresync': deserialized.get('vmware_sync', False)
+        }, fs=deserialized.get('dataset'))
+        if not form.is_valid():
             raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e.value,
-                })
+                response=self.error_response(request, form.errors)
             )
-        snap = list(notifier().zfs_snapshot_list(path='%s@%s' % (
-            deserialized['dataset'],
-            deserialized['name'],
-        )).values())[0][0]
-        bundle = self.full_dehydrate(
-            self.build_bundle(obj=snap, request=request)
-        )
-        return self.create_response(
-            request,
-            bundle,
-            response_class=HttpCreated,
-        )
+        else:
+            try:
+                form.commit(deserialized.get('dataset'))
+            except MiddlewareError as e:
+                raise ImmediateHttpResponse(
+                    response=self.error_response(request, {
+                        'error': e.value,
+                    })
+                )
+            else:
+                snap = list(notifier().zfs_snapshot_list(path='%s@%s' % (
+                    deserialized['dataset'],
+                    deserialized['name'],
+                )).values())[0][0]
+                bundle = self.full_dehydrate(
+                    self.build_bundle(obj=snap, request=request)
+                )
+                return self.create_response(
+                    request,
+                    bundle,
+                    response_class=HttpCreated,
+                )
 
     def obj_delete(self, bundle=None, **kwargs):
         if '@' not in kwargs['pk']:
