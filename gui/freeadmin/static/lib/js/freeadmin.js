@@ -2729,9 +2729,9 @@ require([
         dialog.show();
     };
 
-    editObject = function(name, url, nodes, onload) {
+    editObject = function(name, url, nodes, onload, id="edit_dialog") {
         commonDialog({
-            id: "edit_dialog",
+            id: id,
             style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
             name: name,
             url: url,

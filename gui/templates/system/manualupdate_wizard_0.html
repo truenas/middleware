@@ -1,10 +1,12 @@
 {% extends "system/wizard.html" %}
 {% block form %}
 <tr>
-  <td colspan="2">
+  <td colspan="2" >
     {% url "system_configsave" as saveurl %}
-    <p>{% blocktrans with url=saveurl %}Consider downloading your configuration before proceeding, <a href="{{ url }}" target="_blank">click here</a>.{% endblocktrans %}</p>
+    <p>Consider downloading your configuration before proceeding,
+        <a href="javascript:void(0)" onclick="editObject('{% trans "Save Config"|escapejs %}', '{% url "system_configsave" %}', undefined, undefined, 'edit_dialog2')">Click here</a>.</p>
   </td>
 </tr>
+
 {{ block.super }}
 {% endblock %}
