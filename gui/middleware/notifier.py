@@ -39,7 +39,6 @@ from decimal import Decimal
 import base64
 from Crypto.Cipher import AES
 import ctypes
-from functools import cmp_to_key
 import glob
 import grp
 import libzfs
@@ -109,7 +108,6 @@ from freenasUI.common.warden import (Warden, WardenJail,
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client, ClientException
-from freenasUI.middleware.encryption import random_wipe
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.multipath import Multipath
 import sysctl
@@ -668,150 +666,10 @@ class notifier(metaclass=HookMetaclass):
                         providers.append((part, part))
         return providers
 
-    def __prepare_zfs_vdev(self, disks, swapsize, encrypt, volume):
-        vdevs = []
-        for disk in disks:
-            self.__gpt_labeldisk(type="freebsd-zfs",
-                                 devname=disk,
-                                 swapsize=swapsize)
-
-        self.__confxml = None  # Make sure to invalidate cache
-        doc = self._geom_confxml()
-        for disk in disks:
-            devname = self.part_type_from_device('zfs', disk)
-            if encrypt:
-                uuid = doc.xpath(
-                    "//class[name = 'PART']"
-                    "/geom//provider[name = '%s']/config/rawuuid" % (devname, )
-                )
-                if not uuid:
-                    log.warn("Could not determine GPT uuid for %s", devname)
-                    raise MiddlewareError('Unable to determine GPT UUID for %s' % devname)
-                else:
-                    devname = self.__encrypt_device("gptid/%s" % uuid[0].text, disk, volume)
-            else:
-                uuid = doc.xpath(
-                    "//class[name = 'PART']"
-                    "/geom//provider[name = '%s']/config/rawuuid" % (devname, )
-                )
-                if not uuid:
-                    log.warn("Could not determine GPT uuid for %s", devname)
-                    devname = "/dev/%s" % devname
-                else:
-                    devname = "/dev/gptid/%s" % uuid[0].text
-            vdevs.append(devname)
-
-        return vdevs
-
-    def create_volume(self, volume, groups=False, path=None, init_rand=False):
-        """Create a ZFS volume identified by volume id"""
-        swapsize = self.get_swapsize()
-        z_name = str(volume.vol_name)
-        z_vdev = ""
-        encrypt = (volume.vol_encrypt >= 1)
-        # Grab all disk groups' id matching the volume ID
-        device_list = []
-
-        """
-        stripe vdevs must come first because of the ordering in the
-        zpool create command.
-
-        e.g. zpool create tank ada0 mirror ada1 ada2
-             vs
-             zpool create tank mirror ada1 ada2 ada0
-
-        For further details see #2388
-        """
-        def stripe_first(a, b):
-            if a['type'] == 'stripe':
-                return -1
-            if b['type'] == 'stripe':
-                return 1
-            return 0
-
-        for vgrp in sorted(list(groups.values()), key=cmp_to_key(stripe_first)):
-            vgrp_type = vgrp['type']
-            if vgrp_type != 'stripe':
-                z_vdev += " " + vgrp_type
-            if vgrp_type in ('cache', 'log'):
-                vdev_swapsize = 0
-            else:
-                vdev_swapsize = swapsize
-            # Prepare disks nominated in this group
-            vdevs = self.__prepare_zfs_vdev(vgrp['disks'], vdev_swapsize, encrypt, volume)
-            z_vdev += " ".join([''] + vdevs)
-            device_list += vdevs
-
-        # Initialize devices with random data
-        if init_rand:
-            random_wipe(device_list)
-
-        # Finally, create the zpool.
-        # TODO: disallowing cachefile may cause problem if there is
-        # preexisting zpool having the exact same name.
-        if not os.path.isdir("/data/zfs"):
-            os.makedirs("/data/zfs")
-
-        altroot = 'none' if path else '/mnt'
-        mountpoint = path if path else ('/%s' % (z_name, ))
-
-        p1 = self._pipeopen(
-            "zpool create -o cachefile=/data/zfs/zpool.cache "
-            "-o failmode=continue "
-            "-o autoexpand=on "
-            "-O compression=lz4 "
-            "-O aclmode=passthrough -O aclinherit=passthrough "
-            "-f -m %s -o altroot=%s %s %s" % (mountpoint, altroot, z_name, z_vdev))
-        if p1.wait() != 0:
-            error = ", ".join(p1.communicate()[1].split('\n'))
-            raise MiddlewareError('Unable to create the pool: %s' % error)
-
-        # We've our pool, lets retrieve the GUID
-        p1 = self._pipeopen("zpool get guid %s" % z_name)
-        if p1.wait() == 0:
-            line = p1.communicate()[0].split('\n')[1].strip()
-            volume.vol_guid = re.sub('\s+', ' ', line).split(' ')[2]
-            volume.save()
-        else:
-            log.warn("The guid of the pool %s could not be retrieved", z_name)
-
-        self.zfs_inherit_option(z_name, 'mountpoint')
-
-        self._system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
-        # TODO: geli detach -l
-
     def get_swapsize(self):
         from freenasUI.system.models import Advanced
         swapsize = Advanced.objects.latest('id').adv_swapondrive
         return swapsize
-
-    def zfs_volume_attach_group(self, volume, group, encrypt=False):
-        """Attach a disk group to a zfs volume"""
-
-        vgrp_type = group['type']
-        if vgrp_type in ('log', 'cache'):
-            swapsize = 0
-        else:
-            swapsize = self.get_swapsize()
-
-        z_name = volume.vol_name
-        z_vdev = ""
-        encrypt = (volume.vol_encrypt >= 1)
-
-        # FIXME swapoff -a is overkill
-        self._system("swapoff -a")
-        if vgrp_type != 'stripe':
-            z_vdev += " " + vgrp_type
-
-        # Prepare disks nominated in this group
-        vdevs = self.__prepare_zfs_vdev(group['disks'], swapsize, encrypt, volume)
-        z_vdev += " ".join([''] + vdevs)
-
-        # Finally, attach new groups to the zpool.
-        self._system("zpool add -f %s %s" % (z_name, z_vdev))
-
-        # TODO: geli detach -l
-        self.reload('disk')
 
     def create_zfs_vol(self, name, size, props=None, sparse=False):
         """Internal procedure to create ZFS volume"""
