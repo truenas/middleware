@@ -267,9 +267,8 @@ def volumemanager_zfs(request):
     if request.method == "POST":
 
         form = forms.ZFSVolumeWizardForm(request.POST)
-        if form.is_valid():
-            events = []
-            form.done(request, events)
+        events = []
+        if form.is_valid() and form.done(request, events):
             return JsonResp(
                 request,
                 message=_("Volume successfully added."),
