@@ -458,6 +458,7 @@ class PoolService(CRUDService):
         'pool_create', 'pool_update',
         ('rm', {'name': 'name'}),
         ('rm', {'name': 'encryption'}),
+        ('edit', {'name': 'topology', 'method': lambda x: setattr(x, 'update', True)}),
     ))
     async def do_update(self, id, data):
 
@@ -465,7 +466,7 @@ class PoolService(CRUDService):
 
         verrors = ValidationErrors()
 
-        await self.__common_validation(verrors, data)
+        await self.__common_validation(verrors, data, old=pool)
         disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
         disks_cache = await self.__check_disks_availability(verrors, disks)
 
@@ -494,9 +495,37 @@ class PoolService(CRUDService):
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         return pool
 
-    async def __common_validation(self, verrors, data):
+    async def __common_validation(self, verrors, data, old=None):
+        topology_data = list(data['topology'].get('data') or [])
+
+        if old:
+            def disk_to_stripe():
+                """
+                We need to convert the original topology to use STRIPE
+                instead of DISK to match the user input data
+                """
+                rv = []
+                spare = None
+                for i in old['topology']['data']:
+                    if i['type'] == 'DISK':
+                        if spare is None:
+                            spare = {
+                                'type': 'STRIPE',
+                                'disks': [i['path']],
+                            }
+                            rv.append(spare)
+                        else:
+                            spare['disks'].append(i['path'])
+                    else:
+                        rv.append({
+                            'type': i['type'],
+                            'disks': [j['type'] for j in i['children']],
+                        })
+                return rv
+
+            topology_data += disk_to_stripe()
         lastdatatype = None
-        for i, vdev in enumerate(data['topology']['data']):
+        for i, vdev in enumerate(topology_data):
             numdisks = len(vdev['disks'])
             minmap = {
                 'STRIPE': 1,
@@ -554,7 +583,7 @@ class PoolService(CRUDService):
                 for disk in t_vdev['disks']:
                     disks[disk] = {'vdev': vdev_devs_list, 'create_swap': create_swap}
 
-        if topology['spares']:
+        if topology.get('spares'):
             vdev_devs_list = []
             vdevs.append({
                 'root': 'SPARE',
