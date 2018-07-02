@@ -19,9 +19,10 @@ doSubmit({
 {% block form %}
 <tr>
   <td colspan="2">
-    {% url "system_configsave" as saveurl %}
-    <p>Consider downloading your configuration before proceeding,
-        <a href="javascript:void(0)" onclick="editObject('{% trans "Save Config"|escapejs %}', '{% url "system_configsave" %}', undefined, undefined, 'edit_dialog2')">Click here</a>
+    <p>{% trans "Consider downloading your configuration before proceeding" %}
+        <a href="javascript:void(0)" onclick="configDownloadObject('{% trans "Save Config"|escapejs %}', '{% url "system_configsave" %}')">
+            {% trans "Click here" %}
+        </a>
     </p>
   </td>
 </tr>

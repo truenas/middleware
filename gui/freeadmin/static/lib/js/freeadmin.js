@@ -2729,14 +2729,23 @@ require([
         dialog.show();
     };
 
-    editObject = function(name, url, nodes, onload, id="edit_dialog") {
+    editObject = function(name, url, nodes, onload) {
         commonDialog({
-            id: id,
+            id: "edit_dialog",
             style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
             name: name,
             url: url,
             nodes: nodes,
             onLoad: onload
+            });
+    }
+
+    configDownloadObject = function(name, url) {
+        commonDialog({
+            id: "config_download_dialog",
+            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+            name: name,
+            url: url,
             });
     }
 
