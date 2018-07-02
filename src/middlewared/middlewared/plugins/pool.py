@@ -313,7 +313,7 @@ class PoolService(CRUDService):
             List('data', items=[
                 Dict(
                     'datavdevs',
-                    Str('type', enum=['RAIDZ', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'], required=True),
+                    Str('type', enum=['RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'], required=True),
                     List('disks', items=[Str('disk')], required=True),
                 ),
             ], required=True),
@@ -496,7 +496,7 @@ class PoolService(CRUDService):
             minmap = {
                 'STRIPE': 1,
                 'MIRROR': 2,
-                'RAIDZ': 3,
+                'RAIDZ1': 3,
                 'RAIDZ2': 4,
                 'RAIDZ3': 5,
             }
@@ -1257,7 +1257,7 @@ class PoolDatasetService(CRUDService):
         pool = await self.middleware.call('pool.query', [['name', '=', pool]], {'get': True})
         numdisks = 4
         for vdev in pool['topology']['data']:
-            if vdev['type'] == 'RAIDZ':
+            if vdev['type'] == 'RAIDZ1':
                 num = len(vdev['children']) - 1
             elif vdev['type'] == 'RAIDZ2':
                 num = len(vdev['children']) - 2
