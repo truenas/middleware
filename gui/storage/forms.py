@@ -23,7 +23,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 from datetime import datetime, time
 from decimal import Decimal
 import logging
@@ -325,7 +325,6 @@ class VolumeVdevForm(Form):
     )
 
     def clean_disks(self):
-        vdev = self.cleaned_data.get("vdevtype")
         # TODO: Safe?
         disks = eval(self.cleaned_data.get("disks"))
         return disks
@@ -528,82 +527,62 @@ class ZFSVolumeWizardForm(Form):
         )
         disk_list = self.cleaned_data['volume_disks']
         dedup = self.cleaned_data.get("dedup", False)
-        init_rand = self.cleaned_data.get("encini", False)
         if self.cleaned_data.get("enc", False):
-            volume_encrypt = 1
+            volume_encrypt = True
         else:
-            volume_encrypt = 0
+            volume_encrypt = False
 
         if (len(disk_list) < 2):
             group_type = 'stripe'
         else:
             group_type = self.cleaned_data['group_type']
+        if group_type == 'raidz':
+            group_type = 'raidz1'
+        group_type = group_type.upper()
 
-        volume = scrub = None
-        try:
-            vols = models.Volume.objects.filter(vol_name=volume_name)
-            if vols.count() == 1:
-                volume = vols[0]
-                add = True
-            else:
-                add = False
-                volume = models.Volume(vol_name=volume_name, vol_encrypt=volume_encrypt)
-                volume.save()
+        vols = models.Volume.objects.filter(vol_name=volume_name)
+        if vols.count() == 1:
+            add = vols[0]
+        else:
+            add = False
 
-            self.volume = volume
+        topology = defaultdict(list)
+        topology['data'].append({'type': group_type, 'disks': disk_list})
 
-            zpoolfields = re.compile(r'zpool_(.+)')
-            grouped = OrderedDict()
-            grouped['root'] = {'type': group_type, 'disks': disk_list}
-            for i, gtype in list(request.POST.items()):
-                if zpoolfields.match(i):
-                    if gtype == 'none':
-                        continue
-                    disk = zpoolfields.search(i).group(1)
-                    if gtype in grouped:
-                        # if this is a log vdev we need to mirror it for safety
-                        if gtype == 'log':
-                            grouped[gtype]['type'] = 'log mirror'
-                        grouped[gtype]['disks'].append(disk)
-                    else:
-                        grouped[gtype] = {'type': gtype, 'disks': [disk, ]}
+        zpoolfields = re.compile(r'zpool_(.+)')
+        for i, gtype in list(request.POST.items()):
+            if zpoolfields.match(i):
+                if gtype == 'none':
+                    continue
+                disk = zpoolfields.search(i).group(1)
+                # if this is a log vdev we need to mirror it for safety
+                if gtype in topology:
+                    if gtype == 'log':
+                        topology[gtype][0]['type'] = 'MIRROR'
+                    topology[gtype][0]['disks'].append(disk)
+                else:
+                    topology[gtype].append({
+                        'type': 'STRIPE',
+                        'disks': [disk],
+                    })
 
-            if len(disk_list) > 0 and add:
-                notifier().zfs_volume_attach_group(volume, grouped['root'])
+        with client as c:
+            try:
+                if add:
+                    c.call('pool.update', add.id, {'topology': topology})
+                else:
+                    c.call('pool.create', {
+                        'name': volume_name,
+                        'encryption': volume_encrypt,
+                        'topology': topology,
+                        'deduplication': dedup.upper(),
+                    })
+            except ValidationErrors as e:
+                self._errors['__all__'] = self.error_class([err.errmsg for err in e.errors])
+                return False
 
-            if add:
-                for grp_type in grouped:
-                    if grp_type in ('log', 'cache', 'spare'):
-                        notifier().zfs_volume_attach_group(
-                            volume,
-                            grouped.get(grp_type)
-                        )
-
-            else:
-                notifier().create_volume(volume, groups=grouped, init_rand=init_rand)
-
-                if dedup:
-                    notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
-
-                scrub = models.Scrub.objects.create(scrub_volume=volume)
-
-                try:
-                    notifier().zpool_enclosure_sync(volume.vol_name)
-                except Exception as e:
-                    log.error("Error syncing enclosure: %s", e)
-        except Exception:
-            if volume:
-                volume.delete(destroy=False, cascade=False)
-            if scrub:
-                scrub.delete()
-            raise
-
-        # This must be outside transaction block to make sure the changes
-        # are committed before the call of ix-fstab
-        notifier().reload("disk")
-        # For scrub cronjob
-        notifier().restart("cron")
         super(ZFSVolumeWizardForm, self).done(request, events)
+        return True
 
 
 class VolumeImportForm(Form):
