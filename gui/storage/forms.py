@@ -265,13 +265,13 @@ class VolumeManagerForm(VolumeMixin, Form):
         with client as c:
             try:
                 if add:
-                    pool = c.call('pool.update', add.id, {'topology': topology})
+                    pool = c.call('pool.update', add.id, {'topology': topology}, job=True)
                 else:
                     pool = c.call('pool.create', {
                         'name': volume_name,
                         'encryption': encryption,
                         'topology': topology,
-                    })
+                    }, job=True)
             except ValidationErrors as e:
                 self._errors['__all__'] = self.error_class([err.errmsg for err in e.errors])
                 return False
@@ -536,14 +536,14 @@ class ZFSVolumeWizardForm(Form):
         with client as c:
             try:
                 if add:
-                    c.call('pool.update', add.id, {'topology': topology})
+                    c.call('pool.update', add.id, {'topology': topology}, job=True)
                 else:
                     c.call('pool.create', {
                         'name': volume_name,
                         'encryption': volume_encrypt,
                         'topology': topology,
                         'deduplication': dedup.upper(),
-                    })
+                    }, job=True)
             except ValidationErrors as e:
                 self._errors['__all__'] = self.error_class([err.errmsg for err in e.errors])
                 return False
