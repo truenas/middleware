@@ -85,11 +85,10 @@ class ServiceMonitorThread(threading.Thread):
     def tryConnect(self, host, port):
         max_tries = 3
         connected = False
-        timeout = _fs().middlewared.plugins.service_monitor.socket_timeout
+        sm_timeout = _fs().middlewared.plugins.service_monitor.socket_timeout
         host_list = []
 
         if self.name == 'activedirectory':
-            host_list = []
 
             for i in range(0, max_tries):
                 # Make max_tries attempts to get SRV records from DNS
@@ -104,7 +103,7 @@ class ServiceMonitorThread(threading.Thread):
                 return False
 
             for h in host_list:
-                port_is_listening = FreeNAS_ActiveDirectory.port_is_listening(str(h.target), h.port, errors=[], sm_timeout=timeout)
+                port_is_listening = FreeNAS_ActiveDirectory.port_is_listening(str(h.target), h.port, errors=[], timeout=sm_timeout)
                 if port_is_listening:
                     return True
                 else:
@@ -138,6 +137,11 @@ class ServiceMonitorThread(threading.Thread):
             # We should probably have a configurable threshold for number of
             # failures before starting or stopping the service
             #
+            if self.finished.is_set():
+                # Thread.cancel() takes a while to propagate here
+                ServiceMonitorThread.reset_alerts(service)
+                return
+
             connected = self.tryConnect(self.host, self.port)
             started = self.getStarted(service)
             enabled = self.isEnabled(service)
@@ -186,11 +190,6 @@ class ServiceMonitorThread(threading.Thread):
                     self.logger.debug(
                         "[ServiceMonitorThread] failed starting service", exc_info=True
                     )
-
-            if self.finished.is_set():
-                # Thread.cancel() takes a while to propagate here
-                ServiceMonitorThread.reset_alerts(service)
-                return
 
             if self.retry == 0:
                 continue
