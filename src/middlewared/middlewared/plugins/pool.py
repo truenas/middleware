@@ -308,6 +308,7 @@ class PoolService(CRUDService):
         'pool_create',
         Str('name', required=True),
         Bool('encryption', default=False),
+        Str('deduplication', enum=[None, 'ON', 'VERIFY', 'OFF'], null=True),
         Dict(
             'topology',
             List('data', items=[
@@ -376,6 +377,10 @@ class PoolService(CRUDService):
             'aclinherit': 'passthrough',
             'mountpoint': f'/{data["name"]}',
         }
+
+        dedup = data.get('deduplication')
+        if dedup:
+            fsoptions['dedup'] = dedup.lower()
 
         cachefile_dir = os.path.dirname(ZPOOL_CACHE_FILE)
         if not os.path.isdir(cachefile_dir):
