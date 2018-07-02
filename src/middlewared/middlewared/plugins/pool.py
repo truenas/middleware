@@ -337,7 +337,8 @@ class PoolService(CRUDService):
         ),
         register=True,
     ))
-    async def do_create(self, data):
+    @job(lock='pool_createupdate')
+    async def do_create(self, job, data):
 
         verrors = ValidationErrors()
 
@@ -361,7 +362,7 @@ class PoolService(CRUDService):
             enc_key = ''
             enc_keypath = None
 
-        enc_disks = await self.__format_disks(disks, enc_keypath)
+        enc_disks = await self.__format_disks(job, disks, enc_keypath)
 
         options = {
             'feature@lz4_compress': 'enabled',
@@ -386,6 +387,7 @@ class PoolService(CRUDService):
         if not os.path.isdir(cachefile_dir):
             os.makedirs(cachefile_dir)
 
+        job.set_progress(90, 'Creating ZFS Pool')
         z_pool = await self.middleware.call('zfs.pool.create', {
             'name': data['name'],
             'vdevs': vdevs,
@@ -393,6 +395,7 @@ class PoolService(CRUDService):
             'fsoptions': fsoptions,
         })
 
+        job.set_progress(95, 'Setting pool options')
         pool_id = None
         try:
             # Inherit mountpoint after create because we set mountpoint on creation
@@ -460,7 +463,8 @@ class PoolService(CRUDService):
         ('rm', {'name': 'encryption'}),
         ('edit', {'name': 'topology', 'method': lambda x: setattr(x, 'update', True)}),
     ))
-    async def do_update(self, id, data):
+    @job(lock='pool_createupdate')
+    async def do_update(self, job, id, data):
 
         pool = await self._get_instance(id)
 
@@ -478,8 +482,9 @@ class PoolService(CRUDService):
         else:
             enc_keypath = None
 
-        enc_disks = await self.__format_disks(disks, enc_keypath)
+        enc_disks = await self.__format_disks(job, disks, enc_keypath)
 
+        job.set_progress(90, 'Extending ZFS Pool')
         await (await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)).wait()
 
         await self.__save_encrypteddisks(id, enc_disks, disks_cache)
@@ -633,7 +638,7 @@ class PoolService(CRUDService):
             )
         return disks_cache
 
-    async def __format_disks(self, disks, enc_keypath):
+    async def __format_disks(self, job, disks, enc_keypath):
         """
         Format all disks, putting all freebsd-zfs partitions created
         into their respectives vdevs.
@@ -642,7 +647,9 @@ class PoolService(CRUDService):
 
         # TODO: Make this work in parallel for speed, may take a long time with dozens of drives
         swapgb = (await self.middleware.call('system.advanced.config'))['swapondrive']
-        for disk, config in disks.items():
+        for i, disk_items in enumerate(disks.items()):
+            disk, config = disk_items
+            job.set_progress(15, f'Formatting disks ({i + 1}/{len(disks)})')
             await self.middleware.call('disk.format', disk, swapgb if config['create_swap'] else 0)
             devname = await self.middleware.call('disk.gptid_from_part_type', disk, 'freebsd-zfs')
             if enc_keypath:
