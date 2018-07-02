@@ -404,12 +404,12 @@ class InitialWizard(CommonWizard):
                             'status for more details.'
                         ) % volume_name)
 
-                volume = Volume(vol_name=volume_name)
-                volume.save()
-                model_objs.append(volume)
+                    volume = Volume(vol_name=volume_name)
+                    volume.save()
+                    model_objs.append(volume)
 
-                scrub = Scrub.objects.create(scrub_volume=volume)
-                model_objs.append(scrub)
+                    scrub = Scrub.objects.create(scrub_volume=volume)
+                    model_objs.append(scrub)
 
                 if volume_form:
                     bysize = volume_form._get_unused_disks_by_size()
@@ -419,7 +419,14 @@ class InitialWizard(CommonWizard):
                     else:
                         groups = volume_form._grp_predefined(bysize, volume_type)
 
-                    _n.create_volume(volume, groups=groups, init_rand=False)
+                    with client as c:
+                        c.call('pool.create', {
+                            'name': volume_name,
+                            'topology': groups,
+                        })
+
+                    volume = Volume.objects.get(vol_name=volume_name)
+                    model_objs.append(volume)
 
                 # Create SMART tests for every disk available
                 disks = []
@@ -2083,32 +2090,31 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
     @staticmethod
     def _grp_type(num):
         check = OrderedDict((
-            ('mirror', lambda y: y == 2),
+            ('MIRROR', lambda y: y == 2),
             (
-                'raidz',
+                'RAIDZ1',
                 lambda y: False if y < 3 else math.log(y - 1, 2) % 1 == 0
             ),
             (
-                'raidz2',
+                'RAIDZ2',
                 lambda y: False if y < 4 else math.log(y - 2, 2) % 1 == 0
             ),
             (
-                'raidz3',
+                'RAIDZ3',
                 lambda y: False if y < 5 else math.log(y - 3, 2) % 1 == 0
             ),
-            ('stripe', lambda y: True),
+            ('STRIPE', lambda y: True),
         ))
         for name, func in list(check.items()):
             if func(num):
                 return name
-        return 'stripe'
+        return 'STRIPE'
 
     @classmethod
     def _grp_autoselect(cls, disks):
 
         higher = cls._higher_disks_group(disks)
-        groups = OrderedDict()
-        grpid = 0
+        groups = defaultdict(list)
 
         for size, devs in [(higher[0], disks[higher[0]])]:
             num = len(devs)
@@ -2150,17 +2156,12 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
                 mod = 0
 
             for i in range(rows):
-                groups[grpid] = {
+                groups['data'].append({
                     'type': vdevtype,
                     'disks': devs[i * perrow:perrow * (i + 1)],
-                }
-                grpid += 1
+                })
             if mod > 0:
-                groups[grpid] = {
-                    'type': 'spare',
-                    'disks': devs[-mod:],
-                }
-                grpid += 1
+                groups['spares'] += devs[-mod:]
         return groups
 
     @classmethod
@@ -2170,19 +2171,18 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
 
         maindisks = disks[higher[0]]
 
-        groups = OrderedDict()
-        grpid = 0
+        groups = defaultdict(list)
 
         if grptype == 'raid10':
             for i in range(int(len(maindisks) / 2)):
-                groups[grpid] = {
-                    'type': 'mirror',
+                groups['data'].append({
+                    'type': 'MIRROR',
                     'disks': maindisks[i * 2:2 * (i + 1)],
-                }
-                grpid += 1
+                })
         elif grptype.startswith('raidz'):
             if grptype == 'raidz':
                 optimalrow = 9
+                grptype = 'raidz1'
             elif grptype == 'raidz2':
                 optimalrow = 10
             else:
@@ -2193,16 +2193,15 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
                 div += 1
             perrow = int(len(maindisks) / (div if div else 1))
             for i in range(div):
-                groups[grpid] = {
-                    'type': grptype,
+                groups['data'].append({
+                    'type': grptype.upper(),
                     'disks': maindisks[i * perrow:perrow * (i + 1)],
-                }
-                grpid += 1
+                })
         else:
-            groups[grpid] = {
-                'type': grptype,
+            groups['data'].append({
+                'type': grptype.upper(),
                 'disks': maindisks,
-            }
+            })
 
         return groups
 
@@ -2217,7 +2216,7 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
     def _groups_to_disks_size(self, bysize, groups, swapsize):
         size = 0
         disks = []
-        for group in list(groups.values()):
+        for group in list(groups['data']):
             lower = None
             for disk in group['disks']:
                 _size = self._get_disk_size(disk, bysize)
@@ -2226,13 +2225,13 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
             if not lower:
                 continue
 
-            if group['type'] == 'mirror':
+            if group['type'] == 'MIRROR':
                 size += lower
-            elif group['type'] == 'raidz1':
+            elif group['type'] == 'RAIDZ1':
                 size += lower * (len(group['disks']) - 1)
-            elif group['type'] == 'raidz2':
+            elif group['type'] == 'RAIDZ2':
                 size += lower * (len(group['disks']) - 2)
-            elif group['type'] == 'stripe':
+            elif group['type'] == 'STRIPE':
                 size += lower * len(group['disks'])
             disks.extend(group['disks'])
         return disks, humanize_size(size)
