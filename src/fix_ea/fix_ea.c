@@ -177,7 +177,7 @@ get_afp_list(struct xattr_list *xlist, struct xattr_list *afp_list)
 		return (-1);
 
 	TAILQ_FOREACH(xptr, xlist, link) {
-		if (AFP_EA_CORRUPTED(xptr->value))
+		if (xptr->length >= 3 && AFP_EA_CORRUPTED(xptr->value))
 			TAILQ_INSERT_TAIL(afp_list, xptr, afp_link);
 	}
 
