@@ -1184,6 +1184,11 @@ VM_DISKMODETYPES = (
     ('VIRTIO', _('VirtIO')),
 )
 
+VM_TIMECHOICES = (
+    ('LOCAL', _('Local Time')),
+    ('UTC', _('UTC')),
+)
+
 S3_MODES = (
     ('local', _('local')),
     ('distributed', _('distributed'))
