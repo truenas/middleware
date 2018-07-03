@@ -227,7 +227,6 @@ class DiskService(CRUDService):
 
     def __geli_setmetadata(self, dev, keyfile, passphrase=None):
         self.__create_keyfile(keyfile)
-        _passphrase = "-J %s" % passphrase if passphrase else "-P"
         cp = subprocess.run([
             'geli', 'init', '-s', '4096', '-l', '256', '-B', 'none',
         ] + (
@@ -245,7 +244,7 @@ class DiskService(CRUDService):
                 '-k', key, dev,
             ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if cp.stderr or not os.path.exists(f'/dev/{dev}.eli'):
-                raise Callrror(f'Unable to geli attach {dev}: {cp.stderr.decode()}')
+                raise CallError(f'Unable to geli attach {dev}: {cp.stderr.decode()}')
         else:
             self.logger.debug(f'{dev} already attached')
 
