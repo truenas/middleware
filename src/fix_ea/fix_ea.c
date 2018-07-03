@@ -39,18 +39,18 @@
 #include <unistd.h>
 #include <err.h>
 
-#define EX_EA_CORRUPTED	1
+#define EX_EA_CORRUPTED         1
 
-#define	F_NONE			0x0000
-#define	F_APPEND_NULL_ALL	0x0001
-#define	F_CHECK_AFP_EA		0x0002
-#define	F_DRY_RUN		0x0004
-#define	F_FIX_AFP_EA		0x0008
-#define	F_APPEND_NULL		0x0010
-#define F_VERBOSE		0x0020
-#define F_DEBUG			0x0040
+#define F_NONE                  0x0000
+#define F_APPEND_NULL_ALL       0x0001
+#define F_CHECK_AFP_EA          0x0002
+#define F_DRY_RUN               0x0004
+#define F_FIX_AFP_EA            0x0008
+#define F_APPEND_NULL           0x0010
+#define F_VERBOSE               0x0020
+#define F_DEBUG                 0x0040
 
-#define	AFP_EA_CORRUPTED(v)	(v[0] == 0 && v[1] == 'F' && v[2] == 'P')
+#define AFP_EA_CORRUPTED(v)     (v[0] == 0 && v[1] == 'F' && v[2] == 'P')
 
 
 struct xattr {
@@ -63,6 +63,7 @@ struct xattr {
 };
 
 TAILQ_HEAD(xattr_list, xattr);
+
 
 void
 usage(const char *path)
