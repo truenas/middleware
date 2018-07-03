@@ -8,9 +8,9 @@ import subprocess
 
 def rename_bes(apps, schema_editor):
     # See #36118 for more details
-    cp = subprocess.run(['/usr/local/sbin/beadm', 'list'], stdout=subprocess.PIPE)
+    cp = subprocess.run(['/usr/local/sbin/beadm', 'list', '-H'], stdout=subprocess.PIPE)
     output = cp.stdout.decode('utf8', 'ignore')
-    for line in output.splitlines()[1:]:
+    for line in output.splitlines():
         columns = line.split()
         if ':' not in columns[0]:
             continue
