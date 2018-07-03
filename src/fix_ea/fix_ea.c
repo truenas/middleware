@@ -401,7 +401,8 @@ cleanup:
 	unlink_afp_list(&afp_list);
 	unlink_append_list(&append_list);
 	free_extended_attributes(&xlist);
-	close(fd);
+	if (fd > 0)
+		close(fd);
 
 	return (ret);
 }
