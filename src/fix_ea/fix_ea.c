@@ -429,8 +429,7 @@ do_ea_stuff_recursive(char **paths, const char *attr, u_int64_t flags)
 				break;
 
 			case FTS_ERR:
-				warnx("%s: %s", entry->fts_path, strerror(entry->fts_errno));
-				rval = EX_OSERR;
+				warn("%s: %s", entry->fts_path, strerror(entry->fts_errno));
 				break;
 		}
 	}
