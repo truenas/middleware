@@ -446,10 +446,6 @@ class PoolService(CRUDService):
             await self.middleware.call('service.restart', 'system_datasets')
             # regenerate crontab because of scrub
             await self.middleware.call('service.restart', 'cron')
-            # restart smartd to enable monitoring for any new drives added
-            smartd = await self.middleware.call('service.query', [('service', '=', 'smartd')])
-            if smartd and smartd[0]['state'] == 'RUNNING':
-                await self.middleware.call('service.restart', 'smartd')
 
         asyncio.ensure_future(restart_services())
 
