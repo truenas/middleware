@@ -67,9 +67,8 @@ loader_serial()
 		echo "comconsole_port=\"${serial_port}\""
 		echo "comconsole_speed=\"${serial_speed}\""
 		echo 'boot_multicons="YES"'
+		echo 'boot_serial="YES"'
 		echo "console=\"comconsole,${videoconsole}\""
-		# Above lines do not work in GRUB, so we have to duplicate.
-		echo "hw.uart.console=\"io:${serial_port},br:${serial_speed}\""
 	fi
 }
 

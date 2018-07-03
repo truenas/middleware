@@ -88,7 +88,7 @@ class ReplicationService(CRUDService):
             )
 
         if not await self.middleware.call(
-                'pool.snapshot.query',
+                'pool.snapshottask.query',
                 [('filesystem', '=', data.get('filesystem'))]
         ):
             verrors.add(
