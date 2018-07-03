@@ -428,6 +428,7 @@ do_ea_stuff_recursive(int fd, char **paths, const char *attr, u_int64_t flags)
 		}
 	}
 
+	fts_close(tree);
 	return (rval);
 }
 
