@@ -184,6 +184,29 @@ get_afp_list(struct xattr_list *xlist, struct xattr_list *afp_list)
 	return (0);
 }
 
+static void
+hexdump_ea(const char *path, const char *name, const char *buf, size_t length)
+{
+	int i;
+
+	if (path == NULL || name == NULL || buf == NULL || length <= 0)
+		return;
+
+	printf("%s: %s\n\t", path, name);
+	if (length < 8) {
+		for (i = 0;i < length;i++)
+			printf("%02x ", (unsigned char)buf[i]);
+	} else {
+		for (i = 0;i < 4;i++)
+			printf("%02x ", (unsigned char)buf[i]);
+		printf("/ ");
+		for (i = length - 3;i <= length;i++)
+			printf("%02x ", (unsigned char)buf[i]);
+
+	}
+	printf("[%zu]\n", length);
+}
+
 static int
 fix_afp_list(int fd, const char *path,
 		u_int64_t flags, struct xattr_list *afp_list)
@@ -195,18 +218,8 @@ fix_afp_list(int fd, const char *path,
 		return (-1);
 
 	TAILQ_FOREACH(xptr, afp_list, afp_link) {
-		if (flags & F_DEBUG) {
-			printf("%s: %s\n\t%02x %02x %02x %02x / %02x %02x %02x %02x [%zu]\n", path, xptr->name,
-				(unsigned char)xptr->value[0],
-				(unsigned char)xptr->value[1],
-				(unsigned char)xptr->value[2],
-				(unsigned char)xptr->value[3],
-				(unsigned char)xptr->value[xptr->length - 3],
-				(unsigned char)xptr->value[xptr->length - 2],
-				(unsigned char)xptr->value[xptr->length - 1],
-				(unsigned char)xptr->value[xptr->length],
-				xptr->length);
-		}
+		if (flags & F_DEBUG)
+			hexdump_ea(path, xptr->name, xptr->value, xptr->length);
 
 		if (flags & F_CHECK_AFP_EA) {
 			ret |= EX_EA_CORRUPTED;
@@ -280,18 +293,8 @@ fix_append_list(int fd, const char *path,
 		return (-1);
 
 	TAILQ_FOREACH(xptr, append_list, append_link) {
-		if (flags & F_DEBUG) {
-			printf("%s: %s\n\t%02x %02x %02x %02x / %02x %02x %02x %02x [%zu]\n", path, xptr->name,
-				(unsigned char)xptr->value[0],
-				(unsigned char)xptr->value[1],
-				(unsigned char)xptr->value[2],
-				(unsigned char)xptr->value[3],
-				(unsigned char)xptr->value[xptr->length - 3],
-				(unsigned char)xptr->value[xptr->length - 2],
-				(unsigned char)xptr->value[xptr->length - 1],
-				(unsigned char)xptr->value[xptr->length],
-				xptr->length);
-		}
+		if (flags & F_DEBUG)
+			hexdump_ea(path, xptr->name, xptr->value, xptr->length);
 
 		if (flags & F_APPEND_NULL) {
 			if ((flags & F_DRY_RUN) == 0) {
