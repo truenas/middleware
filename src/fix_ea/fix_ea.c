@@ -200,7 +200,7 @@ hexdump_ea(const char *path, const char *name, const char *buf, size_t length)
 		for (i = 0;i < 4;i++)
 			printf("%02x ", (unsigned char)buf[i]);
 		printf("/ ");
-		for (i = length - 3;i <= length;i++)
+		for (i = length - 4;i < length;i++)
 			printf("%02x ", (unsigned char)buf[i]);
 
 	}
@@ -264,12 +264,12 @@ static int
 get_append_list(struct xattr_list *xlist,
 		struct xattr_list *append_list, const char *attr)
 {
-	struct xattr *xptr = NULL, *xtmp = NULL;
+	struct xattr *xptr = NULL;
 
 	if (xlist == NULL || append_list == NULL)
 		return (-1);
 
-	TAILQ_FOREACH_SAFE(xptr, xlist, link, xtmp) {
+	TAILQ_FOREACH(xptr, xlist, link) {
 		if (attr == NULL) {
 			TAILQ_INSERT_TAIL(append_list, xptr, append_link);
 
