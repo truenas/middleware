@@ -119,7 +119,7 @@ get_extended_attributes(int fd, struct xattr_list *xlist)
 
 		ch = (unsigned char)buf[i];
 		if ((name = malloc(ch)) == NULL) {
-			err(EX_OSERR, NULL);
+			warn("malloc");
 			continue;
 		}
 
