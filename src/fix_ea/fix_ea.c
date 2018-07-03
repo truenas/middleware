@@ -142,6 +142,8 @@ get_extended_attributes(int fd, struct xattr_list *xlist)
 
 		if ((xptr = malloc(sizeof(*xptr))) == NULL) {
 			warn("malloc");	
+			free(value);
+			free(name);
 			continue;
 		}
 
