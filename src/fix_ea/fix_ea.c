@@ -189,7 +189,7 @@ hexdump_ea(const char *path, const char *name, const char *buf, size_t length)
 {
 	int i;
 
-	if (path == NULL || name == NULL || buf == NULL || length <= 0)
+	if (path == NULL || name == NULL || buf == NULL || length == 0)
 		return;
 
 	printf("%s: %s\n\t", path, name);
