@@ -356,14 +356,20 @@ free_extended_attributes(struct xattr_list *xlist)
 }
 
 static int
-do_ea_stuff_single(int fd, const char *path, const char *attr, u_int64_t flags)
+do_ea_stuff_single(const char *path, const char *attr, u_int64_t flags)
 {
-	int setret, ret = 0;
+	int fd = 0, setret, ret = 0;
 	struct xattr_list xlist, afp_list, append_list;
 
 	TAILQ_INIT(&xlist);
 	TAILQ_INIT(&afp_list);
 	TAILQ_INIT(&append_list);
+
+	if ((fd = open(path, O_RDONLY)) < 0) {
+		warn("open");
+		ret = EX_OSERR;
+		goto cleanup;
+	}
 
 	if (get_extended_attributes(fd, &xlist) < 0) {
 		ret = EX_DATAERR;
@@ -392,6 +398,7 @@ cleanup:
 	unlink_afp_list(&afp_list);
 	unlink_append_list(&append_list);
 	free_extended_attributes(&xlist);
+	close(fd);
 
 	return (ret);
 }
@@ -403,7 +410,7 @@ fts_compare(const FTSENT * const *s1, const FTSENT * const *s2)
 }
 
 static int
-do_ea_stuff_recursive(int fd, char **paths, const char *attr, u_int64_t flags)
+do_ea_stuff_recursive(char **paths, const char *attr, u_int64_t flags)
 {
 	int rval = 0;
 	FTS *tree;
@@ -418,7 +425,7 @@ do_ea_stuff_recursive(int fd, char **paths, const char *attr, u_int64_t flags)
 		switch (entry->fts_info) {
 			case FTS_D:
 			case FTS_F:
-				do_ea_stuff_single(fd, entry->fts_accpath, attr, flags);
+				do_ea_stuff_single(entry->fts_accpath, attr, flags);
 				break;
 
 			case FTS_ERR:
@@ -435,7 +442,7 @@ do_ea_stuff_recursive(int fd, char **paths, const char *attr, u_int64_t flags)
 int
 main(int argc, char **argv)
 {
-	int fd, ch, setret, ret = 0;
+	int ch, setret, ret = 0;
 	char *prog, *path, *rp, *attr;
 	u_int64_t flags = F_NONE;
 
@@ -516,18 +523,12 @@ main(int argc, char **argv)
 		goto out;
 	}
 
-	if ((fd = open(rp, O_RDONLY)) < 0) {
-		warn("open");
-		ret = EX_OSERR;
-		goto out;
-	}
-
 	if (flags & F_RECURSIVE) {
 		struct stat st;
 
 		memset(&st, 0, sizeof(st));
-		if (fstat(fd, &st) < 0) {
-			warn("fstat");
+		if (stat(rp, &st) < 0) {
+			warn("stat");
 			ret = EX_OSERR;
 			goto out;
 		}
@@ -538,17 +539,15 @@ main(int argc, char **argv)
 			goto out;
 		}
 
-		do_ea_stuff_recursive(fd, argv, attr, flags);
+		ret = do_ea_stuff_recursive(argv, attr, flags);
 
 	} else {
-		do_ea_stuff_single(fd, path, attr, flags);
+		ret = do_ea_stuff_single(rp, attr, flags);
 	}
 
 out:
 	free(attr);
 	free(rp);
-	if (fd > 0)
-		close(fd);
 
 	return (ret);
 }
