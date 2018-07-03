@@ -162,7 +162,7 @@ get_extended_attributes(int fd, struct xattr_list *xlist)
 		xptr->value = value;
 		xptr->length = getret;
 
-		TAILQ_INSERT_HEAD(xlist, xptr, link);
+		TAILQ_INSERT_TAIL(xlist, xptr, link);
 	}
 
 	return (0);
@@ -176,9 +176,9 @@ get_afp_list(struct xattr_list *xlist, struct xattr_list *afp_list)
 	if (xlist == NULL || afp_list == NULL)
 		return (-1);
 
-	TAILQ_FOREACH_REVERSE(xptr, xlist, xattr_list, link) {
+	TAILQ_FOREACH(xptr, xlist, link) {
 		if (AFP_EA_CORRUPTED(xptr->value))
-			TAILQ_INSERT_HEAD(afp_list, xptr, afp_link);
+			TAILQ_INSERT_TAIL(afp_list, xptr, afp_link);
 	}
 
 	return (0);
@@ -194,7 +194,7 @@ fix_afp_list(int fd, const char *path,
 	if (afp_list == NULL)
 		return (-1);
 
-	TAILQ_FOREACH_REVERSE(xptr, afp_list, xattr_list, afp_link) {
+	TAILQ_FOREACH(xptr, afp_list, afp_link) {
 		if (flags & F_DEBUG) {
 			printf("%s: %s\n\t%02x %02x %02x %02x / %02x %02x %02x %02x [%zu]\n", path, xptr->name,
 				(unsigned char)xptr->value[0],
@@ -256,12 +256,12 @@ get_append_list(struct xattr_list *xlist,
 	if (xlist == NULL || append_list == NULL)
 		return (-1);
 
-	TAILQ_FOREACH_REVERSE_SAFE(xptr, xlist, xattr_list, link, xtmp) {
+	TAILQ_FOREACH_SAFE(xptr, xlist, link, xtmp) {
 		if (attr == NULL) {
-			TAILQ_INSERT_HEAD(append_list, xptr, append_link);
+			TAILQ_INSERT_TAIL(append_list, xptr, append_link);
 
 		} else if (strcmp(xptr->name, attr) == 0) {
-			TAILQ_INSERT_HEAD(append_list, xptr, append_link);
+			TAILQ_INSERT_TAIL(append_list, xptr, append_link);
 			break;
 		}
 	}
@@ -279,7 +279,7 @@ fix_append_list(int fd, const char *path,
 	if (append_list == NULL)
 		return (-1);
 
-	TAILQ_FOREACH_REVERSE(xptr, append_list, xattr_list, append_link) {
+	TAILQ_FOREACH(xptr, append_list, append_link) {
 		if (flags & F_DEBUG) {
 			printf("%s: %s\n\t%02x %02x %02x %02x / %02x %02x %02x %02x [%zu]\n", path, xptr->name,
 				(unsigned char)xptr->value[0],
@@ -434,10 +434,8 @@ do_ea_stuff_recursive(int fd, char **paths, const char *attr, u_int64_t flags)
 int
 main(int argc, char **argv)
 {
-	int fd, ch, setret, rval, ret = 0;
+	int fd, ch, setret, ret = 0;
 	char *prog, *path, *rp, *attr;
-	struct xattr *xptr, *xtmp;
-	struct xattr_list xlist, afp_list, append_list;
 	u_int64_t flags = F_NONE;
 
 	path = rp = attr = NULL;
