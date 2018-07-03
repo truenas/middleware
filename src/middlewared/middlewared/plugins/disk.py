@@ -1103,17 +1103,6 @@ class DiskService(CRUDService):
     @private
     def format(self, disk, swapgb):
 
-        job = self.middleware.call_sync('disk.wipe', disk, 'QUICK')
-        job.wait_sync()
-        if job.error:
-            raise CallError(f'Failed to wipe disk {disk}: {job.error}')
-
-        # Calculate swap size.
-        swapsize = swapgb * 1024 * 1024 * 2
-        # Round up to nearest whole integral multiple of 128 and subtract by 34
-        # so next partition starts at mutiple of 128.
-        swapsize = (int((swapsize + 127) / 128)) * 128
-
         geom.scan()
         g = geom.geom_by_name('DISK', disk)
         if g and g.provider.mediasize:
@@ -1123,6 +1112,17 @@ class DiskService(CRUDService):
                 raise CallError(f'Your disk size must be higher than {swapgb}GB')
         else:
             self.logger.error(f'Unable to determine size of {disk}')
+
+        job = self.middleware.call_sync('disk.wipe', disk, 'QUICK')
+        job.wait_sync()
+        if job.error:
+            raise CallError(f'Failed to wipe disk {disk}: {job.error}')
+
+        # Calculate swap size.
+        swapsize = swapgb * 1024 * 1024 * 2
+        # Round up to nearest whole integral multiple of 128
+        # so next partition starts at mutiple of 128.
+        swapsize = (int((swapsize + 127) / 128)) * 128
 
         commands = []
         commands.append(('gpart', 'create', '-s', 'gpt', f'/dev/{disk}'))
