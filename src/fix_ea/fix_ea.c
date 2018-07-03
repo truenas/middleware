@@ -389,9 +389,9 @@ do_ea_stuff_single(int fd, const char *path, const char *attr, u_int64_t flags)
 	}
 
 cleanup:
-	unlink_afp_list(&afp_list); \
-	unlink_append_list(&append_list); \
-	free_extended_attributes(&xlist); \
+	unlink_afp_list(&afp_list);
+	unlink_append_list(&append_list);
+	free_extended_attributes(&xlist);
 
 	return (ret);
 }
