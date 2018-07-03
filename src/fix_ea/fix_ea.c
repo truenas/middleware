@@ -27,8 +27,10 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 #include <sys/extattr.h>
 #include <fcntl.h>
+#include <fts.h>
 #include <libgen.h>
 #include <limits.h>
 #include <stdio.h>
@@ -49,6 +51,7 @@
 #define F_APPEND_NULL           0x0010
 #define F_VERBOSE               0x0020
 #define F_DEBUG                 0x0040
+#define F_RECURSIVE             0x0080
 
 #define AFP_EA_CORRUPTED(v)     (v[0] == 0 && v[1] == 'F' && v[2] == 'P')
 
@@ -69,29 +72,30 @@ void
 usage(const char *path)
 {
 	fprintf(stderr,
-		"Usage: %s [OPTIONS] <file>\n"
+		"Usage: %s [OPTIONS] <path|file>\n"
 		"Where option is:\n"
-		"     -a%16s# append null byte to all extended attributes\n"
-		"     -c%16s# check if AFP extended attributes are corrupted\n"
-		"     -C%16s# dry run (no changes are made)\n"
-		"     -d%16s# debug mode\n"
-		"     -f%16s# fix AFP extended attributes\n"
-		"     -n <EA>%11s# append null byte\n"
-		"     -v%16s# verbose\n\n"
+		"     -a                # append null byte to all extended attributes\n"
+		"     -c                # check if AFP extended attributes are corrupted\n"
+		"     -C                # dry run (no changes are made)\n"
+		"     -d                # debug mode\n"
+		"     -f                # fix AFP extended attributes\n"
+		"     -n <EA>           # append null byte\n"
+		"     -r                # recursive\n"
+		"     -v                # verbose\n\n"
 		"Exit codes:\n"
 		"      1 if corrupted\n"
 		"      0 if not corrupted or fixed\n",
-		path, " ", " ", " ", " ", " ", " ", " "
+		path
 	);
 
 	exit(EX_USAGE);
 }
 
-int
+static int
 get_extended_attributes(int fd, struct xattr_list *xlist)
 {
+	char *buf;
 	int i, ch, ret, buflen;
-	char *path, *buf;
 
 	if ((ret = extattr_list_fd(fd, EXTATTR_NAMESPACE_USER, NULL, 0)) < 0)
 		return (EX_OK);
@@ -122,6 +126,11 @@ get_extended_attributes(int fd, struct xattr_list *xlist)
 		strncpy(name, &buf[i + 1], ch);
 		name[ch] = '\0';
 
+		if (strncmp(name, "DosStream.", 10) != 0) {
+			free(name);
+			continue;
+		}
+
 		if ((getret = extattr_get_fd(fd, EXTATTR_NAMESPACE_USER,
 			name, NULL, 0)) < 0) {
 			free(name);
@@ -148,7 +157,7 @@ get_extended_attributes(int fd, struct xattr_list *xlist)
 			continue;
 		}
 
-		bzero(xptr, sizeof(*xptr));
+		memset(xptr, 0, sizeof(*xptr));
 		xptr->name = name;
 		xptr->value = value;
 		xptr->length = getret;
@@ -159,15 +168,15 @@ get_extended_attributes(int fd, struct xattr_list *xlist)
 	return (0);
 }
 
-int
+static int
 get_afp_list(struct xattr_list *xlist, struct xattr_list *afp_list)
 {
-	struct xattr *xptr = NULL, *xtmp = NULL;
+	struct xattr *xptr = NULL;
 
 	if (xlist == NULL || afp_list == NULL)
 		return (-1);
 
-	TAILQ_FOREACH_REVERSE_SAFE(xptr, xlist, xattr_list, link, xtmp) {
+	TAILQ_FOREACH_REVERSE(xptr, xlist, xattr_list, link) {
 		if (AFP_EA_CORRUPTED(xptr->value))
 			TAILQ_INSERT_HEAD(afp_list, xptr, afp_link);
 	}
@@ -175,7 +184,7 @@ get_afp_list(struct xattr_list *xlist, struct xattr_list *afp_list)
 	return (0);
 }
 
-int
+static int
 fix_afp_list(int fd, const char *path,
 		u_int64_t flags, struct xattr_list *afp_list)
 {
@@ -187,10 +196,12 @@ fix_afp_list(int fd, const char *path,
 
 	TAILQ_FOREACH_REVERSE(xptr, afp_list, xattr_list, afp_link) {
 		if (flags & F_DEBUG) {
-			printf("%s: %02x %02x %02x / %02x %02x %02x [%ld]\n", path,
+			printf("%s: %s\n\t%02x %02x %02x %02x / %02x %02x %02x %02x [%zu]\n", path, xptr->name,
 				(unsigned char)xptr->value[0],
 				(unsigned char)xptr->value[1],
 				(unsigned char)xptr->value[2],
+				(unsigned char)xptr->value[3],
+				(unsigned char)xptr->value[xptr->length - 3],
 				(unsigned char)xptr->value[xptr->length - 2],
 				(unsigned char)xptr->value[xptr->length - 1],
 				(unsigned char)xptr->value[xptr->length],
@@ -225,7 +236,7 @@ fix_afp_list(int fd, const char *path,
 	return (ret);
 }
 
-void
+static void
 unlink_afp_list(struct xattr_list *afp_list)
 {
 	if (afp_list != NULL) {
@@ -236,7 +247,7 @@ unlink_afp_list(struct xattr_list *afp_list)
 	}
 }
 
-int
+static int
 get_append_list(struct xattr_list *xlist,
 		struct xattr_list *append_list, const char *attr)
 {
@@ -258,7 +269,7 @@ get_append_list(struct xattr_list *xlist,
 	return (0);
 }
 
-int
+static int
 fix_append_list(int fd, const char *path,
 		u_int64_t flags, struct xattr_list *append_list)
 {
@@ -270,10 +281,12 @@ fix_append_list(int fd, const char *path,
 
 	TAILQ_FOREACH_REVERSE(xptr, append_list, xattr_list, append_link) {
 		if (flags & F_DEBUG) {
-			printf("%s: %02x %02x %02x / %02x %02x %02x [%ld]\n", path,
+			printf("%s: %s\n\t%02x %02x %02x %02x / %02x %02x %02x %02x [%zu]\n", path, xptr->name,
 				(unsigned char)xptr->value[0],
 				(unsigned char)xptr->value[1],
 				(unsigned char)xptr->value[2],
+				(unsigned char)xptr->value[3],
+				(unsigned char)xptr->value[xptr->length - 3],
 				(unsigned char)xptr->value[xptr->length - 2],
 				(unsigned char)xptr->value[xptr->length - 1],
 				(unsigned char)xptr->value[xptr->length],
@@ -316,7 +329,7 @@ fix_append_list(int fd, const char *path,
 	return (ret);
 }
 
-void
+static void
 unlink_append_list(struct xattr_list *append_list)
 {
 	if (append_list != NULL) {
@@ -327,7 +340,7 @@ unlink_append_list(struct xattr_list *append_list)
 	}
 }
 
-void
+static void
 free_extended_attributes(struct xattr_list *xlist)
 {
 	if (xlist != NULL) {
@@ -342,22 +355,98 @@ free_extended_attributes(struct xattr_list *xlist)
 	}
 }
 
+static int
+do_ea_stuff_single(int fd, const char *path, const char *attr, u_int64_t flags)
+{
+	int setret, ret = 0;
+	struct xattr_list xlist, afp_list, append_list;
+
+	TAILQ_INIT(&xlist);
+	TAILQ_INIT(&afp_list);
+	TAILQ_INIT(&append_list);
+
+	if (get_extended_attributes(fd, &xlist) < 0) {
+		ret = EX_DATAERR;
+		goto cleanup;
+	}
+
+	if (flags & F_CHECK_AFP_EA || flags & F_FIX_AFP_EA) {
+		get_afp_list(&xlist, &afp_list);
+		if ((setret = fix_afp_list(fd, path, flags, &afp_list)) < 0) {
+			ret = EX_DATAERR;
+			goto cleanup;
+		}
+		ret = setret;
+	}
+
+	if (flags & F_APPEND_NULL_ALL || flags & F_APPEND_NULL) {
+		get_append_list(&xlist, &append_list, attr);
+		if ((setret = fix_append_list(fd, path, flags, &append_list)) < 0) {
+			ret = EX_DATAERR;
+			goto cleanup;
+		}
+		ret = setret;
+	}
+
+cleanup:
+	unlink_afp_list(&afp_list); \
+	unlink_append_list(&append_list); \
+	free_extended_attributes(&xlist); \
+
+	return (ret);
+}
+
+static int
+fts_compare(const FTSENT * const *s1, const FTSENT * const *s2)
+{
+	return (strcoll((*s1)->fts_name, (*s2)->fts_name));
+}
+
+static int
+do_ea_stuff_recursive(int fd, char **paths, const char *attr, u_int64_t flags)
+{
+	int rval = 0;
+	FTS *tree;
+	FTSENT *entry;
+
+	if ((tree = fts_open(paths, FTS_LOGICAL | FTS_NOSTAT, fts_compare)) == NULL) {
+		warn("fts_open");
+		return (EX_OSERR);
+	}
+
+	for (rval = 0;(entry = fts_read(tree)) != NULL;) {
+		switch (entry->fts_info) {
+			case FTS_D:
+			case FTS_F:
+				do_ea_stuff_single(fd, entry->fts_accpath, attr, flags);
+				break;
+
+			case FTS_ERR:
+				warnx("%s: %s", entry->fts_path, strerror(entry->fts_errno));
+				rval = EX_OSERR;
+				break;
+		}
+	}
+
+	return (rval);
+}
+
 int
 main(int argc, char **argv)
 {
-	int fd, ch, setret, ret = 0;
+	int fd, ch, setret, rval, ret = 0;
 	char *prog, *path, *rp, *attr;
 	struct xattr *xptr, *xtmp;
 	struct xattr_list xlist, afp_list, append_list;
 	u_int64_t flags = F_NONE;
 
-	prog = path = rp = attr = NULL;
+	path = rp = attr = NULL;
 
 	prog = basename(argv[0]);
 	if (argc < 2)
 		usage(prog);
 
-	while ((ch = getopt(argc, argv, "acCdfn:v")) != -1) {
+	while ((ch = getopt(argc, argv, "acCdfn:p:rv")) != -1) {
 		switch (ch) {
 			case 'a':
 				flags |= (F_APPEND_NULL_ALL | F_APPEND_NULL);
@@ -366,28 +455,39 @@ main(int argc, char **argv)
 					attr = NULL;
 				}
 				break;
+
 			case 'c':
 				flags |= F_CHECK_AFP_EA;
 				flags &= ~F_FIX_AFP_EA;
 				break;
+
 			case 'C':
 				flags |= F_DRY_RUN;
 				break;
+
 			case 'd':
 				flags |= F_DEBUG;
 				break;
+
 			case 'f':
 				flags |= F_FIX_AFP_EA;
 				flags &= ~F_CHECK_AFP_EA;
 				break;
+
 			case 'n':
 				attr = strdup(optarg);
 				flags |= F_APPEND_NULL;
 				flags &= ~F_APPEND_NULL_ALL;
 				break;
+
+			case 'r':
+				flags |= F_RECURSIVE;
+				break;
+
 			case 'v':
 				flags |= F_VERBOSE;
 				break;
+
 			default:
 				usage(prog);
 		}
@@ -396,9 +496,8 @@ main(int argc, char **argv)
 	argc -= optind;		
 	argv += optind;
 
-	path = NULL;
 	if (!isatty(STDIN_FILENO)) {
-		ssize_t nread;	
+		ssize_t nread;
 		static char pathbuf[PATH_MAX];
 
 		if ((nread = read(STDIN_FILENO, pathbuf, sizeof(pathbuf))) > 0) {
@@ -413,62 +512,44 @@ main(int argc, char **argv)
 	}
 
 	if ((rp = realpath(path, NULL)) == NULL) {
-		free(attr);
-		err(EX_OSERR, "%s", path);
-	}
-
-	if (access(rp, F_OK) != 0) {
-		free(rp);
-		free(attr);
-		err(EX_OSERR, "%s", path);
+		warn("realpath");
+		ret = EX_OSERR;
+		goto out;
 	}
 
 	if ((fd = open(rp, O_RDONLY)) < 0) {
-		free(rp);
-		warnc(EX_OSERR, "%s", path);
-		return (-1);
+		warn("open");
+		ret = EX_OSERR;
+		goto out;
 	}
 
-	TAILQ_INIT(&xlist);
-	TAILQ_INIT(&afp_list);
-	TAILQ_INIT(&append_list);
+	if (flags & F_RECURSIVE) {
+		struct stat st;
 
-#define cleanup() \
-	unlink_afp_list(&afp_list); \
-	unlink_append_list(&append_list); \
-	free_extended_attributes(&xlist); \
-	free(attr); \
-	free(rp); \
-	close(fd);
-
-	if (get_extended_attributes(fd, &xlist) < 0) {
-		ret = EX_DATAERR;
-		cleanup();
-		return ret;
-	}
-
-	if (flags & F_CHECK_AFP_EA || flags & F_FIX_AFP_EA) {
-		get_afp_list(&xlist, &afp_list);
-		if ((setret = fix_afp_list(fd, path, flags, &afp_list)) < 0) {
-			ret = EX_DATAERR;
-			cleanup();
-			return ret;
+		memset(&st, 0, sizeof(st));
+		if (fstat(fd, &st) < 0) {
+			warn("fstat");
+			ret = EX_OSERR;
+			goto out;
 		}
-		ret = setret;
-	}
 
-	if (flags & F_APPEND_NULL_ALL || flags & F_APPEND_NULL) {
-		get_append_list(&xlist, &append_list, attr);
-		if ((setret = fix_append_list(fd, path, flags, &append_list)) < 0) {
-			ret = EX_DATAERR;
-			cleanup();
-			return ret;
+		if (!S_ISDIR(st.st_mode)) {
+			warn("%s must be a directory when -r is used", path);
+			ret = EX_USAGE;
+			goto out;
 		}
-		ret = setret;
+
+		do_ea_stuff_recursive(fd, argv, attr, flags);
+
+	} else {
+		do_ea_stuff_single(fd, path, attr, flags);
 	}
 
-	cleanup();
+out:
+	free(attr);
+	free(rp);
+	if (fd > 0)
+		close(fd);
+
 	return (ret);
-
-#undef cleanup
 }
