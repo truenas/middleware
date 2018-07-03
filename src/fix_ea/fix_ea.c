@@ -425,7 +425,7 @@ do_ea_stuff_recursive(char **paths, const char *attr, u_int64_t flags)
 		switch (entry->fts_info) {
 			case FTS_D:
 			case FTS_F:
-				do_ea_stuff_single(entry->fts_accpath, attr, flags);
+				rval |= do_ea_stuff_single(entry->fts_accpath, attr, flags);
 				break;
 
 			case FTS_ERR:
