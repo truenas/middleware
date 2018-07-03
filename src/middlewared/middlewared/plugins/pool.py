@@ -348,7 +348,7 @@ class PoolService(CRUDService):
         if not data['topology']['data']:
             verrors.add('pool_create.topology.data', 'At least one data vdev is required')
 
-        await self.__common_validation(verrors, data)
+        await self.__common_validation(verrors, data, 'pool_create')
         disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
         disks_cache = await self.__check_disks_availability(verrors, disks)
 
@@ -470,7 +470,7 @@ class PoolService(CRUDService):
 
         verrors = ValidationErrors()
 
-        await self.__common_validation(verrors, data, old=pool)
+        await self.__common_validation(verrors, data, 'pool_update', old=pool)
         disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
         disks_cache = await self.__check_disks_availability(verrors, disks)
 
@@ -500,7 +500,7 @@ class PoolService(CRUDService):
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         return pool
 
-    async def __common_validation(self, verrors, data, old=None):
+    async def __common_validation(self, verrors, data, schema_name, old=None):
         topology_data = list(data['topology'].get('data') or [])
 
         if old:
@@ -542,13 +542,13 @@ class PoolService(CRUDService):
             mindisks = minmap[vdev['type']]
             if numdisks < mindisks:
                 verrors.add(
-                    f'pool_create.topology.data.{i}.disks',
+                    f'{schema_name}.topology.data.{i}.disks',
                     f'You need at least {mindisks} disk(s) for this vdev type.',
                 )
 
             if lastdatatype and lastdatatype != vdev['type']:
                 verrors.add(
-                    f'pool_create.topology.data.{i}.type',
+                    f'{schema_name}.topology.data.{i}.type',
                     'You are not allowed to create a pool with different data vdev types '
                     f'({lastdatatype} and {vdev["type"]}).',
                 )
@@ -558,7 +558,7 @@ class PoolService(CRUDService):
             value = data['topology'].get(i)
             if value and len(value) > 1:
                 verrors.add(
-                    f'pool_create.{i}',
+                    f'{schema_name}.topology.{i}',
                     f'Only one row for the virtual device of type {i} is allowed.',
                 )
 
