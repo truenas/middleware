@@ -503,10 +503,10 @@ def mp_permission(request, path):
     if request.method == 'POST':
         form = forms.MountPointAccessForm(request.POST)
         if form.is_valid():
-            form.commit(path=path)
-            return JsonResp(
-                request,
-                message=_("Mount Point permissions successfully updated."))
+            if form.commit(path):
+                return JsonResp(
+                    request,
+                    message=_("Mount Point permissions successfully updated."))
     else:
         form = forms.MountPointAccessForm(initial={'path': path})
     return render(request, 'storage/permission.html', {

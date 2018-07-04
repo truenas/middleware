@@ -379,15 +379,14 @@ class PermissionResource(DojoResource):
             'mp_user_en': deserialized.get('mp_user_en', True),
         })
         form = MountPointAccessForm(data=deserialized)
-        if not form.is_valid():
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, form.errors)
-            )
-        else:
-            form.commit(path=deserialized.get('mp_path'))
-        return HttpResponse(
-            'Mount Point permissions successfully updated.',
-            status=201,
+        if form.is_valid():
+            if form.commit(deserialized.get('mp_path')):
+                return HttpResponse(
+                    'Mount Point permissions successfully updated.',
+                    status=201,
+                )
+        raise ImmediateHttpResponse(
+            response=self.error_response(request, form.errors)
         )
 
 
