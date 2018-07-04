@@ -228,9 +228,6 @@ class VMSupervisor(object):
 
         args.append(str(self.vm['id']) + '_' + self.vm['name'])
 
-        self.logger.debug('Starting bhyve: {}'.format(' '.join(args)))
-        self.proc = await Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-
         if vnc_web:
             split_port = int(str(vnc_port)[:2]) - 1
             vnc_web_port = str(split_port) + str(vnc_port)[2:]
@@ -243,18 +240,20 @@ class VMSupervisor(object):
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             self.logger.debug("==> Start WEBVNC at port {} with pid number {}".format(vnc_web_port, self.web_proc.pid))
 
+        self.logger.debug('Starting bhyve: {}'.format(' '.join(args)))
+        self.proc = await Popen(
+                args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        bhyve_output = []
+
         while True:
             line = await self.proc.stdout.readline()
-
-            if self.proc.returncode:
-                await self.__teardown_guest_vmemory(self.vm['id'])
-                await self.destroy_vm()
-                raise CallError(line.decode())
+            bhyve_output.append(line)
 
             if line == b'':
                 break
 
-            self.logger.debug('{}: {}'.format(self.vm['name'], line.decode()))
+            self.logger.debug(f'{self.vm["name"]}: {line.decode().rstrip()}')
 
         # bhyve returns the following status code:
         # 0 - VM has been reset
@@ -267,7 +266,7 @@ class VMSupervisor(object):
             self.logger.info("===> Rebooting VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             await self.manager.restart(self.vm['id'])
             await self.manager.start(self.vm['id'])
-        elif self.bhyve_error == 1:
+        elif self.bhyve_error == 1 and len(bhyve_output) >= 3:
             # XXX: Need a better way to handle the vmm destroy.
             self.logger.info("===> Powered off VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             await self.__teardown_guest_vmemory(self.vm['id'])
@@ -276,10 +275,18 @@ class VMSupervisor(object):
             self.logger.info("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             await self.__teardown_guest_vmemory(self.vm['id'])
             await self.manager.stop(self.vm['id'])
-        elif self.bhyve_error not in (0, 1, 2, 3, None):
+        else:
+            # Possibly a different error, or something failed early on
+            # (length of bhyve_output is 2 or less)
+            msg = f'===> Error VM: {self.vm["name"]} ID: {self.vm["id"]}' \
+                f' BHYVE_CODE: {self.bhyve_error}'
+            if len(bhyve_output) < 3:
+                msg += f' MESSAGE: {bhyve_output[-2].decode()}'
+
             await self.__teardown_guest_vmemory(self.vm['id'])
             await self.destroy_vm()
-            raise CallError("===> Error VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+
+            raise CallError(msg)
 
     async def destroy_vm(self):
         self.logger.warn("===> Destroying VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
@@ -985,18 +992,22 @@ class VMService(CRUDService):
     @accepts(Int('id'))
     async def start(self, id):
         """Start a VM."""
-        try:
-            if await self.__init_guest_vmemory(id):
-                # Hack until rewrite for 11.3
-                await asyncio.wait_for(self._manager.start(id), timeout=10)
-            else:
-                return False
-        except asyncio.TimeoutError:
-            # The VM is running
+        if await self.__init_guest_vmemory(id):
+            # Hack until rewrite for 11.3
+            done, _ = await asyncio.wait(
+                [self._manager.start(id)],
+                timeout=3
+            )
+
+            if done:
+                e = next(iter(done))
+
+                if e.done():
+                    e.result()
+
             return True
-        except Exception:
-            # Something happened
-            raise
+        else:
+            return False
 
     @item_method
     @accepts(Int('id'), Bool('force', default=False),)
