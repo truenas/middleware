@@ -303,53 +303,6 @@ class notifier(metaclass=HookMetaclass):
         c = conn.cursor()
         return c, conn
 
-    def __gpt_labeldisk(self, type, devname, swapsize=2):
-        """Label the whole disk with GPT under the desired label and type"""
-
-        # Calculate swap size.
-        swapgb = swapsize
-        swapsize = swapsize * 1024 * 1024 * 2
-        # Round up to nearest whole integral multiple of 128 and subtract by 34
-        # so next partition starts at mutiple of 128.
-        swapsize = (int((swapsize + 127) / 128)) * 128
-
-        with client as c:
-            c.call('disk.wipe', devname, 'QUICK', job=True)
-
-        try:
-            p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
-        except:
-            log.error("Unable to determine size of %s", devname)
-        else:
-            # The GPT header takes about 34KB + alignment, round it to 100
-            if size - 100 <= swapgb * 1024 * 1024:
-                raise MiddlewareError('Your disk size must be higher than %dGB' % (swapgb, ))
-
-        commands = []
-        commands.append("gpart create -s gpt /dev/%s" % (devname, ))
-        if swapsize > 0:
-            commands.append("gpart add -a 4k -b 128 -t freebsd-swap -s %d %s" % (swapsize, devname))
-            commands.append("gpart add -a 4k -t %s %s" % (type, devname))
-        else:
-            commands.append("gpart add -a 4k -b 128 -t %s %s" % (type, devname))
-
-        # Install a dummy boot block so system gives meaningful message if booting
-        # from the wrong disk.
-        commands.append("gpart bootcode -b /boot/pmbr-datadisk /dev/%s" % (devname))
-
-        for command in commands:
-            proc = self._pipeopen(command)
-            error = proc.communicate()[1]
-            if proc.returncode != 0:
-                raise MiddlewareError(f'Unable to GPT format the disk "{devname}": {error}')
-
-        # Invalidating confxml is required or changes wont be seen
-        self.__confxml = None
-        # We might need to sync with reality (e.g. devname -> uuid)
-        with client as c:
-            c.call('disk.sync', devname)
-
     def __gpt_unlabeldisk(self, devname):
         """Unlabel the disk"""
         with client as c:
@@ -367,40 +320,6 @@ class notifier(metaclass=HookMetaclass):
     def unlabel_disk(self, devname):
         # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
         self.__gpt_unlabeldisk(devname)
-
-    def __encrypt_device(self, devname, diskname, volume, passphrase=None):
-        from freenasUI.storage.models import Disk, EncryptedDisk
-
-        _geli_keyfile = volume.get_geli_keyfile()
-
-        self.__geli_setmetadata(devname, _geli_keyfile, passphrase)
-        self.geli_attach_single(devname, _geli_keyfile, passphrase)
-
-        # TODO: initialize the provider in background (wipe with random data)
-
-        if diskname.startswith('multipath/'):
-            diskobj = Disk.objects.get(
-                disk_multipath_name=diskname.replace('multipath/', '')
-            )
-        else:
-            with client as c:
-                ident = c.call('disk.device_to_identifier', diskname)
-            diskobj = Disk.objects.filter(disk_identifier=ident).order_by('disk_expiretime')
-            if diskobj.exists():
-                diskobj = diskobj[0]
-            else:
-                diskobj = Disk.objects.filter(disk_name=diskname).order_by('disk_expiretime')
-                if diskobj.exists():
-                    diskobj = diskobj[0]
-                else:
-                    raise ValueError("Could not find disk in cache table")
-        encdiskobj = EncryptedDisk()
-        encdiskobj.encrypted_volume = volume
-        encdiskobj.encrypted_disk = diskobj
-        encdiskobj.encrypted_provider = devname
-        encdiskobj.save()
-
-        return ("/dev/%s.eli" % devname)
 
     def __create_keyfile(self, keyfile, size=64, force=False):
         if force or not os.path.exists(keyfile):
@@ -795,88 +714,6 @@ class notifier(metaclass=HookMetaclass):
         # Clear out disks associated with the volume
         for disk in disks:
             self.__gpt_unlabeldisk(devname=disk)
-
-    def zfs_replace_disk(self, volume, from_label, to_disk, force=False, passphrase=None):
-        """Replace disk in zfs called `from_label` to `to_disk`"""
-        from freenasUI.storage.models import Disk, EncryptedDisk
-        swapsize = self.get_swapsize()
-
-        # TODO: Test on real hardware to see if ashift would persist across replace
-        from_disk = self.label_to_disk(from_label)
-        encrypt = (volume.vol_encrypt >= 1)
-
-        with client as c:
-            # to_disk _might_ have swap on, offline it before gpt label
-            c.call('disk.swaps_remove_disks', [from_disk, to_disk])
-
-        # Replace in-place
-        if from_disk == to_disk:
-            self._system('/sbin/zpool offline %s %s' % (volume.vol_name, from_label))
-
-        self.__gpt_labeldisk(type="freebsd-zfs", devname=to_disk, swapsize=swapsize)
-
-        # It has to be a freebsd-zfs partition there
-        to_label = self.part_type_from_device('zfs', to_disk)
-
-        if to_label == '':
-            raise MiddlewareError('freebsd-zfs partition could not be found')
-
-        self.__confxml = None  # Clear cache
-        doc = self._geom_confxml()
-        uuid = doc.xpath(
-            "//class[name = 'PART']"
-            "/geom//provider[name = '%s']/config/rawuuid" % (to_label, )
-        )
-        if not encrypt:
-            if not uuid:
-                log.warn("Could not determine GPT uuid for %s", to_label)
-                devname = to_label
-            else:
-                devname = "gptid/%s" % uuid[0].text
-        else:
-            if not uuid:
-                log.warn("Could not determine GPT uuid for %s", to_label)
-                raise MiddlewareError('Unable to determine GPT UUID for %s' % devname)
-            else:
-                from_diskobj = Disk.objects.filter(disk_name=from_disk, disk_expiretime=None)
-                if from_diskobj.exists():
-                    EncryptedDisk.objects.filter(encrypted_volume=volume, encrypted_disk=from_diskobj[0]).delete()
-                devname = self.__encrypt_device("gptid/%s" % uuid[0].text, to_disk, volume, passphrase=passphrase)
-
-        if force:
-            try:
-                with client as c:
-                    c.call('disk.wipe', devname.replace('/dev/', ''), 'QUICK', job=True)
-            except Exception:
-                log.debug('Failed to wipe disk {}'.format(to_disk), exc_info=True)
-
-        p1 = self._pipeopen('/sbin/zpool replace %s%s %s %s' % ('-f ' if force else '', volume.vol_name, from_label, devname))
-        stdout, stderr = p1.communicate()
-        ret = p1.returncode
-        if ret == 0:
-            # If we are replacing a faulted disk, kick it right after replace
-            # is initiated.
-            if from_label.isdigit():
-                self._system('/sbin/zpool detach %s %s' % (volume.vol_name, from_label))
-            # TODO: geli detach -l
-        else:
-            error = ", ".join(stderr.split('\n'))
-            if encrypt:
-                self._system('/sbin/geli detach %s' % (devname, ))
-            try:
-                with client as c:
-                    c.call('disk.swaps_configure')
-            except Exception as e:
-                log.warn('Failed to configure swaps', exc_info=True)
-            raise MiddlewareError('Disk replacement failed: "%s"' % error)
-
-        try:
-            with client as c:
-                c.call('disk.swaps_configure')
-        except ClientException:
-            log.warn('Failed to reconfigure swaps', exc_info=True)
-
-        return ret
 
     def zfs_offline_disk(self, volume, label):
         from freenasUI.storage.models import EncryptedDisk
@@ -1784,13 +1621,6 @@ class notifier(metaclass=HookMetaclass):
         if p1.returncode == 0:
             return True, ''
         return False, err
-
-    def disk_check_clean(self, disk):
-        doc = self._geom_confxml()
-        search = doc.xpath("//class[name = 'PART']/geom[name = '%s']" % disk)
-        if len(search) > 0:
-            return False
-        return True
 
     def detect_volumes(self, extra=None):
         """
