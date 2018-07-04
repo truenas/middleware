@@ -782,17 +782,11 @@ def zpool_disk_replace(request, vname, label):
             volume=volume,
             label=label,
         )
-        if form.is_valid():
-            if form.done():
-                return JsonResp(
-                    request,
-                    message=_("Disk replacement has been initiated."))
-            else:
-                return JsonResp(
-                    request,
-                    error=True,
-                    message=_("An error occurred."))
-
+        if form.is_valid() and form.done():
+            return JsonResp(
+                request,
+                message=_("Disk replacement has been initiated."))
+        return JsonResp(request, form=form)
     else:
         form = forms.ZFSDiskReplacementForm(volume=volume, label=label)
     return render(request, 'storage/zpool_disk_replace.html', {

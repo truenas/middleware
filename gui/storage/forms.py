@@ -1944,7 +1944,6 @@ class ZFSDiskReplacementForm(Form):
     force = forms.BooleanField(
         label=_("Force"),
         required=False,
-        widget=forms.widgets.HiddenInput(),
     )
     replace_disk = forms.ChoiceField(
         choices=(),
@@ -1960,11 +1959,6 @@ class ZFSDiskReplacementForm(Form):
         self.disk = disk
         super(ZFSDiskReplacementForm, self).__init__(*args, **kwargs)
 
-        if self.data:
-            devname = self.data.get('replace_disk')
-            if devname:
-                if not notifier().disk_check_clean(devname):
-                    self.fields['force'].widget = forms.widgets.CheckboxInput()
         if self.volume.vol_encrypt == 2:
             self.fields['pass'] = forms.CharField(
                 label=_("Passphrase"),
@@ -1975,45 +1969,20 @@ class ZFSDiskReplacementForm(Form):
                 widget=forms.widgets.PasswordInput(),
             )
         self.fields['replace_disk'].choices = self._populate_disk_choices()
-        self.fields['replace_disk'].choices.sort(
-            key=lambda a: float(
-                re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])
-            ))
 
     def _populate_disk_choices(self):
+        diskchoices = []
+        with client as c:
+            unused_disks = c.call('disk.get_unused')
 
-        diskchoices = dict()
-        used_disks = []
-        for v in models.Volume.objects.all():
-            used_disks.extend(v.get_disks())
-
-        # Grab partition list
-        # NOTE: This approach may fail if device nodes are not accessible.
-        disks = notifier().get_disks()
-
-        for disk in disks:
-            if disk in used_disks:
-                continue
-            devname, capacity = disks[disk]['devname'], disks[disk]['capacity']
-            capacity = humanize_number_si(int(capacity))
-            diskchoices[devname] = "%s (%s)" % (devname, capacity)
-
-        choices = list(diskchoices.items())
-        choices.sort(key=lambda a: float(
-            re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])
-        ))
-        return choices
-
-    def clean_replace_disk(self):
-        devname = self.cleaned_data.get('replace_disk')
-        force = self.cleaned_data.get('force')
-        if not devname:
-            return devname
-        if not force and not notifier().disk_check_clean(devname):
-            self._errors['force'] = self.error_class([_(
-                "Disk is not clear, partitions or ZFS labels were found."
-            )])
-        return devname
+        for disk in unused_disks:
+            if disk['size']:
+                capacity = humanize_number_si(disk['size'])
+                label = f'{disk["devname"]} ({capacity})'
+            else:
+                label = disk['devname']
+            diskchoices.append((disk['devname'], label))
+        return diskchoices
 
     def clean_pass2(self):
         passphrase = self.cleaned_data.get("pass")
@@ -2022,41 +1991,25 @@ class ZFSDiskReplacementForm(Form):
             raise forms.ValidationError(
                 _("Confirmation does not match passphrase")
             )
-        passfile = tempfile.mktemp(dir='/tmp/')
-        with open(passfile, 'w') as f:
-            os.chmod(passfile, 600)
-            f.write(passphrase)
-        if not notifier().geli_testkey(self.volume, passphrase=passfile):
-            self._errors['pass'] = self.error_class([
-                _("Passphrase is not valid")
-            ])
-        os.unlink(passfile)
         return passphrase
 
     def done(self):
         devname = self.cleaned_data['replace_disk']
         passphrase = self.cleaned_data.get("pass")
-        if passphrase is not None:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
-                f.write(passphrase)
-        else:
-            passfile = None
 
-        rv = notifier().zfs_replace_disk(
-            self.volume,
-            self.label,
-            devname,
-            force=self.cleaned_data.get('force'),
-            passphrase=passfile
-        )
-        if rv == 0:
-            if (services.objects.get(srv_service='smartd').srv_enable):
-                notifier().restart("smartd")
-            return True
-        else:
-            return False
+        with client as c:
+            identifier = c.call('disk.query', [('devname', '=', devname)])[0]['identifier']
+            try:
+                c.call('pool.replace', self.volume.id, {
+                    'label': self.label,
+                    'disk': identifier,
+                    'force': self.cleaned_data.get('force'),
+                    'passphrase': passphrase,
+                }, job=True)
+            except ValidationErrors as e:
+                self._errors['__all__'] = self.error_class([err.errmsg for err in e.errors])
+                return False
+        return True
 
 
 class ReplicationForm(MiddlewareModelForm, ModelForm):
