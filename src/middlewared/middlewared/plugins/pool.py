@@ -6,6 +6,7 @@ import os
 import re
 import subprocess
 import sysctl
+import tempfile
 import uuid
 
 import bsd
@@ -300,7 +301,9 @@ class PoolService(CRUDService):
                         decrypted = False
                         break
                 pool['is_decrypted'] = decrypted
+            pool['encryptkey_path'] = os.path.join(GELI_KEYPATH, f'{pool["encryptkey"]}.key')
         else:
+            pool['encryptkey_path'] = None
             pool['is_decrypted'] = True
         return pool
 
@@ -634,7 +637,7 @@ class PoolService(CRUDService):
             )
         return disks_cache
 
-    async def __format_disks(self, job, disks, enc_keypath):
+    async def __format_disks(self, job, disks, enc_keypath, passphrase=None):
         """
         Format all disks, putting all freebsd-zfs partitions created
         into their respectives vdevs.
@@ -653,7 +656,7 @@ class PoolService(CRUDService):
                     'disk': disk,
                     'devname': devname,
                 })
-                devname = await self.middleware.call('disk.encrypt', devname, enc_keypath)
+                devname = await self.middleware.call('disk.encrypt', devname, enc_keypath, passphrase)
             config['vdev'].append(f'/dev/{devname}')
         return enc_disks
 
@@ -691,6 +694,132 @@ class PoolService(CRUDService):
                     name = await self.middleware.call("disk.get_name", disk)
                     if os.path.exists(os.path.join("/dev", name)):
                         yield name
+
+    @item_method
+    @accepts(Int('id'), Dict(
+        'options',
+        Str('label', required=True),
+        Str('disk', required=True),
+        Bool('force', default=False),
+        Str('passphrase', password=True),
+    ))
+    @job(lock='pool_replace')
+    async def replace(self, job, oid, options):
+        """
+        Replace a disk on a pool.
+
+        `label` is the ZFS guid or a device name
+        `disk` is the identifier of a disk
+        """
+        pool = await self._get_instance(oid)
+
+        verrors = ValidationErrors()
+
+        unused_disks = await self.middleware.call('disk.get_unused')
+        disk = list(filter(lambda x: x['identifier'] == options['disk'], unused_disks))
+        if not disk:
+            verrors.add('options.disk', 'Disk not found.', errno.ENOENT)
+        else:
+            disk = disk[0]
+
+        if not options['force'] and not await self.middleware.call(
+            'disk.check_clean', disk['devname']
+        ):
+            verrors.add('options.force', 'Disk is not clean, partitions were found.')
+
+        if pool['encrypt'] == 2:
+            if not options.get('passphrase'):
+                verrors.add('options.passphrase', 'Passphrase is required for encrypted pool.')
+            elif not await self.middleware.call(
+                'disk.geli_testkey', pool, options['passphrase']
+            ):
+                verrors.add('options.passphrase', 'Passphrase is not valid.')
+
+        found = self.__find_disk_from_topology(options['label'], pool)
+
+        if not found:
+            verrors.add('options.label', f'Label {options["label"]} not found.', errno.ENOENT)
+
+        if verrors:
+            raise verrors
+
+        if found[0] in ('data', 'spare'):
+            create_swap = True
+        else:
+            create_swap = False
+
+        swap_disks = [disk['devname']]
+        # If the disk we are replacing is still available, remove it from swap as well
+        if found[1] and os.path.exists(found[1]['path']):
+            from_disk = await self.middleware.call(
+                'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
+            )
+            if from_disk:
+                swap_disks.append(from_disk)
+
+        await self.middleware.call('disk.swaps_remove_disks', swap_disks)
+
+        vdev = []
+        passphrase_path = None
+        if options.get('passphrase'):
+            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
+            os.chmod(passf.name, 0o600)
+            passf.write(options['passphrase'])
+            passf.flush()
+            passphrase_path = passf.name
+        try:
+            enc_disks = await self.__format_disks(
+                job,
+                {disk['devname']: {'vdev': vdev, 'create_swap': create_swap}},
+                pool['encryptkey_path'],
+                passphrase_path,
+            )
+        finally:
+            if passphrase_path:
+                passf.close()
+
+        new_devname = vdev[0].replace('/dev/', '')
+
+        try:
+            await self.middleware.call(
+                'zfs.pool.replace', pool['name'], options['label'], new_devname
+            )
+            # If we are replacing a faulted disk, kick it right after replace
+            # is initiated.
+            if options['label'].isdigit():
+                await self.middleware.call('zfs.pool.detach', pool['name'], options['label'])
+        except Exception as e:
+            try:
+                # If replace has failed lets detach geli to not keep disk busy
+                await self.middleware.call('disk.geli_detach', new_devname)
+            except Exception:
+                self.logger.warn(f'Failed to geli detach {new_devname}', exc_info=True)
+            raise e
+        finally:
+            # Needs to happen even if replace failed to put back disk that had been
+            # removed from swap prior to replacement
+            await self.middleware.call('disk.swaps_configure')
+
+        await self.__save_encrypteddisks(oid, enc_disks, {disk['devname']: disk})
+
+        return True
+
+    def __find_disk_from_topology(self, label, pool):
+        check = []
+        found = None
+        for root, children in pool['topology'].items():
+            check.append((root, children))
+
+        while check:
+            root, children = check.pop()
+            for c in children:
+                if c['type'] == 'DISK':
+                    if label in (c['path'].replace('/dev/', ''), c['guid']):
+                        found = (root, c)
+                        break
+                if c['children']:
+                    check.append((root, c['children']))
+        return found
 
     @item_method
     @accepts(Int('id'))
