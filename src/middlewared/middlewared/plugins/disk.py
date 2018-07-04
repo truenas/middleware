@@ -16,7 +16,7 @@ from bsd import geom, getswapinfo
 from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import get_smartctl_args
 from middlewared.schema import accepts, Bool, Dict, List, Str
-from middlewared.service import filterable, job, private, CallError, CRUDService
+from middlewared.service import job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
 
@@ -44,17 +44,7 @@ class DiskService(CRUDService):
         datastore = 'storage.disk'
         datastore_prefix = 'disk_'
         datastore_extend = 'disk.disk_extend'
-
-    @filterable
-    async def query(self, filters=None, options=None):
-        if filters is None:
-            filters = []
-        if options is None:
-            options = {}
-        options['prefix'] = 'disk_'
-        filters.append(('expiretime', '=', None))
-        options['extend'] = 'disk.disk_extend'
-        return await self.middleware.call('datastore.query', 'storage.disk', filters, options)
+        datastore_filters = [('expiretime', '=', None)]
 
     @private
     async def disk_extend(self, disk):
@@ -65,6 +55,14 @@ class DiskService(CRUDService):
         )
         for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
             disk[key] = disk[key].upper()
+        try:
+            disk['size'] = int(disk['size'])
+        except ValueError:
+            disk['size'] = None
+        if disk['multipath_name']:
+            disk['devname'] = f'multipath/{disk["multipath_name"]}'
+        else:
+            disk['devname'] = disk['name']
         return disk
 
     @accepts(
@@ -249,6 +247,43 @@ class DiskService(CRUDService):
             self.logger.debug(f'{dev} already attached')
 
     @private
+    def geli_testkey(self, pool, passphrase):
+        """
+        Test key for geli providers of a given pool
+
+        Returns:
+            bool
+        """
+
+        with tempfile.NamedTemporaryFile(mode='w+', dir='/tmp', delete=False) as tf:
+            os.chmod(tf.name, 0o600)
+            tf.write(passphrase)
+            tf.flush()
+            # EncryptedDisk table might be out of sync for some reason,
+            # this is much more reliable!
+            devs = self.middleware.call_sync('zfs.pool.get_devices', pool['name'])
+            for dev in devs:
+                name, ext = os.path.splitext(dev)
+                if ext != '.eli':
+                    continue
+                try:
+                    self.geli_attach_single(
+                        name, pool['encryptkey_path'], tf.name, skip_existing=True,
+                    )
+                except Exception as e:
+                    if str(e).find('Wrong key') != -1:
+                        return False
+        return True
+
+    @private
+    def geli_detach(self, dev):
+        cp = subprocess.run(
+            ['geli', 'detach', dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        if cp.returncode != 0:
+            raise CallError(f'Unable to geli dettach {dev}: {cp.stderr.decode()}')
+
+    @private
     def encrypt(self, devname, keypath, passphrase=None):
         self.__geli_setmetadata(devname, keypath, passphrase)
         self.geli_attach_single(devname, keypath, passphrase)
@@ -264,6 +299,7 @@ class DiskService(CRUDService):
         Decrypt `devices` using uploaded encryption key
         """
         with tempfile.NamedTemporaryFile(dir='/tmp/') as f:
+            os.chmod(0o600, f.name)
             f.write(job.pipes.input.r.read())
             f.flush()
 
@@ -426,6 +462,20 @@ class DiskService(CRUDService):
         prov = klass.xml.find(f'.//provider[name="{label}"]/../name')
         if prov is not None:
             return prov.text
+
+    @private
+    def label_to_disk(self, label, geom_scan=True):
+        if geom_scan:
+            geom.scan()
+        dev = self.label_to_dev(label, geom_scan=False) or label
+        part = geom.class_by_name('PART').xml.find(f'.//provider[name="{dev}"]/../name')
+        if part is not None:
+            return part.text
+
+    @private
+    def check_clean(self, disk):
+        geom.scan()
+        return geom.class_by_name('PART').xml.find(f'.//geom[name="{disk}"]') is None
 
     @private
     @accepts(Str('name'))
