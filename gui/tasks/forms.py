@@ -27,7 +27,7 @@ class CloudSyncForm(ModelForm):
     )
 
     class Meta:
-        exclude = ('credential', )
+        exclude = ('credential', 'args')
         fields = '__all__'
         model = models.CloudSync
         widgets = {
