@@ -1657,38 +1657,24 @@ class MountPointAccessForm(Form):
 
         path = kwargs.get('initial', {}).get('path', None)
         if path:
-            if os.path.exists(os.path.join(path, ".windows")):
-                self.fields['mp_acl'].initial = 'windows'
-                self.fields['mp_mode'].widget.attrs['disabled'] = 'disabled'
-            elif os.path.exists(os.path.join(path, ".mac")):
-                self.fields['mp_acl'].initial = 'mac'
-            else:
-                self.fields['mp_acl'].initial = 'unix'
-            # 8917: This needs to be handled by an upper layer but for now
-            # just prevent a backtrace.
-            try:
-                self.fields['mp_mode'].initial = "%.3o" % (
-                    notifier().mp_get_permission(path),
-                )
-                user, group = notifier().mp_get_owner(path)
-                self.fields['mp_user'].initial = user
-                self.fields['mp_group'].initial = group
-            except Exception:
-                pass
+            with client as c:
+                stat = c.call('filesystem.stat', path)
+
+                self.fields['mp_acl'].initial = stat['acl']
+
+                if stat['acl'] == 'windows':
+                    self.fields['mp_mode'].widget.attrs['disabled'] = 'disabled'
+
+                self.fields['mp_mode'].initial = "%.3o" % stat['mode']
+                self.fields['mp_user'].initial = stat['user']
+                self.fields['mp_group'].initial = stat['group']
+
         self.fields['mp_acl'].widget.attrs['onChange'] = "mpAclChange(this);"
 
-    def clean(self):
-        if (
-            (self.cleaned_data.get("mp_acl") == "unix" or
-                self.cleaned_data.get("mp_acl") == "mac") and not
-                self.cleaned_data.get("mp_mode")
-        ):
-            self._errors['mp_mode'] = self.error_class([
-                _("This field is required")
-            ])
-        return self.cleaned_data
+    def commit(self, path):
 
-    def commit(self, path='/mnt/'):
+        with client as c:
+            dataset = c.call('pool.dataset.query', [['mountpoint', '=', path.rstrip('/')]], {'get': True})
 
         kwargs = {}
 
@@ -1701,12 +1687,28 @@ class MountPointAccessForm(Form):
         if self.cleaned_data.get('mp_user_en'):
             kwargs['user'] = self.cleaned_data['mp_user']
 
-        notifier().mp_change_permission(
-            path=path,
-            recursive=self.cleaned_data['mp_recursive'],
-            acl=self.cleaned_data['mp_acl'],
-            **kwargs
-        )
+        kwargs['acl'] = self.cleaned_data['mp_acl'].upper()
+
+        kwargs['recursive'] = self.cleaned_data['mp_recursive']
+
+        with client as c:
+            try:
+                c.call('pool.dataset.permission', dataset['id'], kwargs)
+                return True
+            except ValidationErrors as e:
+                for err in e.errors:
+                    field_name = 'mp_' + err.attribute.split('.', 1)[-1]
+                    error_message = err.errmsg
+
+                    if field_name not in self.fields:
+                        field_name = '__all__'
+
+                    if field_name not in self._errors:
+                        self._errors[field_name] = self.error_class([error_message])
+                    else:
+                        self._errors[field_name] += [error_message]
+
+                return False
 
 
 class ResilverForm(MiddlewareModelForm, ModelForm):
