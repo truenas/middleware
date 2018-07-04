@@ -115,17 +115,21 @@ class ZFSPoolService(CRUDService):
             raise CallError(str(e))
 
     @accepts(Str('pool'))
-    def get_disks(self, name):
+    def get_devices(self, name):
         try:
             with libzfs.ZFS() as zfs:
-                disks = list(zfs.get(name).disks)
+                return [i.replace('/dev/', '') for i in zfs.get(name).disks]
         except libzfs.ZFSException as e:
             raise CallError(str(e), errno.ENOENT)
 
+    @accepts(Str('pool'))
+    def get_disks(self, name):
+        disks = self.get_devices(name)
+
         geom.scan()
         labelclass = geom.class_by_name('LABEL')
-        for absdev in disks:
-            dev = absdev.replace('/dev/', '').replace('.eli', '')
+        for dev in disks:
+            dev = dev.replace('.eli', '')
             find = labelclass.xml.findall(f".//provider[name='{dev}']/../consumer/provider")
             name = None
             if find:
