@@ -8,6 +8,7 @@ async def get_smartctl_args(disk, device):
     driver = device["driver"]
     controller_id = device["controller_id"]
     channel_no = device["channel_no"]
+    bus = device["bus"]
     lun_id = device["lun_id"]
 
     # Areca Controller support(at least the 12xx family, possibly others)
@@ -46,9 +47,12 @@ async def get_smartctl_args(disk, device):
         port = units.get(channel_no, -1)
         return [f"/dev/{driver}{controller_id}", "-d", f"3ware,{port}"]
 
-    # LSI MegaRAID 6Gb/s and 12Gb/s SAS+SATA RAID controller (not supported)
+    # LSI MegaRAID 6Gb/s and 12Gb/s SAS+SATA RAID controller (only supports passed-through disks on CAM bus 1)
     if driver == "mrsas":
-        return
+        if bus == 1:
+            return [f"/dev/{disk}"]
+        else:
+            return
 
     args = [f"/dev/{disk}"]
     p = await run(["smartctl", "-i"] + args, stderr=subprocess.STDOUT, check=False, encoding="utf8")

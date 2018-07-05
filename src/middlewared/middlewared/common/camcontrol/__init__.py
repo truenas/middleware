@@ -26,16 +26,16 @@ async def camcontrol_list():
     """
     hptctlr = defaultdict(int)
 
-    re_drv_cid = re.compile(r'.* on (?P<drv>.*?)(?P<cid>[0-9]+) bus', re.S | re.M)
+    re_drv_cid_bus = re.compile(r'.* on (?P<drv>.*?)(?P<cid>[0-9]+) bus (?P<bus>[0-9]+)', re.S | re.M)
     re_tgt = re.compile(
         r'target (?P<tgt>[0-9]+) .*?lun (?P<lun>[0-9]+) .*\((?P<dv1>[a-z]+[0-9]+),(?P<dv2>[a-z]+[0-9]+)\)', re.S | re.M)
-    drv, cid, tgt, lun, dev, devtmp = (None,) * 6
+    drv, cid, bus, tgt, lun, dev, devtmp = (None,) * 7
 
     camcontrol = {}
     proc = await run(['camcontrol', 'devlist', '-v'], encoding="utf8")
     for line in proc.stdout.splitlines():
         if not line.startswith('<'):
-            reg = re_drv_cid.search(line)
+            reg = re_drv_cid_bus.search(line)
             if not reg:
                 continue
             drv = reg.group('drv')
@@ -44,6 +44,7 @@ async def camcontrol_list():
                 hptctlr[drv] += 1
             else:
                 cid = reg.group('cid')
+            bus = reg.group('bus')
         else:
             reg = re_tgt.search(line)
             if not reg:
@@ -57,6 +58,7 @@ async def camcontrol_list():
             camcontrol[dev] = {
                 'driver': drv,
                 'controller_id': int(cid),
+                'bus': int(bus),
                 'channel_no': int(tgt),
                 'lun_id': int(lun)
             }
