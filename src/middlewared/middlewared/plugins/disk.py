@@ -255,7 +255,7 @@ class DiskService(CRUDService):
             bool
         """
 
-        with tempfile.NamedTemporaryFile(mode='w+', dir='/tmp', delete=False) as tf:
+        with tempfile.NamedTemporaryFile(mode='w+', dir='/tmp') as tf:
             os.chmod(tf.name, 0o600)
             tf.write(passphrase)
             tf.flush()
