@@ -45,7 +45,9 @@ def find_vdev(pool, vname):
     Returns:
         libzfs.ZFSVdev object
     """
-    children = list(pool.root_vdev.children)
+    children = []
+    for vdevs in pool.groups.values():
+        children += vdevs
     while children:
         child = children.pop()
 
