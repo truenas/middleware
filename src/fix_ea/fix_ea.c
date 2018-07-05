@@ -125,7 +125,7 @@ get_extended_attributes(int fd, struct xattr_list *xlist)
 
 		strncpy(name, &buf[i + 1], ch);
 		name[ch] = '\0';
-
+    
 		if (strncmp(name, "DosStream.", 10) != 0) {
 			free(name);
 			continue;
@@ -161,7 +161,6 @@ get_extended_attributes(int fd, struct xattr_list *xlist)
 		xptr->name = name;
 		xptr->value = value;
 		xptr->length = getret;
-
 		TAILQ_INSERT_TAIL(xlist, xptr, link);
 	}
 
@@ -291,7 +290,7 @@ fix_append_list(int fd, const char *path,
 
 	if (append_list == NULL)
 		return (-1);
-
+  
 	TAILQ_FOREACH(xptr, append_list, append_link) {
 		if (flags & F_DEBUG)
 			hexdump_ea(path, xptr->name, xptr->value, xptr->length);
@@ -454,7 +453,7 @@ main(int argc, char **argv)
 	prog = basename(argv[0]);
 	if (argc < 2)
 		usage(prog);
-
+  
 	while ((ch = getopt(argc, argv, "acCdfn:p:rv")) != -1) {
 		switch (ch) {
 			case 'a':
@@ -488,7 +487,7 @@ main(int argc, char **argv)
 				flags |= F_APPEND_NULL;
 				flags &= ~F_APPEND_NULL_ALL;
 				break;
-
+\
 			case 'r':
 				flags |= F_RECURSIVE;
 				break;
@@ -553,4 +552,5 @@ out:
 	free(rp);
 
 	return (ret);
+
 }
