@@ -722,10 +722,10 @@ class PoolService(CRUDService):
         else:
             disk = disk[0]
 
-        if not options['force'] and not await self.middleware.call(
-            'disk.check_clean', disk['devname']
-        ):
-            verrors.add('options.force', 'Disk is not clean, partitions were found.')
+            if not options['force'] and not await self.middleware.call(
+                'disk.check_clean', disk['devname']
+            ):
+                verrors.add('options.force', 'Disk is not clean, partitions were found.')
 
         if pool['encrypt'] == 2:
             if not options.get('passphrase'):
