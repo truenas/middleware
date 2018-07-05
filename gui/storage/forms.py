@@ -1995,15 +1995,18 @@ class ZFSDiskReplacementForm(Form):
         devname = self.cleaned_data['replace_disk']
         passphrase = self.cleaned_data.get("pass")
 
+        replace_args = {}
+        if passphrase:
+            replace_args['passphrase'] = passphrase
+
         with client as c:
             identifier = c.call('disk.query', [('devname', '=', devname)])[0]['identifier']
             try:
-                c.call('pool.replace', self.volume.id, {
+                c.call('pool.replace', self.volume.id, dict({
                     'label': self.label,
                     'disk': identifier,
                     'force': self.cleaned_data.get('force'),
-                    'passphrase': passphrase,
-                }, job=True)
+                }, **replace_args), job=True)
             except ValidationErrors as e:
                 self._errors['__all__'] = self.error_class([err.errmsg for err in e.errors])
                 return False
