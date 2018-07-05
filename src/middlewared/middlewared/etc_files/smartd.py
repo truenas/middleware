@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 async def annotate_disk_for_smart(devices, disk):
-    if disk["disk_name"] is None or "nvd" in disk["disk_name"] or "zvol" in disk["disk_name"]:
+    if not re.match(r"/dev/a?da[0-9]+", disk["disk_name"]):
         return
 
     device = devices.get(disk["disk_name"])
