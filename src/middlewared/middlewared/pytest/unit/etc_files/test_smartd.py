@@ -69,8 +69,8 @@ async def test__ensure_smart_enabled__handled_args_properly():
 
 
 @pytest.mark.asyncio
-async def test__annotate_disk_for_smart__skips_zvol():
-    assert await annotate_disk_for_smart({}, {"disk_name": "/dev/zvol1"}) is None
+async def test__annotate_disk_for_smart__skips_ses():
+    assert await annotate_disk_for_smart({}, {"disk_name": "/dev/ses1"}) is None
 
 
 @pytest.mark.asyncio
