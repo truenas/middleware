@@ -27,8 +27,10 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 #include <sys/extattr.h>
 #include <fcntl.h>
+#include <fts.h>
 #include <libgen.h>
 #include <limits.h>
 #include <stdio.h>
@@ -49,6 +51,7 @@
 #define F_APPEND_NULL           0x0010
 #define F_VERBOSE               0x0020
 #define F_DEBUG                 0x0040
+#define F_RECURSIVE             0x0080
 
 #define AFP_EA_CORRUPTED(v)     (v[0] == 0 && v[1] == 'F' && v[2] == 'P')
 
@@ -184,7 +187,6 @@ fix_afp_list(int fd, const char *path,
 
 	if (afp_list == NULL)
 		return (-1);
-
 	TAILQ_FOREACH_REVERSE(xptr, afp_list, xattr_list, afp_link) {
 		if (flags & F_DEBUG) {
 			printf("%s: %02x %02x %02x / %02x %02x %02x [%ld]\n", path,
