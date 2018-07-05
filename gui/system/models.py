@@ -752,10 +752,17 @@ class CertificateBase(Model):
         "CertificateAuthority",
         blank=True,
         null=True,
-        verbose_name=_("Signing Certificate Authority")
+        verbose_name=_("Signing Certificate Authority"),
+        on_delete=models.CASCADE
     )
     cert_chain = models.BooleanField(
         default=False,
+    )
+    cert_acme = models.ForeignKey(
+        'ACMERegistration',
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True
     )
 
     def get_certificate(self):
@@ -1168,6 +1175,81 @@ class Support(Model):
             bool
         """
         return self.is_available(support=self)[0] and self.enabled
+
+
+class JWKRSAKey(models.Model):
+    # Keys saved which have 2048 as key_size and public_exponent is 65537
+    jwk_n = models.CharField(
+        max_length=343
+    )
+    jwk_e = models.CharField(
+        max_length=5
+    )
+    jwk_d = models.CharField(
+        max_length=343
+    )
+    jwk_p = models.CharField(
+        max_length=172
+    )
+    jwk_q = models.CharField(
+        max_length=172
+    )
+    jwk_dp = models.CharField(
+        max_length=172
+    )
+    jwk_dq = models.CharField(
+        max_length=172
+    )
+    jwk_qi = models.CharField(
+        max_length=172
+    )
+    jwk_kty = models.CharField(
+        max_length=10
+    )
+
+
+class ACMERegistrationBody(models.Model):
+    registration_body_contact = models.EmailField(
+        verbose_name='Contact Email'
+    )
+    registration_body_status = models.CharField(
+        verbose_name='Status',
+        max_length=10
+    )
+    registration_body_key = models.ForeignKey(
+        'JWKRSAKey',
+        on_delete=models.CASCADE
+    )
+
+
+class ACMERegistration(models.Model):
+    acme_uri = models.URLField(
+        verbose_name='URI'
+    )
+    acme_directory = models.URLField(
+        verbose_name='Directory URI'
+    )
+    acme_tos = models.URLField(
+        verbose_name='Terms of Service'
+    )
+    acme_body = models.ForeignKey(
+        'ACMERegistrationBody',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+    acme_new_account_uri = models.URLField(
+        verbose_name='New Account Uri'
+    )
+    acme_new_nonce_uri = models.URLField(
+        verbose_name='New Nonce Uri'
+    )
+    acme_new_order_uri = models.URLField(
+        verbose_name='New Order Uri'
+    )
+    acme_revoke_cert_uri = models.URLField(
+        verbose_name='Revoke Certificate Uri'
+    )
 
 
 class Filesystem(Model):

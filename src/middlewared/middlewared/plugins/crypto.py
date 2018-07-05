@@ -467,7 +467,7 @@ class CertificateService(CRUDService):
         Dict(
             'certificate_cert_info',
             Int('key_length'),
-            Int('serial', required=False),
+            Int('serial', required=False, null=True),
             Int('lifetime', required=True),
             Str('country', required=True),
             Str('state', required=True),
@@ -477,7 +477,7 @@ class CertificateService(CRUDService):
             Str('common', required=True),
             Str('email', validators=[Email()], required=True),
             Str('digest_algorithm', enum=['SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512']),
-            List('san', items=[Str('san')]),
+            List('san', items=[Str('san')], null=True),
             register=True
         )
     )
