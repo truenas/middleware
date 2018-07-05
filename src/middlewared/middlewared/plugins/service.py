@@ -34,6 +34,14 @@ class StartNotify(threading.Thread):
     def __init__(self, pidfile, verb, *args, **kwargs):
         self._pidfile = pidfile
         self._verb = verb
+
+        if self._pidfile:
+            try:
+                with open(self._pidfile) as f:
+                    self._pid = f.read()
+            except IOError:
+                self._pid = None
+
         super(StartNotify, self).__init__(*args, **kwargs)
 
     def run(self):
@@ -55,11 +63,19 @@ class StartNotify(threading.Thread):
                     # The file might have been created but it may take a
                     # little bit for the daemon to write the PID
                     time.sleep(0.1)
-                if (
-                    os.path.exists(self._pidfile) and
-                    os.stat(self._pidfile).st_size > 0
-                ):
-                    break
+                try:
+                    with open(self._pidfile) as f:
+                        pid = f.read()
+                except IOError:
+                    pid = None
+
+                if pid:
+                    if self._verb == 'start':
+                        break
+                    if self._verb == 'restart':
+                        if pid != self._pid:
+                            break
+                        # Otherwise, service has not restarted yet
             elif self._verb == "stop" and not os.path.exists(self._pidfile):
                 break
             tries += 1
@@ -104,7 +120,8 @@ class ServiceService(CRUDService):
             asyncio.ensure_future(self._get_status(entry)): entry
             for entry in services
         }
-        await asyncio.wait(list(jobs.keys()), timeout=15)
+        if jobs:
+            await asyncio.wait(list(jobs.keys()), timeout=15)
 
         def result(task):
             """
@@ -780,8 +797,6 @@ class ServiceService(CRUDService):
         await self._service("nfsuserd", "stop", force=True, **kwargs)
         await self._service("gssd", "stop", force=True, **kwargs)
         await self._service("rpcbind", "stop", force=True, **kwargs)
-        if not await self.middleware.call('system.is_freenas'):
-            await self._service("vaaiserver", "stop", force=True, **kwargs)
 
     async def _start_nfs(self, **kwargs):
         nfs = await self.middleware.call('datastore.config', 'services.nfs')
@@ -809,8 +824,6 @@ class ServiceService(CRUDService):
         await self._service("nfsd", "start", quiet=True, **kwargs)
         await self._service("statd", "start", quiet=True, **kwargs)
         await self._service("lockd", "start", quiet=True, **kwargs)
-        if not await self.middleware.call('system.is_freenas'):
-            await self._service("vaaiserver", "start", quiet=True, **kwargs)
 
     async def _force_stop_jail(self, **kwargs):
         await self._service("jail", "stop", force=True, **kwargs)
@@ -884,6 +897,12 @@ class ServiceService(CRUDService):
     async def _stop_cifs(self, **kwargs):
         await self._service("samba_server", "stop", force=True, **kwargs)
         await self._service("ix-post-samba", "start", quiet=True, **kwargs)
+
+    async def _started_cifs(self, **kwargs):
+        if await self._service("samba_server", "status", quiet=True, onetime=True, **kwargs):
+            return False, []
+        else:
+            return True, []
 
     async def _start_snmp(self, **kwargs):
         await self._service("ix-snmpd", "start", quiet=True, **kwargs)

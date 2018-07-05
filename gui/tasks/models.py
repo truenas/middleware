@@ -103,6 +103,14 @@ class CloudSync(Model):
         max_length=256,
         verbose_name=_("Encryption salt"),
     )
+    args = models.TextField(
+        blank=True,
+        max_length=255,
+        verbose_name=_("Auxiliary arguments"),
+        help_text=_(
+            "These arguments will be passed to rclone."
+            "<br>See <a href=\"https://rclone.org/docs/\">https://rclone.org/docs/</a> for help"),
+    )
     minute = models.CharField(
         max_length=100,
         default="00",

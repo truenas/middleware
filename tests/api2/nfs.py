@@ -43,13 +43,13 @@ def test_01_creating_the_nfs_server():
                "rpcstatd_port": 871,
                "rpclockd_port": 32803,
                "v4": True}
-    results = PUT("/nfs", paylaod)
+    results = PUT("/nfs/", paylaod)
     assert results.status_code == 200, results.text
 
 
 def test_02_creating_dataset_nfs():
     payload = {"name": DATASET}
-    results = POST("/pool/dataset", payload)
+    results = POST("/pool/dataset/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -68,13 +68,13 @@ def test_04_creating_a_nfs_share_on_nfs_PATH():
     paylaod = {"comment": "My Test Share",
                "paths": [NFS_PATH],
                "security": ["SYS"]}
-    results = POST("/sharing/nfs", paylaod)
+    results = POST("/sharing/nfs/", paylaod)
     assert results.status_code == 200, results.text
 
 
 # Now start the service
 def test_05_starting_nfs_service_at_boot():
-    results = PUT("/service/id/nfs", {"enable": True})
+    results = PUT("/service/id/nfs/", {"enable": True})
     assert results.status_code == 200, results.text
 
 
@@ -85,7 +85,7 @@ def test_06_checking_to_see_if_nfs_service_is_enabled_at_boot():
 
 def test_07_starting_nfs_service():
     payload = {"service": "nfs", "service-control": {"onetime": True}}
-    results = POST("/service/start", payload)
+    results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -164,14 +164,14 @@ def test_16_removing_nfs_mountpoint():
 
 # Update test
 def test_17_updating_the_nfs_service():
-    results = PUT("/nfs", {"servers": "50"})
+    results = PUT("/nfs/", {"servers": "50"})
     assert results.status_code == 200, results.text
 
 
 def test_18_update_nfs_share():
     nfsid = GET('/sharing/nfs?comment=My Test Share').json()[0]['id']
     payload = {"security": []}
-    results = PUT(f"/sharing/nfs/id/{nfsid}", payload)
+    results = PUT(f"/sharing/nfs/id/{nfsid}/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -255,7 +255,7 @@ def test_28_delete_nfs_share():
 
 def test_29_stoping_nfs_service():
     payload = {"service": "nfs", "service-control": {"onetime": True}}
-    results = POST("/service/stop", payload)
+    results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -266,7 +266,7 @@ def test_30_checking_to_see_if_nfs_service_is_stop():
 
 # Test disable AFP
 def test_31_disable_nfs_service_at_boot():
-    results = PUT("/service/id/nfs", {"enable": False})
+    results = PUT("/service/id/nfs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 

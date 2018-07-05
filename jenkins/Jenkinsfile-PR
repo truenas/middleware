@@ -93,6 +93,9 @@ pipeline {
     stage('Update Stage') {
       post {
         always {
+         sh 'rm -rf /usr/obj/freenas-pr'
+         sh '(mount | grep "on /freenas-pr" | awk \'{print $3}\' | sort -r | xargs umount -f ) || true'
+         sh 'zfs destroy tank/freenas-pr || true'
           script {
             cleanWs notFailBuild: true
           }
@@ -105,16 +108,6 @@ pipeline {
         echo '*** Staging the update ***'
         unstash 'upgrade'
         sh 'cd /root/freenas-update && ./release-fn-pr.sh ${WORKSPACE}'
-      }
-    }
-  }
-  post {
-    always {
-      sh 'rm -rf /usr/obj/freenas-pr'
-      sh '(mount | grep "on /freenas-pr" | awk \'{print $3}\' | sort -r | xargs umount -f ) || true'
-      sh 'zfs destroy tank/freenas-pr || true'
-      script {
-        cleanWs notFailBuild: true
       }
     }
   }

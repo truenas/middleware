@@ -55,7 +55,8 @@ smart_func()
 	fi
 	for i in `sysctl -n kern.disks`
 	do
-    		smartctl -a /dev/$i >> /tmp/smart.out
+    		echo /dev/$i >> /tmp/smart.out
+		smartctl -a /dev/$i >> /tmp/smart.out
 	done
 	cat /tmp/smart.out
 	${FREENAS_DEBUG_MODULEDIR}/smart/smart.nawk < /tmp/smart.out

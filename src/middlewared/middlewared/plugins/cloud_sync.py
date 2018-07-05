@@ -14,8 +14,9 @@ from Crypto.Cipher import AES
 from Crypto.Util import Counter
 import json
 import os
-import subprocess
 import re
+import shlex
+import subprocess
 import tempfile
 
 CHUNK_SIZE = 5 * 1024 * 1024
@@ -62,8 +63,9 @@ class RcloneConfig:
                     "standard" if self.cloud_sync["filename_encryption"] else "off"))
                 self.tmp_file.write("password = {}\n".format(
                     rclone_encrypt_password(self.cloud_sync["encryption_password"])))
-                self.tmp_file.write("password2 = {}\n".format(
-                    rclone_encrypt_password(self.cloud_sync["encryption_salt"])))
+                if self.cloud_sync.get("encryption_salt"):
+                    self.tmp_file.write("password2 = {}\n".format(
+                        rclone_encrypt_password(self.cloud_sync["encryption_salt"])))
 
                 remote_path = "encrypted:/"
 
@@ -88,6 +90,7 @@ async def rclone(job, cloud_sync):
             "--config", config.config_path,
             "-v",
             "--stats", "1s",
+        ] + shlex.split(cloud_sync["args"]) + [
             cloud_sync["transfer_mode"].lower(),
         ]
 
@@ -188,6 +191,8 @@ class CredentialsService(CRUDService):
             data,
         )
 
+        data["id"] = id
+
         return data
 
     @accepts(Int("id"))
@@ -252,8 +257,11 @@ class CloudSyncService(CRUDService):
 
     @private
     async def _get_credentials(self, credentials_id):
-        return await self.middleware.call("datastore.query", "system.cloudcredentials", [("id", "=", credentials_id)],
-                                          {"get": True})
+        try:
+            return await self.middleware.call("datastore.query", "system.cloudcredentials",
+                                              [("id", "=", credentials_id)], {"get": True})
+        except IndexError:
+            return None
 
     @private
     async def _validate(self, verrors, name, data):
@@ -261,10 +269,13 @@ class CloudSyncService(CRUDService):
             if not data["encryption_password"]:
                 verrors.add(f"{name}.encryption_password", "This field is required when encryption is enabled")
 
-            if not data["encryption_salt"]:
-                verrors.add(f"{name}.encryption_salt", "This field is required when encryption is enabled")
-
         credentials = await self._get_credentials(data["credentials"])
+        if not credentials:
+            verrors.add(f"{name}.credentials", "Invalid credentials")
+
+        if verrors:
+            raise verrors
+
         provider = REMOTES[credentials["provider"]]
 
         schema = []
@@ -283,6 +294,11 @@ class CloudSyncService(CRUDService):
 
         verrors.add_child(f"{name}.attributes", attributes_verrors)
 
+        try:
+            shlex.split(data["args"])
+        except ValueError as e:
+            verrors.add(f"{name}.args", f"Parse error: {e.args[0]}")
+
     @private
     async def _validate_folder(self, verrors, name, data):
         if data["direction"] == "PULL":
@@ -293,11 +309,12 @@ class CloudSyncService(CRUDService):
                 folder_basename = os.path.basename(data["attributes"]["folder"].strip("/"))
                 ls = await self.list_directory(dict(
                     credentials=data["credentials"],
-                    encryption=data["encryption"],
-                    filename_encryption=data["filename_encryption"],
-                    encryption_password=data["encryption_password"],
-                    encryption_salt=data["encryption_salt"],
-                    attributes=dict(data["attributes"], folder=folder_parent)
+                    encryption=data.get("encryption"),
+                    filename_encryption=data.get("filename_encryption"),
+                    encryption_password=data.get("encryption_password"),
+                    encryption_salt=data.get("encryption_salt"),
+                    attributes=dict(data["attributes"], folder=folder_parent),
+                    args=data.get("args"),
                 ))
                 for item in ls:
                     if item["Name"] == folder_basename:
@@ -328,6 +345,7 @@ class CloudSyncService(CRUDService):
         Str("encryption_salt"),
         Cron("schedule"),
         Dict("attributes", additional_attrs=True),
+        Str("args", default=""),
         Bool("enabled", default=True),
         register=True,
     ))
@@ -425,6 +443,8 @@ class CloudSyncService(CRUDService):
     @accepts(Int("credentials_id"))
     async def list_buckets(self, credentials_id):
         credentials = await self._get_credentials(credentials_id)
+        if not credentials:
+            raise CallError("Invalid credentials")
 
         provider = REMOTES[credentials["provider"]]
 
@@ -441,6 +461,7 @@ class CloudSyncService(CRUDService):
         Str("encryption_password"),
         Str("encryption_salt"),
         Dict("attributes", additional_attrs=True),
+        Str("args"),
     ))
     async def list_directory(self, cloud_sync):
         verrors = ValidationErrors()

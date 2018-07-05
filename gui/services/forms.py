@@ -690,9 +690,8 @@ class iSCSITargetAuthCredentialForm(MiddlewareModelForm, ModelForm):
         return self._clean_secret_common("iscsi_target_auth_peersecret")
 
     def middleware_clean(self, data):
-        del data['secret2']
-        del data['peersecret2']
-
+        data.pop('secret2', None)
+        data.pop('peersecret2', None)
         return data
 
 
@@ -1168,6 +1167,13 @@ class SMARTForm(MiddlewareModelForm, ModelForm):
     class Meta:
         fields = '__all__'
         model = models.SMART
+
+    def __init__(self, *args, **kwargs):
+        if "instance" in kwargs:
+            kwargs.setdefault("initial", {})
+            kwargs["initial"]["smart_email"] = " ".join(kwargs["instance"].smart_email.split(","))
+
+        super(SMARTForm, self).__init__(*args, **kwargs)
 
     def middleware_clean(self, update):
         update["powermode"] = update["powermode"].upper()

@@ -4,6 +4,8 @@ import subprocess as su
 
 import iocage.lib.iocage as ioc
 import libzfs
+import requests
+import itertools
 from iocage.lib.ioc_check import IOCCheck
 from iocage.lib.ioc_clean import IOCClean
 from iocage.lib.ioc_fetch import IOCFetch
@@ -16,6 +18,7 @@ from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
+from middlewared.client import ClientException
 
 
 class JailService(CRUDService):
@@ -36,33 +39,38 @@ class JailService(CRUDService):
         jails = []
 
         if filters and len(filters) == 1 and list(
-                filters[0][:2]) == ['jail', '=']:
-            jail_identifier = filters[0].pop(2)
+                filters[0][:2]) == ['host_hostuuid', '=']:
+            jail_identifier = filters[0][2]
 
-        recursive = False if jail_identifier is not None else True
+        recursive = False if jail_identifier == 'default' else True
 
         try:
             jail_dicts = ioc.IOCage(
                 jail=jail_identifier).get('all', recursive=recursive)
-            for jail in jail_dicts:
-                jail = list(jail.values())[0]
-                if jail['dhcp'] == 'on':
-                    uuid = jail['host_hostuuid']
 
-                    if jail['state'] == 'up':
-                        interface = jail['interfaces'].split(',')[0].split(
-                            ':')[0]
-                        if interface == 'vnet0':
-                            # Inside jails they are epair0b
-                            interface = 'epair0b'
-                        ip4_cmd = ['jexec', f'ioc-{uuid}', 'ifconfig',
-                                   interface, 'inet']
-                        out = su.check_output(ip4_cmd)
-                        jail['ip4_addr'] = f'{interface}|' \
-                            f'{out.splitlines()[2].split()[1].decode()}'
-                    else:
-                        jail['ip4_address'] = 'DHCP (not running)'
-                jails.append(jail)
+            if jail_identifier == 'default':
+                jail_dicts['host_hostuuid'] = 'default'
+                jails.append(jail_dicts)
+            else:
+                for jail in jail_dicts:
+                    jail = list(jail.values())[0]
+                    if jail['dhcp'] == 'on':
+                        uuid = jail['host_hostuuid']
+
+                        if jail['state'] == 'up':
+                            interface = jail['interfaces'].split(',')[0].split(
+                                ':')[0]
+                            if interface == 'vnet0':
+                                # Inside jails they are epair0b
+                                interface = 'epair0b'
+                            ip4_cmd = ['jexec', f'ioc-{uuid}', 'ifconfig',
+                                       interface, 'inet']
+                            out = su.check_output(ip4_cmd)
+                            jail['ip4_addr'] = f'{interface}|' \
+                                f'{out.splitlines()[2].split()[1].decode()}'
+                        else:
+                            jail['ip4_address'] = 'DHCP (not running)'
+                    jails.append(jail)
         except BaseException:
             # Brandon is working on fixing this generic except, till then I
             # am not going to make the perfect the enemy of the good enough!
@@ -74,14 +82,14 @@ class JailService(CRUDService):
 
     @accepts(
         Dict("options",
-             Str("release"),
+             Str("release", required=True),
              Str("template"),
              Str("pkglist"),
              Str("uuid"),
              Bool("basejail", default=False),
              Bool("empty", default=False),
              Bool("short", default=False),
-             List("props")))
+             List("props", default=[])))
     async def do_create(self, options):
         """Creates a jail."""
         # Typically one would return the created jail's id in this
@@ -98,14 +106,14 @@ class JailService(CRUDService):
     @private
     @accepts(
         Dict("options",
-             Str("release"),
+             Str("release", required=True),
              Str("template"),
              Str("pkglist"),
              Str("uuid"),
              Bool("basejail", default=False),
              Bool("empty", default=False),
              Bool("short", default=False),
-             List("props")))
+             List("props", default=[])))
     @job()
     def create_job(self, job, options):
         iocage = ioc.IOCage(skip_jails=True)
@@ -295,13 +303,13 @@ class JailService(CRUDService):
         Str("jail"),
         Dict(
             "options",
-            Str("action", enum=["ADD", "EDIT", "REMOVE", "REPLACE", "LIST"]),
-            Str("source"),
-            Str("destination"),
-            Str("fstype"),
-            Str("fsoptions"),
-            Str("dump"),
-            Str("pass"),
+            Str("action", enum=["ADD", "EDIT", "REMOVE", "REPLACE", "LIST"], required=True),
+            Str("source", required=True),
+            Str("destination", required=True),
+            Str("fstype", required=True),
+            Str("fsoptions", required=True),
+            Str("dump", required=True),
+            Str("pass", required=True),
             Int("index", default=None),
         ))
     def fstab(self, jail, options):
@@ -361,8 +369,6 @@ class JailService(CRUDService):
             IOCClean().clean_jails()
         elif ds_type == "ALL":
             IOCClean().clean_all()
-        elif ds_type == "RELEASE":
-            pass
         elif ds_type == "TEMPLATE":
             IOCClean().clean_templates()
 
@@ -379,14 +385,17 @@ class JailService(CRUDService):
         host_user = options["host_user"]
         jail_user = options.get("jail_user", None)
 
+        if isinstance(command[0], list):
+            # iocage wants a flat list, not a list inside a list
+            command = list(itertools.chain.from_iterable(command))
+
         # We may be getting ';', '&&' and so forth. Adding the shell for
         # safety.
-
         if len(command) == 1:
             command = ["/bin/sh", "-c"] + command
 
         host_user = "" if jail_user and host_user == "root" else host_user
-        msg = iocage.exec(command, host_user, jail_user, return_msg=True)
+        msg = iocage.exec(command, host_user, jail_user, msg_return=True)
 
         return msg.decode("utf-8")
 
@@ -476,3 +485,68 @@ class JailService(CRUDService):
         IOCImage().import_jail(jail)
 
         return True
+
+    @accepts()
+    def get_plugin_versions(self):
+        """
+        Fetches a list of pkg's from the http://pkg.cdn.trueos.org/iocage/
+        repo and returns a dictionary for each plugin
+        """
+        try:
+            pkgs = self.middleware.call_sync('cache.get', 'iocage_plugin_pkgs')
+
+            return pkgs
+        except ClientException as e:
+            # The jail plugin runs in another process, it's seen as a client
+            if e.trace and e.trace['class'] == 'KeyError':
+                pass  # It's either new or past cache date
+            else:
+                raise(e)
+
+        r_pkgs = requests.get('http://pkg.cdn.trueos.org/iocage/All')
+        r_pkgs.raise_for_status()
+
+        r_plugins = requests.get(
+            'https://raw.githubusercontent.com/freenas/'
+            'iocage-ix-plugins/master/INDEX'
+        )
+        r_plugins.raise_for_status()
+        r_plugins = r_plugins.json()
+
+        pkgs = {
+            'bruserver': ('N/A', '1'),
+            'sickrage': ('Git branch - master', '1')
+        }
+        pkg_dict = {}
+
+        for i in r_pkgs.iter_lines():
+            i = i.decode().split('"')
+
+            try:
+                pkg, version = i[1].rsplit('-', 1)
+                pkg_dict[pkg] = version
+            except (ValueError, IndexError):
+                continue  # It's not a pkg
+
+        for plugin, p_dict in r_plugins.items():
+            try:
+                primary_pkg = p_dict['primary_pkg'].split('/', 1)[-1]
+            except KeyError:
+                continue  # Plugin doesn't have a pkg, like bruserver
+
+            if primary_pkg in pkg_dict:
+                version = pkg_dict[primary_pkg]
+                pkgs[plugin] = (
+                    version.rsplit('%2', 1)[0].replace('.txz', ''),
+                    '1'
+                )
+            else:
+                if plugin not in pkgs:
+                    pkgs[plugin] = ('N/A', 'N/A')
+
+        self.middleware.call_sync(
+            'cache.put', 'iocage_plugin_pkgs', pkgs,
+            1209600
+        )
+
+        return pkgs

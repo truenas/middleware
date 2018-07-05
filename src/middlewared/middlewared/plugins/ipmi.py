@@ -79,7 +79,7 @@ class IPMIService(CRUDService):
         verrors = ValidationErrors()
         if not data.get('dhcp'):
             for k in ['ipaddress', 'netmask', 'gateway']:
-                if k not in data:
+                if not data.get(k):
                     verrors.add(
                         f'ipmi_update.{k}',
                         'This field is required when dhcp is not given'

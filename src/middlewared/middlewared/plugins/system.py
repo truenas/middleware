@@ -80,12 +80,27 @@ class SytemAdvancedService(ConfigService):
                 )
 
         serial_choice = data.get('serialport')
-        if serial_choice:
-            if serial_choice not in await self.serial_port_choices():
+        if data.get('serialconsole'):
+
+            if not serial_choice:
+                verrors.add(
+                    f'{schema}.serialport',
+                    'Please specify a serial port when serial console option is checked'
+                )
+            elif serial_choice not in await self.serial_port_choices():
                 verrors.add(
                     f'{schema}.serialport',
                     'Serial port specified has not been identified by the system'
                 )
+
+        elif not serial_choice:
+            # TODO: THIS CHECK CAN BE REMOVED WHEN WE DISALLOW NONE VALUES IN THE SCHEMA LAYER
+
+            verrors.add(
+                f'{schema}.serialport',
+                'Empty serial port is not allowed'
+            )
+
         return verrors, data
 
     @accepts(

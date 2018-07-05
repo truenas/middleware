@@ -329,6 +329,18 @@ class List(EnumMixin, Attribute):
             schema['type'] = 'array'
         if self.enum is not None:
             schema['enum'] = self.enum
+        items = []
+        for i in self.items:
+            child_schema = i.to_json_schema(self)
+            if isinstance(child_schema['type'], list):
+                for t in child_schema['type']:
+                    items.append({'type': t})
+                    break
+            else:
+                items.append({'type': child_schema['type']})
+        if not items:
+            items.append({'type': 'null'})
+        schema['items'] = items
         return schema
 
     def resolve(self, middleware):

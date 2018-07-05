@@ -842,7 +842,7 @@ class InitialWizard(CommonWizard):
             _n.restart(service)
 
         Update.CreateClone('Wizard-%s' % (
-            datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+            datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         ))
 
         progress['percent'] = 100

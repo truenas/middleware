@@ -1368,7 +1368,10 @@ class ZFSDatasetCommonForm(Form):
         try:
             return int(rs)
         except ValueError:
-            if rs[-1].lower() == 'k':
+            if rs[-1].lower() == 'm':
+                rs = int(rs[:-1]) * 1024 * 1024
+                return rs
+            elif rs[-1].lower() == 'k':
                 rs = int(rs[:-1]) * 1024
                 return rs
 
@@ -1729,8 +1732,12 @@ class ZVol_EditForm(CommonZVol):
             return False
         extents = iSCSITargetExtent.objects.filter(
             iscsi_target_extent_type='ZVOL',
-            iscsi_target_extent_path=f'zvol/{self.parentds}')
-        if extents.exists():
+            iscsi_target_extent_path=f'zvol/{self.name}')
+        if (
+            'volsize' in self.zdata and self.zdata['volsize'][0] and
+            self.zdata['volsize'][0] != self.cleaned_data.get('zvol_volsize', '').upper() and
+            extents.exists()
+        ):
             _n.reload('iscsitarget')
         return True
 

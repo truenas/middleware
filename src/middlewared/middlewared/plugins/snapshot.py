@@ -10,7 +10,7 @@ class PeriodicSnapshotTaskService(CRUDService):
     class Config:
         datastore = 'storage.task'
         datastore_prefix = 'task_'
-        datastore_extend = 'pool.snapshot.periodic_snapshot_extend'
+        datastore_extend = 'pool.snapshottask.periodic_snapshot_extend'
         namespace = 'pool.snapshottask'
 
     @private

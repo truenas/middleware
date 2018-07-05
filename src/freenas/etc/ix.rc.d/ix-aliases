@@ -21,7 +21,7 @@ generate_aliases()
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT $sf FROM account_bsdusers WHERE bsdusr_email != ''" | \
 	while eval read $f; do
-		if grep -q "^${bsdusr_username}" /etc/aliases; then
+		if grep -q "^${bsdusr_username}\b" /etc/aliases; then
 			sed -i '' -E "s/^${bsdusr_username}:.*/${bsdusr_username}: ${bsdusr_email}/" /etc/aliases
         	else
 			echo "${bsdusr_username}: ${bsdusr_email}" >> /etc/aliases

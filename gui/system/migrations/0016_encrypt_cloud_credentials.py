@@ -50,7 +50,7 @@ def encrypt_cloud_credentials(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0015_alert'),
+        ('system', '0009_auto_20171023_2159'),
     ]
 
     operations = [

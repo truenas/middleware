@@ -457,9 +457,16 @@ class ZFSQuoteService(Service):
 
     @periodic(60)
     async def notify_quota_excess(self):
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('notifier.failover_licensed') and
+            await self.middleware.call('notifier.failover_status') == 'BACKUP'
+        ):
+            return
+
         if self.excesses is None:
             self.excesses = {
-                excess["dataset_name"]: excess
+                self.__excess_key(excess): excess
                 for excess in await self.middleware.call('datastore.query', 'storage.quotaexcess')
             }
 
@@ -468,7 +475,7 @@ class ZFSQuoteService(Service):
         # Remove gone excesses
         self.excesses = dict(
             filter(
-                lambda item: any(excess["dataset_name"] == item[0] for excess in excesses),
+                lambda item: any(self.__excess_key(excess) == item[0] for excess in excesses),
                 self.excesses.items()
             )
         )
@@ -476,14 +483,14 @@ class ZFSQuoteService(Service):
         # Insert/update present excesses
         for excess in excesses:
             notify = False
-            existing_excess = self.excesses.get(excess["dataset_name"])
+            existing_excess = self.excesses.get(self.__excess_key(excess))
             if existing_excess is None:
                 notify = True
             else:
                 if existing_excess["level"] < excess["level"]:
                     notify = True
 
-            self.excesses[excess["dataset_name"]] = excess
+            self.excesses[self.__excess_key(excess)] = excess
 
             if notify:
                 try:
@@ -596,7 +603,17 @@ class ZFSQuoteService(Service):
             "uid": uid,
         }
 
+    def __excess_key(self, excess):
+        return excess["dataset_name"], excess["quota_type"]
+
     async def terminate(self):
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('notifier.failover_licensed') and
+            await self.middleware.call('notifier.failover_status') == 'BACKUP'
+        ):
+            return
+
         await self.middleware.call('datastore.delete', 'storage.quotaexcess', [])
 
         if self.excesses is not None:

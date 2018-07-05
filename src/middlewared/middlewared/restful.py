@@ -126,6 +126,7 @@ class OpenAPIResource(object):
 
     def __init__(self, rest):
         self.rest = rest
+        self.rest.app.router.add_route('GET', '/api/v2.0', self.get)
         self.rest.app.router.add_route('GET', '/api/v2.0/', self.get)
         self.rest.app.router.add_route('GET', '/api/v2.0/openapi.json', self.get)
         self._paths = defaultdict(dict)
@@ -223,6 +224,18 @@ class OpenAPIResource(object):
         if _type == 'object':
             for key, val in schema['properties'].items():
                 schema['properties'][key] = self._convert_schema(val)
+        elif _type == 'array':
+            items = schema.get('items')
+            for i, item in enumerate(list(items)):
+                if item.get('type') == 'null':
+                    items.remove(item)
+            if isinstance(items, list):
+                if len(items) > 1:
+                    schema['items'] = {'oneOf': items}
+                elif len(items) > 0:
+                    schema['items'] = items[0]
+                else:
+                    schema['items'] = {}
         return schema
 
     def _accepts_to_request(self, methodname, method, schemas):
@@ -321,6 +334,7 @@ class Resource(object):
             operation = getattr(self, i)
             if operation is None:
                 continue
+            self.rest.app.router.add_route(i.upper(), f'/api/v2.0/{path}', getattr(self, f'on_{i}'))
             self.rest.app.router.add_route(i.upper(), f'/api/v2.0/{path}/', getattr(self, f'on_{i}'))
             self.rest._openapi.add_path(path, i, operation)
             self.__map_method_params(operation)
@@ -463,12 +477,19 @@ class Resource(object):
                             method_args = []
                             for p, options in sorted(params.items(), key=lambda x: x[1]['order']):
                                 if p not in data and options['required']:
+                                    resp.set_status(400)
                                     resp.body = json.dumps({
                                         'message': f'{p} attribute expected.',
                                     })
                                     return resp
                                 elif p in data:
-                                    method_args.append(data[p])
+                                    method_args.append(data.pop(p))
+                            if data:
+                                resp.set_status(400)
+                                resp.body = json.dumps({
+                                    'message': f'The following attributes are not expected: {", ".join(data.keys())}',
+                                })
+                                return resp
                 except Exception as e:
                     resp.set_status(400)
                     resp.body = json.dumps({

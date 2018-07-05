@@ -89,9 +89,8 @@ def test_08_Creating_a_cifs_share_on_smb_PATH():
                "name": SMB_NAME,
                "guestok": True,
                "vfsobjects": ["streams_xattr"]}
-    results = POST("/sharing/cifs", payload)
+    results = POST("/sharing/smb/", payload)
     assert results.status_code == 200, results.text
-
 
 
 @mount_test_cfg
@@ -227,9 +226,6 @@ def test_24_removing_smb_mountpoint_on_bsd():
     assert results['result'] is True, results['output']
 
 
-# TO DO adding some osx update test for smb and cifs
-
-
 def test_25_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop", payload)
@@ -248,10 +244,10 @@ def test_27_update_smb():
     assert results.status_code == 200, results.text
 
 
-# def test_28_update_cifs_share():
-#     cifsid = GET(f'/sharing/cifs?name={SMB_NAME}').json()[0]['id']
-#     results = PUT(f"/sharing/cifs/id/{cifsid}", {"home": False})
-#     assert results.status_code == 200, results.text
+def test_28_update_cifs_share():
+    smbid = GET(f'/sharing/smb/?name={SMB_NAME}').json()[0]['id']
+    results = PUT(f"/sharing/smb/id/{smbid}", {"home": False})
+    assert results.status_code == 200, results.text
 
 
 def test_29_starting_cifs_service():
@@ -388,8 +384,8 @@ def test_44_Removing_smb_mountpoint_on_osx():
 
 
 def test_45_delete_cifs_share():
-    cifsid = GET(f'/sharing/cifs?name={SMB_NAME}').json()[0]['id']
-    results = DELETE(f"/sharing/cifs/id/{cifsid}")
+    smbid = GET(f'/sharing/smb/?name={SMB_NAME}').json()[0]['id']
+    results = DELETE(f"/sharing/smb/id/{smbid}")
     assert results.status_code == 200, results.text
 
 

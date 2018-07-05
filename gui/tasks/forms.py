@@ -27,7 +27,7 @@ class CloudSyncForm(ModelForm):
     )
 
     class Meta:
-        exclude = ('credential', )
+        exclude = ('credential', 'args')
         fields = '__all__'
         model = models.CloudSync
         widgets = {
@@ -302,8 +302,8 @@ class RsyncForm(MiddlewareModelForm, ModelForm):
         )
 
     def middleware_clean(self, update):
-        update['month'] = self.data.getlist("rsync_month")
-        update['dayweek'] = self.data.getlist("rsync_dayweek")
+        update['month'] = self.cleaned_data.get("rsync_month")
+        update['dayweek'] = self.cleaned_data.get("rsync_dayweek")
         update['extra'] = update["extra"].split()
         update['schedule'] = {
             'minute': update.pop('minute'),

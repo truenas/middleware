@@ -116,16 +116,16 @@ class SMBService(SystemServiceService):
         return await self.config()
 
 
-class SharingCIFSService(CRUDService):
+class SharingSMBService(CRUDService):
     class Config:
-        namespace = 'sharing.cifs'
+        namespace = 'sharing.smb'
         datastore = 'sharing.cifs_share'
         datastore_prefix = 'cifs_'
-        datastore_extend = 'sharing.cifs.extend'
+        datastore_extend = 'sharing.smb.extend'
 
     @accepts(Dict(
-        'sharingcifs_create',
-        Str('path'),
+        'sharingsmb_create',
+        Str('path', required=True),
         Bool('home', default=False),
         Str('name'),
         Str('comment'),
@@ -150,11 +150,11 @@ class SharingCIFSService(CRUDService):
 
         default_perms = data.pop('default_permissions', True)
 
-        await self.clean(data, 'sharingcifs_create', verrors)
-        await self.validate(data, 'sharingcifs_create', verrors)
+        await self.clean(data, 'sharingsmb_create', verrors)
+        await self.validate(data, 'sharingsmb_create', verrors)
 
         await check_path_resides_within_volume(
-            verrors, self.middleware, "sharingcifs_create.path", path)
+            verrors, self.middleware, "sharingsmb_create.path", path)
 
         if verrors:
             raise verrors
@@ -180,14 +180,14 @@ class SharingCIFSService(CRUDService):
     @accepts(
         Int('id'),
         Patch(
-            'sharingcifs_create',
-            'sharingcifs_update',
+            'sharingsmb_create',
+            'sharingsmb_update',
             ('attr', {'update': True})
         )
     )
     async def do_update(self, id, data):
         verrors = ValidationErrors()
-        path = data['path']
+        path = data.get('path')
         default_perms = data.pop('default_permissions', False)
 
         old = await self.middleware.call(
@@ -199,11 +199,12 @@ class SharingCIFSService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        await self.clean(new, 'sharingcifs_update', verrors, id=id)
-        await self.validate(new, 'sharingcifs_update', verrors, old=old)
+        await self.clean(new, 'sharingsmb_update', verrors, id=id)
+        await self.validate(new, 'sharingsmb_update', verrors, old=old)
 
-        await check_path_resides_within_volume(
-            verrors, self.middleware, "sharingcifs_update.path", path)
+        if path:
+            await check_path_resides_within_volume(
+                verrors, self.middleware, "sharingsmb_update.path", path)
 
         if verrors:
             raise verrors
@@ -323,53 +324,41 @@ class SharingCIFSService(CRUDService):
             await self.middleware.call(
                 'notifier.winacl_reset', path, owner, group)
 
-    async def get_storage_tasks(self, path=None, home=False):
-        zfs_datasets = await self.middleware.call('zfs.dataset.query')
+    @accepts(Str('path', required=True))
+    async def get_storage_tasks(self, path):
+        zfs_datasets = await self.middleware.call('zfs.dataset.query', [('type', '=', 'FILESYSTEM')])
         task_list = []
         task_dict = {}
 
-        if path:
-            for ds in zfs_datasets:
-                tasks = []
-                name = ds['name']
-                fs_type = ds['properties']['type']['parsed']
+        for ds in zfs_datasets:
+            tasks = []
+            name = ds['name']
+            mountpoint = ds['properties']['mountpoint']['parsed']
 
-                if fs_type != "filesystem":
-                    continue
+            if path == mountpoint:
+                tasks = await self.middleware.call(
+                    'datastore.query', 'storage.task',
+                    [['task_filesystem', '=', name]])
+            elif path.startswith(f'{mountpoint}/'):
+                tasks = await self.middleware.call(
+                    'datastore.query', 'storage.task',
+                    [['task_filesystem', '=', name],
+                     ['task_recursive', '=', 'True']])
 
-                mountpoint = ds['properties']['mountpoint']['parsed']
+            task_list.extend(tasks)
 
-                if path == mountpoint or path.startswith(f'{mountpoint}/'):
-                    if mountpoint == path:
-                        tasks = await self.middleware.call(
-                            'datastore.query', 'storage.task',
-                            [['task_filesystem', '=', name]])
-                    else:
-                        tasks = await self.middleware.call(
-                            'datastore.query', 'storage.task',
-                            [['task_filesystem', '=', name],
-                             ['task_recursive', '=', 'True']])
+        for task in task_list:
+            task_id = task['id']
+            fs = task['task_filesystem']
+            retcount = task['task_ret_count']
+            retunit = task['task_ret_unit']
+            _interval = task['task_interval']
+            interval = dict(await self.middleware.call(
+                'notifier.choices', 'TASK_INTERVAL'))[_interval]
 
-                for t in tasks:
-                    task_list.append(t)
-        elif home:
-            task_list = await self.middleware.call(
-                'datastore.query', 'storage.task',
-                [['task_recursive', '=', 'True']])
+            msg = f'{fs} - every {interval} - {retcount}{retunit}'
 
-        if task_list:
-            for task in task_list:
-                task_id = task['id']
-                fs = task['task_filesystem']
-                retcount = task['task_ret_count']
-                retunit = task['task_ret_unit']
-                _interval = task['task_interval']
-                interval = dict(await self.middleware.call(
-                    'notifier.choices', 'TASK_INTERVAL'))[_interval]
-
-                msg = f'{fs} - every {interval} - {retcount}{retunit}'
-
-                task_dict[task_id] = msg
+            task_dict[task_id] = msg
 
         return task_dict
 

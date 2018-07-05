@@ -982,7 +982,33 @@ async def configure_http_proxy(middleware, *args, **kwargs):
     urllib.request.install_opener(None)
 
 
+async def _event_ifnet(middleware, event_type, args):
+    data = args['data']
+    if data.get('system') != 'IFNET' or data.get('type') != 'ATTACH':
+        return
+
+    iface = data.get('subsystem')
+    if not iface:
+        return
+
+    iface = await middleware.call('interfaces.query', [('name', '=', iface)])
+    if not iface:
+        return
+
+    iface = iface[0]
+    # We only want to sync physical interfaces that are hot-plugged,
+    # not cloned interfaces with might be a race condition with original devd.
+    # See #33294 as an example.
+    if iface['cloned']:
+        return
+
+    await middleware.call('interfaces.sync_interface', iface['name'])
+
+
 async def setup(middleware):
     # Configure http proxy on startup and on network.config events
     asyncio.ensure_future(configure_http_proxy(middleware))
     middleware.event_subscribe('network.config', configure_http_proxy)
+
+    # Listen to IFNET events so we can sync on interface attach
+    middleware.event_subscribe('devd.ifnet', _event_ifnet)

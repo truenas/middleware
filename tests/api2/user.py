@@ -56,8 +56,8 @@ def test_08_look_user_shell():
 
 def test_09_add_employe_id_and_team_special_atributes():
     userid = GET('/user?username=testuser').json()[0]['id']
-    payload = {'Employe ID': 'TU1234',
-               'Team': 'QA'}
+    payload = {'key': 'Employe ID', 'value': 'TU1234',
+               'key': 'Team', 'value': 'QA'}
     results = POST("/user/id/%s/set_attribute" % userid, payload)
     assert results.status_code == 200, results.text
 
@@ -118,7 +118,7 @@ def test_18_remove_old_team_special_atribute():
 
 def test_19_add_new_team_to_special_atribute():
     userid = GET('/user?username=testuser').json()[0]['id']
-    payload = {'Team': 'QC'}
+    payload = {'key': 'Team', 'value': 'QA'}
     results = POST("/user/id/%s/set_attribute" % userid, payload)
     assert results.status_code == 200, results.text
 

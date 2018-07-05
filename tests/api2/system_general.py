@@ -48,31 +48,31 @@ def test_05_get_system_general_kbdmap_choices():
     assert isinstance(data, dict), data
 
 
-# def test_06_Setting_timezone():
-#     results = PUT("/system/general/", {"timezone": TIMEZONE})
-#     assert results.status_code == 200, results.text
+def test_06_Setting_timezone():
+    results = PUT("/system/general/", {"timezone": TIMEZONE})
+    assert results.status_code == 200, results.text
 
 
-# def test_07_Checking_timezone_using_api():
-#     results = GET("/system/general/")
-#     assert results.status_code == 200, results.text
-#     data = results.json()
-#     assert data['timezone'] == TIMEZONE
+def test_07_Checking_timezone_using_api():
+    results = GET("/system/general/")
+    assert results.status_code == 200, results.text
+    data = results.json()
+    assert data['timezone'] == TIMEZONE
 
 
-# def test_08_Checking_timezone_using_ssh():
-#     results = SSH_TEST(f'diff /etc/localtime /usr/share/zoneinfo/{TIMEZONE}',
-#                        user, password, ip)
-#     assert results['result'] is True, results
+def test_08_Checking_timezone_using_ssh():
+    results = SSH_TEST(f'diff /etc/localtime /usr/share/zoneinfo/{TIMEZONE}',
+                       user, password, ip)
+    assert results['result'] is True, results
 
 
-# def test_09_Setting_sysloglevel():
-#     results = PUT("/system/general/", {"sysloglevel": SYSLOGLEVEL})
-#     assert results.status_code == 200, results.text
+def test_09_Setting_sysloglevel():
+    results = PUT("/system/general/", {"sysloglevel": SYSLOGLEVEL})
+    assert results.status_code == 200, results.text
 
 
-# def test_10_Checking_sysloglevel_using_api():
-#     results = GET("/system/general/")
-#     assert results.status_code == 200, results.text
-#     data = results.json()
-#     assert data['sysloglevel'] == SYSLOGLEVEL
+def test_10_Checking_sysloglevel_using_api():
+    results = GET("/system/general/")
+    assert results.status_code == 200, results.text
+    data = results.json()
+    assert data['sysloglevel'] == SYSLOGLEVEL

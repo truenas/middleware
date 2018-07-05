@@ -161,14 +161,21 @@ class Service(object, metaclass=ServiceBase):
 
 class ServiceChangeMixin:
     async def _service_change(self, service, verb):
-        enabled = (await self.middleware.call(
-            'datastore.query', 'services.services', [('srv_service', '=', service)], {'get': True}
-        ))['srv_enable']
 
-        started = await self.middleware.call(f'service.{verb}', service, {'onetime': False})
+        svc_state = (await self.middleware.call(
+            'service.query',
+            [('service', '=', service)],
+            {'get': True}
+        ))['state'].lower()
 
-        if enabled and not started:
-            raise CallError(f'The {service} service failed to start', CallError.ESERVICESTARTFAILURE)
+        if svc_state == 'running':
+            started = await self.middleware.call(f'service.{verb}', service, {'onetime': True})
+
+            if not started:
+                raise CallError(
+                    f'The {service} service failed to start',
+                    CallError.ESERVICESTARTFAILURE
+                )
 
 
 class ConfigService(ServiceChangeMixin, Service):
