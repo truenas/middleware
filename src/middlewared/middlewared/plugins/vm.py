@@ -43,7 +43,7 @@ class VMManager(object):
         vm = await self.service.query([('id', '=', id)], {'get': True})
         self._vm[id] = VMSupervisor(self, vm)
 
-        await asyncio.ensure_future(self._vm[id].run())
+        asyncio.ensure_future(self._vm[id].run())
 
     async def stop(self, id, force=False):
         supervisor = self._vm.get(id)
@@ -244,11 +244,8 @@ class VMSupervisor(object):
         self.proc = await Popen(
                 args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-        bhyve_output = []
-
         while True:
             line = await self.proc.stdout.readline()
-            bhyve_output.append(line)
 
             if line == b'':
                 break
@@ -266,7 +263,7 @@ class VMSupervisor(object):
             self.logger.info("===> Rebooting VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             await self.manager.restart(self.vm['id'])
             await self.manager.start(self.vm['id'])
-        elif self.bhyve_error == 1 and len(bhyve_output) >= 3:
+        elif self.bhyve_error == 1:
             # XXX: Need a better way to handle the vmm destroy.
             self.logger.info("===> Powered off VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             await self.__teardown_guest_vmemory(self.vm['id'])
@@ -280,8 +277,6 @@ class VMSupervisor(object):
             # (length of bhyve_output is 2 or less)
             msg = f'===> Error VM: {self.vm["name"]} ID: {self.vm["id"]}' \
                 f' BHYVE_CODE: {self.bhyve_error}'
-            if len(bhyve_output) < 3:
-                msg += f' MESSAGE: {bhyve_output[-2].decode()}'
 
             await self.__teardown_guest_vmemory(self.vm['id'])
             await self.destroy_vm()
