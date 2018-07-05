@@ -64,6 +64,8 @@ define([
       taskSchemas: {},
       templateString: template,
       _buckets: null,
+      _bucketsInput: null,
+      _hadBuckets: false,
       _folder: null,
       postCreate: function() {
 
@@ -113,8 +115,7 @@ define([
                 },
                 function(error) {
                   me._hideLoading();
-                  me.dapProviderError.innerHTML = "Error " + error.error + "<pre style='white-space: pre-wrap;'>" + entities.encode(error.reason) + "</pre>";
-                  domStyle.set(me.dapProviderError, "display", "");
+                  me.setupProviderAttributes(value, null, error);
                 }
               )
             } else {
@@ -146,26 +147,42 @@ define([
         this._standby.show();
       },
       hideAll: function() {
-        domStyle.set(this.dapProviderError, "display", "none");
       },
-      setupProviderAttributes: function(credentialId, buckets) {
+      setupProviderAttributes: function(credentialId, buckets, bucketsError) {
         if (this.buckets[credentialId]) {
-          var options = [{label: "-----", value: ""}];
-          for(var i=0;i<buckets.length;i++) {
-            options.push({label: buckets[i].Name, value: buckets[i].Name});
+          if (buckets !== null)
+          {
+            this._hadBuckets = true;
+            var options = [{label: "-----", value: ""}];
+            for(var i=0;i<buckets.length;i++) {
+              options.push({label: buckets[i].Name, value: buckets[i].Name});
+            }
+            domStyle.set(this.dapBucket, "display", "block");
+            domStyle.set(this.dapBucketInput, "display", "none");
+            if (this._buckets == null) {
+              this._buckets = new Select({
+                name: "bucket",
+                options: options,
+                value: ''
+              }, this.dapBuckets);
+            }
+            this._buckets.set('options', options);
+            if(this.initial.bucket) this._buckets.set('value', this.initial.bucket);
+          } else {
+            this._hadBuckets = false;
+            domStyle.set(this.dapBucket, "display", "none");
+            domStyle.set(this.dapBucketInput, "display", "block");
+            if (this._bucketsInput == null) {
+              this._bucketsInput = new TextBox({
+                name: "bucket",
+              }, this.dapBucketsInput);
+            }
+            this.dapBucketInputError.innerHTML = "Error " + bucketsError.error + "<pre style='white-space: pre-wrap;'>" + entities.encode(bucketsError.reason) + "</pre>Please enter bucket name manually:";
+            if(this.initial.bucket) this._bucketsInput.set('value', this.initial.bucket);
           }
-          domStyle.set(this.dapBucket, "display", "block");
-          if (this._buckets == null) {
-            this._buckets = new Select({
-              name: "bucket",
-              options: options,
-              value: ''
-            }, this.dapBuckets);
-          }
-          this._buckets.set('options', options);
-          if(this.initial.bucket) this._buckets.set('value', this.initial.bucket);
         } else {
           domStyle.set(this.dapBucket, "display", "none");
+          domStyle.set(this.dapBucketInput, "display", "none");
         }
 
         if (this._folder == null) {
@@ -212,7 +229,11 @@ define([
         if(this._credential) value['credential'] = this._credential.get('value');
         if(value.credential) {
           if (this.buckets[value.credential]) {
-            if(this._buckets) value['bucket'] = this._buckets.get('value');
+            if (this._hadBuckets) {
+              if(this._buckets) value['bucket'] = this._buckets.get('value');
+            } else {
+              if(this._bucketsInput) value['bucket'] = this._bucketsInput.get('value');
+            }
           }
           for (var i = 0; i < this.taskSchemas[value.credential].length; i++)
           {
