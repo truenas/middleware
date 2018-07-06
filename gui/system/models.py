@@ -1177,37 +1177,6 @@ class Support(Model):
         return self.is_available(support=self)[0] and self.enabled
 
 
-class JWKRSAKey(models.Model):
-    # Keys saved which have 2048 as key_size and public_exponent is 65537
-    jwk_n = models.CharField(
-        max_length=343
-    )
-    jwk_e = models.CharField(
-        max_length=5
-    )
-    jwk_d = models.CharField(
-        max_length=343
-    )
-    jwk_p = models.CharField(
-        max_length=172
-    )
-    jwk_q = models.CharField(
-        max_length=172
-    )
-    jwk_dp = models.CharField(
-        max_length=172
-    )
-    jwk_dq = models.CharField(
-        max_length=172
-    )
-    jwk_qi = models.CharField(
-        max_length=172
-    )
-    jwk_kty = models.CharField(
-        max_length=10
-    )
-
-
 class ACMERegistrationBody(models.Model):
     registration_body_contact = models.EmailField(
         verbose_name='Contact Email'
@@ -1216,9 +1185,12 @@ class ACMERegistrationBody(models.Model):
         verbose_name='Status',
         max_length=10
     )
-    registration_body_key = models.ForeignKey(
-        'JWKRSAKey',
-        on_delete=models.CASCADE
+    registration_body_key = models.TextField(
+        verbose_name='JWKRSAKey'
+    )
+    registration_body_acme = models.ForeignKey(
+        'ACMERegistration',
+        on_delete=models.CASCADE,
     )
 
 
@@ -1227,16 +1199,11 @@ class ACMERegistration(models.Model):
         verbose_name='URI'
     )
     acme_directory = models.URLField(
-        verbose_name='Directory URI'
+        verbose_name='Directory URI',
+        unique=True  # Is this the right step ?
     )
     acme_tos = models.URLField(
         verbose_name='Terms of Service'
-    )
-    acme_body = models.ForeignKey(
-        'ACMERegistrationBody',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
     )
     acme_new_account_uri = models.URLField(
         verbose_name='New Account Uri'
@@ -1249,6 +1216,27 @@ class ACMERegistration(models.Model):
     )
     acme_revoke_cert_uri = models.URLField(
         verbose_name='Revoke Certificate Uri'
+    )
+
+
+# FIXME: THIS SHOULD BE REMOVED AND FREENAS CLOUD CREDENTIALS BE USED INSTEAD
+class DNSAuthenticator(models.Model):
+    dns_authenticator = models.CharField(
+        max_length=64,
+        unique=True  # is this the right step ?
+    )
+
+
+class DNSAuthenticatorCredentials(models.Model):
+    dns_credentials_key = models.CharField(
+        max_length='64'
+    )
+    dns_credentials_value = models.CharField(
+        max_length=128
+    )
+    dns_credentials_authenticator = models.ForeignKey(
+        'DNSAuthenticator',
+        on_delete=models.CASCADE
     )
 
 
