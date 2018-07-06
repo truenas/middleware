@@ -1,9 +1,10 @@
+import datetime
 import josepy as jose
 import json
 import requests
 
 from middlewared.schema import Bool, Dict, Int, List, Ref, Str, ValidationErrors
-from middlewared.service import accepts, CRUDService
+from middlewared.service import accepts, CRUDService, Service
 
 from acme import client
 from acme import messages
@@ -197,16 +198,24 @@ class ACMEService(CRUDService):
         datastore = 'system.certificate'
         datastore_prefix = 'cert_'
 
+    @accepts()
+    async def supported_dns_authenticators(self):
+        return [
+            'ROUTE53'
+        ]
+
     @accepts(
         Dict(
             'acme_create',
             Bool('tos', default=False),
             Int('csr_id', required=True),
             Str('directory_uri', required=True),
-            Str('name', required=True)
+            Str('name', required=True),
+            Dict('domain_dns_mapping', additional_attrs=True)
         )
     )
     def do_create(self, data):
+        #TODO: THIS SHOULD BE A JOB ?
         verrors = ValidationErrors()
 
         csr_data = self.middleware.call_sync(
@@ -216,12 +225,12 @@ class ACMEService(CRUDService):
 
         if not csr_data:
             verrors.add(
-                'acme.csr_id',
+                'acme_create.csr_id',
                 'Specified CSR does not exist on FreeNAS system'
             )
         elif not csr_data[0]['CSR']:
             verrors.add(
-                'acme.csr_id',
+                'acme_create.csr_id',
                 'Please provide a valid CSR id'
             )
         else:
@@ -240,145 +249,111 @@ class ACMEService(CRUDService):
                 challenge = chg
 
         token = challenge.validation(key)
-        # FOR NOW ASSUMING THAT WE ONLY HAVE COMMON NAME IN CSR AND NO SAN values
+
+        # For now, lets only allow dns validation for dns providers we have an authenticator plugin for
 
         domains = [csr_data['common']]
+        domains.extend(csr_data['san'])
+        CLOUD_PROVIDER_LIST = ['ROUTE53']  # We can query this from cloudsync.providers / acme.supported_dns_authenticators
+                                           # For now assuming that we will use the first credentials we find for
+                                           # cloudsync.provider
         for domain in domains:
-            pass
+            if domain not in data['domain_dns_mapping']:
+                verrors.add(
+                    'acme_create.domain_dns_mapping',
+                    f'Please provide DNS authenticator for {domain}'
+                )
+            elif data['domain_dns_mapping'][domain] not in CLOUD_PROVIDER_LIST:
+                verrors.add(
+                    'acme_create.domain_dns_mapping',
+                    f'Please provide valid DNS Authenticator for {domain}'
+                )
 
-    def handle_authorizations(self, order, domain_names):
+        if verrors:
+            raise verrors
+
+        self.handle_authorizations(order, data['domain_dns_mapping'], acme_client, key)
+
+        # Polling for a maximum of 10 minutes while trying to finalize order
+        # Should we try .poll() instead first ? research please
+        final_order = acme_client.poll_and_finalize(order, datetime.datetime.now() + datetime.timedelta(minutes=10))
+
+        cert_chain = final_order.fullchain_pem
+        pprint(cert_chain)
+        pprint(json.loads(final_order.json_dumps()))
+
+        # save cert and other useful attributes
+        return True
+
+    # TODO: THIS SHOULD BE A JOB ?
+    def handle_authorizations(self, order, domain_names_dns_mapping, acme_client, key):
+        # When this is called, it should be ensured by the function calling this function that for all authorization
+        # resource, a domain name dns mapping is available
         # For multiple domain providers in domain names, I think we should ask the end user to specify which domain
         # provider is used for which domain so authorizations can be handled gracefully
         # https://serverfault.com/questions/906407/lets-encrypt-dns-challenge-with-multiple-public-dns-providers
-        pass
+        verrors = ValidationErrors()
+
+        for authorization_resource in order.authorizations:
+            domain = authorization_resource.body.identifier.value  # TODO: handle wildcards
+            challenge = None
+            for chg in authorization_resource.body.challenges:
+                if chg.typ == 'dns-01':
+                    challenge = chg
+
+            if not challenge:
+                verrors.add(
+                    f'acme.domain',
+                    f'DNS Challenge not found for domain {authorization_resource.body.identifier.value}'
+                )
+
+                raise verrors
+
+            token = challenge.validation(key)
+
+            self.middleware.call_sync(
+                'dns.authenticator.update_txt_record', {
+                    'authenticator_service': domain_names_dns_mapping[domain],
+                    'txt_record': token
+                }
+            )
+
+            acme_client.answer_challenge(challenge, challenge.response(key))
 
 
-
-class DNSAuthenticatorService(CRUDService):
+class DNSAuthenticatorService(Service):
 
     class Config:
         namespace = 'dns.authenticator'
-        datastore = 'system.dnsauthenticator'
-        datastore_prefix = 'dns_'
-        datastore_extend = 'dns.authenticator.authenticator_extend'
 
-    async def authenticator_extend(self, data):
-        data['keys'] = {
-            key: value for obj in
-            await self.middleware.call(
-                'datastore.query',
-                'system.dnsauthenticatorcredentials',
-                [['authenticator', '=', data['id']]],
-                {'prefix': 'dns_credentials_'}
-            ) for key, value in obj.items() if key != 'id'
-        }
-        return data
-
-    # FIXME: THIS SHOULD BE REMOVED AND FREENAS CLOUD CREDENTIALS BE USED INSTEAD
     @accepts(
         Dict(
-            'dns_authenticator_create',
-            Str('service', required=True),
-            List('keys', items=[Dict(
-                'dns_authenticator_credential',
-                Str('key', required=True),
-                Str('value', required=True),
-                register=True
-            )], default=[])
+            'update_txt_record',
+            Str('authenticator_service', required=True),
+            Str('txt_record', required=True)
         )
     )
-    async def do_create(self, data):
-        id = await self.middleware.call(
-            'datastore.insert',
-            self._config.datastore,
-            {'authenticator': data['service']},
-            {'prefix': self._config.datastore_prefix}
-        )
-        for credential_pair in data['keys']:
-            await self.middleware.call(
-                'datastore.insert',
-                'system.dnsauthenticatorcredentials',
-                {'key': credential_pair['key'], 'value': credential_pair['value'], 'authenticator': id},
-                {'prefix': 'dns_credentials_'}
-            )
-
-        return self._get_instance(id)
-
-    @accepts(
-        Int('id', required=True),
-        List('keys', items=[Ref('dns_authenticator_credential')], required=True)
-    )
-    async def do_update(self, id, data):
-        # If a key is provided which does not exist before, for now we will not insert that key in db
-        # only existing keys values would be updated
-        for credential_pair in data:
-            key_id = await self.middleware.call(
-                'datastore.query',
-                'system.dnsauthenticatorcredentials',
-                [
-                    ['key', '=', credential_pair['key']],
-                    ['authenticator', '=', id],
-                    ['value', '!=', credential_pair['value']]
-                 ],
-                {'prefix': 'dns_credentials_'}
-            )
-            if key_id:
-                await self.middleware.call(
-                    'datastore.update',
-                    'system.dnsauthenticatorcredentials',
-                    key_id[0]['id'],
-                    {'value': credential_pair['value']},
-                    {'prefix': 'dns_credentials_'}
-                )
-
-        return self._get_instance(id)
-
-    @accepts(
-        Int('id', required=True)
-    )
-    async def do_delete(self, id):
-        for key_id in [o['id'] for o in
-            await self.middleware.call(
-                'datastore.query', 'system.dnsauthenticatorcredentials',
-                [['authenticator', '=', id]]
-            )
-        ]:
-            await self.middleware.call(
-                'datastore.delete',
-                'system.dnsauthenticatorcredentials',
-                key_id
-            )
-
-        return await self.middleware.call(
-            'datastore.delete',
-            self._config.datastore,
-            id
-        )
-
-    def update_txt_record(self, authenticator_service, txt_record):
+    def update_txt_record(self, data):
         verrors = ValidationErrors()
 
         authenticator = self.middleware.call_sync(
-            'dns.authenticator.query',
-            [['authenticator', '=', authenticator_service]]
+            'acme.supported_dns_authenticators',
         )
 
-        if not authenticator:
+        if data['authenticator_service'] not in authenticator:
             verrors.add(
                 'dns_authenticator_update_record.authenticator',
-                'Please provide a valid authenticator service'
+                f'{data["authenticator_service"]} not a supported authenticator service'
             )
-        else:
-            authenticator = authenticator[0]
 
         if verrors:
             raise verrors
 
         return self.__getattribute__(
-            f'update_txt_record_{authenticator_service}'
-        )(txt_record, authenticator['keys'])  # THIS SHOULD BE GOOD - test this please
+            f'update_txt_record_{data["authenticator_service"].lower()}'
+        )(data['txt_record'])  # THIS SHOULD BE GOOD - test this please
 
-    def update_txt_record_aws(self, txt_record, credentials):
+    def update_txt_record_route53(self, txt_record):
         # waiting for access keys to test boto record updates
         import time
         time.sleep(5*60)

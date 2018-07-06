@@ -1219,27 +1219,6 @@ class ACMERegistration(models.Model):
     )
 
 
-# FIXME: THIS SHOULD BE REMOVED AND FREENAS CLOUD CREDENTIALS BE USED INSTEAD
-class DNSAuthenticator(models.Model):
-    dns_authenticator = models.CharField(
-        max_length=64,
-        unique=True  # is this the right step ?
-    )
-
-
-class DNSAuthenticatorCredentials(models.Model):
-    dns_credentials_key = models.CharField(
-        max_length='64'
-    )
-    dns_credentials_value = models.CharField(
-        max_length=128
-    )
-    dns_credentials_authenticator = models.ForeignKey(
-        'DNSAuthenticator',
-        on_delete=models.CASCADE
-    )
-
-
 class Filesystem(Model):
     identifier = models.CharField(max_length=255, unique=True)
 
