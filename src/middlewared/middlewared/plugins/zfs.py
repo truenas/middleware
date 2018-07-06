@@ -205,6 +205,21 @@ class ZFSPoolService(CRUDService):
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
 
+    @accepts(Str('pool'), Str('label'))
+    def offline(self, name, label):
+        """
+        Offline device `label` from the pool `pool`.
+        """
+        try:
+            with libzfs.ZFS() as zfs:
+                pool = zfs.get(name)
+                target = find_vdev(pool, label)
+                if target is None:
+                    raise CallError(f'Failed to find vdev for {label}', errno.EINVAL)
+                target.offline()
+        except libzfs.ZFSException as e:
+            raise CallError(str(e), e.code)
+
     @accepts(Str('pool'), Str('label'), Str('dev'))
     def replace(self, name, label, dev):
         """
