@@ -716,26 +716,11 @@ class notifier(metaclass=HookMetaclass):
             self.__gpt_unlabeldisk(devname=disk)
 
     def zfs_offline_disk(self, volume, label):
-        from freenasUI.storage.models import EncryptedDisk
-
-        # TODO: Test on real hardware to see if ashift would persist across replace
-        disk = self.label_to_disk(label)
-
-        with client as c:
-            c.call('disk.swaps_remove_disks', [disk])
-
-        # Replace in-place
-        p1 = self._pipeopen('/sbin/zpool offline %s %s' % (volume.vol_name, label))
-        stderr = p1.communicate()[1]
-        if p1.returncode != 0:
-            error = ", ".join(stderr.split('\n'))
-            raise MiddlewareError('Disk offline failed: "%s"' % error)
-        if label.endswith(".eli"):
-            self._system("/sbin/geli detach /dev/%s" % label)
-            EncryptedDisk.objects.filter(
-                encrypted_volume=volume,
-                encrypted_provider=label[:-4]
-            ).delete()
+        try:
+            with client as c:
+                c.call('pool.offline', volume.id, {'label': label})
+        except Exception as e:
+            raise MiddlewareError(f'Disk offline failed: {str(e)}')
 
     def zfs_online_disk(self, volume, label):
         assert volume.vol_encrypt == 0
