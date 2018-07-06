@@ -1158,10 +1158,6 @@ class notifier(metaclass=HookMetaclass):
         if share:
             self.sharesec_reset(share, user, group)
 
-    def mp_get_permission(self, path):
-        if os.path.isdir(path):
-            return stat.S_IMODE(os.stat(path)[stat.ST_MODE])
-
     def mp_get_owner(self, path):
         """Gets the owner/group for a given mountpoint.
 
