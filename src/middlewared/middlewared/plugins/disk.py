@@ -1205,6 +1205,31 @@ class DiskService(CRUDService):
             raise ValueError(f'Partition type {part_type} not found on {disk}')
         return f'gptid/{uuid.text}'
 
+    @private
+    def unlabel(self, disk):
+        self.middleware.call_sync('disk.swaps_remove_disks', [disk])
+
+        subprocess.run(
+            ['gpart', 'destroy', '-F', f'/dev/{disk}'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        # Wipe out the partition table by doing an additional iterate of create/destroy
+        subprocess.run(
+            ['gpart', 'create', '-s', 'gpt', f'/dev/{disk}'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        subprocess.run(
+            ['gpart', 'destroy', '-F', f'/dev/{disk}'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        # We might need to sync with reality (e.g. uuid -> devname)
+        self.middleware.call_sync('disk.sync', disk)
+
 
 def new_swap_name():
     """
