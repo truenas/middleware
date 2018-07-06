@@ -715,6 +715,34 @@ class InterfacesService(Service):
 
         return list_of_ip
 
+    @accepts(
+        Str('name', default='nginx'),
+        Str('port', default='80')
+    )
+    async def get_process_ip(self, name, port):
+        """
+        Grabs the current IP address binded to the process
+        """
+        final_ip = None
+        sockstat = await Popen([
+            '/usr/bin/sockstat', '-46P', 'tcp', '-p', port
+        ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        sockstat_stdout, _ = await sockstat.communicate()
+
+        for line in sockstat_stdout.splitlines():
+            line = line.decode().split()
+            cmd = line[1],
+            ip = line[5].split(':')[0]
+
+            if cmd == name and ip != '*':
+                final_ip = ip
+                break
+
+        return final_ip
+
 
 class RoutesService(Service):
 
