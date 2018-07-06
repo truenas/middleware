@@ -822,6 +822,41 @@ class PoolService(CRUDService):
         return found
 
     @item_method
+    @accepts(Int('id'), Dict(
+        'options',
+        Str('label', required=True),
+    ))
+    async def detach(self, oid, options):
+        """
+        Detach a disk from pool of id `id`.
+
+        `label` is the vdev guid or device name.
+        """
+        pool = await self._get_instance(oid)
+
+        verrors = ValidationErrors()
+        found = self.__find_disk_from_topology(options['label'], pool)
+        if not found:
+            verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
+        if verrors:
+            raise verrors
+
+        disk = await self.middleware.call(
+            'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
+        )
+        if disk:
+            await self.middleware.call('disk.swaps_remove_disks', [disk])
+
+        await self.middleware.call('zfs.pool.detach', pool['name'], found[1]['guid'])
+
+        await self.middleware.call('notifier.sync_encrypted', oid)
+
+        if disk:
+            await self.middleware.call('disk.unlabel', disk)
+
+        return True
+
+    @item_method
     @accepts(Int('id'))
     async def download_encryption_key(self, oid):
         """
