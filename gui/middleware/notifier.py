@@ -747,32 +747,16 @@ class notifier(metaclass=HookMetaclass):
             raise MiddlewareError('Disk online failed: "%s"' % error)
 
     def zfs_detach_disk(self, volume, label):
-        """Detach a disk from zpool
-           (more technically speaking, a replaced disk.  The replacement actually
-           creates a mirror for the device to be replaced)"""
+        from freenasUI.storage.models import Volume
 
         if isinstance(volume, str):
-            vol_name = volume
-        else:
-            vol_name = volume.vol_name
+            volume = Volume.objects.get(vol_name=volume)
 
-        from_disk = self.label_to_disk(label)
-        if not from_disk:
-            if not re.search(r'^[0-9]+$', label):
-                log.warn("Could not find disk for the ZFS label %s", label)
-        else:
+        try:
             with client as c:
-                c.call('disk.swaps_remove_disks', [from_disk])
-
-        ret = self._system_nolog('/sbin/zpool detach %s %s' % (vol_name, label))
-
-        if not isinstance(volume, str):
-            self.sync_encrypted(volume)
-
-        if from_disk:
-            # TODO: This operation will cause damage to disk data which should be limited
-            self.__gpt_unlabeldisk(from_disk)
-        return ret
+                c.call('pool.detach', volume.id, {'label': label})
+        except Exception as e:
+            raise MiddlewareError(f'Failed to detach disk: {str(e)}')
 
     def zfs_remove_disk(self, volume, label):
         """
@@ -2585,7 +2569,10 @@ class notifier(metaclass=HookMetaclass):
         """
         from freenasUI.storage.models import Disk, EncryptedDisk, Volume
         if volume is not None:
-            volumes = [volume]
+            if isinstance(volume, int):
+                volumes = [Volume.objects.get(pk=volume)]
+            else:
+                volumes = [volume]
         else:
             volumes = Volume.objects.filter(vol_encrypt__gt=0)
 
