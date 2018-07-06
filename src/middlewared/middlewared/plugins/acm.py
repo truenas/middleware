@@ -211,7 +211,7 @@ class ACMEService(CRUDService):
             Int('csr_id', required=True),
             Str('directory_uri', required=True),
             Str('name', required=True),
-            Dict('domain_dns_mapping', additional_attrs=True)
+            Dict('domain_dns_mapping', additional_attrs=True, required=True)
         )
     )
     def do_create(self, data):
@@ -220,7 +220,7 @@ class ACMEService(CRUDService):
 
         csr_data = self.middleware.call_sync(
             'certificate.query',
-            ['id', '=', data['csr_id']]
+            [['id', '=', data['csr_id']]]
         )
 
         if not csr_data:
@@ -241,19 +241,14 @@ class ACMEService(CRUDService):
 
         acme_client, key = get_acme_client_and_key(self.middleware, data['directory_uri'], data['tos'])
         # perform operations and have a cert issued
-
+        print('\n\nwe have client')
         order = acme_client.new_order(csr_data['CSR'])
-        challenge = None
-        for chg in order.authorizations[0].body.challenges:
-            if chg.typ == 'dns-01':
-                challenge = chg
-
-        token = challenge.validation(key)
 
         # For now, lets only allow dns validation for dns providers we have an authenticator plugin for
 
         domains = [csr_data['common']]
         domains.extend(csr_data['san'])
+        print('we have order\n\n')
         CLOUD_PROVIDER_LIST = ['ROUTE53']  # We can query this from cloudsync.providers / acme.supported_dns_authenticators
                                            # For now assuming that we will use the first credentials we find for
                                            # cloudsync.provider
@@ -263,7 +258,7 @@ class ACMEService(CRUDService):
                     'acme_create.domain_dns_mapping',
                     f'Please provide DNS authenticator for {domain}'
                 )
-            elif data['domain_dns_mapping'][domain] not in CLOUD_PROVIDER_LIST:
+            elif data['domain_dns_mapping'][domain].lower() not in [v.lower() for v in CLOUD_PROVIDER_LIST]:
                 verrors.add(
                     'acme_create.domain_dns_mapping',
                     f'Please provide valid DNS Authenticator for {domain}'
@@ -273,6 +268,8 @@ class ACMEService(CRUDService):
             raise verrors
 
         self.handle_authorizations(order, data['domain_dns_mapping'], acme_client, key)
+
+        print('\n\nauthorizations handled')
 
         # Polling for a maximum of 10 minutes while trying to finalize order
         # Should we try .poll() instead first ? research please
@@ -288,7 +285,7 @@ class ACMEService(CRUDService):
     # TODO: THIS SHOULD BE A JOB ?
     def handle_authorizations(self, order, domain_names_dns_mapping, acme_client, key):
         # When this is called, it should be ensured by the function calling this function that for all authorization
-        # resource, a domain name dns mapping is available
+        # resource, a domain name dns mapping is available ? Ideal ?
         # For multiple domain providers in domain names, I think we should ask the end user to specify which domain
         # provider is used for which domain so authorizations can be handled gracefully
         # https://serverfault.com/questions/906407/lets-encrypt-dns-challenge-with-multiple-public-dns-providers
@@ -303,7 +300,7 @@ class ACMEService(CRUDService):
 
             if not challenge:
                 verrors.add(
-                    f'acme.domain',
+                    'acme_authorization.domain',
                     f'DNS Challenge not found for domain {authorization_resource.body.identifier.value}'
                 )
 
@@ -311,14 +308,18 @@ class ACMEService(CRUDService):
 
             token = challenge.validation(key)
 
+            print('\n\nTOKEN - ', token)
+
             self.middleware.call_sync(
                 'dns.authenticator.update_txt_record', {
                     'authenticator_service': domain_names_dns_mapping[domain],
-                    'txt_record': token
+                    'txt_record': token,
+                    'domain': domain
                 }
             )
 
             acme_client.answer_challenge(challenge, challenge.response(key))
+            print('\nchallenge answered')
 
 
 class DNSAuthenticatorService(Service):
@@ -330,17 +331,20 @@ class DNSAuthenticatorService(Service):
         Dict(
             'update_txt_record',
             Str('authenticator_service', required=True),
-            Str('txt_record', required=True)
+            Str('txt_record', required=True),
+            Str('domain', required=True)
         )
     )
     def update_txt_record(self, data):
         verrors = ValidationErrors()
 
-        authenticator = self.middleware.call_sync(
-            'acme.supported_dns_authenticators',
-        )
+        authenticator = [
+            value.lower() for value in self.middleware.call_sync(
+                'acme.supported_dns_authenticators',
+            )
+        ]
 
-        if data['authenticator_service'] not in authenticator:
+        if data['authenticator_service'].lower() not in authenticator:
             verrors.add(
                 'dns_authenticator_update_record.authenticator',
                 f'{data["authenticator_service"]} not a supported authenticator service'
@@ -351,9 +355,11 @@ class DNSAuthenticatorService(Service):
 
         return self.__getattribute__(
             f'update_txt_record_{data["authenticator_service"].lower()}'
-        )(data['txt_record'])  # THIS SHOULD BE GOOD - test this please
+        )(data['txt_record'], data['domain'])  # THIS SHOULD BE GOOD - test this please
 
-    def update_txt_record_route53(self, txt_record):
+    def update_txt_record_route53(self, txt_record, domain):
         # waiting for access keys to test boto record updates
         import time
-        time.sleep(5*60)
+        print('going to sleep')
+        time.sleep(45)
+        print('\n\nAWOKE FROM SLEEP')
