@@ -764,6 +764,19 @@ class CertificateBase(Model):
         blank=True,
         null=True
     )
+    cert_expire = models.DateTimeField(
+        blank=True,
+        null=True,
+
+    )
+    cert_acme_uri = models.URLField(
+        null=True,
+        blank=True
+    )
+    cert_domain_authenticators = EncryptedDictField(
+        null=True,
+        blank=True
+    )
 
     def get_certificate(self):
         certificate = None
@@ -1217,6 +1230,14 @@ class ACMERegistration(models.Model):
     acme_revoke_cert_uri = models.URLField(
         verbose_name='Revoke Certificate Uri'
     )
+
+
+class DNSAuthenticator(models.Model):
+    authenticator = models.CharField(
+        max_length=64,
+        unique=True  # is this the right step ?
+    )
+    attributes = EncryptedDictField()
 
 
 class Filesystem(Model):

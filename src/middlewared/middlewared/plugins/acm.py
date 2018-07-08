@@ -1,13 +1,18 @@
+import boto3
 import datetime
 import josepy as jose
 import json
+import pytz
 import requests
 
+from middlewared.plugins.crypto import CERT_TYPE_EXISTING, RE_CERTIFICATE
 from middlewared.schema import Bool, Dict, Int, List, Ref, Str, ValidationErrors
-from middlewared.service import accepts, CRUDService, Service
+from middlewared.service import accepts, CRUDService, private
 
 from acme import client
 from acme import messages
+from certbot import achallenges
+from certbot_dns_route53.dns_route53 import Authenticator as AWS_Authenticator
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 
@@ -197,12 +202,55 @@ class ACMEService(CRUDService):
     class Config:
         datastore = 'system.certificate'
         datastore_prefix = 'cert_'
+        datastore_extend = 'acme.cert_extend'
 
-    @accepts()
-    async def supported_dns_authenticators(self):
-        return [
-            'ROUTE53'
-        ]
+    @private
+    async def get_domain_names(self, data):
+        names = [data['common']]
+        names.extend(data['san'])
+        return names
+
+    def issue_certificate(self, data, csr_data):
+        verrors = ValidationErrors()
+
+        # For now, lets only allow dns validation for dns providers we have an authenticator plugin for
+
+        domains = self.middleware.call_sync('acme.get_domain_names', csr_data)
+        print('we have order\n\n')
+        dns_authenticator_ids = [o['id'] for o in self.middleware.call_sync('dns.authenticator.query')]
+        for domain in domains:
+            if domain not in data['domain_dns_mapping']:
+                verrors.add(
+                    'acme_create.domain_dns_mapping',
+                    f'Please provide DNS authenticator id for {domain}'
+                )
+            elif data['domain_dns_mapping'][domain] not in dns_authenticator_ids:
+                verrors.add(
+                    'acme_create.domain_dns_mapping',
+                    f'Please provide valid DNS Authenticator id for {domain}'
+                )
+        for domain in data['domain_dns_mapping']:
+            if domain not in domains:
+                verrors.add(
+                    'acme_create.domain_dns_mapping',
+                    f'{domain} not specified in the CSR'
+                )
+
+        if verrors:
+            raise verrors
+
+        acme_client, key = get_acme_client_and_key(self.middleware, data['directory_uri'], data['tos'])
+        # perform operations and have a cert issued
+        print('\n\nwe have client')
+        order = acme_client.new_order(csr_data['CSR'])
+
+        self.handle_authorizations(order, data['domain_dns_mapping'], acme_client, key)
+
+        print('\n\nauthorizations handled')
+
+        # Polling for a maximum of 10 minutes while trying to finalize order
+        # Should we try .poll() instead first ? research please
+        return acme_client.poll_and_finalize(order, datetime.datetime.now() + datetime.timedelta(minutes=10))
 
     @accepts(
         Dict(
@@ -215,7 +263,8 @@ class ACMEService(CRUDService):
         )
     )
     def do_create(self, data):
-        #TODO: THIS SHOULD BE A JOB ?
+        # TODO: THIS SHOULD BE A JOB ?
+
         verrors = ValidationErrors()
 
         csr_data = self.middleware.call_sync(
@@ -239,48 +288,53 @@ class ACMEService(CRUDService):
         if verrors:
             raise verrors
 
-        acme_client, key = get_acme_client_and_key(self.middleware, data['directory_uri'], data['tos'])
-        # perform operations and have a cert issued
-        print('\n\nwe have client')
-        order = acme_client.new_order(csr_data['CSR'])
+        final_order = self.issue_certificate(data, csr_data)
 
-        # For now, lets only allow dns validation for dns providers we have an authenticator plugin for
-
-        domains = [csr_data['common']]
-        domains.extend(csr_data['san'])
-        print('we have order\n\n')
-        CLOUD_PROVIDER_LIST = ['ROUTE53']  # We can query this from cloudsync.providers / acme.supported_dns_authenticators
-                                           # For now assuming that we will use the first credentials we find for
-                                           # cloudsync.provider
-        for domain in domains:
-            if domain not in data['domain_dns_mapping']:
-                verrors.add(
-                    'acme_create.domain_dns_mapping',
-                    f'Please provide DNS authenticator for {domain}'
-                )
-            elif data['domain_dns_mapping'][domain].lower() not in [v.lower() for v in CLOUD_PROVIDER_LIST]:
-                verrors.add(
-                    'acme_create.domain_dns_mapping',
-                    f'Please provide valid DNS Authenticator for {domain}'
-                )
-
-        if verrors:
-            raise verrors
-
-        self.handle_authorizations(order, data['domain_dns_mapping'], acme_client, key)
-
-        print('\n\nauthorizations handled')
-
-        # Polling for a maximum of 10 minutes while trying to finalize order
-        # Should we try .poll() instead first ? research please
-        final_order = acme_client.poll_and_finalize(order, datetime.datetime.now() + datetime.timedelta(minutes=10))
-
-        cert_chain = final_order.fullchain_pem
-        pprint(cert_chain)
+        print('\n\n')
         pprint(json.loads(final_order.json_dumps()))
 
+        cert_dict = {
+            'acme': self.middleware.call_sync(
+                        'acme.registration.query',
+                        [['directory', '=', data['directory_uri']]]
+                    )[0]['id'],
+            'acme_uri': final_order.uri,
+            'certificate': final_order.fullchain_pem,
+            'CSR': csr_data['CSR'],
+            'privatekey': csr_data['privatekey'],
+            'name': data['name'],
+            'expire': final_order.body.expires.astimezone(pytz.utc).strftime("%Y-%m-%d"),
+            'chain': True if len(RE_CERTIFICATE.findall(final_order.fullchain_pem)) > 1 else False,
+            'type': CERT_TYPE_EXISTING,
+            'domain_authenticators': data['domain_dns_mapping']
+        }
+
+        for key, value in (self.middleware.call_sync(
+            'certificate.load_certificate', final_order.fullchain_pem
+        )).items():
+            cert_dict[key] = value
+
         # save cert and other useful attributes
-        return True
+        cert_id = self.middleware.call_sync(
+            'datastore.insert',
+            self._config.datastore,
+            cert_dict, {
+                'prefix': self._config.datastore_prefix
+            }
+        )
+
+        self.middleware.call_sync(
+            'service.start',
+            'ix-ssl',
+            {'onetime': False}
+        )
+
+        return self.middleware.call_sync(
+            'certificate.query',
+            [['id', '=', cert_id]], {
+                'get': True
+            }
+        )
 
     # TODO: THIS SHOULD BE A JOB ?
     def handle_authorizations(self, order, domain_names_dns_mapping, acme_client, key):
@@ -312,9 +366,10 @@ class ACMEService(CRUDService):
 
             self.middleware.call_sync(
                 'dns.authenticator.update_txt_record', {
-                    'authenticator_service': domain_names_dns_mapping[domain],
-                    'txt_record': token,
-                    'domain': domain
+                    'authenticator': domain_names_dns_mapping[domain],
+                    'challenge': challenge.json_dumps(),
+                    'domain': domain,
+                    'key': key.json_dumps()
                 }
             )
 
@@ -322,44 +377,154 @@ class ACMEService(CRUDService):
             print('\nchallenge answered')
 
 
-class DNSAuthenticatorService(Service):
+class DNSAuthenticatorService(CRUDService):
 
     class Config:
         namespace = 'dns.authenticator'
+        datastore = 'system.dnsauthenticator'
+
+    @accepts(
+        Dict(
+            'dns_authenticator_create',
+            Str('authenticator', required=True),
+            Dict('attributes', additional_attrs=True)
+        )
+    )
+    async def do_create(self, data):
+        # TODO: ADD VALIDATION FOR KEYS
+        id = await self.middleware.call(
+            'datastore.insert',
+            self._config.datastore,
+            data,
+        )
+
+        return await self._get_instance(id)
+
+    @accepts(
+        Int('id', required=True),
+        Dict('attributes', additional_attrs=True, required=True)
+    )
+    async def do_update(self, id, data):
+        # TODO: ADD VALIDATION
+        old = await self._get_instance(id)
+        new = old.copy()
+        new.update(data)
+
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            id,
+            new
+        )
+
+        return await self._get_instance(id)
+
+    @accepts(
+        Int('id', required=True)
+    )
+    async def do_delete(self, id):
+
+        return await self.middleware.call(
+            'datastore.delete',
+            self._config.datastore,
+            id
+        )
 
     @accepts(
         Dict(
             'update_txt_record',
-            Str('authenticator_service', required=True),
-            Str('txt_record', required=True),
-            Str('domain', required=True)
+            Int('authenticator', required=True),
+            Str('key', required=True),
+            Str('domain', required=True),
+            Str('challenge', required=True)
         )
     )
     def update_txt_record(self, data):
         verrors = ValidationErrors()
 
-        authenticator = [
-            value.lower() for value in self.middleware.call_sync(
-                'acme.supported_dns_authenticators',
-            )
-        ]
+        authenticator = self.middleware.call_sync(
+            'dns.authenticator.query',
+            [['id', '=', data['authenticator']]]
+        )
 
-        if data['authenticator_service'].lower() not in authenticator:
+        if not authenticator:
             verrors.add(
                 'dns_authenticator_update_record.authenticator',
-                f'{data["authenticator_service"]} not a supported authenticator service'
+                f'{data["authenticator"]} not a valid authenticator Id'
             )
+        else:
+            authenticator = authenticator[0]
 
         if verrors:
             raise verrors
 
         return self.__getattribute__(
-            f'update_txt_record_{data["authenticator_service"].lower()}'
-        )(data['txt_record'], data['domain'])  # THIS SHOULD BE GOOD - test this please
+            f'update_txt_record_{authenticator["authenticator"].lower()}'
+        )(
+            data['domain'],
+            messages.ChallengeBody.from_json(json.loads(data['challenge'])),
+            jose.JWKRSA.fields_from_json(json.loads(data['key'])),
+            authenticator['attributes']
+        )  # THIS SHOULD BE GOOD - test this please
 
-    def update_txt_record_route53(self, txt_record, domain):
-        # waiting for access keys to test boto record updates
+    def update_txt_record_route53(self, domain, challenge, key, auth_data):
+        session = boto3.Session(
+            aws_access_key_id=auth_data['access_key_id'],
+            aws_secret_access_key=auth_data['secret_access_key']
+        )
+        # TODO: HANDLE CREDENTIAL OR REQUEST ERRORS GRACEFULLY
+        client = session.client('route53')
+        verrors = ValidationErrors()
+
+        # Finding zone id for the given domain
+        paginator = client.get_paginator('list_hosted_zones')
+        target_labels = domain.rstrip('.').split('.')
+        zones = []
+        for page in paginator.paginate():
+            for zone in page["HostedZones"]:
+                if zone["Config"]["PrivateZone"]:
+                    continue
+
+                candidate_labels = zone["Name"].rstrip(".").split(".")
+                if candidate_labels == target_labels[-len(candidate_labels):]:
+                    zones.append((zone["Name"], zone["Id"]))
+        if not zones:
+            verrors.add(
+                'dns_authenticator_update_record.domain',
+                f'Unable to find a Route53 hosted zone for {domain}'
+            )
+
+            raise verrors
+
+        # Order the zones that are suffixes for our desired to domain by
+        # length, this puts them in an order like:
+        # ["foo.bar.baz.com", "bar.baz.com", "baz.com", "com"]
+        # And then we choose the first one, which will be the most specific.
+        zones.sort(key=lambda z: len(z[0]), reverse=True)
+        zone_id = zones[0][1]
+
+        resp = client.change_resource_record_sets(
+            HostedZoneId=zone_id,
+            ChangeBatch={
+                'Changes': [
+                    {
+                        'Action': 'UPSERT',
+                        'ResourceRecordSet': {
+                            'Name': challenge.validation_domain_name(domain),
+                            'ResourceRecords': [{'Value': f'"{challenge.validation(key)}"'}],
+                            'TTL': 3600,
+                            'Type': 'TXT'
+                        }
+                    }
+                ],
+                'Comment': 'FreeNAS-dns-route53 certificate validation'
+            }
+        )
+
+        # TODO: ENSURE CHANGE HAS BEEN MADE - FOR NOW SLEEP
+        print('\n\nresp has been received')
         import time
-        print('going to sleep')
-        time.sleep(45)
-        print('\n\nAWOKE FROM SLEEP')
+        time.sleep(40)
+        print('\n\nwoke up from sleep')
+        return resp['ChangeInfo']['Id']
+

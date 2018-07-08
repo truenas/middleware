@@ -577,12 +577,14 @@ class CertificateService(CRUDService):
     @accepts(
         Dict(
             'certificate_create',
+            Int('acme'),
             Int('csr_id'),
             Int('signedby'),
             Int('key_length'),
             Int('type'),
             Int('lifetime'),
             Int('serial', validators=[Range(min=1)]),
+            Str('acme_uri'),
             Str('certificate'),
             Str('city'),
             Str('common'),

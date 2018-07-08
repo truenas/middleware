@@ -6,6 +6,11 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
 
+class ShouldBe(Exception):
+    def __init__(self, what):
+        self.what = what
+
+
 class Email:
     def __call__(self, value):
         try:
@@ -141,3 +146,23 @@ class MACAddr:
     def __call__(self, value):
         if not re.match('[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$', value.lower()):
             raise ValueError('Please provide a valid MAC address')
+
+
+def validate_attributes(schema, data, additional_attrs=False, attr_key="attributes"):
+    from middlewared.schema import Dict, Error
+    from middlewared.service import ValidationErrors
+    verrors = ValidationErrors()
+
+    schema = Dict("attributes", *schema, additional_attrs=additional_attrs)
+
+    try:
+        data[attr_key] = schema.clean(data[attr_key])
+    except Error as e:
+        verrors.add(e.attribute, e.errmsg, e.errno)
+
+    try:
+        schema.validate(data[attr_key])
+    except ValidationErrors as e:
+        verrors.extend(e)
+
+    return verrors
