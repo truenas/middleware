@@ -1191,43 +1191,43 @@ class Support(Model):
 
 
 class ACMERegistrationBody(models.Model):
-    registration_body_contact = models.EmailField(
+    contact = models.EmailField(
         verbose_name='Contact Email'
     )
-    registration_body_status = models.CharField(
+    status = models.CharField(
         verbose_name='Status',
         max_length=10
     )
-    registration_body_key = models.TextField(
+    key = models.TextField(
         verbose_name='JWKRSAKey'
     )
-    registration_body_acme = models.ForeignKey(
+    acme = models.ForeignKey(
         'ACMERegistration',
         on_delete=models.CASCADE,
     )
 
 
 class ACMERegistration(models.Model):
-    acme_uri = models.URLField(
+    uri = models.URLField(
         verbose_name='URI'
     )
-    acme_directory = models.URLField(
+    directory = models.URLField(
         verbose_name='Directory URI',
         unique=True  # Is this the right step ?
     )
-    acme_tos = models.URLField(
+    tos = models.URLField(
         verbose_name='Terms of Service'
     )
-    acme_new_account_uri = models.URLField(
+    new_account_uri = models.URLField(
         verbose_name='New Account Uri'
     )
-    acme_new_nonce_uri = models.URLField(
+    new_nonce_uri = models.URLField(
         verbose_name='New Nonce Uri'
     )
-    acme_new_order_uri = models.URLField(
+    new_order_uri = models.URLField(
         verbose_name='New Order Uri'
     )
-    acme_revoke_cert_uri = models.URLField(
+    revoke_cert_uri = models.URLField(
         verbose_name='Revoke Certificate Uri'
     )
 

@@ -63,7 +63,6 @@ class ACMERegistrationService(CRUDService):
     class Config:
         datastore = 'system.acmeregistration'
         datastore_extend = 'acme.registration.register_extend'
-        datastore_prefix = 'acme_'
         namespace = 'acme.registration'
         #TODO: ADD PRIVATE TO TRUE
 
@@ -72,7 +71,7 @@ class ACMERegistrationService(CRUDService):
             key: value for key, value in
             (await self.middleware.call(
                 'datastore.query', 'system.acmeregistrationbody',
-                [['acme', '=', data['id']]], {'prefix': 'registration_body_', 'get': True}
+                [['acme', '=', data['id']]], {'get': True}
             )).items() if key != 'acme'
         }
         return data
@@ -166,7 +165,6 @@ class ACMERegistrationService(CRUDService):
                 'revoke_cert_uri': directory.revokeCert,
                 'directory': data['directory_uri']  # handle trailing / ?
             },
-            {'prefix': self._config.datastore_prefix}
         )
 
         # Save registration body
@@ -179,7 +177,6 @@ class ACMERegistrationService(CRUDService):
                 'key': key.json_dumps(),
                 'acme': registration_id
             },
-            {'prefix': 'registration_body_'}
         )
 
         return self.middleware.call_sync(f'{self._config.namespace}.query', [('id', '=', registration_id)])[0]
@@ -272,6 +269,15 @@ class ACMEService(CRUDService):
             'certificate.query',
             [['id', '=', data['csr_id']]]
         )
+
+        if self.middleware.call_sync(
+            'certificate.query',
+            [['name', '=', data['name']]]
+        ):
+            verrors.add(
+                'acme_create.name',
+                'A Certificate with this name already exists'
+            )
 
         if not csr_data:
             verrors.add(
