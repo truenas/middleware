@@ -350,11 +350,15 @@ def services_s3(request):
     if request.method == "POST":
         form = S3Form(request.POST, instance=s3)
         if form.is_valid():
-            form.save()
-            return JsonResp(
-                request,
-                message=_("S3 successfully edited.")
-            )
+            try:
+                form.save()
+                return JsonResp(
+                    request,
+                    message=_("S3 successfully edited.")
+                )
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
+                return JsonResp(request, form=form)
         else:
             return JsonResp(request, form=form)
 
