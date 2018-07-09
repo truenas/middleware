@@ -16,6 +16,7 @@ from acme import messages
 from certbot import achallenges
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
+from OpenSSL import crypto
 
 from pprint import pprint
 
@@ -419,6 +420,38 @@ class ACMEService(CRUDService):
                     },
                     {'prefix': self._config.datastore_prefix}
                 )
+
+    def do_delete(self, id):
+        # First we revoke the certificate and then delete it from the system
+        cert = self.middleware.call_sync(
+            'certificate.query', # TODO: MAYBE ADD CERTIFICATE EXTEND METHOD TO ACME SERVICE AND ADD ACME RELATED CHECKS
+            [['acme', '!=', None], ['id', '=', id]]
+        )
+        verrors = ValidationErrors()
+        if not cert:
+            verrors.add(
+                'acme_revoke.id',
+                'Kindly provide a valid ACME based certificate id'
+            )
+        else:
+            cert = cert[0]
+
+        if verrors:
+            raise verrors
+
+        client, key = get_acme_client_and_key(self.middleware, cert['acme']['directory'], True)
+        client.revoke(
+            jose.ComparableX509(crypto.load_certificate(crypto.FILETYPE_PEM, cert['certificate'])),
+            0
+        )
+
+        print('\n\nCert revoked successfully')
+
+        return self.middleware.call_sync(
+            'datastore.delete',
+            self._config.datastore,
+            id
+        )
 
 
 class DNSAuthenticatorService(CRUDService):
