@@ -190,35 +190,37 @@ class ZFSPoolService(CRUDService):
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
 
-    @accepts(Str('pool'), Str('label'))
-    def detach(self, name, label):
-        """
-        Detach device `label` from the pool `pool`.
-        """
+    def __zfs_vdev_operation(self, name, label, op):
         try:
             with libzfs.ZFS() as zfs:
                 pool = zfs.get(name)
                 target = find_vdev(pool, label)
                 if target is None:
                     raise CallError(f'Failed to find vdev for {label}', errno.EINVAL)
-                target.detach()
+                op(target)
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
+
+    @accepts(Str('pool'), Str('label'))
+    def detach(self, name, label):
+        """
+        Detach device `label` from the pool `pool`.
+        """
+        self.__zfs_vdev_operation(name, label, lambda target: target.detach())
 
     @accepts(Str('pool'), Str('label'))
     def offline(self, name, label):
         """
         Offline device `label` from the pool `pool`.
         """
-        try:
-            with libzfs.ZFS() as zfs:
-                pool = zfs.get(name)
-                target = find_vdev(pool, label)
-                if target is None:
-                    raise CallError(f'Failed to find vdev for {label}', errno.EINVAL)
-                target.offline()
-        except libzfs.ZFSException as e:
-            raise CallError(str(e), e.code)
+        self.__zfs_vdev_operation(name, label, lambda target: target.offline())
+
+    @accepts(Str('pool'), Str('label'))
+    def online(self, name, label):
+        """
+        Online device `label` from the pool `pool`.
+        """
+        self.__zfs_vdev_operation(name, label, lambda target: target.online())
 
     @accepts(Str('pool'), Str('label'), Str('dev'))
     def replace(self, name, label, dev):
