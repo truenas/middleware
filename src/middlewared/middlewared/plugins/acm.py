@@ -6,13 +6,13 @@ import pytz
 import requests
 
 from middlewared.plugins.crypto import CERT_TYPE_EXISTING, RE_CERTIFICATE
-from middlewared.schema import Bool, Dict, Int, List, Ref, Str, ValidationErrors
+from middlewared.schema import Bool, Dict, Int, Str, ValidationErrors
 from middlewared.service import accepts, CRUDService, private
+from middlewared.validators import validate_attributes
 
 from acme import client
 from acme import messages
 from certbot import achallenges
-from certbot_dns_route53.dns_route53 import Authenticator as AWS_Authenticator
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 
@@ -383,6 +383,39 @@ class DNSAuthenticatorService(CRUDService):
         namespace = 'dns.authenticator'
         datastore = 'system.dnsauthenticator'
 
+    def __init__(self, *args, **kwargs):
+        super(DNSAuthenticatorService, self).__init__(*args, **kwargs)
+        self.schemas = DNSAuthenticatorService.get_authenticator_schemas()
+
+    @staticmethod
+    def get_authenticator_schemas():
+        auth_funcs = [
+            func for func in dir(DNSAuthenticatorService)
+            if callable(getattr(DNSAuthenticatorService, func))
+            and func.startswith('update_txt_record_')
+        ]
+
+        return {
+            f_n[len('update_txt_record_'):]: [
+                Str(arg, required=True)
+                for arg in list(getattr(DNSAuthenticatorService, f_n).__code__.co_varnames)[4:]
+            ]
+            for f_n in auth_funcs
+        }
+
+    async def common_validation(self, data, schema_name):
+        verrors = ValidationErrors()
+        if data['authenticator'] not in self.schemas:
+            verrors.add(
+                f'{schema_name}.authenticator',
+                f'FreeNAS does not support {data["authenticator"]} as an Authenticator'
+            )
+        else:
+            verrors = validate_attributes(self.schemas[data['authenticator']], data)
+
+        if verrors:
+            raise verrors
+
     @accepts(
         Dict(
             'dns_authenticator_create',
@@ -391,7 +424,8 @@ class DNSAuthenticatorService(CRUDService):
         )
     )
     async def do_create(self, data):
-        # TODO: ADD VALIDATION FOR KEYS
+        await self.common_validation(data, 'dns_authenticator_create')
+
         id = await self.middleware.call(
             'datastore.insert',
             self._config.datastore,
@@ -405,10 +439,11 @@ class DNSAuthenticatorService(CRUDService):
         Dict('attributes', additional_attrs=True, required=True)
     )
     async def do_update(self, id, data):
-        # TODO: ADD VALIDATION
         old = await self._get_instance(id)
         new = old.copy()
-        new.update(data)
+        new['attributes'].update(data)
+
+        await self.common_validation(data, 'dns_authenticator_update')
 
         await self.middleware.call(
             'datastore.update',
@@ -464,13 +499,13 @@ class DNSAuthenticatorService(CRUDService):
             data['domain'],
             messages.ChallengeBody.from_json(json.loads(data['challenge'])),
             jose.JWKRSA.fields_from_json(json.loads(data['key'])),
-            authenticator['attributes']
+            **authenticator['attributes']
         )  # THIS SHOULD BE GOOD - test this please
 
-    def update_txt_record_route53(self, domain, challenge, key, auth_data):
+    def update_txt_record_route53(self, domain, challenge, key, access_key_id, secret_access_key):
         session = boto3.Session(
-            aws_access_key_id=auth_data['access_key_id'],
-            aws_secret_access_key=auth_data['secret_access_key']
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key
         )
         # TODO: HANDLE CREDENTIAL OR REQUEST ERRORS GRACEFULLY
         client = session.client('route53')
@@ -524,7 +559,7 @@ class DNSAuthenticatorService(CRUDService):
         # TODO: ENSURE CHANGE HAS BEEN MADE - FOR NOW SLEEP
         print('\n\nresp has been received')
         import time
-        time.sleep(40)
+        time.sleep(30)
         print('\n\nwoke up from sleep')
         return resp['ChangeInfo']['Id']
 
