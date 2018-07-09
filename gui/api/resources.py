@@ -2227,8 +2227,11 @@ class ISCSITargetExtentResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(ISCSITargetExtentResourceMixin, self).dehydrate(bundle)
         if bundle.obj.iscsi_target_extent_type == 'Disk':
-            disk = Disk.objects.get(pk=bundle.obj.iscsi_target_extent_path)
-            bundle.data['iscsi_target_extent_path'] = "/dev/%s" % disk.devname
+            disk = Disk.objects.filter(pk=bundle.obj.iscsi_target_extent_path)
+            if disk.exists():
+                bundle.data['iscsi_target_extent_path'] = "/dev/%s" % disk[0].devname
+            else:
+                bundle.data['iscsi_target_extent_path'] = None
         elif bundle.obj.iscsi_target_extent_type == 'ZVOL':
             bundle.data['iscsi_target_extent_path'] = "/dev/%s" % (
                 bundle.data['iscsi_target_extent_path'],
