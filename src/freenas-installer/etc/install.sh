@@ -320,7 +320,7 @@ install_loader() {
 
     _mnt="$1"
     shift
-    disks="$*"
+    _disks="$*"
 
 
     # When doing inplace upgrades, its entirely possible we've
