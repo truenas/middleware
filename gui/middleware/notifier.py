@@ -723,13 +723,11 @@ class notifier(metaclass=HookMetaclass):
             raise MiddlewareError(f'Disk offline failed: {str(e)}')
 
     def zfs_online_disk(self, volume, label):
-        assert volume.vol_encrypt == 0
-
-        p1 = self._pipeopen('/sbin/zpool online %s %s' % (volume.vol_name, label))
-        stderr = p1.communicate()[1]
-        if p1.returncode != 0:
-            error = ", ".join(stderr.split('\n'))
-            raise MiddlewareError('Disk online failed: "%s"' % error)
+        try:
+            with client as c:
+                c.call('pool.online', volume.id, {'label': label})
+        except Exception as e:
+            raise MiddlewareError(f'Disk online failed: {str(e)}')
 
     def zfs_detach_disk(self, volume, label):
         from freenasUI.storage.models import Volume
