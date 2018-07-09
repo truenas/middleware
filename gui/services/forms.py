@@ -926,6 +926,11 @@ class iSCSITargetPortalIPForm(ModelForm):
             if v in iface_ips:
                 v = iface_ips[v]
             ips.append((k, v))
+
+        if self.instance.id and self.instance.iscsi_target_portalip_ip not in dict(ips):
+            ips.append((
+                self.instance.iscsi_target_portalip_ip, self.instance.iscsi_target_portalip_ip
+            ))
         self.fields['iscsi_target_portalip_ip'].choices = ips
         if not self.instance.id and not self.data:
             if not(

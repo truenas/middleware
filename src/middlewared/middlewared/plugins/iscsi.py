@@ -108,10 +108,14 @@ class ISCSIPortalService(CRUDService):
         data['discovery_authgroup'] = data.pop('discoveryauthgroup')
         return data
 
-    async def __validate(self, verrors, data, schema):
+    async def __validate(self, verrors, data, schema, old=None):
         if not data['listen']:
             verrors.add(f'{schema}.listen', 'At least one listen entry is required.')
         else:
+            system_ips = [
+                ip['address'] for ip in await self.middleware.call('interfaces.ip_in_use')
+            ]
+            new_ips = set(i['ip'] for i in data['listen']) - set(i['ip'] for i in old['listen']) if old else set()
             for i in data['listen']:
                 filters = [
                     ('iscsi_target_portalip_ip', '=', i['ip']),
@@ -123,6 +127,12 @@ class ISCSIPortalService(CRUDService):
                     'datastore.query', 'services.iscsitargetportalip', filters
                 ):
                     verrors.add(f'{schema}.listen', f'{i["ip"]}:{i["port"]} already in use.')
+
+                if (
+                    (i['ip'] in new_ips or not new_ips) and
+                    i['ip'] not in system_ips
+                ):
+                    verrors.add(f'{schema}.listen', f'IP {i["ip"]} not configured on this system.')
 
         if data['discovery_authgroup']:
             if not await self.middleware.call(
@@ -233,7 +243,7 @@ class ISCSIPortalService(CRUDService):
         new.update(data)
 
         verrors = ValidationErrors()
-        await self.__validate(verrors, new, 'iscsiportal_update')
+        await self.__validate(verrors, new, 'iscsiportal_update', old)
         if verrors:
             raise verrors
 
