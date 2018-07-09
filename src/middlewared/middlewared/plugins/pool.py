@@ -894,6 +894,41 @@ class PoolService(CRUDService):
         return True
 
     @item_method
+    @accepts(Int('id'), Dict(
+        'options',
+        Str('label', required=True),
+    ))
+    async def online(self, oid, options):
+        """
+        Online a disk from pool of id `id`.
+
+        `label` is the vdev guid or device name.
+        """
+        pool = await self._get_instance(oid)
+
+        verrors = ValidationErrors()
+
+        found = self.__find_disk_from_topology(options['label'], pool)
+        if not found:
+            verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
+
+        if pool['encrypt'] > 0:
+            verrors.add('id', 'Disk cannot be set to online in encrypted pool.')
+
+        if verrors:
+            raise verrors
+
+        await self.middleware.call('zfs.pool.online', pool['name'], found[1]['guid'])
+
+        disk = await self.middleware.call(
+            'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
+        )
+        if disk:
+            await self.middleware.call('disk.swaps_configure')
+
+        return True
+
+    @item_method
     @accepts(Int('id'))
     async def download_encryption_key(self, oid):
         """
