@@ -4,6 +4,7 @@ import josepy as jose
 import json
 import pytz
 import requests
+import time
 
 from middlewared.plugins.crypto import CERT_TYPE_EXISTING, RE_CERTIFICATE
 from middlewared.schema import Bool, Dict, Int, Str, ValidationErrors
@@ -389,18 +390,18 @@ class DNSAuthenticatorService(CRUDService):
 
     @staticmethod
     def get_authenticator_schemas():
-        auth_funcs = [
-            func for func in dir(DNSAuthenticatorService)
-            if callable(getattr(DNSAuthenticatorService, func))
-            and func.startswith('update_txt_record_')
-        ]
 
         return {
             f_n[len('update_txt_record_'):]: [
                 Str(arg, required=True)
-                for arg in list(getattr(DNSAuthenticatorService, f_n).__code__.co_varnames)[4:]
+                for arg in list(getattr(DNSAuthenticatorService, f_n).__code__.co_varnames)
+                [4: getattr(DNSAuthenticatorService, f_n).__code__.co_argcount]
             ]
-            for f_n in auth_funcs
+            for f_n in [
+                func for func in dir(DNSAuthenticatorService)
+                if callable(getattr(DNSAuthenticatorService, func))
+                and func.startswith('update_txt_record_')
+            ]
         }
 
     async def common_validation(self, data, schema_name):
@@ -420,6 +421,7 @@ class DNSAuthenticatorService(CRUDService):
         Dict(
             'dns_authenticator_create',
             Str('authenticator', required=True),
+            Str('name', required=True),
             Dict('attributes', additional_attrs=True)
         )
     )
@@ -556,10 +558,19 @@ class DNSAuthenticatorService(CRUDService):
             }
         )
 
-        # TODO: ENSURE CHANGE HAS BEEN MADE - FOR NOW SLEEP
-        print('\n\nresp has been received')
-        import time
-        time.sleep(30)
-        print('\n\nwoke up from sleep')
-        return resp['ChangeInfo']['Id']
+        """
+        Wait for a change to be propagated to all Route53 DNS servers.
+        https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetChange.html
+        """
+        for unused_n in range(0, 120):
+            r = client.get_change(Id=resp['ChangeInfo']['Id'])
+            if r['ChangeInfo']['Status'] == 'INSYNC':
+                return resp['ChangeInfo']['Id']
+            time.sleep(5)
 
+        verrors.add(
+            'dns_authenticator_update_record.domain',
+            f'Timed out waiting for Route53 change. Current status: {resp["ChangeInfo"]["Status"]}'
+        )
+
+        raise verrors

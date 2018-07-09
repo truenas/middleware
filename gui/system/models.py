@@ -1235,7 +1235,10 @@ class ACMERegistration(models.Model):
 class DNSAuthenticator(models.Model):
     authenticator = models.CharField(
         max_length=64,
-        unique=True  # is this the right step ?
+    )
+    name = models.CharField(
+        max_length=64,
+        unique=True
     )
     attributes = EncryptedDictField()
 
