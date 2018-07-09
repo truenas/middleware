@@ -34,9 +34,6 @@ ldap_func()
 {
 	local onoff
 
-	#
-	#	First, check if the LDAP service is enabled.
-	#
 	onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ldap_enable
@@ -60,16 +57,7 @@ ldap_func()
 	section_footer
 
 	#
-	#	If LDAP is disabled, exit.
-	#
-
-	if [ "${onoff}" = "0" ]
-	then
-		exit 0
-	fi
-
-	#
-	#	Next, dump LDAP configuration
+	#	dump LDAP configuration
 	#
 	local IFS="|"
 	read hostname basedn binddn anonbind usersuffix \

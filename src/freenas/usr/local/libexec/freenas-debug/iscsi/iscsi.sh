@@ -32,26 +32,30 @@ iscsi_help() { echo "Dump iSCSI Configuration"; }
 iscsi_directory() { echo "iSCSI"; }
 iscsi_func()
 {
-	#
-	#	If iSCSI is disabled, exit.
-	#
+	local onoff
 
-	iscsi_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		srv_enable	
-	FROM
-		services_services
-	WHERE
-		srv_service = 'iscsitarget'
-	")
+        onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+        SELECT
+                srv_enable
+        FROM
+                services_services
+        WHERE
+                srv_service = 'iscsitarget'
+        ORDER BY
+                -id
+        LIMIT 1
+        ")
 
-	if [ "${iscsi_enabled}" = "0" ]
-	then
-		section_header "iSCSI Status"
-		echo "iSCSI is DISABLED"
-		exit 0
-	fi
+        enabled="DISABLED"
+        if [ "${onoff}" = "1" ]
+        then
+                enabled="ENABLED"
+        fi
 
+        section_header "iSCSI Status"
+        echo "iSCSI is ${enabled}"
+        section_footer
+	
 	alua_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		iscsi_alua
