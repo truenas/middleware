@@ -8,7 +8,7 @@ import time
 
 from middlewared.plugins.crypto import CERT_TYPE_EXISTING, RE_CERTIFICATE
 from middlewared.schema import Bool, Dict, Int, Str, ValidationErrors
-from middlewared.service import accepts, CRUDService, periodic, private
+from middlewared.service import accepts, CRUDService, job, periodic, private
 from middlewared.validators import validate_attributes
 
 from acme import client
@@ -19,6 +19,13 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from OpenSSL import crypto
 
 from pprint import pprint
+
+'''
+TODO'S:
+1) IS THERE A MIN KEY SIZE REQUIRED BY LETS ENCRYPT IN CSR - HANDLE THE EXCEPTION GRACEFULLY
+2) CHECK IF _GET_INSTANCE CAN BE CALLED FROM MIDDLEWARE.CALL_SYNC
+3) Domain names should not end in periods ? research
+'''
 
 
 def get_acme_client_and_key(middleware, directory_uri, tos=False):
@@ -99,14 +106,12 @@ class ACMERegistrationService(CRUDService):
         )
     )
     def do_create(self, data):
-        # NOTE: FOR NOW THE DEFAULTS FOR JWK_create SHOULD NOT BE TAMPERED WITH AS THEIR IS A LIMIT TO THE KEY SIZE
-        #  WHICH WE SAVE IN DATABASE
+
         # STEPS FOR CREATION
         # 1) CREATE KEY
         # 2) REGISTER CLIENT
-        # 3) SAVE KEY
-        # 4) SAVE REGISTRATION OBJECT
-        # 5) SAVE REGISTRATION BODY
+        # 3) SAVE REGISTRATION OBJECT
+        # 4) SAVE REGISTRATION BODY
 
         verrors = ValidationErrors()
 
@@ -165,8 +170,8 @@ class ACMERegistrationService(CRUDService):
                 'new_nonce_uri': directory.newNonce,
                 'new_order_uri': directory.newOrder,
                 'revoke_cert_uri': directory.revokeCert,
-                'directory': data['directory_uri']  # handle trailing / ?
-            },
+                'directory': data['directory_uri'] + '/' if data['directory_uri'][-1] != '/' else ''
+            }
         )
 
         # Save registration body
@@ -183,26 +188,20 @@ class ACMERegistrationService(CRUDService):
 
         return self.middleware.call_sync(f'{self._config.namespace}.query', [('id', '=', registration_id)])[0]
 
-    @accepts(
-        Int('id')
-    )
-    async def do_delete(self, id):
-        # TODO: Should this method be implemented at all?
-        response = await self.middleware.call(
-            'datastore.delete',
-            self._config.datastore,
-            id
-        )
-
-        return response
-
 
 class ACMEService(CRUDService):
 
     class Config:
         datastore = 'system.certificate'
         datastore_prefix = 'cert_'
-        datastore_extend = 'acme.cert_extend'
+        datastore_extend = 'certificate.cert_extend'
+
+    async def query(self, filters=None, options=None):
+        if not filters:
+            filters = [['acme', '!=', None]]
+        else:
+            filters.append(['acme', '!=', None])
+        return await super(ACMEService, self).query(filters, options)
 
     @private
     async def get_domain_names(self, data):
@@ -210,13 +209,12 @@ class ACMEService(CRUDService):
         names.extend(data['san'])
         return names
 
-    def issue_certificate(self, data, csr_data):
+    def issue_certificate(self, job, progress, data, csr_data):
         verrors = ValidationErrors()
 
-        # For now, lets only allow dns validation for dns providers we have an authenticator plugin for
+        # TODO: Add ability to complete DNS validation challenge manually
 
         domains = self.middleware.call_sync('acme.get_domain_names', csr_data)
-        print('we have order\n\n')
         dns_authenticator_ids = [o['id'] for o in self.middleware.call_sync('dns.authenticator.query')]
         for domain in domains:
             if domain not in data['domain_dns_mapping']:
@@ -227,7 +225,7 @@ class ACMEService(CRUDService):
             elif data['domain_dns_mapping'][domain] not in dns_authenticator_ids:
                 verrors.add(
                     'acme_create.domain_dns_mapping',
-                    f'Please provide valid DNS Authenticator id for {domain}'
+                    f'Provided DNS Authenticator id for {domain} does not exist'
                 )
         for domain in data['domain_dns_mapping']:
             if domain not in domains:
@@ -240,17 +238,25 @@ class ACMEService(CRUDService):
             raise verrors
 
         acme_client, key = get_acme_client_and_key(self.middleware, data['directory_uri'], data['tos'])
-        # perform operations and have a cert issued
-        print('\n\nwe have client')
-        order = acme_client.new_order(csr_data['CSR'])
+        try:
+            # perform operations and have a cert issued
+            order = acme_client.new_order(csr_data['CSR'])
+        except messages.Error as e:
+            verrors.add(
+                'acme_create.new_order',
+                f'Failed to issue a new order for Certificate : {e}'
+            )
+        else:
+            job.set_progress(progress, 'New order for certificate issuance placed')
 
-        self.handle_authorizations(order, data['domain_dns_mapping'], acme_client, key)
+            self.handle_authorizations(job, progress, order, data['domain_dns_mapping'], acme_client, key)
 
-        print('\n\nauthorizations handled')
-
-        # Polling for a maximum of 10 minutes while trying to finalize order
-        # Should we try .poll() instead first ? research please
-        return acme_client.poll_and_finalize(order, datetime.datetime.now() + datetime.timedelta(minutes=10))
+            # Polling for a maximum of 10 minutes while trying to finalize order
+            # Should we try .poll() instead first ? research please
+            return acme_client.poll_and_finalize(order, datetime.datetime.now() + datetime.timedelta(minutes=10))
+        finally:
+            if verrors:
+                raise verrors
 
     @accepts(
         Dict(
@@ -262,9 +268,8 @@ class ACMEService(CRUDService):
             Dict('domain_dns_mapping', additional_attrs=True, required=True)
         )
     )
-    def do_create(self, data):
-        # TODO: THIS SHOULD BE A JOB ?
-
+    @job(lock='acme_cert_create')
+    def do_create(self, job, data):
         verrors = ValidationErrors()
 
         csr_data = self.middleware.call_sync(
@@ -297,7 +302,11 @@ class ACMEService(CRUDService):
         if verrors:
             raise verrors
 
-        final_order = self.issue_certificate(data, csr_data)
+        job.set_progress(10, 'Validation complete')
+
+        final_order = self.issue_certificate(job, 25, data, csr_data)
+
+        job.set_progress(95, 'Final order received from ACME server')
 
         print('\n\n')
         pprint(json.loads(final_order.json_dumps()))
@@ -339,14 +348,13 @@ class ACMEService(CRUDService):
         )
 
         return self.middleware.call_sync(
-            'certificate.query',
+            'acme.query',
             [['id', '=', cert_id]], {
                 'get': True
             }
         )
 
-    # TODO: THIS SHOULD BE A JOB ?
-    def handle_authorizations(self, order, domain_names_dns_mapping, acme_client, key):
+    def handle_authorizations(self, job, progress, order, domain_names_dns_mapping, acme_client, key):
         # When this is called, it should be ensured by the function calling this function that for all authorization
         # resource, a domain name dns mapping is available ? Ideal ?
         # For multiple domain providers in domain names, I think we should ask the end user to specify which domain
@@ -354,56 +362,82 @@ class ACMEService(CRUDService):
         # https://serverfault.com/questions/906407/lets-encrypt-dns-challenge-with-multiple-public-dns-providers
         verrors = ValidationErrors()
 
-        for authorization_resource in order.authorizations:
-            domain = authorization_resource.body.identifier.value  # TODO: handle wildcards
-            # BOULDER DOES NOT RETURN WILDCARDS FOR NOW - WILDCARDS SHOULD BE GRACEFULLY HANDLED IN THE DOMAIN DNS
-            # MAPPING DICT
-            # OTHER IMPLEMENTATIONS RIGHT NOW ASSUME THAT EVERY DOMAIN HAS A WILD CARD IN CASE OF DNS CHALLENGE
-            challenge = None
-            for chg in authorization_resource.body.challenges:
-                if chg.typ == 'dns-01':
-                    challenge = chg
+        max_progress = (progress * 4) - progress - (progress * 4 / 5)  # TODO: Refine this
 
-            if not challenge:
-                verrors.add(
-                    'acme_authorization.domain',
-                    f'DNS Challenge not found for domain {authorization_resource.body.identifier.value}'
+        for authorization_resource in order.authorizations:
+            try:
+                progress += (max_progress / len(order.authorizations))
+                status = False
+                domain = authorization_resource.body.identifier.value  # TODO: handle wildcards
+                # BOULDER DOES NOT RETURN WILDCARDS FOR NOW - WILDCARDS SHOULD BE GRACEFULLY HANDLED IN THE DOMAIN DNS
+                # MAPPING DICT
+                # OTHER IMPLEMENTATIONS RIGHT NOW ASSUME THAT EVERY DOMAIN HAS A WILD CARD IN CASE OF DNS CHALLENGE
+                challenge = None
+                for chg in authorization_resource.body.challenges:
+                    if chg.typ == 'dns-01':
+                        challenge = chg
+
+                if not challenge:
+                    verrors.add(
+                        'acme_authorization.domain',
+                        f'DNS Challenge not found for domain {authorization_resource.body.identifier.value}'
+                    )
+                    raise verrors
+
+                token = challenge.validation(key)
+
+                print('\n\nTOKEN - ', token)
+
+                try:
+                    status = self.middleware.call_sync(
+                        'dns.authenticator.update_txt_record', {
+                            'authenticator': domain_names_dns_mapping[domain],
+                            'challenge': challenge.json_dumps(),
+                            'domain': domain,
+                            'key': key.json_dumps()
+                        }
+                    )
+                except ValidationErrors as v:
+                    verrors.extend(v)
+                else:
+                    try:
+                        acme_client.answer_challenge(challenge, challenge.response(key))
+                    except Exception as e:
+                        verrors.add(
+                            'acme_authorization.domain',
+                            f'Error answering challenge for {domain} : {e}'
+                        )
+
+            finally:
+                job.set_progress(
+                    progress,
+                    f'DNS challenge {"completed" if status else "failed"} for {domain}'
                 )
 
-                raise verrors
+        if verrors:
+            raise verrors
 
-            token = challenge.validation(key)
-
-            print('\n\nTOKEN - ', token)
-
-            self.middleware.call_sync(
-                'dns.authenticator.update_txt_record', {
-                    'authenticator': domain_names_dns_mapping[domain],
-                    'challenge': challenge.json_dumps(),
-                    'domain': domain,
-                    'key': key.json_dumps()
-                }
-            )
-
-            acme_client.answer_challenge(challenge, challenge.response(key))
-            print('\nchallenge answered')
-
-    @periodic(43200, run_on_start=True)
-    def renew_certs(self):
-        for cert in self.middleware.call_sync(
-            'certificate.query',
-            [['acme', '!=', None]]
-        ):
+    @periodic(86400, run_on_start=True)
+    @job(lock='acme_cert_renewal')
+    def renew_certs(self, job):
+        certs = self.middleware.call_sync('acme.query')
+        progress = 0
+        for cert in certs:
             # TODO: Make the renew date customizable, perhaps add a field to the cert model
+            progress += (100 / len(certs))
 
             if (pytz.utc.localize(cert['expire']) - datetime.datetime.now(datetime.timezone.utc)).days < 10:
                 # renew cert
                 print('\n\nupdating cert')
-                final_order = self.issue_certificate({
-                    'tos': True,
-                    'directory_uri': cert['acme']['directory'],
-                    'domain_dns_mapping': cert['domain_authenticators']
-                }, cert)
+                self.logger.debug(f'Renewing certificate {cert["name"]}')
+                final_order = self.issue_certificate(
+                    job, progress / 4, {
+                        'tos': True,
+                        'directory_uri': cert['acme']['directory'],
+                        'domain_dns_mapping': cert['domain_authenticators']
+                    },
+                    cert
+                )
 
                 print('\n\nnew cert is - ', final_order.fullchain_pem)
                 print('\n\nexpiry date - ', final_order.body.expires.astimezone(pytz.utc).strftime("%Y-%m-%d"))
@@ -421,13 +455,18 @@ class ACMEService(CRUDService):
                     {'prefix': self._config.datastore_prefix}
                 )
 
-    def do_delete(self, id):
+            job.set_progress(progress)
+
+    @job(lock='acme_cert_delete')
+    def do_delete(self, job, id):
         # First we revoke the certificate and then delete it from the system
         cert = self.middleware.call_sync(
-            'certificate.query', # TODO: MAYBE ADD CERTIFICATE EXTEND METHOD TO ACME SERVICE AND ADD ACME RELATED CHECKS
-            [['acme', '!=', None], ['id', '=', id]]
+            'acme.query',
+            [['id', '=', id]]
         )
+
         verrors = ValidationErrors()
+
         if not cert:
             verrors.add(
                 'acme_revoke.id',
@@ -440,10 +479,15 @@ class ACMEService(CRUDService):
             raise verrors
 
         client, key = get_acme_client_and_key(self.middleware, cert['acme']['directory'], True)
+
+        job.set_progress(60)
+
         client.revoke(
             jose.ComparableX509(crypto.load_certificate(crypto.FILETYPE_PEM, cert['certificate'])),
             0
         )
+
+        job.set_progress(95, 'Certificate successfully revoked by ACME server')
 
         print('\n\nCert revoked successfully')
 
@@ -563,7 +607,7 @@ class DNSAuthenticatorService(CRUDService):
         if not authenticator:
             verrors.add(
                 'dns_authenticator_update_record.authenticator',
-                f'{data["authenticator"]} not a valid authenticator Id'
+                f'{data["authenticator"]} not a valid authenticator Id provided for {data["domain"]}'
             )
         else:
             authenticator = authenticator[0]
@@ -580,6 +624,16 @@ class DNSAuthenticatorService(CRUDService):
             **authenticator['attributes']
         )
 
+    '''
+    Few rules for writing authenticator functions
+    1) The name must start with "update_txt_record_"
+    2) The authenticator name in function should be lowercase e.g "route53"
+    3) The first 3 arguments must be domain, challenge and key. Rest will be what the 
+       credentials are required for authenticating and nothing else 
+    4) In case update_txt_record is unsuccessful, ValidationErrors should be RAISED with appropriate
+       status/reason.
+    '''
+
     def update_txt_record_route53(self, domain, challenge, key, access_key_id, secret_access_key):
         session = boto3.Session(
             aws_access_key_id=access_key_id,
@@ -594,13 +648,13 @@ class DNSAuthenticatorService(CRUDService):
         target_labels = domain.rstrip('.').split('.')
         zones = []
         for page in paginator.paginate():
-            for zone in page["HostedZones"]:
-                if zone["Config"]["PrivateZone"]:
+            for zone in page['HostedZones']:
+                if zone['Config']['PrivateZone']:
                     continue
 
-                candidate_labels = zone["Name"].rstrip(".").split(".")
+                candidate_labels = zone['Name'].rstrip('.').split('.')
                 if candidate_labels == target_labels[-len(candidate_labels):]:
-                    zones.append((zone["Name"], zone["Id"]))
+                    zones.append((zone['Name'], zone['Id']))
         if not zones:
             verrors.add(
                 'dns_authenticator_update_record.domain',
