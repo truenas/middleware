@@ -2740,6 +2740,15 @@ require([
             });
     }
 
+    configDownloadObject = function(name, url) {
+        commonDialog({
+            id: "config_download_dialog",
+            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+            name: name,
+            url: url,
+            });
+    }
+
     editScaryObject = function(name, url, nodes) {
         commonDialog({
             id: "editscary_dialog",
