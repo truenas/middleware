@@ -8,7 +8,7 @@ import time
 
 from middlewared.plugins.crypto import CERT_TYPE_EXISTING, RE_CERTIFICATE
 from middlewared.schema import Bool, Dict, Int, Str, ValidationErrors
-from middlewared.service import accepts, CRUDService, private
+from middlewared.service import accepts, CRUDService, periodic, private
 from middlewared.validators import validate_attributes
 
 from acme import client
@@ -41,7 +41,7 @@ def get_acme_client_and_key(middleware, directory_uri, tos=False):
             'status': data['body']['status'],
             'key': {
                 'e': key_dict['e'],
-                'kty': 'RSA',  # TODO: IS THE HARD CODED VALUE IDEAL ?
+                'kty': 'RSA',
                 'n': key_dict['n']
             }
         }
@@ -64,7 +64,7 @@ class ACMERegistrationService(CRUDService):
         datastore = 'system.acmeregistration'
         datastore_extend = 'acme.registration.register_extend'
         namespace = 'acme.registration'
-        #TODO: ADD PRIVATE TO TRUE
+        private = True
 
     async def register_extend(self, data):
         data['body'] = {
@@ -110,7 +110,7 @@ class ACMERegistrationService(CRUDService):
         verrors = ValidationErrors()
 
         directory = self.get_directory(data['directory_uri'])
-        if not directory:
+        if not isinstance(directory, messages.Directory):
             verrors.add(
                 'acme_registration_create.direcotry_uri',
                 f'System was unable to retrieve the directory with the specified directory_uri: {directory}'
@@ -122,6 +122,7 @@ class ACMERegistrationService(CRUDService):
                 'Please agree to the terms of service'
             )
 
+        # For now we assume that only root is responsible for certs issued under ACME protocol
         email = (self.middleware.call_sync('user.query', [['id', '=', 1]]))[0]['email']
         if not email:
             verrors.add(
@@ -185,7 +186,7 @@ class ACMERegistrationService(CRUDService):
         Int('id')
     )
     async def do_delete(self, id):
-
+        # TODO: Should this method be implemented at all?
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
@@ -354,6 +355,9 @@ class ACMEService(CRUDService):
 
         for authorization_resource in order.authorizations:
             domain = authorization_resource.body.identifier.value  # TODO: handle wildcards
+            # BOULDER DOES NOT RETURN WILDCARDS FOR NOW - WILDCARDS SHOULD BE GRACEFULLY HANDLED IN THE DOMAIN DNS
+            # MAPPING DICT
+            # OTHER IMPLEMENTATIONS RIGHT NOW ASSUME THAT EVERY DOMAIN HAS A WILD CARD IN CASE OF DNS CHALLENGE
             challenge = None
             for chg in authorization_resource.body.challenges:
                 if chg.typ == 'dns-01':
@@ -382,6 +386,39 @@ class ACMEService(CRUDService):
 
             acme_client.answer_challenge(challenge, challenge.response(key))
             print('\nchallenge answered')
+
+    @periodic(43200, run_on_start=True)
+    def renew_certs(self):
+        for cert in self.middleware.call_sync(
+            'certificate.query',
+            [['acme', '!=', None]]
+        ):
+            # TODO: Make the renew date customizable, perhaps add a field to the cert model
+
+            if (pytz.utc.localize(cert['expire']) - datetime.datetime.now(datetime.timezone.utc)).days < 10:
+                # renew cert
+                print('\n\nupdating cert')
+                final_order = self.issue_certificate({
+                    'tos': True,
+                    'directory_uri': cert['acme']['directory'],
+                    'domain_dns_mapping': cert['domain_authenticators']
+                }, cert)
+
+                print('\n\nnew cert is - ', final_order.fullchain_pem)
+                print('\n\nexpiry date - ', final_order.body.expires.astimezone(pytz.utc).strftime("%Y-%m-%d"))
+
+                self.middleware.call_sync(
+                    'datastore.update',
+                    self._config.datastore,
+                    cert['id'],
+                    {
+                        'certificate': final_order.fullchain_pem,
+                        'acme_uri': final_order.uri,
+                        'expire': final_order.body.expires.astimezone(pytz.utc).strftime("%Y-%m-%d"),
+                        'chain': True if len(RE_CERTIFICATE.findall(final_order.fullchain_pem)) > 1 else False,
+                    },
+                    {'prefix': self._config.datastore_prefix}
+                )
 
 
 class DNSAuthenticatorService(CRUDService):
@@ -508,7 +545,7 @@ class DNSAuthenticatorService(CRUDService):
             messages.ChallengeBody.from_json(json.loads(data['challenge'])),
             jose.JWKRSA.fields_from_json(json.loads(data['key'])),
             **authenticator['attributes']
-        )  # THIS SHOULD BE GOOD - test this please
+        )
 
     def update_txt_record_route53(self, domain, challenge, key, access_key_id, secret_access_key):
         session = boto3.Session(
