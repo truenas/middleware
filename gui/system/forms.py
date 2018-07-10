@@ -1129,11 +1129,11 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
         return data
 
     def done(self, request, events):
-        if self.original_instance['adv_consolemsg'] != self.instance.adv_consolemsg:
-            if self.instance.adv_consolemsg:
-                events.append("_msg_start()")
-            else:
-                events.append("_msg_stop()")
+        if self.instance.adv_consolemsg:
+            events.append("_msg_start()")
+        else:
+            events.append("_msg_stop()")
+
         if self.original_instance['adv_advancedmode'] != self.instance.adv_advancedmode:
             # Invalidate cache
             request.session.pop("adv_mode", None)
