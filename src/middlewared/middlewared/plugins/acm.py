@@ -11,8 +11,9 @@ from middlewared.schema import Bool, Dict, Int, Str, ValidationErrors
 from middlewared.service import accepts, CRUDService, job, periodic, private
 from middlewared.validators import validate_attributes
 
-from acme import client
-from acme import messages
+from acme import client, errors, messages
+from botocore import exceptions as boto_exceptions
+from botocore.errorfactory import BaseClientExceptions as boto_BaseClientException
 from certbot import achallenges
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -251,9 +252,15 @@ class ACMEService(CRUDService):
 
             self.handle_authorizations(job, progress, order, data['domain_dns_mapping'], acme_client, key)
 
-            # Polling for a maximum of 10 minutes while trying to finalize order
-            # Should we try .poll() instead first ? research please
-            return acme_client.poll_and_finalize(order, datetime.datetime.now() + datetime.timedelta(minutes=10))
+            try:
+                # Polling for a maximum of 10 minutes while trying to finalize order
+                # Should we try .poll() instead first ? research please
+                return acme_client.poll_and_finalize(order, datetime.datetime.now() + datetime.timedelta(minutes=10))
+            except errors.TimeoutError:
+                verrors.add(
+                    'acme_create.final_order',
+                    'Certificate request for final order timed out'
+                )
         finally:
             if verrors:
                 raise verrors
@@ -307,9 +314,6 @@ class ACMEService(CRUDService):
         final_order = self.issue_certificate(job, 25, data, csr_data)
 
         job.set_progress(95, 'Final order received from ACME server')
-
-        print('\n\n')
-        pprint(json.loads(final_order.json_dumps()))
 
         cert_dict = {
             'acme': self.middleware.call_sync(
@@ -366,8 +370,8 @@ class ACMEService(CRUDService):
 
         for authorization_resource in order.authorizations:
             try:
-                progress += (max_progress / len(order.authorizations))
                 status = False
+                progress += (max_progress / len(order.authorizations))
                 domain = authorization_resource.body.identifier.value  # TODO: handle wildcards
                 # BOULDER DOES NOT RETURN WILDCARDS FOR NOW - WILDCARDS SHOULD BE GRACEFULLY HANDLED IN THE DOMAIN DNS
                 # MAPPING DICT
@@ -382,11 +386,7 @@ class ACMEService(CRUDService):
                         'acme_authorization.domain',
                         f'DNS Challenge not found for domain {authorization_resource.body.identifier.value}'
                     )
-                    raise verrors
-
-                token = challenge.validation(key)
-
-                print('\n\nTOKEN - ', token)
+                    continue
 
                 try:
                     status = self.middleware.call_sync(
@@ -402,7 +402,7 @@ class ACMEService(CRUDService):
                 else:
                     try:
                         acme_client.answer_challenge(challenge, challenge.response(key))
-                    except Exception as e:
+                    except errors.UnexpectedUpdate as e:
                         verrors.add(
                             'acme_authorization.domain',
                             f'Error answering challenge for {domain} : {e}'
@@ -424,6 +424,7 @@ class ACMEService(CRUDService):
         progress = 0
         for cert in certs:
             # TODO: Make the renew date customizable, perhaps add a field to the cert model
+            # TODO: Make renewal optional with default set as True
             progress += (100 / len(certs))
 
             if (pytz.utc.localize(cert['expire']) - datetime.datetime.now(datetime.timezone.utc)).days < 10:
@@ -438,9 +439,6 @@ class ACMEService(CRUDService):
                     },
                     cert
                 )
-
-                print('\n\nnew cert is - ', final_order.fullchain_pem)
-                print('\n\nexpiry date - ', final_order.body.expires.astimezone(pytz.utc).strftime("%Y-%m-%d"))
 
                 self.middleware.call_sync(
                     'datastore.update',
@@ -482,14 +480,20 @@ class ACMEService(CRUDService):
 
         job.set_progress(60)
 
-        client.revoke(
-            jose.ComparableX509(crypto.load_certificate(crypto.FILETYPE_PEM, cert['certificate'])),
-            0
-        )
+        try:
+            client.revoke(
+                jose.ComparableX509(crypto.load_certificate(crypto.FILETYPE_PEM, cert['certificate'])),
+                0
+            )
+        except errors.ClientError as e:
+            verrors.add(
+                'acme_revoke.id',
+                f'Unable to revoke certificate :{e}'
+            )
+
+            raise verrors
 
         job.set_progress(95, 'Certificate successfully revoked by ACME server')
-
-        print('\n\nCert revoked successfully')
 
         return self.middleware.call_sync(
             'datastore.delete',
@@ -647,20 +651,27 @@ class DNSAuthenticatorService(CRUDService):
         paginator = client.get_paginator('list_hosted_zones')
         target_labels = domain.rstrip('.').split('.')
         zones = []
-        for page in paginator.paginate():
-            for zone in page['HostedZones']:
-                if zone['Config']['PrivateZone']:
-                    continue
+        try:
+            for page in paginator.paginate():
+                for zone in page['HostedZones']:
+                    if zone['Config']['PrivateZone']:
+                        continue
 
-                candidate_labels = zone['Name'].rstrip('.').split('.')
-                if candidate_labels == target_labels[-len(candidate_labels):]:
-                    zones.append((zone['Name'], zone['Id']))
-        if not zones:
+                    candidate_labels = zone['Name'].rstrip('.').split('.')
+                    if candidate_labels == target_labels[-len(candidate_labels):]:
+                        zones.append((zone['Name'], zone['Id']))
+            if not zones:
+                verrors.add(
+                    'dns_authenticator_update_record.domain',
+                    f'Unable to find a Route53 hosted zone for {domain}'
+                )
+        except boto_exceptions.ClientError as e:
             verrors.add(
-                'dns_authenticator_update_record.domain',
-                f'Unable to find a Route53 hosted zone for {domain}'
+                'dns_authenticator_update_record.credentials',
+                f'Failed to get Hosted zones with provided credentials :{e}'
             )
 
+        if verrors:
             raise verrors
 
         # Order the zones that are suffixes for our desired to domain by
@@ -670,23 +681,31 @@ class DNSAuthenticatorService(CRUDService):
         zones.sort(key=lambda z: len(z[0]), reverse=True)
         zone_id = zones[0][1]
 
-        resp = client.change_resource_record_sets(
-            HostedZoneId=zone_id,
-            ChangeBatch={
-                'Changes': [
-                    {
-                        'Action': 'UPSERT',
-                        'ResourceRecordSet': {
-                            'Name': challenge.validation_domain_name(domain),
-                            'ResourceRecords': [{'Value': f'"{challenge.validation(key)}"'}],
-                            'TTL': 3600,
-                            'Type': 'TXT'
+        try:
+            resp = client.change_resource_record_sets(
+                HostedZoneId=zone_id,
+                ChangeBatch={
+                    'Changes': [
+                        {
+                            'Action': 'UPSERT',
+                            'ResourceRecordSet': {
+                                'Name': challenge.validation_domain_name(domain),
+                                'ResourceRecords': [{'Value': f'"{challenge.validation(key)}"'}],
+                                'TTL': 3600,
+                                'Type': 'TXT'
+                            }
                         }
-                    }
-                ],
-                'Comment': 'FreeNAS-dns-route53 certificate validation'
-            }
-        )
+                    ],
+                    'Comment': 'FreeNAS-dns-route53 certificate validation'
+                }
+            )
+        except boto_BaseClientException as e:
+            verrors.add(
+                'dns_authenticator_update_record.credentials',
+                f'Failed to update record sets : {e}'
+            )
+
+            raise verrors
 
         """
         Wait for a change to be propagated to all Route53 DNS servers.
