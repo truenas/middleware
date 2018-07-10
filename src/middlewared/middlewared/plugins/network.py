@@ -1,5 +1,5 @@
 from middlewared.service import (ConfigService, CRUDService, Service,
-                                 filterable, private)
+                                 filterable, pass_app, private)
 from middlewared.utils import Popen, filter_list, run
 from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Str,
                                 ValidationErrors, accepts)
@@ -14,6 +14,7 @@ import os
 import re
 import shlex
 import signal
+import socket
 import subprocess
 import urllib.request
 
@@ -324,6 +325,40 @@ class InterfacesService(Service):
                 })
 
         return iface
+
+    @accepts()
+    @pass_app
+    async def websocket_interface(self, app):
+        """
+        Returns the interface this websocket is connected to.
+        """
+        if app is None:
+            return
+        sock = app.request.transport.get_extra_info('socket')
+        if sock.family not in (socket.AF_INET, socket.AF_INET6):
+            return
+
+        remote_port = (
+            app.request.headers.get('X-Real-Remote-Port') or
+            app.request.transport.get_extra_info('peername')[1]
+        )
+        if not remote_port:
+            return
+
+        proc = await Popen(
+            f'sockstat -46|grep ":{remote_port}"',
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        stdout = (await proc.communicate())[0].decode().strip().split()
+        if proc.returncode != 0:
+            return None
+        local_ip = stdout[5].split(':')[0]
+        for iface in await self.middleware.call('interfaces.query'):
+            for alias in iface['aliases']:
+                if alias['address'] == local_ip:
+                    return iface
 
     @private
     async def sync(self):
