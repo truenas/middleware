@@ -133,6 +133,7 @@ class EtcService(Service):
             if not os.path.exists(outfile):
                 with open(outfile, 'w') as f:
                     f.write(rendered)
+                changes = True
 
             with open(outfile, 'w') as f:
                 f.write(rendered)
