@@ -18,6 +18,7 @@ import re
 import shlex
 import subprocess
 import tempfile
+import textwrap
 
 CHUNK_SIZE = 5 * 1024 * 1024
 RE_TRANSF = re.compile(r"Transferred:\s*?(.+)$", re.S)
@@ -90,9 +91,14 @@ async def rclone(job, cloud_sync):
             "--config", config.config_path,
             "-v",
             "--stats", "1s",
-        ] + shlex.split(cloud_sync["args"]) + [
-            cloud_sync["transfer_mode"].lower(),
         ]
+
+        if cloud_sync["attributes"].get("fast_list"):
+            args.append("--fast-list")
+
+        args += shlex.split(cloud_sync["args"])
+
+        args += [cloud_sync["transfer_mode"].lower()]
 
         if cloud_sync["direction"] == "PUSH":
             args.extend([cloud_sync["path"], config.remote_path])
@@ -298,6 +304,8 @@ class CloudSyncService(CRUDService):
         schema.append(Str("folder"))
 
         schema.extend(provider.task_schema)
+
+        schema.extend(self.common_task_schema(provider))
 
         attributes_verrors = validate_attributes(schema, data, additional_attrs=True)
 
@@ -534,13 +542,24 @@ class CloudSyncService(CRUDService):
                             "property": field.name,
                             "schema": field.to_json_schema()
                         }
-                        for field in provider.task_schema
+                        for field in provider.task_schema + self.common_task_schema(provider)
                     ],
                 }
                 for provider in REMOTES.values()
             ],
             key=lambda provider: provider["title"].lower()
         )
+
+    def common_task_schema(self, provider):
+        schema = []
+
+        if provider.fast_list:
+            schema.append(Bool("fast_list", title="Use --fast-list", description=textwrap.dedent("""\
+                Use fewer transactions in exchange for more RAM. This may also speed up or slow down your
+                transfer. See [rclone documentation](https://rclone.org/docs/#fast-list) for more details.
+            """).rstrip()))
+
+        return schema
 
 
 async def setup(middleware):

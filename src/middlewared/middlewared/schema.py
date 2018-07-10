@@ -45,7 +45,7 @@ class EnumMixin(object):
 
 class Attribute(object):
 
-    def __init__(self, name, verbose=None, required=False, null=False, private=False,
+    def __init__(self, name, title=None, description=None, required=False, null=False, private=False,
                  validators=None, register=False, **kwargs):
         self.name = name
         self.has_default = 'default' in kwargs
@@ -53,7 +53,8 @@ class Attribute(object):
         self.required = required
         self.null = null
         self.private = private
-        self.verbose = verbose or name
+        self.title = title or name
+        self.description = description
         self.validators = validators or []
         self.register = register
 
@@ -116,13 +117,18 @@ class Attribute(object):
 class Any(Attribute):
 
     def to_json_schema(self, parent=None):
-        schema = {'anyOf': [
-            {'type': 'string'},
-            {'type': 'integer'},
-            {'type': 'boolean'},
-            {'type': 'object'},
-            {'type': 'array'},
-        ], 'title': self.verbose}
+        schema = {
+            'anyOf': [
+                {'type': 'string'},
+                {'type': 'integer'},
+                {'type': 'boolean'},
+                {'type': 'object'},
+                {'type': 'array'},
+            ],
+            'title': self.title,
+        }
+        if self.description:
+            schema['description'] = self.description
         if not parent:
             schema['_required_'] = self.required
         return schema
@@ -143,7 +149,9 @@ class Str(EnumMixin, Attribute):
     def to_json_schema(self, parent=None):
         schema = {}
         if not parent:
-            schema['title'] = self.verbose
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
             schema['_required_'] = self.required
         if not self.required:
             schema['type'] = ['string', 'null']
@@ -269,7 +277,9 @@ class Bool(Attribute):
             'type': ['boolean', 'null'] if not self.required else 'boolean',
         }
         if not parent:
-            schema['title'] = self.verbose
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
             schema['_required_'] = self.required
         return schema
 
@@ -291,7 +301,9 @@ class Int(EnumMixin, Attribute):
             'type': ['integer', 'null'] if not self.required else 'integer',
         }
         if not parent:
-            schema['title'] = self.verbose
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
             schema['_required_'] = self.required
         return schema
 
@@ -371,7 +383,9 @@ class List(EnumMixin, Attribute):
     def to_json_schema(self, parent=None):
         schema = {'type': 'array'}
         if not parent:
-            schema['title'] = self.verbose
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
             schema['_required_'] = self.required
         if self.required:
             schema['type'] = ['array', 'null']
@@ -486,7 +500,9 @@ class Dict(Attribute):
             'additionalProperties': self.additional_attrs,
         }
         if not parent:
-            schema['title'] = self.verbose
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
             schema['_required_'] = self.required
         for name, attr in list(self.attrs.items()):
             schema['properties'][name] = attr.to_json_schema(parent=self)
@@ -754,6 +770,8 @@ class UnixPerm(Str):
             'type': ['string', 'null'] if not self.required else 'string',
         }
         if not parent:
-            schema['title'] = self.verbose
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
             schema['_required_'] = self.required
         return schema
