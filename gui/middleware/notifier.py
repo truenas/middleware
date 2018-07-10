@@ -747,24 +747,11 @@ class notifier(metaclass=HookMetaclass):
         Cache disks, inactive hot-spares (and log devices in zfs 28) can be removed
         """
 
-        from_disk = self.label_to_disk(label)
-        with client as c:
-            c.call('disk.swaps_remove_disks', [from_disk])
-
-        p1 = self._pipeopen('/sbin/zpool remove %s %s' % (volume.vol_name, label))
-        stderr = p1.communicate()[1]
-        if p1.returncode != 0:
-            error = ", ".join(stderr.split('\n'))
-            raise MiddlewareError('Disk could not be removed: "%s"' % error)
-
-        self.sync_encrypted(volume)
-
-        if volume.vol_encrypt >= 1:
-            self._system(f'/sbin/geli detach {label}')
-
-        # TODO: This operation will cause damage to disk data which should be limited
-        if from_disk:
-            self.__gpt_unlabeldisk(from_disk)
+        try:
+            with client as c:
+                c.call('pool.remove', volume.id, {'label': label})
+        except Exception as e:
+            raise MiddlewareError(f'Disk could not be removed: {str(e)}')
 
     def detach_volume_swaps(self, volume):
         """Detach all swaps associated with volume"""
