@@ -49,22 +49,22 @@ def directoryservice_home(request):
 
     try:
         activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
-    except:
+    except Exception:
         activedirectory = models.ActiveDirectory.objects.create()
 
     try:
         ldap = models.LDAP.objects.order_by("-id")[0]
-    except:
+    except Exception:
         ldap = models.LDAP.objects.create()
 
     try:
         nis = models.NIS.objects.order_by("-id")[0]
-    except:
+    except Exception:
         nis = models.NIS.objects.create()
 
     try:
         ks = models.KerberosSettings.objects.order_by("-id")[0]
-    except:
+    except Exception:
         ks = models.KerberosSettings.objects.create()
 
     return render(request, 'directoryservice/index.html', {
