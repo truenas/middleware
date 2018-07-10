@@ -27,6 +27,7 @@ TODO'S:
 2) CHECK IF _GET_INSTANCE CAN BE CALLED FROM MIDDLEWARE.CALL_SYNC
 3) Domain names should not end in periods ? research
 4) Integrate alerts
+5) See what can be done to respect rate limits
 '''
 
 
@@ -310,6 +311,8 @@ class ACMEService(CRUDService):
 
         # TODO: Add ability to complete DNS validation challenge manually
 
+        # Validate domain dns mapping for handling DNS challenges
+        # Ensure that there is an authenticator for each domain in the CSR
         domains = self.middleware.call_sync('acme.get_domain_names', csr_data)
         dns_authenticator_ids = [o['id'] for o in self.middleware.call_sync('dns.authenticator.query')]
         for domain in domains:

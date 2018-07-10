@@ -587,7 +587,6 @@ class CertificateService(CRUDService):
             Int('type'),
             Int('lifetime'),
             Int('serial', validators=[Range(min=1)]),
-            Str('acme_uri'),
             Str('certificate'),
             Str('city'),
             Str('common'),
