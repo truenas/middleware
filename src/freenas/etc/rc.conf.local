@@ -532,6 +532,40 @@ _ldap_config()
 	echo "nslcd_enable=\"${nslcd_enable}\""
 }
 
+get_bmc_firmware_revision()
+{
+	/usr/local/bin/ipmitool mc info 2> /dev/null | awk -F ": " '/^Firmware Revision/ { print $2 }'
+}
+
+bmc_watchdog_is_broken()
+{
+	local major minor patch
+
+	get_bmc_firmware_revision |\
+	while IFS=. read major minor patch; do
+		# http://www.asrockrack.com/general/productdetail.asp?Model=C2750D4I#Download
+		# BMC firmware revision 0.30 fixed a watchdog timer bug
+		[ -n "${major}" -a -n "${minor}" -a -z "${patch}" ] &&
+			[ ${major} -eq 0 -a ${minor} -lt 30 ]
+	done
+}
+
+_watchdogd_config()
+{
+	local product
+
+	product=$(/usr/local/sbin/dmidecode -s baseboard-product-name | head -1)
+	if [ "${product}" = "X9DR3-F" -o "${product}" = "X9DR3-LN4F+" ] ; then
+		echo "watchdogd_enable=\"NO\""
+	elif [ "${product}" = "C2750D4I" -o "${product}" = "C2550D4I" ] && bmc_watchdog_is_broken ; then
+		echo "watchdogd_flags=\"-t 30 --softtimeout --softtimeout-action log,printf --pretimeout 15 --pretimeout-action log,printf -e 'sleep 1' -w -T 3\""
+		echo "watchdogd_enable=\"YES\""
+	else
+		echo "watchdogd_flags=\"--pretimeout 5 --pretimeout-action log,printf\""
+		echo "watchdogd_enable=\"YES\""
+	fi
+}
+
 _gen_conf()
 {
 	local failover_status="" failover_licensed=0
@@ -784,17 +818,7 @@ _gen_conf()
 		if /sbin/sysctl hw.model | grep -q AMD; then
 			echo "watchdogd_enable=\"NO\""
 		else
-			local product
-			product=`/usr/local/sbin/dmidecode -s baseboard-product-name | /usr/bin/head -n 1`
-			if [ "${product}" = "X9DR3-F" -o "${product}" = "X9DR3-LN4F+" ] ; then
-				echo "watchdogd_enable=\"NO\""
-			elif [ "${product}" = "C2750D4I" -o "${product}" = "C2550D4I" ] && [ "$(/usr/local/bin/ipmitool mc info 2> /dev/null | grep ^Firmware | cut -d . -f 2)" -lt 30 ] ; then
-				echo "watchdogd_flags=\"-t 30 --softtimeout --softtimeout-action log,printf --pretimeout 15 --pretimeout-action log,printf -e 'sleep 1' -w -T 3\""
-				echo "watchdogd_enable=\"YES\""
-			else
-				echo "watchdogd_flags=\"--pretimeout 5 --pretimeout-action log,printf\""
-				echo "watchdogd_enable=\"YES\""
-			fi
+			_watchdogd_config
 		fi
 	else
 		echo "ataidle_enable=\"NO\""
