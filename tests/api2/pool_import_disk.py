@@ -16,6 +16,12 @@ DATASET_PATH = os.path.join("/mnt", DATASET)
 
 IMAGES = {}
 
+def teardown_function():
+    for md in IMAGES.values():
+        subprocess.check_call(["mdconfig", "-d", "-u", md])
+
+    DELETE(f"/pool/dataset/id/{urllib.parse.quote(DATASET, '')}/")
+
 def expect_state(job_id, state):
     for _ in range(60):
         job = GET(f"/core/get_jobs/?id={job_id}").json()[0]
@@ -46,14 +52,7 @@ def test_01_setup_function():
             ["mdconfig", "-a", "-t", "vnode", "-f", f"/tmp/{image}"], encoding="utf8").strip()
 
 
-def test_02_teardown_function():
-    for md in IMAGES.values():
-        subprocess.check_call(["mdconfig", "-d", "-u", md])
-
-    DELETE(f"/pool/dataset/id/{urllib.parse.quote(DATASET, '')}/")
-
-
-def test_04_import_msdosfs():
+def test_02_import_msdosfs():
     result = POST("/pool/import_disk", {
         "volume": f"/dev/{IMAGES['msdosfs']}s1",
         "fs_type": "msdosfs",
@@ -69,7 +68,7 @@ def test_04_import_msdosfs():
     assert os.path.exists(os.path.join(DATASET_PATH, "Directory/File"))
 
 
-def test_05_import_nonascii_msdosfs_fails():
+def test_03_import_nonascii_msdosfs_fails():
     result = POST("/pool/import_disk", {
         "volume": f"/dev/{IMAGES['msdosfs-nonascii']}s1",
         "fs_type": "msdosfs",
@@ -86,7 +85,7 @@ def test_05_import_nonascii_msdosfs_fails():
     assert os.path.exists(os.path.join(DATASET_PATH, "Directory/File"))
 
 
-def test_06_import_nonascii_msdosfs():
+def test_04_import_nonascii_msdosfs():
     result = POST("/pool/import_disk", {
         "volume": f"/dev/{IMAGES['msdosfs-nonascii']}s1",
         "fs_type": "msdosfs",
@@ -102,7 +101,7 @@ def test_06_import_nonascii_msdosfs():
     assert os.path.exists(os.path.join(DATASET_PATH, "Каталог/Файл"))
 
 
-def test_07_import_ntfs():
+def test_05_import_ntfs():
     result = POST("/pool/import_disk", {
         "volume": f"/dev/{IMAGES['ntfs']}s1",
         "fs_type": "ntfs",
