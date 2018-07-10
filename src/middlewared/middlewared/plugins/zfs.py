@@ -222,6 +222,13 @@ class ZFSPoolService(CRUDService):
         """
         self.__zfs_vdev_operation(name, label, lambda target: target.online())
 
+    @accepts(Str('pool'), Str('label'))
+    def remove(self, name, label):
+        """
+        Remove device `label` from the pool `pool`.
+        """
+        self.__zfs_vdev_operation(name, label, lambda target: target.remove())
+
     @accepts(Str('pool'), Str('label'), Str('dev'))
     def replace(self, name, label, dev):
         """

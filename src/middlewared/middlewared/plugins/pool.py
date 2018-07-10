@@ -929,6 +929,43 @@ class PoolService(CRUDService):
         return True
 
     @item_method
+    @accepts(Int('id'), Dict(
+        'options',
+        Str('label', required=True),
+    ))
+    async def remove(self, oid, options):
+        """
+        Remove a disk from pool of id `id`.
+
+        `label` is the vdev guid or device name.
+        """
+        pool = await self._get_instance(oid)
+
+        verrors = ValidationErrors()
+
+        found = self.__find_disk_from_topology(options['label'], pool)
+        if not found:
+            verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
+
+        if verrors:
+            raise verrors
+
+        await self.middleware.call('zfs.pool.remove', pool['name'], found[1]['guid'])
+
+        await self.middleware.call('notifier.sync_encrypted', oid)
+
+        if found[1]['path'].endswith('.eli'):
+            devname = found[1]['path'].replace('/dev/', '')[:-4]
+            await self.middleware.call('disk.geli_detach', devname)
+
+        disk = await self.middleware.call(
+            'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
+        )
+        if disk:
+            await self.middleware.call('disk.swaps_remove_disks', [disk])
+            await self.middleware.call('disk.unlabel', disk)
+
+    @item_method
     @accepts(Int('id'))
     async def download_encryption_key(self, oid):
         """
