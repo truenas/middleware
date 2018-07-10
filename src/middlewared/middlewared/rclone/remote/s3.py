@@ -9,6 +9,9 @@ class S3RcloneRemote(BaseRcloneRemote):
     title = "Amazon S3"
 
     buckets = True
+
+    fast_list = True
+
     rclone_type = "s3"
 
     credentials_schema = [

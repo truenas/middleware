@@ -8,6 +8,8 @@ class B2RcloneRemote(BaseRcloneRemote):
 
     buckets = True
 
+    fast_list = True
+
     rclone_type = "b2"
 
     credentials_schema = [

@@ -10,6 +10,8 @@ class GoogleCloudStorageRcloneRemote(BaseRcloneRemote):
 
     buckets = True
 
+    fast_list = True
+
     rclone_type = "google cloud storage"
 
     credentials_schema = [

@@ -6,6 +6,8 @@ class WebDavRcloneRemote(BaseRcloneRemote):
     name = "YANDEX"
     title = "Yandex"
 
+    fast_list = True
+
     rclone_type = "yandex"
 
     credentials_schema = [

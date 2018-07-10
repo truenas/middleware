@@ -8,6 +8,8 @@ class HubicRcloneRemote(BaseRcloneRemote):
 
     buckets = True
 
+    fast_list = True
+
     rclone_type = "hubic"
 
     credentials_schema = [

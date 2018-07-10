@@ -8,6 +8,8 @@ class AzureBlobRcloneRemote(BaseRcloneRemote):
 
     buckets = True
 
+    fast_list = True
+
     rclone_type = "azureblob"
 
     credentials_schema = [
