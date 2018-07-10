@@ -11,6 +11,6 @@ class B2RcloneRemote(BaseRcloneRemote):
     rclone_type = "b2"
 
     credentials_schema = [
-        Str("account", verbose="Account ID", required=True),
-        Str("key", verbose="Application Key", required=True),
+        Str("account", title="Account ID", required=True),
+        Str("key", title="Application Key", required=True),
     ]

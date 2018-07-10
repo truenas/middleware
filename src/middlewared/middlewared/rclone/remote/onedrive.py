@@ -9,5 +9,5 @@ class OneDriveRcloneRemote(BaseRcloneRemote):
     rclone_type = "onedrive"
 
     credentials_schema = [
-        Str("token", verbose="Access Token", required=True),
+        Str("token", title="Access Token", required=True),
     ]

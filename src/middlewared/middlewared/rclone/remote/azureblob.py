@@ -11,6 +11,6 @@ class AzureBlobRcloneRemote(BaseRcloneRemote):
     rclone_type = "azureblob"
 
     credentials_schema = [
-        Str("account", verbose="Account Name", required=True),
-        Str("key", verbose="Account Key", required=True),
+        Str("account", title="Account Name", required=True),
+        Str("key", title="Account Key", required=True),
     ]
