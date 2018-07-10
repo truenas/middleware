@@ -42,11 +42,8 @@ class VMManager(object):
     async def start(self, id):
         vm = await self.service.query([('id', '=', id)], {'get': True})
         self._vm[id] = VMSupervisor(self, vm)
-        try:
-            asyncio.ensure_future(self._vm[id].run())
-            return True
-        except:
-            raise
+
+        asyncio.ensure_future(self._vm[id].run())
 
     async def stop(self, id, force=False):
         supervisor = self._vm.get(id)
@@ -231,9 +228,6 @@ class VMSupervisor(object):
 
         args.append(str(self.vm['id']) + '_' + self.vm['name'])
 
-        self.logger.debug('Starting bhyve: {}'.format(' '.join(args)))
-        self.proc = await Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-
         if vnc_web:
             split_port = int(str(vnc_port)[:2]) - 1
             vnc_web_port = str(split_port) + str(vnc_port)[2:]
@@ -246,11 +240,17 @@ class VMSupervisor(object):
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             self.logger.debug("==> Start WEBVNC at port {} with pid number {}".format(vnc_web_port, self.web_proc.pid))
 
+        self.logger.debug('Starting bhyve: {}'.format(' '.join(args)))
+        self.proc = await Popen(
+                args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
         while True:
             line = await self.proc.stdout.readline()
+
             if line == b'':
                 break
-            self.logger.debug('{}: {}'.format(self.vm['name'], line.decode()))
+
+            self.logger.debug(f'{self.vm["name"]}: {line.decode().rstrip()}')
 
         # bhyve returns the following status code:
         # 0 - VM has been reset
@@ -272,10 +272,16 @@ class VMSupervisor(object):
             self.logger.info("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             await self.__teardown_guest_vmemory(self.vm['id'])
             await self.manager.stop(self.vm['id'])
-        elif self.bhyve_error not in (0, 1, 2, 3, None):
-            self.logger.info("===> Error VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+        else:
+            # Possibly a different error, or something failed early on
+            # (length of bhyve_output is 2 or less)
+            msg = f'===> Error VM: {self.vm["name"]} ID: {self.vm["id"]}' \
+                f' BHYVE_CODE: {self.bhyve_error}'
+
             await self.__teardown_guest_vmemory(self.vm['id'])
             await self.destroy_vm()
+
+            raise CallError(msg)
 
     async def destroy_vm(self):
         self.logger.warn("===> Destroying VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
@@ -381,6 +387,8 @@ class VMSupervisor(object):
             self.logger.debug("===> Force Stop VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             if bhyve_error:
                 self.logger.error("===> Stopping VM error: {0}".format(bhyve_error))
+            await self.__teardown_guest_vmemory(self.vm['id'])
+            await self.destroy_vm()
         else:
             os.kill(self.proc.pid, signal.SIGTERM)
             self.logger.debug("===> Soft Stop VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
@@ -979,13 +987,21 @@ class VMService(CRUDService):
     @accepts(Int('id'))
     async def start(self, id):
         """Start a VM."""
-        try:
-            if await self.__init_guest_vmemory(id):
-                return await self._manager.start(id)
-            else:
-                return False
-        except Exception as err:
-            self.logger.error("===> {0}".format(err))
+        if await self.__init_guest_vmemory(id):
+            # Hack until rewrite for 11.3
+            done, _ = await asyncio.wait(
+                [self._manager.start(id)],
+                timeout=3
+            )
+
+            if done:
+                e = next(iter(done))
+
+                if e.done():
+                    e.result()
+
+            return True
+        else:
             return False
 
     @item_method
