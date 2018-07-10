@@ -119,7 +119,7 @@ def test_05_update_cloud_sync(env, credentials, task):
     assert result.status_code == 200, result.text
 
 
-def test_06_run_cloud_sync(task):
+def test_06_run_cloud_sync(env, task):
     result = POST(f"/cloudsync/id/{task['id']}/sync/")
 
     assert result.status_code == 200, result.text
@@ -149,19 +149,19 @@ def test_06_run_cloud_sync(task):
     assert False, state
 
 
-def test_97_delete_cloud_sync(task):
+def test_07_delete_cloud_sync(env, task):
     result = DELETE(f"/cloudsync/id/{task['id']}/")
 
     assert result.status_code == 200, result.text
 
 
-def test_98_delete_cloud_credentials(credentials):
+def test_08_delete_cloud_credentials(env, credentials):
     result = DELETE(f"/cloudsync/credentials/id/{credentials['id']}/")
 
     assert result.status_code == 200, result.text
 
 
-def test_99_destroy_dataset():
+def test_09_destroy_dataset():
     result = DELETE(f"/pool/dataset/id/{urllib.parse.quote(DATASET, '')}/")
 
     assert result.status_code == 200, result.text
