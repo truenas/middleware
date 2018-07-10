@@ -26,6 +26,7 @@ TODO'S:
 1) IS THERE A MIN KEY SIZE REQUIRED BY LETS ENCRYPT IN CSR - HANDLE THE EXCEPTION GRACEFULLY
 2) CHECK IF _GET_INSTANCE CAN BE CALLED FROM MIDDLEWARE.CALL_SYNC
 3) Domain names should not end in periods ? research
+4) Integrate alerts
 '''
 
 
@@ -196,6 +197,7 @@ class ACMEService(CRUDService):
         datastore = 'system.certificate'
         datastore_prefix = 'cert_'
         datastore_extend = 'certificate.cert_extend'
+        private = True
 
     async def query(self, filters=None, options=None):
         if not filters:
@@ -209,6 +211,99 @@ class ACMEService(CRUDService):
         names = [data['common']]
         names.extend(data['san'])
         return names
+
+    @accepts(
+        Dict(
+            'acme_create',
+            Bool('tos', default=False),
+            Int('csr_id', required=True),
+            Str('directory_uri', required=True),
+            Str('name', required=True),
+            Dict('domain_dns_mapping', additional_attrs=True, required=True)
+        )
+    )
+    @job(lock='acme_cert_create')
+    def do_create(self, job, data):
+        verrors = ValidationErrors()
+
+        csr_data = self.middleware.call_sync(
+            'certificate.query',
+            [['id', '=', data['csr_id']]]
+        )
+
+        if self.middleware.call_sync(
+            'certificate.query',
+            [['name', '=', data['name']]]
+        ):
+            verrors.add(
+                'acme_create.name',
+                'A Certificate with this name already exists'
+            )
+
+        if not csr_data:
+            verrors.add(
+                'acme_create.csr_id',
+                'Specified CSR does not exist on FreeNAS system'
+            )
+        elif not csr_data[0]['CSR']:
+            verrors.add(
+                'acme_create.csr_id',
+                'Please provide a valid CSR id'
+            )
+        else:
+            csr_data = csr_data[0]
+
+        if verrors:
+            raise verrors
+
+        job.set_progress(10, 'Initial validation complete')
+
+        final_order = self.issue_certificate(job, 25, data, csr_data)
+
+        job.set_progress(95, 'Final order received from ACME server')
+
+        cert_dict = {
+            'acme': self.middleware.call_sync(
+                        'acme.registration.query',
+                        [['directory', '=', data['directory_uri']]]
+                    )[0]['id'],
+            'acme_uri': final_order.uri,
+            'certificate': final_order.fullchain_pem,
+            'CSR': csr_data['CSR'],
+            'privatekey': csr_data['privatekey'],
+            'name': data['name'],
+            'expire': final_order.body.expires.astimezone(pytz.utc).strftime("%Y-%m-%d"),
+            'chain': True if len(RE_CERTIFICATE.findall(final_order.fullchain_pem)) > 1 else False,
+            'type': CERT_TYPE_EXISTING,
+            'domain_authenticators': data['domain_dns_mapping']
+        }
+
+        for key, value in (self.middleware.call_sync(
+            'certificate.load_certificate', final_order.fullchain_pem
+        )).items():
+            cert_dict[key] = value
+
+        # save cert and other useful attributes
+        cert_id = self.middleware.call_sync(
+            'datastore.insert',
+            self._config.datastore,
+            cert_dict, {
+                'prefix': self._config.datastore_prefix
+            }
+        )
+
+        self.middleware.call_sync(
+            'service.start',
+            'ix-ssl',
+            {'onetime': False}
+        )
+
+        return self.middleware.call_sync(
+            'acme.query',
+            [['id', '=', cert_id]], {
+                'get': True
+            }
+        )
 
     def issue_certificate(self, job, progress, data, csr_data):
         verrors = ValidationErrors()
@@ -264,99 +359,6 @@ class ACMEService(CRUDService):
         finally:
             if verrors:
                 raise verrors
-
-    @accepts(
-        Dict(
-            'acme_create',
-            Bool('tos', default=False),
-            Int('csr_id', required=True),
-            Str('directory_uri', required=True),
-            Str('name', required=True),
-            Dict('domain_dns_mapping', additional_attrs=True, required=True)
-        )
-    )
-    @job(lock='acme_cert_create')
-    def do_create(self, job, data):
-        verrors = ValidationErrors()
-
-        csr_data = self.middleware.call_sync(
-            'certificate.query',
-            [['id', '=', data['csr_id']]]
-        )
-
-        if self.middleware.call_sync(
-            'certificate.query',
-            [['name', '=', data['name']]]
-        ):
-            verrors.add(
-                'acme_create.name',
-                'A Certificate with this name already exists'
-            )
-
-        if not csr_data:
-            verrors.add(
-                'acme_create.csr_id',
-                'Specified CSR does not exist on FreeNAS system'
-            )
-        elif not csr_data[0]['CSR']:
-            verrors.add(
-                'acme_create.csr_id',
-                'Please provide a valid CSR id'
-            )
-        else:
-            csr_data = csr_data[0]
-
-        if verrors:
-            raise verrors
-
-        job.set_progress(10, 'Validation complete')
-
-        final_order = self.issue_certificate(job, 25, data, csr_data)
-
-        job.set_progress(95, 'Final order received from ACME server')
-
-        cert_dict = {
-            'acme': self.middleware.call_sync(
-                        'acme.registration.query',
-                        [['directory', '=', data['directory_uri']]]
-                    )[0]['id'],
-            'acme_uri': final_order.uri,
-            'certificate': final_order.fullchain_pem,
-            'CSR': csr_data['CSR'],
-            'privatekey': csr_data['privatekey'],
-            'name': data['name'],
-            'expire': final_order.body.expires.astimezone(pytz.utc).strftime("%Y-%m-%d"),
-            'chain': True if len(RE_CERTIFICATE.findall(final_order.fullchain_pem)) > 1 else False,
-            'type': CERT_TYPE_EXISTING,
-            'domain_authenticators': data['domain_dns_mapping']
-        }
-
-        for key, value in (self.middleware.call_sync(
-            'certificate.load_certificate', final_order.fullchain_pem
-        )).items():
-            cert_dict[key] = value
-
-        # save cert and other useful attributes
-        cert_id = self.middleware.call_sync(
-            'datastore.insert',
-            self._config.datastore,
-            cert_dict, {
-                'prefix': self._config.datastore_prefix
-            }
-        )
-
-        self.middleware.call_sync(
-            'service.start',
-            'ix-ssl',
-            {'onetime': False}
-        )
-
-        return self.middleware.call_sync(
-            'acme.query',
-            [['id', '=', cert_id]], {
-                'get': True
-            }
-        )
 
     def handle_authorizations(self, job, progress, order, domain_names_dns_mapping, acme_client, key):
         # When this is called, it should be ensured by the function calling this function that for all authorization
@@ -429,7 +431,6 @@ class ACMEService(CRUDService):
 
             if (pytz.utc.localize(cert['expire']) - datetime.datetime.now(datetime.timezone.utc)).days < 10:
                 # renew cert
-                print('\n\nupdating cert')
                 self.logger.debug(f'Renewing certificate {cert["name"]}')
                 final_order = self.issue_certificate(
                     job, progress / 4, {
@@ -455,7 +456,7 @@ class ACMEService(CRUDService):
 
             job.set_progress(progress)
 
-    @job(lock='acme_cert_delete')
+    @job(lock='acme_cert_revoke')
     def do_delete(self, job, id):
         # First we revoke the certificate and then delete it from the system
         cert = self.middleware.call_sync(
@@ -495,11 +496,18 @@ class ACMEService(CRUDService):
 
         job.set_progress(95, 'Certificate successfully revoked by ACME server')
 
-        return self.middleware.call_sync(
+        response = self.middleware.call_sync(
             'datastore.delete',
             self._config.datastore,
             id
         )
+
+        self.middleware.call_sync(
+            'service.start',
+            'ix-ssl',
+            {'onetime': False}
+        )
+        return response
 
 
 class DNSAuthenticatorService(CRUDService):
