@@ -1200,7 +1200,9 @@ class VMService(CRUDService):
                 split_port = int(str(vnc_port)[:2]) - 1
                 vnc_web_port = str(split_port) + str(vnc_port)[2:]
                 bind_ip = vnc_device.get('vnc_bind', None)
-                vnc_web.append('http://{}:{}/vnc_auto.html'.format(bind_ip, vnc_web_port))
+                vnc_web.append(
+                    f'http://{bind_ip}:{vnc_web_port}/vnc.html?autoconnect=1'
+                )
 
         return vnc_web
 
