@@ -861,6 +861,25 @@ class PoolDatasetService(CRUDService):
                                    group, mode, recursive, acl.lower())
         return data
 
+    @accepts(Str('pool'))
+    async def recommended_zvol_blocksize(self, pool):
+        pool = await self.middleware.call('pool.query', [['name', '=', pool]], {'get': True})
+        numdisks = 4
+        for vdev in pool['topology']['data']:
+            if vdev['type'] == 'RAIDZ':
+                num = len(vdev['children']) - 1
+            elif vdev['type'] == 'RAIDZ2':
+                num = len(vdev['children']) - 2
+            elif vdev['type'] == 'RAIDZ3':
+                num = len(vdev['children']) - 3
+            elif vdev['type'] == 'MIRROR':
+                num = 1
+            else:
+                num = len(vdev['children'])
+            if num > numdisks:
+                numdisks = num
+        return '%dK' % 2 ** ((numdisks * 4) - 1).bit_length()
+
 
 class PoolScrubService(CRUDService):
 
