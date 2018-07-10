@@ -773,7 +773,7 @@ class CertificateBase(Model):
         null=True,
         blank=True
     )
-    cert_domain_authenticators = EncryptedDictField(
+    cert_domains_authenticators = EncryptedDictField(
         null=True,
         blank=True
     )

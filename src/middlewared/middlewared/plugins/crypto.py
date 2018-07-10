@@ -579,20 +579,19 @@ class CertificateService(CRUDService):
         Dict(
             'certificate_create',
             Bool('tos'),
-            Dict('domain_dns_mapping', additional_attrs=True),
-            Int('acme'),
+            Dict('dns_mapping', additional_attrs=True),
             Int('csr_id'),
             Int('signedby'),
             Int('key_length'),
             Int('type'),
             Int('lifetime'),
             Int('serial', validators=[Range(min=1)]),
+            Str('acme_directory_uri'),
             Str('certificate'),
             Str('city'),
             Str('common'),
             Str('country'),
             Str('CSR'),
-            Str('directory_uri'),
             Str('email', validators=[Email()]),
             Str('name', required=True),
             Str('organization'),
@@ -870,9 +869,9 @@ class CertificateService(CRUDService):
 
     @accepts(
         Int('id'),
+        Bool('force', default=False)
     )
-    async def do_delete(self, id):
-        certificate = await self._get_instance(id)
+    async def do_delete(self, id, force):
 
         if (await self.middleware.call('system.general.config'))['ui_certificate']['id'] == id:
             verrors = ValidationErrors()
@@ -890,7 +889,7 @@ class CertificateService(CRUDService):
         ):
             return await self.middleware.call(
                 'acme.delete',
-                id
+                id, force
             )
 
         response = await self.middleware.call(

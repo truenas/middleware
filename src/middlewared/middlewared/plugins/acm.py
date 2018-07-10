@@ -8,7 +8,7 @@ import time
 
 from middlewared.plugins.crypto import CERT_TYPE_EXISTING, RE_CERTIFICATE
 from middlewared.schema import Bool, Dict, Int, Str, ValidationErrors
-from middlewared.service import accepts, CRUDService, job, periodic, private
+from middlewared.service import accepts, CallError, CRUDService, job, periodic, private
 from middlewared.validators import validate_attributes
 
 from acme import client, errors, messages
@@ -21,6 +21,12 @@ from OpenSSL import crypto
 
 from pprint import pprint
 
+
+'''
+>>> issue_cert
+{'name': 'check_cert', 'tos': True, 'csr_id': 14, 'acme_directory_uri': 'https://acme-staging-v02.api.letsencrypt.org/directory', 'create_type': 'CERTIFICATE_CREATE_ACME', 'dns_mapping': {'acmedev.agencialivre.com.br': 1}}
+'''
+
 '''
 TODO'S:
 1) IS THERE A MIN KEY SIZE REQUIRED BY LETS ENCRYPT IN CSR - HANDLE THE EXCEPTION GRACEFULLY
@@ -31,12 +37,12 @@ TODO'S:
 '''
 
 
-def get_acme_client_and_key(middleware, directory_uri, tos=False):
-    data = middleware.call_sync('acme.registration.query', [['directory', '=', directory_uri]])
+def get_acme_client_and_key(middleware, acme_directory_uri, tos=False):
+    data = middleware.call_sync('acme.registration.query', [['directory', '=', acme_directory_uri]])
     if not data:
         data = middleware.call_sync(
             'acme.registration.create',
-            {'tos': tos, 'directory_uri': directory_uri}
+            {'tos': tos, 'acme_directory_uri': acme_directory_uri}
         )
     else:
         data = data[0]
@@ -87,14 +93,14 @@ class ACMERegistrationService(CRUDService):
         }
         return data
 
-    def get_directory(self, directory_uri):
+    def get_directory(self, acme_directory_uri):
         try:
-            response = requests.get(directory_uri).json()
+            response = requests.get(acme_directory_uri).json()
             return messages.Directory({
                 key: response[key] for key in ['newAccount', 'newNonce', 'newOrder', 'revokeCert']
             })
         except (requests.ConnectionError, requests.Timeout, json.JSONDecodeError, KeyError) as e:
-            return str(e)
+            raise CallError(f'Unable to retrieve directory : {e}')
 
     @accepts(
         Dict(
@@ -105,7 +111,7 @@ class ACMERegistrationService(CRUDService):
                 Int('key_size', default=2048),
                 Int('public_exponent', default=65537)
             ),
-            Str('directory_uri', required=True),
+            Str('acme_directory_uri', required=True),
         )
     )
     def do_create(self, data):
@@ -118,11 +124,11 @@ class ACMERegistrationService(CRUDService):
 
         verrors = ValidationErrors()
 
-        directory = self.get_directory(data['directory_uri'])
+        directory = self.get_directory(data['acme_directory_uri'])
         if not isinstance(directory, messages.Directory):
             verrors.add(
                 'acme_registration_create.direcotry_uri',
-                f'System was unable to retrieve the directory with the specified directory_uri: {directory}'
+                f'System was unable to retrieve the directory with the specified acme_directory_uri: {directory}'
             )
 
         if not data['tos']:
@@ -139,7 +145,7 @@ class ACMERegistrationService(CRUDService):
                 'Please specify root email address which will be used with the ACME server'
             )
 
-        if self.middleware.call_sync('acme.registration.query', [['directory', '=', data['directory_uri']]]):
+        if self.middleware.call_sync('acme.registration.query', [['directory', '=', data['acme_directory_uri']]]):
             verrors.add(
                 'acme_registration_create.directory',
                 'A registration with the specified directory uri already exists'
@@ -173,7 +179,7 @@ class ACMERegistrationService(CRUDService):
                 'new_nonce_uri': directory.newNonce,
                 'new_order_uri': directory.newOrder,
                 'revoke_cert_uri': directory.revokeCert,
-                'directory': data['directory_uri'] + '/' if data['directory_uri'][-1] != '/' else ''
+                'directory': data['acme_directory_uri'] + '/' if data['acme_directory_uri'][-1] != '/' else ''
             }
         )
 
@@ -218,9 +224,9 @@ class ACMEService(CRUDService):
             'acme_create',
             Bool('tos', default=False),
             Int('csr_id', required=True),
-            Str('directory_uri', required=True),
+            Str('acme_directory_uri', required=True),
             Str('name', required=True),
-            Dict('domain_dns_mapping', additional_attrs=True, required=True)
+            Dict('dns_mapping', additional_attrs=True, required=True)
         )
     )
     @job(lock='acme_cert_create')
@@ -266,23 +272,22 @@ class ACMEService(CRUDService):
         cert_dict = {
             'acme': self.middleware.call_sync(
                         'acme.registration.query',
-                        [['directory', '=', data['directory_uri']]]
+                        [['directory', '=', data['acme_directory_uri']]]
                     )[0]['id'],
             'acme_uri': final_order.uri,
             'certificate': final_order.fullchain_pem,
             'CSR': csr_data['CSR'],
             'privatekey': csr_data['privatekey'],
             'name': data['name'],
-            'expire': final_order.body.expires.astimezone(pytz.utc).strftime("%Y-%m-%d"),
+            'expire': final_order.body.expires.astimezone(pytz.utc).strftime('%Y-%m-%d'),
             'chain': True if len(RE_CERTIFICATE.findall(final_order.fullchain_pem)) > 1 else False,
             'type': CERT_TYPE_EXISTING,
-            'domain_authenticators': data['domain_dns_mapping']
+            'domains_authenticators': data['dns_mapping']
         }
 
-        for key, value in (self.middleware.call_sync(
+        cert_dict.update(self.middleware.call_sync(
             'certificate.load_certificate', final_order.fullchain_pem
-        )).items():
-            cert_dict[key] = value
+        ))
 
         # save cert and other useful attributes
         cert_id = self.middleware.call_sync(
@@ -316,27 +321,27 @@ class ACMEService(CRUDService):
         domains = self.middleware.call_sync('acme.get_domain_names', csr_data)
         dns_authenticator_ids = [o['id'] for o in self.middleware.call_sync('dns.authenticator.query')]
         for domain in domains:
-            if domain not in data['domain_dns_mapping']:
+            if domain not in data['dns_mapping']:
                 verrors.add(
-                    'acme_create.domain_dns_mapping',
+                    'acme_create.dns_mapping',
                     f'Please provide DNS authenticator id for {domain}'
                 )
-            elif data['domain_dns_mapping'][domain] not in dns_authenticator_ids:
+            elif data['dns_mapping'][domain] not in dns_authenticator_ids:
                 verrors.add(
-                    'acme_create.domain_dns_mapping',
+                    'acme_create.dns_mapping',
                     f'Provided DNS Authenticator id for {domain} does not exist'
                 )
-        for domain in data['domain_dns_mapping']:
+        for domain in data['dns_mapping']:
             if domain not in domains:
                 verrors.add(
-                    'acme_create.domain_dns_mapping',
+                    'acme_create.dns_mapping',
                     f'{domain} not specified in the CSR'
                 )
 
         if verrors:
             raise verrors
 
-        acme_client, key = get_acme_client_and_key(self.middleware, data['directory_uri'], data['tos'])
+        acme_client, key = get_acme_client_and_key(self.middleware, data['acme_directory_uri'], data['tos'])
         try:
             # perform operations and have a cert issued
             order = acme_client.new_order(csr_data['CSR'])
@@ -348,7 +353,7 @@ class ACMEService(CRUDService):
         else:
             job.set_progress(progress, 'New order for certificate issuance placed')
 
-            self.handle_authorizations(job, progress, order, data['domain_dns_mapping'], acme_client, key)
+            self.handle_authorizations(job, progress, order, data['dns_mapping'], acme_client, key)
 
             try:
                 # Polling for a maximum of 10 minutes while trying to finalize order
@@ -429,7 +434,6 @@ class ACMEService(CRUDService):
         progress = 0
         for cert in certs:
             # TODO: Make the renew date customizable, perhaps add a field to the cert model
-            # TODO: Make renewal optional with default set as True
             progress += (100 / len(certs))
 
             if (pytz.utc.localize(cert['expire']) - datetime.datetime.now(datetime.timezone.utc)).days < 10:
@@ -438,8 +442,8 @@ class ACMEService(CRUDService):
                 final_order = self.issue_certificate(
                     job, progress / 4, {
                         'tos': True,
-                        'directory_uri': cert['acme']['directory'],
-                        'domain_dns_mapping': cert['domain_authenticators']
+                        'acme_directory_uri': cert['acme']['directory'],
+                        'dns_mapping': cert['domains_authenticators']
                     },
                     cert
                 )
@@ -460,7 +464,7 @@ class ACMEService(CRUDService):
             job.set_progress(progress)
 
     @job(lock='acme_cert_revoke')
-    def do_delete(self, job, id):
+    def do_delete(self, job, id, force=False):
         # First we revoke the certificate and then delete it from the system
         cert = self.middleware.call_sync(
             'acme.query',
@@ -495,6 +499,7 @@ class ACMEService(CRUDService):
                 f'Unable to revoke certificate :{e}'
             )
 
+        if verrors and not force:
             raise verrors
 
         job.set_progress(95, 'Certificate successfully revoked by ACME server')
@@ -612,23 +617,8 @@ class DNSAuthenticatorService(CRUDService):
         )
     )
     def update_txt_record(self, data):
-        verrors = ValidationErrors()
 
-        authenticator = self.middleware.call_sync(
-            'dns.authenticator.query',
-            [['id', '=', data['authenticator']]]
-        )
-
-        if not authenticator:
-            verrors.add(
-                'dns_authenticator_update_record.authenticator',
-                f'{data["authenticator"]} not a valid authenticator Id provided for {data["domain"]}'
-            )
-        else:
-            authenticator = authenticator[0]
-
-        if verrors:
-            raise verrors
+        authenticator = self.middleware.call_sync('dns.authenticator._get_instance', data['authenticator'])
 
         return self.__getattribute__(
             f'update_txt_record_{authenticator["authenticator"].lower()}'
