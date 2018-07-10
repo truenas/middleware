@@ -198,18 +198,25 @@ define([
             var property = this.taskSchemas[credentialId][i];
 
             var id = "id_attributes_" + property.property;
-            var input = "<input type='text' id='" + id + "'>";
-            if (property.schema.enum)
+            if (property.schema.type.indexOf("boolean") != -1)
             {
-                input = "<select id='" + id + "'>";
-                for (var i = 0; i < property.schema.enum.length; i++)
-                {
-                    input += '<option>' + property.schema.enum[i] + '</option>';
-                }
-                input += '</select>';
+                html += '<div style="margin-bottom: 5px;"><label><input type="checkbox" id="' + id + '" value="1"> ' + property.schema.title + '</label></div>';
             }
+            else
+            {
+                var input = "<input type='text' id='" + id + "'>";
+                if (property.schema.enum)
+                {
+                    input = "<select id='" + id + "'>";
+                    for (var i = 0; i < property.schema.enum.length; i++)
+                    {
+                        input += '<option>' + property.schema.enum[i] + '</option>';
+                    }
+                    input += '</select>';
+                }
 
-            html += '<div style="margin-bottom: 5px;"><div>' + property.schema.title + '</div><div>' + input + '</div></div>';
+                html += '<div style="margin-bottom: 5px;"><div>' + property.schema.title + '</div><div>' + input + '</div></div>';
+            }
         }
         this.dapEtc.innerHTML = html;
         for (var i = 0; i < this.taskSchemas[credentialId].length; i++)
@@ -220,7 +227,14 @@ define([
 
             if (this.initial[property.property] !== undefined)
             {
-                document.getElementById(id).value = this.initial[property.property];
+                if (property.schema.type.indexOf("boolean") != -1)
+                {
+                    document.getElementById(id).checked = this.initial[property.property];
+                }
+                else
+                {
+                    document.getElementById(id).value = this.initial[property.property];
+                }
             }
         }
       },
@@ -240,7 +254,11 @@ define([
             var property = this.taskSchemas[value.credential][i];
             var id = "id_attributes_" + property.property;
             if (document.getElementById(id)) {
-              value[property.property] = document.getElementById(id).value;
+              if (property.schema.type.indexOf("boolean") != -1) {
+                value[property.property] = document.getElementById(id).checked;
+              } else {
+                value[property.property] = document.getElementById(id).value;
+              }
               if (value[property.property] === "null") {
                 value[property.property] = null;
               }
