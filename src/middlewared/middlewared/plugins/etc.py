@@ -151,6 +151,7 @@ class EtcService(Service):
             if not os.path.exists(outfile):
                 with open(outfile, 'w') as f:
                     f.write(rendered)
+                changes = True
 
             # If ownership or permissions are specified, see if
             # they need to be changed.
