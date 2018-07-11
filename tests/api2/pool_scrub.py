@@ -8,7 +8,7 @@ sys.path.append(apifolder)
 from functions import PUT, POST, DELETE
 
 
-@pytest.skip("Need to be fix")
+@pytest.mark.skip("Need to be fix")
 def test_01_create_scrub_for_same_pool():
     result = POST("/pool/scrub/", {
         "pool": 1,
