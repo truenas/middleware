@@ -716,7 +716,16 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         elif self.krb_realm and self.binddn and self.bindpw:
             user = self.get_user_by_DN(self.binddn)
-            uid = user[1]['uid'][0]
+ 
+            try: 
+                uid = user[1]['uid'][0].decode('utf-8')
+            except:
+                uid = user[1]['uid'][0]
+
+            try: 
+                bindpw = self.bindpw.encode('utf-8')
+            except: 
+                bindpw = self.bindpw 
 
             krb_principal = self.get_kerberos_principal_from_cache()
             principal = "%s@%s" % (uid, self.krb_realm)
@@ -724,14 +733,15 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             if krb_principal and krb_principal.upper() == principal.upper():
                 return True
 
-            f = tempfile.NamedTemporaryFile(mode='w+', dir="/tmp")
-            os.chmod(f.name, 0o600)
-            f.write(self.bindpw)
+            (fd, fname) = tempfile.mkstemp(dir="/tmp", text=True)
+            os.write(fd, bindpw)
+            os.fchmod(fd, 0o777)
+            os.close(fd)
 
             args = [
                 "/usr/bin/kinit",
                 "--renewable",
-                "--password-file=%s" % f.name,
+                "--password-file=%s" % fname,
                 "%s" % principal
             ]
 
@@ -740,7 +750,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                 kinit = True
                 res = True
 
-            f.close()
+            os.unlink(fname)
 
         if kinit:
             i = 0
@@ -1493,17 +1503,23 @@ class FreeNAS_ActiveDirectory_Base(object):
             krb_principal = self.get_kerberos_principal_from_cache()
             principal = "%s@%s" % (self.bindname, self.krb_realm)
 
+            try: 
+                bindpw = self.bindpw.encode('utf-8')
+            except: 
+                bindpw = self.bindpw 
+
             if krb_principal and krb_principal.upper() == principal.upper():
                 return True
 
-            f = tempfile.NamedTemporaryFile(mode='w+', dir="/tmp")
-            os.chmod(f.name, 0o600)
-            f.write(self.bindpw)
+            (fd, fname) = tempfile.mkstemp(dir="/tmp", text=True)
+            os.write(fd, bindpw)
+            os.fchmod(fd, 0o777)
+            os.close(fd)
 
             args = [
                 "/usr/bin/kinit",
                 "--renewable",
-                "--password-file=%s" % f.name,
+                "--password-file=%s" % fname,
                 "%s" % principal
             ]
 
@@ -1514,7 +1530,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             if res is not False:
                 kinit = True
 
-            f.close()
+            os.unlink(fname)
 
         if kinit:
             i = 0
