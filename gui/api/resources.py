@@ -1000,12 +1000,10 @@ class VolumeResourceMixin(NestedMixin):
                 deserialized['passphrase2'] = deserialized.get('passphrase')
 
             form = ChangePassphraseForm(deserialized)
-            if not form.is_valid():
+            if not (form.is_valid() and form.done(obj)):
                 raise ImmediateHttpResponse(
                     response=self.error_response(request, form.errors)
                 )
-            else:
-                form.done(obj)
 
             if deserialized.get('remove'):
                 return HttpResponse('Volume passphrase has been removed', status=201)

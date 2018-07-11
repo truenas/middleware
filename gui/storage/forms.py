@@ -59,7 +59,7 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.util import JobAborted, JobFailed, upload_job_and_wait
-from freenasUI.services.models import iSCSITargetExtent, services
+from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import dedup_enabled
@@ -2371,18 +2371,8 @@ class CreatePassphraseForm(Form):
 
     def done(self, volume):
         passphrase = self.cleaned_data.get("passphrase")
-        if passphrase is not None:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
-                f.write(passphrase)
-        else:
-            passfile = None
-        notifier().geli_passphrase(volume, passfile, rmrecovery=True)
-        if passfile is not None:
-            os.unlink(passfile)
-        volume.vol_encrypt = 2
-        volume.save()
+        with client as c:
+            return c.call('pool.passphrase', volume.id, {'passphrase': passphrase})
 
 
 class ChangePassphraseForm(Form):
@@ -2413,19 +2403,6 @@ class ChangePassphraseForm(Form):
             self.fields['passphrase'].widget.attrs['disabled'] = 'disabled'
             self.fields['passphrase2'].widget.attrs['disabled'] = 'disabled'
 
-    def clean_adminpw(self):
-        pw = self.cleaned_data.get("adminpw")
-        valid = False
-        for user in bsdUsers.objects.filter(bsdusr_uid=0):
-            if user.check_password(pw):
-                valid = True
-                break
-        if valid is False:
-            raise forms.ValidationError(
-                _("Invalid password")
-            )
-        return pw
-
     def clean_passphrase2(self):
         pass1 = self.cleaned_data.get("passphrase")
         pass2 = self.cleaned_data.get("passphrase2")
@@ -2448,20 +2425,24 @@ class ChangePassphraseForm(Form):
         else:
             passphrase = self.cleaned_data.get("passphrase")
 
-        if passphrase is not None:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
-                f.write(passphrase)
-        else:
-            passfile = None
-        notifier().geli_passphrase(volume, passfile)
-        if passfile is not None:
-            os.unlink(passfile)
-            volume.vol_encrypt = 2
-        else:
-            volume.vol_encrypt = 1
-        volume.save()
+        try:
+            with client as c:
+                return c.call('pool.passphrase', volume.id, {
+                    'admin_password': self.cleaned_data.get('adminpw'),
+                    'passphrase': passphrase,
+                })
+        except ValidationErrors as e:
+            for err in e.errors:
+                if err.attribute == 'options.admin_password':
+                    field = 'adminpw'
+                elif err.attribute == 'options.passphrase':
+                    field = 'passphrase'
+                else:
+                    field = '__all__'
+                if field not in self._errors:
+                    self._errors[field] = self.error_class()
+                self._errors[field].append(err.errmsg)
+            return False
 
 
 class UnlockPassphraseForm(Form):
