@@ -27,6 +27,8 @@ if '/usr/local/www' not in sys.path:
 from freenasUI.services.utils import SmartAlert
 
 DISK_EXPIRECACHE_DAYS = 7
+GELI_KEY_SLOT = 0
+GELI_RECOVERY_SLOT = 1
 MIRROR_MAX = 5
 RE_CAMCONTROL_DRIVE_LOCKED = re.compile(r'^drive locked\s+yes$', re.M)
 RE_DA = re.compile('^da[0-9]+$')
@@ -274,6 +276,52 @@ class DiskService(CRUDService):
                     if str(e).find('Wrong key') != -1:
                         return False
         return True
+
+    @private
+    def geli_setkey(self, dev, key, slot=GELI_KEY_SLOT, passphrase=None, oldkey=None):
+        cp = subprocess.run([
+            'geli', 'setkey', '-n', str(slot),
+        ] + (
+            ['-J', passphrase] if passphrase else ['-P']
+        ) + ['-K', key] + (
+            ['-k', oldkey] if oldkey else []
+        ) + [dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if cp.stderr:
+            raise CallError(f'Unable to set passphrase on {dev}: {cp.stderr.decode()}')
+
+    @private
+    def geli_delkey(self, dev, slot=GELI_KEY_SLOT, force=False):
+        cp = subprocess.run([
+            'geli', 'delkey', '-n', str(slot),
+        ] + (
+            ['-f'] if force else []
+        ) + [dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if cp.stderr:
+            raise CallError(f'Unable to delete key {slot} on {dev}: {cp.stderr.decode()}')
+
+    @private
+    def geli_passphrase(self, pool, passphrase, rmrecovery=False):
+        """
+        Set a passphrase in a geli
+        If passphrase is None then remove the passphrase
+        """
+        if passphrase:
+            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
+            os.chmod(passf.name, 0o600)
+            passf.write(passphrase)
+            passf.flush()
+            passphrase = passf.name
+        try:
+            for ed in self.middleware.call_sync(
+                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+            ):
+                dev = ed['encrypted_provider']
+                if rmrecovery:
+                    self.geli_delkey(dev, GELI_RECOVERY_SLOT, force=True)
+                self.geli_setkey(dev, pool['encryptkey_path'], GELI_KEY_SLOT, passphrase)
+        finally:
+            if passphrase:
+                passf.close()
 
     @private
     def geli_detach(self, dev):
