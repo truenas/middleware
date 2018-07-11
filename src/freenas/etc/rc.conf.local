@@ -534,7 +534,6 @@ _ldap_config()
 
 get_bmc_firmware_revision()
 {
-	kldload ipmi
 	/usr/local/bin/ipmitool mc info | awk -F ": " '/^Firmware Revision/ { print $2 }'
 }
 
