@@ -273,7 +273,7 @@ class ActiveDirectoryForm(ModelForm):
 
     class Meta:
         fields = '__all__'
-        exclude = ['ad_idmap_backend_type']
+        exclude = ['ad_idmap_backend_type', 'ad_userdn', 'ad_groupdn']
 
         model = models.ActiveDirectory
         widgets = {
