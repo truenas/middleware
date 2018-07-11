@@ -33,7 +33,6 @@ import pwd
 import socket
 import tempfile
 import time
-import types
 import ipaddr
 
 from dns import resolver
@@ -716,16 +715,16 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         elif self.krb_realm and self.binddn and self.bindpw:
             user = self.get_user_by_DN(self.binddn)
- 
-            try: 
+
+            try:
                 uid = user[1]['uid'][0].decode('utf-8')
             except:
                 uid = user[1]['uid'][0]
 
-            try: 
+            try:
                 bindpw = self.bindpw.encode('utf-8')
-            except: 
-                bindpw = self.bindpw 
+            except:
+                bindpw = self.bindpw
 
             krb_principal = self.get_kerberos_principal_from_cache()
             principal = "%s@%s" % (uid, self.krb_realm)
@@ -1507,10 +1506,10 @@ class FreeNAS_ActiveDirectory_Base(object):
             krb_principal = self.get_kerberos_principal_from_cache()
             principal = "%s@%s" % (self.bindname, self.krb_realm)
 
-            try: 
+            try:
                 bindpw = self.bindpw.encode('utf-8')
-            except: 
-                bindpw = self.bindpw 
+            except:
+                bindpw = self.bindpw
 
             if krb_principal and krb_principal.upper() == principal.upper():
                 return True
