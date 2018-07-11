@@ -91,13 +91,13 @@ udp(default-facility(syslog) default-priority(emerg));
 
 log {
 source(this_controller);
-destination(other_side);
+destination(other_controller_file);
 };
 
-destination other_side { file("$controller_file"); };
-destination loghost { udp("$controller_other_ip" port($controller_port)); };
+destination other_controller_file { file("$controller_file"); };
+destination other_controller { udp("$controller_other_ip" port($controller_port)); };
 
-log { source(src); filter(f_not_mdnsresponder); filter(f_not_nginx); filter(f_not_consul); destination(loghost); };
+log { source(src); filter(f_not_mdnsresponder); filter(f_not_nginx); filter(f_not_consul); destination(other_controller); };
 _EOF_
 } >> /etc/local/syslog-ng.conf
 
