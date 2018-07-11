@@ -766,8 +766,7 @@ class CertificateBase(Model):
     )
     cert_expire = models.DateTimeField(
         blank=True,
-        null=True,
-
+        null=True
     )
     cert_acme_uri = models.URLField(
         null=True,
@@ -776,6 +775,10 @@ class CertificateBase(Model):
     cert_domains_authenticators = EncryptedDictField(
         null=True,
         blank=True
+    )
+    cert_renew_days = models.IntegerField(
+        default=10,
+        verbose_name="Renew certificate day"  # Should we change the name ?
     )
 
     def get_certificate(self):
