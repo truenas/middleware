@@ -35,7 +35,7 @@ class KeyValueService(Service):
                 "value": json.dumps(value)
             })
         else:
-            self.middleware.call("datastore.update", "system.keyvalue", row["id"], {
+            await self.middleware.call("datastore.update", "system.keyvalue", row["id"], {
                 "value": json.dumps(value)
             })
 
