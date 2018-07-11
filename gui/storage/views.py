@@ -912,10 +912,13 @@ def volume_create_passphrase(request, object_id):
     if request.method == "POST":
         form = forms.CreatePassphraseForm(request.POST)
         if form.is_valid():
-            form.done(volume=volume)
-            return JsonResp(
-                request,
-                message=_("Passphrase created"))
+            try:
+                form.done(volume=volume)
+                return JsonResp(
+                    request,
+                    message=_("Passphrase created"))
+            except ClientException as e:
+                form._errors['__all__'] = form.error_class([str(e)])
     else:
         form = forms.CreatePassphraseForm()
     return render(request, "storage/create_passphrase.html", {
@@ -929,8 +932,7 @@ def volume_change_passphrase(request, object_id):
     volume = models.Volume.objects.get(id=object_id)
     if request.method == "POST":
         form = forms.ChangePassphraseForm(request.POST)
-        if form.is_valid():
-            form.done(volume=volume)
+        if form.is_valid() and form.done(volume=volume):
             return JsonResp(
                 request,
                 message=_("Passphrase updated"))
