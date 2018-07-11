@@ -143,4 +143,10 @@ hardware_func()
 		sas2flash -listall
 		section_footer
 	fi
+
+	if [ -c /dev/mpr0 ]: then
+		section_header "sas3flash -listall"
+		sas3flash -listall
+		section_footer
+	fi
 }
