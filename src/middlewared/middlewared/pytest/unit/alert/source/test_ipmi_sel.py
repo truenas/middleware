@@ -1,6 +1,8 @@
+import asyncio
 from datetime import datetime
 import textwrap
 
+from mock import Mock
 import pytest
 
 from middlewared.alert.source.ipmi_sel import (
@@ -59,7 +61,19 @@ def test__parse_sel_information():
 
 @pytest.mark.asyncio
 async def test_ipmi_sel_alert_source__works():
-    assert await IPMISELAlertSource(None)._produce_alerts_for_ipmitool_output(textwrap.dedent("""\
+    middleware = Mock()
+    fut1 = asyncio.Future()
+    fut1.set_result(True)
+    fut2 = asyncio.Future()
+    fut2.set_result(datetime.min)
+    middleware.call = lambda method, *args: ({
+        "keyvalue.has_key": fut1,
+        "keyvalue.get": fut2,
+    }[method])
+
+    source = IPMISELAlertSource(middleware)
+
+    assert await source._produce_alerts_for_ipmitool_output(textwrap.dedent("""\
         9,04/20/2017,06:03:07,Watchdog2 #0xca,Timer interrupt (),Asserted
     """)) == [
         Alert(
@@ -73,6 +87,59 @@ async def test_ipmi_sel_alert_source__works():
             datetime=datetime(2017, 4, 20, 6, 3, 7),
         )
     ]
+
+
+@pytest.mark.asyncio
+async def test_ipmi_sel_alert_source__works_filters_dismissed_events():
+    middleware = Mock()
+    fut1 = asyncio.Future()
+    fut1.set_result(True)
+    fut2 = asyncio.Future()
+    fut2.set_result(datetime(2017, 4, 20, 6, 3, 7))
+    middleware.call = lambda method, *args: ({
+        "keyvalue.has_key": fut1,
+        "keyvalue.get": fut2,
+    }[method])
+
+    source = IPMISELAlertSource(middleware)
+
+    assert await source._produce_alerts_for_ipmitool_output(textwrap.dedent("""\
+        9,04/20/2017,06:03:07,Watchdog2 #0xca,Timer interrupt (),Asserted
+        9,04/20/2017,06:03:08,Watchdog2 #0xca,Timer interrupt (),Asserted
+    """)) == [
+        Alert(
+            title="%(sensor)s %(direction)s %(event)s",
+            args=dict(
+                sensor="Watchdog2 #0xca",
+                event="Timer interrupt ()",
+                direction="Asserted",
+                verbose=None
+            ),
+            datetime=datetime(2017, 4, 20, 6, 3, 8),
+        )
+    ]
+
+
+@pytest.mark.asyncio
+async def test_ipmi_sel_alert_source__first_run():
+    def _create_future(m, *args):
+        fut = asyncio.Future()
+        fut.set_result(m(*args))
+        return fut
+    m2 = Mock()
+    middleware = Mock()
+    middleware.call = lambda method, *args: ({
+        "keyvalue.has_key": lambda *args: _create_future(Mock(return_value=False), *args),
+        "keyvalue.set": lambda *args: _create_future(m2, *args),
+    }[method](*args))
+
+    source = IPMISELAlertSource(middleware)
+
+    assert await source._produce_alerts_for_ipmitool_output(textwrap.dedent("""\
+        9,04/20/2017,06:03:07,Watchdog2 #0xca,Timer interrupt (),Asserted
+    """)) == []
+
+    m2.assert_called_once_with("alert:ipmi_sel:dismissed_datetime", datetime(2017, 4, 20, 6, 3, 7))
 
 
 def test_ipmi_sel_space_left_alert_source__does_not_emit():

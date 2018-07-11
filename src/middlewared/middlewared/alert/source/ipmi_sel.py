@@ -57,6 +57,8 @@ class IPMISELAlertSource(AlertSource):
 
     schedule = IntervalSchedule(timedelta(minutes=5))
 
+    dismissed_datetime_kv_key = "alert:ipmi_sel:dismissed_datetime"
+
     async def check(self):
         if not has_ipmi():
             return
@@ -66,20 +68,34 @@ class IPMISELAlertSource(AlertSource):
 
     async def _produce_alerts_for_ipmitool_output(self, output):
         alerts = []
-        for record in parse_ipmitool_output(output):
-            title = "%(sensor)s %(direction)s %(event)s"
-            if record.verbose is not None:
-                title += ": %(verbose)s"
 
-            args = dict(record._asdict())
-            args.pop("id")
-            args.pop("datetime")
+        records = parse_ipmitool_output(output)
 
-            alerts.append(Alert(
-                title=title,
-                args=args,
-                datetime=record.datetime,
-            ))
+        if records:
+            if await self.middleware.call("keyvalue.has_key", self.dismissed_datetime_kv_key):
+                dismissed_datetime = await self.middleware.call("keyvalue.get", self.dismissed_datetime_kv_key)
+            else:
+                # Prevent notifying about existing alerts on first install/upgrade
+                dismissed_datetime = max(record.datetime for record in records)
+                await self.middleware.call("keyvalue.set", self.dismissed_datetime_kv_key, dismissed_datetime)
+
+            for record in records:
+                if record.datetime <= dismissed_datetime:
+                    continue
+
+                title = "%(sensor)s %(direction)s %(event)s"
+                if record.verbose is not None:
+                    title += ": %(verbose)s"
+
+                args = dict(record._asdict())
+                args.pop("id")
+                args.pop("datetime")
+
+                alerts.append(Alert(
+                    title=title,
+                    args=args,
+                    datetime=record.datetime,
+                ))
 
         return alerts
 
