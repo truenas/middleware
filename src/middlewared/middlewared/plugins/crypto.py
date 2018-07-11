@@ -4,7 +4,6 @@ import dateutil.parser
 import josepy as jose
 import json
 import os
-import pytz
 import random
 import re
 import socket
@@ -12,7 +11,7 @@ import ssl
 
 from middlewared.async_validators import validate_country
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
-from middlewared.service import CRUDService, job, periodic, private, skip_arg, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, periodic, private, skip_arg, ValidationErrors
 from middlewared.validators import Email, IpAddress, Range, ShouldBe
 
 from acme import client, errors, messages
@@ -261,13 +260,13 @@ class CertificateService(CRUDService):
             root_path = CERT_ROOT_PATH
         cert['root_path'] = root_path
         cert['certificate_path'] = os.path.join(
-            root_path, '{0}.crt'.format(cert['name'])
+            root_path, f'{cert["name"]}.crt'
         )
         cert['privatekey_path'] = os.path.join(
-            root_path, '{0}.key'.format(cert['name'])
+            root_path, f'{cert["name"]}.key'
         )
         cert['csr_path'] = os.path.join(
-            root_path, '{0}.csr'.format(cert['name'])
+            root_path, f'{cert["name"]}.csr'
         )
 
         def cert_issuer(cert):
@@ -309,21 +308,21 @@ class CertificateService(CRUDService):
                         crypto.dump_certificate(crypto.FILETYPE_PEM, cert_obj).decode()
                     )
         except Exception:
-            self.logger.debug('Failed to load certificate {0}'.format(cert['name']), exc_info=True)
+            self.logger.debug(f'Failed to load certificate {cert["name"]}', exc_info=True)
 
         try:
             if cert['privatekey']:
                 key_obj = crypto.load_privatekey(crypto.FILETYPE_PEM, cert['privatekey'])
                 cert['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, key_obj).decode()
         except Exception:
-            self.logger.debug('Failed to load privatekey {0}'.format(cert['name']), exc_info=True)
+            self.logger.debug(f'Failed to load privatekey {cert["name"]}', exc_info=True)
 
         try:
             if cert['CSR']:
                 csr_obj = crypto.load_certificate_request(crypto.FILETYPE_PEM, cert['CSR'])
                 cert['CSR'] = crypto.dump_certificate_request(crypto.FILETYPE_PEM, csr_obj).decode()
         except Exception:
-            self.logger.debug('Failed to load csr {0}'.format(cert['name']), exc_info=True)
+            self.logger.debug(f'Failed to load csr {cert["name"]}', exc_info=True)
 
         cert['internal'] = 'NO' if cert['type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING) else 'YES'
 
@@ -627,7 +626,7 @@ class CertificateService(CRUDService):
         ), key
 
     @private
-    def issue_certificate(self, job, progress, data, csr_data):
+    def acme_issue_certificate(self, job, progress, data, csr_data):
         verrors = ValidationErrors()
 
         # TODO: Add ability to complete DNS validation challenge manually
@@ -751,16 +750,18 @@ class CertificateService(CRUDService):
             'certificate.query',
             [['acme', '!=', None]]
         )
+
         progress = 0
         for cert in certs:
             progress += (100 / len(certs))
 
             if (
-                    pytz.utc.localize(cert['expire']) - datetime.datetime.now(datetime.timezone.utc)
+                    datetime.datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') -
+                    datetime.datetime.now()
             ).days < cert['renew_days']:
                 # renew cert
                 self.logger.debug(f'Renewing certificate {cert["name"]}')
-                final_order = self.issue_certificate(
+                final_order = self.acme_issue_certificate(
                     job, progress / 4, {
                         'tos': True,
                         'acme_directory_uri': cert['acme']['directory'],
@@ -776,7 +777,6 @@ class CertificateService(CRUDService):
                     {
                         'certificate': final_order.fullchain_pem,
                         'acme_uri': final_order.uri,
-                        'expire': final_order.body.expires.astimezone(pytz.utc).strftime('%Y-%m-%d'),
                         'chain': True if len(RE_CERTIFICATE.findall(final_order.fullchain_pem)) > 1 else False,
                     },
                     {'prefix': self._config.datastore_prefix}
@@ -902,7 +902,7 @@ class CertificateService(CRUDService):
             'certificate._get_instance', data['csr_id']
         )
 
-        final_order = self.issue_certificate(job, 25, data, csr_data)
+        final_order = self.acme_issue_certificate(job, 25, data, csr_data)
 
         job.set_progress(95, 'Final order received from ACME server')
 
@@ -916,7 +916,6 @@ class CertificateService(CRUDService):
             'CSR': csr_data['CSR'],
             'privatekey': csr_data['privatekey'],
             'name': data['name'],
-            'expire': final_order.body.expires.astimezone(pytz.utc).strftime('%Y-%m-%d'),
             'chain': True if len(RE_CERTIFICATE.findall(final_order.fullchain_pem)) > 1 else False,
             'type': CERT_TYPE_EXISTING,
             'domains_authenticators': data['dns_mapping'],
@@ -1147,6 +1146,24 @@ class CertificateService(CRUDService):
 
         return await self._get_instance(id)
 
+    @private
+    async def delete_domains_authenticator(self, auth_id):
+        # Delete provided auth_id from all ACME based certs domains_authenticators
+        for cert in await self.query([['acme', '!=', None]]):
+            if auth_id in cert['domains_authenticators'].values():
+                await self.middleware.call(
+                    'datastore.update',
+                    self._config.datastore,
+                    cert['id'],
+                    {
+                        'domains_authenticators': {
+                            k: v for k, v in cert['domains_authenticators'].items()
+                            if v != auth_id
+                        }
+                    },
+                    {'prefix': self._config.datastore_prefix}
+                )
+
     @accepts(
         Int('id'),
         Bool('force', default=False)
@@ -1174,8 +1191,6 @@ class CertificateService(CRUDService):
 
         if certificate['acme']:
 
-            verrors = ValidationErrors()
-
             client, key = self.get_acme_client_and_key(certificate['acme']['directory'], True)
 
             job.set_progress(60)
@@ -1188,15 +1203,10 @@ class CertificateService(CRUDService):
                     0
                 )
             except errors.ClientError as e:
-                verrors.add(
-                    'acme_revoke.id',
-                    f'Unable to revoke certificate :{e}'
-                )
+                if not force:
+                    raise CallError(f'Unable to revoke certificate : {e}')
             else:
                 job.set_progress(80, 'Certificate successfully revoked')
-
-            if verrors and not force:
-                raise verrors
 
         response = self.middleware.call_sync(
             'datastore.delete',
@@ -1467,12 +1477,17 @@ class CertificateAuthorityService(CRUDService):
             'signedby': ca_data['id']
         }
 
-        new_csr_job_id = self.middleware.call_sync(
+        new_csr_job = self.middleware.call_sync(
             'certificate.create',
             new_csr
         )
 
-        return new_csr_job_id
+        new_csr_job.wait_sync()
+
+        if new_csr_job.error:
+            raise CallError(new_csr_job.exception)
+        else:
+            return new_csr_job.result
 
     @accepts(
         Patch(

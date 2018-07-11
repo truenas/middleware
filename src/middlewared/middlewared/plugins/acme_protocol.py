@@ -185,7 +185,7 @@ class DNSAuthenticatorService(CRUDService):
         if data['authenticator'] not in self.schemas:
             verrors.add(
                 f'{schema_name}.authenticator',
-                f'FreeNAS does not support {data["authenticator"]} as an Authenticator'
+                f'System does not support {data["authenticator"]} as an Authenticator'
             )
         else:
             verrors = validate_attributes(self.schemas[data['authenticator']], data)
@@ -236,6 +236,8 @@ class DNSAuthenticatorService(CRUDService):
         Int('id', required=True)
     )
     async def do_delete(self, id):
+
+        await self.middleware.call('certificate.delete_domains_authenticator', id)
 
         return await self.middleware.call(
             'datastore.delete',
