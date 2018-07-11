@@ -1157,6 +1157,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         )
 
         r = resolver.Resolver()
+        r.rotate = True
         r.timeout = _fs().directoryservice.activedirectory.dns.timeout
         r.lifetime = _fs().directoryservice.activedirectory.dns.lifetime
 
@@ -1312,10 +1313,13 @@ class FreeNAS_ActiveDirectory_Base(object):
             )
 
     @staticmethod
-    def port_is_listening(host, port, errors=[]):
+    def port_is_listening(host, port, errors=[], timeout=0):
         ret = False
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if timeout:
+            s.settimeout(timeout)
+
         try:
             s.connect((host, port))
             ret = True
