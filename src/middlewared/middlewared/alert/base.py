@@ -38,6 +38,9 @@ class Alert:
         self.dismissed = dismissed
         self.mail = mail
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
     def __repr__(self):
         return repr(self.__dict__)
 
