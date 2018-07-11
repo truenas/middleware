@@ -966,6 +966,51 @@ class PoolService(CRUDService):
             await self.middleware.call('disk.unlabel', disk)
 
     @item_method
+    @accepts(Int('id'), Dict('options',
+        Str('passphrase', password=True, required=True, null=True),
+        Str('admin_password', password=True),
+    ))
+    async def passphrase(self, oid, options):
+        """
+        Create/Change/Remove passphrase for an encrypted pool.
+
+        Setting passphrase to null will remove the passphrase.
+        `admin_password` is required when changing or removing passphrase.
+        """
+        pool = await self._get_instance(oid)
+
+        verrors = ValidationErrors()
+
+        if pool['encrypt'] == 0:
+            verrors.add('id', 'Pool is not encrypted.')
+
+        # For historical reasons (API v1.0 compatibility) we only require
+        # admin_password when changing/removing passphrase
+        if pool['encrypt'] == 2:
+            if not options.get('admin_password'):
+                verrors.add('options.admin_password', 'This attribute is required.')
+            else:
+                if not await self.middleware.call(
+                    'auth.check_user', 'root', options['admin_password']
+                ):
+                    verrors.add('options.admin_password', 'Invalid admin password.')
+
+        if verrors:
+            raise verrors
+
+        await self.middleware.call('disk.geli_passphrase', pool, options['passphrase'], True)
+
+        if pool['encrypt'] == 1 and options['passphrase']:
+            await self.middleware.call(
+                'datastore.update', 'storage.volume', oid, {'vol_encrypt': 2}
+            )
+        elif pool['encrypt'] == 2 and not options['passphrase']:
+            await self.middleware.call(
+                'datastore.update', 'storage.volume', oid, {'vol_encrypt': 1}
+            )
+        return True
+
+    @item_method
     @accepts(Int('id'))
     async def download_encryption_key(self, oid):
         """
