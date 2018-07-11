@@ -1,6 +1,10 @@
+import datetime
 import dateutil
 import dateutil.parser
+import josepy as jose
+import json
 import os
+import pytz
 import random
 import re
 import socket
@@ -8,8 +12,10 @@ import ssl
 
 from middlewared.async_validators import validate_country
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
-from middlewared.service import CRUDService, private, ValidationErrors
-from middlewared.validators import Email, IpAddress, Range
+from middlewared.service import CRUDService, job, periodic, private, skip_arg, ValidationErrors
+from middlewared.validators import Email, IpAddress, Range, ShouldBe
+
+from acme import client, errors, messages
 from OpenSSL import crypto, SSL
 
 
@@ -187,7 +193,14 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
                 'Please provide a valid CSR'
             )
 
-    await middleware.run_in_thread(
+    csr_id = data.get('csr_id')
+    if csr_id and not await middleware.call('certificate.query', [['id', '=', csr_id]]):
+        verrors.add(
+            f'{schema_name}.csr_id',
+            'Please provide a valid csr_id'
+        )
+
+    await middleware.run_in_io_thread(
         _validate_certificate_with_key, certificate, private_key, schema_name, verrors
     )
 
@@ -206,7 +219,8 @@ class CertificateService(CRUDService):
             'CERTIFICATE_CREATE_IMPORTED': self.__create_imported_certificate,
             'CERTIFICATE_CREATE_IMPORTED_CSR': self.__create_imported_csr,
             'CERTIFICATE_CREATE': self.__create_certificate,
-            'CERTIFICATE_CREATE_CSR': self.__create_csr
+            'CERTIFICATE_CREATE_CSR': self.__create_csr,
+            'CERTIFICATE_CREATE_ACME': self.__create_acme_certificate
         }
 
     @private
@@ -563,6 +577,207 @@ class CertificateService(CRUDService):
 
         return verrors
 
+    @private
+    async def get_domain_names(self, data):
+        names = [data['common']]
+        names.extend(data['san'])
+        return names
+
+    @private
+    def get_acme_client_and_key(self, acme_directory_uri, tos=False):
+        data = self.middleware.call_sync('acme.registration.query', [['directory', '=', acme_directory_uri]])
+        if not data:
+            data = self.middleware.call_sync(
+                'acme.registration.create',
+                {'tos': tos, 'acme_directory_uri': acme_directory_uri}
+            )
+        else:
+            data = data[0]
+        # Making key now
+        key = jose.JWKRSA.fields_from_json(json.loads(data['body']['key']))
+        key_dict = key.fields_to_partial_json()
+        # Making registration resource now
+        registration = messages.RegistrationResource.from_json({
+            'uri': data['uri'],
+            'terms_of_service': data['tos'],
+            'body': {
+                'contact': [data['body']['contact']],
+                'status': data['body']['status'],
+                'key': {
+                    'e': key_dict['e'],
+                    'kty': 'RSA',
+                    'n': key_dict['n']
+                }
+            }
+        })
+
+        return client.ClientV2(
+            messages.Directory({
+                'newAccount': data['new_account_uri'],
+                'newNonce': data['new_nonce_uri'],
+                'newOrder': data['new_order_uri'],
+                'revokeCert': data['revoke_cert_uri']
+            }),
+            client.ClientNetwork(key, account=registration)
+        ), key
+
+    @private
+    def issue_certificate(self, job, progress, data, csr_data):
+        verrors = ValidationErrors()
+
+        # TODO: Add ability to complete DNS validation challenge manually
+
+        # Validate domain dns mapping for handling DNS challenges
+        # Ensure that there is an authenticator for each domain in the CSR
+        domains = self.middleware.call_sync('certificate.get_domain_names', csr_data)
+        dns_authenticator_ids = [o['id'] for o in self.middleware.call_sync('dns.authenticator.query')]
+        for domain in domains:
+            if domain not in data['dns_mapping']:
+                verrors.add(
+                    'acme_create.dns_mapping',
+                    f'Please provide DNS authenticator id for {domain}'
+                )
+            elif data['dns_mapping'][domain] not in dns_authenticator_ids:
+                verrors.add(
+                    'acme_create.dns_mapping',
+                    f'Provided DNS Authenticator id for {domain} does not exist'
+                )
+        for domain in data['dns_mapping']:
+            if domain not in domains:
+                verrors.add(
+                    'acme_create.dns_mapping',
+                    f'{domain} not specified in the CSR'
+                )
+
+        if verrors:
+            raise verrors
+
+        acme_client, key = self.get_acme_client_and_key(data['acme_directory_uri'], data['tos'])
+        try:
+            # perform operations and have a cert issued
+            order = acme_client.new_order(csr_data['CSR'])
+        except messages.Error as e:
+            verrors.add(
+                'acme_create.new_order',
+                f'Failed to issue a new order for Certificate : {e}'
+            )
+        else:
+            job.set_progress(progress, 'New order for certificate issuance placed')
+
+            self.handle_authorizations(job, progress, order, data['dns_mapping'], acme_client, key)
+
+            try:
+                # Polling for a maximum of 10 minutes while trying to finalize order
+                # Should we try .poll() instead first ? research please
+                return acme_client.poll_and_finalize(order, datetime.datetime.now() + datetime.timedelta(minutes=10))
+            except errors.TimeoutError:
+                verrors.add(
+                    'acme_create.final_order',
+                    'Certificate request for final order timed out'
+                )
+        finally:
+            if verrors:
+                raise verrors
+
+    @private
+    def handle_authorizations(self, job, progress, order, domain_names_dns_mapping, acme_client, key):
+        # When this is called, it should be ensured by the function calling this function that for all authorization
+        # resource, a domain name dns mapping is available ? Ideal ?
+        # For multiple domain providers in domain names, I think we should ask the end user to specify which domain
+        # provider is used for which domain so authorizations can be handled gracefully
+        # https://serverfault.com/questions/906407/lets-encrypt-dns-challenge-with-multiple-public-dns-providers
+        verrors = ValidationErrors()
+
+        max_progress = (progress * 4) - progress - (progress * 4 / 5)  # TODO: Refine this
+
+        for authorization_resource in order.authorizations:
+            try:
+                status = False
+                progress += (max_progress / len(order.authorizations))
+                domain = authorization_resource.body.identifier.value  # TODO: handle wildcards
+                # BOULDER DOES NOT RETURN WILDCARDS FOR NOW - WILDCARDS SHOULD BE GRACEFULLY HANDLED IN THE DOMAIN DNS
+                # MAPPING DICT
+                # OTHER IMPLEMENTATIONS RIGHT NOW ASSUME THAT EVERY DOMAIN HAS A WILD CARD IN CASE OF DNS CHALLENGE
+                challenge = None
+                for chg in authorization_resource.body.challenges:
+                    if chg.typ == 'dns-01':
+                        challenge = chg
+
+                if not challenge:
+                    verrors.add(
+                        'acme_authorization.domain',
+                        f'DNS Challenge not found for domain {authorization_resource.body.identifier.value}'
+                    )
+                    continue
+
+                try:
+                    status = self.middleware.call_sync(
+                        'dns.authenticator.update_txt_record', {
+                            'authenticator': domain_names_dns_mapping[domain],
+                            'challenge': challenge.json_dumps(),
+                            'domain': domain,
+                            'key': key.json_dumps()
+                        }
+                    )
+                except ValidationErrors as v:
+                    verrors.extend(v)
+                else:
+                    try:
+                        acme_client.answer_challenge(challenge, challenge.response(key))
+                    except errors.UnexpectedUpdate as e:
+                        verrors.add(
+                            'acme_authorization.domain',
+                            f'Error answering challenge for {domain} : {e}'
+                        )
+
+            finally:
+                job.set_progress(
+                    progress,
+                    f'DNS challenge {"completed" if status else "failed"} for {domain}'
+                )
+
+        if verrors:
+            raise verrors
+
+    @periodic(86400, run_on_start=True)
+    @job(lock='acme_cert_renewal')
+    def renew_certs(self, job):
+        certs = self.middleware.call_sync(
+            'certificate.query',
+            [['acme', '!=', None]]
+        )
+        progress = 0
+        for cert in certs:
+            # TODO: Make the renew date customizable, perhaps add a field to the cert model
+            progress += (100 / len(certs))
+
+            if (pytz.utc.localize(cert['expire']) - datetime.datetime.now(datetime.timezone.utc)).days < 10:
+                # renew cert
+                self.logger.debug(f'Renewing certificate {cert["name"]}')
+                final_order = self.issue_certificate(
+                    job, progress / 4, {
+                        'tos': True,
+                        'acme_directory_uri': cert['acme']['directory'],
+                        'dns_mapping': cert['domains_authenticators']
+                    },
+                    cert
+                )
+
+                self.middleware.call_sync(
+                    'datastore.update',
+                    self._config.datastore,
+                    cert['id'],
+                    {
+                        'certificate': final_order.fullchain_pem,
+                        'acme_uri': final_order.uri,
+                        'expire': final_order.body.expires.astimezone(pytz.utc).strftime('%Y-%m-%d'),
+                        'chain': True if len(RE_CERTIFICATE.findall(final_order.fullchain_pem)) > 1 else False,
+                    },
+                    {'prefix': self._config.datastore_prefix}
+                )
+
+            job.set_progress(progress)
+
     # CREATE METHODS FOR CREATING CERTIFICATES
     # "do_create" IS CALLED FIRST AND THEN BASED ON THE TYPE OF THE CERTIFICATE WHICH IS TO BE CREATED THE
     # APPROPRIATE METHOD IS CALLED
@@ -573,7 +788,7 @@ class CertificateService(CRUDService):
     # CERTIFICATE_CREATE_IMPORTED_CSR - __create_imported_csr
     # CERTIFICATE_CREATE              - __create_certificate
     # CERTIFICATE_CREATE_CSR          - __create_csr
-    # CERTIFICATE_CREATE_ACME         - Control moved from create function to ACME Service
+    # CERTIFICATE_CREATE_ACME         - __create_acme_certificate
 
     @accepts(
         Dict(
@@ -608,7 +823,8 @@ class CertificateService(CRUDService):
             register=True
         )
     )
-    async def do_create(self, data):
+    @job(lock='cert_create')
+    async def do_create(self, job, data):
         if not data.get('san'):
             data.pop('san', None)
 
@@ -629,11 +845,11 @@ class CertificateService(CRUDService):
         if verrors:
             raise verrors
 
-        # TODO: ENFORCE THAT THE RIGHT PARAMETERS GO TO THE NEXT CREATE FUNCTION
+        job.set_progress(10, 'Initial validation complete')
 
         data = await self.middleware.run_in_io_thread(
-            self.map_functions[create_type],
-            data
+            self.map_functions[data.pop('create_type')],
+            job, data
         )
 
         data['san'] = ' '.join(data.pop('san', []) or [])
@@ -651,7 +867,50 @@ class CertificateService(CRUDService):
             {'onetime': False}
         )
 
+        job.set_progress(100, 'Certificate created successfully')
+
         return await self._get_instance(pk)
+
+    @accepts(
+        Dict(
+            'acme_create',
+            Bool('tos', default=False),
+            Int('csr_id', required=True),
+            Str('acme_directory_uri', required=True),
+            Str('name', required=True),
+            Dict('dns_mapping', additional_attrs=True, required=True)
+        )
+    )
+    @skip_arg(count=1)
+    def __create_acme_certificate(self, job, data):
+
+        csr_data = self.middleware.call_sync(
+            'certificate._get_instance', data['csr_id']
+        )
+
+        final_order = self.issue_certificate(job, 25, data, csr_data)
+
+        job.set_progress(95, 'Final order received from ACME server')
+
+        cert_dict = {
+            'acme': self.middleware.call_sync(
+                'acme.registration.query',
+                [['directory', '=', data['acme_directory_uri']]]
+            )[0]['id'],
+            'acme_uri': final_order.uri,
+            'certificate': final_order.fullchain_pem,
+            'CSR': csr_data['CSR'],
+            'privatekey': csr_data['privatekey'],
+            'name': data['name'],
+            'expire': final_order.body.expires.astimezone(pytz.utc).strftime('%Y-%m-%d'),
+            'chain': True if len(RE_CERTIFICATE.findall(final_order.fullchain_pem)) > 1 else False,
+            'type': CERT_TYPE_EXISTING,
+            'domains_authenticators': data['dns_mapping']
+        }
+
+        cert_dict.update(self.load_certificate(final_order.fullchain_pem))
+
+        return cert_dict
 
     @accepts(
         Patch(
@@ -660,7 +919,8 @@ class CertificateService(CRUDService):
             ('rm', {'name': 'lifetime'})
         )
     )
-    def __create_csr(self, data):
+    @skip_arg(count=1)
+    def __create_csr(self, job, data):
         # no signedby, lifetime attributes required
         cert_info = get_cert_info_from_data(data)
 
@@ -682,7 +942,8 @@ class CertificateService(CRUDService):
             Str('passphrase')
         )
     )
-    def __create_imported_csr(self, data):
+    @skip_arg(count=1)
+    def __create_imported_csr(self, job, data):
 
         data['type'] = CERT_TYPE_CSR
 
@@ -708,7 +969,8 @@ class CertificateService(CRUDService):
             ('rm', {'name': 'create_type'})
         )
     )
-    def __create_certificate(self, data):
+    @skip_arg(count=1)
+    def __create_certificate(self, job, data):
 
         for k, v in self.load_certificate(data['certificate']).items():
             data[k] = v
@@ -725,7 +987,8 @@ class CertificateService(CRUDService):
             Str('privatekey')
         )
     )
-    def __create_imported_certificate(self, data):
+    @skip_arg(count=1)
+    def __create_imported_certificate(self, job, data):
         verrors = ValidationErrors()
 
         csr_id = data.pop('csr_id', None)
@@ -756,7 +1019,7 @@ class CertificateService(CRUDService):
 
         data['type'] = CERT_TYPE_EXISTING
 
-        data = self.__create_certificate(data)
+        data = self.__create_certificate(job, data)
 
         data['chain'] = True if len(RE_CERTIFICATE.findall(data['certificate'])) > 1 else False
 
@@ -787,7 +1050,8 @@ class CertificateService(CRUDService):
             register=True
         )
     )
-    def __create_internal(self, data):
+    @skip_arg(count=1)
+    def __create_internal(self, job, data):
 
         cert_info = get_cert_info_from_data(data)
         data['type'] = CERT_TYPE_INTERNAL
@@ -830,7 +1094,8 @@ class CertificateService(CRUDService):
             Str('name')
         )
     )
-    async def do_update(self, id, data):
+    @job(lock='cert_update')
+    async def do_update(self, job, id, data):
         old = await self._get_instance(id)
         # signedby is changed back to integer from a dict
         old['signedby'] = old['signedby']['id'] if old.get('signedby') else None
@@ -871,9 +1136,10 @@ class CertificateService(CRUDService):
         Int('id'),
         Bool('force', default=False)
     )
-    async def do_delete(self, id, force):
+    @job(lock='cert_delete')
+    def do_delete(self, job, id, force=False):
 
-        if (await self.middleware.call('system.general.config'))['ui_certificate']['id'] == id:
+        if (self.middleware.call_sync('system.general.config'))['ui_certificate']['id'] == id:
             verrors = ValidationErrors()
 
             verrors.add(
@@ -883,22 +1149,47 @@ class CertificateService(CRUDService):
 
             raise verrors
 
-        if await self.middleware.call(
-            'acme.query',
-            [['id', '=', id]]
-        ):
-            return await self.middleware.call(
-                'acme.delete',
-                id, force
-            )
+        certificate = self.middleware.call_sync(
+            'certificate.query',
+            [
+                ['id', '=', id],
+                ['acme', '!=', None]
+            ]
+        )
 
-        response = await self.middleware.call(
+        if certificate['acme']:
+
+            verrors = ValidationErrors()
+
+            client, key = self.get_acme_client_and_key(certificate['acme']['directory'], True)
+
+            job.set_progress(60)
+
+            try:
+                client.revoke(
+                    jose.ComparableX509(
+                        crypto.load_certificate(crypto.FILETYPE_PEM, certificate['certificate'])
+                    ),
+                    0
+                )
+            except errors.ClientError as e:
+                verrors.add(
+                    'acme_revoke.id',
+                    f'Unable to revoke certificate :{e}'
+                )
+            else:
+                job.set_progress(80, 'Certificate successfully revoked')
+
+            if verrors and not force:
+                raise verrors
+
+        response = self.middleware.call_sync(
             'datastore.delete',
             self._config.datastore,
             id
         )
 
-        await self.middleware.call(
+        self.middleware.call_sync(
             'service.start',
             'ix-ssl',
             {'onetime': False}
@@ -907,8 +1198,9 @@ class CertificateService(CRUDService):
         sentinel = f'/tmp/alert_invalidcert_{certificate["name"]}'
         if os.path.exists(sentinel):
             os.unlink(sentinel)
-            await self.middleware.call('alert.process_alerts')
+            self.middleware.call_sync('alert.process_alerts')
 
+        job.set_progress(100)
         return response
 
 
@@ -1159,12 +1451,12 @@ class CertificateAuthorityService(CRUDService):
             'signedby': ca_data['id']
         }
 
-        new_csr_dict = self.middleware.call_sync(
+        new_csr_job_id = self.middleware.call_sync(
             'certificate.create',
             new_csr
         )
 
-        return new_csr_dict
+        return new_csr_job_id
 
     @accepts(
         Patch(
