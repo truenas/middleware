@@ -804,6 +804,7 @@ class CertificateService(CRUDService):
             Int('csr_id'),
             Int('signedby'),
             Int('key_length'),
+            Int('renew_days'),
             Int('type'),
             Int('lifetime'),
             Int('serial', validators=[Range(min=1)]),
@@ -888,6 +889,7 @@ class CertificateService(CRUDService):
             'acme_create',
             Bool('tos', default=False),
             Int('csr_id', required=True),
+            Int('renew_days', default=10),
             Str('acme_directory_uri', required=True),
             Str('name', required=True),
             Dict('dns_mapping', additional_attrs=True, required=True)
@@ -917,7 +919,8 @@ class CertificateService(CRUDService):
             'expire': final_order.body.expires.astimezone(pytz.utc).strftime('%Y-%m-%d'),
             'chain': True if len(RE_CERTIFICATE.findall(final_order.fullchain_pem)) > 1 else False,
             'type': CERT_TYPE_EXISTING,
-            'domains_authenticators': data['dns_mapping']
+            'domains_authenticators': data['dns_mapping'],
+            'renew_days': data['renew_days']
         }
 
         cert_dict.update(self.load_certificate(final_order.fullchain_pem))
