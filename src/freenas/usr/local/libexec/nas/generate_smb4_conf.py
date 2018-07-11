@@ -955,6 +955,10 @@ def generate_smb4_conf(client, smb4_conf, role):
     if server_max_protocol != 'NONE':
         confset2(smb4_conf, "server max protocol = %s", server_max_protocol)
 
+    server_multi_channel = fs().services.smb.config.server_multi_channel
+    if server_multi_channel != 0:
+        confset1(smb4_conf, "server multi channel support = yes")
+
     if cifs.bindip:
         interfaces = []
 
