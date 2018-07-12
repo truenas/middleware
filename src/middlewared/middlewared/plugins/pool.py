@@ -1011,6 +1011,41 @@ class PoolService(CRUDService):
         return True
 
     @item_method
+    @accepts(Int('id'), Dict('options',
+        Str('admin_password', password=True, required=False),
+    ))
+    async def rekey(self, oid, options):
+        """
+        Rekey encrypted pool `id`.
+        """
+        pool = await self._get_instance(oid)
+
+        verrors = ValidationErrors()
+
+        if pool['encrypt'] == 0:
+            verrors.add('id', 'Pool is not encrypted.')
+
+        # admin password is optional, its choice of the client to enforce
+        # it or not.
+        if 'admin_password' in options and not await self.middleware.call(
+            'auth.check_user', 'root', options['admin_password']
+        ):
+            verrors.add('options.admin_password', 'Invalid admin password.')
+
+        if verrors:
+            raise verrors
+
+        await self.middleware.call('disk.geli_rekey', pool)
+
+        if pool['encrypt'] == 2:
+            await self.middleware.call(
+                'datastore.update', 'storage.volume', oid, {'vol_encrypt': 1}
+            )
+
+        await self.middleware.call_hook('pool.rekey_done', pool=pool)
+        return True
+
+    @item_method
     @accepts(Int('id'))
     async def download_encryption_key(self, oid):
         """

@@ -29,6 +29,7 @@ from freenasUI.services.utils import SmartAlert
 DISK_EXPIRECACHE_DAYS = 7
 GELI_KEY_SLOT = 0
 GELI_RECOVERY_SLOT = 1
+GELI_REKEY_FAILED = '/tmp/.rekey_failed'
 MIRROR_MAX = 5
 RE_CAMCONTROL_DRIVE_LOCKED = re.compile(r'^drive locked\s+yes$', re.M)
 RE_DA = re.compile('^da[0-9]+$')
@@ -223,6 +224,8 @@ class DiskService(CRUDService):
             subprocess.run(
                 ['dd', 'if=/dev/random', f'of={keyfile}', f'bs={size}', 'count=1'],
                 check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
 
     def __geli_setmetadata(self, dev, keyfile, passphrase=None):
@@ -322,6 +325,82 @@ class DiskService(CRUDService):
         finally:
             if passphrase:
                 passf.close()
+
+    @private
+    def geli_rekey(self, pool, slot=GELI_KEY_SLOT):
+        """
+        Regenerates the geli global key and set it to devices
+        Removes the passphrase if it was present
+        """
+
+        geli_keyfile = pool['encryptkey_path']
+        geli_keyfile_tmp = f'{geli_keyfile}.tmp'
+        devs = [
+            ed['encrypted_provider']
+            for ed in self.middleware.call_sync(
+                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+            )
+        ]
+
+        # keep track of which device has which key in case something goes wrong
+        dev_to_keyfile = {dev: geli_keyfile for dev in devs}
+
+        # Generate new key as .tmp
+        self.logger.debug("Creating new key file: %s", geli_keyfile_tmp)
+        self.__create_keyfile(geli_keyfile_tmp, force=True)
+        error = None
+        applied = []
+        for dev in devs:
+            try:
+                self.geli_setkey(dev, geli_keyfile_tmp, slot)
+                dev_to_keyfile[dev] = geli_keyfile_tmp
+                applied.append(dev)
+            except Exception as ee:
+                error = str(ee)
+                self.logger.error('Failed to set geli key on %s: %s', dev, error, exc_info=True)
+                break
+
+        # Try to be atomic in a certain way
+        # If rekey failed for one of the devs, revert for the ones already applied
+        if error:
+            could_not_restore = False
+            for dev in applied:
+                try:
+                    self.geli_setkey(dev, geli_keyfile, slot, oldkey=geli_keyfile_tmp)
+                    dev_to_keyfile[dev] = geli_keyfile
+                except Exception as ee:
+                    # this is very bad for the user, at the very least there
+                    # should be a notification that they will need to
+                    # manually rekey as they now have drives with different keys
+                    could_not_restore = True
+                    self.logger.error(
+                        'Failed to restore key on rekey for %s: %s', dev, str(ee), exc_info=True
+                    )
+            if could_not_restore:
+                try:
+                    open(GELI_REKEY_FAILED, 'w').close()
+                except Exception:
+                    pass
+                self.logger.error(
+                    'Unable to rekey. Devices now have the following keys: %s',
+                    '\n'.join([
+                        f'{dev}: {keyfile}'
+                        for dev, keyfile in dev_to_keyfile
+                    ])
+                )
+                raise CallError(
+                    'Unable to rekey and devices have different keys. See the log file.'
+                )
+            else:
+                raise CallError(f'Unable to set key: {error}')
+        else:
+            if os.path.exists(GELI_REKEY_FAILED):
+                try:
+                    os.unlink(GELI_REKEY_FAILED)
+                except Exception:
+                    pass
+            self.logger.debug("Rename geli key %s -> %s", geli_keyfile_tmp, geli_keyfile)
+            os.rename(geli_keyfile_tmp, geli_keyfile)
 
     @private
     def geli_detach(self, dev):
