@@ -2581,7 +2581,16 @@ class ReKeyForm(KeyForm):
         super(ReKeyForm, self).__init__(*args, **kwargs)
 
     def done(self):
-        notifier().geli_rekey(self.volume)
+        options = {}
+        adminpw = self.cleaned_data.get('adminpw')
+        if adminpw is not None:
+            options['admin_password'] = adminpw
+        try:
+            with client as c:
+                return c.call('pool.rekey', self.volume.id, options)
+        except ClientException as e:
+            self._errors['__all__'] = self.error_class([str(e)])
+            return False
 
 
 class VMWarePluginForm(MiddlewareModelForm, ModelForm):
