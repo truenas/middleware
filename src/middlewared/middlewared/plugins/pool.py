@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import errno
 import logging
 from datetime import datetime, time
@@ -1043,6 +1044,41 @@ class PoolService(CRUDService):
             )
 
         await self.middleware.call_hook('pool.rekey_done', pool=pool)
+        return True
+
+    @item_method
+    @accepts(Int('id'), Dict('options',
+        Str('admin_password', password=True, required=False),
+    ))
+    @job(lock=lambda x: f'pool_reckey_{x[0]}', pipes=['output'])
+    async def recoverykey_add(self, job, oid, options):
+        """
+        Add Recovery key for encrypted pool `id`.
+
+        This is to be used with `core.download` which will provide an URL
+        to download the recovery key.
+        """
+        pool = await self._get_instance(oid)
+
+        verrors = ValidationErrors()
+
+        if pool['encrypt'] == 0:
+            verrors.add('id', 'Pool is not encrypted.')
+
+        # admin password is optional, its choice of the client to enforce
+        # it or not.
+        if 'admin_password' in options and not await self.middleware.call(
+            'auth.check_user', 'root', options['admin_password']
+        ):
+            verrors.add('options.admin_password', 'Invalid admin password.')
+
+        if verrors:
+            raise verrors
+
+        reckey = await self.middleware.call('disk.geli_recoverykey_add', pool)
+
+        job.pipes.output.w.write(base64.b64decode(reckey))
+
         return True
 
     @item_method
