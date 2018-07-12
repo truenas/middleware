@@ -757,7 +757,7 @@ class CertificateService(CRUDService):
 
             if (
                     datetime.datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') -
-                    datetime.datetime.now()
+                    datetime.datetime.utcnow()
             ).days < cert['renew_days']:
                 # renew cert
                 self.logger.debug(f'Renewing certificate {cert["name"]}')

@@ -83,7 +83,7 @@ class ACMERegistrationService(CRUDService):
         directory = self.get_directory(data['acme_directory_uri'])
         if not isinstance(directory, messages.Directory):
             verrors.add(
-                'acme_registration_create.direcotry_uri',
+                'acme_registration_create.directory_uri',
                 f'System was unable to retrieve the directory with the specified acme_directory_uri: {directory}'
             )
 
@@ -96,14 +96,13 @@ class ACMERegistrationService(CRUDService):
         # For now we assume that only root is responsible for certs issued under ACME protocol
         email = (self.middleware.call_sync('user.query', [['id', '=', 1]]))[0]['email']
         if not email:
-            verrors.add(
-                'acme_registration_create.email',
+            raise CallError(
                 'Please specify root email address which will be used with the ACME server'
             )
 
         if self.middleware.call_sync('acme.registration.query', [['directory', '=', data['acme_directory_uri']]]):
             verrors.add(
-                'acme_registration_create.directory',
+                'acme_registration_create.directory_uri',
                 'A registration with the specified directory uri already exists'
             )
 
@@ -334,7 +333,8 @@ class DNSAuthenticatorService(CRUDService):
                             }
                         }
                     ],
-                    'Comment': 'FreeNAS-dns-route53 certificate validation'
+                    'Comment': f'{"Free" if self.middleware.call_sync("system.is_freenas") else "True"}'
+                               'NAS-dns-route53 certificate validation'
                 }
             )
         except boto_BaseClientException as e:
