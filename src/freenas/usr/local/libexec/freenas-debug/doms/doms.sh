@@ -34,7 +34,7 @@ doms_func()
 {
     section_header "SATA DOMS"
     PRODUCT=$( dmidecode -s system-product-name )
-    if echo ${PRODUCT} | grep -q 'TRUENAS.*Z'
+    if echo ${PRODUCT} | grep -qe 'TRUENAS.*Z' -qe 'TRUENAS.*M'
     then
         for i in /dev/ada0 /dev/ada1
         do

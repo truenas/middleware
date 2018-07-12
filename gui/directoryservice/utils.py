@@ -151,7 +151,7 @@ def get_idmap(obj_type, obj_id, idmap_type):
 
     try:
         idmap = get_idmap_object(obj_type, obj_id, idmap_type)
-    except:
+    except Exception:
         idmap = None
 
     if idmap_type == "ad":

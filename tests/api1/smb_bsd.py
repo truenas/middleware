@@ -66,7 +66,7 @@ def test_05_Changing_permissions_on_SMB_PATH():
 
 
 def test_06_Creating_a_SMB_share_on_SMB_PATH():
-    payload = {"cfs_comment": "My Test SMB Share",
+    payload = {"cifs_comment": "My Test SMB Share",
                "cifs_path": SMB_PATH,
                "cifs_name": SMB_NAME,
                "cifs_guestok": True,
@@ -208,25 +208,25 @@ def test_22_Removing_SMB_mountpoint():
     assert results['result'] is True, results['output']
 
 
-def test_23_SMB_share_on_SMB_PATH():
-    payload = {"cfs_comment": "My Test SMB Share",
+# Now stop the service
+def test_23_Stopping_SMB_service():
+    results = PUT("/services/services/cifs/", {"srv_enable": False})
+    assert results.status_code == 200, results.text
+
+
+def test_24_Verify_SMB_service_is_disabled():
+    results = GET("/services/services/cifs/")
+    assert results.json()["srv_state"] == "STOPPED", results.text
+
+
+def test_25_Delete_cifs_share_on_SMB_PATH():
+    payload = {"cifs_comment": "My Test SMB Share",
                "cifs_path": SMB_PATH,
                "cifs_name": SMB_NAME,
                "cifs_guestok": True,
                "cifs_vfsobjects": "streams_xattr"}
     results = DELETE("/sharing/cifs/", payload)
     assert results.status_code == 204, results.text
-
-
-# Now stop the service
-def test_24_Stopping_SMB_service():
-    results = PUT("/services/services/cifs/", {"srv_enable": False})
-    assert results.status_code == 200, results.text
-
-
-def test_25_Verify_SMB_service_is_disabled():
-    results = GET("/services/services/cifs/")
-    assert results.json()["srv_state"] == "STOPPED", results.text
 
 
 # Check destroying a SMB dataset

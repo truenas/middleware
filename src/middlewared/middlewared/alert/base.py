@@ -53,7 +53,7 @@ class Alert:
     def formatted(self):
         if self.args:
             try:
-                return self.title % self.args
+                return self.title % (tuple(self.args) if isinstance(self.args, list) else self.args)
             except Exception:
                 logger.error("Error formatting alert: %r, %r", self.title, self.args, exc_info=True)
 

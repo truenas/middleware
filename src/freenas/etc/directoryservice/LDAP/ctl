@@ -101,6 +101,13 @@ ldapctl_start()
 	local realm
 	local keytab_principal
 
+	# chicken & eggs
+	realm=$(LDAP_get_krb_realm)
+	if [ -n "${realm}" ]
+	then
+		ldapctl_cmd ${service} ix-kerberos quietstart default "${realm}"
+	fi
+
 	if ! LDAP_init
 	then
 		ldap_set 0

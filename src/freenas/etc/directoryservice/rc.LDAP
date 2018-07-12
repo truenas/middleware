@@ -100,10 +100,16 @@ LDAP_get_user_by_DN()
 	local binddn="$(LDAP_get ldap_binddn)"
 	local bindpw="$(LDAP_get ldap_bindpw)"
 	local tmpfile="$(mktemp -q /var/tmp/.adbarXXXXXX)"
+	local proto="ldap"
+
+	if [ "${port}" = "636" ]
+	then
+		proto="ldaps"
+	fi
 
 	cat<<-__EOF__>"${tmpfile}"
 	/usr/local/bin/ldapsearch \
-	    -H 'ldap://${host}:${port}' \
+	    -H '${proto}://${host}:${port}' \
 	    -b '${dn}' \
 	    -D '${binddn}' \
 	    -w '${bindpw}' \
@@ -116,6 +122,25 @@ __EOF__
 
 	eval $(cat "${tmpfile}")
 	rm "${tmpfile}"
+}
+
+LDAP_get_krb_realm()
+{
+	name="ldap_krb_realm"
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
+
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "\
+		SELECT
+			krb.krb_realm
+		FROM
+			directoryservice_kerberosrealm as krb
+
+		INNER JOIN
+			directoryservice_ldap as ldap
+		ON
+			krb.id = ldap.ldap_kerberos_realm_id
+	"
 }
 
 LDAP_get_binddn_uid()

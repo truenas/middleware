@@ -258,8 +258,16 @@ LoadPlugin zfs_arc_v2
 
 <Plugin "rrdtool">
     DataDir "${datadir}"
+EOF
+
+if use_rrd_dataset; then
+    cat << EOF >> $cfg
     CacheTimeout 120
     CacheFlush 900
+EOF
+fi
+
+cat << EOF >> $cfg
 </Plugin>
 
 <Plugin "threshold">

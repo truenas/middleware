@@ -72,3 +72,12 @@ class CacheService(Service):
             del self.__cache[key]
 
             raise KeyError(f'{key} has expired')
+
+    @private
+    def get_or_put(self, key, timeout, method):
+        try:
+            return self.get(key)
+        except KeyError:
+            value = method()
+            self.put(key, value, timeout)
+            return value

@@ -109,10 +109,14 @@ class ISCSIPortalService(CRUDService):
         data['discovery_authgroup'] = data.pop('discoveryauthgroup')
         return data
 
-    async def __validate(self, verrors, data, schema):
+    async def __validate(self, verrors, data, schema, old=None):
         if not data['listen']:
             verrors.add(f'{schema}.listen', 'At least one listen entry is required.')
         else:
+            system_ips = [
+                ip['address'] for ip in await self.middleware.call('interfaces.ip_in_use')
+            ]
+            new_ips = set(i['ip'] for i in data['listen']) - set(i['ip'] for i in old['listen']) if old else set()
             for i in data['listen']:
                 filters = [
                     ('iscsi_target_portalip_ip', '=', i['ip']),
@@ -124,6 +128,12 @@ class ISCSIPortalService(CRUDService):
                     'datastore.query', 'services.iscsitargetportalip', filters
                 ):
                     verrors.add(f'{schema}.listen', f'{i["ip"]}:{i["port"]} already in use.')
+
+                if (
+                    (i['ip'] in new_ips or not new_ips) and
+                    i['ip'] not in system_ips
+                ):
+                    verrors.add(f'{schema}.listen', f'IP {i["ip"]} not configured on this system.')
 
         if data['discovery_authgroup']:
             if not await self.middleware.call(
@@ -234,7 +244,7 @@ class ISCSIPortalService(CRUDService):
         new.update(data)
 
         verrors = ValidationErrors()
-        await self.__validate(verrors, new, 'iscsiportal_update')
+        await self.__validate(verrors, new, 'iscsiportal_update', old)
         if verrors:
             raise verrors
 
@@ -338,28 +348,30 @@ class iSCSITargetAuthCredentialService(CRUDService):
         peer_secret = data.get('peersecret') or ''
         peer_user = data.get('peeruser', '')
 
-        if peer_user:
-            if not peer_secret:
-                verrors.add(
-                    f'{schema_name}.peersecret',
-                    'The peer secret is required if you set a peer user.')
-            elif peer_secret == secret:
-                verrors.add(
-                    f'{schema_name}.peersecret',
-                    'The peer secret cannot be the same as user secret.')
-        else:
-            if peer_secret:
-                verrors.add(
-                    f'{schema_name}.peersecret',
-                    'The peer user is required if you set a peer secret.')
+        if not peer_user and peer_secret:
+            verrors.add(
+                f'{schema_name}.peersecret',
+                'The peer user is required if you set a peer secret.')
 
         if len(secret) < 12 or len(secret) > 16:
             verrors.add(f'{schema_name}.secret',
                         'Secret must be between 12 and 16 characters.')
 
-        if len(peer_secret) < 12 or len(peer_secret) > 16:
-            verrors.add(f'{schema_name}.peersecret',
-                        'Peer Secret must be between 12 and 16 characters.')
+        if not peer_user:
+            return
+
+        if not peer_secret:
+            verrors.add(
+                f'{schema_name}.peersecret',
+                'The peer secret is required if you set a peer user.')
+        elif peer_secret == secret:
+            verrors.add(
+                f'{schema_name}.peersecret',
+                'The peer secret cannot be the same as user secret.')
+        elif peer_secret:
+            if len(peer_secret) < 12 or len(peer_secret) > 16:
+                verrors.add(f'{schema_name}.peersecret',
+                            'Peer Secret must be between 12 and 16 characters.')
 
     @private
     async def extend(self, data):

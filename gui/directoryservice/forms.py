@@ -273,7 +273,7 @@ class ActiveDirectoryForm(ModelForm):
 
     class Meta:
         fields = '__all__'
-        exclude = ['ad_idmap_backend_type']
+        exclude = ['ad_idmap_backend_type', 'ad_userdn', 'ad_groupdn']
 
         model = models.ActiveDirectory
         widgets = {
@@ -528,7 +528,7 @@ class ActiveDirectoryForm(ModelForm):
                     error.append(e.args[0]['desc'])
                     error = ', '.join(error)
 
-                except:
+                except Exception as e:
                     error = str(e)
 
                 raise forms.ValidationError("{0}".format(error))
@@ -722,7 +722,7 @@ class NISForm(ModelForm):
         # XXX: We need to have a method to test server connection.
         try:
             started = notifier().started("nis")
-        except:
+        except Exception:
             raise MiddlewareError(_("Failed to check NIS status."))
         finally:
             super(NISForm, self).save()
@@ -732,13 +732,13 @@ class NISForm(ModelForm):
                 try:
                     started = notifier().restart("nis")
                     log.debug("Try to restart: %s", started)
-                except:
+                except Exception:
                     raise MiddlewareError(_("NIS failed to restart."))
             if started is False:
                 try:
                     started = notifier().start("nis")
                     log.debug("Try to start: %s", started)
-                except:
+                except Exception:
                     raise MiddlewareError(_("NIS failed to start."))
             if started is False:
                 self.instance.ad_enable = False
@@ -934,7 +934,7 @@ class LDAPForm(ModelForm):
                 error.append(e.args[0]['desc'])
                 error = ', '.join(error)
 
-            except:
+            except Exception as e:
                 error = str(e)
 
             raise forms.ValidationError("{0}".format(error))

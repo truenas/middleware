@@ -192,7 +192,7 @@ dcctl_stop()
 	fi
 
 	domaincontroller_set 0
-	dcctl_cmd ${service} ix-resolv quietstop
+	dcctl_cmd ${service} ix-resolv quietstart
 
 	return 0
 }

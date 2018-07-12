@@ -320,7 +320,7 @@ install_loader() {
 
     _mnt="$1"
     shift
-    disks="$*"
+    _disks="$*"
 
 
     # When doing inplace upgrades, its entirely possible we've
@@ -328,8 +328,7 @@ install_loader() {
     # Default to re-stamping what was already used on the current install
     _boottype="$BOOTMODE"
     if [ "${_upgrade_type}" = "inplace" ] ; then
-       glabel list | grep -q 'efibsd'
-      if [ $? -eq 0 ] ; then
+      if glabel list | grep -q 'efibsd' ; then
          _boottype="UEFI"
       else
          _boottype="BIOS"

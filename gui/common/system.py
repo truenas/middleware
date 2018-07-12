@@ -307,7 +307,7 @@ def ldap_enabled():
         ldap = LDAP.objects.all()[0]
         enabled = ldap.ldap_enable
 
-    except:
+    except Exception:
         enabled = False
 
     return enabled
@@ -322,7 +322,7 @@ def ldap_sudo_configured():
         if ldap.ldap_sudosuffix:
             enabled = True
 
-    except:
+    except Exception:
         enabled = False
 
     return enabled
@@ -337,7 +337,7 @@ def ldap_has_samba_schema():
         if ldap.ldap_has_samba_schema:
             has_samba_schema = True
 
-    except:
+    except Exception:
         has_samba_schema = False
 
     return has_samba_schema
@@ -352,7 +352,7 @@ def ldap_anonymous_bind():
         if ldap.ldap_anonbind:
             anonymous_bind = True
 
-    except:
+    except Exception:
         anonymous_bind = False
 
     return anonymous_bind
@@ -372,7 +372,7 @@ def activedirectory_enabled():
         ad = ActiveDirectory.objects.all()[0]
         enabled = ad.ad_enable
 
-    except:
+    except Exception:
         log_traceback(log=log)
         enabled = False
 
@@ -387,7 +387,7 @@ def activedirectory_has_unix_extensions():
         ad = ActiveDirectory.objects.all()[0]
         ad_unix_extensions = ad.ad_unix_extensions
 
-    except:
+    except Exception:
         ad_unix_extensions = False
 
     return ad_unix_extensions
@@ -445,7 +445,7 @@ def nis_enabled():
         nis = NIS.objects.all()[0]
         enabled = nis.nis_enable
 
-    except:
+    except Exception:
         enabled = False
 
     return enabled
@@ -548,7 +548,7 @@ def get_dc_hostname():
         gc_hostname = gc.get_hostname()
         gc_domain = gc.gc_domain
 
-    except:
+    except Exception:
         pass
 
     if gc_hostname and gc_domain:
@@ -573,7 +573,7 @@ def get_hostname():
         gc = GlobalConfiguration.objects.all()[0]
         hostname = gc.get_hostname()
 
-    except:
+    except Exception:
         pass
 
     if not hostname:

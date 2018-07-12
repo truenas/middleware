@@ -93,6 +93,8 @@ def main():
         cf_contents.append("\tldap name attr = %s\n" % "sAMAccountName")
         cf_contents.append("\tldap group attr = %s\n" % "sAMAccountName")
 
+    cf_contents.append("\tlog file = %s\n" % "/var/log/afp.log")
+    cf_contents.append("\tlog level = %s\n" % "default:info")
     cf_contents.append("\n")
 
     for share in client.call('datastore.query', 'sharing.afp_share'):
