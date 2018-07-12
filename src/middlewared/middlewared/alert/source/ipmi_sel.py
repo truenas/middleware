@@ -5,7 +5,7 @@ from datetime import timedelta
 import logging
 import os
 
-from middlewared.alert.base import Alert, AlertLevel, AlertSource
+from middlewared.alert.base import Alert, AlertLevel, AlertSource, DismissableAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import run
 
@@ -51,7 +51,7 @@ def parse_sel_information(output):
     }
 
 
-class IPMISELAlertSource(AlertSource):
+class IPMISELAlertSource(AlertSource, DismissableAlertSource):
     level = AlertLevel.WARNING
     title = "IPMI System Event"
 
@@ -65,6 +65,11 @@ class IPMISELAlertSource(AlertSource):
 
         return await self._produce_alerts_for_ipmitool_output(
             await run(["ipmitool", "-c", "sel", "elist"], encoding="utf8"))
+
+    async def dismiss(self, alerts):
+        await self.middleware.call("keyvalue.set", self.dismissed_datetime_kv_key, max(alert.datetime
+                                                                                       for alert in alerts))
+        return []
 
     async def _produce_alerts_for_ipmitool_output(self, output):
         alerts = []

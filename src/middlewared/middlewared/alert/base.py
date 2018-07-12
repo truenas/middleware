@@ -8,6 +8,7 @@ import os
 from middlewared.alert.schedule import IntervalSchedule
 
 __all__ = ["AlertLevel", "Alert", "AlertSource", "FilePresenceAlertSource", "ThreadedAlertSource",
+           "DismissableAlertSource",
            "AlertService", "ThreadedAlertService", "ProThreadedAlertService",
            "format_alerts", "ellipsis"]
 
@@ -94,6 +95,11 @@ class ThreadedAlertSource(AlertSource):
         return await self.middleware.run_in_thread(self.check_sync)
 
     def check_sync(self):
+        raise NotImplementedError
+
+
+class DismissableAlertSource:
+    async def dismiss(self, alerts):
         raise NotImplementedError
 
 
