@@ -1,4 +1,5 @@
 import asyncio
+import base64
 from collections import defaultdict
 from datetime import datetime, timedelta
 import errno
@@ -401,6 +402,31 @@ class DiskService(CRUDService):
                     pass
             self.logger.debug("Rename geli key %s -> %s", geli_keyfile_tmp, geli_keyfile)
             os.rename(geli_keyfile_tmp, geli_keyfile)
+
+    @private
+    def geli_recoverykey_add(self, pool):
+        with tempfile.NamedTemporaryFile(dir='/tmp/') as reckey:
+            reckey_file = reckey.name
+            self.__create_keyfile(reckey_file, force=True)
+            reckey.flush()
+
+            errors = []
+
+            for ed in self.middleware.call_sync(
+                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+            ):
+                dev = ed['encrypted_provider']
+                try:
+                    self.geli_setkey(dev, reckey_file, GELI_RECOVERY_SLOT, None)
+                except Exception as ee:
+                    errors.append(str(ee))
+
+            if errors:
+                raise CallError(
+                    'Unable to set recovery key for {len(errors)} devices: {", ".join(errors)}'
+                )
+            reckey.seek(0)
+            return base64.b64encode(reckey.read()).decode()
 
     @private
     def geli_detach(self, dev):
