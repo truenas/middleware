@@ -276,7 +276,6 @@ class DatastoreService(Service):
 
     def sql(self, query, params=None):
         cursor = connection.cursor()
-        rv = None
         try:
             if params is None:
                 res = cursor.executelocal(query)
@@ -311,3 +310,33 @@ class DatastoreService(Service):
         # FIXME: This could return a few hundred KB of data,
         # we need to investigate a way of doing that in chunks.
         return connection.dump()
+
+    @accepts()
+    async def dump_json(self):
+        models = []
+        for model in django.apps.apps.get_models():
+            if not model.__module__.startswith("freenasUI."):
+                continue
+
+            try:
+                entries = await self.middleware.call("datastore.sql", f"SELECT * FROM {model._meta.db_table}")
+            except CallError as e:
+                self.logger.debug("%r", e)
+                continue
+
+            models.append({
+                "table_name": model._meta.db_table,
+                "verbose_name": str(model._meta.verbose_name),
+                "fields": [
+                    {
+                        "name": field.column,
+                        "verbose_name": str(field.verbose_name),
+                        "database_type": field.db_type(connection),
+                    }
+                    for field in model._meta.get_fields()
+                    if not field.is_relation
+                ],
+                "entries": entries,
+            })
+
+        return models
