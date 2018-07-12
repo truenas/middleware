@@ -482,7 +482,7 @@ class RsyncTaskService(CRUDService):
                             f'{schema}.remotepath',
                             'The Remote Path you specified does not exist or is not a directory.'
                             'Either create one yourself on the remote machine or uncheck the '
-                            'rsync_validate_rpath field'
+                            'validate_rpath field'
                         )
                     else:
                         verrors.add(
@@ -507,8 +507,7 @@ class RsyncTaskService(CRUDService):
                     'Remote path could not be validated because of missing fields'
                 )
 
-        if data.get('validate_rpath'):
-            data.pop('validate_rpath')
+        data.pop('validate_rpath', None)
 
         return verrors, data
 
@@ -551,7 +550,7 @@ class RsyncTaskService(CRUDService):
             data,
             {'prefix': self._config.datastore_prefix}
         )
-        await self.middleware.call('service.reload', 'cron')
+        await self.middleware.call('service.restart', 'cron')
 
         return data
 
@@ -578,12 +577,12 @@ class RsyncTaskService(CRUDService):
             new,
             {'prefix': self._config.datastore_prefix}
         )
-        await self.middleware.call('service.reload', 'cron')
+        await self.middleware.call('service.restart', 'cron')
 
         return await self.query(filters=[('id', '=', id)], options={'get': True})
 
     @accepts(Int('id'))
     async def do_delete(self, id):
         res = await self.middleware.call('datastore.delete', self._config.datastore, id)
-        await self.middleware.call('service.reload', 'cron')
+        await self.middleware.call('service.restart', 'cron')
         return res
