@@ -965,12 +965,10 @@ class VolumeResourceMixin(NestedMixin):
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
         form = ReKeyForm(data=deserialized, volume=obj, api_validation=True)
-        if not form.is_valid():
+        if not (form.is_valid() and form.done()):
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)
             )
-        else:
-            form.done()
         return HttpResponse('Volume has been rekeyed.', status=202)
 
     def keypassphrase(self, request, **kwargs):

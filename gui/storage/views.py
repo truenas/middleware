@@ -1076,8 +1076,7 @@ def volume_rekey(request, object_id):
     volume = models.Volume.objects.get(id=object_id)
     if request.method == "POST":
         form = forms.ReKeyForm(request.POST, volume=volume)
-        if form.is_valid():
-            form.done()
+        if form.is_valid() and form.done():
             return JsonResp(
                 request,
                 message=_("Encryption re-key succeeded"))
