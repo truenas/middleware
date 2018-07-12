@@ -33,7 +33,7 @@ def test_01_Creating_dataset_for_WebDAV_use(pool_dict):
 
 
 def test_02_Creating_WebDAV_share_on_DATASET_PATH(webdav_dict):
-    results = POST('/webdav/share', {
+    results = POST('/share/webdav/', {
         'name': SHARE_NAME,
         'comment': 'Auto-created by API tests',
         'path': DATASET_PATH
@@ -96,7 +96,7 @@ def test_10_Verifying_that_the_WebDAV_service_has_stopped():
 
 def test_11_Changing_comment_for_WebDAV(webdav_dict):
     id = webdav_dict['id']
-    results = PUT(f'/webdav/share/id/{id}', {
+    results = PUT(f'/share/webdav/id/{id}', {
         'comment': 'foobar'
     })
     assert results.status_code == 200, results.text
@@ -117,7 +117,7 @@ def test_13_Check_WebDAV_password():
 
 def test_14_Check_that_API_reports_WebDAV_config_as_changed(webdav_dict):
     id = webdav_dict['id']
-    results = GET(f'/webdav/share?id={id}')
+    results = GET(f'/share/webdav?id={id}')
     assert results.status_code == 200, results.text
     data = results.json()[0]
     assert data['comment'] == 'foobar'
@@ -126,7 +126,7 @@ def test_14_Check_that_API_reports_WebDAV_config_as_changed(webdav_dict):
 def test_15_Delete_WebDAV_share(webdav_dict):
     id = webdav_dict['id']
 
-    results = DELETE(f'/webdav/share/id/{id}')
+    results = DELETE(f'/share/webdav/id/{id}')
     assert results.status_code == 200, results.text
 
 
