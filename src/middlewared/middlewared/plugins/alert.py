@@ -14,7 +14,8 @@ from middlewared.alert.base import (
     FilePresenceAlertSource,
     ThreadedAlertSource,
     ThreadedAlertService,
-    ProThreadedAlertService
+    ProThreadedAlertService,
+    DismissableAlertSource,
 )
 from middlewared.alert.base import AlertService as _AlertService
 from middlewared.schema import Dict, Str, Bool, Int, accepts, Patch
@@ -139,10 +140,17 @@ class AlertService(Service):
         ]
 
     @accepts(Str("id"))
-    def dismiss(self, id):
+    async def dismiss(self, id):
         node, source, key = id.split(";", 2)
-        alert = self.alerts[node][source][key]
-        alert.dismissed = True
+        try:
+            alert = self.alerts[node][source][key]
+        except KeyError:
+            return
+        alert_source = ALERT_SOURCES.get(source)
+        if alert_source and isinstance(alert_source, DismissableAlertSource):
+            self.alerts[node][source] = await alert_source.dismiss(self.alerts[node][source])
+        else:
+            alert.dismissed = True
 
     @accepts(Str("id"))
     def restore(self, id):
