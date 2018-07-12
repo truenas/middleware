@@ -200,9 +200,9 @@ directoryservice_init(void)
 		FAILRET("Failed to add nis timeout node.\n", -1);
 	}
 
-	SYSCTL_ADD_ULONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree2), OID_AUTO,
+	SYSCTL_ADD_ULONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree), OID_AUTO,
 		"cache", CTLFLAG_RW,  &g_directoryservice->nis.cache, "Cache users and groups");
-	SYSCTL_ADD_ULONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree2), OID_AUTO,
+	SYSCTL_ADD_ULONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree), OID_AUTO,
 		"enumerate", CTLFLAG_RW,  &g_directoryservice->nis.enumerate, "Enumerate users and groups");
 
 	g_directoryservice->nis.cache = 0;
