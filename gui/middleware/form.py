@@ -55,8 +55,12 @@ class MiddlewareModelForm:
     def save(self):
         result = self.__save()
 
-        self.instance = self._meta.model.objects.get(pk=result["id"])
-        return self.instance
+        if isinstance(result, dict):
+            self.instance = self._meta.model.objects.get(pk=result["id"])
+            return self.instance
+        else:
+            # Result is a job id and should be handled accordingly
+            return result
 
     def middleware_clean(self, data):
         return data

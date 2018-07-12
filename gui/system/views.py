@@ -71,6 +71,7 @@ from freenasUI.middleware.client import client, CallTimeout, ClientException, Va
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.util import get_validation_errors
 from freenasUI.middleware.zfs import zpool_list
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.storage.models import Volume
@@ -1966,6 +1967,50 @@ def CA_export_privatekey(request, id):
     return response
 
 
+def certificate_create_progress(request):
+    with client as c:
+        job = c.call(
+            'core.get_jobs',
+            [['id', '=', request.session['certificate_create_internal']['job_id']]],
+            {'get': True}
+        )
+
+    return HttpResponse(json.dumps({
+        "status": "finished" if job["state"] in ["SUCCESS", "FAILED", "ABORTED"] else job["progress"]["description"],
+        "volume": job["arguments"][0],
+        "extra": job["progress"]["extra"],
+        "percent": job["progress"]["percent"],
+    }), content_type='application/json')
+
+
+def certificate_post_progress(request):
+    #  TODO: Set username if session key
+    form = getattr(
+        forms,
+        request.session['certificate_create_internal']['form']
+    )(request.session['certificate_create_internal']['payload'])
+    form.is_valid()
+    form._middleware_action = request.session['certificate_create_internal']['action']
+
+    with client as c:
+        job = c.call(
+            'core.get_jobs',
+            [['id', '=', request.session['certificate_create_internal']['job_id']]],
+            {'get': True}
+        )
+
+    verrors = get_validation_errors(request.session['certificate_create_internal']['job_id'])
+    if verrors:
+        handle_middleware_validation(form, verrors)
+
+        return render(request, "system/certificate/certificate_create_internal.html", {
+            'form': form
+        })
+    else:
+        request.session['certificate_create_internal']
+        return JsonResp(request, form=form, message='Certificate created successfully')
+
+
 def certificate_csr_import(request):
 
     if request.method == "POST":
@@ -2014,18 +2059,48 @@ def certificate_import(request):
 
 def certificate_create_internal(request):
 
+    s_data = request.session.get('certificate_create_internal')
+    if s_data and s_data['state'] == 'IN_PROGRESS':
+        form = forms.CertificateCreateInternalForm(s_data['payload'])
+        form.is_valid()
+        form._middleware_action = 'create'
+        handle_middleware_validation(form, get_validation_errors(s_data['job_id']) or ValidationErrors([]))
+        with client as c:
+            job = c.call(
+                'core.get_jobs',
+                [['id', '=', request.session['certificate_create_internal']['job_id']]],
+                {'get': True}
+            )
+
+        del request.session['certificate_create_internal']
+
+        if job['state'] == 'SUCCESS':
+            #return JsonResp(request, message=_("Certificate successfully Imported."))
+            return render(request, 'system/certificate/certificate_create_dialog.html',
+                          {'msg': 'Certificate created successfully'})
+        else:
+            return render(request, "system/certificate/certificate_create_internal.html", {
+                'form': form
+            })
+
     if request.method == "POST":
         form = forms.CertificateCreateInternalForm(request.POST)
+        message = None
         if form.is_valid():
             try:
-                form.save()
-                return JsonResp(
-                    request,
-                    message=_("Internal Certificate successfully created.")
-                )
+                request.session['certificate_create_internal'] = {
+                    'job_id': form.save(),
+                    'form': form.__class__.__name__,
+                    'payload': request.POST,
+                    'action': 'create',  # CREATE/UPDATE,
+                    'state': 'IN_PROGRESS'
+                }
+
+                return render(request, 'system/certificate/certificate_progress.html', {'certificate_url': 'certificate_create_internal'})
+
             except ValidationErrors as e:
                 handle_middleware_validation(form, e)
-        return JsonResp(request, form=form)
+        return JsonResp(request, form=form, message=message)
 
     else:
         form = forms.CertificateCreateInternalForm()

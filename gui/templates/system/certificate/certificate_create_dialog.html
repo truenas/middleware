@@ -1,0 +1,14 @@
+{% extends "freeadmin/generic_form.html" %}
+{% block form %}
+    {{ msg }}
+{% endblock %}
+
+{% block buttons %}
+    <button id="btn_okay_certificate_create" data-dojo-type="dijit.form.Button" type="button">
+        {% block okaylabel %}{% trans "Ok" %}{% endblock %}
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            cancelDialog(this);
+        </script>
+    </button>
+
+{% endblock %}
