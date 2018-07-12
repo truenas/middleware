@@ -10,7 +10,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import interface, ip
-from functions import GET
+from functions import GET, PUT
 from config import *
 
 BRIDGEGWReason = "BRIDGEGW not in ixautomation.conf"
