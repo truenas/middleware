@@ -376,24 +376,10 @@ class notifier(metaclass=HookMetaclass):
             self.geli_setkey(dev, geli_keyfile, GELI_KEY_SLOT, passphrase)
 
     def geli_recoverykey_add(self, volume, passphrase=None):
-        reckey_file = tempfile.mktemp(dir='/tmp/')
-        self.__create_keyfile(reckey_file, force=True)
-
-        errors = []
-
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
-            try:
-                self.geli_setkey(dev, reckey_file, GELI_RECOVERY_SLOT, passphrase)
-            except Exception as ee:
-                errors.append(str(ee))
-
-        if errors:
-            raise MiddlewareError("Unable to set recovery key for %d devices: %s" % (
-                len(errors),
-                ', '.join(errors),
-            ))
-        return reckey_file
+        from freenasUI.middleware.util import download_job
+        reckey = tempfile.NamedTemporaryFile(dir='/tmp/', delete=False)
+        download_job(reckey.name, 'recovery.key', 'pool.recoverykey_add', volume.id)
+        return reckey.name
 
     def geli_delkey(self, volume, slot=GELI_RECOVERY_SLOT, force=True):
         for ed in volume.encrypteddisk_set.all():
