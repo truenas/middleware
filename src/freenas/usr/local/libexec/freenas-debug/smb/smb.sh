@@ -115,9 +115,6 @@ smb_func()
 	section_header "net getdomainsid"
 	net getdomainsid
 	section_footer
-	section_header "net usersidlist"
-	net usersidlist | head -50
-	section_footer
 	section_header "net groupmap list"
 	net groupmap list | head -50
 	section_footer
