@@ -56,7 +56,7 @@ class RcloneConfig:
             remote_path = "remote:" + "/".join([self.cloud_sync["attributes"].get("bucket", ""),
                                                 self.cloud_sync["attributes"].get("folder", "")]).strip("/")
 
-            if self.cloud_sync.get("encryption"):
+            if self.cloud_sync["encryption"]:
                 self.tmp_file.write("[encrypted]\n")
                 self.tmp_file.write("type = crypt\n")
                 self.tmp_file.write(f"remote = {remote_path}\n")
@@ -64,7 +64,7 @@ class RcloneConfig:
                     "standard" if self.cloud_sync["filename_encryption"] else "off"))
                 self.tmp_file.write("password = {}\n".format(
                     rclone_encrypt_password(self.cloud_sync["encryption_password"])))
-                if self.cloud_sync.get("encryption_salt"):
+                if self.cloud_sync["encryption_salt"]:
                     self.tmp_file.write("password2 = {}\n".format(
                         rclone_encrypt_password(self.cloud_sync["encryption_salt"])))
 
@@ -171,9 +171,9 @@ class CredentialsService(CRUDService):
 
     @accepts(Dict(
         "cloud_sync_credentials_create",
-        Str("name"),
-        Str("provider"),
-        Dict("attributes", additional_attrs=True),
+        Str("name", required=True),
+        Str("provider", required=True),
+        Dict("attributes", additional_attrs=True, required=True),
         register=True,
     ))
     async def do_create(self, data):
@@ -271,12 +271,10 @@ class CloudSyncService(CRUDService):
     async def _extend(self, cloud_sync):
         cloud_sync["credentials"] = cloud_sync.pop("credential")
 
-        if "encryption_password" in cloud_sync:
-            cloud_sync["encryption_password"] = await self.middleware.call(
-                "notifier.pwenc_decrypt", cloud_sync["encryption_password"])
-        if "encryption_salt" in cloud_sync:
-            cloud_sync["encryption_salt"] = await self.middleware.call(
-                "notifier.pwenc_decrypt", cloud_sync["encryption_salt"])
+        cloud_sync["encryption_password"] = await self.middleware.call(
+            "notifier.pwenc_decrypt", cloud_sync["encryption_password"])
+        cloud_sync["encryption_salt"] = await self.middleware.call(
+            "notifier.pwenc_decrypt", cloud_sync["encryption_salt"])
 
         Cron.convert_db_format_to_schedule(cloud_sync)
 
@@ -284,15 +282,12 @@ class CloudSyncService(CRUDService):
 
     @private
     async def _compress(self, cloud_sync):
-        if "credentials" in cloud_sync:
-            cloud_sync["credential"] = cloud_sync.pop("credentials")
+        cloud_sync["credential"] = cloud_sync.pop("credentials")
 
-        if "encryption_password" in cloud_sync:
-            cloud_sync["encryption_password"] = await self.middleware.call(
-                "notifier.pwenc_encrypt", cloud_sync["encryption_password"])
-        if "encryption_salt" in cloud_sync:
-            cloud_sync["encryption_salt"] = await self.middleware.call(
-                "notifier.pwenc_encrypt", cloud_sync["encryption_salt"])
+        cloud_sync["encryption_password"] = await self.middleware.call(
+            "notifier.pwenc_encrypt", cloud_sync["encryption_password"])
+        cloud_sync["encryption_salt"] = await self.middleware.call(
+            "notifier.pwenc_encrypt", cloud_sync["encryption_salt"])
 
         Cron.convert_schedule_to_db_format(cloud_sync)
 
@@ -354,12 +349,12 @@ class CloudSyncService(CRUDService):
                 folder_basename = os.path.basename(data["attributes"]["folder"].strip("/"))
                 ls = await self.list_directory(dict(
                     credentials=data["credentials"],
-                    encryption=data.get("encryption"),
-                    filename_encryption=data.get("filename_encryption"),
-                    encryption_password=data.get("encryption_password"),
-                    encryption_salt=data.get("encryption_salt"),
+                    encryption=data["encryption"],
+                    filename_encryption=data["filename_encryption"],
+                    encryption_password=data["encryption_password"],
+                    encryption_salt=data["encryption_salt"],
                     attributes=dict(data["attributes"], folder=folder_parent),
-                    args=data.get("args"),
+                    args=data["args"],
                 ))
                 for item in ls:
                     if item["Name"] == folder_basename:
@@ -379,17 +374,17 @@ class CloudSyncService(CRUDService):
 
     @accepts(Dict(
         "cloud_sync_create",
-        Str("description"),
+        Str("description", default=""),
         Str("direction", enum=["PUSH", "PULL"], required=True),
         Str("transfer_mode", enum=["SYNC", "COPY", "MOVE"], required=True),
         Str("path", required=True),
         Int("credentials", required=True),
         Bool("encryption", default=False),
         Bool("filename_encryption", default=False),
-        Str("encryption_password"),
-        Str("encryption_salt"),
-        Cron("schedule"),
-        Dict("attributes", additional_attrs=True),
+        Str("encryption_password", default=""),
+        Str("encryption_salt", default=""),
+        Cron("schedule", required=True),
+        Dict("attributes", additional_attrs=True, required=True),
         Str("args", default=""),
         Bool("enabled", default=True),
         register=True,
@@ -500,13 +495,13 @@ class CloudSyncService(CRUDService):
 
     @accepts(Dict(
         "cloud_sync_ls",
-        Int("credentials"),
+        Int("credentials", required=True),
         Bool("encryption", default=False),
         Bool("filename_encryption", default=False),
-        Str("encryption_password"),
-        Str("encryption_salt"),
-        Dict("attributes", additional_attrs=True),
-        Str("args"),
+        Str("encryption_password", default=""),
+        Str("encryption_salt", default=""),
+        Dict("attributes", required=True, additional_attrs=True),
+        Str("args", default=""),
     ))
     async def list_directory(self, cloud_sync):
         verrors = ValidationErrors()
