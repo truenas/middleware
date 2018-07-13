@@ -304,6 +304,14 @@ class DiskService(CRUDService):
             raise CallError(f'Unable to delete key {slot} on {dev}: {cp.stderr.decode()}')
 
     @private
+    def geli_recoverykey_rm(self, pool):
+        for ed in self.middleware.call_sync(
+            'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+        ):
+            dev = ed['encrypted_provider']
+            self.geli_delkey(dev, GELI_RECOVERY_SLOT, True)
+
+    @private
     def geli_passphrase(self, pool, passphrase, rmrecovery=False):
         """
         Set a passphrase in a geli
