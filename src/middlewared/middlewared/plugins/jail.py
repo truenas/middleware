@@ -283,10 +283,11 @@ class JailService(CRUDService):
                 )
         elif resource == "base":
             try:
-                resource_list = self.middleware.call_sync(
-                    'cache.get', 'iocage_remote_releases')
+                if remote:
+                    resource_list = self.middleware.call_sync(
+                        'cache.get', 'iocage_remote_releases')
 
-                return resource_list
+                    return resource_list
             except ClientException as e:
                 # The jail plugin runs in another process, it's seen as
                 # a client
@@ -294,12 +295,14 @@ class JailService(CRUDService):
                     pass  # It's either new or past cache date
                 else:
                     raise
+
             resource_list = iocage.fetch(list=True, remote=remote, http=True)
 
-            self.middleware.call_sync(
-                'cache.put', 'iocage_remote_releases', resource_list,
-                86400
-            )
+            if remote:
+                self.middleware.call_sync(
+                    'cache.put', 'iocage_remote_releases', resource_list,
+                    86400
+                )
         else:
             resource_list = iocage.list(resource)
 
