@@ -3,10 +3,23 @@
 
 <div data-dojo-type="freeadmin/Progress" style="width: 300px" data-dojo-id="importProgress" data-dojo-props="mode: 'import', poolUrl: '{% url 'certificate_create_progress' %}', importProgress: true">
     <script type="dojo/method" data-dojo-event="onFinished">
-        getDialog(this).set("href", "{% url certificate_url %}");
+
+
+
+    createCertificateDialog('btn_str_Ok_label', '{% trans dialog_name|escapejs %}', '{% url certificate_url %}');
+
     </script>
 </div>
 
 {% endblock %}
 
+{% block onSubmit %}
+doSubmit({
+    form: this,
+    event: e,
+    url: '{% url certificate_url %}'
+});
+{% endblock %}
+
+{% block oklabel %}Ok{% endblock %}
 {% block cancellabel %}Run in Background{% endblock %}

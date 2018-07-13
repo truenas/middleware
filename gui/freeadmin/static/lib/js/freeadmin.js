@@ -2685,6 +2685,10 @@ require([
 
     };
 
+    createCertificateDialog = function(btn_id, name, url) {
+        dom.byId(btn_id).click();
+    };
+
     refreshById = function(id) {
         registry.byId(id).refresh();
     };
