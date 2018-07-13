@@ -2751,12 +2751,23 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_CSR').help_text
     )
+    cert_certificate = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_certificate').verbose_name,
+        widget=forms.Textarea(),
+        required=False,
+        help_text=models.Certificate._meta.get_field('cert_certificate').help_text
+    )
 
     def __init__(self, *args, **kwargs):
         super(CertificateCSREditForm, self).__init__(*args, **kwargs)
 
-        self.fields['cert_name'].widget.attrs['readonly'] = True
         self.fields['cert_CSR'].widget.attrs['readonly'] = True
+
+    def middleware_clean(self, data):
+        data.pop('CSR', None)
+        if not data.get('certificate'):
+            data.pop('certificate', None)
+        return data
 
     class Meta:
         fields = [
