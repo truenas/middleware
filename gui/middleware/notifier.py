@@ -382,9 +382,11 @@ class notifier(metaclass=HookMetaclass):
         return reckey.name
 
     def geli_delkey(self, volume, slot=GELI_RECOVERY_SLOT, force=True):
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
-            self.__geli_delkey(dev, slot, force)
+        try:
+            with client as c:
+                c.call('pool.recoverykey_rm', volume.id)
+        except Exception as e:
+            raise MiddlewareError(f'Failed to remove recovery key: {str(e)}')
 
     def geli_is_decrypted(self, dev):
         doc = self._geom_confxml()
