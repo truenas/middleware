@@ -14,12 +14,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 # 30 minutes in seconds
-STARTUP_PERIOD = 30*60
+STARTUP_PERIOD = 30 * 60
 REQUEST_TIMEOUT = 5
 
 SELECT_STATUS_RE = re.compile('^([x\.\-\+\#\*o]?)')
 SELECT_STATUS = {
-    '':  {'code': 0, 'message': 'sel_reject', 'description': "discarded as not valid (TEST10-TEST13)"},
+    '': {'code': 0, 'message': 'sel_reject', 'description': "discarded as not valid (TEST10-TEST13)"},
     'x': {'code': 1, 'message': 'sel_falsetick', 'description': "discarded by intersection algorithm"},
     '.': {'code': 2, 'message': 'sel_excess', 'description': "discarded by table overflow (not used)"},
     '-': {'code': 3, 'message': 'sel_outlier', 'description': "discarded by the cluster algorithm"},
@@ -69,7 +69,7 @@ def parse_peers(output):
                 if peer_cnt == 1:
                     continue
                 peer[0] = remote
-            elif peer_cnt == FIELDS_CNT-1 and remote:
+            elif peer_cnt == FIELDS_CNT - 1 and remote:
                 """Continuation line"""
                 peer.insert(0, remote)
                 remote = ''
