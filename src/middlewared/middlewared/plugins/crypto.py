@@ -959,6 +959,8 @@ class CertificateService(CRUDService):
     @skip_arg(count=1)
     def __create_imported_csr(self, job, data):
 
+        # TODO: We should validate csr with private key ?
+
         data['type'] = CERT_TYPE_CSR
 
         for k, v in self.load_certificate_request(data['CSR']).items():

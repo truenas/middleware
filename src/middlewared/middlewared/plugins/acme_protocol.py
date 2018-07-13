@@ -83,7 +83,7 @@ class ACMERegistrationService(CRUDService):
         directory = self.get_directory(data['acme_directory_uri'])
         if not isinstance(directory, messages.Directory):
             verrors.add(
-                'acme_registration_create.directory_uri',
+                'acme_registration_create.acme_directory_uri',
                 f'System was unable to retrieve the directory with the specified acme_directory_uri: {directory}'
             )
 
@@ -102,7 +102,7 @@ class ACMERegistrationService(CRUDService):
 
         if self.middleware.call_sync('acme.registration.query', [['directory', '=', data['acme_directory_uri']]]):
             verrors.add(
-                'acme_registration_create.directory_uri',
+                'acme_registration_create.acme_directory_uri',
                 'A registration with the specified directory uri already exists'
             )
 
@@ -299,12 +299,11 @@ class DNSAuthenticatorService(CRUDService):
                         zones.append((zone['Name'], zone['Id']))
             if not zones:
                 verrors.add(
-                    'dns_authenticator_update_record.domain',
+                    'update_txt_record.domain',
                     f'Unable to find a Route53 hosted zone for {domain}'
                 )
         except boto_exceptions.ClientError as e:
-            verrors.add(
-                'dns_authenticator_update_record.credentials',
+            raise CallError(
                 f'Failed to get Hosted zones with provided credentials :{e}'
             )
 
@@ -339,7 +338,7 @@ class DNSAuthenticatorService(CRUDService):
             )
         except boto_BaseClientException as e:
             verrors.add(
-                'dns_authenticator_update_record.credentials',
+                'update_txt_record.credentials',
                 f'Failed to update record sets : {e}'
             )
 
@@ -356,7 +355,7 @@ class DNSAuthenticatorService(CRUDService):
             time.sleep(5)
 
         verrors.add(
-            'dns_authenticator_update_record.domain',
+            'update_txt_record.domain',
             f'Timed out waiting for Route53 change. Current status: {resp["ChangeInfo"]["Status"]}'
         )
 
