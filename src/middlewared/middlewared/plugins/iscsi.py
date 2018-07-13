@@ -115,6 +115,7 @@ class ISCSIPortalService(CRUDService):
             system_ips = [
                 ip['address'] for ip in await self.middleware.call('interfaces.ip_in_use')
             ]
+            system_ips.extend(['0.0.0.0', '::'])
             new_ips = set(i['ip'] for i in data['listen']) - set(i['ip'] for i in old['listen']) if old else set()
             for i in data['listen']:
                 filters = [
