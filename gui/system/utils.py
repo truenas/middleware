@@ -27,7 +27,6 @@ import json
 import logging
 import os
 import tarfile
-import signal
 
 from uuid import uuid4
 
@@ -38,12 +37,34 @@ from lockfile import LockFile
 from freenasOS import Update
 from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
-from freenasUI.middleware.client import client
-from freenasUI.middleware.util import run_alerts
+from freenasUI.middleware.client import client, ValidationErrors
+from freenasUI.middleware.form import handle_middleware_validation
+from freenasUI.middleware.util import get_validation_errors, run_alerts
+from freenasUI.system import forms
 
 log = logging.getLogger('system.utils')
 
 UPDATE_APPLIED_SENTINEL = '/tmp/.updateapplied'
+
+
+def certificate_common_post_create(action, request, cert=None):
+    form = getattr(
+        forms, request.session['certificate_create']['form']
+    )(request.session['certificate_create']['payload'], instance=cert)
+    form.is_valid()
+    form._middleware_action = action
+    verrors = get_validation_errors(request.session['certificate_create']['job_id'])
+    handle_middleware_validation(form, verrors or ValidationErrors([]))
+    with client as c:
+        job = c.call(
+            'core.get_jobs',
+            [['id', '=', request.session['certificate_create']['job_id']]],
+            {'get': True}
+        )
+
+    del request.session['certificate_create']
+
+    return form, job, verrors
 
 
 def is_update_applied(update_version, create_alert=True):
