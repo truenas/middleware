@@ -64,7 +64,7 @@ class IPMISELAlertSource(AlertSource, DismissableAlertSource):
             return
 
         return await self._produce_alerts_for_ipmitool_output(
-            await run(["ipmitool", "-c", "sel", "elist"], encoding="utf8"))
+            (await run(["ipmitool", "-c", "sel", "elist"], encoding="utf8")).stdout)
 
     async def dismiss(self, alerts):
         await self.middleware.call("keyvalue.set", self.dismissed_datetime_kv_key, max(alert.datetime
@@ -115,7 +115,8 @@ class IPMISELSpaceLeftAlertSource(AlertSource):
         if not has_ipmi():
             return
 
-        return self._produce_alert_for_ipmitool_output(await run(["ipmitool", "sel", "info"], encoding="utf8"))
+        return self._produce_alert_for_ipmitool_output(
+            (await run(["ipmitool", "sel", "info"], encoding="utf8")).stdout)
 
     def _produce_alert_for_ipmitool_output(self, output):
         sel_information = parse_sel_information(output)
