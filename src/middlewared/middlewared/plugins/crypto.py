@@ -701,7 +701,8 @@ class CertificateService(CRUDService):
         Int('id', required=True),
         Dict(
             'certificate_update',
-            Str('name')
+            Str('name'),
+            Str('certificate')
         )
     )
     async def do_update(self, id, data):
@@ -713,31 +714,43 @@ class CertificateService(CRUDService):
 
         new.update(data)
 
-        if new['name'] != old['name']:
+        verrors = ValidationErrors()
 
-            verrors = ValidationErrors()
+        # TODO: THIS WILL BE REMOVED IN 11.3 - WO DON'T WANT TO ALLOW UPDATES TO THE CERTIFICATE FIELD
+        if new['type'] != CERT_TYPE_CSR and data.get('certificate'):
+            verrors.add(
+                'certificate_update.certificate',
+                'Certificate field cannot be updated'
+            )
+        elif data.get('certificate'):
+            verrors = await self.validate_common_attributes(new, 'certificate_update')
+
+            if not verrors:
+                new['type'] = CERT_TYPE_EXISTING
+
+        if new['name'] != old['name']:
 
             await validate_cert_name(self.middleware, data['name'], self._config.datastore, verrors,
                                      'certificate_update.name')
 
-            if verrors:
-                raise verrors
+        if verrors:
+            raise verrors
 
-            new['san'] = ' '.join(new.pop('san', []) or [])
+        new['san'] = ' '.join(new.pop('san', []) or [])
 
-            await self.middleware.call(
-                'datastore.update',
-                self._config.datastore,
-                id,
-                new,
-                {'prefix': self._config.datastore_prefix}
-            )
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            id,
+            new,
+            {'prefix': self._config.datastore_prefix}
+        )
 
-            await self.middleware.call(
-                'service.start',
-                'ix-ssl',
-                {'onetime': False}
-            )
+        await self.middleware.call(
+            'service.start',
+            'ix-ssl',
+            {'onetime': False}
+        )
 
         return await self._get_instance(id)
 
