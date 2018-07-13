@@ -980,23 +980,12 @@ class PoolService(CRUDService):
         """
         pool = await self._get_instance(oid)
 
-        verrors = ValidationErrors()
-
-        if pool['encrypt'] == 0:
-            verrors.add('id', 'Pool is not encrypted.')
+        verrors = await self.__common_encopt_validation(pool, options)
 
         # For historical reasons (API v1.0 compatibility) we only require
         # admin_password when changing/removing passphrase
-        if pool['encrypt'] == 2:
-            if not options.get('admin_password'):
-                verrors.add('options.admin_password', 'This attribute is required.')
-            else:
-                if not await self.middleware.call(
-                    'auth.check_user', 'root', options['admin_password']
-                ):
-                    verrors.add('options.admin_password', 'Invalid admin password.')
-
-        if verrors:
+        if pool['encrypt'] == 2 and not options.get('admin_password'):
+            verrors.add('options.admin_password', 'This attribute is required.')
             raise verrors
 
         await self.middleware.call('disk.geli_passphrase', pool, options['passphrase'], True)
@@ -1011,16 +1000,7 @@ class PoolService(CRUDService):
             )
         return True
 
-    @item_method
-    @accepts(Int('id'), Dict('options',
-        Str('admin_password', password=True, required=False),
-    ))
-    async def rekey(self, oid, options):
-        """
-        Rekey encrypted pool `id`.
-        """
-        pool = await self._get_instance(oid)
-
+    async def __common_encopt_validation(self, pool, options):
         verrors = ValidationErrors()
 
         if pool['encrypt'] == 0:
@@ -1035,6 +1015,19 @@ class PoolService(CRUDService):
 
         if verrors:
             raise verrors
+        return verrors
+
+    @item_method
+    @accepts(Int('id'), Dict('options',
+        Str('admin_password', password=True, required=False),
+    ))
+    async def rekey(self, oid, options):
+        """
+        Rekey encrypted pool `id`.
+        """
+        pool = await self._get_instance(oid)
+
+        await self.__common_encopt_validation(pool, options)
 
         await self.middleware.call('disk.geli_rekey', pool)
 
@@ -1060,24 +1053,27 @@ class PoolService(CRUDService):
         """
         pool = await self._get_instance(oid)
 
-        verrors = ValidationErrors()
-
-        if pool['encrypt'] == 0:
-            verrors.add('id', 'Pool is not encrypted.')
-
-        # admin password is optional, its choice of the client to enforce
-        # it or not.
-        if 'admin_password' in options and not await self.middleware.call(
-            'auth.check_user', 'root', options['admin_password']
-        ):
-            verrors.add('options.admin_password', 'Invalid admin password.')
-
-        if verrors:
-            raise verrors
+        await self.__common_encopt_validation(pool, options)
 
         reckey = await self.middleware.call('disk.geli_recoverykey_add', pool)
 
         job.pipes.output.w.write(base64.b64decode(reckey))
+
+        return True
+
+    @item_method
+    @accepts(Int('id'), Dict('options',
+        Str('admin_password', password=True, required=False),
+    ))
+    async def recoverykey_rm(self, oid, options):
+        """
+        Remove recovery key for encrypted pool `id`.
+        """
+        pool = await self._get_instance(oid)
+
+        await self.__common_encopt_validation(pool, options)
+
+        await self.middleware.call('disk.geli_recoverykey_rm', pool)
 
         return True
 
