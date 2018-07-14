@@ -192,6 +192,26 @@ class DNSAuthenticatorService(CRUDService):
         if verrors:
             raise verrors
 
+    async def schema_choices(self):
+        return [
+            {
+                'name': key,
+                'title': key.replace('_', ' ').capitalize(),
+                'credentials_schema': [
+                    {
+                        'property': v.name,
+                        'schema': {
+                            '_required_': False,
+                            'title': v.name.replace('_', ' ').capitalize(),
+                            'type': 'string'
+                        }
+                    }
+                    for v in value
+                ]
+            }
+            for key, value in self.schemas.items()
+        ]
+
     @accepts(
         Dict(
             'dns_authenticator_create',
@@ -213,14 +233,19 @@ class DNSAuthenticatorService(CRUDService):
 
     @accepts(
         Int('id', required=True),
-        Dict('attributes', additional_attrs=True, required=True)
+        Dict(
+            'dns_authenticator_update',
+            Str('name'),
+            Dict('attributes', additional_attrs=True)
+        )
     )
     async def do_update(self, id, data):
+        print('\n\nin update', data)
         old = await self._get_instance(id)
         new = old.copy()
-        new['attributes'].update(data)
+        new.update(data)
 
-        await self.common_validation(data, 'dns_authenticator_update')
+        await self.common_validation(new, 'dns_authenticator_update')
 
         await self.middleware.call(
             'datastore.update',

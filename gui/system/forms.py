@@ -2712,12 +2712,69 @@ class CertificateAuthoritySignCSRForm(MiddlewareModelForm, ModelForm):
         model = models.Certificate
 
 
+class DNSAuthenticatorForm(MiddlewareModelForm, ModelForm):
+
+    middleware_plugin = 'dns.authenticator'
+    middleware_attr_schema = 'dns_authenticator'
+    middleware_attr_prefix = ''
+    is_singletone = False
+
+    authenticator = forms.ChoiceField(
+        choices=(),
+    )
+    attributes = forms.CharField(
+        widget=forms.widgets.HiddenInput,
+    )
+    credentials_schemas = forms.CharField(
+        widget=forms.widgets.HiddenInput,
+    )
+
+    class Meta:
+        fields = [
+            'name',
+            'authenticator',
+        ]
+        model = models.DNSAuthenticator
+
+    def __init__(self, *args, **kwargs):
+        super(DNSAuthenticatorForm, self).__init__(*args, **kwargs)
+        self.fields['authenticator'].widget.attrs['onChange'] = (
+            'DNSAuthenticators();'
+        )
+        with client as c:
+            schemas = c.call('dns.authenticator.schema_choices')
+
+        # FIXME: FOR SOME REASON ONCHANGE IS NOT BEING CALLED ON FORM CREATION - LOOK INTO THIS
+        schemas = schemas
+        schemas.append(schemas[0].copy())
+        schemas[1]['name'] = 'route54'
+        schemas[1]['title'] = 'Route 54'
+        self.fields['authenticator'].choices = [
+            (schema['name'], schema['title'])
+            for schema in schemas
+        ]
+        self.fields['attributes'].initial = json.dumps(self.instance.attributes if self.instance else {})
+        self.fields['credentials_schemas'].initial = json.dumps({
+            schema['name']: schema['credentials_schema']
+            for schema in schemas
+        })
+
+    def middleware_clean(self, data):
+        data['attributes'] = json.loads(self.cleaned_data.get('attributes'))
+        data.pop('credentials_schemas', None)
+        if self.instance:
+            data.pop('authenticator')
+        return data
+
+
 class CertificateEditForm(MiddlewareModelForm, ModelForm):
 
     middleware_plugin = 'certificate'
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    complete_job = False
+    middleware_job = True
 
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
@@ -2755,6 +2812,8 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    complete_job = False
+    middleware_job = True
 
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
@@ -2792,6 +2851,8 @@ class CertificateCSRImportForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    complete_job = False
+    middleware_job = True
 
     class Meta:
         fields = [
@@ -2857,6 +2918,8 @@ class CertificateImportForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    complete_job = False
+    middleware_job = True
 
     class Meta:
         fields = [
@@ -2955,6 +3018,8 @@ class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    complete_job = False
+    middleware_job = True
 
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
@@ -3069,6 +3134,8 @@ class CertificateCreateCSRForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    complete_job = False
+    middleware_job = True
 
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,

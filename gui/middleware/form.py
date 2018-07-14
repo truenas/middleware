@@ -49,18 +49,18 @@ class MiddlewareModelForm:
     middleware_plugin = NotImplemented
     middleware_job = False
     is_singletone = NotImplemented
+    complete_job = True
 
     middleware_exclude_fields = []
 
     def save(self):
         result = self.__save()
 
-        if isinstance(result, dict):
+        if self.middleware_job and not self.complete_job:
+            return result
+        else:
             self.instance = self._meta.model.objects.get(pk=result["id"])
             return self.instance
-        else:
-            # Result is a job id and should be handled accordingly
-            return result
 
     def middleware_clean(self, data):
         return data
@@ -106,7 +106,7 @@ class MiddlewareModelForm:
 
             args = (data,) + args
 
-        if self.middleware_job:
+        if self.middleware_job and self.complete_job:
             kwargs['job'] = True
 
         with client as c:

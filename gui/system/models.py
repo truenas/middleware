@@ -1189,7 +1189,7 @@ class Support(Model):
         return self.is_available(support=self)[0] and self.enabled
 
 
-class ACMERegistrationBody(models.Model):
+class ACMERegistrationBody(Model):
     contact = models.EmailField(
         verbose_name='Contact Email'
     )
@@ -1206,7 +1206,7 @@ class ACMERegistrationBody(models.Model):
     )
 
 
-class ACMERegistration(models.Model):
+class ACMERegistration(Model):
     uri = models.URLField(
         verbose_name='URI'
     )
@@ -1231,15 +1231,23 @@ class ACMERegistration(models.Model):
     )
 
 
-class DNSAuthenticator(models.Model):
+class DNSAuthenticator(Model):
     authenticator = models.CharField(
         max_length=64,
+        verbose_name=_('Authenticator')
     )
     name = models.CharField(
         max_length=64,
-        unique=True
+        unique=True,
+        verbose_name=_('Name')
     )
     attributes = EncryptedDictField()
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _("DNS Authenticator")
 
 
 class Filesystem(Model):
