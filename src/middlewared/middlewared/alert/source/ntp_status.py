@@ -7,7 +7,7 @@ import os
 import logging
 
 from datetime import timedelta
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import UnavailableException, Alert, AlertLevel, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
 logger = logging.getLogger(__name__)
@@ -90,7 +90,7 @@ def parse_peers(output):
 
             if info['refid'] == '.INIT.':
                 if SINCE_BOOT < STARTUP_PERIOD:
-                    break
+                    raise UnavailableException()
                 else:
                     raise Exception("still initializing after {:d} seconds since boot".format(since_boot))
 
