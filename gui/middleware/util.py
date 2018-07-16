@@ -57,9 +57,10 @@ def upload_job_and_wait(fileobj, method_name, *args):
 
 def download_job(path, filename, method_name, *args):
     with client as c:
-        url = c.call('core.download', method_name, args, filename)[1]
-    r = requests.get(f'http://127.0.0.1:6000{url}', stream=True)
-    with open(path, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024):
-            if chunk:
-                f.write(chunk)
+        job_id, url = c.call('core.download', method_name, args, filename)
+        r = requests.get(f'http://127.0.0.1:6000{url}', stream=True)
+        with open(path, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
+        return wait_job(c, job_id)
