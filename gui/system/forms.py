@@ -2802,34 +2802,32 @@ class CertificateACMEForm(MiddlewareModelForm, ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.csr_id = kwargs.pop('csr_id')
+
         super(CertificateACMEForm, self).__init__(*args, **kwargs)
 
         with client as c:
             popular_acme_choices = c.call('certificate.popular_acme_server_choices')
-            csr_domains = c.call('certificate.get_domain_names', self.csr_id)
+            self.csr_domains = c.call('certificate.get_domain_names', self.csr_id)
 
-        # TODO: Make this editable
         self.fields['cert_acme_directory_uri'] = forms.ChoiceField(
-            choices=[(v, v) for v in popular_acme_choices],
             label=_('ACME Server Directory URI'),
             required=True,
             help_text=_('Please specify URI of ACME Server Directory')
         )
+        self.fields['cert_acme_directory_uri'].widget = forms.widgets.ComboBox()
+        self.fields['cert_acme_directory_uri'].choices = [(v, v) for v in popular_acme_choices]
+        if self.is_bound and 'cert_acme_directory_uri' in self.data:
+            self.fields['cert_acme_directory_uri'].initial = self.data['cert_acme_directory_uri']
 
-        #TODO: FIX THIS - FOR SOME REASON VALID FAILS SAYING DOMAIN FIELDS ARE REQUIRED
-
-        '''
-        authenticators = [(o.pk, o.name) for o in models.DNSAuthenticator.objects.all()]
-        for domain in csr_domains:
-            self.fields[f'domain_{domain}'] = forms.ChoiceField(
-                choices=authenticators,
+        for n, domain in enumerate(self.csr_domains):
+            self.fields[f'domain_{n}'] = forms.ModelChoiceField(
+                queryset=models.DNSAuthenticator.objects.all(),
                 label=(_(f'Authenticator for {domain} ')),
+                required=True,
+                help_text=_(f'Specify Authenticator to be used for {domain} domain')
             )
-            self.fields[f'domain_{domain}'] = forms.ModelChoiceField(
-                queryset=models.DNSAuthenticator.objects.filter(name__ne=''),
-                label=(_(f'Authenticator for {domain} ')),
-            )
-        '''
+            if self.is_bound and f'domain_{n}' in self.data:
+                self.fields[f'domain_{n}'].initial = self.data[f'domain_{n}']
 
     def clean_cert_tos(self):
         if not self.cleaned_data.get('cert_tos'):
@@ -2841,9 +2839,9 @@ class CertificateACMEForm(MiddlewareModelForm, ModelForm):
 
     def middleware_clean(self, data):
         data['csr_id'] = self.csr_id
-        data['dns_mapping'] = {'acmedev.agencialivre.com.br': 1}
-        #for domain_f in [k[len('domain_'):] for k in self.cleaned_data if k.startswith('domain_')]:
-            #data['dns_mapping'][domain_f] = self.cleaned_data.get(domain_f)
+        data['dns_mapping'] = {}
+        for n, domain_f in enumerate(self.csr_domains):
+            data['dns_mapping'][domain_f] = self.cleaned_data.get(f'domain_{n}').id
         data['create_type'] = 'CERTIFICATE_CREATE_ACME'
         return data
 
