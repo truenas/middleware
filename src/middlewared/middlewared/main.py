@@ -855,7 +855,7 @@ class Middleware(object):
         """
         for hook in self.__hooks[name]:
             try:
-                fut = hook['method'](*args, **kwargs)
+                fut = hook['method'](self, *args, **kwargs)
                 if hook['sync']:
                     await fut
                 else:

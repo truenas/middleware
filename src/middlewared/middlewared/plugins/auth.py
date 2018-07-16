@@ -172,7 +172,7 @@ class AuthService(Service):
             return False
 
 
-async def check_permission(app):
+async def check_permission(middleware, app):
     """
     Authenticates connections comming from loopback and from
     root user.
