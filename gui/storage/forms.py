@@ -2473,20 +2473,10 @@ class UnlockPassphraseForm(Form):
 
     def __init__(self, *args, **kwargs):
         super(UnlockPassphraseForm, self).__init__(*args, **kwargs)
-        app = appPool.get_app('plugins')
-        choices = [
-            ('afp', _('AFP')),
-            ('cifs', _('CIFS')),
-            ('ftp', _('FTP')),
-            ('iscsitarget', _('iSCSI')),
-            ('nfs', _('NFS')),
-            ('webdav', _('WebDAV')),
-        ]
-        if getattr(app, 'unlock_restart', False):
-            choices.append(
-                ('jails', _('Jails/Plugins')),
+        with client as c:
+            self.fields['services'].choices = list(
+                c.call('pool.unlock_services_restart_choices').items()
             )
-        self.fields['services'].choices = choices
 
     def clean(self):
         passphrase = self.cleaned_data.get("passphrase")
@@ -2501,48 +2491,29 @@ class UnlockPassphraseForm(Form):
     def done(self, volume):
         passphrase = self.cleaned_data.get("passphrase")
         key = self.cleaned_data.get("key") or self.cleaned_data.get('recovery_key')
+
         if passphrase:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
-                f.write(passphrase)
-            failed = notifier().geli_attach(volume, passphrase=passfile)
-            os.unlink(passfile)
+            with client as c:
+                c.call('pool.unlock', volume.id, {
+                    'passphrase': passphrase,
+                    'services_restart': self.cleaned_data.get('services'),
+                }, job=True)
         elif key is not None:
             keyfile = tempfile.mktemp(dir='/tmp/')
-            with open(keyfile, 'wb') as f:
+            with open(keyfile, 'wb+') as f:
                 os.chmod(keyfile, 600)
                 f.write(key.read() if not isinstance(key, str) else base64.b64decode(key))
-            failed = notifier().geli_attach(
-                volume,
-                passphrase=None,
-                key=keyfile)
+                f.flush()
+                f.seek(0)
+                upload_job_and_wait(f, 'pool.unlock', volume.id, {
+                    'recoverykey': True,
+                    'services_restart': self.cleaned_data.get('services'),
+                })
             os.unlink(keyfile)
         else:
             raise ValueError("Need a passphrase or recovery key")
-        zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid, first_time=False)
-        if not zimport:
-            if failed > 0:
-                msg = _(
-                    "Volume could not be imported: %d devices failed to "
-                    "decrypt"
-                ) % failed
-            else:
-                msg = _("Volume could not be imported")
-            raise MiddlewareError(msg)
-        notifier().sync_encrypted(volume=volume)
 
-        _notifier = notifier()
-        for svc in self.cleaned_data.get("services"):
-            if svc == 'jails':
-                with client as c:
-                    c.call('core.bulk', 'service.restart', [['jails']])
-                    c.call('core.bulk', 'jail.rc_action', [['RESTART']])
-            else:
-                _notifier.restart(svc)
-        _notifier.start("ix-warden")
-        _notifier.restart("system_datasets")
-        _notifier.reload("disk")
+        """
         if not _notifier.is_freenas() and _notifier.failover_licensed():
             from freenasUI.failover.enc_helper import LocalEscrowCtl
             escrowctl = LocalEscrowCtl()
@@ -2554,6 +2525,7 @@ class UnlockPassphraseForm(Form):
                 log.warn('Failed to set key on standby node, is it down?', exc_info=True)
             if _notifier.failover_status() != 'MASTER':
                 _notifier.failover_force_master()
+        """
 
 
 class KeyForm(Form):

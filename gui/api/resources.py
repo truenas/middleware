@@ -913,8 +913,8 @@ class VolumeResourceMixin(NestedMixin):
                 response=self.error_response(request, _('Volume is not encrypted.'))
             )
 
-        _n = notifier()
-        _n.volume_detach(obj)
+        with client as c:
+            c.call('pool.lock', obj.id, job=True)
 
         return HttpResponse('Volume has been locked.', status=202)
 

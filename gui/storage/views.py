@@ -961,16 +961,9 @@ def volume_lock(request, object_id):
                 return JsonResp(request, confirm=message)
 
         with client as c:
-            active_pool = c.call('jail.get_activated_pool')
+            c.call('pool.lock', volume.id, job=True)
 
-            if active_pool == volume:
-                jails = c.call('jail.query', [('state', '=', 'up')])
-
-                for j in jails:
-                    _jail = j['host_hostuuid']
-                    c.call('jail.stop', _jail)
-
-        notifier().volume_detach(volume)
+        """
         if hasattr(notifier, 'failover_status') and notifier().failover_status() == 'MASTER':
             from freenasUI.failover.enc_helper import LocalEscrowCtl
             escrowctl = LocalEscrowCtl()
@@ -984,7 +977,7 @@ def volume_lock(request, object_id):
                     c.call('failover.call_remote', 'failover.encryption_clearkey')
             except Exception:
                 log.warn('Failed to clear key on standby node, is it down?', exc_info=True)
-        notifier().restart("system_datasets")
+        """
         return JsonResp(request, message=_("Volume locked"))
     return render(request, "storage/lock.html")
 
