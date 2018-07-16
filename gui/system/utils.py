@@ -47,10 +47,10 @@ log = logging.getLogger('system.utils')
 UPDATE_APPLIED_SENTINEL = '/tmp/.updateapplied'
 
 
-def certificate_common_post_create(action, request, cert=None):
+def certificate_common_post_create(action, request, **kwargs):
     form = getattr(
         forms, request.session['certificate_create']['form']
-    )(request.session['certificate_create']['payload'], instance=cert)
+    )(request.session['certificate_create']['payload'], **kwargs)
     form.is_valid()
     form._middleware_action = action
     verrors = get_validation_errors(request.session['certificate_create']['job_id'])

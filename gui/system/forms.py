@@ -2774,6 +2774,7 @@ class CertificateACMEForm(MiddlewareModelForm, ModelForm):
     middleware_attr_schema = 'certificate'
     is_singletone = False
     middleware_job = True
+    complete_job = False
 
     cert_tos = forms.BooleanField(
         required=False,
@@ -2816,12 +2817,6 @@ class CertificateACMEForm(MiddlewareModelForm, ModelForm):
         )
 
         #TODO: FIX THIS - FOR SOME REASON VALID FAILS SAYING DOMAIN FIELDS ARE REQUIRED
-        # TODO: EFAULT FAILS
-        '''
-        {'id': 39, 'fields': {'id': 39, 'method': 'certificate.create', 'arguments': [{'name': 'asdf', 'tos': True, 'renew_days': 10, 'acme_directory_uri': 'https://acme-staging-v02.api.letsencrypt.org/directory', 'csr_id': '25', 'dns_mapping': {'acmedev.agencialivre.com.br': 1}, 'create_type': 'CERTIFICATE_CREATE_ACME'}], 'logs_path': None, 'logs_excerpt': None, 'progress': {'percent': 10, 'description': 'Initial validation complete', 'extra': None}, 'result': None, 'error': '[EFAULT] Please specify root email address which will be used with the ACME server', 'exception': 'Traceback (most recent call last):\n  File "/usr/local/lib/python3.6/site-packages/middlewared/job.py", line 333, in run\n    await self.future\n  File "/usr/local/lib/python3.6/site-packages/middlewared/job.py", line 362, in __run_body\n    rv = await self.method(*([self] + args))\n  File "/usr/local/lib/python3.6/site-packages/middlewared/schema.py", line 717, in nf\n    return await f(*args, **kwargs)\n  File "/usr/local/lib/python3.6/site-packages/middlewared/plugins/crypto.py", line 834, in do_create\n    job, data\n  File "/usr/local/lib/python3.6/site-packages/middlewared/main.py", line 913, in run_in_io_thread\n    return await self.loop.run_in_executor(executor, functools.partial(method, *args, **kwargs))\n  File "/usr/local/lib/python3.6/concurrent/futures/thread.py", line 56, in run\n    result = self.fn(*self.args, **self.kwargs)\n  File "/usr/local/lib/python3.6/site-packages/middlewared/schema.py", line 721, in nf\n    return f(*args, **kwargs)\n  File "/usr/local/lib/python3.6/site-packages/middlewared/plugins/crypto.py", line 877, in __create_acme_certificate\n    final_order = self.acme_issue_certificate(job, 25, data, csr_data)\n  File "/usr/local/lib/python3.6/site-packages/middlewared/plugins/crypto.py", line 634, in acme_issue_certificate\n    acme_client, key = self.get_acme_client_and_key(data[\'acme_directory_uri\'], data[\'tos\'])\n  File "/usr/local/lib/python3.6/site-packages/middlewared/plugins/crypto.py", line 571, in get_acme_client_and_key\n    {\'tos\': tos, \'acme_directory_uri\': acme_directory_uri}\n  File "/usr/local/lib/python3.6/site-packages/middlewared/main.py", line 1043, in call_sync\n    return fut.result()\n  File "/usr/local/lib/python3.6/concurrent/futures/_base.py", line 425, in result\n    return self.__get_result()\n  File "/usr/local/lib/python3.6/concurrent/futures/_base.py", line 384, in __get_result\n    raise self._exception\n  File "/usr/local/lib/python3.6/site-packages/middlewared/main.py", line 953, in _call\n    return await methodobj(*args)\n  File "/usr/local/lib/python3.6/site-packages/middlewared/service.py", line 285, in create\n    f\'{self._config.namespace}.create\', self, self.do_create, [data]\n  File "/usr/local/lib/python3.6/site-packages/middlewared/main.py", line 967, in _call\n    return await run_method(methodobj, *args)\n  File "/usr/local/lib/python3.6/site-packages/middlewared/main.py", line 905, in run_in_thread\n    return await self.run_in_executor(self.__threadpool, method, *args, **kwargs)\n  File "/usr/local/lib/python3.6/site-packages/middlewared/main.py", line 902, in run_in_executor\n    return await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))\n  File "/usr/local/lib/python3.6/concurrent/futures/thread.py", line 56, in run\n    result = self.fn(*self.args, **self.kwargs)\n  File "/usr/local/lib/python3.6/site-packages/middlewared/schema.py", line 721, in nf\n    return f(*args, **kwargs)\n  File "/usr/local/lib/python3.6/site-packages/middlewared/plugins/acme_protocol.py", line 100, in do_create\n    \'Please specify root email address which will be used with the ACME server\'\nmiddlewared.service_exception.CallError: [EFAULT] Please specify root email address which will be used with the ACME server\n', 'exc_info': {'type': 'CallError', 'extra': None}, 'state': 'FAILED', 'time_started': datetime.datetime(2018, 7, 15, 21, 29, 45, 72468), 'time_finished': datetime.datetime(2018, 7, 15, 21, 29, 48, 106117)}}
-        
-        '''
-
 
         '''
         authenticators = [(o.pk, o.name) for o in models.DNSAuthenticator.objects.all()]
@@ -2835,6 +2830,14 @@ class CertificateACMEForm(MiddlewareModelForm, ModelForm):
                 label=(_(f'Authenticator for {domain} ')),
             )
         '''
+
+    def clean_cert_tos(self):
+        if not self.cleaned_data.get('cert_tos'):
+            raise forms.ValidationError(_(
+                'Please accept Terms of Service for the ACME Server'
+            ))
+        else:
+            return True
 
     def middleware_clean(self, data):
         data['csr_id'] = self.csr_id
@@ -2852,6 +2855,7 @@ class CertificateEditForm(MiddlewareModelForm, ModelForm):
     middleware_attr_schema = 'certificate'
     is_singletone = False
     middleware_job = True
+    complete_job = False
 
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,

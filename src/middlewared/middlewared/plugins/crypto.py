@@ -906,6 +906,7 @@ class CertificateService(CRUDService):
     @skip_arg(count=1)
     def __create_acme_certificate(self, job, data):
 
+        data['acme_directory_uri'] += '/' if data['acme_directory_uri'][-1] != '/' else ''
         csr_data = self.middleware.call_sync(
             'certificate._get_instance', data['csr_id']
         )
@@ -1123,6 +1124,8 @@ class CertificateService(CRUDService):
         old = await self._get_instance(id)
         # signedby is changed back to integer from a dict
         old['signedby'] = old['signedby']['id'] if old.get('signedby') else None
+        if old.get('acme'):
+            old['acme'] = old['acme']['id']
 
         new = old.copy()
 
