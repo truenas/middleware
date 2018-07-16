@@ -253,6 +253,38 @@ class DiskService(CRUDService):
             self.logger.debug(f'{dev} already attached')
 
     @private
+    def geli_attach(self, pool, passphrase=None, key=None):
+        """
+        Attach geli providers of a given pool
+
+        Returns:
+            The number of providers that failed to attach
+        """
+        failed = 0
+        geli_keyfile = key or pool['encryptkey_path']
+
+        if passphrase:
+            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
+            os.chmod(passf.name, 0o600)
+            passf.write(passphrase)
+            passf.flush()
+            passphrase = passf.name
+        try:
+            for ed in self.middleware.call_sync(
+                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+            ):
+                dev = ed['encrypted_provider']
+                try:
+                    self.geli_attach_single(dev, geli_keyfile, passphrase)
+                except Exception as ee:
+                    log.warn(str(ee))
+                    failed += 1
+        finally:
+            if passphrase:
+                passf.close()
+        return failed
+
+    @private
     def geli_testkey(self, pool, passphrase):
         """
         Test key for geli providers of a given pool

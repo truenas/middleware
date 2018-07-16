@@ -1058,6 +1058,7 @@ class PoolService(CRUDService):
         reckey = await self.middleware.call('disk.geli_recoverykey_add', pool)
 
         job.pipes.output.w.write(base64.b64decode(reckey))
+        job.pipes.output.w.close()
 
         return True
 
@@ -1074,6 +1075,120 @@ class PoolService(CRUDService):
         await self.__common_encopt_validation(pool, options)
 
         await self.middleware.call('disk.geli_recoverykey_rm', pool)
+
+        return True
+
+    @accepts()
+    async def unlock_services_restart_choices(self):
+        svcs = {
+            'afp': 'AFP',
+            'cifs': 'SMB',
+            'ftp': 'FTP',
+            'iscsitarget': 'iSCSI',
+            'nfs': 'NFS',
+            'webdav': 'WebDAV',
+            'jails': 'Jails/Plugins',
+        }
+        return svcs
+
+    @item_method
+    @accepts(Int('id'), Dict(
+        'options',
+        Str('passphrase', password=True, required=False),
+        Bool('recoverykey', default=False),
+        List('services_restart', default=[]),
+    ))
+    @job(lock='unlock_pool', pipes=['input'], check_pipes=False)
+    async def unlock(self, job, oid, options):
+        """
+        Unlock encrypted pool `id`.
+        """
+        pool = await self._get_instance(oid)
+
+        verrors = ValidationErrors()
+
+        if pool['encrypt'] == 0:
+            verrors.add('id', 'Pool is not encrypted.')
+        elif pool['status'] != 'OFFLINE':
+            verrors.add('id', 'Pool already unlocked.')
+
+        if options.get('passphrase') and options['recoverykey']:
+            verrors.add(
+                'options.passphrase', 'Either provide a passphrase or a recovery key, not both.'
+            )
+        elif not options.get('passphrase') and not options['recoverykey']:
+            verrors.add(
+                'options.passphrase', 'Provide a passphrase or a recovery key.'
+            )
+
+        services_restart_choices = set((await self.unlock_services_restart_choices()).keys())
+        options_services_restart = set(options['services_restart'])
+        invalid_choices = options_services_restart - services_restart_choices
+        if invalid_choices:
+            verrors.add(
+                'options.services_restart', f'Invalid choices: {", ".join(invalid_choices)}'
+            )
+
+        if verrors:
+            raise verrors
+
+        if options['recoverykey']:
+            job.check_pipe("input")
+            with tempfile.NamedTemporaryFile(mode='wb+', dir='/tmp/') as f:
+                f.write(job.pipes.input.r.read())
+                f.flush()
+                failed = await self.middleware.call('disk.geli_attach', pool, None, f.name)
+        else:
+            failed = await self.middleware.call('disk.geli_attach', pool, options['passphrase'])
+
+        # We need to try to import the pool even if some disks failed to attach
+        try:
+            await self.middleware.call('zfs.pool.import_pool', pool['guid'], {
+                'altroot': '/mnt',
+                'cachefile': ZPOOL_CACHE_FILE,
+            })
+        except Exception as e:
+            if failed > 0:
+                raise CallError(
+                    f'Pool could not be imported: {failed} devices failed to decrypt.'
+                )
+            raise
+
+        await self.middleware.call('notifier.sync_encrypted', oid)
+
+        await self.middleware.call('core.bulk', 'service.restart', [
+            [i] for i in options['services_restart'] + ['system_datasets', 'disk']
+        ])
+        if 'jails' in options['services_restart']:
+            await self.middleware.call('core.bulk', 'jail.rc_action', [['RESTART']])
+
+        await self.middleware.call_hook('pool.post_unlock', pool=pool)
+
+        return True
+
+    @item_method
+    @accepts(Int('id'))
+    @job(lock='lock_pool')
+    async def lock(self, job, oid):
+        """
+        Lock encrypted pool `id`.
+        """
+        pool = await self._get_instance(oid)
+
+        verrors = ValidationErrors()
+
+        if pool['encrypt'] == 0:
+            verrors.add('id', 'Pool is not encrypted.')
+        elif pool['status'] == 'OFFLINE':
+            verrors.add('id', 'Pool already locked.')
+
+        if verrors:
+            raise verrors
+
+        await self.middleware.call_hook('pool.pre_lock', pool=pool)
+        await self.middleware.call('notifier.volume_detach', oid)
+        await self.middleware.call_hook('pool.post_lock', pool=pool)
+        await self.middleware.call('service.restart', 'system_datasets')
 
         return True
 
