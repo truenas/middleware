@@ -1983,6 +1983,49 @@ def certificate_progress(request):
     }), content_type='application/json')
 
 
+def certificate_acme_create(request, csr_id):
+    if request.session.get('certificate_create'):
+
+        form, job, verrors = certificate_common_post_create(
+            'create', request
+        )
+
+        if job['state'] == 'SUCCESS':
+            return JsonResp(request, message=_('ACME Certificate successfully created'))
+        else:
+            if not verrors:
+                raise ClientException(job['error'], trace=job['exception'])
+            else:
+                return render(request, 'system/certificate/certificate_create_ACME.html', {
+                    'form': form
+                })
+
+    if request.method == "POST":
+        form = forms.CertificateACMEForm(request.POST, csr_id=csr_id)
+        if form.is_valid():
+            job_id = form.save()
+            request.session['certificate_create'] = {
+                'job_id': job_id,
+                'form': form.__class__.__name__,
+                'payload': request.POST,
+            }
+
+            return render(
+                request, 'system/certificate/certificate_progress.html', {
+                    'certificate_url': reverse('certificate_acme_create'),
+                    'dialog_name': 'Create ACME Certificate'
+                }
+            )
+        return JsonResp(request, form=form)
+
+    else:
+        form = forms.CertificateACMEForm(csr_id=csr_id)
+
+    return render(request, "system/certificate/certificate_create_ACME.html", {
+        'form': form
+    })
+
+
 def certificate_csr_import(request):
 
     if request.session.get('certificate_create'):

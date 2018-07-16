@@ -582,7 +582,8 @@ class CertificateService(CRUDService):
         return verrors
 
     @private
-    async def get_domain_names(self, data):
+    async def get_domain_names(self, cert_id):
+        data = await self._get_instance(int(cert_id))
         names = [data['common']]
         names.extend(data['san'])
         return names
@@ -633,7 +634,7 @@ class CertificateService(CRUDService):
 
         # Validate domain dns mapping for handling DNS challenges
         # Ensure that there is an authenticator for each domain in the CSR
-        domains = self.middleware.call_sync('certificate.get_domain_names', csr_data)
+        domains = self.middleware.call_sync('certificate.get_domain_names', csr_data['id'])
         dns_authenticator_ids = [o['id'] for o in self.middleware.call_sync('dns.authenticator.query')]
         for domain in domains:
             if domain not in data['dns_mapping']:
@@ -783,6 +784,13 @@ class CertificateService(CRUDService):
                 )
 
             job.set_progress(progress)
+
+    @accepts()
+    async def popular_acme_server_choices(self):
+        return [
+            'https://acme-staging-v02.api.letsencrypt.org/directory',
+            'https://acme-v02.api.letsencrypt.org/directory'
+        ]
 
     # CREATE METHODS FOR CREATING CERTIFICATES
     # "do_create" IS CALLED FIRST AND THEN BASED ON THE TYPE OF THE CERTIFICATE WHICH IS TO BE CREATED THE

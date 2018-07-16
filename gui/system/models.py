@@ -758,6 +758,7 @@ class CertificateBase(Model):
     cert_chain = models.BooleanField(
         default=False,
     )
+    # TODO: Probably move these fields to the certificate model so that they don't get included in CA Model
     cert_acme = models.ForeignKey(
         'ACMERegistration',
         on_delete=models.CASCADE,
@@ -774,7 +775,8 @@ class CertificateBase(Model):
     )
     cert_renew_days = models.IntegerField(
         default=10,
-        verbose_name="Renew certificate day"  # Should we change the name ?
+        verbose_name=_("Renew certificate day"),  # Should we change the name ?
+        help_text=_('Number of days to renew certificate before expiring')
     )
 
     def get_certificate(self):
