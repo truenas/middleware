@@ -12,6 +12,7 @@ import uuid
 
 import bsd
 
+from libzfs import ZFSException
 from middlewared.job import JobProgressBuffer
 from middlewared.schema import (accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch,
                                 Str, UnixPerm)
@@ -1147,6 +1148,10 @@ class PoolService(CRUDService):
                 'altroot': '/mnt',
                 'cachefile': ZPOOL_CACHE_FILE,
             })
+        except ZFSException as e:
+            # mounting filesystems may fail if we have readonly datasets as parent
+            if e.code.name != 'MOUNTFAILED':
+                raise
         except Exception as e:
             if failed > 0:
                 raise CallError(
