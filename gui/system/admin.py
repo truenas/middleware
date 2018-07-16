@@ -356,6 +356,17 @@ class CertificateFAdmin(BaseFreeAdmin):
             }""",
             'on_select_after': hide_me % '!row.data.cert_type_CSR',
         }
+        actions['create_acme'] = {
+            'button_name': 'Create ACME Certificate',
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('Edit',data._ACME_create_url, [mybtn,]);
+                }
+            }""",
+            'on_select_after': hide_me % '!row.data.cert_type_CSR'
+        }
 
         actions['export_privatekey'] = {
             'button_name': 'Export Private Key',

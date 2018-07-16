@@ -130,7 +130,6 @@ class CertificateView(TreeNode):
     order = 15
 
 
-# TODO: FIX THIS
 class DNSAuthenticator(TreeNode):
 
     gname = 'DNSAuthenticator'

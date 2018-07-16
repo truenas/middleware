@@ -3403,6 +3403,12 @@ class CertificateResourceMixin(object):
                             'id': bundle.obj.id
                         }
                     )
+                    bundle.data['_ACME_create_url'] = reverse(
+                        'CSR_edit',
+                        kwargs={
+                            'id': bundle.obj.id
+                        }
+                    )
 
                 with client as c:
                     sys_cert = c.call('system.general.config')['ui_certificate']
