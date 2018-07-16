@@ -249,7 +249,8 @@ class VCenterService(ConfigService):
     async def is_update_available(self):
         latest_version = await self.middleware.run_in_io_thread(self.get_plugin_version)
         current_version = (await self.config())['version']
-        return latest_version if parse_version(latest_version) > parse_version(current_version) else None
+        return latest_version if current_version and \
+                                 parse_version(latest_version) > parse_version(current_version) else None
 
     @private
     async def plugin_root_path(self):
@@ -270,7 +271,7 @@ class VCenterService(ConfigService):
         # TODO: The path to the plugin should be moved over to middlewared from django
         root_path = self.middleware.call_sync('vcenter.plugin_root_path')
         return next(v for v in os.listdir(root_path) if 'plugin' in v and '.zip' in v)
-    
+
     @private
     def get_plugin_version(self):
         file_name = self.get_plugin_file_name()
