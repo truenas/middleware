@@ -583,3 +583,19 @@ class JailService(CRUDService):
             version = ['N/A', 'N/A']
 
         return version
+
+
+async def jail_pool_pre_lock(middleware, pool):
+    """
+    We need to stop jails before unlocking a pool because of used
+    resources in it.
+    """
+    activated_pool = await middleware.call('jail.get_activated_pool')
+    if activated_pool == pool['name']:
+        jails = await middleware.call('jail.query', [('state', '=', 'up')])
+        for j in jails:
+            await middleware.call('jail.stop', j['host_hostuuid'])
+
+
+def setup(middleware):
+    middleware.register_hook('pool.pre_lock', jail_pool_pre_lock)
