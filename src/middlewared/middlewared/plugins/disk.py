@@ -507,7 +507,7 @@ class DiskService(CRUDService):
             for dev in devices:
                 try:
                     self.middleware.call_sync(
-                        'notifier.geli_attach_single',
+                        'disk.geli_attach_single',
                         dev,
                         f.name,
                         passphrase,
