@@ -492,7 +492,7 @@ class PoolService(CRUDService):
 
         if pool['encrypt'] >= 2:
             # FIXME: ask current passphrase and validate
-            await self.middleware.call('notifier.geli_passphrase', id, None)
+            await self.middleware.call('disk.geli_passphrase', pool, None)
             await self.middleware.call(
                 'datastore.update', 'storage.volume', id, {'encrypt': 1}, {'prefix': 'vol_'},
             )

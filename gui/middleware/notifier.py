@@ -321,31 +321,6 @@ class notifier(metaclass=HookMetaclass):
         # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
         self.__gpt_unlabeldisk(devname)
 
-    def __create_keyfile(self, keyfile, size=64, force=False):
-        if force or not os.path.exists(keyfile):
-            keypath = os.path.dirname(keyfile)
-            if not os.path.exists(keypath):
-                self._system("mkdir -p %s" % keypath)
-            self._system("dd if=/dev/random of=%s bs=%d count=1" % (keyfile, size))
-            if not os.path.exists(keyfile):
-                raise MiddlewareError("Unable to create key file: %s" % keyfile)
-        else:
-            log.debug("key file %s already exists" % keyfile)
-
-    def __geli_setmetadata(self, dev, keyfile, passphrase=None):
-        self.__create_keyfile(keyfile)
-        _passphrase = "-J %s" % passphrase if passphrase else "-P"
-        command = "geli init -s 4096 -l 256 -B none %s -K %s %s" % (_passphrase, keyfile, dev)
-        err = self._pipeerr(command)
-        if err:
-            raise MiddlewareError("Unable to set geli metadata on %s: %s" % (dev, err))
-
-    def __geli_delkey(self, dev, slot=GELI_KEY_SLOT, force=False):
-        command = "geli delkey -n %s %s %s" % (slot, '-f' if force else '', dev)
-        err = self._pipeerr(command)
-        if err:
-            raise MiddlewareError("Unable to delete key %s on %s: %s" % (slot, dev, err))
-
     def geli_setkey(self, dev, key, slot=GELI_KEY_SLOT, passphrase=None, oldkey=None):
         command = ("geli setkey -n %s %s -K %s %s %s"
                    % (slot,
@@ -356,24 +331,6 @@ class notifier(metaclass=HookMetaclass):
         err = self._pipeerr(command)
         if err:
             raise MiddlewareError("Unable to set passphrase on %s: %s" % (dev, err))
-
-    def geli_passphrase(self, volume, passphrase, rmrecovery=False):
-        """
-        Set a passphrase in a geli
-        If passphrase is None then remove the passphrase
-
-        Raises:
-            MiddlewareError
-        """
-        from freenasUI.storage.models import Volume
-        if isinstance(volume, int):
-            volume = Volume.objects.get(id=volume)
-        geli_keyfile = volume.get_geli_keyfile()
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
-            if rmrecovery:
-                self.__geli_delkey(dev, GELI_RECOVERY_SLOT, force=True)
-            self.geli_setkey(dev, geli_keyfile, GELI_KEY_SLOT, passphrase)
 
     def geli_recoverykey_add(self, volume, passphrase=None):
         from freenasUI.middleware.util import download_job
@@ -396,40 +353,6 @@ class notifier(metaclass=HookMetaclass):
         if geom:
             return True
         return False
-
-    def geli_attach_single(self, dev, key, passphrase=None, skip_existing=False):
-        if skip_existing or not os.path.exists("/dev/%s.eli" % dev):
-            command = "geli attach %s -k %s %s" % ("-j %s" % passphrase if passphrase else "-p",
-                                                   key,
-                                                   dev)
-            err = self._pipeerr(command)
-            if err or not os.path.exists("/dev/%s.eli" % dev):
-                raise MiddlewareError("Unable to geli attach %s: %s" % (dev, err))
-        else:
-            log.debug("%s already attached", dev)
-
-    def geli_testkey(self, volume, passphrase=None):
-        """
-        Test key for geli providers of a given volume
-        """
-        geli_keyfile = volume.get_geli_keyfile()
-
-        # Parse zpool status to get encrypted providers
-        # EncryptedDisk table might be out of sync for some reason,
-        # this is much more reliable!
-        devs = self.zpool_parse(volume.vol_name).get_devs()
-        for dev in devs:
-            name, ext = os.path.splitext(dev.name)
-            if ext == ".eli":
-                try:
-                    self.geli_attach_single(name,
-                                            geli_keyfile,
-                                            passphrase,
-                                            skip_existing=True)
-                except Exception as ee:
-                    if str(ee).find('Wrong key') != -1:
-                        return False
-        return True
 
     def geli_clear(self, dev):
         """
