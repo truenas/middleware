@@ -377,7 +377,7 @@ class notifier(metaclass=HookMetaclass):
     def geli_recoverykey_add(self, volume, passphrase=None):
         from freenasUI.middleware.util import download_job
         reckey = tempfile.NamedTemporaryFile(dir='/tmp/', delete=False)
-        download_job(reckey.name, 'recovery.key', 'pool.recoverykey_add', volume.id)
+        download_job(reckey.name, 'recovery.key', 'pool.recoverykey_add', volume.id, {})
         return reckey.name
 
     def geli_delkey(self, volume, slot=GELI_RECOVERY_SLOT, force=True):
@@ -406,23 +406,6 @@ class notifier(metaclass=HookMetaclass):
                 raise MiddlewareError("Unable to geli attach %s: %s" % (dev, err))
         else:
             log.debug("%s already attached", dev)
-
-    def geli_attach(self, volume, passphrase=None, key=None):
-        """
-        Attach geli providers of a given volume
-
-        Returns the number of providers that failed to attach
-        """
-        failed = 0
-        geli_keyfile = key or volume.get_geli_keyfile()
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
-            try:
-                self.geli_attach_single(dev, geli_keyfile, passphrase)
-            except Exception as ee:
-                log.warn(str(ee))
-                failed += 1
-        return failed
 
     def geli_testkey(self, volume, passphrase=None):
         """
@@ -1603,6 +1586,9 @@ class notifier(metaclass=HookMetaclass):
             MiddlewareError: the volume could not be detached cleanly.
             MiddlewareError: the volume's mountpoint couldn't be removed.
         """
+        if isinstance(volume, int):
+            from freenasUI.storage.models import Volume
+            volume = Volume.objects.get(pk=volume)
 
         vol_name = volume.vol_name
 
