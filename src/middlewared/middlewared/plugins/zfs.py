@@ -287,6 +287,24 @@ class ZFSPoolService(CRUDService):
         with libzfs.ZFS() as zfs:
             return [i.__getstate__() for i in zfs.find_import()]
 
+    @accepts(
+        Str('name_or_guid'),
+        Dict('options', additional_attrs=True),
+        Bool('any_host', default=True),
+    )
+    def import_pool(self, name_or_guid, options, any_host):
+        found = False
+        with libzfs.ZFS() as zfs:
+            for pool in zfs.find_import():
+                if pool.name == name_or_guid or str(pool.guid) == name_or_guid:
+                    found = pool
+                    break
+
+            if not found:
+                raise CallError(f'Pool {name_or_guid} not found.')
+
+            zfs.import_pool(found, found.name, options, any_host=any_host)
+
 
 class ZFSDatasetService(CRUDService):
 
