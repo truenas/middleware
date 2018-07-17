@@ -1,7 +1,7 @@
 from itertools import chain
 
 from middlewared.schema import accepts, Cron, Dict, Int, List, Patch, Str
-from middlewared.validators import Email, Range
+from middlewared.validators import Email, Range, Unique
 from middlewared.service import CRUDService, private, SystemServiceService, ValidationErrors
 
 
@@ -177,7 +177,7 @@ class SmartService(SystemServiceService):
         Int('difference'),
         Int('informational'),
         Int('critical'),
-        List('email', items=[Str('email', validators=[Email()])]),
+        List('email', validators=[Unique()], items=[Str('email', validators=[Email()])]),
         update=True
     ))
     async def do_update(self, data):
