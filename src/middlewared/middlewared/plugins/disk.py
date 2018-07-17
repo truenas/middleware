@@ -277,7 +277,7 @@ class DiskService(CRUDService):
                 try:
                     self.geli_attach_single(dev, geli_keyfile, passphrase)
                 except Exception as ee:
-                    log.warn(str(ee))
+                    self.logger.warn(str(ee))
                     failed += 1
         finally:
             if passphrase:
@@ -469,12 +469,28 @@ class DiskService(CRUDService):
             return base64.b64encode(reckey.read()).decode()
 
     @private
-    def geli_detach(self, dev):
+    def geli_detach_single(self, dev):
+        if not os.path.exists(f'/dev/{dev.replace(".eli", "")}.eli'):
+            return
         cp = subprocess.run(
             ['geli', 'detach', dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
         if cp.returncode != 0:
             raise CallError(f'Unable to geli dettach {dev}: {cp.stderr.decode()}')
+
+    @private
+    def geli_detach(self, pool):
+        failed = 0
+        for ed in self.middleware.call_sync(
+            'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+        ):
+            dev = ed['encrypted_provider']
+            try:
+                self.geli_detach_single(dev)
+            except Exception as ee:
+                self.logger.warn(str(ee))
+                failed += 1
+        return failed
 
     @private
     def encrypt(self, devname, keypath, passphrase=None):
