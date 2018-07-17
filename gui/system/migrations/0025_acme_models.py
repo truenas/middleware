@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='DNSAuthenticator',
+            name='ACMEDNSAuthenticator',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('authenticator', models.CharField(max_length=64, verbose_name='Authenticator')),
@@ -68,11 +68,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='certificate',
             name='cert_renew_days',
-            field=models.IntegerField(default=10, help_text='Number of days to renew certificate before expiring', verbose_name='Renew certificate day'),
+            field=models.IntegerField(
+                default=10, help_text='Number of days to renew certificate before expiring',
+                verbose_name='Renew certificate day',
+                blank=True, null=True
+            ),
         ),
         migrations.AddField(
             model_name='certificate',
             name='cert_acme',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='system.ACMERegistration'),
+            field=models.ForeignKey(
+                blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='system.ACMERegistration'
+            ),
         ),
     ]

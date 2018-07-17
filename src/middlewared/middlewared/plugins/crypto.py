@@ -635,7 +635,7 @@ class CertificateService(CRUDService):
         # Validate domain dns mapping for handling DNS challenges
         # Ensure that there is an authenticator for each domain in the CSR
         domains = self.middleware.call_sync('certificate.get_domain_names', csr_data['id'])
-        dns_authenticator_ids = [o['id'] for o in self.middleware.call_sync('dns.authenticator.query')]
+        dns_authenticator_ids = [o['id'] for o in self.middleware.call_sync('acme.dns.authenticator.query')]
         for domain in domains:
             if domain not in data['dns_mapping']:
                 verrors.add(
@@ -715,26 +715,21 @@ class CertificateService(CRUDService):
                     )
                     continue
 
-                try:
-                    status = self.middleware.call_sync(
-                        'dns.authenticator.update_txt_record', {
-                            'authenticator': domain_names_dns_mapping[domain],
-                            'challenge': challenge.json_dumps(),
-                            'domain': domain,
-                            'key': key.json_dumps()
-                        }
-                    )
-                except ValidationErrors as v:
-                    verrors.extend(v)
-                else:
-                    try:
-                        acme_client.answer_challenge(challenge, challenge.response(key))
-                    except errors.UnexpectedUpdate as e:
-                        verrors.add(
-                            'acme_authorization.domain',
-                            f'Error answering challenge for {domain} : {e}'
-                        )
+                self.middleware.call_sync(
+                    'acme.dns.authenticator.update_txt_record', {
+                        'authenticator': domain_names_dns_mapping[domain],
+                        'challenge': challenge.json_dumps(),
+                        'domain': domain,
+                        'key': key.json_dumps()
+                    }
+                )
 
+                try:
+                    status = acme_client.answer_challenge(challenge, challenge.response(key))
+                except errors.UnexpectedUpdate as e:
+                    raise CallError(
+                        f'Error answering challenge for {domain} : {e}'
+                    )
             finally:
                 job.set_progress(
                     progress,
@@ -757,8 +752,7 @@ class CertificateService(CRUDService):
             progress += (100 / len(certs))
 
             if (
-                    datetime.datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') -
-                    datetime.datetime.utcnow()
+                datetime.datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') - datetime.datetime.utcnow()
             ).days < cert['renew_days']:
                 # renew cert
                 self.logger.debug(f'Renewing certificate {cert["name"]}')
@@ -786,11 +780,11 @@ class CertificateService(CRUDService):
             job.set_progress(progress)
 
     @accepts()
-    async def popular_acme_server_choices(self):
-        return [
-            'https://acme-staging-v02.api.letsencrypt.org/directory',
-            'https://acme-v02.api.letsencrypt.org/directory'
-        ]
+    async def acme_server_choices(self):
+        return {
+            'https://acme-staging-v02.api.letsencrypt.org/directory': 'Let\'s Encrypt Staging Directory',
+            'https://acme-v02.api.letsencrypt.org/directory': 'Let\'s Encrypt Production Directory'
+        }
 
     # CREATE METHODS FOR CREATING CERTIFICATES
     # "do_create" IS CALLED FIRST AND THEN BASED ON THE TYPE OF THE CERTIFICATE WHICH IS TO BE CREATED THE

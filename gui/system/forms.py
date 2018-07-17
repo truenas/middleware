@@ -2712,9 +2712,9 @@ class CertificateAuthoritySignCSRForm(MiddlewareModelForm, ModelForm):
         model = models.Certificate
 
 
-class DNSAuthenticatorForm(MiddlewareModelForm, ModelForm):
+class ACMEDNSAuthenticatorForm(MiddlewareModelForm, ModelForm):
 
-    middleware_plugin = 'dns.authenticator'
+    middleware_plugin = 'acme.dns.authenticator'
     middleware_attr_schema = 'dns_authenticator'
     middleware_attr_prefix = ''
     is_singletone = False
@@ -2734,15 +2734,32 @@ class DNSAuthenticatorForm(MiddlewareModelForm, ModelForm):
             'name',
             'authenticator',
         ]
-        model = models.DNSAuthenticator
+        model = models.ACMEDNSAuthenticator
 
     def __init__(self, *args, **kwargs):
-        super(DNSAuthenticatorForm, self).__init__(*args, **kwargs)
+        super(ACMEDNSAuthenticatorForm, self).__init__(*args, **kwargs)
         self.fields['authenticator'].widget.attrs['onChange'] = (
             'credentialsProvider("id_authenticator", "dns-authenticators-attribute");'
         )
         with client as c:
-            schemas = c.call('dns.authenticator.schema_choices')
+            schemas = c.call('acme.dns.authenticator.authenticator_schemas')
+
+        schemas = [
+            {
+                'name': data['key'],
+                'title': data['key'].replace('_', ' ').capitalize(),
+                'credentials_schema': [
+                    {
+                        'property': s['title'],
+                        'schema': {
+                            '_required_': s['_required_'], 'type': s['type'], 'title': s['title'].replace('_', ' ')
+                        }
+                    }
+                    for s in data['schema']
+                ]
+            }
+            for data in schemas
+        ]
 
         self.fields['authenticator'].choices = [
             (schema['name'], schema['title'])
@@ -2801,12 +2818,12 @@ class CertificateACMEForm(MiddlewareModelForm, ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.csr_id = kwargs.pop('csr_id')
-        self.complete_job = kwargs.pop('complete_job', False)
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
 
         super(CertificateACMEForm, self).__init__(*args, **kwargs)
 
         with client as c:
-            popular_acme_choices = c.call('certificate.popular_acme_server_choices')
+            popular_acme_choices = c.call('certificate.acme_server_choices')
             self.csr_domains = c.call('certificate.get_domain_names', self.csr_id)
 
         self.fields['cert_acme_directory_uri'].widget = forms.widgets.ComboBox()
@@ -2814,7 +2831,7 @@ class CertificateACMEForm(MiddlewareModelForm, ModelForm):
 
         for n, domain in enumerate(self.csr_domains):
             self.fields[f'domain_{n}'] = forms.ModelChoiceField(
-                queryset=models.DNSAuthenticator.objects.all(),
+                queryset=models.ACMEDNSAuthenticator.objects.all(),
                 label=(_(f'Authenticator for {domain} ')),
                 required=True,
                 help_text=_(f'Specify Authenticator to be used for {domain} domain')
@@ -2858,7 +2875,7 @@ class CertificateEditForm(MiddlewareModelForm, ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        self.complete_job = kwargs.pop('complete_job', False)
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
         super(CertificateEditForm, self).__init__(*args, **kwargs)
 
         self.fields['cert_certificate'].widget.attrs['readonly'] = True
@@ -2897,7 +2914,7 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        self.complete_job = kwargs.pop('complete_job', False)
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
         super(CertificateCSREditForm, self).__init__(*args, **kwargs)
 
         self.fields['cert_name'].widget.attrs['readonly'] = False
@@ -2964,7 +2981,7 @@ class CertificateCSRImportForm(MiddlewareModelForm, ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        self.complete_job = kwargs.pop('complete_job', False)
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
         super(CertificateCSRImportForm, self).__init__(*args, **kwargs)
 
     def clean_cert_passphrase2(self):
@@ -3054,7 +3071,7 @@ class CertificateImportForm(MiddlewareModelForm, ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        self.complete_job = kwargs.pop('complete_job', False)
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
         super(CertificateImportForm, self).__init__(*args, **kwargs)
 
         self.fields['cert_csr'].widget.attrs['onChange'] = (
@@ -3160,7 +3177,7 @@ class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        self.complete_job = kwargs.pop('complete_job', False)
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
         super(CertificateCreateInternalForm, self).__init__(*args, **kwargs)
 
         self.fields['cert_signedby'].required = True
@@ -3271,7 +3288,7 @@ class CertificateCreateCSRForm(MiddlewareModelForm, ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        self.complete_job = kwargs.pop('complete_job', False)
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
         super(CertificateCreateCSRForm, self).__init__(*args, **kwargs)
 
     def middleware_clean(self, data):

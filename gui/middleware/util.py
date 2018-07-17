@@ -7,9 +7,6 @@ from collections import namedtuple
 from freenasUI.middleware.client import client, ValidationErrors
 
 
-Error = namedtuple('Error', ['attribute', 'errmsg', 'errcode'])
-
-
 class JobAborted(Exception):
     pass
 
@@ -25,6 +22,7 @@ def run_alerts():
 
 
 def get_validation_errors(id):
+    Error = namedtuple('Error', ['attribute', 'errmsg', 'errcode'])
     with client as c:
         job = c.call(
             'core.get_jobs',

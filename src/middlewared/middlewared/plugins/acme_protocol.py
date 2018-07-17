@@ -5,7 +5,7 @@ import requests
 import time
 
 from middlewared.schema import Bool, Dict, Int, Str, ValidationErrors
-from middlewared.service import accepts, CallError, CRUDService
+from middlewared.service import accepts, CallError, CRUDService, private
 from middlewared.validators import validate_attributes
 
 from acme import client, messages
@@ -150,15 +150,23 @@ class ACMERegistrationService(CRUDService):
 class DNSAuthenticatorService(CRUDService):
 
     class Config:
-        namespace = 'dns.authenticator'
-        datastore = 'system.dnsauthenticator'
+        namespace = 'acme.dns.authenticator'
+        datastore = 'system.acmednsauthenticator'
 
     def __init__(self, *args, **kwargs):
         super(DNSAuthenticatorService, self).__init__(*args, **kwargs)
-        self.schemas = DNSAuthenticatorService.get_authenticator_schemas()
+        self.schemas = DNSAuthenticatorService.initialize_authenticator_schemas()
+
+    @accepts()
+    def authenticator_schemas(self):
+        return [
+            {'schema': [v.to_json_schema() for v in value], 'key': key}
+            for key, value in self.schemas.items()
+        ]
 
     @staticmethod
-    def get_authenticator_schemas():
+    @private
+    def initialize_authenticator_schemas():
 
         return {
             f_n[len('update_txt_record_'):]: [
@@ -173,6 +181,7 @@ class DNSAuthenticatorService(CRUDService):
             ]
         }
 
+    @private
     async def common_validation(self, data, schema_name):
         verrors = ValidationErrors()
         if data['authenticator'] not in self.schemas:
@@ -185,26 +194,6 @@ class DNSAuthenticatorService(CRUDService):
 
         if verrors:
             raise verrors
-
-    async def schema_choices(self):
-        return [
-            {
-                'name': key,
-                'title': key.replace('_', ' ').capitalize(),
-                'credentials_schema': [
-                    {
-                        'property': v.name,
-                        'schema': {
-                            '_required_': False,
-                            'title': v.name.replace('_', ' ').capitalize(),
-                            'type': 'string'
-                        }
-                    }
-                    for v in value
-                ]
-            }
-            for key, value in self.schemas.items()
-        ]
 
     @accepts(
         Dict(
@@ -271,9 +260,10 @@ class DNSAuthenticatorService(CRUDService):
             Str('challenge', required=True)
         )
     )
+    @private
     def update_txt_record(self, data):
 
-        authenticator = self.middleware.call_sync('dns.authenticator._get_instance', data['authenticator'])
+        authenticator = self.middleware.call_sync('acme.dns.authenticator._get_instance', data['authenticator'])
 
         return self.__getattribute__(
             f'update_txt_record_{authenticator["authenticator"].lower()}'
@@ -294,13 +284,13 @@ class DNSAuthenticatorService(CRUDService):
        status/reason.
     '''
 
+    @private
     def update_txt_record_route53(self, domain, challenge, key, access_key_id, secret_access_key):
         session = boto3.Session(
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key
         )
         client = session.client('route53')
-        verrors = ValidationErrors()
 
         # Finding zone id for the given domain
         paginator = client.get_paginator('list_hosted_zones')
@@ -316,17 +306,13 @@ class DNSAuthenticatorService(CRUDService):
                     if candidate_labels == target_labels[-len(candidate_labels):]:
                         zones.append((zone['Name'], zone['Id']))
             if not zones:
-                verrors.add(
-                    'update_txt_record.domain',
+                raise CallError(
                     f'Unable to find a Route53 hosted zone for {domain}'
                 )
         except boto_exceptions.ClientError as e:
             raise CallError(
                 f'Failed to get Hosted zones with provided credentials :{e}'
             )
-
-        if verrors:
-            raise verrors
 
         # Order the zones that are suffixes for our desired to domain by
         # length, this puts them in an order like:
@@ -355,12 +341,9 @@ class DNSAuthenticatorService(CRUDService):
                 }
             )
         except boto_BaseClientException as e:
-            verrors.add(
-                'update_txt_record.credentials',
+            raise CallError(
                 f'Failed to update record sets : {e}'
             )
-
-            raise verrors
 
         """
         Wait for a change to be propagated to all Route53 DNS servers.
@@ -372,9 +355,6 @@ class DNSAuthenticatorService(CRUDService):
                 return resp['ChangeInfo']['Id']
             time.sleep(5)
 
-        verrors.add(
-            'update_txt_record.domain',
+        raise CallError(
             f'Timed out waiting for Route53 change. Current status: {resp["ChangeInfo"]["Status"]}'
         )
-
-        raise verrors

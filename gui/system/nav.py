@@ -130,9 +130,9 @@ class CertificateView(TreeNode):
     order = 15
 
 
-class DNSAuthenticator(TreeNode):
+class ACMEDNSAuthenticator(TreeNode):
 
-    gname = 'DNSAuthenticator'
+    gname = 'ACMEDNSAuthenticator'
     replace_only = True
     append_to = 'system'
 

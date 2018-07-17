@@ -1026,7 +1026,9 @@ class Certificate(CertificateBase):
     cert_renew_days = models.IntegerField(
         default=10,
         verbose_name=_("Renew certificate day"),  # Should we change the name ?
-        help_text=_('Number of days to renew certificate before expiring')
+        help_text=_('Number of days to renew certificate before expiring'),
+        null=True,
+        blank=True
     )
 
     def delete(self):
@@ -1248,7 +1250,7 @@ class ACMERegistration(Model):
     )
 
 
-class DNSAuthenticator(Model):
+class ACMEDNSAuthenticator(Model):
     authenticator = models.CharField(
         max_length=64,
         verbose_name=_('Authenticator')
@@ -1260,27 +1262,11 @@ class DNSAuthenticator(Model):
     )
     attributes = EncryptedDictField()
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.attributes:
-            for key, value in self.attributes.items():
-                try:
-                    self.attributes[key] = notifier().pwenc_decrypt(value)
-                except Exception:
-                    log.debug(f'Failed to decrypt Authenticator {key} token', exc_info=True)
-                    self.attributes[key] = ''
-
-    def save(self, *args, **kwargs):
-        if self.attributes:
-            for key, value in self.attributes.items():
-                self.attributes[key] = notifier().pwenc_encrypt(value)
-        return super().save(*args, **kwargs)
-
     def __str__(self):
         return self.name
 
     class Meta:
-        verbose_name = _("DNS Authenticator")
+        verbose_name = _('ACME DNS Authenticator')
 
 
 class Filesystem(Model):

@@ -44,7 +44,7 @@ class SystemHook(AppHook):
             models.AlertService,
             models.CertificateAuthority,
             models.Certificate,
-            models.DNSAuthenticator
+            models.ACMEDNSAuthenticator
         ]
 
         tabs = []
