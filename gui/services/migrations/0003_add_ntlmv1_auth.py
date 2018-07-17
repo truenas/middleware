@@ -17,13 +17,15 @@ class Migration(migrations.Migration):
             model_name='cifs',
             name='cifs_srv_ntlmv1_auth',
             field=models.BooleanField(default=False,
-                                      help_text='Off by default. When set, smbd(8) attempts '
-                                                'to authenticate users with the insecure '
-                                                'and vulnerable NTLMv1 encryption. This setting '
-                                                'allows backward compatibility with older '
-                                                'versions of Windows, but is not '
-                                                'recommended and should not be used on untrusted '
-                                                'networks.',
+                                      help_text=(
+                                          'Off by default. When set, smbd(8) attempts '
+                                          'to authenticate users with the insecure '
+                                          'and vulnerable NTLMv1 encryption. This setting '
+                                          'allows backward compatibility with older '
+                                          'versions of Windows, but is not '
+                                          'recommended and should not be used on untrusted '
+                                          'networks.'
+                                      ),
                                       verbose_name='NTLMv1 auth'),
         ),
     ]
