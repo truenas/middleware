@@ -2056,7 +2056,7 @@ def certificate_csr_import(request):
 
             return render(
                 request, 'system/certificate/certificate_progress.html', {
-                    'certificate_url': reverse('certificate_csr_import'),
+                    'certificate_url': reverse('certificate_import_csr'),
                     'dialog_name': 'Import Certificate Signing Request'
                 }
             )

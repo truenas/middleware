@@ -2726,7 +2726,7 @@ class DNSAuthenticatorForm(MiddlewareModelForm, ModelForm):
         widget=forms.widgets.HiddenInput,
     )
     credentials_schemas = forms.CharField(
-        widget=forms.widgets.HiddenInput,
+        widget=forms.widgets.HiddenInput
     )
 
     class Meta:
@@ -2738,6 +2738,7 @@ class DNSAuthenticatorForm(MiddlewareModelForm, ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(DNSAuthenticatorForm, self).__init__(*args, **kwargs)
+        # TODO: GENERALIZE THE DNSAUTHENTICATORS JS FUNC AND HAVE CLOUD CREDENTIALS USE IT AS WELL
         self.fields['authenticator'].widget.attrs['onChange'] = (
             'DNSAuthenticators();'
         )
@@ -2787,6 +2788,11 @@ class CertificateACMEForm(MiddlewareModelForm, ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_name').help_text
     )
+    cert_acme_directory_uri = forms.ChoiceField(
+            label=_('ACME Server Directory URI'),
+            required=True,
+            help_text=_('Please specify URI of ACME Server Directory')
+        )
 
     class Meta:
         fields = [
@@ -2804,15 +2810,8 @@ class CertificateACMEForm(MiddlewareModelForm, ModelForm):
             popular_acme_choices = c.call('certificate.popular_acme_server_choices')
             self.csr_domains = c.call('certificate.get_domain_names', self.csr_id)
 
-        self.fields['cert_acme_directory_uri'] = forms.ChoiceField(
-            label=_('ACME Server Directory URI'),
-            required=True,
-            help_text=_('Please specify URI of ACME Server Directory')
-        )
         self.fields['cert_acme_directory_uri'].widget = forms.widgets.ComboBox()
         self.fields['cert_acme_directory_uri'].choices = [(v, v) for v in popular_acme_choices]
-        if self.is_bound and 'cert_acme_directory_uri' in self.data:
-            self.fields['cert_acme_directory_uri'].initial = self.data['cert_acme_directory_uri']
 
         for n, domain in enumerate(self.csr_domains):
             self.fields[f'domain_{n}'] = forms.ModelChoiceField(

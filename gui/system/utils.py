@@ -37,7 +37,7 @@ from lockfile import LockFile
 from freenasOS import Update
 from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
-from freenasUI.middleware.client import client, ValidationErrors
+from freenasUI.middleware.client import client
 from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.util import get_validation_errors, run_alerts
 from freenasUI.system import forms
@@ -54,7 +54,8 @@ def certificate_common_post_create(action, request, **kwargs):
     form.is_valid()
     form._middleware_action = action
     verrors = get_validation_errors(request.session['certificate_create']['job_id'])
-    handle_middleware_validation(form, verrors or ValidationErrors([]))
+    if verrors:
+        handle_middleware_validation(form, verrors)
     with client as c:
         job = c.call(
             'core.get_jobs',

@@ -17,17 +17,10 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 
 '''
->>> issue_cert
-{'name': 'check_cert', 'tos': True, 'csr_id': 14, 'acme_directory_uri': 'https://acme-staging-v02.api.letsencrypt.org/directory', 'create_type': 'CERTIFICATE_CREATE_ACME', 'dns_mapping': {'acmedev.agencialivre.com.br': 1}}
-'''
-
-'''
 TODO'S:
 1) IS THERE A MIN KEY SIZE REQUIRED BY LETS ENCRYPT IN CSR - HANDLE THE EXCEPTION GRACEFULLY
-2) CHECK IF _GET_INSTANCE CAN BE CALLED FROM MIDDLEWARE.CALL_SYNC
-3) Domain names should not end in periods ? research
-4) Integrate alerts
-5) See what can be done to respect rate limits
+2) Domain names should not end in periods ? research
+3) See what can be done to respect rate limits
 '''
 
 
@@ -51,9 +44,7 @@ class ACMERegistrationService(CRUDService):
 
     def get_directory(self, acme_directory_uri):
         try:
-            response = requests.get(
-                acme_directory_uri[:-1] if acme_directory_uri[-1] == '/' else acme_directory_uri
-            ).json()
+            response = requests.get(acme_directory_uri).json()
             return messages.Directory({
                 key: response[key] for key in ['newAccount', 'newNonce', 'newOrder', 'revokeCert']
             })
@@ -125,6 +116,8 @@ class ACMERegistrationService(CRUDService):
         )
         # We have registered with the acme server
 
+        data['acme_directory_uri'] += '/' if data['acme_directory_uri'][-1] != '/' else ''
+
         # Save registration object
         registration_id = self.middleware.call_sync(
             'datastore.insert',
@@ -136,8 +129,7 @@ class ACMERegistrationService(CRUDService):
                 'new_nonce_uri': directory.newNonce,
                 'new_order_uri': directory.newOrder,
                 'revoke_cert_uri': directory.revokeCert,
-                'directory': data['acme_directory_uri'] + '/' if data['acme_directory_uri'][-1] != '/' else
-                data['acme_directory_uri']
+                'directory': data['acme_directory_uri']
             }
         )
 
@@ -150,10 +142,10 @@ class ACMERegistrationService(CRUDService):
                 'status': register.body.status,
                 'key': key.json_dumps(),
                 'acme': registration_id
-            },
+            }
         )
 
-        return self.middleware.call_sync(f'{self._config.namespace}.query', [('id', '=', registration_id)])[0]
+        return self.middleware.call_sync(f'{self._config.namespace}._get_instance', registration_id)
 
 
 class DNSAuthenticatorService(CRUDService):

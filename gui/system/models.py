@@ -40,6 +40,7 @@ from OpenSSL import crypto
 
 from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, EncryptedDictField, ListField, Model, UserField
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.support.utils import get_license
 from licenselib.license import ContractType
@@ -1030,7 +1031,11 @@ class Certificate(CertificateBase):
 
     def delete(self):
         temp_cert_name = self.cert_name
-        super(Certificate, self).delete()
+        if not self.cert_acme:
+            super(Certificate, self).delete()
+        else:
+            with client as c:
+                c.call('certificate.delete', self.pk, True, job=True)
         # If this was a malformed CA then delete its alert sentinel file
         try:
             os.unlink('/tmp/alert_invalidcert_{0}'.format(temp_cert_name))
@@ -1203,14 +1208,14 @@ class Support(Model):
 
 class ACMERegistrationBody(Model):
     contact = models.EmailField(
-        verbose_name='Contact Email'
+        verbose_name=_('Contact Email')
     )
     status = models.CharField(
-        verbose_name='Status',
+        verbose_name=_('Status'),
         max_length=10
     )
     key = models.TextField(
-        verbose_name='JWKRSAKey'
+        verbose_name=_('JWKRSAKey')
     )
     acme = models.ForeignKey(
         'ACMERegistration',
@@ -1220,26 +1225,26 @@ class ACMERegistrationBody(Model):
 
 class ACMERegistration(Model):
     uri = models.URLField(
-        verbose_name='URI'
+        verbose_name=_('URI')
     )
     directory = models.URLField(
-        verbose_name='Directory URI',
+        verbose_name=_('Directory URI'),
         unique=True
     )
     tos = models.URLField(
-        verbose_name='Terms of Service'
+        verbose_name=_('Terms of Service')
     )
     new_account_uri = models.URLField(
-        verbose_name='New Account Uri'
+        verbose_name=_('New Account Uri')
     )
     new_nonce_uri = models.URLField(
-        verbose_name='New Nonce Uri'
+        verbose_name=_('New Nonce Uri')
     )
     new_order_uri = models.URLField(
-        verbose_name='New Order Uri'
+        verbose_name=_('New Order Uri')
     )
     revoke_cert_uri = models.URLField(
-        verbose_name='Revoke Certificate Uri'
+        verbose_name=_('Revoke Certificate Uri')
     )
 
 

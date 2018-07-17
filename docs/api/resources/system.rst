@@ -1273,6 +1273,45 @@ Delete resource
    :statuscode 204: no error
 
 
+DNS AUTHENTICATOR
+-----------------
+
+The DNS AUTHENTICATOR resource represents DNS authenticators for ACME based DNS challenges.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/system/dnsauthenticator/
+
+   Returns a list of DNS Authenticators.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/system/dnsauthenticator/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      [
+        {
+
+        }
+      ]
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 20
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
 Shutdown
 --------
 
