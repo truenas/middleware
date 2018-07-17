@@ -793,7 +793,7 @@ class PoolService(CRUDService):
         except Exception as e:
             try:
                 # If replace has failed lets detach geli to not keep disk busy
-                await self.middleware.call('disk.geli_detach', new_devname)
+                await self.middleware.call('disk.geli_detach_single', new_devname)
             except Exception:
                 self.logger.warn(f'Failed to geli detach {new_devname}', exc_info=True)
             raise e
@@ -887,7 +887,7 @@ class PoolService(CRUDService):
 
         if found[1]['path'].endswith('.eli'):
             devname = found[1]['path'].replace('/dev/', '')[:-4]
-            await self.middleware.call('disk.geli_detach', devname)
+            await self.middleware.call('disk.geli_detach_single', devname)
             await self.middleware.call(
                 'datastore.delete',
                 'storage.encrypteddisk',
@@ -958,7 +958,7 @@ class PoolService(CRUDService):
 
         if found[1]['path'].endswith('.eli'):
             devname = found[1]['path'].replace('/dev/', '')[:-4]
-            await self.middleware.call('disk.geli_detach', devname)
+            await self.middleware.call('disk.geli_detach_single', devname)
 
         disk = await self.middleware.call(
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
@@ -1148,16 +1148,21 @@ class PoolService(CRUDService):
                 'altroot': '/mnt',
                 'cachefile': ZPOOL_CACHE_FILE,
             })
-        except ZFSException as e:
-            # mounting filesystems may fail if we have readonly datasets as parent
-            if e.code.name != 'MOUNTFAILED':
-                raise
         except Exception as e:
-            if failed > 0:
-                raise CallError(
-                    f'Pool could not be imported: {failed} devices failed to decrypt.'
-                )
-            raise
+            # mounting filesystems may fail if we have readonly datasets as parent
+            if isinstance(e, ZFSException) and e.code.name != 'MOUNTFAILED':
+                detach_failed = await self.middleware.call('disk.geli_detach', pool)
+                if failed > 0:
+                    msg = f'Pool could not be imported: {failed} devices failed to decrypt.'
+                    if detach_failed > 0:
+                        msg += (
+                            f' {detach_failed} devices failed to detach and were left decrypted.'
+                        )
+                    raise CallError(msg)
+                elif detach_failed > 0:
+                    self.logger.warn('Pool %s failed to import', pool['name'], exc_info=True)
+                    raise CallError(f'Pool could not be imported ({detach_failed} devices left decrypted): {str(e)}')
+                raise e
 
         await self.middleware.call('notifier.sync_encrypted', oid)
 
