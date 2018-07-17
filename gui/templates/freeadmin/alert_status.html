@@ -2,7 +2,7 @@
 {% for alert in alerts %}
     <li>
         <input id="cbox_Alert_{{ alert.id }}" data-dojo-type="dijit.form.CheckBox" type="checkbox" value="{{ alert.id }}" onClick="alertDismiss" {% if not alert.dismissed %} checked{% endif %} />
-        {% if alert.level == 'OK'%}
+        {% if alert.level == 'INFO'%}
             <span style="color:green;font-weight:bold;">
             {% trans "OK" %}:
         {% else %}
