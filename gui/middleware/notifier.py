@@ -51,7 +51,6 @@ import shutil
 import signal
 import socket
 import sqlite3
-import stat
 from subprocess import Popen, PIPE
 import subprocess
 import sys
@@ -274,7 +273,7 @@ class notifier(metaclass=HookMetaclass):
                 ):
                     running = True
                     break
-        except:
+        except Exception:
             pass
 
         return running
@@ -296,7 +295,7 @@ class notifier(metaclass=HookMetaclass):
         try:
             from freenasUI.settings import DATABASES
             dbname = DATABASES['default']['NAME']
-        except:
+        except Exception:
             dbname = '/data/freenas-v1.db'
 
         conn = sqlite3.connect(dbname)
@@ -423,7 +422,7 @@ class notifier(metaclass=HookMetaclass):
             if could_not_restore:
                 try:
                     open(GELI_REKEY_FAILED, 'w').close()
-                except:
+                except Exception:
                     pass
                 log.error("Unable to rekey. Devices now have the following keys:%s%s",
                           os.linesep,
@@ -437,7 +436,7 @@ class notifier(metaclass=HookMetaclass):
             if os.path.exists(GELI_REKEY_FAILED):
                 try:
                     os.unlink(GELI_REKEY_FAILED)
-                except:
+                except Exception:
                     pass
             log.debug("%s -> %s", geli_keyfile_tmp, geli_keyfile)
             os.rename(geli_keyfile_tmp, geli_keyfile)
@@ -670,7 +669,7 @@ class notifier(metaclass=HookMetaclass):
             if self.contains_jail_root(mp):
                 try:
                     self.delete_plugins(force=True)
-                except:
+                except Exception:
                     log.warn('Failed to delete plugins', exc_info=True)
 
             if recursive:
@@ -929,7 +928,7 @@ class notifier(metaclass=HookMetaclass):
 
         try:
             share = CIFS_Share.objects.get(cifs_path=path)
-        except:
+        except Exception:
             share = None
 
         return share
@@ -939,7 +938,7 @@ class notifier(metaclass=HookMetaclass):
 
         try:
             path = CIFS_Share.objects.get(cifs_name=share)
-        except:
+        except Exception:
             path = None
 
         return path
@@ -957,7 +956,7 @@ class notifier(metaclass=HookMetaclass):
 
         try:
             SID = info.split(' ')[0].strip()
-        except:
+        except Exception:
             SID = None
 
         log.debug("owner_to_SID: %s -> %s", owner, SID)
@@ -976,7 +975,7 @@ class notifier(metaclass=HookMetaclass):
 
         try:
             SID = info.split(' ')[0].strip()
-        except:
+        except Exception:
             SID = None
 
         log.debug("group_to_SID: %s -> %s", group, SID)
@@ -1005,7 +1004,7 @@ class notifier(metaclass=HookMetaclass):
             add_cmd = "%s %s -a '%s'" % (sharesec, share, add_args)
             try:
                 self._pipeopen(add_cmd).communicate()
-            except:
+            except Exception:
                 log.debug("sharesec_add: %s failed", add_cmd)
                 ret = False
 
@@ -1023,7 +1022,7 @@ class notifier(metaclass=HookMetaclass):
         ret = True
         try:
             self._pipeopen(delete_cmd).communicate()
-        except:
+        except Exception:
             log.debug("sharesec_delete: %s failed", delete_cmd)
             ret = False
 
@@ -1303,7 +1302,7 @@ class notifier(metaclass=HookMetaclass):
                         break
                     try:
                         os.kill(proc.pid, signal.SIGINFO)
-                    except:
+                    except Exception:
                         break
                     time.sleep(1)
                     # TODO: We don't need to read the whole file
@@ -1958,7 +1957,7 @@ class notifier(metaclass=HookMetaclass):
                 try:
                     snaplist = fsinfo[fs]
                     mostrecent = False
-                except:
+                except Exception:
                     snaplist = []
                     mostrecent = True
 
@@ -2057,7 +2056,7 @@ class notifier(metaclass=HookMetaclass):
                         "Failed to upload config, version newer than the "
                         "current installed."
                     )
-        except:
+        except Exception:
             os.unlink(config_file_name)
             return False, _('The uploaded file is not valid.')
 
@@ -2228,7 +2227,7 @@ class notifier(metaclass=HookMetaclass):
         try:
             iface = iface[0].strip()
 
-        except:
+        except Exception:
             pass
 
         return iface if iface else None
@@ -2241,7 +2240,7 @@ class notifier(metaclass=HookMetaclass):
         try:
             iface = iface[0].strip()
 
-        except:
+        except Exception:
             pass
 
         return iface if iface else None
@@ -2268,7 +2267,7 @@ class notifier(metaclass=HookMetaclass):
 
         try:
             out = out[0].strip()
-        except:
+        except Exception:
             return iface_info
 
         m = re.search('ether (([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2})', out, re.MULTILINE)
@@ -2318,7 +2317,7 @@ class notifier(metaclass=HookMetaclass):
             socket.inet_aton(addr)
             res = True
 
-        except:
+        except Exception:
             res = False
 
         return res
@@ -2330,7 +2329,7 @@ class notifier(metaclass=HookMetaclass):
             socket.inet_pton(socket.AF_INET6, addr)
             res = True
 
-        except:
+        except Exception:
             res = False
 
         return res
@@ -2561,7 +2560,7 @@ class notifier(metaclass=HookMetaclass):
         res = res.rstrip('\n')
         try:
             return int(res)
-        except:
+        except Exception:
             return res
 
     def zpool_upgrade(self, name):
@@ -2655,7 +2654,7 @@ class notifier(metaclass=HookMetaclass):
         try:
             zpool = self.zpool_parse('freenas-boot')
             return zpool.get_disks()
-        except:
+        except Exception:
             log.warn("Root device not found!")
             return []
 
