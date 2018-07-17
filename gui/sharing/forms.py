@@ -245,7 +245,7 @@ class WebDAV_ShareForm(MiddlewareModelForm, ModelForm):
 
     middleware_attr_schema = 'webdav_share'
     middleware_attr_prefix = 'webdav_'
-    middleware_plugin = 'webdav.share'
+    middleware_plugin = 'sharing.webdav'
     is_singletone = False
 
     class Meta:

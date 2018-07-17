@@ -9,9 +9,9 @@ class SFTPRcloneRemote(BaseRcloneRemote):
     rclone_type = "sftp"
 
     credentials_schema = [
-        Str("host", verbose="Host", required=True),
-        Int("port", verbose="Port"),
-        Str("user", verbose="Username", required=True),
-        Str("pass", verbose="Password", required=True),
-        Str("key_file", verbose="PEM-encoded private key file path", required=True),
+        Str("host", title="Host", required=True),
+        Int("port", title="Port"),
+        Str("user", title="Username", required=True),
+        Str("pass", title="Password", required=True),
+        Str("key_file", title="PEM-encoded private key file path", required=True),
     ]

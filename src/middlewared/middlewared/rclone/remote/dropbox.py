@@ -9,5 +9,5 @@ class DropboxRcloneRemote(BaseRcloneRemote):
     rclone_type = "dropbox"
 
     credentials_schema = [
-        Str("token", verbose="Access Token", required=True),
+        Str("token", title="Access Token", required=True),
     ]

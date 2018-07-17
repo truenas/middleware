@@ -52,7 +52,7 @@ class CloudSyncWidget(DojoWidgetMixin, Widget):
                     for i in CloudCredentials.objects.all()
                 ]),
                 json.dumps(value),
-            ).replace('"', '&quot;')),
+            ).replace('"', '&quot;').replace("\\n", "\\\\n")),
         }
         final_attrs = self.build_attrs(attrs, name=name, **extra_attrs)
         return mark_safe('<div%s></div>' % (flatatt(final_attrs),))

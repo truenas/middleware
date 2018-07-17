@@ -9,6 +9,6 @@ class AmazonCloudDriveRcloneRemote(BaseRcloneRemote):
     rclone_type = "amazon cloud drive"
 
     credentials_schema = [
-        Str("client_id", verbose="Amazon Application Client ID", required=True),
-        Str("client_secret", verbose="Application Key", required=True),
+        Str("client_id", title="Amazon Application Client ID", required=True),
+        Str("client_secret", title="Application Key", required=True),
     ]

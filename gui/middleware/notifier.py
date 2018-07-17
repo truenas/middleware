@@ -374,105 +374,18 @@ class notifier(metaclass=HookMetaclass):
                 self.__geli_delkey(dev, GELI_RECOVERY_SLOT, force=True)
             self.geli_setkey(dev, geli_keyfile, GELI_KEY_SLOT, passphrase)
 
-    def geli_rekey(self, volume, slot=GELI_KEY_SLOT):
-        """
-        Regenerates the geli global key and set it to devs
-        Removes the passphrase if it was present
-
-        Raises:
-            MiddlewareError
-        """
-
-        geli_keyfile = volume.get_geli_keyfile()
-        geli_keyfile_tmp = "%s.tmp" % geli_keyfile
-        devs = [ed.encrypted_provider for ed in volume.encrypteddisk_set.all()]
-
-        # keep track of which device has which key in case something goes wrong
-        dev_to_keyfile = dict((dev, geli_keyfile) for dev in devs)
-
-        # Generate new key as .tmp
-        log.debug("Creating new key file: %s", geli_keyfile_tmp)
-        self.__create_keyfile(geli_keyfile_tmp, force=True)
-        error = None
-        applied = []
-        for dev in devs:
-            try:
-                self.geli_setkey(dev, geli_keyfile_tmp, slot)
-                dev_to_keyfile[dev] = geli_keyfile_tmp
-                applied.append(dev)
-            except Exception as ee:
-                error = str(ee)
-                log.error(error)
-                break
-
-        # Try to be atomic in a certain way
-        # If rekey failed for one of the devs, revert for the ones already applied
-        if error:
-            could_not_restore = False
-            for dev in applied:
-                try:
-                    self.geli_setkey(dev, geli_keyfile, slot, oldkey=geli_keyfile_tmp)
-                    dev_to_keyfile[dev] = geli_keyfile
-                except Exception as ee:
-                    # this is very bad for the user, at the very least there
-                    # should be a notification that they will need to
-                    # manually rekey as they now have drives with different keys
-                    could_not_restore = True
-                    log.error(str(ee))
-            if could_not_restore:
-                try:
-                    open(GELI_REKEY_FAILED, 'w').close()
-                except Exception:
-                    pass
-                log.error("Unable to rekey. Devices now have the following keys:%s%s",
-                          os.linesep,
-                          os.linesep.join(['%s: %s' % (dev, keyfile)
-                                           for dev, keyfile in dev_to_keyfile]))
-                raise MiddlewareError("Unable to rekey and devices have different "
-                                      "keys. See the log file.")
-            else:
-                raise MiddlewareError("Unable to set key: %s" % (error, ))
-        else:
-            if os.path.exists(GELI_REKEY_FAILED):
-                try:
-                    os.unlink(GELI_REKEY_FAILED)
-                except Exception:
-                    pass
-            log.debug("%s -> %s", geli_keyfile_tmp, geli_keyfile)
-            os.rename(geli_keyfile_tmp, geli_keyfile)
-            if volume.vol_encrypt != 1:
-                volume.vol_encrypt = 1
-                volume.save()
-
-            # Sync new file to standby node
-            if not self.is_freenas() and self.failover_licensed():
-                with client as c:
-                    self.sync_file_send(c, geli_keyfile)
-
     def geli_recoverykey_add(self, volume, passphrase=None):
-        reckey_file = tempfile.mktemp(dir='/tmp/')
-        self.__create_keyfile(reckey_file, force=True)
-
-        errors = []
-
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
-            try:
-                self.geli_setkey(dev, reckey_file, GELI_RECOVERY_SLOT, passphrase)
-            except Exception as ee:
-                errors.append(str(ee))
-
-        if errors:
-            raise MiddlewareError("Unable to set recovery key for %d devices: %s" % (
-                len(errors),
-                ', '.join(errors),
-            ))
-        return reckey_file
+        from freenasUI.middleware.util import download_job
+        reckey = tempfile.NamedTemporaryFile(dir='/tmp/', delete=False)
+        download_job(reckey.name, 'recovery.key', 'pool.recoverykey_add', volume.id)
+        return reckey.name
 
     def geli_delkey(self, volume, slot=GELI_RECOVERY_SLOT, force=True):
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
-            self.__geli_delkey(dev, slot, force)
+        try:
+            with client as c:
+                c.call('pool.recoverykey_rm', volume.id)
+        except Exception as e:
+            raise MiddlewareError(f'Failed to remove recovery key: {str(e)}')
 
     def geli_is_decrypted(self, dev):
         doc = self._geom_confxml()
@@ -715,63 +628,30 @@ class notifier(metaclass=HookMetaclass):
             self.__gpt_unlabeldisk(devname=disk)
 
     def zfs_offline_disk(self, volume, label):
-        from freenasUI.storage.models import EncryptedDisk
-
-        # TODO: Test on real hardware to see if ashift would persist across replace
-        disk = self.label_to_disk(label)
-
-        with client as c:
-            c.call('disk.swaps_remove_disks', [disk])
-
-        # Replace in-place
-        p1 = self._pipeopen('/sbin/zpool offline %s %s' % (volume.vol_name, label))
-        stderr = p1.communicate()[1]
-        if p1.returncode != 0:
-            error = ", ".join(stderr.split('\n'))
-            raise MiddlewareError('Disk offline failed: "%s"' % error)
-        if label.endswith(".eli"):
-            self._system("/sbin/geli detach /dev/%s" % label)
-            EncryptedDisk.objects.filter(
-                encrypted_volume=volume,
-                encrypted_provider=label[:-4]
-            ).delete()
+        try:
+            with client as c:
+                c.call('pool.offline', volume.id, {'label': label})
+        except Exception as e:
+            raise MiddlewareError(f'Disk offline failed: {str(e)}')
 
     def zfs_online_disk(self, volume, label):
-        assert volume.vol_encrypt == 0
-
-        p1 = self._pipeopen('/sbin/zpool online %s %s' % (volume.vol_name, label))
-        stderr = p1.communicate()[1]
-        if p1.returncode != 0:
-            error = ", ".join(stderr.split('\n'))
-            raise MiddlewareError('Disk online failed: "%s"' % error)
+        try:
+            with client as c:
+                c.call('pool.online', volume.id, {'label': label})
+        except Exception as e:
+            raise MiddlewareError(f'Disk online failed: {str(e)}')
 
     def zfs_detach_disk(self, volume, label):
-        """Detach a disk from zpool
-           (more technically speaking, a replaced disk.  The replacement actually
-           creates a mirror for the device to be replaced)"""
+        from freenasUI.storage.models import Volume
 
         if isinstance(volume, str):
-            vol_name = volume
-        else:
-            vol_name = volume.vol_name
+            volume = Volume.objects.get(vol_name=volume)
 
-        from_disk = self.label_to_disk(label)
-        if not from_disk:
-            if not re.search(r'^[0-9]+$', label):
-                log.warn("Could not find disk for the ZFS label %s", label)
-        else:
+        try:
             with client as c:
-                c.call('disk.swaps_remove_disks', [from_disk])
-
-        ret = self._system_nolog('/sbin/zpool detach %s %s' % (vol_name, label))
-
-        if not isinstance(volume, str):
-            self.sync_encrypted(volume)
-
-        if from_disk:
-            # TODO: This operation will cause damage to disk data which should be limited
-            self.__gpt_unlabeldisk(from_disk)
-        return ret
+                c.call('pool.detach', volume.id, {'label': label})
+        except Exception as e:
+            raise MiddlewareError(f'Failed to detach disk: {str(e)}')
 
     def zfs_remove_disk(self, volume, label):
         """
@@ -779,24 +659,11 @@ class notifier(metaclass=HookMetaclass):
         Cache disks, inactive hot-spares (and log devices in zfs 28) can be removed
         """
 
-        from_disk = self.label_to_disk(label)
-        with client as c:
-            c.call('disk.swaps_remove_disks', [from_disk])
-
-        p1 = self._pipeopen('/sbin/zpool remove %s %s' % (volume.vol_name, label))
-        stderr = p1.communicate()[1]
-        if p1.returncode != 0:
-            error = ", ".join(stderr.split('\n'))
-            raise MiddlewareError('Disk could not be removed: "%s"' % error)
-
-        self.sync_encrypted(volume)
-
-        if volume.vol_encrypt >= 1:
-            self._system(f'/sbin/geli detach {label}')
-
-        # TODO: This operation will cause damage to disk data which should be limited
-        if from_disk:
-            self.__gpt_unlabeldisk(from_disk)
+        try:
+            with client as c:
+                c.call('pool.remove', volume.id, {'label': label})
+        except Exception as e:
+            raise MiddlewareError(f'Disk could not be removed: {str(e)}')
 
     def detach_volume_swaps(self, volume):
         """Detach all swaps associated with volume"""
@@ -1905,9 +1772,11 @@ class notifier(metaclass=HookMetaclass):
                 raise MiddlewareError('Failed to remove mountpoint %s: %s'
                                       % (path, str(ose), ))
 
-    def zfs_scrub(self, name, stop=False):
+    def zfs_scrub(self, name, stop=False, pause=False):
         if stop:
             imp = self._pipeopen('zpool scrub -s %s' % str(name))
+        elif pause:
+            imp = self._pipeopen('zpool scrub -p %s' % str(name))
         else:
             imp = self._pipeopen('zpool scrub %s' % str(name))
         stdout, stderr = imp.communicate()
@@ -2580,7 +2449,10 @@ class notifier(metaclass=HookMetaclass):
         """
         from freenasUI.storage.models import Disk, EncryptedDisk, Volume
         if volume is not None:
-            volumes = [volume]
+            if isinstance(volume, int):
+                volumes = [Volume.objects.get(pk=volume)]
+            else:
+                volumes = [volume]
         else:
             volumes = Volume.objects.filter(vol_encrypt__gt=0)
 

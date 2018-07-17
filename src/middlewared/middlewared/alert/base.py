@@ -8,6 +8,7 @@ import os
 from middlewared.alert.schedule import IntervalSchedule
 
 __all__ = ["AlertLevel", "Alert", "AlertSource", "FilePresenceAlertSource", "ThreadedAlertSource",
+           "DismissableAlertSource",
            "AlertService", "ThreadedAlertService", "ProThreadedAlertService",
            "format_alerts", "ellipsis"]
 
@@ -38,6 +39,9 @@ class Alert:
         self.dismissed = dismissed
         self.mail = mail
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
     def __repr__(self):
         return repr(self.__dict__)
 
@@ -49,7 +53,7 @@ class Alert:
     def formatted(self):
         if self.args:
             try:
-                return self.title % self.args
+                return self.title % (tuple(self.args) if isinstance(self.args, list) else self.args)
             except Exception:
                 logger.error("Error formatting alert: %r, %r", self.title, self.args, exc_info=True)
 
@@ -91,6 +95,11 @@ class ThreadedAlertSource(AlertSource):
         return await self.middleware.run_in_thread(self.check_sync)
 
     def check_sync(self):
+        raise NotImplementedError
+
+
+class DismissableAlertSource:
+    async def dismiss(self, alerts):
         raise NotImplementedError
 
 

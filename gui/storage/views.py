@@ -757,15 +757,15 @@ def zpool_scrub(request, vid):
             _('Pool output could not be parsed. Is the pool imported?')
         )
     if request.method == "POST":
-        if request.POST.get("scrub") == 'IN_PROGRESS':
-            notifier().zfs_scrub(str(volume.vol_name), stop=True)
-            return JsonResp(
-                request,
-                message=_("The scrub process has stopped"),
-            )
-        else:
+        if request.POST["action"] == "start":
             notifier().zfs_scrub(str(volume.vol_name))
-            return JsonResp(request, message=_("The scrub process has begun"))
+            return JsonResp(request, message=_("The scrub process has been started"))
+        elif request.POST["action"] == "stop":
+            notifier().zfs_scrub(str(volume.vol_name), stop=True)
+            return JsonResp(request, message=_("The scrub process has been stopped"))
+        elif request.POST["action"] == "pause":
+            notifier().zfs_scrub(str(volume.vol_name), pause=True)
+            return JsonResp(request, message=_("The scrub process has been paused"))
 
     return render(request, 'storage/scrub_confirm.html', {
         'volume': volume,
@@ -912,10 +912,13 @@ def volume_create_passphrase(request, object_id):
     if request.method == "POST":
         form = forms.CreatePassphraseForm(request.POST)
         if form.is_valid():
-            form.done(volume=volume)
-            return JsonResp(
-                request,
-                message=_("Passphrase created"))
+            try:
+                form.done(volume=volume)
+                return JsonResp(
+                    request,
+                    message=_("Passphrase created"))
+            except ClientException as e:
+                form._errors['__all__'] = form.error_class([str(e)])
     else:
         form = forms.CreatePassphraseForm()
     return render(request, "storage/create_passphrase.html", {
@@ -929,8 +932,7 @@ def volume_change_passphrase(request, object_id):
     volume = models.Volume.objects.get(id=object_id)
     if request.method == "POST":
         form = forms.ChangePassphraseForm(request.POST)
-        if form.is_valid():
-            form.done(volume=volume)
+        if form.is_valid() and form.done(volume=volume):
             return JsonResp(
                 request,
                 message=_("Passphrase updated"))
@@ -951,11 +953,22 @@ def volume_lock(request, object_id):
         _n = notifier()
         if '__confirm' not in request.POST and not _n.is_freenas() and _n.failover_licensed():
             remaining_volumes = [v for v in models.Volume.objects.exclude(pk=object_id) if v.is_decrypted()]
+
             if not remaining_volumes:
                 message = render_to_string('freeadmin/generic_model_confirm.html', {
                     'message': 'Warning: Locking this volume will prevent failover from functioning correctly.<br />Do you want to continue?',
                 })
                 return JsonResp(request, confirm=message)
+
+        with client as c:
+            active_pool = c.call('jail.get_activated_pool')
+
+            if active_pool == volume:
+                jails = c.call('jail.query', [('state', '=', 'up')])
+
+                for j in jails:
+                    _jail = j['host_hostuuid']
+                    c.call('jail.stop', _jail)
 
         notifier().volume_detach(volume)
         if hasattr(notifier, 'failover_status') and notifier().failover_status() == 'MASTER':
@@ -1074,8 +1087,7 @@ def volume_rekey(request, object_id):
     volume = models.Volume.objects.get(id=object_id)
     if request.method == "POST":
         form = forms.ReKeyForm(request.POST, volume=volume)
-        if form.is_valid():
-            form.done()
+        if form.is_valid() and form.done():
             return JsonResp(
                 request,
                 message=_("Encryption re-key succeeded"))

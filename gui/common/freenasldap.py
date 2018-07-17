@@ -33,7 +33,6 @@ import pwd
 import socket
 import tempfile
 import time
-import types
 import ipaddr
 
 from dns import resolver
@@ -716,7 +715,16 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         elif self.krb_realm and self.binddn and self.bindpw:
             user = self.get_user_by_DN(self.binddn)
-            uid = user[1]['uid'][0]
+
+            try:
+                uid = user[1]['uid'][0].decode('utf-8')
+            except Exception:
+                uid = user[1]['uid'][0]
+
+            try:
+                bindpw = self.bindpw.encode('utf-8')
+            except Exception:
+                bindpw = self.bindpw
 
             krb_principal = self.get_kerberos_principal_from_cache()
             principal = "%s@%s" % (uid, self.krb_realm)
@@ -724,14 +732,15 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             if krb_principal and krb_principal.upper() == principal.upper():
                 return True
 
-            f = tempfile.NamedTemporaryFile(mode='w+', dir="/tmp")
-            os.chmod(f.name, 0o600)
-            f.write(self.bindpw)
+            (fd, fname) = tempfile.mkstemp(dir="/tmp", text=True)
+            os.write(fd, bindpw)
+            os.fchmod(fd, 0o777)
+            os.close(fd)
 
             args = [
                 "/usr/bin/kinit",
                 "--renewable",
-                "--password-file=%s" % f.name,
+                "--password-file=%s" % fname,
                 "%s" % principal
             ]
 
@@ -740,7 +749,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                 kinit = True
                 res = True
 
-            f.close()
+            os.unlink(fname)
 
         if kinit:
             i = 0
@@ -1061,7 +1070,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             try:
                 FreeNAS_ActiveDirectory_Base.AsyncConnect(
                     host, int(port), callback)
-            except:
+            except Exception:
                 log.debug(
                     "get_best_host: Unable to connect to %s:%d",
                     host, int(port)
@@ -1099,7 +1108,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             )
             A_records = resolver.query(host, 'A')
 
-        except:
+        except Exception:
             log.debug(
                 "FreeNAS_ActiveDirectory_Base.get_A_records: "
                 "no A records for %s found, fail!",
@@ -1124,7 +1133,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             )
             AAAA_records = resolver.query(host, 'AAAA')
 
-        except:
+        except Exception:
             log.debug(
                 "FreeNAS_ActiveDirectory_Base.get_AAAA_records: "
                 "no AAAA records for %s found, fail!",
@@ -1148,6 +1157,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         )
 
         r = resolver.Resolver()
+        r.rotate = True
         r.timeout = _fs().directoryservice.activedirectory.dns.timeout
         r.lifetime = _fs().directoryservice.activedirectory.dns.lifetime
 
@@ -1303,10 +1313,13 @@ class FreeNAS_ActiveDirectory_Base(object):
             )
 
     @staticmethod
-    def port_is_listening(host, port, errors=[]):
+    def port_is_listening(host, port, errors=[], timeout=0):
         ret = False
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if timeout:
+            s.settimeout(timeout)
+
         try:
             s.connect((host, port))
             ret = True
@@ -1493,17 +1506,23 @@ class FreeNAS_ActiveDirectory_Base(object):
             krb_principal = self.get_kerberos_principal_from_cache()
             principal = "%s@%s" % (self.bindname, self.krb_realm)
 
+            try:
+                bindpw = self.bindpw.encode('utf-8')
+            except Exception:
+                bindpw = self.bindpw
+
             if krb_principal and krb_principal.upper() == principal.upper():
                 return True
 
-            f = tempfile.NamedTemporaryFile(mode='w+', dir="/tmp")
-            os.chmod(f.name, 0o600)
-            f.write(self.bindpw)
+            (fd, fname) = tempfile.mkstemp(dir="/tmp", text=True)
+            os.write(fd, bindpw)
+            os.fchmod(fd, 0o777)
+            os.close(fd)
 
             args = [
                 "/usr/bin/kinit",
                 "--renewable",
-                "--password-file=%s" % f.name,
+                "--password-file=%s" % fname,
                 "%s" % principal
             ]
 
@@ -1514,7 +1533,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             if res is not False:
                 kinit = True
 
-            f.close()
+            os.unlink(fname)
 
         if kinit:
             i = 0
@@ -1826,7 +1845,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                 bindpw=self.bindpw
             )
             return True
-        except:
+        except Exception:
             pass
         return False
 
@@ -1864,7 +1883,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         try:
             results = results[0][1]['rootDomainNamingContext'][0].decode('utf8')
 
-        except:
+        except Exception:
             log.debug('Failed to get rootDN', exc_info=True)
             results = None
 
@@ -1878,7 +1897,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         try:
             results = results[0][1]['defaultNamingContext'][0].decode('utf8')
 
-        except:
+        except Exception:
             log.debug('Failed to get baseDN', exc_info=True)
             results = None
 
@@ -1892,7 +1911,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         try:
             results = results[0][1]['configurationNamingContext'][0].decode('utf8')
 
-        except:
+        except Exception:
             log.debug('Failed to get config', exc_info=True)
             results = None
 
@@ -1914,7 +1933,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         try:
             netbios_name = results[0][1]['nETBIOSName'][0].decode('utf8')
 
-        except:
+        except Exception:
             netbios_name = None
 
         log.debug("FreeNAS_ActiveDirectory_Base.get_netbios_name: leave")
@@ -1961,7 +1980,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         try:
             domain = results[0][1]['dnsRoot'][0].decode('utf8')
 
-        except:
+        except Exception:
             domain = None
 
         log.debug("FreeNAS_ActiveDirectory_Base.get_root_domain: leave")
@@ -1975,7 +1994,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         try:
             domain = results[0][1]['dnsRoot'][0]
 
-        except:
+        except Exception:
             domain = None
 
         log.debug("FreeNAS_ActiveDirectory_Base.get_domain: leave")
@@ -2110,7 +2129,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         try:
             results = results[0][1]
 
-        except:
+        except Exception:
             results = None
 
         log.debug("FreeNAS_ActiveDirectory_Base.get_machine_account: leave")
@@ -2136,7 +2155,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         try:
             results = results[0][1][attributes[0]][0]
 
-        except:
+        except Exception:
             results = None
 
         log.debug("FreeNAS_ActiveDirectory_Base.get_userDN: leave")
@@ -2215,7 +2234,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         try:
             results = results[0][1][attributes[0]][0]
 
-        except:
+        except Exception:
             results = None
 
         log.debug("FreeNAS_ActiveDirectory_Base.get_groupDN: leave")
@@ -2323,7 +2342,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             userAccountControl = int(results['userAccountControl'][0])
             distinguishedName = results['distinguishedName'][0]
 
-        except:
+        except Exception:
             userAccountControl = 0
             distinguishedName = None
 
@@ -2371,7 +2390,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             userAccountControl = int(results['userAccountControl'][0])
             distinguishedName = results['distinguishedName'][0]
 
-        except:
+        except Exception:
             userAccountControl = 0
             distinguishedName = None
 
@@ -2409,7 +2428,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         try:
             distinguishedName = results['distinguishedName'][0]
 
-        except:
+        except Exception:
             distinguishedName = None
 
         if not distinguishedName:
@@ -2474,7 +2493,7 @@ class FreeNAS_LDAP_Users(FreeNAS_LDAP):
         try:
             file = paths[index]
 
-        except:
+        except Exception:
             pass
 
         if file and write:
@@ -2483,7 +2502,7 @@ class FreeNAS_LDAP_Users(FreeNAS_LDAP):
                     f.close()
                 ret = True
 
-            except:
+            except Exception:
                 ret = False
 
         elif file:
@@ -2545,7 +2564,7 @@ class FreeNAS_LDAP_Users(FreeNAS_LDAP):
 
             try:
                 pw = pwd.getpwnam(uid)
-            except:
+            except Exception:
                 continue
 
             self.__users.append(pw)
@@ -2605,7 +2624,7 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
         try:
             file = paths[index]
 
-        except:
+        except Exception:
             file = None
 
         if file and write:
@@ -2614,7 +2633,7 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
                     f.close()
                 ret = True
 
-            except:
+            except Exception:
                 ret = False
 
         elif file:
@@ -2782,7 +2801,7 @@ class FreeNAS_LDAP_Groups(FreeNAS_LDAP):
         try:
             file = paths[index]
 
-        except:
+        except Exception:
             pass
 
         if file and write:
@@ -2791,7 +2810,7 @@ class FreeNAS_LDAP_Groups(FreeNAS_LDAP):
                     f.close()
                 ret = True
 
-            except:
+            except Exception:
                 ret = False
 
         elif file:
@@ -2854,7 +2873,7 @@ class FreeNAS_LDAP_Groups(FreeNAS_LDAP):
             try:
                 gr = grp.getgrnam(cn)
 
-            except:
+            except Exception:
                 continue
 
             self.__groups.append(gr)
@@ -2915,7 +2934,7 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
         try:
             file = paths[index]
 
-        except:
+        except Exception:
             file = None
 
         if file and write:
@@ -2924,7 +2943,7 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
                     f.close()
                 ret = True
 
-            except:
+            except Exception:
                 ret = False
 
         elif file:
@@ -3122,21 +3141,21 @@ class FreeNAS_LDAP_Group(FreeNAS_LDAP):
             try:
                 gr = grp.getgrnam(cn)
 
-            except:
+            except Exception:
                 gr = None
 
         else:
             if type(group) is int or group.isdigit():
                 try:
                     gr = grp.getgrgid(group)
-                except:
+                except Exception:
                     gr = None
 
             else:
                 try:
                     gr = grp.getgrnam(group)
 
-                except:
+                except Exception:
                     gr = None
 
         if (self.flags & FLAGS_CACHE_WRITE_GROUP) and gr:
@@ -3248,7 +3267,7 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
         try:
             gr = grp.getgrnam(g)
 
-        except:
+        except Exception:
             gr = None
 
         if (self.flags & FLAGS_CACHE_WRITE_GROUP) and gr:
@@ -3348,21 +3367,21 @@ class FreeNAS_LDAP_User(FreeNAS_LDAP):
 
             try:
                 pw = pwd.getpwnam(uid)
-            except:
+            except Exception:
                 pw = None
 
         else:
             if type(user) is int or user.isdigit():
                 try:
                     pw = pwd.getpwuid(user)
-                except:
+                except Exception:
                     pw = None
 
             else:
                 try:
                     pw = pwd.getpwnam(user)
 
-                except:
+                except Exception:
                     pw = None
 
         if (self.flags & FLAGS_CACHE_WRITE_USER) and pw:
@@ -3470,7 +3489,7 @@ class FreeNAS_ActiveDirectory_User(FreeNAS_ActiveDirectory):
         try:
             pw = pwd.getpwnam(u)
 
-        except:
+        except Exception:
             pw = None
 
         if (self.flags & FLAGS_CACHE_WRITE_USER) and pw:

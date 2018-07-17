@@ -1,4 +1,5 @@
 import asyncio
+import base64
 from collections import defaultdict
 from datetime import datetime, timedelta
 import errno
@@ -27,6 +28,9 @@ if '/usr/local/www' not in sys.path:
 from freenasUI.services.utils import SmartAlert
 
 DISK_EXPIRECACHE_DAYS = 7
+GELI_KEY_SLOT = 0
+GELI_RECOVERY_SLOT = 1
+GELI_REKEY_FAILED = '/tmp/.rekey_failed'
 MIRROR_MAX = 5
 RE_CAMCONTROL_DRIVE_LOCKED = re.compile(r'^drive locked\s+yes$', re.M)
 RE_DA = re.compile('^da[0-9]+$')
@@ -221,6 +225,8 @@ class DiskService(CRUDService):
             subprocess.run(
                 ['dd', 'if=/dev/random', f'of={keyfile}', f'bs={size}', 'count=1'],
                 check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
 
     def __geli_setmetadata(self, dev, keyfile, passphrase=None):
@@ -274,6 +280,161 @@ class DiskService(CRUDService):
                     if str(e).find('Wrong key') != -1:
                         return False
         return True
+
+    @private
+    def geli_setkey(self, dev, key, slot=GELI_KEY_SLOT, passphrase=None, oldkey=None):
+        cp = subprocess.run([
+            'geli', 'setkey', '-n', str(slot),
+        ] + (
+            ['-J', passphrase] if passphrase else ['-P']
+        ) + ['-K', key] + (
+            ['-k', oldkey] if oldkey else []
+        ) + [dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if cp.stderr:
+            raise CallError(f'Unable to set passphrase on {dev}: {cp.stderr.decode()}')
+
+    @private
+    def geli_delkey(self, dev, slot=GELI_KEY_SLOT, force=False):
+        cp = subprocess.run([
+            'geli', 'delkey', '-n', str(slot),
+        ] + (
+            ['-f'] if force else []
+        ) + [dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if cp.stderr:
+            raise CallError(f'Unable to delete key {slot} on {dev}: {cp.stderr.decode()}')
+
+    @private
+    def geli_recoverykey_rm(self, pool):
+        for ed in self.middleware.call_sync(
+            'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+        ):
+            dev = ed['encrypted_provider']
+            self.geli_delkey(dev, GELI_RECOVERY_SLOT, True)
+
+    @private
+    def geli_passphrase(self, pool, passphrase, rmrecovery=False):
+        """
+        Set a passphrase in a geli
+        If passphrase is None then remove the passphrase
+        """
+        if passphrase:
+            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
+            os.chmod(passf.name, 0o600)
+            passf.write(passphrase)
+            passf.flush()
+            passphrase = passf.name
+        try:
+            for ed in self.middleware.call_sync(
+                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+            ):
+                dev = ed['encrypted_provider']
+                if rmrecovery:
+                    self.geli_delkey(dev, GELI_RECOVERY_SLOT, force=True)
+                self.geli_setkey(dev, pool['encryptkey_path'], GELI_KEY_SLOT, passphrase)
+        finally:
+            if passphrase:
+                passf.close()
+
+    @private
+    def geli_rekey(self, pool, slot=GELI_KEY_SLOT):
+        """
+        Regenerates the geli global key and set it to devices
+        Removes the passphrase if it was present
+        """
+
+        geli_keyfile = pool['encryptkey_path']
+        geli_keyfile_tmp = f'{geli_keyfile}.tmp'
+        devs = [
+            ed['encrypted_provider']
+            for ed in self.middleware.call_sync(
+                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+            )
+        ]
+
+        # keep track of which device has which key in case something goes wrong
+        dev_to_keyfile = {dev: geli_keyfile for dev in devs}
+
+        # Generate new key as .tmp
+        self.logger.debug("Creating new key file: %s", geli_keyfile_tmp)
+        self.__create_keyfile(geli_keyfile_tmp, force=True)
+        error = None
+        applied = []
+        for dev in devs:
+            try:
+                self.geli_setkey(dev, geli_keyfile_tmp, slot)
+                dev_to_keyfile[dev] = geli_keyfile_tmp
+                applied.append(dev)
+            except Exception as ee:
+                error = str(ee)
+                self.logger.error('Failed to set geli key on %s: %s', dev, error, exc_info=True)
+                break
+
+        # Try to be atomic in a certain way
+        # If rekey failed for one of the devs, revert for the ones already applied
+        if error:
+            could_not_restore = False
+            for dev in applied:
+                try:
+                    self.geli_setkey(dev, geli_keyfile, slot, oldkey=geli_keyfile_tmp)
+                    dev_to_keyfile[dev] = geli_keyfile
+                except Exception as ee:
+                    # this is very bad for the user, at the very least there
+                    # should be a notification that they will need to
+                    # manually rekey as they now have drives with different keys
+                    could_not_restore = True
+                    self.logger.error(
+                        'Failed to restore key on rekey for %s: %s', dev, str(ee), exc_info=True
+                    )
+            if could_not_restore:
+                try:
+                    open(GELI_REKEY_FAILED, 'w').close()
+                except Exception:
+                    pass
+                self.logger.error(
+                    'Unable to rekey. Devices now have the following keys: %s',
+                    '\n'.join([
+                        f'{dev}: {keyfile}'
+                        for dev, keyfile in dev_to_keyfile
+                    ])
+                )
+                raise CallError(
+                    'Unable to rekey and devices have different keys. See the log file.'
+                )
+            else:
+                raise CallError(f'Unable to set key: {error}')
+        else:
+            if os.path.exists(GELI_REKEY_FAILED):
+                try:
+                    os.unlink(GELI_REKEY_FAILED)
+                except Exception:
+                    pass
+            self.logger.debug("Rename geli key %s -> %s", geli_keyfile_tmp, geli_keyfile)
+            os.rename(geli_keyfile_tmp, geli_keyfile)
+
+    @private
+    def geli_recoverykey_add(self, pool):
+        with tempfile.NamedTemporaryFile(dir='/tmp/') as reckey:
+            reckey_file = reckey.name
+            self.__create_keyfile(reckey_file, force=True)
+            reckey.flush()
+
+            errors = []
+
+            for ed in self.middleware.call_sync(
+                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+            ):
+                dev = ed['encrypted_provider']
+                try:
+                    self.geli_setkey(dev, reckey_file, GELI_RECOVERY_SLOT, None)
+                except Exception as ee:
+                    errors.append(str(ee))
+
+            if errors:
+                raise CallError(
+                    'Unable to set recovery key for {len(errors)} devices: {", ".join(errors)}'
+                )
+            reckey.seek(0)
+            return base64.b64encode(reckey.read()).decode()
 
     @private
     def geli_detach(self, dev):
@@ -1204,6 +1365,31 @@ class DiskService(CRUDService):
         if uuid is None:
             raise ValueError(f'Partition type {part_type} not found on {disk}')
         return f'gptid/{uuid.text}'
+
+    @private
+    def unlabel(self, disk):
+        self.middleware.call_sync('disk.swaps_remove_disks', [disk])
+
+        subprocess.run(
+            ['gpart', 'destroy', '-F', f'/dev/{disk}'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        # Wipe out the partition table by doing an additional iterate of create/destroy
+        subprocess.run(
+            ['gpart', 'create', '-s', 'gpt', f'/dev/{disk}'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        subprocess.run(
+            ['gpart', 'destroy', '-F', f'/dev/{disk}'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        # We might need to sync with reality (e.g. uuid -> devname)
+        self.middleware.call_sync('disk.sync', disk)
 
 
 def new_swap_name():

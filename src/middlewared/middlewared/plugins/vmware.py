@@ -101,7 +101,7 @@ class VMWareService(CRUDService):
 
         new.update(data)
 
-        await self.validate_data(new)
+        await self.validate_data(new, 'vmware_update')
 
         new['password'] = await self.middleware.call(
             'notifier.pwenc_encrypt',

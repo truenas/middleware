@@ -106,7 +106,7 @@ def test_07_Changing_permissions_on_SMB_PATH():
 
 
 def test_08_Creating_a_SMB_share_on_SMB_PATH():
-    payload = {"cfs_comment": "My Test SMB Share",
+    payload = {"cifs_comment": "My Test SMB Share",
                "cifs_path": SMB_PATH,
                "cifs_name": SMB_NAME,
                "cifs_guestok": True,
@@ -266,7 +266,7 @@ def test_25_Removing_SMB_mountpoint():
 
 
 def test_26_Removing_SMB_share_on_SMB_PATH():
-    payload = {"cfs_comment": "My Test SMB Share",
+    payload = {"cifs_comment": "My Test SMB Share",
                "cifs_path": SMB_PATH,
                "cifs_name": SMB_NAME,
                "cifs_guestok": True,
@@ -308,7 +308,17 @@ def test_30_Verify_SMB_service_has_shut_down():
     assert results.json()["srv_state"] == "STOPPED", results.text
 
 
+def test_31_Delete_cifs_share_on_SMB_PATH():
+    payload = {"cifs_comment": "My Test SMB Share",
+               "cifs_path": SMB_PATH,
+               "cifs_name": SMB_NAME,
+               "cifs_guestok": True,
+               "cifs_vfsobjects": "streams_xattr"}
+    results = DELETE("/sharing/cifs/", payload)
+    assert results.status_code == 204, results.text
+
+
 # Check destroying a SMB dataset
-def test_31_Destroying_SMB_dataset():
+def test_32_Destroying_SMB_dataset():
     results = DELETE("/storage/volume/1/datasets/%s/" % DATASET)
     assert results.status_code == 204, results.text

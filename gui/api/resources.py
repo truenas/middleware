@@ -101,6 +101,7 @@ from freenasUI.storage.forms import (
     ReKeyForm,
     CreatePassphraseForm,
     ChangePassphraseForm,
+    ManualSnapshotForm,
     UnlockPassphraseForm,
     VolumeAutoImportForm,
     VolumeManagerForm,
@@ -965,12 +966,10 @@ class VolumeResourceMixin(NestedMixin):
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
         form = ReKeyForm(data=deserialized, volume=obj, api_validation=True)
-        if not form.is_valid():
+        if not (form.is_valid() and form.done()):
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)
             )
-        else:
-            form.done()
         return HttpResponse('Volume has been rekeyed.', status=202)
 
     def keypassphrase(self, request, **kwargs):
@@ -1000,12 +999,10 @@ class VolumeResourceMixin(NestedMixin):
                 deserialized['passphrase2'] = deserialized.get('passphrase')
 
             form = ChangePassphraseForm(deserialized)
-            if not form.is_valid():
+            if not (form.is_valid() and form.done(obj)):
                 raise ImmediateHttpResponse(
                     response=self.error_response(request, form.errors)
                 )
-            else:
-                form.done(obj)
 
             if deserialized.get('remove'):
                 return HttpResponse('Volume passphrase has been removed', status=201)
@@ -1945,12 +1942,7 @@ class CloudSyncResourceMixin(NestedMixin):
 
     def dispatch_list(self, request, **kwargs):
         with client as c:
-            self.__jobs = {}
-            for job in c.call('core.get_jobs', [('method', '=', 'cloudsync.sync')], {'order_by': ['id']}):
-                if job['arguments']:
-                    if job['arguments'][0] in self.__jobs and self.__jobs[job['arguments'][0]]['state'] == 'RUNNING':
-                        continue
-                    self.__jobs[job['arguments'][0]] = job
+            self.__tasks = {task["id"]: task for task in c.call("cloudsync.query")}
         return super(CloudSyncResourceMixin, self).dispatch_list(request, **kwargs)
 
     def dehydrate(self, bundle):
@@ -1961,7 +1953,7 @@ class CloudSyncResourceMixin(NestedMixin):
                 'oid': bundle.obj.id
             })
             bundle.data['credential'] = str(bundle.obj.credential)
-        job = self.__jobs.get(bundle.obj.id)
+        job = self.__tasks.get(bundle.obj.id, {}).get("job")
         if job:
             if job['state'] == 'RUNNING':
                 bundle.data['status'] = '{}{}'.format(
@@ -2227,8 +2219,11 @@ class ISCSITargetExtentResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(ISCSITargetExtentResourceMixin, self).dehydrate(bundle)
         if bundle.obj.iscsi_target_extent_type == 'Disk':
-            disk = Disk.objects.get(pk=bundle.obj.iscsi_target_extent_path)
-            bundle.data['iscsi_target_extent_path'] = "/dev/%s" % disk.devname
+            disk = Disk.objects.filter(pk=bundle.obj.iscsi_target_extent_path)
+            if disk.exists():
+                bundle.data['iscsi_target_extent_path'] = "/dev/%s" % disk[0].devname
+            else:
+                bundle.data['iscsi_target_extent_path'] = None
         elif bundle.obj.iscsi_target_extent_type == 'ZVOL':
             bundle.data['iscsi_target_extent_path'] = "/dev/%s" % (
                 bundle.data['iscsi_target_extent_path'],
@@ -2789,26 +2784,37 @@ class SnapshotResource(DojoResource):
             request.body,
             format=request.META.get('CONTENT_TYPE', 'application/json')
         )
-        try:
-            notifier().zfs_mksnap(**deserialized)
-        except MiddlewareError as e:
+        form = ManualSnapshotForm(data={
+            'ms_recursively': deserialized.get('recursive', False),
+            'ms_name': deserialized.get('name'),
+            'vmwaresync': deserialized.get('vmware_sync', False)
+        }, fs=deserialized.get('dataset'))
+        if not form.is_valid():
             raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e.value,
-                })
+                response=self.error_response(request, form.errors)
             )
-        snap = list(notifier().zfs_snapshot_list(path='%s@%s' % (
-            deserialized['dataset'],
-            deserialized['name'],
-        )).values())[0][0]
-        bundle = self.full_dehydrate(
-            self.build_bundle(obj=snap, request=request)
-        )
-        return self.create_response(
-            request,
-            bundle,
-            response_class=HttpCreated,
-        )
+        else:
+            try:
+                form.commit(deserialized.get('dataset'))
+            except MiddlewareError as e:
+                raise ImmediateHttpResponse(
+                    response=self.error_response(request, {
+                        'error': e.value,
+                    })
+                )
+            else:
+                snap = list(notifier().zfs_snapshot_list(path='%s@%s' % (
+                    deserialized['dataset'],
+                    deserialized['name'],
+                )).values())[0][0]
+                bundle = self.full_dehydrate(
+                    self.build_bundle(obj=snap, request=request)
+                )
+                return self.create_response(
+                    request,
+                    bundle,
+                    response_class=HttpCreated,
+                )
 
     def obj_delete(self, bundle=None, **kwargs):
         if '@' not in kwargs['pk']:

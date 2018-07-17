@@ -25,6 +25,8 @@
 #####################################################################
 from collections import defaultdict
 from datetime import datetime, time
+
+import base64
 import logging
 import os
 import re
@@ -59,7 +61,7 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.util import JobAborted, JobFailed, upload_job_and_wait
-from freenasUI.services.models import iSCSITargetExtent, services
+from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import dedup_enabled
@@ -1809,20 +1811,22 @@ class ManualSnapshotForm(Form):
         initial=False,
         required=False,
         label=_('Recursive snapshot'))
+
     ms_name = forms.CharField(label=_('Snapshot Name'))
+
+    vmwaresync = forms.BooleanField(
+        required=False,
+        label=_('VMware Sync'),
+        initial=True,
+    )
 
     def __init__(self, *args, **kwargs):
         self._fs = kwargs.pop('fs', None)
         super(ManualSnapshotForm, self).__init__(*args, **kwargs)
         self.fields['ms_name'].initial = datetime.today().strftime(
             'manual-%Y%m%d')
-
-        if models.VMWarePlugin.objects.filter(filesystem=self._fs).exists():
-            self.fields['vmwaresync'] = forms.BooleanField(
-                required=False,
-                label=_('VMware Sync'),
-                initial=True,
-            )
+        if not models.VMWarePlugin.objects.filter(filesystem=self._fs).exists():
+            self.fields.pop('vmwaresync')
 
     def clean_ms_name(self):
         regex = re.compile('^[-a-zA-Z0-9_. ]+$')
@@ -1842,29 +1846,29 @@ class ManualSnapshotForm(Form):
         vmsnapname = str(uuid.uuid4())
         vmsnapdescription = str(datetime.now()).split('.')[0] + " FreeNAS Created Snapshot"
         snapvms = []
-        for obj in models.VMWarePlugin.objects.filter(filesystem=self._fs):
-            try:
-                ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-                ssl_context.verify_mode = ssl.CERT_NONE
+        if self.cleaned_data.get('vmwaresync'):
+            for obj in models.VMWarePlugin.objects.filter(filesystem=self._fs):
+                try:
+                    ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+                    ssl_context.verify_mode = ssl.CERT_NONE
 
-                si = connect.SmartConnect(host=obj.hostname, user=obj.username, pwd=obj.get_password(), sslContext=ssl_context)
-            except Exception:
-                continue
-            content = si.RetrieveContent()
-            vm_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
-            for vm in vm_view.view:
-                if vm.summary.runtime.powerState != 'poweredOn':
+                    si = connect.SmartConnect(host=obj.hostname, user=obj.username, pwd=obj.get_password(), sslContext=ssl_context)
+                except Exception:
                     continue
-                for i in vm.datastore:
-                    if i.info.name == obj.datastore:
-                        VimTask.WaitForTask(vm.CreateSnapshot_Task(
-                            name=vmsnapname,
-                            description=vmsnapdescription,
-                            memory=False, quiesce=False,
-                        ))
-                        snapvms.append(vm)
-                        break
-
+                content = si.RetrieveContent()
+                vm_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
+                for vm in vm_view.view:
+                    if vm.summary.runtime.powerState != 'poweredOn':
+                        continue
+                    for i in vm.datastore:
+                        if i.info.name == obj.datastore:
+                            VimTask.WaitForTask(vm.CreateSnapshot_Task(
+                                name=vmsnapname,
+                                description=vmsnapdescription,
+                                memory=False, quiesce=False,
+                            ))
+                            snapvms.append(vm)
+                            break
         try:
             notifier().zfs_mksnap(
                 fs,
@@ -2371,18 +2375,8 @@ class CreatePassphraseForm(Form):
 
     def done(self, volume):
         passphrase = self.cleaned_data.get("passphrase")
-        if passphrase is not None:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
-                f.write(passphrase)
-        else:
-            passfile = None
-        notifier().geli_passphrase(volume, passfile, rmrecovery=True)
-        if passfile is not None:
-            os.unlink(passfile)
-        volume.vol_encrypt = 2
-        volume.save()
+        with client as c:
+            return c.call('pool.passphrase', volume.id, {'passphrase': passphrase})
 
 
 class ChangePassphraseForm(Form):
@@ -2413,19 +2407,6 @@ class ChangePassphraseForm(Form):
             self.fields['passphrase'].widget.attrs['disabled'] = 'disabled'
             self.fields['passphrase2'].widget.attrs['disabled'] = 'disabled'
 
-    def clean_adminpw(self):
-        pw = self.cleaned_data.get("adminpw")
-        valid = False
-        for user in bsdUsers.objects.filter(bsdusr_uid=0):
-            if user.check_password(pw):
-                valid = True
-                break
-        if valid is False:
-            raise forms.ValidationError(
-                _("Invalid password")
-            )
-        return pw
-
     def clean_passphrase2(self):
         pass1 = self.cleaned_data.get("passphrase")
         pass2 = self.cleaned_data.get("passphrase2")
@@ -2448,20 +2429,24 @@ class ChangePassphraseForm(Form):
         else:
             passphrase = self.cleaned_data.get("passphrase")
 
-        if passphrase is not None:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
-                f.write(passphrase)
-        else:
-            passfile = None
-        notifier().geli_passphrase(volume, passfile)
-        if passfile is not None:
-            os.unlink(passfile)
-            volume.vol_encrypt = 2
-        else:
-            volume.vol_encrypt = 1
-        volume.save()
+        try:
+            with client as c:
+                return c.call('pool.passphrase', volume.id, {
+                    'admin_password': self.cleaned_data.get('adminpw'),
+                    'passphrase': passphrase,
+                })
+        except ValidationErrors as e:
+            for err in e.errors:
+                if err.attribute == 'options.admin_password':
+                    field = 'adminpw'
+                elif err.attribute == 'options.passphrase':
+                    field = 'passphrase'
+                else:
+                    field = '__all__'
+                if field not in self._errors:
+                    self._errors[field] = self.error_class()
+                self._errors[field].append(err.errmsg)
+            return False
 
 
 class UnlockPassphraseForm(Form):
@@ -2480,6 +2465,10 @@ class UnlockPassphraseForm(Form):
         widget=forms.widgets.CheckboxSelectMultiple(),
         initial=['afp', 'cifs', 'ftp', 'iscsitarget', 'jails', 'nfs', 'webdav'],
         required=False,
+    )
+    recovery_key = forms.CharField(  # added for api v1 support
+        required=False,
+        widget=forms.HiddenInput()
     )
 
     def __init__(self, *args, **kwargs):
@@ -2502,7 +2491,8 @@ class UnlockPassphraseForm(Form):
     def clean(self):
         passphrase = self.cleaned_data.get("passphrase")
         key = self.cleaned_data.get("key")
-        if not passphrase and key is None:
+        recovery_key = self.cleaned_data.get('recovery_key')
+        if not passphrase and key is None and not recovery_key:
             self._errors['__all__'] = self.error_class([
                 _("You need either a passphrase or a recovery key to unlock")
             ])
@@ -2510,7 +2500,7 @@ class UnlockPassphraseForm(Form):
 
     def done(self, volume):
         passphrase = self.cleaned_data.get("passphrase")
-        key = self.cleaned_data.get("key")
+        key = self.cleaned_data.get("key") or self.cleaned_data.get('recovery_key')
         if passphrase:
             passfile = tempfile.mktemp(dir='/tmp/')
             with open(passfile, 'w') as f:
@@ -2522,7 +2512,7 @@ class UnlockPassphraseForm(Form):
             keyfile = tempfile.mktemp(dir='/tmp/')
             with open(keyfile, 'wb') as f:
                 os.chmod(keyfile, 600)
-                f.write(key.read())
+                f.write(key.read() if not isinstance(key, str) else base64.b64decode(key))
             failed = notifier().geli_attach(
                 volume,
                 passphrase=None,
@@ -2600,7 +2590,16 @@ class ReKeyForm(KeyForm):
         super(ReKeyForm, self).__init__(*args, **kwargs)
 
     def done(self):
-        notifier().geli_rekey(self.volume)
+        options = {}
+        adminpw = self.cleaned_data.get('adminpw')
+        if adminpw is not None:
+            options['admin_password'] = adminpw
+        try:
+            with client as c:
+                return c.call('pool.rekey', self.volume.id, options)
+        except ClientException as e:
+            self._errors['__all__'] = self.error_class([str(e)])
+            return False
 
 
 class VMWarePluginForm(MiddlewareModelForm, ModelForm):

@@ -3,10 +3,16 @@
 from __future__ import unicode_literals
 
 from django.db import migrations
+import os
 import subprocess
 
 
 def rename_bes(apps, schema_editor):
+
+    # There is no reason to run that code on fresh install
+    if os.environ.get('FREENAS_INSTALL', '').lower() == 'yes':
+        return
+
     # See #36118 for more details
     cp = subprocess.run(['/usr/local/sbin/beadm', 'list', '-H'], stdout=subprocess.PIPE)
     output = cp.stdout.decode('utf8', 'ignore')

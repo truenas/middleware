@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import errno
 import logging
 from datetime import datetime, time
@@ -822,6 +823,261 @@ class PoolService(CRUDService):
         return found
 
     @item_method
+    @accepts(Int('id'), Dict(
+        'options',
+        Str('label', required=True),
+    ))
+    async def detach(self, oid, options):
+        """
+        Detach a disk from pool of id `id`.
+
+        `label` is the vdev guid or device name.
+        """
+        pool = await self._get_instance(oid)
+
+        verrors = ValidationErrors()
+        found = self.__find_disk_from_topology(options['label'], pool)
+        if not found:
+            verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
+        if verrors:
+            raise verrors
+
+        disk = await self.middleware.call(
+            'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
+        )
+        if disk:
+            await self.middleware.call('disk.swaps_remove_disks', [disk])
+
+        await self.middleware.call('zfs.pool.detach', pool['name'], found[1]['guid'])
+
+        await self.middleware.call('notifier.sync_encrypted', oid)
+
+        if disk:
+            await self.middleware.call('disk.unlabel', disk)
+
+        return True
+
+    @item_method
+    @accepts(Int('id'), Dict(
+        'options',
+        Str('label', required=True),
+    ))
+    async def offline(self, oid, options):
+        """
+        Offline a disk from pool of id `id`.
+
+        `label` is the vdev guid or device name.
+        """
+        pool = await self._get_instance(oid)
+
+        verrors = ValidationErrors()
+        found = self.__find_disk_from_topology(options['label'], pool)
+        if not found:
+            verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
+        if verrors:
+            raise verrors
+
+        disk = await self.middleware.call(
+            'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
+        )
+        await self.middleware.call('disk.swaps_remove_disks', [disk])
+
+        await self.middleware.call('zfs.pool.offline', pool['name'], found[1]['guid'])
+
+        if found[1]['path'].endswith('.eli'):
+            devname = found[1]['path'].replace('/dev/', '')[:-4]
+            await self.middleware.call('disk.geli_detach', devname)
+            await self.middleware.call(
+                'datastore.delete',
+                'storage.encrypteddisk',
+                [('encrypted_volume', '=', oid), ('encrypted_provider', '=', devname)],
+            )
+        return True
+
+    @item_method
+    @accepts(Int('id'), Dict(
+        'options',
+        Str('label', required=True),
+    ))
+    async def online(self, oid, options):
+        """
+        Online a disk from pool of id `id`.
+
+        `label` is the vdev guid or device name.
+        """
+        pool = await self._get_instance(oid)
+
+        verrors = ValidationErrors()
+
+        found = self.__find_disk_from_topology(options['label'], pool)
+        if not found:
+            verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
+
+        if pool['encrypt'] > 0:
+            verrors.add('id', 'Disk cannot be set to online in encrypted pool.')
+
+        if verrors:
+            raise verrors
+
+        await self.middleware.call('zfs.pool.online', pool['name'], found[1]['guid'])
+
+        disk = await self.middleware.call(
+            'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
+        )
+        if disk:
+            await self.middleware.call('disk.swaps_configure')
+
+        return True
+
+    @item_method
+    @accepts(Int('id'), Dict(
+        'options',
+        Str('label', required=True),
+    ))
+    async def remove(self, oid, options):
+        """
+        Remove a disk from pool of id `id`.
+
+        `label` is the vdev guid or device name.
+        """
+        pool = await self._get_instance(oid)
+
+        verrors = ValidationErrors()
+
+        found = self.__find_disk_from_topology(options['label'], pool)
+        if not found:
+            verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
+
+        if verrors:
+            raise verrors
+
+        await self.middleware.call('zfs.pool.remove', pool['name'], found[1]['guid'])
+
+        await self.middleware.call('notifier.sync_encrypted', oid)
+
+        if found[1]['path'].endswith('.eli'):
+            devname = found[1]['path'].replace('/dev/', '')[:-4]
+            await self.middleware.call('disk.geli_detach', devname)
+
+        disk = await self.middleware.call(
+            'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
+        )
+        if disk:
+            await self.middleware.call('disk.swaps_remove_disks', [disk])
+            await self.middleware.call('disk.unlabel', disk)
+
+    @item_method
+    @accepts(Int('id'), Dict('options',
+        Str('passphrase', password=True, required=True, null=True),
+        Str('admin_password', password=True),
+    ))
+    async def passphrase(self, oid, options):
+        """
+        Create/Change/Remove passphrase for an encrypted pool.
+
+        Setting passphrase to null will remove the passphrase.
+        `admin_password` is required when changing or removing passphrase.
+        """
+        pool = await self._get_instance(oid)
+
+        verrors = await self.__common_encopt_validation(pool, options)
+
+        # For historical reasons (API v1.0 compatibility) we only require
+        # admin_password when changing/removing passphrase
+        if pool['encrypt'] == 2 and not options.get('admin_password'):
+            verrors.add('options.admin_password', 'This attribute is required.')
+            raise verrors
+
+        await self.middleware.call('disk.geli_passphrase', pool, options['passphrase'], True)
+
+        if pool['encrypt'] == 1 and options['passphrase']:
+            await self.middleware.call(
+                'datastore.update', 'storage.volume', oid, {'vol_encrypt': 2}
+            )
+        elif pool['encrypt'] == 2 and not options['passphrase']:
+            await self.middleware.call(
+                'datastore.update', 'storage.volume', oid, {'vol_encrypt': 1}
+            )
+        return True
+
+    async def __common_encopt_validation(self, pool, options):
+        verrors = ValidationErrors()
+
+        if pool['encrypt'] == 0:
+            verrors.add('id', 'Pool is not encrypted.')
+
+        # admin password is optional, its choice of the client to enforce
+        # it or not.
+        if 'admin_password' in options and not await self.middleware.call(
+            'auth.check_user', 'root', options['admin_password']
+        ):
+            verrors.add('options.admin_password', 'Invalid admin password.')
+
+        if verrors:
+            raise verrors
+        return verrors
+
+    @item_method
+    @accepts(Int('id'), Dict('options',
+        Str('admin_password', password=True, required=False),
+    ))
+    async def rekey(self, oid, options):
+        """
+        Rekey encrypted pool `id`.
+        """
+        pool = await self._get_instance(oid)
+
+        await self.__common_encopt_validation(pool, options)
+
+        await self.middleware.call('disk.geli_rekey', pool)
+
+        if pool['encrypt'] == 2:
+            await self.middleware.call(
+                'datastore.update', 'storage.volume', oid, {'vol_encrypt': 1}
+            )
+
+        await self.middleware.call_hook('pool.rekey_done', pool=pool)
+        return True
+
+    @item_method
+    @accepts(Int('id'), Dict('options',
+        Str('admin_password', password=True, required=False),
+    ))
+    @job(lock=lambda x: f'pool_reckey_{x[0]}', pipes=['output'])
+    async def recoverykey_add(self, job, oid, options):
+        """
+        Add Recovery key for encrypted pool `id`.
+
+        This is to be used with `core.download` which will provide an URL
+        to download the recovery key.
+        """
+        pool = await self._get_instance(oid)
+
+        await self.__common_encopt_validation(pool, options)
+
+        reckey = await self.middleware.call('disk.geli_recoverykey_add', pool)
+
+        job.pipes.output.w.write(base64.b64decode(reckey))
+
+        return True
+
+    @item_method
+    @accepts(Int('id'), Dict('options',
+        Str('admin_password', password=True, required=False),
+    ))
+    async def recoverykey_rm(self, oid, options):
+        """
+        Remove recovery key for encrypted pool `id`.
+        """
+        pool = await self._get_instance(oid)
+
+        await self.__common_encopt_validation(pool, options)
+
+        await self.middleware.call('disk.geli_recoverykey_rm', pool)
+
+        return True
+
+    @item_method
     @accepts(Int('id'))
     async def download_encryption_key(self, oid):
         """
@@ -1478,7 +1734,7 @@ class PoolScrubService(CRUDService):
                         pool_pk != data['original_pool_id']
                     )
             ):
-                scrub_obj = await self.query(filters=[('volume_id', '=', pool_pk)])
+                scrub_obj = await self.query(filters=[('pool', '=', pool_pk)])
                 if len(scrub_obj) != 0:
                     verrors.add(
                         f'{schema}.pool',
