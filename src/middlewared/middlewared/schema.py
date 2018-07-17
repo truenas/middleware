@@ -7,7 +7,6 @@ import os
 from croniter import croniter
 
 from middlewared.service_exception import ValidationErrors
-from middlewared.validators import ShouldBe
 
 NOT_PROVIDED = object()
 
@@ -82,8 +81,8 @@ class Attribute(object):
         for validator in self.validators:
             try:
                 validator(value)
-            except ShouldBe as e:
-                verrors.add(self.name, f"Should be {e.what}")
+            except ValueError as e:
+                verrors.add(self.name, str(e))
 
         if verrors:
             raise verrors

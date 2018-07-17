@@ -4,7 +4,7 @@ from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
 from middlewared.service import (CallError, CRUDService, SystemServiceService,
                                  ValidationErrors, private)
 from middlewared.utils import run
-from middlewared.validators import IpAddress, Range, ShouldBe
+from middlewared.validators import IpAddress, Range
 
 import bidict
 import errno
@@ -65,7 +65,7 @@ class ISCSIGlobalService(SystemServiceService):
                     ip_validator = IpAddress()
                     ip_validator(ip)
                     continue
-                except ShouldBe:
+                except ValueError:
                     pass
             verrors.add('iscsiglobal_update.isns_servers', f'Server "{server}" is not a valid IP(:PORT)? tuple.')
 

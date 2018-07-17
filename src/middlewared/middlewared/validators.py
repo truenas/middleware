@@ -6,17 +6,12 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
 
-class ShouldBe(Exception):
-    def __init__(self, what):
-        self.what = what
-
-
 class Email:
     def __call__(self, value):
         try:
             validate_email(value)
         except ValidationError:
-            raise ShouldBe("valid E-Mail address")
+            raise ValueError("Not a valid E-Mail address")
 
 
 class Exact:
@@ -25,7 +20,7 @@ class Exact:
 
     def __call__(self, value):
         if value != self.value:
-            raise ShouldBe(f"{self.value!r}")
+            raise ValueError(f"Should be {self.value!r}")
 
 
 class IpAddress:
@@ -33,7 +28,7 @@ class IpAddress:
         try:
             ipaddress.ip_address(value)
         except ValueError:
-            raise ShouldBe("valid IP address")
+            raise ValueError("Not a valid IP address")
 
 
 class Time:
@@ -41,14 +36,12 @@ class Time:
         try:
             hours, minutes = value.split(':')
         except ValueError:
-            raise ShouldBe('Time should be in 24 hour format like "18:00"')
+            raise ValueError('Time should be in 24 hour format like "18:00"')
         else:
             try:
                 time(int(hours), int(minutes))
             except TypeError:
-                raise ShouldBe('Time should be in 24 hour format like "18:00"')
-            except ValueError as v:
-                raise ShouldBe(str(v))
+                raise ValueError('Time should be in 24 hour format like "18:00"')
 
 
 class Match:
@@ -61,7 +54,7 @@ class Match:
 
     def __call__(self, value):
         if not self.regex.match(value):
-            raise ShouldBe(self.explanation or f"{self.pattern}")
+            raise ValueError(self.explanation or f"Does not match {self.pattern}")
 
     def __deepcopy__(self, memo):
         return Match(self.pattern, self.flags)
@@ -72,17 +65,17 @@ class Or:
         self.validators = validators
 
     def __call__(self, value):
-        patterns = []
+        errors = []
 
         for validator in self.validators:
             try:
                 validator(value)
-            except ShouldBe as e:
-                patterns.append(e.what)
+            except ValueError as e:
+                errors.append(str(e))
             else:
                 return
 
-        raise ShouldBe(" or ".join(patterns))
+        raise ValueError(" or ".join(errors))
 
 
 class Range:
@@ -101,14 +94,12 @@ class Range:
         }[self.min is not None, self.max is not None]
 
         if self.min is not None and value < self.min:
-            raise ShouldBe(error)
+            raise ValueError(f"Should be {error}")
 
         if self.max is not None and value > self.max:
-            raise ShouldBe(error)
+            raise ValueError(f"Should be {error}")
 
 
-class Port:
-
-    def __call__(self, value):
-        range_validator = Range(min=1, max=65535)
-        range_validator(value)
+class Port(Range):
+    def __init__(self):
+        super().__init__(min=1, max=65535)

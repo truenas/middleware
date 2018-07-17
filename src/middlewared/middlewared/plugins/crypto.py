@@ -9,7 +9,7 @@ import ssl
 from middlewared.async_validators import validate_country
 from middlewared.schema import accepts, Dict, Int, List, Patch, Ref, Str
 from middlewared.service import CRUDService, private, ValidationErrors
-from middlewared.validators import Email, IpAddress, Range, ShouldBe
+from middlewared.validators import Email, IpAddress, Range
 from OpenSSL import crypto, SSL
 
 
@@ -435,7 +435,7 @@ class CertificateService(CRUDService):
         for count, san in enumerate(san_list or []):
             try:
                 ip_validator(san)
-            except ShouldBe:
+            except ValueError:
                 san_string += f'DNS: {san}, '
             else:
                 san_string += f'IP: {san}, '
