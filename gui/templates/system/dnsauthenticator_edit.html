@@ -3,7 +3,7 @@
 {{ block.super }}
 <script type="dojo/method">
 addToStack(function() {
-    DNSAuthenticators();
+    credentialsProvider('id_authenticator', 'dns-authenticators-attribute');
 });
 </script>
 {% endblock %}

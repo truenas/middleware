@@ -11,7 +11,6 @@ from middlewared.validators import validate_attributes
 from acme import client, messages
 from botocore import exceptions as boto_exceptions
 from botocore.errorfactory import BaseClientExceptions as boto_BaseClientException
-#from certbot import achallenges
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 

@@ -1312,6 +1312,31 @@ List resource
    :statuscode 200: no error
 
 
+Delete resource
++++++++++++++++
+
+.. http:delete:: /api/v1.0/system/dnsauthenticator/(int:id)/
+
+   Delete Authenticator `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/system/dnsauthenticator/1/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 204 No Response
+      Vary: Accept
+      Content-Type: application/json
+
+   :statuscode 204: no error
+
+
 Shutdown
 --------
 

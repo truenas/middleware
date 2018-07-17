@@ -1580,8 +1580,9 @@ require([
 
     }
 
-    DNSAuthenticators = function() {
-        var provider = registry.byId("id_authenticator").get('value');
+    credentialsProvider = function(provider_id, class_name) {
+
+        var provider = registry.byId(provider_id).get('value');
         var credentialsSchemas = JSON.parse(registry.byId("id_credentials_schemas").get('value'));
 
         var attributesInput = dom.byId("id_attributes");
@@ -1602,71 +1603,7 @@ require([
 
         while (true)
         {
-            var old = document.getElementsByClassName("dns-authenticators-attribute");
-            if (!old.length)
-            {
-                break;
-            }
-            old[0].parentNode.removeChild(old[0]);
-        }
-
-        for (var i = 0; i < credentialsSchemas[provider].length; i++)
-        {
-            var property = credentialsSchemas[provider][credentialsSchemas[provider].length - 1 - i];
-
-            var id = "id_attributes_" + property.property;
-            var input = "<input type='text' id='" + id + "'>";
-            if (property.schema.enum)
-            {
-                input = "<select id='" + id + "'>";
-                for (var j = 0; j < property.schema.enum.length; j++)
-                {
-                    input += '<option>' + property.schema.enum[j] + '</option>';
-                }
-                input += '</select>';
-            }
-
-            var newNode = document.createElement("tr");
-            newNode.className = "dns-authenticators-attribute";
-            newNode.innerHTML = "<th>" + property.schema.title + "</th><td>" + input + "</td>";
-
-            attributesInput.parentNode.insertBefore(newNode, attributesInput.nextSibling);
-
-            if (attributes[property.property])
-            {
-                document.getElementById(id).value = attributes[property.property];
-            }
-
-            document.getElementById(id).onchange = updateAttributes;
-        }
-
-        updateAttributes();
-    }
-
-    cloudCredentialsProvider = function() {
-
-        var provider = registry.byId("id_provider").get('value');
-        var credentialsSchemas = JSON.parse(registry.byId("id_credentials_schemas").get('value'));
-
-        var attributesInput = dom.byId("id_attributes");
-        var attributes = JSON.parse(attributesInput.value) || {};
-
-        var updateAttributes = function() {
-            var attributes = {};
-            for (var i = 0; i < credentialsSchemas[provider].length; i++)
-            {
-                var property = credentialsSchemas[provider][credentialsSchemas[provider].length - 1 - i];
-
-                var id = "id_attributes_" + property.property;
-                attributes[property.property] = document.getElementById(id).value;
-            }
-
-            attributesInput.value = JSON.stringify(attributes);
-        };
-
-        while (true)
-        {
-            var old = document.getElementsByClassName("cloud-credentials-attribute");
+            var old = document.getElementsByClassName(class_name);
             if (!old.length)
             {
                 break;

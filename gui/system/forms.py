@@ -2738,9 +2738,8 @@ class DNSAuthenticatorForm(MiddlewareModelForm, ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(DNSAuthenticatorForm, self).__init__(*args, **kwargs)
-        # TODO: GENERALIZE THE DNSAUTHENTICATORS JS FUNC AND HAVE CLOUD CREDENTIALS USE IT AS WELL
         self.fields['authenticator'].widget.attrs['onChange'] = (
-            'DNSAuthenticators();'
+            'credentialsProvider("id_authenticator", "dns-authenticators-attribute");'
         )
         with client as c:
             schemas = c.call('dns.authenticator.schema_choices')
@@ -2820,8 +2819,6 @@ class CertificateACMEForm(MiddlewareModelForm, ModelForm):
                 required=True,
                 help_text=_(f'Specify Authenticator to be used for {domain} domain')
             )
-            if self.is_bound and f'domain_{n}' in self.data:
-                self.fields[f'domain_{n}'].initial = self.data[f'domain_{n}']
 
     def clean_cert_tos(self):
         if not self.cleaned_data.get('cert_tos'):
@@ -3326,7 +3323,7 @@ class CloudCredentialsForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(CloudCredentialsForm, self).__init__(*args, **kwargs)
         self.fields['provider'].widget.attrs['onChange'] = (
-            'cloudCredentialsProvider();'
+            'credentialsProvider("id_provider", "cloud-credentials-attribute");'
         )
         with client as c:
             providers = c.call("cloudsync.providers")
