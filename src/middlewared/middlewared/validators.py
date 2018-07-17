@@ -103,3 +103,10 @@ class Range:
 class Port(Range):
     def __init__(self):
         super().__init__(min=1, max=65535)
+
+
+class Unique:
+    def __call__(self, value):
+        for item in value:
+            if value.count(item) > 1:
+                raise ValueError(f"Duplicate values are not allowed: {item!r}")

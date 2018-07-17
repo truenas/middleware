@@ -379,6 +379,8 @@ class List(EnumMixin, Attribute):
         if verrors:
             raise verrors
 
+        super().validate(value)
+
     def to_json_schema(self, parent=None):
         schema = {'type': 'array'}
         if not parent:
