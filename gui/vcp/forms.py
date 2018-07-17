@@ -40,6 +40,7 @@ from freenasUI.vcp import models
 
 log = logging.getLogger('vcp.forms')
 
+# TODO: SEE IF THE FORM INTERACTION CAN BE SMOOTHED IN LEGACY
 
 class VcenterConfigurationForm(MiddlewareModelForm, ModelForm):
 
