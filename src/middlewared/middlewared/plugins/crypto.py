@@ -245,7 +245,7 @@ class CertificateService(CRUDService):
         # Remove ACME related keys if cert is not an ACME based cert
         if not cert.get('acme'):
             for key in ['acme', 'acme_uri', 'domains_authenticators', 'renew_days']:
-                cert.pop(key)
+                cert.pop(key, None)
 
         # convert san to list
         cert['san'] = (cert.pop('san', '') or '').split()

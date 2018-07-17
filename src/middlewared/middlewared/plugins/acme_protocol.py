@@ -11,7 +11,7 @@ from middlewared.validators import validate_attributes
 from acme import client, messages
 from botocore import exceptions as boto_exceptions
 from botocore.errorfactory import BaseClientExceptions as boto_BaseClientException
-from certbot import achallenges
+#from certbot import achallenges
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 
@@ -158,10 +158,19 @@ class DNSAuthenticatorService(CRUDService):
     class Config:
         namespace = 'dns.authenticator'
         datastore = 'system.dnsauthenticator'
+        datastore_extend = 'dns.authenticator.dns_extend'
 
     def __init__(self, *args, **kwargs):
         super(DNSAuthenticatorService, self).__init__(*args, **kwargs)
         self.schemas = DNSAuthenticatorService.get_authenticator_schemas()
+
+    async def dns_extend(self, data):
+        for key, pwd in data['attributes'].items():
+            data['attributes'][key] = await self.middleware.call(
+                'notifier.pwenc_decrypt',
+                pwd
+            )
+        return data
 
     @staticmethod
     def get_authenticator_schemas():
@@ -217,11 +226,17 @@ class DNSAuthenticatorService(CRUDService):
             'dns_authenticator_create',
             Str('authenticator', required=True),
             Str('name', required=True),
-            Dict('attributes', additional_attrs=True)
+            Dict('attributes', additional_attrs=True, required=True)
         )
     )
     async def do_create(self, data):
         await self.common_validation(data, 'dns_authenticator_create')
+
+        for key, pwd in data['attributes'].items():
+            data['attributes'][key] = await self.middleware.call(
+                'notifier.pwenc_encrypt',
+                pwd
+            )
 
         id = await self.middleware.call(
             'datastore.insert',
@@ -240,12 +255,17 @@ class DNSAuthenticatorService(CRUDService):
         )
     )
     async def do_update(self, id, data):
-        print('\n\nin update', data)
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
 
         await self.common_validation(new, 'dns_authenticator_update')
+
+        for key, pwd in new['attributes'].items():
+            new['attributes'][key] = await self.middleware.call(
+                'notifier.pwenc_encrypt',
+                pwd
+            )
 
         await self.middleware.call(
             'datastore.update',

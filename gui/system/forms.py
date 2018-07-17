@@ -2745,10 +2745,6 @@ class DNSAuthenticatorForm(MiddlewareModelForm, ModelForm):
             schemas = c.call('dns.authenticator.schema_choices')
 
         # FIXME: FOR SOME REASON ONCHANGE IS NOT BEING CALLED ON FORM CREATION - LOOK INTO THIS
-        schemas = schemas
-        schemas.append(schemas[0].copy())
-        schemas[1]['name'] = 'route54'
-        schemas[1]['title'] = 'Route 54'
         self.fields['authenticator'].choices = [
             (schema['name'], schema['title'])
             for schema in schemas

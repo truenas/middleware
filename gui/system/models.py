@@ -758,26 +758,6 @@ class CertificateBase(Model):
     cert_chain = models.BooleanField(
         default=False,
     )
-    # TODO: Probably move these fields to the certificate model so that they don't get included in CA Model
-    cert_acme = models.ForeignKey(
-        'ACMERegistration',
-        on_delete=models.CASCADE,
-        blank=True,
-        null=True
-    )
-    cert_acme_uri = models.URLField(
-        null=True,
-        blank=True
-    )
-    cert_domains_authenticators = EncryptedDictField(
-        null=True,
-        blank=True
-    )
-    cert_renew_days = models.IntegerField(
-        default=10,
-        verbose_name=_("Renew certificate day"),  # Should we change the name ?
-        help_text=_('Number of days to renew certificate before expiring')
-    )
 
     def get_certificate(self):
         certificate = None
@@ -1027,6 +1007,36 @@ class CertificateAuthority(CertificateBase):
 
 
 class Certificate(CertificateBase):
+
+    cert_acme = models.ForeignKey(
+        'ACMERegistration',
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True
+    )
+    cert_acme_uri = models.URLField(
+        null=True,
+        blank=True
+    )
+    cert_domains_authenticators = EncryptedDictField(
+        null=True,
+        blank=True
+    )
+    cert_renew_days = models.IntegerField(
+        default=10,
+        verbose_name=_("Renew certificate day"),  # Should we change the name ?
+        help_text=_('Number of days to renew certificate before expiring')
+    )
+
+    def delete(self):
+        temp_cert_name = self.cert_name
+        super(Certificate, self).delete()
+        # If this was a malformed CA then delete its alert sentinel file
+        try:
+            os.unlink('/tmp/alert_invalidcert_{0}'.format(temp_cert_name))
+        except OSError:
+            # It was not a malformed CA after all!
+            pass
 
     class Meta:
         verbose_name = _("Certificate")
