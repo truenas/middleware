@@ -1255,6 +1255,22 @@ class DNSAuthenticator(Model):
     )
     attributes = EncryptedDictField()
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.attributes:
+            for key, value in self.attributes.items():
+                try:
+                    self.attributes[key] = notifier().pwenc_decrypt(value)
+                except Exception:
+                    log.debug(f'Failed to decrypt Authenticator {key} token', exc_info=True)
+                    self.attributes[key] = ''
+
+    def save(self, *args, **kwargs):
+        if self.attributes:
+            for key, value in self.attributes.items():
+                self.attributes[key] = notifier().pwenc_encrypt(value)
+        return super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 

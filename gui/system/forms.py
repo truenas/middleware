@@ -2744,7 +2744,6 @@ class DNSAuthenticatorForm(MiddlewareModelForm, ModelForm):
         with client as c:
             schemas = c.call('dns.authenticator.schema_choices')
 
-        # FIXME: FOR SOME REASON ONCHANGE IS NOT BEING CALLED ON FORM CREATION - LOOK INTO THIS
         self.fields['authenticator'].choices = [
             (schema['name'], schema['title'])
             for schema in schemas
@@ -2758,7 +2757,7 @@ class DNSAuthenticatorForm(MiddlewareModelForm, ModelForm):
     def middleware_clean(self, data):
         data['attributes'] = json.loads(self.cleaned_data.get('attributes'))
         data.pop('credentials_schemas', None)
-        if self.instance:
+        if self.instance.id:
             data.pop('authenticator')
         return data
 
@@ -2770,7 +2769,6 @@ class CertificateACMEForm(MiddlewareModelForm, ModelForm):
     middleware_attr_schema = 'certificate'
     is_singletone = False
     middleware_job = True
-    complete_job = False
 
     cert_tos = forms.BooleanField(
         required=False,
@@ -2798,6 +2796,7 @@ class CertificateACMEForm(MiddlewareModelForm, ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.csr_id = kwargs.pop('csr_id')
+        self.complete_job = kwargs.pop('complete_job', False)
 
         super(CertificateACMEForm, self).__init__(*args, **kwargs)
 
@@ -2849,7 +2848,6 @@ class CertificateEditForm(MiddlewareModelForm, ModelForm):
     middleware_attr_schema = 'certificate'
     is_singletone = False
     middleware_job = True
-    complete_job = False
 
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,

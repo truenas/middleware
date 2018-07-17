@@ -51,7 +51,9 @@ class ACMERegistrationService(CRUDService):
 
     def get_directory(self, acme_directory_uri):
         try:
-            response = requests.get(acme_directory_uri).json()
+            response = requests.get(
+                acme_directory_uri[:-1] if acme_directory_uri[-1] == '/' else acme_directory_uri
+            ).json()
             return messages.Directory({
                 key: response[key] for key in ['newAccount', 'newNonce', 'newOrder', 'revokeCert']
             })
@@ -134,7 +136,8 @@ class ACMERegistrationService(CRUDService):
                 'new_nonce_uri': directory.newNonce,
                 'new_order_uri': directory.newOrder,
                 'revoke_cert_uri': directory.revokeCert,
-                'directory': data['acme_directory_uri'] + '/' if data['acme_directory_uri'][-1] != '/' else ''
+                'directory': data['acme_directory_uri'] + '/' if data['acme_directory_uri'][-1] != '/' else
+                data['acme_directory_uri']
             }
         )
 
@@ -158,19 +161,10 @@ class DNSAuthenticatorService(CRUDService):
     class Config:
         namespace = 'dns.authenticator'
         datastore = 'system.dnsauthenticator'
-        datastore_extend = 'dns.authenticator.dns_extend'
 
     def __init__(self, *args, **kwargs):
         super(DNSAuthenticatorService, self).__init__(*args, **kwargs)
         self.schemas = DNSAuthenticatorService.get_authenticator_schemas()
-
-    async def dns_extend(self, data):
-        for key, pwd in data['attributes'].items():
-            data['attributes'][key] = await self.middleware.call(
-                'notifier.pwenc_decrypt',
-                pwd
-            )
-        return data
 
     @staticmethod
     def get_authenticator_schemas():
@@ -232,12 +226,6 @@ class DNSAuthenticatorService(CRUDService):
     async def do_create(self, data):
         await self.common_validation(data, 'dns_authenticator_create')
 
-        for key, pwd in data['attributes'].items():
-            data['attributes'][key] = await self.middleware.call(
-                'notifier.pwenc_encrypt',
-                pwd
-            )
-
         id = await self.middleware.call(
             'datastore.insert',
             self._config.datastore,
@@ -260,12 +248,6 @@ class DNSAuthenticatorService(CRUDService):
         new.update(data)
 
         await self.common_validation(new, 'dns_authenticator_update')
-
-        for key, pwd in new['attributes'].items():
-            new['attributes'][key] = await self.middleware.call(
-                'notifier.pwenc_encrypt',
-                pwd
-            )
 
         await self.middleware.call(
             'datastore.update',
