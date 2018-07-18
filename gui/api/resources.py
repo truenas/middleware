@@ -1485,10 +1485,11 @@ class VolumeResourceMixin(NestedMixin):
             bundle.request.body or '{}',
             format=_format,
         )
-        bundle.obj.delete(
-            destroy=deserialized.get('destroy', True),
-            cascade=deserialized.get('cascade', True),
-        )
+        with client as c:
+            c.call('pool.export', bundle.obj.id, {
+                'destroy': deserialized.get('destroy', True),
+                'cascade', deserialized.get('cascade', True),
+            }, job=True)
 
 
 class ScrubResourceMixin(object):

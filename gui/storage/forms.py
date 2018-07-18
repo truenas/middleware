@@ -2227,6 +2227,17 @@ class VolumeExport(Form):
                 required=False,
                 label=_("Also delete the share's configuration"))
 
+    def done(self, request, events, **kwargs):
+        cascade = self.cleaned_data.get('cascade')
+        if cascade is None:
+            cascade = True
+        with client as c:
+            c.call('pool.export', self.instance.id, {
+                'cascade': cascade,
+                'destroy': self.cleaned_data.get('mark_new'),
+            }, job=True)
+        super().done(request, events, **kwargs)
+
 
 class Dataset_Destroy(Form):
     def __init__(self, *args, **kwargs):
