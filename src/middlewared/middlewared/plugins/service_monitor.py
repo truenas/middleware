@@ -1,6 +1,5 @@
 import asyncio
 import os
-import socket
 import sys
 import threading
 import time
@@ -18,6 +17,7 @@ if not apps.ready:
     django.setup()
 
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
+from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory
 
 
 class ServiceMonitorThread(threading.Thread):
@@ -85,36 +85,46 @@ class ServiceMonitorThread(threading.Thread):
     def tryConnect(self, host, port):
         max_tries = 3
         connected = False
+        sm_timeout = _fs().middlewared.plugins.service_monitor.socket_timeout
+        host_list = []
 
-        timeout = _fs().middlewared.plugins.service_monitor.socket_timeout
+        if self.name == 'activedirectory':
 
-        for i in range(0, max_tries):
-            # XXX What about UDP?
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(timeout)
+            for i in range(0, max_tries):
+                # Make max_tries attempts to get SRV records from DNS
+                host_list = FreeNAS_ActiveDirectory.get_ldap_servers(host)
+                if host_list:
+                    break
+                else:
+                    self.logger.debug(f'[ServiceMonitorThread] Attempt {i} to query SRV records failed')
 
-            try:
-                s.connect((host, port))
-                connected = True
+            if not host_list:
+                self.logger.debug(f'[ServiceMonitorThread] Query for SRV records for {host} failed')
+                return False
 
-            except Exception as e:
-                self.logger.debug("[ServiceMonitorThread] Cannot connect: %s:%d with error: %s" % (host, port, e))
-                connected = False
+            for h in host_list:
+                port_is_listening = FreeNAS_ActiveDirectory.port_is_listening(str(h.target), h.port, errors=[], timeout=sm_timeout)
+                if port_is_listening:
+                    return True
+                else:
+                    self.logger.debug(f'[ServiceMonitorThread] Cannot connect: {h.target}:{h.port}')
+                    connected = False
 
-            finally:
-                s.settimeout(None)
-                s.close()
+            return connected
 
-            if connected:
-                break
-
-        return connected
+        else:
+            self.logger.debug(f'[ServiceMonitorThread] no monitoring has been written for {self.name}')
+            return False
 
     @private
     def getStarted(self, service):
         max_tries = 3
 
         for i in range(0, max_tries):
+            if service == 'activedirectory':
+                if not self.middleware.call_sync('service.started', 'cifs'):
+                    self.logger.debug("[ServiceMonitorThread] restarting Samba service")
+                    self.middleware.call_sync('service.start', 'cifs')
             if self.middleware.call_sync('service.started', service):
                 return True
             time.sleep(1)
@@ -131,9 +141,20 @@ class ServiceMonitorThread(threading.Thread):
             # We should probably have a configurable threshold for number of
             # failures before starting or stopping the service
             #
+            if self.finished.is_set():
+                # Thread.cancel() takes a while to propagate here
+                ServiceMonitorThread.reset_alerts(service)
+                return
+
             connected = self.tryConnect(self.host, self.port)
             started = self.getStarted(service)
             enabled = self.isEnabled(service)
+
+            # Try less disruptive recovery attempt first before restarting AD service
+            if not started and service == 'activedirectory':
+                self.logger.debug("[ServiceMonitorThread] reloading Active Directory")
+                self.middleware.call_sync('service.reload', 'activedirectory')
+                started = self.getStarted(service)
 
             self.logger.trace("[ServiceMonitorThread] connected=%s started=%s enabled=%s", connected, started, enabled)
             # Everything is OK
@@ -174,11 +195,6 @@ class ServiceMonitorThread(threading.Thread):
                         "[ServiceMonitorThread] failed starting service", exc_info=True
                     )
 
-            if self.finished.is_set():
-                # Thread.cancel() takes a while to propagate here
-                ServiceMonitorThread.reset_alerts(service)
-                return
-
             if self.retry == 0:
                 continue
 
@@ -186,7 +202,10 @@ class ServiceMonitorThread(threading.Thread):
                 break
 
         if not connected or not enabled or not started:
-            self.alert(service, "tried %d attempts to recover service %s" % (ntries, service))
+            # Clear all intermediate alerts
+            ServiceMonitorThread.reset_alerts(service)
+            # We gave up to restore service here
+            self.alert(service, "Failed to recover service %s after %d tries" % (service, ntries))
             # Disable monitoring here?
 
     def cancel(self):
