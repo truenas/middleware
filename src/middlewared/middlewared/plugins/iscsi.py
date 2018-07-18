@@ -1117,7 +1117,7 @@ class iSCSITargetToExtentService(CRUDService):
     @accepts(Dict(
         'iscsi_targetextent_create',
         Int('target', required=True),
-        Int('lunid', default=0),
+        Int('lunid'),
         Int('extent', required=True),
         register=True
     ))
@@ -1125,6 +1125,9 @@ class iSCSITargetToExtentService(CRUDService):
         verrors = ValidationErrors()
 
         await self.validate(data, 'iscsi_targetextent_create', verrors)
+
+        if verrors:
+            raise verrors
 
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
@@ -1152,6 +1155,9 @@ class iSCSITargetToExtentService(CRUDService):
 
         await self.validate(new, 'iscsi_targetextent_update', verrors, old)
 
+        if verrors:
+            raise verrors
+
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
@@ -1178,32 +1184,46 @@ class iSCSITargetToExtentService(CRUDService):
         if old is None:
             old = {}
 
-        lunid = data['lunid']
         old_lunid = old.get('lunid')
         target = data['target']
         old_target = old.get('target')
         extent = data['extent']
+        if 'lunid' not in data:
+            lunids = [
+                o['lunid'] for o in await self.query(
+                    [('target', '=', target)], {'order_by': ['lunid']}
+                )
+            ]
+            if not lunids:
+                lunid = 0
+            else:
+                diff = sorted(set(range(0, lunids[-1] + 1)).difference(lunids))
+                lunid = diff[0] if diff else max(lunids) + 1
+
+            data['lunid'] = lunid
+        else:
+            lunid = data['lunid']
 
         lun_map_size = sysctl.filter('kern.cam.ctl.lun_map_size')[0].value
 
         if lunid < 0 or lunid > lun_map_size - 1:
-            verrors.add(f'{schema_name}.lunid',
-                        'LUN ID must be a positive integer and lower than'
-                        f' {lun_map_size - 1}')
+            verrors.add(
+                f'{schema_name}.lunid',
+                f'LUN ID must be a positive integer and lower than {lun_map_size - 1}'
+            )
 
-        if lunid and target:
-            filters = [('lunid', '=', lunid), ('target', '=', target)]
-            result = await self.query(filters)
+        if old_lunid != lunid and await self.query([
+            ('lunid', '=', lunid), ('target', '=', target)
+        ]):
+            verrors.add(
+                f'{schema_name}.lunid',
+                'LUN ID is already being used for this target.'
+            )
 
-            if old_lunid != lunid and result:
-                verrors.add(f'{schema_name}.lunid',
-                            'LUN ID is already being used for this target.'
-                            )
-
-        if target and extent:
-            filters = [('target', '=', target), ('extent', '=', extent)]
-            result = await self.query(filters)
-
-            if old_target != target and result:
-                verrors.add(f'{schema_name}.target',
-                            'Extent is already in this target.')
+        if old_target != target and await self.query([
+            ('target', '=', target), ('extent', '=', extent)]
+        ):
+            verrors.add(
+                f'{schema_name}.target',
+                'Extent is already in this target.'
+            )
