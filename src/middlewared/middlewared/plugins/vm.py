@@ -1,3 +1,4 @@
+from collections import deque
 from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch
 from middlewared.service import filterable, CRUDService, item_method, private, job, CallError
 from middlewared.utils import Nid, Popen
@@ -42,11 +43,12 @@ class VMManager(object):
     async def start(self, id):
         vm = await self.service.query([('id', '=', id)], {'get': True})
         self._vm[id] = VMSupervisor(self, vm)
-        try:
-            asyncio.ensure_future(self._vm[id].run())
-            return True
-        except:
-            raise
+        coro = self._vm[id].run()
+        # If run() has not returned in about 3 seconds we assume
+        # bhyve process started successfully.
+        done = (await asyncio.wait([coro], timeout=3))[0]
+        if done:
+            list(done)[0].result()
 
     async def stop(self, id, force=False):
         supervisor = self._vm.get(id)
@@ -218,8 +220,7 @@ class VMSupervisor(object):
 
             #  If container has no boot device, we should stop.
             if grub_boot_device is False:
-                self.logger.error('===> There is no boot disk for vm: {0}'.format(self.vm['name']))
-                return False
+                raise CallError(f'There is no boot disk for vm: {self.vm["name"]}')
 
             self.logger.debug('Starting grub-bhyve: {}'.format(' '.join(grub_bhyve_args)))
             self.grub_proc = await Popen(grub_bhyve_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -246,17 +247,22 @@ class VMSupervisor(object):
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             self.logger.debug('==> Start WEBVNC at port {} with pid number {}'.format(vnc_web_port, self.web_proc.pid))
 
+        output = deque(maxlen=10)
+
         while True:
             line = await self.proc.stdout.readline()
             if line == b'':
                 break
-            self.logger.debug('{}: {}'.format(self.vm['name'], line.decode()))
+            line = line.decode().rstrip()
+            self.logger.debug('{}: {}'.format(self.vm['name'], line))
+            output.append(line)
 
         # bhyve returns the following status code:
         # 0 - VM has been reset
         # 1 - VM has been powered off
         # 2 - VM has been halted
         # 3 - VM generated a triple fault
+        # 4 - VM exited due to an error
         # all other non-zero status codes are errors
         self.bhyve_error = await self.proc.wait()
         if self.bhyve_error == 0:
@@ -276,6 +282,8 @@ class VMSupervisor(object):
             self.logger.info('===> Error VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
             await self.__teardown_guest_vmemory(self.vm['id'])
             await self.destroy_vm()
+            output = "\n".join(output)
+            raise CallError(f'VM {self.vm["name"]} failed to start: {output}')
 
     async def destroy_vm(self):
         self.logger.warn('===> Destroying VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
@@ -827,12 +835,11 @@ class VMService(CRUDService):
         if guest_status.get('state') != 'RUNNING':
             setvmem = await self.__set_guest_vmemory(guest_memory)
             if setvmem is False:
-                self.logger.warn('===> Cannot guarantee memory for guest id: {}'.format(id))
+                raise CallError(f'Cannot guarantee memory for guest id: {id}')
             return setvmem
 
         else:
-            self.logger.debug("===> bhyve process is running, we won't allocate memory")
-            return False
+            raise CallError('bhyve process is running, we won\'t allocate memory')
 
     @accepts(Int('id'))
     async def rm_container_conf(self, id):
@@ -1005,14 +1012,8 @@ class VMService(CRUDService):
     @accepts(Int('id'))
     async def start(self, id):
         """Start a VM."""
-        try:
-            if await self.__init_guest_vmemory(id):
-                return await self._manager.start(id)
-            else:
-                return False
-        except Exception as err:
-            self.logger.error('===> {0}'.format(err))
-            return False
+        await self.__init_guest_vmemory(id)
+        await self._manager.start(id)
 
     @item_method
     @accepts(Int('id'), Bool('force', default=False),)
