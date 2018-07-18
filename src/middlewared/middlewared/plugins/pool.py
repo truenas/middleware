@@ -277,6 +277,7 @@ class PoolService(CRUDService):
         If pool is encrypted we need to check if the pool is imported
         or if all geli providers exist.
         """
+        pool['path'] = f'/mnt/{pool["name"]}'
         try:
             zpool = self.middleware.call_sync('zfs.pool.query', [('id', '=', pool['name'])])[0]
         except Exception:
@@ -1196,7 +1197,16 @@ class PoolService(CRUDService):
             raise verrors
 
         await self.middleware.call_hook('pool.pre_lock', pool=pool)
-        await self.middleware.call('notifier.volume_detach', oid)
+
+        sysds = await self.middleware.call('systemdataset.config')
+        if sysds['pool'] == pool['name']:
+            job = await self.middleware.call('systemdataset.update', {'pool': ''})
+            await job.wait()
+            await self.middleware.call('systemdataset.setup', True, pool['name'])
+            await self.middleware.call('service.restart', 'system_datasets')
+
+        await self.middleware.call('zfs.pool.export', pool['name'])
+
         await self.middleware.call_hook('pool.post_lock', pool=pool)
         await self.middleware.call('service.restart', 'system_datasets')
 
@@ -1388,6 +1398,181 @@ class PoolService(CRUDService):
             for locale in subprocess.check_output(["locale", "-a"], encoding="utf-8").split("\n")
             if locale.strip()
         ]
+
+    @item_method
+    @accepts(
+        Int('id'),
+        Dict(
+            'options',
+            Bool('cascade', default=False),
+            Bool('destroy', default=False),
+        ),
+    )
+    @job(lock='pool_export')
+    async def export(self, job, oid, options):
+        pool = await self._get_instance(oid)
+
+        job.set_progress(5, 'Retrieving pool attachments')
+        attachments = await self.__attachments(pool)
+        if options['cascade']:
+            job.set_progress(10, 'Deleting pool attachments')
+            await self.__delete_attachments(attachments, pool)
+
+        job.set_progress(20, 'Stopping VMs using this pool (if any)')
+        # If there is any guest vm attached to this volume, we stop them
+        await self.middleware.call('vm.stop_by_pool', pool['name'], True)
+
+        job.set_progress(30, 'Stopping jails using this pool (if any)')
+        for jail_host in attachments['jails']:
+            await self.middleware.call('jail.stop', jail_host)
+
+        job.set_progress(30, 'Removing pool disks from swap')
+        disks = [i async for i in await self.middleware.call('pool.get_disks')]
+        await self.middleware.call('disk.swaps_remove_disks', disks)
+
+        sysds = await self.middleware.call('systemdataset.config')
+        if sysds['pool'] == pool['name']:
+            job.set_progress(40, 'Reconfiguring system dataset')
+            sysds_job = await self.middleware.call('systemdataset.update', {'pool': ''})
+            await sysds_job.wait()
+            await self.middleware.call('systemdataset.setup', True, pool['name'])
+            await self.middleware.call('service.restart', 'system_datasets')
+
+        if pool['status'] == 'OFFLINE':
+            # Pool exists only in database, its not imported
+            pass
+        elif options['destroy']:
+            job.set_progress(60, 'Destroying pool')
+            try:
+                # TODO: Remove me when legacy UI is gone
+                if await self.middleware.call('notifier.contais_jail_root', pool['path']):
+                    await self.middleware.call('notifier.delete_plugins')
+            except Exception:
+                pass
+            await self.middleware.call('zfs.pool.delete', pool['name'])
+
+            job.set_progress(80, 'Cleaning disks')
+            for disk in disks:
+                await self.middleware.call('disk.unlabel', disk)
+            await self.middleware.call('disk.geli_detach', pool, True)
+            if pool['encrypt'] > 0:
+                try:
+                    os.remove(pool['encryptkey_path'])
+                except OSError as e:
+                    self.logger.warn(
+                        'Failed to remove encryption key %s: %s',
+                        pool['encryptkey_path'],
+                        e,
+                        exc_info=True,
+                    )
+        else:
+            job.set_progress(80, 'Exporting pool')
+            await self.middleware.call('zfs.pool.export', pool['name'])
+            await self.middleware.call('disk.geli_detach', pool)
+
+        job.set_progress(90, 'Cleaning up')
+        if os.path.isdir(pool['path']):
+            try:
+                # We dont try to remove recursively to avoid removing files that were
+                # potentially hidden by the mount
+                os.rmdir(pool['path'])
+            except OSError as e:
+                self.logger.warn('Failed to remove pointoint %s: %s', pool['path'], e)
+
+        await self.middleware.call('datastore.delete', 'storage.volume', oid)
+
+        # scrub needs to be regenerated in crontab
+        await self.middleware.call('service.restart', 'cron')
+
+        await self.middleware.call_hook('pool.post_export', pool=pool, options=options)
+
+    @item_method
+    @accepts(Int('id'))
+    async def attachments(self, oid):
+        """
+        Return a dict composed by the name of services and ids of each item
+        dependent of this pool.
+
+        Responsible for telling the user whether there is a related
+        share, asking for confirmation.
+        """
+        pool = await self._get_instance(oid)
+        return await self.__attachments(pool)
+
+    async def __attachments(self, pool):
+        attachments = {
+            'afp': [],
+            'iscsi_extents': [],
+            'jails': [],
+            'nfs': [],
+            'replication': [],
+            'smb': [],
+            'snaptask': [],
+            'vm_devices': [],
+        }
+
+        for smb in await self.middleware.call('sharing.smb.query'):
+            if smb['path'] == pool['path'] or smb['path'].startswith(pool['path'] + '/'):
+                attachments['smb'].append(smb['id'])
+
+        for afp in await self.middleware.call('sharing.afp.query'):
+            if afp['path'] == pool['path'] or afp['path'].startswith(pool['path'] + '/'):
+                attachments['afp'].append(afp['id'])
+
+        for nfs in await self.middleware.call('sharing.nfs.query'):
+            for path in nfs['paths']:
+                if (
+                    (path == pool['path'] or path.startswith(pool['path'] + '/')) and
+                    nfs['id'] not in attachments['nfs']
+                ):
+                    attachments['nfs'].append(nfs['id'])
+
+        for extent in await self.middleware.call('iscsi.extent.query', [('type', '=', 'DISK')]):
+            if extent['path'].startswith(f'zvol/{pool["name"]}/'):
+                attachments['iscsi_extents'].append(extent['id'])
+
+        for vm_attached in await self.middleware.call('vm.stop_by_pool', pool['name']):
+            attachments['vm_devices'].append(vm_attached['device_id'])
+
+        for repl in await self.middleware.call('datastore.query', 'storage.replication'):
+            if (
+                repl['repl_filesystem'] == pool['name'] or
+                repl['repl_filesystem'].startswith(pool['name'] + '/')
+            ):
+                attachments['replication'].append(repl['id'])
+
+        for snap in await self.middleware.call('pool.snapshottask.query'):
+            if (
+                snap['filesystem'] == pool['name'] or
+                snap['filesystem'].startswith(pool['name'] + '/')
+            ):
+                attachments['snaptask'].append(snap['id'])
+
+        activated_pool = await self.middleware.call('jail.get_activated_pool')
+        if activated_pool == pool['name']:
+            for j in await self.middleware.call('jail.query', [('state', '=', 'up')]):
+                attachments['jails'].append(j['host_hostuuid'])
+
+        return attachments
+
+    async def __delete_attachments(self, attachments, pool):
+        # TODO: use a hook and move delete/stop to each plugin
+        for name, service in (
+            ('smb', 'sharing.smb.delete'),
+            ('afp', 'sharing.afp.delete'),
+            ('nfs', 'sharing.nfs.delete'),
+            ('iscsi_extents', 'iscsi.extent.delete'),
+            ('snaptask', 'pool.snapshottask.delete'),
+        ):
+            for aid in attachments[name]:
+                await self.middleware.call(service, aid)
+
+        for name, datastore in (
+            ('replication', 'storage.replication'),
+            ('vm_devices', 'vm.device'),
+        ):
+            for aid in attachments[name]:
+                await self.middleware.call('datastore.delete', datastore, aid)
 
     """
     These methods are hacks for old UI which supports only one volume import at a time

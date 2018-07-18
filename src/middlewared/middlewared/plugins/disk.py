@@ -479,7 +479,15 @@ class DiskService(CRUDService):
             raise CallError(f'Unable to geli dettach {dev}: {cp.stderr.decode()}')
 
     @private
-    def geli_detach(self, pool):
+    def geli_clear(self, dev):
+        cp = subprocess.run(
+            ['geli', 'clear', dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        if cp.returncode != 0:
+            raise CallError(f'Unable to geli clear {dev}: {cp.stderr.decode()}')
+
+    @private
+    def geli_detach(self, pool, clear=False):
         failed = 0
         for ed in self.middleware.call_sync(
             'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
@@ -490,7 +498,14 @@ class DiskService(CRUDService):
             except Exception as ee:
                 self.logger.warn(str(ee))
                 failed += 1
+            if clear:
+                try:
+                    self.geli_clear(dev)
+                except Exception:
+                    self.logger.warn('Failed to clear %s', dev)
         return failed
+
+
 
     @private
     def encrypt(self, devname, keypath, passphrase=None):
@@ -508,7 +523,7 @@ class DiskService(CRUDService):
         Decrypt `devices` using uploaded encryption key
         """
         with tempfile.NamedTemporaryFile(dir='/tmp/') as f:
-            os.chmod(0o600, f.name)
+            os.chmod(f.name, 0o600)
             f.write(job.pipes.input.r.read())
             f.flush()
 
