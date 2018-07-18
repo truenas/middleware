@@ -250,7 +250,6 @@ class AdvancedResourceTest(APITestCase):
             'adv_autotune': False,
             'adv_consolemenu': False,
             'adv_consolemsg': True,
-            'adv_consolescreensaver': False,
             'adv_debugkernel': False,
             'adv_motd': 'Welcome',
             'adv_powerdaemon': False,
