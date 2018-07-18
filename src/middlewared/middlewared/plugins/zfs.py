@@ -111,8 +111,20 @@ class ZFSPoolService(CRUDService):
     def do_delete(self, name, options):
         try:
             with libzfs.ZFS() as zfs:
+                zfs.destroy(name, force=options['force'])
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
+
+    @accepts(Str('pool'), Dict(
+        'options',
+        Bool('force', default=False),
+    ))
+    def export(self, name, options):
+        try:
+            with libzfs.ZFS() as zfs:
                 # FIXME: force not yet implemented
-                zfs.destroy(name)
+                pool = zfs.get(name)
+                zfs.export_pool(pool)
         except libzfs.ZFSException as e:
             raise CallError(str(e))
 
