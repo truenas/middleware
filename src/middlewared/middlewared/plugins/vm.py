@@ -1,5 +1,7 @@
 from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch
-from middlewared.service import filterable, CRUDService, item_method, private, job, CallError
+from middlewared.service import (
+    filterable, item_method, job, pass_app, private, CRUDService, CallError
+)
 from middlewared.utils import Nid, Popen
 from urllib.request import urlretrieve
 from pipes import quote
@@ -1181,8 +1183,9 @@ class VMService(CRUDService):
 
         return True
 
-    @accepts(Int('id'))
-    async def get_vnc_web(self, id):
+    @accepts(Int('id'), Str('host', default=''))
+    @pass_app
+    async def get_vnc_web(self, app, id, host=None):
         """
             Get the VNC URL from a given VM.
 
@@ -1190,6 +1193,8 @@ class VMService(CRUDService):
                 list: With all URL available.
         """
         vnc_web = []
+
+        host = host or await self.middleware.call('interfaces.websocket_local_ip', app=app)
 
         for vnc_device in await self.get_vnc(id):
             if vnc_device.get('vnc_web', None) is True:
@@ -1199,9 +1204,8 @@ class VMService(CRUDService):
                 #  XXX: Create a method for web port.
                 split_port = int(str(vnc_port)[:2]) - 1
                 vnc_web_port = str(split_port) + str(vnc_port)[2:]
-                bind_ip = vnc_device.get('vnc_bind', None)
                 vnc_web.append(
-                    f'http://{bind_ip}:{vnc_web_port}/vnc.html?autoconnect=1'
+                    f'http://{host}:{vnc_web_port}/vnc.html?autoconnect=1'
                 )
 
         return vnc_web
