@@ -704,10 +704,11 @@ def volume_detach(request, vid):
     volume = models.Volume.objects.get(pk=vid)
     usedbytes = volume._get_used_bytes()
     usedsize = humanize_size(usedbytes) if usedbytes else None
-    services = {
-        key: val
-        for key, val in list(volume.has_attachments().items()) if len(val) > 0
-    }
+    with client as c:
+        services = {
+            key: val
+            for key, val in list(c.call('pool.attachments', volume.id).items()) if len(val) > 0
+        }
     if volume.vol_encrypt > 0:
         request.session["allow_gelikey"] = True
     if request.method == "POST":
@@ -726,9 +727,6 @@ def volume_detach(request, vid):
                     return JsonResp(request, confirm=message)
             try:
                 events = []
-                volume.delete(
-                    destroy=form.cleaned_data['mark_new'],
-                    cascade=form.cleaned_data.get('cascade', True))
                 form.done(request, events)
                 return JsonResp(
                     request,

@@ -353,15 +353,6 @@ class notifier(metaclass=HookMetaclass):
             return True
         return False
 
-    def geli_clear(self, dev):
-        """
-        Clears the geli metadata on a provider
-        """
-        command = "geli clear %s" % dev
-        err = self._pipeerr(command)
-        if err:
-            raise MiddlewareError("Unable to geli clear %s: %s" % (dev, err))
-
     def geli_detach(self, dev):
         """
         Detach geli provider
@@ -606,43 +597,6 @@ class notifier(metaclass=HookMetaclass):
             return stdout.strip()
 
         return os.path.join(mountpoint_root, name)
-
-    def volume_destroy(self, volume):
-        """Destroy a ZFS pool on the system
-
-        In the event that the volume is still in use in the OS, the end-result
-        is implementation defined depending on the filesystem, and the set of
-        commands used to export the filesystem.
-
-        Finally, this method goes and cleans up the mountpoint, as it's
-        assumed to be no longer needed. This is also a sanity check to ensure
-        that cleaning up everything worked.
-
-        XXX: doing recursive unmounting here might be a good idea.
-        XXX: better feedback about files in use might be a good idea...
-             someday. But probably before getting to this point. This is a
-             tricky problem to fix in a way that doesn't unnecessarily suck up
-             resources, but also ensures that the user is provided with
-             meaningful data.
-        XXX: divorce this from storage.models; depending on storage.models
-             introduces a circular dependency and creates design ugliness.
-
-        Parameters:
-            volume: a storage.models.Volume object.
-
-        Raises:
-            MiddlewareError: the volume could not be detached cleanly.
-            MiddlewareError: the volume's mountpoint couldn't be removed.
-            ValueError: 'destroy' isn't implemented for the said filesystem.
-        """
-
-        # volume_detach compatibility.
-        vol_name = volume.vol_name
-        vol_mountpath = self.__get_mountpath(vol_name)
-        self.__destroy_zfs_volume(volume)
-        self.reload('disk')
-        self._encvolume_detach(volume, destroy=True)
-        self.__rmdir_mountpoint(vol_mountpath)
 
     def groupmap_list(self):
         command = "/usr/local/bin/net groupmap list"
@@ -1458,88 +1412,6 @@ class notifier(metaclass=HookMetaclass):
         else:
             log.error("Importing %s [%s] failed with: %s", name, id, stderr)
         return False
-
-    def _encvolume_detach(self, volume, destroy=False):
-        """Detach GELI providers after detaching volume."""
-        """See bug: #3964"""
-        if volume.vol_encrypt > 0:
-            for ed in volume.encrypteddisk_set.all():
-                try:
-                    self.geli_detach(ed.encrypted_provider)
-                except Exception as ee:
-                    log.warn(str(ee))
-                if destroy:
-                    try:
-                        # bye bye data, it was nice knowing ya
-                        self.geli_clear(ed.encrypted_provider)
-                    except Exception as ee:
-                        log.warn(str(ee))
-                    try:
-                        os.remove(volume.get_geli_keyfile())
-                    except Exception as ee:
-                        log.warn(str(ee))
-
-    def volume_detach(self, volume):
-        """Detach a volume from the system
-
-        This either executes exports a zpool or umounts a generic volume (e.g.
-        NTFS, UFS, etc).
-
-        In the event that the volume is still in use in the OS, the end-result
-        is implementation defined depending on the filesystem, and the set of
-        commands used to export the filesystem.
-
-        Finally, this method goes and cleans up the mountpoint. This is a
-        sanity check to ensure that things are in synch.
-
-        XXX: recursive unmounting / needs for recursive unmounting here might
-             be a good idea.
-        XXX: better feedback about files in use might be a good idea...
-             someday. But probably before getting to this point. This is a
-             tricky problem to fix in a way that doesn't unnecessarily suck up
-             resources, but also ensures that the user is provided with
-             meaningful data.
-        XXX: this doesn't work with the alternate mountpoint functionality
-             available in UFS volumes.
-
-        Parameters:
-            volume: volume model object
-
-        Raises:
-            MiddlewareError: the volume could not be detached cleanly.
-            MiddlewareError: the volume's mountpoint couldn't be removed.
-        """
-        if isinstance(volume, int):
-            from freenasUI.storage.models import Volume
-            volume = Volume.objects.get(pk=volume)
-
-        vol_name = volume.vol_name
-
-        succeeded = False
-
-        vol_mountpath = self.__get_mountpath(vol_name)
-        cmd = 'zpool export %s' % (vol_name)
-        cmdf = 'zpool export -f %s' % (vol_name)
-
-        self.stop("syslogd")
-
-        p1 = self._pipeopen(cmd)
-        stdout, stderr = p1.communicate()
-        if p1.returncode == 0:
-            succeeded = True
-        else:
-            p1 = self._pipeopen(cmdf)
-            stdout, stderr = p1.communicate()
-
-        self.start("syslogd")
-
-        if not succeeded and p1.returncode:
-            raise MiddlewareError('Failed to detach %s with "%s" (exited '
-                                  'with %d): %s' %
-                                  (vol_name, cmd, p1.returncode, stderr))
-
-        self._encvolume_detach(volume)
-        self.__rmdir_mountpoint(vol_mountpath)
 
     def volume_import(self, volume_name, volume_id, key=None, passphrase=None, enc_disks=None):
         from freenasUI.storage.models import Disk, EncryptedDisk, Scrub, Volume
