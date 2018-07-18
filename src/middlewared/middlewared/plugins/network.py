@@ -328,7 +328,7 @@ class InterfacesService(Service):
 
     @accepts()
     @pass_app
-    async def websocket_interface(self, app):
+    async def websocket_local_ip(self, app):
         """
         Returns the interface this websocket is connected to.
         """
@@ -355,6 +355,12 @@ class InterfacesService(Service):
         if proc.returncode != 0:
             return None
         local_ip = stdout[5].split(':')[0]
+        return local_ip
+
+    @accepts()
+    @pass_app
+    async def websocket_interface(self, app):
+        local_ip = await self.middleware.call('interfaces.websocket_local_ip', app=app)
         for iface in await self.middleware.call('interfaces.query'):
             for alias in iface['aliases']:
                 if alias['address'] == local_ip:
