@@ -642,7 +642,6 @@ class ServiceService(CRUDService):
         await self._service("samba_server", "stop", force=True, **kwargs)
         await self._service("samba_server", "start", quiet=True, **kwargs)
 
-
     async def _started_domaincontroller(self, **kwargs):
         res = False
         if not await self._system("/etc/directoryservice/DomainController/ctl status"):
