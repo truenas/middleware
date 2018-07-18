@@ -510,20 +510,6 @@ class notifier(metaclass=HookMetaclass):
         retval = zfsproc.communicate()[1]
         return retval
 
-    def __destroy_zfs_volume(self, volume):
-        """Internal procedure to destroy a ZFS volume identified by volume id"""
-        vol_name = str(volume.vol_name)
-        mp = self.__get_mountpath(vol_name)
-        if self.contains_jail_root(mp):
-            self.delete_plugins()
-        # First, destroy the zpool.
-        disks = volume.get_disks()
-        self._system("zpool destroy -f %s" % (vol_name, ))
-
-        # Clear out disks associated with the volume
-        for disk in disks:
-            self.__gpt_unlabeldisk(devname=disk)
-
     def zfs_offline_disk(self, volume, label):
         try:
             with client as c:
