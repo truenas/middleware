@@ -1,20 +1,18 @@
-: logo ( x y -- ) \ "FreeNAS" logo in B/W (13 rows x 24 columns)
+: logo ( x y -- ) \ "FreeNAS" logo in B/W (11 rows x 30 columns)
 
-	5 + swap 6 + swap
+	6 + swap 0 + swap
 
-	2dup at-xy ."  ______                " 1+
-	2dup at-xy ." |  ____| __ ___  ___   " 1+
-	2dup at-xy ." | |__ | '__/ _ \/ _ \  " 1+
-	2dup at-xy ." |  __|| | |  __/  __/  " 1+
-	2dup at-xy ." | |   | | |    |    |  " 1+
-	2dup at-xy ." |_|   |_|  \___|\___|  " 1+
-	2dup at-xy ."  _     _   __    _____ " 1+
-	2dup at-xy ." | \   | | /  \  /  ___|" 1+
-	2dup at-xy ." |  \  | |/ /\ \|  (__  " 1+
-	2dup at-xy ." | |\\ | | |__| |\___ \ " 1+
-	2dup at-xy ." | | \\| |  __  |____) |" 1+
-	2dup at-xy ." | |  \  | |  | |      |" 1+
-	     at-xy ." |_|   \_|_|  |_|_____/ "
+	2dup at-xy ." +mmdhs/.   ,.:+sydmNMm       " 1+
+	2dup at-xy ."  hMMMMMMdydNMMMMMMMMM:       " 1+
+	2dup at-xy ."  yMMMMMMMMMMMMMMMNNNo        " 1+
+	2dup at-xy ." /MMMMMMMMMMMMMMMmho.        ." 1+
+	2dup at-xy ." NMMMMMMMMMMMMMMMMm:'    ..:yN" 1+
+	2dup at-xy ." MMMMMMMMMMMMMMMmMNmddmydmNMMo" 1+
+	2dup at-xy ." mMMMMMMMMMMMMMs./ymMMMMMMmy- " 1+
+	2dup at-xy ." :NMMMMMMMMMMMM.   `.oMMm-`   " 1+
+	2dup at-xy ."  -mMMMMMMMMMMMmo/:/yNMh.     " 1+
+	2dup at-xy ."  .mhdMMMMMMMMMMMMMMMh/       " 1+
+	     at-xy ."  +'  `+ymMMMMMMNmy+'         "
 
 	\ Put the cursor back at the bottom
 	0 25 at-xy
