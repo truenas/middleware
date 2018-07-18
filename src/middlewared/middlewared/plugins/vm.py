@@ -186,7 +186,10 @@ class VMSupervisor(object):
 
                 vnc_resolution = device['attributes'].get('vnc_resolution', None)
                 vnc_port = int(device['attributes'].get('vnc_port', 5900 + self.vm['id']))
-                vnc_bind = device['attributes'].get('vnc_bind', '0.0.0.0')
+                nginx_ip = await self.middleware.call(
+                    'interfaces.get_process_ip') if not None else '0.0.0.0'
+                vnc_bind = device['attributes'].get(
+                    'vnc_bind', nginx_ip)
                 vnc_password = device['attributes'].get('vnc_password', None)
                 vnc_web = device['attributes'].get('vnc_web', None)
 
