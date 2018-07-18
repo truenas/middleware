@@ -92,7 +92,7 @@ def parse_peers(output):
                 if SINCE_BOOT < STARTUP_PERIOD:
                     raise UnavailableException()
                 else:
-                    raise Exception("still initializing after {:d} seconds since boot".format(since_boot))
+                    raise Exception("still initializing after {:d} seconds since boot".format(int(since_boot())))
 
             """Skip discarded peers """
             if info['select'] not in ('sel_candidate', 'sel_backup', 'sel_sys.peer', 'sel_pps.peer'):
