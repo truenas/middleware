@@ -1340,7 +1340,7 @@ class notifier(metaclass=HookMetaclass):
         self.sharesec_delete(share)
         return self.sharesec_add(share, owner, group)
 
-    def winacl_reset(self, path, owner=None, group=None, exclude=None):
+    def winacl_reset(self, path, owner=None, group=None, exclude=None, recursive=True):
         if exclude is None:
             exclude = []
 
@@ -1368,7 +1368,7 @@ class notifier(metaclass=HookMetaclass):
         if group is not None:
             args = "%s -G '%s'" % (args, group)
         apply_paths = exclude_path(path, exclude)
-        apply_paths = [(y, ' -r ') for y in apply_paths]
+        apply_paths = [(y, f' {"-r " if recursive else ""}') for y in apply_paths]
         if len(apply_paths) > 1:
             apply_paths.insert(0, (path, ''))
         for apath, flags in apply_paths:
