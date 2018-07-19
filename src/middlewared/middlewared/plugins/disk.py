@@ -501,8 +501,8 @@ class DiskService(CRUDService):
             if clear:
                 try:
                     self.geli_clear(dev)
-                except Exception:
-                    self.logger.warn('Failed to clear %s', dev)
+                except Exception as e:
+                    self.logger.warn('Failed to clear %s: %s', dev, e)
         return failed
 
 
