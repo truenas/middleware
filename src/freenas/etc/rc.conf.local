@@ -694,11 +694,6 @@ _gen_conf()
 		echo "failover_enable=\"NO\""
 	fi
 
-
-	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_consolescreensaver FROM system_advanced ORDER BY -id LIMIT 1")" = 1 ]; then
-		echo "saver=\"daemon\""
-	fi
-
         local nonroot mountdflags statdflags lockdflags ip nfsips mountdport statdport lockdport
         
         if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_mountd_log FROM services_nfs ORDER BY -id LIMIT 1")" = 1 ]; then
