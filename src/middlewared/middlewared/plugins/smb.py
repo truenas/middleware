@@ -153,9 +153,6 @@ class SharingSMBService(CRUDService):
         await self.clean(data, 'sharingsmb_create', verrors)
         await self.validate(data, 'sharingsmb_create', verrors)
 
-        await check_path_resides_within_volume(
-            verrors, self.middleware, "sharingsmb_create.path", path)
-
         if verrors:
             raise verrors
 
@@ -170,10 +167,10 @@ class SharingSMBService(CRUDService):
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
-        await self.extend(data)
+        await self.extend(data)  # We should do this in the insert call ?
 
         await self.middleware.call('service.reload', 'cifs')
-        await self.apply_default_perms(default_perms, path)
+        await self.apply_default_perms(default_perms, path, data['home'])
 
         return data
 
@@ -202,10 +199,6 @@ class SharingSMBService(CRUDService):
         await self.clean(new, 'sharingsmb_update', verrors, id=id)
         await self.validate(new, 'sharingsmb_update', verrors, old=old)
 
-        if path:
-            await check_path_resides_within_volume(
-                verrors, self.middleware, "sharingsmb_update.path", path)
-
         if verrors:
             raise verrors
 
@@ -220,10 +213,10 @@ class SharingSMBService(CRUDService):
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
-        await self.extend(new)
+        await self.extend(new)  # same here ?
 
         await self.middleware.call('service.reload', 'cifs')
-        await self.apply_default_perms(default_perms, path)
+        await self.apply_default_perms(default_perms, path, data['home'])
 
         return new
 
@@ -246,6 +239,11 @@ class SharingSMBService(CRUDService):
                         'Only one share is allowed to be a home share.')
         elif not home_result and not data['path']:
             verrors.add(f'{schema_name}.path', 'This field is required.')
+
+        if data['path']:
+            await check_path_resides_within_volume(
+                verrors, self.middleware, f"{schema_name}.path", data['path']
+            )
 
     @private
     async def home_exists(self, home, schema_name, verrors, old=None):
@@ -313,7 +311,7 @@ class SharingSMBService(CRUDService):
         return data
 
     @private
-    async def apply_default_perms(self, default_perms, path):
+    async def apply_default_perms(self, default_perms, path, is_home):
         if default_perms:
             try:
                 (owner, group) = await self.middleware.call(
@@ -322,7 +320,8 @@ class SharingSMBService(CRUDService):
                 (owner, group) = ('root', 'wheel')
 
             await self.middleware.call(
-                'notifier.winacl_reset', path, owner, group)
+                'notifier.winacl_reset', path, owner, group, None, not is_home
+            )
 
     @accepts(Str('path', required=True))
     async def get_storage_tasks(self, path):
