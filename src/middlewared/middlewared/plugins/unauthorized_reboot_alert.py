@@ -25,11 +25,10 @@ async def setup(middleware):
         hostname = f"{gc['gc_hostname']}.{gc['gc_domain']}"
         now = datetime.now().strftime("%c")
 
-        # FIXME: Translation
         await middleware.call("mail.send", {
-            "subject": f"{hostname}: Unauthorized system reboot",
+            "subject": f"{hostname}: Unscheduled system reboot",
             "text": textwrap.dedent(f"""\
-                System booted at {now} was not shut down properly
+                The operating system successfully booted at {now}. 
             """),
         })
 
