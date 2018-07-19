@@ -1488,7 +1488,7 @@ class VolumeResourceMixin(NestedMixin):
         with client as c:
             c.call('pool.export', bundle.obj.id, {
                 'destroy': deserialized.get('destroy', True),
-                'cascade', deserialized.get('cascade', True),
+                'cascade': deserialized.get('cascade', True),
             }, job=True)
 
 
