@@ -28,7 +28,8 @@ async def setup(middleware):
         await middleware.call("mail.send", {
             "subject": f"{hostname}: Unscheduled system reboot",
             "text": textwrap.dedent(f"""\
-                The operating system successfully booted at {now}.
+                {hostname} had an unscheduled system reboot.
+                The operating system successfully came back online at {now}.
             """),
         })
 
