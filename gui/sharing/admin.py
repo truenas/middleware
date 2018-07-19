@@ -73,11 +73,8 @@ class CIFSShareFAdmin(BaseFreeAdmin):
     def get_confirm_message(self, action, **kwargs):
         if action not in ('add', 'edit'):
             return
-        form = kwargs['form']
-        warn = []
 
-        if warn:
-            return ('<br/><br/>\n' + _('Also,') + '<br/><br/>\n').join(warn)
+        return
 
 
 class NFSShareFAdmin(BaseFreeAdmin):
@@ -128,13 +125,14 @@ class WebDAVShareFAdmin(BaseFreeAdmin):
     icon_view = "ViewAllWebDAVSharesIcon"
     icon_object = "WebDAVShareIcon"
     fields = (
-          'webdav_name',
-          'webdav_comment',
-          'webdav_path',
-          'webdav_ro',
-          'webdav_perm',
+        'webdav_name',
+        'webdav_comment',
+        'webdav_path',
+        'webdav_ro',
+        'webdav_perm',
     )
     resource_name = 'sharing/webdav'
+
 
 site.register(models.AFP_Share, AFPShareFAdmin)
 site.register(models.CIFS_Share, CIFSShareFAdmin)
