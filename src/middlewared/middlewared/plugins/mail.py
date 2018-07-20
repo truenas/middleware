@@ -192,6 +192,7 @@ class MailService(ConfigService):
 
     @accepts(Ref('mail-message'), Ref('mail-config'))
     @job(pipes=['input'], check_pipes=False)
+    @private
     def send_raw(self, job, message, config=None):
         interval = message.get('interval')
         if interval is None:
