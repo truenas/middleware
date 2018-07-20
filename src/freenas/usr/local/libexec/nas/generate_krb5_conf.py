@@ -520,22 +520,22 @@ def main():
         bc = KerberosConfigBindingCollection()
         bc.append(
             KerberosConfigBinding(
-                name=kr.krb_realm.lower(), value=kr.krb_realm.upper()
+                name=kr.krb_realm.lower(), value=kr.krb_realm
             )
         )
         bc.append(
             KerberosConfigBinding(
-                name=".%s" % kr.krb_realm.lower(), value=kr.krb_realm.upper()
+                name=".%s" % kr.krb_realm.lower(), value=kr.krb_realm)
             )
         )
         bc.append(
             KerberosConfigBinding(
-                name=kr.krb_realm.upper(), value=kr.krb_realm.upper()
+                name=kr.krb_realm.upper(), value=kr.krb_realm
             )
         )
         bc.append(
             KerberosConfigBinding(
-                name=".%s" % kr.krb_realm.upper(), value=kr.krb_realm.upper()
+                name=".%s" % kr.krb_realm.upper(), value=kr.krb_realm
             )
         )
 

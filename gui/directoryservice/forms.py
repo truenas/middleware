@@ -987,8 +987,6 @@ class KerberosRealmForm(ModelForm):
 
     def clean_krb_realm(self):
         krb_realm = self.cleaned_data.get("krb_realm", None)
-        if krb_realm:
-            krb_realm = krb_realm.upper()
         return krb_realm
 
     def save(self):
