@@ -525,7 +525,7 @@ def main():
         )
         bc.append(
             KerberosConfigBinding(
-                name=".%s" % kr.krb_realm.lower(), value=kr.krb_realm)
+                name=".%s" % kr.krb_realm.lower(), value=kr.krb_realm
             )
         )
         bc.append(
