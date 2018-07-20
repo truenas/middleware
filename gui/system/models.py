@@ -256,10 +256,6 @@ class Advanced(Model):
         help_text=_("Set this to match your serial port speed"),
         verbose_name=_("Serial Port Speed")
     )
-    adv_consolescreensaver = models.BooleanField(
-        verbose_name=_("Enable screen saver"),
-        default=False,
-    )
     adv_powerdaemon = models.BooleanField(
         verbose_name=_("Enable powerd (Power Saving Daemon)"),
         default=False,

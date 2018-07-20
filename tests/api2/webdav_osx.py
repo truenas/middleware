@@ -26,14 +26,14 @@ def pool_dict():
 
 
 def test_01_Creating_dataset_for_WebDAV_use(pool_dict):
-    results = POST("/pool/dataset", {"name": DATASET})
+    results = POST("/pool/dataset/", {"name": DATASET})
     assert results.status_code == 200, results.text
     pool_dict.update(results.json())
     assert isinstance(pool_dict['id'], str) is True
 
 
 def test_02_Creating_WebDAV_share_on_DATASET_PATH(webdav_dict):
-    results = POST('/webdav/share', {
+    results = POST('/sharing/webdav/', {
         'name': SHARE_NAME,
         'comment': 'Auto-created by API tests',
         'path': DATASET_PATH
@@ -64,7 +64,7 @@ def test_05_Checking_to_see_if_WebDAV_service_is_enabled_at_boot():
 
 
 def test_06_Starting_WebDAV_service():
-    results = POST('/service/start', {
+    results = POST('/service/start/', {
         'service': 'webdav',
         'service-control': {'onetime': True}
     })
@@ -77,12 +77,12 @@ def test_07_Checking_to_see_if_WebDAV_service_is_running():
 
 
 def test_08_Disabling_WebDAV_service():
-    results = PUT('/service/id/webdav', {'enable': False})
+    results = PUT('/service/id/webdav/', {'enable': False})
     assert results.status_code == 200, results.text
 
 
 def test_09_Stopping_WebDAV_service():
-    results = POST('/service/stop', {
+    results = POST('/service/stop/', {
         'service': 'webdav',
         'service-control': {'onetime': True}
     })
@@ -96,14 +96,14 @@ def test_10_Verifying_that_the_WebDAV_service_has_stopped():
 
 def test_11_Changing_comment_for_WebDAV(webdav_dict):
     id = webdav_dict['id']
-    results = PUT(f'/webdav/share/id/{id}', {
+    results = PUT(f'/sharing/webdav/id/{id}', {
         'comment': 'foobar'
     })
     assert results.status_code == 200, results.text
 
 
 def test_12_Change_WebDAV_password():
-    results = PUT('/webdav', {
+    results = PUT('/webdav/', {
         'password': 'ixsystems',
     })
 
@@ -111,13 +111,13 @@ def test_12_Change_WebDAV_password():
 
 
 def test_13_Check_WebDAV_password():
-    results = GET('/webdav')
+    results = GET('/webdav/')
     assert results.json()['password'] == 'ixsystems', results.text
 
 
 def test_14_Check_that_API_reports_WebDAV_config_as_changed(webdav_dict):
     id = webdav_dict['id']
-    results = GET(f'/webdav/share?id={id}')
+    results = GET(f'/sharing/webdav?id={id}')
     assert results.status_code == 200, results.text
     data = results.json()[0]
     assert data['comment'] == 'foobar'
@@ -126,7 +126,7 @@ def test_14_Check_that_API_reports_WebDAV_config_as_changed(webdav_dict):
 def test_15_Delete_WebDAV_share(webdav_dict):
     id = webdav_dict['id']
 
-    results = DELETE(f'/webdav/share/id/{id}')
+    results = DELETE(f'/sharing/webdav/id/{id}/')
     assert results.status_code == 200, results.text
 
 

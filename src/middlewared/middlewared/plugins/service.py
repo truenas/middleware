@@ -947,24 +947,6 @@ class ServiceService(CRUDService):
     async def _start_loader(self, **kwargs):
         await self._service("ix-loader", "start", quiet=True, **kwargs)
 
-    async def __saver_loaded(self):
-        pipe = os.popen("kldstat|grep daemon_saver")
-        out = pipe.read().strip('\n')
-        pipe.close()
-        return (len(out) > 0)
-
-    async def _start_saver(self, **kwargs):
-        if not await self.__saver_loaded():
-            await self._system("kldload daemon_saver")
-
-    async def _stop_saver(self, **kwargs):
-        if await self.__saver_loaded():
-            await self._system("kldunload daemon_saver")
-
-    async def _restart_saver(self, **kwargs):
-        await self._stop_saver()
-        await self._start_saver()
-
     async def _restart_disk(self, **kwargs):
         await self._reload_disk(**kwargs)
 

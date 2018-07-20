@@ -1012,9 +1012,9 @@ class Middleware(object):
 
         return await self._call(message['method'], serviceobj, methodobj, params, app=app, io_thread=False)
 
-    async def call(self, name, *params, pipes=None):
+    async def call(self, name, *params, pipes=None, app=None):
         serviceobj, methodobj = self._method_lookup(name)
-        return await self._call(name, serviceobj, methodobj, params, pipes=pipes, io_thread=True)
+        return await self._call(name, serviceobj, methodobj, params, app=app, pipes=pipes, io_thread=True)
 
     def call_sync(self, name, *params):
         """

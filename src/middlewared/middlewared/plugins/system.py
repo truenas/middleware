@@ -114,7 +114,6 @@ class SytemAdvancedService(ConfigService):
             Bool('autotune'),
             Bool('consolemenu'),
             Bool('consolemsg'),
-            Bool('consolescreensaver'),
             Bool('cpu_in_percentage'),
             Bool('debugkernel'),
             Bool('fqdn_syslog'),
@@ -178,15 +177,6 @@ class SytemAdvancedService(ConfigService):
                     original_data['serialspeed'] != config_data['serialspeed'] or
                     original_data['serialport'] != config_data['serialport']
             ):
-                if not loader_reloaded:
-                    await self.middleware.call('service.reload', 'loader', {'onetime': False})
-                    loader_reloaded = True
-
-            if original_data['consolescreensaver'] != config_data['consolescreensaver']:
-                if config_data['consolescreensaver'] == 0:
-                    await self.middleware.call('service.stop', 'saver', {'onetime': False})
-                else:
-                    await self.middleware.call('service.start', 'saver', {'onetime': False})
                 if not loader_reloaded:
                     await self.middleware.call('service.reload', 'loader', {'onetime': False})
                     loader_reloaded = True

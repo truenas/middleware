@@ -17,12 +17,13 @@ from middlewared.alert.base import (
     ProThreadedAlertService,
     DismissableAlertSource,
 )
-from middlewared.alert.base import AlertService as _AlertService
+from middlewared.alert.base import UnavailableException, AlertService as _AlertService
 from middlewared.schema import Dict, Str, Bool, Int, accepts, Patch
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
     job, periodic, private,
 )
+from middlewared.service_exception import CallError
 from middlewared.utils import load_modules, load_classes
 
 POLICIES = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]
@@ -290,18 +291,29 @@ class AlertService(Service):
 
             self.logger.trace("Running alert source: %r", alert_source.name)
 
-            alerts_a = await self.__run_source(alert_source.name)
+            try:
+                alerts_a = await self.__run_source(alert_source.name)
+            except UnavailableException:
+                alerts_a = list(self.alerts["A"][alert_source.name].values())
             for alert in alerts_a:
                 alert.node = master_node
 
             alerts_b = []
             if run_on_backup_node and alert_source.run_on_backup_node:
                 try:
-                    alerts_b = [Alert(**dict(alert,
-                                             level=(AlertLevel(alert["level"]) if alert["level"] is not None
-                                                    else alert["level"])))
-                                for alert in (await self.middleware.call("failover.call_remote", "alert.run_source",
-                                                                         [alert_source.name]))]
+                    try:
+                        alerts_b = await self.middleware.call("failover.call_remote", "alert.run_source",
+                                                              [alert_source.name])
+                    except CallError as e:
+                        if e.errno == CallError.EALERTCHECKERUNAVAILABLE:
+                            alerts_b = list(self.alerts["B"][alert_source.name].values())
+                        else:
+                            raise
+                    else:
+                        alerts_b = [Alert(**dict(alert,
+                                                 level=(AlertLevel(alert["level"]) if alert["level"] is not None
+                                                        else alert["level"])))
+                                    for alert in alerts_b]
                 except Exception:
                     alerts_b = [
                         Alert(title="Unable to run alert source %(source_name)r on backup node\n%(traceback)s",
@@ -335,14 +347,19 @@ class AlertService(Service):
 
     @private
     async def run_source(self, source_name):
-        return [dict(alert.__dict__, level=alert.level.value if alert.level is not None else alert.level)
-                for alert in await self.__run_source(source_name)]
+        try:
+            return [dict(alert.__dict__, level=alert.level.value if alert.level is not None else alert.level)
+                    for alert in await self.__run_source(source_name)]
+        except UnavailableException:
+            raise CallError("This alert checker is unavailable", CallError.EALERTCHECKERUNAVAILABLE)
 
     async def __run_source(self, source_name):
         alert_source = ALERT_SOURCES[source_name]
 
         try:
             alerts = (await alert_source.check()) or []
+        except UnavailableException:
+            raise
         except Exception:
             alerts = [
                 Alert(title="Unable to run alert source %(source_name)r\n%(traceback)s",

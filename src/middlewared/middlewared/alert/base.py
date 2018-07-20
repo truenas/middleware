@@ -7,8 +7,9 @@ import os
 
 from middlewared.alert.schedule import IntervalSchedule
 
-__all__ = ["AlertLevel", "Alert", "AlertSource", "FilePresenceAlertSource", "ThreadedAlertSource",
-           "DismissableAlertSource",
+__all__ = ["AlertLevel", "UnavailableException",
+           "Alert", "AlertSource", "DismissableAlertSource", "FilePresenceAlertSource",
+           "ThreadedAlertSource",
            "AlertService", "ThreadedAlertService", "ProThreadedAlertService",
            "format_alerts", "ellipsis"]
 
@@ -21,6 +22,10 @@ class AlertLevel(enum.Enum):
     INFO = 20
     WARNING = 30
     CRITICAL = 50
+
+
+class UnavailableException(Exception):
+    pass
 
 
 class Alert:

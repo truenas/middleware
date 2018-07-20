@@ -237,7 +237,6 @@ class ActiveDirectoryForm(ModelForm):
     ad_netbiosname_b = forms.CharField(
         max_length=120,
         label=_("NetBIOS name"),
-        required=False,
     )
     ad_netbiosalias = forms.CharField(
         max_length=120,

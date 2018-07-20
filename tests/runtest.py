@@ -80,6 +80,8 @@ if 'ip' not in locals() and 'password' not in locals() and 'interface' not in lo
 
 if interface == "vtnet0":
     disk = 'disk1 = "vtbd1"\ndisk2 = "vtbd2"'
+elif api == "1.0":
+    disk = 'disk1 = "da1"\ndisk2 = "da2"'
 else:
     disk = 'disk1 = "ada1"\ndisk2 = "ada2"'
 

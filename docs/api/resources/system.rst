@@ -36,7 +36,6 @@ List resource
                 "adv_serialconsole": false,
                 "adv_traceback": true,
                 "adv_uploadcrash": true,
-                "adv_consolescreensaver": false,
                 "adv_debugkernel": false,
                 "adv_advancedmode": false,
                 "adv_consolemsg": false,
@@ -86,7 +85,6 @@ Update resource
                 "adv_serialconsole": false,
                 "adv_traceback": true,
                 "adv_uploadcrash": true,
-                "adv_consolescreensaver": false,
                 "adv_debugkernel": false,
                 "adv_advancedmode": false,
                 "adv_consolemsg": false,
@@ -106,7 +104,6 @@ Update resource
    :json boolean adv_serialconsole: Use Serial Console
    :json string adv_serialport: 0x2f8, 0x3f8
    :json string adv_serialspeed: 9600, 19200, 38400, 57600, 115200
-   :json boolean adv_consolescreensaver: Enable screen saver
    :json boolean adv_powerdaemon: Enable powerd (Power Saving Daemon)
    :json string adv_swapondrive: Swap size on each drive in GiB, affects new disks only
    :json boolean adv_consolemsg: Show console messages in the footer

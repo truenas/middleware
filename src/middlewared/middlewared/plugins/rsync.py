@@ -412,7 +412,8 @@ class RsyncTaskService(CRUDService):
 
             search = os.path.join(user.pw_dir, '.ssh', 'id_[edr]*')
             exclude_from_search = os.path.join(user.pw_dir, '.ssh', 'id_[edr]*pub')
-            if not set(glob.glob(search)) - set(glob.glob(exclude_from_search)):
+            key_files = set(glob.glob(search)) - set(glob.glob(exclude_from_search))
+            if not key_files:
                 verrors.add(
                     f'{schema}.user',
                     'In order to use rsync over SSH you need a user'
@@ -444,7 +445,9 @@ class RsyncTaskService(CRUDService):
                     with (await asyncio.wait_for(asyncssh.connect(
                             remote_host,
                             port=remote_port,
-                            username=remote_username), timeout=5)) as conn:
+                            username=remote_username,
+                            client_keys=key_files
+                    ), timeout=5)) as conn:
 
                         await conn.run(f'test -d {remote_path}', check=True)
 
@@ -483,7 +486,7 @@ class RsyncTaskService(CRUDService):
                             f'{schema}.remotepath',
                             'The Remote Path you specified does not exist or is not a directory.'
                             'Either create one yourself on the remote machine or uncheck the '
-                            'rsync_validate_rpath field'
+                            'validate_rpath field'
                         )
                     else:
                         verrors.add(
@@ -508,8 +511,7 @@ class RsyncTaskService(CRUDService):
                     'Remote path could not be validated because of missing fields'
                 )
 
-        if data.get('validate_rpath'):
-            data.pop('validate_rpath')
+        data.pop('validate_rpath', None)
 
         return verrors, data
 
@@ -552,7 +554,7 @@ class RsyncTaskService(CRUDService):
             data,
             {'prefix': self._config.datastore_prefix}
         )
-        await self.middleware.call('service.reload', 'cron')
+        await self.middleware.call('service.restart', 'cron')
 
         return data
 
@@ -579,12 +581,12 @@ class RsyncTaskService(CRUDService):
             new,
             {'prefix': self._config.datastore_prefix}
         )
-        await self.middleware.call('service.reload', 'cron')
+        await self.middleware.call('service.restart', 'cron')
 
         return await self.query(filters=[('id', '=', id)], options={'get': True})
 
     @accepts(Int('id'))
     async def do_delete(self, id):
         res = await self.middleware.call('datastore.delete', self._config.datastore, id)
-        await self.middleware.call('service.reload', 'cron')
+        await self.middleware.call('service.restart', 'cron')
         return res
