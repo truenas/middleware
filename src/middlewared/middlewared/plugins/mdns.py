@@ -67,24 +67,23 @@ class mDNSDaemonThread(object):
         fd = os.open(path_dir, os.O_RDONLY)
         kq = select.kqueue()
 
-        events = [
-            select.kevent(fd, filter=select.KQ_FILTER_VNODE,
-                flags=select.KQ_EV_ADD|select.KQ_EV_ENABLE|select.KQ_EV_CLEAR,
-                fflags=select.KQ_NOTE_WRITE|select.KQ_NOTE_EXTEND)
-        ]
+        events = [select.kevent(
+            fd, filter=select.KQ_FILTER_VNODE,
+            flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE | select.KQ_EV_CLEAR,
+            fflags=select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND
+        )]
 
         events = kq.control(events, 0, 0)
         while (not exists):
             proc_events = kq.control([], 1024)
             for event in proc_events:
-                if ((event.fflags & select.KQ_NOTE_WRITE) or \
-                    (event.fflags & select.KQ_NOTE_EXTEND)):
-                    if os.access(fullpath, os.F_OK):
-                        exists = True
+                if ((event.fflags & select.KQ_NOTE_WRITE) or
+                        (event.fflags & select.KQ_NOTE_EXTEND)):
+                        if os.access(fullpath, os.F_OK):
+                            exists = True
 
             if exists is True:
                 break
-
 
         kq.close()
         os.close(fd)
@@ -99,24 +98,23 @@ class mDNSDaemonThread(object):
             kq = select.kqueue()
             sha256 = hashlib.sha256(f.read().encode('utf-8')).hexdigest()
 
-            events = [
-                select.kevent(fd, filter=select.KQ_FILTER_VNODE,
-                    flags=select.KQ_EV_ADD|select.KQ_EV_ENABLE|select.KQ_EV_CLEAR,
-                    fflags=select.KQ_NOTE_WRITE|select.KQ_NOTE_EXTEND)
-            ]
+            events = [select.kevent(
+                fd, filter=select.KQ_FILTER_VNODE,
+                flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE | select.KQ_EV_CLEAR,
+                fflags=select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND
+            )]
 
             events = kq.control(events, 0, 0)
             while (not changed):
                 proc_events = kq.control([], 1024)
                 for event in proc_events:
-                    if ((event.fflags & select.KQ_NOTE_WRITE) or \
-                        (event.fflags & select.KQ_NOTE_EXTEND)):
-                        if os.access(path, os.F_OK):
-                            changed = True
+                    if ((event.fflags & select.KQ_NOTE_WRITE) or
+                            (event.fflags & select.KQ_NOTE_EXTEND)):
+                            if os.access(path, os.F_OK):
+                                changed = True
 
                 if changed is True:
                     break
-
 
             kq.close()
 
@@ -131,7 +129,6 @@ class mDNSDaemonThread(object):
 
         return self.wait_for_file_change(os.path.abspath(os.path.realpath(path)))
 
-
     def check_resolv_conf(self, path):
         if not path or not os.access(path, os.F_OK):
             return False
@@ -139,14 +136,14 @@ class mDNSDaemonThread(object):
         ret = False
         with open(path, "r") as f:
             contents = f.read()
-            r = re.match('(.+)?^(\s+)?nameserver\s+([^\s]+)', contents, re.M|re.S|re.I)
+            r = re.match('(.+)?^(\s+)?nameserver\s+([^\s]+)', contents, re.M | re.S | re.I)
             if r and len(r.groups()) >= 3:
                 ip = r.group(3)
                 try:
                     ipaddress.ip_address(ip)
                     ret = True
 
-                except:
+                except Exception:
                     ret = False
 
         return ret
@@ -308,7 +305,6 @@ class DiscoverThread(mDNSThread):
 
             if self.finished.is_set():
                 break
-
 
         if self.active(sdRef):
             sdRef.close()
@@ -641,8 +637,6 @@ class mDNSServiceThread(threading.Thread):
 
             if self.finished.is_set():
                 break
-
-
 
         # This deregisters service
         sdRef.close()
