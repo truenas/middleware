@@ -87,8 +87,6 @@ class RcloneConfig:
 async def rclone(middleware, job, cloud_sync):
     # Use a temporary file to store rclone file
     with RcloneConfig(cloud_sync) as config:
-        await run_script(job, cloud_sync["pre_script"], "Pre-script")
-
         args = [
             "/usr/local/bin/rclone",
             "--config", config.config_path,
@@ -104,8 +102,8 @@ async def rclone(middleware, job, cloud_sync):
         args += [cloud_sync["transfer_mode"].lower()]
 
         snapshot = None
+        path = cloud_sync["path"]
         if cloud_sync["direction"] == "PUSH":
-            path = cloud_sync["path"]
             if cloud_sync["snapshot"]:
                 dataset, recursive = get_dataset_recursive(
                     await middleware.call("zfs.dataset.query"), cloud_sync["path"])
@@ -119,7 +117,23 @@ async def rclone(middleware, job, cloud_sync):
 
             args.extend([path, config.remote_path])
         else:
-            args.extend([config.remote_path, cloud_sync["path"]])
+            args.extend([config.remote_path, path])
+
+        env = {}
+        for k, v in (
+            [(k, v) for (k, v) in cloud_sync.items()
+             if k in ["id", "description", "direction", "transfer_mode", "encryption", "filename_encryption",
+                      "encryption_password", "encryption_salt", "snapshot"]] +
+            list(cloud_sync["credentials"]["attributes"].items()) +
+            list(cloud_sync["attributes"].items())
+        ):
+            if type(v) in (bool,):
+                env[f"CLOUD_SYNC_{k.upper()}"] = str(int(v))
+            if type(v) in (int, str):
+                env[f"CLOUD_SYNC_{k.upper()}"] = str(v)
+        env["CLOUD_SYNC_PATH"] = path
+
+        await run_script(job, env, cloud_sync["pre_script"], "Pre-script")
 
         proc = await Popen(
             args,
@@ -136,12 +150,12 @@ async def rclone(middleware, job, cloud_sync):
         if proc.returncode != 0:
             raise ValueError("rclone failed")
 
-        await run_script(job, cloud_sync["post_script"], "Post-script")
+        await run_script(job, env, cloud_sync["post_script"], "Post-script")
 
         return True
 
 
-async def run_script(job, hook, name):
+async def run_script(job, env, hook, script_name):
     hook = hook.strip()
     if not hook:
         return
@@ -160,30 +174,31 @@ async def run_script(job, hook, name):
             [name],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
+            env=env,
         )
-        future = asyncio.ensure_future(run_script_check(job, proc))
+        future = asyncio.ensure_future(run_script_check(job, proc, script_name))
         await proc.wait()
         await asyncio.wait_for(future, None)
         if proc.returncode != 0:
-            raise ValueError(f"{name} failed with exit code {proc.returncode}")
+            raise ValueError(f"{script_name} failed with exit code {proc.returncode}")
     finally:
         os.unlink(name)
 
 
-async def run_script_check(job, proc):
+async def run_script_check(job, proc, name):
     while True:
         read = await proc.stdout.readline()
-        job.logs_fd.write(read)
         if read == b"":
             break
+        job.logs_fd.write(f"[{name}] ".encode("utf-8") + read)
 
 
 async def rclone_check_progress(job, proc):
     while True:
         read = (await proc.stdout.readline()).decode()
-        job.logs_fd.write(read.encode("utf-8", "ignore"))
         if read == "":
             break
+        job.logs_fd.write(read.encode("utf-8", "ignore"))
         reg = RE_TRANSF.search(read)
         if reg:
             transferred = reg.group(1).strip()
