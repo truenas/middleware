@@ -1,5 +1,4 @@
 import asyncio
-import hashlib
 import ipaddress
 import os
 import psutil
@@ -99,7 +98,6 @@ class mDNSDaemonMonitor(object):
         with open(path, "r") as f:
             fd = f.fileno()
             kq = select.kqueue()
-            sha256 = hashlib.sha256(f.read().encode('utf-8')).hexdigest()
 
             events = [select.kevent(
                 fd, filter=select.KQ_FILTER_VNODE,
@@ -128,7 +126,7 @@ class mDNSDaemonMonitor(object):
             return False
 
         if not os.access(path, os.F_OK):
-            return wait_for_file_to_exist(path)
+            return self.wait_for_file_to_exist(path)
 
         return self.wait_for_file_change(os.path.abspath(os.path.realpath(path)))
 
