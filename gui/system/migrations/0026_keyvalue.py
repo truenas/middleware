@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0024_rename_bes'),
+        ('system', '0025_remove_screensaver'),
     ]
 
     operations = [
