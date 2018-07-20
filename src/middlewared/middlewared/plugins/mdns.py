@@ -1,4 +1,6 @@
 import asyncio
+import hashlib
+import ipaddress
 import os
 import psutil
 import pybonjour
@@ -51,8 +53,115 @@ class mDNSDaemonThread(object):
 
         return alive
 
-    def wait(self):
+    def start(self):
+        p = subprocess.Popen(["/usr/local/etc/rc.d/mdnsd", "onestart"])
+        p.wait()
+        return p.returncode == 0
+
+    def wait_for_file_to_exist(self, path, timeout=0):
+        path_dir = os.path.abspath(os.path.realpath(os.path.dirname(path)))
+        filename = os.path.basename(path)
+        fullpath = os.path.join(path_dir, filename)
+        exists = False
+
+        fd = os.open(path_dir, os.O_RDONLY)
+        kq = select.kqueue()
+
+        events = [
+            select.kevent(fd, filter=select.KQ_FILTER_VNODE,
+                flags=select.KQ_EV_ADD|select.KQ_EV_ENABLE|select.KQ_EV_CLEAR,
+                fflags=select.KQ_NOTE_WRITE|select.KQ_NOTE_EXTEND)
+        ]
+
+        events = kq.control(events, 0, 0)
+        while (not exists):
+            proc_events = kq.control([], 1024)
+            for event in proc_events:
+                if ((event.fflags & select.KQ_NOTE_WRITE) or \
+                    (event.fflags & select.KQ_NOTE_EXTEND)):
+                    if os.access(fullpath, os.F_OK):
+                        exists = True
+
+            if exists is True:
+                break
+
+
+        kq.close()
+        os.close(fd)
+
+        return exists
+
+    def wait_for_file_change(self, path, timeout=0):
+        changed = False
+
+        with open(path, "r") as f:
+            fd = f.fileno()
+            kq = select.kqueue()
+            sha256 = hashlib.sha256(f.read().encode('utf-8')).hexdigest()
+
+            events = [
+                select.kevent(fd, filter=select.KQ_FILTER_VNODE,
+                    flags=select.KQ_EV_ADD|select.KQ_EV_ENABLE|select.KQ_EV_CLEAR,
+                    fflags=select.KQ_NOTE_WRITE|select.KQ_NOTE_EXTEND)
+            ]
+
+            events = kq.control(events, 0, 0)
+            while (not changed):
+                proc_events = kq.control([], 1024)
+                for event in proc_events:
+                    if ((event.fflags & select.KQ_NOTE_WRITE) or \
+                        (event.fflags & select.KQ_NOTE_EXTEND)):
+                        if os.access(path, os.F_OK):
+                            changed = True
+
+                if changed is True:
+                    break
+
+
+            kq.close()
+
+        return changed
+
+    def wait_for_file(self, path):
+        if not path:
+            return False
+
+        if not os.access(path, os.F_OK):
+            return wait_for_file_to_exist(path)
+
+        return self.wait_for_file_change(os.path.abspath(os.path.realpath(path)))
+
+
+    def check_resolv_conf(self, path):
+        if not path or not os.access(path, os.F_OK):
+            return False
+
+        ret = False
+        with open(path, "r") as f:
+            contents = f.read()
+            r = re.match('(.+)?^(\s+)?nameserver\s+([^\s]+)', contents, re.M|re.S|re.I)
+            if r and len(r.groups()) >= 3:
+                ip = r.group(3)
+                try:
+                    ipaddress.ip_address(ip)
+                    ret = True
+
+                except:
+                    ret = False
+
+        return ret
+
+    def wait_for_system_dns(self):
+        filename = "/etc/resolv.conf"
+
+        while (not self.check_resolv_conf(filename)):
+            self.wait_for_file(filename)
+
+    def wait(self, timeout=0):
+        max_nevents = 1024
         alive = False
+
+        self.wait_for_system_dns()
 
         if self.is_alive():
             return True
@@ -199,6 +308,7 @@ class DiscoverThread(mDNSThread):
 
             if self.finished.is_set():
                 break
+
 
         if self.active(sdRef):
             sdRef.close()
@@ -531,6 +641,8 @@ class mDNSServiceThread(threading.Thread):
 
             if self.finished.is_set():
                 break
+
+
 
         # This deregisters service
         sdRef.close()
