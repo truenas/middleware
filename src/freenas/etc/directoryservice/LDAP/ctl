@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh 
 
 . /etc/rc.freenas
 
@@ -151,7 +151,7 @@ ldapctl_start()
 	fi
 
 	anonbind="$(LDAP_get ldap_anonbind)"
-	if [ "${anonbind}" = "0" ]
+	if [ "${anonbind}" = "0" -o -n "${realm}" -o -n "${keytab_principal}" ]
 	then
 		ldapctl_cmd ${service} ix-sssd start	
 		if sssd_running
@@ -161,8 +161,7 @@ ldapctl_start()
 			sssd_start
 		fi
 
-	elif [ "${anonbind}" = "1" ]
-	then
+        else
 		ldapctl_cmd ${service} ix-pam quietstart
 		if nslcd_running
 		then

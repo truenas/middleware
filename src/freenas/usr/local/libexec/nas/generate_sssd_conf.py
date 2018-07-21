@@ -598,9 +598,7 @@ def sssd_setup():
         os.chmod(SSSD_CONFIGFILE, 0o600)
 
 
-def add_ldap_section(client, sc):
-    ldap = Struct(client.call('datastore.query', 'directoryservice.ldap', None, {'get': True}))
-
+def add_ldap_section(client, sc, ldap):
     ldap_hostname = ldap.ldap_hostname.upper()
     parts = ldap_hostname.split('.')
     ldap_hostname = parts[0]
@@ -687,10 +685,18 @@ def add_ldap_section(client, sc):
             ldap_section.ldap_tls_cacert = certpath
         ldap_section.ldap_id_use_start_tls = 'true'
 
+    ldap_anon = ldap.ldap_anonbind
     ldap_save = ldap
     ldap = Struct(client.call('notifier.directoryservice', 'LDAP'))
 
-    if ldap.keytab_file and ldap.keytab_principal:
+    if ldap_anon and ldap.keytab_file and ldap.keytab_principal:
+        ldap_section.auth_provider = 'krb5'
+        ldap_section.chpass_provider = 'krb5'
+        ldap_section.krb5_server = ldap.krb_kdc
+        ldap_section.krb5_realm = ldap.krb_realm
+        ldap_section.krb5_canonicalize = 'false'
+
+    elif ldap.keytab_file and ldap.keytab_principal:
         ldap_section.auth_provider = 'krb5'
         ldap_section.chpass_provider = 'krb5'
         ldap_section.ldap_sasl_mech = 'GSSAPI'
@@ -875,8 +881,9 @@ def get_directoryservice_cookie(client):
 def main():
     client = Client()
     sssd_conf = None
+    ldap = Struct(client.call('datastore.query', 'directoryservice.ldap', None, {'get': True}))
 
-    if client.call('notifier.common', 'system', 'ldap_enabled') and client.call('notifier.common', 'system', 'ldap_anonymous_bind'):
+    if ldap.ldap_enable and ldap.ldap_anonbind and not ldap.ldap_kerberos_realm:
         sys.exit(1)
 
     sssd_setup()
@@ -898,7 +905,7 @@ def main():
     if client.call('notifier.common', 'system', 'activedirectory_enabled') and activedirectory_has_unix_extensions(client):
         add_activedirectory_section(client, sc)
     if client.call('notifier.common', 'system', 'ldap_enabled'):
-        add_ldap_section(client, sc)
+        add_ldap_section(client, sc, ldap)
 
     sc.save(SSSD_CONFIGFILE)
 
