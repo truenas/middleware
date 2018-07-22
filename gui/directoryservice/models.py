@@ -1143,10 +1143,10 @@ class NIS(DirectoryServiceBase):
 
 
 class LDAP(DirectoryServiceBase):
-    ldap_hostname = models.CharField(
+    ldap_hostname = models.TextField(
         verbose_name=_("Hostname"),
         max_length=120,
-        help_text=_("The name or IP address of the LDAP server"),
+        help_text=_("The name(s) or IP address(es) of the LDAP server(s)."),
         blank=True
     )
     ldap_basedn = models.CharField(

@@ -601,11 +601,7 @@ def sssd_setup():
 def add_ldap_section(client, sc):
     ldap = Struct(client.call('datastore.query', 'directoryservice.ldap', None, {'get': True}))
 
-    ldap_hostname = ldap.ldap_hostname.upper()
-    parts = ldap_hostname.split('.')
-    ldap_hostname = parts[0]
-
-    ldap_cookie = ldap_hostname
+    ldap_cookie = calculate_ldap_cookie(ldap)
     ldap_domain = 'domain/%s' % ldap_cookie
 
     ldap_section = None
@@ -637,10 +633,13 @@ def add_ldap_section(client, sc):
             setattr(ldap_section, key, d[key])
 
     ldap_section.ldap_schema = ldap.ldap_schema
-    ldap_section.ldap_uri = "%s://%s" % (
-        "ldaps" if ldap.ldap_ssl == 'on' else "ldap",
-        ldap.ldap_hostname
-    )
+    ldap_section.ldap_uri = ", ".join([
+        "%s://%s" % (
+            "ldaps" if ldap.ldap_ssl == 'on' else "ldap",
+            hostname
+        )
+        for hostname in ldap.ldap_hostname.split()
+    ])
     ldap_section.ldap_search_base = ldap.ldap_basedn
 
     if ldap.ldap_usersuffix:
@@ -856,11 +855,15 @@ def get_ldap_cookie(client):
 
     if client.call('notifier.common', 'system', 'ldap_enabled'):
         ldap = Struct(client.call('datastore.query', 'directoryservice.ldap', None, {'get': True}))
-        cookie = ldap.ldap_hostname.upper()
-        parts = cookie.split('.')
-        cookie = parts[0]
+        cookie = calculate_ldap_cookie(ldap)
 
     return cookie
+
+
+def calculate_ldap_cookie(ldap):
+    cookie = ldap.ldap_hostname.split()[0].upper()
+    parts = cookie.split('.')
+    return parts[0]
 
 
 def get_directoryservice_cookie(client):

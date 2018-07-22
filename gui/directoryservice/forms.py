@@ -849,6 +849,13 @@ class LDAPForm(ModelForm):
         else:
             self.instance.ldap_has_samba_schema = False
 
+    def clean_ldap_hostname(self):
+        hostnames = self.cleaned_data.get("ldap_hostname").replace(",", " ")
+        if not hostnames.split():
+            raise forms.ValidationError("No LDAP hostname(s) specified")
+
+        return hostnames
+
     def clean_ldap_netbiosname_a(self):
         netbiosname = self.cleaned_data.get("ldap_netbiosname_a")
         try:
@@ -889,7 +896,7 @@ class LDAPForm(ModelForm):
         binddn = cdata.get("ldap_binddn")
         bindpw = cdata.get("ldap_bindpw")
         basedn = cdata.get("ldap_basedn")
-        hostname = cdata.get("ldap_hostname")
+        hostnames = cdata.get("ldap_hostname").split()
         ssl = cdata.get("ldap_ssl")
 
         certfile = None
@@ -901,46 +908,53 @@ class LDAPForm(ModelForm):
             else:
                 certfile = get_certificateauthority_path(certificate)
 
-        port = 389
-        if ssl == "on":
-            port = 636
-        if hostname:
-            parts = hostname.split(':')
-            hostname = parts[0]
+        hostnames_ports = []
+        for hostname in hostnames:
+            port = 389
+            if ssl == "on":
+                port = 636
+
+            parts = hostname.split(":", 1)
             if len(parts) > 1:
-                port = int(parts[1])
+                try:
+                    port = int(parts[1])
+                except ValueError:
+                    raise forms.ValidationError(f"Invalid port: {parts[1]!r}")
+
+            hostnames_ports.append([parts[0], port])
 
         if cdata.get("ldap_enable") is False:
             return cdata
 
         # self.check_for_samba_schema()
-        try:
-            FreeNAS_LDAP.validate_credentials(
-                hostname,
-                binddn=binddn,
-                bindpw=bindpw,
-                basedn=basedn,
-                port=port,
-                certfile=certfile,
-                ssl=ssl
-            )
-        except LDAPError as e:
-            log.debug("LDAPError: type = %s", type(e))
-
-            error = []
+        for hostname, port in hostnames_ports:
             try:
-                error.append(e.args[0]['info'])
-                error.append(e.args[0]['desc'])
-                error = ', '.join(error)
+                FreeNAS_LDAP.validate_credentials(
+                    hostname,
+                    binddn=binddn,
+                    bindpw=bindpw,
+                    basedn=basedn,
+                    port=port,
+                    certfile=certfile,
+                    ssl=ssl
+                )
+            except LDAPError as e:
+                log.debug("LDAPError: type = %s", type(e))
+
+                error = []
+                try:
+                    error.append(e.args[0]['info'])
+                    error.append(e.args[0]['desc'])
+                    error = ', '.join(error)
+
+                except Exception as e:
+                    error = str(e)
+
+                raise forms.ValidationError(f"Error validating {hostname}:{port}: {error}")
 
             except Exception as e:
-                error = str(e)
-
-            raise forms.ValidationError("{0}".format(error))
-
-        except Exception as e:
-            log.debug("LDAPError: type = %s", type(e))
-            raise forms.ValidationError("{0}".format(str(e)))
+                log.debug("LDAPError: type = %s", type(e))
+                raise forms.ValidationError(f"Error validating {hostname}:{port}: {str(e)}")
 
         return cdata
 
