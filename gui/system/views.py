@@ -842,7 +842,7 @@ def testmail(request):
             mailconfig = form.middleware_prepare()
             try:
                 c.call('mail.send', {
-                    'subject': f'Test message from your {sw_name} system hostname {socket.gethostname()}',
+                    'subject': f'Test message from your {sw_name}',
                     'text': f'This is a message test from {sw_name}',
                     'to': [email],
                     'timeout': 10,

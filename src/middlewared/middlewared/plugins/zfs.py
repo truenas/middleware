@@ -1,5 +1,4 @@
 import errno
-import socket
 import subprocess
 import threading
 import time
@@ -630,7 +629,7 @@ async def _handle_zfs_events(middleware, event_type, args):
 
     if data.get('type') == 'misc.fs.zfs.scrub_finish':
         await middleware.call('mail.send', {
-            'subject': f'{socket.gethostname()}: scrub finished',
+            'subject': 'scrub finished',
             'text': f"scrub of pool '{data.get('pool_name')}' finished",
         })
 
