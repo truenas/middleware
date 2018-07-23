@@ -214,17 +214,21 @@ class JailService(CRUDService):
         return pool
 
     @accepts(
-        Dict("options",
-             Str("release"),
-             Str("server", default="download.freebsd.org"),
-             Str("user", default="anonymous"),
-             Str("password", default="anonymous@"),
-             Str("name", default=None),
-             Bool("accept", default=False),
-             List("props"),
-             List(
-                 "files",
-                 default=["MANIFEST", "base.txz", "lib32.txz", "doc.txz"])))
+        Dict(
+            "options",
+            Str("release"),
+            Str("server", default="download.freebsd.org"),
+            Str("user", default="anonymous"),
+            Str("password", default="anonymous@"),
+            Str("name", default=None),
+            Bool("accept", default=True),
+            List("props"),
+            List(
+                "files",
+                default=["MANIFEST", "base.txz", "lib32.txz", "doc.txz"]
+            )
+        )
+    )
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
     def fetch(self, job, options):
         """Fetches a release or plugin."""
@@ -232,6 +236,8 @@ class JailService(CRUDService):
 
         if options["name"] is not None:
             options["plugins"] = True
+
+        options["accept"] = True
 
         iocage = ioc.IOCage(silent=True)
 
