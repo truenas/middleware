@@ -114,7 +114,7 @@ class FreeNAS_LDAP_Directory(object):
     @staticmethod
     def validate_credentials(
         hostname, port=389, basedn=None, binddn=None, bindpw=None, ssl='off',
-        certfile=None, errors=[]
+        certfile=None
     ):
         FreeNAS_LDAP(
             host=hostname,
@@ -150,6 +150,8 @@ class FreeNAS_LDAP_Directory(object):
         if self.port is None:
             self.port = FREENAS_LDAP_PORT
 
+        self.hosts = kwargs.get('hosts', [self.host, self.port])
+
         self.scope = ldap.SCOPE_SUBTREE
         if 'scope' in kwargs and kwargs['scope'] is not None:
             self.scope = kwargs['scope']
@@ -172,8 +174,8 @@ class FreeNAS_LDAP_Directory(object):
 
         log.debug(
             "FreeNAS_LDAP_Directory.__init__: "
-            "host = %s, port = %ld, binddn = %s, basedn = %s, ssl = %s",
-            self.host, self.port, self.binddn, self.basedn, self.ssl
+            "hosts = %r, binddn = %s, basedn = %s, ssl = %s",
+            self.hosts, self.binddn, self.basedn, self.ssl
         )
         log.debug("FreeNAS_LDAP_Directory.__init__: leave")
 
@@ -278,68 +280,74 @@ class FreeNAS_LDAP_Directory(object):
         if self._isopen:
             return True
 
-        if self.host:
-            uri = self._geturi()
-            log.debug("FreeNAS_LDAP_Directory.open: uri = %s", uri)
-
-            self._handle = ldap.initialize(self._geturi())
-            log.debug("FreeNAS_LDAP_Directory.open: initialized")
-
-        if self._handle:
-            res = None
-            ldap.protocol_version = FREENAS_LDAP_VERSION
-            ldap.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
-            ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, 10.0)
-
-            if self.ssl in (FREENAS_LDAP_USESSL, FREENAS_LDAP_USETLS):
-                ldap.set_option(ldap.OPT_X_TLS_ALLOW, 1)
-                if self.certfile:
-                    ldap.set_option(
-                        ldap.OPT_X_TLS_CACERTFILE,
-                        self.certfile
-                    )
-                ldap.set_option(
-                    ldap.OPT_X_TLS_REQUIRE_CERT,
-                    ldap.OPT_X_TLS_ALLOW
-                )
-
-            if self.ssl == FREENAS_LDAP_USETLS:
-                try:
-                    self._handle.start_tls_s()
-                    log.debug("FreeNAS_LDAP_Directory.open: started TLS")
-
-                except ldap.LDAPError as e:
-                    self._logex(e)
-                    raise e
-
-            bind_method = None
-            if self.anonbind:
-                bind_method = self._do_anonymous_bind
-            elif self.flags & FLAGS_SASL_GSSAPI:
-                bind_method = self._do_sasl_gssapi_bind
-            elif self.binddn and self.bindpw:
-                bind_method = self._do_authenticated_bind
-            else:
-                bind_method = self._do_anonymous_bind
-
+        for i, (self.host, self.port) in enumerate(self.hosts):
             try:
-                log.debug("FreeNAS_LDAP_Directory.open: trying to bind")
-                res = bind_method()
-                log.debug("FreeNAS_LDAP_Directory.open: binded")
+                if self.host:
+                    uri = self._geturi()
+                    log.debug("FreeNAS_LDAP_Directory.open: uri = %s", uri)
 
-            except ldap.LDAPError as e:
-                log.debug(
-                    "FreeNAS_LDAP_Directory.open: "
-                    "could not bind to %s:%d (%s)",
-                    self.host, self.port, e
-                )
-                self._logex(e)
-                res = None
-                raise e
+                    self._handle = ldap.initialize(self._geturi())
+                    log.debug("FreeNAS_LDAP_Directory.open: initialized")
 
-            if res:
-                self._isopen = True
-                log.debug("FreeNAS_LDAP_Directory.open: connection open")
+                if self._handle:
+                    res = None
+                    ldap.protocol_version = FREENAS_LDAP_VERSION
+                    ldap.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
+                    ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, 10.0)
+
+                    if self.ssl in (FREENAS_LDAP_USESSL, FREENAS_LDAP_USETLS):
+                        ldap.set_option(ldap.OPT_X_TLS_ALLOW, 1)
+                        if self.certfile:
+                            ldap.set_option(
+                                ldap.OPT_X_TLS_CACERTFILE,
+                                self.certfile
+                            )
+                        ldap.set_option(
+                            ldap.OPT_X_TLS_REQUIRE_CERT,
+                            ldap.OPT_X_TLS_ALLOW
+                        )
+
+                    if self.ssl == FREENAS_LDAP_USETLS:
+                        try:
+                            self._handle.start_tls_s()
+                            log.debug("FreeNAS_LDAP_Directory.open: started TLS")
+
+                        except ldap.LDAPError as e:
+                            self._logex(e)
+                            raise e
+
+                    bind_method = None
+                    if self.anonbind:
+                        bind_method = self._do_anonymous_bind
+                    elif self.flags & FLAGS_SASL_GSSAPI:
+                        bind_method = self._do_sasl_gssapi_bind
+                    elif self.binddn and self.bindpw:
+                        bind_method = self._do_authenticated_bind
+                    else:
+                        bind_method = self._do_anonymous_bind
+
+                    try:
+                        log.debug("FreeNAS_LDAP_Directory.open: trying to bind")
+                        res = bind_method()
+                        log.debug("FreeNAS_LDAP_Directory.open: binded")
+
+                    except ldap.LDAPError as e:
+                        log.debug(
+                            "FreeNAS_LDAP_Directory.open: "
+                            "could not bind to %s:%d (%s)",
+                            self.host, self.port, e
+                        )
+                        self._logex(e)
+                        res = None
+                        raise e
+
+                    if res:
+                        self._isopen = True
+                        log.debug("FreeNAS_LDAP_Directory.open: connection open")
+                        break
+            except Exception:
+                if i == len(self.hosts) - 1:
+                    raise
 
         log.debug("FreeNAS_LDAP_Directory.open: leave")
         return (self._isopen is True)
@@ -560,16 +568,6 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         log.debug("FreeNAS_LDAP_Base.__set_defaults: leave")
 
-    def __name_to_host(self, name):
-        host = None
-        port = 389
-        if name:
-            parts = name.split(':')
-            host = parts[0]
-            if len(parts) > 1:
-                port = int(parts[1])
-        return (host, port)
-
     def __init__(self, **kwargs):
         log.debug("FreeNAS_LDAP_Base.__init__: enter")
 
@@ -585,14 +583,22 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
                 newkey = key.replace("ldap_", "")
                 if newkey == 'hostname':
-                    (host, port) = self.__name_to_host(ldap.__dict__[key])
-                    if 'host' not in kwargs:
-                        kwargs['host'] = host
-                    if 'port' not in kwargs:
-                        kwargs['port'] = port
                     kwargs[newkey] = ldap.__dict__[key]
-                    if ldap.__dict__['ldap_ssl'] == FREENAS_LDAP_USESSL:
-                        kwargs['port'] = 636
+
+                    kwargs.setdefault("hosts", [])
+                    for hostname in ldap.ldap_hostname.split():
+                        port = 389
+                        if ldap.ldap_ssl == "on":
+                            port = 636
+
+                        parts = hostname.split(":", 1)
+                        if len(parts) > 1:
+                            try:
+                                port = int(parts[1])
+                            except ValueError:
+                                raise ValueError(f"Invalid port: {parts[1]!r}")
+
+                        kwargs["hosts"].append([parts[0], port])
 
                 elif newkey in (
                     'anonbind', 'use_default_domain', 'has_samba_schema'
