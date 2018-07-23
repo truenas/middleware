@@ -76,6 +76,10 @@ class CloudSyncForm(ModelForm):
             }
             self.fields['attributes'].initial.update(self.instance.attributes)
 
+        self.fields['direction'].widget.attrs['onChange'] = (
+            "cloudSyncDirectionToggle();"
+        )
+
     def clean_attributes(self):
         attributes = self.cleaned_data.get('attributes')
         try:

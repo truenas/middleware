@@ -12,6 +12,7 @@ from collections import namedtuple
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
+from datetime import datetime
 import json
 import os
 import re
@@ -83,7 +84,7 @@ class RcloneConfig:
             self.tmp_file.close()
 
 
-async def rclone(job, cloud_sync):
+async def rclone(middleware, job, cloud_sync):
     # Use a temporary file to store rclone file
     with RcloneConfig(cloud_sync) as config:
         args = [
@@ -100,10 +101,39 @@ async def rclone(job, cloud_sync):
 
         args += [cloud_sync["transfer_mode"].lower()]
 
+        snapshot = None
+        path = cloud_sync["path"]
         if cloud_sync["direction"] == "PUSH":
-            args.extend([cloud_sync["path"], config.remote_path])
+            if cloud_sync["snapshot"]:
+                dataset, recursive = get_dataset_recursive(
+                    await middleware.call("zfs.dataset.query"), cloud_sync["path"])
+                snapshot_name = f"cloud_sync-{cloud_sync['id']}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+
+                snapshot = {"dataset": dataset["name"], "name": snapshot_name}
+                await middleware.call("zfs.snapshot.create", dict(snapshot, recursive=recursive))
+
+                relpath = os.path.relpath(path, dataset["mountpoint"])
+                path = os.path.join(dataset["mountpoint"], ".zfs", "snapshot", snapshot_name, relpath)
+
+            args.extend([path, config.remote_path])
         else:
-            args.extend([config.remote_path, cloud_sync["path"]])
+            args.extend([config.remote_path, path])
+
+        env = {}
+        for k, v in (
+            [(k, v) for (k, v) in cloud_sync.items()
+             if k in ["id", "description", "direction", "transfer_mode", "encryption", "filename_encryption",
+                      "encryption_password", "encryption_salt", "snapshot"]] +
+            list(cloud_sync["credentials"]["attributes"].items()) +
+            list(cloud_sync["attributes"].items())
+        ):
+            if type(v) in (bool,):
+                env[f"CLOUD_SYNC_{k.upper()}"] = str(int(v))
+            if type(v) in (int, str):
+                env[f"CLOUD_SYNC_{k.upper()}"] = str(v)
+        env["CLOUD_SYNC_PATH"] = path
+
+        await run_script(job, env, cloud_sync["pre_script"], "Pre-script")
 
         proc = await Popen(
             args,
@@ -112,18 +142,63 @@ async def rclone(job, cloud_sync):
         )
         check_cloud_sync = asyncio.ensure_future(rclone_check_progress(job, proc))
         await proc.wait()
+        await asyncio.wait_for(check_cloud_sync, None)
+
+        if snapshot:
+            await middleware.call("zfs.snapshot.remove", snapshot)
+
         if proc.returncode != 0:
-            await asyncio.wait_for(check_cloud_sync, None)
             raise ValueError("rclone failed")
+
+        await run_script(job, env, cloud_sync["post_script"], "Post-script")
+
         return True
+
+
+async def run_script(job, env, hook, script_name):
+    hook = hook.strip()
+    if not hook:
+        return
+
+    if not hook.startswith("#!"):
+        hook = f"#!/bin/bash\n{hook}"
+
+    fd, name = tempfile.mkstemp()
+    os.close(fd)
+    try:
+        os.chmod(name, 0o700)
+        with open(name, "w+") as f:
+            f.write(hook)
+
+        proc = await Popen(
+            [name],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            env=env,
+        )
+        future = asyncio.ensure_future(run_script_check(job, proc, script_name))
+        await proc.wait()
+        await asyncio.wait_for(future, None)
+        if proc.returncode != 0:
+            raise ValueError(f"{script_name} failed with exit code {proc.returncode}")
+    finally:
+        os.unlink(name)
+
+
+async def run_script_check(job, proc, name):
+    while True:
+        read = await proc.stdout.readline()
+        if read == b"":
+            break
+        job.logs_fd.write(f"[{name}] ".encode("utf-8") + read)
 
 
 async def rclone_check_progress(job, proc):
     while True:
         read = (await proc.stdout.readline()).decode()
-        job.logs_fd.write(read.encode("utf-8", "ignore"))
         if read == "":
             break
+        job.logs_fd.write(read.encode("utf-8", "ignore"))
         reg = RE_TRANSF.search(read)
         if reg:
             transferred = reg.group(1).strip()
@@ -142,6 +217,37 @@ def rclone_encrypt_password(password):
     cipher = AES.new(key, AES.MODE_CTR, counter=counter)
     encrypted = iv + cipher.encrypt(password.encode("utf-8"))
     return base64.urlsafe_b64encode(encrypted).decode("ascii").rstrip("=")
+
+
+def get_dataset_recursive(datasets, directory):
+    datasets = flatten_datasets(datasets)
+
+    datasets = [
+        dict(dataset, prefixlen=len(
+            os.path.dirname(os.path.commonprefix([dataset["mountpoint"] + "/", directory + "/"]))))
+        for dataset in datasets
+        if dataset["mountpoint"]
+    ]
+
+    dataset = sorted(
+        [
+            dataset
+            for dataset in datasets
+            if (directory + "/").startswith(dataset["mountpoint"] + "/")
+        ],
+        key=lambda dataset: dataset["prefixlen"],
+        reverse=True
+    )[0]
+
+    return dataset, any(
+        (ds["mountpoint"] + "/").startswith(directory + "/")
+        for ds in datasets
+        if ds != dataset
+    )
+
+
+def flatten_datasets(datasets):
+    return sum([[ds] + flatten_datasets(ds["children"]) for ds in datasets], [])
 
 
 def validate_attributes(schema, data, additional_attrs=False):
@@ -302,7 +408,7 @@ class CloudSyncService(CRUDService):
             return None
 
     @private
-    async def _validate(self, verrors, name, data):
+    async def _basic_validate(self, verrors, name, data):
         if data["encryption"]:
             if not data["encryption_password"]:
                 verrors.add(f"{name}.encryption_password", "This field is required when encryption is enabled")
@@ -338,6 +444,14 @@ class CloudSyncService(CRUDService):
             shlex.split(data["args"])
         except ValueError as e:
             verrors.add(f"{name}.args", f"Parse error: {e.args[0]}")
+
+    @private
+    async def _validate(self, verrors, name, data):
+        await self._basic_validate(verrors, name, data)
+
+        if data["snapshot"]:
+            if data["direction"] != "PUSH":
+                verrors.add(f"{name}.snapshot", "This option can only be enabled for PUSH tasks")
 
     @private
     async def _validate_folder(self, verrors, name, data):
@@ -385,6 +499,9 @@ class CloudSyncService(CRUDService):
         Str("encryption_salt", default=""),
         Cron("schedule", required=True),
         Dict("attributes", additional_attrs=True, required=True),
+        Bool("snapshot", default=False),
+        Str("pre_script", default=""),
+        Str("post_script", default=""),
         Str("args", default=""),
         Bool("enabled", default=True),
         register=True,
@@ -506,7 +623,7 @@ class CloudSyncService(CRUDService):
     async def list_directory(self, cloud_sync):
         verrors = ValidationErrors()
 
-        await self._validate(verrors, "cloud_sync", cloud_sync)
+        await self._basic_validate(verrors, "cloud_sync", dict(cloud_sync))
 
         if verrors:
             raise verrors
@@ -540,7 +657,7 @@ class CloudSyncService(CRUDService):
 
         cloud_sync = await self._get_instance(id)
 
-        return await rclone(job, cloud_sync)
+        return await rclone(self.middleware, job, cloud_sync)
 
     @accepts()
     async def providers(self):

@@ -1643,6 +1643,20 @@ require([
         updateAttributes();
     }
 
+    cloudSyncDirectionToggle = function() {
+
+        var direction = registry.byId("id_direction");
+        var snapshot = registry.byId("id_snapshot");
+        var tr = snapshot.domNode.parentNode.parentNode;
+        if(direction.get('value') == 'PUSH') {
+            domStyle.set(tr, "display", "table-row");
+        } else {
+            snapshot.set("value", false);
+            domStyle.set(tr, "display", "none");
+        }
+
+    }
+
     cloudSyncEncryptionToggle = function() {
 
         var checkbox = registry.byId("id_encryption");

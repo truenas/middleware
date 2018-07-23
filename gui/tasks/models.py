@@ -80,6 +80,26 @@ class CloudSync(Model):
     attributes = DictField(
         editable=False,
     )
+    snapshot = models.BooleanField(
+        verbose_name=_("Take snapshot"),
+        help_text=_(
+            "Take dataset snapshot before pushing data.",
+        ),
+    )
+    pre_script = models.TextField(
+        blank=True,
+        verbose_name=_("Pre-script"),
+        help_text=_(
+            "Script to execute before running sync.",
+        ),
+    )
+    post_script = models.TextField(
+        blank=True,
+        verbose_name=_("Post-script"),
+        help_text=_(
+            "Script to execute after running sync.",
+        ),
+    )
     encryption = models.BooleanField(
         verbose_name=_("Remote encryption"),
         help_text=_(

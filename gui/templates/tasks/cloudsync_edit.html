@@ -4,6 +4,7 @@
 {{ block.super }}
 <script type="dojo/method">
 addToStack(function() {
+    cloudSyncDirectionToggle();
     document.getElementById("id_encryption").onchange = cloudSyncEncryptionToggle;
     cloudSyncEncryptionToggle();
 });
