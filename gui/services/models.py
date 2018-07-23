@@ -241,9 +241,15 @@ class CIFS(Model):
     cifs_srv_ntlmv1_auth = models.BooleanField(
         verbose_name=_("NTLMv1 auth"),
         default=False,
-        help_text=_("This parameter determines whether or not smbd(8) will attempt to"
-                    "authenticate users using the NTLMv1 encrypted password response"),
-    )
+        help_text=_(
+            'Off by default. When set, smbd(8) attempts '
+            'to authenticate users with the insecure '
+            'and vulnerable NTLMv1 encryption. This setting '
+            'allows backward compatibility with older '
+            'versions of Windows, but is not '
+            'recommended and should not be used on untrusted '
+            'networks.'
+        )
     cifs_srv_bindip = MultiSelectField(
         verbose_name=_("Bind IP Addresses"),
         help_text=_("IP addresses to bind to. If none specified, all "
