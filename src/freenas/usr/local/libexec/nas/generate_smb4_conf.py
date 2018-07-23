@@ -753,8 +753,8 @@ def add_ldap_conf(client, smb4_conf):
 
     confset1(
         smb4_conf,
-        "passdb backend = %s" % " ".join([
-            "ldapsam:%s://%s" % ("ldaps" if ldap.ldap_ssl == 'on' else "ldap", hostname)
+        "passdb backend = ldapsam:\"%s\"" % " ".join([
+            "%s://%s" % ("ldaps" if ldap.ldap_ssl == 'on' else "ldap", hostname)
             for hostname in ldap.ldap_hostname.split()
         ])
     )
