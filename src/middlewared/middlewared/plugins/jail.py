@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import subprocess as su
 
@@ -54,6 +55,7 @@ class JailService(CRUDService):
             else:
                 for jail in jail_dicts:
                     jail = list(jail.values())[0]
+                    jail['id'] = jail['host_hostuuid']
                     if jail['dhcp'] == 'on':
                         uuid = jail['host_hostuuid']
 
@@ -329,6 +331,24 @@ class JailService(CRUDService):
         """Takes a jail and starts it."""
         _, _, iocage = self.check_jail_existence(jail)
 
+        # iocage does not automatically set up the bridges of VNET jails
+        # with any additional interfaces for outside communication.
+        # Here we try to do the same thing warden did, which is finding
+        # the default gateway interface and add it to the bridge of the jail.
+        interfaces = iocage.get('interfaces')
+        if iocage.get('vnet') == 'on' and interfaces:
+            reg = re.search(r'.*(bridge\d+).*', interfaces)
+            if reg:
+                bridge = reg.group(1)
+                defroute = self.middleware.call_sync(
+                    'routes.system_routes',
+                    [('network', '=', '0.0.0.0'), ('flags', 'rin', 'GATEWAY')],
+                )
+                if defroute:
+                    self.middleware.call_sync(
+                        'interfaces.bridge_add_member', bridge, defroute[0]['interface'],
+                    )
+
         iocage.start()
 
         return True
@@ -586,3 +606,20 @@ class JailService(CRUDService):
             version = ['N/A', 'N/A']
 
         return version
+
+
+async def __event_system_ready(middleware, event_type, args):
+    """
+    Method called when system is ready, supposed to start jails
+    flagged that way.
+    """
+    if args['id'] != 'ready':
+        return
+
+    jails = await middleware.call('jail.query', [('boot', '=', 'on')])
+    for jail in sorted(jails, key=lambda j: int(j['priority'])):
+        await middleware.call('jail.start', jail['id'])
+
+
+def setup(middleware):
+    middleware.event_subscribe('system', __event_system_ready)
