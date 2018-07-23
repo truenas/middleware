@@ -850,11 +850,7 @@ class LDAPForm(ModelForm):
             self.instance.ldap_has_samba_schema = False
 
     def clean_ldap_hostname(self):
-        hostnames = self.cleaned_data.get("ldap_hostname").replace(",", " ")
-        if not hostnames.split():
-            raise forms.ValidationError("No LDAP hostname(s) specified")
-
-        return hostnames
+        return self.cleaned_data.get("ldap_hostname").replace(",", " ")
 
     def clean_ldap_netbiosname_a(self):
         netbiosname = self.cleaned_data.get("ldap_netbiosname_a")
@@ -899,6 +895,9 @@ class LDAPForm(ModelForm):
         hostnames = cdata.get("ldap_hostname").split()
         ssl = cdata.get("ldap_ssl")
 
+        if cdata.get("ldap_enable") and not hostnames:
+            raise forms.ValidationError("No LDAP hostname(s) specified")
+
         certfile = None
         if ssl in ('start_tls', 'on'):
             certificate = cdata["ldap_certificate"]
@@ -931,10 +930,10 @@ class LDAPForm(ModelForm):
             try:
                 FreeNAS_LDAP.validate_credentials(
                     hostname,
+                    port=port,
                     binddn=binddn,
                     bindpw=bindpw,
                     basedn=basedn,
-                    port=port,
                     certfile=certfile,
                     ssl=ssl
                 )

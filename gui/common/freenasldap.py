@@ -150,7 +150,7 @@ class FreeNAS_LDAP_Directory(object):
         if self.port is None:
             self.port = FREENAS_LDAP_PORT
 
-        self.hosts = kwargs.get('hosts', [self.host, self.port])
+        self.hosts = kwargs.get('hosts', [(self.host, self.port)])
 
         self.scope = ldap.SCOPE_SUBTREE
         if 'scope' in kwargs and kwargs['scope'] is not None:
