@@ -3032,7 +3032,7 @@ class CertificateImportForm(MiddlewareModelForm, ModelForm):
     )
 
     cert_csr_id = forms.ModelChoiceField(
-        queryset=models.Certificate.objects.filter(cert_CSR__isnull=False),
+        queryset=models.Certificate.objects.filter(cert_type=0x20),
         label=(_("CSRs")),
         required=False
     )

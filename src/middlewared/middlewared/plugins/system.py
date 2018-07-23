@@ -693,13 +693,13 @@ class SystemGeneralService(ConfigService):
                     syslog.syslog(syslog.LOG_ERR, 'Fingerprint of the certificate used in UI : ' + fingerprint)
                     syslog.closelog()
                 else:
-                    # Two reasons value is None - certificate not found - error while parsing the certificate
-                    # for fingerprint
+                    # One reason value is None - error while parsing the certificate for fingerprint
                     verrors.add(
                         f'{schema}.ui_certificate',
                         'Please check if the certificate has been added to the system and it is a '
                         'valid certificate'
                     )
+
         return verrors
 
     @accepts(

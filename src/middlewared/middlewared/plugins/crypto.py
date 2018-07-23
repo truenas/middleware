@@ -31,7 +31,7 @@ RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", r
 
 
 def get_context_object():
-    # BEING USED IN VCENTERPLUGIN SERVICE
+    # BEING USED IN VCENTER SERVICE
     try:
         ssl._create_default_https_context = ssl._create_unverified_context
     except AttributeError:
@@ -193,10 +193,10 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
             )
 
     csr_id = data.get('csr_id')
-    if csr_id and not await middleware.call('certificate.query', [['id', '=', csr_id]]):
+    if csr_id and not await middleware.call('certificate.query', [['id', '=', csr_id], ['CSR', '!=', None]]):
         verrors.add(
             f'{schema_name}.csr_id',
-            'Please provide a valid csr_id'
+            'Please provide a valid csr_id which has a valid CSR filed'
         )
 
     await middleware.run_in_io_thread(
@@ -230,6 +230,7 @@ class CertificateService(CRUDService):
 
             # We query for signedby again to make sure it's keys do not have the "cert_" prefix and it has gone through
             # the cert_extend method
+            # Datastore query is used instead of certificate.query to stop an infinite recursive loop
 
             cert['signedby'] = await self.middleware.call(
                 'datastore.query',
@@ -441,14 +442,11 @@ class CertificateService(CRUDService):
 
     @private
     async def get_fingerprint_of_cert(self, certificate_id):
-        certificate_list = await self.query(filters=[('id', '=', certificate_id)])
-        if len(certificate_list) == 0:
-            return None
-        else:
-            return await self.middleware.run_in_thread(
-                self.fingerprint,
-                certificate_list[0]['certificate']
-            )
+        cert = await self._get_instance(certificate_id)
+        return await self.middleware.run_in_io_thread(
+            self.fingerprint,
+            cert['certificate']
+        )
 
     @private
     @accepts(
@@ -662,10 +660,7 @@ class CertificateService(CRUDService):
             # perform operations and have a cert issued
             order = acme_client.new_order(csr_data['CSR'])
         except messages.Error as e:
-            verrors.add(
-                'acme_create.new_order',
-                f'Failed to issue a new order for Certificate : {e}'
-            )
+            raise CallError(f'Failed to issue a new order for Certificate : {e}')
         else:
             job.set_progress(progress, 'New order for certificate issuance placed')
 
@@ -676,22 +671,15 @@ class CertificateService(CRUDService):
                 # Should we try .poll() instead first ? research please
                 return acme_client.poll_and_finalize(order, datetime.datetime.now() + datetime.timedelta(minutes=10))
             except errors.TimeoutError:
-                verrors.add(
-                    'acme_create.final_order',
-                    'Certificate request for final order timed out'
-                )
-        finally:
-            if verrors:
-                raise verrors
+                raise CallError('Certificate request for final order timed out')
 
     @private
     def handle_authorizations(self, job, progress, order, domain_names_dns_mapping, acme_client, key):
         # When this is called, it should be ensured by the function calling this function that for all authorization
-        # resource, a domain name dns mapping is available ? Ideal ?
+        # resource, a domain name dns mapping is available
         # For multiple domain providers in domain names, I think we should ask the end user to specify which domain
         # provider is used for which domain so authorizations can be handled gracefully
         # https://serverfault.com/questions/906407/lets-encrypt-dns-challenge-with-multiple-public-dns-providers
-        verrors = ValidationErrors()
 
         max_progress = (progress * 4) - progress - (progress * 4 / 5)  # TODO: Refine this
 
@@ -709,11 +697,9 @@ class CertificateService(CRUDService):
                         challenge = chg
 
                 if not challenge:
-                    verrors.add(
-                        'acme_authorization.domain',
+                    raise CallError(
                         f'DNS Challenge not found for domain {authorization_resource.body.identifier.value}'
                     )
-                    continue
 
                 self.middleware.call_sync(
                     'acme.dns.authenticator.update_txt_record', {
@@ -736,10 +722,8 @@ class CertificateService(CRUDService):
                     f'DNS challenge {"completed" if status else "failed"} for {domain}'
                 )
 
-        if verrors:
-            raise verrors
-
     @periodic(86400, run_on_start=True)
+    @private
     @job(lock='acme_cert_renewal')
     def renew_certs(self, job):
         certs = self.middleware.call_sync(
@@ -868,6 +852,7 @@ class CertificateService(CRUDService):
 
         # Patch creates another copy of dns_mapping
         data.pop('dns_mapping', None)
+        data.pop('csr_id', None)
 
         pk = await self.middleware.call(
             'datastore.insert',
@@ -971,8 +956,7 @@ class CertificateService(CRUDService):
 
         data['type'] = CERT_TYPE_CSR
 
-        for k, v in self.load_certificate_request(data['CSR']).items():
-            data[k] = v
+        data.update(self.load_certificate_request(data['CSR']))
 
         job.set_progress(80)
 
@@ -1000,8 +984,7 @@ class CertificateService(CRUDService):
     @skip_arg(count=1)
     def __create_certificate(self, job, data):
 
-        for k, v in self.load_certificate(data['certificate']).items():
-            data[k] = v
+        data.update(self.load_certificate(data['certificate']))
 
         job.set_progress(90, 'Finalizing changes')
 
@@ -1028,16 +1011,12 @@ class CertificateService(CRUDService):
                 [
                     ['id', '=', csr_id],
                     ['CSR', '!=', None]
-                ]
+                ],
+                {'get': True}
             )
-            if not csr_obj:
-                verrors.add(
-                    'certificate_create.csr_id',
-                    f'No CSR exists with id {csr_id}'
-                )
-            else:
-                data['privatekey'] = csr_obj[0]['privatekey']
-                data.pop('passphrase', None)
+
+            data['privatekey'] = csr_obj['privatekey']
+            data.pop('passphrase', None)
         elif not data.get('privatekey'):
             verrors.add(
                 'certificate_create.privatekey',
@@ -1146,8 +1125,9 @@ class CertificateService(CRUDService):
 
             verrors = ValidationErrors()
 
-            await validate_cert_name(self.middleware, data['name'], self._config.datastore, verrors,
-                                     'certificate_update.name')
+            await validate_cert_name(
+                self.middleware, data['name'], self._config.datastore, verrors, 'certificate_update.name'
+            )
 
             if verrors:
                 raise verrors
@@ -1570,8 +1550,7 @@ class CertificateAuthorityService(CRUDService):
         data['type'] = CA_TYPE_EXISTING
         data['chain'] = True if len(RE_CERTIFICATE.findall(data['certificate'])) > 1 else False
 
-        for k, v in self.middleware.call_sync('certificate.load_certificate', data['certificate']).items():
-            data[k] = v
+        data.update(self.middleware.call_sync('certificate.load_certificate', data['certificate']))
 
         if all(k in data for k in ('passphrase', 'privatekey')):
             data['privatekey'] = export_private_key(
@@ -1624,6 +1603,7 @@ class CertificateAuthorityService(CRUDService):
     async def do_update(self, id, data):
 
         if data.pop('create_type', '') == 'CA_SIGN_CSR':
+            # BEING USED BY OLD LEGACY FOR SIGNING CSR'S. THIS CAN BE REMOVED WHEN LEGACY UI IS REMOVED
             data['ca_id'] = id
             return await self.middleware.run_in_thread(
                 self.__ca_sign_csr,

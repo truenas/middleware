@@ -280,7 +280,7 @@ class DNSAuthenticatorService(CRUDService):
     2) The authenticator name in function should be lowercase e.g "route53"
     3) The first 3 arguments must be domain, challenge and key. Rest will be what the 
        credentials are required for authenticating and nothing else 
-    4) In case update_txt_record is unsuccessful, ValidationErrors should be RAISED with appropriate
+    4) In case update_txt_record is unsuccessful, CallError should be RAISED with appropriate
        status/reason.
     '''
 
