@@ -756,17 +756,6 @@ class InterfacesService(Service):
 
         return list_of_ip
 
-    @private
-    def bridge_add_member(self, bridge, member):
-        try:
-            bridgeif = netif.get_interface(bridge)
-        except KeyError:
-            netif.create_interface(bridge)
-            bridgeif = netif.get_interface(bridge)
-        if member in bridgeif.members:
-            return
-        bridgeif.add_member(member)
-
 
 class RoutesService(Service):
 
