@@ -745,6 +745,8 @@ class iSCSITargetGlobalConfigurationForm(MiddlewareModelForm, ModelForm):
 
     def middleware_clean(self, data):
         data['isns_servers'] = data['isns_servers'].split()
+        if not data.get('pool_avail_threshold'):
+            data.pop('pool_avail_threshold', None)
         return data
 
 
@@ -856,6 +858,9 @@ class iSCSITargetExtentForm(MiddlewareModelForm, ModelForm):
         extent_rpm = data['rpm']
         data['type'] = extent_type.upper()
         data['rpm'] = extent_rpm.upper()
+
+        if not data.get('avail_threshold'):
+            data.pop('avail_threshold', None)
 
         return data
 
@@ -1045,7 +1050,8 @@ class iSCSITargetForm(MiddlewareModelForm, ModelForm):
     def middleware_clean(self, data):
         data['mode'] = data['mode'].upper()
         data['groups'] = self._groups
-        data['alias'] = data.get('alias') or None
+        if not data.get('alias'):
+            data.pop('alias', None)
         return data
 
 
