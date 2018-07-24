@@ -71,7 +71,7 @@ class Volume(Model):
     @property
     def is_upgraded(self):
         with client as c:
-            return c.call('pool.is_upgraded', self.vol_name)
+            return c.call('pool.is_upgraded', self.id)
 
     @property
     def vol_path(self):

@@ -1157,7 +1157,7 @@ def volume_upgrade(request, object_id):
 
     if request.method == 'POST':
         with client as c:
-            c.call('pool.upgrade', volume.vol_name)
+            c.call('pool.upgrade', object_id)
 
         return JsonResp(request, message=_('The pool has been upgraded'))
 

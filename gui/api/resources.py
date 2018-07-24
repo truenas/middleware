@@ -924,7 +924,7 @@ class VolumeResourceMixin(NestedMixin):
         bundle, obj = self._get_parent(request, kwargs)
 
         with client as c:
-            c.call('pool.upgrade', obj.vol_name)
+            c.call('pool.upgrade', obj.id)
 
         return HttpResponse('Volume has been upgraded.', status=202)
 

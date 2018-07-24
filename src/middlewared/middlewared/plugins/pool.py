@@ -249,29 +249,28 @@ class PoolService(CRUDService):
             )
         ]
 
-    @accepts(Str('name', required=True))
-    def is_upgraded(self, name):
-        proc = subprocess.Popen(
-            f'zpool get -H -o value version {name}'.split(' '),
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8'
+    @accepts(Int('oid', required=True))
+    @item_method
+    async def is_upgraded(self, oid):
+        name = (await self._get_instance(oid))['name']
+        proc = await Popen(
+            f'zpool get -H -o value version {name}',
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8', shell=True
         )
-        res, err = proc.communicate()
-        if proc.returncode != 0 and self.middleware.call_sync('pool.query', [['name', '=', name]]):
+        res, err = await proc.communicate()
+        if proc.returncode != 0:
             return True
-        res = res.rstrip('\n')
+        res = res.decode('utf8').rstrip('\n')
         try:
             int(res)
         except ValueError:
 
             if res == '-':
-                proc = subprocess.Popen([
-                    "zpool",
-                    "get",
-                    "-H", "-o", "property,value",
-                    "all",
-                    name,
-                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-                data = proc.communicate()[0].strip('\n')
+                proc = await Popen(
+                    f"zpool get -H -o property,value all {name}",
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8', shell=True
+                )
+                data = (await proc.communicate())[0].decode('utf8').strip('\n')
                 for line in [l for l in data.split('\n') if l.startswith('feature') and '\t' in l]:
                     prop, value = line.split('\t', 1)
                     if value not in ('active', 'enabled'):
@@ -282,10 +281,14 @@ class PoolService(CRUDService):
         else:
             return False
 
-    @accepts(Str('pool', required=True))
-    def upgrade(self, pool):
+    @accepts(Int('oid', required=True))
+    @item_method
+    async def upgrade(self, oid):
         # Should we check first if upgrade is required ?
-        self.middleware.call_sync('zfs.pool.upgrade', pool)
+        await self.middleware.call(
+            'zfs.pool.upgrade',
+            (await self._get_instance(oid))['name']
+        )
         return True
 
     def _topology(self, x, geom_scan=True):
