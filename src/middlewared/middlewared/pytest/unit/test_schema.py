@@ -271,8 +271,8 @@ def test__schema_dict_required_args(value, expected):
 @pytest.mark.parametrize("value,expected,msg", [
     ({'foo': 'foo', 'bar': False}, {'foo': 'foo', 'bar': False}, None),
     ({'foo': 'foo', 'bar': False, 'num': 5}, {'foo': 'foo', 'bar': False, 'num': 5}, None),
-    ({'foo': 'foo'}, {'foo': 'foo', 'bar': None}, None),
-    ({'foo': 'foo', 'list': ['listitem']}, {'foo': 'foo', 'bar': None, 'list': ['listitem']}, None),
+    ({'foo': 'foo'}, {'foo': 'foo'}, None),
+    ({'foo': 'foo', 'list': ['listitem']}, {'foo': 'foo', 'list': ['listitem']}, None),
     ({'foo': 'foo', 'list': 5}, Error, 'Not a list'),
     ({'foo': 'foo', 'bar': False, 'num': None}, Error, 'null not allowed'),
     ({'foo': None}, Error, 'null not allowed'),
@@ -300,11 +300,7 @@ def test__schema_dict_mixed_args(value, expected, msg):
         assert dictargs(self, value) == expected
 
 
-@pytest.mark.parametrize("args", [
-    [None],
-    [],
-])
-def test__schema_list_null(args):
+def test__schema_list_null():
 
     @accepts(List('data', null=True))
     def listnull(self, data):
@@ -312,7 +308,7 @@ def test__schema_list_null(args):
 
     self = Mock()
 
-    assert listnull(self, *args) == None
+    assert listnull(self, None) == None
 
 
 def test__schema_list_not_null():

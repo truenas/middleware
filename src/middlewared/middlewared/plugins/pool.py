@@ -314,7 +314,7 @@ class PoolService(CRUDService):
         'pool_create',
         Str('name', required=True),
         Bool('encryption', default=False),
-        Str('deduplication', enum=[None, 'ON', 'VERIFY', 'OFF'], null=True),
+        Str('deduplication', enum=[None, 'ON', 'VERIFY', 'OFF'], default=None, null=True),
         Dict(
             'topology',
             List('data', items=[
@@ -677,7 +677,7 @@ class PoolService(CRUDService):
             )
 
     @item_method
-    @accepts(Int('id', required=False, null=True))
+    @accepts(Int('id', required=False, default=None, null=True))
     async def get_disks(self, oid):
         """
         Get all disks in use by pools.
