@@ -86,10 +86,10 @@ class SharingNFSService(CRUDService):
         Bool("alldirs"),
         Bool("ro"),
         Bool("quiet"),
-        Str("maproot_user", required=False, default=None),
-        Str("maproot_group", required=False, default=None),
-        Str("mapall_user", required=False, default=None),
-        Str("mapall_group", required=False, default=None),
+        Str("maproot_user", required=False, default=None, null=True),
+        Str("maproot_group", required=False, default=None, null=True),
+        Str("mapall_user", required=False, default=None, null=True),
+        Str("mapall_group", required=False, default=None, null=True),
         List(
             "security",
             default=[],
@@ -137,14 +137,7 @@ class SharingNFSService(CRUDService):
     )
     async def do_update(self, id, data):
         verrors = ValidationErrors()
-        old = await self.middleware.call(
-            "datastore.query", self._config.datastore, [("id", "=", id)],
-            {
-                "extend": self._config.datastore_extend,
-                "prefix": self._config.datastore_prefix,
-                "get": True
-            },
-        )
+        old = await self._get_instance(id)
 
         new = old.copy()
         new.update(data)
@@ -189,6 +182,9 @@ class SharingNFSService(CRUDService):
         if not data["paths"]:
             verrors.add(f"{schema_name}.paths", "At least one path is required")
 
+        if verrors:
+            raise verrors
+
         await self.middleware.run_in_io_thread(self.validate_paths, data, schema_name, verrors)
 
         filters = []
@@ -198,8 +194,10 @@ class SharingNFSService(CRUDService):
         dns_cache = await self.resolve_hostnames(
             sum([share["hosts"] for share in other_shares], []) + data["hosts"]
         )
-        await self.middleware.run_in_io_thread(self.validate_hosts_and_networks, other_shares, data, schema_name,
-                                               verrors, dns_cache)
+        await self.middleware.run_in_io_thread(
+            self.validate_hosts_and_networks, other_shares,
+            data, schema_name, verrors, dns_cache
+        )
 
         for k in ["maproot", "mapall"]:
             if not data[f"{k}_user"] and not data[f"{k}_group"]:
