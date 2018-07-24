@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 import time
@@ -20,6 +21,8 @@ from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
 from middlewared.client import ClientException
+
+SHUTDOWN_LOCK = asyncio.Lock()
 
 
 class JailService(CRUDService):
@@ -613,19 +616,32 @@ class JailService(CRUDService):
 
         return version
 
+    @private
+    def start_on_boot(self):
+        ioc.IOCage(rc=True).start()
 
-async def __event_system_ready(middleware, event_type, args):
+    @private
+    def stop_on_shutdown(self):
+        ioc.IOCage(rc=True).stop()
+
+    @private
+    async def terminate(self):
+        await SHUTDOWN_LOCK.acquire()
+
+
+async def __event_system(middleware, event_type, args):
     """
-    Method called when system is ready, supposed to start jails
+    Method called when system is ready or shutdown, supposed to start/stop jails
     flagged that way.
     """
-    if args['id'] != 'ready':
-        return
-
-    jails = await middleware.call('jail.query', [('boot', '=', 'on')])
-    for jail in sorted(jails, key=lambda j: int(j['priority'])):
-        await middleware.call('jail.start', jail['id'])
+    # We need to call a method in Jail service to make sure it runs in the
+    # process pool because of py-libzfs thread safety issue with iocage and middlewared
+    if args['id'] == 'ready':
+        await middleware.call('jail.start_on_boot')
+    elif args['id'] == 'shutdown':
+        async with SHUTDOWN_LOCK:
+            await middleware.call('jail.stop_on_shutdown')
 
 
 def setup(middleware):
-    middleware.event_subscribe('system', __event_system_ready)
+    middleware.event_subscribe('system', __event_system)
