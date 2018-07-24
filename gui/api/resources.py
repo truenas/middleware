@@ -923,18 +923,9 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
-        errmsg = _('Pool output could not be parsed. Is the pool imported?')
-        try:
-            notifier().zpool_version(obj.vol_name)
-        except Exception:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, errmsg)
-            )
-        upgrade = notifier().zpool_upgrade(str(obj.vol_name))
-        if upgrade is not True:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, errmsg)
-            )
+        with client as c:
+            c.call('pool.upgrade', obj.vol_name)
+
         return HttpResponse('Volume has been upgraded.', status=202)
 
     def recoverykey(self, request, **kwargs):

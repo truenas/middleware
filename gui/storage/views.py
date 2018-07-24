@@ -1154,21 +1154,12 @@ def volume_recoverykey_remove(request, object_id):
 
 def volume_upgrade(request, object_id):
     volume = models.Volume.objects.get(pk=object_id)
-    try:
-        notifier().zpool_version(volume.vol_name)
-    except Exception:
-        raise MiddlewareError(
-            _('Pool output could not be parsed. Is the pool imported?')
-        )
-    if request.method == "POST":
-        upgrade = notifier().zpool_upgrade(str(volume.vol_name))
-        if upgrade is not True:
-            return JsonResp(
-                request,
-                message=_("The pool failed to upgraded: %s") % upgrade,
-            )
-        else:
-            return JsonResp(request, message=_("The pool has been upgraded"))
+
+    if request.method == 'POST':
+        with client as c:
+            c.call('pool.upgrade', volume.vol_name)
+
+        return JsonResp(request, message=_('The pool has been upgraded'))
 
     return render(request, 'storage/upgrade_confirm.html', {
         'volume': volume,

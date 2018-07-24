@@ -249,6 +249,45 @@ class PoolService(CRUDService):
             )
         ]
 
+    @accepts(Str('name', required=True))
+    def is_upgraded(self, name):
+        proc = subprocess.Popen(
+            f'zpool get -H -o value version {name}'.split(' '),
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8'
+        )
+        res, err = proc.communicate()
+        if proc.returncode != 0 and self.middleware.call_sync('pool.query', [['name', '=', name]]):
+            return True
+        res = res.rstrip('\n')
+        try:
+            int(res)
+        except ValueError:
+
+            if res == '-':
+                proc = subprocess.Popen([
+                    "zpool",
+                    "get",
+                    "-H", "-o", "property,value",
+                    "all",
+                    name,
+                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
+                data = proc.communicate()[0].strip('\n')
+                for line in [l for l in data.split('\n') if l.startswith('feature') and '\t' in l]:
+                    prop, value = line.split('\t', 1)
+                    if value not in ('active', 'enabled'):
+                        return False
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    @accepts(Str('pool', required=True))
+    def upgrade(self, pool):
+        # Should we check first if upgrade is required ?
+        self.middleware.call_sync('zfs.pool.upgrade', pool)
+        return True
+
     def _topology(self, x, geom_scan=True):
         """
         Transform topology output from libzfs to add `device` and make `type` uppercase.
