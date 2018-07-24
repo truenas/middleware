@@ -867,6 +867,25 @@ class iSCSITargetAuthCredential(Model):
         verbose_name = _("Authorized Access")
         verbose_name_plural = _("Authorized Accesses")
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for attr in ('iscsi_target_auth_secret', 'iscsi_target_auth_peersecret'):
+            field = getattr(self, attr)
+            if field and self.id:
+                try:
+                    setattr(self, attr, notifier().pwenc_decrypt(field))
+                except Exception as e:
+                    log.debug(f'Failed to decrypt {attr} password', exc_info=True)
+                    setattr(self, attr, '')
+
+    def save(self, *args, **kwargs):
+        for attr in ('iscsi_target_auth_secret', 'iscsi_target_auth_peersecret'):
+            field = getattr(self, attr)
+            if field:
+                encrypted_val = notifier().pwenc_encrypt(field)
+                setattr(self, attr, encrypted_val)
+        return super().save(*args, **kwargs)
+
     def __str__(self):
         return str(self.iscsi_target_auth_tag)
 
