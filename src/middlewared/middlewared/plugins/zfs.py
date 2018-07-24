@@ -159,7 +159,7 @@ class ZFSPoolService(CRUDService):
 
     @accepts(
         Str('name'),
-        List('new', null=True),
+        List('new', default=None, null=True),
         List('existing', items=[
             Dict(
                 'attachvdev',

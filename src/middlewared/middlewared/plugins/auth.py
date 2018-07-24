@@ -84,7 +84,7 @@ class AuthService(Service):
             return False
         return crypt.crypt(password, user['bsdusr_unixhash']) == user['bsdusr_unixhash']
 
-    @accepts(Int('ttl', null=True), Dict('attrs', additional_attrs=True))
+    @accepts(Int('ttl', default=None, null=True), Dict('attrs', additional_attrs=True))
     def generate_token(self, ttl=None, attrs=None):
         """Generate a token to be used for authentication."""
         if ttl is None:

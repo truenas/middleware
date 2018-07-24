@@ -63,8 +63,6 @@ class Attribute(object):
         if value is NOT_PROVIDED:
             if self.has_default:
                 return copy.deepcopy(self.default)
-            elif self.null is True:
-                return None
             else:
                 raise Error(self.name, 'attribute required')
         return value
@@ -455,7 +453,7 @@ class Dict(Attribute):
         if not self.update:
             for attr in list(self.attrs.values()):
                 if attr.name not in data and (
-                    attr.required or attr.null is True or attr.has_default
+                    attr.required or attr.has_default
                 ):
                     data[attr.name] = attr.clean(NOT_PROVIDED)
 

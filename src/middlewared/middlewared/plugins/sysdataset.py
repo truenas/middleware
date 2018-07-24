@@ -105,7 +105,7 @@ class SystemDatasetService(ConfigService):
             await self.middleware.call('service.restart', 'collectd')
         return config
 
-    @accepts(Bool('mount', default=True), Str('exclude_pool', null=True))
+    @accepts(Bool('mount', default=True), Str('exclude_pool', default=None, null=True))
     @private
     async def setup(self, mount, exclude_pool=None):
         config = await self.config()
