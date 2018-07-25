@@ -302,24 +302,6 @@ class notifier(metaclass=HookMetaclass):
         c = conn.cursor()
         return c, conn
 
-    def __gpt_unlabeldisk(self, devname):
-        """Unlabel the disk"""
-        with client as c:
-            c.call('disk.swaps_remove_disks', [devname])
-        self._system("gpart destroy -F /dev/%s" % devname)
-
-        # Wipe out the partition table by doing an additional iterate of create/destroy
-        self._system("gpart create -s gpt /dev/%s" % devname)
-        self._system("gpart destroy -F /dev/%s" % devname)
-
-        # We might need to sync with reality (e.g. uuid -> devname)
-        with client as c:
-            c.call('disk.sync', devname)
-
-    def unlabel_disk(self, devname):
-        # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
-        self.__gpt_unlabeldisk(devname)
-
     def geli_setkey(self, dev, key, slot=GELI_KEY_SLOT, passphrase=None, oldkey=None):
         command = ("geli setkey -n %s %s -K %s %s %s"
                    % (slot,

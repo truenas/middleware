@@ -768,7 +768,7 @@ class iSCSITargetExtentService(CRUDService):
             data['path'] = disk
 
             if disk.startswith('multipath'):
-                await self.middleware.call('notifier.unlabel_disk', disk)
+                await self.middleware.call('disk.unlabel', disk)
                 await self.middleware.call(
                     'notifier.label_disk', f'extent_{disk}', disk
                 )
