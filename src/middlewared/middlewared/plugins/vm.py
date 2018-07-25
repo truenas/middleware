@@ -350,6 +350,8 @@ class VMSupervisor(object):
                     bridge_enabled = True
                     self.set_iface_mtu(attach_iface_info, tap)
                     bridge.add_member(tapname)
+                    if netif.InterfaceFlags.UP not in bridge.flags:
+                        bridge.up()
                     break
 
         if bridge_enabled is False:
