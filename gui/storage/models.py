@@ -70,29 +70,8 @@ class Volume(Model):
 
     @property
     def is_upgraded(self):
-        if not self.is_decrypted():
-            return True
-        try:
-            version = notifier().zpool_version(str(self.vol_name))
-        except ValueError:
-            return True
-        if version == '-':
-            proc = subprocess.Popen([
-                "zpool",
-                "get",
-                "-H", "-o", "property,value",
-                "all",
-                str(self.vol_name),
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-            data = proc.communicate()[0].strip('\n')
-            for line in data.split('\n'):
-                if not line.startswith('feature') or '\t' not in line:
-                    continue
-                prop, value = line.split('\t', 1)
-                if value not in ('active', 'enabled'):
-                    return False
-            return True
-        return False
+        with client as c:
+            return c.call('pool.is_upgraded', self.id)
 
     @property
     def vol_path(self):

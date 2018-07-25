@@ -114,6 +114,14 @@ class ZFSPoolService(CRUDService):
         except libzfs.ZFSException as e:
             raise CallError(str(e))
 
+    @accepts(Str('pool', required=True))
+    def upgrade(self, pool):
+        try:
+            with libzfs.ZFS() as zfs:
+                zfs.get(pool).upgrade()
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
+
     @accepts(Str('pool'), Dict(
         'options',
         Bool('force', default=False),
