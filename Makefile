@@ -1,8 +1,7 @@
 # $FreeBSD$
 
 PORTNAME=	libhyve-remote
-PORTVERSION=	0.1.4.1
-PORTREVISION=	1
+PORTVERSION=	0.1.4.2
 CATEGORIES=	devel
 
 MAINTAINER=	araujo@FreeBSD.org
