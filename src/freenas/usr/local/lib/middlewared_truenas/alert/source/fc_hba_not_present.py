@@ -16,10 +16,25 @@ class FCHBANotPresentAlertSource(ThreadedAlertSource):
     title = "FC HBA not present"
 
     def check_sync(self):
-        portlist = etree.fromstring(subprocess.check_output(["ctladm", "portlist", "-x"], encoding="utf-8"))
+        ports = set()
+        for e in (
+            etree.fromstring(subprocess.check_output(["ctladm", "portlist", "-x"], encoding="utf-8")).
+                xpath("//frontend_type[text()='camtgt']")
+        ):
+            port = e.getparent()
+            ports.add((port.xpath("./port_name")[0].text,
+                       port.xpath("./physical_port")[0].text,
+                       port.xpath("./virtual_port")[0].text))
+
         alerts = []
         for channeltotarget in self.middleware.call_sync("datastore.query", "services.fibrechanneltotarget"):
-            if not portlist.xpath(f"//port_name[text()='{channeltotarget['fc_port']}']"):
+            fq_fc_port = channeltotarget["fc_port"]
+            if fq_fc_port.count("/") == 0:
+                fq_fc_port += "/0"
+            if fq_fc_port.count("/") == 1:
+                fq_fc_port += "/0"
+            port_name, physical_port, virtual_port = fq_fc_port.split("/", 2)
+            if (port_name, physical_port, virtual_port) not in ports:
                 alerts.append(Alert(
                     title="HBA for FC port %(port)s configured for target %(target)r is not present",
                     args={
