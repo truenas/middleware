@@ -258,23 +258,45 @@ class ZFSPoolService(CRUDService):
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
 
-    @accepts(Str('name'))
-    @job(lock=lambda i: i[0])
-    def scrub(self, job, name):
+    @accepts(
+        Str('name', required=True),
+        Str('action', enum=['START', 'STOP', 'PAUSE'], default='START')
+    )
+    @job(lock=lambda i: f'{i[0]}-{i[1]}')
+    def scrub(self, job, name, action):
         """
-        Start a scrub on pool `name`.
+        Start/Stop/Pause a scrub on pool `name`.
         """
-        try:
-            with libzfs.ZFS() as zfs:
-                pool = zfs.get(name)
-                pool.start_scrub()
-        except libzfs.ZFSException as e:
-            raise CallError(str(e), e.code)
+        if action != 'PAUSE':
+            try:
+                with libzfs.ZFS() as zfs:
+                    pool = zfs.get(name)
+
+                    if action == 'START':
+                        pool.start_scrub()
+                    else:
+                        pool.stop_scrub()
+            except libzfs.ZFSException as e:
+                raise CallError(str(e), e.code)
+        else:
+            proc = subprocess.Popen(
+                f'zpool scrub -p {name}'.split(' '),
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            proc.communicate()
+
+            if proc.returncode != 0:
+                raise CallError('Unable to pause scrubbing')
 
         def watch():
             while True:
                 with libzfs.ZFS() as zfs:
                     scrub = zfs.get(name).scrub.__getstate__()
+
+                if scrub['pause']:
+                    job.set_progress(100, 'Scrub paused')
+                    break
+
                 if scrub['function'] != 'SCRUB':
                     break
 
@@ -289,9 +311,10 @@ class ZFSPoolService(CRUDService):
                     job.set_progress(scrub['percentage'], 'Scrubbing')
                 time.sleep(1)
 
-        t = threading.Thread(target=watch, daemon=True)
-        t.start()
-        t.join()
+        if action == 'START':
+            t = threading.Thread(target=watch, daemon=True)
+            t.start()
+            t.join()
 
     @accepts()
     def find_import(self):

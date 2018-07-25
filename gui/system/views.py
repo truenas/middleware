@@ -317,9 +317,10 @@ def bootenv_add(request, source=None):
 def bootenv_scrub(request):
     if request.method == "POST":
         try:
-            notifier().zfs_scrub('freenas-boot')
+            with client as c:
+                c.call('zfs.pool.scrub', 'freenas-boot')
             return JsonResp(request, message=_("Scrubbing the Boot Pool..."))
-        except Exception as e:
+        except ClientException as e:
             return JsonResp(request, error=True, message=repr(e))
     return render(request, 'system/boot_scrub.html')
 

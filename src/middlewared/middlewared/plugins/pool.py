@@ -236,6 +236,18 @@ class PoolService(CRUDService):
         datastore_extend = 'pool.pool_extend'
         datastore_prefix = 'vol_'
 
+    @item_method
+    @accepts(
+        Int('oid', required=True),
+        Str('action', enum=['START', 'STOP', 'PAUSE'], required=True)
+    )
+    @job()
+    async def scrub(self, job, oid, action):
+        pool = await self._get_instance(oid)
+        return await job.wrap(
+            await self.middleware.call('zfs.pool.scrub', pool['name'], action)
+        )
+
     @accepts()
     async def filesystem_choices(self):
         vol_names = [vol['name'] for vol in (await self.query())]

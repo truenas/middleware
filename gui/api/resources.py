@@ -875,12 +875,13 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
-        if request.method == 'POST':
-            notifier().zfs_scrub(str(obj.vol_name))
-            return HttpResponse('Volume scrub started.', status=202)
-        elif request.method == 'DELETE':
-            notifier().zfs_scrub(str(obj.vol_name), stop=True)
-            return HttpResponse('Volume scrub stopped.', status=202)
+        with client as c:
+            if request.method == 'POST':
+                c.call('pool.scrub', obj.id, 'START', job=True)
+                return HttpResponse('Volume scrub started.', status=202)
+            elif request.method == 'DELETE':
+                c.call('pool.scrub', obj.id, 'STOP', job=True)
+                return HttpResponse('Volume scrub stopped.', status=202)
 
     def unlock(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
