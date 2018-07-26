@@ -170,7 +170,7 @@ def smb4_set_database_SID(client, SID):
 
     try:
         cifs = Struct(client.call('datastore.query', 'services.cifs', None, {'get': True}))
-        client.call('datastore.update','services.cifs',cifs.id, {'cifs_SID':SID})
+        client.call('datastore.update', 'services.cifs', cifs.id, {'cifs_SID': SID})
         ret = True
 
     except Exception as e:
