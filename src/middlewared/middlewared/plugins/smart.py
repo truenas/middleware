@@ -153,6 +153,12 @@ class SMARTTestService(CRUDService):
             id
         )
 
+        await self.middleware.call(
+            'service.restart',
+            'smartd',
+            {'onetime': False}
+        )
+
         return response
 
 
