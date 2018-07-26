@@ -1004,34 +1004,12 @@ class CertificateAuthority(CertificateBase):
         if not os.path.exists(self.cert_root_path):
             os.mkdir(self.cert_root_path, 0o755)
 
-    def delete(self):
-        temp_cert_name = self.cert_name
-        super(CertificateAuthority, self).delete()
-        # If this was a malformed CA then delete its alert sentinel file
-        try:
-            os.unlink('/tmp/alert_invalidCA_{0}'.format(temp_cert_name))
-            run_alerts()
-        except OSError:
-            # It was not a malformed CA after all!
-            pass
-
     class Meta:
         verbose_name = _("CA")
         verbose_name_plural = _("CAs")
 
 
 class Certificate(CertificateBase):
-
-    def delete(self):
-        temp_cert_name = self.cert_name
-        super(Certificate, self).delete()
-        # If this was a malformed CA then delete its alert sentinel file
-        try:
-            os.unlink('/tmp/alert_invalidcert_{0}'.format(temp_cert_name))
-            run_alerts()
-        except OSError:
-            # It was not a malformed CA after all!
-            pass
 
     class Meta:
         verbose_name = _("Certificate")
