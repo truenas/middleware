@@ -385,13 +385,6 @@ class CronJob(Model):
         ])
         proc.communicate()
 
-    def delete(self):
-        super(CronJob, self).delete()
-        try:
-            notifier().restart("cron")
-        except:
-            pass
-
 
 class InitShutdown(Model):
     ini_type = models.CharField(
