@@ -329,13 +329,6 @@ class Scrub(Model):
             labels.append(str(wchoices[str(w)]))
         return ', '.join(labels)
 
-    def delete(self):
-        super(Scrub, self).delete()
-        try:
-            notifier().restart("cron")
-        except:
-            pass
-
 
 class Resilver(Model):
     enabled = models.BooleanField(
