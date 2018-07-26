@@ -745,13 +745,6 @@ class Rsync(Model):
         ])
         proc.communicate()
 
-    def delete(self):
-        super(Rsync, self).delete()
-        try:
-            notifier().restart("cron")
-        except:
-            pass
-
 
 class SMARTTest(Model):
     smarttest_disks = models.ManyToManyField(
