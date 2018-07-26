@@ -487,13 +487,6 @@ class Tunable(Model):
     def __str__(self):
         return str(self.tun_var)
 
-    def delete(self):
-        super(Tunable, self).delete()
-        if self.tun_type == 'loader':
-            notifier().reload("loader")
-        else:
-            notifier().reload("sysctl")
-
     class Meta:
         verbose_name = _("Tunable")
         verbose_name_plural = _("Tunables")
