@@ -306,9 +306,9 @@ class CloudSyncService(CRUDService):
         schema = []
 
         if provider.buckets:
-            schema.append(Str("bucket"))
+            schema.append(Str("bucket", required=True, empty=False))
 
-        schema.append(Str("folder"))
+        schema.append(Str("folder", required=True))
 
         schema.extend(provider.task_schema)
 
