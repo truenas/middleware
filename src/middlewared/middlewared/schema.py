@@ -42,11 +42,12 @@ class EnumMixin(object):
 
 class Attribute(object):
 
-    def __init__(self, name, verbose=None, required=False, private=False, validators=None, register=False, **kwargs):
+    def __init__(self, name, verbose=None, required=False, empty=True, private=False, validators=None, register=False, **kwargs):
         self.name = name
         self.has_default = 'default' in kwargs
         self.default = kwargs.pop('default', None)
         self.required = required
+        self.empty = empty
         self.private = private
         self.verbose = verbose or name
         self.validators = validators or []
@@ -124,6 +125,8 @@ class Str(EnumMixin, Attribute):
             return str(value)
         if not isinstance(value, str):
             raise Error(self.name, 'Not a string')
+        if not self.empty and not value:
+            raise Error(self.name, 'Empty value not allowed')
         return value
 
     def to_json_schema(self, parent=None):
@@ -286,6 +289,8 @@ class List(EnumMixin, Attribute):
             return copy.copy(self.default)
         if not isinstance(value, list):
             raise Error(self.name, 'Not a list')
+        if not self.empty and not value:
+            raise Error(self.name, 'Empty value not allowed')
         if self.items:
             for index, v in enumerate(value):
                 for i in self.items:
