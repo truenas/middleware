@@ -230,7 +230,8 @@ class JailService(CRUDService):
             List(
                 "files",
                 default=["MANIFEST", "base.txz", "lib32.txz", "doc.txz"]
-            )
+            ),
+            Str("branch", default=None)
         )
     )
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
