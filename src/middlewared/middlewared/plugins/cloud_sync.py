@@ -425,9 +425,9 @@ class CloudSyncService(CRUDService):
         schema = []
 
         if provider.buckets:
-            schema.append(Str("bucket"))
+            schema.append(Str("bucket", required=True, empty=False))
 
-        schema.append(Str("folder"))
+        schema.append(Str("folder", required=True))
 
         schema.extend(provider.task_schema)
 
@@ -691,7 +691,7 @@ class CloudSyncService(CRUDService):
         schema = []
 
         if provider.fast_list:
-            schema.append(Bool("fast_list", title="Use --fast-list", description=textwrap.dedent("""\
+            schema.append(Bool("fast_list", default=False, title="Use --fast-list", description=textwrap.dedent("""\
                 Use fewer transactions in exchange for more RAM. This may also speed up or slow down your
                 transfer. See [rclone documentation](https://rclone.org/docs/#fast-list) for more details.
             """).rstrip()))
