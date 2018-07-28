@@ -233,7 +233,7 @@ class AlertService(Service):
                             if support["enabled"]:
                                 msg = [f"* {alert.formatted}" for alert in new_hardware_alerts]
 
-                                serial = await self.middleware.call("system._serial")
+                                serial = (await self.middleware.call("system.info"))["system_serial"]
 
                                 for name, verbose_name in (
                                     ("name", "Contact Name"),
