@@ -64,6 +64,19 @@ def index(request):
     for c in appPool.hook_view_context('support.index', request):
         context.update(c)
 
+    if not notifier().is_freenas():
+        form = forms.ProductionForm()
+        if request.method == 'POST':
+            form = forms.ProductionForm(request.POST)
+            if form.is_valid():
+                form.save()
+                return JsonResp(
+                    request,
+                    message='Production status successfully updated.'
+                )
+
+        context['production_form'] = form
+
     return render(request, 'support/home.html', context)
 
 
