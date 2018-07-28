@@ -60,6 +60,7 @@ import syslog
 import tarfile
 import tempfile
 import time
+from freenasUI.middleware.client import client
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
@@ -2060,6 +2061,15 @@ class notifier(metaclass=HookMetaclass):
         cmdf = 'zpool export -f %s' % (vol_name)
 
         self.stop("syslogd")
+        with client as c:
+            active_pool = c.call('jail.get_activated_pool')
+
+            if active_pool == vol_name:
+                jails = c.call('jail.query', [('state', '=', 'up')])
+
+            for j in jails:
+                _jail = j['host_hostuuid']
+                c.call('jail.stop', _jail)
 
         p1 = self._pipeopen(cmd)
         stdout, stderr = p1.communicate()
