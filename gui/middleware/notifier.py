@@ -1521,18 +1521,6 @@ class notifier(metaclass=HookMetaclass):
                 raise MiddlewareError('Failed to remove mountpoint %s: %s'
                                       % (path, str(ose), ))
 
-    def zfs_scrub(self, name, stop=False, pause=False):
-        if stop:
-            imp = self._pipeopen('zpool scrub -s %s' % str(name))
-        elif pause:
-            imp = self._pipeopen('zpool scrub -p %s' % str(name))
-        else:
-            imp = self._pipeopen('zpool scrub %s' % str(name))
-        stdout, stderr = imp.communicate()
-        if imp.returncode != 0:
-            raise MiddlewareError('Unable to scrub %s: %s' % (name, stderr))
-        return True
-
     def zfs_snapshot_list(self, path=None, sort=None, system=False):
         from freenasUI.storage.models import Volume
         fsinfo = dict()
