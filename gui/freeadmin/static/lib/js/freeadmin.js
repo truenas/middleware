@@ -1221,6 +1221,20 @@ require([
         directoryservice_mutex_toggle('nis_enable', nis);
     }
 
+    support_production_init = function() {
+        domStyle.set(registry.byId("id_send_debug").domNode.parentNode.parentNode, 'display', 'none');
+    }
+
+    support_production_toggle = function() {
+        if (registry.byId("id_production").get("value")) {
+            domStyle.set(registry.byId("id_send_debug").domNode.parentNode.parentNode, 'display', 'table-row');
+            registry.byId("id_send_debug").set("checked", true);
+        } else {
+            domStyle.set(registry.byId("id_send_debug").domNode.parentNode.parentNode, 'display', 'none');
+            registry.byId("id_send_debug").set("checked", false);
+        }
+    }
+
     directoryservice_idmap_onclick = function(eid, ds_type, ds_id) {
         var widget = registry.byId(eid);
         var idmap_type = widget.get("value");

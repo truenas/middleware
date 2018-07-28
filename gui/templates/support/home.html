@@ -1,3 +1,50 @@
+{% load freeadmin %}
+
+{% if sw_name != "freenas" %}
+<h1>Production</h1>
+<form data-dojo-type="dijit.form.Form" id="form_{% cls_name production_form %}" {% if production_form and form.is_multipart %}enctype="multipart/form-data" {% endif %}method="POST">
+    <script type="dojo/method" data-dojo-event="submitForm" data-dojo-args="form,e,conf">
+        {% block onSubmit %}
+        doSubmit({
+	        form: this,
+	        event: e,
+	        url: '{% block formpost %}{{ request.path }}{% endblock %}',
+            confirm: conf
+	    });
+        {% endblock %}
+    </script>
+    <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
+    this.submitForm(this, e);
+    </script>
+    <table class="form">
+        {% block production_form %}
+        {% csrf_token %}
+        {% admin_form production_form %}
+        {% endblock %}
+        <tr>
+            <td colspan="2">
+                {% block buttons %}
+                <button id="btn_{% cls_name production_form %}_Ok" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'" class="submitform">
+                    {% block oklabel %}{% trans "OK" %}{% endblock %}
+                </button>
+                {% if not inline %}
+                <button id="btn_{% cls_name production_form %}_Cancel" data-dojo-type="dijit.form.Button" type="button">
+                    {% block cancellabel %}{% trans "Cancel" %}{% endblock %}
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                        cancelDialog(this);
+                    </script>
+                </button>
+                {% endif %}
+                {% with form.advanced_fields as advfields %}
+                {% include "freeadmin/advanced_btn.html" %}
+                {% endwith %}
+                {% block extra_buttons %}{% endblock %}
+                {% endblock %}
+            </td>
+        </tr>
+    </table>
+</form>
+{% endif %}
 {% if sw_name != "freenas" or license %}
 <h1>
 {% trans "License Information" %}
