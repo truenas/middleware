@@ -51,6 +51,10 @@ FAILOVER_NEEDOP = '/tmp/.failover_needop'
 HEARTBEAT_BARRIER = '/tmp/heartbeat_barrier'
 HEARTBEAT_STATE = '/tmp/heartbeat_state'
 
+# This file is managed in freeNAS code (unscheduled_reboot_alert.py)
+# Ticket 39114
+WATCHDOG_ALERT_FILE = "/data/sentinels/.watchdog-alert"
+
 # FAILOVER_IFQ is the mutex used to protect per-interface events.
 # Before creating the lockfile that this script is handing events
 # on a given interface, this lock is aquired.  This lock attempt
@@ -633,6 +637,21 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
             run('/sbin/pfctl -ef /etc/pf.conf.block')
 
             run('/usr/sbin/service watchdogd quietstop')
+
+            # ticket 23361 enabled a feature to send email alerts when an unclean reboot occurrs.
+            # TrueNAS HA, by design, has a triggered unclean shutdown.
+            # If a controller is demoted to standby, we set a 4 sec countdown using watchdog.
+            # If the zpool(s) can't export within that timeframe, we use watchdog to violently reboot the controller.
+            # When this occurrs, the customer gets an email about an "Unauthorized system reboot".
+            # The idea for creating a new sentinel file for watchdog related panics,
+            # is so that we can send an appropriate email alert.
+
+            # If we have gotten this far, the controller is being demoted to standby.
+            # If we panic here, middleware will check for this file and send an appropriate email.
+            # Ticket 39114
+            with open(WATCHDOG_ALERT_FILE, "wb"):
+                pass
+
             run('watchdog -t 4')
 
             # make CTL to close backing storages, allowing pool to export
@@ -666,6 +685,13 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
             try:
                 os.unlink(FAILOVER_ASSUMED_MASTER)
             except:
+                pass
+
+            # If we get this far, the zpool(s) have been successfully exported.
+            # We try to delete the watchdog alert file.
+            try:
+                os.unlink(WATCHDOG_ALERT_FILE)
+            except IOError:
                 pass
 
             if volumes:
