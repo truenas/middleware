@@ -646,7 +646,6 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
             # The idea for creating a new sentinel file for watchdog related panics,
             # is so that we can send an appropriate email alert.
 
-            # If we have gotten this far, the controller is being demoted to standby.
             # If we panic here, middleware will check for this file and send an appropriate email.
             # Ticket 39114
             with open(WATCHDOG_ALERT_FILE, "wb"):
@@ -687,8 +686,9 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
             except:
                 pass
 
-            # If we get this far, the zpool(s) have been successfully exported.
-            # We try to delete the watchdog alert file.
+            # We also remove this file here, because this code path is executed on boot.
+            # The middlewared process is removing the file and then sending an email as expected.
+            # However, this python file is being called about 1min afterwards and recreating the file on line 651.
             try:
                 os.unlink(WATCHDOG_ALERT_FILE)
             except IOError:
