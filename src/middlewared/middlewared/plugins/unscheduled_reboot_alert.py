@@ -39,7 +39,7 @@ async def setup(middleware):
                 "subject": f"{hostname}: Failover event",
                 "text": textwrap.dedent(f"""\
                     {hostname} had a failover event.
-                    The system was rebooted because persistent SCSI reservations were lost and/or cleared.
+                    The system was rebooted to ensure a proper failover occurred.
                     The operating system successfully came back online at {now}.
                 """),
             })
@@ -51,7 +51,7 @@ async def setup(middleware):
                 "subject": f"{hostname}: Failover event",
                 "text": textwrap.dedent(f"""\
                     {hostname} had a failover event.
-                    The system was rebooted to ensure a proper failover occurred.
+                    The system was rebooted because persistent SCSI reservations were lost and/or cleared.
                     The operating system successfully came back online at {now}.
                 """),
 
