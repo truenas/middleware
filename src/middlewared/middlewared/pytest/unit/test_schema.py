@@ -7,6 +7,29 @@ from middlewared.schema import (
 )
 
 
+def test__schema_str_empty():
+
+    @accepts(Str('data', empty=False))
+    def strempty(self, data):
+        return data
+
+    self = Mock()
+
+    with pytest.raises(Error):
+        strempty(self, '')
+
+
+def test__schema_str_non_empty():
+
+    @accepts(Str('data', empty=True))
+    def strempty(self, data):
+        return data
+
+    self = Mock()
+
+    assert strempty(self, '') == ''
+
+
 def test__schema_str_null():
 
     @accepts(Str('data', null=True))
@@ -298,6 +321,29 @@ def test__schema_dict_mixed_args(value, expected, msg):
         assert ei.value.errmsg == msg
     else:
         assert dictargs(self, value) == expected
+
+
+def test__schema_list_empty():
+
+    @accepts(List('data', empty=False))
+    def listempty(self, data):
+        return data
+
+    self = Mock()
+
+    with pytest.raises(Error):
+        listempty(self, [])
+
+
+def test__schema_list_non_empty():
+
+    @accepts(List('data', empty=True))
+    def listempty(self, data):
+        return data
+
+    self = Mock()
+
+    assert listempty(self, []) == []
 
 
 def test__schema_list_null():
