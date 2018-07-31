@@ -280,6 +280,32 @@ class ReplicationService(CRUDService):
     )
     async def do_delete(self, id):
 
+        replication = await self._get_instance(id)
+
+        try:
+            if replication['lastsnapshot']:
+                zfsname = replication['lastsnapshot'].split('@')[0]
+                await self.middleware.call('notifier.zfs_dataset_release_snapshots', zfsname, True)
+        except Exception:
+            pass
+        if os.path.exists(REPL_RESULTFILE):
+            with open(REPL_RESULTFILE, 'rb') as f:
+                data = f.read()
+            try:
+                results = pickle.loads(data)
+                results.pop(id, None)
+                with open(REPL_RESULTFILE, 'wb') as f:
+                    f.write(pickle.dumps(results))
+            except Exception as e:
+                self.logger.debug('Failed to remove replication from state file %s', e)
+        progressfile = '/tmp/.repl_progress_%d' % id
+        if os.path.exists(progressfile):
+            try:
+                os.unlink(progressfile)
+            except Exception:
+                # Possible race condition?
+                pass
+
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,

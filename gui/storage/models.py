@@ -639,32 +639,6 @@ class Replication(Model):
         if self.repl_lastresult:
             return self.repl_lastresult['msg']
 
-    def delete(self):
-        try:
-            if self.repl_lastsnapshot != "":
-                zfsname = self.repl_lastsnapshot.split('@')[0]
-                notifier().zfs_dataset_release_snapshots(zfsname, True)
-        except:
-            pass
-        if os.path.exists(REPL_RESULTFILE):
-            with open(REPL_RESULTFILE, 'rb') as f:
-                data = f.read()
-            try:
-                results = pickle.loads(data)
-                results.pop(self.id, None)
-                with open(REPL_RESULTFILE, 'wb') as f:
-                    f.write(pickle.dumps(results))
-            except Exception as e:
-                log.debug('Failed to remove replication from state file %s', e)
-        progressfile = '/tmp/.repl_progress_%d' % self.id
-        if os.path.exists(progressfile):
-            try:
-                os.unlink(progressfile)
-            except:
-                # Possible race condition?
-                pass
-        super(Replication, self).delete()
-
 
 class Task(Model):
     task_filesystem = models.CharField(
