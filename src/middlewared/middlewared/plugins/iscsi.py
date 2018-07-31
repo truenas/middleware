@@ -819,7 +819,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         'iscsi_initiator_create',
         Int('tag', default=0),
         List('initiators', default=[]),
-        List('auth_network', items=[IPAddr('ip', cidr=True)], default=[]),
+        List('auth_network', items=[IPAddr('ip', network=True)], default=[]),
         Str('comment'),
         register=True
     ))
