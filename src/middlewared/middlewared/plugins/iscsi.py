@@ -1119,8 +1119,10 @@ class iSCSITargetService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        rv = await self.middleware.call(
-            'datastore.delete', self._config.datastore, id)
+        for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['target', '=', id]]):
+            await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'])
+
+        rv = await self.middleware.call('datastore.delete', self._config.datastore, id)
         await self._service_change('iscsitarget', 'reload')
         return rv
 

@@ -888,18 +888,6 @@ class iSCSITarget(Model):
     def __str__(self):
         return self.iscsi_target_name
 
-    def delete(self):
-        for te in iSCSITargetToExtent.objects.filter(iscsi_target=self):
-            te.delete()
-        super(iSCSITarget, self).delete()
-        started = notifier().reload("iscsitarget")
-        if started is False and services.objects.get(
-                srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed(
-                "iscsitarget",
-                _("The iSCSI service failed to reload.")
-            )
-
 
 class iSCSITargetGroups(Model):
     iscsi_target = models.ForeignKey(
