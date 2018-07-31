@@ -529,11 +529,6 @@ class ReplRemote(Model):
         verbose_name = _("Remote Replication Host")
         verbose_name_plural = _("Remote Replication Hosts")
 
-    def delete(self):
-        rv = super(ReplRemote, self).delete()
-        notifier().reload("ssh")
-        return rv
-
     def __str__(self):
         return "%s:%s" % (self.ssh_remote_hostname, self.ssh_remote_port)
 

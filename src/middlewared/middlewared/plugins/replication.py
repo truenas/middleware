@@ -286,6 +286,12 @@ class ReplicationService(CRUDService):
             id
         )
 
+        await self.middleware.call(
+            'service.reload',
+            'ssh',
+            {'onetime': False}
+        )
+
         return response
 
     @accepts()
