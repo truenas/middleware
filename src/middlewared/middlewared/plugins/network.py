@@ -1,13 +1,13 @@
-from middlewared.service import (ConfigService, CRUDService, Service,
+from middlewared.service import (CallError, ConfigService, CRUDService, Service,
                                  filterable, pass_app, private)
 from middlewared.utils import Popen, filter_list, run
 from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Str,
                                 ValidationErrors, accepts)
-from middlewared.validators import Match
+from middlewared.validators import Match, Range
 
 import asyncio
 from collections import defaultdict
-import ipaddr
+import contextlib
 import ipaddress
 import netif
 import os
@@ -272,7 +272,7 @@ def dhclient_leases(interface):
             return f.read()
 
 
-class InterfacesService(Service):
+class InterfacesService(CRUDService):
 
     @filterable
     def query(self, filters, options):
@@ -326,6 +326,190 @@ class InterfacesService(Service):
                 })
 
         return iface
+
+    @accepts(Dict(
+        'interface_create',
+        Str('name', required=True),
+        Str('type', enum=['LINK_AGGREGATION', 'VLAN'], required=True),
+        Bool('ipv4_dhcp', default=False),
+        Bool('ipv6_auto', default=False),
+        List('ipaddresses', items=[IPAddr('ip', cidr=True)], default=[]),
+        Bool('failover_critical', default=False),
+        Int('failover_group'),
+        Int('failover_vhid'),
+        List('failover_ipaddresses', items=[IPAddr('ip', cidr=True)]),
+        List('failover_virtual_ips', items=[IPAddr('ip', cidr=True)]),
+        Str('lag_protocol', enum=['LACP', 'FAILOVER', 'LOADBALANCE', 'ROUNDROBIN', 'NONE']),
+        List('lag_members', items=[Str('interface')]),
+        Str('vlan_parent_interface'),
+        Int('vlan_tag', validators=[Range(min=1, max=4094)]),
+        Int('vlan_pcp', validators=[Range(min=0, max=7)], null=True),
+        Str('options'),
+    ))
+    async def do_create(self, data):
+        """
+        Create virtual interfaces (Link Aggregation, VLAN)
+
+        For LINK_AGGREGATION `type` the following attributes are required: lag_members,
+        lag_protocol.
+
+        For VLAN `type` the following attributes are required: vlan_parent_interface,
+        vlan_tag and vlan_pcp.
+        """
+
+        verrors = ValidationErrors()
+        if data['type'] == 'LINK_AGGREGATION':
+            required_attrs = ('lag_protocol', 'lag_members')
+        elif data['type'] == 'VLAN':
+            required_attrs = ('vlan_parent_interface', 'vlan_tag')
+
+        for i in required_attrs:
+            if not data.get(i):
+                verrors.add(f'interface_create.{i}', 'This field is required')
+
+        if await self.middleware.call('system.is_freenas'):
+            data.pop('failover_critical', None)
+            data.pop('failover_group', None)
+            data.pop('failover_ipaddresses', None)
+            data.pop('failover_vhid', None)
+            data.pop('failover_virtual_ips', None)
+        else:
+            raise CallError('Not yet implemented for this product')
+
+        verrors.check()
+
+        if data['type'] == 'LINK_AGGREGATION':
+            next_lagg = 0
+            laggs = [
+                i['int_interface']
+                for i in await self.middleware.call(
+                    'datastore.query',
+                    'network.interfaces',
+                    [('int_interface', '^', 'lagg')],
+                )
+            ]
+            while f'lagg{next_lagg}' in laggs:
+                next_lagg += 1
+
+            interface_id = None
+            lag_id = None
+            lagmembers_ids = []
+            try:
+                async for i in self.__create_interface_datastore(data, {
+                    'interface': f'lagg{next_lagg}',
+                }):
+                    interface_id = i
+
+                lag_id = await self.middleware.call(
+                    'datastore.insert',
+                    'network.lagginterface',
+                    {'lagg_interface': interface_id, 'lagg_protocol': data['lag_protocol'].lower()},
+                )
+                for idx, i in enumerate(data['lag_members']):
+                    lagmembers_ids.append(
+                        await self.middleware.call(
+                            'datastore.insert',
+                            'network.lagginterfacemembers',
+                            {'interfacegroup': lag_id, 'ordernum': idx, 'physnic': i},
+                            {'prefix': 'lagg_'},
+                        )
+                    )
+            except Exception as e:
+                for lagmember_id in lagmembers_ids:
+                    with contextlib.suppress(Exception):
+                        await self.middleware.call(
+                            'datastore.delete', 'network.lagginterfacemembers', lagmember_id
+                        )
+                if lag_id:
+                    with contextlib.suppress(Exception):
+                        await self.middleware.call(
+                            'datastore.delete', 'network.lagginterface', lag_id
+                        )
+                if interface_id:
+                    with contextlib.suppress(Exception):
+                        await self.middleware.call(
+                            'datastore.delete', 'network.interfaces', interface_id
+                        )
+                raise e
+        elif data['type'] == 'VLAN':
+            interface_id = None
+            interface_name = f'vlan{data["vlan_tag"]}'
+            try:
+                async for i in self.__create_interface_datastore(data, {
+                    'interface': interface_name,
+                }):
+                    interface_id = i
+                await self.middleware.call(
+                    'datastore.insert',
+                    'network.vlan',
+                    {
+                        'vint': interface_name,
+                        'pint': data['vlan_parent_interface'],
+                        'tag': data['vlan_tag'],
+                        'pcp': data.get('vlan_pcp'),
+                    },
+                    {'prefix': 'vlan_'},
+                )
+            except Exception as e:
+                if interface_id:
+                    with contextlib.suppress(Exception):
+                        await self.middleware.call(
+                            'datastore.delete', 'network.interfaces', interface_id
+                        )
+                raise e
+
+    async def __create_interface_datastore(self, data, attrs):
+        interface_attrs, aliases = self.__convert_ipaddresses_to_datastore(data)
+        interface_attrs.update(attrs)
+
+        interface_id = await self.middleware.call(
+            'datastore.insert',
+            'network.interfaces',
+            dict({
+                'name': data['name'],
+                'dhcp': data['ipv4_dhcp'],
+                'ipv6auto': data['ipv6_auto'],
+                'vip': None,
+                'vhid': data.get('failover_vhid'),
+                'critical': data.get('failover_critical') or False,
+                'group': data.get('failover_group'),
+                'options': data.get('options', ''),
+            }, **interface_attrs),
+            {'prefix': 'int_'},
+        )
+        yield interface_id
+
+        for alias in aliases:
+            await self.middleware.call(
+                'datastore.insert',
+                'network.alias',
+                dict(interface=interface_id, **alias),
+                {'prefix': 'alias_'},
+            )
+
+    def __convert_ipaddresses_to_datastore(self, data):
+        iface = {}
+        aliases = []
+        for ipaddr in data['ipaddresses']:
+            ipaddr = ipaddress.ip_interface(ipaddr)
+            if ipaddr.version == 4:
+                iface_addrfield = 'ipv4address'
+                alias_addrfield = 'v4address'
+                netfield = 'v4netmaskbit'
+            else:
+                iface_addrfield = 'ipv6address'
+                alias_addrfield = 'v6address'
+                netfield = 'v6netmaskbit'
+
+            if not iface.get(iface_addrfield):
+                iface[iface_addrfield] = str(ipaddr.ip)
+                iface[netfield] = ipaddr.network.prefixlen
+            else:
+                aliases.append({
+                    alias_addrfield: str(ipaddr.ip),
+                    netfield: ipaddr.network.prefixlen,
+                })
+        return iface, aliases
 
     @accepts()
     @pass_app
@@ -863,10 +1047,7 @@ class RoutesService(Service):
                 for nic_address in iface.addresses:
                     if nic_address.af == netif.AddressFamily.INET:
                         ipv4_nic = ipaddress.IPv4Interface(nic_address)
-                        nic_network = ipaddr.IPv4Network(ipv4_nic)
-                        nic_prefixlen = nic_network.prefixlen
-                        nic_result = str(nic_network.network) + '/' + str(nic_prefixlen)
-                        if ipaddress.ip_address(ipv4_gateway) in ipaddress.ip_network(nic_result):
+                        if ipaddress.ip_address(ipv4_gateway) in ipv4_nic.network:
                             return True
         return False
 
@@ -879,7 +1060,7 @@ class StaticRouteService(CRUDService):
 
     @accepts(Dict(
         'staticroute_create',
-        IPAddr('destination', cidr=True),
+        IPAddr('destination', network=True),
         IPAddr('gateway', allow_zone_index=True),
         Str('description'),
         register=True
