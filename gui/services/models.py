@@ -792,16 +792,6 @@ class iSCSITargetAuthorizedInitiator(Model):
         else:
             return str(self.iscsi_target_initiator_tag)
 
-    def delete(self):
-        super(iSCSITargetAuthorizedInitiator, self).delete()
-        portals = iSCSITargetAuthorizedInitiator.objects.all().order_by(
-            'iscsi_target_initiator_tag')
-        idx = 1
-        for portal in portals:
-            portal.iscsi_target_initiator_tag = idx
-            portal.save()
-            idx += 1
-
 
 class iSCSITargetAuthCredential(Model):
     iscsi_target_auth_tag = models.IntegerField(

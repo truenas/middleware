@@ -896,9 +896,19 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        return await self.middleware.call(
+        result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
+
+        for i, initiator in enumerate(await self.middleware.call('iscsi.initiator.query', [], {'order_by': ['tag']})):
+            await self.middleware.call(
+                'datastore.update', self._config.datastore, initiator['id'], {'tag': i + 1},
+                {'prefix': self._config.datastore_prefix}
+            )
+
+        await self._service_change('iscsitarget', 'reload')
+
+        return result
 
     @private
     async def compress(self, data):
