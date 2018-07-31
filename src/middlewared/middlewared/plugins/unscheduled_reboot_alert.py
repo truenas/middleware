@@ -1,8 +1,10 @@
 from datetime import datetime
 import os
 import textwrap
+import re
 
 from middlewared.service import Service
+from middlewared.client import Client
 
 SENTINEL_PATH = "/data/sentinels/unscheduled-reboot"
 MIDDLEWARE_STARTED_SENTINEL_PATH = "/tmp/.middleware-started"
@@ -14,6 +16,10 @@ WATCHDOG_ALERT_FILE = "/data/sentinels/.watchdog-alert"
 # This file is managed in TrueNAS HA code (.../sbin/fenced)
 # Ticket 39114
 FENCED_ALERT_FILE = "/data/sentinels/.fenced-alert"
+
+# This file only exists on TrueNAS HA systems
+# Ticket 39114
+TRUENAS_HA_FILE = "/tmp/.ha_mode"
 
 
 class UnscheduledRebootAlertService(Service):
@@ -29,8 +35,19 @@ async def setup(middleware):
             return
 
         gc = await middleware.call('datastore.config', 'network.globalconfiguration')
-        hostname = f"{gc['gc_hostname']}.{gc['gc_domain']}"
         now = datetime.now().strftime("%c")
+
+        Client() = c
+        if not c.call('notifier.is_freenas') and c.call('notifier.failover_licensed')
+            try:
+                with open(TRUENAS_HA_FILE, "rb") as controller:
+                    match = re.search(r"(.*):(.*)")
+                if match.group(2) == 'B':
+                    hostname = f"{gc['gc_hostname_b'].{gc['gc_domain']}"
+            except IOError:
+                pass
+        else:
+            hostname = f"{gc['gc_hostname']}.{gc.['gc_domain']}"
 
         # If the watchdog alert file exists,
         # then we can assume that carp-state-change-hook.py
