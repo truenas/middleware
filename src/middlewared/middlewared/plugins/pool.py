@@ -1904,7 +1904,7 @@ class PoolDatasetService(CRUDService):
             )
         elif data['type'] == 'VOLUME' and 'volsize' in data:
             if await self.middleware.call('iscsi.extent.query', [('path', '=', f'zvol/{id}')]):
-                await self.middleware.call('service.reload', 'iscsitarget')
+                await self._service_change('iscsitarget', 'reload')
 
         return rv
 

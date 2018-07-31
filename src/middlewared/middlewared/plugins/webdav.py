@@ -61,11 +61,7 @@ class WebDAVSharingService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call(
-            'service.reload',
-            'webdav',
-            {'onetime': False}
-        )
+        await self._service_change('webdav', 'reload')
 
         return await self.query(filters=[('id', '=', data['id'])], options={'get': True})
 
@@ -92,11 +88,7 @@ class WebDAVSharingService(CRUDService):
                 {'prefix': self._config.datastore_prefix}
             )
 
-            await self.middleware.call(
-                'service.reload',
-                'webdav',
-                {'onetime': False}
-            )
+            await self._service_change('webdav', 'reload')
 
         return await self.query(filters=[('id', '=', id)], options={'get': True})
 
@@ -111,11 +103,7 @@ class WebDAVSharingService(CRUDService):
             id
         )
 
-        await self.middleware.call(
-            'service.reload',
-            'webdav',
-            {'onetime': False}
-        )
+        await self._service_change('webdav', 'reload')
 
         return response
 

@@ -100,7 +100,7 @@ class SharingAFPService(CRUDService):
             {'prefix': self._config.datastore_prefix})
         await self.extend(data)
 
-        await self.middleware.call('service.reload', 'afp')
+        await self._service_change('afp', 'reload')
 
         return data
 
@@ -146,14 +146,14 @@ class SharingAFPService(CRUDService):
             {'prefix': self._config.datastore_prefix})
         await self.extend(new)
 
-        await self.middleware.call('service.reload', 'afp')
+        await self._service_change('afp', 'reload')
 
         return new
 
     @accepts(Int('id'))
     async def do_delete(self, id):
         result = await self.middleware.call('datastore.delete', self._config.datastore, id)
-        await self.middleware.call('service.reload', 'afp')
+        await self._service_change('afp', 'reload')
         return result
 
     @private

@@ -214,11 +214,7 @@ class ReplicationService(CRUDService):
             repl_remote_dict
         )
 
-        await self.middleware.call(
-            'service.reload',
-            'ssh',
-            {'onetime': False}
-        )
+        await self._service_change('ssh', 'reload')
 
         data['remote'] = remote_pk
 
@@ -259,11 +255,7 @@ class ReplicationService(CRUDService):
             repl_remote_dict
         )
 
-        await self.middleware.call(
-            'service.reload',
-            'ssh',
-            {'onetime': False}
-        )
+        await self._service_change('ssh', 'reload')
 
         await self.middleware.call(
             'datastore.update',
@@ -297,11 +289,7 @@ class ReplicationService(CRUDService):
             id
         )
 
-        await self.middleware.call(
-            'service.reload',
-            'ssh',
-            {'onetime': False}
-        )
+        await self._service_change('ssh', 'reload')
 
         return response
 

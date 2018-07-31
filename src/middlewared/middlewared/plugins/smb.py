@@ -169,7 +169,7 @@ class SharingSMBService(CRUDService):
             {'prefix': self._config.datastore_prefix})
         await self.extend(data)  # We should do this in the insert call ?
 
-        await self.middleware.call('service.reload', 'cifs')
+        await self._service_change('cifs', 'reload')
         await self.apply_default_perms(default_perms, path, data['home'])
 
         return data
@@ -215,7 +215,7 @@ class SharingSMBService(CRUDService):
             {'prefix': self._config.datastore_prefix})
         await self.extend(new)  # same here ?
 
-        await self.middleware.call('service.reload', 'cifs')
+        await self._service_change('cifs', 'reload')
         await self.apply_default_perms(default_perms, path, data['home'])
 
         return new
@@ -225,7 +225,7 @@ class SharingSMBService(CRUDService):
         share = await self._get_instance(id)
         result = await self.middleware.call('datastore.delete', self._config.datastore, id)
         await self.middleware.call('notifier.sharesec_delete', share['name'])
-        await self.middleware.call('service.reload', 'cifs')
+        await self._service_change('cifs', 'reload')
         return result
 
     @private
