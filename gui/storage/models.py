@@ -329,13 +329,6 @@ class Scrub(Model):
             labels.append(str(wchoices[str(w)]))
         return ', '.join(labels)
 
-    def delete(self):
-        super(Scrub, self).delete()
-        try:
-            notifier().restart("cron")
-        except:
-            pass
-
 
 class Resilver(Model):
     enabled = models.BooleanField(
@@ -760,20 +753,6 @@ class Task(Model):
             self.task_ret_count,
             self.task_ret_unit,
         )
-
-    def save(self, *args, **kwargs):
-        super(Task, self).save(*args, **kwargs)
-        try:
-            notifier().restart("cron")
-        except:
-            pass
-
-    def delete(self, *args, **kwargs):
-        super(Task, self).delete(*args, **kwargs)
-        try:
-            notifier().restart("cron")
-        except:
-            pass
 
     class Meta:
         verbose_name = _("Periodic Snapshot Task")

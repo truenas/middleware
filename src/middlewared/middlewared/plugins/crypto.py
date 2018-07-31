@@ -834,6 +834,8 @@ class CertificateService(CRUDService):
         Int('id')
     )
     async def do_delete(self, id):
+        certificate = await self._get_instance(id)
+
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
@@ -845,6 +847,12 @@ class CertificateService(CRUDService):
             'ix-ssl',
             {'onetime': False}
         )
+
+        sentinel = f'/tmp/alert_invalidcert_{certificate["name"]}'
+        if os.path.exists(sentinel):
+            os.unlink(sentinel)
+            await self.middleware.call('alert.process_alerts')
+
         return response
 
 
@@ -1243,6 +1251,8 @@ class CertificateAuthorityService(CRUDService):
         Int('id')
     )
     async def do_delete(self, id):
+        ca = self._get_instance(id)
+
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
@@ -1254,4 +1264,10 @@ class CertificateAuthorityService(CRUDService):
             'ix-ssl',
             {'onetime': False}
         )
+
+        sentinel = f'/tmp/alert_invalidCA_{ca["name"]}'
+        if os.path.exists(sentinel):
+            os.unlink(sentinel)
+            await self.middleware.call('alert.process_alerts')
+
         return response

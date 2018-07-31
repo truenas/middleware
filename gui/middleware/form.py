@@ -3,6 +3,7 @@ import json
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Model
 
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.models.fields import DictField
 from freenasUI.middleware.client import client, ClientException
 from freenasUI.services.exceptions import ServiceFailed
@@ -112,3 +113,10 @@ class MiddlewareModelForm:
                     raise ServiceFailed(e.error, e.errno)
                 else:
                     raise
+
+    def delete(self, request=None, events=None, **kwargs):
+        with client as c:
+            c.call(f"{self.middleware_plugin}.delete", self.instance.id)
+
+        fname = str(type(self).__name__)
+        appPool.hook_form_delete(fname, self, request, events)
