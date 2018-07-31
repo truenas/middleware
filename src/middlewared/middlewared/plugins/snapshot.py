@@ -137,4 +137,10 @@ class PeriodicSnapshotTaskService(CRUDService):
             id
         )
 
+        await self.middleware.call(
+            'service.restart',
+            'cron',
+            {'onetime': False}
+        )
+
         return response

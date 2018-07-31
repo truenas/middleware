@@ -222,8 +222,11 @@ class SharingSMBService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        return await self.middleware.call(
-            'datastore.delete', self._config.datastore, id)
+        share = await self._get_instance(id)
+        result = await self.middleware.call('datastore.delete', self._config.datastore, id)
+        await self.middleware.call('notifier.sharesec_delete', share['name'])
+        await self.middleware.call('service.reload', 'cifs')
+        return result
 
     @private
     async def clean(self, data, schema_name, verrors, id=None):

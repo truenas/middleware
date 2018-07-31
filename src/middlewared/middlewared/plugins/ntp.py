@@ -60,8 +60,12 @@ class NTPServerService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        return await self.middleware.call(
-            'datastore.delete', self._config.datastore, id)
+        response = await self.middleware.call('datastore.delete', self._config.datastore, id)
+
+        await self.middleware.call('service.start', 'ix-ntpd')
+        await self.middleware.call('service.restart', 'ntpd')
+
+        return response
 
 
     @private
