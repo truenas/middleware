@@ -496,6 +496,9 @@ class iSCSITargetExtentService(CRUDService):
             if delete is not True:
                 raise CallError('Failed to remove extent file')
 
+        for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['extent', '=', id]]):
+            await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'])
+
         return await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )

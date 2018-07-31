@@ -654,12 +654,6 @@ class iSCSITargetExtent(Model):
             except Exception:
                 return self.iscsi_target_extent_path
 
-    def delete(self):
-        for te in iSCSITargetToExtent.objects.filter(iscsi_extent=self):
-            te.delete()
-        super(iSCSITargetExtent, self).delete()
-        notifier().reload("iscsitarget")
-
     def save(self, *args, **kwargs):
         if not self.iscsi_target_extent_naa:
             self.iscsi_target_extent_naa = '0x6589cfc000000%s' % (
