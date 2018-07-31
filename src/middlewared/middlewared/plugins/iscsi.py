@@ -271,8 +271,17 @@ class ISCSIPortalService(CRUDService):
         """
         Delete iSCSI Portal `id`.
         """
-        return await self.middleware.call('datastore.delete', self._config.datastore, id)
-        # service is currently restarted by datastore/django model
+        result = await self.middleware.call('datastore.delete', self._config.datastore, id)
+
+        for i, portal in enumerate(await self.middleware.call('iscsi.portal.query', [], {'order_by': ['tag']})):
+            await self.middleware.call(
+                'datastore.update', self._config.datastore, portal['id'], {'tag': i + 1},
+                {'prefix': self._config.datastore_prefix}
+            )
+
+        await self._service_change('iscsitarget', 'reload')
+
+        return result
 
 
 class iSCSITargetAuthCredentialService(CRUDService):

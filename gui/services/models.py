@@ -691,19 +691,6 @@ class iSCSITargetPortal(Model):
         else:
             return str(self.iscsi_target_portal_tag)
 
-    def delete(self):
-        super(iSCSITargetPortal, self).delete()
-        portals = iSCSITargetPortal.objects.all().order_by(
-            'iscsi_target_portal_tag')
-        for portal, idx in zip(portals, range(1, len(portals) + 1)):
-            portal.iscsi_target_portal_tag = idx
-            portal.save()
-        started = notifier().reload("iscsitarget")
-        if started is False and services.objects.get(
-                srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget",
-                                _("The iSCSI service failed to reload."))
-
 
 class iSCSITargetPortalIP(Model):
     iscsi_target_portalip_portal = models.ForeignKey(
