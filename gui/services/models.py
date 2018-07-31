@@ -992,14 +992,6 @@ class iSCSITargetToExtent(Model):
     def __str__(self):
         return str(self.iscsi_target) + ' / ' + str(self.iscsi_extent)
 
-    def delete(self):
-        super(iSCSITargetToExtent, self).delete()
-        started = notifier().reload("iscsitarget")
-        if started is False and services.objects.get(
-                srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget",
-                                _("The iSCSI service failed to reload."))
-
 
 class FibreChannelToTarget(Model):
     fc_port = models.CharField(

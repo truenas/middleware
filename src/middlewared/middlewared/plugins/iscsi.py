@@ -1179,9 +1179,13 @@ class iSCSITargetToExtentService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        return await self.middleware.call(
+        result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
+
+        await self.middleware.call('service.reload', 'iscsitarget')
+
+        return result
 
     @private
     async def extend(self, data):
