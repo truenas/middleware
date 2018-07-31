@@ -288,23 +288,8 @@ class ReplicationService(CRUDService):
                 await self.middleware.call('notifier.zfs_dataset_release_snapshots', zfsname, True)
         except Exception:
             pass
-        if os.path.exists(REPL_RESULTFILE):
-            with open(REPL_RESULTFILE, 'rb') as f:
-                data = f.read()
-            try:
-                results = pickle.loads(data)
-                results.pop(id, None)
-                with open(REPL_RESULTFILE, 'wb') as f:
-                    f.write(pickle.dumps(results))
-            except Exception as e:
-                self.logger.debug('Failed to remove replication from state file %s', e)
-        progressfile = '/tmp/.repl_progress_%d' % id
-        if os.path.exists(progressfile):
-            try:
-                os.unlink(progressfile)
-            except Exception:
-                # Possible race condition?
-                pass
+
+        await self.middleware.call('replication.remove_from_state_file', id)
 
         response = await self.middleware.call(
             'datastore.delete',
@@ -319,6 +304,25 @@ class ReplicationService(CRUDService):
         )
 
         return response
+
+    @private
+    def remove_from_state_file(self, id):
+        if os.path.exists(REPL_RESULTFILE):
+            with open(REPL_RESULTFILE, 'rb') as f:
+                data = f.read()
+            try:
+                results = pickle.loads(data)
+                results.pop(id, None)
+                with open(REPL_RESULTFILE, 'wb') as f:
+                    f.write(pickle.dumps(results))
+            except Exception as e:
+                self.logger.debug('Failed to remove replication from state file %s', e)
+
+        progressfile = '/tmp/.repl_progress_%d' % id
+        try:
+            os.unlink(progressfile)
+        except Exception:
+            pass
 
     @accepts()
     def public_key(self):
