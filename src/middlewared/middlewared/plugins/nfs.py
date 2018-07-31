@@ -81,7 +81,7 @@ class SharingNFSService(CRUDService):
         "sharingnfs_create",
         List("paths", items=[Dir("path")], empty=False),
         Str("comment"),
-        List("networks", items=[IPAddr("network", cidr=True)], default=[]),
+        List("networks", items=[IPAddr("network", network=True)], default=[]),
         List("hosts", items=[Str("host")], default=[]),
         Bool("alldirs"),
         Bool("ro"),

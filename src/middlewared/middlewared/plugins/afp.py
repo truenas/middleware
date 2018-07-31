@@ -70,8 +70,8 @@ class SharingAFPService(CRUDService):
         UnixPerm('fperm', default='644'),
         UnixPerm('dperm', default='755'),
         UnixPerm('umask', default='000'),
-        List('hostsallow', items=[IPAddr('ip', cidr=True)], default=[]),
-        List('hostsdeny', items=[IPAddr('ip', cidr=True)], default=[]),
+        List('hostsallow', items=[IPAddr('ip', network=True)], default=[]),
+        List('hostsdeny', items=[IPAddr('ip', network=True)], default=[]),
         Str('auxparams'),
         register=True
     ))

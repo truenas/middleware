@@ -207,24 +207,31 @@ class IPAddr(Str):
 
     def __init__(self, *args, **kwargs):
         self.cidr = kwargs.pop('cidr', False)
-        self.cidr_strict = kwargs.pop('cidr_strict', False)
+        self.network = kwargs.pop('network', False)
+        self.network_strict = kwargs.pop('network_strict', False)
 
         self.v4 = kwargs.pop('v4', True)
         self.v6 = kwargs.pop('v6', True)
 
         if self.v4 and self.v6:
-            if self.cidr:
+            if self.network:
                 self.factory = ipaddress.ip_network
+            elif self.cidr:
+                self.factory = ipaddress.ip_interface
             else:
                 self.factory = ipaddress.ip_address
         elif self.v4:
-            if self.cidr:
+            if self.network:
                 self.factory = ipaddress.IPv4Network
+            elif self.cidr:
+                self.factory = ipaddress.IPv4Interface
             else:
                 self.factory = ipaddress.IPv4Address
         elif self.v6:
-            if self.cidr:
+            if self.network:
                 self.factory = ipaddress.IPv6Network
+            elif self.cidr:
+                self.factory = ipaddress.IPv6Interface
             else:
                 self.factory = ipaddress.IPv6Address
         else:
@@ -242,9 +249,14 @@ class IPAddr(Str):
 
         if value:
             try:
-                if self.cidr:
-                    self.factory(value, strict=self.cidr_strict)
+                if self.network:
+                    self.factory(value, strict=self.network_strict)
                 else:
+                    if self.cidr and '/' not in value:
+                        raise ValueError(
+                            'Specified address should be in CIDR notation, e.g. 192.168.0.2/24'
+                        )
+
                     has_zone_index = False
                     if self.allow_zone_index and "%" in value:
                         has_zone_index = True
