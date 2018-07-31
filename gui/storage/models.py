@@ -470,16 +470,6 @@ class Disk(Model):
         else:
             return self.disk_name
 
-    def delete(self):
-        from freenasUI.services.models import iSCSITargetExtent
-        # Delete device extents depending on this Disk
-        qs = iSCSITargetExtent.objects.filter(
-            iscsi_target_extent_type='Disk',
-            iscsi_target_extent_path=str(self.pk))
-        if qs.exists():
-            qs.delete()
-        super(Disk, self).delete()
-
     class Meta:
         verbose_name = _("Disk")
         verbose_name_plural = _("Disks")
