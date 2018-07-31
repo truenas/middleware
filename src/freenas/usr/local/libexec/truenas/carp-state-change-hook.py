@@ -95,9 +95,9 @@ def run(cmd):
 
 def run_async(cmd):
     subprocess.Popen(
-            cmd,
-            shell=True,
-            )
+        cmd,
+        shell=True,
+    )
     return
 
 
@@ -627,7 +627,7 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
                     log.warn("Setting advskew to 100 on non-critical interface %s" % iface)
                     run("ifconfig %s vhid %s advskew 100" % (iface, vhid))
 
-            for group in fobj['groups']: 
+            for group in fobj['groups']:
                 for interface in fobj['groups'][group]:
                     error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % interface)
                     for vhid in output.split():
