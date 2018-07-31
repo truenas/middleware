@@ -138,11 +138,6 @@ class CIFS_Share(Model):
     def __str__(self):
         return self.cifs_name
 
-    def delete(self, *args, **kwargs):
-        super(CIFS_Share, self).delete(*args, **kwargs)
-        notifier().sharesec_delete(self.cifs_name)
-        notifier().reload("cifs")
-
     class Meta:
         verbose_name = _("Windows (SMB) Share")
         verbose_name_plural = _("Windows (SMB) Shares")
@@ -295,10 +290,6 @@ class AFP_Share(Model):
     def __str__(self):
         return str(self.afp_name)
 
-    def delete(self, *args, **kwargs):
-        super(AFP_Share, self).delete(*args, **kwargs)
-        notifier().reload("afp")
-
     class Meta:
         verbose_name = _("Apple (AFP) Share")
         verbose_name_plural = _("Apple (AFP) Shares")
@@ -410,10 +401,6 @@ class NFS_Share(Model):
             return str(self.nfs_comment)
         return "[%s]" % ', '.join([p.path for p in self.paths.all()])
 
-    def delete(self, *args, **kwargs):
-        super(NFS_Share, self).delete(*args, **kwargs)
-        notifier().reload("nfs")
-
     @property
     def nfs_paths(self):
         return [p.path for p in self.paths.all()]
@@ -471,10 +458,6 @@ class WebDAV_Share(Model):
 
     def __str__(self):
         return self.webdav_name
-
-    def delete(self, *args, **kwargs):
-        super(WebDAV_Share, self).delete(*args, **kwargs)
-        notifier().reload("webdav")
 
     class Meta:
         verbose_name = _("WebDAV Share")

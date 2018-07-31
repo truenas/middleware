@@ -111,6 +111,12 @@ class WebDAVSharingService(CRUDService):
             id
         )
 
+        await self.middleware.call(
+            'service.reload',
+            'webdav',
+            {'onetime': False}
+        )
+
         return response
 
 

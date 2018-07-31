@@ -152,8 +152,9 @@ class SharingAFPService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        return await self.middleware.call(
-            'datastore.delete', self._config.datastore, id)
+        result = await self.middleware.call('datastore.delete', self._config.datastore, id)
+        await self.middleware.call('service.reload', 'afp')
+        return result
 
     @private
     async def clean(self, data, schema_name, verrors, id=None):
