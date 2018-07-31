@@ -2,6 +2,7 @@ import asyncio
 import imp
 import inspect
 import os
+import re
 import sys
 import subprocess
 import threading
@@ -123,10 +124,17 @@ def filter_list(_list, filters=None, options=None):
     opmap = {
         '=': lambda x, y: x == y,
         '!=': lambda x, y: x != y,
+        '>': lambda x, y: x > y,
+        '>=': lambda x, y: x >= y,
+        '<': lambda x, y: x < y,
+        '<=': lambda x, y: x <= y,
+        '~': lambda x, y: re.match(y, x),
         'in': lambda x, y: x in y,
         'nin': lambda x, y: x not in y,
         'rin': lambda x, y: y in x,
         'rnin': lambda x, y: y not in x,
+        '^': lambda x, y: x.startswith(y),
+        '$': lambda x, y: x.endswith(y),
     }
 
     if filters is None:
