@@ -44,6 +44,8 @@ class DatastoreService(Service):
             '~': 'regex',
             'in': 'in',
             'nin': 'in',
+            '^': 'startswith',
+            '$': 'endswith',
         }
 
         rv = []
