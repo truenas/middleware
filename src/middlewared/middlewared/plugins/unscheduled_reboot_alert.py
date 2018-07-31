@@ -15,6 +15,7 @@ WATCHDOG_ALERT_FILE = "/data/sentinels/.watchdog-alert"
 # Ticket 39114
 FENCED_ALERT_FILE = "/data/sentinels/.fenced-alert"
 
+
 class UnscheduledRebootAlertService(Service):
     async def terminate(self):
         if os.path.exists(SENTINEL_PATH):
@@ -26,12 +27,13 @@ async def setup(middleware):
         # We want to emit the mail only if the machine truly rebooted
         if os.path.exists(MIDDLEWARE_STARTED_SENTINEL_PATH):
             return
-            
+
         gc = await middleware.call('datastore.config', 'network.globalconfiguration')
         hostname = f"{gc['gc_hostname']}.{gc['gc_domain']}"
         now = datetime.now().strftime("%c")
 
-        # If the watchdog alert file exists, then we can assume that carp-state-change-hook.py
+        # If the watchdog alert file exists,
+        # then we can assume that carp-state-change-hook.py
         # panic'ed the box by design via a watchdog countdown.
         # Let's alert the end user why we did this
         if os.path.exists(WATCHDOG_ALERT_FILE) and not os.path.exists(FENCED_ALERT_FILE):
@@ -44,9 +46,10 @@ async def setup(middleware):
                 """),
             })
 
-        # If the fenced alert file exists, then we can assume that fenced panic'ed the box by design.
-        # Let's alert the end user why we did this 
-        elif os.path.exists(FENCED_ALERT_FILE) and not os.path.exists(WATCHDOG_ALERT_FILE): 
+        # If the fenced alert file exists,
+        # then we can assume that fenced panic'ed the box by design.
+        # Let's alert the end user why we did this
+        elif os.path.exists(FENCED_ALERT_FILE) and not os.path.exists(WATCHDOG_ALERT_FILE):
             await middleware.call("mail.send", {
                 "subject": f"{hostname}: Failover event",
                 "text": textwrap.dedent(f"""\
@@ -74,14 +77,14 @@ async def setup(middleware):
                 })
 
             else:
-                  await middleware.call("mail.send", {
-                      "subject": f"{hostname}: Failover event",
-                      "text": textwrap.dedent(f"""\
-                          {hostname} had a failover event.
-                          The system was rebooted because persistent SCSI reservations were lost and/or cleared.
-                          The operating system successfully came back online at {now}.
-                      """),
-                  })
+                await middleware.call("mail.send", {
+                    "subject": f"{hostname}: Failover event",
+                    "text": textwrap.dedent(f"""\
+                        {hostname} had a failover event.
+                        The system was rebooted because persistent SCSI reservations were lost and/or cleared.
+                        The operating system successfully came back online at {now}.
+                    """),
+                })
 
         else:
             await middleware.call("mail.send", {
