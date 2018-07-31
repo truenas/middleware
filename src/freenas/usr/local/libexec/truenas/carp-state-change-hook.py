@@ -688,7 +688,7 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
 
             # We also remove this file here, because this code path is executed on boot.
             # The middlewared process is removing the file and then sending an email as expected.
-            # However, this python file is being called about 1min afterwards and recreating the file on line 651.
+            # However, this python file is being called about 1min after middlewared and recreating the file on line 651.
             try:
                 os.unlink(WATCHDOG_ALERT_FILE)
             except IOError:
