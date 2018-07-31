@@ -183,7 +183,7 @@ class PoolResilverService(ConfigService):
                 new_config
             )
 
-            await self.middleware.call('service.restart', 'cron', {'onetime': False})
+            await self.middleware.call('service.restart', 'cron')
             await self.middleware.call('pool.configure_resilver_priority')
 
         return await self.config()
@@ -2122,11 +2122,7 @@ class PoolScrubService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call(
-            'service.restart',
-            'cron',
-            {'onetime': False}
-        )
+        await self.middleware.call('service.restart', 'cron')
 
         return await self.query(filters=[('id', '=', data['id'])], options={'get': True})
 
@@ -2160,11 +2156,7 @@ class PoolScrubService(CRUDService):
                 {'prefix': self._config.datastore_prefix}
             )
 
-            await self.middleware.call(
-                'service.restart',
-                'cron',
-                {'onetime': False}
-            )
+            await self.middleware.call('service.restart', 'cron')
 
         return await self.query(filters=[('id', '=', id)], options={'get': True})
 
@@ -2178,11 +2170,7 @@ class PoolScrubService(CRUDService):
             id
         )
 
-        await self.middleware.call(
-            'service.restart',
-            'cron',
-            {'onetime': False}
-        )
+        await self.middleware.call('service.restart', 'cron')
         return response
 
 

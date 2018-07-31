@@ -81,11 +81,7 @@ class PeriodicSnapshotTaskService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call(
-            'service.restart',
-            'cron',
-            {'onetime': False}
-        )
+        await self.middleware.call('service.restart', 'cron')
 
         return await self._get_instance(data['id'])
 
@@ -119,11 +115,7 @@ class PeriodicSnapshotTaskService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call(
-            'service.restart',
-            'cron',
-            {'onetime': False}
-        )
+        await self.middleware.call('service.restart', 'cron')
 
         return await self._get_instance(id)
 
@@ -137,10 +129,6 @@ class PeriodicSnapshotTaskService(CRUDService):
             id
         )
 
-        await self.middleware.call(
-            'service.restart',
-            'cron',
-            {'onetime': False}
-        )
+        await self.middleware.call('service.restart', 'cron')
 
         return response
