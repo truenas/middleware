@@ -152,9 +152,9 @@ class ServiceMonitorThread(threading.Thread):
                 """
                  Check to see if the file .ad_start file is stale. This file is generated
                  by /etc/directoryservice/ActiveDirectory/ctl and indicates that an AD start
-                 is in progress. We should not restart while AD is initializing, on the other 
+                 is in progress. We should not restart while AD is initializing, on the other
                  hand, we don't want to be in a place where a stale file is causing AD to be down
-                 Two iterations of waiting the sm_frequency period should be enough to get the 
+                 Two iterations of waiting the sm_frequency period should be enough to get the
                  service fully up.
                 """
                 self.logger.debug(f'[ServiceMonitorThread] AD is starting. Temporarily delaying service checks.')
