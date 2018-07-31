@@ -8,9 +8,11 @@ from middlewared.validators import IpAddress, Range
 
 import bidict
 import errno
+import hashlib
 import re
 import os
 import sysctl
+import uuid
 
 AUTHMETHOD_LEGACY_MAP = bidict.bidict({
     'None': 'NONE',
@@ -506,6 +508,7 @@ class iSCSITargetExtentService(CRUDService):
     @private
     async def validate(self, data):
         data['serial'] = await self.extent_serial(data['serial'])
+        data['naa'] = self.extent_naa(data.get('naa'))
 
     @private
     async def compress(self, data):
@@ -681,6 +684,15 @@ class iSCSITargetExtentService(CRUDService):
                 return '10000001'
         else:
             return serial
+
+    @private
+    def extent_naa(self, naa):
+        if naa is None:
+            return '0x6589cfc000000%s' % (
+                hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest()[0:19]
+            )
+        else:
+            return naa
 
     @accepts(List('exclude', default=[]))
     async def disk_choices(self, exclude):

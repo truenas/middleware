@@ -654,13 +654,6 @@ class iSCSITargetExtent(Model):
             except Exception:
                 return self.iscsi_target_extent_path
 
-    def save(self, *args, **kwargs):
-        if not self.iscsi_target_extent_naa:
-            self.iscsi_target_extent_naa = '0x6589cfc000000%s' % (
-                hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest()[0:19]
-            )
-        return super(iSCSITargetExtent, self).save(*args, **kwargs)
-
 
 class iSCSITargetPortal(Model):
     iscsi_target_portal_tag = models.IntegerField(
