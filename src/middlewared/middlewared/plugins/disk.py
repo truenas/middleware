@@ -793,6 +793,9 @@ class DiskService(CRUDService):
                     await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                 elif disk['disk_expiretime'] < datetime.utcnow():
                     # Disk expire time has surpassed, go ahead and remove it
+                    for extent in await self.middleware.call(
+                            'iscsi.extent.query', [['type', '=', 'DISK'], ['path', '=', disk['disk_identifier']]]):
+                        await self.middleware.call('iscsi.extent.delete', extent['id'])
                     await self.middleware.call('datastore.delete', 'storage.disk', disk['disk_identifier'])
                 continue
             else:

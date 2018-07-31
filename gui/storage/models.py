@@ -329,13 +329,6 @@ class Scrub(Model):
             labels.append(str(wchoices[str(w)]))
         return ', '.join(labels)
 
-    def delete(self):
-        super(Scrub, self).delete()
-        try:
-            notifier().restart("cron")
-        except:
-            pass
-
 
 class Resilver(Model):
     enabled = models.BooleanField(
@@ -477,16 +470,6 @@ class Disk(Model):
         else:
             return self.disk_name
 
-    def delete(self):
-        from freenasUI.services.models import iSCSITargetExtent
-        # Delete device extents depending on this Disk
-        qs = iSCSITargetExtent.objects.filter(
-            iscsi_target_extent_type='Disk',
-            iscsi_target_extent_path=str(self.pk))
-        if qs.exists():
-            qs.delete()
-        super(Disk, self).delete()
-
     class Meta:
         verbose_name = _("Disk")
         verbose_name_plural = _("Disks")
@@ -545,11 +528,6 @@ class ReplRemote(Model):
     class Meta:
         verbose_name = _("Remote Replication Host")
         verbose_name_plural = _("Remote Replication Hosts")
-
-    def delete(self):
-        rv = super(ReplRemote, self).delete()
-        notifier().reload("ssh")
-        return rv
 
     def __str__(self):
         return "%s:%s" % (self.ssh_remote_hostname, self.ssh_remote_port)
@@ -661,32 +639,6 @@ class Replication(Model):
         if self.repl_lastresult:
             return self.repl_lastresult['msg']
 
-    def delete(self):
-        try:
-            if self.repl_lastsnapshot != "":
-                zfsname = self.repl_lastsnapshot.split('@')[0]
-                notifier().zfs_dataset_release_snapshots(zfsname, True)
-        except:
-            pass
-        if os.path.exists(REPL_RESULTFILE):
-            with open(REPL_RESULTFILE, 'rb') as f:
-                data = f.read()
-            try:
-                results = pickle.loads(data)
-                results.pop(self.id, None)
-                with open(REPL_RESULTFILE, 'wb') as f:
-                    f.write(pickle.dumps(results))
-            except Exception as e:
-                log.debug('Failed to remove replication from state file %s', e)
-        progressfile = '/tmp/.repl_progress_%d' % self.id
-        if os.path.exists(progressfile):
-            try:
-                os.unlink(progressfile)
-            except:
-                # Possible race condition?
-                pass
-        super(Replication, self).delete()
-
 
 class Task(Model):
     task_filesystem = models.CharField(
@@ -760,20 +712,6 @@ class Task(Model):
             self.task_ret_count,
             self.task_ret_unit,
         )
-
-    def save(self, *args, **kwargs):
-        super(Task, self).save(*args, **kwargs)
-        try:
-            notifier().restart("cron")
-        except:
-            pass
-
-    def delete(self, *args, **kwargs):
-        super(Task, self).delete(*args, **kwargs)
-        try:
-            notifier().restart("cron")
-        except:
-            pass
 
     class Meta:
         verbose_name = _("Periodic Snapshot Task")

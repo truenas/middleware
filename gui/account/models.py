@@ -234,13 +234,6 @@ class bsdUsers(Model):
                 raw_password, str(self.bsdusr_unixhash)
             ) == str(self.bsdusr_unixhash)
 
-    def delete(self, using=None, reload=True, delete_group=True):
-        if self.bsdusr_builtin is True:
-            raise ValueError(_(
-                "User %s is built-in and can not be deleted!"
-            ) % (self.bsdusr_username))
-        super(bsdUsers, self).delete(using)
-
     def save(self, *args, **kwargs):
         # TODO: Add last_login field
         if (

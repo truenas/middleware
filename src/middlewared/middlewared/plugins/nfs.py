@@ -123,7 +123,7 @@ class SharingNFSService(CRUDService):
             )
         await self.extend(data)
 
-        await self.middleware.call("service.reload", "nfs")
+        await self._service_change("nfs", "reload")
 
         return data
 
@@ -168,7 +168,7 @@ class SharingNFSService(CRUDService):
         await self.extend(new)
         new["paths"] = paths
 
-        await self.middleware.call("service.reload", "nfs")
+        await self._service_change("nfs", "reload")
 
         return new
 
@@ -176,6 +176,7 @@ class SharingNFSService(CRUDService):
     async def do_delete(self, id):
         await self.middleware.call("datastore.delete", "sharing.nfs_share_path", [["share_id", "=", id]])
         await self.middleware.call("datastore.delete", self._config.datastore, id)
+        await self._service_change("nfs", "reload")
 
     @private
     async def validate(self, data, schema_name, verrors, old=None):

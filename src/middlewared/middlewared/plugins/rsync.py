@@ -319,7 +319,7 @@ class RsyncModService(CRUDService):
             data,
             {'prefix': self._config.datastore_prefix}
         )
-        await self.middleware.call('service.reload', 'rsync')
+        await self._service_change('rsync', 'reload')
         return data
 
     @accepts(Int('id'), Patch('rsyncmod_create', 'rsyncmod_update', ('attr', {'update': True})))
@@ -342,7 +342,7 @@ class RsyncModService(CRUDService):
             data,
             {'prefix': self._config.datastore_prefix}
         )
-        await self.middleware.call('service.reload', 'rsync')
+        await self._service_change('rsync', 'reload')
 
         return module
 

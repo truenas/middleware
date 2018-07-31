@@ -8,9 +8,11 @@ from middlewared.validators import IpAddress, Range
 
 import bidict
 import errno
+import hashlib
 import re
 import os
 import sysctl
+import uuid
 
 AUTHMETHOD_LEGACY_MAP = bidict.bidict({
     'None': 'NONE',
@@ -269,8 +271,17 @@ class ISCSIPortalService(CRUDService):
         """
         Delete iSCSI Portal `id`.
         """
-        return await self.middleware.call('datastore.delete', self._config.datastore, id)
-        # service is currently restarted by datastore/django model
+        result = await self.middleware.call('datastore.delete', self._config.datastore, id)
+
+        for i, portal in enumerate(await self.middleware.call('iscsi.portal.query', [], {'order_by': ['tag']})):
+            await self.middleware.call(
+                'datastore.update', self._config.datastore, portal['id'], {'tag': i + 1},
+                {'prefix': self._config.datastore_prefix}
+            )
+
+        await self._service_change('iscsitarget', 'reload')
+
+        return result
 
 
 class iSCSITargetAuthCredentialService(CRUDService):
@@ -303,7 +314,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(data['id'])
 
@@ -335,7 +346,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(id)
 
@@ -496,6 +507,9 @@ class iSCSITargetExtentService(CRUDService):
             if delete is not True:
                 raise CallError('Failed to remove extent file')
 
+        for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['extent', '=', id]]):
+            await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'])
+
         return await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
@@ -503,6 +517,7 @@ class iSCSITargetExtentService(CRUDService):
     @private
     async def validate(self, data):
         data['serial'] = await self.extent_serial(data['serial'])
+        data['naa'] = self.extent_naa(data.get('naa'))
 
     @private
     async def compress(self, data):
@@ -679,6 +694,13 @@ class iSCSITargetExtentService(CRUDService):
         else:
             return serial
 
+    @private
+    def extent_naa(self, naa):
+        if naa is None:
+            return '0x6589cfc000000' + hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest()[0:19]
+        else:
+            return naa
+
     @accepts(List('exclude', default=[]))
     async def disk_choices(self, exclude):
         """
@@ -763,7 +785,7 @@ class iSCSITargetExtentService(CRUDService):
 
                 await run(['truncate', '-s', str(extent_size), path])
 
-            await self.middleware.call('service.reload', 'iscsitarget')
+            await self._service_change('iscsitarget', 'reload')
         else:
             data['path'] = disk
 
@@ -843,7 +865,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(data['id'])
 
@@ -866,15 +888,25 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        return await self.middleware.call(
+        result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
+
+        for i, initiator in enumerate(await self.middleware.call('iscsi.initiator.query', [], {'order_by': ['tag']})):
+            await self.middleware.call(
+                'datastore.update', self._config.datastore, initiator['id'], {'tag': i + 1},
+                {'prefix': self._config.datastore_prefix}
+            )
+
+        await self._service_change('iscsitarget', 'reload')
+
+        return result
 
     @private
     async def compress(self, data):
@@ -1104,8 +1136,10 @@ class iSCSITargetService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        rv = await self.middleware.call(
-            'datastore.delete', self._config.datastore, id)
+        for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['target', '=', id]]):
+            await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'])
+
+        rv = await self.middleware.call('datastore.delete', self._config.datastore, id)
         await self._service_change('iscsitarget', 'reload')
         return rv
 
@@ -1145,7 +1179,7 @@ class iSCSITargetToExtentService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(data['id'])
 
@@ -1173,15 +1207,19 @@ class iSCSITargetToExtentService(CRUDService):
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        return await self.middleware.call(
+        result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
+
+        await self._service_change('iscsitarget', 'reload')
+
+        return result
 
     @private
     async def extend(self, data):

@@ -183,7 +183,7 @@ class PoolResilverService(ConfigService):
                 new_config
             )
 
-            await self.middleware.call('service.restart', 'cron', {'onetime': False})
+            await self.middleware.call('service.restart', 'cron')
             await self.middleware.call('pool.configure_resilver_priority')
 
         return await self.config()
@@ -1916,7 +1916,7 @@ class PoolDatasetService(CRUDService):
             )
         elif data['type'] == 'VOLUME' and 'volsize' in data:
             if await self.middleware.call('iscsi.extent.query', [('path', '=', f'zvol/{id}')]):
-                await self.middleware.call('service.reload', 'iscsitarget')
+                await self._service_change('iscsitarget', 'reload')
 
         return rv
 
@@ -2134,11 +2134,7 @@ class PoolScrubService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call(
-            'service.restart',
-            'cron',
-            {'onetime': False}
-        )
+        await self.middleware.call('service.restart', 'cron')
 
         return await self.query(filters=[('id', '=', data['id'])], options={'get': True})
 
@@ -2172,11 +2168,7 @@ class PoolScrubService(CRUDService):
                 {'prefix': self._config.datastore_prefix}
             )
 
-            await self.middleware.call(
-                'service.restart',
-                'cron',
-                {'onetime': False}
-            )
+            await self.middleware.call('service.restart', 'cron')
 
         return await self.query(filters=[('id', '=', id)], options={'get': True})
 
@@ -2190,11 +2182,7 @@ class PoolScrubService(CRUDService):
             id
         )
 
-        await self.middleware.call(
-            'service.restart',
-            'cron',
-            {'onetime': False}
-        )
+        await self.middleware.call('service.restart', 'cron')
         return response
 
 

@@ -385,13 +385,6 @@ class CronJob(Model):
         ])
         proc.communicate()
 
-    def delete(self):
-        super(CronJob, self).delete()
-        try:
-            notifier().restart("cron")
-        except:
-            pass
-
 
 class InitShutdown(Model):
     ini_type = models.CharField(
@@ -752,13 +745,6 @@ class Rsync(Model):
         ])
         proc.communicate()
 
-    def delete(self):
-        super(Rsync, self).delete()
-        try:
-            notifier().restart("cron")
-        except:
-            pass
-
 
 class SMARTTest(Model):
     smarttest_disks = models.ManyToManyField(
@@ -853,13 +839,6 @@ class SMARTTest(Model):
             self.get_smarttest_type_display(),
             disks
         )
-
-    def delete(self):
-        super(SMARTTest, self).delete()
-        try:
-            notifier().restart("smartd")
-        except:
-            pass
 
     class Meta:
         verbose_name = _("S.M.A.R.T. Test")

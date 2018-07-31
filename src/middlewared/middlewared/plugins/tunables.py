@@ -69,12 +69,17 @@ class TunableService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        tunable = await self._get_instance(id)
 
-        return await self.middleware.call(
+        response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
             id
         )
+
+        await self.middleware.call('service.reload', tunable['type'].lower())
+
+        return response
 
     @private
     async def lower(self, data):

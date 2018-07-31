@@ -214,11 +214,7 @@ class ReplicationService(CRUDService):
             repl_remote_dict
         )
 
-        await self.middleware.call(
-            'service.reload',
-            'ssh',
-            {'onetime': False}
-        )
+        await self._service_change('ssh', 'reload')
 
         data['remote'] = remote_pk
 
@@ -259,11 +255,7 @@ class ReplicationService(CRUDService):
             repl_remote_dict
         )
 
-        await self.middleware.call(
-            'service.reload',
-            'ssh',
-            {'onetime': False}
-        )
+        await self._service_change('ssh', 'reload')
 
         await self.middleware.call(
             'datastore.update',
@@ -280,13 +272,45 @@ class ReplicationService(CRUDService):
     )
     async def do_delete(self, id):
 
+        replication = await self._get_instance(id)
+
+        try:
+            if replication['lastsnapshot']:
+                zfsname = replication['lastsnapshot'].split('@')[0]
+                await self.middleware.call('notifier.zfs_dataset_release_snapshots', zfsname, True)
+        except Exception:
+            pass
+
+        await self.middleware.call('replication.remove_from_state_file', id)
+
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
             id
         )
 
+        await self._service_change('ssh', 'reload')
+
         return response
+
+    @private
+    def remove_from_state_file(self, id):
+        if os.path.exists(REPL_RESULTFILE):
+            with open(REPL_RESULTFILE, 'rb') as f:
+                data = f.read()
+            try:
+                results = pickle.loads(data)
+                results.pop(id, None)
+                with open(REPL_RESULTFILE, 'wb') as f:
+                    f.write(pickle.dumps(results))
+            except Exception as e:
+                self.logger.debug('Failed to remove replication from state file %s', e)
+
+        progressfile = '/tmp/.repl_progress_%d' % id
+        try:
+            os.unlink(progressfile)
+        except Exception:
+            pass
 
     @accepts()
     def public_key(self):
