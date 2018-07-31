@@ -138,11 +138,6 @@ class CIFS_Share(Model):
     def __str__(self):
         return self.cifs_name
 
-    def delete(self, *args, **kwargs):
-        super(CIFS_Share, self).delete(*args, **kwargs)
-        notifier().sharesec_delete(self.cifs_name)
-        notifier().reload("cifs")
-
     class Meta:
         verbose_name = _("Windows (SMB) Share")
         verbose_name_plural = _("Windows (SMB) Shares")
