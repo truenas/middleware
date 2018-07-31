@@ -697,9 +697,7 @@ class iSCSITargetExtentService(CRUDService):
     @private
     def extent_naa(self, naa):
         if naa is None:
-            return '0x6589cfc000000%s' % (
-                hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest()[0:19]
-            )
+            return '0x6589cfc000000' + hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest()[0:19]
         else:
             return naa
 
