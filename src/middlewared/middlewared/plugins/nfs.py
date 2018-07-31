@@ -176,6 +176,7 @@ class SharingNFSService(CRUDService):
     async def do_delete(self, id):
         await self.middleware.call("datastore.delete", "sharing.nfs_share_path", [["share_id", "=", id]])
         await self.middleware.call("datastore.delete", self._config.datastore, id)
+        await self.middleware.call("service.reload", "nfs")
 
     @private
     async def validate(self, data, schema_name, verrors, old=None):
