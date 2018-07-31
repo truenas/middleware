@@ -314,7 +314,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(data['id'])
 
@@ -346,7 +346,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(id)
 
@@ -787,7 +787,7 @@ class iSCSITargetExtentService(CRUDService):
 
                 await run(['truncate', '-s', str(extent_size), path])
 
-            await self.middleware.call('service.reload', 'iscsitarget')
+            await self._service_change('iscsitarget', 'reload')
         else:
             data['path'] = disk
 
@@ -867,7 +867,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(data['id'])
 
@@ -890,7 +890,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(id)
 
@@ -1181,7 +1181,7 @@ class iSCSITargetToExtentService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(data['id'])
 
@@ -1209,7 +1209,7 @@ class iSCSITargetToExtentService(CRUDService):
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(id)
 
@@ -1219,7 +1219,7 @@ class iSCSITargetToExtentService(CRUDService):
             'datastore.delete', self._config.datastore, id
         )
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return result
 
