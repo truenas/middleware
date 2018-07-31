@@ -41,7 +41,6 @@ from OpenSSL import crypto
 from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, EncryptedDictField, Model, UserField
 from freenasUI.middleware.notifier import notifier
-from freenasUI.middleware.util import run_alerts
 from freenasUI.support.utils import get_license
 from licenselib.license import ContractType
 
