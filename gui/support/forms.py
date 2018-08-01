@@ -30,10 +30,56 @@ from django.utils.translation import ugettext as _
 from dojango import forms
 from licenselib.license import License
 from freenasUI.common.forms import Form, ModelForm
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.support import models, utils
 
 log = logging.getLogger("support.forms")
+
+
+class ProductionForm(Form):
+
+    production = forms.BooleanField(
+        label=_('This is production system'),
+        required=False,
+    )
+
+    send_debug = forms.BooleanField(
+        label=_('Send initial debug'),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(ProductionForm, self).__init__(*args, **kwargs)
+
+        self.fields['production'].widget.attrs['onChange'] = (
+            'support_production_toggle();'
+        )
+
+        with client as c:
+            self.initial['production'] = c.call('keyvalue.get', 'truenas:production', False)
+
+    def save(self):
+        with client as c:
+            send_debug = (
+                not c.call('keyvalue.get', 'truenas:production', False) and
+                self.cleaned_data['production'] and
+                self.cleaned_data['send_debug']
+            )
+            c.call('keyvalue.set', 'truenas:production', self.cleaned_data['production'])
+            if send_debug:
+                serial = c.call('system.info')["system_serial"]
+                c.call('support.new_ticket', {
+                    "title": f"System has been just put into production ({serial})",
+                    "body": "This system has been just put into production",
+                    "attach_debug": True,
+                    "category": "Installation/Setup",
+                    "criticality": "Inquiry",
+                    "environment": "Production",
+                    "name": "Automatic Alert",
+                    "email": "auto-support@ixsystems.com",
+                    "phone": "-",
+                })
 
 
 class SupportForm(ModelForm):

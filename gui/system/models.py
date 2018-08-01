@@ -1210,3 +1210,8 @@ class Support(Model):
 
 class Filesystem(Model):
     identifier = models.CharField(max_length=255, unique=True)
+
+
+class KeyValue(Model):
+    key = models.CharField(max_length=255, unique=True)
+    value = models.TextField()
