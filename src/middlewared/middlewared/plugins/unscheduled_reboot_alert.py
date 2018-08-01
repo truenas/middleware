@@ -30,7 +30,7 @@ async def setup(middleware):
 
         gc = await middleware.call('datastore.config', 'network.globalconfiguration')
         now = datetime.now().strftime("%c")
-        hostname = f"{gc['gc_hostname']}.{gc.['gc_domain']}"
+        hostname = f"{gc['gc_hostname']}.{gc['gc_domain']}"
 
         watchdog_file = False
         fenced_file = False
@@ -44,7 +44,7 @@ async def setup(middleware):
 
             controller = await middleware.call('notifier.failover_node')
             if controller == 'B':
-                hostname = f"{gc['gc_hostname_b']}.{gc.['gc_domain']}"
+                hostname = f"{gc['gc_hostname_b']}.{gc['gc_domain']}"
 
         # If the watchdog alert file exists,
         # then we can assume that carp-state-change-hook.py
