@@ -277,22 +277,25 @@ class InterfacesService(CRUDService):
     @filterable
     def query(self, filters, options):
         data = []
+        configs = {
+            i['int_interface']: i
+            for i in self.middleware.call_sync('datastore.query', 'network.interfaces')
+        }
         for name, iface in netif.list_interfaces().items():
             if name in ('lo0', 'pfsync0', 'pflog0'):
                 continue
-            data.append(self.iface_extend(iface.__getstate__()))
+            data.append(self.iface_extend(iface.__getstate__(), configs))
         return filter_list(data, filters, options)
 
     @private
-    def iface_extend(self, iface):
+    def iface_extend(self, iface, configs):
         iface.update({
             'configured_aliases': [],
             'dhcp': False,
         })
-        config = self.middleware.call_sync('datastore.query', 'network.interfaces', [('int_interface', '=', iface['name'])])
+        config = configs.get(iface['name'])
         if not config:
             return iface
-        config = config[0]
 
         if config['int_dhcp']:
             iface['dhcp'] = True
@@ -333,14 +336,14 @@ class InterfacesService(CRUDService):
         Str('type', enum=['LINK_AGGREGATION', 'VLAN'], required=True),
         Bool('ipv4_dhcp', default=False),
         Bool('ipv6_auto', default=False),
-        List('ipaddresses', items=[IPAddr('ip', cidr=True)], default=[]),
+        List('aliases', items=[IPAddr('ip', cidr=True)], default=[]),
         Bool('failover_critical', default=False),
         Int('failover_group'),
         Int('failover_vhid'),
-        List('failover_ipaddresses', items=[IPAddr('ip', cidr=True)]),
-        List('failover_virtual_ips', items=[IPAddr('ip', cidr=True)]),
+        List('failover_aliases', items=[IPAddr('ip', cidr=True)]),
+        List('failover_virtual_aliases', items=[IPAddr('ip', cidr=True)]),
         Str('lag_protocol', enum=['LACP', 'FAILOVER', 'LOADBALANCE', 'ROUNDROBIN', 'NONE']),
-        List('lag_members', items=[Str('interface')]),
+        List('lag_ports', items=[Str('interface')]),
         Str('vlan_parent_interface'),
         Int('vlan_tag', validators=[Range(min=1, max=4094)]),
         Int('vlan_pcp', validators=[Range(min=0, max=7)], null=True),
@@ -350,7 +353,7 @@ class InterfacesService(CRUDService):
         """
         Create virtual interfaces (Link Aggregation, VLAN)
 
-        For LINK_AGGREGATION `type` the following attributes are required: lag_members,
+        For LINK_AGGREGATION `type` the following attributes are required: lag_ports,
         lag_protocol.
 
         For VLAN `type` the following attributes are required: vlan_parent_interface,
@@ -359,7 +362,7 @@ class InterfacesService(CRUDService):
 
         verrors = ValidationErrors()
         if data['type'] == 'LINK_AGGREGATION':
-            required_attrs = ('lag_protocol', 'lag_members')
+            required_attrs = ('lag_protocol', 'lag_ports')
         elif data['type'] == 'VLAN':
             required_attrs = ('vlan_parent_interface', 'vlan_tag')
 
@@ -370,11 +373,59 @@ class InterfacesService(CRUDService):
         if await self.middleware.call('system.is_freenas'):
             data.pop('failover_critical', None)
             data.pop('failover_group', None)
-            data.pop('failover_ipaddresses', None)
+            data.pop('failover_aliases', None)
             data.pop('failover_vhid', None)
             data.pop('failover_virtual_ips', None)
         else:
             raise CallError('Not yet implemented for this product')
+
+        verrors.check()
+
+        ifaces = {
+            i['name']: i
+            for i in await self.middleware.call('interfaces.query')
+        }
+        vlan_used = {
+            i['vlan_pint']: i['vlan_vint']
+            for i in await self.middleware.call('datastore.query', 'network.vlan')
+        }
+        lag_used = {
+            i['lagg_physnic']: i['lagg_interfacegroup']['lagg_interface']['int_interface']
+            for i in await self.middleware.call(
+                'datastore.query', 'network.lagginterfacemembers'
+            )
+        }
+        if data['type'] == 'LINK_AGGREGATION':
+            for i, member in enumerate(data['lag_ports']):
+                if member not in ifaces:
+                    verrors.add(f'interface_create.lag_ports.{i}', 'Not a valid interface.')
+                    continue
+                member_iface = ifaces[member]
+                if member_iface['cloned']:
+                    verrors.add(
+                        f'interface_create.lag_ports.{i}',
+                        'Only physical interfaces are allowed to be a member of Link Aggregation.',
+                    )
+                elif member in lag_used:
+                    verrors.add(
+                        f'interface_create.lag_ports.{i}',
+                        f'Interface {member} is currently in use by {lag_used[member]}.',
+                    )
+                elif member in vlan_used:
+                    verrors.add(
+                        f'interface_create.lag_ports.{i}',
+                        f'Interface {member} is currently in use by {vlan_used[member]}.',
+                    )
+
+        elif data['type'] == 'VLAN':
+            if data['vlan_parent_interface'] not in ifaces:
+                verrors.add('interface_create.vlan_parent_interface', 'Not a valid interface.')
+            elif data['vlan_parent_interface'] in lag_used:
+                verrors.add(
+                    'interface_create.vlan_parent_interface',
+                    f'Interface {data["vlan_parent_interface"]} is currently in use by '
+                    f'{lag_used[data["vlan_parent_interface"]]}.',
+                )
 
         verrors.check()
 
@@ -405,7 +456,7 @@ class InterfacesService(CRUDService):
                     'network.lagginterface',
                     {'lagg_interface': interface_id, 'lagg_protocol': data['lag_protocol'].lower()},
                 )
-                for idx, i in enumerate(data['lag_members']):
+                for idx, i in enumerate(data['lag_ports']):
                     lagmembers_ids.append(
                         await self.middleware.call(
                             'datastore.insert',
@@ -459,7 +510,7 @@ class InterfacesService(CRUDService):
                 raise e
 
     async def __create_interface_datastore(self, data, attrs):
-        interface_attrs, aliases = self.__convert_ipaddresses_to_datastore(data)
+        interface_attrs, aliases = self.__convert_aliases_to_datastore(data)
         interface_attrs.update(attrs)
 
         interface_id = await self.middleware.call(
@@ -487,10 +538,10 @@ class InterfacesService(CRUDService):
                 {'prefix': 'alias_'},
             )
 
-    def __convert_ipaddresses_to_datastore(self, data):
+    def __convert_aliases_to_datastore(self, data):
         iface = {}
         aliases = []
-        for ipaddr in data['ipaddresses']:
+        for ipaddr in data['aliases']:
             ipaddr = ipaddress.ip_interface(ipaddr)
             if ipaddr.version == 4:
                 iface_addrfield = 'ipv4address'
