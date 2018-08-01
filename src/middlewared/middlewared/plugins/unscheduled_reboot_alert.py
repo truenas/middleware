@@ -34,7 +34,7 @@ async def setup(middleware):
 
         watchdog_file = False
         fenced_file = False
-        if not await middleware.call('notifier.is_freenas') and await middleware.call('notifier.failover_licensed')
+        if not await middleware.call('notifier.is_freenas') and await middleware.call('notifier.failover_licensed'):
             if os.path.exists(WATCHDOG_ALERT_FILE):
                 watchdog_file = True
                 watchdog_time = os.path.getmtime(WATCHDOG_ALERT_FILE)
