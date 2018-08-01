@@ -108,6 +108,7 @@ class SystemHook(AppHook):
             'focus': 'system.Support',
             'verbose_name': _('Support'),
             'url': reverse('support_home'),
+            'onload': 'support_production_init();' if not notifier().is_freenas() else ''
         })
 
         license = get_license()[0]

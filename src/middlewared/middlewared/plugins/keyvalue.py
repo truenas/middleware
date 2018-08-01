@@ -16,13 +16,16 @@ class KeyValueService(Service):
         except KeyError:
             return False
 
-    @accepts(Str('key'))
-    async def get(self, key):
+    @accepts(Str('key'), Any('default'))
+    async def get(self, key, default):
         try:
             return json.loads(
                 (await self.middleware.call(
                     "datastore.query", "system.keyvalue", [["key", "=", key]], {"get": True}))["value"])
         except IndexError:
+            if default is not None:
+                return default
+
             raise KeyError(key)
 
     @accepts(Str('key'), Any('value'))
