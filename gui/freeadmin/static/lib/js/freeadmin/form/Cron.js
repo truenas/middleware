@@ -127,10 +127,10 @@ define([
 
             var myvals = [];
             if(this.typeChoice == 'selected'){
-                myvals = this.value.split(',');
+                myvals = this.value.split(',').map(Number);
             }
             for(var i=0;i<this.numChoices;i++) {
-                var checked = (array.indexOf(myvals, sprintf("%.2d", i+this.start)) != -1) ? true : false;
+                var checked = myvals.includes(i+this.start);
                 var tg = new ToggleButton({
                     id: cron.name + "_toggle_" + (cron.start + i),
                     showLabel: true,

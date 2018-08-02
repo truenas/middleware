@@ -290,7 +290,6 @@ class iSCSITargetAuthCredentialService(CRUDService):
         namespace = 'iscsi.auth'
         datastore = 'services.iscsitargetauthcredential'
         datastore_prefix = 'iscsi_target_auth_'
-        datastore_extend = 'iscsi.auth.extend'
 
     @accepts(Dict(
         'iscsi_auth_create',
@@ -308,7 +307,6 @@ class iSCSITargetAuthCredentialService(CRUDService):
         if verrors:
             raise verrors
 
-        await self.compress(data)
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix}
@@ -340,7 +338,6 @@ class iSCSITargetAuthCredentialService(CRUDService):
         if verrors:
             raise verrors
 
-        await self.compress(new)
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix}
@@ -393,30 +390,6 @@ class iSCSITargetAuthCredentialService(CRUDService):
                     f'{schema_name}.peersecret',
                     'Peer Secret must be between 12 and 16 characters.'
                 )
-
-    @private
-    async def extend(self, data):
-        secret = data.get('secret', '')
-        peersecret = data.get('peersecret', '')
-
-        data['secret'] = await self.middleware.call(
-            'notifier.pwenc_decrypt', secret)
-        data['peersecret'] = await self.middleware.call(
-            'notifier.pwenc_decrypt', peersecret)
-
-        return data
-
-    @private
-    async def compress(self, data):
-        secret = data.get('secret') or ''
-        peersecret = data.get('peersecret') or ''
-
-        data['secret'] = await self.middleware.call(
-            'notifier.pwenc_encrypt', secret)
-        data['peersecret'] = await self.middleware.call(
-            'notifier.pwenc_encrypt', peersecret)
-
-        return data
 
 
 class iSCSITargetExtentService(CRUDService):

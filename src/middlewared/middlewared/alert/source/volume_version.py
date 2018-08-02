@@ -17,8 +17,9 @@ class VolumeVersionAlertSource(ThreadedAlertSource):
             if not self.middleware.call_sync('pool.is_upgraded', pool["id"]):
                 alerts.append(Alert(
                     "New feature flags are available for volume %s. Refer "
-                    "to the \"Upgrading a ZFS Pool\" section of the User "
-                    "Guide for instructions.",
+                    "to the \"Upgrading a ZFS Pool\" subsection in the "
+                    "User Guide \"Installing and Upgrading\" chapter "
+                    "and \"Upgrading\" section for more instructions.",
                     pool["name"],
                 ))
 

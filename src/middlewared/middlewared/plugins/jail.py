@@ -1,3 +1,4 @@
+import asyncio
 import os
 import time
 import subprocess as su
@@ -19,6 +20,8 @@ from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
 from middlewared.client import ClientException
+
+SHUTDOWN_LOCK = asyncio.Lock()
 
 
 class JailService(CRUDService):
@@ -54,6 +57,7 @@ class JailService(CRUDService):
             else:
                 for jail in jail_dicts:
                     jail = list(jail.values())[0]
+                    jail['id'] = jail['host_hostuuid']
                     if jail['dhcp'] == 'on':
                         uuid = jail['host_hostuuid']
 
@@ -214,17 +218,21 @@ class JailService(CRUDService):
         return pool
 
     @accepts(
-        Dict("options",
-             Str("release"),
-             Str("server", default="download.freebsd.org"),
-             Str("user", default="anonymous"),
-             Str("password", default="anonymous@"),
-             Str("name", default=None),
-             Bool("accept", default=False),
-             List("props", default=[]),
-             List(
-                 "files",
-                 default=["MANIFEST", "base.txz", "lib32.txz", "doc.txz"])))
+        Dict(
+            "options",
+            Str("release"),
+            Str("server", default="download.freebsd.org"),
+            Str("user", default="anonymous"),
+            Str("password", default="anonymous@"),
+            Str("name", default=None),
+            Bool("accept", default=True),
+            List("props", default=[]),
+            List(
+                "files",
+                default=["MANIFEST", "base.txz", "lib32.txz", "doc.txz"]
+            )
+        )
+    )
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
     def fetch(self, job, options):
         """Fetches a release or plugin."""
@@ -232,6 +240,8 @@ class JailService(CRUDService):
 
         if options["name"] is not None:
             options["plugins"] = True
+
+        options["accept"] = True
 
         iocage = ioc.IOCage(silent=True)
 
@@ -587,6 +597,18 @@ class JailService(CRUDService):
 
         return version
 
+    @private
+    def start_on_boot(self):
+        ioc.IOCage(rc=True).start()
+
+    @private
+    def stop_on_shutdown(self):
+        ioc.IOCage(rc=True).stop()
+
+    @private
+    async def terminate(self):
+        await SHUTDOWN_LOCK.acquire()
+
 
 async def jail_pool_pre_lock(middleware, pool):
     """
@@ -600,5 +622,20 @@ async def jail_pool_pre_lock(middleware, pool):
             await middleware.call('jail.stop', j['host_hostuuid'])
 
 
+async def __event_system(middleware, event_type, args):
+    """
+    Method called when system is ready or shutdown, supposed to start/stop jails
+    flagged that way.
+    """
+    # We need to call a method in Jail service to make sure it runs in the
+    # process pool because of py-libzfs thread safety issue with iocage and middlewared
+    if args['id'] == 'ready':
+        await middleware.call('jail.start_on_boot')
+    elif args['id'] == 'shutdown':
+        async with SHUTDOWN_LOCK:
+            await middleware.call('jail.stop_on_shutdown')
+
+
 def setup(middleware):
     middleware.register_hook('pool.pre_lock', jail_pool_pre_lock)
+    middleware.event_subscribe('system', __event_system)

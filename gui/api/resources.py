@@ -35,6 +35,7 @@ import urllib.parse
 import sysctl
 
 from collections import OrderedDict
+from croniter import croniter
 from django.conf.urls import url
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
@@ -143,17 +144,73 @@ log = logging.getLogger('api.resources')
 
 
 def _common_human_fields(bundle):
-    for human in (
+    for index, human in enumerate((
         'human_minute',
         'human_hour',
         'human_daymonth',
         'human_month',
         'human_dayweek',
-    ):
-        method = getattr(bundle.obj, "get_%s" % human, None)
-        if not method:
+    )):
+
+        field = next((v for v in dir(bundle.obj) if human[len('human_'):] in v.split('_')), None)
+        if not field:
             continue
-        bundle.data[human] = getattr(bundle.obj, "get_%s" % human)()
+
+        field_value = ','.join([
+            str(croniter.ALPHACONV[index].get(f) or 7) if f in croniter.ALPHACONV[index] else f
+            for f in getattr(bundle.obj, field).split(',')
+        ]).strip()
+
+        bundle.data[field] = field_value
+
+        if index == 0:
+            if field_value == '*':
+                bundle.data[human] = _('Every minute')
+            elif field_value.startswith('*/'):
+                bundle.data[human] = _(f'Every {field_value.split("*/")[1]} minute(s)')
+            else:
+                bundle.data[human] = field_value
+        elif index == 1:
+            if field_value == '*':
+                bundle.data[human] = _('Every hour')
+            elif field_value.startswith('*/'):
+                bundle.data[human] = _(f'Every {field_value.split("*/")[1]} hour(s)')
+            else:
+                bundle.data[human] = field_value
+        elif index == 2:
+            if field_value == '*':
+                bundle.data[human] = _('Everyday')
+            elif field_value.startswith('*/'):
+                bundle.data[human] = _(f'Every {field_value.split("*/")[1]} days')
+            else:
+                bundle.data[human] = field_value
+        elif index == 3:
+            months = field_value.split(',')
+            if len(months) == 12 or field_value == '*':
+                bundle.data[human] = _('Every month')
+            else:
+                mchoices = dict(choices.MONTHS_CHOICES)
+                labels = []
+                for m in months:
+                    labels.append(str(mchoices[m]))
+                bundle.data[human] = ', '.join(labels)
+        else:
+            # TODO:
+            # 1. Carve out the days input so that way one can say:
+            #    Mon-Fri + Saturday -> Weekdays + Saturday
+            weeks = field_value.split(',')
+            if len(weeks) == 7 or field_value == '*':
+                bundle.data[human] = _('Everyday')
+            elif weeks == list(map(str, range(1, 6))):
+                bundle.data[human] = _('Weekdays')
+            elif weeks == list(map(str, range(6, 8))):
+                bundle.data[human] = _('Weekends')
+            else:
+                wchoices = dict(choices.WEEKDAYS_CHOICES)
+                labels = []
+                for w in weeks:
+                    labels.append(str(wchoices[str(w)]))
+                bundle.data[human] = ', '.join(labels)
 
 
 class NestedMixin(object):
@@ -1948,6 +2005,7 @@ class CloudSyncResourceMixin(NestedMixin):
             bundle.data['credential'] = str(bundle.obj.credential)
         job = self.__tasks.get(bundle.obj.id, {}).get("job")
         if job:
+            bundle.data['job_id'] = job['id']
             if job['state'] == 'RUNNING':
                 bundle.data['status'] = '{}{}'.format(
                     job['state'],
@@ -1960,7 +2018,6 @@ class CloudSyncResourceMixin(NestedMixin):
                     job['state'],
                     job['error'],
                 )
-                bundle.data['job_id'] = job['id']
             else:
                 bundle.data['status'] = job['state']
         else:

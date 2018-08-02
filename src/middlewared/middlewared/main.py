@@ -1170,10 +1170,6 @@ class Middleware(object):
 
     def terminate(self):
         self.logger.info('Terminating')
-
-        for task in asyncio.Task.all_tasks():
-            task.cancel()
-
         self.__loop.create_task(self.__terminate())
 
     async def __terminate(self):
@@ -1182,6 +1178,9 @@ class Middleware(object):
             # in base class to reduce number of awaits
             if hasattr(service, "terminate"):
                 await service.terminate()
+
+        for task in asyncio.Task.all_tasks():
+            task.cancel()
 
         self.__loop.stop()
 
