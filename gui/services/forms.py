@@ -799,7 +799,10 @@ class iSCSITargetExtentForm(MiddlewareModelForm, ModelForm):
                 exclude = [e] if not self._api else []
 
                 disk_choices = list(c.call(
-                    'iscsi.extent.disk_choices', exclude).items())
+                    'iscsi.extent.disk_choices', exclude
+                ).items())
+
+                disk_choices.sort(key=lambda x: x[1])
 
             if self.instance.iscsi_target_extent_type == 'File':
                 self.fields['iscsi_target_extent_type'].initial = 'File'
@@ -816,7 +819,10 @@ class iSCSITargetExtentForm(MiddlewareModelForm, ModelForm):
         elif not self._api:
             with client as c:
                 disk_choices = list(c.call(
-                    'iscsi.extent.disk_choices').items())
+                    'iscsi.extent.disk_choices'
+                ).items())
+
+                disk_choices.sort(key=lambda x: x[1])
 
             self.fields['iscsi_target_extent_disk'].choices = disk_choices
         self.fields['iscsi_target_extent_type'].widget.attrs['onChange'] = "iscsiExtentToggle();extentZvolToggle();"
