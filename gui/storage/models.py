@@ -562,58 +562,6 @@ class Scrub(Model):
     def __str__(self):
         return self.scrub_volume.vol_name
 
-    def get_human_minute(self):
-        if self.scrub_minute == '*':
-            return _('Every minute')
-        elif self.scrub_minute.startswith('*/'):
-            return _('Every {0} minute(s)').format(self.scrub_minute.split('*/')[1])
-        else:
-            return self.scrub_minute
-
-    def get_human_hour(self):
-        if self.scrub_hour == '*':
-            return _('Every hour')
-        elif self.scrub_hour.startswith('*/'):
-            return _('Every {0} hour(s)').format(self.scrub_hour.split('*/')[1])
-        else:
-            return self.scrub_hour
-
-    def get_human_daymonth(self):
-        if self.scrub_daymonth == '*':
-            return _('Everyday')
-        elif self.scrub_daymonth.startswith('*/'):
-            return _('Every {0} days').format(self.scrub_daymonth.split('*/')[1])
-        else:
-            return self.scrub_daymonth
-
-    def get_human_month(self):
-        months = self.scrub_month.split(",")
-        if len(months) == 12 or self.scrub_month == '*':
-            return _("Every month")
-        mchoices = dict(choices.MONTHS_CHOICES)
-        labels = []
-        for m in months:
-            labels.append(str(mchoices[m]))
-        return ', '.join(labels)
-
-    def get_human_dayweek(self):
-        # TODO:
-        # 1. Carve out the days input so that way one can say:
-        #    Mon-Fri + Saturday -> Weekdays + Saturday.
-        # 2. Get rid of the duplicate code.
-        weeks = self.scrub_dayweek.split(',')
-        if len(weeks) == 7 or self.scrub_dayweek == '*':
-            return _('Everyday')
-        if weeks == list(map(str, range(1, 6))):
-            return _('Weekdays')
-        if weeks == list(map(str, range(6, 8))):
-            return _('Weekends')
-        wchoices = dict(choices.WEEKDAYS_CHOICES)
-        labels = []
-        for w in weeks:
-            labels.append(str(wchoices[str(w)]))
-        return ', '.join(labels)
-
     def delete(self):
         super(Scrub, self).delete()
         try:
