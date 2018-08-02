@@ -969,8 +969,7 @@ class Middleware(object):
     async def _call_worker(self, serviceobj, name, *args, job=None):
         return await self.run_in_proc(
             main_worker,
-            # For now only plugins in middlewared.plugins are supported
-            f'middlewared.plugins.{serviceobj.__class__.__module__}',
+            serviceobj.__class__.__module__,
             serviceobj.__class__.__name__,
             name.rsplit('.', 1)[-1],
             args,
