@@ -2519,6 +2519,11 @@ class CertificateAuthorityCreateInternalForm(MiddlewareModelForm, ModelForm):
         required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_organization').help_text
     )
+    cert_organizational_unit = forms.CharField(
+        label=models.CertificateAuthority._meta.get_field('cert_organizational_unit').verbose_name,
+        required=False,
+        help_text=models.CertificateAuthority._meta.get_field('cert_organizational_unit').help_text
+    )
     cert_email = forms.CharField(
         label=models.CertificateAuthority._meta.get_field('cert_email').verbose_name,
         required=True,
@@ -2609,6 +2614,11 @@ class CertificateAuthorityCreateIntermediateForm(MiddlewareModelForm, ModelForm)
         label=models.CertificateAuthority._meta.get_field('cert_organization').verbose_name,
         required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_organization').help_text
+    )
+    cert_organizational_unit = forms.CharField(
+        label=models.CertificateAuthority._meta.get_field('cert_organizational_unit').verbose_name,
+        required=False,
+        help_text=models.CertificateAuthority._meta.get_field('cert_organizational_unit').help_text
     )
     cert_email = forms.CharField(
         label=models.CertificateAuthority._meta.get_field('cert_email').verbose_name,
@@ -2983,6 +2993,11 @@ class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_organization').help_text
     )
+    cert_organizational_unit = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_organizational_unit').verbose_name,
+        required=False,
+        help_text=models.Certificate._meta.get_field('cert_organizational_unit').help_text
+    )
     cert_email = forms.CharField(
         label=models.Certificate._meta.get_field('cert_email').verbose_name,
         required=True,
@@ -3086,6 +3101,11 @@ class CertificateCreateCSRForm(MiddlewareModelForm, ModelForm):
         label=models.Certificate._meta.get_field('cert_organization').verbose_name,
         required=True,
         help_text=models.Certificate._meta.get_field('cert_organization').help_text
+    )
+    cert_organizational_unit = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_organizational_unit').verbose_name,
+        required=False,
+        help_text=models.Certificate._meta.get_field('cert_organizational_unit').help_text
     )
     cert_email = forms.CharField(
         label=models.Certificate._meta.get_field('cert_email').verbose_name,

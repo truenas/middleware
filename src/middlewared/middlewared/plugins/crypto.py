@@ -38,8 +38,8 @@ def get_context_object():
 
 def get_cert_info_from_data(data):
     cert_info_keys = ['key_length', 'country', 'state', 'city', 'organization', 'common',
-                      'san', 'serial', 'email', 'lifetime', 'digest_algorithm']
-    return {key: data.get(key) for key in cert_info_keys}
+                      'san', 'serial', 'email', 'lifetime', 'digest_algorithm', 'organizational_unit']
+    return {key: data.get(key) for key in cert_info_keys if data.get(key)}
 
 
 async def validate_cert_name(middleware, cert_name, datastore, verrors, name):
@@ -383,6 +383,7 @@ class CertificateService(CRUDService):
             'state': obj.get_subject().ST,
             'city': obj.get_subject().L,
             'organization': obj.get_subject().O,
+            'organizational_unit': obj.get_subject().OU,
             'common': obj.get_subject().CN,
             'san': obj.get_subject().subjectAltName,
             'email': obj.get_subject().emailAddress,
@@ -452,6 +453,7 @@ class CertificateService(CRUDService):
             Str('state', required=True),
             Str('city', required=True),
             Str('organization', required=True),
+            Str('organizational_unit'),
             Str('common', required=True),
             Str('email', validators=[Email()], required=True),
             Str('digest_algorithm', enum=['SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512']),
@@ -471,6 +473,8 @@ class CertificateService(CRUDService):
         cert.get_subject().ST = cert_info['state']
         cert.get_subject().L = cert_info['city']
         cert.get_subject().O = cert_info['organization']
+        if cert_info.get('organizational_unit'):
+            cert.get_subject().OU = cert_info['organizational_unit']
         cert.get_subject().CN = cert_info['common']
         # Add subject alternate name in addition to CN
 
@@ -516,6 +520,8 @@ class CertificateService(CRUDService):
         req.get_subject().ST = cert_info['state']
         req.get_subject().L = cert_info['city']
         req.get_subject().O = cert_info['organization']
+        if cert_info.get('organizational_unit'):
+            req.get_subject().OU = cert_info['organizational_unit']
         req.get_subject().CN = cert_info['common']
 
         if cert_info['san']:
@@ -565,6 +571,7 @@ class CertificateService(CRUDService):
             Str('email', validators=[Email()]),
             Str('name', required=True),
             Str('organization'),
+            Str('organizational_unit'),
             Str('passphrase'),
             Str('privatekey'),
             Str('state'),
@@ -579,7 +586,7 @@ class CertificateService(CRUDService):
     )
     async def do_create(self, data):
         if not data.get('san'):
-            data.pop('san')
+            data.pop('san', None)
 
         verrors = await self.validate_common_attributes(data, 'certificate_create')
 
@@ -625,7 +632,6 @@ class CertificateService(CRUDService):
     def __create_csr(self, data):
         # no signedby, lifetime attributes required
         cert_info = get_cert_info_from_data(data)
-        cert_info.pop('lifetime')
 
         data['type'] = CERT_TYPE_CSR
 
@@ -1100,7 +1106,7 @@ class CertificateAuthorityService(CRUDService):
 
     @accepts(
         Patch(
-            'ca_create_interal', 'ca_create_intermediate',
+            'ca_create_internal', 'ca_create_intermediate',
             ('add', {'name': 'signedby', 'type': 'int', 'required': True}),
         ),
     )
@@ -1167,7 +1173,7 @@ class CertificateAuthorityService(CRUDService):
 
     @accepts(
         Patch(
-            'ca_create', 'ca_create_interal',
+            'ca_create', 'ca_create_internal',
             ('edit', _set_required('key_length')),
             ('edit', _set_required('digest_algorithm')),
             ('edit', _set_required('lifetime')),

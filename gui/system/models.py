@@ -724,6 +724,13 @@ class CertificateBase(Model):
         verbose_name=_("Organization"),
         help_text=_("Organization Name (eg, company)"),
     )
+    cert_organizational_unit = models.CharField(
+        blank=True,
+        null=True,
+        max_length=120,
+        verbose_name=_("Organizational Unit"),
+        help_text=_("Organizational unit of the entity"),
+    )
     cert_email = models.CharField(
         blank=True,
         null=True,
