@@ -578,7 +578,7 @@ class NICChoices(object):
         if self.noepair:
             niclist = copy.deepcopy(self._NIClist)
             for nic in niclist:
-                if nic.startswith('epair'):
+                if nic.startswith('epair') or nic.startswith('vnet'):
                     self._NIClist.remove(nic)
 
         if self.notap:
