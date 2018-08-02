@@ -9,6 +9,7 @@ from pipes import quote
 
 import middlewared.logger
 import asyncio
+import contextlib
 import errno
 import netif
 import os
@@ -906,39 +907,56 @@ class VMService(CRUDService):
     async def do_create(self, data):
         """Create a VM."""
         devices = data.pop('devices')
-        pk = await self.middleware.call('datastore.insert', 'vm.vm', data)
+        vm_id = None
+        created_zvols = []
+        try:
+            vm_id = await self.middleware.call('datastore.insert', 'vm.vm', data)
 
-        for device in devices:
-            device['vm'] = pk
-            create_zvol = device['attributes'].pop('create_zvol', False)
-            ds_options = {
-                'name': device['attributes'].pop('zvol_name', None),
-                'type': "VOLUME",
-                'volsize': device['attributes'].pop('zvol_volsize', None)
-            }
+            for device in devices:
+                device['vm'] = vm_id
+                create_zvol = device['attributes'].pop('create_zvol', False)
+                ds_options = {
+                    'name': device['attributes'].pop('zvol_name', None),
+                    'type': "VOLUME",
+                    'volsize': device['attributes'].pop('zvol_volsize', None)
+                }
 
-            if create_zvol and device['dtype'] == 'DISK':
-                if not all(ds_options.values()):
-                    raise CallError(
-                        'Must supply zvol_name, zvol_type and zvol_volsize'
-                        ' when creating a zvol.', errno.EINVAL
+                if create_zvol and device['dtype'] == 'DISK':
+                    if not all(ds_options.values()):
+                        raise CallError(
+                            'Must supply zvol_name, zvol_type and zvol_volsize'
+                            ' when creating a zvol.', errno.EINVAL
+                        )
+
+                    self.logger.debug(
+                        f'===> Creating ZVOL {ds_options["name"]} with volsize'
+                        f' {ds_options["volsize"]}')
+
+                    zvol_blocksize = await self.middleware.call(
+                        'pool.dataset.recommended_zvol_blocksize',
+                        ds_options['name'].split('/', 1)[0]
+                    )
+                    ds_options['volblocksize'] = zvol_blocksize
+
+                    created_zvols.append(
+                        (await self.middleware.call('pool.dataset.create', ds_options))['id']
                     )
 
-                self.logger.debug(
-                    f'===> Creating ZVOL {ds_options["name"]} with volsize'
-                    f' {ds_options["volsize"]}')
+                await self.middleware.call('datastore.insert', 'vm.device', device)
+        except Exception as e:
+            if vm_id:
+                with contextlib.suppress(Exception):
+                    await self.middleware.call('datastore.delete', 'vm.vm', vm_id)
+            for zvol in created_zvols:
+                try:
+                    await self.middleware.call('pool.dataset.delete', zvol)
+                except Exception:
+                    self.logger.warn(
+                        'Failed to delete zvol "%s" on vm.create rollback', zvol, exc_info=True
+                    )
+            raise e
 
-                zvol_blocksize = await self.middleware.call(
-                    'pool.dataset.recommended_zvol_blocksize',
-                    ds_options['name'].split('/', 1)[0]
-                )
-                ds_options['volblocksize'] = zvol_blocksize
-
-                await self.middleware.call('pool.dataset.create', ds_options)
-
-            await self.middleware.call('datastore.insert', 'vm.device', device)
-
-        return pk
+        return vm_id
 
     async def __do_update_devices(self, id, devices):
         if devices and isinstance(devices, list) is True:
