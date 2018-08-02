@@ -25,6 +25,7 @@
 #####################################################################
 import logging
 
+from croniter import croniter
 from dojango import forms
 from dojango.forms import ModelForm as MF
 from dojango.forms import Form as F
@@ -49,6 +50,13 @@ def mchoicefield(form, field, default):
         form.initial[field] = cm.split(',')
     else:
         form.initial[field] = [cm]
+
+    if form.instance.id and any(v in field.split('_') for v in ('dayweek', 'month')):
+        index = 4 if 'dayweek' in field else 3
+        form.initial[field] = [
+            str(croniter.ALPHACONV[index].get(f) or 7) if f in croniter.ALPHACONV[index] else int(f)
+            for f in getattr(form.instance, field).split(',')
+        ]
 
 
 class AdvMixin(object):
