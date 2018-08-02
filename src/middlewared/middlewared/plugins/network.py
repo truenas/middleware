@@ -294,6 +294,7 @@ class InterfacesService(CRUDService):
     @private
     def iface_extend(self, iface, configs, fake=False):
         iface.update({
+            'id': iface['name'],
             'configured_aliases': [],
             'dhcp': False,
             'fake': fake,
@@ -488,12 +489,13 @@ class InterfacesService(CRUDService):
             while f'lagg{next_lagg}' in laggs:
                 next_lagg += 1
 
+            name = f'lagg{next_lagg}'
             interface_id = None
             lag_id = None
             lagmembers_ids = []
             try:
                 async for i in self.__create_interface_datastore(data, {
-                    'interface': f'lagg{next_lagg}',
+                    'interface': name,
                 }):
                     interface_id = i
 
@@ -530,17 +532,17 @@ class InterfacesService(CRUDService):
                 raise e
         elif data['type'] == 'VLAN':
             interface_id = None
-            interface_name = f'vlan{data["vlan_tag"]}'
+            name = f'vlan{data["vlan_tag"]}'
             try:
                 async for i in self.__create_interface_datastore(data, {
-                    'interface': interface_name,
+                    'interface': name,
                 }):
                     interface_id = i
                 await self.middleware.call(
                     'datastore.insert',
                     'network.vlan',
                     {
-                        'vint': interface_name,
+                        'vint': name,
                         'pint': data['vlan_parent_interface'],
                         'tag': data['vlan_tag'],
                         'pcp': data.get('vlan_pcp'),
@@ -554,6 +556,8 @@ class InterfacesService(CRUDService):
                             'datastore.delete', 'network.interfaces', interface_id
                         )
                 raise e
+
+        return await self._get_instance(name)
 
     def __validate_aliases(self, verrors, data, ifaces):
         for i, alias in enumerate(data['aliases']):
