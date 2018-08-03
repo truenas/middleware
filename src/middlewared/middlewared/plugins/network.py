@@ -288,31 +288,50 @@ class InterfacesService(CRUDService):
         for name, config in filter(lambda x: x[0] not in data, configs.items()):
             data[name] = self.iface_extend({
                 'name': config['int_interface'],
-            }, configs, fake=True)
-        return filter_list(list(data.values()), filters, options)
-
-    @private
-    def iface_extend(self, iface, configs, fake=False):
-        iface.update({
-            'id': iface['name'],
-            'configured_aliases': [],
-            'dhcp': False,
-            'fake': fake,
-        })
-
-        if fake:
-            iface.update({
                 'aliases': [],
                 'link_address': '',
                 'cloned': True,
                 'mtu': 1500,
-            })
+            }, configs, fake=True)
+        return filter_list(list(data.values()), filters, options)
+
+    @private
+    def iface_extend(self, iface_state, configs, fake=False):
+
+        if iface_state['name'].startswith('vlan'):
+            itype = 'VLAN'
+        elif iface_state['name'].startswith('lagg'):
+            itype = 'LINK_AGGREGATION'
+        elif not iface_state['cloned']:
+            itype = 'PHYSICAL'
+        else:
+            itype = 'UNKNOWN'
+
+        iface = {
+            'id': iface_state['name'],
+            'name': iface_state['name'],
+            'fake': fake,
+            'type': itype,
+            'state': iface_state,
+            'aliases': [],
+            'ipv4_dhcp': False,
+            'ipv6_auto': False,
+            'description': None,
+            'options': '',
+        }
 
         config = configs.get(iface['name'])
         if not config:
             return iface
 
-        if fake and iface['name'].startswith('lagg'):
+        iface.update({
+            'ipv4_dhcp': config['int_dhcp'],
+            'ipv6_auto': config['int_ipv6auto'],
+            'description': config['int_name'],
+            'options': config['int_options'],
+        })
+
+        if iface['name'].startswith('lagg'):
             lag = self.middleware.call_sync(
                 'datastore.query',
                 'network.lagginterface',
@@ -321,15 +340,15 @@ class InterfacesService(CRUDService):
             )
             if lag:
                 lag = lag[0]
-                iface.update({'protocol': lag['protocol'].upper(), 'ports': []})
+                iface.update({'lag_protocol': lag['protocol'].upper(), 'lag_ports': []})
                 for port in self.middleware.call_sync(
                     'datastore.query',
                     'network.lagginterfacemembers',
                     [('interfacegroup', '=', lag['id'])],
                     {'prefix': 'lagg_'}
                 ):
-                    iface['ports'].append({'name': port['physnic'], 'flags': []})
-        if fake and iface['name'].startswith('vlan'):
+                    iface['lag_ports'].append(port['physnic'])
+        if iface['name'].startswith('vlan'):
             vlan = self.middleware.call_sync(
                 'datastore.query',
                 'network.vlan',
@@ -339,22 +358,20 @@ class InterfacesService(CRUDService):
             if vlan:
                 vlan = vlan[0]
                 iface.update({
-                    'parent': vlan['pint'],
-                    'tag': vlan['tag'],
-                    'pcp': vlan['pcp'],
+                    'vlan_parent_interface': vlan['pint'],
+                    'vlan_tag': vlan['tag'],
+                    'vlan_pcp': vlan['pcp'],
                 })
 
-        if config['int_dhcp']:
-            iface['dhcp'] = True
-        else:
+        if not config['int_dhcp']:
             if config['int_ipv4address']:
-                iface['configured_aliases'].append({
+                iface['aliases'].append({
                     'type': 'INET',
                     'address': config['int_ipv4address'],
                     'netmask': int(config['int_v4netmaskbit']),
                 })
             if config['int_ipv6address']:
-                iface['configured_aliases'].append({
+                iface['aliases'].append({
                     'type': 'INET6',
                     'address': config['int_ipv6address'],
                     'netmask': int(config['int_v6netmaskbit']),
@@ -363,13 +380,13 @@ class InterfacesService(CRUDService):
         for alias in self.middleware.call_sync('datastore.query', 'network.alias', [('alias_interface', '=', config['id'])]):
 
             if alias['alias_v4address']:
-                iface['configured_aliases'].append({
+                iface['aliases'].append({
                     'type': 'INET',
                     'address': alias['alias_v4address'],
                     'netmask': int(alias['alias_v4netmaskbit']),
                 })
             if alias['alias_v6address']:
-                iface['configured_aliases'].append({
+                iface['aliases'].append({
                     'type': 'INET6',
                     'address': alias['alias_v6address'],
                     'netmask': int(alias['alias_v6netmaskbit']),
@@ -380,6 +397,7 @@ class InterfacesService(CRUDService):
     @accepts(Dict(
         'interface_create',
         Str('name', required=True),
+        Str('description'),
         Str('type', enum=['LINK_AGGREGATION', 'VLAN'], required=True),
         Bool('ipv4_dhcp', default=False),
         Bool('ipv6_auto', default=False),
@@ -395,6 +413,7 @@ class InterfacesService(CRUDService):
         Int('vlan_tag', validators=[Range(min=1, max=4094)]),
         Int('vlan_pcp', validators=[Range(min=0, max=7)], null=True),
         Str('options'),
+        register=True
     ))
     async def do_create(self, data):
         """
@@ -428,51 +447,7 @@ class InterfacesService(CRUDService):
 
         verrors.check()
 
-        ifaces = {
-            i['name']: i
-            for i in await self.middleware.call('interfaces.query')
-        }
-        await self.middleware.run_in_io_thread(self.__validate_aliases, verrors, data, ifaces)
-
-        vlan_used = {
-            v['parent']: k
-            for k, v in filter(lambda x: x[0].startswith('vlan'), ifaces.items())
-        }
-        lag_used = {}
-        for k, v in filter(lambda x: x[0].startswith('lagg'), ifaces.items()):
-            for port in (v.get('ports') or []):
-                lag_used[port['name']] = k
-        if data['type'] == 'LINK_AGGREGATION':
-            for i, member in enumerate(data['lag_ports']):
-                if member not in ifaces:
-                    verrors.add(f'interface_create.lag_ports.{i}', 'Not a valid interface.')
-                    continue
-                member_iface = ifaces[member]
-                if member_iface['cloned']:
-                    verrors.add(
-                        f'interface_create.lag_ports.{i}',
-                        'Only physical interfaces are allowed to be a member of Link Aggregation.',
-                    )
-                elif member in lag_used:
-                    verrors.add(
-                        f'interface_create.lag_ports.{i}',
-                        f'Interface {member} is currently in use by {lag_used[member]}.',
-                    )
-                elif member in vlan_used:
-                    verrors.add(
-                        f'interface_create.lag_ports.{i}',
-                        f'Interface {member} is currently in use by {vlan_used[member]}.',
-                    )
-
-        elif data['type'] == 'VLAN':
-            if data['vlan_parent_interface'] not in ifaces:
-                verrors.add('interface_create.vlan_parent_interface', 'Not a valid interface.')
-            elif data['vlan_parent_interface'] in lag_used:
-                verrors.add(
-                    'interface_create.vlan_parent_interface',
-                    f'Interface {data["vlan_parent_interface"]} is currently in use by '
-                    f'{lag_used[data["vlan_parent_interface"]]}.',
-                )
+        await self.__common_validation(verrors, data, data['type'])
 
         verrors.check()
 
@@ -559,6 +534,60 @@ class InterfacesService(CRUDService):
 
         return await self._get_instance(name)
 
+    async def __common_validation(self, verrors, data, itype, update=None):
+        if update:
+            filters = [('id', '!=', update['id'])]
+        else:
+            filters = []
+
+        ifaces = {
+            i['name']: i
+            for i in await self.middleware.call('interfaces.query', filters)
+        }
+        await self.middleware.run_in_io_thread(self.__validate_aliases, verrors, data, ifaces)
+
+        vlan_used = {
+            v['vlan_parent_interface']: k
+            for k, v in filter(lambda x: x[0].startswith('vlan'), ifaces.items())
+        }
+        lag_used = {}
+        for k, v in filter(lambda x: x[0].startswith('lagg'), ifaces.items()):
+            for port in (v.get('lag_ports') or []):
+                lag_used[port['name']] = k
+
+        if itype == 'LINK_AGGREGATION':
+            for i, member in enumerate(data.get('lag_ports') or []):
+                if member not in ifaces:
+                    verrors.add(f'interface_create.lag_ports.{i}', 'Not a valid interface.')
+                    continue
+                member_iface = ifaces[member]
+                if member_iface['state']['cloned']:
+                    verrors.add(
+                        f'interface_create.lag_ports.{i}',
+                        'Only physical interfaces are allowed to be a member of Link Aggregation.',
+                    )
+                elif member in lag_used:
+                    verrors.add(
+                        f'interface_create.lag_ports.{i}',
+                        f'Interface {member} is currently in use by {lag_used[member]}.',
+                    )
+                elif member in vlan_used:
+                    verrors.add(
+                        f'interface_create.lag_ports.{i}',
+                        f'Interface {member} is currently in use by {vlan_used[member]}.',
+                    )
+
+        elif itype == 'VLAN':
+            parent = data.get('vlan_parent_interface')
+            if parent:
+                if parent not in ifaces:
+                    verrors.add('interface_create.vlan_parent_interface', 'Not a valid interface.')
+                elif parent in lag_used:
+                    verrors.add(
+                        'interface_create.vlan_parent_interface',
+                        f'Interface {parent} is currently in use by {lag_used[parent]}.',
+                    )
+
     def __validate_aliases(self, verrors, data, ifaces):
         for i, alias in enumerate(data['aliases']):
             used_networks = []
@@ -566,7 +595,7 @@ class InterfacesService(CRUDService):
             for iface in ifaces.values():
                 for iface_alias in filter(
                     lambda x: x['type'] == ('INET' if alias_network.version == 4 else 'INET6'),
-                    iface['configured_aliases']
+                    iface['aliases']
                 ):
                     used_networks.append(ipaddress.ip_network(
                         f'{iface_alias["address"]}/{iface_alias["netmask"]}', strict=False
@@ -579,23 +608,26 @@ class InterfacesService(CRUDService):
                     )
                     break
 
+    async def __convert_interface_datastore(self, data):
+        return {
+            'name': data.get('description') or '',
+            'dhcp': data['ipv4_dhcp'],
+            'ipv6auto': data['ipv6_auto'],
+            'vip': None,
+            'vhid': data.get('failover_vhid'),
+            'critical': data.get('failover_critical') or False,
+            'group': data.get('failover_group'),
+            'options': data.get('options', ''),
+        }
+
     async def __create_interface_datastore(self, data, attrs):
-        interface_attrs, aliases = self.__convert_aliases_to_datastore(data)
+        interface_attrs, aliases = self.__convert_aliases_to_datastore(data)[0:2]
         interface_attrs.update(attrs)
 
         interface_id = await self.middleware.call(
             'datastore.insert',
             'network.interfaces',
-            dict({
-                'name': data['name'],
-                'dhcp': data['ipv4_dhcp'],
-                'ipv6auto': data['ipv6_auto'],
-                'vip': None,
-                'vhid': data.get('failover_vhid'),
-                'critical': data.get('failover_critical') or False,
-                'group': data.get('failover_group'),
-                'options': data.get('options', ''),
-            }, **interface_attrs),
+            dict(**(await self.__convert_interface_datastore(data)), **interface_attrs),
             {'prefix': 'int_'},
         )
         yield interface_id
@@ -609,28 +641,127 @@ class InterfacesService(CRUDService):
             )
 
     def __convert_aliases_to_datastore(self, data):
-        iface = {}
+        iface = {
+            'ipv4address': '',
+            'v4netmaskbit': '',
+            'ipv6address': '',
+            'v6netmaskbit': '',
+        }
         aliases = []
-        for ipaddr in data['aliases']:
-            ipaddr = ipaddress.ip_interface(ipaddr)
+        aliases_cidr = []
+        for i in data['aliases']:
+            ipaddr = ipaddress.ip_interface(i)
+            iface_ip = True
             if ipaddr.version == 4:
                 iface_addrfield = 'ipv4address'
                 alias_addrfield = 'v4address'
                 netfield = 'v4netmaskbit'
+                if iface.get(iface_addrfield) or data.get('ipv4_dhcp'):
+                    iface_ip = False
             else:
                 iface_addrfield = 'ipv6address'
                 alias_addrfield = 'v6address'
                 netfield = 'v6netmaskbit'
+                if iface.get(iface_addrfield) or data.get('ipv6_auto'):
+                    iface_ip = False
 
-            if not iface.get(iface_addrfield):
+            if iface_ip:
                 iface[iface_addrfield] = str(ipaddr.ip)
                 iface[netfield] = ipaddr.network.prefixlen
             else:
+                aliases_cidr.append(i)
                 aliases.append({
                     alias_addrfield: str(ipaddr.ip),
                     netfield: ipaddr.network.prefixlen,
                 })
-        return iface, aliases
+        return iface, aliases, aliases_cidr
+
+    @accepts(
+        Str('id'),
+        Patch(
+            'interface_create',
+            'interface_update',
+            ('rm', {'name': 'type'}),
+            ('attr', {'update': True}),
+        )
+    )
+    async def do_update(self, oid, data):
+        iface = await self._get_instance(oid)
+
+        verrors = ValidationErrors()
+        await self.__common_validation(verrors, data, iface['type'], update=iface)
+        verrors.check()
+
+        new = iface.copy()
+        new.update(data)
+
+        interface_id = None
+        try:
+
+            config = await self.middleware.call(
+                'datastore.query', 'network.interfaces', [('int_interface', '=', oid)]
+            )
+            if not config:
+                async for i in self.__create_interface_datastore(new, {
+                    'interface': iface['name'],
+                }):
+                    interface_id = i
+            else:
+                if 'aliases' in data:
+                    interface_attrs, aliases_db, aliases_cidr = self.__convert_aliases_to_datastore(new)
+                config = config[0]
+                await self.middleware.call(
+                    'datastore.update', 'network.interfaces', config['id'], dict(
+                        **(await self.__convert_interface_datastore(new)), **interface_attrs
+                    ), {'prefix': 'int_'}
+                )
+
+                if 'aliases' in data:
+                    old_aliases = set()
+                    alias_ids = {}
+                    if config:
+                        for i in await self.middleware.call(
+                            'datastore.query',
+                            'network.alias',
+                            [('interface', '=', config['id'])],
+                            {'prefix': 'alias_'},
+                        ):
+                            alias = None
+                            if i['v4address']:
+                                alias = f'{i["v4address"]}/{i["v4netmaskbit"]}'
+                            if i['v6address']:
+                                alias = f'{i["v6address"]}/{i["v6netmaskbit"]}'
+                            if alias:
+                                alias_ids[alias] = i['id']
+                                old_aliases.add(alias)
+                    new_aliases = set(aliases_cidr)
+                    for i in new_aliases - old_aliases:
+                        ip, netmask = i.split('/')
+                        if ':' in ip:
+                            alias = {'v6address': ip, 'v6netmaskbit': netmask}
+                        else:
+                            alias = {'v4address': ip, 'v4netmaskbit': netmask}
+                        await self.middleware.call(
+                            'datastore.insert',
+                            'network.alias',
+                            dict(interface=config['id'], **alias),
+                            {'prefix': 'alias_'}
+                        )
+
+                    for i in old_aliases - new_aliases:
+                        alias_id = alias_ids.get(i)
+                        if alias_id:
+                            await self.middleware.call('datastore.delete', 'network.alias', alias_id)
+
+        except Exception as e:
+            if interface_id:
+                with contextlib.suppress(Exception):
+                    await self.middleware.call(
+                        'datastore.delete', 'network.interfaces', interface_id
+                    )
+            raise e
+
+        return await self._get_instance(oid)
 
     @accepts()
     @pass_app
@@ -1364,7 +1495,7 @@ async def _event_ifnet(middleware, event_type, args):
     # We only want to sync physical interfaces that are hot-plugged,
     # not cloned interfaces with might be a race condition with original devd.
     # See #33294 as an example.
-    if iface['cloned']:
+    if iface['state']['cloned']:
         return
 
     await middleware.call('interfaces.sync_interface', iface['name'])
