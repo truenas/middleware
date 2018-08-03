@@ -544,6 +544,20 @@ class InterfacesService(CRUDService):
             i['name']: i
             for i in await self.middleware.call('interfaces.query', filters)
         }
+
+        if data.get('ipv4_dhcp') and any(
+            filter(lambda x: x['ipv4_dhcp'] and not x['fake'], ifaces.values())
+        ):
+            verrors.add('interface_create.ipv4_dhcp', 'Only one interface can be used for DHCP.')
+
+        if data.get('ipv6_auto') and any(
+            filter(lambda x: x['ipv6_auto'] and not x['fake'], ifaces.values())
+        ):
+            verrors.add(
+                'interface_create.ipv6_auto',
+                'Only one interface can have IPv6 autoconfiguration enabled.'
+            )
+
         await self.middleware.run_in_io_thread(self.__validate_aliases, verrors, data, ifaces)
 
         vlan_used = {
