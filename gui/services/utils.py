@@ -48,7 +48,7 @@ class SmartAlert(object):
             with open(self.SMART_FILE, 'rb') as f:
                 try:
                     self.data = pickle.loads(f.read())
-                except:
+                except Exception:
                     pass
         return self
 
