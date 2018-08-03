@@ -447,7 +447,7 @@ class InterfacesService(CRUDService):
 
         verrors.check()
 
-        await self.__common_validation(verrors, data, data['type'])
+        await self.__common_validation(verrors, 'interface_create', data, data['type'])
 
         verrors.check()
 
@@ -534,7 +534,7 @@ class InterfacesService(CRUDService):
 
         return await self._get_instance(name)
 
-    async def __common_validation(self, verrors, data, itype, update=None):
+    async def __common_validation(self, verrors, schema_name, data, itype, update=None):
         if update:
             filters = [('id', '!=', update['id'])]
         else:
@@ -548,17 +548,19 @@ class InterfacesService(CRUDService):
         if data.get('ipv4_dhcp') and any(
             filter(lambda x: x['ipv4_dhcp'] and not x['fake'], ifaces.values())
         ):
-            verrors.add('interface_create.ipv4_dhcp', 'Only one interface can be used for DHCP.')
+            verrors.add(f'{schema_name}.ipv4_dhcp', 'Only one interface can be used for DHCP.')
 
         if data.get('ipv6_auto') and any(
             filter(lambda x: x['ipv6_auto'] and not x['fake'], ifaces.values())
         ):
             verrors.add(
-                'interface_create.ipv6_auto',
+                f'{schema_name}.ipv6_auto',
                 'Only one interface can have IPv6 autoconfiguration enabled.'
             )
 
-        await self.middleware.run_in_io_thread(self.__validate_aliases, verrors, data, ifaces)
+        await self.middleware.run_in_io_thread(
+            self.__validate_aliases, verrors, schema_name, data, ifaces
+        )
 
         vlan_used = {
             v['vlan_parent_interface']: k
@@ -572,22 +574,22 @@ class InterfacesService(CRUDService):
         if itype == 'LINK_AGGREGATION':
             for i, member in enumerate(data.get('lag_ports') or []):
                 if member not in ifaces:
-                    verrors.add(f'interface_create.lag_ports.{i}', 'Not a valid interface.')
+                    verrors.add(f'{schema_name}.lag_ports.{i}', 'Not a valid interface.')
                     continue
                 member_iface = ifaces[member]
                 if member_iface['state']['cloned']:
                     verrors.add(
-                        f'interface_create.lag_ports.{i}',
+                        f'{schema_name}.lag_ports.{i}',
                         'Only physical interfaces are allowed to be a member of Link Aggregation.',
                     )
                 elif member in lag_used:
                     verrors.add(
-                        f'interface_create.lag_ports.{i}',
+                        f'{schema_name}.lag_ports.{i}',
                         f'Interface {member} is currently in use by {lag_used[member]}.',
                     )
                 elif member in vlan_used:
                     verrors.add(
-                        f'interface_create.lag_ports.{i}',
+                        f'{schema_name}.lag_ports.{i}',
                         f'Interface {member} is currently in use by {vlan_used[member]}.',
                     )
 
@@ -595,14 +597,14 @@ class InterfacesService(CRUDService):
             parent = data.get('vlan_parent_interface')
             if parent:
                 if parent not in ifaces:
-                    verrors.add('interface_create.vlan_parent_interface', 'Not a valid interface.')
+                    verrors.add(f'{schema_name}.vlan_parent_interface', 'Not a valid interface.')
                 elif parent in lag_used:
                     verrors.add(
-                        'interface_create.vlan_parent_interface',
+                        f'{schema_name}.vlan_parent_interface',
                         f'Interface {parent} is currently in use by {lag_used[parent]}.',
                     )
 
-    def __validate_aliases(self, verrors, data, ifaces):
+    def __validate_aliases(self, verrors, schema_name, data, ifaces):
         for i, alias in enumerate(data['aliases']):
             used_networks = []
             alias_network = ipaddress.ip_network(alias, strict=False)
@@ -617,7 +619,7 @@ class InterfacesService(CRUDService):
             for used_network in used_networks:
                 if used_network.overlaps(alias_network):
                     verrors.add(
-                        f'interface_create.aliases.{i}',
+                        f'{schema_name}.aliases.{i}',
                         f'The network {alias_network} is already in use by another interface.'
                     )
                     break
@@ -703,7 +705,9 @@ class InterfacesService(CRUDService):
         iface = await self._get_instance(oid)
 
         verrors = ValidationErrors()
-        await self.__common_validation(verrors, data, iface['type'], update=iface)
+        await self.__common_validation(
+            verrors, 'interface_update', data, iface['type'], update=iface
+        )
         verrors.check()
 
         new = iface.copy()
