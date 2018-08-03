@@ -155,61 +155,100 @@ def _common_human_fields(bundle):
         if not field:
             continue
 
-        field_value = ','.join([
-            str(croniter.ALPHACONV[index].get(f) or 7) if f in croniter.ALPHACONV[index] else f
-            for f in getattr(bundle.obj, field).split(',')
-        ]).strip()
+        file = open('/usr/local/www/tmp.txt', 'a')
+        file.write(f'field is {field}\n')
+        values = []
+        for f in getattr(bundle.obj, field).split(','):
+            split_list = f.split('/')[0].split('-') if '/' in f else f.split('-')
+            file.write(f'value of f {f} with split value {split_list}\n')
+            vals = []
+            for val in split_list:
+                if val in croniter.ALPHACONV[index]:
+                    vals.append(str(croniter.ALPHACONV[index].get(val) or 7))
+                else:
+                    vals.append(val)
+                    file.write(f'appended value {val}\n')
+            values.append('-'.join(vals) + (f'/{f.split("/")[1]}' if '/' in f else ''))
+            file.write(f'values - value {values}\n appending value is ' + str('-'.join(vals) + f'/{f.split("/")[1]}' if '/' in f else ''))
+            file.write(f'\nvals value is {vals}\n')
+        field_value = ','.join(values)
+
+        file.write(f'field value is - {field_value}\n\n')
 
         bundle.data[field] = field_value
 
-        if index == 0:
+        def _slash_helper(val, w):
+            if val.startswith('*/'):
+                return f'Every {val.split("*/")[1]} {w}(s)'
+            elif '-' in val:
+                return f'Every {val.split("/")[1]} {w}(s) ' \
+                       f'from {val.split("/")[0].split("-")[0]} ' \
+                       f'through {val.split("/")[0].split("-")[1]} {w}(s)'
+            else:
+                # TODO: Finalize wording
+                return f'Every {val.split("/")[1]} {w}(s) '
+
+        def _wording_helper(w):
             if field_value == '*':
-                bundle.data[human] = _('Every minute')
-            elif field_value.startswith('*/'):
-                bundle.data[human] = _(f'Every {field_value.split("*/")[1]} minute(s)')
-            else:
-                bundle.data[human] = field_value
-        elif index == 1:
-            if field_value == '*':
-                bundle.data[human] = _('Every hour')
-            elif field_value.startswith('*/'):
-                bundle.data[human] = _(f'Every {field_value.split("*/")[1]} hour(s)')
-            else:
-                bundle.data[human] = field_value
-        elif index == 2:
-            if field_value == '*':
-                bundle.data[human] = _('Everyday')
-            elif field_value.startswith('*/'):
-                bundle.data[human] = _(f'Every {field_value.split("*/")[1]} days')
-            else:
-                bundle.data[human] = field_value
-        elif index == 3:
-            months = field_value.split(',')
-            if len(months) == 12 or field_value == '*':
-                bundle.data[human] = _('Every month')
-            else:
-                mchoices = dict(choices.MONTHS_CHOICES)
+                return _(f'Every {w}')
+            elif '/' in field_value:
+                return _(_slash_helper(field_value, w))
+            elif '-' in field_value:
                 labels = []
-                for m in months:
-                    labels.append(str(mchoices[m]))
-                bundle.data[human] = ', '.join(labels)
+                for val in field_value.split(','):
+                    if '-' in val:
+                        labels.append(
+                            f'From {field_value.split("-")[0]} through '
+                            f'{field_value.split("-")[1]} {w}(s)'
+                        )
+                    else:
+                        labels.append(val)
+                return ', '.join(labels)
+            else:
+                return field_value
+
+        def _wording_helper_2(w, v_choices):
+            if ',' in field_value:
+                vals = field_value.split(',')
+                if len(vals) == len(v_choices):
+                    return _(f'Every {w}')
+                else:
+                    d_choices = dict(v_choices)
+                    labels = []
+                    for v in vals:
+                        if '-' in v:
+                            labels.append(
+                                f'From {d_choices[v.split("-")[0]]} to {d_choices[v.split("-")][1]}'
+                            )
+                        elif '/' in v:
+                            labels.append(_slash_helper(v, w))
+                        else:
+                            labels.append(str(d_choices[v]))
+                    return ', '.join(labels)
+            else:
+                return _wording_helper(w)
+
+        if index == 0:
+            bundle.data[human] = _wording_helper('minute')
+        elif index == 1:
+            bundle.data[human] = _wording_helper('hour')
+        elif index == 2:
+            bundle.data[human] = _wording_helper('day')
+        elif index == 3:
+            bundle.data[human] = _wording_helper_2('month', choices.MONTHS_CHOICES)
         else:
             # TODO:
             # 1. Carve out the days input so that way one can say:
             #    Mon-Fri + Saturday -> Weekdays + Saturday
             weeks = field_value.split(',')
-            if len(weeks) == 7 or field_value == '*':
-                bundle.data[human] = _('Everyday')
-            elif weeks == list(map(str, range(1, 6))):
+            if weeks == list(map(str, range(1, 6))):
                 bundle.data[human] = _('Weekdays')
             elif weeks == list(map(str, range(6, 8))):
                 bundle.data[human] = _('Weekends')
             else:
-                wchoices = dict(choices.WEEKDAYS_CHOICES)
-                labels = []
-                for w in weeks:
-                    labels.append(str(wchoices[str(w)]))
-                bundle.data[human] = ', '.join(labels)
+                bundle.data[human] = _wording_helper_2('day of week', choices.WEEKDAYS_CHOICES)
+
+        file.close()
 
 
 class NestedMixin(object):
