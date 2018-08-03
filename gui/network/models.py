@@ -305,8 +305,6 @@ class Interfaces(Model):
         VLAN.objects.filter(vlan_vint=self.int_interface).delete()
         if self.id:
             super(Interfaces, self).delete()
-        os.system("sleep 2")
-        notifier().start("network")
 
     def save(self, *args, **kwargs):
         if self.int_vip and not self.int_pass:
@@ -453,10 +451,6 @@ class Alias(Model):
             return '%s/%s' % (self.alias_v4address, self.alias_v4netmaskbit)
         else:
             return '%s/%s' % (self.alias_v6address, self.alias_v6netmaskbit)
-
-    def delete(self):
-        super(Alias, self).delete()
-        notifier().start("network")
 
     class Meta:
         verbose_name = _("Alias")
