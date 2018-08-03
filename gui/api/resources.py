@@ -155,25 +155,18 @@ def _common_human_fields(bundle):
         if not field:
             continue
 
-        file = open('/usr/local/www/tmp.txt', 'a')
-        file.write(f'field is {field}\n')
         values = []
         for f in getattr(bundle.obj, field).split(','):
             split_list = f.split('/')[0].split('-') if '/' in f else f.split('-')
-            file.write(f'value of f {f} with split value {split_list}\n')
             vals = []
             for val in split_list:
-                if val in croniter.ALPHACONV[index]:
-                    vals.append(str(croniter.ALPHACONV[index].get(val) or 7))
+                if val.lower() in croniter.ALPHACONV[index]:
+                    vals.append(str(croniter.ALPHACONV[index].get(val.lower()) or 7))
                 else:
-                    vals.append(val)
-                    file.write(f'appended value {val}\n')
+                    # 0 and 7 are supported for Sunday, we normalize 0's to 7
+                    vals.append(val if val != '0' else '7')
             values.append('-'.join(vals) + (f'/{f.split("/")[1]}' if '/' in f else ''))
-            file.write(f'values - value {values}\n appending value is ' + str('-'.join(vals) + f'/{f.split("/")[1]}' if '/' in f else ''))
-            file.write(f'\nvals value is {vals}\n')
         field_value = ','.join(values)
-
-        file.write(f'field value is - {field_value}\n\n')
 
         bundle.data[field] = field_value
 
@@ -188,45 +181,45 @@ def _common_human_fields(bundle):
                 # TODO: Finalize wording
                 return f'Every {val.split("/")[1]} {w}(s) '
 
-        def _wording_helper(w):
-            if field_value == '*':
-                return _(f'Every {w}')
-            elif '/' in field_value:
-                return _(_slash_helper(field_value, w))
-            elif '-' in field_value:
-                labels = []
-                for val in field_value.split(','):
-                    if '-' in val:
-                        labels.append(
-                            f'From {field_value.split("-")[0]} through '
-                            f'{field_value.split("-")[1]} {w}(s)'
-                        )
-                    else:
-                        labels.append(val)
-                return ', '.join(labels)
-            else:
-                return field_value
-
-        def _wording_helper_2(w, v_choices):
+        def _wording_helper(w, v_choices=None):
             if ',' in field_value:
-                vals = field_value.split(',')
-                if len(vals) == len(v_choices):
-                    return _(f'Every {w}')
+                if not v_choices:
+                    return field_value
                 else:
-                    d_choices = dict(v_choices)
-                    labels = []
-                    for v in vals:
-                        if '-' in v:
-                            labels.append(
-                                f'From {d_choices[v.split("-")[0]]} to {d_choices[v.split("-")][1]}'
-                            )
-                        elif '/' in v:
-                            labels.append(_slash_helper(v, w))
-                        else:
-                            labels.append(str(d_choices[v]))
-                    return ', '.join(labels)
+                    vals = field_value.split(',')
+                    if len(vals) == len(v_choices):
+                        return _(f'Every {w}')
+                    else:
+                        d_choices = dict(v_choices)
+                        labels = []
+                        for v in vals:
+                            if '-' in v:
+                                labels.append(
+                                    f'From {d_choices[v.split("-")[0]]} to {d_choices[v.split("-")[1]]}'
+                                )
+                            elif '/' in v:
+                                labels.append(_slash_helper(v, w))
+                            else:
+                                labels.append(str(d_choices[v]))
+                        return ', '.join(labels)
             else:
-                return _wording_helper(w)
+                if field_value == '*':
+                    return _(f'Every {w}')
+                elif '/' in field_value:
+                    return _(_slash_helper(field_value, w))
+                elif '-' in field_value:
+                    labels = []
+                    for val in field_value.split(','):
+                        if '-' in val:
+                            labels.append(
+                                f'From {field_value.split("-")[0]} through '
+                                f'{field_value.split("-")[1]} {w}(s)'
+                            )
+                        else:
+                            labels.append(val)
+                    return ', '.join(labels)
+                else:
+                    return str(dict(v_choices)[field_value]) if v_choices else field_value
 
         if index == 0:
             bundle.data[human] = _wording_helper('minute')
@@ -235,7 +228,7 @@ def _common_human_fields(bundle):
         elif index == 2:
             bundle.data[human] = _wording_helper('day')
         elif index == 3:
-            bundle.data[human] = _wording_helper_2('month', choices.MONTHS_CHOICES)
+            bundle.data[human] = _wording_helper('month', choices.MONTHS_CHOICES)
         else:
             # TODO:
             # 1. Carve out the days input so that way one can say:
@@ -246,9 +239,7 @@ def _common_human_fields(bundle):
             elif weeks == list(map(str, range(6, 8))):
                 bundle.data[human] = _('Weekends')
             else:
-                bundle.data[human] = _wording_helper_2('day of week', choices.WEEKDAYS_CHOICES)
-
-        file.close()
+                bundle.data[human] = _wording_helper('day of week', choices.WEEKDAYS_CHOICES)
 
 
 class NestedMixin(object):
