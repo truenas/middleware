@@ -80,9 +80,9 @@ def core(request):
         afp = models.AFP.objects.create()
 
     try:
-        cifs = models.CIFS.objects.order_by("-id")[0]
+        models.CIFS.objects.order_by("-id")[0]
     except IndexError:
-        cifs = models.CIFS.objects.create()
+        models.CIFS.objects.create()
 
     try:
         domaincontroller = models.DomainController.objects.order_by("-id")[0]
@@ -120,9 +120,9 @@ def core(request):
         rsyncd = models.Rsyncd.objects.create()
 
     try:
-        s3 = models.S3.objects.order_by("-id")[0]
+        models.S3.objects.order_by("-id")[0]
     except IndexError:
-        s3 = models.S3.objects.create()
+        models.S3.objects.create()
 
     try:
         smart = models.SMART.objects.order_by("-id")[0]
@@ -191,7 +191,7 @@ def enable(request, svc):
 def services_cifs(request):
     try:
         cifs = models.CIFS.objects.all()[0]
-    except:
+    except Exception:
         cifs = models.CIFS()
 
     try:
@@ -338,7 +338,7 @@ def fibrechanneltotarget(request):
 def services_s3(request):
     try:
         s3 = models.S3.objects.all()[0]
-    except:
+    except Exception:
         s3 = models.S3()
 
     if request.method == "POST":

@@ -189,7 +189,7 @@ class CIFSForm(ModelForm):
         try:
             if v != "" and (int(v, 8) & ~0o11777):
                 raise ValueError
-        except:
+        except Exception:
             raise forms.ValidationError(_("This is not a valid mask"))
 
     def clean_cifs_srv_workgroup(self):
@@ -247,7 +247,7 @@ class CIFSForm(ModelForm):
         for ip in ips:
             try:
                 IPAddress(ip)
-            except:
+            except Exception:
                 raise forms.ValidationError(
                     "This is not a valid IP: %s" % (ip, )
                 )
@@ -374,7 +374,7 @@ class NFSForm(ModelForm):
         for ip in ips:
             try:
                 IPAddress(ip)
-            except:
+            except Exception:
                 raise forms.ValidationError(
                     "This is not a valid IP: %s" % (ip, )
                 )
@@ -711,7 +711,7 @@ class UPSForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(UPSForm, self).__init__(*args, **kwargs)
-        _n = notifier()   
+        _n = notifier()
         if not _n.is_freenas():
             self.fields['ups_powerdown'].help_text = _("Signal the UPS to power off after TrueNAS shuts down.")
         self.fields['ups_shutdown'].widget.attrs['onChange'] = mark_safe(
@@ -789,7 +789,7 @@ class UPSForm(ModelForm):
             for e in email.split(';'):
                 try:
                     validate_email(e.strip())
-                except:
+                except Exception:
                     invalids.append(e.strip())
 
             if len(invalids) > 0:
