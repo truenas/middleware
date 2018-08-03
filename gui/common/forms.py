@@ -52,31 +52,11 @@ def mchoicefield(form, field, default):
     if form.instance.id and any(v in field.split('_') for v in ('dayweek', 'month')):
         index = 4 if 'dayweek' in field else 3
 
-        values = []
-        for f in cm.split(','):
-            split_list = f.split('/')[0].split('-') if '/' in f else f.split('-')
-            vals = []
-            for val in split_list:
-                if val.lower() in croniter.ALPHACONV[index]:
-                    vals.append(str(croniter.ALPHACONV[index].get(val.lower()) or 7))
-                else:
-                    # 0 and 7 are supported for Sunday, we normalize 0's to 7
-                    vals.append(val if val != '0' else '7')
-            values.append('-'.join(vals) + (f'/{f.split("/")[1]}' if '/' in f else ''))
-        field_value = ','.join(values)
-
         if cm != '*':
-            values = []
-            for value in field_value.split(','):
-                pass
-
-            #todo: complete this
-
-            form.initial[field] = [
-                str(croniter.ALPHACONV[index].get(f.lower()) or 7) if f.lower() in croniter.ALPHACONV[index] else f
-                for f in cm.split(',')
-            ]
-
+            expression = ''
+            for i in range(0, 5):
+                expression += ('* ' if i != index else f'{cm} ')
+            form.initial[field] = [v or 7 for v in croniter(expression).expanded[index]]
 
 
 class AdvMixin(object):
