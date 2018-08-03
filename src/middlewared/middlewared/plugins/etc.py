@@ -125,9 +125,15 @@ class EtcService(Service):
                 with open(outfile, 'rb') as f:
                     existing_hash = hashlib.sha256(f.read()).hexdigest()
                 new_hash = hashlib.sha256(rendered.encode('utf-8')).hexdigest()
-                if existing_hash == new_hash:
-                    self.logger.debug(f'No new changes for {outfile}')
-                    continue
+                if existing_hash != new_hash:
+                    with open(outfile, 'w') as f:
+                        f.write(rendered)
+                        changes = True
+
+            if not os.path.exists(outfile):
+                with open(outfile, 'w') as f:
+                    f.write(rendered)
+                changes = True
 
             with open(outfile, 'w') as f:
                 f.write(rendered)
