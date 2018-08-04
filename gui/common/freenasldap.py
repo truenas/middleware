@@ -734,7 +734,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
             (fd, fname) = tempfile.mkstemp(dir="/tmp", text=True)
             os.write(fd, bindpw)
-            os.fchmod(fd, 0o777)
+            os.fchmod(fd, 0o600)
             os.close(fd)
 
             args = [
@@ -1516,7 +1516,7 @@ class FreeNAS_ActiveDirectory_Base(object):
 
             (fd, fname) = tempfile.mkstemp(dir="/tmp", text=True)
             os.write(fd, bindpw)
-            os.fchmod(fd, 0o777)
+            os.fchmod(fd, 0o600)
             os.close(fd)
 
             args = [
