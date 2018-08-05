@@ -42,6 +42,27 @@ def get_cert_info_from_data(data):
     return {key: data.get(key) for key in cert_info_keys if data.get(key)}
 
 
+def create_self_signed_cert():
+    key = generate_key(2048)
+    cert = crypto.X509()
+    cert.get_subject().C = 'US'
+    cert.get_subject().O = 'iXsystems'
+    cert.get_subject().CN = 'localhost'
+    cert.set_serial_number(1)
+
+    cert.get_subject().emailAddress = 'info@ixsystems.com'
+
+    cert.gmtime_adj_notBefore(0)
+    # How should this be handled for cert being used by Middlewared to expose itself over server ?
+    cert.gmtime_adj_notAfter(3600 * (60 * 60 * 24))
+
+    cert.set_issuer(cert.get_subject())
+    cert.set_version(2)
+    cert.set_pubkey(key)
+    cert.sign(key, 'SHA256')
+    return cert, key
+
+
 async def validate_cert_name(middleware, cert_name, datastore, verrors, name):
     certs = await middleware.call(
         'datastore.query',
@@ -1289,3 +1310,16 @@ class CertificateAuthorityService(CRUDService):
             await self.middleware.call('alert.process_alerts')
 
         return response
+
+
+def setup(middlewared):
+    path = '/data/middlewared.'
+    if not all(os.path.isfile(path + f) for f in ('crt', 'key')):
+        middlewared.logger.debug('Creating certificate for Middlewared')
+        for p, f, m in zip(
+                ('crt', 'key'), create_self_signed_cert(), (crypto.dump_certificate, crypto.dump_privatekey)
+        ):
+            with open(path + p, 'w') as file:
+                file.write(m(crypto.FILETYPE_PEM, f).decode('utf8'))
+
+    middlewared.logger.debug('Certificate setup for Middlewared complete')

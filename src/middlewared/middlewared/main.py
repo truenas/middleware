@@ -30,6 +30,7 @@ import queue
 import select
 import setproctitle
 import signal
+import ssl
 import sys
 import threading
 import time
@@ -1118,6 +1119,7 @@ class Middleware(object):
             last = current
 
     def run(self):
+        print('running run function now')
         self.loop = self.__loop = asyncio.get_event_loop()
 
         if self.loop_debug:
@@ -1165,11 +1167,15 @@ class Middleware(object):
         # Start up middleware worker process pool
         self.__procpool._start_queue_management_thread()
 
+        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        context.load_cert_chain('/data/middlewared.crt', '/data/middlewared.key')
+
         runner = web.AppRunner(app, handle_signals=False, access_log=None)
         self.__loop.run_until_complete(runner.setup())
         self.__loop.run_until_complete(
-            web.TCPSite(runner, '0.0.0.0', 6000, reuse_address=True, reuse_port=True).start()
+            web.TCPSite(runner, '0.0.0.0', 6000, reuse_address=True, reuse_port=True, ssl_context=context).start()
         )
+        # TODO: ssl not working with unix socket, configure this
         self.__loop.run_until_complete(web.UnixSite(runner, '/var/run/middlewared.sock').start())
 
         self.logger.debug('Accepting connections')
