@@ -1119,7 +1119,6 @@ class Middleware(object):
             last = current
 
     def run(self):
-        print('running run function now')
         self.loop = self.__loop = asyncio.get_event_loop()
 
         if self.loop_debug:
@@ -1175,8 +1174,7 @@ class Middleware(object):
         self.__loop.run_until_complete(
             web.TCPSite(runner, '0.0.0.0', 6000, reuse_address=True, reuse_port=True, ssl_context=context).start()
         )
-        # TODO: ssl not working with unix socket, configure this
-        self.__loop.run_until_complete(web.UnixSite(runner, '/var/run/middlewared.sock').start())
+        self.__loop.run_until_complete(web.UnixSite(runner, '/var/run/middlewared.sock', ssl_context=context).start())
 
         self.logger.debug('Accepting connections')
 

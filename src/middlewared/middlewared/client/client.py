@@ -165,6 +165,11 @@ class WSClient(WebSocketClient):
     def connect(self):
         self.sock.settimeout(10)
         max_attempts = 3
+        if self.scheme == "wss+unix":
+            # TODO: File an issue with ws4py as they only support ssl for wss scheme ?
+            self.sock = ssl.wrap_socket(self.sock, **self.ssl_options)
+            self._is_secure = True
+
         for i in range(max_attempts):
             try:
                 rv = super(WSClient, self).connect()
@@ -298,7 +303,7 @@ class Client(object):
         self._py_exceptions = py_exceptions
         self._event_callbacks = {}
         if uri is None:
-            uri = 'ws+unix:///var/run/middlewared.sock'
+            uri = 'wss+unix:///var/run/middlewared.sock'
         self._closed = Event()
         self._connected = Event()
         try:
