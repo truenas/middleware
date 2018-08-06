@@ -470,7 +470,7 @@ class Email(Model):
         if self.em_pass:
             try:
                 self.em_pass = notifier().pwenc_decrypt(self.em_pass)
-            except:
+            except Exception:
                 log.debug('Failed to decrypt email password', exc_info=True)
                 self.em_pass = ''
         self._em_pass_encrypted = False
@@ -735,9 +735,10 @@ class CertificateBase(Model):
         verbose_name=_("Subject Alternate Names"),
         help_text=_("Multi-domain support. Enter additional space separated domains")
     )
-    cert_serial = models.IntegerField(
+    cert_serial = models.CharField(
         blank=True,
         null=True,
+        max_length=48,
         verbose_name=_("Serial"),
         help_text=_("Serial for next certificate"),
     )
@@ -759,7 +760,7 @@ class CertificateBase(Model):
                     crypto.FILETYPE_PEM,
                     self.cert_certificate
                 )
-        except:
+        except Exception:
             pass
         return certificate
 
@@ -776,7 +777,7 @@ class CertificateBase(Model):
             for m in matches:
                 certificate = crypto.load_certificate(crypto.FILETYPE_PEM, m)
                 certificates.append(certificate)
-        except:
+        except Exception:
             pass
 
         return certificates
@@ -888,7 +889,7 @@ class CertificateBase(Model):
             try:
                 if self.cert_name == cert.cert_signedby.cert_name:
                     count += 1
-            except:
+            except Exception:
                 pass
         return count
 
@@ -1003,7 +1004,7 @@ class CertificateAuthority(CertificateBase):
                 with open("/var/run/alertd.pid", "r") as f:
                     alertd_pid = int(f.read())
                 os.kill(alertd_pid, signal.SIGUSR1)
-            except:
+            except Exception:
                 # alertd not running?
                 pass
         except OSError:
@@ -1027,7 +1028,7 @@ class Certificate(CertificateBase):
                 with open("/var/run/alertd.pid", "r") as f:
                     alertd_pid = int(f.read())
                 os.kill(alertd_pid, signal.SIGUSR1)
-            except:
+            except Exception:
                 # alertd not running?
                 pass
         except OSError:

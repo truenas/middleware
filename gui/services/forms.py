@@ -33,6 +33,8 @@ import re
 import subprocess
 import sysctl
 from django.core.validators import validate_email
+
+from django.db.models import Q
 from django.utils.safestring import mark_safe
 from django.utils.translation import (
     ugettext_lazy as _, ungettext_lazy
@@ -149,7 +151,7 @@ class CIFSForm(ModelForm):
                     'cifs_srv_bindip',
                     self.data['cifs_srv_bindip'].split(',')
                 )
-        self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices())
+        self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices(noloopback=False))
         if self.instance.id and self.instance.cifs_srv_bindip:
             bindips = []
             for ip in self.instance.cifs_srv_bindip:
@@ -158,6 +160,12 @@ class CIFSForm(ModelForm):
             self.fields['cifs_srv_bindip'].initial = (bindips)
         else:
             self.fields['cifs_srv_bindip'].initial = ('')
+
+        # Disable UNIX extensions if not using SMB1 - We can probably disable other things too
+        proto = _fs().services.smb.config.server_min_protocol
+        if re.match('SMB[23]+', proto):
+            self.initial['cifs_srv_unixext'] = False
+            self.fields['cifs_srv_unixext'].widget.attrs['disabled'] = 'disabled'
 
         if activedirectory_enabled():
             self.initial['cifs_srv_localmaster'] = False
@@ -189,7 +197,7 @@ class CIFSForm(ModelForm):
         try:
             if v != "" and (int(v, 8) & ~0o11777):
                 raise ValueError
-        except:
+        except Exception:
             raise forms.ValidationError(_("This is not a valid mask"))
 
     def clean_cifs_srv_workgroup(self):
@@ -247,7 +255,7 @@ class CIFSForm(ModelForm):
         for ip in ips:
             try:
                 IPAddress(ip)
-            except:
+            except Exception:
                 raise forms.ValidationError(
                     "This is not a valid IP: %s" % (ip, )
                 )
@@ -374,7 +382,7 @@ class NFSForm(ModelForm):
         for ip in ips:
             try:
                 IPAddress(ip)
-            except:
+            except Exception:
                 raise forms.ValidationError(
                     "This is not a valid IP: %s" % (ip, )
                 )
@@ -789,7 +797,7 @@ class UPSForm(ModelForm):
             for e in email.split(';'):
                 try:
                     validate_email(e.strip())
-                except:
+                except Exception:
                     invalids.append(e.strip())
 
             if len(invalids) > 0:

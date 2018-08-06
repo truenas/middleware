@@ -100,10 +100,16 @@ LDAP_get_user_by_DN()
 	local binddn="$(LDAP_get ldap_binddn)"
 	local bindpw="$(LDAP_get ldap_bindpw)"
 	local tmpfile="$(mktemp -q /var/tmp/.adbarXXXXXX)"
+	local proto="ldap"
+
+	if [ "${port}" = "636" ]
+	then
+		proto="ldaps"
+	fi
 
 	cat<<-__EOF__>"${tmpfile}"
 	/usr/local/bin/ldapsearch \
-	    -H 'ldap://${host}:${port}' \
+	    -H '${proto}://${host}:${port}' \
 	    -b '${dn}' \
 	    -D '${binddn}' \
 	    -w '${bindpw}' \
