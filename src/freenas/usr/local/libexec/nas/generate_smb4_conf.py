@@ -235,7 +235,7 @@ def smb4_autorid_enabled(client):
 
     try:
         ad = Struct(client.call('datastore.query', 'directoryservice.ActiveDirectory', None, {'get': True}))
-    except:
+    except Exception as e:
         return ret
 
     if ad.ad_idmap_backend.lower() == "autorid":
@@ -261,7 +261,7 @@ def config_share_for_zfs(share):
 # for fruit, and if catia and fruit are used, catia comes before fruit
 #
 def order_vfs_objects(vfs_objects):
-    vfs_objects_special = ('catia', 'fruit', 'streams_xattr', 'recycle', 'aio_pthread')
+    vfs_objects_special = ('catia', 'zfs_space', 'zfsacl', 'fruit', 'streams_xattr', 'recycle', 'aio_pthread')
     vfs_objects_ordered = []
 
     if 'fruit' in vfs_objects:
@@ -298,7 +298,7 @@ def extend_vfs_objects_for_zfs(path, vfs_objects):
 def is_within_zfs(mountpoint):
     try:
         st = os.stat(mountpoint)
-    except:
+    except Exception as e:
         return False
 
     share_dev = st.st_dev
@@ -324,7 +324,7 @@ def is_within_zfs(mountpoint):
 
         try:
             st = os.stat(mp)
-        except:
+        except Exception as e:
             continue
 
         if st.st_dev == share_dev:
@@ -340,7 +340,7 @@ def get_sysctl(name):
         return None
     try:
         out = out[0].strip()
-    except:
+    except Exception as e:
         pass
     return out
 
@@ -370,7 +370,7 @@ def get_server_role(client):
     if client.call('notifier.common', 'system', 'domaincontroller_enabled'):
         try:
             role = client.call('datastore.query', 'services.DomainController', None, {'get': True})['dc_role']
-        except:
+        except Exception as e:
             pass
 
     return role
@@ -416,6 +416,14 @@ def configure_idmap_ad(smb4_conf, idmap, domain):
     confset1(smb4_conf, "idmap config %s: schema mode = %s" % (
         domain,
         idmap.idmap_ad_schema_mode
+    ))
+    confset1(smb4_conf, "idmap config %s: unix_primary_group = %s" % (
+        domain,
+        "yes" if idmap.idmap_ad_unix_primary_group else "no"
+    ))
+    confset1(smb4_conf, "idmap config %s: unix_nss_info = %s" % (
+        domain,
+        "yes" if idmap.idmap_ad_unix_nss_info else "no"
     ))
 
 
@@ -577,7 +585,7 @@ def configure_idmap_rfc2307(smb4_conf, idmap, domain):
 def idmap_backend_rfc2307(client):
     try:
         ad = Struct(client.call('datastore.query', 'directoryservice.ActiveDirectory', None, {'get': True}))
-    except:
+    except Exception as e:
         return False
 
     return ad.ad_idmap_backend == 'rfc2307'
@@ -587,7 +595,7 @@ def set_idmap_rfc2307_secret(client):
     try:
         ad = Struct(client.call('datastore.query', 'directoryservice.ActiveDirectory', None, {'get': True}))
         ad.ds_type = 1  # FIXME: DS_TYPE_ACTIVEDIRECTORY = 1
-    except:
+    except Exception as e:
         return False
 
     domain = None
@@ -597,7 +605,7 @@ def set_idmap_rfc2307_secret(client):
     try:
         fad = Struct(client.call('notifier.directoryservice', 'AD'))
         domain = fad.netbiosname.upper()
-    except:
+    except Exception as e:
         return False
 
     args = [
@@ -708,7 +716,7 @@ def configure_idmap_backend(client, smb4_conf, idmap, domain):
     try:
         idmap_str = client.call('notifier.ds_idmap_type_code_to_string', idmap.idmap_backend_type)
         IDMAP_FUNCTIONS[idmap_str](smb4_conf, idmap, domain)
-    except:
+    except Exception as e:
         log.warn('Failed to configure idmap', exc_info=True)
         pass
 
@@ -716,7 +724,7 @@ def configure_idmap_backend(client, smb4_conf, idmap, domain):
 def set_ldap_password(client):
     try:
         ldap = Struct(client.call('datastore.query', 'directoryservice.LDAP', None, {'get': True}))
-    except:
+    except Exception as e:
         return
 
     if ldap.ldap_bindpw:
@@ -736,7 +744,7 @@ def add_ldap_conf(client, smb4_conf):
         ldap = Struct(client.call('datastore.query', 'directoryservice.LDAP', None, {'get': True}))
         ldap.ds_type = 2  # FIXME: DS_TYPE_LDAP = 2
         cifs = Struct(client.call('smb.config'))
-    except:
+    except Exception as e:
         return
 
     confset1(smb4_conf, "security = user")
@@ -779,20 +787,20 @@ def add_activedirectory_conf(client, smb4_conf):
     try:
         ad = Struct(client.call('datastore.query', 'directoryservice.ActiveDirectory', None, {'get': True}))
         ad.ds_type = 1  # FIXME: DS_TYPE_ACTIVEDIRECTORY = 1
-    except:
+    except Exception as e:
         return
 
     try:
         os.makedirs(cachedir)
         os.chmod(cachedir, 0o755)
-    except:
+    except Exception as e:
         pass
 
     ad_workgroup = None
     try:
         fad = Struct(client.call('notifier.directoryservice', 'AD'))
         ad_workgroup = fad.netbiosname.upper()
-    except:
+    except Exception as e:
         return
 
     confset2(smb4_conf, "workgroup = %s", ad_workgroup)
@@ -837,7 +845,7 @@ def add_domaincontroller_conf(client, smb4_conf):
     try:
         dc = Struct(client.call('datastore.query', 'services.DomainController', None, {'get': True}))
         cifs = Struct(client.call('smb.config'))
-    except:
+    except Exception as e:
         return
 
     # server_services = get_server_services()
@@ -862,7 +870,7 @@ def add_domaincontroller_conf(client, smb4_conf):
             try:
                 socket.inet_aton(i)
                 ipv4_addrs.append(i)
-            except:
+            except Exception as e:
                 pass
 
     else:
@@ -871,7 +879,7 @@ def add_domaincontroller_conf(client, smb4_conf):
             try:
                 socket.inet_aton(i[0])
                 ipv4_addrs.append(i[0])
-            except:
+            except Exception as e:
                 pass
 
     with open("/usr/local/etc/lmhosts", "w") as f:
@@ -904,7 +912,7 @@ def get_disabled_users(client):
         for u in users:
             disabled_users.append(u)
 
-    except:
+    except Exception as e:
         disabled_users = []
 
     return disabled_users
@@ -915,7 +923,7 @@ def generate_smb4_tdb(client, smb4_tdb):
         users = get_smb4_users(client)
         for u in users:
             smb4_tdb.append(u['bsdusr_smbhash'])
-    except:
+    except Exception as e:
         return
 
 
@@ -945,6 +953,10 @@ def generate_smb4_conf(client, smb4_conf, role):
     if server_max_protocol != 'NONE':
         confset2(smb4_conf, "server max protocol = %s", server_max_protocol)
 
+    server_multi_channel = fs().services.smb.config.server_multi_channel
+    if server_multi_channel != 0:
+        confset1(smb4_conf, "server multi channel support = yes")
+
     if cifs.bindip:
         interfaces = []
 
@@ -963,7 +975,7 @@ def generate_smb4_conf(client, smb4_conf, role):
             if iface:
                 try:
                     is_carp_interface = client.call('notifier.is_carp_interface', iface)
-                except:
+                except Exception as e:
                     pass
 
             if iface and is_carp_interface:
@@ -1140,7 +1152,7 @@ def generate_smb4_shares(client, smb4_shares):
                         if not os.access(homedir_path, os.F_OK):
                             smb4_mkdir(homedir_path)
 
-                except:
+                except Exception as e:
                     pass
 
             confset2(smb4_shares, "valid users = %s", valid_users)
@@ -1243,7 +1255,7 @@ def generate_smb4_system_shares(client, smb4_shares):
                 config_share_for_nfs4(smb4_shares)
                 config_share_for_zfs(smb4_shares)
 
-        except:
+        except Exception as e:
             pass
 
 
@@ -1290,14 +1302,14 @@ def provision_smb4(client):
 def smb4_mkdir(dir):
     try:
         os.makedirs(dir)
-    except:
+    except Exception as e:
         pass
 
 
 def smb4_unlink(dir):
     try:
         os.unlink(dir)
-    except:
+    except Exception as e:
         pass
 
 
@@ -1704,7 +1716,9 @@ def main():
                 smb4_tdb,
                 privatedir + "/passdb.tdb"
             )
-            smb4_grant_rights()
+            if role != 'member':
+                smb4_grant_rights()
+
             client.call('notifier.samba4', 'user_import_sentinel_file_create')
 
         smb4_map_groups(client)

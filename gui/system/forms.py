@@ -2924,7 +2924,7 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
 
         super(CertificateAuthorityCreateIntermediateForm, self).save()
         ca = models.CertificateAuthority.objects.get(cert_name=self.instance.cert_signedby.cert_name)
-        ca.cert_serial = ca.cert_serial + 1
+        ca.cert_serial = int(ca.cert_serial) + 1
         ca.save()
         notifier().start("ix-ssl")
 
@@ -3344,7 +3344,7 @@ class CertificateCreateInternalForm(ModelForm):
         if not ca_cert_serial:
             ca_cert_serial = cert_serial
 
-        ca_cert_serial += 1
+        ca_cert_serial = ca_cert_serial + 1
         ca.cert_serial = ca_cert_serial
         ca.save()
 

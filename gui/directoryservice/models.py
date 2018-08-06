@@ -54,7 +54,7 @@ def directoryservice_to_enum(ds_type):
 
     try:
         enum = ds_dict[ds_type]
-    except:
+    except Exception:
         pass
 
     return enum
@@ -71,7 +71,7 @@ def enum_to_directoryservice(enum):
 
     try:
         ds = ds_dict[enum]
-    except:
+    except Exception:
         pass
 
     return ds
@@ -111,7 +111,7 @@ def idmap_to_enum(idmap_type):
 
     try:
         enum = idmap_dict[idmap_type]
-    except:
+    except Exception:
         pass
 
     return enum
@@ -136,7 +136,7 @@ def enum_to_idmap(enum):
 
     try:
         idmap = idmap_dict[enum]
-    except:
+    except Exception:
         pass
 
     return idmap
@@ -196,6 +196,27 @@ class idmap_ad(idmap_base):
             ('sfu20', _('sfu20')),
         ),
         default='rfc2307'
+    )
+    idmap_ad_unix_primary_group = models.BooleanField(
+        verbose_name=_("UNIX Primary Group"),
+        help_text=_(
+            'Defines whether the user\'s primary group is fetched from the SFU '
+            'attributes or the AD primary group. If set to yes the primary group '
+            'membership is fetched from the LDAP attributes (gidNumber). If set '
+            'to no the primary group membership is calculated via the '
+            '"primaryGroupID" LDAP attribute.'
+        ),
+        default=False
+    )
+    idmap_ad_unix_nss_info = models.BooleanField(
+        verbose_name=_("UNIX NSS Info"),
+        help_text=_(
+            'If set to yes winbind will retrieve the login shell and home '
+            'directory from the LDAP attributes. If set to no the or the AD LDAP '
+            'entry lacks the SFU attributes the options template shell and '
+            'template homedir are used.'
+        ),
+        default=False
     )
 
     def __init__(self, *args, **kwargs):
@@ -583,7 +604,7 @@ class idmap_rfc2307(idmap_base):
                 self.idmap_rfc2307_ldap_user_dn_password = notifier().pwenc_decrypt(
                     self.idmap_rfc2307_ldap_user_dn_password
                 )
-            except:
+            except Exception:
                 log.debug('Failed to decrypt idmap password', exc_info=True)
                 self.idmap_rfc2307_ldap_user_dn_password = ''
 
@@ -859,20 +880,20 @@ class ActiveDirectory(DirectoryServiceBase):
         blank=True
     )
     ad_monitor_frequency = models.IntegerField(
-            verbose_name=_("AD check connectivity frequency (seconds)"),
-            default=60,
-            validators=[MaxValueValidator(3600), MinValueValidator(30)],
-            help_text=_("How often to verify that AD servers are active."),
-            blank=False
+        verbose_name=_("AD check connectivity frequency (seconds)"),
+        default=60,
+        validators=[MaxValueValidator(3600), MinValueValidator(30)],
+        help_text=_("How often to verify that AD servers are active."),
+        blank=False
     )
     ad_recover_retry = models.IntegerField(
-            verbose_name=_("How many recovery attempts"),
-            default=10,
-            validators=[MaxValueValidator(500), MinValueValidator(0)],
-            help_text=_(
-                "Number of times to attempt to recover the connection with AD "
-                "server. If the value is 0, try forever."),
-            blank=False
+        verbose_name=_("How many recovery attempts"),
+        default=10,
+        validators=[MaxValueValidator(500), MinValueValidator(0)],
+        help_text=_(
+            "Number of times to attempt to recover the connection with AD "
+            "server. If the value is 0, try forever."),
+        blank=False
     )
     ad_enable_monitor = models.BooleanField(
         verbose_name=_("Enable Monitoring"),
@@ -1033,7 +1054,7 @@ class ActiveDirectory(DirectoryServiceBase):
         if self.ad_bindpw:
             try:
                 self.ad_bindpw = notifier().pwenc_decrypt(self.ad_bindpw)
-            except:
+            except Exception:
                 log.debug('Failed to decrypt AD bind password', exc_info=True)
                 self.ad_bindpw = ''
         self._ad_bindpw_encrypted = False
@@ -1273,7 +1294,7 @@ class LDAP(DirectoryServiceBase):
         if self.ldap_bindpw:
             try:
                 self.ldap_bindpw = notifier().pwenc_decrypt(self.ldap_bindpw)
-            except:
+            except Exception:
                 log.debug(
                     'Failed to decrypt LDAP bind password',
                     exc_info=True

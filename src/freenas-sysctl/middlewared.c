@@ -104,7 +104,7 @@ middlewared_init(void)
 		"service_monitor", CTLFLAG_RD, NULL, NULL)) == NULL) {
 		FAILRET("Failed to add middlewared service_monitor node.\n", -1);
 	}
-	SYSCTL_ADD_LONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree2), OID_AUTO,
+	SYSCTL_ADD_ULONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree2), OID_AUTO,
 		"socket_timeout", CTLFLAG_RW,&g_middlewared->plugins.service_monitor.socket_timeout,
 		"Socket timeout");
 
