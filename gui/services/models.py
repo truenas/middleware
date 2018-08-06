@@ -548,7 +548,7 @@ def extent_serial():
         else:
             lid = 0
         return mac.strip() + "%.2d" % lid
-    except:
+    except Exception:
         return "10000001"
 
 
@@ -676,7 +676,7 @@ class iSCSITargetExtent(Model):
                     return "/dev/%s" % (
                         notifier().identifier_to_device(disk.disk_identifier),
                     )
-            except:
+            except Exception:
                 return self.iscsi_target_extent_path
 
     def delete(self):
@@ -894,7 +894,7 @@ class iSCSITargetAuthCredential(Model):
                 self.iscsi_target_auth_secret = notifier().pwenc_decrypt(
                     self.iscsi_target_auth_secret
                 )
-            except:
+            except Exception:
                 log.debug('Failed to decrypt auth access secret', exc_info=True)
                 self.iscsi_target_auth_secret = ''
         self._iscsi_target_auth_secret_encrypted = False
@@ -904,7 +904,7 @@ class iSCSITargetAuthCredential(Model):
                 self.iscsi_target_auth_peersecret = notifier().pwenc_decrypt(
                     self.iscsi_target_auth_peersecret
                 )
-            except:
+            except Exception:
                 log.debug('Failed to decrypt auth access peer secret', exc_info=True)
                 self.iscsi_target_auth_peersecret = ''
         self._iscsi_target_auth_peersecret_encrypted = False
@@ -1168,7 +1168,7 @@ class DynamicDNS(Model):
         if self.ddns_password:
             try:
                 self.ddns_password = notifier().pwenc_decrypt(self.ddns_password)
-            except:
+            except Exception:
                 log.debug('Failed to decrypt DDNS password', exc_info=True)
                 self.ddns_password = ''
 
@@ -1410,7 +1410,7 @@ class UPS(Model):
         if self.ups_monpwd:
             try:
                 self.ups_monpwd = notifier().pwenc_decrypt(self.ups_monpwd)
-            except:
+            except Exception:
                 log.debug('Failed to decrypt UPS mon password', exc_info=True)
                 self.ups_monpwd = ''
         self._ups_monpwd_encrypted = False
@@ -2175,7 +2175,7 @@ class DomainController(Model):
         if self.dc_passwd:
             try:
                 self.dc_passwd = notifier().pwenc_decrypt(self.dc_passwd)
-            except:
+            except Exception:
                 log.debug('Failed to decrypt DC password', exc_info=True)
                 self.dc_passwd = ''
         self._dc_passwd_encrypted = False
@@ -2280,7 +2280,7 @@ class WebDAV(Model):
         if self.webdav_password:
             try:
                 self.webdav_password = notifier().pwenc_decrypt(self.webdav_password)
-            except:
+            except Exception:
                 log.debug('Failed to decrypt Webdav password', exc_info=True)
                 self.webdav_password = ''
         self._webdav_password_encrypted = False
