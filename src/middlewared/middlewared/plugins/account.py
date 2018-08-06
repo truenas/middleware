@@ -295,7 +295,7 @@ class UserService(CRUDService):
             home_mode = None
 
         def set_home_mode():
-            if home_mode is not None:
+            if home_mode:
                 try:
                     os.chmod(user['home'], int(home_mode, 8))
                 except OSError:
