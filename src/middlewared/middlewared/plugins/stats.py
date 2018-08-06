@@ -1,6 +1,6 @@
 from middlewared.client import ejson as json
 from middlewared.schema import Dict, Int, List, Str, accepts
-from middlewared.service import Service, ValidationError
+from middlewared.service import CallError, Service, ValidationError
 from middlewared.utils import Popen
 
 import glob
@@ -110,7 +110,7 @@ class StatsService(Service):
         )
         data, err = await proc.communicate()
         if proc.returncode != 0:
-            raise ValueError('rrdtool failed: {}'.format(err.decode()))
+            raise CallError('rrdtool failed: {}'.format(err.decode()))
         data = json.loads(data.decode())
 
         # Custom about property
