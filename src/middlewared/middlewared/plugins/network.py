@@ -605,7 +605,7 @@ class InterfacesService(CRUDService):
                     )
 
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
-        for i, alias in enumerate(data['aliases']):
+        for i, alias in enumerate(data.get('aliases') or []):
             used_networks = []
             alias_network = ipaddress.ip_network(alias, strict=False)
             for iface in ifaces.values():
