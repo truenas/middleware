@@ -76,11 +76,16 @@ static struct {
 		struct service_timeout s_st;
 	} smart;
 
+	/*
+	 * This should get its own file. We should add lots more
+	 * performance tuning options here as well. Coming soon?
+	 */
 	struct {
 		struct service_timeout s_st;
 		struct {
-			int server_min_protocol;
-			int server_max_protocol;
+			unsigned int server_min_protocol;
+			unsigned int server_max_protocol;
+			unsigned int server_multi_channel;
 		} config;
 	} smb;
 
@@ -322,9 +327,11 @@ services_init(void)
 		FAILRET("Failed to add smb timeout node.\n", -1);
 	}
 
-	g_services->smb.config.server_min_protocol = -1;
-	g_services->smb.config.server_max_protocol = -1;
+	g_services->smb.config.server_min_protocol = SMB2;
+	g_services->smb.config.server_max_protocol = SMB3;
+	g_services->smb.config.server_multi_channel = 0;
 
+	/* SMB config */
 	if ((tmptree2 = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
 		SYSCTL_CHILDREN(tmptree), OID_AUTO,
 		"config", CTLFLAG_RD, NULL, NULL)) == NULL) {
@@ -342,6 +349,12 @@ services_init(void)
 		"server_max_protocol", CTLTYPE_STRING|CTLFLAG_RW,
 		&g_services->smb.config.server_max_protocol, 0,
 		sysctl_smb_server_proto, "A", "server max protocol");
+
+	SYSCTL_ADD_UINT(&g_freenas_sysctl_ctx,
+		SYSCTL_CHILDREN(tmptree2), OID_AUTO,
+		"server_multi_channel", CTLFLAG_RW,
+		&g_services->smb.config.server_multi_channel, 0,
+		"server multi channel support");
 
 	/* SNMP node */
 	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
