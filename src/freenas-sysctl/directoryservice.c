@@ -60,11 +60,6 @@ static struct {
 		unsigned long enumerate;
 	} ldap;
 
-	struct nt4 {
-		struct service_timeout ds_st;
-		struct service_error ds_se;
-	} nt4;
-
 	struct nis {
 		struct service_timeout ds_st;
 		struct service_error ds_se;
@@ -193,17 +188,6 @@ directoryservice_init(void)
 
 	g_directoryservice->ldap.cache = 0;
 	g_directoryservice->ldap.enumerate = 0;
-
-	/* NT4 node */
-	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
-		SYSCTL_CHILDREN(dstree), OID_AUTO,
-		"nt4", CTLFLAG_RD, NULL, NULL)) == NULL) {
-		FAILRET("Failed to add nt4 node.\n", -1);
-	}
-	if ((freenas_sysctl_add_timeout_tree(&g_freenas_sysctl_ctx,
-		tmptree, &g_directoryservice->nt4.ds_st)) != 0) {
-		FAILRET("Failed to add nt4 timeout node.\n", -1);
-	}
 
 	/* NIS node */
 	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
