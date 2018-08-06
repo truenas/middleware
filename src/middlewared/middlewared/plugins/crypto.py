@@ -1319,7 +1319,7 @@ def setup(middlewared):
         for p, f, m in zip(
                 ('crt', 'key'), create_self_signed_cert(), (crypto.dump_certificate, crypto.dump_privatekey)
         ):
-            with open(path + p, 'w') as file:
-                file.write(m(crypto.FILETYPE_PEM, f).decode('utf8'))
+            with open(path + p, 'wb') as file:
+                file.write(m(crypto.FILETYPE_PEM, f))
 
     middlewared.logger.debug('Certificate setup for Middlewared complete')
