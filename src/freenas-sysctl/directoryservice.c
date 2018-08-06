@@ -49,11 +49,15 @@ static struct {
 			unsigned long lifetime;
 			unsigned long timeout;
 		} dns;
+		unsigned long cache;
+		unsigned long enumerate;
 	} activedirectory;
 
 	struct {
 		struct service_timeout ds_st;
 		struct service_error ds_se;
+		unsigned long cache;
+		unsigned long enumerate;
 	} ldap;
 
 	struct nt4 {
@@ -64,6 +68,8 @@ static struct {
 	struct nis {
 		struct service_timeout ds_st;
 		struct service_error ds_se;
+		unsigned long cache;
+		unsigned long enumerate;
 	} nis;
 
 	struct kerberos {
@@ -144,14 +150,21 @@ directoryservice_init(void)
 		"dns", CTLFLAG_RD, NULL, NULL)) == NULL) {
 		FAILRET("Failed to add directoryservice DNS node.\n", -1);
 	}
-	SYSCTL_ADD_LONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree2), OID_AUTO,
+	SYSCTL_ADD_ULONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree2), OID_AUTO,
 		"lifetime", CTLFLAG_RW, &g_directoryservice->activedirectory.dns.lifetime, "DNS lifetime");
-	SYSCTL_ADD_LONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree2), OID_AUTO,
+	SYSCTL_ADD_ULONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree2), OID_AUTO,
 		"timeout", CTLFLAG_RW,  &g_directoryservice->activedirectory.dns.timeout, "DNS timeout");
 
 	g_directoryservice->activedirectory.dns.timeout = 5;
 	g_directoryservice->activedirectory.dns.lifetime = 5;
 
+	SYSCTL_ADD_ULONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree), OID_AUTO,
+		"cache", CTLFLAG_RW,  &g_directoryservice->activedirectory.cache, "Cache users and groups");
+	SYSCTL_ADD_ULONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree), OID_AUTO,
+		"enumerate", CTLFLAG_RW,  &g_directoryservice->activedirectory.enumerate, "Enumerate users and groups");
+
+	g_directoryservice->activedirectory.cache = 0;
+	g_directoryservice->activedirectory.enumerate = 0;
 
 	/* LDAP node */
 	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
@@ -173,6 +186,13 @@ directoryservice_init(void)
 	g_directoryservice->ldap.ds_st.restart = 180;
 	g_directoryservice->ldap.ds_st.reload = 180;
 
+	SYSCTL_ADD_ULONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree), OID_AUTO,
+		"cache", CTLFLAG_RW,  &g_directoryservice->ldap.cache, "Cache users and groups");
+	SYSCTL_ADD_ULONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree), OID_AUTO,
+		"enumerate", CTLFLAG_RW,  &g_directoryservice->ldap.enumerate, "Enumerate users and groups");
+
+	g_directoryservice->ldap.cache = 0;
+	g_directoryservice->ldap.enumerate = 0;
 
 	/* NT4 node */
 	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
@@ -195,6 +215,14 @@ directoryservice_init(void)
 		tmptree, &g_directoryservice->nis.ds_st)) != 0) {
 		FAILRET("Failed to add nis timeout node.\n", -1);
 	}
+
+	SYSCTL_ADD_ULONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree), OID_AUTO,
+		"cache", CTLFLAG_RW,  &g_directoryservice->nis.cache, "Cache users and groups");
+	SYSCTL_ADD_ULONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree), OID_AUTO,
+		"enumerate", CTLFLAG_RW,  &g_directoryservice->nis.enumerate, "Enumerate users and groups");
+
+	g_directoryservice->nis.cache = 0;
+	g_directoryservice->nis.enumerate = 0;
 
 	/* Kerberos node */
 	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,

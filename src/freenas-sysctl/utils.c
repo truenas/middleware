@@ -51,15 +51,15 @@ freenas_sysctl_add_timeout_tree(struct sysctl_ctx_list *ctx,
 	st->restart = 60;
 	st->reload = 60;
 
-	SYSCTL_ADD_LONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
+	SYSCTL_ADD_ULONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
 		"start", CTLFLAG_RW, &st->start, "start timeout");
-	SYSCTL_ADD_LONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
+	SYSCTL_ADD_ULONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
 		"stop", CTLFLAG_RW, &st->stop, "stop timeout");
-	SYSCTL_ADD_LONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
+	SYSCTL_ADD_ULONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
 		"started", CTLFLAG_RW, &st->started, "started timeout");
-	SYSCTL_ADD_LONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
+	SYSCTL_ADD_ULONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
 		"restart", CTLFLAG_RW, &st->restart, "restart timeout");
-	SYSCTL_ADD_LONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
+	SYSCTL_ADD_ULONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
 		"reload", CTLFLAG_RW, &st->reload, "reload timeout");
 
 	return (0);
