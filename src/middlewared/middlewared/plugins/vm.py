@@ -22,10 +22,10 @@ import signal
 logger = middlewared.logger.Logger('vm').getLogger()
 
 CONTAINER_IMAGES = {
-    "RancherOS": {
-        "URL": "http://download.freenas.org/bhyve-templates/rancheros-bhyve-v1.1.3/rancheros-bhyve-v1.1.3.img.gz",
-        "GZIPFILE": "rancheros-bhyve-v1.1.3.img.gz",
-        "SHA256": "e9288df573e01f5468c1f7e4609fbeab481caa3ffc5855af9d003b49557dde84",
+    'RancherOS': {
+        'URL': 'http://download.freenas.org/bhyve-templates/rancheros-bhyve-v1.4.0/rancheros-bhyve-v1.4.0.img.gz',
+        'GZIPFILE': 'rancheros-bhyve-v1.4.0.img.gz',
+        'SHA256': '9ba4676656fe4b43b93a3da9d512b378bc48f7ccf3c889e812f73dc11811b6b3',
     }
 }
 BUFSIZE = 65536
@@ -444,8 +444,8 @@ class VMUtils(object):
         ]
 
         grub_additional_args = {
-            "RancherOS": ['linux /boot/vmlinuz-4.9.75-rancher rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.resize_device=/dev/sda'.format(quote(password)),
-                          'initrd /boot/initrd-v1.1.3']
+            'RancherOS': ['linux /boot/vmlinuz-4.14.32-rancher2 rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.resize_device=/dev/sda'.format(quote(password)),
+                          'initrd /boot/initrd-v1.4.0']
         }
 
         vm_private_dir = sharefs_path + '/configs/' + str(vm_id) + '_' + vm_name + '/' + 'grub/'
