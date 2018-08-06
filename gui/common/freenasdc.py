@@ -28,7 +28,16 @@ import logging
 import os
 import pwd
 
-from freenasUI.common.freenascache import *
+from freenasUI.common.freenascache import (
+    FLAGS_CACHE_READ_GROUP,
+    FLAGS_CACHE_WRITE_GROUP,
+    FLAGS_CACHE_READ_USER,
+    FLAGS_CACHE_WRITE_USER,
+    FreeNAS_UserCache,
+    FreeNAS_GroupCache,
+    FreeNAS_DomainController_UserCache,
+    FreeNAS_DomainController_GroupCache
+)
 from freenasUI.common.cmd import cmd_pipe
 
 log = logging.getLogger('common.freenasdc')
@@ -258,7 +267,7 @@ class FreeNAS_DomainController_Users(FreeNAS_DomainController):
         try:
             file = paths[index]
 
-        except:
+        except Exception:
             file = None
 
         if file and write:
@@ -267,7 +276,7 @@ class FreeNAS_DomainController_Users(FreeNAS_DomainController):
                     f.close()
                 ret = True
 
-            except:
+            except Exception:
                 ret = False
 
         elif file:
@@ -393,7 +402,7 @@ class FreeNAS_DomainController_Groups(FreeNAS_DomainController):
         try:
             file = paths[index]
 
-        except:
+        except Exception:
             file = None
 
         if file and write:
@@ -402,7 +411,7 @@ class FreeNAS_DomainController_Groups(FreeNAS_DomainController):
                     f.close()
                 ret = True
 
-            except:
+            except Exception:
                 ret = False
 
         elif file:
@@ -468,7 +477,7 @@ class FreeNAS_DomainController_Groups(FreeNAS_DomainController):
                 try:
                     gr = grp.getgrnam(sAMAccountName)
 
-                except:
+                except Exception:
                     continue
 
                 self.__groups[d].append(gr)
@@ -546,7 +555,7 @@ class FreeNAS_DomainController_User(FreeNAS_DomainController):
         try:
             pw = pwd.getpwnam(u)
 
-        except:
+        except Exception:
             pw = None
 
         if (self.flags & FLAGS_CACHE_WRITE_USER) and pw:
@@ -618,7 +627,7 @@ class FreeNAS_DomainController_Group(FreeNAS_DomainController):
         try:
             gr = grp.getgrnam(g)
 
-        except:
+        except Exception:
             gr = None
 
         if (self.flags & FLAGS_CACHE_WRITE_GROUP) and gr:
