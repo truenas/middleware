@@ -295,7 +295,7 @@ class UserService(CRUDService):
             home_mode = None
 
         def set_home_mode():
-            if home_mode:
+            if home_mode is not None:
                 try:
                     os.chmod(user['home'], int(home_mode, 8))
                 except OSError:
@@ -459,6 +459,16 @@ class UserService(CRUDService):
                     'home',
                     '"Home Directory" must begin with /mnt/ or set to '
                     '/nonexistent.'
+                )
+
+        if 'home_mode' in data:
+            try:
+                o = int(data['home_mode'], 8)
+                assert o & 0o777 == o
+            except (AssertionError, ValueError, TypeError):
+                verrors.add(
+                    'home_mode',
+                    'Please provide a valid value for home_mode attribute'
                 )
 
         if 'groups' in data:
