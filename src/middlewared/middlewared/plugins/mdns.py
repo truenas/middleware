@@ -781,9 +781,7 @@ class mDNSServiceMiddlewareSSLThread(mDNSServiceThread):
         if (webui[0]['stg_guiprotocol'] == 'https' or
            webui[0]['stg_guiprotocol'] == 'httphttps'):
             self.port = int(webui[0]['stg_guihttpsport'] or 443)
-        else:
-            self.port = 6001
-        self.regtype = "_middleware-ssl._tcp."
+            self.regtype = "_middleware-ssl._tcp."
 
 
 class mDNSAdvertiseService(Service):

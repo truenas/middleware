@@ -42,27 +42,6 @@ def get_cert_info_from_data(data):
     return {key: data.get(key) for key in cert_info_keys if data.get(key)}
 
 
-def create_self_signed_cert():
-    key = generate_key(2048)
-    cert = crypto.X509()
-    cert.get_subject().C = 'US'
-    cert.get_subject().O = 'iXsystems'
-    cert.get_subject().CN = 'localhost'
-    cert.set_serial_number(1)
-
-    cert.get_subject().emailAddress = 'info@ixsystems.com'
-
-    cert.gmtime_adj_notBefore(0)
-    # How should this be handled for cert being used by Middlewared to expose itself over server ?
-    cert.gmtime_adj_notAfter(3600 * (60 * 60 * 24))
-
-    cert.set_issuer(cert.get_subject())
-    cert.set_version(2)
-    cert.set_pubkey(key)
-    cert.sign(key, 'SHA256')
-    return cert, key
-
-
 async def validate_cert_name(middleware, cert_name, datastore, verrors, name):
     certs = await middleware.call(
         'datastore.query',
@@ -356,6 +335,26 @@ class CertificateService(CRUDService):
         return cert
 
     # HELPER METHODS
+
+    @private
+    def create_self_signed_cert(self):
+        key = generate_key(2048)
+        cert = crypto.X509()
+        cert.get_subject().C = 'US'
+        cert.get_subject().O = 'iXsystems'
+        cert.get_subject().CN = 'localhost'
+        cert.set_serial_number(1)
+
+        cert.get_subject().emailAddress = 'info@ixsystems.com'
+
+        cert.gmtime_adj_notBefore(0)
+        cert.gmtime_adj_notAfter(3600 * (60 * 60 * 24))
+
+        cert.set_issuer(cert.get_subject())
+        cert.set_version(2)
+        cert.set_pubkey(key)
+        cert.sign(key, 'SHA256')
+        return cert, key
 
     @private
     @accepts(
@@ -1312,14 +1311,27 @@ class CertificateAuthorityService(CRUDService):
         return response
 
 
-def setup(middlewared):
-    path = '/data/middlewared.'
-    if not all(os.path.isfile(path + f) for f in ('crt', 'key')):
-        middlewared.logger.debug('Creating certificate for Middlewared')
-        for p, f, m in zip(
-                ('crt', 'key'), create_self_signed_cert(), (crypto.dump_certificate, crypto.dump_privatekey)
-        ):
-            with open(path + p, 'wb') as file:
-                file.write(m(crypto.FILETYPE_PEM, f))
+async def setup(middlewared):
+    system_config = await middlewared.call('system.general.config')
+    certs = await middlewared.call('certificate.query')
+    if not system_config['ui_certificate'] in [c['id'] for c in certs]:
+        # create a self signed cert if it doesn't exist and set ui_certificate to it's value
+        if not any('freenas_default' == c['name'] for c in certs):
+            cert, key = await middlewared.call('certificate.create_self_signed_cert')
+            default_cert = middlewared.call(
+                'certificate.create', {
+                    'create_type': 'CERTIFICATE_CREATE_IMPORTED',
+                    'certificate': crypto.load_certificate(crypto.FILETYPE_PEM, cert),
+                    'privatekey': crypto.load_privatekey(crypto.FILETYPE_PEM, key),
+                    'name': 'freenas_default'
+                }
+            )
 
-    middlewared.logger.debug('Certificate setup for Middlewared complete')
+            id = default_cert['id']
+            middlewared.logger.debug('Default certificate for FreeNAS created')
+        else:
+            id = [c['id'] for c in certs if c['name'] == 'freenas_default'][0]
+
+        await middlewared.call('system.general.update', {'ui_certificate': id})
+
+    middlewared.logger.debug('Certificate setup for FreeNAS complete')
