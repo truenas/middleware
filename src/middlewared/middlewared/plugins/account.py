@@ -461,6 +461,16 @@ class UserService(CRUDService):
                     '/nonexistent.'
                 )
 
+        if 'home_mode' in data:
+            try:
+                o = int(data['home_mode'], 8)
+                assert o & 0o777 == o
+            except (AssertionError, ValueError, TypeError):
+                verrors.add(
+                    'home_mode',
+                    'Please provide a valid value for home_mode attribute'
+                )
+
         if 'groups' in data:
             groups = data.get('groups') or []
             if groups and len(groups) > 64:
