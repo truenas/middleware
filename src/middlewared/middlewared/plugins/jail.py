@@ -3,18 +3,18 @@ import os
 import time
 import subprocess as su
 
-import iocage.lib.iocage as ioc
+import iocage_lib.iocage as ioc
 import libzfs
 import requests
 import itertools
-from iocage.lib.ioc_check import IOCCheck
-from iocage.lib.ioc_clean import IOCClean
-from iocage.lib.ioc_fetch import IOCFetch
-from iocage.lib.ioc_image import IOCImage
-from iocage.lib.ioc_json import IOCJson
+from iocage_lib.ioc_check import IOCCheck
+from iocage_lib.ioc_clean import IOCClean
+from iocage_lib.ioc_fetch import IOCFetch
+from iocage_lib.ioc_image import IOCImage
+from iocage_lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
-from iocage.lib.ioc_list import IOCList
-from iocage.lib.ioc_upgrade import IOCUpgrade
+from iocage_lib.ioc_list import IOCList
+from iocage_lib.ioc_upgrade import IOCUpgrade
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError
@@ -236,16 +236,36 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
     def fetch(self, job, options):
         """Fetches a release or plugin."""
+        def progress_callback(content):
+            level = content['level']
+            msg = content['message'].replace('\n', '')
+
+            if level == 'EXCEPTION':
+                raise CallError(msg)
+
+            job.set_progress(None, msg)
+
+            if '  These pkgs will be installed:' in msg:
+                job.set_progress(50, msg)
+            elif 'Installing plugin packages:' in msg:
+                job.set_progress(75, msg)
+
         self.check_dataset_existence()  # Make sure our datasets exist.
+        start_msg = None
+        finaL_msg = None
 
         if options["name"] is not None:
-            options["plugins"] = True
+            options["plugin_file"] = True
+            start_msg = 'Starting plugin install'
+            finaL_msg = f"Plugin: {options['name']} installed"
 
         options["accept"] = True
 
-        iocage = ioc.IOCage(silent=True)
+        iocage = ioc.IOCage(callback=progress_callback, silent=False)
 
+        job.set_progress(0, start_msg)
         iocage.fetch(**options)
+        job.set_progress(100, finaL_msg)
 
         return True
 
