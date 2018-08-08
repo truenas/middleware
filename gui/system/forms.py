@@ -2913,7 +2913,7 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
             crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=cert),
         ])
 
-        cert.set_serial_number(signing_cert.cert_serial)
+        cert.set_serial_number(int(signing_cert.cert_serial))
         self.instance.cert_serial = 0o3
         sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
 
@@ -3328,6 +3328,8 @@ class CertificateCreateInternalForm(ModelForm):
         cert_serial = signing_cert.cert_serial
         if not cert_serial:
             cert_serial = 1
+        else:
+            cert_serial = int(cert_serial)
 
         cert.set_serial_number(cert_serial)
         sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
@@ -3343,6 +3345,8 @@ class CertificateCreateInternalForm(ModelForm):
         ca_cert_serial = ca.cert_serial
         if not ca_cert_serial:
             ca_cert_serial = cert_serial
+        else:
+            ca_cert_serial = int(ca_cert_serial)
 
         ca_cert_serial = ca_cert_serial + 1
         ca.cert_serial = ca_cert_serial
