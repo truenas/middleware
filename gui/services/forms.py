@@ -1067,6 +1067,10 @@ class iSCSITargetGroupsForm(MiddlewareModelForm, ModelForm):
         self.fields['iscsi_target_authgroup'].required = False
         self.fields['iscsi_target_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
 
+    def clean_iscsi_target_authgroup(self):
+        value = self.cleaned_data.get('iscsi_target_authgroup')
+        return None if value and int(value) == -1 else value
+
     def middleware_clean(self, data):
         targetobj = self.cleaned_data.get('iscsi_target')
         with client as c:
