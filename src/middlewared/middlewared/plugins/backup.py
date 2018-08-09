@@ -133,7 +133,7 @@ class BackupService(CRUDService):
         Str('dayweek'),
         Str('month'),
         Dict('attributes', additional_attrs=True),
-        Str('args'),
+        Str('args', default=''),
         Bool('enabled'),
         register=True,
     ))
