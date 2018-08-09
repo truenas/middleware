@@ -142,7 +142,10 @@ class AlertService(Service):
     @accepts(Str("id"))
     def dismiss(self, id):
         node, source, key = id.split(";", 2)
-        alert = self.alerts[node][source][key]
+        try:
+            alert = self.alerts[node][source][key]
+        except KeyError:
+            return
         alert.dismissed = True
 
     @accepts(Str("id"))
