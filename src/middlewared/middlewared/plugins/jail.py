@@ -546,7 +546,8 @@ class JailService(CRUDService):
         repo and returns a list with the pkg version and plugin revision
         """
         try:
-            pkg_dict = self.middleware.call_sync('cache.get', 'iocage_rpkgdict')
+            pkg_dict = self.middleware.call_sync('cache.get',
+                                                 'iocage_rpkgdict')
             r_plugins = self.middleware.call_sync('cache.get',
                                                   'iocage_rplugins')
         except ClientException as e:
@@ -560,7 +561,11 @@ class JailService(CRUDService):
 
                     try:
                         pkg, version = i[1].rsplit('-', 1)
-                        pkg_dict[pkg] = version
+                        pkg_size = round(float(i[2].rsplit(
+                            ' ', 1)[-1]) / 1000**2, 2)
+                        pkg_size = f'{pkg_size}MiB'
+
+                        pkg_dict[pkg] = (version, pkg_size)
                     except (ValueError, IndexError):
                         continue  # It's not a pkg
                 self.middleware.call_sync(
@@ -583,19 +588,22 @@ class JailService(CRUDService):
                 raise
 
         if pkg == 'bru-server':
-            return ['N/A', '1']
+            return ['N/A', '1', 'N/A']
         elif pkg == 'sickrage':
-            return ['Git branch - master', '1']
+            return ['Git branch - master', '1', 'N/A']
 
         try:
             primary_pkg = r_plugins[pkg]['primary_pkg'].split('/', 1)[-1]
 
-            version = pkg_dict[primary_pkg]
-            version = [version.rsplit('%2', 1)[0].replace('.txz', ''), '1']
+            version, size = pkg_dict[primary_pkg]
+            version_and_size = [
+                version.rsplit('%2', 1)[0].replace('.txz', ''), '1',
+                size
+            ]
         except KeyError:
-            version = ['N/A', 'N/A']
+            version_and_size = ['N/A', 'N/A', 'N/A']
 
-        return version
+        return version_and_size
 
     @private
     def start_on_boot(self):
