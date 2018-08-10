@@ -2,7 +2,7 @@ import logging
 import os
 import base64
 
-from freenasUI.common.pipesubr import pipeopen
+from middlewared.utils import Popen
 
 logger = logging.getLogger(__name__)
 kdir = "/etc/kerberos"
@@ -10,13 +10,6 @@ keytabfile = "/etc/krb5.keytab"
 ktutil_cmd = "/usr/sbin/ktutil copy"
 
 
-async def ktutil_copy(temp_keytab):
-    p = pipeopen(f'{ktutil_cmd} {temp_keytab} {keytabfile}')
-    output = p.communicate()
-    if output[1]:
-        logger.debug(f'generate krb5.keytab failed with error: {output[1]}')
-
-        
 async def write_keytab(db_keytabname, db_keytabfile):
     temp_keytab = f'{kdir}/{db_keytabname}'
     if not os.path.exists(kdir):
@@ -26,9 +19,9 @@ async def write_keytab(db_keytabname, db_keytabfile):
     with open(temp_keytab, "wb") as f:
         f.write(db_keytabfile)
 
-    await ktutil_copy(temp_keytab)
+    await Popen(f'{ktutil_cmd} {temp_keytab} {keytabfile}', shell=True)
 
-    
+
 async def render(service, middleware):
     keytabs = await middleware.call("datastore.query", "directoryservice.kerberoskeytab")
     if not keytabs:
