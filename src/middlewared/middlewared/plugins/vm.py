@@ -1,7 +1,8 @@
 from collections import deque
 from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch
 from middlewared.service import (
-    filterable, item_method, job, pass_app, private, CRUDService, CallError
+    filterable, item_method, job, pass_app, private, CRUDService, CallError,
+    ValidationErrors,
 )
 from middlewared.utils import Nid, Popen
 from urllib.request import urlretrieve
@@ -86,14 +87,6 @@ class VMManager(object):
                 'state': 'STOPPED',
                 'pid': None,
             }
-
-    async def clone(self, id):
-        try:
-            vm = await self.service.query([('id', '=', id)], {'get': True})
-            return vm
-        except IndexError:
-            self.logger.error('VM does not exist.')
-            return None
 
 
 class VMSupervisor(object):
@@ -952,6 +945,12 @@ class VMService(CRUDService):
     ))
     async def do_create(self, data):
         """Create a VM."""
+
+        verrors = ValidationErrors()
+        await self.__common_validation(verrors, 'vm_create', data)
+        if verrors:
+            raise verrors
+
         devices = data.pop('devices')
         vm_id = None
         created_zvols = []
@@ -1004,6 +1003,14 @@ class VMService(CRUDService):
 
         return vm_id
 
+    async def __common_validation(self, verrors, schema_name, data, old=None):
+        if 'name' in data:
+            filters = [('name', '=', data['name'])]
+            if old:
+                filters.append(('id', '!=', old['id']))
+            if await self.middleware.call('vm.query', filters):
+                verrors.add(f'{schema_name}.name', 'This name already exists.', errno.EEXIST)
+
     async def __do_update_devices(self, id, devices):
         if devices and isinstance(devices, list) is True:
             device_query = await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', int(id))])
@@ -1033,6 +1040,12 @@ class VMService(CRUDService):
     ))
     async def do_update(self, id, data):
         """Update all information of a specific VM."""
+
+        verrors = ValidationErrors()
+        await self.__common_validation(verrors, 'vm_update', data)
+        if verrors:
+            raise verrors
+
         devices = data.pop('devices', None)
         if devices:
             update_devices = await self.__do_update_devices(id, devices)
@@ -1203,61 +1216,81 @@ class VMService(CRUDService):
             self.logger.error('===> SRC: {0} does not exists or is broken.'.format(src))
             return False
 
-    async def __find_clone(self, name):
-        data = await self.middleware.call('vm.query', [], {'order_by': ['name']})
+    async def __next_clone_name(self, name):
+        vm_names = [
+            i['name']
+            for i in await self.middleware.call('vm.query', [('name', '~', rf'{name}_clone\d+')])
+        ]
         clone_index = 0
-        next_name = ''
-        for vm_name in data:
-            if name in vm_name['name'] and '_clone' in vm_name['name']:
-                name_index = int(vm_name['name'][-1])
-                next_name = vm_name['name'][:-1]
-                if name_index >= clone_index:
-                    clone_index = int(name_index) + 1
+        while True:
+            clone_name = f'{name}_clone{clone_index}'
+            if clone_name not in vm_names:
+                break
+            clone_index += 1
+        return clone_name
 
-        if next_name:
-            next_name = next_name + str(clone_index)
-        else:
-            next_name = name + '_clone' + str(clone_index)
-
-        return next_name
-
+    @item_method
     @accepts(Int('id'))
     async def clone(self, id):
-        vm = await self._manager.clone(id)
-
-        if vm is None:
-            raise CallError('Cannot clone a VM that does not exist.', errno.EINVAL)
+        vm = await self._get_instance(id)
 
         origin_name = vm['name']
         del vm['id']
+        del vm['status']
 
-        vm['name'] = await self.__find_clone(vm['name'])
+        vm['name'] = await self.__next_clone_name(vm['name'])
 
-        for item in vm['devices']:
-            if item['dtype'] == 'NIC':
-                if 'mac' in item['attributes']:
-                    del item['attributes']['mac']
-            if item['dtype'] == 'VNC':
-                if 'vnc_port' in item['attributes']:
-                    del item['attributes']['vnc_port']
-            if item['dtype'] == 'DISK':
-                disk_src_path = '/'.join(item['attributes']['path'].split('/dev/zvol/')[-1:])
-                disk_snapshot_name = vm['name']
-                disk_snapshot_path = disk_src_path + '@' + disk_snapshot_name
-                clone_dst_path = disk_src_path + '_' + vm['name']
+        # In case we need to rollback
+        created_snaps = []
+        created_clones = []
+        try:
+            for item in vm['devices']:
+                if item['dtype'] == 'NIC':
+                    if 'mac' in item['attributes']:
+                        del item['attributes']['mac']
+                if item['dtype'] == 'VNC':
+                    if 'vnc_port' in item['attributes']:
+                        del item['attributes']['vnc_port']
+                if item['dtype'] == 'DISK':
+                    zvol = item['attributes']['path'].replace('/dev/zvol/', '')
+                    zvol_snapshot = zvol + '@' + vm['name']
+                    clone_dst = zvol + '_' + vm['name']
 
-                data = {'dataset': disk_src_path, 'name': disk_snapshot_name}
-                await self.middleware.call('zfs.snapshot.create', data)
+                    await self.middleware.call('zfs.snapshot.create', {
+                        'dataset': zvol, 'name': vm['name'],
+                    })
 
-                data = {'snapshot': disk_snapshot_path, 'dataset_dst': clone_dst_path}
-                await self.middleware.call('zfs.snapshot.clone', data)
+                    created_snaps.append(zvol_snapshot)
 
-                item['attributes']['path'] = '/dev/zvol/' + clone_dst_path
-            if item['dtype'] == 'RAW':
-                item['attributes']['path'] = ''
-                self.logger.warn('For RAW disk you need copy it manually inside your NAS.')
+                    await self.middleware.call('zfs.snapshot.clone', {
+                        'snapshot': zvol_snapshot, 'dataset_dst': clone_dst,
+                    })
 
-        await self.create(vm)
+                    created_clones.append(clone_dst)
+
+                    item['attributes']['path'] = '/dev/zvol/' + clone_dst
+                if item['dtype'] == 'RAW':
+                    item['attributes']['path'] = ''
+                    self.logger.warn('For RAW disk you need copy it manually inside your NAS.')
+
+            await self.create(vm)
+        except Exception as e:
+            for i in reversed(created_clones):
+                try:
+                    await self.middleware.call('zfs.dataset.delete', i)
+                except Exception:
+                    self.logger.warn('Rollback of VM clone left dangling zvol: %s', i)
+            for i in reversed(created_snaps):
+                try:
+                    dataset, snap = i.split('@')
+                    await self.middleware.call('zfs.snapshot.remove', {
+                        'dataset': dataset,
+                        'name': snap,
+                        'defer_delete': True,
+                    })
+                except Exception:
+                    self.logger.warn('Rollback of VM clone left dangling snapshot: %s', i)
+            raise e
         self.logger.info('VM cloned from {0} to {1}'.format(origin_name, vm['name']))
 
         return True
