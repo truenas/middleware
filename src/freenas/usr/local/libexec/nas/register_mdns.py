@@ -47,8 +47,7 @@ def main():
 
     webui = client.call('datastore.query', 'system.settings')
 
-    if (webui[0]['stg_guiprotocol'] == 'http' or
-            webui[0]['stg_guiprotocol'] == 'httphttps'):
+    if not webui[0]['stg_guihttpsredirect']:
         http_port = int(webui[0]['stg_guiport'] or 80)
         t = threading.Thread(target=register,
                              args=(hostname, '_http._tcp.', http_port))
@@ -59,8 +58,7 @@ def main():
         t.daemon = False
         t.start()
 
-    if (webui[0]['stg_guiprotocol'] == 'https' or
-            webui[0]['stg_guiprotocol'] == 'httphttps'):
+    if webui[0]['stg_guihttpsredirect']:
         https_port = int(webui[0]['stg_guihttpsport'] or 443)
         t = threading.Thread(target=register,
                              args=(hostname, '_https._tcp.', https_port))

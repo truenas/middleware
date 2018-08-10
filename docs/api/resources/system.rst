@@ -672,7 +672,6 @@ List resource
                 "stg_guiport": 80,
                 "stg_guihttpsport": 443,
                 "stg_guihttpsredirect": true,
-                "stg_guiprotocol": "http",
                 "stg_guiv6address": ["::"],
                 "stg_syslogserver": "",
                 "stg_language": "en",
@@ -717,8 +716,12 @@ Update resource
                 "stg_guiport": 80,
                 "stg_guihttpsport": 443,
                 "stg_guihttpsredirect": true,
+<<<<<<< HEAD
                 "stg_guiprotocol": "http",
                 "stg_guiv6address": ["::"],
+=======
+                "stg_guiv6address": "::",
+>>>>>>> Default protocl for freenas set to https+https. Still some todos left to cover and the code needs to be refined
                 "stg_syslogserver": "",
                 "stg_language": "en",
                 "stg_directoryservice": "",
@@ -728,7 +731,6 @@ Update resource
                 "id": 1
         }
 
-   :json string stg_guiprotocol: http, https
    :json integer stg_guicertificate: Certificate ID
    :json list stg_guiaddress: List of WebGUI IPv4 Address
    :json list stg_guiv6address: List of WebGUI IPv6 Address

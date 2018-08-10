@@ -738,9 +738,9 @@ class mDNSServiceHTTPThread(mDNSServiceThread):
         super(mDNSServiceHTTPThread, self).__init__(**kwargs)
 
     def setup(self):
+        # TODO: how should these be handled ?
         webui = self.middleware.call_sync('datastore.query', 'system.settings')
-        if (webui[0]['stg_guiprotocol'] == 'http' or
-           webui[0]['stg_guiprotocol'] == 'httphttps'):
+        if not webui[0]['stg_guihttpsredirect']:
             self.port = int(webui[0]['stg_guiport'] or 80)
             self.regtype = "_http._tcp."
 
@@ -752,8 +752,7 @@ class mDNSServiceHTTPSThread(mDNSServiceThread):
 
     def setup(self):
         webui = self.middleware.call_sync('datastore.query', 'system.settings')
-        if (webui[0]['stg_guiprotocol'] == 'https' or
-           webui[0]['stg_guiprotocol'] == 'httphttps'):
+        if webui[0]['stg_guihttpsredirect']:
             self.port = int(webui[0]['stg_guihttpsport'] or 443)
             self.regtype = "_https._tcp."
 
@@ -765,8 +764,7 @@ class mDNSServiceMiddlewareThread(mDNSServiceThread):
 
     def setup(self):
         webui = self.middleware.call_sync('datastore.query', 'system.settings')
-        if (webui[0]['stg_guiprotocol'] == 'http' or
-           webui[0]['stg_guiprotocol'] == 'httphttps'):
+        if not webui[0]['stg_guihttpsredirect']:
             self.port = int(webui[0]['stg_guiport'] or 80)
             self.regtype = "_middleware._tcp."
 
@@ -778,8 +776,7 @@ class mDNSServiceMiddlewareSSLThread(mDNSServiceThread):
 
     def setup(self):
         webui = self.middleware.call_sync('datastore.query', 'system.settings')
-        if (webui[0]['stg_guiprotocol'] == 'https' or
-           webui[0]['stg_guiprotocol'] == 'httphttps'):
+        if webui[0]['stg_guihttpsredirect']:
             self.port = int(webui[0]['stg_guihttpsport'] or 443)
             self.regtype = "_middleware-ssl._tcp."
 

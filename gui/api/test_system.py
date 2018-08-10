@@ -191,8 +191,12 @@ class SettingsResourceTest(APITestCase):
             'stg_guihttpsport': 443,
             'stg_guiport': 80,
             'stg_guihttpsredirect': True,
+<<<<<<< HEAD
             'stg_guiprotocol': 'http',
             'stg_guiv6address': ['::'],
+=======
+            'stg_guiv6address': '::',
+>>>>>>> Default protocl for freenas set to https+https. Still some todos left to cover and the code needs to be refined
             'stg_kbdmap': '',
             'stg_language': 'en',
             'stg_syslogserver': '',

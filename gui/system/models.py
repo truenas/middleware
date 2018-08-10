@@ -60,12 +60,6 @@ def time_now():
 
 
 class Settings(Model):
-    stg_guiprotocol = models.CharField(
-        max_length=120,
-        choices=choices.PROTOCOL_CHOICES,
-        default="http",
-        verbose_name=_("Protocol")
-    )
     stg_guicertificate = models.ForeignKey(
         "Certificate",
         verbose_name=_("Certificate"),

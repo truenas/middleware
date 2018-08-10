@@ -1318,11 +1318,11 @@ async def setup(middlewared):
         # create a self signed cert if it doesn't exist and set ui_certificate to it's value
         if not any('freenas_default' == c['name'] for c in certs):
             cert, key = await middlewared.call('certificate.create_self_signed_cert')
-            default_cert = middlewared.call(
+            default_cert = await middlewared.call(
                 'certificate.create', {
                     'create_type': 'CERTIFICATE_CREATE_IMPORTED',
-                    'certificate': crypto.load_certificate(crypto.FILETYPE_PEM, cert),
-                    'privatekey': crypto.load_privatekey(crypto.FILETYPE_PEM, key),
+                    'certificate': crypto.dump_certificate(crypto.FILETYPE_PEM, cert).decode(),
+                    'privatekey': crypto.dump_privatekey(crypto.FILETYPE_PEM, key).decode(),
                     'name': 'freenas_default'
                 }
             )

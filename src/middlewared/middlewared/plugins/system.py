@@ -404,8 +404,6 @@ class SystemGeneralService(ConfigService):
                 data['ui_' + key[3:]] = data.pop(key)
 
         data['sysloglevel'] = data['sysloglevel'].upper()
-        data['sysloglevel'] = data['sysloglevel'].upper()
-        data['ui_protocol'] = data['ui_protocol'].upper()
         data['ui_certificate'] = data['ui_certificate']['id'] if data['ui_certificate'] else None
         return data
 
@@ -660,46 +658,43 @@ class SystemGeneralService(ConfigService):
                         'Port specified should be between 0 - 65535'
                     )
 
-        protocol = data.get('ui_protocol')
-        if protocol:
-            if protocol != 'HTTP':
-                certificate_id = data.get('ui_certificate')
-                if not certificate_id:
+        certificate_id = data.get('ui_certificate')
+        if not certificate_id:
+            verrors.add(
+                f'{schema}.ui_certificate',
+                'Certificate is required'
+            )
+        else:
+            cert = await self.middleware.call(
+                'certificate.query',
+                [
+                    ["id", "=", certificate_id],
+                    ["CSR", "=", None]
+                ]
+            )
+            if not cert:
+                verrors.add(
+                    f'{schema}.ui_certificate',
+                    'Please specify a valid certificate which exists on the FreeNAS system'
+                )
+            else:
+                # getting fingerprint for certificate
+                fingerprint = await self.middleware.call(
+                    'certificate.get_fingerprint_of_cert',
+                    certificate_id
+                )
+                if fingerprint:
+                    syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
+                    syslog.syslog(syslog.LOG_ERR, 'Fingerprint of the certificate used in UI : ' + fingerprint)
+                    syslog.closelog()
+                else:
+                    # Two reasons value is None - certificate not found - error while parsing the certificate
+                    # for fingerprint
                     verrors.add(
                         f'{schema}.ui_certificate',
-                        'Protocol has been selected as HTTPS, certificate is required'
+                        'Kindly check if the certificate has been added to the system and it is a '
+                        'valid certificate'
                     )
-                else:
-                    cert = await self.middleware.call(
-                        'certificate.query',
-                        [
-                            ["id", "=", certificate_id],
-                            ["CSR", "=", None]
-                        ]
-                    )
-                    if not cert:
-                        verrors.add(
-                            f'{schema}.ui_certificate',
-                            'Please specify a valid certificate which exists on the FreeNAS system'
-                        )
-                    else:
-                        # getting fingerprint for certificate
-                        fingerprint = await self.middleware.call(
-                            'certificate.get_fingerprint_of_cert',
-                            certificate_id
-                        )
-                        if fingerprint:
-                            syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
-                            syslog.syslog(syslog.LOG_ERR, 'Fingerprint of the certificate used in UI : ' + fingerprint)
-                            syslog.closelog()
-                        else:
-                            # Two reasons value is None - certificate not found - error while parsing the certificate
-                            # for fingerprint
-                            verrors.add(
-                                f'{schema}.ui_certificate',
-                                'Kindly check if the certificate has been added to the system and it is a '
-                                'valid certificate'
-                            )
         return verrors
 
     @accepts(
@@ -709,9 +704,13 @@ class SystemGeneralService(ConfigService):
             Int('ui_httpsport', validators=[Range(min=1, max=65535)]),
             Bool('ui_httpsredirect'),
             Int('ui_port', validators=[Range(min=1, max=65535)]),
+<<<<<<< HEAD
             Str('ui_protocol', enum=['HTTP', 'HTTPS', 'HTTPHTTPS']),
             List('ui_address', items=[IPAddr('addr')], empty=False),
             List('ui_v6address', items=[IPAddr('addr')], empty=False),
+=======
+            IPAddr('ui_v6address'),
+>>>>>>> Default protocl for freenas set to https+https. Still some todos left to cover and the code needs to be refined
             Str('kbdmap'),
             Str('language'),
             Str('sysloglevel', enum=['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE',
@@ -730,6 +729,7 @@ class SystemGeneralService(ConfigService):
         if verrors:
             raise verrors
 
+<<<<<<< HEAD
         # Converting new_config to map the database table fields
         new_config['sysloglevel'] = new_config['sysloglevel'].lower()
         new_config['ui_protocol'] = new_config['ui_protocol'].lower()
@@ -745,6 +745,15 @@ class SystemGeneralService(ConfigService):
             new_config,
             {'prefix': 'stg_'}
         )
+=======
+        if len(set(new_config.items()) ^ set(config.items())) > 0:
+            # Converting new_config to map the database table fields
+            new_config['sysloglevel'] = new_config['sysloglevel'].lower()
+            keys = new_config.keys()
+            for key in keys:
+                if key.startswith('ui_'):
+                    new_config['gui' + key[3:]] = new_config.pop(key)
+>>>>>>> Default protocl for freenas set to https+https. Still some todos left to cover and the code needs to be refined
 
         # case insensitive comparison should be performed for sysloglevel
         if (

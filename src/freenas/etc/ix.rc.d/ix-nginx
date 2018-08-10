@@ -143,13 +143,12 @@ __EOF__
 generate_nginx_conf()
 {
 	local res=1
-	local proto="${1}"
-	local addr="${2}"
-	local addr6="${3}"
-	local port="${4}"
-	local httpsport="${5}"
-	local httpsredirect="${6}"
-	local vcenter_https="${7}"
+	local addr="${1}"
+	local addr6="${2}"
+	local port="${3}"
+	local httpsport="${4}"
+	local httpsredirect="${5}"
+	local vcenter_https="${6}"
 	local working_ssl=false
 	local default_ui="ui"
 	local dhparams_file="/data/dhparam.pem"
@@ -213,9 +212,8 @@ http {
         server_name  localhost;
 __EOF__
 
-	if [ "${proto}" = "https" -o "${proto}" = "httphttps" ]; then
-                local httpdcert="$(get_ssl_certificate)"
-                local httpdkey="$(get_ssl_privatekey)"
+		local httpdcert="$(get_ssl_certificate)"
+		local httpdkey="$(get_ssl_privatekey)"
 
 		local validcert=0
 		${OPENSSL} x509 -in "${httpdcert}" -noout -text -dates -purpose > /dev/null 2>&1
@@ -280,8 +278,8 @@ __EOF__
 			    echo "${safecert}" > /tmp/alert_invalid_ssl_nginx
 			fi
 		fi
-	fi
 
+<<<<<<< HEAD
 	if [ ! ${working_ssl} -o "${proto}" = "http" -o "${proto}" = "httphttps" ]; then
 
 		for ip in $ips
@@ -293,6 +291,11 @@ __EOF__
 			fi
 		done
 
+=======
+	if [ "${working_ssl}" = false ] || [ "${httpsredirect}" = "0" ]; then
+		echo "        listen       ${addr}:${port};"
+		echo "        listen       [${addr6}]:${port};"
+>>>>>>> Default protocl for freenas set to https+https. Still some todos left to cover and the code needs to be refined
 	fi
 
 	if ! is_freenas; then
@@ -451,6 +454,7 @@ __EOF__
     }
 __EOF__
 
+<<<<<<< HEAD
 	if [ "${proto}" = "https" -a "${working_ssl}" = true -a "${httpsredirect}" = "1" ]; then
 		echo "    server {"
 		for ip in $ips
@@ -462,6 +466,9 @@ __EOF__
 				fi
 			done
 
+=======
+	if [ "${working_ssl}" = true -a "${httpsredirect}" = "1" ]; then
+>>>>>>> Default protocl for freenas set to https+https. Still some todos left to cover and the code needs to be refined
 		cat << __EOF__
 	server_name localhost;
 	return 307 https://\$host:${httpsport}\$request_uri;
@@ -477,26 +484,6 @@ __EOF__
 		mkdir -p /var/log/nginx
 	fi
 
-}
-
-
-set_stg_guiprotocol()
-{
-	local res=1
-	local proto="${1}"
-
-	if [ "${proto}" = "http" -o "${proto}" = "https" -o "${proto}" = "httphttps" ]
-	then
-		${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
-		UPDATE
-			system_settings
-		SET
-			stg_guiprotocol = '${proto}'
-		"
-		res=$?
-	fi
-
-	return ${res}
 }
 
 
@@ -525,7 +512,7 @@ generate_fastcgi_params()
 
 	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 	SELECT
-		stg_guiprotocol
+		stg_guihttpsredirect
 
 	FROM
 		system_settings
@@ -535,21 +522,13 @@ generate_fastcgi_params()
 
 	LIMIT 1
 	" | \
-	while read stg_guiprotocol
+	while read stg_guihttpsredirect
 	do
-		local ssl_enable=0
-
-		stg_guiprotocol=$(echo "${stg_guiprotocol}"|tr a-z A-Z)
-		case "${stg_guiprotocol}" in
-			HTTP) ssl_enable=0; ;;
-			HTTPS) ssl_enable=1; ;;
-		esac
-
 		local tmp="$(mktemp /tmp/tmp.XXXXXX)"
 		grep -Eiv '^( |\t)*fastcgi_param( |\t)+https( |\t)+' \
 			< "${NGINX_FASTCGI_PARAMS}" > "${tmp}"
 
-		if [ "${ssl_enable}" = "1" ]
+		if [ "${stg_guihttpsredirect}" = "1" ];
 		then
 			echo "fastcgi_param HTTPS on;" >> "${tmp}"
 		fi
@@ -564,7 +543,6 @@ get_nginx_settings()
 		local IFS="|"
 		${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 		SELECT
-			stg_guiprotocol,
 			stg_guiaddress,
 			stg_guiv6address,
 			stg_guiport,
@@ -579,20 +557,27 @@ get_nginx_settings()
 
 		LIMIT 1
 		" | \
-		while read -r stg_guiprotocol stg_guiaddress stg_guiv6address stg_guiport stg_guihttpsport stg_guihttpsredirect
+		while read -r stg_guiaddress stg_guiv6address stg_guiport stg_guihttpsport stg_guihttpsredirect
 		do
-			echo "${stg_guiprotocol}|${stg_guiaddress}|${stg_guiv6address}|${stg_guiport}|${stg_guihttpsport}|${stg_guihttpsredirect}"
+			echo "${stg_guiaddress}|${stg_guiv6address}|${stg_guiport}|${stg_guihttpsport}|${stg_guihttpsredirect}"
 		done
 	)
 
+<<<<<<< HEAD
 	local proto=$(echo ${settings}|cut -f1 -d"|" -s|tr A-Z a-z)
 	local addr="$(echo ${settings}|cut -f2 -d"|" -s| tr '[\[,\]\"]' ' ' )"
 	local addr6="$(echo ${settings}|cut -f3 -d"|" -s| tr '[\[,\]\"]' ' ' )"
 	local port=$(echo ${settings}|cut -f4 -d"|" -s)
 	local httpsport=$(echo ${settings}|cut -f5 -d"|" -s)
 	local httpsredirect=$(echo ${settings}|cut -f6 -d"|" -s)
+=======
+	local addr=$(echo ${settings}|cut -f1 -d"|" -s)
+	local addr6=$(echo ${settings}|cut -f2 -d"|" -s)
+	local port=$(echo ${settings}|cut -f3 -d"|" -s)
+	local httpsport=$(echo ${settings}|cut -f4 -d"|" -s)
+	local httpsredirect=$(echo ${settings}|cut -f5 -d"|" -s)
+>>>>>>> Default protocl for freenas set to https+https. Still some todos left to cover and the code needs to be refined
 
-	: ${proto:="http"}
 	: ${addr:="0.0.0.0"}
 	: ${addr6:="::"}
 
@@ -627,7 +612,7 @@ get_nginx_settings()
 	addr=$( initialize_ip_vars "$addr" "0.0.0.0" )
 	addr6=$( initialize_ip_vars "$addr6" "::" )
 
-	echo "${proto}|${addr}|${addr6}|${port}|${httpsport}|${httpsredirect}"
+	echo "${addr}|${addr6}|${port}|${httpsport}|${httpsredirect}"
 }
 
 
@@ -638,12 +623,11 @@ ix_nginx_start()
 
 	local settings=$(get_nginx_settings)
 
-	local proto=$(echo "${settings}"|cut -f1 -d"|")
-	local addr=$(echo "${settings}"|cut -f2 -d"|")
-	local addr6=$(echo "${settings}"|cut -f3 -d"|")
-	local port=$(echo "${settings}"|cut -f4 -d"|")
-	local httpsport=$(echo "${settings}"|cut -f5 -d"|")
-	local httpsredirect=$(echo "${settings}"|cut -f6 -d"|")
+	local addr=$(echo "${settings}"|cut -f1 -d"|")
+	local addr6=$(echo "${settings}"|cut -f2 -d"|")
+	local port=$(echo "${settings}"|cut -f3 -d"|")
+	local httpsport=$(echo "${settings}"|cut -f4 -d"|")
+	local httpsredirect=$(echo "${settings}"|cut -f5 -d"|")
 
 	local vcenter_https=$(
 		${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
@@ -662,7 +646,7 @@ ix_nginx_start()
 	#generate_plugins_conf
 	#generate_fastcgi_params
 
-	generate_nginx_conf "${proto}" "${addr}" "${addr6}" "${port}" "${httpsport}" "${httpsredirect}" "${vcenter_https}"
+	generate_nginx_conf "${addr}" "${addr6}" "${port}" "${httpsport}" "${httpsredirect}" "${vcenter_https}"
 
 }
 

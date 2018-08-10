@@ -34,11 +34,11 @@ http_ssl_enabled()
 {
 	local ssl=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 		SELECT
-			stg_guiprotocol
+			stg_guihttpsredirect
 		FROM
 			system_settings
 		WHERE
-			stg_guiprotocol = 'https'
+			stg_guihttpsredirect = '1'
 		ORDER BY
 			-id
 		LIMIT 1
