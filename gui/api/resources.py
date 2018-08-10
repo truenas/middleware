@@ -156,61 +156,46 @@ def _common_human_fields(bundle):
         if not field:
             continue
 
-        field_value = ','.join([
-            str(croniter.ALPHACONV[index].get(f) or 7) if f in croniter.ALPHACONV[index] else f
-            for f in getattr(bundle.obj, field).split(',')
-        ]).strip()
+        expression = ''
+        for i in range(0, 5):
+            expression += ('* ' if i != index else f'{getattr(bundle.obj, field)} ')
+        field_value = croniter(expression).expanded[index]
 
         bundle.data[field] = field_value
 
+        def _wording_helper(w, v_choices):
+            if isinstance(v_choices, int):
+                v_choices = {v: v for v in range(0, v_choices)}
+            if field_value[0] == '*' or len(field_value) >= len(v_choices):
+                return f'Every {w}'
+            else:
+                return ', '.join([
+                    str(v_choices[v]) for v in field_value
+                ])
+
         if index == 0:
-            if field_value == '*':
-                bundle.data[human] = _('Every minute')
-            elif field_value.startswith('*/'):
-                bundle.data[human] = _(f'Every {field_value.split("*/")[1]} minute(s)')
-            else:
-                bundle.data[human] = field_value
+            bundle.data[human] = _wording_helper('minute', 60)
         elif index == 1:
-            if field_value == '*':
-                bundle.data[human] = _('Every hour')
-            elif field_value.startswith('*/'):
-                bundle.data[human] = _(f'Every {field_value.split("*/")[1]} hour(s)')
-            else:
-                bundle.data[human] = field_value
+            bundle.data[human] = _wording_helper('hour', 24)
         elif index == 2:
-            if field_value == '*':
-                bundle.data[human] = _('Everyday')
-            elif field_value.startswith('*/'):
-                bundle.data[human] = _(f'Every {field_value.split("*/")[1]} days')
-            else:
-                bundle.data[human] = field_value
+            bundle.data[human] = _wording_helper('day', 30)
         elif index == 3:
-            months = field_value.split(',')
-            if len(months) == 12 or field_value == '*':
-                bundle.data[human] = _('Every month')
-            else:
-                mchoices = dict(choices.MONTHS_CHOICES)
-                labels = []
-                for m in months:
-                    labels.append(str(mchoices[m]))
-                bundle.data[human] = ', '.join(labels)
+            bundle.data[human] = _wording_helper(
+                'month', {int(k): v for k, v in dict(choices.MONTHS_CHOICES).items()}
+            )
         else:
             # TODO:
             # 1. Carve out the days input so that way one can say:
             #    Mon-Fri + Saturday -> Weekdays + Saturday
-            weeks = field_value.split(',')
-            if len(weeks) == 7 or field_value == '*':
-                bundle.data[human] = _('Everyday')
-            elif weeks == list(map(str, range(1, 6))):
+            if field_value == list(map(str, range(1, 6))):
                 bundle.data[human] = _('Weekdays')
-            elif weeks == list(map(str, range(6, 8))):
+            elif field_value == list(map(str, range(6, 8))):
                 bundle.data[human] = _('Weekends')
             else:
-                wchoices = dict(choices.WEEKDAYS_CHOICES)
-                labels = []
-                for w in weeks:
-                    labels.append(str(wchoices[str(w)]))
-                bundle.data[human] = ', '.join(labels)
+                field_value = [v or 7 for v in field_value]
+                bundle.data[human] = _wording_helper(
+                    'day of week', {int(k): v for k, v in dict(choices.WEEKDAYS_CHOICES).items()}
+                )
 
 
 class NestedMixin(object):

@@ -350,7 +350,7 @@ class bsdUsersForm(ModelForm):
         mode = self.cleaned_data.get('bsdusr_mode')
         if not self.instance.id and not mode:
             return '755'
-        return mode
+        return mode or None
 
     def clean_bsdusr_sshpubkey(self):
         ssh = self.cleaned_data.get('bsdusr_sshpubkey', '')
@@ -384,6 +384,8 @@ class bsdUsersForm(ModelForm):
 
         data.pop('password2', None)
         data['home_mode'] = data.pop('mode')
+        if not data.get('home_mode'):
+            data.pop('home_mode')
         if data['group']:
             data['group'] = data['group'].id
         else:

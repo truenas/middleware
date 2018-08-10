@@ -46,17 +46,17 @@ def mchoicefield(form, field, default):
         cm = form.fields[field].initial
     if cm == '*':
         form.initial[field] = default
-    elif ',' in cm:
-        form.initial[field] = cm.split(',')
     else:
-        form.initial[field] = [cm]
+        form.initial[field] = cm.split(',')
 
     if form.instance.id and any(v in field.split('_') for v in ('dayweek', 'month')):
         index = 4 if 'dayweek' in field else 3
-        form.initial[field] = [
-            str(croniter.ALPHACONV[index].get(f) or 7) if f in croniter.ALPHACONV[index] else int(f)
-            for f in getattr(form.instance, field).split(',')
-        ]
+
+        if cm != '*':
+            expression = ''
+            for i in range(0, 5):
+                expression += ('* ' if i != index else f'{cm} ')
+            form.initial[field] = [v or 7 for v in croniter(expression).expanded[index]]
 
 
 class AdvMixin(object):

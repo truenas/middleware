@@ -306,7 +306,7 @@ define([
         ) {
           return "MINOR_UPGRADE";
         }
-        if(Number.isInteger(v1[1]) && Number.isInteger(v2[1]) && v1[1] > v2[1]) {
+        if(Number.isInteger(v1[1]) && (Number.isInteger(v2[1]) && v1[1] > v2[1]) || (!Number.isInteger(v2[1]) && v1[1] > 0)) {
           return "MINOR_DOWNGRADE";
         }
         var branch1 = v1[v1.length-1].toLowerCase();

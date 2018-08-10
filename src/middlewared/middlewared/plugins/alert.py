@@ -147,6 +147,7 @@ class AlertService(Service):
             alert = self.alerts[node][source][key]
         except KeyError:
             return
+
         alert_source = ALERT_SOURCES.get(source)
         if alert_source and isinstance(alert_source, DismissableAlertSource):
             self.alerts[node][source] = await alert_source.dismiss(self.alerts[node][source])

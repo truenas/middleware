@@ -7,6 +7,7 @@ from .restful import RESTfulAPI
 from .schema import ResolverError, Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from .utils import start_daemon_thread, load_modules, load_classes
+from .webui_auth import WebUIAuth
 from .worker import ProcessPoolExecutor, main_worker
 from aiohttp import web
 from aiohttp.web_exceptions import HTTPPermanentRedirect
@@ -1132,7 +1133,8 @@ class Middleware(object):
         ], loop=self.__loop)
         app.router.add_route('GET', '/websocket', self.ws_handler)
 
-        app.router.add_route("*", "/api/docs{path_info:.*}", WSGIHandler(apidocs_app))
+        app.router.add_route('*', '/api/docs{path_info:.*}', WSGIHandler(apidocs_app))
+        app.router.add_route('*', '/ui{path_info:.*}', WebUIAuth(self))
 
         self.fileapp = FileApplication(self, self.__loop)
         app.router.add_route('*', '/_download{path_info:.*}', self.fileapp.download)

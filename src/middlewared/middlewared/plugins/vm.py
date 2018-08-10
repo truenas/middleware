@@ -9,10 +9,11 @@ from pipes import quote
 
 import middlewared.logger
 import asyncio
+import contextlib
 import errno
 import netif
 import os
-import os.path
+import psutil
 import random
 import stat
 import subprocess
@@ -26,13 +27,13 @@ logger = middlewared.logger.Logger('vm').getLogger()
 
 CONTAINER_IMAGES = {
     'RancherOS': {
-        'URL': 'http://download.freenas.org/bhyve-templates/rancheros-bhyve-v1.1.3/rancheros-bhyve-v1.1.3.img.gz',
-        'GZIPFILE': 'rancheros-bhyve-v1.1.3.img.gz',
-        'SHA256': 'e9288df573e01f5468c1f7e4609fbeab481caa3ffc5855af9d003b49557dde84',
+        'URL': 'http://download.freenas.org/bhyve-templates/rancheros-bhyve-v1.4.0/rancheros-bhyve-v1.4.0.img.gz',
+        'GZIPFILE': 'rancheros-bhyve-v1.4.0.img.gz',
+        'SHA256': '9ba4676656fe4b43b93a3da9d512b378bc48f7ccf3c889e812f73dc11811b6b3',
     }
 }
 BUFSIZE = 65536
-ZFS_ARC_MAX = 0
+ZFS_ARC_MAX_INITIAL = None
 
 
 class VMManager(object):
@@ -42,10 +43,10 @@ class VMManager(object):
         self.logger = self.service.logger
         self._vm = {}
 
-    async def start(self, id):
-        vm = await self.service.query([('id', '=', id)], {'get': True})
-        self._vm[id] = VMSupervisor(self, vm)
-        coro = self._vm[id].run()
+    async def start(self, vm):
+        vid = vm['id']
+        self._vm[vid] = VMSupervisor(self, vm)
+        coro = self._vm[vid].run()
         # If run() has not returned in about 3 seconds we assume
         # bhyve process started successfully.
         done = (await asyncio.wait([coro], timeout=3))[0]
@@ -78,10 +79,12 @@ class VMManager(object):
         if supervisor and await supervisor.running():
             return {
                 'state': 'RUNNING',
+                'pid': supervisor.proc.pid if supervisor.proc else None,
             }
         else:
             return {
                 'state': 'STOPPED',
+                'pid': None,
             }
 
     async def clone(self, id):
@@ -300,20 +303,19 @@ class VMSupervisor(object):
 
     async def __teardown_guest_vmemory(self, id):
         guest_status = await self.middleware.call('vm.status', id)
-        vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
-        guest_memory = vm[0].get('memory', None) * 1024 * 1024
-        max_arc = sysctl.filter('vfs.zfs.arc_max')
-        resize_arc = max_arc[0].value + guest_memory
+        if guest_status.get('state') != 'STOPPED':
+            return
 
-        if guest_status.get('state') == 'STOPPED':
-            if resize_arc <= ZFS_ARC_MAX:
-                sysctl.filter('vfs.zfs.arc_max')[0].value = max_arc[0].value + guest_memory
-                self.logger.debug('===> Give back guest memory to ARC.: {}'.format(guest_memory))
-            elif resize_arc > ZFS_ARC_MAX and max_arc[0].value < ZFS_ARC_MAX:
-                sysctl.filter('vfs.zfs.arc_max')[0].value = ZFS_ARC_MAX
-                self.logger.debug('===> Enough guest memory to set ARC back to its original limit.')
-            return True
-        return False
+        vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
+        guest_memory = vm[0].get('memory', 0) * 1024 * 1024
+        arc_max = sysctl.filter('vfs.zfs.arc_max')[0].value
+        new_arc_max = min(
+            await self.middleware.call('vm.get_initial_arc_max'),
+            arc_max + guest_memory
+        )
+        if arc_max != new_arc_max:
+            self.logger.debug(f'===> Give back guest memory to ARC: {new_arc_max - arc_max}')
+            sysctl.filter('vfs.zfs.arc_max')[0].value = new_arc_max
 
     def destroy_tap(self):
         while self.taps:
@@ -481,8 +483,8 @@ class VMUtils(object):
         ]
 
         grub_additional_args = {
-            'RancherOS': ['linux /boot/vmlinuz-4.9.75-rancher rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.resize_device=/dev/sda'.format(quote(password)),
-                          'initrd /boot/initrd-v1.1.3']
+            'RancherOS': ['linux /boot/vmlinuz-4.14.32-rancher2 rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.resize_device=/dev/sda'.format(quote(password)),
+                          'initrd /boot/initrd-v1.4.0']
         }
 
         vm_private_dir = sharefs_path + '/configs/' + str(vm_id) + '_' + vm_name + '/' + 'grub/'
@@ -812,39 +814,84 @@ class VMService(CRUDService):
 
         return memory_allocation
 
-    async def __set_guest_vmemory(self, memory):
-        usermem = sysctl.filter('hw.usermem')
-        max_arc = sysctl.filter('vfs.zfs.arc_max')
-        guest_mem_used = await self.get_vmemory_in_use()
-        memory = memory * 1024 * 1024
+    @accepts(Bool('overcommit', default=False))
+    def get_available_memory(self, overcommit):
+        """
+        Get the current maximum amount of available memory to be allocated for VMs.
 
-        # Keep at least 35% of memory from initial arc_max.
-        throttled_arc_max = int(usermem[0].value * 1.35) - usermem[0].value
-        # Get the user memory and keep space for ARC.
-        throttled_user_mem = int(usermem[0].value - throttled_arc_max)
-        # Potential memory used by guests.
-        memory_used = guest_mem_used['RPRD'] + guest_mem_used['RNP']
+        If `overcommit` is true only the current used memory of running VMs will be accounted for.
+        If false all memory (including unused) of runnings VMs will be accounted for.
 
-        vms_memory = memory_used + memory
-        if vms_memory <= throttled_user_mem:
-            if max_arc[0].value > throttled_arc_max:
-                if max(max_arc[0].value - memory, 0) != 0:
-                    self.logger.info('===> Setting ARC FROM: {} TO: {}'.format(max_arc[0].value, max_arc[0].value - memory))
-                    sysctl.filter('vfs.zfs.arc_max')[0].value = max_arc[0].value - memory
-            return True
-        else:
+        This will include memory shrinking ZFS ARC to the minimum.
+
+        Memory is of course a very "volatile" resource, values may change abruptly between a
+        second but I deem it good enough to give the user a clue about how much memory is
+        available at the current moment and if a VM should be allowed to be launched.
+        """
+        # Use 90% of available memory to play safe
+        free = int(psutil.virtual_memory().available * 0.9)
+
+        # swap used space is accounted for used physical memory because
+        # 1. processes (including VMs) can be swapped out
+        # 2. we want to avoid using swap
+        swap_used = psutil.swap_memory().used * sysctl.filter('hw.pagesize')[0].value
+
+        # Difference between current ARC total size and the minimum allowed
+        arc_total = sysctl.filter('kstat.zfs.misc.arcstats.size')[0].value
+        arc_min = sysctl.filter('vfs.zfs.arc_min')[0].value
+        arc_shrink = max(0, arc_total - arc_min)
+
+        vms_memory_used = 0
+        if overcommit is False:
+            # If overcommit is not wanted its verified how much physical memory
+            # the bhyve process is currently using and add the maximum memory its
+            # supposed to have.
+            for vm in self.middleware.call_sync('vm.query'):
+                status = self.middleware.call_sync('vm.status', vm['id'])
+                if status['pid']:
+                    try:
+                        p = psutil.Process(status['pid'])
+                    except psutil.NoSuchProcess:
+                        continue
+                    memory_info = p.memory_info()._asdict()
+                    memory_info.pop('vms')
+                    vms_memory_used += (vm['memory'] * 1024 * 1024) - sum(memory_info.values())
+
+        return max(0, free + arc_shrink - vms_memory_used - swap_used)
+
+    @private
+    async def get_initial_arc_max(self):
+        tunable = await self.middleware.call('tunable.query', [
+            ('type', '=', 'SYSCTL'), ('var', '=', 'vfs.zfs.arc_max')
+        ])
+        if tunable:
+            try:
+                return int(tunable[0]['value'])
+            except ValueError:
+                pass
+        return ZFS_ARC_MAX_INITIAL
+
+    async def __set_guest_vmemory(self, memory, overcommit):
+        memory_available = await self.middleware.call('vm.get_available_memory', overcommit)
+        memory_bytes = memory * 1024 * 1024
+        if memory_bytes > memory_available:
             return False
 
-    async def __init_guest_vmemory(self, id):
-        vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
-        guest_memory = vm[0].get('memory', None)
-        guest_status = await self.status(id)
-        if guest_status.get('state') != 'RUNNING':
-            setvmem = await self.__set_guest_vmemory(guest_memory)
-            if setvmem is False:
-                raise CallError(f'Cannot guarantee memory for guest id: {id}')
-            return setvmem
+        arc_max = sysctl.filter('vfs.zfs.arc_max')[0].value
+        arc_min = sysctl.filter('vfs.zfs.arc_min')[0].value
+        if arc_max > arc_min:
+            new_arc_max = max(arc_min, arc_max - memory_bytes)
+            self.logger.info(f'===> Setting ARC FROM: {arc_max} TO: {new_arc_max}')
+            sysctl.filter('vfs.zfs.arc_max')[0].value = new_arc_max
+        return True
 
+    async def __init_guest_vmemory(self, vm, overcommit):
+        guest_memory = vm.get('memory', None)
+        guest_status = await self.status(vm['id'])
+        if guest_status.get('state') != 'RUNNING':
+            setvmem = await self.__set_guest_vmemory(guest_memory, overcommit)
+            if setvmem is False:
+                raise CallError(f'Cannot guarantee memory for guest {vm["name"]}')
         else:
             raise CallError('bhyve process is running, we won\'t allocate memory')
 
@@ -910,39 +957,56 @@ class VMService(CRUDService):
     async def do_create(self, data):
         """Create a VM."""
         devices = data.pop('devices')
-        pk = await self.middleware.call('datastore.insert', 'vm.vm', data)
+        vm_id = None
+        created_zvols = []
+        try:
+            vm_id = await self.middleware.call('datastore.insert', 'vm.vm', data)
 
-        for device in devices:
-            device['vm'] = pk
-            create_zvol = device['attributes'].pop('create_zvol', False)
-            ds_options = {
-                'name': device['attributes'].pop('zvol_name', None),
-                'type': "VOLUME",
-                'volsize': device['attributes'].pop('zvol_volsize', None)
-            }
+            for device in devices:
+                device['vm'] = vm_id
+                create_zvol = device['attributes'].pop('create_zvol', False)
+                ds_options = {
+                    'name': device['attributes'].pop('zvol_name', None),
+                    'type': "VOLUME",
+                    'volsize': device['attributes'].pop('zvol_volsize', None)
+                }
 
-            if create_zvol and device['dtype'] == 'DISK':
-                if not all(ds_options.values()):
-                    raise CallError(
-                        'Must supply zvol_name, zvol_type and zvol_volsize'
-                        ' when creating a zvol.', errno.EINVAL
+                if create_zvol and device['dtype'] == 'DISK':
+                    if not all(ds_options.values()):
+                        raise CallError(
+                            'Must supply zvol_name, zvol_type and zvol_volsize'
+                            ' when creating a zvol.', errno.EINVAL
+                        )
+
+                    self.logger.debug(
+                        f'===> Creating ZVOL {ds_options["name"]} with volsize'
+                        f' {ds_options["volsize"]}')
+
+                    zvol_blocksize = await self.middleware.call(
+                        'pool.dataset.recommended_zvol_blocksize',
+                        ds_options['name'].split('/', 1)[0]
+                    )
+                    ds_options['volblocksize'] = zvol_blocksize
+
+                    created_zvols.append(
+                        (await self.middleware.call('pool.dataset.create', ds_options))['id']
                     )
 
-                self.logger.debug(
-                    f'===> Creating ZVOL {ds_options["name"]} with volsize'
-                    f' {ds_options["volsize"]}')
+                await self.middleware.call('datastore.insert', 'vm.device', device)
+        except Exception as e:
+            if vm_id:
+                with contextlib.suppress(Exception):
+                    await self.middleware.call('datastore.delete', 'vm.vm', vm_id)
+            for zvol in created_zvols:
+                try:
+                    await self.middleware.call('pool.dataset.delete', zvol)
+                except Exception:
+                    self.logger.warn(
+                        'Failed to delete zvol "%s" on vm.create rollback', zvol, exc_info=True
+                    )
+            raise e
 
-                zvol_blocksize = await self.middleware.call(
-                    'pool.dataset.recommended_zvol_blocksize',
-                    ds_options['name'].split('/', 1)[0]
-                )
-                ds_options['volblocksize'] = zvol_blocksize
-
-                await self.middleware.call('pool.dataset.create', ds_options)
-
-            await self.middleware.call('datastore.insert', 'vm.device', device)
-
-        return pk
+        return vm_id
 
     async def __do_update_devices(self, id, devices):
         if devices and isinstance(devices, list) is True:
@@ -1017,11 +1081,23 @@ class VMService(CRUDService):
             return False
 
     @item_method
-    @accepts(Int('id'))
-    async def start(self, id):
-        """Start a VM."""
-        await self.__init_guest_vmemory(id)
-        await self._manager.start(id)
+    @accepts(Int('id'), Dict('options', Bool('overcommit')))
+    async def start(self, id, options):
+        """Start a VM.
+
+        options.overcommit defaults to false, which means VM will not be allowed to
+        start if there is not enough available memory to hold all VMs configured memory.
+        If true VM will start even if there is not enough memory for all VMs configured memory."""
+
+        vm = await self._get_instance(id)
+
+        overcommit = options.get('options')
+        if overcommit is None:
+            # Perhaps we should have a default config option for VMs?
+            overcommit = False
+
+        await self.__init_guest_vmemory(vm, overcommit=overcommit)
+        await self._manager.start(vm)
 
     @item_method
     @accepts(Int('id'), Bool('force', default=False),)
@@ -1234,14 +1310,15 @@ async def __event_system_ready(middleware, event_type, args):
     if args['id'] != 'ready':
         return
 
-    global ZFS_ARC_MAX
-    max_arc = sysctl.filter('vfs.zfs.arc_max')
-    ZFS_ARC_MAX = max_arc[0].value
+    global ZFS_ARC_MAX_INITIAL
+    ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc_max')[0].value
 
     for vm in await middleware.call('vm.query', [('autostart', '=', True)]):
         await middleware.call('vm.start', vm['id'])
 
 
 def setup(middleware):
+    global ZFS_ARC_MAX_INITIAL
+    ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc_max')[0].value
     asyncio.ensure_future(kmod_load())
     middleware.event_subscribe('system', __event_system_ready)
