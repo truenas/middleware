@@ -71,11 +71,6 @@ class VMManager(object):
 
     async def status(self, id):
         supervisor = self._vm.get(id)
-        if supervisor is None:
-            vm = await self.service.query([('id', '=', id)], {'get': True})
-            self._vm[id] = VMSupervisor(self, vm)
-            supervisor = self._vm.get(id)
-
         if supervisor and await supervisor.running():
             return {
                 'state': 'RUNNING',
@@ -590,6 +585,7 @@ class VMService(CRUDService):
             device.pop('id', None)
             device.pop('vm', None)
             vm['devices'].append(device)
+        vm['status'] = await self.status(vm['id'])
         return vm
 
     @accepts(Int('id'))
@@ -1118,12 +1114,13 @@ class VMService(CRUDService):
     @item_method
     @accepts(Int('id'))
     async def status(self, id):
-        """Get the status of a VM, if it is RUNNING or STOPPED."""
-        try:
-            return await self._manager.status(id)
-        except Exception as err:
-            self.logger.error('===> {0}'.format(err))
-            return False
+        """Get the status of a VM.
+
+        Returns a dict:
+            - state, RUNNING or STOPPED
+            - pid, process id if RUNNING
+        """
+        return await self._manager.status(id)
 
     def fetch_hookreport(self, blocknum, blocksize, totalsize, job, file_name):
         """Hook to report the download progress."""
