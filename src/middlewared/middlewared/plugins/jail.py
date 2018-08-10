@@ -236,7 +236,7 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
     def fetch(self, job, options):
         """Fetches a release or plugin."""
-        fetch_output = {'return_value': [True]}
+        fetch_output = {'error': False, 'install_notes': []}
 
         def progress_callback(content):
             level = content['level']
@@ -244,9 +244,10 @@ class JailService(CRUDService):
 
             if job.progress['percent'] == 90:
                 for split_msg in msg.split('\n'):
-                    fetch_output['return_value'].append(split_msg)
+                    fetch_output['install_notes'].append(split_msg)
 
             if level == 'EXCEPTION':
+                fetch_output['error'] = True
                 raise CallError(msg)
 
             job.set_progress(None, msg)
@@ -257,7 +258,6 @@ class JailService(CRUDService):
                 job.set_progress(75, msg)
             elif 'Command output:' in msg:
                 job.set_progress(90, msg)
-                fetch_output['return_value'] = []  # We don't want True
 
         self.check_dataset_existence()  # Make sure our datasets exist.
         start_msg = None
@@ -276,9 +276,9 @@ class JailService(CRUDService):
         iocage.fetch(**options)
 
         if options['name'] is not None:
-            for split_msg in job.progress['description'].split('\n'):
-                # This is to get the admin URL and such
-                fetch_output['return_value'].append(split_msg)
+            # This is to get the admin URL and such
+            fetch_output['install_notes'] += job.progress['description'].split(
+                '\n')
 
         job.set_progress(100, finaL_msg)
 
