@@ -43,10 +43,10 @@ class VMManager(object):
         self.logger = self.service.logger
         self._vm = {}
 
-    async def start(self, id):
-        vm = await self.service.query([('id', '=', id)], {'get': True})
-        self._vm[id] = VMSupervisor(self, vm)
-        coro = self._vm[id].run()
+    async def start(self, vm):
+        vid = vm['id']
+        self._vm[vid] = VMSupervisor(self, vm)
+        coro = self._vm[vid].run()
         # If run() has not returned in about 3 seconds we assume
         # bhyve process started successfully.
         done = (await asyncio.wait([coro], timeout=3))[0]
@@ -825,8 +825,8 @@ class VMService(CRUDService):
         second but I deem it good enough to give the user a clue about how much memory is
         available at the current moment and if a VM should be allowed to be launched.
         """
-        # Use 90% of free memory to play safe
-        free = int(psutil.virtual_memory().free * 0.9)
+        # Use 90% of available memory to play safe
+        free = int(psutil.virtual_memory().available * 0.9)
 
         # swap used space is accounted for used physical memory because
         # 1. processes (including VMs) can be swapped out
@@ -882,14 +882,13 @@ class VMService(CRUDService):
             sysctl.filter('vfs.zfs.arc_max')[0].value = new_arc_max
         return True
 
-    async def __init_guest_vmemory(self, id, overcommit):
-        vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
-        guest_memory = vm[0].get('memory', None)
-        guest_status = await self.status(id)
+    async def __init_guest_vmemory(self, vm, overcommit):
+        guest_memory = vm.get('memory', None)
+        guest_status = await self.status(vm['id'])
         if guest_status.get('state') != 'RUNNING':
             setvmem = await self.__set_guest_vmemory(guest_memory, overcommit)
             if setvmem is False:
-                raise CallError(f'Cannot guarantee memory for guest id: {id}')
+                raise CallError(f'Cannot guarantee memory for guest {vm["name"]}')
         else:
             raise CallError('bhyve process is running, we won\'t allocate memory')
 
@@ -1080,14 +1079,21 @@ class VMService(CRUDService):
     @item_method
     @accepts(Int('id'), Dict('options', Bool('overcommit')))
     async def start(self, id, options):
-        """Start a VM."""
+        """Start a VM.
+
+        options.overcommit defaults to false, which means VM will not be allowed to
+        start if there is not enough available memory to hold all VMs configured memory.
+        If true VM will start even if there is not enough memory for all VMs configured memory."""
+
+        vm = await self._get_instance(id)
+
         overcommit = options.get('options')
         if overcommit is None:
             # Perhaps we should have a default config option for VMs?
             overcommit = False
 
-        await self.__init_guest_vmemory(id, overcommit=overcommit)
-        await self._manager.start(id)
+        await self.__init_guest_vmemory(vm, overcommit=overcommit)
+        await self._manager.start(vm)
 
     @item_method
     @accepts(Int('id'), Bool('force', default=False),)
