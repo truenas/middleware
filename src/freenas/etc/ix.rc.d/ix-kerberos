@@ -8,47 +8,9 @@
 
 . /etc/rc.freenas
 
-generate_krb5_conf()
-{
-	/usr/local/libexec/nas/generate_krb5_conf.py $*
-}
-
-generate_krb5_keytab()
-{
-	local IFS="|"
-	local kdir="/etc/kerberos"
-
-	mkdir -p "${kdir}"
-	rm -rf "${kdir}"/*
-
-	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
-	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
-
-	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
-	SELECT
-		keytab_name,
-		keytab_file
-	FROM
-		directoryservice_kerberoskeytab
-        " | while read keytab_name keytab_file
-	do
-		echo "${keytab_file}" | /usr/bin/b64decode -r > "${kdir}/${keytab_name}"
-		/usr/sbin/ktutil copy "${kdir}/${keytab_name}" "/etc/krb5.keytab"
-	done
-}
-
 generate_kerberos_files()
 {
-	rm -f /etc/krb5.keytab
-
-	if [ $# -eq 0 ] && activedirectory_enabled
-	then
-		AD_init
-		generate_krb5_conf default "$(AD_get ad_krb_realm)"
-	else
-		generate_krb5_conf $*
-	fi
-	generate_krb5_keytab
+         LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate kerberos > /dev/null
 }
 
 name="ix-kerberos"
@@ -56,4 +18,4 @@ start_cmd='generate_kerberos_files'
 stop_cmd=':'
 
 load_rc_config $name
-run_rc_command $*
+run_rc_command "$1"
