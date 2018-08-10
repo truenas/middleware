@@ -236,9 +236,15 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
     def fetch(self, job, options):
         """Fetches a release or plugin."""
+        fetch_output = {'return_value': [True]}
+
         def progress_callback(content):
             level = content['level']
-            msg = content['message'].replace('\n', '')
+            msg = content['message'].strip('\n')
+
+            if job.progress['percent'] == 90:
+                for split_msg in msg.split('\n'):
+                    fetch_output['return_value'].append(split_msg)
 
             if level == 'EXCEPTION':
                 raise CallError(msg)
@@ -249,6 +255,9 @@ class JailService(CRUDService):
                 job.set_progress(50, msg)
             elif 'Installing plugin packages:' in msg:
                 job.set_progress(75, msg)
+            elif 'Command output:' in msg:
+                job.set_progress(90, msg)
+                fetch_output['return_value'] = []  # We don't want True
 
         self.check_dataset_existence()  # Make sure our datasets exist.
         start_msg = None
@@ -265,9 +274,15 @@ class JailService(CRUDService):
 
         job.set_progress(0, start_msg)
         iocage.fetch(**options)
+
+        if options['name'] is not None:
+            for split_msg in job.progress['description'].split('\n'):
+                # This is to get the admin URL and such
+                fetch_output['return_value'].append(split_msg)
+
         job.set_progress(100, finaL_msg)
 
-        return True
+        return fetch_output
 
     @accepts(Str("resource", enum=["RELEASE", "TEMPLATE", "PLUGIN"]),
              Bool("remote", default=False))
