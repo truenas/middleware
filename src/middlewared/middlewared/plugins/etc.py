@@ -99,6 +99,9 @@ class EtcService(Service):
         'smartd': [
             {'type': 'py', 'path': 'smartd'},
         ],
+        'nginx': [
+            {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
+        ]
     }
 
     class Config:
@@ -137,6 +140,7 @@ class EtcService(Service):
 
             outfile = '/etc/{0}'.format(entry['path'])
             changes = False
+            print('\n\ngoing to write out file')
 
             # Check hash of generated and existing file
             # Do not rewrite if they are the same
@@ -151,6 +155,7 @@ class EtcService(Service):
                         changes = True
 
             if not os.path.exists(outfile):
+                print('file does not exist')
                 with open(outfile, 'w') as f:
                     f.write(rendered)
                 changes = True

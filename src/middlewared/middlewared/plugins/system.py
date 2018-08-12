@@ -397,14 +397,18 @@ class SystemGeneralService(ConfigService):
         self._country_choices = {}
 
     @private
-    def general_system_extend(self, data):
+    async def general_system_extend(self, data):
         keys = data.keys()
         for key in keys:
             if key.startswith('gui'):
                 data['ui_' + key[3:]] = data.pop(key)
 
         data['sysloglevel'] = data['sysloglevel'].upper()
-        data['ui_certificate'] = data['ui_certificate']['id'] if data['ui_certificate'] else None
+        data['ui_certificate'] = await self.middleware.call(
+            'certificate.query',
+            [['id', '=', data['ui_certificate']['id']]],
+            {'get': True}
+        )
         return data
 
     @accepts()
@@ -722,6 +726,7 @@ class SystemGeneralService(ConfigService):
     )
     async def do_update(self, data):
         config = await self.config()
+        config['ui_certificate'] = config['ui_certificate']['id']
         new_config = config.copy()
         new_config.update(data)
 

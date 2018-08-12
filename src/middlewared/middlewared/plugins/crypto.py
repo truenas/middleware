@@ -860,6 +860,7 @@ class CertificateService(CRUDService):
         Int('id')
     )
     async def do_delete(self, id):
+        # TODO: Make sure nginx cert is not deleted
         certificate = await self._get_instance(id)
 
         response = await self.middleware.call(
