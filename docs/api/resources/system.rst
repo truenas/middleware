@@ -736,7 +736,7 @@ Update resource
    :json list stg_guiv6address: List of WebGUI IPv6 Address
    :json integer stg_guiport: WebGUI Port for HTTP
    :json integer stg_guihttpsport: WebGUI Port for HTTPS
-   :json boolean stg_guihttpsredirect: Redirect HTTP (port 80) to HTTPS when only the HTTPS protocol is enabled
+   :json boolean stg_guihttpsredirect: Redirect all HTTP (port 80) requests to HTTPS
    :json string stg_language: webguil language
    :json string stg_kbdmap: see /usr/share/syscons/keymaps/INDEX.keymaps
    :json string stg_timezone: see /usr/share/zoneinfo

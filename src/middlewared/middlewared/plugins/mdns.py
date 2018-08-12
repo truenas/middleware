@@ -738,11 +738,12 @@ class mDNSServiceHTTPThread(mDNSServiceThread):
         super(mDNSServiceHTTPThread, self).__init__(**kwargs)
 
     def setup(self):
-        # TODO: how should these be handled ?
         webui = self.middleware.call_sync('datastore.query', 'system.settings')
         if not webui[0]['stg_guihttpsredirect']:
             self.port = int(webui[0]['stg_guiport'] or 80)
-            self.regtype = "_http._tcp."
+        else:
+            self.port = 6000
+        self.regtype = "_http._tcp."
 
 
 class mDNSServiceHTTPSThread(mDNSServiceThread):
@@ -755,6 +756,7 @@ class mDNSServiceHTTPSThread(mDNSServiceThread):
         if webui[0]['stg_guihttpsredirect']:
             self.port = int(webui[0]['stg_guihttpsport'] or 443)
             self.regtype = "_https._tcp."
+        # TODO: Should we have an else for this to set port to 6000 ?
 
 
 class mDNSServiceMiddlewareThread(mDNSServiceThread):
@@ -766,7 +768,9 @@ class mDNSServiceMiddlewareThread(mDNSServiceThread):
         webui = self.middleware.call_sync('datastore.query', 'system.settings')
         if not webui[0]['stg_guihttpsredirect']:
             self.port = int(webui[0]['stg_guiport'] or 80)
-            self.regtype = "_middleware._tcp."
+        else:
+            self.port = 6000
+        self.regtype = "_middleware._tcp."
 
 
 class mDNSServiceMiddlewareSSLThread(mDNSServiceThread):

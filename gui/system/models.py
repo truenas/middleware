@@ -90,10 +90,9 @@ class Settings(Model):
     )
     stg_guihttpsredirect = models.BooleanField(
         verbose_name=_('WebGUI HTTP -> HTTPS Redirect'),
-        default=True,
+        default=False,
         help_text=_(
-            'Redirect HTTP (port 80) to HTTPS when only the HTTPS protocol is '
-            'enabled'
+            'Redirect all incoming HTTP requests to HTTPS'
         ),
     )
     stg_language = models.CharField(

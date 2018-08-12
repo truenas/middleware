@@ -5,7 +5,6 @@
 
 # PROVIDE: ix-ssl
 # REQUIRE: FILESYSTEMS
-# BEFORE: ix-nginx
 
 . /etc/rc.freenas
 

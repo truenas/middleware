@@ -8,7 +8,7 @@ import ssl
 
 from middlewared.async_validators import validate_country
 from middlewared.schema import accepts, Dict, Int, List, Patch, Ref, Str
-from middlewared.service import CRUDService, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, private, ValidationErrors
 from middlewared.validators import Email, IpAddress, Range
 from OpenSSL import crypto, SSL
 
@@ -857,11 +857,23 @@ class CertificateService(CRUDService):
         return await self._get_instance(id)
 
     @accepts(
-        Int('id')
+        Int('id'),
+        Str('force', default=False)
     )
-    async def do_delete(self, id):
+    async def do_delete(self, id, force=False):
         # TODO: Make sure nginx cert is not deleted
         certificate = await self._get_instance(id)
+
+        if (await self.middleware.call('system.general.config')['ui_certificate']['id']) == id:
+            if not force:
+                raise CallError(
+                    'Selected certificate is being used by FreeNAS for encryption, please select another one'
+                )
+            else:
+                # TODO: We can create another cert with freenas_default name,
+                # probably calling the setup method from here.
+                # The case should be handled when the cert being deleted is named "freenas_default"
+                pass
 
         response = await self.middleware.call(
             'datastore.delete',

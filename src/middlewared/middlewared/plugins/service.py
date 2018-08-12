@@ -944,12 +944,12 @@ class ServiceService(CRUDService):
         await self._service("snmp-agent", "start", quiet=True, **kwargs)
 
     async def _restart_http(self, **kwargs):
-        await self._service("ix-nginx", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "nginx")
         await self._service("ix_register", "reload", **kwargs)
         await self._service("nginx", "restart", **kwargs)
 
     async def _reload_http(self, **kwargs):
-        await self._service("ix-nginx", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "nginx")
         await self._service("ix_register", "reload", **kwargs)
         await self._service("nginx", "reload", **kwargs)
 

@@ -11,48 +11,9 @@
 
 
 NGINX_PLUGINS_CONF="${HTTPDDIR}/plugins.conf"
-NGINX_FASTCGI_PARAMS="${HTTPDDIR}/fastcgi_params"
 
-get_ssl_certificate_name()
-{
-	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
-	SELECT
-		sc.cert_name
-	FROM
-		system_settings
-	LEFT OUTER JOIN
-		system_certificate as sc
-	ON
-		(stg_guicertificate_id = sc.id)
-	ORDER BY
-		-system_settings.id
-	LIMIT
-		1
-	"
-}
 
-get_ssl_certificate()
-{
-	local certname
-
-	certname="$(get_ssl_certificate_name)"
-	if [ -n "${certname}" ]
-	then
-		echo "${SSLDIR}/${certname}.crt"
-	fi
-}
-
-get_ssl_privatekey()
-{
-	local certname
-
-	certname="$(get_ssl_certificate_name)"
-	if [ -n "${certname}" ]
-	then
-		echo "${SSLDIR}/${certname}.key"
-	fi
-}
-
+# TODO: MOVE THIS TO MIDDLEWARED AS WELL
 generate_plugins_conf()
 {
 	local IFS="|"
@@ -138,6 +99,7 @@ __EOF__
 
 	done
 }
+<<<<<<< HEAD
 
 
 generate_nginx_conf()
@@ -563,20 +525,12 @@ get_nginx_settings()
 		done
 	)
 
-<<<<<<< HEAD
 	local proto=$(echo ${settings}|cut -f1 -d"|" -s|tr A-Z a-z)
 	local addr="$(echo ${settings}|cut -f2 -d"|" -s| tr '[\[,\]\"]' ' ' )"
 	local addr6="$(echo ${settings}|cut -f3 -d"|" -s| tr '[\[,\]\"]' ' ' )"
 	local port=$(echo ${settings}|cut -f4 -d"|" -s)
 	local httpsport=$(echo ${settings}|cut -f5 -d"|" -s)
 	local httpsredirect=$(echo ${settings}|cut -f6 -d"|" -s)
-=======
-	local addr=$(echo ${settings}|cut -f1 -d"|" -s)
-	local addr6=$(echo ${settings}|cut -f2 -d"|" -s)
-	local port=$(echo ${settings}|cut -f3 -d"|" -s)
-	local httpsport=$(echo ${settings}|cut -f4 -d"|" -s)
-	local httpsredirect=$(echo ${settings}|cut -f5 -d"|" -s)
->>>>>>> Default protocl for freenas set to https+https. Still some todos left to cover and the code needs to be refined
 
 	: ${addr:="0.0.0.0"}
 	: ${addr6:="::"}
@@ -657,3 +611,5 @@ stop_cmd=':'
 
 load_rc_config $name
 run_rc_command "$1"
+=======
+>>>>>>> Winding up some todos and adding some other todos left for this ticket
