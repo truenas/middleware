@@ -2,12 +2,12 @@ import logging
 import os
 import base64
 
-from middlewared.utils import Popen
+from middlewared.utils import run
 
 logger = logging.getLogger(__name__)
 kdir = "/etc/kerberos"
 keytabfile = "/etc/krb5.keytab"
-ktutil_cmd = "/usr/sbin/ktutil copy"
+ktutil_cmd = "/usr/sbin/ktutil"
 
 
 async def write_keytab(db_keytabname, db_keytabfile):
@@ -19,7 +19,13 @@ async def write_keytab(db_keytabname, db_keytabfile):
     with open(temp_keytab, "wb") as f:
         f.write(db_keytabfile)
 
-    await Popen(f'{ktutil_cmd} {temp_keytab} {keytabfile}', shell=True)
+    ktutil = await run([ktutil_cmd, "copy", temp_keytab, keytabfile], check=False)
+    ktutil_errs = ktutil.stderr.decode()
+
+    if ktutil_errs:
+        logger.debug(f'Keytab generation failed with error: {ktutil_errs}')
+
+    os.remove(temp_keytab)
 
 
 async def render(service, middleware):
