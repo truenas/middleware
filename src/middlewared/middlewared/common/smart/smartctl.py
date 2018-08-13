@@ -46,10 +46,6 @@ async def get_smartctl_args(disk, device):
         port = units.get(channel_no, -1)
         return [f"/dev/{driver}{controller_id}", "-d", f"3ware,{port}"]
 
-    # LSI MegaRAID 6Gb/s and 12Gb/s SAS+SATA RAID controller (not supported)
-    if driver == "mrsas":
-        return
-
     args = [f"/dev/{disk}"]
     p = await run(["smartctl", "-i"] + args, stderr=subprocess.STDOUT, check=False, encoding="utf8")
     if "Unknown USB bridge" in p.stdout:
