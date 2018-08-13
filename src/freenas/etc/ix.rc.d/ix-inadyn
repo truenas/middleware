@@ -52,9 +52,9 @@ generate_inadyn_real()
                 echo "    username = ${ddns_username}"
             fi
 
-            ddns_password=$(/usr/local/bin/midclt call notifier.pwenc_decrypt "${ddns_password}")
+            ddns_password=$(/usr/local/bin/midclt call notifier.pwenc_decrypt "${ddns_password}" | sed "s/'/\\'/g")
             if [ -n "${ddns_password}" ]; then
-                echo "    password = ${ddns_password}"
+                echo "    password = '${ddns_password}'"
             fi
 
             ddns_domain=$(echo "$ddns_domain" | awk 'BEGIN { FS="[ \t,;]*"; OFS="\", \""; } { $1=$1; print $0; }')
