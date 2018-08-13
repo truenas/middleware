@@ -563,7 +563,7 @@ _gen_conf()
 	_bool_svcconfig apache24_enable webdav
 	_bool_svcconfig netdata_enable netdata
 	_bool_svcconfig postgresql_enable asigra
-	_bool_svcconfig dssystem asigra
+	_bool_svcconfig dssystem_enable asigra
 
 	echo "postgresql_data=\"/usr/local/pgsql/data\""
 	echo "postgresql_user=\"pgsql\""

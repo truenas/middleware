@@ -386,7 +386,6 @@ class ServiceService(CRUDService):
         await self._start_asigra(**kwargs)
 
     async def _started_asigra(self, **kwargs):
-        #if await self._system('/usr/sbin/service dssystem onestatus') != 0:
         if await self._service("dssystem", "status", force=True, **kwargs) != 0:
             return False, []
         return True, []
