@@ -173,3 +173,12 @@ class NetdataView(TreeNode):
     type = u'object'
     view = u'services_netdata'
     icon = u'NetdataIcon'
+
+
+class AsigraView(TreeNode):
+
+    gname = 'Asigra'
+    name = _('Asigra')
+    type = u'object'
+    view = u'services_asigra'
+    icon = u'AsigraIcon'

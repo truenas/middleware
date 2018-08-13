@@ -101,7 +101,8 @@ class ServiceService(CRUDService):
         'smartd': ServiceDefinition('smartd', 'smartd-daemon', '/var/run/smartd-daemon.pid'),
         'webshell': ServiceDefinition(None, '/var/run/webshell.pid'),
         'webdav': ServiceDefinition('httpd', '/var/run/httpd.pid'),
-        'netdata': ServiceDefinition('netdata', '/var/db/netdata/netdata.pid')
+        'netdata': ServiceDefinition('netdata', '/var/db/netdata/netdata.pid'),
+        'asigra': ServiceDefinition('asigra', '/var/run/dssystem.pid')
     }
 
     @filterable
@@ -378,6 +379,26 @@ class ServiceService(CRUDService):
                 ]
         return False, []
 
+    async def _start_asigra(self, **kwargs):
+        await self.middleware.call('asigra.setup_postgresql')
+        await self._service("postgresql", "start", force=True, **kwargs)
+        await self.middleware.call('asigra.setup_asigra')
+        await self.middleware.call('etc.generate', 'asigra')
+        await self._service("dssystem", "start", force=True, **kwargs)
+
+    async def _stop_asigra(self, **kwargs):
+        await self._service("dssystem", "stop", force=True, **kwargs)
+        await self._service("postgresql", "stop", force=True, **kwargs)
+
+    async def _restart_asigra(self, **kwargs):
+        await self._stop_asigra(**kwargs)
+        await self._start_asigra(**kwargs)
+
+    async def _started_asigra(self, **kwargs):
+        if await self._service("dssystem", "status", force=True, **kwargs) != 0:
+            return False, []
+        return True, []
+
     async def _start_webdav(self, **kwargs):
         await self._service("ix-apache", "start", force=True, **kwargs)
         await self._service("apache24", "start", **kwargs)
@@ -407,7 +428,7 @@ class ServiceService(CRUDService):
                 os.kill(int(pid), signal.SIGTERM)
                 time.sleep(0.2)
                 os.kill(int(pid), signal.SIGKILL)
-        except:
+        except Exception:
             pass
         await self._system("ulimit -n 1024 && /usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
