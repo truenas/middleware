@@ -2403,3 +2403,7 @@ class Asigra(Model):
         verbose_name=_('Path'),
         blank=True
     )
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = "AsigraIcon"
