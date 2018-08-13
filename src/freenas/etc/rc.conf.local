@@ -575,6 +575,29 @@ _watchdogd_config()
 	fi
 }
 
+_asigra_config()
+{
+	_bool_svcconfig postgresql_enable asigra
+	_bool_svcconfig dssystem_enable asigra
+
+	local postgresql_path=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		SELECT
+			asigra_postgresql_path
+		FROM
+			services_asigra
+		ORDER BY
+			-id
+		LIMIT 1
+	")
+	if [ -z "${postgresql_path}" ]
+	then
+		postgresql_path="/usr/local/pgsql/data"
+	fi
+
+	echo "postgresql_data=\"${postgresql_path}\""
+	echo "postgresql_user=\"pgsql\""
+}
+
 _gen_conf()
 {
 	local failover_status="" failover_licensed=0
@@ -611,7 +634,6 @@ _gen_conf()
 	_bool_svcconfig apache24_enable webdav
 	_bool_svcconfig netdata_enable netdata
 
-
 	_bool_svcconfig samba_server_enable cifs
 	if ! dirsrv_enabled domaincontroller ; then
 		_bool_svcconfig smbd_enable cifs
@@ -623,6 +645,7 @@ _gen_conf()
 		_nis_config
 	fi
 
+	_asigra_config
 	_snmp_config
 
 	_ldap_config

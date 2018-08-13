@@ -1409,3 +1409,77 @@ class S3Form(MiddlewareModelForm, ModelForm):
             data['storage_path'] = data.pop('disks')
         data.pop('mode', None)
         return data
+
+
+#class AsigraForm(MiddlewareModelForm, ModelForm):
+class AsigraForm(ModelForm):
+
+#    middleware_attr_prefix = "asigra_"
+#    middleware_attr_schema = "asigra"
+#    middleware_plugin = "asigra"
+#    is_singletone = True
+
+#    asigra_bindip = forms.ChoiceField(
+#        label=models.Asigra._meta.get_field("asigra_bindip").verbose_name,
+#        help_text=models.Asigra._meta.get_field("asigra_bindip").help_text,
+#        widget=forms.widgets.FilteringSelect(),
+#        required=False,
+#        choices=(),
+#    )
+
+    class Meta:
+        fields = '__all__'
+        model = models.Asigra
+        exclude = ['asigra_bindip']
+
+    def __init__(self, *args, **kwargs):
+        super(AsigraForm, self).__init__(*args, **kwargs)
+
+        # XXX
+        # At some point, we want to be able to change a path of necessary. This,
+        # coupled with the save() method accomplish that, but the asigra
+        # database needs to be updated for this to work. Keeping this in
+        # for now until we get the go ahead to do this from asigra.
+        # XXX
+
+        self.saved_asigra_path = None
+        if self.instance.id:
+            self.saved_asigra_path = self.instance.asigra_path
+            if self.instance.asigra_path:
+                self.fields["asigra_path"].widget.attrs["readonly"] = True
+
+#        if self.data and self.data.get('asigra_bindip'):
+#            if ',' in self.data['asigra_bindip']:
+#                self.data = self.data.copy()
+#                self.data.setlist(
+#                    'asigra_bindip',
+#                    self.data['asigra_bindip'].split(',')
+#                )
+#        self.fields['asigra_bindip'].choices = list(choices.IPChoices(noloopback=False))
+#        if self.instance.id and self.instance.asigra_bindip:
+#            bindips = []
+#            for ip in self.instance.asigra_bindip:
+#                bindips.append(ip)
+#
+#            self.fields['asigra_bindip'].initial = (bindips)
+#        else:
+#            self.fields['asigra_bindip'].initial = ('')
+
+    def clean_asigra_path(self):
+        asigra_path = self.cleaned_data.get("asigra_path")
+        if not asigra_path:
+            raise forms.ValidationError("Path can't be empty!")
+        if not os.path.exists(asigra_path):
+            raise forms.ValidationError("Path does not exist!")
+        return asigra_path
+
+    def save(self):
+        changed = False
+        if self.instance.id and (self.saved_asigra_path != self.instance.asigra_path):
+            changed = True
+
+        obj = super(AsigraForm, self).save()
+        if changed:
+            notifier().restart("asigra") 
+
+        return obj
