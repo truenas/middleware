@@ -180,20 +180,22 @@ class Application(object):
                 message['method'],
                 self.middleware.dump_args(message.get('params', []), method_name=message['method'])
             ), exc_info=True)
+            asyncio.ensure_future(self.__crash_reporting(sys.exc_info()))
 
-            if self.middleware.crash_reporting.is_disabled():
-                self.logger.debug('[Crash Reporting] is disabled using sentinel file.')
-            elif self.middleware.crash_reporting_semaphore.locked():
-                self.logger.debug('[Crash Reporting] skipped due too many running instances')
-            else:
-                async with self.middleware.crash_reporting_semaphore:
-                    extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-                    await self.middleware.run_in_io_thread(
-                        self.middleware.crash_reporting.report,
-                        sys.exc_info(),
-                        None,
-                        extra_log_files,
-                    )
+    async def __crash_reporting(self, exc_info):
+        if self.middleware.crash_reporting.is_disabled():
+            self.logger.debug('[Crash Reporting] is disabled using sentinel file.')
+        elif self.middleware.crash_reporting_semaphore.locked():
+            self.logger.debug('[Crash Reporting] skipped due too many running instances')
+        else:
+            async with self.middleware.crash_reporting_semaphore:
+                extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
+                await self.middleware.run_in_io_thread(
+                    self.middleware.crash_reporting.report,
+                    exc_info,
+                    None,
+                    extra_log_files,
+                )
 
     async def subscribe(self, ident, name):
 
