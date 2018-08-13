@@ -94,28 +94,6 @@ async def test__get_smartctl_args__twa():
 
 
 @pytest.mark.asyncio
-async def test__get_smartctl_args__mrsas_bus_0():
-    assert await get_smartctl_args("ada0", {
-        "driver": "mrsas",
-        "controller_id": 1,
-        "bus": 0,
-        "channel_no": 2,
-        "lun_id": 10,
-    }) is None
-
-
-@pytest.mark.asyncio
-async def test__get_smartctl_args__mrsas_bus_1():
-    assert await get_smartctl_args("ada0", {
-        "driver": "mrsas",
-        "controller_id": 1,
-        "bus": 1,
-        "channel_no": 2,
-        "lun_id": 10,
-    }) == ["/dev/ada0"]
-
-
-@pytest.mark.asyncio
 async def test_get_disk__unknown_usb_bridge():
     with patch("middlewared.common.smart.smartctl.run") as run:
         run.return_value = asyncio.Future()
