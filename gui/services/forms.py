@@ -2027,3 +2027,43 @@ class S3Form(ModelForm):
             # Currently not working because of python byte string
             notifier().winacl_reset(path=path, owner="minio", group="minio")
         return obj
+
+
+#class AsigraForm(MiddlewareModelForm, ModelForm):
+class AsigraForm(ModelForm):
+
+    #middleware_attr_prefix = "asigra_"
+    #middleware_attr_schema = "asigra"
+    #middleware_plugin = "asigra"
+    #is_singletone = True
+
+    asigra_bindip = forms.ChoiceField(
+        label=models.Asigra._meta.get_field("asigra_bindip").verbose_name,
+        help_text=models.Asigra._meta.get_field("asigra_bindip").help_text,
+        widget=forms.widgets.FilteringSelect(),
+        required=False,
+        choices=(),
+    )
+
+    class Meta:
+        fields = '__all__'
+        model = models.Asigra
+
+    def __init__(self, *args, **kwargs):
+        super(AsigraForm, self).__init__(*args, **kwargs)
+        if self.data and self.data.get('asigra_bindip'):
+            if ',' in self.data['asigra_bindip']:
+                self.data = self.data.copy()
+                self.data.setlist(
+                    'asigra_bindip',
+                    self.data['asigra_bindip'].split(',')
+                )
+        self.fields['asigra_bindip'].choices = list(choices.IPChoices(noloopback=False))
+        if self.instance.id and self.instance.asigra_bindip:
+            bindips = []
+            for ip in self.instance.asigra_bindip:
+                bindips.append(ip)
+
+            self.fields['asigra_bindip'].initial = (bindips)
+        else:
+            self.fields['asigra_bindip'].initial = ('')

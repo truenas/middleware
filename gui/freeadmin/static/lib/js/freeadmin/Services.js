@@ -56,7 +56,8 @@ define([
       'tftp': gettext('TFTP'),
       'ups': gettext('UPS'),
       'webdav': gettext('WebDAV'),
-      'netdata': gettext('Netdata')
+      'netdata': gettext('Netdata'),
+      'asigra': gettext('Asigra')
     }
 
     var Service = declare("freeadmin.Service", [ _Widget, _Templated ], {

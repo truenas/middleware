@@ -42,6 +42,7 @@ from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
 from freenasUI.services.forms import (
+    AsigraForm,
     CIFSForm,
     S3Form
 )
@@ -78,6 +79,11 @@ def core(request):
         afp = models.AFP.objects.order_by("-id")[0]
     except IndexError:
         afp = models.AFP.objects.create()
+
+    try:
+        models.Asigra.objects.order_by("-id")[0]
+    except IndexError:
+        models.Asigra.objects.create()
 
     try:
         models.CIFS.objects.order_by("-id")[0]
@@ -167,6 +173,7 @@ def core(request):
             'webdav': webdav.get_edit_url(),
             'domaincontroller': domaincontroller.get_edit_url(),
             'netdata': reverse('services_netdata'),
+            'asigra': reverse('services_asigra'),
         }),
         'disabled': json.dumps(disabled),
     })
@@ -376,3 +383,37 @@ def services_netdata(request):
                   {
                       'started': started
                   })
+
+def services_asigra(request):
+    try:
+        asigra = models.Asigra.objects.all()[0]
+    except Exception:
+        asigra = models.Asigra()
+
+    if request.method == "POST":
+        form = AsigraForm(request.POST, instance=s3)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Asigra successfully edited.")
+            )
+        else:
+            return JsonResp(request, form=form)
+
+    else:
+        form = AsigraForm(instance=asigra)
+
+    asigra_ui_url = "https://www.google.com"
+    #asigra_ui_url = "http://%s:%s" % (asigra.asigra_bindip, asigra.asigra_bindport)
+    #if asigra.asigra_bindip == "0.0.0.0":
+    #    asigra_ui_url = "http://%s:%s" % (request.META['HTTP_HOST'].split(':')[0], asigra.asigra_bindport)
+
+    asigra_started = notifier().started('asigra')
+
+    return render(request, 'services/asigra.html', {
+        'form': form,
+        'asigra': asigra,
+        'asigra_started': asigra_started,
+        'asigra_ui_url': asigra_ui_url
+    })

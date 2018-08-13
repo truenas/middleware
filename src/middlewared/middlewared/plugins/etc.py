@@ -71,7 +71,10 @@ class EtcService(Service):
         #    {'type': 'mako', 'path': 'krb5.conf'},
         #    {'type': 'mako', 'path': 'krb5.keytab'},
         # ],
-
+        'asigra': [
+            {'type': 'mako', 'path': 'dssys.cfg'},
+            {'type': 'mako', 'path': 'libmap.conf'},
+        ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
         ],
