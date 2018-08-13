@@ -2293,3 +2293,26 @@ class NetDataGlobalSettings(Model):
 
     class FreeAdmin:
         deletable = False
+
+
+class Asigra(Model):
+    asigra_bindip = MultiSelectField(
+        verbose_name=_("Bind IP Addresses"),
+        help_text=_("IP addresses to bind to. If none specified, all "
+                    "available interfaces that are up will be listened on."),
+        max_length=250,
+        blank=True,
+        null=True,
+    )
+    asigra_path = PathField(
+        verbose_name=_('Path'),
+        blank=True
+    )
+    asigra_postgresql_path = PathField(
+        verbose_name=_('PG Path'),
+        blank=True
+    )
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = "AsigraIcon"
