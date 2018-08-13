@@ -3,9 +3,9 @@
 {% block buttons_extra %}
 {% if asigra_started %}
 <div data-dojo-type="dijit/form/Button">
-    {% trans "UI" %}
+    {% trans "DS-Operator" %}
     <script type="dojo/method" data-dojo-event="onClick">
-        window.open("{{ asigra_ui_url }}")
+        window.open("{{ asigra_dsoperator_url }}")
     </script>
 </div>
 {% endif %}

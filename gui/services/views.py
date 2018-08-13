@@ -23,11 +23,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import os
 import json
 import logging
 import sysctl
 
 from django.core.urlresolvers import reverse
+from django.http import StreamingHttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 
@@ -48,6 +50,8 @@ from freenasUI.services.forms import (
 )
 from freenasUI.system.models import Tunable
 from freenasUI.support.utils import fc_enabled
+
+from wsgiref.util import FileWrapper
 
 log = logging.getLogger("services.views")
 
@@ -404,16 +408,30 @@ def services_asigra(request):
     else:
         form = AsigraForm(instance=asigra)
 
-    asigra_ui_url = "https://www.google.com"
-    #asigra_ui_url = "http://%s:%s" % (asigra.asigra_bindip, asigra.asigra_bindport)
-    #if asigra.asigra_bindip == "0.0.0.0":
-    #    asigra_ui_url = "http://%s:%s" % (request.META['HTTP_HOST'].split(':')[0], asigra.asigra_bindport)
-
+    asigra_dsoperator_url = reverse('services_asigra_dsoperator')
     asigra_started = notifier().started('asigra')
 
     return render(request, 'services/asigra.html', {
         'form': form,
         'asigra': asigra,
         'asigra_started': asigra_started,
-        'asigra_ui_url': asigra_ui_url
+        'asigra_dsoperator_url': asigra_dsoperator_url
     })
+
+def services_asigra_dsoperator(request):
+    filename = "/usr/local/www/asigra/DSOP.jnlp"
+    wrapper = FileWrapper(open(filename, 'rb'))
+
+    response = StreamingHttpResponse(
+        wrapper, content_type='application/octet-stream'
+    )
+
+    response['Content-Length'] = os.path.getsize(filename)
+    response['Content-Disposition'] = (
+        'attachment; filename="{}"'.format(os.path.basename(filename))
+    )
+
+    try:
+        return response
+    finally:
+        pass
