@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# PROVIDE: ix-asigra
+# REQUIRE: FILESYSTEMS
+# BEFORE: postgresql dssystem
+
+. /etc/rc.freenas
+
+asigra_start()
+{
+	if srv_enabled asigra
+	then
+		LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call asigra.setup_postgresql
+		LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call asigra.setup_asigra
+	fi
+}
+
+name="ix-asigra"
+start_cmd="asigra_start"
+
+load_rc_config ${name}
+run_rc_command "$1"
