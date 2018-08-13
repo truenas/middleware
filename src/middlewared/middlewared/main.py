@@ -183,11 +183,17 @@ class Application(object):
 
             if self.middleware.crash_reporting.is_disabled():
                 self.logger.debug('[Crash Reporting] is disabled using sentinel file.')
+            elif self.middleware.crash_reporting_semaphore.locked():
+                self.logger.debug('[Crash Reporting] skipped due too many running instances')
             else:
-                extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-                asyncio.ensure_future(self.middleware.run_in_thread(
-                    self.middleware.crash_reporting.report, sys.exc_info(), None, extra_log_files
-                ))
+                async with self.middleware.crash_reporting_semaphore:
+                    extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
+                    await self.middleware.run_in_io_thread(
+                        self.middleware.crash_reporting.report,
+                        sys.exc_info(),
+                        None,
+                        extra_log_files,
+                    )
 
     async def subscribe(self, ident, name):
 
@@ -711,6 +717,7 @@ class Middleware(object):
     def __init__(self, loop_monitor=True, overlay_dirs=None, debug_level=None):
         self.logger = logger.Logger('middlewared', debug_level).getLogger()
         self.crash_reporting = logger.CrashReporting()
+        self.crash_reporting_semaphore = asyncio.Semaphore(value=2)
         self.loop_monitor = loop_monitor
         self.overlay_dirs = overlay_dirs or []
         self.__loop = None

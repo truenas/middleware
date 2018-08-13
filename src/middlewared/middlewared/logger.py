@@ -6,6 +6,7 @@ from logging.config import dictConfig
 from .utils import sw_version, sw_version_is_stable
 
 from raven import Client
+from raven.transport.http import HTTPTransport
 from raven.transport.threaded import ThreadedHTTPTransport
 
 # markdown debug is also considered useless
@@ -33,9 +34,11 @@ class CrashReporting(object):
     Pseudo-Class for remote crash reporting
     """
 
-    def __init__(self, transport='threaded'):
+    def __init__(self, transport='sync'):
         if transport == 'threaded':
             transport = ThreadedHTTPTransport
+        elif transport == 'sync':
+            transport = HTTPTransport
         else:
             raise ValueError(f'Unknown transport: {transport}')
 
@@ -49,7 +52,9 @@ class CrashReporting(object):
             install_sys_hook=False,
             install_logging_hook=False,
             string_max_length=10240,
+            raise_send_errors=True,
             release=sw_version(),
+            transport=transport,
         )
 
     def is_disabled(self):
@@ -98,7 +103,7 @@ class CrashReporting(object):
         try:
             self.client.captureException(exc_info=exc_info, data=data, extra=extra_data)
         except Exception:
-            pass  # We don't care about the exception
+            self.logger.debug('Failed to send crash report', exc_info=True)
 
 
 class LoggerFormatter(logging.Formatter):
