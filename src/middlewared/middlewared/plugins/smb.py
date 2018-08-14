@@ -82,10 +82,10 @@ class SMBService(SystemServiceService):
                 return False
 
         proc = await Popen(
-            '/usr/bin/iconv -l'.split(),
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8'
+            ['/usr/bin/iconv', '-l'],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        output = (await proc.communicate())[0].decode('utf8')
+        output = (await proc.communicate())[0].decode()
 
         encodings = set()
         for line in output.splitlines():
