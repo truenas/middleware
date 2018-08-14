@@ -2050,8 +2050,12 @@ class AsigraForm(ModelForm):
         model = models.Asigra
         exclude = ['asigra_bindip']
 
-#    def __init__(self, *args, **kwargs):
-#        super(AsigraForm, self).__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(AsigraForm, self).__init__(*args, **kwargs)
+        self.saved_asigra_path = None
+        if self.instance.id:
+            self.saved_asigra_path = self.instance.asigra_path
+
 #        if self.data and self.data.get('asigra_bindip'):
 #            if ',' in self.data['asigra_bindip']:
 #                self.data = self.data.copy()
@@ -2068,3 +2072,28 @@ class AsigraForm(ModelForm):
 #            self.fields['asigra_bindip'].initial = (bindips)
 #        else:
 #            self.fields['asigra_bindip'].initial = ('')
+
+    def clean_asigra_path(self):
+        asigra_path = self.cleaned_data.get("asigra_path")
+        if not asigra_path:
+            raise forms.ValidationError("Path can't be empty!")
+        if not os.path.exists(asigra_path):
+            raise forms.ValidationError("Path does not exist!")
+        return asigra_path
+
+    def save(self):
+        changed = False
+        if self.instance.id and (self.saved_asigra_path != self.instance.asigra_path):
+            changed = True
+
+        obj = super(AsigraForm, self).save()
+        if changed:
+            try:
+                with client as c:
+                    c.call('etc.generate', 'asigra')
+                    notifier().restart("asigra") 
+
+            except Exception as e:
+                log.error("Can't generate asigra config: {}".format(e))
+
+        return obj

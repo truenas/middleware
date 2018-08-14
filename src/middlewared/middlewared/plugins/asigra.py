@@ -32,7 +32,6 @@ class AsigraService(Service):
 
     # Use etc plugin for this?
     async def setup_postgresql(self):
-
         # pgsql user home must exist before we can initialize postgresql data
         if not os.path.exists(self.pg_home):
             os.mkdir(self.pg_home, mode=0o750)
@@ -266,7 +265,6 @@ class AsigraService(Service):
         return True
 
     async def setup_asigra(self):
-
         self.logger.debug("Checking to see if database exists")
         if not await self.asigra_database_exists():
 
