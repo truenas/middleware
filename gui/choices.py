@@ -716,7 +716,11 @@ ZFS_DEDUP = (
     ('verify', _('Verify')),
     ('off', _('Off')))
 
-ZFS_DEDUP_INHERIT = (('inherit', _('Inherit'))) + ZFS_DEDUP
+ZFS_DEDUP_INHERIT = (
+    ('inherit', _('Inherit')),
+    ('on', _('On')),
+    ('verify', _('Verify')),
+    ('off', _('Off')))
 
 TASK_INTERVAL = (
     (5, _("%(minutes)s minutes") % {'minutes': '5'}),
