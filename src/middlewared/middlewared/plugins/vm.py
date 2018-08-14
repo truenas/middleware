@@ -124,7 +124,7 @@ class VMSupervisor(object):
         for device in self.vm['devices']:
             if device['dtype'] == 'DISK' or device['dtype'] == 'RAW':
 
-                disk_sector_size = device['attributes'].get('sectorsize', 0)
+                disk_sector_size = int(device['attributes'].get('sectorsize', 0))
                 if disk_sector_size > 0:
                     sectorsize_args = ',sectorsize=' + str(disk_sector_size)
                 else:
