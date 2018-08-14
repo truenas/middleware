@@ -2052,9 +2052,19 @@ class AsigraForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(AsigraForm, self).__init__(*args, **kwargs)
+
+        # XXX
+        # At some point, we want to be able to change a path of necessary. This,
+        # coupled with the save() method accomplish that, but the asigra
+        # database needs to be updated for this to work. Keeping this in
+        # for now until we get the go ahead to do this from asigra.
+        # XXX
+
         self.saved_asigra_path = None
         if self.instance.id:
             self.saved_asigra_path = self.instance.asigra_path
+            if self.instance.asigra_path:
+                self.fields["asigra_path"].widget.attrs["readonly"] = True
 
 #        if self.data and self.data.get('asigra_bindip'):
 #            if ',' in self.data['asigra_bindip']:
