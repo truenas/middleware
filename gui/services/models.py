@@ -103,13 +103,11 @@ class CIFS(Model):
     )
     cifs_srv_doscharset = models.CharField(
         max_length=120,
-        choices=choices.CHARSET(choices.DOSCHARSET_CHOICES),
         default="CP437",
         verbose_name=_("DOS charset"),
     )
     cifs_srv_unixcharset = models.CharField(
         max_length=120,
-        choices=choices.CHARSET(choices.UNIXCHARSET_CHOICES),
         default="UTF-8",
         verbose_name=_("UNIX charset"),
     )

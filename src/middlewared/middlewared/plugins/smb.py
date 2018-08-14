@@ -3,9 +3,12 @@ from middlewared.service import (SystemServiceService, ValidationErrors,
                                  accepts, private, CRUDService)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
+from middlewared.utils import Popen
 
-import re
+import codecs
 import os
+import re
+import subprocess
 
 
 LOGLEVEL_MAP = {
@@ -43,6 +46,62 @@ class SMBService(SystemServiceService):
     async def __validate_netbios_name(self, name):
         return RE_NETBIOSNAME.match(name)
 
+    async def doscharset_choices(self):
+        return await self.generate_choices(
+            ['CP437', 'CP850', 'CP852', 'CP866', 'CP932', 'CP949', 'CP950', 'CP1026', 'CP1251', 'ASCII']
+        )
+
+    async def unixcharset_choices(self):
+        return await self.generate_choices(
+            ['UTF-8', 'ISO-8859-1', 'ISO-8859-15', 'GB2312', 'EUC-JP', 'ASCII']
+        )
+
+    @private
+    async def generate_choices(self, initial):
+        def key_cp(encoding):
+            cp = re.compile("(?P<name>CP|GB|ISO-8859-|UTF-)(?P<num>\d+)").match(encoding)
+            if cp:
+                return tuple((cp.group('name'), int(cp.group('num'), 10)))
+            else:
+                return tuple((encoding, float('inf')))
+
+        charset = await self.common_charset_choices()
+        return {
+            v: v for v in [
+                c for c in sorted(charset, key=key_cp) if c not in initial
+            ] + initial
+        }
+
+    @private
+    async def common_charset_choices(self):
+
+        def check_codec(encoding):
+            try:
+                return encoding.upper() if codecs.lookup(encoding) else False
+            except LookupError:
+                return False
+
+        proc = await Popen(
+            '/usr/bin/iconv -l'.split(),
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8'
+        )
+        output = (await proc.communicate())[0].decode('utf8')
+
+        encodings = set()
+        for line in output.splitlines():
+            enc = [e for e in line.split() if check_codec(e)]
+
+            if enc:
+                cp = enc[0]
+                for e in enc:
+                    if e in ('UTF-8', 'ASCII', 'GB2312', 'HZ-GB-2312', 'CP1361'):
+                        cp = e
+                        break
+
+                encodings.add(cp)
+
+        return encodings
+
     @accepts(Dict(
         'smb_update',
         Str('netbiosname'),
@@ -50,13 +109,8 @@ class SMBService(SystemServiceService):
         Str('netbiosalias'),
         Str('workgroup'),
         Str('description'),
-        Str('doscharset', enum=[
-            'CP437', 'CP850', 'CP852', 'CP866', 'CP932', 'CP949', 'CP950', 'CP1026', 'CP1251',
-            'ASCII',
-        ]),
-        Str('unixcharset', enum=[
-            'UTF-8', 'ISO-8859-1', 'ISO-8859-15', 'GB2312', 'EUC-JP', 'ASCII',
-        ]),
+        Str('doscharset'),
+        Str('unixcharset'),
         Str('loglevel', enum=['NONE', 'MINIMUM', 'NORMAL', 'FULL', 'DEBUG']),
         Bool('syslog'),
         Bool('localmaster'),
@@ -83,6 +137,13 @@ class SMBService(SystemServiceService):
         new.update(data)
 
         verrors = ValidationErrors()
+
+        for k, m in [('unixcharset', self.unixcharset_choices), ('doscharset', self.doscharset_choices)]:
+            if data.get(k) and data[k] not in await m():
+                verrors.add(
+                    f'smb_update.{k}',
+                    f'Please provide a valid value for {k}'
+                )
 
         for i in ('workgroup', 'netbiosname', 'netbiosname_b', 'netbiosalias'):
             if i not in data or not data[i]:
