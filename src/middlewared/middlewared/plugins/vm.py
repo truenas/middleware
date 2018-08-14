@@ -955,33 +955,31 @@ class VMService(CRUDService):
 
             for device in devices:
                 device['vm'] = vm_id
-                create_zvol = device['attributes'].pop('create_zvol', False)
-                ds_options = {
-                    'name': device['attributes'].pop('zvol_name', None),
-                    'type': "VOLUME",
-                    'volsize': device['attributes'].pop('zvol_volsize', None)
-                }
+                if device['dtype'] == 'DISK':
+                    create_zvol = device['attributes'].pop('create_zvol', False)
 
-                if create_zvol and device['dtype'] == 'DISK':
-                    if not all(ds_options.values()):
-                        raise CallError(
-                            'Must supply zvol_name, zvol_type and zvol_volsize'
-                            ' when creating a zvol.', errno.EINVAL
+                    if create_zvol:
+                        ds_options = {
+                            'name': device['attributes'].pop('zvol_name'),
+                            'type': "VOLUME",
+                            'volsize': device['attributes'].pop('zvol_volsize'),
+                        }
+
+                        self.logger.debug(
+                            f'===> Creating ZVOL {ds_options["name"]} with volsize'
+                            f' {ds_options["volsize"]}')
+
+                        zvol_blocksize = await self.middleware.call(
+                            'pool.dataset.recommended_zvol_blocksize',
+                            ds_options['name'].split('/', 1)[0]
                         )
+                        ds_options['volblocksize'] = zvol_blocksize
 
-                    self.logger.debug(
-                        f'===> Creating ZVOL {ds_options["name"]} with volsize'
-                        f' {ds_options["volsize"]}')
-
-                    zvol_blocksize = await self.middleware.call(
-                        'pool.dataset.recommended_zvol_blocksize',
-                        ds_options['name'].split('/', 1)[0]
-                    )
-                    ds_options['volblocksize'] = zvol_blocksize
-
-                    created_zvols.append(
-                        (await self.middleware.call('pool.dataset.create', ds_options))['id']
-                    )
+                        new_zvol = (
+                            await self.middleware.call('pool.dataset.create', ds_options)
+                        )['id']
+                        device['attributes']['path'] = f'/dev/zvol/{new_zvol}'
+                        created_zvols.append(new_zvol)
 
                 await self.middleware.call('datastore.insert', 'vm.device', device)
         except Exception as e:
@@ -1006,6 +1004,33 @@ class VMService(CRUDService):
                 filters.append(('id', '!=', old['id']))
             if await self.middleware.call('vm.query', filters):
                 verrors.add(f'{schema_name}.name', 'This name already exists.', errno.EEXIST)
+
+        for i, device in enumerate(data.get('devices') or []):
+            if device.get('dtype') == 'DISK':
+                create_zvol = device['attributes'].get('create_zvol')
+                path = device['attributes'].get('path')
+                if create_zvol:
+                    for attr in ('zvol_name', 'zvol_volsize'):
+                        if not device['attributes'].get(attr):
+                            verrors.add(
+                                f'{schema_name}.devices.{i}.attributes.{attr}',
+                                'This field is required.'
+                            )
+                    parentzvol = (device['attributes'].get('zvol_name') or '').rsplit('/', 1)[0]
+                    if parentzvol and not await self.middleware.call(
+                        'pool.dataset.query', [('id', '=', parentzvol)]
+                    ):
+                        verrors.add(
+                            f'{schema_name}.devices.{i}.attributes.zvol_name',
+                            f'Parent dataset {parentzvol} does not exist.',
+                            errno.ENOENT
+                        )
+                elif path and not os.path.exists(path):
+                    verrors.add(
+                        f'{schema_name}.devices.{i}.attributes.path',
+                        f'Disk path {path} does not exist.',
+                        errno.ENOENT
+                    )
 
     async def __do_update_devices(self, id, devices):
         if devices and isinstance(devices, list) is True:
