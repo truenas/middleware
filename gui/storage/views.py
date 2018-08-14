@@ -742,7 +742,12 @@ def volume_detach(request, vid):
                     events=events,
                 )
             except ServiceFailed as e:
-                return JsonResp(request, error=True, message=str(e))
+                return JsonResp(
+                    request,
+                    form=form,
+                    error=True,
+                    message=e.value,
+                    events=["serviceFailed(\"%s\")" % e.service])
     else:
         form = forms.VolumeExport(instance=volume, services=services)
     return render(request, 'storage/volume_detach.html', {

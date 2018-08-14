@@ -385,17 +385,17 @@ class BaseFreeAdmin(object):
                 except ValidationErrors as e:
                     handle_middleware_validation(mf, e)
                     return JsonResp(request, form=mf, formsets=formsets)
+                except ServiceFailed as e:
+                    return JsonResp(
+                        request,
+                        error=True,
+                        message=e.value,
+                        events=["serviceFailed(\"%s\")" % e.service])
                 except MiddlewareError as e:
                     return JsonResp(
                         request,
                         error=True,
                         message=_("Error: %s") % str(e))
-                except ServiceFailed as e:
-                    return JsonResp(
-                        request,
-                        error=True,
-                        message=_("The service failed to restart.")
-                    )
             else:
                 return JsonResp(request, form=mf, formsets=formsets)
 
@@ -607,7 +607,7 @@ class BaseFreeAdmin(object):
                         request,
                         form=mf,
                         error=True,
-                        message=_("The service failed to restart."),
+                        message=e.value,
                         events=["serviceFailed(\"%s\")" % e.service])
                 except MiddlewareError as e:
                     return JsonResp(
