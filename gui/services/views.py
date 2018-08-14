@@ -159,26 +159,30 @@ def core(request):
     except IndexError:
         webdav = models.WebDAV.objects.create()
 
+    urls = {
+        'cifs': reverse('services_cifs'),
+        'afp': afp.get_edit_url(),
+        'lldp': lldp.get_edit_url(),
+        'nfs': nfs.get_edit_url(),
+        'rsync': rsyncd.get_edit_url(),
+        'dynamicdns': dynamicdns.get_edit_url(),
+        's3': reverse('services_s3'),
+        'snmp': snmp.get_edit_url(),
+        'ups': ups.get_edit_url(),
+        'ftp': ftp.get_edit_url(),
+        'tftp': tftp.get_edit_url(),
+        'ssh': ssh.get_edit_url(),
+        'smartd': smart.get_edit_url(),
+        'webdav': webdav.get_edit_url(),
+        'domaincontroller': domaincontroller.get_edit_url(),
+        'netdata': reverse('services_netdata'),
+    }
+
+    if not notifier().is_freenas():
+        urls['asigra'] = reverse('services_asigra')
+
     return render(request, 'services/core.html', {
-        'urls': json.dumps({
-            'cifs': reverse('services_cifs'),
-            'afp': afp.get_edit_url(),
-            'lldp': lldp.get_edit_url(),
-            'nfs': nfs.get_edit_url(),
-            'rsync': rsyncd.get_edit_url(),
-            'dynamicdns': dynamicdns.get_edit_url(),
-            's3': reverse('services_s3'),
-            'snmp': snmp.get_edit_url(),
-            'ups': ups.get_edit_url(),
-            'ftp': ftp.get_edit_url(),
-            'tftp': tftp.get_edit_url(),
-            'ssh': ssh.get_edit_url(),
-            'smartd': smart.get_edit_url(),
-            'webdav': webdav.get_edit_url(),
-            'domaincontroller': domaincontroller.get_edit_url(),
-            'netdata': reverse('services_netdata'),
-            'asigra': reverse('services_asigra'),
-        }),
+        'urls': json.dumps(urls),
         'disabled': json.dumps(disabled),
     })
 
