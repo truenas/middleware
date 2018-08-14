@@ -11,9 +11,10 @@ class CallException(ErrnoMixin, Exception):
 
 
 class CallError(CallException):
-    def __init__(self, errmsg, errno=errno.EFAULT):
+    def __init__(self, errmsg, errno=errno.EFAULT, extra=None):
         self.errmsg = errmsg
         self.errno = errno
+        self.extra = extra
 
     def __str__(self):
         errname = get_errname(self.errno)

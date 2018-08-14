@@ -174,7 +174,8 @@ class ServiceChangeMixin:
             if not started:
                 raise CallError(
                     f'The {service} service failed to start',
-                    CallError.ESERVICESTARTFAILURE
+                    CallError.ESERVICESTARTFAILURE,
+                    [service],
                 )
 
 
