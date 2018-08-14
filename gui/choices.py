@@ -25,14 +25,11 @@
 #####################################################################
 
 import freenasUI.settings
-import csv
 import logging
 import os
 import re
 import sqlite3
 import copy
-import subprocess
-import codecs
 
 from os import popen
 from django.utils.translation import ugettext_lazy as _
@@ -177,76 +174,19 @@ CIFS_SMB_PROTO_CHOICES = (
     ('SMB3_11', _('SMB3_11')),
 )
 
-DOSCHARSET_CHOICES = (
-    'CP437',
-    'CP850',
-    'CP852',
-    'CP866',
-    'CP932',
-    'CP949',
-    'CP950',
-    'CP1026',
-    'CP1251',
-    'ASCII',
-)
 
-UNIXCHARSET_CHOICES = (
-    'UTF-8',
-    'ISO-8859-1',
-    'ISO-8859-15',
-    'GB2312',
-    'EUC-JP',
-    'ASCII',
-)
+def UNIXCHARSET_CHOICES():
+    with client as c:
+        choices = list(c.call('smb.unixcharset_choices').items())
+        choices.sort()
+        return choices
 
 
-class CHARSET(object):
-
-    __CODEPAGE = re.compile("(?P<name>CP|GB|ISO-8859-|UTF-)(?P<num>\d+)").match
-
-    __canonical = {'UTF-8', 'ASCII', 'GB2312', 'HZ-GB-2312', 'CP1361'}
-
-    def __check_codec(self, encoding):
-        try:
-            if codecs.lookup(encoding):
-                return encoding.upper()
-        except LookupError:
-            pass
-        return
-
-    def __key_cp(self, encoding):
-        cp = CHARSET.__CODEPAGE(encoding)
-        if cp:
-            return tuple((cp.group('name'), int(cp.group('num'), 10)))
-        return tuple((encoding, float('inf')))
-
-    def __init__(self, popular=[]):
-
-        self.__popular = popular
-
-        out = subprocess.Popen(['/usr/bin/iconv', '-l'], stdout=subprocess.PIPE, encoding='utf8').communicate()[0]
-
-        encodings = set()
-        for line in out.splitlines():
-            enc = [e for e in line.split() if self.__check_codec(e)]
-            if enc:
-                cp = enc[0]
-                for e in enc:
-                    if e in CHARSET.__canonical:
-                        cp = e
-                        break
-                encodings.add(cp)
-
-        self.__charsets = [c for c in sorted(encodings, key=self.__key_cp) if c not in self.__popular]
-
-    def __iter__(self):
-        if self.__popular:
-            for c in self.__popular:
-                yield(c, c)
-            yield('', '-----')
-
-        for c in self.__charsets:
-            yield(c, c)
+def DOSCHARSET_CHOICES():
+    with client as c:
+        choices = list(c.call('smb.doscharset_choices').items())
+        choices.sort()
+        return choices
 
 
 LOGLEVEL_CHOICES = (
