@@ -109,6 +109,6 @@ class MiddlewareModelForm:
                 return c.call(f"{self.middleware_plugin}.{self._middleware_action}", *args, **kwargs)
             except ClientException as e:
                 if e.errno == ClientException.ESERVICESTARTFAILURE:
-                    raise ServiceFailed(e.error, e.errno)
+                    raise ServiceFailed(e.extra[0], e.error)
                 else:
                     raise
