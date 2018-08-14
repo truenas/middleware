@@ -39,9 +39,11 @@ from freenasUI.directoryservice.models import (
 from freenasUI.directoryservice.views import get_directoryservice_status
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
+from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.forms import (
     CIFSForm,
     S3Form
@@ -206,8 +208,8 @@ def services_cifs(request):
         it = idmap_tdb()
 
     if request.method == "POST":
+        form = CIFSForm(request.POST, instance=cifs)
         try:
-            form = CIFSForm(request.POST, instance=cifs)
             if form.is_valid():
                 form.save()
             else:
@@ -215,6 +217,19 @@ def services_cifs(request):
         except ValidationErrors as e:
             handle_middleware_validation(form, e)
             return JsonResp(request, form=form)
+        except ServiceFailed as e:
+            return JsonResp(
+                request,
+                form=form,
+                error=True,
+                message=e.value,
+                events=["serviceFailed(\"%s\")" % e.service])
+        except MiddlewareError as e:
+            return JsonResp(
+                request,
+                form=form,
+                error=True,
+                message=_("Error: %s") % str(e))
 
         idmap_form = idmap_tdb_Form(request.POST, instance=it)
         if idmap_form.is_valid():

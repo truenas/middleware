@@ -173,7 +173,7 @@ class Application(object):
         except (CallException, SchemaError) as e:
             # CallException and subclasses are the way to gracefully
             # send errors to the client
-            self.send_error(message, e.errno, str(e), sys.exc_info())
+            self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
         except Exception as e:
             self.send_error(message, errno.EINVAL, str(e), sys.exc_info())
             self.logger.warn('Exception while calling {}(*{})'.format(
