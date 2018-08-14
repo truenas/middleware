@@ -395,7 +395,7 @@ def services_asigra(request):
         asigra = models.Asigra()
 
     if request.method == "POST":
-        form = AsigraForm(request.POST, instance=s3)
+        form = AsigraForm(request.POST, instance=asigra)
         if form.is_valid():
             form.save()
             return JsonResp(
