@@ -130,5 +130,5 @@ class IpInUse:
 
         if ip in ips:
             raise ShouldBe(
-                f'{ip} is already being used by the FreeNAS system. Please select another IP'
+                f'{ip} is already being used by the system. Please select another IP'
             )
