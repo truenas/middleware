@@ -92,78 +92,73 @@ class JailService(CRUDService):
              Str("release", required=True),
              Str("template"),
              Str("pkglist"),
-             Str("uuid"),
-             Bool("basejail", default=False),
-             Bool("empty", default=False),
-             Bool("short", default=False),
-             List("props", default=[])))
-    async def do_create(self, options):
-        """Creates a jail."""
-        # Typically one would return the created jail's id in this
-        # create call BUT since jail creation may or may not involve
-        # fetching a release, which in turn could be time consuming
-        # and could then block for a long time. This dictates that we
-        # make it a job, but that violates the principle that CRUD methods
-        # are not jobs as yet, so I settle on making this a wrapper around
-        # the main job that calls this and return said job's id instead of
-        # the created jail's id
-
-        return await self.middleware.call('jail.create_job', options)
-
-    @private
-    @accepts(
-        Dict("options",
-             Str("release", required=True),
-             Str("template"),
-             Str("pkglist"),
-             Str("uuid"),
+             Str("uuid", required=True),
              Bool("basejail", default=False),
              Bool("empty", default=False),
              Bool("short", default=False),
              List("props", default=[])))
     @job()
-    def create_job(self, job, options):
+    async def do_create(self, options):
+        """Creates a jail."""
+        from pprint import pprint
+        print('\n\noptions dict')
+        pprint(options)
 
-        verrors = ValidationErrors()
+        try:
+            iocage = ioc.IOCage(skip_jails=True, jail=options['uuid'])
+            iocage.__check_jail_existence__()
+        except SystemExit:
+            try:
+                verrors = ValidationErrors()
 
-        self.validate_ips(verrors, options)
+                self.validate_ips(verrors, options)
 
-        iocage = ioc.IOCage(skip_jails=True)
+                iocage = ioc.IOCage(skip_jails=True)
 
-        release = options["release"]
-        template = options.get("template", False)
-        pkglist = options.get("pkglist", None)
-        uuid = options.get("uuid", None)
-        basejail = options["basejail"]
-        empty = options["empty"]
-        short = options["short"]
-        props = options["props"]
-        pool = IOCJson().json_get_value("pool")
-        iocroot = IOCJson(pool).json_get_value("iocroot")
+                release = options["release"]
+                template = options.get("template", False)
+                pkglist = options.get("pkglist", None)
+                uuid = options.get("uuid", None)
+                basejail = options["basejail"]
+                empty = options["empty"]
+                short = options["short"]
+                props = options["props"]
+                pool = IOCJson().json_get_value("pool")
+                iocroot = IOCJson(pool).json_get_value("iocroot")
 
-        if template:
-            release = template
+                if template:
+                    release = template
 
-        if not os.path.isdir(f"{iocroot}/releases/{release}") and not \
-                template and not empty:
-            self.middleware.call_sync('jail.fetch', {"release":
-                                                     release}, job=True)
+                if not os.path.isdir(f"{iocroot}/releases/{release}") and not \
+                        template and not empty:
+                    self.middleware.call_sync('jail.fetch', {"release":
+                                                                 release}, job=True)
 
-        err, msg = iocage.create(
-            release,
-            props,
-            0,
-            pkglist,
-            template=template,
-            short=short,
-            _uuid=uuid,
-            basejail=basejail,
-            empty=empty)
+                err, msg = iocage.create(
+                    release,
+                    props,
+                    0,
+                    pkglist,
+                    template=template,
+                    short=short,
+                    _uuid=uuid,
+                    basejail=basejail,
+                    empty=empty)
 
-        if err:
-            raise CallError(msg)
+                if err:
+                    raise CallError(msg)
 
-        return True
+                return True
+
+            except Exception as e:
+                try:
+                    self.middleware.call('jail.delete', options['uuid'])
+                except Exception:
+                    pass
+                finally:
+                    raise e
+        else:
+            raise CallError(f'A jail with uuid {options["uuid"]} already exists')
 
     @private
     def validate_ips(self, verrors, options, schema='options.props', exclude=None):
