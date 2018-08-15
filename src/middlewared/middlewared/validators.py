@@ -111,3 +111,26 @@ class Port:
     def __call__(self, value):
         range_validator = Range(min=1, max=65535)
         range_validator(value)
+
+
+class IpInUse:
+    def __init__(self, middleware, exclude=None):
+        self.middleware = middleware
+        self.exclude = exclude or []
+
+    def __call__(self, ip):
+        IpAddress()(ip)
+
+        # ip is valid
+        if ip not in self.exclude:
+            ips = [
+                v.split('|')[1].split('/')[0] for jail in self.middleware.call_sync('jail.query')
+                for j_ip in [jail['ip4_addr'], jail['ip6_addr']] for v in j_ip.split(',') if j_ip != 'none'
+            ] + [
+                d['address'] for d in self.middleware.call_sync('interfaces.ip_in_use')
+            ]
+
+            if ip in ips:
+                raise ShouldBe(
+                    f'{ip} is already being used by the system. Please select another IP'
+                )

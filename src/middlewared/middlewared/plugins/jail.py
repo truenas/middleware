@@ -15,11 +15,14 @@ from iocage_lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
 from iocage_lib.ioc_list import IOCList
 from iocage_lib.ioc_upgrade import IOCUpgrade
+
+from middlewared.client import ClientException
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
-from middlewared.client import ClientException
+from middlewared.validators import IpInUse, ShouldBe
+
 
 SHUTDOWN_LOCK = asyncio.Lock()
 
@@ -120,6 +123,11 @@ class JailService(CRUDService):
              List("props", default=[])))
     @job()
     def create_job(self, job, options):
+
+        verrors = ValidationErrors()
+
+        self.validate_ips(verrors, options)
+
         iocage = ioc.IOCage(skip_jails=True)
 
         release = options["release"]
@@ -157,6 +165,23 @@ class JailService(CRUDService):
 
         return True
 
+    @private
+    def validate_ips(self, verrors, options, schema='options.props', exclude=None):
+        for item in options['props']:
+            for f in ('ip4_addr', 'ip6_addr'):
+                if f in item:
+                    for ip in item.split('=')[1].split(','):
+                        try:
+                            IpInUse(self.middleware, exclude)(ip.split('|')[1].split('/')[0])
+                        except ShouldBe as e:
+                            verrors.add(
+                                f'{schema}.{f}',
+                                str(e)
+                            )
+
+        if verrors:
+            raise verrors
+
     @accepts(Str("jail"), Dict(
              "options",
              Bool("plugin", default=False),
@@ -168,6 +193,21 @@ class JailService(CRUDService):
         _, _, iocage = self.check_jail_existence(jail)
 
         name = options.pop("name", None)
+
+        verrors = ValidationErrors()
+
+        jail = self.query([['id', '=', jail]], {'get': True})
+
+        exclude_ips = [
+            ip.split('|')[1].split('/')[0]
+            for f in ('ip4_addr', 'ip6_addr') for ip in jail[f].split(',')
+            if ip != 'none'
+        ]
+
+        self.validate_ips(
+            verrors, {'props': [f'{k}={v}' for k, v in options.items()]},
+            'options', exclude_ips
+        )
 
         for prop, val in options.items():
             p = f"{prop}={val}"
@@ -238,6 +278,10 @@ class JailService(CRUDService):
     def fetch(self, job, options):
         """Fetches a release or plugin."""
         fetch_output = {'error': False, 'install_notes': []}
+
+        verrors = ValidationErrors()
+
+        self.validate_ips(verrors, options)
 
         def progress_callback(content):
             level = content['level']
