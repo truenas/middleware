@@ -17,7 +17,7 @@ from iocage_lib.ioc_list import IOCList
 from iocage_lib.ioc_upgrade import IOCUpgrade
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.client import ClientException
 
@@ -388,17 +388,22 @@ class JailService(CRUDService):
 
         return True
 
+    @private
+    def get_iocroot(self):
+        pool = IOCJson().json_get_value("pool")
+        return IOCJson(pool).json_get_value("iocroot")
+
     @accepts(
         Str("jail"),
         Dict(
             "options",
             Str("action", enum=["ADD", "EDIT", "REMOVE", "REPLACE", "LIST"], required=True),
-            Str("source", required=True),
-            Str("destination", required=True),
-            Str("fstype", required=True),
-            Str("fsoptions", required=True),
-            Str("dump", required=True),
-            Str("pass", required=True),
+            Str("source"),
+            Str("destination"),
+            Str("fstype"),
+            Str("fsoptions"),
+            Str("dump"),
+            Str("pass"),
             Int("index", default=None),
         ))
     def fstab(self, jail, options):
@@ -407,22 +412,64 @@ class JailService(CRUDService):
         """
         _, _, iocage = self.check_jail_existence(jail, skip=False)
 
-        action = options["action"].lower()
-        source = options["source"]
-        destination = options["destination"]
-        fstype = options["fstype"]
-        fsoptions = options["fsoptions"]
-        dump = options["dump"]
-        _pass = options["pass"]
-        index = options["index"]
+        verrors = ValidationErrors()
 
-        if action == "replace" and index is None:
+        action = options['action'].lower()
+        source = options.get('source')
+        if source:
+            if not os.path.exists(source):
+                verrors.add(
+                    'source',
+                    'Provided path for source does not exist'
+                )
+
+        destination = options.get('destination')
+        if destination:
+            destination = f'/{destination}' if destination[0] != '/' else destination
+            dst = f'{self.get_iocroot()}/jails/{jail}/root{destination}'
+            if 'mnt' in destination:
+                verrors.add(
+                    'destination',
+                    'Please specify destination path from root folder of jail'
+                    'e.g "/mnt/iocage/jails/btsync/root/" Path should be specified'
+                    'after this / now'
+                )
+            elif os.path.exists(dst):
+                if not os.path.isdir(dst):
+                    verrors.add(
+                        'destination',
+                        'Destination is not a directory, please provide a valid destination'
+                    )
+                elif os.listdir(dst):
+                    verrors.add(
+                        'destination',
+                        'Destination directory should be empty'
+                    )
+
+        if action != 'list':
+            for f in options:
+                if not options.get(f) and f not in ('index',):
+                    verrors.add(
+                        f,
+                        'This field is required'
+                    )
+
+        fstype = options.get('fstype')
+        fsoptions = options.get('fsoptions')
+        dump = options.get('dump')
+        _pass = options.get('pass')
+        index = options.get('index')
+
+        if verrors:
+            raise verrors
+
+        if action == 'replace' and index is None:
             raise ValueError(
-                "index must not be None when replacing fstab entry"
+                "Index must not be None when replacing fstab entry"
             )
 
         _list = iocage.fstab(action, source, destination, fstype, fsoptions,
-                             dump, _pass, index=index)
+                             dump, _pass, index=index, add_path=True)
 
         if action == "list":
             split_list = {}
