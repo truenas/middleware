@@ -446,10 +446,13 @@ class JailService(CRUDService):
             Int("index", default=None),
         ))
     def fstab(self, jail, options):
-        """
-        Adds an fstab mount to the jail, mounts if the jail is running.
-        """
-        _, _, iocage = self.check_jail_existence(jail, skip=False)
+        """Adds an fstab mount to the jail"""
+        uuid, _, iocage = self.check_jail_existence(jail, skip=False)
+        status, jid = IOCList.list_get_jid(uuid)
+
+        if status:
+            raise CallError(
+                f'{jail} should not be running when adding a mountpoint')
 
         action = options["action"].lower()
         source = options["source"]
