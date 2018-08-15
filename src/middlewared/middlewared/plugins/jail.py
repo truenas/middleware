@@ -166,13 +166,13 @@ class JailService(CRUDService):
         return True
 
     @private
-    def validate_ips(self, verrors, options, schema='options.props'):
+    def validate_ips(self, verrors, options, schema='options.props', exclude=None):
         for item in options['props']:
             for f in ('ip4_addr', 'ip6_addr'):
                 if f in item:
                     for ip in item.split('=')[1].split(','):
                         try:
-                            IpInUse(self.middleware)(ip.split('|')[1].split('/')[0])
+                            IpInUse(self.middleware, exclude)(ip.split('|')[1].split('/')[0])
                         except ShouldBe as e:
                             verrors.add(
                                 f'{schema}.{f}',
@@ -196,7 +196,18 @@ class JailService(CRUDService):
 
         verrors = ValidationErrors()
 
-        self.validate_ips(verrors, {'props': [f'{k}={v}' for k, v in options.items()]}, 'options')
+        jail = self.query([['id', '=', jail]], {'get': True})
+
+        exclude_ips = [
+            ip.split('|')[1].split('/')[0]
+            for f in ('ip4_addr', 'ip6_addr') for ip in jail[f].split(',')
+            if ip != 'none'
+        ]
+
+        self.validate_ips(
+            verrors, {'props': [f'{k}={v}' for k, v in options.items()]},
+            'options', exclude_ips
+        )
 
         for prop, val in options.items():
             p = f"{prop}={val}"
