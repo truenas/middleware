@@ -402,18 +402,12 @@ __EOF__
         }
 
         #include plugins.conf;
-__EOF__
-
-	if srv_enabled asigra ; then
-		cat <<__EOF__
 
         location /asigra {
             alias /usr/local/www/asigra;
         }
+    }
 __EOF__
-	fi
-
-	echo "    }"
 
 	if [ "${proto}" = "https" -a "${working_ssl}" = true -a "${httpsredirect}" = "1" ]; then
 		cat << __EOF__
