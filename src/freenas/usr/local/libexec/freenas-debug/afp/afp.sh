@@ -45,14 +45,19 @@ afp_func()
 	LIMIT 1
 	")
 
-	afp_enabled="DISABLED"
+	afp_enabled="not start on boot."
 	if [ "${afp_onoff}" = "1" ]
 	then
-		afp_enabled="ENABLED"
+		afp_enabled="start on boot."
 	fi
 
-	section_header "AFP Status"
-	echo "AFP is ${afp_enabled}"
+	section_header "AFP boot status"
+	echo "AFP will ${afp_enabled}"
+	section_footer
+
+
+	section_header "AFP run status"
+	service netatalk onestatus
 	section_footer
 
 	#
