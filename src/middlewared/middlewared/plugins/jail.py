@@ -466,7 +466,7 @@ class JailService(CRUDService):
             )
 
         _list = iocage.fstab(action, source, destination, fstype, fsoptions,
-                             dump, _pass, index=index)
+                             dump, _pass, index=index, add_path=True)
 
         if action == "list":
             split_list = {}
