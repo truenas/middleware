@@ -42,7 +42,7 @@ active_directory_func()
 	local enabled="DISABLED"
 	local mon_onoff
 	local mon_enabled="DISABLED"
-
+	local cifs_onoff
 
 	#
 	#	First, check if the AD Monitoring service is enabled.
@@ -68,7 +68,7 @@ active_directory_func()
 	section_footer
 
 	#
-	#	Second, check if the Active Directory service is enabled.
+	#	Second, check if the Active Directory is enabled.
 	#
 	onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
@@ -89,6 +89,35 @@ active_directory_func()
 	
 	section_header "Active Directory Status"
 	echo "Active Directory is ${enabled}"
+	section_footer
+
+	section_header "Active Directory Run Status"
+	service samba_server onestatus
+	section_header
+
+	#
+	#	Check if SMB service is set to start on boot.
+	#
+	cifs_onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		srv_enable
+	FROM
+		services_services
+	WHERE
+		srv_service = 'cifs'
+	ORDER BY
+		-id
+	LIMIT 1
+	")	
+
+	cifs_enabled="not start on boot."
+	if [ "$cifs_onoff" == "1" ]
+	then
+		cifs_enabled="start on boot."
+	fi
+
+	section_header "SMB Service Status"
+	echo "SMB will $cifs_enabled"
 	section_footer
 
 	#
