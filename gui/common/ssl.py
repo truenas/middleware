@@ -63,7 +63,7 @@ def create_certificate(cert_info):
 
     serial = cert_info.get('serial')
     if serial is not None:
-        cert.set_serial_number(serial)
+        cert.set_serial_number(int(serial))
 
     cert.gmtime_adj_notBefore(0)
     cert.gmtime_adj_notAfter(cert_info['lifetime'] * (60 * 60 * 24))
