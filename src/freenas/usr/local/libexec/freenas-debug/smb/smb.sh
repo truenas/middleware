@@ -53,16 +53,16 @@ smb_func()
 	LIMIT 1
 	")
 
-	enabled="DISABLED"
+	enabled="not start on boot."
 	if [ "${onoff}" = "1" ]
 	then
-		enabled="ENABLED"
+		enabled="start on boot."
 	fi
 
-	section_header "SMB Status"
-	echo "SMB is ${enabled}"
+	section_header "SMB Boot Status"
+	echo "SMB will ${enabled}"
 	section_footer
-	
+
 	#
 	#	Dump samba version
 	#
