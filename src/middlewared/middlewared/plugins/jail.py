@@ -430,9 +430,9 @@ class JailService(CRUDService):
             if 'mnt' in destination:
                 verrors.add(
                     'destination',
-                    'Please specify destination path from root folder of jail'
+                    'Destination should not include the jail path. '
                     'e.g "/mnt/iocage/jails/btsync/root/" Path should be specified'
-                    'after this / now'
+                    'after /'
                 )
             elif os.path.exists(dst):
                 if not os.path.isdir(dst):
