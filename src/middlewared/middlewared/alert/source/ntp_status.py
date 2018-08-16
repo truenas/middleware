@@ -236,7 +236,7 @@ class NTPStatusAlertSource(ThreadedAlertSource):
                 alerts.append(Alert(
                     title='NTP status: %(error)s',
                     args={'error': self.__fail_message},
-                    key=['ntp_client','exception'],
+                    key=['ntp_client', 'exception'],
                     level=AlertLevel.CRITICAL
                 ))
         else:
