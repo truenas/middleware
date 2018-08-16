@@ -46,15 +46,19 @@ iscsi_func()
         LIMIT 1
         ")
 
-        enabled="DISABLED"
+        enabled="not start on boot."
         if [ "${onoff}" = "1" ]
         then
-                enabled="ENABLED"
+                enabled="will start on boot."
         fi
 
-        section_header "iSCSI Status"
-        echo "iSCSI is ${enabled}"
+        section_header "iSCSI Boot Status"
+        echo "iSCSI will ${enabled}"
         section_footer
+
+	section_header "iSCSI Run Status"
+	service ctld onestatus
+	section_footer
 	
 	alua_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
