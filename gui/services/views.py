@@ -51,6 +51,7 @@ from freenasUI.services.forms import (
 from freenasUI.system.models import Tunable
 from freenasUI.support.utils import fc_enabled
 
+from io import StringIO
 from wsgiref.util import FileWrapper
 
 log = logging.getLogger("services.views")
@@ -424,7 +425,21 @@ def services_asigra(request):
 
 def services_asigra_dsoperator(request):
     filename = "/usr/local/www/asigra/DSOP.jnlp"
-    wrapper = FileWrapper(open(filename, 'rb'))
+
+    contents = []
+    with open(filename, 'r') as f:
+        contents = f.read()
+
+    addr = request.META.get("SERVER_ADDR") 
+    if ':' in addr:
+        addr = '[%s]' % addr
+    protocol = "http"
+    if request.is_secure():
+        protocol = "https"
+    url = "{}://{}/asigra/".format(protocol, addr)
+
+    contents = contents.replace("@@URL@@", url)
+    wrapper = FileWrapper(StringIO(contents))
 
     response = StreamingHttpResponse(
         wrapper, content_type='application/octet-stream'
