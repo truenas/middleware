@@ -715,10 +715,11 @@ class JailService(CRUDService):
             # Since these are plugins, we don't want to spin them up just to
             # check a pkg, directly accessing the db is best in this case.
             db_rows = self.read_plugin_pkg_db(
-                f'{iocroot}/jails/{plugin}/root/var/db/pkg/local.sqlite')
+                f'{iocroot}/jails/{plugin}/root/var/db/pkg/local.sqlite',
+                primary_pkg)
 
             for row in db_rows:
-                if primary_pkg in row[1] or primary_pkg in row[2]:
+                if primary_pkg == row[1] or primary_pkg == row[2]:
                     version = [row[3], '1']
                     break
         except KeyError:
@@ -727,7 +728,7 @@ class JailService(CRUDService):
         return version
 
     @private
-    def read_plugin_pkg_db(self, db):
+    def read_plugin_pkg_db(self, db, pkg):
         try:
             conn = sqlite3.connect(db)
         except sqlite3.Error as e:
@@ -735,7 +736,9 @@ class JailService(CRUDService):
 
         with conn:
             cur = conn.cursor()
-            cur.execute('SELECT * FROM packages')
+            cur.execute(
+                f'SELECT * FROM packages WHERE origin="{pkg}" OR name="{pkg}"'
+            )
 
             rows = cur.fetchall()
 
