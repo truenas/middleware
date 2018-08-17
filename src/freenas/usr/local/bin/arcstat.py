@@ -110,12 +110,13 @@ opfile = None
 sep = "  "              # Default separator is 2 spaces
 version = "0.4"
 l2exist = False
-cmd = ("Usage: arcstat [-hvx] [-f fields] [-o file] [-s string] [interval "
+cmd = ("Usage: arcstat [-havxp] [-f fields] [-o file] [-s string] [interval "
     "[count]]\n")
 cur = {}
 d = {}
 out = None
 kstat = None
+pretty_print = True
 float_pobj = re.compile("^[0-9]+(\.[0-9]+)?$")
 
 
@@ -132,6 +133,7 @@ def detailed_usage():
 def usage():
     sys.stderr.write("%s\n" % cmd)
     sys.stderr.write("\t -h : Print this help message\n")
+    sys.stderr.write("\t -a : Print all possible stats\n")
     sys.stderr.write("\t -v : List all possible field headers and definitions"
         "\n")
     sys.stderr.write("\t -x : Print extended stats\n")
@@ -139,6 +141,7 @@ def usage():
     sys.stderr.write("\t -o : Redirect output to the specified file\n")
     sys.stderr.write("\t -s : Override default field separator with custom "
         "character or string\n")
+    sys.stderr.write("\t -p : Disable auto-scaling of numerical fields\n")
     sys.stderr.write("\nExamples:\n")
     sys.stderr.write("\tarcstat -o /tmp/a.log 2 10\n")
     sys.stderr.write("\tarcstat -s \",\" -o /tmp/a.log 2 10\n")
@@ -224,26 +227,48 @@ def prettynum(sz, scale, num=0):
     else:
         return "%*d%s" % (sz - 1, num, suffix[index])
 
+def print_with_sep(value, sep, first):
+    if first is None:
+        first = False
+    if first:
+        sys.stdout.write("%s" % value)
+    else:
+        sys.stdout.write("%s%s" % (sep, value))
 
 def print_values():
     global hdr
     global sep
     global v
+    global pretty_print
 
+    first = True
     for col in hdr:
-        sys.stdout.write("%s%s" % (
-            prettynum(cols[col][0], cols[col][1], v[col]),
-            sep
-            ))
+        if pretty_print:
+            print_with_sep(prettynum(cols[col][0], cols[col][1], v[col]),
+                           sep,
+                           first
+                           )
+        else:
+            print_with_sep(v[col], sep, first)
+        first = False
     sys.stdout.write("\n")
 
 
 def print_header():
     global hdr
     global sep
+    global pretty_print
 
+    first = True
     for col in hdr:
-        sys.stdout.write("%*s%s" % (cols[col][0], col, sep))
+        if pretty_print:
+            print_with_sep(("%*s" % (cols[col][0], col)),
+                           sep,
+                           first
+                           )
+        else:
+            print_with_sep(col, sep, first)
+        first = False
     sys.stdout.write("\n")
 
 
@@ -256,8 +281,10 @@ def init():
     global sep
     global out
     global l2exist
+    global pretty_print
 
     desired_cols = None
+    aflag = False
     xflag = False
     hflag = False
     vflag = False
@@ -266,14 +293,16 @@ def init():
     try:
         opts, args = getopt.getopt(
             sys.argv[1:],
-            "xo:hvs:f:",
+            "axo:hvs:f:p",
             [
+                "all",
                 "extended",
                 "outfile",
                 "help",
                 "verbose",
                 "seperator",
-                "columns"
+                "columns",
+                "noprettynum"
             ]
         )
 
@@ -284,6 +313,8 @@ def init():
     for opt, arg in opts:
         if opt in ('-x', '--extended'):
             xflag = True
+        if opt in ('-a', '--all'):
+            aflag = True
         if opt in ('-o', '--outfile'):
             opfile = arg
             i += 1
@@ -297,6 +328,8 @@ def init():
         if opt in ('-f', '--columns'):
             desired_cols = arg
             i += 1
+        if opt in ('-p', '--noprettynum'):
+            pretty_print = False
         i += 1
 
     argv = sys.argv[i:]
@@ -347,6 +380,15 @@ def init():
                 incompat,
                 ))
             usage()
+
+    if aflag:
+        if l2exist:
+            hdr = cols.keys()
+        else:
+            hdr = []
+            for col in cols.keys():
+                if not col.startswith("l2"):
+                    hdr.append(col)
 
     if opfile:
         try:
