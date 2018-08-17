@@ -91,15 +91,18 @@ class JailService(CRUDService):
     query._fiterable = True
 
     @accepts(
-        Dict("options",
-             Str("release", required=True),
-             Str("template"),
-             Str("pkglist"),
-             Str("uuid"),
-             Bool("basejail", default=False),
-             Bool("empty", default=False),
-             Bool("short", default=False),
-             List("props", default=[])))
+        Dict(
+            "options",
+            Str("release", required=True),
+            Str("template"),
+            Str("pkglist"),
+            Str("uuid", required=True),
+            Bool("basejail", default=False),
+            Bool("empty", default=False),
+            Bool("short", default=False),
+            List("props", default=[])
+        )
+    )
     async def do_create(self, options):
         """Creates a jail."""
         # Typically one would return the created jail's id in this
@@ -114,29 +117,30 @@ class JailService(CRUDService):
         return await self.middleware.call('jail.create_job', options)
 
     @private
-    @accepts(
-        Dict("options",
-             Str("release", required=True),
-             Str("template"),
-             Str("pkglist"),
-             Str("uuid"),
-             Bool("basejail", default=False),
-             Bool("empty", default=False),
-             Bool("short", default=False),
-             List("props", default=[])))
     @job()
     def create_job(self, job, options):
-
         verrors = ValidationErrors()
 
-        self.validate_ips(verrors, options)
+        try:
+            self.check_jail_existence(options['uuid'], skip=False)
 
-        iocage = ioc.IOCage(skip_jails=True)
+            verrors.add(
+                'uuid',
+                f'A jail with uuid {options["uuid"]} already exists'
+            )
+            raise verrors
+        except CallError:
+            # A jail does not exist with the provided uuid, we can create one now
+
+            self.validate_ips(verrors, options)
+            job.set_progress(20, 'Initial validation complete')
+
+            iocage = ioc.IOCage(skip_jails=True)
 
         release = options["release"]
         template = options.get("template", False)
         pkglist = options.get("pkglist", None)
-        uuid = options.get("uuid", None)
+        uuid = options["uuid"]
         basejail = options["basejail"]
         empty = options["empty"]
         short = options["short"]
@@ -147,10 +151,14 @@ class JailService(CRUDService):
         if template:
             release = template
 
-        if not os.path.isdir(f"{iocroot}/releases/{release}") and not \
-                template and not empty:
-            self.middleware.call_sync('jail.fetch', {"release":
-                                                     release}, job=True)
+        if (
+                not os.path.isdir(f'{iocroot}/releases/{release}') and
+                not template and
+                not empty
+        ):
+            self.middleware.call_sync(
+                'jail.fetch', {"release": release}, job=True
+            )
 
         err, msg = iocage.create(
             release,
@@ -161,7 +169,8 @@ class JailService(CRUDService):
             short=short,
             _uuid=uuid,
             basejail=basejail,
-            empty=empty)
+            empty=empty
+        )
 
         if err:
             raise CallError(msg)
@@ -245,7 +254,7 @@ class JailService(CRUDService):
         try:
             iocage = ioc.IOCage(skip_jails=skip, jail=jail)
             jail, path = iocage.__check_jail_existence__()
-        except SystemExit:
+        except (SystemExit, RuntimeError):
             raise CallError(f"jail '{jail}' not found!")
 
         return jail, path, iocage
