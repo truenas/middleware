@@ -470,6 +470,8 @@ class JailService(CRUDService):
                     'Provided path for source does not exist'
                 )
 
+            source = source.replace(' ', r'\040')  # fstab hates spaces ;)
+
         destination = options.get('destination')
         if destination:
             destination = f'/{destination}' if destination[0] != '/' else destination
@@ -492,6 +494,9 @@ class JailService(CRUDService):
                         'destination',
                         'Destination directory should be empty'
                     )
+
+            # fstab hates spaces ;)
+            destination = destination.replace(' ', r'\040')
 
         if action != 'list':
             for f in options:
