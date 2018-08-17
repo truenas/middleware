@@ -7,6 +7,9 @@ import iocage_lib.iocage as ioc
 import libzfs
 import requests
 import itertools
+import pathlib
+import json
+import sqlite3
 from iocage_lib.ioc_check import IOCCheck
 from iocage_lib.ioc_clean import IOCClean
 from iocage_lib.ioc_fetch import IOCFetch
@@ -356,6 +359,18 @@ class JailService(CRUDService):
                                              header=False)
             else:
                 resource_list = iocage.list("all", plugin=True)
+                pool = IOCJson().json_get_value("pool")
+                iocroot = IOCJson(pool).json_get_value("iocroot")
+                index_path = f'{iocroot}/.plugin_index/INDEX'
+
+                if not pathlib.Path(index_path).is_file():
+                    index_json = None
+                    raise CallError(
+                        'Plugin INDEX doesn\'t exist, unable to list pkg'
+                        ' versions for any plugins.')
+                else:
+                    index_fd = open(index_path, 'r')
+                    index_json = json.load(index_fd)
 
             for plugin in resource_list:
                 for i, elem in enumerate(plugin):
@@ -364,13 +379,19 @@ class JailService(CRUDService):
 
                 if remote:
                     pv = self.get_plugin_version(plugin[2])
-                    resource_list[resource_list.index(plugin)] = plugin + pv
+                else:
+                    pv = self.get_local_plugin_version(
+                        plugin[1], index_json, iocroot)
+
+                resource_list[resource_list.index(plugin)] = plugin + pv
 
             if remote:
                 self.middleware.call_sync(
                     'cache.put', 'iocage_remote_plugins', resource_list,
                     86400
                 )
+            else:
+                index_fd.close()
         elif resource == "base":
             try:
                 if remote:
@@ -731,6 +752,52 @@ class JailService(CRUDService):
             version = ['N/A', 'N/A']
 
         return version
+
+    @private
+    def get_local_plugin_version(self, plugin, index_json, iocroot):
+        """
+        Checks the primary_pkg key in the INDEX with the pkg version
+        inside the jail.
+        """
+        if index_json is None:
+            return ['N/A', 'N/A']
+
+        try:
+            base_plugin = plugin.rsplit('_', 1)[0]  # May have multiple
+            primary_pkg = index_json[base_plugin]['primary_pkg']
+            version = ['N/A', 'N/A']
+
+            # Since these are plugins, we don't want to spin them up just to
+            # check a pkg, directly accessing the db is best in this case.
+            db_rows = self.read_plugin_pkg_db(
+                f'{iocroot}/jails/{plugin}/root/var/db/pkg/local.sqlite',
+                primary_pkg)
+
+            for row in db_rows:
+                if primary_pkg == row[1] or primary_pkg == row[2]:
+                    version = [row[3], '1']
+                    break
+        except KeyError:
+            version = ['N/A', 'N/A']
+
+        return version
+
+    @private
+    def read_plugin_pkg_db(self, db, pkg):
+        try:
+            conn = sqlite3.connect(db)
+        except sqlite3.Error as e:
+            raise CallError(e)
+
+        with conn:
+            cur = conn.cursor()
+            cur.execute(
+                f'SELECT * FROM packages WHERE origin="{pkg}" OR name="{pkg}"'
+            )
+
+            rows = cur.fetchall()
+
+            return rows
 
     @private
     def start_on_boot(self):
