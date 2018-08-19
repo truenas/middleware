@@ -97,11 +97,11 @@ def main(certfile, keyfile):
     fnassettings.stg_guicertificate = created_cert
     fnassettings.save()
 
-    # Note we do not need ot call ix-ssl as this python program is called
+    # Note we do not need to call ix-ssl as this python program is called
     # by ix-update which is higher up in the rcorder than ix-ssl, as a result
     # of which ix-ssl will be called later-on either ways.
     # HOWEVER, if you do run this file as a standalone do call ix-ssl service
-    # yourself as well as ix-nginx and the works.
+    # yourself as well as and reload_http and the works.
 
 
 def usage():
@@ -110,6 +110,7 @@ def usage():
     key : The full path to the privatekey file of the cert specificed""" \
         % (os.path.basename(sys.argv[0]), )
     sys.exit(usage_str)
+
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:

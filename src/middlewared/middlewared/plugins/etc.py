@@ -100,8 +100,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'smartd'},
         ],
         'nginx': [
-            {'type': 'mako', 'path': 'local/nginx/nginx.conf'},
-            {'type': 'py', 'path': 'local/nginx/fastcgi_params'}
+            {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
         ]
     }
 
