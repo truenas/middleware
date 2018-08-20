@@ -445,7 +445,7 @@ def services_asigra_dsoperator(request):
         wrapper, content_type='application/octet-stream'
     )
 
-    response['Content-Length'] = os.path.getsize(filename)
+    response['Content-Length'] = len(content)
     response['Content-Disposition'] = (
         'attachment; filename="{}"'.format(os.path.basename(filename))
     )
