@@ -81,7 +81,7 @@ adctl_start()
 
 	if ! AD_init
 	then
-		activedirectory_set 1 
+		activedirectory_set 1
 	        srv_set cifs 1
 	        rm "${start_file}"
 		return 1
