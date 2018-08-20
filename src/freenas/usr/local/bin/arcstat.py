@@ -227,6 +227,7 @@ def prettynum(sz, scale, num=0):
     else:
         return "%*d%s" % (sz - 1, num, suffix[index])
 
+
 def print_with_sep(value, sep, first):
     if first is None:
         first = False
@@ -234,6 +235,7 @@ def print_with_sep(value, sep, first):
         sys.stdout.write("%s" % value)
     else:
         sys.stdout.write("%s%s" % (sep, value))
+
 
 def print_values():
     global hdr
