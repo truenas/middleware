@@ -369,6 +369,25 @@ class ServiceService(CRUDService):
                 ]
         return False, []
 
+    async def _restart_asigra(self, **kwargs):
+        await self.middleware.call('asigra.service_stop')
+        await self.middleware.call('asigra.service_start')
+
+    async def _reload_asigra(self, **kwargs):
+        await self._restart_asigra(**kwargs)
+
+    async def _start_asigra(self, **kwargs):
+        await self.middleware.call('asigra.service_start')
+
+    async def _stop_asigra(self, **kwargs):
+        await self.middleware.call('asigra.service_stop')
+
+    async def _started_asigra(self, **kwargs):
+        if await self.middleware.call('asigra.service_started'):
+            return True, []
+        else:
+            return False, []
+
     async def _start_webdav(self, **kwargs):
         await self._service("ix-apache", "start", force=True, **kwargs)
         await self._service("apache24", "start", **kwargs)
