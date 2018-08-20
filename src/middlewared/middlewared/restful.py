@@ -374,7 +374,8 @@ class Resource(object):
 
             async def on_method(req, *args, **kwargs):
                 resp = web.Response()
-                await authenticate(self.middleware, req)
+                if not self.rest._methods[getattr(self, method)]['no_auth_required']:
+                    await authenticate(self.middleware, req)
                 kwargs.update(dict(req.match_info))
                 return await do(method, req, resp, *args, **kwargs)
 
