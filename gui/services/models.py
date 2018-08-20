@@ -80,6 +80,14 @@ class Asigra(Model):
         default='',
     )
 
+    class Meta:
+        verbose_name = _("Asigra")
+        verbose_name_plural = _("Asigra")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = "AsigraIcon"
+
 
 class CIFS(Model):
     cifs_srv_netbiosname = models.CharField(

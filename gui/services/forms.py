@@ -41,7 +41,6 @@ from django.utils.translation import (
 )
 
 from dojango import forms
-from django.db.models import Q
 from freenasUI import choices
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm, Form
@@ -126,6 +125,30 @@ class servicesForm(ModelForm):
                 obj.save()
 
         return obj
+
+
+class AsigraForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = ''
+    middleware_attr_schema = 'asigra'
+    middleware_plugin = 'asigra'
+    is_singletone = True
+
+    class Meta:
+        fields = '__all__'
+        model = models.Asigra
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['filesystem'] = forms.ChoiceField(
+            label=self.fields['filesystem'].label,
+        )
+        with client as c:
+            self.fields['filesystem'].choices = [
+                (i, i) for i in c.call('pool.filesystem_choices')
+            ]
+        if self.instance.id:
+            self.fields['filesystem'].initial = self.instance.filesystem
 
 
 class CIFSForm(ModelForm):

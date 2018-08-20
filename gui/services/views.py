@@ -66,6 +66,7 @@ def index(request):
 def core(request):
 
     disabled = {}
+    extra_services = {}
 
     for key, val in get_directoryservice_status().items():
         if val is True and key != 'dc_enable':
@@ -78,6 +79,13 @@ def core(request):
         afp = models.AFP.objects.order_by("-id")[0]
     except IndexError:
         afp = models.AFP.objects.create()
+
+    if not notifier().is_freenas():
+        try:
+            asigra = models.Asigra.objects.order_by("-id")[0]
+        except IndexError:
+            asigra = models.Asigra.objects.create()
+        extra_services['asigra'] = asigra.get_edit_url()
 
     try:
         models.CIFS.objects.order_by("-id")[0]
@@ -150,7 +158,7 @@ def core(request):
         webdav = models.WebDAV.objects.create()
 
     return render(request, 'services/core.html', {
-        'urls': json.dumps({
+        'urls': json.dumps(dict({
             'cifs': reverse('services_cifs'),
             'afp': afp.get_edit_url(),
             'lldp': lldp.get_edit_url(),
@@ -167,7 +175,7 @@ def core(request):
             'webdav': webdav.get_edit_url(),
             'domaincontroller': domaincontroller.get_edit_url(),
             'netdata': reverse('services_netdata'),
-        }),
+        }, **extra_services)),
         'disabled': json.dumps(disabled),
     })
 
