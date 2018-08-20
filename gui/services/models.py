@@ -73,6 +73,14 @@ class services(Model):
         return self.srv_service
 
 
+class Asigra(Model):
+    filesystem = models.CharField(
+        verbose_name=_('Base Filesystem'),
+        max_length=100,
+        default='',
+    )
+
+
 class CIFS(Model):
     cifs_srv_netbiosname = models.CharField(
         max_length=120,
