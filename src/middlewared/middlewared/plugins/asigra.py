@@ -115,7 +115,6 @@ class AsigraService(Service):
             self.logger.error("Can't query dssystem!: {}".format(e))
             return exists
 
-        exists = False
         try:
             exists = (cur.fetchone()[0] != 0)
         except Exception:
