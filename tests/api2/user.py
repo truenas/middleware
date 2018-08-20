@@ -132,3 +132,7 @@ def test_20_deleting_user_testuser():
 
 def test_21_look_user_is_delete():
     assert len(GET('/user?username=testuser').json()) == 0
+
+
+def test_22_has_root_password():
+    assert GET('/user/has_root_password', anonymous=True).json() == True
