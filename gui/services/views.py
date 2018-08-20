@@ -76,6 +76,7 @@ def index(request):
 def core(request):
 
     disabled = {}
+    extra_services = {}
 
     for key, val in get_directoryservice_status().items():
         if val is True and key != 'dc_enable':
@@ -89,10 +90,12 @@ def core(request):
     except IndexError:
         afp = models.AFP.objects.create()
 
-    try:
-        models.Asigra.objects.order_by("-id")[0]
-    except IndexError:
-        models.Asigra.objects.create()
+    if not notifier().is_freenas():
+        try:
+            asigra = models.Asigra.objects.order_by("-id")[0]
+        except IndexError:
+            asigra = models.Asigra.objects.create()
+        extra_services['asigra'] = asigra.get_edit_url()
 
     try:
         cifs = models.CIFS.objects.order_by("-id")[0]
@@ -164,30 +167,25 @@ def core(request):
     except IndexError:
         webdav = models.WebDAV.objects.create()
 
-    urls = {
-        'cifs': reverse('services_cifs'),
-        'afp': afp.get_edit_url(),
-        'lldp': lldp.get_edit_url(),
-        'nfs': nfs.get_edit_url(),
-        'rsync': rsyncd.get_edit_url(),
-        'dynamicdns': dynamicdns.get_edit_url(),
-        's3': reverse('services_s3'),
-        'snmp': snmp.get_edit_url(),
-        'ups': ups.get_edit_url(),
-        'ftp': ftp.get_edit_url(),
-        'tftp': tftp.get_edit_url(),
-        'ssh': ssh.get_edit_url(),
-        'smartd': smart.get_edit_url(),
-        'webdav': webdav.get_edit_url(),
-        'domaincontroller': domaincontroller.get_edit_url(),
-        'netdata': reverse('services_netdata'),
-    }
-
-    if not notifier().is_freenas():
-        urls['asigra'] = reverse('services_asigra')
-
     return render(request, 'services/core.html', {
-        'urls': json.dumps(urls),
+        'urls': json.dumps(dict({
+            'cifs': reverse('services_cifs'),
+            'afp': afp.get_edit_url(),
+            'lldp': lldp.get_edit_url(),
+            'nfs': nfs.get_edit_url(),
+            'rsync': rsyncd.get_edit_url(),
+            'dynamicdns': dynamicdns.get_edit_url(),
+            's3': reverse('services_s3'),
+            'snmp': snmp.get_edit_url(),
+            'ups': ups.get_edit_url(),
+            'ftp': ftp.get_edit_url(),
+            'tftp': tftp.get_edit_url(),
+            'ssh': ssh.get_edit_url(),
+            'smartd': smart.get_edit_url(),
+            'webdav': webdav.get_edit_url(),
+            'domaincontroller': domaincontroller.get_edit_url(),
+            'netdata': reverse('services_netdata'),
+        }, **extra_services)),
         'disabled': json.dumps(disabled),
     })
 

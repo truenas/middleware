@@ -2274,6 +2274,10 @@ class Asigra(Model):
         blank=True
     )
 
+    class Meta:
+        verbose_name = _("Asigra")
+        verbose_name_plural = _("Asigra")
+
     class FreeAdmin:
         deletable = False
         icon_model = "AsigraIcon"

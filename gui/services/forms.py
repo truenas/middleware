@@ -1411,25 +1411,28 @@ class S3Form(MiddlewareModelForm, ModelForm):
         return data
 
 
-class AsigraForm(ModelForm):
+class AsigraForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = ''
+    middleware_attr_schema = 'asigra'
+    middleware_plugin = 'asigra'
+    is_singletone = True
 
     class Meta:
         fields = '__all__'
         model = models.Asigra
-        exclude = ['asigra_bindip']
 
     def __init__(self, *args, **kwargs):
-        super(AsigraForm, self).__init__(*args, **kwargs)
-
+        super().__init__(*args, **kwargs)
         self.fields['filesystem'] = forms.ChoiceField(
             label=self.fields['filesystem'].label,
         )
-        volnames = [o.vol_name for o in Volume.objects.all()]
-        choices = set([
-			y for y in list(notifier().list_zfs_fsvols().items())
-            if '/' in y[0] and y[0].split('/')[0] in volnames
-        ])
-        self.fields['filesystem'].choices = choices
+        with client as c:
+            self.fields['filesystem'].choices = [
+                (i, i) for i in c.call('pool.filesystem_choices')
+            ]
+        if self.instance.id:
+            self.fields['filesystem'].initial = self.instance.filesystem
 
         # XXX
         # At some point, we want to be able to change a path of necessary. This,
