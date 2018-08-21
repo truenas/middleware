@@ -798,11 +798,14 @@ def add_activedirectory_conf(client, smb4_conf):
         pass
 
     ad_workgroup = None
+
+    # First try to get the workgroup from LDAP. If that fails, automatically generate based on ad_domainname
+    # This is to allow us to generate a functional config even if a DC isn't available when we're generating the config
     try:
         fad = Struct(client.call('notifier.directoryservice', 'AD'))
         ad_workgroup = fad.netbiosname.upper()
     except Exception as e:
-        return
+        ad_workgroup = ad.ad_domainname.upper().split(".")[0]
 
     confset2(smb4_conf, "workgroup = %s", ad_workgroup)
     confset2(smb4_conf, "realm = %s", ad.ad_domainname.upper())
