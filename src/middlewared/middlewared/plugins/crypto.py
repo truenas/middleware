@@ -8,7 +8,7 @@ import ssl
 
 from middlewared.async_validators import validate_country
 from middlewared.schema import accepts, Dict, Int, List, Patch, Ref, Str
-from middlewared.service import CallError, CRUDService, private, ValidationErrors
+from middlewared.service import CRUDService, private, ValidationErrors
 from middlewared.validators import Email, IpAddress, Range
 from OpenSSL import crypto, SSL
 
@@ -858,22 +858,19 @@ class CertificateService(CRUDService):
 
     @accepts(
         Int('id'),
-        Str('force', default=False)
     )
-    async def do_delete(self, id, force=False):
-        # TODO: Make sure nginx cert is not deleted
+    async def do_delete(self, id):
         certificate = await self._get_instance(id)
 
         if (await self.middleware.call('system.general.config')['ui_certificate']['id']) == id:
-            if not force:
-                raise CallError(
-                    'Selected certificate is being used by FreeNAS for encryption, please select another one'
-                )
-            else:
-                # TODO: We can create another cert with freenas_default name,
-                # probably calling the setup method from here.
-                # The case should be handled when the cert being deleted is named "freenas_default"
-                pass
+            verrors = ValidationErrors()
+
+            verrors.add(
+                'certificate_delete.id',
+                'Selected certificate is being used by FreeNAS for encryption, please select another one'
+            )
+
+            raise verrors
 
         response = await self.middleware.call(
             'datastore.delete',
@@ -1325,9 +1322,9 @@ class CertificateAuthorityService(CRUDService):
 
 
 async def setup(middlewared):
-    system_config = await middlewared.call('system.general.config')
+    system_cert = (await middlewared.call('system.general.config'))['ui_certificate']
     certs = await middlewared.call('certificate.query')
-    if not system_config['ui_certificate'] in [c['id'] for c in certs]:
+    if not system_cert or system_cert['id'] not in [c['id'] for c in certs]:
         # create a self signed cert if it doesn't exist and set ui_certificate to it's value
         if not any('freenas_default' == c['name'] for c in certs):
             cert, key = await middlewared.call('certificate.create_self_signed_cert')

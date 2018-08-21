@@ -404,11 +404,12 @@ class SystemGeneralService(ConfigService):
                 data['ui_' + key[3:]] = data.pop(key)
 
         data['sysloglevel'] = data['sysloglevel'].upper()
-        data['ui_certificate'] = await self.middleware.call(
-            'certificate.query',
-            [['id', '=', data['ui_certificate']['id']]],
-            {'get': True}
-        )
+        if data['ui_certificate']:
+            data['ui_certificate'] = await self.middleware.call(
+                'certificate.query',
+                [['id', '=', data['ui_certificate']['id']]],
+                {'get': True}
+            )
         return data
 
     @accepts()

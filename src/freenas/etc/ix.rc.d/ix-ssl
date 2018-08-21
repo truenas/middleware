@@ -5,6 +5,7 @@
 
 # PROVIDE: ix-ssl
 # REQUIRE: FILESYSTEMS
+# BEFORE: ix-ldap
 
 . /etc/rc.freenas
 
