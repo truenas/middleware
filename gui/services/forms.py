@@ -150,6 +150,10 @@ class AsigraForm(MiddlewareModelForm, ModelForm):
         if self.instance.id:
             self.fields['filesystem'].initial = self.instance.filesystem
 
+    def started(self):
+        with client as c:
+            return c.call('service.started', 'asigra')
+
 
 class CIFSForm(ModelForm):
 
