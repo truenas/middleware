@@ -12,6 +12,7 @@ import middlewared.logger
 import asyncio
 import contextlib
 import errno
+import math
 import netif
 import os
 import psutil
@@ -122,11 +123,11 @@ class VMSupervisor(object):
         grub_dir = None
         grub_boot_device = False
         block_devices = {
-            'ahci-hd': [],
+            'ahci': [],
             'virtio-blk': [],
         }
         for device in sorted(self.vm['devices'], key=lambda x: (x['order'], x['id'])):
-            if device['dtype'] == 'DISK' or device['dtype'] == 'RAW':
+            if device['dtype'] in ('CDROM', 'DISK', 'RAW'):
 
                 disk_sector_size = int(device['attributes'].get('sectorsize', 0))
                 if disk_sector_size > 0:
@@ -134,14 +135,21 @@ class VMSupervisor(object):
                 else:
                     sectorsize_args = ''
 
-                if device['attributes'].get('type') == 'AHCI':
-                    block_name = 'ahci-hd'
+                if device['dtype'] == 'CDROM':
+                    block_name = 'ahci'
+                    suffix = 'cd:'
+                elif device['attributes'].get('type') == 'AHCI':
+                    block_name = 'ahci'
+                    suffix = 'hd:'
                 else:
                     block_name = 'virtio-blk'
+                    suffix = ''
 
-                # Each block PCI slot takes up to 8 disks
+                # Each block PCI slot takes up to 8 functions
+                # ahci can take up to 32 disks per function
+                # virtio-blk occupies the entire function
                 for block in block_devices[block_name]:
-                    if len(block['disks']) < 8:
+                    if len(block['disks']) < (256 if block_name == 'ahci' else 8):
                         break
                 else:
                     block = {
@@ -149,9 +157,9 @@ class VMSupervisor(object):
                         'disks': []
                     }
                     block_devices[block_name].append(block)
-                block['disks'].append(f'{device["attributes"]["path"]}{sectorsize_args}')
+                block['disks'].append(f'{suffix}{device["attributes"]["path"]}{sectorsize_args}')
 
-                if self.vmutils.is_container(self.vm) and \
+                if device['dtype'] != 'CDROM' and self.vmutils.is_container(self.vm) and \
                     device['attributes'].get('boot', False) is True and \
                         grub_boot_device is False:
                     shared_fs = await self.middleware.call('vm.get_sharefs')
@@ -160,8 +168,6 @@ class VMSupervisor(object):
                     grub_boot_device = True
                     self.logger.debug('==> Boot Disk: {0}'.format(device))
 
-            elif device['dtype'] == 'CDROM':
-                args += ['-s', '{},ahci-cd,{}'.format(nid(), device['attributes']['path'])]
             elif device['dtype'] == 'NIC':
                 attach_iface = device['attributes'].get('nic_attach')
 
@@ -218,9 +224,13 @@ class VMSupervisor(object):
                          '-s', '30,xhci,tablet', ]
 
         for pciemu, pcislots in block_devices.items():
+            perfunction = 32 if pciemu == 'ahci' else 1
             for pcislot in pcislots:
-                for i, d in enumerate(pcislot['disks']):
-                    args += ['-s', f'{pcislot["slot"]}:{i},{pciemu},{d}']
+                for pcifunc in range(math.ceil(len(pcislot['disks']) / perfunction)):
+                    conf = ','.join(pcislot['disks'][
+                        pcifunc * perfunction:(pcifunc + 1) * perfunction
+                    ])
+                    args += ['-s', f'{pcislot["slot"]}:{pcifunc},{pciemu},{conf}']
 
         # grub-bhyve support for containers
         if self.vmutils.is_container(self.vm):
@@ -1058,8 +1068,10 @@ class VMService(CRUDService):
     async def do_update(self, id, data):
         """Update all information of a specific VM."""
 
+        old = await self._get_instance(id)
+
         verrors = ValidationErrors()
-        await self.__common_validation(verrors, 'vm_update', data)
+        await self.__common_validation(verrors, 'vm_update', data, old=old)
         if verrors:
             raise verrors
 
