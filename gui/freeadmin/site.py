@@ -14,6 +14,7 @@ from django.views.decorators.csrf import csrf_protect
 
 from freenasUI.common.system import get_sw_name, get_sw_year, get_sw_version
 from freenasUI.middleware.client import client
+from freenasUI.middleware.notifier import notifier
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.options import BaseFreeAdmin
 
@@ -288,6 +289,7 @@ class FreeAdminSite(object):
             alerts = c.call("alert.list")
         return render(request, "freeadmin/alert_status.html", {
             "alerts": alerts,
+            "show_node": not notifier().is_freenas() and notifier().failover_licensed()
         })
 
 
