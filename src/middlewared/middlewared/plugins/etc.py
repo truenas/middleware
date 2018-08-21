@@ -154,7 +154,6 @@ class EtcService(Service):
                         changes = True
 
             if not os.path.exists(outfile):
-                print('file does not exist')
                 with open(outfile, 'w') as f:
                     f.write(rendered)
                 changes = True

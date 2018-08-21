@@ -867,7 +867,7 @@ class CertificateService(CRUDService):
 
             verrors.add(
                 'certificate_delete.id',
-                'Selected certificate is being used by FreeNAS for encryption, please select another one'
+                'Selected certificate is being used by system HTTPS server, please select another one'
             )
 
             raise verrors
@@ -1338,10 +1338,10 @@ async def setup(middlewared):
             )
 
             id = default_cert['id']
-            middlewared.logger.debug('Default certificate for FreeNAS created')
+            middlewared.logger.debug('Default certificate for System created')
         else:
             id = [c['id'] for c in certs if c['name'] == 'freenas_default'][0]
 
         await middlewared.call('system.general.update', {'ui_certificate': id})
 
-    middlewared.logger.debug('Certificate setup for FreeNAS complete')
+    middlewared.logger.debug('Certificate setup for System complete')

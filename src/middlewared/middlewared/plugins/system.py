@@ -697,7 +697,7 @@ class SystemGeneralService(ConfigService):
                     # for fingerprint
                     verrors.add(
                         f'{schema}.ui_certificate',
-                        'Kindly check if the certificate has been added to the system and it is a '
+                        'Please check if the certificate has been added to the system and it is a '
                         'valid certificate'
                     )
         return verrors

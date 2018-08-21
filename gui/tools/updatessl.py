@@ -101,7 +101,7 @@ def main(certfile, keyfile):
     # by ix-update which is higher up in the rcorder than ix-ssl, as a result
     # of which ix-ssl will be called later-on either ways.
     # HOWEVER, if you do run this file as a standalone do call ix-ssl service
-    # yourself as well as and reload_http and the works.
+    # yourself as well as run `midclt call service.http reload`.
 
 
 def usage():
