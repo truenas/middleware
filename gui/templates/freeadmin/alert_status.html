@@ -15,7 +15,11 @@
             {% endif %}
         {% endif %}
         </span>
-        {{ alert.datetime }} - {{ alert.formatted|safe }}
+        {{ alert.datetime }} -
+        {% if show_node %}
+            Node {{ alert.node }} -
+        {% endif %}
+        {{ alert.formatted|safe }}
     </li>
 {% empty %}
   <li>The system has no alerts</li>
