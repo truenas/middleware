@@ -17,6 +17,8 @@ class EnclosureStatusAlertSource(AlertSource):
     level = AlertLevel.CRITICAL
     title = "Enclosure status is critical"
 
+    run_on_backup_node = False
+
     async def check(self):
         encs = ses.Enclosures()
         alerts = []
