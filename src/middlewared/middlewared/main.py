@@ -639,6 +639,7 @@ class Middleware(object):
         self.crash_reporting = logger.CrashReporting()
         self.loop_monitor = loop_monitor
         self.plugins_dirs = plugins_dirs or []
+        self.app = None
         self.__loop = None
         self.__thread_id = threading.get_ident()
         self.__threadpool = concurrent.futures.ThreadPoolExecutor(
@@ -770,6 +771,9 @@ class Middleware(object):
                 method, service_name, task_name, interval
             )
         )
+
+    def plugin_route_add(self, plugin_name, route, method):
+        self.app.router.add_route('*', f'/_plugins/{plugin_name}/{route}', method)
 
     def register_wsclient(self, client):
         self.__wsclients[client.sessionid] = client
@@ -1020,6 +1024,8 @@ class Middleware(object):
             t.setDaemon(True)
             t.start()
 
+        self.app = app = web.Application(loop=self.__loop)
+
         # Needs to happen after setting debug or may cause race condition
         # http://bugs.python.org/issue30805
         self.__loop.run_until_complete(self.__plugins_load())
@@ -1028,7 +1034,6 @@ class Middleware(object):
         self.__loop.add_signal_handler(signal.SIGTERM, self.terminate)
         self.__loop.add_signal_handler(signal.SIGUSR1, self.pdb)
 
-        app = web.Application(loop=self.__loop)
         app.router.add_route('GET', '/websocket', self.ws_handler)
 
         app.router.add_route("*", "/api/docs{path_info:.*}", WSGIHandler(apidocs_app))
