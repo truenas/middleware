@@ -1,0 +1,14 @@
+{% extends "freeadmin/generic_model_edit.html" %}
+{% block buttons %}
+{{ block.super }}
+    <tr>
+        <td colspan="2">
+	    <button id="btn_{{ model_name }}_DSOp" class="submitform" data-dojo-type="dijit.form.Button"{% if not form.started%} disabled{% endif %}>
+		    Launch DS Operator
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+			window.location.href = '/_plugins/asigra/DSOP.jnlp';
+                </script>
+            </button>
+	</td>
+    </tr>
+{% endblock %}
