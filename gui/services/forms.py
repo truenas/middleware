@@ -1459,3 +1459,7 @@ class AsigraForm(MiddlewareModelForm, ModelForm):
         if self._orig_filesystem != obj.filesystem:
             notifier().restart("asigra")
         return obj
+
+    def started(self):
+        with client as c:
+            return c.call('service.started', 'asigra')
