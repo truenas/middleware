@@ -1388,7 +1388,7 @@ class VMDeviceService(CRUDService):
             raise ValidationError('vmdevice_create.vm', 'This field is required.')
 
         await self.validate_device(data)
-        id = await self.middleware.call('datastore.insert', self._config.datastore, id, data)
+        id = await self.middleware.call('datastore.insert', self._config.datastore, data)
         await self.__reorder_devices(id, data['vm'], data['order'])
 
         return await self._get_instance(id)
