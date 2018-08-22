@@ -247,6 +247,9 @@ define([
               me.sync();
             }
             me.stopLoading();
+          }, function(error) {
+            me.stopLoading();
+            setMessage(error.reason, "error");
           });
         } else {
           Middleware.call('notifier.start', [me.name, null, true], function(result) {
@@ -255,6 +258,9 @@ define([
               me.sync();
             }
             me.stopLoading();
+          }, function(error) {
+            me.stopLoading();
+            setMessage(error.reason, "error");
           });
         }
       }
