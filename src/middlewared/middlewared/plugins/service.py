@@ -175,6 +175,7 @@ class ServiceService(CRUDService):
         await self.middleware.call_hook('service.pre_action', service, 'start', options)
         sn = self._started_notify("start", service)
         await self._simplecmd("start", service, options)
+        await self.middleware.call_hook('service.post_action', service, 'start', options)
         return await self.started(service, sn)
 
     async def started(self, service, sn=None):
@@ -210,6 +211,7 @@ class ServiceService(CRUDService):
         await self.middleware.call_hook('service.pre_action', service, 'stop', options)
         sn = self._started_notify("stop", service)
         await self._simplecmd("stop", service, options)
+        await self.middleware.call_hook('service.post_action', service, 'stop', options)
         return await self.started(service, sn)
 
     @accepts(
@@ -225,6 +227,7 @@ class ServiceService(CRUDService):
         await self.middleware.call_hook('service.pre_action', service, 'restart', options)
         sn = self._started_notify("restart", service)
         await self._simplecmd("restart", service, options)
+        await self.middleware.call_hook('service.post_action', service, 'restart', options)
         return await self.started(service, sn)
 
     @accepts(
@@ -243,6 +246,7 @@ class ServiceService(CRUDService):
             await self._simplecmd("reload", service, options)
         except Exception as e:
             await self.restart(service, options)
+        await self.middleware.call_hook('service.post_action', service, 'reload', options)
         return await self.started(service)
 
     async def _get_status(self, service):
