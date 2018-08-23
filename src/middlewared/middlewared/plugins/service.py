@@ -119,7 +119,8 @@ class ServiceService(CRUDService):
             asyncio.ensure_future(self._get_status(entry)): entry
             for entry in services
         }
-        await asyncio.wait(list(jobs.keys()), timeout=15)
+        if jobs:
+            await asyncio.wait(list(jobs.keys()), timeout=15)
 
         def result(task):
             """
@@ -175,6 +176,7 @@ class ServiceService(CRUDService):
         await self.middleware.call_hook('service.pre_action', service, 'start', options)
         sn = self._started_notify("start", service)
         await self._simplecmd("start", service, options)
+        await self.middleware.call_hook('service.post_action', service, 'start', options)
         return await self.started(service, sn)
 
     async def started(self, service, sn=None):
@@ -210,6 +212,7 @@ class ServiceService(CRUDService):
         await self.middleware.call_hook('service.pre_action', service, 'stop', options)
         sn = self._started_notify("stop", service)
         await self._simplecmd("stop", service, options)
+        await self.middleware.call_hook('service.post_action', service, 'stop', options)
         return await self.started(service, sn)
 
     @accepts(
@@ -225,6 +228,7 @@ class ServiceService(CRUDService):
         await self.middleware.call_hook('service.pre_action', service, 'restart', options)
         sn = self._started_notify("restart", service)
         await self._simplecmd("restart", service, options)
+        await self.middleware.call_hook('service.post_action', service, 'restart', options)
         return await self.started(service, sn)
 
     @accepts(
@@ -243,6 +247,7 @@ class ServiceService(CRUDService):
             await self._simplecmd("reload", service, options)
         except Exception as e:
             await self.restart(service, options)
+        await self.middleware.call_hook('service.post_action', service, 'reload', options)
         return await self.started(service)
 
     async def _get_status(self, service):
@@ -368,6 +373,25 @@ class ServiceService(CRUDService):
                     for i in data.strip().split('\n') if i.isdigit()
                 ]
         return False, []
+
+    async def _restart_asigra(self, **kwargs):
+        await self.middleware.call('asigra.service_stop')
+        await self.middleware.call('asigra.service_start')
+
+    async def _reload_asigra(self, **kwargs):
+        await self._restart_asigra(**kwargs)
+
+    async def _start_asigra(self, **kwargs):
+        await self.middleware.call('asigra.service_start')
+
+    async def _stop_asigra(self, **kwargs):
+        await self.middleware.call('asigra.service_stop')
+
+    async def _started_asigra(self, **kwargs):
+        if await self.middleware.call('asigra.service_started'):
+            return True, []
+        else:
+            return False, []
 
     async def _start_webdav(self, **kwargs):
         await self._service("ix-apache", "start", force=True, **kwargs)

@@ -249,7 +249,7 @@ class CRUDService(Service):
         """
         Helpher method to get an instance from a collection given the `id`.
         """
-        instance = await self.middleware.call('datastore.query', self._config.datastore, [('id', '=', id)], {'prefix': self._config.datastore_prefix})
+        instance = await self.middleware.call(f'{self._config.namespace}.query', [('id', '=', id)])
         if not instance:
             raise ValidationError(None, f'{self._config.verbose_name} {id} does not exist', errno.ENOENT)
         return instance[0]

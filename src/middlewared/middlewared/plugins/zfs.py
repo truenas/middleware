@@ -291,7 +291,7 @@ class ZFSDatasetService(CRUDService):
                     else:
                         if 'value' not in v:
                             raise ValidationError('properties', f'properties.{k} needs a "value" attribute')
-                        if ':' not in v['value']:
+                        if ':' not in k:
                             raise ValidationError('properties', f'User property needs a colon (:) in its name`')
                         prop = libzfs.ZFSUserProperty(v['value'])
                         dataset.properties[k] = prop
@@ -304,6 +304,8 @@ class ZFSDatasetService(CRUDService):
         try:
             zfs = libzfs.ZFS()
             ds = zfs.get_dataset(id)
+            if ds.type == libzfs.DatasetType.FILESYSTEM:
+                ds.umount()
             ds.delete()
         except libzfs.ZFSException as e:
             self.logger.error('Failed to delete dataset', exc_info=True)
@@ -335,8 +337,16 @@ class ZFSSnapshot(CRUDService):
     @filterable
     def query(self, filters, options):
         zfs = libzfs.ZFS()
+        iterable = zfs.snapshots
+        for f in (filters or []):
+            if list(f[:2]) == ['dataset', '=']:
+                try:
+                    iterable = zfs.get_dataset(f[-1]).snapshots
+                except libzfs.ZFSException:
+                    iterable = []
+                break
         # FIXME: awful performance with hundreds/thousands of snapshots
-        return filter_list([i.__getstate__() for i in list(zfs.snapshots)], filters, options)
+        return filter_list([i.__getstate__() for i in iterable], filters, options)
 
     @accepts(Dict(
         'snapshot_create',
