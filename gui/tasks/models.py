@@ -166,6 +166,9 @@ class CloudSync(Model):
         default="*",
         verbose_name=_("Day of week"),
     )
+    bwlimit = DictField(
+        editable=False,
+    )
     enabled = models.BooleanField(
         default=True,
         verbose_name=_("Enabled"),
