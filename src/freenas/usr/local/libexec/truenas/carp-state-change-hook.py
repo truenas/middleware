@@ -17,7 +17,7 @@ import sqlite3
 import subprocess
 import sys
 import time
-
+import struct
 
 # TODO /tmp/failover/
 
@@ -648,8 +648,15 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
 
             # If we panic here, middleware will check for this file and send an appropriate email.
             # Ticket 39114
-            with open(WATCHDOG_ALERT_FILE, "wb"):
-                pass
+            try:
+                fd = os.open(WATCHDOG_ALERT_FILE, os.O_RDWR | os.O_CREAT | os.O_TRUNC)
+                epoch = int(time())
+                b = struct.pack("@i", epoch)
+                os.write(fd, b)
+                os.fsync(fd)
+                os.close(fd)
+            except EnvironmentError as err:
+                log.warn(err)
 
             run('watchdog -t 4')
 
@@ -691,7 +698,7 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
             # However, this python file is being called about 1min after middlewared and recreating the file on line 651.
             try:
                 os.unlink(WATCHDOG_ALERT_FILE)
-            except IOError:
+            except EnvironmentError:
                 pass
 
             if volumes:
