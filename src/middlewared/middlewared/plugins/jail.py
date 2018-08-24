@@ -184,7 +184,9 @@ class JailService(CRUDService):
                 if f in item:
                     for ip in item.split('=')[1].split(','):
                         try:
-                            IpInUse(self.middleware, exclude)(ip.split('|')[1].split('/')[0])
+                            IpInUse(self.middleware, exclude)(
+                                ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
+                            )
                         except ShouldBe as e:
                             verrors.add(
                                 f'{schema}.{f}',
@@ -211,7 +213,7 @@ class JailService(CRUDService):
         jail = self.query([['id', '=', jail]], {'get': True})
 
         exclude_ips = [
-            ip.split('|')[1].split('/')[0]
+            ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
             for f in ('ip4_addr', 'ip6_addr') for ip in jail[f].split(',')
             if ip != 'none'
         ]
