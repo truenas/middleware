@@ -650,7 +650,7 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
             # Ticket 39114
             try:
                 fd = os.open(WATCHDOG_ALERT_FILE, os.O_RDWR | os.O_CREAT | os.O_TRUNC)
-                epoch = int(time())
+                epoch = int(time.time())
                 b = struct.pack("@i", epoch)
                 os.write(fd, b)
                 os.fsync(fd)
