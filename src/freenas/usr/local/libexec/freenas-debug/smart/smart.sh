@@ -34,9 +34,9 @@ smart_func()
 {
 
 	local smart_onoff=0
-	local smart_enable="not start on boot."
+	local smart_enabled="not start on boot."
 
-	smart_onoff=$({FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	smart_onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		srv_enable
 	FROM
@@ -50,7 +50,7 @@ smart_func()
 
 	if [ "$smart_onoff" == "1" ]
 	then
-		$smart_enabled="start on boot."
+		smart_enabled="start on boot."
 	fi
 
 	section_header "SMARTD Boot Status"
