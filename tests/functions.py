@@ -27,7 +27,7 @@ def GET(testpath, **optional):
             raise ValueError('api parameter should be "1" or "2"')
     else:
         api_url = default_api_url
-    if optional.pop("anonymous", True):
+    if optional.pop("anonymous", False):
         auth = None
     else:
         auth = authentification
@@ -56,7 +56,7 @@ def POST(testpath, payload=None, **optional):
             raise ValueError('api parameter should be "1" or "2"')
     else:
         api_url = default_api_url
-    if optional.pop("anonymous", True):
+    if optional.pop("anonymous", False):
         auth = None
     else:
         auth = authentification
