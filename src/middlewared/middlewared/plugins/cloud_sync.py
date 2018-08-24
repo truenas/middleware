@@ -1,9 +1,10 @@
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import accepts, Bool, Cron, Dict, Error, Int, Patch, Str
+from middlewared.schema import accepts, Bool, Cron, Dict, Error, Int, List, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, item_method, job, private
 )
 from middlewared.utils import load_modules, load_classes, Popen, run
+from middlewared.validators import Range, Time
 
 import asyncio
 import base64
@@ -96,6 +97,12 @@ async def rclone(middleware, job, cloud_sync):
 
         if cloud_sync["attributes"].get("fast_list"):
             args.append("--fast-list")
+
+        if cloud_sync["bwlimit"]:
+            args.extend(["--bwlimit", " ".join([
+                f"{limit['time']},{str(limit['bandwidth']) + 'b' if limit['bandwidth'] else 'off'}"
+                for limit in cloud_sync["bwlimit"]
+            ])])
 
         args += shlex.split(cloud_sync["args"])
 
@@ -417,6 +424,15 @@ class CloudSyncService(CRUDService):
         if not credentials:
             verrors.add(f"{name}.credentials", "Invalid credentials")
 
+        for i, (limit1, limit2) in enumerate(zip(data["bwlimit"], data["bwlimit"][1:])):
+            if limit1["time"] >= limit2["time"]:
+                verrors.add(f"{name}.bwlimit.{i + 1}.time", f"Invalid time order: {limit1['time']}, {limit2['time']}")
+
+        try:
+            shlex.split(data["args"])
+        except ValueError as e:
+            verrors.add(f"{name}.args", f"Parse error: {e.args[0]}")
+
         if verrors:
             raise verrors
 
@@ -439,11 +455,6 @@ class CloudSyncService(CRUDService):
             await provider.pre_save_task(data, credentials, verrors)
 
         verrors.add_child(f"{name}.attributes", attributes_verrors)
-
-        try:
-            shlex.split(data["args"])
-        except ValueError as e:
-            verrors.add(f"{name}.args", f"Parse error: {e.args[0]}")
 
     @private
     async def _validate(self, verrors, name, data):
@@ -498,6 +509,9 @@ class CloudSyncService(CRUDService):
         Str("encryption_password", default=""),
         Str("encryption_salt", default=""),
         Cron("schedule", required=True),
+        List("bwlimit", default=[], items=[Dict("cloud_sync_bwlimit",
+                                                Str("time", validators=[Time()]),
+                                                Int("bandwidth", validators=[Range(min=1)], null=True))]),
         Dict("attributes", additional_attrs=True, required=True),
         Bool("snapshot", default=False),
         Str("pre_script", default=""),
