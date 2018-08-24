@@ -292,6 +292,7 @@ cat << EOF >> $cfg
     Mountpoint "/"
     Mountpoint "/^\/mnt\//"
     FSType "zfs"
+    LogOnce true
 </Plugin>
 
 <Plugin python>
