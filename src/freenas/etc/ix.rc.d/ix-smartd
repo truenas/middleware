@@ -81,11 +81,6 @@ parse_devlist()
 			propdev="/dev/${DRIVER}${CONTROLLER_ID} -d 3ware,${port}"
 			break
 			;;
-		# LSI MegaRAID 6Gb/s and 12Gb/s SAS+SATA RAID controller (not supported)
-		${disk}:mrsas)
-			propdev=
-			break
-			;;
 		# Common device
 		${disk}:* )
 			propdev=/dev/$disk
