@@ -1,6 +1,7 @@
 from datetime import datetime
 import os
 import textwrap
+import struct
 
 from middlewared.service import Service
 
