@@ -38,22 +38,12 @@ async def setup(middleware):
         if not await middleware.call('notifier.is_freenas') and await middleware.call('notifier.failover_licensed'):
             if os.path.exists(WATCHDOG_ALERT_FILE):
                 watchdog_file = True
-                try:
-                    fd = os.open(WATCHDOG_ALERT_FILE, os.O_RDONLY)
-                    b = os.read(fd, 4)
-                    watchdog_time = struct.unpack("@i", b)[0]
-                    os.close(fd)
-                except EnvironmentError:
-                    pass
+                with open(WATCHDOG_ALERT_FILE, 'rb') as f:
+                    watchdog_time = struct.unpack("@i", f.read(4))[0]
             if os.path.exists(FENCED_ALERT_FILE):
                 fenced_file = True
-                try:
-                    fd = os.open(FENCED_ALERT_FILE, os.O_RDONLY)
-                    b = os.read(fd, 4)
-                    fenced_time = struct.unpack("@i", b)[0]
-                    os.close(fd)
-                except EnvironmentError:
-                    pass
+                with open(FENCED_ALERT_FILE, 'rb') as f:
+                    fenced_time = struct.unpack("@i", f.read(4))[0]
 
             controller = await middleware.call('notifier.failover_node')
             if controller == 'B':
