@@ -247,9 +247,6 @@ class SharingNFSService(CRUDService):
         hostnames = list(set(hostnames))
 
         async def resolve(hostname):
-            if hostname.startswith("@"):
-                return None
-
             try:
                 return (
                     await asyncio.wait_for(self.middleware.run_in_io_thread(socket.getaddrinfo, hostname, None), 5)
@@ -309,12 +306,8 @@ class SharingNFSService(CRUDService):
 
         had_explanation = False
         for i, host in enumerate(data["hosts"]):
-            if host.startswith("@"):
-                continue
-
             host = dns_cache[host]
             if host is None:
-                verrors.add(f"{schema_name}.hosts.{i}", "Unable to resolve host")
                 continue
 
             network = ipaddress.ip_network(host)
