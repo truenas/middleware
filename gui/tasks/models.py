@@ -169,6 +169,9 @@ class CloudSync(Model):
     bwlimit = ListField(
         editable=False,
     )
+    exclude = ListField(
+        editable=False,
+    )
     enabled = models.BooleanField(
         default=True,
         verbose_name=_("Enabled"),

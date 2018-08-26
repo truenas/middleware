@@ -27,7 +27,7 @@ RE_TRANSF = re.compile(r"Transferred:\s*?(.+)$", re.S)
 
 REMOTES = {}
 
-RcloneConfigTuple = namedtuple("RcloneConfigTuple", ["config_path", "remote_path"])
+RcloneConfigTuple = namedtuple("RcloneConfigTuple", ["config_path", "remote_path", "extra_args"])
 
 
 class RcloneConfig:
@@ -37,10 +37,14 @@ class RcloneConfig:
         self.provider = REMOTES[self.cloud_sync["credentials"]["provider"]]
 
         self.tmp_file = None
+        self.tmp_file_exclude = None
+
         self.path = None
 
     def __enter__(self):
         self.tmp_file = tempfile.NamedTemporaryFile(mode="w+")
+        if self.cloud_sync["exclude"]:
+            self.tmp_file_exclude = tempfile.NamedTemporaryFile(mode="w+")
 
         # Make sure only root can read it as there is sensitive data
         os.chmod(self.tmp_file.name, 0o600)
@@ -51,6 +55,7 @@ class RcloneConfig:
             config["pass"] = rclone_encrypt_password(config["pass"])
 
         remote_path = None
+        extra_args = []
 
         if "attributes" in self.cloud_sync:
             config.update(dict(self.cloud_sync["attributes"], **self.provider.get_task_extra(self.cloud_sync)))
@@ -72,17 +77,24 @@ class RcloneConfig:
 
                 remote_path = "encrypted:/"
 
+            if self.cloud_sync["exclude"]:
+                self.tmp_file_exclude.write("\n".join(self.cloud_sync["exclude"]))
+                self.tmp_file_exclude.flush()
+                extra_args.extend(["--exclude-from", self.tmp_file_exclude.name])
+
         self.tmp_file.write("[remote]\n")
         for k, v in config.items():
             self.tmp_file.write(f"{k} = {v}\n")
 
         self.tmp_file.flush()
 
-        return RcloneConfigTuple(self.tmp_file.name, remote_path)
+        return RcloneConfigTuple(self.tmp_file.name, remote_path, extra_args)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.tmp_file:
             self.tmp_file.close()
+        if self.tmp_file_exclude:
+            self.tmp_file_exclude.close()
 
 
 async def rclone(middleware, job, cloud_sync):
@@ -103,6 +115,8 @@ async def rclone(middleware, job, cloud_sync):
                 f"{limit['time']},{str(limit['bandwidth']) + 'b' if limit['bandwidth'] else 'off'}"
                 for limit in cloud_sync["bwlimit"]
             ])])
+
+        args += config.extra_args
 
         args += shlex.split(cloud_sync["args"])
 
@@ -512,6 +526,7 @@ class CloudSyncService(CRUDService):
         List("bwlimit", default=[], items=[Dict("cloud_sync_bwlimit",
                                                 Str("time", validators=[Time()]),
                                                 Int("bandwidth", validators=[Range(min=1)], null=True))]),
+        List("exclude", default=[], items=[Str("path", empty=False)]),
         Dict("attributes", additional_attrs=True, required=True),
         Bool("snapshot", default=False),
         Str("pre_script", default=""),
