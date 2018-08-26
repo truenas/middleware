@@ -4,7 +4,7 @@ from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Model
 
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.freeadmin.models.fields import DictField
+from freenasUI.freeadmin.models.fields import DictField, ListField
 from freenasUI.middleware.client import client, ClientException
 from freenasUI.services.exceptions import ServiceFailed
 
@@ -82,7 +82,7 @@ class MiddlewareModelForm:
         except FieldDoesNotExist:
             pass
         else:
-            if isinstance(field, DictField):
+            if isinstance(field, (DictField, ListField)):
                 return json.loads(v)
 
         return v
