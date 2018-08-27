@@ -376,9 +376,11 @@ class JailService(CRUDService):
 
                 if not pathlib.Path(index_path).is_file():
                     index_json = None
-                    raise CallError(
-                        'Plugin INDEX doesn\'t exist, unable to list pkg'
-                        ' versions for any plugins.')
+
+                    for plugin in resource_list:
+                        plugin += ['N/A', 'N/A']
+
+                    return resource_list
                 else:
                     index_fd = open(index_path, 'r')
                     index_json = json.load(index_fd)
