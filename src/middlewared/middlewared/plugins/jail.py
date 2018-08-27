@@ -24,7 +24,7 @@ from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
-from middlewared.validators import IpInUse, ShouldBe
+from middlewared.validators import IpInUse
 
 
 SHUTDOWN_LOCK = asyncio.Lock()
@@ -187,7 +187,7 @@ class JailService(CRUDService):
                             IpInUse(self.middleware, exclude)(
                                 ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
                             )
-                        except ShouldBe as e:
+                        except ValueError as e:
                             verrors.add(
                                 f'{schema}.{f}',
                                 str(e)
