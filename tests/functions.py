@@ -27,8 +27,12 @@ def GET(testpath, **optional):
             raise ValueError('api parameter should be "1" or "2"')
     else:
         api_url = default_api_url
+    if optional.pop("anonymous", False):
+        auth = None
+    else:
+        auth = authentification
     getit = requests.get(api_url + testpath, headers=header,
-                         auth=authentification)
+                         auth=auth)
     return getit
 
 
@@ -52,12 +56,16 @@ def POST(testpath, payload=None, **optional):
             raise ValueError('api parameter should be "1" or "2"')
     else:
         api_url = default_api_url
+    if optional.pop("anonymous", False):
+        auth = None
+    else:
+        auth = authentification
     if payload is None:
         postit = requests.post(api_url + testpath, headers=header,
-                               auth=authentification)
+                               auth=auth)
     else:
         postit = requests.post(api_url + testpath, headers=header,
-                               auth=authentification, data=json.dumps(payload))
+                               auth=auth, data=json.dumps(payload))
     return postit
 
 

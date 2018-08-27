@@ -1101,6 +1101,7 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
     )
 
     class Meta:
+        exclude = ('adv_uploadcrash', )
         fields = '__all__'
         model = models.Advanced
         widgets = {

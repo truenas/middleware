@@ -446,7 +446,8 @@ class RsyncTaskService(CRUDService):
                             remote_host,
                             port=remote_port,
                             username=remote_username,
-                            client_keys=key_files
+                            client_keys=key_files,
+                            known_hosts=None
                     ), timeout=5)) as conn:
 
                         await conn.run(f'test -d {remote_path}', check=True)

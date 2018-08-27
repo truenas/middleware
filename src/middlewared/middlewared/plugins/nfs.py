@@ -312,7 +312,6 @@ class SharingNFSService(CRUDService):
         for i, host in enumerate(data["hosts"]):
             host = dns_cache[host]
             if host is None:
-                verrors.add(f"{schema_name}.hosts.{i}", "Unable to resolve host")
                 continue
 
             network = ipaddress.ip_network(host)

@@ -111,6 +111,10 @@ class Device(Model):
     attributes = DictField(
         editable=False,
     )
+    order = models.IntegerField(
+        editable=False,
+        null=True,
+    )
 
     def __str__(self):
         return '{0}:{1}'.format(self.vm, self.get_dtype_display())

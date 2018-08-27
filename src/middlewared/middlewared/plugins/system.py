@@ -551,7 +551,11 @@ class SystemGeneralService(ConfigService):
             for index, row in enumerate(reader):
                 if index != 0:
                     if row[cni] and row[two_li]:
-                        self._country_choices[row[two_li]] = row[cni]
+                        if row[two_li] in self._country_choices:
+                            # If two countries in the iso file have the same key, we concatenate their names
+                            self._country_choices[row[two_li]] += f' + {row[cni]}'
+                        else:
+                            self._country_choices[row[two_li]] = row[cni]
                 else:
                     # ONLY CNI AND TWO_LI ARE BEING CONSIDERED FROM THE CSV
                     cni = _get_index(row, 'Common Name')

@@ -176,7 +176,8 @@ class ServiceChangeMixin:
             if not started:
                 raise CallError(
                     f'The {service} service failed to start',
-                    CallError.ESERVICESTARTFAILURE
+                    CallError.ESERVICESTARTFAILURE,
+                    [service],
                 )
 
 
@@ -454,6 +455,7 @@ class CoreService(Service):
                     'examples': examples,
                     'accepts': accepts,
                     'item_method': True if item_method else hasattr(method, '_item_method'),
+                    'no_auth_required': hasattr(method, '_no_auth_required'),
                     'filterable': hasattr(method, '_filterable'),
                     'require_websocket': hasattr(method, '_pass_app'),
                     'job': hasattr(method, '_job'),

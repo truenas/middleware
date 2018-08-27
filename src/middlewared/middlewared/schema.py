@@ -17,6 +17,7 @@ class Error(Exception):
         self.attribute = attribute
         self.errmsg = errmsg
         self.errno = errno
+        self.extra = None
 
     def __str__(self):
         return '[{0}] {1}'.format(self.attribute, self.errmsg)

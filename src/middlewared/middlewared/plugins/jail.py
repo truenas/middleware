@@ -7,6 +7,9 @@ import iocage_lib.iocage as ioc
 import libzfs
 import requests
 import itertools
+import pathlib
+import json
+import sqlite3
 from iocage_lib.ioc_check import IOCCheck
 from iocage_lib.ioc_clean import IOCClean
 from iocage_lib.ioc_fetch import IOCFetch
@@ -15,11 +18,14 @@ from iocage_lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
 from iocage_lib.ioc_list import IOCList
 from iocage_lib.ioc_upgrade import IOCUpgrade
+
+from middlewared.client import ClientException
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
-from middlewared.client import ClientException
+from middlewared.validators import IpInUse, ShouldBe
+
 
 SHUTDOWN_LOCK = asyncio.Lock()
 
@@ -85,15 +91,18 @@ class JailService(CRUDService):
     query._fiterable = True
 
     @accepts(
-        Dict("options",
-             Str("release", required=True),
-             Str("template"),
-             Str("pkglist"),
-             Str("uuid"),
-             Bool("basejail", default=False),
-             Bool("empty", default=False),
-             Bool("short", default=False),
-             List("props", default=[])))
+        Dict(
+            "options",
+            Str("release", required=True),
+            Str("template"),
+            Str("pkglist"),
+            Str("uuid", required=True),
+            Bool("basejail", default=False),
+            Bool("empty", default=False),
+            Bool("short", default=False),
+            List("props", default=[])
+        )
+    )
     async def do_create(self, options):
         """Creates a jail."""
         # Typically one would return the created jail's id in this
@@ -108,24 +117,30 @@ class JailService(CRUDService):
         return await self.middleware.call('jail.create_job', options)
 
     @private
-    @accepts(
-        Dict("options",
-             Str("release", required=True),
-             Str("template"),
-             Str("pkglist"),
-             Str("uuid"),
-             Bool("basejail", default=False),
-             Bool("empty", default=False),
-             Bool("short", default=False),
-             List("props", default=[])))
     @job()
     def create_job(self, job, options):
-        iocage = ioc.IOCage(skip_jails=True)
+        verrors = ValidationErrors()
+
+        try:
+            self.check_jail_existence(options['uuid'], skip=False)
+
+            verrors.add(
+                'uuid',
+                f'A jail with uuid {options["uuid"]} already exists'
+            )
+            raise verrors
+        except CallError:
+            # A jail does not exist with the provided uuid, we can create one now
+
+            self.validate_ips(verrors, options)
+            job.set_progress(20, 'Initial validation complete')
+
+            iocage = ioc.IOCage(skip_jails=True)
 
         release = options["release"]
         template = options.get("template", False)
         pkglist = options.get("pkglist", None)
-        uuid = options.get("uuid", None)
+        uuid = options["uuid"]
         basejail = options["basejail"]
         empty = options["empty"]
         short = options["short"]
@@ -136,10 +151,14 @@ class JailService(CRUDService):
         if template:
             release = template
 
-        if not os.path.isdir(f"{iocroot}/releases/{release}") and not \
-                template and not empty:
-            self.middleware.call_sync('jail.fetch', {"release":
-                                                     release}, job=True)
+        if (
+                not os.path.isdir(f'{iocroot}/releases/{release}') and
+                not template and
+                not empty
+        ):
+            self.middleware.call_sync(
+                'jail.fetch', {"release": release}, job=True
+            )
 
         err, msg = iocage.create(
             release,
@@ -150,12 +169,32 @@ class JailService(CRUDService):
             short=short,
             _uuid=uuid,
             basejail=basejail,
-            empty=empty)
+            empty=empty
+        )
 
         if err:
             raise CallError(msg)
 
         return True
+
+    @private
+    def validate_ips(self, verrors, options, schema='options.props', exclude=None):
+        for item in options['props']:
+            for f in ('ip4_addr', 'ip6_addr'):
+                if f in item:
+                    for ip in item.split('=')[1].split(','):
+                        try:
+                            IpInUse(self.middleware, exclude)(
+                                ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
+                            )
+                        except ShouldBe as e:
+                            verrors.add(
+                                f'{schema}.{f}',
+                                str(e)
+                            )
+
+        if verrors:
+            raise verrors
 
     @accepts(Str("jail"), Dict(
              "options",
@@ -168,6 +207,21 @@ class JailService(CRUDService):
         _, _, iocage = self.check_jail_existence(jail)
 
         name = options.pop("name", None)
+
+        verrors = ValidationErrors()
+
+        jail = self.query([['id', '=', jail]], {'get': True})
+
+        exclude_ips = [
+            ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
+            for f in ('ip4_addr', 'ip6_addr') for ip in jail[f].split(',')
+            if ip != 'none'
+        ]
+
+        self.validate_ips(
+            verrors, {'props': [f'{k}={v}' for k, v in options.items()]},
+            'options', exclude_ips
+        )
 
         for prop, val in options.items():
             p = f"{prop}={val}"
@@ -202,7 +256,7 @@ class JailService(CRUDService):
         try:
             iocage = ioc.IOCage(skip_jails=skip, jail=jail)
             jail, path = iocage.__check_jail_existence__()
-        except SystemExit:
+        except (SystemExit, RuntimeError):
             raise CallError(f"jail '{jail}' not found!")
 
         return jail, path, iocage
@@ -230,17 +284,29 @@ class JailService(CRUDService):
             List(
                 "files",
                 default=["MANIFEST", "base.txz", "lib32.txz", "doc.txz"]
-            )
+            ),
+            Str("branch", default=None)
         )
     )
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
     def fetch(self, job, options):
         """Fetches a release or plugin."""
+        fetch_output = {'error': False, 'install_notes': []}
+
+        verrors = ValidationErrors()
+
+        self.validate_ips(verrors, options)
+
         def progress_callback(content):
             level = content['level']
-            msg = content['message'].replace('\n', '')
+            msg = content['message'].strip('\n')
+
+            if job.progress['percent'] == 90:
+                for split_msg in msg.split('\n'):
+                    fetch_output['install_notes'].append(split_msg)
 
             if level == 'EXCEPTION':
+                fetch_output['error'] = True
                 raise CallError(msg)
 
             job.set_progress(None, msg)
@@ -249,6 +315,8 @@ class JailService(CRUDService):
                 job.set_progress(50, msg)
             elif 'Installing plugin packages:' in msg:
                 job.set_progress(75, msg)
+            elif 'Command output:' in msg:
+                job.set_progress(90, msg)
 
         self.check_dataset_existence()  # Make sure our datasets exist.
         start_msg = None
@@ -265,9 +333,15 @@ class JailService(CRUDService):
 
         job.set_progress(0, start_msg)
         iocage.fetch(**options)
+
+        if options['name'] is not None:
+            # This is to get the admin URL and such
+            fetch_output['install_notes'] += job.progress['description'].split(
+                '\n')
+
         job.set_progress(100, finaL_msg)
 
-        return True
+        return fetch_output
 
     @accepts(Str("resource", enum=["RELEASE", "TEMPLATE", "PLUGIN"]),
              Bool("remote", default=False))
@@ -296,6 +370,18 @@ class JailService(CRUDService):
                                              header=False)
             else:
                 resource_list = iocage.list("all", plugin=True)
+                pool = IOCJson().json_get_value("pool")
+                iocroot = IOCJson(pool).json_get_value("iocroot")
+                index_path = f'{iocroot}/.plugin_index/INDEX'
+
+                if not pathlib.Path(index_path).is_file():
+                    index_json = None
+                    raise CallError(
+                        'Plugin INDEX doesn\'t exist, unable to list pkg'
+                        ' versions for any plugins.')
+                else:
+                    index_fd = open(index_path, 'r')
+                    index_json = json.load(index_fd)
 
             for plugin in resource_list:
                 for i, elem in enumerate(plugin):
@@ -304,13 +390,19 @@ class JailService(CRUDService):
 
                 if remote:
                     pv = self.get_plugin_version(plugin[2])
-                    resource_list[resource_list.index(plugin)] = plugin + pv
+                else:
+                    pv = self.get_local_plugin_version(
+                        plugin[1], index_json, iocroot)
+
+                resource_list[resource_list.index(plugin)] = plugin + pv
 
             if remote:
                 self.middleware.call_sync(
                     'cache.put', 'iocage_remote_plugins', resource_list,
                     86400
                 )
+            else:
+                index_fd.close()
         elif resource == "base":
             try:
                 if remote:
@@ -372,41 +464,96 @@ class JailService(CRUDService):
 
         return True
 
+    @private
+    def get_iocroot(self):
+        pool = IOCJson().json_get_value("pool")
+        return IOCJson(pool).json_get_value("iocroot")
+
     @accepts(
         Str("jail"),
         Dict(
             "options",
             Str("action", enum=["ADD", "EDIT", "REMOVE", "REPLACE", "LIST"], required=True),
-            Str("source", required=True),
-            Str("destination", required=True),
-            Str("fstype", required=True),
-            Str("fsoptions", required=True),
-            Str("dump", required=True),
-            Str("pass", required=True),
+            Str("source"),
+            Str("destination"),
+            Str("fstype"),
+            Str("fsoptions"),
+            Str("dump"),
+            Str("pass"),
             Int("index", default=None),
         ))
     def fstab(self, jail, options):
-        """
-        Adds an fstab mount to the jail, mounts if the jail is running.
-        """
-        _, _, iocage = self.check_jail_existence(jail, skip=False)
+        """Adds an fstab mount to the jail"""
+        uuid, _, iocage = self.check_jail_existence(jail, skip=False)
+        status, jid = IOCList.list_get_jid(uuid)
 
-        action = options["action"].lower()
-        source = options["source"]
-        destination = options["destination"]
-        fstype = options["fstype"]
-        fsoptions = options["fsoptions"]
-        dump = options["dump"]
-        _pass = options["pass"]
-        index = options["index"]
+        if status:
+            raise CallError(
+                f'{jail} should not be running when adding a mountpoint')
 
-        if action == "replace" and index is None:
+        verrors = ValidationErrors()
+
+        action = options['action'].lower()
+        source = options.get('source')
+        if source:
+            if not os.path.exists(source):
+                verrors.add(
+                    'source',
+                    'Provided path for source does not exist'
+                )
+
+            source = source.replace(' ', r'\040')  # fstab hates spaces ;)
+
+        destination = options.get('destination')
+        if destination:
+            destination = f'/{destination}' if destination[0] != '/' else destination
+            dst = f'{self.get_iocroot()}/jails/{jail}/root{destination}'
+            if 'mnt' in destination:
+                verrors.add(
+                    'destination',
+                    'Destination should not include the jail path. '
+                    'e.g "/mnt/iocage/jails/btsync/root/" Path should be specified'
+                    'after /'
+                )
+            elif os.path.exists(dst):
+                if not os.path.isdir(dst):
+                    verrors.add(
+                        'destination',
+                        'Destination is not a directory, please provide a valid destination'
+                    )
+                elif os.listdir(dst):
+                    verrors.add(
+                        'destination',
+                        'Destination directory should be empty'
+                    )
+
+            # fstab hates spaces ;)
+            destination = destination.replace(' ', r'\040')
+
+        if action != 'list':
+            for f in options:
+                if not options.get(f) and f not in ('index',):
+                    verrors.add(
+                        f,
+                        'This field is required'
+                    )
+
+        fstype = options.get('fstype')
+        fsoptions = options.get('fsoptions')
+        dump = options.get('dump')
+        _pass = options.get('pass')
+        index = options.get('index')
+
+        if verrors:
+            raise verrors
+
+        if action == 'replace' and index is None:
             raise ValueError(
-                "index must not be None when replacing fstab entry"
+                "Index must not be None when replacing fstab entry"
             )
 
         _list = iocage.fstab(action, source, destination, fstype, fsoptions,
-                             dump, _pass, index=index)
+                             dump, _pass, index=index, add_path=True)
 
         if action == "list":
             split_list = {}
@@ -616,6 +763,52 @@ class JailService(CRUDService):
             version = ['N/A', 'N/A']
 
         return version
+
+    @private
+    def get_local_plugin_version(self, plugin, index_json, iocroot):
+        """
+        Checks the primary_pkg key in the INDEX with the pkg version
+        inside the jail.
+        """
+        if index_json is None:
+            return ['N/A', 'N/A']
+
+        try:
+            base_plugin = plugin.rsplit('_', 1)[0]  # May have multiple
+            primary_pkg = index_json[base_plugin]['primary_pkg']
+            version = ['N/A', 'N/A']
+
+            # Since these are plugins, we don't want to spin them up just to
+            # check a pkg, directly accessing the db is best in this case.
+            db_rows = self.read_plugin_pkg_db(
+                f'{iocroot}/jails/{plugin}/root/var/db/pkg/local.sqlite',
+                primary_pkg)
+
+            for row in db_rows:
+                if primary_pkg == row[1] or primary_pkg == row[2]:
+                    version = [row[3], '1']
+                    break
+        except KeyError:
+            version = ['N/A', 'N/A']
+
+        return version
+
+    @private
+    def read_plugin_pkg_db(self, db, pkg):
+        try:
+            conn = sqlite3.connect(db)
+        except sqlite3.Error as e:
+            raise CallError(e)
+
+        with conn:
+            cur = conn.cursor()
+            cur.execute(
+                f'SELECT * FROM packages WHERE origin="{pkg}" OR name="{pkg}"'
+            )
+
+            rows = cur.fetchall()
+
+            return rows
 
     @private
     def start_on_boot(self):

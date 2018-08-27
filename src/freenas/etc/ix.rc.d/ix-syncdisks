@@ -4,7 +4,8 @@
 #
 
 # PROVIDE: ix-syncdisks
-# REQUIRE: FILESYSTEMS
+# REQUIRE: earlykld
+# BEFORE: fsck
 
 . /etc/rc.subr
 

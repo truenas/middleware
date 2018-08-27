@@ -18,4 +18,4 @@ class WebUIAuth(object):
             '</head>',
             f'<script>var MIDDLEWARE_TOKEN = "{post["auth_token"]}";</script></head>',
         )
-        return web.Response(status=200, body=index)
+        return web.Response(status=200, body=index, content_type='text/html')

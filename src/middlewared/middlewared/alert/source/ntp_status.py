@@ -14,7 +14,11 @@ logger = logging.getLogger(__name__)
 
 # 30 minutes in seconds for starting up NTP
 STARTUP_PERIOD = 30 * 60
+# 5 minutes in seconds between checks
+CHECK_PERIOD = 5 * 60
+# In seconds
 REQUEST_TIMEOUT = 5
+# Time since boot
 SINCE_BOOT = 0
 
 SELECT_STATUS_RE = re.compile('^([x\.\-\+\#\*o]?)')
@@ -136,7 +140,12 @@ class NTPStatusAlertSource(ThreadedAlertSource):
     level = AlertLevel.CRITICAL
     title = 'NTP status'
 
-    schedule = IntervalSchedule(timedelta(minutes=5))
+    schedule = IntervalSchedule(timedelta(seconds=CHECK_PERIOD))
+
+    def __init__(self, middleware):
+        super().__init__(middleware)
+        self.__fail_message = ''
+        self.__fail_count = 0
 
     def check_sync(self):
         global SINCE_BOOT, STARTUP_PERIOD
@@ -198,13 +207,6 @@ class NTPStatusAlertSource(ThreadedAlertSource):
                 ))
             """ Reachability """
             if (info['reach'] < 255) and (info['poll'] * 8 < SINCE_BOOT):
-                alerts.append(Alert(
-                    title="NTP status: %(times)d out of 8 probes failed",
-                    args={'times': reachability(info['reach']).count('0')},
-                    key=['ntp_flapping'],
-                    level=AlertLevel.WARNING
-                ))
-
                 if info['reach'] & 0x0F == 0x00:
                     alerts.append(Alert(
                         title="NTP status: Last 4 probes failed",
@@ -216,18 +218,25 @@ class NTPStatusAlertSource(ThreadedAlertSource):
             try:
                 client = ntplib.NTPClient()
                 client.request(info['remote'], timeout=REQUEST_TIMEOUT)
+                self.__fail_message = ''
+                self.__fail_count = 0
             except ntplib.NTPException as ne:
-                alerts.append(Alert(
-                    title='NTP status: %(error)s',
-                    args={'error': str(ne)},
-                    key=['ntp_exception'],
-                    level=AlertLevel.CRITICAL
-                ))
+                self.__fail_message = str(ne)
+                self.__fail_count += 1
+                logger.debug("NTP status: try {:d}: {:s}".format(self.__fail_count, self.__fail_message))
             except Exception as e:
                 alerts.append(Alert(
                     title='NTP status: %(error)s',
                     args={'error': str(e)},
                     key=['ntp_client', 'other_exception'],
+                    level=AlertLevel.CRITICAL
+                ))
+
+            if self.__fail_count > 8:
+                alerts.append(Alert(
+                    title='NTP status: %(error)s',
+                    args={'error': self.__fail_message},
+                    key=['ntp_client', 'exception'],
                     level=AlertLevel.CRITICAL
                 ))
         else:

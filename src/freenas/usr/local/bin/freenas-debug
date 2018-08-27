@@ -296,7 +296,12 @@ main()
 			then
 				fp="${FREENAS_DEBUG_DIRECTORY}/${directory}"
 				mkdir -p "${fp}"
-				eval "${func}" 2>&1|tee -a "${fp}/dump.txt"
+				if [ "${directory}" == "Jails_NG" ] ; then
+					# iocage creates it's own files
+					eval "${func}" 2>&1
+				else
+					eval "${func}" 2>&1|tee -a "${fp}/dump.txt"
+				fi
 			fi
 		done
 	else
@@ -318,7 +323,12 @@ main()
 				then
 					fp="${FREENAS_DEBUG_DIRECTORY}/${directory}"
 					mkdir -p "${fp}"
-					eval "${func}" 2>&1|tee -a "${fp}/dump.txt"
+					if [ "${directory}" == "Jails_NG" ] ; then
+						# iocage creates it's own files
+						eval "${func}" 2>&1
+					else
+						eval "${func}" 2>&1|tee -a "${fp}/dump.txt"
+					fi
 				fi
 			fi
 		done

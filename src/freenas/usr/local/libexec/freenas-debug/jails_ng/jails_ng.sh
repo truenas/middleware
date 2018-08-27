@@ -1,6 +1,6 @@
 #!/bin/sh
 #+
-# Copyright 2014 iXsystems, Inc.
+# Copyright 2018 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,66 +27,10 @@
 #####################################################################
 
 
-smart_opt() { echo S; }
-smart_help() { echo "Dump SMART Information"; }
-smart_directory() { echo "SMART"; }
-smart_func()
+jails_ng_opt() { echo J; }
+jails_ng_help() { echo "Dump iocage information"; }
+jails_ng_directory() { echo "Jails_NG"; }
+jails_ng_func()
 {
-
-	local smart_onoff=0
-	local smart_enabled="not start on boot."
-
-	smart_onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		srv_enable
-	FROM
-		services_services
-	WHERE
-		srv_service = 'smartd'
-	ORDER BY
-		-id
-	LIMIT 1
-	")
-
-	if [ "$smart_onoff" == "1" ]
-	then
-		smart_enabled="start on boot."
-	fi
-
-	section_header "SMARTD Boot Status"
-	echo "SMARTD will $smart_enabled"
-	section_footer
-
-	section_header "SMARTD Run Status"
-	service smartd-daemon onestatus
-	section_footer
-
-	section_header "Scheduled SMART Jobs"
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} -line "
-	SELECT *
-	FROM tasks_smarttest
-	WHERE id >= '1'
-	ORDER BY +id"
-	section_footer
-
-	section_header "Disks being checked by SMART"
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} -line "
-	SELECT *
-	FROM tasks_smarttest_smarttest_disks
-	WHERE id >= '1'
-	ORDER BY +id"
-	section_footer
-
-	section_header "smartctl -a"
-	if [ -f /tmp/smart.out ]; then
-		rm -rf /tmp/smart.out
-	fi
-	for i in `sysctl -n kern.disks`
-	do
-    		echo /dev/$i >> /tmp/smart.out
-		smartctl -a /dev/$i >> /tmp/smart.out
-	done
-	cat /tmp/smart.out
-	${FREENAS_DEBUG_MODULEDIR}/smart/smart.nawk < /tmp/smart.out
-	section_footer
+	iocage debug -d "$FREENAS_DEBUG_DIRECTORY/Jails_NG"
 }
