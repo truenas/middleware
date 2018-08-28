@@ -117,7 +117,7 @@ class JailService(CRUDService):
         return await self.middleware.call('jail.create_job', options)
 
     @private
-    @job(lock=lambda args: f'jail_create:{args[-1]}')
+    @job(lock=lambda args: f'jail_create:{args[-1]["uuid"]}')
     def create_job(self, job, options):
         verrors = ValidationErrors()
         uuid = options["uuid"]
