@@ -52,6 +52,7 @@ class CloudSyncFAdmin(BaseFreeAdmin):
         'minute',
         'month',
         'bwlimit',
+        'exclude',
         'attributes',
         'transfer_mode',
         'encryption',

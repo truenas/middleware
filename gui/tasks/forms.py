@@ -48,6 +48,12 @@ class CloudSyncForm(ModelForm):
                     'Example: "08:00,512 12:00,10M 13:00,512 18:00,30M 23:00,off".<br />'
                     'Default unit is kilobytes.')
     )
+    exclude = forms.CharField(
+        label=_('Exclude'),
+        help_text=_('Newline-separated list of files and directories to exclude from sync.<br />'
+                    'See https://rclone.org/filtering/ for more details on --exclude option.'),
+        widget=forms.Textarea(),
+    )
 
     class Meta:
         exclude = ('credential', 'args')
@@ -93,6 +99,8 @@ class CloudSyncForm(ModelForm):
                     f"{limit['time']},{humanize_size_rclone(limit['bandwidth']) if limit['bandwidth'] else 'off'}"
                     for limit in kwargs["instance"].bwlimit
                 ])
+
+            kwargs["initial"]["exclude"] = "\n".join(kwargs["instance"].exclude)
 
         super(CloudSyncForm, self).__init__(*args, **kwargs)
         key_order(self, 2, 'attributes', instance=True)
@@ -188,6 +196,9 @@ class CloudSyncForm(ModelForm):
                 raise forms.ValidationError(_('Invalid time order: %s, %s') % (a["time"], b["time"]))
 
         return bwlimit
+
+    def clean_exclude(self):
+        return list(filter(None, map(lambda s: s.strip(), self.cleaned_data.get('exclude').split('\n'))))
 
     def save(self, **kwargs):
         with client as c:
