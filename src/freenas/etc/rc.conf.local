@@ -586,7 +586,12 @@ _gen_conf()
 	fi
 
 	## First, import network interface configuration.
-	_interface_config ${failover_status} ${failover_licensed}
+	# Only generate interfaces config if middleware failed
+	if [ -f "${FREENAS_MW_IFACES_FAILED}" ]; then
+		_interface_config ${failover_status} ${failover_licensed}
+	else
+		echo "netif_enable=\"NO\""
+	fi
 	_host_config
 	_staticroute_config
 
