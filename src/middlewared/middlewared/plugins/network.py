@@ -822,7 +822,7 @@ class InterfacesService(CRUDService):
                     return iface
 
     @private
-    async def sync(self):
+    async def sync(self, wait_dhcp=False):
         """
         Sync interfaces configured in database to the OS.
         """
@@ -945,7 +945,7 @@ class InterfacesService(CRUDService):
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
         for interface in interfaces:
             try:
-                await self.sync_interface(interface)
+                await self.sync_interface(interface, wait_dhcp)
             except Exception:
                 self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
 
@@ -992,7 +992,7 @@ class InterfacesService(CRUDService):
         return addr
 
     @private
-    async def sync_interface(self, name):
+    async def sync_interface(self, name, wait_dhcp=False):
         try:
             data = await self.middleware.call('datastore.query', 'network.interfaces', [('int_interface', '=', name)], {'get': True})
         except IndexError:
@@ -1141,7 +1141,11 @@ class InterfacesService(CRUDService):
         # If dhclient is not running and dhcp is configured, lets start it
         if not dhclient_running and data['int_dhcp']:
             self.logger.debug('Starting dhclient for {}'.format(name))
-            asyncio.ensure_future(self.dhclient_start(data['int_interface']))
+            dhclient_coro = self.dhclient_start(data['int_interface'], wait_dhcp)
+            if wait_dhcp:
+                await dhclient_coro
+            else:
+                asyncio.ensure_future(dhclient_coro)
         elif dhclient_running and not data['int_dhcp']:
             self.logger.debug('Killing dhclient for {}'.format(name))
             os.kill(dhclient_pid, signal.SIGTERM)
@@ -1158,10 +1162,11 @@ class InterfacesService(CRUDService):
             iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
 
     @private
-    async def dhclient_start(self, interface):
-        proc = await Popen([
-            '/sbin/dhclient', '-b', interface,
-        ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
+    async def dhclient_start(self, interface, wait=False):
+        proc = await Popen(
+            ['/sbin/dhclient'] + ([] if wait else ['-b']) + [interface],
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True,
+        )
         output = (await proc.communicate())[0].decode()
         if proc.returncode != 0:
             self.logger.error('Failed to run dhclient on {}: {}'.format(
