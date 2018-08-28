@@ -274,6 +274,11 @@ def dhclient_leases(interface):
 
 class InterfacesService(CRUDService):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._original_datastores = {}
+        self._rollback_timer = None
+
     @filterable
     def query(self, filters, options):
         data = {}
@@ -394,6 +399,109 @@ class InterfacesService(CRUDService):
 
         return iface
 
+    async def __save_datastores(self):
+        """
+        Save datastores states before performing any actions to interfaces.
+        This will make sure to be able to rollback configurations in case something
+        doesnt go as planned.
+        """
+        if self._original_datastores:
+            return
+        self._original_datastores['interfaces'] = await self.middleware.call(
+            'datastore.query', 'network.interfaces'
+        )
+        self._original_datastores['alias'] = []
+        for i in await self.middleware.call('datastore.query', 'network.alias'):
+            i['alias_interface'] = i['alias_interface']['id']
+            self._original_datastores['alias'].append(i)
+
+        self._original_datastores['vlan'] = await self.middleware.call(
+            'datastore.query', 'network.vlan'
+        )
+
+        self._original_datastores['lagg'] = []
+        for i in await self.middleware.call('datastore.query', 'network.lagginterface'):
+            i['lagg_interface'] = i['lagg_interface']['id']
+            self._original_datastores['lagg'].append(i)
+
+        self._original_datastores['laggmembers'] = []
+        for i in await self.middleware.call('datastore.query', 'network.lagginterfacemembers'):
+            i['lagg_interfacegroup'] = i['lagg_interfacegroup']['id']
+            self._original_datastores['laggmembers'].append(i)
+
+    async def __restore_datastores(self):
+        if not self._original_datastores:
+            return
+
+        # Deleting interfaces should cascade to network.alias and network.lagginterface
+        await self.middleware.call('datastore.delete', 'network.interfaces', [])
+        await self.middleware.call('datastore.delete', 'network.vlan', [])
+
+        for i in self._original_datastores['interfaces']:
+            await self.middleware.call('datastore.insert', 'network.interfaces', i)
+
+        for i in self._original_datastores['alias']:
+            await self.middleware.call('datastore.insert', 'network.alias', i)
+
+        for i in self._original_datastores['vlan']:
+            await self.middleware.call('datastore.insert', 'network.vlan', i)
+
+        for i in self._original_datastores['lagg']:
+            await self.middleware.call('datastore.insert', 'network.lagginterface', i)
+
+        for i in self._original_datastores['laggmembers']:
+            await self.middleware.call('datastore.insert', 'network.lagginterfacemembers', i)
+
+    @accepts()
+    async def rollback(self):
+        """
+        Rollback pending interfaces changes.
+        """
+        await self.__restore_datastores()
+        await self.sync()
+
+    @accepts()
+    async def checkin(self):
+        """
+        After interfaces changes are committed with checkin timeout this method needs to be called
+        within that timeout limit to prevent reverting the changes.
+
+        This is to ensure user verifies the changes went as planned and its working.
+        """
+        if self._rollback_timer:
+            self._rollback_timer.cancel()
+        self._rollback_timer = None
+        self._original_datastores = {}
+
+    @accepts(Dict(
+        'options',
+        Bool('rollback', default=True),
+        Int('checkin_timeout', default=60),
+    ))
+    async def commit(self, options):
+        """
+        Commit/apply pending interfaces changes.
+
+        `rollback` as true (default) will rollback changes in case they fail to apply.
+        `checkin_timeout` is the time in seconds it will wait for the checkin call to acknowledge
+        the interfaces changes happened as planned from the user. If checkin does not happen
+        within this period of time the changes will get reverted.
+        """
+        try:
+            await self.sync()
+        except Exception as e:
+            if options['rollback']:
+                await self.rollback()
+            raise e
+
+        if options['rollback'] and options['checkin_timeout']:
+            loop = asyncio.get_event_loop()
+            self._rollback_timer = loop.call_later(
+                options['checkin_timeout'], lambda: asyncio.ensure_future(self.rollback())
+            )
+        else:
+            self._original_datastores = {}
+
     @accepts(Dict(
         'interface_create',
         Str('name', required=True),
@@ -450,6 +558,8 @@ class InterfacesService(CRUDService):
         await self.__common_validation(verrors, 'interface_create', data, data['type'])
 
         verrors.check()
+
+        await self.__save_datastores()
 
         if data['type'] == 'LINK_AGGREGATION':
             next_lagg = 0
@@ -569,7 +679,7 @@ class InterfacesService(CRUDService):
         lag_used = {}
         for k, v in filter(lambda x: x[0].startswith('lagg'), ifaces.items()):
             for port in (v.get('lag_ports') or []):
-                lag_used[port['name']] = k
+                lag_used[port] = k
 
         if itype == 'LINK_AGGREGATION':
             for i, member in enumerate(data.get('lag_ports') or []):
@@ -709,6 +819,8 @@ class InterfacesService(CRUDService):
             verrors, 'interface_update', data, iface['type'], update=iface
         )
         verrors.check()
+
+        await self.__save_datastores()
 
         new = iface.copy()
         new.update(data)
