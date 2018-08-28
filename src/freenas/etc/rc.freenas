@@ -37,6 +37,8 @@
 : ${FREENAS_VERSIONFILE:="/etc/version"}
 : ${FREENAS_SYSTEMDATASET:="/var/db/system"}
 
+: ${FREENAS_MW_IFACES_FAILED:="/tmp/.middleware_interface_failed"}
+
 #
 #	Updater specific variables.
 #
