@@ -716,10 +716,11 @@ class ShellApplication(object):
 
 class Middleware(object):
 
-    def __init__(self, loop_monitor=True, overlay_dirs=None, debug_level=None):
+    def __init__(self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None):
         self.logger = logger.Logger('middlewared', debug_level).getLogger()
         self.crash_reporting = logger.CrashReporting()
         self.crash_reporting_semaphore = asyncio.Semaphore(value=2)
+        self.loop_debug = loop_debug
         self.loop_monitor = loop_monitor
         self.overlay_dirs = overlay_dirs or []
         self.__loop = None
@@ -1119,9 +1120,9 @@ class Middleware(object):
     def run(self):
         self.loop = self.__loop = asyncio.get_event_loop()
 
-        if self.loop_monitor:
+        if self.loop_debug:
             self.__loop.set_debug(True)
-            # loop.slow_callback_duration(0.2)
+            self.__loop.slow_callback_duration(0.2)
 
         # Needs to happen after setting debug or may cause race condition
         # http://bugs.python.org/issue30805
@@ -1255,6 +1256,7 @@ def main():
             _pidfile.write(f"{str(os.getpid())}\n")
 
     Middleware(
+        loop_debug=True if args.debug_level == 'TRAVE' else False,
         loop_monitor=not args.disable_loop_monitor,
         overlay_dirs=args.overlay_dirs,
         debug_level=args.debug_level,
