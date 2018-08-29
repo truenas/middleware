@@ -1063,7 +1063,7 @@ class Middleware(object):
 
         self.logger.trace(f'Sending event "{event_type}":{kwargs}')
 
-        for sessionid, wsclient in self.__wsclients.items():
+        for sessionid, wsclient in list(self.__wsclients.items()):
             try:
                 wsclient.send_event(name, event_type, **kwargs)
             except Exception:
