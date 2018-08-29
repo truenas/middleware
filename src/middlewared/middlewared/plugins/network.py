@@ -504,7 +504,7 @@ class InterfacesService(CRUDService):
 
     @accepts(Dict(
         'interface_create',
-        Str('name', required=True),
+        Str('name'),
         Str('description'),
         Str('type', enum=['LINK_AGGREGATION', 'VLAN'], required=True),
         Bool('ipv4_dhcp', default=False),
@@ -562,19 +562,21 @@ class InterfacesService(CRUDService):
         await self.__save_datastores()
 
         if data['type'] == 'LINK_AGGREGATION':
-            next_lagg = 0
-            laggs = [
-                i['int_interface']
-                for i in await self.middleware.call(
-                    'datastore.query',
-                    'network.interfaces',
-                    [('int_interface', '^', 'lagg')],
-                )
-            ]
-            while f'lagg{next_lagg}' in laggs:
-                next_lagg += 1
+            name = data.get('name')
+            if not name:
+                next_lagg = 0
+                laggs = [
+                    i['int_interface']
+                    for i in await self.middleware.call(
+                        'datastore.query',
+                        'network.interfaces',
+                        [('int_interface', '^', 'lagg')],
+                    )
+                ]
+                while f'lagg{next_lagg}' in laggs:
+                    next_lagg += 1
+                name = f'lagg{next_lagg}'
 
-            name = f'lagg{next_lagg}'
             interface_id = None
             lag_id = None
             lagmembers_ids = []
@@ -617,7 +619,9 @@ class InterfacesService(CRUDService):
                 raise e
         elif data['type'] == 'VLAN':
             interface_id = None
-            name = f'vlan{data["vlan_tag"]}'
+            name = data.get('name')
+            if not name:
+                name = f'vlan{data["vlan_tag"]}'
             try:
                 async for i in self.__create_interface_datastore(data, {
                     'interface': name,
@@ -655,6 +659,9 @@ class InterfacesService(CRUDService):
             for i in await self.middleware.call('interfaces.query', filters)
         }
 
+        if 'name' in data and data['name'] in ifaces:
+            verrors.add(f'{schema_name}.name', 'Interface name is already in use.')
+
         if data.get('ipv4_dhcp') and any(
             filter(lambda x: x['ipv4_dhcp'] and not x['fake'], ifaces.values())
         ):
@@ -682,6 +689,16 @@ class InterfacesService(CRUDService):
                 lag_used[port] = k
 
         if itype == 'LINK_AGGREGATION':
+            if 'name' in data and (
+                not data['name'].startswith('lagg') or data['name'][4:].isdigit()
+            ):
+                verrors.add(
+                    f'{schema_name}.name',
+                    (
+                        'Link aggregation interface must start with "lagg" followed by an unique'
+                        'number.'
+                    ),
+                )
             for i, member in enumerate(data.get('lag_ports') or []):
                 if member not in ifaces:
                     verrors.add(f'{schema_name}.lag_ports.{i}', 'Not a valid interface.')
@@ -704,6 +721,13 @@ class InterfacesService(CRUDService):
                     )
 
         elif itype == 'VLAN':
+            if 'name' in data and (
+                not data['name'].startswith('vlan') or data['vlan'][4:].isdigit()
+            ):
+                verrors.add(
+                    f'{schema_name}.name',
+                    'VLAN interface must start with "vlan" followed by an unique number.',
+                )
             parent = data.get('vlan_parent_interface')
             if parent:
                 if parent not in ifaces:
