@@ -29,11 +29,13 @@ class NetworkConfigurationService(ConfigService):
         datastore_prefix = 'gc_'
         datastore_extend = 'network.configuration.network_config_extend'
 
+    @private
     def network_config_extend(self, data):
         data['domains'] = data['domains'].split()
         data['netwait_ip'] = data['netwait_ip'].split()
         return data
 
+    @private
     async def validate_general_settings(self, data, schema):
         verrors = ValidationErrors()
 
@@ -916,6 +918,34 @@ class InterfacesService(CRUDService):
             raise e
 
         return await self._get_instance(oid)
+
+    @accepts(Str('id'))
+    async def do_delete(self, oid):
+        iface = await self._get_instance(oid)
+
+        if iface['type'] == 'PHYSICAL':
+            raise CallError('Only virtual interfaces can be deleted.')
+
+        await self.__save_datastores()
+
+        if iface['type'] == 'LINK_AGGREGATION':
+            vlans = ', '.join([
+                i['name'] for i in await self.middleware.call('interfaces.query', [
+                    ('type', '=', 'VLAN'), ('vlan_parent_interface', '=', iface['id'])
+                ])
+            ])
+            if vlans:
+                raise CallError(f'The following VLANs depend on this interface: {vlans}')
+
+        # Currently Interfaces model takes care of cascade deleting LAG
+        await self.middleware.call(
+            'datastore.delete', 'network.interfaces', [('int_interface', '=', oid)]
+        )
+        if iface['type'] == 'VLAN':
+            await self.middleware.call(
+                'datastore.delete', 'network.vlan', [('vlan_vint', '=', oid)]
+            )
+        return oid
 
     @accepts()
     @pass_app
