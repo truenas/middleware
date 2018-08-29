@@ -1275,6 +1275,7 @@ class VMService(CRUDService):
         created_clones = []
         try:
             for item in vm['devices']:
+                item.pop('id', None)
                 if item['dtype'] == 'NIC':
                     if 'mac' in item['attributes']:
                         del item['attributes']['mac']
@@ -1286,15 +1287,17 @@ class VMService(CRUDService):
                     zvol_snapshot = zvol + '@' + vm['name']
                     clone_dst = zvol + '_' + vm['name']
 
-                    await self.middleware.call('zfs.snapshot.create', {
+                    if not await self.middleware.call('zfs.snapshot.create', {
                         'dataset': zvol, 'name': vm['name'],
-                    })
+                    }):
+                        raise CallError(f'Failed to snapshot {zvol_snapshot}.')
 
                     created_snaps.append(zvol_snapshot)
 
-                    await self.middleware.call('zfs.snapshot.clone', {
+                    if not await self.middleware.call('zfs.snapshot.clone', {
                         'snapshot': zvol_snapshot, 'dataset_dst': clone_dst,
-                    })
+                    }):
+                        raise CallError(f'Failed to clone {zvol_snapshot}.')
 
                     created_clones.append(clone_dst)
 
