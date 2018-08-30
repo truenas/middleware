@@ -1122,7 +1122,7 @@ class Middleware(object):
 
         if self.loop_debug:
             self.__loop.set_debug(True)
-            self.__loop.slow_callback_duration(0.2)
+            self.__loop.slow_callback_duration = 0.2
 
         # Needs to happen after setting debug or may cause race condition
         # http://bugs.python.org/issue30805
@@ -1210,6 +1210,7 @@ def main():
     parser.add_argument('restart', nargs='?')
     parser.add_argument('--pidfile', '-P', action='store_true')
     parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
+    parser.add_argument('--loop-debug', action='store_true')
     parser.add_argument('--overlay-dirs', '-o', action='append')
     parser.add_argument('--debug-level', choices=[
         'TRACE',
@@ -1256,7 +1257,7 @@ def main():
             _pidfile.write(f"{str(os.getpid())}\n")
 
     Middleware(
-        loop_debug=True if args.debug_level == 'TRAVE' else False,
+        loop_debug=args.loop_debug,
         loop_monitor=not args.disable_loop_monitor,
         overlay_dirs=args.overlay_dirs,
         debug_level=args.debug_level,
