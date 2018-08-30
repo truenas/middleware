@@ -48,8 +48,8 @@ system_func()
 	ntpq -pwn
 	section_footer
 
-	section_header "ps -auxww"
-	ps -auxww
+	section_header "ps -auxwwd"
+	ps -auxwwd
 	section_footer
 
 	section_header "mount"
