@@ -10,9 +10,9 @@ reinstall: clean
 
 dev: reinstall
 .if ${VERSION:MTrueNAS*}
-	middlewared restart -L -P -o /usr/local/lib/middlewared_truenas --debug-level 'TRACE'
+	middlewared restart --loop-debug -P -o /usr/local/lib/middlewared_truenas --debug-level 'TRACE'
 .else
-	middlewared restart -L -P --debug-level 'TRACE'
+	middlewared restart --loop-debug -P --debug-level 'TRACE'
 .endif
 
 reinstall-remote:
