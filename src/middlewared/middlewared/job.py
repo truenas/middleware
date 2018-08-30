@@ -389,7 +389,7 @@ class Job(object):
 
                 return excerpt
 
-            self.logs_excerpt = await self.middleware.run_in_io_thread(get_logs_excerpt)
+            self.logs_excerpt = await self.middleware.run_in_thread(get_logs_excerpt)
 
     async def __close_pipes(self):
         def close_pipes():
@@ -398,7 +398,7 @@ class Job(object):
             if self.pipes.output:
                 self.pipes.output.w.close()
 
-        await self.middleware.run_in_io_thread(close_pipes)
+        await self.middleware.run_in_thread(close_pipes)
 
     def __encode__(self):
         return {

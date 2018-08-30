@@ -289,7 +289,7 @@ class PoolService(CRUDService):
             filters.append(('id', '=', oid))
         for pool in await self.query(filters):
             if pool['is_decrypted']:
-                async for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
+                for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
                     yield i
             else:
                 for encrypted_disk in await self.middleware.call('datastore.query', 'storage.encrypteddisk',

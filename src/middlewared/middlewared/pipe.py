@@ -27,5 +27,5 @@ class Pipe:
         self.w = os.fdopen(w, "wb")
 
     async def close(self):
-        await self.middleware.run_in_io_thread(self.r.close)
-        await self.middleware.run_in_io_thread(self.w.close)
+        await self.middleware.run_in_thread(self.r.close)
+        await self.middleware.run_in_thread(self.w.close)

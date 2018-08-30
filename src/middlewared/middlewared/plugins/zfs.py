@@ -62,14 +62,14 @@ class ZFSPoolService(Service):
         return filter_list(pools, filters, options)
 
     @accepts(Str('pool'))
-    async def get_disks(self, name):
+    def get_disks(self, name):
         try:
             with libzfs.ZFS() as zfs:
                 disks = list(zfs.get(name).disks)
         except libzfs.ZFSException as e:
             raise CallError(str(e), errno.ENOENT)
 
-        await self.middleware.run_in_thread(geom.scan)
+        geom.scan()
         labelclass = geom.class_by_name('LABEL')
         for absdev in disks:
             dev = absdev.replace('/dev/', '').replace('.eli', '')

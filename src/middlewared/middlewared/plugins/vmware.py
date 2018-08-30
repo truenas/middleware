@@ -38,7 +38,7 @@ class VMWareService(CRUDService):
 
         datastore = data.get('datastore')
         try:
-            ds = await self.middleware.run_in_io_thread(
+            ds = await self.middleware.run_in_thread(
                 self.get_datastores,
                 {
                     'hostname': data.get('hostname'),

@@ -84,10 +84,9 @@ class DatastoreService(Service):
         app, model = name.split('.', 1)
         return apps.get_model(app, model)
 
-    async def __queryset_serialize(self, qs, extend=None, field_prefix=None):
-        result = await self.middleware.run_in_thread(lambda: list(qs))
-        for i in result:
-            yield await django_modelobj_serialize(self.middleware, i, extend=extend, field_prefix=field_prefix)
+    def __queryset_serialize(self, qs, extend=None, field_prefix=None):
+        for i in qs:
+            yield django_modelobj_serialize(self.middleware, i, extend=extend, field_prefix=field_prefix)
 
     @accepts(
         Str('name'),
@@ -103,7 +102,7 @@ class DatastoreService(Service):
             register=True,
         ),
     )
-    async def query(self, name, filters=None, options=None):
+    def query(self, name, filters=None, options=None):
         """Query for items in a given collection `name`.
 
         `filters` is a list which each entry can be in one of the following formats:
@@ -168,7 +167,7 @@ class DatastoreService(Service):
             return qs.count()
 
         result = []
-        async for i in self.__queryset_serialize(
+        for i in self.__queryset_serialize(
             qs, extend=options.get('extend'), field_prefix=options.get('prefix')
         ):
             result.append(i)
@@ -179,7 +178,7 @@ class DatastoreService(Service):
         return result
 
     @accepts(Str('name'), Ref('query-options'))
-    async def config(self, name, options=None):
+    def config(self, name, options=None):
         """
         Get configuration settings object for a given `name`.
 
@@ -188,10 +187,10 @@ class DatastoreService(Service):
         if options is None:
             options = {}
         options['get'] = True
-        return await self.query(name, None, options)
+        return self.query(name, None, options)
 
     @accepts(Str('name'), Dict('data', additional_attrs=True), Dict('options', Str('prefix')))
-    async def insert(self, name, data, options=None):
+    def insert(self, name, data, options=None):
         """
         Insert a new entry to `name`.
         """
@@ -217,7 +216,7 @@ class DatastoreService(Service):
                 data[field.name] = data.pop(name)
 
         obj = model(**data)
-        await self.middleware.run_in_thread(obj.save)
+        obj.save()
 
         for k, v in list(many_to_many_fields_data.items()):
             field = getattr(obj, k)
@@ -226,7 +225,7 @@ class DatastoreService(Service):
         return obj.pk
 
     @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix')))
-    async def update(self, name, id, data, options=None):
+    def update(self, name, id, data, options=None):
         """
         Update an entry `id` in `name`.
         """
@@ -235,7 +234,7 @@ class DatastoreService(Service):
         options = options or {}
         prefix = options.get('prefix')
         model = self.__get_model(name)
-        obj = await self.middleware.run_in_thread(lambda oid: model.objects.get(pk=oid), id)
+        obj = model.objects.get(pk=id)
         for field in chain(model._meta.fields, model._meta.many_to_many):
             if prefix:
                 name = field.name.replace(prefix, '')
@@ -250,7 +249,7 @@ class DatastoreService(Service):
             else:
                 setattr(obj, field.name, data.pop(name))
 
-        await self.middleware.run_in_thread(obj.save)
+        obj.save()
 
         for k, v in list(many_to_many_fields_data.items()):
             field = getattr(obj, k)
@@ -260,17 +259,16 @@ class DatastoreService(Service):
         return obj.pk
 
     @accepts(Str('name'), Any('id_or_filters'))
-    async def delete(self, name, id_or_filters):
+    def delete(self, name, id_or_filters):
         """
         Delete an entry `id` in `name`.
         """
         model = self.__get_model(name)
         if isinstance(id_or_filters, list):
             qs = model.objects.all()
-            qs = qs.filter(*self._filters_to_queryset(id_or_filters, None))
-            await self.middleware.run_in_thread(qs.delete)
+            qs.filter(*self._filters_to_queryset(id_or_filters, None)).delete()
         else:
-            await self.middleware.run_in_thread(lambda oid: model.objects.get(pk=oid).delete(), id_or_filters)
+            model.objects.get(pk=id_or_filters).delete()
         return True
 
     def sql(self, query, params=None):

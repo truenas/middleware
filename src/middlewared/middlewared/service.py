@@ -265,7 +265,7 @@ class CRUDService(ServiceChangeMixin, Service):
             result = await self.middleware.call(
                 'datastore.query', self._config.datastore, [], datastore_options
             )
-            return await self.middleware.run_in_io_thread(
+            return await self.middleware.run_in_thread(
                 filter_list, result, filters, options
             )
         else:

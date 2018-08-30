@@ -179,7 +179,7 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
                 'Please provide a valid signing authority'
             )
 
-    await middleware.run_in_io_thread(
+    await middleware.run_in_thread(
         _validate_certificate_with_key, certificate, private_key, schema_name, verrors
     )
 
@@ -380,7 +380,7 @@ class CertificateService(CRUDService):
         if len(certificate_list) == 0:
             return None
         else:
-            return await self.middleware.run_in_io_thread(
+            return await self.middleware.run_in_thread(
                 self.fingerprint,
                 certificate_list[0]['certificate']
             )
@@ -560,7 +560,7 @@ class CertificateService(CRUDService):
         if verrors:
             raise verrors
 
-        data = await self.middleware.run_in_io_thread(
+        data = await self.middleware.run_in_thread(
             self.map_functions[data.pop('create_type')],
             data
         )
@@ -895,7 +895,7 @@ class CertificateAuthorityService(CRUDService):
         if verrors:
             raise verrors
 
-        data = await self.middleware.run_in_io_thread(
+        data = await self.middleware.run_in_thread(
             self.map_create_functions[data.pop('create_type')],
             data
         )
@@ -1123,7 +1123,7 @@ class CertificateAuthorityService(CRUDService):
 
         if data.pop('create_type', '') == 'CA_SIGN_CSR':
             data['ca_id'] = id
-            return await self.middleware.run_in_io_thread(
+            return await self.middleware.run_in_thread(
                 self.__ca_sign_csr,
                 data,
                 'certificate_authority_update'
