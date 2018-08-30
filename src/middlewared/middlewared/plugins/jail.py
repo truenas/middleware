@@ -500,7 +500,7 @@ class JailService(CRUDService):
         if source:
             if not os.path.exists(source):
                 verrors.add(
-                    'source',
+                    'options.source',
                     'Provided path for source does not exist'
                 )
 
@@ -509,23 +509,19 @@ class JailService(CRUDService):
         destination = options.get('destination')
         if destination:
             destination = f'/{destination}' if destination[0] != '/' else destination
-            dst = f'{self.get_iocroot()}/jails/{jail}/root{destination}'
-            if 'mnt' in destination:
-                verrors.add(
-                    'destination',
-                    'Destination should not include the jail path. '
-                    'e.g "/mnt/iocage/jails/btsync/root/" Path should be specified'
-                    'after /'
-                )
-            elif os.path.exists(dst):
-                if not os.path.isdir(dst):
+            dst = f'{self.get_iocroot()}/jails/{jail}/root'
+            if dst not in destination:
+                destination = f'{dst}{destination}'
+
+            if os.path.exists(destination):
+                if not os.path.isdir(destination):
                     verrors.add(
-                        'destination',
+                        'options.destination',
                         'Destination is not a directory, please provide a valid destination'
                     )
-                elif os.listdir(dst):
+                elif os.listdir(destination):
                     verrors.add(
-                        'destination',
+                        'options.destination',
                         'Destination directory should be empty'
                     )
 
@@ -536,7 +532,7 @@ class JailService(CRUDService):
             for f in options:
                 if not options.get(f) and f not in ('index',):
                     verrors.add(
-                        f,
+                        f'options.{f}',
                         'This field is required'
                     )
 
@@ -546,16 +542,17 @@ class JailService(CRUDService):
         _pass = options.get('pass')
         index = options.get('index')
 
+        if action == 'replace' and index is None:
+            verrors.add(
+                'options.index',
+                'Index must not be None when replacing fstab entry'
+            )
+
         if verrors:
             raise verrors
 
-        if action == 'replace' and index is None:
-            raise ValueError(
-                "Index must not be None when replacing fstab entry"
-            )
-
         _list = iocage.fstab(action, source, destination, fstype, fsoptions,
-                             dump, _pass, index=index, add_path=True)
+                             dump, _pass, index=index)
 
         if action == "list":
             split_list = {}
