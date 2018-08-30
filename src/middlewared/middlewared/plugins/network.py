@@ -557,7 +557,7 @@ class InterfacesService(CRUDService):
 
         verrors.check()
 
-        await self.__common_validation(verrors, 'interface_create', data, data['type'])
+        await self._common_validation(verrors, 'interface_create', data, data['type'])
 
         verrors.check()
 
@@ -650,7 +650,7 @@ class InterfacesService(CRUDService):
 
         return await self._get_instance(name)
 
-    async def __common_validation(self, verrors, schema_name, data, itype, update=None):
+    async def _common_validation(self, verrors, schema_name, data, itype, update=None):
         if update:
             filters = [('id', '!=', update['id'])]
         else:
@@ -691,8 +691,8 @@ class InterfacesService(CRUDService):
                 lag_used[port] = k
 
         if itype == 'LINK_AGGREGATION':
-            if 'name' in data and (
-                not data['name'].startswith('lagg') or data['name'][4:].isdigit()
+            if 'name' in data and not (
+                data['name'].startswith('lagg') and data['name'][4:].isdigit()
             ):
                 verrors.add(
                     f'{schema_name}.name',
@@ -723,8 +723,8 @@ class InterfacesService(CRUDService):
                     )
 
         elif itype == 'VLAN':
-            if 'name' in data and (
-                not data['name'].startswith('vlan') or data['vlan'][4:].isdigit()
+            if 'name' in data and not (
+                data['name'].startswith('vlan') and data['vlan'][4:].isdigit()
             ):
                 verrors.add(
                     f'{schema_name}.name',
@@ -841,7 +841,7 @@ class InterfacesService(CRUDService):
         iface = await self._get_instance(oid)
 
         verrors = ValidationErrors()
-        await self.__common_validation(
+        await self._common_validation(
             verrors, 'interface_update', data, iface['type'], update=iface
         )
         verrors.check()
