@@ -184,7 +184,7 @@ class SharingNFSService(CRUDService):
         if not data["paths"]:
             verrors.add(f"{schema_name}.paths", "At least one path is required")
 
-        await self.middleware.run_in_io_thread(self.validate_paths, data, schema_name, verrors)
+        await self.middleware.run_in_thread(self.validate_paths, data, schema_name, verrors)
 
         filters = []
         if old:
@@ -193,8 +193,9 @@ class SharingNFSService(CRUDService):
         dns_cache = await self.resolve_hostnames(
             sum([share["hosts"] for share in other_shares], []) + data["hosts"]
         )
-        await self.middleware.run_in_io_thread(self.validate_hosts_and_networks, other_shares, data, schema_name,
-                                               verrors, dns_cache)
+        await self.middleware.run_in_thread(
+            self.validate_hosts_and_networks, other_shares, data, schema_name, verrors, dns_cache
+        )
 
         for k in ["maproot", "mapall"]:
             if not data[f"{k}_user"] and not data[f"{k}_group"]:
@@ -249,7 +250,7 @@ class SharingNFSService(CRUDService):
         async def resolve(hostname):
             try:
                 return (
-                    await asyncio.wait_for(self.middleware.run_in_io_thread(socket.getaddrinfo, hostname, None), 5)
+                    await asyncio.wait_for(self.middleware.run_in_thread(socket.getaddrinfo, hostname, None), 5)
                 )[0][4][0]
             except Exception as e:
                 self.logger.warning("Unable to resolve host %r: %r", hostname, e)

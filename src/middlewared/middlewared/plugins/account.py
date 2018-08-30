@@ -317,7 +317,7 @@ class UserService(CRUDService):
                     self.logger.warn(f"Failed to copy homedir: {e}")
                 set_home_mode()
 
-            asyncio.ensure_future(self.middleware.run_in_io_thread(do_home_copy))
+            asyncio.ensure_future(self.middleware.run_in_thread(do_home_copy))
         else:
             set_home_mode()
 

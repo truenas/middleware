@@ -35,7 +35,7 @@ class ConfigService(Service):
                 tar.add('/data/pwenc_secret', arcname='pwenc_secret')
 
         with open(filename, 'rb') as f:
-            await self.middleware.run_in_io_thread(shutil.copyfileobj, f, job.pipes.output.w)
+            await self.middleware.run_in_thread(shutil.copyfileobj, f, job.pipes.output.w)
 
         if bundle:
             os.remove(filename)
@@ -60,7 +60,7 @@ class ConfigService(Service):
                     if nreads > 10240:
                         # FIXME: transfer to a file on disk
                         raise ValueError('File is bigger than 10MiB')
-        await self.middleware.run_in_io_thread(read_write)
+        await self.middleware.run_in_thread(read_write)
         rv = await self.middleware.call('notifier.config_upload', filename)
         if not rv[0]:
             raise ValueError(rv[1])
