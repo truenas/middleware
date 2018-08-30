@@ -427,7 +427,7 @@ class JailService(CRUDService):
         if destination:
             destination = f'/{destination}' if destination[0] != '/' else destination
             dst = f'{self.get_iocroot()}/jails/{jail}/root'
-            if not dst in destination:
+            if dst not in destination:
                 destination = f'{dst}{destination}'
 
             if os.path.exists(destination):
