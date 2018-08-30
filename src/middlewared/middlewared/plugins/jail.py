@@ -419,7 +419,7 @@ class JailService(CRUDService):
         if source:
             if not os.path.exists(source):
                 verrors.add(
-                    'source',
+                    'options.source',
                     'Provided path for source does not exist'
                 )
 
@@ -433,12 +433,12 @@ class JailService(CRUDService):
             if os.path.exists(destination):
                 if not os.path.isdir(destination):
                     verrors.add(
-                        'destination',
+                        'options.destination',
                         'Destination is not a directory, please provide a valid destination'
                     )
                 elif os.listdir(destination):
                     verrors.add(
-                        'destination',
+                        'options.destination',
                         'Destination directory should be empty'
                     )
 
@@ -446,7 +446,7 @@ class JailService(CRUDService):
             for f in options:
                 if not options.get(f) and f not in ('index',):
                     verrors.add(
-                        f,
+                        f'options.{f}',
                         'This field is required'
                     )
 
@@ -458,7 +458,7 @@ class JailService(CRUDService):
 
         if action == 'replace' and index is None:
             verrors.add(
-                'index',
+                'options.index',
                 'Index must not be None when replacing fstab entry'
             )
 
