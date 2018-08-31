@@ -641,7 +641,7 @@ def set_idmap_rfc2307_secret(client):
 def configure_idmap_rid(smb4_conf, idmap, domain):
     confset1(smb4_conf, "idmap config %s: backend = %s" % (
         domain,
-        idmap.idmap_backend_name
+        idmap.backend_type
     ))
     confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
         domain,
@@ -653,7 +653,7 @@ def configure_idmap_rid(smb4_conf, idmap, domain):
 def configure_idmap_tdb(smb4_conf, idmap, domain):
     confset1(smb4_conf, "idmap config %s: backend = %s" % (
         domain,
-        idmap.idmap_backend_name
+        idmap.backend_type
     ))
     confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
         domain,
@@ -665,7 +665,7 @@ def configure_idmap_tdb(smb4_conf, idmap, domain):
 def configure_idmap_tdb2(smb4_conf, idmap, domain):
     confset1(smb4_conf, "idmap config %s: backend = %s" % (
         domain,
-        idmap.idmap_backend_name
+        idmap.backend_type
     ))
     confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
         domain,
@@ -681,7 +681,7 @@ def configure_idmap_tdb2(smb4_conf, idmap, domain):
 def configure_idmap_script(smb4_conf, idmap, domain):
     confset1(smb4_conf, "idmap config %s: backend = %s" % (
         domain,
-        idmap.idmap_backend_name
+        idmap.backend_type
     ))
     confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
         domain,
@@ -715,7 +715,7 @@ def configure_idmap_backend(client, smb4_conf, idmap, domain):
         domain = "*"
 
     try:
-        idmap_str = client.call('notifier.ds_idmap_type_code_to_string', idmap.idmap_backend_type)
+        idmap_str = f'IDMAP_TYPE_{idmap.backend_type.upper()}'
         IDMAP_FUNCTIONS[idmap_str](smb4_conf, idmap, domain)
     except Exception as e:
         log.warn('Failed to configure idmap', exc_info=True)
@@ -778,7 +778,9 @@ def add_ldap_conf(client, smb4_conf):
     confset2(smb4_conf, "workgroup = %s", ldap_workgroup)
     confset1(smb4_conf, "domain logons = yes")
 
-    idmap = Struct(client.call('notifier.ds_get_idmap_object', ldap.ds_type, ldap.id, ldap.ldap_idmap_backend))
+    idmap = client.call('datastore.query', f'directoryservice.idmap_{ldap.ldap_idmap_backend}', [('idmap_ds_type', '=', '2')], {'get':True})
+    idmap.update({'backend_type': ldap.ldap_idmap_backend})
+    idmap = Struct(idmap)
     configure_idmap_backend(client, smb4_conf, idmap, ldap_workgroup)
 
 
@@ -831,7 +833,9 @@ def add_activedirectory_conf(client, smb4_conf):
     if ad.ad_nss_info:
         confset2(smb4_conf, "winbind nss info = %s", ad.ad_nss_info)
 
-    idmap = Struct(client.call('notifier.ds_get_idmap_object', ad.ds_type, ad.id, ad.ad_idmap_backend))
+    idmap = client.call('datastore.query', f'directoryservice.idmap_{ad.ad_idmap_backend}', [('idmap_ds_type', '=', '1')], {'get':True})
+    idmap.update({'backend_type': ad.ad_idmap_backend})
+    idmap = Struct(idmap)
     configure_idmap_backend(client, smb4_conf, idmap, ad_workgroup)
 
     confset2(smb4_conf, "allow trusted domains = %s",
@@ -1073,7 +1077,10 @@ def generate_smb4_conf(client, smb4_conf, role):
 
     if not smb4_autorid_enabled(client):
         # 5 = DS_TYPE_CIFS
-        idmap = Struct(client.call('notifier.ds_get_idmap_object', 5, cifs.id, 'tdb'))
+        idmap = client.call('datastore.query', 'directoryservice.idmap_tdb', [('idmap_ds_type', '=', '5')], {'get':True})
+        idmap.update({'backend_type': 'tdb'})
+        idmap = Struct(idmap)
+
         configure_idmap_backend(client, smb4_conf, idmap, None)
 
     if role == 'auto':
