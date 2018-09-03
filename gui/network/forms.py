@@ -48,6 +48,7 @@ from freenasUI.freeadmin.utils import key_order
 from ipaddr import IPNetwork
 
 log = logging.getLogger('network.forms')
+RE_MTU = re.compile(r'\bmtu (\d+)\b')
 SW_NAME = get_sw_name()
 
 
@@ -365,6 +366,14 @@ class InterfacesForm(ModelForm):
                 self._errors['int_ipv4address'] = self.error_class([
                     _("This field is required for failover")
                 ])
+
+        # API backward compatibility
+        options = cdata.get('int_options')
+        if options:
+            reg = RE_MTU.search(options)
+            if reg:
+                cdata['int_mtu'] = int(reg.group(1))
+                cdata['int_options'] = options.replace(reg.group(0), '')
 
         return cdata
 

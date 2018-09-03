@@ -284,6 +284,11 @@ class Interfaces(Model):
         null=True,
         blank=True,
     )
+    int_mtu = models.PositiveIntegerField(
+        verbose_name=_("MTU"),
+        blank=True,
+        null=True,
+    )
     int_options = models.CharField(
         max_length=120,
         verbose_name=_("Options"),
