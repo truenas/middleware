@@ -256,7 +256,7 @@ class DiskService(CRUDService):
 
     @private
     async def get_reserved(self):
-        reserved = [i async for i in await self.middleware.call('boot.get_disks')]
+        reserved = list(await self.middleware.call('boot.get_disks'))
         reserved += [i async for i in await self.middleware.call('pool.get_disks')]
         reserved += [i async for i in self.__get_iscsi_targets()]
         return reserved
