@@ -485,7 +485,7 @@ def test__schema_ipaddr(value, expected):
 
 @pytest.mark.parametrize("value,expected", [
     ('127.0.0.1/32', '127.0.0.1/32'),
-    ('22::56', '22::56'),
+    ('22::56/64', '22::56/64'),
     ('192.', ValidationErrors),
     ('5:5', ValidationErrors),
     ('ff:ff:ee:aa', ValidationErrors),
