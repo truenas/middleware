@@ -121,7 +121,7 @@ class SystemHook(AppHook):
 
             tabs.insert(14, {
                 'name': 'ViewEnclosure',
-                'focus': 'storage.ViewEnclosure',
+                'focus': 'system.ViewEnclosure',
                 'verbose_name': _('View Enclosure'),
                 'url': reverse('storage_enclosure_status'),
             })
