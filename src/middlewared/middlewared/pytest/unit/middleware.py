@@ -13,5 +13,5 @@ class Middleware(dict):
     async def call(self, name, *args):
         return self[name](*args)
 
-    async def run_in_io_thread(self, method, *args, **kwargs):
+    async def run_in_thread(self, method, *args, **kwargs):
         return method(*args, **kwargs)

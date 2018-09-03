@@ -677,7 +677,7 @@ class InterfacesService(CRUDService):
                 'Only one interface can have IPv6 autoconfiguration enabled.'
             )
 
-        await self.middleware.run_in_io_thread(
+        await self.middleware.run_in_thread(
             self.__validate_aliases, verrors, schema_name, data, ifaces
         )
 
