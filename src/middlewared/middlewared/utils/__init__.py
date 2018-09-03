@@ -2,6 +2,7 @@ import asyncio
 import imp
 import inspect
 import os
+import re
 import sys
 import subprocess
 import threading
@@ -19,7 +20,7 @@ BUILDTIME = None
 VERSION = None
 
 
-async def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
+def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
     from django.db.models.fields.related import ForeignKey, ManyToManyField
     from freenasUI.contrib.IPAddressField import (
         IPAddressField, IP4AddressField, IP6AddressField
@@ -42,15 +43,15 @@ async def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=N
         )):
             data[name] = str(value)
         elif isinstance(field, ForeignKey):
-            data[name] = await django_modelobj_serialize(middleware, value) if value is not None else value
+            data[name] = django_modelobj_serialize(middleware, value) if value is not None else value
         elif isinstance(field, ManyToManyField):
             data[name] = []
             for o in value.all():
-                data[name].append((await django_modelobj_serialize(middleware, o)))
+                data[name].append(django_modelobj_serialize(middleware, o))
         else:
             data[name] = value
     if extend:
-        data = await middleware.call(extend, data)
+        data = middleware.call_sync(extend, data)
     return data
 
 
@@ -123,10 +124,17 @@ def filter_list(_list, filters=None, options=None):
     opmap = {
         '=': lambda x, y: x == y,
         '!=': lambda x, y: x != y,
+        '>': lambda x, y: x > y,
+        '>=': lambda x, y: x >= y,
+        '<': lambda x, y: x < y,
+        '<=': lambda x, y: x <= y,
+        '~': lambda x, y: re.match(y, x),
         'in': lambda x, y: x in y,
         'nin': lambda x, y: x not in y,
         'rin': lambda x, y: y in x,
         'rnin': lambda x, y: y not in x,
+        '^': lambda x, y: x.startswith(y),
+        '$': lambda x, y: x.endswith(y),
     }
 
     if filters is None:

@@ -473,7 +473,7 @@ Changelog:
         try:
             job.set_progress(10, 'Writing uploaded file to disk')
             with open(destfile, 'wb') as f:
-                await self.middleware.run_in_io_thread(
+                await self.middleware.run_in_thread(
                     shutil.copyfileobj, job.pipes.input.r, f, 1048576,
                 )
 
@@ -486,7 +486,7 @@ Changelog:
                 except Exception as e:
                     raise CallError(str(e))
 
-            await self.middleware.run_in_io_thread(do_update)
+            await self.middleware.run_in_thread(do_update)
 
             job.set_progress(95, 'Cleaning up')
 

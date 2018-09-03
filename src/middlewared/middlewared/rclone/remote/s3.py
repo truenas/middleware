@@ -37,8 +37,9 @@ class S3RcloneRemote(BaseRcloneRemote):
         if task["attributes"]["encryption"] not in (None, "", "AES256"):
             verrors.add("encryption", 'Encryption should be null or "AES256"')
 
-        response = await self.middleware.run_in_io_thread(self._get_client(credentials).get_bucket_location,
-                                                          Bucket=task["attributes"]["bucket"])
+        response = await self.middleware.run_in_thread(
+            self._get_client(credentials).get_bucket_location, Bucket=task["attributes"]["bucket"]
+        )
         task["attributes"]["region"] = response["LocationConstraint"] or "us-east-1"
 
     def get_remote_extra(self, task):

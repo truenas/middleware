@@ -1181,25 +1181,25 @@ class VMService(CRUDService):
 
     @accepts(Str('vmOS'), Bool('force', default=False))
     @job(lock='container')
-    async def fetch_image(self, job, vmOS, force=False):
+    def fetch_image(self, job, vmOS, force=False):
         """Download a pre-built image for bhyve"""
         vm_os = CONTAINER_IMAGES.get(vmOS)
         url = vm_os['URL']
 
         self.logger.debug('==> IMAGE: {0}'.format(vm_os))
 
-        sharefs = await self.middleware.call('vm.get_sharefs')
+        sharefs = self.middleware.call_sync('vm.get_sharefs')
         vm_os_file = vm_os['GZIPFILE']
         iso_path = sharefs + '/iso_files/'
         file_path = iso_path + vm_os_file
 
         if os.path.exists(file_path) is False and force is False:
             logger.debug('===> Downloading: %s' % (url))
-            await self.middleware.run_in_thread(lambda: urlretrieve(
+            urlretrieve(
                 url,
                 file_path,
                 lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job, file_path)
-            ))
+            )
 
     @accepts()
     async def list_images(self):
@@ -1279,6 +1279,7 @@ class VMService(CRUDService):
         created_clones = []
         try:
             for item in vm['devices']:
+                item.pop('id', None)
                 if item['dtype'] == 'NIC':
                     if 'mac' in item['attributes']:
                         del item['attributes']['mac']
@@ -1290,15 +1291,17 @@ class VMService(CRUDService):
                     zvol_snapshot = zvol + '@' + vm['name']
                     clone_dst = zvol + '_' + vm['name']
 
-                    await self.middleware.call('zfs.snapshot.create', {
+                    if not await self.middleware.call('zfs.snapshot.create', {
                         'dataset': zvol, 'name': vm['name'],
-                    })
+                    }):
+                        raise CallError(f'Failed to snapshot {zvol_snapshot}.')
 
                     created_snaps.append(zvol_snapshot)
 
-                    await self.middleware.call('zfs.snapshot.clone', {
+                    if not await self.middleware.call('zfs.snapshot.clone', {
                         'snapshot': zvol_snapshot, 'dataset_dst': clone_dst,
-                    })
+                    }):
+                        raise CallError(f'Failed to clone {zvol_snapshot}.')
 
                     created_clones.append(clone_dst)
 

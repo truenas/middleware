@@ -190,7 +190,7 @@ class Application(object):
         else:
             async with self.middleware.crash_reporting_semaphore:
                 extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-                await self.middleware.run_in_io_thread(
+                await self.middleware.run_in_thread(
                     self.middleware.crash_reporting.report,
                     exc_info,
                     None,
@@ -405,7 +405,7 @@ class FileApplication(object):
                 asyncio.run_coroutine_threadsafe(resp.write(read), loop=self.loop).result()
 
         try:
-            await self.middleware.run_in_io_thread(do_copy)
+            await self.middleware.run_in_thread(do_copy)
         finally:
             await self._cleanup_job(job_id)
 
@@ -486,9 +486,9 @@ class FileApplication(object):
             job = await self.middleware.call(data['method'], *(data.get('params') or []),
                                              pipes=Pipes(input=self.middleware.pipe()))
             try:
-                await self.middleware.run_in_io_thread(copy)
+                await self.middleware.run_in_thread(copy)
             finally:
-                await self.middleware.run_in_io_thread(job.pipes.input.w.close)
+                await self.middleware.run_in_thread(job.pipes.input.w.close)
         except CallError as e:
             if e.errno == CallError.ENOMETHOD:
                 status_code = 422
@@ -716,10 +716,11 @@ class ShellApplication(object):
 
 class Middleware(object):
 
-    def __init__(self, loop_monitor=True, overlay_dirs=None, debug_level=None):
+    def __init__(self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None):
         self.logger = logger.Logger('middlewared', debug_level).getLogger()
         self.crash_reporting = logger.CrashReporting()
         self.crash_reporting_semaphore = asyncio.Semaphore(value=2)
+        self.loop_debug = loop_debug
         self.loop_monitor = loop_monitor
         self.overlay_dirs = overlay_dirs or []
         self.__loop = None
@@ -911,13 +912,22 @@ class Middleware(object):
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
 
-    async def run_in_thread(self, method, *args, **kwargs):
+    async def _run_in_conn_threadpool(self, method, *args, **kwargs):
+        """
+        Threads to handle websocket connection are gated on `__threadpool`.
+        Any other calls should use `run_in_thread` as that launches its own thread
+        and does not cause deadlock waiting another thread to finish in the pool
+        (which could happen on the stack call, e.g.
+           service.foo calls something in using the thread pool and something also
+           uses the thread pool. If service.foo is called many times before each thread
+           finishes we will have a deadlock)
+        """
         return await self.run_in_executor(self.__threadpool, method, *args, **kwargs)
 
     async def run_in_proc(self, method, *args, **kwargs):
         return await self.run_in_executor(self.__procpool, method, *args, **kwargs)
 
-    async def run_in_io_thread(self, method, *args, **kwargs):
+    async def run_in_thread(self, method, *args, **kwargs):
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
         try:
             return await self.loop.run_in_executor(executor, functools.partial(method, *args, **kwargs))
@@ -927,7 +937,7 @@ class Middleware(object):
     def pipe(self):
         return Pipe(self)
 
-    async def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, io_thread=False):
+    async def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, io_thread=True):
 
         args = []
         if hasattr(methodobj, '_pass_app'):
@@ -971,9 +981,9 @@ class Middleware(object):
                 return await self.run_in_executor(tpool, methodobj, *args)
 
             if io_thread:
-                run_method = self.run_in_io_thread
-            else:
                 run_method = self.run_in_thread
+            else:
+                run_method = self._run_in_conn_threadpool
             return await run_method(methodobj, *args)
 
     async def _call_worker(self, serviceobj, name, *args, job=None):
@@ -1062,7 +1072,7 @@ class Middleware(object):
 
         self.logger.trace(f'Sending event "{event_type}":{kwargs}')
 
-        for sessionid, wsclient in self.__wsclients.items():
+        for sessionid, wsclient in list(self.__wsclients.items()):
             try:
                 wsclient.send_event(name, event_type, **kwargs)
             except Exception:
@@ -1118,9 +1128,9 @@ class Middleware(object):
     def run(self):
         self.loop = self.__loop = asyncio.get_event_loop()
 
-        if self.loop_monitor:
+        if self.loop_debug:
             self.__loop.set_debug(True)
-            # loop.slow_callback_duration(0.2)
+            self.__loop.slow_callback_duration = 0.2
 
         # Needs to happen after setting debug or may cause race condition
         # http://bugs.python.org/issue30805
@@ -1208,6 +1218,7 @@ def main():
     parser.add_argument('restart', nargs='?')
     parser.add_argument('--pidfile', '-P', action='store_true')
     parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
+    parser.add_argument('--loop-debug', action='store_true')
     parser.add_argument('--overlay-dirs', '-o', action='append')
     parser.add_argument('--debug-level', choices=[
         'TRACE',
@@ -1254,6 +1265,7 @@ def main():
             _pidfile.write(f"{str(os.getpid())}\n")
 
     Middleware(
+        loop_debug=args.loop_debug,
         loop_monitor=not args.disable_loop_monitor,
         overlay_dirs=args.overlay_dirs,
         debug_level=args.debug_level,

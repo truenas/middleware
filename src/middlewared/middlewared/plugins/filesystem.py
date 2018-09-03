@@ -175,7 +175,7 @@ class FilesystemService(Service):
             raise CallError(f'{path} is not a file')
 
         with open(path, 'rb') as f:
-            await self.middleware.run_in_io_thread(shutil.copyfileobj, f, job.pipes.output.w)
+            await self.middleware.run_in_thread(shutil.copyfileobj, f, job.pipes.output.w)
 
     @accepts(
         Str('path'),
@@ -200,7 +200,7 @@ class FilesystemService(Service):
             openmode = 'wb+'
 
         with open(path, openmode) as f:
-            await self.middleware.run_in_io_thread(shutil.copyfileobj, job.pipes.input.r, f)
+            await self.middleware.run_in_thread(shutil.copyfileobj, job.pipes.input.r, f)
 
         mode = options.get('mode')
         if mode:

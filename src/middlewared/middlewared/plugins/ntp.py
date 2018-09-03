@@ -88,7 +88,7 @@ class NTPServerService(CRUDService):
         maxpoll = data['maxpoll']
         minpoll = data['minpoll']
         force = data.pop('force', False)
-        usable = True if await self.middleware.run_in_io_thread(
+        usable = True if await self.middleware.run_in_thread(
             self.test_ntp_server, data['address']) else False
 
         if not force and not usable:
