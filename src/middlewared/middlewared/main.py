@@ -4,7 +4,7 @@ from .event import EventSource
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
-from .schema import ResolverError, Error as SchemaError
+from .schema import Error as SchemaError, Schemas
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from .utils import start_daemon_thread, load_modules, load_classes
 from .webui_auth import WebUIAuth
@@ -743,7 +743,7 @@ class Middleware(object):
         )
         self.__threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
         self.jobs = JobsQueue(self)
-        self.__schemas = {}
+        self.__schemas = Schemas()
         self.__services = {}
         self.__wsclients = {}
         self.__event_sources = {}
@@ -783,23 +783,12 @@ class Middleware(object):
 
         # Now that all plugins have been loaded we can resolve all method params
         # to make sure every schema is patched and references match
-        from middlewared.schema import resolver  # Lazy import so namespace match
+        from middlewared.schema import resolve_methods  # Lazy import so namespace match
         to_resolve = []
         for service in list(self.__services.values()):
             for attr in dir(service):
                 to_resolve.append(getattr(service, attr))
-        while len(to_resolve) > 0:
-            resolved = 0
-            for method in list(to_resolve):
-                try:
-                    resolver(self, method)
-                except ResolverError:
-                    pass
-                else:
-                    to_resolve.remove(method)
-                    resolved += 1
-            if resolved == 0:
-                raise ValueError(f'Not all schemas could be resolved: {to_resolve}')
+        resolve_methods(self.__schemas, to_resolve)
 
         # Only call setup after all schemas have been resolved because
         # they can call methods with schemas defined.
@@ -904,16 +893,6 @@ class Middleware(object):
 
     def get_services(self):
         return self.__services
-
-    def add_schema(self, schema):
-        if schema.name in self.__schemas:
-            raise ValueError('Schema "{0}" is already registered'.format(
-                schema.name
-            ))
-        self.__schemas[schema.name] = schema
-
-    def get_schema(self, name):
-        return self.__schemas.get(name)
 
     async def run_in_executor(self, pool, method, *args, **kwargs):
         """

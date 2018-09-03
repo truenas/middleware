@@ -11,6 +11,14 @@ from middlewared.service_exception import ValidationErrors
 NOT_PROVIDED = object()
 
 
+class Schemas(dict):
+
+    def add(self, schema):
+        if schema.name in self:
+            raise ValueError(f'Schema "{schema.name}" is already registered')
+        super().__setitem__(schema.name, schema)
+
+
 class Error(Exception):
 
     def __init__(self, attribute, errmsg, errno=errno.EINVAL):
@@ -93,7 +101,7 @@ class Attribute(object):
         """
         raise NotImplementedError("Attribute must implement to_json_schema method")
 
-    def resolve(self, middleware):
+    def resolve(self, schemas):
         """
         After every plugin is initialized this method is called for every method param
         so that the real attribute is evaluated.
@@ -109,7 +117,7 @@ class Attribute(object):
         )
         """
         if self.register:
-            middleware.add_schema(self)
+            schemas.add(self)
         return self
 
 
@@ -430,11 +438,11 @@ class List(EnumMixin, Attribute):
         schema['items'] = items
         return schema
 
-    def resolve(self, middleware):
+    def resolve(self, schemas):
         for index, i in enumerate(self.items):
-            self.items[index] = i.resolve(middleware)
+            self.items[index] = i.resolve(schemas)
         if self.register:
-            middleware.add_schema(self)
+            schemas.add(self)
         return self
 
 
@@ -531,11 +539,11 @@ class Dict(Attribute):
             schema['properties'][name] = attr.to_json_schema(parent=self)
         return schema
 
-    def resolve(self, middleware):
+    def resolve(self, schemas):
         for name, attr in list(self.attrs.items()):
-            self.attrs[name] = attr.resolve(middleware)
+            self.attrs[name] = attr.resolve(schemas)
         if self.register:
-            middleware.add_schema(self)
+            schemas.add(self)
         return self
 
 
@@ -605,8 +613,8 @@ class Ref(object):
     def __init__(self, name):
         self.name = name
 
-    def resolve(self, middleware):
-        schema = middleware.get_schema(self.name)
+    def resolve(self, schemas):
+        schema = schemas.get(self.name)
         if not schema:
             raise ResolverError('Schema {0} does not exist'.format(self.name))
         schema = copy.deepcopy(schema)
@@ -635,8 +643,8 @@ class Patch(object):
             return Dict(name, **spec)
         raise ValueError('Unknown type: {0}'.format(spec['type']))
 
-    def resolve(self, middleware):
-        schema = middleware.get_schema(self.name)
+    def resolve(self, schemas):
+        schema = schemas.get(self.name)
         if not schema:
             raise ResolverError(f'Schema {self.name} not found')
         elif not isinstance(schema, Dict):
@@ -661,7 +669,7 @@ class Patch(object):
                 for key, val in list(patch.items()):
                     setattr(schema, key, val)
         if self.register:
-            middleware.add_schema(schema)
+            schemas.add(schema)
         return schema
 
 
@@ -669,7 +677,7 @@ class ResolverError(Exception):
     pass
 
 
-def resolver(middleware, f):
+def resolver(schemas, f):
     if not callable(f):
         return
     if not hasattr(f, 'accepts'):
@@ -677,13 +685,28 @@ def resolver(middleware, f):
     new_params = []
     for p in f.accepts:
         if isinstance(p, (Patch, Ref, Attribute)):
-            new_params.append(p.resolve(middleware))
+            new_params.append(p.resolve(schemas))
         else:
             raise ResolverError('Invalid parameter definition {0}'.format(p))
 
     # FIXME: for some reason assigning params (f.accepts = new_params) does not work
     f.accepts.clear()
     f.accepts.extend(new_params)
+
+
+def resolve_methods(schemas, to_resolve):
+    while len(to_resolve) > 0:
+        resolved = 0
+        for method in list(to_resolve):
+            try:
+                resolver(schemas, method)
+            except ResolverError:
+                pass
+            else:
+                to_resolve.remove(method)
+                resolved += 1
+        if resolved == 0:
+            raise ValueError(f'Not all schemas could be resolved: {to_resolve}')
 
 
 def accepts(*schema):
