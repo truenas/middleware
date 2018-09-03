@@ -18,7 +18,7 @@ def correct_default_value_for_https_redirect(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0027_add_organizational_unit'),
+        ('system', '0028_merge_20180807_0642'),
     ]
 
     operations = [
