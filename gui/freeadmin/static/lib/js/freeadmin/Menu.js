@@ -29,7 +29,7 @@ define([
                     if(tabnet) {
                         var c2 = tabnet.getChildren();
                         for(var j=0; j<c2.length; j++){
-                            if(c2[j].domNode.getAttribute("tab") == tab)
+                            if(c2[j].domNode.getAttribute("tab").split(".").slice(1).join(".") == tab.split(".").slice(1).join("."))
                                 tabnet.selectChild(c2[j]);
                         }
                     }
