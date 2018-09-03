@@ -1,3 +1,4 @@
+import copy
 import pytest
 
 from asynctest import Mock
@@ -214,7 +215,7 @@ async def test__interfaces_service__create_vlan():
 @pytest.mark.asyncio
 async def test__interfaces_service__update_two_dhcp():
 
-    interfaces_with_one_dhcp = INTERFACES.copy()
+    interfaces_with_one_dhcp = copy.deepcopy(INTERFACES)
     interfaces_with_one_dhcp[0]['ipv4_dhcp'] = True
 
     m = Middleware()
@@ -234,7 +235,7 @@ async def test__interfaces_service__update_two_dhcp():
 @pytest.mark.asyncio
 async def test__interfaces_service__update_two_same_network():
 
-    interfaces_one_network = INTERFACES.copy()
+    interfaces_one_network = copy.deepcopy(INTERFACES)
     interfaces_one_network[0]['aliases'] = [
         {'type': 'INET', 'address': '192.168.5.2', 'netmask': 24},
     ]
@@ -253,3 +254,20 @@ async def test__interfaces_service__update_two_same_network():
             },
         )
     assert 'interface_update.aliases.0' in ve.value
+
+
+@pytest.mark.asyncio
+async def test__interfaces_service__update_mtu():
+
+    m = Middleware()
+    m['interfaces.query'] = Mock(return_value=INTERFACES)
+    m['datastore.query'] = Mock(return_value=[])
+    m['datastore.insert'] = Mock(return_value=5)
+
+    update_interface = INTERFACES[1]
+
+    rv = await InterfacesService(m).update(
+        update_interface['id'], {
+            'mtu': 1550,
+        },
+    )

@@ -325,6 +325,7 @@ class InterfacesService(CRUDService):
             'ipv6_auto': False,
             'description': None,
             'options': '',
+            'mtu': None,
         }
 
         config = configs.get(iface['name'])
@@ -336,6 +337,7 @@ class InterfacesService(CRUDService):
             'ipv6_auto': config['int_ipv6auto'],
             'description': config['int_name'],
             'options': config['int_options'],
+            'mtu': config['int_mtu'],
         })
 
         if iface['name'].startswith('lagg'):
@@ -522,6 +524,7 @@ class InterfacesService(CRUDService):
         Str('vlan_parent_interface'),
         Int('vlan_tag', validators=[Range(min=1, max=4094)]),
         Int('vlan_pcp', validators=[Range(min=0, max=7)], null=True),
+        Int('mtu', validators=[Range(min=1492, max=9216)], default=None, null=True),
         Str('options'),
         register=True
     ))
@@ -677,6 +680,9 @@ class InterfacesService(CRUDService):
                 'Only one interface can have IPv6 autoconfiguration enabled.'
             )
 
+        if data.get('mtu') and data.get('options') and RE_MTU.match(data.get('options')):
+            verrors.add(f'{schema_name}.options', 'MTU should be placed in its own field.')
+
         await self.middleware.run_in_thread(
             self.__validate_aliases, verrors, schema_name, data, ifaces
         )
@@ -770,6 +776,7 @@ class InterfacesService(CRUDService):
             'critical': data.get('failover_critical') or False,
             'group': data.get('failover_group'),
             'options': data.get('options', ''),
+            'mtu': data.get('mtu') or None,
         }
 
     async def __create_interface_datastore(self, data, attrs):
@@ -865,6 +872,8 @@ class InterfacesService(CRUDService):
             else:
                 if 'aliases' in data:
                     interface_attrs, aliases_db, aliases_cidr = self.__convert_aliases_to_datastore(new)
+                else:
+                    interface_attrs = {}
                 config = config[0]
                 await self.middleware.call(
                     'datastore.update', 'network.interfaces', config['id'], dict(
@@ -1296,10 +1305,13 @@ class InterfacesService(CRUDService):
             if err:
                 self.logger.info('{}: error applying: {}'.format(name, err))
 
-            # In case there is no MTU in interface options and it is currently
-            # different than the default of 1500, revert it
-            if data['int_options'].find('mtu') == -1 and iface.mtu != 1500:
-                iface.mtu = 1500
+        # In case there is no MTU in interface and it is currently
+        # different than the default of 1500, revert it
+        if data['int_mtu']:
+            if iface.mtu != data['int_mtu']:
+                iface.mtu = data['int_mtu']
+        elif iface.mtu != 1500:
+            iface.mtu = 1500
 
         if netif.InterfaceFlags.UP not in iface.flags:
             iface.up()
