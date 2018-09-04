@@ -680,7 +680,7 @@ class InterfacesService(CRUDService):
                 'Only one interface can have IPv6 autoconfiguration enabled.'
             )
 
-        if data.get('mtu') and data.get('options') and RE_MTU.match(data.get('options')):
+        if data.get('options') and RE_MTU.match(data.get('options')):
             verrors.add(f'{schema_name}.options', 'MTU should be placed in its own field.')
 
         await self.middleware.run_in_thread(

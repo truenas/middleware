@@ -266,8 +266,27 @@ async def test__interfaces_service__update_mtu():
 
     update_interface = INTERFACES[1]
 
-    rv = await InterfacesService(m).update(
+    await InterfacesService(m).update(
         update_interface['id'], {
             'mtu': 1550,
         },
     )
+
+
+@pytest.mark.asyncio
+async def test__interfaces_service__update_mtu_options():
+
+    m = Middleware()
+    m['interfaces.query'] = Mock(return_value=INTERFACES)
+    m['datastore.query'] = Mock(return_value=[])
+    m['datastore.insert'] = Mock(return_value=5)
+
+    update_interface = INTERFACES[1]
+
+    with pytest.raises(ValidationErrors) as ve:
+        await InterfacesService(m).update(
+            update_interface['id'], {
+                'options': 'mtu 1550',
+            },
+        )
+    assert 'interface_update.options' in ve.value
