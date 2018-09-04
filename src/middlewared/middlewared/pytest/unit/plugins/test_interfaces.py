@@ -150,6 +150,25 @@ async def test__interfaces_service__create_lagg():
     })
 
 
+@pytest.mark.parametrize('attr_val', [
+    ('aliases', ['192.168.8.2/24']),
+    ('mtu', 1500),
+    ('ipv4_dhcp', True),
+    ('ipv6_auto', True),
+])
+@pytest.mark.asyncio
+async def test__interfaces_service__lagg_update_members_invalid(attr_val):
+
+    m = Middleware()
+    m['interfaces.query'] = m._query_filter(INTERFACES_WITH_LAG)
+
+    with pytest.raises(ValidationErrors) as ve:
+        await InterfacesService(m).update('em0', {
+            attr_val[0]: attr_val[1],
+        })
+    assert f'interface_update.{attr_val[0]}' in ve.value
+
+
 @pytest.mark.asyncio
 async def test__interfaces_service__create_vlan_invalid_parent():
 

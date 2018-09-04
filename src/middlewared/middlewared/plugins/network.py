@@ -703,7 +703,16 @@ class InterfacesService(CRUDService):
             for port in (v.get('lag_ports') or []):
                 lag_used[port] = k
 
-        if itype == 'LINK_AGGREGATION':
+        if itype == 'PHYSICAL':
+            if data['name'] in lag_used:
+                for i in ('aliases', 'mtu', 'ipv4_dhcp', 'ipv6_auto'):
+                    if data.get(i):
+                        verrors.add(
+                            f'{schema_name}.{i}',
+                            f'Interface in use by {data["name"]}. Attribute {i} cannot be changed'
+                            ' on members interfaces.',
+                        )
+        elif itype == 'LINK_AGGREGATION':
             if 'name' in data and not (
                 data['name'].startswith('lagg') and data['name'][4:].isdigit()
             ):
