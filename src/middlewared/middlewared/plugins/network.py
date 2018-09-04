@@ -1337,6 +1337,12 @@ class InterfacesService(CRUDService):
         elif iface.mtu != 1500:
             iface.mtu = 1500
 
+        if data['int_name'] and iface.description != data['int_name']:
+            try:
+                iface.description = data['int_name']
+            except Exception:
+                self.logger.warn(f'Failed to set interface {name} description', exc_info=True)
+
         if netif.InterfaceFlags.UP not in iface.flags:
             iface.up()
 
