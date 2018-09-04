@@ -260,7 +260,7 @@ async def test__interfaces_service__update_two_same_network():
 async def test__interfaces_service__update_mtu():
 
     m = Middleware()
-    m['interfaces.query'] = Mock(return_value=INTERFACES)
+    m['interfaces.query'] = m._query_filter(INTERFACES)
     m['datastore.query'] = Mock(return_value=[])
     m['datastore.insert'] = Mock(return_value=5)
 

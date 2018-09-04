@@ -737,7 +737,7 @@ class InterfacesService(CRUDService):
 
         elif itype == 'VLAN':
             if 'name' in data and not (
-                data['name'].startswith('vlan') and data['vlan'][4:].isdigit()
+                data['name'].startswith('vlan') and data['name'][4:].isdigit()
             ):
                 verrors.add(
                     f'{schema_name}.name',
@@ -752,6 +752,14 @@ class InterfacesService(CRUDService):
                         f'{schema_name}.vlan_parent_interface',
                         f'Interface {parent} is currently in use by {lag_used[parent]}.',
                     )
+                else:
+                    parent_iface = ifaces[parent]
+                    mtu = data.get('mtu')
+                    if mtu and mtu > (parent_iface.get('mtu') or 1500):
+                        verrors.add(
+                            f'{schema_name}.mtu',
+                            f'VLAN MTU cannot be bigger than parent interface.',
+                        )
 
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
         for i, alias in enumerate(data.get('aliases') or []):
@@ -854,16 +862,16 @@ class InterfacesService(CRUDService):
     async def do_update(self, oid, data):
         iface = await self._get_instance(oid)
 
+        new = iface.copy()
+        new.update(data)
+
         verrors = ValidationErrors()
         await self._common_validation(
-            verrors, 'interface_update', data, iface['type'], update=iface
+            verrors, 'interface_update', new, iface['type'], update=iface
         )
         verrors.check()
 
         await self.__save_datastores()
-
-        new = iface.copy()
-        new.update(data)
 
         interface_id = None
         try:
