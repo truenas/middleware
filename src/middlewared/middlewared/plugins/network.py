@@ -457,6 +457,13 @@ class InterfacesService(CRUDService):
             await self.middleware.call('datastore.insert', 'network.lagginterfacemembers', i)
 
     @accepts()
+    async def has_pending_changes(self):
+        """
+        Returns whether there are pending interfaces changes to be applied or not.
+        """
+        return bool(self._original_datastores)
+
+    @accepts()
     async def rollback(self):
         """
         Rollback pending interfaces changes.
