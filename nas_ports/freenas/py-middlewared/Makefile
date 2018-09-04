@@ -34,6 +34,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}croniter>0:sysutils/py-croniter@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}bidict>0:devel/py-bidict@${FLAVOR} \
 		rclone>0:net/rclone \
+		ifstat>0:net/ifstat \
 		swagger-ui>0:freenas/swagger-ui
 
 USE_RC_SUBR=	middlewared
