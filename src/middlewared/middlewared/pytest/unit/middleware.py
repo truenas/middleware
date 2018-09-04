@@ -1,4 +1,5 @@
 from asynctest import Mock
+from middlewared.utils import filter_list
 from middlewared.schema import Schemas, resolve_methods
 
 
@@ -19,3 +20,8 @@ class Middleware(dict):
 
     async def run_in_thread(self, method, *args, **kwargs):
         return method(*args, **kwargs)
+
+    def _query_filter(self, l):
+        def query(filters=None, options=None):
+            return filter_list(l, filters, options)
+        return query
