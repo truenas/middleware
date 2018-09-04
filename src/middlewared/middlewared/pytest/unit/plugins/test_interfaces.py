@@ -213,6 +213,19 @@ async def test__interfaces_service__create_vlan():
 
 
 @pytest.mark.asyncio
+async def test__interfaces_service__update_vlan_mtu_bigger_parent():
+
+    m = Middleware()
+    m['interfaces.query'] = m._query_filter(INTERFACES_WITH_VLAN)
+
+    with pytest.raises(ValidationErrors) as ve:
+        await InterfacesService(m).update(INTERFACES_WITH_VLAN[-1]['id'], {
+            'mtu': 9000,
+        })
+    assert 'interface_update.mtu' in ve.value
+
+
+@pytest.mark.asyncio
 async def test__interfaces_service__update_two_dhcp():
 
     interfaces_with_one_dhcp = copy.deepcopy(INTERFACES)
