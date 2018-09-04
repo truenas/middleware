@@ -1251,7 +1251,9 @@ def main():
 
     if 'file' in args.log_handler:
         _logger.configure_logging('file')
-        sys.stdout = sys.stderr = _logger.stream()
+        stream = _logger.stream()
+        if stream is not None:
+            sys.stdout = sys.stderr = stream
     elif 'console' in args.log_handler:
         _logger.configure_logging('console')
     else:
