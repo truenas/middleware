@@ -59,6 +59,7 @@ class InterfacesForm(ModelForm):
         fields = '__all__'
         model = models.Interfaces
         widgets = {
+            'int_mtu': forms.widgets.TextInput(),
             'int_vhid': forms.widgets.TextInput(),
         }
 
