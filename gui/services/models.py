@@ -1305,6 +1305,14 @@ class UPS(Model):
         help_text=_("Signal the UPS to power off after FreeNAS shuts down."),
         default=True,
     )
+    ups_hostsync = models.IntegerField(
+        default=15,
+        verbose_name=_("Host Sync"),
+        help_text=_(
+            "Upsmon will wait up to this many seconds in master mode "
+            "for the slaves to disconnect during a shutdown situation"
+        )
+    )
 
     def __init__(self, *args, **kwargs):
         super(UPS, self).__init__(*args, **kwargs)
