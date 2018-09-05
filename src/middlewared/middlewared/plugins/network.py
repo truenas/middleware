@@ -1068,6 +1068,7 @@ class InterfacesService(CRUDService):
         interfaces = [i['int_interface'] for i in (await self.middleware.call('datastore.query', 'network.interfaces'))]
         cloned_interfaces = []
         parent_interfaces = []
+        sync_interface_opts = defaultdict(dict)
 
         # First of all we need to create the virtual interfaces
         # LAGG comes first and then VLAN
@@ -1094,6 +1095,8 @@ class InterfacesService(CRUDService):
             # all members and use that.
             lower_mtu = None
             for member in (await self.middleware.call('datastore.query', 'network.lagginterfacemembers', [('lagg_interfacegroup_id', '=', lagg['id'])])):
+                # For Link Aggregation MTU is configured in parent, not ports
+                sync_interface_opts[member['lagg_physnic']]['skip_mtu'] = True
                 members_database.add(member['lagg_physnic'])
                 try:
                     member_iface = netif.get_interface(member['lagg_physnic'])
@@ -1104,20 +1107,22 @@ class InterfacesService(CRUDService):
                 # In case there is no MTU in interface options and it is currently
                 # different than the default of 1500, revert it.
                 # If there is MTU and its different set it (using member options).
-                reg_mtu = RE_MTU.search(member['lagg_deviceoptions'])
+                lagg_mtu = lagg['lagg_interface']['int_mtu']
+                if not lagg_mtu:
+                    reg_mtu = RE_MTU.search(member['lagg_deviceoptions'])
+                    if reg_mtu:
+                        lagg_mtu = int(reg_mtu.group(1))
                 if (
-                    reg_mtu and (
-                        int(reg_mtu.group(1)) != member_iface.mtu or
-                        int(reg_mtu.group(1)) != iface.mtu
+                    lagg_mtu and (
+                        lagg_mtu != member_iface.mtu or lagg_mtu != iface.mtu
                     )
-                ) or (not reg_mtu and (member_iface.mtu != 1500 or iface.mtu != 1500)):
-                    if not reg_mtu:
+                ) or (not lagg_mtu and (member_iface.mtu != 1500 or iface.mtu != 1500)):
+                    if not lagg_mtu:
                         if not lower_mtu or lower_mtu > 1500:
                             lower_mtu = 1500
                     else:
-                        reg_mtu = int(reg_mtu.group(1))
-                        if not lower_mtu or lower_mtu > reg_mtu:
-                            lower_mtu = reg_mtu
+                        if not lower_mtu or lower_mtu > lagg_mtu:
+                            lower_mtu = lagg_mtu
 
                 members_changes.append((member_iface, member['lagg_physnic'], member['lagg_deviceoptions']))
 
@@ -1183,7 +1188,7 @@ class InterfacesService(CRUDService):
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
         for interface in interfaces:
             try:
-                await self.sync_interface(interface, wait_dhcp)
+                await self.sync_interface(interface, wait_dhcp, **sync_interface_opts[interface])
             except Exception:
                 self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
 
@@ -1230,7 +1235,7 @@ class InterfacesService(CRUDService):
         return addr
 
     @private
-    async def sync_interface(self, name, wait_dhcp=False):
+    async def sync_interface(self, name, wait_dhcp=False, **kwargs):
         try:
             data = await self.middleware.call('datastore.query', 'network.interfaces', [('int_interface', '=', name)], {'get': True})
         except IndexError:
@@ -1370,11 +1375,12 @@ class InterfacesService(CRUDService):
 
         # In case there is no MTU in interface and it is currently
         # different than the default of 1500, revert it
-        if data['int_mtu']:
-            if iface.mtu != data['int_mtu']:
-                iface.mtu = data['int_mtu']
-        elif iface.mtu != 1500:
-            iface.mtu = 1500
+        if not kwargs.get('skip_mtu'):
+            if data['int_mtu']:
+                if iface.mtu != data['int_mtu']:
+                    iface.mtu = data['int_mtu']
+            elif iface.mtu != 1500:
+                iface.mtu = 1500
 
         if data['int_name'] and iface.description != data['int_name']:
             try:
