@@ -142,6 +142,7 @@ class UPSService(SystemServiceService):
             Str('shutdowncmd'),
             Str('subject'),
             List('toemail', items=[Str('email', validators=[Email()])]),
+            update=True
         )
     )
     async def do_update(self, data):
