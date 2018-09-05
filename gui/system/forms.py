@@ -1062,6 +1062,8 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
 
             if self.original_instance['stg_guihttpsredirect'] != self.instance.stg_guihttpsredirect:
                 events.append("evilrestartHttpd('%s')" % newurl)
+            else:
+                events.append("restartHttpd('%s')" % newurl)
 
         if self.original_instance['stg_timezone'] != self.instance.stg_timezone:
             os.environ['TZ'] = self.instance.stg_timezone

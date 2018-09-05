@@ -862,7 +862,7 @@ class CertificateService(CRUDService):
     async def do_delete(self, id):
         certificate = await self._get_instance(id)
 
-        if (await self.middleware.call('system.general.config')['ui_certificate']['id']) == id:
+        if (await self.middleware.call('system.general.config'))['ui_certificate']['id'] == id:
             verrors = ValidationErrors()
 
             verrors.add(

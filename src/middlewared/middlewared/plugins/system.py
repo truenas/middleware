@@ -727,7 +727,7 @@ class SystemGeneralService(ConfigService):
     )
     async def do_update(self, data):
         config = await self.config()
-        config['ui_certificate'] = config['ui_certificate']['id']
+        config['ui_certificate'] = config['ui_certificate']['id'] if config['ui_certificate'] else None
         new_config = config.copy()
         new_config.update(data)
 
