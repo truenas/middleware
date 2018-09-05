@@ -192,7 +192,6 @@ activedirectory_start()
 			AD_log "activedirectory_start: trying to join domain"
 			if ! AD_join_domain
 			then
-				/etc/directoryservice/ActiveDirectory/ctl stop
 				touch /tmp/.adalert
 				return 1
 			else
