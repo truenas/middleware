@@ -591,7 +591,7 @@ class InterfacesService(CRUDService):
 
             interface_id = None
             lag_id = None
-            lagmembers_ids = []
+            lagports_ids = []
             try:
                 async for i in self.__create_interface_datastore(data, {
                     'interface': name,
@@ -604,7 +604,7 @@ class InterfacesService(CRUDService):
                     {'lagg_interface': interface_id, 'lagg_protocol': data['lag_protocol'].lower()},
                 )
                 for idx, i in enumerate(data['lag_ports']):
-                    lagmembers_ids.append(
+                    lagports_ids.append(
                         await self.middleware.call(
                             'datastore.insert',
                             'network.lagginterfacemembers',
@@ -612,11 +612,50 @@ class InterfacesService(CRUDService):
                             {'prefix': 'lagg_'},
                         )
                     )
+
+                    """
+                    If the link aggregation member was configured we need to reset it,
+                    including removing all its IP addresses.
+                    """
+                    portinterface = await self.middleware.call(
+                        'datastore.query',
+                        'network.interfaces',
+                        [('interface', '=', i)],
+                        {'prefix': 'int_'},
+                    )
+                    if portinterface:
+                        portinterface = portinterface[0]
+                        portinterface.update({
+                            'dhcp': False,
+                            'ipv4address': '',
+                            'ipv4address_b': '',
+                            'v4netmaskbit': '',
+                            'ipv6auto': False,
+                            'ipv6address': '',
+                            'v6netmaskbit': '',
+                            'vip': '',
+                            'vhid': None,
+                            'critical': False,
+                            'group': None,
+                            'mtu': None,
+                        })
+                        await self.middleware.call(
+                            'datastore.update',
+                            'network.interfaces',
+                            portinterface['id'],
+                            portinterface,
+                            {'prefix': 'int_'},
+                        )
+                        await self.middleware.call(
+                            'datastore.delete',
+                            'network.alias',
+                            [('alias_interface', '=', portinterface['id'])],
+                        )
             except Exception as e:
-                for lagmember_id in lagmembers_ids:
+                for lagport_id in lagports_ids:
                     with contextlib.suppress(Exception):
                         await self.middleware.call(
-                            'datastore.delete', 'network.lagginterfacemembers', lagmember_id
+                            'datastore.delete', 'network.lagginterfacemembers', lagport_id
                         )
                 if lag_id:
                     with contextlib.suppress(Exception):
