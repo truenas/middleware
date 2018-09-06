@@ -61,10 +61,14 @@ class SmartAlert(object):
             raise
 
     def message_add(self, dev, message):
+        if not dev.startswith('/dev/'):
+            dev = '/dev/{0}'.format(dev)
         if dev not in self.data:
             self.data[dev] = []
         if message not in self.data[dev]:
             self.data[dev].append(message)
 
     def device_delete(self, dev):
+        if not dev.startswith('/dev/'):
+            dev = '/dev/{0}'.format(dev)
         self.data.pop(dev, None)

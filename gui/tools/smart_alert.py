@@ -48,8 +48,6 @@ def event():
 
 
 def remove(dev):
-    if not dev.startswith('/dev/'):
-        dev = '/dev/{0}'.format(dev)
     with SmartAlert() as sa:
         sa.device_delete(dev)
 
