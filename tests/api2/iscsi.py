@@ -13,7 +13,8 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 
 from auto_config import ip, user, password
-from config import *  # SHOULD IMPORT FOLLOWING VARIABLES - BSD_HOST, BSD_PASSWORD, BSD_USERNAME
+# SHOULD IMPORT FOLLOWING VARIABLES - BSD_HOST, BSD_PASSWORD, BSD_USERNAME
+from config import *
 from functions import PUT, POST, GET, SSH_TEST, return_output, DELETE
 
 global DEVICE_NAME
@@ -38,7 +39,7 @@ def test_01_Add_iSCSI_initiator():
     payload = {
         'tag': 0,
     }
-    results = POST("/iscsi/initiator", payload)
+    results = POST("/iscsi/initiator/", payload)
     assert isinstance(results.json(), dict), results.text
 
 
@@ -51,7 +52,7 @@ def test_02_Add_ISCSI_portal():
             }
         ]
     }
-    results = POST("/iscsi/portal", payload)
+    results = POST("/iscsi/portal/", payload)
     assert isinstance(results.json(), dict), results.text
 
 
@@ -243,7 +244,7 @@ def test_22_Disable_iSCSI_service():
 
 def test_23_stop_iSCSI_service():
     result = POST(
-        '/service/stop', {
+        '/service/stop/', {
             'service': 'iscsitarget',
             'service-control': {
                 'onetime': True
@@ -260,7 +261,7 @@ def test_24_Verify_the_iSCSI_service_is_disabled():
 
 # Delete iSCSI target and group
 def test_25_Delete_ISCSI_target():
-    results = DELETE("/iscsi/target/id/1")
+    results = DELETE("/iscsi/target/id/1/")
     assert results.json(), results.text
 
 
@@ -272,5 +273,5 @@ def test_26_Delete_iSCSI_extent():
 
 # Remove iSCSI portal
 def test_27_Delete_portal():
-    results = DELETE("/iscsi/portal/id/1")
+    results = DELETE("/iscsi/portal/id/1/")
     assert results.json(), results.text

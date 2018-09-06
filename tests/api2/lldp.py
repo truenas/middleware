@@ -15,7 +15,7 @@ INTDESC = True
 
 
 def test_01_Configuring_LLDP_service():
-    results = PUT("/lldp", {
+    results = PUT("/lldp/", {
         "country": COUNTRY,
         "intdesc": INTDESC,
         "location": LOCATION,
@@ -24,12 +24,12 @@ def test_01_Configuring_LLDP_service():
 
 
 def test_02_Checking_that_API_reports_LLDP_service():
-    results = GET("/lldp")
+    results = GET("/lldp/")
     assert results.status_code == 200, results.text
 
 
 def test_03_Checking_that_API_reports_LLDP_configuration_as_saved():
-    results = GET("/lldp")
+    results = GET("/lldp/")
     assert results.status_code == 200, results.text
     data = results.json()
     assert data["country"] == COUNTRY
@@ -38,17 +38,18 @@ def test_03_Checking_that_API_reports_LLDP_configuration_as_saved():
 
 
 def test_04_Enable_LLDP_service():
-    results = PUT("/service/id/lldp", {"enable": True})
+    results = PUT("/service/id/lldp/", {"enable": True})
     assert results.status_code == 200, results.text
 
 
 def test_04_checking_to_see_if_LLDP_service_is_enabled_at_boot():
     results = GET("/service?service=lldp")
-    assert results.json()[0]["enable"] == True, results.text
+    assert results.json()[0]["enable"] is True, results.text
 
 
 def test_05_starting_LLDP_service():
-    results = POST("/service/start", {"service": "lldp", "service-control": {"onetime": True}})
+    payload = {"service": "lldp", "service-control": {"onetime": True}}
+    results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
 
 

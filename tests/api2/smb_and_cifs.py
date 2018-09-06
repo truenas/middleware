@@ -43,12 +43,12 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 def test_01_setting_auxilary_parameters_for_mount_smbfs():
     toload = "lanman auth = yes\nntlm auth = yes \nraw NTLMv2 auth = yes"
     payload = {"smb_options": toload}
-    results = PUT("/smb", payload)
+    results = PUT("/smb/", payload)
     assert results.status_code == 200, results.text
 
 
 def test_02_creating_smb_dataset():
-    results = POST("/pool/dataset", {"name": DATASET})
+    results = POST("/pool/dataset/", {"name": DATASET})
     assert results.status_code == 200, results.text
 
 
@@ -63,18 +63,18 @@ def test_03_changing_permissions_on_smb_PATH():
 
 
 def test_04_starting_cifs_service_at_boot():
-    results = PUT("/service/id/cifs", {"enable": True})
+    results = PUT("/service/id/cifs/", {"enable": True})
     assert results.status_code == 200, results.text
 
 
 def test_05_checking_to_see_if_clif_service_is_enabled_at_boot():
     results = GET("/service?service=cifs")
-    assert results.json()[0]["enable"] == True, results.text
+    assert results.json()[0]["enable"] is True, results.text
 
 
 def test_06_starting_cifs_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
-    results = POST("/service/start", payload)
+    results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -105,7 +105,7 @@ def test_09_creating_smb_mountpoint_on_bsd():
 @bsd_host_cfg
 def test_10_mounting_smb_on_bsd():
     cmd = f'mount_smbfs -N -I {ip} ' \
-          f'"//guest@testnas/{SMB_NAME}" "{MOUNTPOINT}"'
+        f'"//guest@testnas/{SMB_NAME}" "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
@@ -228,7 +228,7 @@ def test_24_removing_smb_mountpoint_on_bsd():
 
 def test_25_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
-    results = POST("/service/stop", payload)
+    results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -240,19 +240,19 @@ def test_26_checking_if_cifs_is_stop():
 # Create tests
 def test_27_update_smb():
     payload = {"timeserver": False}
-    results = PUT("/smb", payload)
+    results = PUT("/smb/", payload)
     assert results.status_code == 200, results.text
 
 
 def test_28_update_cifs_share():
     smbid = GET(f'/sharing/smb/?name={SMB_NAME}').json()[0]['id']
-    results = PUT(f"/sharing/smb/id/{smbid}", {"home": False})
+    results = PUT(f"/sharing/smb/id/{smbid}/", {"home": False})
     assert results.status_code == 200, results.text
 
 
 def test_29_starting_cifs_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
-    results = POST("/service/start", payload)
+    results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -290,7 +290,7 @@ def test_33_create_file_on_smb_share_via_osx_to_test_permissions():
 @osx_host_cfg
 def test_34_moving_smb_test_file_into_a_new_directory_on_osx():
     cmd = f'mkdir -p "{MOUNTPOINT}/tmp" && mv "{MOUNTPOINT}/testfile.txt" ' \
-          f'"{MOUNTPOINT}/tmp/testfile.txt"'
+        f'"{MOUNTPOINT}/tmp/testfile.txt"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
@@ -344,7 +344,7 @@ def test_39_create_file_on_smb_share_via_osx_to_test_permissions_on_osx():
 @osx_host_cfg
 def test_40_moving_smb_test_file_into_a_new_directory_on_osx():
     cmd = f'mkdir -p "{MOUNTPOINT}/tmp" && mv "{MOUNTPOINT}/testfile.txt" ' \
-          f'"{MOUNTPOINT}/tmp/testfile.txt"'
+        f'"{MOUNTPOINT}/tmp/testfile.txt"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
@@ -391,18 +391,18 @@ def test_45_delete_cifs_share():
 
 # Now stop the service
 def test_46_disable_cifs_service_at_boot():
-    results = PUT("/service/id/cifs", {"enable": False})
+    results = PUT("/service/id/cifs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
 def test_47_checking_to_see_if_clif_service_is_enabled_at_boot():
     results = GET("/service?service=cifs")
-    assert results.json()[0]["enable"] == False, results.text
+    assert results.json()[0]["enable"] is False, results.text
 
 
 def test_48_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
-    results = POST("/service/stop", payload)
+    results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
 
 

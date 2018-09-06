@@ -39,7 +39,7 @@ def test_02_enable_s3_service():
 
 def test_03_start_s3_service():
     result = POST(
-        '/service/start', {
+        '/service/start/', {
             'service': 's3',
             'service-control': {
                 'onetime': True

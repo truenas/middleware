@@ -19,40 +19,40 @@ def test_01_Configuring_settings():
                "security": "PLAIN",
                "smtp": True,
                "user": "william.spam@ixsystems.com"}
-    results = PUT("/mail", payload)
+    results = PUT("/mail/", payload)
     assert results.status_code == 200, results.text
 
 
 def test_02_look_fromemail_settings_change():
-    results = GET("/mail")
+    results = GET("/mail/")
     assert results.json()["fromemail"] == "william.spam@ixsystems.com"
 
 
 def test_03_look_outgoingserver_settings_change():
-    results = GET("/mail")
+    results = GET("/mail/")
     assert results.json()["outgoingserver"] == "mail.ixsystems.com"
 
 
 def test_04_look_pass_settings_change():
-    results = GET("/mail")
+    results = GET("/mail/")
     assert results.json()["pass"] == "changeme"
 
 
 def test_05_look_port_settings_change():
-    results = GET("/mail")
+    results = GET("/mail/")
     assert results.json()["port"] == 25
 
 
 def test_06_look_security_settings_change():
-    results = GET("/mail")
+    results = GET("/mail/")
     assert results.json()["security"] == "PLAIN"
 
 
 def test_07_look_smtp_settings_change():
-    results = GET("/mail")
-    assert results.json()["smtp"] == True
+    results = GET("/mail/")
+    assert results.json()["smtp"] is True
 
 
 def test_08_look_user_settings_change():
-    results = GET("/mail")
+    results = GET("/mail/")
     assert results.json()["user"] == "william.spam@ixsystems.com"
