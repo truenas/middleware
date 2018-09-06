@@ -1399,7 +1399,7 @@ class ZFSDatasetCommonForm(Form):
             else:
                 value = self.cleaned_data.get('dataset_%s' % prop)
 
-            if value:
+            if value or prop in ('org.freenas:description',):
                 props[prop] = value
 
         return props
