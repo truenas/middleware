@@ -54,7 +54,7 @@ def test_03_Changing_permissions_on_DATASET():
 
 
 def test_04_Enable_WebDAV_service():
-    results = PUT('/service/id/webdav', {'enable': True})
+    results = PUT('/service/id/webdav/', {'enable': True})
     assert results.status_code == 200, results.text
 
 
@@ -96,7 +96,7 @@ def test_10_Verifying_that_the_WebDAV_service_has_stopped():
 
 def test_11_Changing_comment_for_WebDAV(webdav_dict):
     id = webdav_dict['id']
-    results = PUT(f'/sharing/webdav/id/{id}', {
+    results = PUT(f'/sharing/webdav/id/{id}/', {
         'comment': 'foobar'
     })
     assert results.status_code == 200, results.text

@@ -17,7 +17,7 @@ def test_01_Creating_dataset_tank_tftproot():
     # THIS IS UNDER THE ASSUMPTION THAT A TANK VOLUME ALREADY EXISTS WHEN THIS TEST RUNS
 
     result = POST(
-        '/pool/dataset', {
+        '/pool/dataset/', {
             'name': DATASET_NAME.replace('%2F', '/')
         }
     )
