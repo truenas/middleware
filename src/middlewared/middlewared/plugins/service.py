@@ -858,6 +858,10 @@ class ServiceService(CRUDService):
                 res = True
         return res, []
 
+    async def _start_dynamicdns(self, **kwargs):
+        await self._service("ix-inadyn", "start", quiet=True, **kwargs)
+        await self._service("inadyn", "start", **kwargs)
+
     async def _restart_dynamicdns(self, **kwargs):
         await self._service("ix-inadyn", "start", quiet=True, **kwargs)
         await self._service("inadyn", "stop", force=True, **kwargs)
