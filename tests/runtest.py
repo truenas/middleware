@@ -21,7 +21,7 @@ keyPath = localHome + '/.ssh/test_id_rsa'
 ixautomationdotconfurl = "https://raw.githubusercontent.com/iXsystems/"
 ixautomationdotconfurl += "ixautomation/master/src/etc/ixautomation.conf.dist"
 config_file_msg = "Please add config.py to freenas/tests which can be empty " \
-     f"or contain settings from {ixautomationdotconfurl}"
+    f"or contain settings from {ixautomationdotconfurl}"
 
 try:
     import config

@@ -21,7 +21,7 @@ def cronjob_dict():
 
 
 def test_01_Creating_new_cron_job_which_will_run_every_minute(cronjob_dict):
-    results = POST('/cronjob', {
+    results = POST('/cronjob/', {
         'user': 'root',
         'command': f'touch "{TESTFILE}"',
         'schedule': {'minute': '*/1'}
@@ -41,9 +41,9 @@ def test_03_Wait_a_minute():
     sleep(60)
 
 
-def test_04_Updating_cron_job_status_to_disabled_updating_command(cronjob_dict):
+def test_04_Updating_cronjob_status_to_disabled_updating_command(cronjob_dict):
     id = cronjob_dict['id']
-    results = PUT(f'/cronjob/id/{id}', {
+    results = PUT(f'/cronjob/id/{id}/', {
         'enabled': False
     })
     assert results.status_code == 200, results.text
@@ -62,7 +62,7 @@ def test_06_Deleting_test_file_created_by_cronjob():
 
 def test_07_Deleting_cron_job_which_will_run_every_minute(cronjob_dict):
     id = cronjob_dict['id']
-    results = DELETE(f'/cronjob/id/{id}', None)
+    results = DELETE(f'/cronjob/id/{id}/', None)
     assert results.status_code == 200, results.text
 
 

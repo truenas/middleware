@@ -23,7 +23,7 @@ def test_01_check_backup():
 
 def test_02_creating_dataset_backup():
     payload = {"name": DATASET}
-    results = POST("/pool/dataset", payload)
+    results = POST("/pool/dataset/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -42,6 +42,7 @@ def test_03_creating_backup_backup():
                "enabled": True}
     results = POST("/backup/", payload)
     assert results.status_code == 200, results.text
+
 
 # Check destroying a SMB dataset
 def test_02_destroying_backup_dataset():

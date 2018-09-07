@@ -15,6 +15,7 @@ Reason = f"{disk0} is not real ATA disk"
 
 not_real_disk = pytest.mark.skipif(disk0 == "vtbd0", reason=Reason)
 
+
 @pytest.fixture(scope='module')
 def smart_dict():
     return {}
@@ -82,6 +83,7 @@ def test_07_starting_smartd_service():
     payload = {"service": "smartd", "service-control": {"onetime": True}}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
+
 
 @not_real_disk
 def test_08_checking_to_see_if_smartd_service_is_running():

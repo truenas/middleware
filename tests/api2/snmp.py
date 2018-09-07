@@ -16,7 +16,7 @@ PASSWORD = 'testing1234'
 
 
 def test_01_Configure_SNMP():
-    results = PUT('/snmp', {
+    results = PUT('/snmp/', {
         'community': COMMUNITY,
         'traps': TRAPS,
         'contact': CONTACT,
@@ -26,18 +26,18 @@ def test_01_Configure_SNMP():
 
 
 def test_02_Enable_SNMP_service_at_boot():
-    results = PUT('/service/id/snmp', {'enable': True})
+    results = PUT('/service/id/snmp/', {'enable': True})
     assert results.status_code == 200, results.text
 
 
 def test_03_checking_to_see_if_snmp_service_is_enabled_at_boot():
     results = GET("/service?service=snmp")
-    assert results.json()[0]["enable"] == True, results.text
+    assert results.json()[0]["enable"] is True, results.text
 
 
 def test_04_starting_snmp_service():
     payload = {"service": "snmp", "service-control": {"onetime": True}}
-    results = POST("/service/start", payload)
+    results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -52,7 +52,7 @@ def test_06_Validate_that_SNMP_service_is_running():
 
 
 def test_07_Validate_that_SNMP_settings_are_preserved():
-    results = GET('/snmp')
+    results = GET('/snmp/')
     assert results.status_code == 200, results.text
     data = results.json()
     assert data['community'] == COMMUNITY

@@ -15,12 +15,12 @@ DATASET_NAME = 'tank%2Fdataset1'
 
 
 def test_01_check_dataset_endpoint():
-    assert isinstance(GET('/pool/dataset').json(), list)
+    assert isinstance(GET('/pool/dataset/').json(), list)
 
 
 def test_02_create_dataset():
     result = POST(
-        '/pool/dataset', {
+        '/pool/dataset/', {
             'name': DATASET_NAME.replace('%2F', '/')
         }
     )
@@ -57,7 +57,8 @@ def test_05_set_permissions_for_dataset():
 
 
 def test_06_promoting_dataset():
-    # TODO: ONCE WE HAVE MANUAL SNAPSHOT FUNCTIONAITY IN MIDDLEWARED, THIS TEST CAN BE COMPLETED THEN
+    # TODO: ONCE WE HAVE MANUAL SNAPSHOT FUNCTIONAITY IN MIDDLEWARED,
+    # THIS TEST CAN BE COMPLETED THEN
     pass
 
 

@@ -15,7 +15,7 @@ GroupIdFile = "/tmp/.ixbuild_test_groupid"
 
 
 def test_01_get_next_gid():
-    results = GET('/group/get_next_gid')
+    results = GET('/group/get_next_gid/')
     assert results.status_code == 200, results.text
     global next_gid
     next_gid = results.json()
@@ -24,7 +24,7 @@ def test_01_get_next_gid():
 # Create tests
 def test_02_greating_group_testgroup():
     payload = {"gid": next_gid, "name": "testgroup"}
-    results = POST("/group", payload)
+    results = POST("/group/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -46,7 +46,7 @@ def test_06_look_group_full_name():
 
 
 def test_07_get_new_next_gid():
-    results = GET('/group/get_next_gid')
+    results = GET('/group/get_next_gid/')
     assert results.status_code == 200, results.text
     global new_next_gid
     new_next_gid = results.json()
@@ -81,7 +81,7 @@ def test_12_look_user_new_uid():
 # Delete the group
 def test_13_delete_group_testgroup_newgroup():
     groupid = GET('/group?group=newgroup').json()[0]['id']
-    results = DELETE("/group/id/%s" % groupid, {"delete_users": True})
+    results = DELETE("/group/id/%s/" % groupid, {"delete_users": True})
     assert results.status_code == 200, results.text
 
 
