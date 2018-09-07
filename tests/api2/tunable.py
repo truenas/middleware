@@ -37,7 +37,7 @@ def test_03_retrieve_tunable_with_variable_name():
 
 
 def test_04_disable_tuneable():
-    results = PUT(f'/tunable/id/{TUNABLE_ID}i/', {'enabled': False})
+    results = PUT(f'/tunable/id/{TUNABLE_ID}/', {'enabled': False})
     assert results.json()['enabled'] is False, results.text
 
 

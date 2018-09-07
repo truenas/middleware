@@ -5,6 +5,7 @@
 
 import sys
 import os
+from time import sleep
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -15,6 +16,7 @@ def test_01_creating_a_new_boot_environment():
     payload = {"name": "bootenv01", "source": "default"}
     results = POST("/bootenv/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_02_look_new_bootenv_is_created():
@@ -32,6 +34,7 @@ def test_04_cloning_a_new_boot_environment():
     payload = {"name": "bootenv02", "source": "bootenv01"}
     results = POST("/bootenv/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_05_activate_bootenv02():
@@ -76,6 +79,6 @@ def test_11_activate_default():
     assert results.status_code == 200, results.text
 
 
-def test_12_removing_a_boot_environment_01():
+def test_12_removing_a_boot_environment_03():
     results = DELETE("/bootenv/id/bootenv03/")
     assert results.status_code == 200, results.text
