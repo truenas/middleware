@@ -434,7 +434,7 @@ class UserService(CRUDService):
     @accepts(Str('password'))
     @pass_app
     async def set_root_password(self, app, password):
-        if not app.authenticated and await self.middleware.call('account.has_root_password'):
+        if not app.authenticated and await self.middleware.call('user.has_root_password'):
             raise CallError('You can\'t call this method anonymously if root already has a password', errno.EACCES)
 
         root = await self.middleware.call('user.query', [('username', '=', 'root')], {'get': True})
