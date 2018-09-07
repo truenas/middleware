@@ -524,6 +524,8 @@ class JailService(CRUDService):
                         'options.destination',
                         'Destination directory should be empty'
                     )
+            else:
+                os.makedirs(destination)
 
             # fstab hates spaces ;)
             destination = destination.replace(' ', r'\040')
