@@ -871,7 +871,7 @@ class StaticRouteService(CRUDService):
     @accepts(Dict(
         'staticroute_create',
         IPAddr('destination', cidr=True),
-        IPAddr('gateway'),
+        IPAddr('gateway', allow_zone_index=True),
         Str('description'),
         register=True
     ))
