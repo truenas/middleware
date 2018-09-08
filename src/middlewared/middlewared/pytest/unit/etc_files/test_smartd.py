@@ -6,7 +6,7 @@ from mock import call, Mock, patch
 import pytest
 
 from middlewared.etc_files.smartd import (
-    ensure_smart_enabled, annotate_disk_for_smart, get_smartd_schedule_piece, get_smartd_config
+    ensure_smart_enabled, annotate_disk_for_smart, get_smartd_schedule, get_smartd_schedule_piece, get_smartd_config
 )
 
 
@@ -112,6 +112,15 @@ async def test__annotate_disk_for_smart():
             }
 
 
+def test__get_smartd_schedule__need_mapping():
+    assert get_smartd_schedule({
+        "smarttest_month": "jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec",
+        "smarttest_daymonth": "1,hedgehog day,3",
+        "smarttest_dayweek": "tue,SUN",
+        "smarttest_hour": "*/1",
+    }) == "../(01|03)/(2|7)/.."
+
+
 def test__get_smartd_schedule_piece__every_day_of_week():
     assert get_smartd_schedule_piece("1,2,3,4,5,6,7", 1, 7) == "."
 
@@ -120,15 +129,19 @@ def test__get_smartd_schedule_piece__every_day_of_week_wildcard():
     assert get_smartd_schedule_piece("*", 1, 7) == "."
 
 
+def test__get_smartd_schedule_piece__specific_day_of_week():
+    assert get_smartd_schedule_piece("1,2,3", 1, 7) == "(1|2|3)"
+
+
 def test__get_smartd_schedule_piece__every_month():
     assert get_smartd_schedule_piece("1,2,3,4,5,6,7,8,9,10,11,12", 1, 12) == ".."
 
 
-def test__get_smartd_schedule_piece__every_each_month_wildcard():
+def test__get_smartd_schedule_piece__each_month_wildcard():
     assert get_smartd_schedule_piece("*", 1, 12) == ".."
 
 
-def test__get_smartd_schedule_piece__every_each_month():
+def test__get_smartd_schedule_piece__each_month():
     assert get_smartd_schedule_piece("*/1", 1, 12) == ".."
 
 
