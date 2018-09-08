@@ -876,6 +876,8 @@ class StaticRouteService(CRUDService):
         register=True
     ))
     async def do_create(self, data):
+        self._validate('staticroute_create', data)
+
         await self.lower(data)
 
         id = await self.middleware.call(
@@ -898,6 +900,8 @@ class StaticRouteService(CRUDService):
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
+
+        self._validate('staticroute_update', data)
 
         await self.lower(data)
         await self.middleware.call(
@@ -922,6 +926,15 @@ class StaticRouteService(CRUDService):
     async def upper(self, data):
         data['description'] = data['description'].upper()
         return data
+
+    def _validate(self, schema_name, data):
+        verrors = ValidationErrors()
+
+        if (':' in data['destination']) != (':' in data['gateway']):
+            verrors.add(f'{schema_name}.destination', 'Destination and gateway address families must match')
+
+        if verrors:
+            raise verrors
 
 
 class DNSService(Service):
