@@ -1090,10 +1090,6 @@ class InterfacesService(CRUDService):
 
             members_database = set()
             members_configured = set(p[0] for p in iface.ports)
-            members_changes = []
-            # In case there are MTU changes we need to use the lowest MTU between
-            # all members and use that.
-            lower_mtu = None
             for member in (await self.middleware.call('datastore.query', 'network.lagginterfacemembers', [('lagg_interfacegroup_id', '=', lagg['id'])])):
                 # For Link Aggregation MTU is configured in parent, not ports
                 sync_interface_opts[member['lagg_physnic']]['skip_mtu'] = True
@@ -1104,39 +1100,13 @@ class InterfacesService(CRUDService):
                     self.logger.warn('Could not find {} from {}'.format(member['lagg_physnic'], name))
                     continue
 
-                # In case there is no MTU in interface options and it is currently
-                # different than the default of 1500, revert it.
-                # If there is MTU and its different set it (using member options).
-                lagg_mtu = lagg['lagg_interface']['int_mtu']
-                if not lagg_mtu:
-                    reg_mtu = RE_MTU.search(member['lagg_deviceoptions'])
-                    if reg_mtu:
-                        lagg_mtu = int(reg_mtu.group(1))
-                if (
-                    lagg_mtu and (
-                        lagg_mtu != member_iface.mtu or lagg_mtu != iface.mtu
-                    )
-                ) or (not lagg_mtu and (member_iface.mtu != 1500 or iface.mtu != 1500)):
-                    if not lagg_mtu:
-                        if not lower_mtu or lower_mtu > 1500:
-                            lower_mtu = 1500
-                    else:
-                        if not lower_mtu or lower_mtu > lagg_mtu:
-                            lower_mtu = lagg_mtu
-
-                members_changes.append((member_iface, member['lagg_physnic'], member['lagg_deviceoptions']))
-
-            for member_iface, member_name, member_options in members_changes:
-                # We need to remove interface from LAGG before changing MTU
-                if lower_mtu and member_iface.mtu != lower_mtu and member_name in members_configured:
-                    iface.delete_port(member_name)
-                    members_configured.remove(member_name)
-                proc = await Popen(['/sbin/ifconfig', member_name] + shlex.split(member_options), stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-                err = (await proc.communicate())[1].decode()
-                if err:
-                    self.logger.info(f'{member_name}: error applying: {err}')
-                if lower_mtu and member_iface.mtu != lower_mtu:
-                    member_iface.mtu = lower_mtu
+                lagg_mtu = lagg['lagg_interface']['int_mtu'] or 1500
+                if member_iface.mtu != lagg_mtu:
+                    member_name = member['lagg_physnic']
+                    if member_name in members_configured:
+                        iface.delete_port(member_name)
+                        members_configured.remove(member_name)
+                    member_iface.mtu = lagg_mtu
 
             # Remove member configured but not in database
             for member in (members_configured - members_database):
