@@ -26,12 +26,13 @@
 import concurrent.futures
 import re
 import subprocess
+import sys
 import sysctl
 import traceback
 
 # One cannot simply import collectd in a python interpreter (for various reasons)
-# thus adding this workaround for standalone testing
-if __name__ == '__main__':
+# thus adding this workaround for standalone testing and doctest
+if __name__ == '__main__' or hasattr(sys.modules['__main__'], '_SpoofOut'):
     class CollectdDummy:
         def register_config(self, a):
             # do something
@@ -78,6 +79,49 @@ READ_INTERVAL = 300.0
 collectd.info('Loading "disktemp" python plugin')
 
 
+def get_temperature(stdout):
+    """
+    >>> get_temperature("190 Airflow_Temperature_Cel 0x0022   073   037   045    Old_age   Always   In_the_past 27 (3 44 30 26 0)")
+    27
+    >>> get_temperature("194 Temperature_Celsius     0x0022   049   067   ---    Old_age   Always       -       51 (Min/Max 24/67)")
+    51
+
+    >>> get_temperature("Temperature:                        40 Celsius")
+    40
+    >>> get_temperature("Temperature Sensor 1:               30 Celsius")
+    30
+
+    >>> get_temperature("Current Drive Temperature:     31 C")
+    31
+    """
+
+    # ataprint.cpp
+
+    reg = re.search(r'190\s+Airflow_Temperature_Cel[^\n]*', stdout, re.M)
+    if reg:
+        return int(reg.group(0).split()[9])
+
+    reg = re.search(r'194\s+Temperature_Celsius[^\n]*', stdout, re.M)
+    if reg:
+        return int(reg.group(0).split()[9])
+
+    # nvmeprint.cpp
+
+    reg = re.search(r'Temperature:\s+([0-9]+) Celsius', stdout, re.M)
+    if reg:
+        return int(reg.group(1))
+
+    reg = re.search(r'Temperature Sensor [0-9]+:\s+([0-9]+) Celsius', stdout, re.M)
+    if reg:
+        return int(reg.group(1))
+
+    # scsiprint.cpp
+
+    reg = re.search(r'Current Drive Temperature:\s+([0-9]+) C', stdout, re.M)
+    if reg:
+        return int(reg.group(1))
+
+
 class DiskTemp(object):
 
     def init(self):
@@ -119,15 +163,10 @@ class DiskTemp(object):
         if cp.returncode != 0:
             collectd.info(f'Failed to run smartctl for {disk}: {cp.stdout.decode("utf8", "ignore")}')
             return None
-        stdout = cp.stdout.decode('utf8', 'ignore')
-        reg = re.search(r'190\s+Airflow_Temperature_Cel[^\n]*', stdout, re.M)
-        if reg:
-            return int(reg.group(0).split()[9])
 
-        reg = re.search(r'194\s+Temperature_Celsius[^\n]*', stdout, re.M)
-        if reg:
-            return int(reg.group(0).split()[9])
-        return None
+        stdout = cp.stdout.decode('utf8', 'ignore')
+
+        return get_temperature(stdout)
 
 
 disktemp = DiskTemp()
