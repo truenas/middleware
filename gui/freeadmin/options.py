@@ -65,6 +65,9 @@ class FreeBaseInlineFormSet(BaseInlineFormSet):
         kwargs['parent'] = self._fparent
         return super(FreeBaseInlineFormSet, self)._construct_form(i, **kwargs)
 
+    def show_condition(self):
+        return True
+
 
 class BaseFreeAdmin(object):
 
@@ -340,6 +343,8 @@ class BaseFreeAdmin(object):
                             prefix=prefix,
                             parent=mf,
                             instance=instance)
+                        if not fset.show_condition():
+                            continue
                         formsets[fsname] = {
                             'instance': fset,
                             'position': inlineopts.get('position', 'bottom')
@@ -438,6 +443,8 @@ class BaseFreeAdmin(object):
                     fset = fset_fac(
                         prefix=prefix, instance=instance, parent=mf
                     )
+                    if not fset.show_condition():
+                        continue
                     fset.verbose_name = (
                         inline._meta.model._meta.verbose_name
                     )
@@ -548,6 +555,8 @@ class BaseFreeAdmin(object):
                             prefix=prefix,
                             parent=mf,
                             instance=instance)
+                        if not fset.show_condition():
+                            continue
                         formsets[fsname] = {
                             'instance': fset,
                             'position': inlineopts.get('position', 'bottom'),
@@ -675,6 +684,8 @@ class BaseFreeAdmin(object):
                     fset = fset_fac(
                         prefix=prefix, instance=instance, parent=mf,
                     )
+                    if not fset.show_condition():
+                        continue
                     fset.verbose_name = (
                         inline._meta.model._meta.verbose_name
                     )

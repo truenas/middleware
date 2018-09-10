@@ -63,6 +63,7 @@ class InterfacesFAdmin(NetworkInterruptMixin, BaseFreeAdmin):
     inlines = [
         {
             'form': 'AliasForm',
+            'formset': 'AliasInlineFormSet',
             'prefix': 'alias_set'
         },
     ]

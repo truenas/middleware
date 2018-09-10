@@ -574,11 +574,6 @@ class LAGGInterfaceMembers(Model):
         unique=True,
         verbose_name=_("Physical NIC")
     )
-    lagg_deviceoptions = models.CharField(
-        max_length=120,
-        verbose_name=_("Options"),
-        default='up',
-    )
 
     def __str__(self):
         return self.lagg_physnic
