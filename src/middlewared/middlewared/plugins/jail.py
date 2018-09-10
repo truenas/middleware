@@ -117,21 +117,24 @@ class JailService(CRUDService):
         return await self.middleware.call('jail.create_job', options)
 
     @private
-    @job()
+    @job(lock=lambda args: f'jail_create:{args[-1]["uuid"]}')
     def create_job(self, job, options):
         verrors = ValidationErrors()
+        uuid = options["uuid"]
+
+        job.set_progress(0, f'Creating: {uuid}')
 
         try:
-            self.check_jail_existence(options['uuid'], skip=False)
+            self.check_jail_existence(uuid, skip=False)
 
             verrors.add(
                 'uuid',
-                f'A jail with uuid {options["uuid"]} already exists'
+                f'A jail with name {uuid} already exists'
             )
             raise verrors
         except CallError:
-            # A jail does not exist with the provided uuid, we can create one now
-
+            # A jail does not exist with the provided name, we can create one
+            # now
             self.validate_ips(verrors, options)
             job.set_progress(20, 'Initial validation complete')
 
@@ -140,7 +143,6 @@ class JailService(CRUDService):
         release = options["release"]
         template = options.get("template", False)
         pkglist = options.get("pkglist", None)
-        uuid = options["uuid"]
         basejail = options["basejail"]
         empty = options["empty"]
         short = options["short"]
@@ -156,6 +158,7 @@ class JailService(CRUDService):
                 not template and
                 not empty
         ):
+            job.set_progress(50, f'{release} missing, calling fetch')
             self.middleware.call_sync(
                 'jail.fetch', {"release": release}, job=True
             )
@@ -174,6 +177,8 @@ class JailService(CRUDService):
 
         if err:
             raise CallError(msg)
+
+        job.set_progress(100, f'Created: {uuid}')
 
         return True
 
@@ -292,6 +297,7 @@ class JailService(CRUDService):
     def fetch(self, job, options):
         """Fetches a release or plugin."""
         fetch_output = {'error': False, 'install_notes': []}
+        release = options.get('release', None)
 
         verrors = ValidationErrors()
 
@@ -300,8 +306,9 @@ class JailService(CRUDService):
         def progress_callback(content):
             level = content['level']
             msg = content['message'].strip('\n')
+            rel_up = f'* Updating {release} to the latest patch level... '
 
-            if job.progress['percent'] == 90:
+            if job.progress['percent'] == 90 and options['name'] is not None:
                 for split_msg in msg.split('\n'):
                     fetch_output['install_notes'].append(split_msg)
 
@@ -311,21 +318,33 @@ class JailService(CRUDService):
 
             job.set_progress(None, msg)
 
-            if '  These pkgs will be installed:' in msg:
-                job.set_progress(50, msg)
-            elif 'Installing plugin packages:' in msg:
-                job.set_progress(75, msg)
-            elif 'Command output:' in msg:
-                job.set_progress(90, msg)
+            if options['name'] is None:
+                if 'Extracting: base.txz' in msg:
+                    job.set_progress(25, msg)
+                elif 'Extracting: lib32.txz' in msg:
+                    job.set_progress(50, msg)
+                elif 'Extracting: doc.txz' in msg:
+                    job.set_progress(75, msg)
+                elif 'Extracting: src.txz' in msg:
+                    job.set_progress(90, msg)
+                elif rel_up in msg:
+                    job.set_progress(95, msg)
+            else:
+                if '  These pkgs will be installed:' in msg:
+                    job.set_progress(50, msg)
+                elif 'Installing plugin packages:' in msg:
+                    job.set_progress(75, msg)
+                elif 'Command output:' in msg:
+                    job.set_progress(90, msg)
 
         self.check_dataset_existence()  # Make sure our datasets exist.
-        start_msg = None
-        finaL_msg = None
+        start_msg = f'{release} being fetched'
+        final_msg = f'{release} fetched'
 
         if options["name"] is not None:
             options["plugin_file"] = True
             start_msg = 'Starting plugin install'
-            finaL_msg = f"Plugin: {options['name']} installed"
+            final_msg = f"Plugin: {options['name']} installed"
 
         options["accept"] = True
 
@@ -339,7 +358,7 @@ class JailService(CRUDService):
             fetch_output['install_notes'] += job.progress['description'].split(
                 '\n')
 
-        job.set_progress(100, finaL_msg)
+        job.set_progress(100, final_msg)
 
         return fetch_output
 
