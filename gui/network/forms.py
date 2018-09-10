@@ -38,6 +38,7 @@ from freenasUI import choices
 from freenasUI.common.forms import Form, ModelForm
 from freenasUI.common.system import get_sw_name
 from freenasUI.contrib.IPAddressField import IP4AddressFormField
+from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.freeadmin.sqlite3_ha.base import DBSync
 from freenasUI.middleware.client import client
 from freenasUI.middleware.form import MiddlewareModelForm
@@ -83,6 +84,14 @@ class InterfacesForm(ModelForm):
             del self.fields['int_critical']
             del self.fields['int_group']
             del self.fields['int_ipv4address_b']
+
+        if self.instance.id and models.LAGGInterfaceMembers.objects.filter(
+            lagg_physnic=self.instance.int_interface
+        ).exists():
+            for f in list(self.fields.keys()):
+                if f != 'int_options':
+                    self.fields.pop(f)
+            return
 
         self.fields['int_interface'].choices = choices.NICChoices()
         self.fields['int_dhcp'].widget.attrs['onChange'] = (
@@ -424,6 +433,18 @@ class InterfacesDeleteForm(forms.Form):
                     _("You are not allowed to delete interfaces while failover is enabled.")
                 ])
         return self.cleaned_data
+
+
+class AliasInlineFormSet(FreeBaseInlineFormSet):
+
+    def show_condition(self):
+        if not self.instance.id:
+            return True
+        if models.LAGGInterfaceMembers.objects.filter(
+            lagg_physnic=self.instance.int_interface
+        ).exists():
+            return False
+        return True
 
 
 class IPMIForm(Form):
@@ -815,8 +836,11 @@ class LAGGInterfaceForm(ModelForm):
                         lagg_interfacegroup=lagg_interfacegroup,
                         lagg_ordernum=order,
                         lagg_physnic=interface,
-                        lagg_deviceoptions='up'
                     )
+                    model_objs.append(models.Interfaces.objects.create(
+                        int_interface=interface,
+                        int_name=f'member of {lagg_name}',
+                    ))
                     lagg_member_entry.save()
                     model_objs.append(lagg_member_entry)
                     order = order + 1
