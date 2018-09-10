@@ -369,13 +369,22 @@ _staticroute_config()
 	local IFS=\|
 	local id destination gateway interface static_routes
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, sr_destination, sr_gateway FROM network_staticroute;" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, sr_destination, sr_gateway FROM network_staticroute WHERE sr_destination NOT LIKE '%:%';" | \
 	while read -r id destination gateway; do
 		echo route_freenas${id}=\"-net ${destination} ${gateway}\"
 	done
-	static_routes=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM network_staticroute" | sed -e s/^/freenas/g | xargs echo)
+	static_routes=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM network_staticroute WHERE sr_destination NOT LIKE '%:%'" | sed -e s/^/freenas/g | xargs echo)
 	if [ -n "${static_routes:-}" ]; then
 		echo static_routes=\"$static_routes\"
+	fi
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, sr_destination, sr_gateway FROM network_staticroute WHERE sr_destination LIKE '%:%';" | \
+	while read -r id destination gateway; do
+		echo ipv6_route_freenas${id}=\"-net ${destination} ${gateway}\"
+	done
+	ipv6_static_routes=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM network_staticroute WHERE sr_destination LIKE '%:%'" | sed -e s/^/freenas/g | xargs echo)
+	if [ -n "${ipv6_static_routes:-}" ]; then
+		echo ipv6_static_routes=\"$ipv6_static_routes\"
 	fi
 }
 
