@@ -102,7 +102,6 @@ ifstat_to_json(){
     echo "${_tmp}"
   done #read loop
   )
-  echo ${_out}
   _tmp="[${_out}]"
 }
 
