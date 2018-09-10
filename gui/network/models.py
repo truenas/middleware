@@ -305,7 +305,8 @@ class Interfaces(Model):
         self._original_int_options = self.int_options
 
     def delete(self):
-        LAGGInterface.objects.filter(lagg_interface__id=self.id).delete()
+        for lagg in LAGGInterface.objects.filter(lagg_interface__id=self.id):
+            lagg.delete()
         # Delete VLAN entries for this interface
         VLAN.objects.filter(vlan_vint=self.int_interface).delete()
         if self.id:
@@ -553,6 +554,8 @@ class LAGGInterface(Model):
             interfaces)
 
     def delete(self):
+        for member in self.lagginterfacemembers_set.all():
+            Interfaces.objects.filter(int_interface=member.lagg_physnic).delete()
         super(LAGGInterface, self).delete()
         VLAN.objects.filter(
             vlan_pint=self.lagg_interface.int_interface
