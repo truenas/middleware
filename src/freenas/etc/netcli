@@ -688,11 +688,12 @@ def create_lagg_interface():
 
     order = 0
     for nic in lagg_nics:
-        lagg_iface_member = LAGGInterfaceMembers(lagg_interfacegroup =
-                                                 lagg_iface,
-                                                 lagg_ordernum = order,
-                                                 lagg_physnic = nic,
-                                                 lagg_deviceoptions = 'up')
+        lagg_iface_member = LAGGInterfaceMembers(
+            lagg_interfacegroup=lagg_iface, lagg_ordernum=order, lagg_physnic=nic,
+        )
+        interface = Interfaces.objects.filter(int_interface=nic)
+        if not interface.exists():
+            Interfaces.objects.create(int_interface=nic, int_name=f'member of {lagg_name}')
 
         print(_("Saving Link Aggregation member configuration:"), end=' ')
         try:

@@ -79,7 +79,7 @@ _interface_config()
 	local saved_ifs="${IFS}"
 	local IFS=\|
 	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options
-	local lagg_id laggproto lagg_physnic lagg_deviceoptions
+	local lagg_id laggproto lagg_physnic
 	local vlan_vint vlan_pint vlan_tag vlan_pcp
 
 	if [ `${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(id) FROM network_interfaces"` = 0 ]; then
@@ -256,10 +256,10 @@ _interface_config()
 
 
 	#
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_physnic, lagg_deviceoptions, lagg_interfacegroup_id FROM network_lagginterfacemembers ORDER BY lagg_ordernum" | \
-	while read lagg_physnic lagg_deviceoptions lagg_gid; do
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_physnic, lagg_interfacegroup_id FROM network_lagginterfacemembers ORDER BY lagg_ordernum" | \
+	while read lagg_physnic lagg_gid; do
 		lagg_intoptions=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_options FROM network_interfaces INNER JOIN network_lagginterface ON network_interfaces.id=network_lagginterface.lagg_interface_id WHERE network_lagginterface.id=${lagg_gid}")
-		echo "ifconfig_${lagg_physnic}=\"${lagg_intoptions} ${lagg_deviceoptions}\""
+		echo "ifconfig_${lagg_physnic}=\"\${ifconfig_${lagg_physnic}} ${lagg_intoptions}\""
 	done
 
 	# Hook to support vlan interfaces
