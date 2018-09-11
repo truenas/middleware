@@ -19,7 +19,6 @@ from iocage_lib.ioc_json import IOCJson
 from iocage_lib.ioc_list import IOCList
 from iocage_lib.ioc_upgrade import IOCUpgrade
 
-from middlewared.client import ClientException
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError, ValidationErrors
@@ -377,13 +376,8 @@ class JailService(CRUDService):
                         'cache.get', 'iocage_remote_plugins')
 
                     return resource_list
-                except ClientException as e:
-                    # The jail plugin runs in another process, it's seen as
-                    # a client
-                    if e.trace and e.trace['class'] == 'KeyError':
-                        pass  # It's either new or past cache date
-                    else:
-                        raise
+                except KeyError:
+                    pass
 
                 resource_list = iocage.fetch(list=True, plugins=True,
                                              header=False)
@@ -431,13 +425,8 @@ class JailService(CRUDService):
                         'cache.get', 'iocage_remote_releases')
 
                     return resource_list
-            except ClientException as e:
-                # The jail plugin runs in another process, it's seen as
-                # a client
-                if e.trace and e.trace['class'] == 'KeyError':
-                    pass  # It's either new or past cache date
-                else:
-                    raise
+            except KeyError:
+                pass
 
             resource_list = iocage.fetch(list=True, remote=remote, http=True)
 
@@ -736,38 +725,34 @@ class JailService(CRUDService):
             pkg_dict = self.middleware.call_sync('cache.get', 'iocage_rpkgdict')
             r_plugins = self.middleware.call_sync('cache.get',
                                                   'iocage_rplugins')
-        except ClientException as e:
-            # The jail plugin runs in another process, it's seen as a client
-            if e.trace and e.trace['class'] == 'KeyError':
-                r_pkgs = requests.get('http://pkg.cdn.trueos.org/iocage/All')
-                r_pkgs.raise_for_status()
-                pkg_dict = {}
-                for i in r_pkgs.iter_lines():
-                    i = i.decode().split('"')
+        except KeyError:
+            r_pkgs = requests.get('http://pkg.cdn.trueos.org/iocage/All')
+            r_pkgs.raise_for_status()
+            pkg_dict = {}
+            for i in r_pkgs.iter_lines():
+                i = i.decode().split('"')
 
-                    try:
-                        pkg, version = i[1].rsplit('-', 1)
-                        pkg_dict[pkg] = version
-                    except (ValueError, IndexError):
-                        continue  # It's not a pkg
-                self.middleware.call_sync(
-                    'cache.put', 'iocage_rpkgdict', pkg_dict,
-                    86400
-                )
+                try:
+                    pkg, version = i[1].rsplit('-', 1)
+                    pkg_dict[pkg] = version
+                except (ValueError, IndexError):
+                    continue  # It's not a pkg
+            self.middleware.call_sync(
+                'cache.put', 'iocage_rpkgdict', pkg_dict,
+                86400
+            )
 
-                r_plugins = requests.get(
-                    'https://raw.githubusercontent.com/freenas/'
-                    'iocage-ix-plugins/master/INDEX'
-                )
-                r_plugins.raise_for_status()
+            r_plugins = requests.get(
+                'https://raw.githubusercontent.com/freenas/'
+                'iocage-ix-plugins/master/INDEX'
+            )
+            r_plugins.raise_for_status()
 
-                r_plugins = r_plugins.json()
-                self.middleware.call_sync(
-                    'cache.put', 'iocage_rplugins', r_plugins,
-                    86400
-                )
-            else:
-                raise
+            r_plugins = r_plugins.json()
+            self.middleware.call_sync(
+                'cache.put', 'iocage_rplugins', r_plugins,
+                86400
+            )
 
         if pkg == 'bru-server':
             return ['N/A', '1']
