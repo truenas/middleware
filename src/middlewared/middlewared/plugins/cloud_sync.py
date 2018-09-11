@@ -171,7 +171,7 @@ class CredentialsService(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
-        self._validate("cloud_sync_credentials", data)
+        await self._validate("cloud_sync_credentials", data)
 
         data["id"] = await self.middleware.call(
             "datastore.insert",
@@ -182,7 +182,7 @@ class CredentialsService(CRUDService):
 
     @accepts(Int("id"), Ref("cloud_sync_credentials"))
     async def do_update(self, id, data):
-        self._validate("cloud_sync_credentials", data)
+        await self._validate("cloud_sync_credentials", data, id)
 
         await self.middleware.call(
             "datastore.update",
@@ -203,8 +203,10 @@ class CredentialsService(CRUDService):
             id,
         )
 
-    def _validate(self, schema_name, data):
+    async def _validate(self, schema_name, data, id=None):
         verrors = ValidationErrors()
+
+        await self._ensure_unique(verrors, schema_name, "name", data["name"], id)
 
         if data["provider"] not in REMOTES:
             verrors.add(f"{schema_name}.provider", "Invalid provider")
