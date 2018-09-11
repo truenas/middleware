@@ -151,7 +151,10 @@ class AlertService(Service):
     @accepts(Str("id"))
     def restore(self, id):
         node, source, key = id.split(";", 2)
-        alert = self.alerts[node][source][key]
+        try:
+            alert = self.alerts[node][source][key]
+        except KeyError:
+            return
         alert.dismissed = False
 
     @periodic(60)
