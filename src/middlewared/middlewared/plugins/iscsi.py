@@ -582,8 +582,9 @@ class iSCSITargetExtentService(CRUDService):
                 verrors.add(f'{schema_name}.path',
                             'You need to specify a filepath not a directory')
 
-            await check_path_resides_within_volume(verrors, self.middleware,
-                                                   schema_name, path)
+            await check_path_resides_within_volume(
+                verrors, self.middleware, f'{schema_name}.path', path
+            )
 
         return data
 
