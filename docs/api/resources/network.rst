@@ -600,7 +600,6 @@ List resource
       [
         {
           "id": 2,
-          "lagg_deviceoptions": "up",
           "lagg_interfacegroup": 1,
           "lagg_ordernum": 0,
           "lagg_physnic": "em1"
@@ -644,7 +643,6 @@ Create resource
 
         {
              "id": 3,
-             "lagg_deviceoptions": "up",
              "lagg_interfacegroup": 1,
              "lagg_ordernum": 1,
              "lagg_physnic": "em2"
@@ -652,7 +650,6 @@ Create resource
 
    :json int lagg_interfacegroup: id of the lagg interface object
    :json int lagg_ordernum: LAGG priority number
-   :json string lagg_deviceoptions: intercace device options
    :json string lagg_physnic: physical interface name
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
@@ -687,7 +684,6 @@ Update resource
 
         {
              "id": 3,
-             "lagg_deviceoptions": "up",
              "lagg_interfacegroup": 1,
              "lagg_ordernum": 0,
              "lagg_physnic": "em2"
@@ -695,7 +691,6 @@ Update resource
 
    :json int lagg_interfacegroup: id of the lagg interface object
    :json int lagg_ordernum: LAGG priority number
-   :json string lagg_deviceoptions: intercace device options
    :json string lagg_physnic: physical interface name
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
