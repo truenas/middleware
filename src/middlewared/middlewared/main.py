@@ -301,7 +301,7 @@ class Application(object):
                     'version': '1',
                 })
             else:
-                features = message.get('features')
+                features = message.get('features') or []
                 if 'PY_EXCEPTIONS' in features:
                     self._py_exceptions = True
                 # aiohttp can cancel tasks if a request take too long to finish
