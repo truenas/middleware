@@ -1208,7 +1208,10 @@ class Middleware(object):
             # We're using this instead of having no-op `terminate`
             # in base class to reduce number of awaits
             if hasattr(service, "terminate"):
-                await service.terminate()
+                try:
+                    await service.terminate()
+                except Exception as e:
+                    self.logger.error('Failed to terminate %s', service_name, exc_info=True)
 
         for task in asyncio.Task.all_tasks():
             task.cancel()
