@@ -178,7 +178,7 @@ class Logger(object):
     """Pseudo-Class for Logger - Wrapper for logging module"""
     DEFAULT_LOGGING = {
         'version': 1,
-        'disable_existing_loggers': True,
+        'disable_existing_loggers': False,
         'root': {
             'level': 'NOTSET',
             'handlers': ['file'],
