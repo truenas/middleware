@@ -793,7 +793,7 @@ class JailService(CRUDService):
                 if primary_pkg == row[1] or primary_pkg == row[2]:
                     version = [row[3], '1']
                     break
-        except KeyError:
+        except (KeyError, sqlite3.OperationalError):
             version = ['N/A', 'N/A']
 
         return version
