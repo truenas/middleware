@@ -275,7 +275,11 @@ class DiskService(CRUDService):
         partitions = []
         name = await self.middleware.call("disk.get_name", disk)
         for path in glob.glob(f"/dev/%s[a-fps]*" % name) or [f"/dev/{name}"]:
-            info = (await run("/usr/sbin/diskinfo", path)).stdout.decode("utf-8").split("\t")
+            cp = await run("/usr/sbin/diskinfo", path, check=False)
+            if cp.returncode:
+                self.logger.debug('Failed to get diskinfo for %s: %s', name, cp.stderr.decode())
+                continue
+            info = cp.stdout.decode("utf-8").split("\t")
             if len(info) > 3:
                 partitions.append({
                     "path": path,
