@@ -419,7 +419,7 @@ class ServiceService(CRUDService):
                 os.kill(int(pid), signal.SIGTERM)
                 time.sleep(0.2)
                 os.kill(int(pid), signal.SIGKILL)
-        except:
+        except Exception:
             pass
         await self._system("ulimit -n 1024 && /usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 

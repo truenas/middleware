@@ -5,18 +5,17 @@ import re
 import shutil
 import subprocess
 
-from psycopg2.extras import DictCursor
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 from middlewared.service import Service
 from middlewared.utils import Popen
+
 
 class AsigraService(Service):
 
     class Config:
         service = "asigra"
         datastore_prefix = "asigra_"
-
 
     def __init__(self, middleware):
         super(AsigraService, self).__init__(middleware)
@@ -67,23 +66,22 @@ class AsigraService(Service):
 
             self.logger.debug(output)
 
-            await (await Popen(
-                ['/usr/sbin/chown', '-R', '{}:{}'.format(
-                    self.pg_user, self.pg_group), asigra_postgresql_path],
+            await await Popen(
+                ['/usr/sbin/chown', '-R', '{}:{}'.format(self.pg_user, self.pg_group), asigra_postgresql_path],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 close_fds=True
-            )).wait()
+            ).wait()
 
             if not os.path.exists(asigra_postgresql_conf):
                 self.logger.error("{} doesn't exist!".format(asigra_postgresql_conf))
-                return 
+                return
 
             # listen_address = '*'
             pg_conf_regex = re.compile('.*(#)\s{0,}?listen_addresses\s{0,}=\s{0,}([^\s]+)', re.M | re.S)
             pg_conf_buf = []
             rewrite = False
-   
+
             with open(asigra_postgresql_conf, "r") as f:
                 for line in f:
                     if pg_conf_regex.search(line):
@@ -196,7 +194,7 @@ class AsigraService(Service):
 
             except Exception as e:
                 self.logger.error("Can't init dssystem database: {}".format(e))
-                return False 
+                return False
 
         cur.close()
         con.close()
@@ -251,7 +249,7 @@ class AsigraService(Service):
 
         max = 0
         for f in files:
-            m  = re.match('.*/dssp([0-9]+).sql', f)
+            m = re.match('.*/dssp([0-9]+).sql', f)
             if not m or len(m.groups()) != 1:
                 continue
             if int(m.group(1)) > max:
@@ -260,8 +258,8 @@ class AsigraService(Service):
         db_number = await self.get_db_number()
         if db_number < 0:
             db_number *= -1
-    
-        db_number += 1 
+
+        db_number += 1
         while max >= db_number:
             sql_patch = os.path.join(self.dssystem_db_path, "dssp{}.sql".format(db_number))
 
@@ -311,15 +309,15 @@ class AsigraService(Service):
                 self.logger.error('Failed to install dssystem package:\n{}'.format(output))
                 ret = False
 
-            if ret != False:
+            if not ret:
                 try:
                     os.chmod("/usr/local/etc/rc.d/dssystem", 0o555)
                     shutil.copyfile("/usr/local/etc/rc.d/dssystem", "/conf/base/etc/local/rc.d/dssystem")
                     os.chmod("/conf/base/etc/local/rc.d/dssystem", 0o555)
 
-                except Exception: 
+                except Exception:
                     self.logger.error("Failed to install dssystem rc.d script")
-                    ret = False 
+                    ret = False
 
         return ret
 
@@ -357,4 +355,4 @@ class AsigraService(Service):
             self.logger.debug("Updating database")
             await self.asigra_database_update()
 
-        return True 
+        return True
