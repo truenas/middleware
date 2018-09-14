@@ -74,7 +74,7 @@ def add(request):
                     elif job['state'] == 'SUCCESS':
                         return JsonResp(
                             request,
-                            message=_('VM has been successfully added.'),
+                            message=_('VM has been successfully created.'),
                         )
                 return HttpResponse(uuid, status=202)
         form = forms.VMForm(request.POST)
@@ -88,7 +88,7 @@ def add(request):
                     request.session['vm_add'] = request.POST.copy()
                     request.session['vm_add_job'] = obj
                     return HttpResponse(obj, status=202)
-                return JsonResp(request, message=_('VM has been successfully added.'))
+                return JsonResp(request, message=_('VM has been successfully created.'))
         return JsonResp(request, form=form)
     else:
         request.session['vm_add_job'] = None

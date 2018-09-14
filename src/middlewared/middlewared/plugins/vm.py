@@ -1141,7 +1141,7 @@ class VMService(CRUDService):
         Str('type', required=True),
         Str('name', required=True),
         Str('description'),
-        Int('vcpus', required=True),
+        Int('vcpus', default=1),
         Int('memory', required=True),
         Str('root_password', password=True, required=True),
         Bool('autostart', default=True),
@@ -1220,7 +1220,7 @@ class VMService(CRUDService):
             except Exception:
                 pass
         else:
-            raise CallError(f'Failed to download {container_image["URL"]} (retries=3)')
+            raise CallError(f'Failed to download {container_image["URL"]} (retries={retry + 1})')
 
         job.set_progress(60, 'Verifying integrity of the image')
 
@@ -1533,12 +1533,12 @@ class VMDeviceService(CRUDService):
                     'pool.dataset.query', [('id', '=', parentzvol)]
                 ):
                     verrors.add(
-                        f'attributes.zvol_name',
+                        'attributes.zvol_name',
                         f'Parent dataset {parentzvol} does not exist.',
                         errno.ENOENT
                     )
             elif not path:
-                verrors.add('attributes.path', f'Disk path is required.')
+                verrors.add('attributes.path', 'Disk path is required.')
             elif path and not os.path.exists(path):
                 verrors.add('attributes.path', f'Disk path {path} does not exist.', errno.ENOENT)
 
@@ -1546,12 +1546,12 @@ class VMDeviceService(CRUDService):
             path = device['attributes'].get('path')
             exists = device['attributes'].pop('exists', True)
             if not path:
-                verrors.add('attributes.path', f'Path is required.')
+                verrors.add('attributes.path', 'Path is required.')
             else:
                 if exists and not os.path.exists(path):
-                    verrors.add('attributes.path', f'Path must exist.')
+                    verrors.add('attributes.path', 'Path must exist.')
                 if not exists and os.path.exists(path):
-                    verrors.add('attributes.path', f'Path must not exist.')
+                    verrors.add('attributes.path', 'Path must not exist.')
                 await check_path_resides_within_volume(
                     verrors, self.middleware, 'attributes.path', path,
                 )
