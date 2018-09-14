@@ -2403,6 +2403,10 @@ class Asigra(Model):
         verbose_name=_('Path'),
         blank=True
     )
+    asigra_postgresql_path = PathField(
+        verbose_name=_('PG Path'),
+        blank=True
+    )
 
     class FreeAdmin:
         deletable = False

@@ -17,13 +17,11 @@ class AsigraService(Service):
         service = "asigra"
         datastore_prefix = "asigra_"
 
+
     def __init__(self, middleware):
         super(AsigraService, self).__init__(middleware)
 
         self.pg_home = "/usr/local/pgsql"
-        self.pg_data = os.path.join(self.pg_home, "data")
-        self.pg_conf = os.path.join(self.pg_data, "postgresql.conf")
-        self.pg_hba_conf = os.path.join(self.pg_data, "pg_hba.conf")
         self.pg_user = "pgsql"
         self.pg_group = "pgsql"
 
@@ -32,12 +30,29 @@ class AsigraService(Service):
 
     # Use etc plugin for this?
     async def setup_postgresql(self):
+        asigra_config = None
+        for row in await self.middleware.call('datastore.query', 'services.asigra'):
+            asigra_config = row
+        if not asigra_config:
+            return False
+
+        asigra_postgresql_path = asigra_config['asigra_postgresql_path']
+        if not asigra_postgresql_path:
+            return False
+
+        asigra_postgresql_conf = os.path.join(asigra_postgresql_path, "postgresql.conf")
+        asigra_pg_hba_conf = os.path.join(asigra_postgresql_path, "pg_hba.conf")
+
         # pgsql user home must exist before we can initialize postgresql data
         if not os.path.exists(self.pg_home):
             os.mkdir(self.pg_home, mode=0o750)
             shutil.chown(self.pg_home, user=self.pg_user, group=self.pg_group)
 
-        if not os.path.exists(self.pg_data):
+        if not os.path.exists(asigra_postgresql_path):
+            os.mkdir(asigra_postgresql_path, mode=0o750)
+            shutil.chown(asigra_postgresql_path, user=self.pg_user, group=self.pg_group)
+
+        if not os.path.exists(asigra_pg_hba_conf):
             proc = await Popen(
                 ['/usr/local/etc/rc.d/postgresql', 'oneinitdb'],
                 stdout=subprocess.PIPE,
@@ -48,20 +63,20 @@ class AsigraService(Service):
             if proc.returncode != 0:
                 self.logger.error(output)
                 self.logger.error('Failed to initialize postgresql:\n{}'.format(output))
-                return
+                return False
 
             self.logger.debug(output)
 
             await (await Popen(
                 ['/usr/sbin/chown', '-R', '{}:{}'.format(
-                    self.pg_user, self.pg_group), self.pg_home],
+                    self.pg_user, self.pg_group), asigra_postgresql_path],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 close_fds=True
             )).wait()
 
-            if not os.path.exists(self.pg_conf):
-                self.logger.error("{} doesn't exist!".format(self.pg_conf))
+            if not os.path.exists(asigra_postgresql_conf):
+                self.logger.error("{} doesn't exist!".format(asigra_postgresql_conf))
                 return 
 
             # listen_address = '*'
@@ -69,7 +84,7 @@ class AsigraService(Service):
             pg_conf_buf = []
             rewrite = False
    
-            with open(self.pg_conf, "r") as f:
+            with open(asigra_postgresql_conf, "r") as f:
                 for line in f:
                     if pg_conf_regex.search(line):
                         def pg_re_replace(m):
@@ -81,16 +96,18 @@ class AsigraService(Service):
                     pg_conf_buf.append(line)
 
             if rewrite and pg_conf_buf:
-                with open(self.pg_conf, "w") as f:
+                with open(asigra_postgresql_conf, "w") as f:
                     f.write("".join(pg_conf_buf))
 
-            if not os.path.exists(self.pg_hba_conf):
-                self.logger.error("{} doesn't exist!".format(self.pg_hba_conf))
-                return 
+            if not os.path.exists(asigra_pg_hba_conf):
+                self.logger.error("{} doesn't exist!".format(asigra_pg_hba_conf))
+                return False
 
             # allow local access
-            with open(self.pg_hba_conf, "a") as f:
+            with open(asigra_pg_hba_conf, "a") as f:
                 f.write("host\tall\tall\t127.0.0.0/24\ttrust")
+
+        return True
 
     # XXX
     # We should probably write a postgresql middleware plugin
@@ -115,6 +132,7 @@ class AsigraService(Service):
             self.logger.error("Can't query dssystem!: {}".format(e))
             return exists
 
+        exists = False
         try:
             exists = (cur.fetchone()[0] != 0)
         except Exception:
@@ -263,7 +281,69 @@ class AsigraService(Service):
 
         return True
 
+    async def install_asigra(self):
+        ret = True
+
+        if os.path.exists("/asigra"):
+            dssystem_pkg = None
+
+            files = glob.glob("/asigra/DS-System_*/dssystem-*.txz")
+            for f in files:
+                dssystem_pkg = f
+
+            if dssystem_pkg:
+                with open("/tmp/dssystem_install.ini", "w") as f:
+                    f.write("silentmode=yes\n")
+
+                proc = await Popen(
+                    ['/usr/sbin/pkg', 'add', '-f', dssystem_pkg],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    close_fds=True,
+                    env={'INSTALL_INI': '/tmp/dssystem_install.ini'}
+                )
+            else:
+                ret = False
+
+            output = (await proc.communicate())[0].decode()
+            if proc.returncode != 0:
+                self.logger.error(output)
+                self.logger.error('Failed to install dssystem package:\n{}'.format(output))
+                ret = False
+
+            if ret != False:
+                try:
+                    os.chmod("/usr/local/etc/rc.d/dssystem", 0o555)
+                    shutil.copyfile("/usr/local/etc/rc.d/dssystem", "/conf/base/etc/local/rc.d/dssystem")
+                    os.chmod("/conf/base/etc/local/rc.d/dssystem", 0o555)
+
+                except Exception: 
+                    self.logger.error("Failed to install dssystem rc.d script")
+                    ret = False 
+
+        return ret
+
+    async def asigra_installed(self):
+        if not os.path.exists(os.path.join(self.dssystem_path, "libasigraencmodule.so")):
+            return False
+        return True
+
     async def setup_asigra(self):
+        asigra_config = None
+        for row in await self.middleware.call('datastore.query', 'services.asigra'):
+            asigra_config = row
+        if not asigra_config:
+            return False
+
+        asigra_path = asigra_config['asigra_path']
+        if not asigra_path:
+            return False
+
+        self.logger.debug("Checking to see if Asigra is installed")
+        if not await self.asigra_installed():
+            self.logger.debug("Installing Asigra")
+            await self.install_asigra()
+
         self.logger.debug("Checking to see if database exists")
         if not await self.asigra_database_exists():
 
@@ -276,3 +356,5 @@ class AsigraService(Service):
         else:
             self.logger.debug("Updating database")
             await self.asigra_database_update()
+
+        return True 
