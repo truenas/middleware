@@ -1401,11 +1401,20 @@ require([
     vmTypeToggle = function() {
         var vm_type = registry.byId("id_vm_type");
         var bootloader = registry.byId("id_bootloader").domNode.parentNode.parentNode;
+        var pwd = registry.byId("id_root_password").domNode.parentNode.parentNode;
+        var path = registry.byId("id_path").domNode.parentNode.parentNode;
+        var size = registry.byId("id_size").domNode.parentNode.parentNode;
 
         if (vm_type.get('value') == 'Container Provider') {
             domStyle.set(bootloader, "display", "none");
+            domStyle.set(pwd, "display", "");
+            domStyle.set(path, "display", "");
+            domStyle.set(size, "display", "");
         } else if (vm_type.get('value') == 'Bhyve') {
             domStyle.set(bootloader, "display", "");
+            domStyle.set(pwd, "display", "none");
+            domStyle.set(path, "display", "none");
+            domStyle.set(size, "display", "none");
         }
     }
 
