@@ -1136,7 +1136,7 @@ class VMService(CRUDService):
         Str('description'),
         Int('vcpus', required=True),
         Int('memory', required=True),
-        Str('root_password', required=True),
+        Str('root_password', password=True, required=True),
         Bool('autostart', default=True),
         List('devices', items=[Ref('vmdevice_create')], required=True),
     ))
