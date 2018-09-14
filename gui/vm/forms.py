@@ -43,8 +43,14 @@ class VMForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(VMForm, self).__init__(*args, **kwargs)
-        self.fields['vm_type'].widget.attrs['onChange'] = ("vmTypeToggle();")
-        key_order(self, 0, 'vm_type', instance=True)
+        if self.instance.id:
+            for i in ('vm_type', 'root_password', 'path', 'size'):
+                del self.fields[i]
+            if self.instance.vm_type != 'Bhyve':
+                del self.fields['bootloader']
+        else:
+            self.fields['vm_type'].widget.attrs['onChange'] = ("vmTypeToggle();")
+            key_order(self, 0, 'vm_type', instance=True)
 
     def get_cpu_flags(self):
         cpu_flags = {}
