@@ -23,7 +23,7 @@ from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
-from middlewared.validators import IpInUse, ShouldBe
+from middlewared.validators import IpInUse, MACAddr, ShouldBe
 
 
 SHUTDOWN_LOCK = asyncio.Lock()
@@ -134,10 +134,15 @@ class JailService(CRUDService):
         except CallError:
             # A jail does not exist with the provided name, we can create one
             # now
-            self.validate_ips(verrors, options)
+
+            verrors = self.common_validation(verrors, options)
+
+            if verrors:
+                raise verrors
+
             job.set_progress(20, 'Initial validation complete')
 
-            iocage = ioc.IOCage(skip_jails=True)
+        iocage = ioc.IOCage(skip_jails=True)
 
         release = options["release"]
         template = options.get("template", False)
@@ -197,9 +202,6 @@ class JailService(CRUDService):
                                 str(e)
                             )
 
-        if verrors:
-            raise verrors
-
     @accepts(Str("jail"), Dict(
              "options",
              Bool("plugin", default=False),
@@ -216,16 +218,10 @@ class JailService(CRUDService):
 
         jail = self.query([['id', '=', jail]], {'get': True})
 
-        exclude_ips = [
-            ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
-            for f in ('ip4_addr', 'ip6_addr') for ip in jail[f].split(',')
-            if ip != 'none'
-        ]
+        verrors = self.common_validation(verrors, options, True, jail)
 
-        self.validate_ips(
-            verrors, {'props': [f'{k}={v}' for k, v in options.items()]},
-            'options', exclude_ips
-        )
+        if verrors:
+            raise verrors
 
         for prop, val in options.items():
             p = f"{prop}={val}"
@@ -239,6 +235,71 @@ class JailService(CRUDService):
             iocage.rename(name)
 
         return True
+
+    @private
+    def common_validation(self, verrors, options, update=False, jail=None):
+        if not update:
+            # Ensure that api call conforms to format set by iocage for props
+            # Example 'key=value'
+
+            for value in options['props']:
+                if '=' not in value:
+                    verrors.add(
+                        'options.props',
+                        'Please follow the format specified by iocage for api calls'
+                        'e.g "key=value"'
+                    )
+                    break
+
+            if verrors:
+                raise verrors
+
+            # normalise vnet mac address
+            # expected format here is 'vnet0_mac=00-D0-56-F2-B5-12,00-D0-56-F2-B5-13'
+            vnet_macs = {
+                f.split('=')[0]: f.split('=')[1] for f in options['props']
+                if any(f'vnet{i}_mac' in f.split('=')[0] for i in range(0, 4))
+            }
+
+            self.validate_ips(verrors, options)
+        else:
+            vnet_macs = {
+                key: value for key, value in options.items()
+                if any(f'vnet{i}_mac' in key for i in range(0, 4))
+            }
+
+            exclude_ips = [
+                ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
+                for f in ('ip4_addr', 'ip6_addr') for ip in jail[f].split(',')
+                if ip != 'none'
+            ]
+
+            self.validate_ips(
+                verrors, {'props': [f'{k}={v}' for k, v in options.items()]},
+                'options', exclude_ips
+            )
+
+        # validate vnetX_mac addresses
+        for key, value in vnet_macs.items():
+            if value and value != 'none':
+                value = value.replace(',', ' ')
+                try:
+                    for mac in value.split():
+                        MACAddr()(mac)
+
+                    if (
+                        len(value.split()) != 2 or
+                        any(value.split().count(v) > 1 for v in value.split())
+                    ):
+                        raise ShouldBe('Exception')
+                except ShouldBe:
+                    verrors.add(
+                        key,
+                        'Please Enter two valid and different '
+                        f'space/comma-delimited MAC addresses for {key}.'
+                    )
+
+        return verrors
 
     @accepts(Str("jail"))
     def do_delete(self, jail):
@@ -301,6 +362,9 @@ class JailService(CRUDService):
         verrors = ValidationErrors()
 
         self.validate_ips(verrors, options)
+
+        if verrors:
+            raise verrors
 
         def progress_callback(content):
             level = content['level']
