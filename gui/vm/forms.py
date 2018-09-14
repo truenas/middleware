@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 
 from django.core.validators import RegexValidator
@@ -19,6 +20,22 @@ log = logging.getLogger('vm.forms')
 
 
 class VMForm(ModelForm):
+
+    root_password = forms.CharField(
+        label=_("Root Password"),
+        widget=forms.PasswordInput(render_value=True),
+        required=False,
+    )
+    path = PathField(
+        label=_("Docker Disk File"),
+        dirsonly=False,
+        filesonly=False,
+    )
+    size = forms.IntegerField(
+        label=_("Size of Docker Disk File (GiB)"),
+        initial=2,
+        required=False,
+    )
 
     class Meta:
         fields = '__all__'
@@ -58,6 +75,30 @@ class VMForm(ModelForm):
             else:
                 return vcpus
 
+    def clean_root_password(self):
+        vm_type = self.cleaned_data.get('vm_type')
+        root_password = self.cleaned_data.get('root_password')
+        if vm_type != 'Bhyve' and not root_password:
+            raise forms.ValidationError(_('This field is required.'))
+        return root_password
+
+    def clean_path(self):
+        vm_type = self.cleaned_data.get('vm_type')
+        path = self.cleaned_data.get('path')
+        if vm_type != 'Bhyve':
+            if path and os.path.exists(path):
+                raise forms.ValidationError(_('File must not exist.'))
+            elif not path:
+                raise forms.ValidationError(_('File path is required.'))
+        return path
+
+    def clean_size(self):
+        vm_type = self.cleaned_data.get('vm_type')
+        size = self.cleaned_data.get('size')
+        if vm_type != 'Bhyve' and not size:
+            raise forms.ValidationError(_('This field is required.'))
+        return size
+
     def clean_memory(self):
         memory = self.cleaned_data.get('memory')
         vm_type = self.cleaned_data.get('vm_type')
@@ -77,13 +118,27 @@ class VMForm(ModelForm):
             if self.instance.id:
                 c.call('vm.update', self.instance.id, cdata)
             else:
-                if self.instance.vm_type == 'Container Provider':
+                if cdata['vm_type'] == 'Container Provider':
                     cdata['devices'] = [
                         {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
-                        {'dtype': 'RAW', 'attributes': {'path': '', 'type': 'AHCI', 'sectorsize': 0}},
+                        {'dtype': 'RAW', 'attributes': {
+                            'path': cdata.pop('path'),
+                            'type': 'AHCI',
+                            'sectorsize': 0,
+                            'size': cdata.pop('size'),
+                            'exists': False,
+                        }},
                     ]
-                    c.call('vm.activate_sharefs')
-                elif self.instance.bootloader == 'UEFI' and self.instance.vm_type == 'Bhyve':
+                    cdata.pop('vm_type')
+                    cdata.pop('bootloader')
+                    cdata['type'] = 'RancherOS'
+                    return c.call('vm.create_container', cdata)
+
+                cdata.pop('root_password')
+                cdata.pop('path')
+                cdata.pop('size')
+
+                if cdata['bootloader'] == 'UEFI' and cdata['vm_type'] == 'Bhyve':
                     cdata['devices'] = [
                         {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
                         {'dtype': 'VNC', 'attributes': {'wait': False, 'vnc_web': False}},

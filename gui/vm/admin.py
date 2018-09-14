@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import DeviceResourceMixin, VMResourceMixin
@@ -203,6 +204,11 @@ class VMFAdmin(BaseFreeAdmin):
             }""",
         })
         return columns
+
+    def get_datagrid_context(self, request):
+        return {
+            'add_url': reverse('vm_add'),
+        }
 
 
 site.register(models.Device, DeviceFAdmin)
