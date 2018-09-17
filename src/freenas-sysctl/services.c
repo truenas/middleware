@@ -327,7 +327,7 @@ services_init(void)
 		FAILRET("Failed to add smb timeout node.\n", -1);
 	}
 
-	g_services->smb.config.server_min_protocol = SMB2;
+	g_services->smb.config.server_min_protocol = SMB2_02;
 	g_services->smb.config.server_max_protocol = SMB3;
 	g_services->smb.config.server_multi_channel = 0;
 

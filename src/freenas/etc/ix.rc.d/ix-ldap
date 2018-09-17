@@ -94,6 +94,8 @@ ldap_status()
 	local IFS=\|
 	local ret=0
 	local fail="/tmp/.ldap_fail"
+	local sysctl_timeout=$(sysctl -n freenas.directoryservice.ldap.timeout.started)
+	local timeout=$(expr $sysctl_timeout / 2)
 
 	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
@@ -143,7 +145,7 @@ ldap_status()
 		
 			chmod 400 "${temp}"
 
-			echo "${ldapsearch} ${options} -Y GSSAPI  -b '' -s base" > "${cmdfile}"
+			echo "${ldapsearch} ${options} -o nettimeout=${timeout} -Y GSSAPI  -b '' -s base" > "${cmdfile}"
 			cmd=$(cat ${cmdfile})
 			eval "${cmd}" >/dev/null 2>&1
 			res=$?
@@ -159,7 +161,7 @@ ldap_status()
 			chmod 400 "${temp}"
 			echo -n "$(/usr/local/bin/midclt call notifier.pwenc_decrypt ${ldap_bindpw})" > "${temp}"
 
-			echo "${ldapsearch} ${options} -D '"${ldap_binddn}"' -b '' -s base -y "${temp}"" > "${cmdfile}"
+			echo "${ldapsearch} ${options} -o nettimeout=${timeout} -D '"${ldap_binddn}"' -b '' -s base -y "${temp}"" > "${cmdfile}"
 			cmd=$(cat ${cmdfile})
 			eval "${cmd}" >/dev/null 2>&1
 			res=$?
@@ -169,7 +171,7 @@ ldap_status()
 			local cmdfile=$(mktemp /tmp/tmp.XXXXXX)
 			local cmd
 
-			echo "${ldapsearch} -D '' -b '' -s base ${options}" > "${cmdfile}"
+			echo "${ldapsearch} -o nettimeout=${timeout} -D '' -b '' -s base ${options}" > "${cmdfile}"
 			cmd=$(cat ${cmdfile})
 			eval "${cmd}" >/dev/null 2>&1
 			res=$?

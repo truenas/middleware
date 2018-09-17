@@ -303,6 +303,14 @@ class CRUDService(ServiceChangeMixin, Service):
             raise ValidationError(None, f'{self._config.verbose_name} {id} does not exist', errno.ENOENT)
         return instance[0]
 
+    async def _ensure_unique(self, verrors, schema_name, field_name, value, id=None):
+        f = [(field_name, '=', value)]
+        if id is not None:
+            f.append(('id', '!=', id))
+        instance = await self.middleware.call(f'{self._config.namespace}.query', f)
+        if instance:
+            verrors.add(f'{schema_name}.{field_name}', f'Object with this {field_name} already exists')
+
 
 class CoreService(Service):
 

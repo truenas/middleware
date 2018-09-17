@@ -487,12 +487,16 @@ class InitialWizard(CommonWizard):
                     qs = bsdGroups.objects.filter(bsdgrp_group=share_group)
                     if not qs.exists():
                         if share_groupcreate:
-                            with client as c:
-                                group = c.call('group.create', {
-                                    'name': share_group,
-                                })
-                            group = bsdGroups.objects.get(pk=group)
-                            model_objs.append(group)
+                            try:
+                                with client as c:
+                                    group = c.call('group.create', {
+                                        'name': share_group,
+                                    })
+                            except ValidationErrors as e:
+                                raise MiddlewareError(str(e))
+                            else:
+                                group = bsdGroups.objects.get(pk=group)
+                                model_objs.append(group)
                         else:
                             group = bsdGroups.objects.all()[0]
                     else:
@@ -501,24 +505,22 @@ class InitialWizard(CommonWizard):
                     qs = bsdUsers.objects.filter(bsdusr_username=share_user)
                     if not qs.exists():
                         if share_usercreate:
-                            if share_userpw:
-                                password = share_userpw
-                                password_disabled = False
+                            try:
+                                with client as c:
+                                    user = c.call('user.create', {
+                                        'username': share_user,
+                                        'full_name': share_user,
+                                        'password': share_userpw if share_userpw else '',
+                                        'shell': '/bin/csh',
+                                        'home': '/nonexistent',
+                                        'password_disabled': False if share_userpw else True,
+                                        'group': group.id,
+                                    })
+                            except ValidationErrors as e:
+                                raise MiddlewareError(str(e))
                             else:
-                                password = '!'
-                                password_disabled = True
-                            with client as c:
-                                user = c.call('user.create', {
-                                    'username': share_user,
-                                    'full_name': share_user,
-                                    'password': password,
-                                    'shell': '/bin/csh',
-                                    'home': '/nonexistent',
-                                    'password_disabled': password_disabled,
-                                    'group': group.id,
-                                })
-                            user = bsdUsers.objects.get(pk=user)
-                            model_objs.append(user)
+                                user = bsdUsers.objects.get(pk=user)
+                                model_objs.append(user)
 
                 else:
                     errno, errmsg = _n.create_zfs_vol(

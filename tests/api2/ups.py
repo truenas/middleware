@@ -9,30 +9,29 @@ from functions import GET, PUT
 
 
 def test_01_Enabling_UPS_Service():
-    results = PUT('/service/id/ups', {'enable': True})
+    results = PUT('/service/id/ups/', {'enable': True})
     assert results.status_code == 200, results.text
 
 
 def test_10_Disabling_UPS_Service():
-    results = PUT('/service/id/ups', {'enable': False})
+    results = PUT('/service/id/ups/', {'enable': False})
     assert results.status_code == 200, results.text
 
 
 def test_02_Set_UPS_options():
-    results = PUT('/ups', {
+    results = PUT('/ups/', {
         'rmonitor': True,
         'emailnotify': True,
         'mode': 'MASTER',
         'shutdown': 'BATT',
         'port': '655',
         'remotehost': '127.0.0.1',
-        'identifier': 'ups'
-        })
+        'identifier': 'ups'})
     assert results.status_code == 200, results.text
 
 
 def test_03_Checking_that_API_reports_UPS_configuration_as_saved():
-    results = GET('/ups')
+    results = GET('/ups/')
     assert results.status_code == 200, results.text
     data = results.json()
     assert data['rmonitor'] is True
@@ -45,19 +44,18 @@ def test_03_Checking_that_API_reports_UPS_configuration_as_saved():
 
 
 def test_03_Change_UPS_options():
-    results = PUT('/ups', {
+    results = PUT('/ups/', {
         'rmonitor': False,
         'emailnotify': False,
         'mode': 'SLAVE',
         'shutdown': 'LOWBATT',
         'port': '65535',
-        'identifier': 'foo'
-        })
+        'identifier': 'foo'})
     assert results.status_code == 200, results.text
 
 
 def test_03_Checking_that_API_reports_UPS_configuration_as_changed():
-    results = GET('/ups')
+    results = GET('/ups/')
     assert results.status_code == 200, results.text
     data = results.json()
     assert data['rmonitor'] is False

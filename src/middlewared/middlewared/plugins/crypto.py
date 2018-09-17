@@ -915,8 +915,14 @@ class CertificateAuthorityService(CRUDService):
 
             async def child_serials(ca_id):
                 serials = []
-                children = await self.query(
-                    [('signedby', '=', ca_id)]
+                children = await self.middleware.call(
+                    'datastore.query',
+                    self._config.datastore,
+                    [('signedby', '=', ca_id)],
+                    {
+                        'prefix': self._config.datastore_prefix,
+                        'extend': self._config.datastore_extend
+                    }
                 )
 
                 for child in children:

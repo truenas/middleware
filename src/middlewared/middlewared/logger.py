@@ -163,11 +163,22 @@ class LoggerStream(object):
             self.logger.debug(line.rstrip())
 
 
+class ErrorProneRotatingFileHandler(logging.handlers.RotatingFileHandler):
+    def handleError(self, record):
+        try:
+            super().handleError(record)
+        except ValueError:
+            # sys.stderr can be closed by core.reconfigure_logging which leads to
+            # ValueError: I/O operation on closed file. raised on every operation that
+            # involves logging
+            pass
+
+
 class Logger(object):
     """Pseudo-Class for Logger - Wrapper for logging module"""
     DEFAULT_LOGGING = {
         'version': 1,
-        'disable_existing_loggers': True,
+        'disable_existing_loggers': False,
         'root': {
             'level': 'NOTSET',
             'handlers': ['file'],
@@ -175,7 +186,7 @@ class Logger(object):
         'handlers': {
             'file': {
                 'level': 'DEBUG',
-                'class': 'logging.handlers.RotatingFileHandler',
+                'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
                 'filename': LOGFILE,
                 'mode': 'a',
                 'maxBytes': 10485760,
@@ -200,11 +211,20 @@ class Logger(object):
         return logging.getLogger(self.application_name)
 
     def stream(self):
-        return logging.root.handlers[0].stream
+        for handler in logging.root.handlers:
+            if isinstance(handler, ErrorProneRotatingFileHandler):
+                return handler.stream
 
     def _set_output_file(self):
         """Set the output format for file log."""
-        dictConfig(self.DEFAULT_LOGGING)
+        try:
+            dictConfig(self.DEFAULT_LOGGING)
+        except Exception:
+            # If something happens during system dataset reconfiguration, we have the chance of not having
+            # /var/log present leaving us with "ValueError: Unable to configure handler 'file':
+            # [Errno 2] No such file or directory: '/var/log/middlewared.log'"
+            # crashing the middleware during startup
+            pass
         # Make sure log file is not readable by everybody.
         # umask could be another approach but chmod was chosen so
         # it affects existing installs.

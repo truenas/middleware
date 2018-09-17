@@ -35,7 +35,7 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 
 # have to wait for the volume api
 def test_01_creating_afp_dataset():
-    results = POST("/pool/dataset", {"name": DATASET})
+    results = POST("/pool/dataset/", {"name": DATASET})
     assert results.status_code == 200, results.text
 
 
@@ -58,18 +58,18 @@ def test_03_setting_afp():
 
 
 def test_04_enable_afp_service_at_boot():
-    results = PUT("/service/id/afp", {"enable": True})
+    results = PUT("/service/id/afp/", {"enable": True})
     assert results.status_code == 200, results.text
 
 
 def test_05_checking_afp_enable_at_boot():
     results = GET("/service?service=afp")
-    assert results.json()[0]['enable'] == True, results.text
+    assert results.json()[0]['enable'] is True, results.text
 
 
 def test_06_start_afp_service():
     payload = {"service": "afp", "service-control": {"onetime": True}}
-    results = POST("/service/start", payload)
+    results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -80,7 +80,7 @@ def test_07_checking_if_afp_is_running():
 
 def test_08_creating_a_afp_share_on_afp_path():
     payload = {"name": AFP_NAME, "path": AFP_PATH}
-    results = POST("/sharing/afp", payload)
+    results = POST("/sharing/afp/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -115,7 +115,7 @@ def test_11_create_file_on_afp_share_via_osx_to_test_permissions():
 @osx_host_cfg
 def test_12_moving_afp_test_file_into_a_new_directory():
     cmd = f'mkdir -p "{MOUNTPOINT}/tmp" && mv "{MOUNTPOINT}/testfile.txt" ' \
-          f'"{MOUNTPOINT}/tmp/testfile.txt"'
+        f'"{MOUNTPOINT}/tmp/testfile.txt"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
@@ -149,7 +149,7 @@ def test_15_unmount_afp_share():
 # Update test
 def test_16_updating_the_apf_service():
     payload = {"connections_limit": 10}
-    results = PUT("/afp", payload)
+    results = PUT("/afp/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -187,7 +187,7 @@ def test_17_create_file_on_afp_share_via_osx_to_test_permissions():
 @osx_host_cfg
 def test_18_moving_afp_test_file_into_a_new_directory():
     cmd = f'mkdir -p "{MOUNTPOINT}/tmp" && mv "{MOUNTPOINT}/testfile.txt" ' \
-          f'"{MOUNTPOINT}/tmp/testfile.txt"'
+        f'"{MOUNTPOINT}/tmp/testfile.txt"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
@@ -235,7 +235,7 @@ def test_28_delete_afp_share():
 
 def test_25_stopping_afp_service():
     payload = {"service": "afp", "service-control": {"onetime": True}}
-    results = POST("/service/stop", payload)
+    results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -246,13 +246,13 @@ def test_26_checking_if_afp_is_stop():
 
 # Test disable AFP
 def test_23_disable_afp_service_at_boot():
-    results = PUT("/service/id/afp", {"enable": False})
+    results = PUT("/service/id/afp/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
 def test_24_checking_afp_disable_at_boot():
     results = GET("/service?service=afp")
-    assert results.json()[0]['enable'] == False, results.text
+    assert results.json()[0]['enable'] is False, results.text
 
 
 def test_29_destroying_afp_dataset():

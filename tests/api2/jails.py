@@ -19,27 +19,17 @@ JAIL_NAME = 'jail1'
 
 
 def test_01_activate_iocage_pool():
-    result = POST(
-        '/jail/activate/', IOCAGE_POOL
-    )
-
+    result = POST('/jail/activate/', IOCAGE_POOL)
     assert result.json() is True, result.text
 
 
 def test_02_verify_iocage_pool():
-    result = GET(
-        '/jail/get_activated_pool/'
-    )
-
+    result = GET('/jail/get_activated_pool/')
     assert result.json() == IOCAGE_POOL, result.text
 
 
 def test_03_verify_list_resources_endpoint():
-    result = POST(
-        '/jail/list_resource/', {
-            'resource': 'RELEASE',
-        }
-    )
+    result = POST('/jail/list_resource/', {'resource': 'RELEASE'})
 
     assert isinstance(result.json(), list), result.text
 
@@ -110,7 +100,7 @@ def test_08_update_jail_description():
     global JAIL_NAME
 
     result = PUT(
-        f'/jail/id/{JAIL_NAME}', {
+        f'/jail/id/{JAIL_NAME}/', {
             'name': JAIL_NAME + '_renamed'
         }
     )
@@ -135,14 +125,14 @@ def test_10_verify_jail_started():
 
 
 def test_11_export_call():
-    result = POST('/jail/export', JAIL_NAME)
+    result = POST('/jail/export/', JAIL_NAME)
 
     assert result.status_code == 200, result.text
 
 
 def test_12_exec_call():
     result = POST(
-        '/jail/exec', {
+        '/jail/exec/', {
             'jail': JAIL_NAME,
             'command': ['echo "exec successful"']
         }
@@ -153,7 +143,7 @@ def test_12_exec_call():
 
 def test_13_upgrade_jail():
     result = POST(
-        '/jail/upgrade', {
+        '/jail/upgrade/', {
             'jail': JAIL_NAME,
             'release': '11.1-RELEASE'
         }
@@ -174,26 +164,20 @@ def test_13_upgrade_jail():
 
 
 def test_14_stop_jail():
-    result = POST(
-        '/jail/stop/', JAIL_NAME
-    )
-
+    result = POST('/jail/stop/', JAIL_NAME)
     assert result.status_code == 200, result.text
 
 
 def test_15_verify_jail_stopped():
     result = GET('/jail/').json()[0]
-
     assert result['state'].lower() == 'down', 'Jail did not stop'
 
 
 def test_16_rc_action():
     result = POST('/jail/rc_action/', 'STOP')
-
     assert result.status_code == 200, result.text
 
 
 def test_17_verify_clean_call():
-    result = POST('/jail/clean', 'ALL')
-
+    result = POST('/jail/clean/', 'ALL')
     assert result.json() is True, result.text

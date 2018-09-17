@@ -510,11 +510,7 @@ class SMARTTestForm(MiddlewareModelForm, ModelForm):
         return h
 
     def clean_smarttest_month(self):
-        m = eval(self.cleaned_data.get("smarttest_month"))
-        m = ",".join(m)
-        return m
+        return ",".join(self.data.getlist("smarttest_month"))
 
     def clean_smarttest_dayweek(self):
-        w = eval(self.cleaned_data.get("smarttest_dayweek"))
-        w = ",".join(w)
-        return w
+        return ",".join(self.data.getlist("smarttest_dayweek"))

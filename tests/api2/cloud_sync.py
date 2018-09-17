@@ -37,7 +37,7 @@ def task():
 
 
 def test_01_create_dataset():
-    result = POST("/pool/dataset", {"name": DATASET})
+    result = POST("/pool/dataset/", {"name": DATASET})
     assert result.status_code == 200, result.text
 
 

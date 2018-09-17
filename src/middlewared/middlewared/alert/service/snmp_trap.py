@@ -15,32 +15,38 @@ class SNMPTrapAlertService(ThreadedAlertService):
     def __init__(self, middleware, attributes):
         super().__init__(middleware, attributes)
 
-        self.snmp_engine = pysnmp.hlapi.SnmpEngine()
-        self.auth_data = pysnmp.hlapi.CommunityData("public")
-        self.transport_target = pysnmp.hlapi.UdpTransportTarget(("localhost", 162))
-        self.context_data = pysnmp.hlapi.ContextData()
-
-        mib_builder = pysnmp.smi.builder.MibBuilder()
-        mib_sources = mib_builder.getMibSources() + (pysnmp.smi.builder.DirMibSource("/usr/local/share/pysnmp/mibs"),)
-        mib_builder.setMibSources(*mib_sources)
-        mib_builder.loadModules("FREENAS-MIB")
-        self.snmp_alert_level_type = mib_builder.importSymbols("FREENAS-MIB", "AlertLevelType")[0]
-        mib_view_controller = pysnmp.smi.view.MibViewController(mib_builder)
-        self.snmp_alert = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alert"). \
-            resolveWithMib(mib_view_controller)
-        self.snmp_alert_id = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertId"). \
-            resolveWithMib(mib_view_controller)
-        self.snmp_alert_level = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertLevel"). \
-            resolveWithMib(mib_view_controller)
-        self.snmp_alert_message = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertMessage"). \
-            resolveWithMib(mib_view_controller)
-        self.snmp_alert_cancellation = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertCancellation"). \
-            resolveWithMib(mib_view_controller)
+        self.initialized = False
 
     def send_sync(self, alerts, gone_alerts, new_alerts):
         if not self.middleware.call_sync("service.started", "snmp"):
             self.logger.trace("SNMP service not started, not sending traps")
             return
+
+        if not self.initialized:
+            self.snmp_engine = pysnmp.hlapi.SnmpEngine()
+            self.auth_data = pysnmp.hlapi.CommunityData("public")
+            self.transport_target = pysnmp.hlapi.UdpTransportTarget(("localhost", 162))
+            self.context_data = pysnmp.hlapi.ContextData()
+
+            mib_builder = pysnmp.smi.builder.MibBuilder()
+            mib_sources = mib_builder.getMibSources() + (
+                pysnmp.smi.builder.DirMibSource("/usr/local/share/pysnmp/mibs"),)
+            mib_builder.setMibSources(*mib_sources)
+            mib_builder.loadModules("FREENAS-MIB")
+            self.snmp_alert_level_type = mib_builder.importSymbols("FREENAS-MIB", "AlertLevelType")[0]
+            mib_view_controller = pysnmp.smi.view.MibViewController(mib_builder)
+            self.snmp_alert = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alert"). \
+                resolveWithMib(mib_view_controller)
+            self.snmp_alert_id = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertId"). \
+                resolveWithMib(mib_view_controller)
+            self.snmp_alert_level = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertLevel"). \
+                resolveWithMib(mib_view_controller)
+            self.snmp_alert_message = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertMessage"). \
+                resolveWithMib(mib_view_controller)
+            self.snmp_alert_cancellation = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertCancellation"). \
+                resolveWithMib(mib_view_controller)
+
+            self.initialized = True
 
         for alert in gone_alerts:
             error_indication, error_status, error_index, var_binds = next(

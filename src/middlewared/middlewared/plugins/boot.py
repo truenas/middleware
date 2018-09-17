@@ -34,11 +34,11 @@ class BootService(Service):
         await self.middleware.run_in_thread(geom.scan)
         labelclass = geom.class_by_name('PART')
         efi = bios = 0
-        async for disk in await self.get_disks():
+        for disk in await self.get_disks():
             for e in labelclass.xml.findall(f".//geom[name='{disk}']/provider/config/type"):
                 if e.text == 'efi':
                     efi += 1
-                elif e.text == 'bios-boot':
+                elif e.text == 'freebsd-boot':
                     bios += 1
         if efi == 0 and bios == 0:
             return None
@@ -151,7 +151,7 @@ class BootService(Service):
                  the maximum available or the same size as the current disk.
         """
 
-        disks = [d async for d in await self.get_disks()]
+        disks = list(await self.get_disks())
         if len(disks) > 1:
             raise CallError('3-way mirror not supported yet')
 

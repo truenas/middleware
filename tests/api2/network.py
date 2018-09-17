@@ -28,14 +28,14 @@ route_and_dns_cfg = pytest.mark.skipif(all(["BRIDGEDOMAIN" in locals(),
 @pytest.mark.skipif("BRIDGENETMASK" not in locals(),
                     reason=BRIDGENETMASKReason)
 def test_01_get_IPV4_info():
-    getinfo = GET("/network/general/summary").json()
+    getinfo = GET("/network/general/summary/").json()
     getinfo = getinfo['ips'][interface]['IPV4']
     assert getinfo == ['%s/%s' % (ip, BRIDGENETMASK)]
 
 
 @pytest.mark.skipif("BRIDGEGW" not in locals(), reason=BRIDGEGWReason)
 def test_02_get_default_routes_info():
-    getinfo = GET("/network/general/summary").json()
+    getinfo = GET("/network/general/summary/").json()
     getinfo = getinfo['default_routes'][0]
     assert getinfo == BRIDGEGW
 
@@ -46,29 +46,29 @@ def test_03_setting_default_domain_host_and_dns():
                "hostname": BRIDGEHOST,
                "ipv4gateway": BRIDGEGW,
                "nameserver1": BRIDGEDNS}
-    results = PUT("/network/configuration", payload)
+    results = PUT("/network/configuration/", payload)
     assert results.status_code == 200, results.text
 
 
 @route_and_dns_cfg
 def test_04_look_if_domain_was_set():
-    results = GET("/network/configuration")
+    results = GET("/network/configuration/")
     assert results.json()["domain"] == BRIDGEDOMAIN, results.text
 
 
 @route_and_dns_cfg
 def test_05_look_if_hostname_was_set():
-    results = GET("/network/configuration")
+    results = GET("/network/configuration/")
     assert results.json()["hostname"] == BRIDGEHOST, results.text
 
 
 @route_and_dns_cfg
 def test_06_look_if_ipv4_gateway_was_set():
-    results = GET("/network/configuration")
+    results = GET("/network/configuration/")
     assert results.json()["ipv4gateway"] == BRIDGEGW, results.text
 
 
 @route_and_dns_cfg
 def test_07_look_if_dns_was_set():
-    results = GET("/network/configuration")
+    results = GET("/network/configuration/")
     assert results.json()["nameserver1"] == BRIDGEDNS, results.text

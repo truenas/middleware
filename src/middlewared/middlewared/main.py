@@ -25,6 +25,7 @@ import inspect
 import linecache
 import multiprocessing
 import os
+import pickle
 import queue
 import select
 import setproctitle
@@ -50,6 +51,8 @@ class Application(object):
         self.handshake = False
         self.logger = logger.Logger('application').getLogger()
         self.sessionid = str(uuid.uuid4())
+
+        self._py_exceptions = False
 
         """
         Callback index registered by services. They are blocking.
@@ -137,16 +140,19 @@ class Application(object):
         }
 
     def send_error(self, message, errno, reason=None, exc_info=None, etype=None, extra=None):
+        error_extra = {}
+        if self._py_exceptions and exc_info:
+            error_extra['py_exception'] = binascii.b2a_base64(pickle.dumps(exc_info[1])).decode()
         self._send({
             'msg': 'result',
             'id': message['id'],
-            'error': {
+            'error': dict({
                 'error': errno,
                 'type': etype,
                 'reason': reason,
                 'trace': self._tb_error(exc_info) if exc_info else None,
                 'extra': extra,
-            },
+            }, **error_extra),
         })
 
     async def call_method(self, message):
@@ -176,11 +182,12 @@ class Application(object):
             self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
         except Exception as e:
             self.send_error(message, errno.EINVAL, str(e), sys.exc_info())
-            self.logger.warn('Exception while calling {}(*{})'.format(
-                message['method'],
-                self.middleware.dump_args(message.get('params', []), method_name=message['method'])
-            ), exc_info=True)
-            asyncio.ensure_future(self.__crash_reporting(sys.exc_info()))
+            if not self._py_exceptions:
+                self.logger.warn('Exception while calling {}(*{})'.format(
+                    message['method'],
+                    self.middleware.dump_args(message.get('params', []), method_name=message['method'])
+                ), exc_info=True)
+                asyncio.ensure_future(self.__crash_reporting(sys.exc_info()))
 
     async def __crash_reporting(self, exc_info):
         if self.middleware.crash_reporting.is_disabled():
@@ -294,6 +301,9 @@ class Application(object):
                     'version': '1',
                 })
             else:
+                features = message.get('features') or []
+                if 'PY_EXCEPTIONS' in features:
+                    self._py_exceptions = True
                 # aiohttp can cancel tasks if a request take too long to finish
                 # It is desired to prevent that in this stage in case we are debugging
                 # middlewared via gdb (which makes the program execution a lot slower)
@@ -1197,7 +1207,10 @@ class Middleware(object):
             # We're using this instead of having no-op `terminate`
             # in base class to reduce number of awaits
             if hasattr(service, "terminate"):
-                await service.terminate()
+                try:
+                    await service.terminate()
+                except Exception as e:
+                    self.logger.error('Failed to terminate %s', service_name, exc_info=True)
 
         for task in asyncio.Task.all_tasks():
             task.cancel()
@@ -1250,7 +1263,9 @@ def main():
 
     if 'file' in args.log_handler:
         _logger.configure_logging('file')
-        sys.stdout = sys.stderr = _logger.stream()
+        stream = _logger.stream()
+        if stream is not None:
+            sys.stdout = sys.stderr = stream
     elif 'console' in args.log_handler:
         _logger.configure_logging('console')
     else:

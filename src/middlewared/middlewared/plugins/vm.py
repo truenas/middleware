@@ -295,7 +295,7 @@ class VMSupervisor(object):
         if self.bhyve_error == 0:
             self.logger.info('===> Rebooting VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
             await self.manager.restart(self.vm['id'])
-            await self.manager.start(self.vm['id'])
+            await self.manager.start(self.vm)
         elif self.bhyve_error == 1:
             # XXX: Need a better way to handle the vmm destroy.
             self.logger.info('===> Powered off VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))

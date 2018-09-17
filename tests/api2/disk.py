@@ -18,7 +18,7 @@ DISK_ID = None
 
 
 def test_01_verifying_that_the_installer_created_all_disk():
-    assert len(GET('/disk').json()) == 3
+    assert len(GET('/disk/').json()) == 3
 
 
 def test_02_looking_for_disk0_was_created():
@@ -43,7 +43,6 @@ def test_06_looking_for_disk1_was_created():
     global DISK_ID
     result = GET('/disk?number=1')
     DISK_ID = result.json()[0]['identifier']
-
     assert result.json()[0]['name'] == disk1
 
 
@@ -82,11 +81,10 @@ def test_13_looking_disk2_identifier_and_serial_match():
 def test_14_update_disk_description():
     updated_description = 'Updated description'
     result = PUT(
-        f'/disk/id/{DISK_ID}', {
+        f'/disk/id/{DISK_ID}/', {
             'description': updated_description
         }
     )
-
     assert result.json()['description'] == updated_description, result.text
 
 
@@ -97,13 +95,13 @@ def test_15_update_disk_password():
             'passwd': new_passwd
         }
     )
-
     assert result.json()['passwd'] == new_passwd
 
 
 def test_16_get_encrypted_disks():
-    # TODO: create a volume with encryption enabled and then test the encrypted disk
-    # Will complete as soon as we have implementation of pool.create in middlewared
+    # TODO: create a volume with encryption enabled and then test the
+    # encrypted disk. Will complete as soon as we have implementation of pool
+    # create in middlewared
     pass
 
 
@@ -113,18 +111,16 @@ def test_17_get_decrypted_disks():
 
 
 def test_18_get_unused_disks():
-    result = POST('/disk/get_unused', False)
-
+    result = POST('/disk/get_unused/', False)
     assert isinstance(result.json(), list), result.text
 
 
 def test_19_perform_wipe_on_unused_disk():
-    unused_disks = POST('/disk/get_unused', False)
+    unused_disks = POST('/disk/get_unused/', False)
     if len(unused_disks.json()) > 0:
         print('in if')
-        result = POST('/disk/wipe', {
+        result = POST('/disk/wipe/', {
             'dev': unused_disks.json()[0]['name'],
             'mode': 'QUICK'
         })
-
         assert result.status_code == 200

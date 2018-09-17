@@ -14,7 +14,7 @@ TUNABLE_ID = 1
 
 
 def test_01_creating_test_tunable():
-    results = POST('/tunable', {
+    results = POST('/tunable/', {
         'var': VARIABLE,
         'value': 'test',
         'type': 'SYSCTL',
@@ -25,28 +25,19 @@ def test_01_creating_test_tunable():
 
 
 def test_02_tunable_created_and_enabled():
-    results = GET(
-        '/tunable'
-    )
+    results = GET('/tunable/')
 
     assert results.json()[0]['enabled'], results.text
 
 
 def test_03_retrieve_tunable_with_variable_name():
-    results = GET(
-        f'/tunable?var={VARIABLE}'
-    )
+    results = GET(f'/tunable?var={VARIABLE}')
 
     assert results.json()[0]['var'] == VARIABLE, results.text
 
 
 def test_04_disable_tuneable():
-    results = PUT(
-       f'/tunable/id/{TUNABLE_ID}', {
-            'enabled': False
-        }
-    )
-
+    results = PUT(f'/tunable/id/{TUNABLE_ID}/', {'enabled': False})
     assert results.json()['enabled'] is False, results.text
 
 
@@ -60,7 +51,7 @@ def test_05_updating_variable_name_value_comment_type():
     }
 
     results = PUT(
-        f'/tunable/id/{TUNABLE_ID}',
+        f'/tunable/id/{TUNABLE_ID}/',
         payload
     )
     j_resp = results.json()
@@ -71,7 +62,7 @@ def test_05_updating_variable_name_value_comment_type():
 
 def test_06_deleting_tunable():
     results = DELETE(
-        f'/tunable/id/{TUNABLE_ID}',
+        f'/tunable/id/{TUNABLE_ID}/',
         None
     )
 
@@ -79,7 +70,6 @@ def test_06_deleting_tunable():
 
 
 def test_07_ensure_API_has_no_tunables():
-    results = GET('/tunable')
+    results = GET('/tunable/')
 
     assert results.json() == [], results.text
-

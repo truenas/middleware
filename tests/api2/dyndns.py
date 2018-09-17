@@ -29,40 +29,36 @@ test = ''
 def test_01_Updating_Settings_for_NO_IP():
     global test
 
-    results = PUT('/dyndns', {
+    results = PUT('/dyndns/', {
         'username': NOIPUSERNAME,
         'password': NOIPPASSWORD,
         'provider': 'default@no-ip.com',
         'domain': NOIPHOST})
     assert results.status_code == 200, results.text
-
     test = 'NOIP'
 
 
 @custom_test_cfg
 def test_01_Updating_Settings_for_Custom_Provider():
     global test
-
-    results = PUT('/dyndns', {
+    results = PUT('/dyndns/', {
         'username': 'foo',
         'password': 'bar',
         'provider': 'ixsystems.com',
         'domain': ['foobar']})
     assert results.status_code == 200, results.text
-
     test = 'CUSTOM'
 
 
 def test_02_Check_that_API_reports_dyndns_service():
-    results = GET('/dyndns')
+    results = GET('/dyndns/')
     assert results.status_code == 200, results.text
 
 
 def test_03_Check_that_API_reports_dynsdns_configuration_as_saved():
-    results = GET('/dyndns')
+    results = GET('/dyndns/')
     assert results.status_code == 200, results.text
     data = results.json()
-
     if test == 'NOIP':
         assert data['username'] == NOIPPASSWORD
         assert data['provider'] == 'default@no-ip.com'
@@ -74,18 +70,18 @@ def test_03_Check_that_API_reports_dynsdns_configuration_as_saved():
 
 
 def test_04_Enable_dyns_service():
-    results = PUT('/service/id/dynamicdns', {'enable': True})
+    results = PUT('/service/id/dynamicdns/', {'enable': True})
     assert results.status_code == 200, results.text
 
 
 def test_04_Check_to_see_if_dyndns_service_is_enabled_at_boot():
     results = GET('/service?service=dynamicdns')
-    assert results.json()[0]['enable'] == True, results.text
+    assert results.json()[0]['enable'] is True, results.text
 
 
 @noip_test_cfg
 def test_05_Starting_dyndns_service():
-    results = POST('/service/start',
+    results = POST('/service/start/',
                    {'service': 'dynamicdns',
                     'service-control': {'onetime': True}})
     assert results.status_code == 200, results.text

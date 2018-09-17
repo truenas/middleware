@@ -79,7 +79,7 @@ class SharingNFSService(CRUDService):
 
     @accepts(Dict(
         "sharingnfs_create",
-        List("paths", items=[Dir("path")], default=[]),
+        List("paths", items=[Dir("path")], empty=False),
         Str("comment"),
         List("networks", items=[IPAddr("network", cidr=True)], default=[]),
         List("hosts", items=[Str("host")], default=[]),
