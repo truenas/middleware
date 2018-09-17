@@ -156,8 +156,9 @@ def test_13_upgrade_jail():
         else:
             result = GET('/jail/')
             assert result.status_code == 200, result.text
-            release = result.json()[0]['release'].lower()
-            assert '11.1-release' in release, job_status
+            assert len(result.json()) > 0, result.text
+            release = result.json()[0]['release']
+            assert '11.1-release' in release.lower(), job_status
             break
 
 
@@ -172,12 +173,12 @@ def test_15_verify_jail_stopped():
     assert result.json()[0]['state'].lower() == 'down', result.text
 
 
-def test_16_rc_action():
-    result = POST('/jail/rc_action/', 'STOP')
-    assert result.status_code == 200, result.text
+#def test_16_rc_action():
+#    result = POST('/jail/rc_action/', 'STOP')
+#    assert result.status_code == 200, result.text
 
 
-def test_17_verify_clean_call():
-    result = POST('/jail/clean/', 'ALL')
-    assert result.status_code == 200, result.text
-    assert result.json() is True, result.text
+#def test_17_verify_clean_call():
+#    result = POST('/jail/clean/', 'ALL')
+#    assert result.status_code == 200, result.text
+#    assert result.json() is True, result.text
