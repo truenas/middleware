@@ -5,6 +5,9 @@ from django.db import migrations, models
 from freenas.middleware.notifier import notifier
 
 def add_pgsql_user(apps, schema_editor):
+    if notifier().is_freenas():
+        return
+
     try:
         group = apps.get_model("account", "bsdGroups").objects.create(
             bsdgrp_builtin=True,
@@ -29,6 +32,9 @@ def add_pgsql_user(apps, schema_editor):
         print("ERROR: unable to create pgsql user/group: ", e)
 
 def remove_pgsql_user(apps, schema_editor):
+    if notifier().is_freenas():
+        return
+
     try:
         apps.get_model("account", "bsdUsers").objects.get(
             bsdusr_username="pgsql"
@@ -41,9 +47,6 @@ def remove_pgsql_user(apps, schema_editor):
         print("ERROR: unable to remove pgsql user/group: ", e)
 
 class Migration(migrations.Migration):
-    if notifier().is_freenas():
-        return
-
     dependencies = [
         ('account', '0007_add_nslcd_user'),
     ]
