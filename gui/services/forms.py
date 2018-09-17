@@ -2098,12 +2098,6 @@ class AsigraForm(ModelForm):
 
         obj = super(AsigraForm, self).save()
         if changed:
-            try:
-                with client as c:
-                    c.call('etc.generate', 'asigra')
-                    notifier().restart("asigra") 
-
-            except Exception as e:
-                log.error("Can't generate asigra config: {}".format(e))
+            notifier().restart("asigra") 
 
         return obj
