@@ -20,17 +20,19 @@ JAIL_NAME = 'jail1'
 
 def test_01_activate_iocage_pool():
     result = POST('/jail/activate/', IOCAGE_POOL)
+    assert result.status_code == 200, result.text
     assert result.json() is True, result.text
 
 
 def test_02_verify_iocage_pool():
     result = GET('/jail/get_activated_pool/')
+    assert result.status_code == 200, result.text
     assert result.json() == IOCAGE_POOL, result.text
 
 
 def test_03_verify_list_resources_endpoint():
     result = POST('/jail/list_resource/', {'resource': 'RELEASE'})
-
+    assert result.status_code == 200, result.text
     assert isinstance(result.json(), list), result.text
 
 
@@ -88,11 +90,12 @@ def test_06_create_jail():
 def test_07_verify_creation_of_jail():
     while True:
         job_status = GET(f'/core/get_jobs/?id={JOB_ID}').json()[0]
-
         if job_status['state'] in ('RUNNING', 'WAITING'):
             time.sleep(3)
         else:
-            assert len(GET('/jail/').json()) > 0, 'JAIL NOT CREATED'
+            result = GET('/jail/')
+            assert result.status_code == 200, result.text
+            assert len(result.json()) > 0, job_status
             break
 
 
@@ -104,29 +107,24 @@ def test_08_update_jail_description():
             'name': JAIL_NAME + '_renamed'
         }
     )
-
+    assert result.status_code == 200, result.text
     assert result.json() is True, result.text
-
     JAIL_NAME += '_renamed'
 
 
 def test_09_start_jail():
-    result = POST(
-        '/jail/start/', JAIL_NAME
-    )
-
+    result = POST('/jail/start/', JAIL_NAME)
     assert result.status_code == 200, result.text
 
 
 def test_10_verify_jail_started():
-    result = GET('/jail/').json()[0]
-
-    assert result['state'].lower() == 'up', 'Jail did not start'
+    result = GET('/jail/')
+    assert result.status_code == 200, result.test
+    assert result.json()[0]['state'].lower() == 'up', result.text
 
 
 def test_11_export_call():
     result = POST('/jail/export/', JAIL_NAME)
-
     assert result.status_code == 200, result.text
 
 
@@ -137,7 +135,7 @@ def test_12_exec_call():
             'command': ['echo "exec successful"']
         }
     )
-
+    assert result.status_code == 200, result.text
     assert 'exec successful' in result.json().lower(), result.text
 
 
@@ -148,18 +146,18 @@ def test_13_upgrade_jail():
             'release': '11.1-RELEASE'
         }
     )
-
     assert result.status_code == 200, result.text
-
     JOB_ID = result.json()
 
     while True:
         job_status = GET(f'/core/get_jobs/?id={JOB_ID}').json()[0]
-
         if job_status['state'] in ('RUNNING', 'WAITING'):
             time.sleep(3)
         else:
-            assert '11.1-release' in GET('/jail/').json()[0]['release'].lower(), 'JAIL NOT UPGRADED'
+            result = GET('/jail/')
+            assert result.status_code == 200, result.text
+            release = result.json()[0]['release'].lower()
+            assert '11.1-release' in release, job_status
             break
 
 
@@ -169,8 +167,9 @@ def test_14_stop_jail():
 
 
 def test_15_verify_jail_stopped():
-    result = GET('/jail/').json()[0]
-    assert result['state'].lower() == 'down', 'Jail did not stop'
+    result = GET('/jail/')
+    assert result.status_code == 200, result.text
+    assert result.json()[0]['state'].lower() == 'down', result.text
 
 
 def test_16_rc_action():
@@ -180,4 +179,5 @@ def test_16_rc_action():
 
 def test_17_verify_clean_call():
     result = POST('/jail/clean/', 'ALL')
+    assert result.status_code == 200, result.text
     assert result.json() is True, result.text
