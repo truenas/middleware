@@ -3,6 +3,7 @@ from django.db import migrations
 
 import sys
 
+from freenas.middleware.notifier import notifier
 
 def add_asigra(apps, schema_editor):
     services = apps.get_model("services", "services")
@@ -25,6 +26,8 @@ def remove_asigra(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    if notifier().is_freenas():
+        return 
 
     dependencies = [
         ('services', '0017_ftp_set_unlimited_length_for_ftp_options'),
