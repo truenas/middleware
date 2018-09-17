@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
+from freenas.middleware.notifier import notifier
 
 def add_pgsql_user(apps, schema_editor):
     try:
@@ -40,6 +41,8 @@ def remove_pgsql_user(apps, schema_editor):
         print("ERROR: unable to remove pgsql user/group: ", e)
 
 class Migration(migrations.Migration):
+    if notifier().is_freenas():
+        return
 
     dependencies = [
         ('account', '0007_add_nslcd_user'),
