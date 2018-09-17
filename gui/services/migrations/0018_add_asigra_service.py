@@ -6,6 +6,9 @@ import sys
 from freenas.middleware.notifier import notifier
 
 def add_asigra(apps, schema_editor):
+    if notifier().is_freenas():
+        return 
+
     services = apps.get_model("services", "services")
     asigra = services.objects.create()
     asigra.srv_service = "asigra"
@@ -17,6 +20,9 @@ def add_asigra(apps, schema_editor):
 
 
 def remove_asigra(apps, schema_editor):
+    if notifier().is_freenas():
+        return 
+
     services = apps.get_model("services", "services")
     asigra = services.objects.get(srv_service="asigra")
     try:
@@ -26,9 +32,6 @@ def remove_asigra(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    if notifier().is_freenas():
-        return 
-
     dependencies = [
         ('services', '0017_ftp_set_unlimited_length_for_ftp_options'),
     ]
