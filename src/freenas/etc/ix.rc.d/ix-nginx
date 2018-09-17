@@ -2,6 +2,8 @@
 #
 # $FreeBSD$
 #
+# XXX This file *really* needs to be a middleware module :-) XXX
+#
 
 # PROVIDE: ix-nginx
 # REQUIRE: ix-warden
@@ -400,6 +402,10 @@ __EOF__
         }
 
         #include plugins.conf;
+
+        location /asigra {
+            alias /usr/local/www/asigra;
+        }
     }
 __EOF__
 
