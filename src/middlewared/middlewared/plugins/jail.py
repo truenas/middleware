@@ -4,12 +4,15 @@ import time
 import subprocess as su
 
 import iocage_lib.iocage as ioc
+import iocage_lib.ioc_exceptions as ioc_exceptions
+
 import libzfs
 import requests
 import itertools
 import pathlib
 import json
 import sqlite3
+import errno
 from iocage_lib.ioc_check import IOCCheck
 from iocage_lib.ioc_clean import IOCClean
 from iocage_lib.ioc_fetch import IOCFetch
@@ -313,7 +316,10 @@ class JailService(CRUDService):
 
     @private
     def check_dataset_existence(self):
-        IOCCheck()
+        try:
+            IOCCheck()
+        except ioc_exceptions.PoolNotActivated as e:
+            raise CallError(e, errno=errno.ENOENT)
 
     @private
     def check_jail_existence(self, jail, skip=True):
@@ -366,7 +372,7 @@ class JailService(CRUDService):
         if verrors:
             raise verrors
 
-        def progress_callback(content):
+        def progress_callback(content, exception):
             level = content['level']
             msg = content['message'].strip('\n')
             rel_up = f'* Updating {release} to the latest patch level... '
