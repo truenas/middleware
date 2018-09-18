@@ -66,15 +66,7 @@ def test_05_verify_bsd_release():
             break
 
 
-def test_06_verify_iocage_list_with_ssh():
-    cmd1 = f'iocage list | grep "{JAIL_NAME}" | grep -q "11.0-RELEASE"'
-    results = SSH_TEST(cmd1, user, password, ip)
-    cmd2 = 'iocage list'
-    results2 = SSH_TEST(cmd2, user, password, ip)
-    assert results['result'] is True, results2['output']
-
-
-def test_07_create_jail():
+def test_06_create_jail():
     global JOB_ID
 
     results = POST(
@@ -94,7 +86,7 @@ def test_07_create_jail():
     JOB_ID = results.json()
 
 
-def test_08_verify_creation_of_jail():
+def test_07_verify_creation_of_jail():
     while True:
         job_status = GET(f'/core/get_jobs/?id={JOB_ID}').json()[0]
         if job_status['state'] in ('RUNNING', 'WAITING'):
@@ -104,6 +96,15 @@ def test_08_verify_creation_of_jail():
             assert results.status_code == 200, results.text
             assert len(results.json()) > 0, job_status
             break
+
+
+def test_08_verify_iocage_list_with_ssh():
+    cmd1 = f'iocage list | grep {JAIL_NAME} | grep -q 11.0-RELEASE'
+    results = SSH_TEST(cmd1, user, password, ip)
+    cmd2 = 'iocage list'
+    results2 = SSH_TEST(cmd2, user, password, ip)
+    assert results['result'] is True, results2['output']
+
 
 
 def test_09_update_jail_description():
