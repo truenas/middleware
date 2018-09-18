@@ -17,6 +17,7 @@ import netif
 import os
 import psutil
 import random
+import re
 import stat
 import subprocess
 import sysctl
@@ -36,6 +37,9 @@ CONTAINER_IMAGES = {
 }
 BUFSIZE = 65536
 ZFS_ARC_MAX_INITIAL = None
+
+ZVOL_CLONE_SUFFIX = '_clone'
+ZVOL_CLONE_RE = re.compile(rf'^(.*){ZVOL_CLONE_SUFFIX}\d+$')
 
 
 class VMManager(object):
@@ -1251,15 +1255,67 @@ class VMService(CRUDService):
     async def __next_clone_name(self, name):
         vm_names = [
             i['name']
-            for i in await self.middleware.call('vm.query', [('name', '~', rf'{name}_clone\d+')])
+            for i in await self.middleware.call('vm.query', [
+                ('name', '~', rf'{name}{ZVOL_CLONE_SUFFIX}\d+')
+            ])
         ]
         clone_index = 0
         while True:
-            clone_name = f'{name}_clone{clone_index}'
+            clone_name = f'{name}{ZVOL_CLONE_SUFFIX}{clone_index}'
             if clone_name not in vm_names:
                 break
             clone_index += 1
         return clone_name
+
+    async def __clone_zvol(self, name, zvol, created_snaps, created_clones):
+        if not await self.middleware.call('zfs.dataset.query', [('id', '=', zvol)]):
+            raise CallError(f'zvol {zvol} does not exist.', errno.ENOENT)
+
+        snapshot_name = name
+        i = 0
+        while True:
+            zvol_snapshot = zvol + '@' + snapshot_name
+            if await self.middleware.call('zfs.snapshot.query', [('id', '=', zvol_snapshot)]):
+                if ZVOL_CLONE_RE.search(snapshot_name):
+                    snapshot_name = ZVOL_CLONE_RE.sub(
+                        rf'\1{ZVOL_CLONE_SUFFIX}{i}', snapshot_name,
+                    )
+                else:
+                    snapshot_name = f'{name}{ZVOL_CLONE_SUFFIX}{i}'
+                i += 1
+                continue
+            break
+
+        if not await self.middleware.call('zfs.snapshot.create', {
+            'dataset': zvol, 'name': snapshot_name,
+        }):
+            raise CallError(f'Failed to snapshot {zvol_snapshot}.')
+
+        created_snaps.append(zvol_snapshot)
+
+        clone_suffix = name
+        i = 0
+        while True:
+            clone_dst = f'{zvol}_{clone_suffix}'
+            if await self.middleware.call('zfs.dataset.query', [('id', '=', clone_dst)]):
+                if ZVOL_CLONE_RE.search(clone_suffix):
+                    clone_suffix = ZVOL_CLONE_RE.sub(
+                        rf'\1{ZVOL_CLONE_SUFFIX}{i}', clone_suffix,
+                    )
+                else:
+                    clone_suffix = f'{name}{ZVOL_CLONE_SUFFIX}{i}'
+                i += 1
+                continue
+            break
+
+        if not await self.middleware.call('zfs.snapshot.clone', {
+            'snapshot': zvol_snapshot, 'dataset_dst': clone_dst,
+        }):
+            raise CallError(f'Failed to clone {zvol_snapshot}.')
+
+        created_clones.append(clone_dst)
+
+        return clone_dst
 
     @item_method
     @accepts(Int('id'))
@@ -1286,23 +1342,9 @@ class VMService(CRUDService):
                         del item['attributes']['vnc_port']
                 if item['dtype'] == 'DISK':
                     zvol = item['attributes']['path'].replace('/dev/zvol/', '')
-                    zvol_snapshot = zvol + '@' + vm['name']
-                    clone_dst = zvol + '_' + vm['name']
-
-                    if not await self.middleware.call('zfs.snapshot.create', {
-                        'dataset': zvol, 'name': vm['name'],
-                    }):
-                        raise CallError(f'Failed to snapshot {zvol_snapshot}.')
-
-                    created_snaps.append(zvol_snapshot)
-
-                    if not await self.middleware.call('zfs.snapshot.clone', {
-                        'snapshot': zvol_snapshot, 'dataset_dst': clone_dst,
-                    }):
-                        raise CallError(f'Failed to clone {zvol_snapshot}.')
-
-                    created_clones.append(clone_dst)
-
+                    clone_dst = await self.__clone_zvol(
+                        vm['name'], zvol, created_snaps, created_clones,
+                    )
                     item['attributes']['path'] = '/dev/zvol/' + clone_dst
                 if item['dtype'] == 'RAW':
                     item['attributes']['path'] = ''
