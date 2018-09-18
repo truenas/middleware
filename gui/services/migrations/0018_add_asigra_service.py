@@ -3,7 +3,7 @@ from django.db import migrations
 
 import sys
 
-from freenas.middleware.notifier import notifier
+from freenasUI.middleware.notifier import notifier
 
 def add_asigra(apps, schema_editor):
     if notifier().is_freenas():
