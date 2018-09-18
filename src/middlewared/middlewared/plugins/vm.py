@@ -346,6 +346,9 @@ class VMSupervisor(object):
         if_bridge = []
         bridge_enabled = False
 
+        if tapname == attach_iface:
+            raise CallError(f'VM cannot bridge with its own interface ({tapname}).')
+
         if attach_iface is None:
             # XXX: backward compatibility prior to 11.1-RELEASE.
             try:
@@ -365,15 +368,14 @@ class VMSupervisor(object):
             if brgname.startswith('bridge'):
                 if_bridge.append(iface)
 
-        if if_bridge:
-            for bridge in if_bridge:
-                if attach_iface in bridge.members:
-                    bridge_enabled = True
-                    self.set_iface_mtu(attach_iface_info, tap)
-                    bridge.add_member(tapname)
-                    if netif.InterfaceFlags.UP not in bridge.flags:
-                        bridge.up()
-                    break
+        for bridge in if_bridge:
+            if attach_iface in bridge.members:
+                bridge_enabled = True
+                self.set_iface_mtu(attach_iface_info, tap)
+                bridge.add_member(tapname)
+                if netif.InterfaceFlags.UP not in bridge.flags:
+                    bridge.up()
+                break
 
         if bridge_enabled is False:
             bridge = netif.get_interface(netif.create_interface('bridge'))
