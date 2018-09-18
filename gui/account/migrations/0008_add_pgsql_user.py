@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-from freenas.middleware.notifier import notifier
+from freenasUI.middleware.notifier import notifier
 
 def add_pgsql_user(apps, schema_editor):
     if notifier().is_freenas():
