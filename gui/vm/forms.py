@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 
 from django.core.validators import RegexValidator
 from django.utils.translation import ugettext_lazy as _
@@ -52,34 +51,11 @@ class VMForm(ModelForm):
             self.fields['vm_type'].widget.attrs['onChange'] = ("vmTypeToggle();")
             key_order(self, 0, 'vm_type', instance=True)
 
-    def get_cpu_flags(self):
-        cpu_flags = {}
-        with client as c:
-            cpu_flags = c.call('vm.flags')
-        return cpu_flags
-
     def clean_name(self):
         name = self.cleaned_data.get('name')
         if name:
-            if not re.search(r'^[a-zA-Z _0-9]+$', name):
-                raise forms.ValidationError(_('Only alphanumeric characters are allowed and maximum of 150 characters.'))
             name = name.replace(' ', '')
         return name
-
-    def clean_vcpus(self):
-        cpu_flags = self.get_cpu_flags()
-        vcpus = self.cleaned_data.get('vcpus')
-
-        if cpu_flags.get('intel_vmx'):
-            if vcpus > 1 and cpu_flags.get('unrestricted_guest') is False:
-                raise forms.ValidationError(_('Only one Virtual CPU is allowed in this system.'))
-            else:
-                return vcpus
-        elif cpu_flags.get('amd_rvi'):
-            if vcpus > 1 and cpu_flags.get('amd_asids') is False:
-                raise forms.ValidationError(_('Only one Virtual CPU is allowed in this system.'))
-            else:
-                return vcpus
 
     def clean_root_password(self):
         vm_type = self.cleaned_data.get('vm_type')
@@ -104,14 +80,6 @@ class VMForm(ModelForm):
         if vm_type != 'Bhyve' and not size:
             raise forms.ValidationError(_('This field is required.'))
         return size
-
-    def clean_memory(self):
-        memory = self.cleaned_data.get('memory')
-        vm_type = self.cleaned_data.get('vm_type')
-        if vm_type == 'Container Provider' and memory < 1024:
-            raise forms.ValidationError(_('Minimum container memory is 1,024MiB.'))
-        else:
-            return memory
 
     def save(self, **kwargs):
         with client as c:
