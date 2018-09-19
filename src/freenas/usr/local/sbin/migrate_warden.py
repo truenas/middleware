@@ -171,7 +171,6 @@ class Migrate(object):
             "vnet": "vnet",
             "boot": "autostart",
             "nat": "nat",
-            "release": "jailtype",
             "defaultrouter4": "defaultrouter-ipv4",
             "defaultrouter6": "defaultrouter-ipv6"
         }
@@ -236,8 +235,10 @@ class Migrate(object):
 
         self.warden_dataset.destroy_snapshot(f"WardenMigration_{self.date}")
 
-        self.copy_fstab(iocroot)
-        self.fixup_fstab(iocroot)
+        if os.path.isfile(f"{self.meta}/fstab"):
+            # We want to migrate their fstab
+            self.copy_fstab(iocroot)
+            self.fixup_fstab(iocroot)
 
     def is_jail_running(self):
         """
@@ -295,7 +296,7 @@ class Migrate(object):
         warden_id = props.get("warden_id", "none")
         boot = props.get("boot", "off")
         sysctls = props.get("allow_props", "")
-        release = props['release']
+        release = self.get_warden_release()
         defaultrouter4 = props.get('defaultrouter4', "none")
         defaultrouter6 = props.get('defaultrouter6', "none")
 
@@ -362,6 +363,12 @@ class Migrate(object):
                         destination).mkdir(parents=True, exist_ok=True)
 
                     fstab.write(line)
+
+    def get_warden_release(self):
+        jail_world = su.run(['file', f'{self.dataset}/bin/sh'], stdout=su.PIPE)
+        jail_world = jail_world.stdout.split()[-3].decode().rstrip(',')
+
+        return f'{jail_world}-RELEASE'
 
 
 async def main(argv, loop):
