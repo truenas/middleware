@@ -1,6 +1,6 @@
 from collections import deque
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch, Ref
+from middlewared.schema import accepts, Error, Int, Str, Dict, List, Bool, Patch, Ref
 from middlewared.service import (
     item_method, job, pass_app, private, CRUDService, CallError,
     ValidationError, ValidationErrors,
@@ -1446,6 +1446,50 @@ class VMService(CRUDService):
 
 class VMDeviceService(CRUDService):
 
+    DEVICE_ATTRS = {
+        'CDROM': Dict(
+            'attributes',
+            Str('path', required=True),
+        ),
+        'RAW': Dict(
+            'attributes',
+            Str('path', required=True),
+            Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
+            Bool('exists', default=True),
+            Bool('boot', default=False),
+            Str('rootpwd', password=True),
+            Int('size', default=0),
+            Int('sectorsize', enum=[0, 512, 4096], default=0),
+        ),
+        'DISK': Dict(
+            'attributes',
+            Str('path'),
+            Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
+            Bool('create_zvol', default=False),
+            Str('zvol_name'),
+            Int('zvol_volsize'),
+            Int('sectorsize', enum=[0, 512, 4096], default=0),
+        ),
+        'NIC': Dict(
+            'attributes',
+            Str('type', enum=['E1000', 'VIRTIO'], default='E1000'),
+            Str('nic_attach', default=None),
+            Str('mac'),
+        ),
+        'VNC': Dict(
+            'attributes',
+            Str('vnc_resolution', enum=[
+                '1920x1200', '1920x1080', '1600x1200', '1600x900', '1280x1024',
+                '1280x720', '1024x768', '800x600', '640x480',
+            ], default='1024x768'),
+            Int('vnc_port', default=None),
+            Str('vnc_bind'),
+            Bool('wait', default=False),
+            Str('vnc_password', default=None, password=True),
+            Bool('vnc_web', default=False),
+        ),
+    }
+
     class Config:
         namespace = 'vm.device'
         datastore = 'vm.device'
@@ -1468,7 +1512,7 @@ class VMDeviceService(CRUDService):
             'vmdevice_create',
             Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'VNC', 'RAW'], required=True),
             Int('vm'),
-            Dict('attributes', additional_attrs=True),
+            Dict('attributes', additional_attrs=True, default=None),
             Int('order', default=None),
             register=True,
         ),
@@ -1533,6 +1577,21 @@ class VMDeviceService(CRUDService):
     @private
     async def validate_device(self, device, old=None):
         verrors = ValidationErrors()
+        schema = self.DEVICE_ATTRS.get(device['dtype'])
+        if schema:
+            try:
+                device['attributes'] = schema.clean(device['attributes'])
+            except Error as e:
+                verrors.add(f'attributes.{e.attribute}', e.errmsg, e.errno)
+
+            try:
+                schema.validate(device['attributes'])
+            except ValidationErrors as e:
+                verrors.extend(e)
+
+            if verrors:
+                raise verrors
+
         if device.get('dtype') == 'DISK':
             if 'attributes' not in device:
                 verrors.add('attributes', 'This field is required.')
@@ -1573,6 +1632,16 @@ class VMDeviceService(CRUDService):
                 await check_path_resides_within_volume(
                     verrors, self.middleware, 'attributes.path', path,
                 )
+        elif device.get('dtype') == 'CDROM':
+            path = device['attributes'].get('path')
+            if not path:
+                verrors.add('attributes.path', 'Path is required.')
+        elif device.get('dtype') == 'VNC':
+            vm = device.get('vm')
+            if vm:
+                vm = await self.middleware.call('vm.query', [('id', '=', vm)])
+                if vm and vm[0]['bootloader'] != 'UEFI':
+                    verrors.add('dtype', 'VNC only works with UEFI bootloader.')
 
         if verrors:
             raise verrors
