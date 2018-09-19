@@ -1272,7 +1272,7 @@ class VMService(CRUDService):
         snapshot_name = name
         i = 0
         while True:
-            zvol_snapshot = zvol + '@' + snapshot_name
+            zvol_snapshot = f'{zvol}@{snapshot_name}'
             if await self.middleware.call('zfs.snapshot.query', [('id', '=', zvol_snapshot)]):
                 if ZVOL_CLONE_RE.search(snapshot_name):
                     snapshot_name = ZVOL_CLONE_RE.sub(
@@ -1343,7 +1343,7 @@ class VMService(CRUDService):
                     clone_dst = await self.__clone_zvol(
                         vm['name'], zvol, created_snaps, created_clones,
                     )
-                    item['attributes']['path'] = '/dev/zvol/' + clone_dst
+                    item['attributes']['path'] = f'/dev/zvol/{clone_dst}'
                 if item['dtype'] == 'RAW':
                     item['attributes']['path'] = ''
                     self.logger.warn('For RAW disk you need copy it manually inside your NAS.')
