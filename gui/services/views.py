@@ -424,10 +424,11 @@ def services_asigra(request):
     })
 
 def services_asigra_dsoperator(request):
+    template = "/usr/local/www/asigra/DSOP.jnlp.template"
     filename = "/usr/local/www/asigra/DSOP.jnlp"
 
     contents = []
-    with open(filename, 'r') as f:
+    with open(template, 'r') as f:
         contents = f.read()
 
     addr = request.META.get("SERVER_ADDR") 
@@ -439,6 +440,9 @@ def services_asigra_dsoperator(request):
     url = "{}://{}/asigra/".format(protocol, addr)
 
     contents = contents.replace("@@URL@@", url)
+    with open(filename, 'w') as f:
+        f.write(contents)
+
     wrapper = FileWrapper(StringIO(contents))
 
     response = StreamingHttpResponse(
