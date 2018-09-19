@@ -328,9 +328,6 @@ class DeviceForm(ModelForm):
                 'sectorsize': self.cleaned_data['DISK_sectorsize'],
             }
         elif self.cleaned_data['dtype'] == 'RAW':
-            if self.is_container(vm.vm_type):
-                if self.cleaned_data['DISK_mode'] == 'VIRTIO':
-                    self._errors['dtype'] = self.error_class([_('Containers require AHCI mode.')])
             obj.attributes = {
                 'path': self.cleaned_data['DISK_raw'],
                 'type': self.cleaned_data['DISK_mode'],
