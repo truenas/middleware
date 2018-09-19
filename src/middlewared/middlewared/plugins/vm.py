@@ -1004,12 +1004,35 @@ class VMService(CRUDService):
         return vm_id
 
     async def __common_validation(self, verrors, schema_name, data, old=None):
+
+        vcpus = data.get('vcpus')
+        if vcpus:
+            flags = await self.middleware.call('vm.flags')
+            if flags['intel_vmx']:
+                if vcpus > 1 and flags['unrestricted_guest'] is False:
+                    verrors.add(
+                        f'{schema_name}.vcpus',
+                        'Only one Virtual CPU is allowed in this system.',
+                    )
+            elif flags['amd_rvi']:
+                if vcpus > 1 and flags['amd_asids'] is False:
+                    verrors.add(
+                        f'{schema_name}.vcpus',
+                        'Only one Virtual CPU is allowed in this system.',
+                    )
+
+        memory = data.get('memory')
+        if memory and memory < 1024 and data.get('type') == 'Container Provider':
+            verrors.add(f'{schema_name}.memory', 'Minimum container memory is 2048MiB.')
+
         if 'name' in data:
             filters = [('name', '=', data['name'])]
             if old:
                 filters.append(('id', '!=', old['id']))
             if await self.middleware.call('vm.query', filters):
                 verrors.add(f'{schema_name}.name', 'This name already exists.', errno.EEXIST)
+            elif not re.search(r'^[a-zA-Z_0-9]+$', data['name']):
+                verrors.add(f'{schema_name}.name', 'Only alphanumeric characters are allowed.')
 
         for i, device in enumerate(data.get('devices') or []):
             try:
@@ -1049,9 +1072,11 @@ class VMService(CRUDService):
         """Update all information of a specific VM."""
 
         old = await self._get_instance(id)
+        new = old.copy()
+        new.update(data)
 
         verrors = ValidationErrors()
-        await self.__common_validation(verrors, 'vm_update', data, old=old)
+        await self.__common_validation(verrors, 'vm_update', new, old=old)
         if verrors:
             raise verrors
 
