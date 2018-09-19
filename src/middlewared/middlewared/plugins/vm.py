@@ -1012,6 +1012,12 @@ class VMService(CRUDService):
 
     async def __common_validation(self, verrors, schema_name, data, old=None):
 
+        bootloader = data.get('bootloader')
+        if bootloader and bootloader != 'GRUB' and data.get('vm_type') == 'Container Provider':
+            verrors.add(
+                f'{schema_name}.bootloader', 'Only GRUB bootloader allowed for container.'
+            )
+
         vcpus = data.get('vcpus')
         if vcpus:
             flags = await self.middleware.call('vm.flags')
