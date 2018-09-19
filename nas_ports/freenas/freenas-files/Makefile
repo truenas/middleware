@@ -49,11 +49,14 @@ do-build:
 do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
 	mkdir -p ${STAGEDIR}${PREFIX}/boot/modules
+.if defined(DEBUG_FLAGS)
+	mkdir -p ${STAGEDIR}${DEBUGDIR}${PREFIX}/boot/modules
+.endif
 
-	${MAKE} -C ${WRKSRC}/extract-tarball  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
-	${MAKE} -C ${WRKSRC}/fix_ea  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
-	${MAKE} -C ${WRKSRC}/winacl  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
-	${MAKE} -C ${WRKSRC}/freenas-sysctl KMODDIR=${STAGEDIR}${PREFIX}/boot/modules install
+	${MAKE} -C ${WRKSRC}/extract-tarball DESTDIR=${STAGEDIR} BINDIR=${PREFIX}/usr/local/bin install
+	${MAKE} -C ${WRKSRC}/fix_ea DESTDIR=${STAGEDIR} BINDIR=${PREFIX}/usr/local/bin install
+	${MAKE} -C ${WRKSRC}/winacl DESTDIR=${STAGEDIR} BINDIR=${PREFIX}/usr/local/bin install
+	${MAKE} -C ${WRKSRC}/freenas-sysctl DESTDIR=${STAGEDIR} KMODDIR=${PREFIX}/boot/modules install
 	#
 	# Adding autotune
 	#
