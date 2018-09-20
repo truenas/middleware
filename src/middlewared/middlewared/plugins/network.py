@@ -469,7 +469,15 @@ class InterfacesService(Service):
 
             if iface.parent != vlan['vlan_pint'] or iface.tag != vlan['vlan_tag'] or iface.pcp != vlan['vlan_pcp']:
                 iface.unconfigure()
-                iface.configure(vlan['vlan_pint'], vlan['vlan_tag'], vlan['vlan_pcp'])
+                try:
+                    iface.configure(vlan['vlan_pint'], vlan['vlan_tag'], vlan['vlan_pcp'])
+                except FileNotFoundError:
+                    self.logger.warn(
+                        'VLAN %s parent interface %s not found, skipping.',
+                        vlan['vlan_vint'],
+                        vlan['vlan_pint'],
+                    )
+                    continue
 
             try:
                 parent_iface = netif.get_interface(iface.parent)
