@@ -81,7 +81,7 @@ class JailService(CRUDService):
                             jail['ip4_addr'] = f'{interface}|' \
                                 f'{out.splitlines()[2].split()[1].decode()}'
                         else:
-                            jail['ip4_address'] = 'DHCP (not running)'
+                            jail['ip4_addr'] = 'DHCP (not running)'
                     jails.append(jail)
         except BaseException:
             # Brandon is working on fixing this generic except, till then I
