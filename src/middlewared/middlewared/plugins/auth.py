@@ -58,9 +58,10 @@ class AuthTokens(object):
 
     def pop_token(self, token_id):
         # Remove a token from both indexes
-        token = self.__tokens.pop(token_id)
-        for sessionid in token['sessions']:
-            self.__sessionid_map.pop(sessionid, None)
+        token = self.__tokens.pop(token_id, None)
+        if token:
+            for sessionid in token['sessions']:
+                self.__sessionid_map.pop(sessionid, None)
 
 
 class AuthService(Service):
