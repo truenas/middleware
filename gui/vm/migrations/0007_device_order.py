@@ -5,6 +5,13 @@ from __future__ import unicode_literals
 from django.db import migrations, models
 
 
+def preserve_order(apps, schema_editor):
+    Device = apps.get_model('vm', 'Device')
+    for device in Device.objects.order_by('id'):
+        device.order = device.id
+        device.save()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -17,4 +24,5 @@ class Migration(migrations.Migration):
             name='order',
             field=models.IntegerField(editable=False, null=True),
         ),
+        migrations.RunPython(preserve_order, reverse_code=migrations.RunPython.noop),
     ]
