@@ -9,6 +9,16 @@
 
 . /etc/rc.freenas
 
+ha_licensed() {
+
+	if [ "$(/usr/local/bin/python /usr/local/www/freenasUI/failover/licensed.py 2> /dev/null)" = "True" ]
+	then
+		return 0
+ 	else	
+		return 1
+	fi
+}
+
 generate_syslog_conf()
 {
 	local IFS="|"
@@ -46,69 +56,85 @@ generate_syslog_conf()
 				serverhost="${stg_syslogserver}"
 				serverport="514"
 			fi
-{
-cat << __EOF__
-destination loghost { udp("${serverhost}" port(${serverport}) localport(514)); };
-log { source(src);  filter(${stg_sysloglevel}); destination(loghost); };
+
+			cat <<-__EOF__>> /etc/local/syslog-ng.conf
+			destination loghost { udp("${serverhost}" port(${serverport}) localport(514)); };
+			log { source(src);  filter(${stg_sysloglevel}); destination(loghost); };
 __EOF__
-} >> /etc/local/syslog-ng.conf
 		fi
 	done
 
+	if ha_licensed
+	then
+		local controller_port=7777
+                if [ "$(ha_node)" = "A" ]
+                then
+                        local controller_ip=169.254.10.1
+                        local controller_other_ip=169.254.10.2
+                        local controller_file="/root/syslog/controller_b"
+                elif [ "$(ha_node)" = "B" ]
+                then
+                        local controller_ip=169.254.10.2
+                        local controller_other_ip=169.254.10.1
+                        local controller_file="/root/syslog/controller_a"
+                fi
+
+                if [ ! -d "/root/syslog" ]
+                then
+                        mkdir -p /root/syslog
+                fi
+
+		date >> /tmp/THETIME
+
+		cat <<-_EOF_>> /etc/local/syslog-ng.conf
+
+		# Redmine 32700
+		source this_controller {
+		    udp(ip($controller_ip) port($controller_port));
+		    udp(default-facility(syslog) default-priority(emerg));
+		};
+
+		log {
+		    source(this_controller);
+		    destination(other_controller_file);
+		};
+
+		destination other_controller_file { file("$controller_file"); };
+		destination other_controller{ udp("$controller_other_ip" port($controller_port)); };
+
+		log {
+		    source(src);
+		    filter(f_not_mdnsresponder);
+		    filter(f_not_nginx);
+		    filter(f_not_consul);
+		    destination(other_controller);
+		};
+_EOF_
+
+	fi
 }
 
 
-generate_ha_syslog()
-{
-	local controller_port=7777
-	if [ "$(/usr/local/bin/python /usr/local/www/freenasUI/failover/licensed.py 2> /dev/null)" = "True" ]
+generate_newsyslog() {
+
+	if ha_licensed
 	then
+		cp /conf/base/etc/newsyslog.conf /etc/newsyslog.conf
+
 		if [ "$(ha_node)" = "A" ]
 		then
-			local controller_ip=169.254.10.1
-			local controller_other_ip=169.254.10.2
-			local controller_file="/root/syslog/controller_b"
+			controller_file="/root/syslog/controller_b"
 		elif [ "$(ha_node)" = "B" ]
 		then
-			local controller_ip=169.254.10.2
-			local controller_other_ip=169.254.10.1
-			local controller_file="/root/syslog/controller_a"
+			controller_file="/root/syslog/controller_a"
 		fi
 
-		if [ ! -d "/root/syslog" ]
-		then
-			mkdir -p /root/syslog
-		fi
-{
-cat << _EOF_
+		cat <<-_EOF_>> /etc/newsyslog.conf
 
-
-# Redmine 32700
-source this_controller {
-udp(ip($controller_ip) port($controller_port));
-udp(default-facility(syslog) default-priority(emerg));
-};
-
-log {
-source(this_controller);
-destination(other_controller_file);
-};
-
-destination other_controller_file { file("$controller_file"); };
-destination other_controller { udp("$controller_other_ip" port($controller_port)); };
-
-log { source(src); filter(f_not_mdnsresponder); filter(f_not_nginx); filter(f_not_consul); destination(other_controller); };
+		# Redmine 32700
+		$controller_file		640  10	   200	@0101T JC
 _EOF_
-} >> /etc/local/syslog-ng.conf
 
-{
-cat << _EOF_
-
-
-# Redmine 32700
-$controller_file		640  10	   200	@0101T JC
-_EOF_
-} >> /etc/newsyslog.conf
 	fi
 }
 
@@ -180,13 +206,17 @@ get_syslog_dataset()
 
 ix_syslogd_start()
 {
+	# Redmine 32700	
+	ha_licensed
+
 	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 	generate_syslog_conf
 
+	
 	# Redmine 32700
-	generate_ha_syslog
-
+	generate_newsyslog
+	
 	if ! use_syslog_dataset
 	then
 		if [ -L "/var/log" ]
