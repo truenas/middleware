@@ -237,8 +237,11 @@ class Volume(Model):
             )
 
         vms_attached = None
-        with client as c:
-            vms_attached = c.call('vm.stop_by_pool', self.vol_name)
+        try:
+            with client as c:
+                vms_attached = c.call('vm.stop_by_pool', self.vol_name)
+        except Exception:
+            log.error('Failed to get VMs to stop', exc_info=True)
 
         if vms_attached:
             for vm_attached in vms_attached:
@@ -284,9 +287,12 @@ class Volume(Model):
             reload_iscsi = True
         reload_jails = len(attachments['jails']) > 0
 
-        # If there is any guest vm attached to this volume, we stop them.
-        with client as c:
-            c.call('vm.stop_by_pool', self.vol_name, True)
+        try:
+            # If there is any guest vm attached to this volume, we stop them.
+            with client as c:
+                c.call('vm.stop_by_pool', self.vol_name, True)
+        except Exception:
+            log.error('Failed to stop VMs', exc_info=True)
 
         if attachments['vm']:
             for device_id in attachments['vm']:
@@ -348,9 +354,12 @@ class Volume(Model):
                 ))
             ))
 
-        # If there is any guest vm attached to this volume, we stop them.
-        with client as c:
-            c.call('vm.stop_by_pool', self.vol_name, True)
+        try:
+            # If there is any guest vm attached to this volume, we stop them.
+            with client as c:
+                c.call('vm.stop_by_pool', self.vol_name, True)
+        except Exception:
+            log.error('Failed to stop VMs', exc_info=True)
 
         # Delete scheduled snapshots for this volume
         Task.objects.filter(
