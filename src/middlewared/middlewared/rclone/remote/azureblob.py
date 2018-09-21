@@ -7,6 +7,7 @@ class AzureBlobRcloneRemote(BaseRcloneRemote):
     title = "Microsoft Azure Blob Storage"
 
     buckets = True
+    bucket_title = "Container"
 
     fast_list = True
 

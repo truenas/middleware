@@ -7,6 +7,7 @@ class HubicRcloneRemote(BaseRcloneRemote):
     title = "Hubic"
 
     buckets = True
+    bucket_title = "Container"
 
     fast_list = True
 

@@ -61,6 +61,7 @@ define([
       url: "",
       credentials: "",
       buckets: {},
+      bucketTitle: {},
       taskSchemas: {},
       templateString: template,
       _buckets: null,
@@ -83,7 +84,8 @@ define([
         for(var i=0;i<credentials.length;i++) {
           creds.push({label: credentials[i][0], value: credentials[i][1]});
           this.buckets[credentials[i][1]] = credentials[i][2];
-          this.taskSchemas[credentials[i][1]] = credentials[i][3];
+          this.bucketTitle[credentials[i][1]] = credentials[i][3];
+          this.taskSchemas[credentials[i][1]] = credentials[i][4];
         }
 
         if(!gettext) {
@@ -177,9 +179,11 @@ define([
                 name: "bucket",
               }, this.dapBucketsInput);
             }
-            this.dapBucketInputError.innerHTML = "Error " + bucketsError.error + "<pre style='white-space: pre-wrap;'>" + entities.encode(bucketsError.reason) + "</pre>Please enter bucket name manually:";
+            this.dapBucketInputError.innerHTML = "Error " + bucketsError.error + "<pre style='white-space: pre-wrap;'>" + entities.encode(bucketsError.reason) + "</pre>Please enter " + this.bucketTitle[credentialId].toLowerCase() + " name manually:";
             if(this.initial.bucket) this._bucketsInput.set('value', this.initial.bucket);
           }
+          this.dapBucketLabel.innerHTML = this.bucketTitle[credentialId];
+          this.dapBucketInputLabel.innerHTML = this.bucketTitle[credentialId];
         } else {
           domStyle.set(this.dapBucket, "display", "none");
           domStyle.set(this.dapBucketInput, "display", "none");
