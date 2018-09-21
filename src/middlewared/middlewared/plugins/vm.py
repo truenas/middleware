@@ -755,14 +755,9 @@ class VMService(CRUDService):
 
     @private
     def __activate_sharefs(self, dataset):
-        pool_exist = False
-        images_fs = '/.bhyve_containers'
-        new_fs = dataset + images_fs
+        new_fs = f'{dataset}/.bhyve_containers'
 
-        if self.middleware.call_sync('zfs.dataset.query', [('id', '=', new_fs)]):
-            pool_exist = True
-
-        if pool_exist is False:
+        if not self.middleware.call_sync('zfs.dataset.query', [('id', '=', new_fs)]):
             try:
                 self.logger.debug('===> Trying to create: {0}'.format(new_fs))
                 self.middleware.call_sync('zfs.dataset.create', {
@@ -1224,6 +1219,11 @@ class VMService(CRUDService):
         if not sharefs:
             await self.middleware.call('vm.activate_sharefs')
             sharefs = await self.middleware.call('vm.get_sharefs')
+            if not sharefs:
+                raise CallError(
+                    'Failed to configure shared dataset for VMs. '
+                    'Make sure there is a pool available.'
+                )
 
         await self.middleware.run_in_thread(
             self.__fetch_and_decompress, container_image, sharefs, dest, str(size), job,
