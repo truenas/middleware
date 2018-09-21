@@ -705,6 +705,7 @@ class CloudSyncService(CRUDService):
                         for field in provider.credentials_schema
                     ],
                     "buckets": provider.buckets,
+                    "bucket_title": provider.bucket_title,
                     "task_schema": [
                         {
                             "property": field.name,

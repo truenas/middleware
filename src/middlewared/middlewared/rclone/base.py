@@ -3,6 +3,8 @@ class BaseRcloneRemote:
     title = NotImplemented
 
     buckets = False
+    bucket_title = "Bucket"
+
     readonly = False
 
     fast_list = False
