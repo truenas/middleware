@@ -166,7 +166,7 @@ get_raid_present()
 
 get_physical_disks_list()
 {
-    local _boot=$(glabel status | awk ' /iso9660\/(FREE|TRUE)NAS/ { print $3;}')
+    local _boot=$(glabel status | awk '/iso9660\/(FREE|TRUE)NAS/ { print $3 }')
     local _disk
 
     for _disk in $(sysctl -n kern.disks)
@@ -454,7 +454,7 @@ get_minimum_size() {
     do
 	_size=""
 	if create_partitions ${_disk} 1>&2; then
-	    _size=$(diskinfo /dev/${_disk}p2 | awk '{print $3;}')
+	    _size=$(diskinfo /dev/${_disk}p2 | cut -f 3)
 	    gpart destroy -F ${_disk} 1>&2
 	fi
 	if [ -z "${_size}" ]; then
@@ -486,7 +486,7 @@ partition_disk() {
 	for _disk in ${_disks}; do
 	    gpart destroy -F ${_disk} >/dev/null 2>&1 || true
 	    dd if=/dev/zero of=/dev/${_disk} bs=1m count=2 >/dev/null
-	    dd if=/dev/zero of=/dev/${_disk} bs=1m oseek=$(diskinfo /dev/${_disk} | awk '{print int($3/(1024*1024))-2;}') >/dev/null || true
+	    dd if=/dev/zero of=/dev/${_disk} bs=1m oseek=$(diskinfo /dev/${_disk} | awk '{ print int($3/(1024*1024))-2 }') >/dev/null || true
 	done
 
 	_minsize=$(get_minimum_size ${_disks})
@@ -640,7 +640,7 @@ disk_is_freenas()
 	# For GUI upgrades, we only have one OS partition
 	# that has conf/base/etc.  For ISO upgrades, we
 	# have two, but only one is active.
-	slice=$(gpart show ${_disk} | grep -F '[active]' | awk ' { print $3;}')
+	slice=$(gpart show ${_disk} | awk '/\[active\]/ { print $3 }')
 	if [ -z "${slice}" ]; then
 	    # We don't have an active slice, so something is wrong.
 	    return 1
@@ -927,7 +927,7 @@ menu_install()
 	break
     elif [ "${_satadom}" = "YES" -a -c /dev/ufs/TrueNASs4 ]; then
 	# Special hack for USB -> DOM upgrades
-	_disk_old=`glabel status | grep ' ufs/TrueNASs4 ' | awk '{ print $3 }' | sed -e 's,s4$,,g'`
+	_disk_old=`glabel status | awk '/ ufs\/TrueNASs4 / { print $3 }' | sed -e 's,s4$,,g'`
 	if disk_is_freenas ${_disk_old} ; then
 	    if ask_upgrade ${_disk_old} ; then
 		_do_upgrade=2
@@ -988,7 +988,7 @@ menu_install()
 	    # For old style, we have two potential
 	    # partitions to look at:  s1a and s2a.
 	    # 
-	    slice=$(gpart show ${_disk} | grep -F '[active]' | awk ' { print $3;}')
+	    slice=$(gpart show ${_disk} | awk '/\[active\]/ { print $3 }')
 	    if [ -z "${slice}" ]; then
 		# We don't have an active slice, so something is wrong.
 		false
@@ -1435,7 +1435,7 @@ parse_config() {
     # For the install, the mount situation is complex,
     # but we want to look for a label of "INSTALL" and find
     # out the device for that.
-    _boot=$(glabel status | awk ' /INSTALL/ { print $3;}')
+    _boot=$(glabel status | awk '/INSTALL/ { print $3 }')
     if [ -n "${_upgrade}" ]; then
 	# Option to do an upgrade
 	_output="-U ${_upgrade}"
@@ -1459,7 +1459,7 @@ parse_config() {
 	if [ "${_disk}" = "${_boot}" ]; then
 	    continue
 	fi
-	_diskSize=$(diskinfo ${_disk} | awk ' { print $3; }')
+	_diskSize=$(diskinfo ${_disk} | cut -f 3)
 	if [ -n "${_minSize}" ] && [ "${_diskSize}" -lt "${_minSize}" ]; then
 	    continue
 	fi
