@@ -121,7 +121,7 @@ class NFSShareFAdmin(BaseFreeAdmin):
         columns.insert(0, {
             'name': 'nfs_paths',
             'label': _('Paths'),
-            'sortable': False,
+            'sortable': True,
         })
         return columns
 
