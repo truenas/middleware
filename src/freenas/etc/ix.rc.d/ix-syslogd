@@ -84,8 +84,6 @@ __EOF__
                         mkdir -p /root/syslog
                 fi
 
-		date >> /tmp/THETIME
-
 		cat <<-_EOF_>> /etc/local/syslog-ng.conf
 
 		# Redmine 32700
