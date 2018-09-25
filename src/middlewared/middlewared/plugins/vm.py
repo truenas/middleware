@@ -207,7 +207,7 @@ class VMSupervisor(object):
                     wait = ''
 
                 vnc_resolution = device['attributes'].get('vnc_resolution', None)
-                vnc_port = int(device['attributes'].get('vnc_port', 5900 + self.vm['id']))
+                vnc_port = int(device['attributes'].get('vnc_port') or (5900 + self.vm['id']))
                 vnc_bind = device['attributes'].get('vnc_bind', '0.0.0.0')
                 vnc_password = device['attributes'].get('vnc_password', None)
                 vnc_web = device['attributes'].get('vnc_web', None)
