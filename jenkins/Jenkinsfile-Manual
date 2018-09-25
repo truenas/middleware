@@ -9,8 +9,11 @@ pipeline {
     GH_BUILD_BRANCH = 'master'
   }
   stages {
-
+      
     stage('Init') {
+    when {
+      changelog 'Jenkins: test this please'
+    }
       steps {
         checkout scm
         echo '*** Checking out build repo ***'
