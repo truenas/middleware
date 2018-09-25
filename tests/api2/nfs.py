@@ -80,7 +80,7 @@ def test_05_starting_nfs_service_at_boot():
 
 def test_06_checking_to_see_if_nfs_service_is_enabled_at_boot():
     results = GET("/service?service=nfs")
-    assert results.json()[0]["enable"] == True, results.text
+    assert results.json()[0]["enable"] is True, results.text
 
 
 def test_07_starting_nfs_service():
@@ -247,6 +247,7 @@ def test_27_removing_nfs_mountpoint():
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
+
 def test_28_delete_nfs_share():
     nfsid = GET('/sharing/nfs?comment=My Test Share').json()[0]['id']
     results = DELETE(f"/sharing/nfs/id/{nfsid}")
@@ -272,7 +273,7 @@ def test_31_disable_nfs_service_at_boot():
 
 def test_32_checking_nfs_disable_at_boot():
     results = GET("/service?service=nfs")
-    assert results.json()[0]['enable'] == False, results.text
+    assert results.json()[0]['enable'] is False, results.text
 
 
 # Check destroying a SMB dataset

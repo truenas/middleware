@@ -8,7 +8,7 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, POST
+from functions import GET, POST, DELETE
 
 dataset = "tank/vmware"
 url_dataset = "tank%2Fvmware"
@@ -25,20 +25,14 @@ def data():
     return {}
 
 
-def test_01_creating_dataset_for_vmware():
-    payload = {"name": dataset}
-    results = POST("/pool/dataset/", payload)
-    assert results.status_code == 200, results.text
-
-
-def test_02_get_vmware_query():
+def test_01_get_vmware_query():
     results = GET('/vmware/')
     assert results.status_code == 200
     assert isinstance(results.json(), list) is True
 
 
 @vmw_credentials
-def test_03_create_vmware(data):
+def test_02_create_vmware(data):
     payload = {
         'hostname': os.environ['VMWARE_HOST'],
         'username': os.environ['VMWARE_USERNAME'],
