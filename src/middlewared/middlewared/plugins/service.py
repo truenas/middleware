@@ -380,6 +380,7 @@ class ServiceService(CRUDService):
         return False, []
 
     async def _start_asigra(self, **kwargs):
+        await self.middleware.call('asigra.setup_filesystems')
         await self.middleware.call('asigra.setup_postgresql')
         await self._service("postgresql", "start", force=True, **kwargs)
         await self.middleware.call('asigra.setup_asigra')

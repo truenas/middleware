@@ -1411,21 +1411,7 @@ class S3Form(MiddlewareModelForm, ModelForm):
         return data
 
 
-#class AsigraForm(MiddlewareModelForm, ModelForm):
 class AsigraForm(ModelForm):
-
-#    middleware_attr_prefix = "asigra_"
-#    middleware_attr_schema = "asigra"
-#    middleware_plugin = "asigra"
-#    is_singletone = True
-
-#    asigra_bindip = forms.ChoiceField(
-#        label=models.Asigra._meta.get_field("asigra_bindip").verbose_name,
-#        help_text=models.Asigra._meta.get_field("asigra_bindip").help_text,
-#        widget=forms.widgets.FilteringSelect(),
-#        required=False,
-#        choices=(),
-#    )
 
     class Meta:
         fields = '__all__'
@@ -1435,6 +1421,16 @@ class AsigraForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(AsigraForm, self).__init__(*args, **kwargs)
 
+        self.fields['filesystem'] = forms.ChoiceField(
+            label=self.fields['filesystem'].label,
+        )
+        volnames = [o.vol_name for o in Volume.objects.all()]
+        choices = set([
+			y for y in list(notifier().list_zfs_fsvols().items())
+            if '/' in y[0] and y[0].split('/')[0] in volnames
+        ])
+        self.fields['filesystem'].choices = choices
+
         # XXX
         # At some point, we want to be able to change a path of necessary. This,
         # coupled with the save() method accomplish that, but the asigra
@@ -1442,44 +1438,21 @@ class AsigraForm(ModelForm):
         # for now until we get the go ahead to do this from asigra.
         # XXX
 
-        self.saved_asigra_path = None
-        if self.instance.id:
-            self.saved_asigra_path = self.instance.asigra_path
-            if self.instance.asigra_path:
-                self.fields["asigra_path"].widget.attrs["readonly"] = True
+        self._orig_filesystem = self.instance.filesystem
+        if self.instance.id and self.instance.filesystem:
+            if self.instance.filesystem:
+                self.fields["filesystem"].widget.attrs["readonly"] = True
 
-#        if self.data and self.data.get('asigra_bindip'):
-#            if ',' in self.data['asigra_bindip']:
-#                self.data = self.data.copy()
-#                self.data.setlist(
-#                    'asigra_bindip',
-#                    self.data['asigra_bindip'].split(',')
-#                )
-#        self.fields['asigra_bindip'].choices = list(choices.IPChoices(noloopback=False))
-#        if self.instance.id and self.instance.asigra_bindip:
-#            bindips = []
-#            for ip in self.instance.asigra_bindip:
-#                bindips.append(ip)
-#
-#            self.fields['asigra_bindip'].initial = (bindips)
-#        else:
-#            self.fields['asigra_bindip'].initial = ('')
-
-    def clean_asigra_path(self):
-        asigra_path = self.cleaned_data.get("asigra_path")
-        if not asigra_path:
-            raise forms.ValidationError("Path can't be empty!")
-        if not os.path.exists(asigra_path):
-            raise forms.ValidationError("Path does not exist!")
-        return asigra_path
+    def clean_filesystem(self):
+        fs = self.cleaned_data.get("filesystem")
+        if not fs:
+            raise forms.ValidationError("Filesystem can't be empty!")
+        if not os.path.exists(f'/mnt/{fs}'):
+            raise forms.ValidationError("Filesystem does not exist!")
+        return fs
 
     def save(self):
-        changed = False
-        if self.instance.id and (self.saved_asigra_path != self.instance.asigra_path):
-            changed = True
-
         obj = super(AsigraForm, self).save()
-        if changed:
-            notifier().restart("asigra") 
-
+        if self._orig_filesystem != obj.filesystem:
+            notifier().restart("asigra")
         return obj
