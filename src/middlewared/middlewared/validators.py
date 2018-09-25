@@ -6,11 +6,6 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
 
-class ShouldBe(Exception):
-    def __init__(self, what):
-        self.what = what
-
-
 class Email:
     def __call__(self, value):
         try:
