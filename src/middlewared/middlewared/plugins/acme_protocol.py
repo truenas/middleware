@@ -31,6 +31,14 @@ class ACMERegistrationService(CRUDService):
         namespace = 'acme.registration'
         private = True
 
+    async def query(self, filters=None, options=None):
+        for filter in filters or []:
+            if len(filter) == 3 and filter[0] == 'directory':
+                # Let's normalize directory uri for query
+                filter[2] += '/' if filter[2][-1] != '/' else ''
+
+        return await super().query(filters, options)
+
     async def register_extend(self, data):
         data['body'] = {
             key: value for key, value in
@@ -79,6 +87,10 @@ class ACMERegistrationService(CRUDService):
                 f'System was unable to retrieve the directory with the specified acme_directory_uri: {directory}'
             )
 
+        # Normalizing uri after directory call as let's encrypt staging api
+        # does not accept a trailing slash right now
+        data['acme_directory_uri'] += '/' if data['acme_directory_uri'][-1] != '/' else ''
+
         if not data['tos']:
             verrors.add(
                 'acme_registration_create.tos',
@@ -92,7 +104,9 @@ class ACMERegistrationService(CRUDService):
                 'Please specify root email address which will be used with the ACME server'
             )
 
-        if self.middleware.call_sync('acme.registration.query', [['directory', '=', data['acme_directory_uri']]]):
+        if self.middleware.call_sync(
+                'acme.registration.query', [['directory', '=', data['acme_directory_uri']]]
+        ):
             verrors.add(
                 'acme_registration_create.acme_directory_uri',
                 'A registration with the specified directory uri already exists'
@@ -114,8 +128,6 @@ class ACMERegistrationService(CRUDService):
             )
         )
         # We have registered with the acme server
-
-        data['acme_directory_uri'] += '/' if data['acme_directory_uri'][-1] != '/' else ''
 
         # Save registration object
         registration_id = self.middleware.call_sync(

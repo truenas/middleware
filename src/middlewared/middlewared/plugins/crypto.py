@@ -199,7 +199,7 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
             'Please provide a valid csr_id which has a valid CSR filed'
         )
 
-    await middleware.run_in_io_thread(
+    await middleware.run_in_thread(
         _validate_certificate_with_key, certificate, private_key, schema_name, verrors
     )
 
@@ -443,7 +443,7 @@ class CertificateService(CRUDService):
     @private
     async def get_fingerprint_of_cert(self, certificate_id):
         cert = await self._get_instance(certificate_id)
-        return await self.middleware.run_in_io_thread(
+        return await self.middleware.run_in_thread(
             self.fingerprint,
             cert['certificate']
         )
@@ -818,15 +818,6 @@ class CertificateService(CRUDService):
     )
     @job(lock='cert_create')
     async def do_create(self, job, data):
-        if not data.get('san'):
-            data.pop('san', None)
-
-        create_type = data.pop('create_type')
-        if create_type == 'CERTIFICATE_CREATE_ACME':
-            return await self.middleware.call(
-                'acme.create',
-                data
-            )
 
         if not data.get('dns_mapping'):
             data.pop('dns_mapping')  # Default dict added
@@ -843,7 +834,7 @@ class CertificateService(CRUDService):
 
         job.set_progress(10, 'Initial validation complete')
 
-        data = await self.middleware.run_in_io_thread(
+        data = await self.middleware.run_in_thread(
             self.map_functions[data.pop('create_type')],
             job, data
         )
@@ -1196,7 +1187,7 @@ class CertificateService(CRUDService):
         )
         certificate = self.middleware.call_sync('certificate._get_instance', id)
 
-        if certificate['acme']:
+        if certificate.get('acme'):
 
             client, key = self.get_acme_client_and_key(certificate['acme']['directory'], True)
 
