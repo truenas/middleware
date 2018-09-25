@@ -26,7 +26,7 @@ from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
-from middlewared.validators import IpInUse, MACAddr, ShouldBe
+from middlewared.validators import IpInUse, MACAddr
 
 
 SHUTDOWN_LOCK = asyncio.Lock()
@@ -294,8 +294,8 @@ class JailService(CRUDService):
                         len(value.split()) != 2 or
                         any(value.split().count(v) > 1 for v in value.split())
                     ):
-                        raise ShouldBe('Exception')
-                except ShouldBe:
+                        raise ValueError('Exception')
+                except ValueError:
                     verrors.add(
                         key,
                         'Please Enter two valid and different '
