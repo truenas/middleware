@@ -8,7 +8,7 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, POST, DELETE
+from functions import GET, POST
 
 dataset = "tank/vmware"
 url_dataset = "tank%2Fvmware"
