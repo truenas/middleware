@@ -1,5 +1,6 @@
 from collections import deque
-from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch, Ref
+from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.schema import accepts, Error, Int, Str, Dict, List, Bool, Patch, Ref
 from middlewared.service import (
     item_method, job, pass_app, private, CRUDService, CallError,
     ValidationError, ValidationErrors,
@@ -17,6 +18,7 @@ import netif
 import os
 import psutil
 import random
+import re
 import stat
 import subprocess
 import sysctl
@@ -36,6 +38,9 @@ CONTAINER_IMAGES = {
 }
 BUFSIZE = 65536
 ZFS_ARC_MAX_INITIAL = None
+
+ZVOL_CLONE_SUFFIX = '_clone'
+ZVOL_CLONE_RE = re.compile(rf'^(.*){ZVOL_CLONE_SUFFIX}\d+$')
 
 
 class VMManager(object):
@@ -205,7 +210,7 @@ class VMSupervisor(object):
                     wait = ''
 
                 vnc_resolution = device['attributes'].get('vnc_resolution', None)
-                vnc_port = int(device['attributes'].get('vnc_port', 5900 + self.vm['id']))
+                vnc_port = int(device['attributes'].get('vnc_port') or (5900 + self.vm['id']))
                 vnc_bind = device['attributes'].get('vnc_bind', '0.0.0.0')
                 vnc_password = device['attributes'].get('vnc_password', None)
                 vnc_web = device['attributes'].get('vnc_web', None)
@@ -349,6 +354,9 @@ class VMSupervisor(object):
         if_bridge = []
         bridge_enabled = False
 
+        if tapname == attach_iface:
+            raise CallError(f'VM cannot bridge with its own interface ({tapname}).')
+
         if attach_iface is None:
             # XXX: backward compatibility prior to 11.1-RELEASE.
             try:
@@ -368,15 +376,14 @@ class VMSupervisor(object):
             if brgname.startswith('bridge'):
                 if_bridge.append(iface)
 
-        if if_bridge:
-            for bridge in if_bridge:
-                if attach_iface in bridge.members:
-                    bridge_enabled = True
-                    self.set_iface_mtu(attach_iface_info, tap)
-                    bridge.add_member(tapname)
-                    if netif.InterfaceFlags.UP not in bridge.flags:
-                        bridge.up()
-                    break
+        for bridge in if_bridge:
+            if attach_iface in bridge.members:
+                bridge_enabled = True
+                self.set_iface_mtu(attach_iface_info, tap)
+                bridge.add_member(tapname)
+                if netif.InterfaceFlags.UP not in bridge.flags:
+                    bridge.up()
+                break
 
         if bridge_enabled is False:
             bridge = netif.get_interface(netif.create_interface('bridge'))
@@ -538,10 +545,7 @@ class VMUtils(object):
 
         return vm_private_dir
 
-    def check_sha256(file_path, vmOS):
-        vm_os = CONTAINER_IMAGES.get(vmOS)
-        digest_sha256 = vm_os['SHA256']
-
+    def check_sha256(file_path, digest_sha256):
         sha256 = hashlib.sha256()
         with open(file_path, 'rb') as f:
             while True:
@@ -686,23 +690,30 @@ class VMService(CRUDService):
             dict: will return a dict with vm_id, vm_name, device_id and disk path.
         """
         vms_attached = []
-        if pool:
-            devices = await self.middleware.call('datastore.query', 'vm.device')
-            for device in devices:
-                if device['dtype'] == 'DISK' or device['dtype'] == 'RAW':
-                        disk = device['attributes'].get('path', None)
-                        if device['dtype'] == 'DISK':
-                            disk = disk.lstrip('/dev/zvol/').split('/')[0]
-                        elif device['dtype'] == 'RAW':
-                            disk = disk.lstrip('/mnt/').split('/')[0]
+        if not pool:
+            return vms_attached
+        devices = await self.middleware.call('datastore.query', 'vm.device')
+        for device in devices:
+            if device['dtype'] not in ('DISK', 'RAW'):
+                continue
+            disk = device['attributes'].get('path', None)
+            if not disk:
+                continue
+            if device['dtype'] == 'DISK':
+                disk = disk.lstrip('/dev/zvol/').split('/')[0]
+            elif device['dtype'] == 'RAW':
+                disk = disk.lstrip('/mnt/').split('/')[0]
 
-                        if disk == pool:
-                            status = await self.status(device['vm'].get('id'))
-                            vms_attached.append({'vm_id': device['vm'].get('id'), 'vm_name': device['vm'].get('name'),
-                                                 'device_id': device.get('id'), 'vm_disk': device['attributes'].get('path', None)})
-                            if stop:
-                                if status.get('state') == 'RUNNING':
-                                    await self.stop(device['vm'].get('id'))
+            if disk == pool:
+                status = await self.status(device['vm'].get('id'))
+                vms_attached.append({
+                    'vm_id': device['vm'].get('id'),
+                    'vm_name': device['vm'].get('name'),
+                    'device_id': device.get('id'),
+                    'vm_disk': device['attributes'].get('path', None)
+                })
+                if stop and status.get('state') == 'RUNNING':
+                    await self.stop(device['vm'].get('id'))
         return vms_attached
 
     @accepts(Int('id'))
@@ -747,14 +758,9 @@ class VMService(CRUDService):
 
     @private
     def __activate_sharefs(self, dataset):
-        pool_exist = False
-        images_fs = '/.bhyve_containers'
-        new_fs = dataset + images_fs
+        new_fs = f'{dataset}/.bhyve_containers'
 
-        if self.middleware.call_sync('zfs.dataset.query', [('id', '=', new_fs)]):
-            pool_exist = True
-
-        if pool_exist is False:
+        if not self.middleware.call_sync('zfs.dataset.query', [('id', '=', new_fs)]):
             try:
                 self.logger.debug('===> Trying to create: {0}'.format(new_fs))
                 self.middleware.call_sync('zfs.dataset.create', {
@@ -793,8 +799,7 @@ class VMService(CRUDService):
             if pool_name:
                 return self.__activate_sharefs(pool_name)
             else:
-                self.logger.error('===> There is no pool available to activate a shared fs.')
-                return False
+                raise CallError('There is no pool available to activate VM filesystem.')
 
     @accepts()
     async def get_sharefs(self):
@@ -923,29 +928,6 @@ class VMService(CRUDService):
                     return True
         return False
 
-    @accepts(Str('raw_path'), Str('size'))
-    async def raw_resize(self, raw_path, size=0):
-        unit_size = ('M', 'G', 'T')
-        truncate_cmd = [
-            'truncate', '-s',
-        ]
-        if size is 0:
-            return False
-        if os.path.exists(raw_path):
-            if size is 0:
-                return False
-            expand_size = size if len(size) > 0 and size[-1:] in unit_size else size + 'G'
-            truncate_cmd += [expand_size, raw_path]
-            self.logger.debug('===> DISK: {0} resize to: {1}'.format(raw_path, expand_size))
-            error = await (await Popen(truncate_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
-            if error:
-                self.logger.debug('===> Error to resize disk: {0} with size: {1}'.format(raw_path, expand_size))
-                return False
-            else:
-                return True
-        else:
-            return False
-
     @accepts()
     def random_mac(self):
         """ Create a random mac address.
@@ -964,7 +946,7 @@ class VMService(CRUDService):
         Int('memory', required=True),
         Str('bootloader'),
         List('devices', default=[], items=[Ref('vmdevice_create')]),
-        Str('vm_type'),
+        Str('vm_type', default='Bhyve'),
         Bool('autostart'),
         Str('time', enum=['LOCAL', 'UTC'], default='LOCAL'),
         register=True,
@@ -1028,16 +1010,45 @@ class VMService(CRUDService):
         return vm_id
 
     async def __common_validation(self, verrors, schema_name, data, old=None):
+
+        bootloader = data.get('bootloader')
+        if bootloader and bootloader != 'GRUB' and data.get('vm_type') == 'Container Provider':
+            verrors.add(
+                f'{schema_name}.bootloader', 'Only GRUB bootloader allowed for container.'
+            )
+
+        vcpus = data.get('vcpus')
+        if vcpus:
+            flags = await self.middleware.call('vm.flags')
+            if flags['intel_vmx']:
+                if vcpus > 1 and flags['unrestricted_guest'] is False:
+                    verrors.add(
+                        f'{schema_name}.vcpus',
+                        'Only one Virtual CPU is allowed in this system.',
+                    )
+            elif flags['amd_rvi']:
+                if vcpus > 1 and flags['amd_asids'] is False:
+                    verrors.add(
+                        f'{schema_name}.vcpus',
+                        'Only one Virtual CPU is allowed in this system.',
+                    )
+
+        memory = data.get('memory')
+        if memory and memory < 1024 and data.get('type') == 'Container Provider':
+            verrors.add(f'{schema_name}.memory', 'Minimum container memory is 2048MiB.')
+
         if 'name' in data:
             filters = [('name', '=', data['name'])]
             if old:
                 filters.append(('id', '!=', old['id']))
             if await self.middleware.call('vm.query', filters):
                 verrors.add(f'{schema_name}.name', 'This name already exists.', errno.EEXIST)
+            elif not re.search(r'^[a-zA-Z_0-9]+$', data['name']):
+                verrors.add(f'{schema_name}.name', 'Only alphanumeric characters are allowed.')
 
         for i, device in enumerate(data.get('devices') or []):
             try:
-                await self.middleware.call('vm.device.validate_device', device)
+                device = await self.middleware.call('vm.device.validate_device', device)
             except ValidationErrors as verrs:
                 for attribute, errmsg, enumber in verrs:
                     verrors.add(f'{schema_name}.devices.{i}.{attribute}', errmsg, enumber)
@@ -1073,9 +1084,11 @@ class VMService(CRUDService):
         """Update all information of a specific VM."""
 
         old = await self._get_instance(id)
+        new = old.copy()
+        new.update(data)
 
         verrors = ValidationErrors()
-        await self.__common_validation(verrors, 'vm_update', data, old=old)
+        await self.__common_validation(verrors, 'vm_update', new, old=old)
         if verrors:
             raise verrors
 
@@ -1086,25 +1099,6 @@ class VMService(CRUDService):
             return await self.middleware.call('datastore.update', 'vm.vm', id, data)
         else:
             return update_devices
-
-    @accepts(Int('id'),
-             Dict('devices', additional_attrs=True), )
-    async def create_device(self, id, data):
-        """Create a new device in an existing vm."""
-        devices_type = ('NIC', 'DISK', 'CDROM', 'VNC', 'RAW')
-        devices = data.get('devices', None)
-
-        if devices:
-            devices[0].update({'vm': id})
-            dtype = devices[0].get('dtype', None)
-            if dtype in devices_type and isinstance(devices, list) is True:
-                devices = devices[0]
-                await self.middleware.call('datastore.insert', 'vm.device', devices)
-                return True
-            else:
-                return False
-        else:
-            return False
 
     @accepts(Int('id'))
     async def do_delete(self, id):
@@ -1172,96 +1166,217 @@ class VMService(CRUDService):
         """
         return await self._manager.status(id)
 
-    def fetch_hookreport(self, blocknum, blocksize, totalsize, job, file_name):
-        """Hook to report the download progress."""
-        readchunk = blocknum * blocksize
-        if totalsize > 0:
-            percent = readchunk * 1e2 / totalsize
-            job.set_progress(int(percent), 'Downloading', {'downloaded': readchunk, 'total': totalsize})
-
-    @accepts(Str('vmOS'), Bool('force', default=False))
+    @accepts(Dict(
+        'vmcreate_container',
+        Str('type', required=True),
+        Str('name', required=True),
+        Str('description'),
+        Int('vcpus', default=1),
+        Int('memory', required=True),
+        Str('root_password', password=True, required=True),
+        Bool('autostart', default=True),
+        List('devices', items=[Ref('vmdevice_create')], required=True),
+    ))
     @job(lock='container')
-    def fetch_image(self, job, vmOS, force=False):
-        """Download a pre-built image for bhyve"""
-        vm_os = CONTAINER_IMAGES.get(vmOS)
-        url = vm_os['URL']
+    async def create_container(self, job, data):
 
-        self.logger.debug('==> IMAGE: {0}'.format(vm_os))
+        verrors = ValidationErrors()
 
-        sharefs = self.middleware.call_sync('vm.get_sharefs')
-        vm_os_file = vm_os['GZIPFILE']
-        iso_path = sharefs + '/iso_files/'
-        file_path = iso_path + vm_os_file
+        await self.__common_validation(verrors, 'vmcreate_container', data)
 
-        if os.path.exists(file_path) is False and force is False:
-            logger.debug('===> Downloading: %s' % (url))
-            urlretrieve(
-                url,
-                file_path,
-                lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job, file_path)
+        dest = None
+        size = None
+        raw = None
+        for i, device in enumerate(data['devices']):
+            if device['dtype'] == 'RAW':
+                raw = device
+                if dest:
+                    verrors.add(
+                        f'vmcreate_container.devices.{i}.dtype',
+                        'Only one disk is allowed.',
+                    )
+                    break
+                dest = device['attributes'].get('path')
+                size = device['attributes'].get('size')
+                device['attributes']['boot'] = True
+                device['attributes']['rootpwd'] = data['root_password']
+                if not size:
+                    verrors.add(
+                        f'vmcreate_container.devices.{i}.attributes.size',
+                        'Size is required.',
+                    )
+
+        if not raw:
+            verrors.add(
+                'vmcreate_container.devices',
+                'A disk device of type RAW is required.',
             )
+
+        container_image = CONTAINER_IMAGES.get(data['type'])
+        if container_image is None:
+            verrors.add('vmcreate_container.type', 'Invalid container type.')
+
+        if verrors:
+            raise verrors
+
+        sharefs = await self.middleware.call('vm.get_sharefs')
+        if not sharefs:
+            await self.middleware.call('vm.activate_sharefs')
+            sharefs = await self.middleware.call('vm.get_sharefs')
+            if not sharefs:
+                raise CallError(
+                    'Failed to configure shared dataset for VMs. '
+                    'Make sure there is a pool available.'
+                )
+
+        await self.middleware.run_in_thread(
+            self.__fetch_and_decompress, container_image, sharefs, dest, str(size), job,
+        )
+        job.set_progress(80, 'Creating Docker VM')
+
+        try:
+            vmdata = data.copy()
+            vmdata['vm_type'] = 'Container Provider'
+            vmdata['bootloader'] = 'GRUB'
+            vmdata.pop('type')
+            vmdata.pop('root_password')
+            vm = await self.middleware.call('vm.create', vmdata)
+        except Exception as e:
+            raise CallError(f'Failed to create VM: {e}')
+        return vm
+
+    def __fetch_and_decompress(self, container_image, sharefs, dest, size, job):
+
+        file_path = os.path.join(sharefs, 'iso_files', container_image['GZIPFILE'])
+        for retry in range(3):
+            try:
+                self.__fetch_image(container_image['URL'], file_path, job)
+                break
+            except Exception:
+                pass
+        else:
+            raise CallError(f'Failed to download {container_image["URL"]} (retries={retry + 1})')
+
+        job.set_progress(60, 'Verifying integrity of the image')
+
+        if os.path.exists(file_path) and not self.vmutils.check_sha256(
+            file_path, container_image['SHA256']
+        ):
+            self.logger.debug(f'Checksum failed, removing file: {file_path}')
+            os.remove(file_path)
+
+        job.set_progress(70, 'Decompressing the image')
+        self.__decompress_gzip(file_path, dest)
+        self.__raw_resize(dest, size)
+
+    def __fetch_image(self, url, path, job):
+
+        def fetch_hookreport(blocknum, blocksize, totalsize):
+            """Hook to report the download progress."""
+            if totalsize > 0:
+                readchunk = blocknum * blocksize
+                percent = readchunk * 1e2 / totalsize
+                # Download is ~50% of the entire process
+                job.set_progress(
+                    int(percent / 2),
+                    'Downloading',
+                    {'downloaded': readchunk, 'total': totalsize}
+                )
+
+        if not os.path.exists(path):
+            urlretrieve(url, path, fetch_hookreport)
+
+    def __decompress_gzip(self, src, dst):
+        if os.path.exists(dst):
+            raise CallError(f'{dst} file already exists.')
+
+        if not self.vmutils.is_gzip(src):
+            raise CallError(f'{src} file is not a compressed file (gzip).')
+
+        with gzip.open(src, 'rb') as src_file, open(dst, 'wb') as dst_file:
+            shutil.copyfileobj(src_file, dst_file)
+
+    def __raw_resize(self, raw_path, size):
+        unit_size = ('M', 'G', 'T')
+        expand_size = size if len(size) > 0 and size[-1:] in unit_size else size + 'G'
+        self.logger.debug(f'Resizing {raw_path} to {expand_size}')
+        cp = subprocess.run(
+            ['truncate', '-s', expand_size, raw_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if cp.returncode:
+            self.logger.debug(f'Failed to resize: {cp.stderr.decode()}')
 
     @accepts()
     async def list_images(self):
         return CONTAINER_IMAGES
 
-    @accepts(Int('job_id'))
-    async def get_download_status(self, job_id):
-        """ Returns the status of the job, if job does not exists it returns False."""
-        job_pool = await self.middleware.call('core.get_jobs', [('method', '=', 'vm.fetch_image')])
-        for __job in job_pool:
-            if __job['id'] == job_id:
-                return __job
-        return False
-
-    @accepts(Str('vmOS'))
-    async def image_path(self, vmOS):
-        """Return the prebuilt image path or false in case it is not supported."""
-        vm_os = CONTAINER_IMAGES.get(vmOS, None)
-        if vm_os:
-            image_file = vm_os['GZIPFILE']
-            sharefs = await self.middleware.call('vm.get_sharefs')
-            file_path = sharefs + '/iso_files/' + image_file
-            if os.path.exists(file_path):
-                if self.vmutils.check_sha256(file_path, vmOS):
-                    self.logger.debug('===> Checksum OK: {}'.format(file_path))
-                    return file_path
-                else:
-                    self.logger.debug('===> Checksum NOK, removing file: {}'.format(file_path))
-                    os.remove(file_path)
-                    return False
-            else:
-                return False
-        else:
-            return False
-
-    @accepts(Str('src'), Str('dst'))
-    def decompress_gzip(self, src, dst):
-        if os.path.exists(dst):
-            self.logger.error('===> DST: {0} exist, we stop here.'.format(dst))
-            return False
-
-        if self.vmutils.is_gzip(src) is True:
-            self.logger.debug('===> SRC: {0} DST: {1}'.format(src, dst))
-            with gzip.open(src, 'rb') as src_file, open(dst, 'wb') as dst_file:
-                shutil.copyfileobj(src_file, dst_file)
-            return True
-        else:
-            self.logger.error('===> SRC: {0} does not exists or is broken.'.format(src))
-            return False
-
     async def __next_clone_name(self, name):
         vm_names = [
             i['name']
-            for i in await self.middleware.call('vm.query', [('name', '~', rf'{name}_clone\d+')])
+            for i in await self.middleware.call('vm.query', [
+                ('name', '~', rf'{name}{ZVOL_CLONE_SUFFIX}\d+')
+            ])
         ]
         clone_index = 0
         while True:
-            clone_name = f'{name}_clone{clone_index}'
+            clone_name = f'{name}{ZVOL_CLONE_SUFFIX}{clone_index}'
             if clone_name not in vm_names:
                 break
             clone_index += 1
         return clone_name
+
+    async def __clone_zvol(self, name, zvol, created_snaps, created_clones):
+        if not await self.middleware.call('zfs.dataset.query', [('id', '=', zvol)]):
+            raise CallError(f'zvol {zvol} does not exist.', errno.ENOENT)
+
+        snapshot_name = name
+        i = 0
+        while True:
+            zvol_snapshot = f'{zvol}@{snapshot_name}'
+            if await self.middleware.call('zfs.snapshot.query', [('id', '=', zvol_snapshot)]):
+                if ZVOL_CLONE_RE.search(snapshot_name):
+                    snapshot_name = ZVOL_CLONE_RE.sub(
+                        rf'\1{ZVOL_CLONE_SUFFIX}{i}', snapshot_name,
+                    )
+                else:
+                    snapshot_name = f'{name}{ZVOL_CLONE_SUFFIX}{i}'
+                i += 1
+                continue
+            break
+
+        if not await self.middleware.call('zfs.snapshot.create', {
+            'dataset': zvol, 'name': snapshot_name,
+        }):
+            raise CallError(f'Failed to snapshot {zvol_snapshot}.')
+
+        created_snaps.append(zvol_snapshot)
+
+        clone_suffix = name
+        i = 0
+        while True:
+            clone_dst = f'{zvol}_{clone_suffix}'
+            if await self.middleware.call('zfs.dataset.query', [('id', '=', clone_dst)]):
+                if ZVOL_CLONE_RE.search(clone_suffix):
+                    clone_suffix = ZVOL_CLONE_RE.sub(
+                        rf'\1{ZVOL_CLONE_SUFFIX}{i}', clone_suffix,
+                    )
+                else:
+                    clone_suffix = f'{name}{ZVOL_CLONE_SUFFIX}{i}'
+                i += 1
+                continue
+            break
+
+        if not await self.middleware.call('zfs.snapshot.clone', {
+            'snapshot': zvol_snapshot, 'dataset_dst': clone_dst,
+        }):
+            raise CallError(f'Failed to clone {zvol_snapshot}.')
+
+        created_clones.append(clone_dst)
+
+        return clone_dst
 
     @item_method
     @accepts(Int('id'))
@@ -1288,24 +1403,10 @@ class VMService(CRUDService):
                         del item['attributes']['vnc_port']
                 if item['dtype'] == 'DISK':
                     zvol = item['attributes']['path'].replace('/dev/zvol/', '')
-                    zvol_snapshot = zvol + '@' + vm['name']
-                    clone_dst = zvol + '_' + vm['name']
-
-                    if not await self.middleware.call('zfs.snapshot.create', {
-                        'dataset': zvol, 'name': vm['name'],
-                    }):
-                        raise CallError(f'Failed to snapshot {zvol_snapshot}.')
-
-                    created_snaps.append(zvol_snapshot)
-
-                    if not await self.middleware.call('zfs.snapshot.clone', {
-                        'snapshot': zvol_snapshot, 'dataset_dst': clone_dst,
-                    }):
-                        raise CallError(f'Failed to clone {zvol_snapshot}.')
-
-                    created_clones.append(clone_dst)
-
-                    item['attributes']['path'] = '/dev/zvol/' + clone_dst
+                    clone_dst = await self.__clone_zvol(
+                        vm['name'], zvol, created_snaps, created_clones,
+                    )
+                    item['attributes']['path'] = f'/dev/zvol/{clone_dst}'
                 if item['dtype'] == 'RAW':
                     item['attributes']['path'] = ''
                     self.logger.warn('For RAW disk you need copy it manually inside your NAS.')
@@ -1362,6 +1463,50 @@ class VMService(CRUDService):
 
 class VMDeviceService(CRUDService):
 
+    DEVICE_ATTRS = {
+        'CDROM': Dict(
+            'attributes',
+            Str('path', required=True),
+        ),
+        'RAW': Dict(
+            'attributes',
+            Str('path', required=True),
+            Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
+            Bool('exists', default=True),
+            Bool('boot', default=False),
+            Str('rootpwd', password=True),
+            Int('size', default=0),
+            Int('sectorsize', enum=[0, 512, 4096], default=0),
+        ),
+        'DISK': Dict(
+            'attributes',
+            Str('path'),
+            Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
+            Bool('create_zvol', default=False),
+            Str('zvol_name'),
+            Int('zvol_volsize'),
+            Int('sectorsize', enum=[0, 512, 4096], default=0),
+        ),
+        'NIC': Dict(
+            'attributes',
+            Str('type', enum=['E1000', 'VIRTIO'], default='E1000'),
+            Str('nic_attach', default=None),
+            Str('mac'),
+        ),
+        'VNC': Dict(
+            'attributes',
+            Str('vnc_resolution', enum=[
+                '1920x1200', '1920x1080', '1600x1200', '1600x900', '1280x1024',
+                '1280x720', '1024x768', '800x600', '640x480',
+            ], default='1024x768'),
+            Int('vnc_port', default=None),
+            Str('vnc_bind'),
+            Bool('wait', default=False),
+            Str('vnc_password', default=None, password=True),
+            Bool('vnc_web', default=False),
+        ),
+    }
+
     class Config:
         namespace = 'vm.device'
         datastore = 'vm.device'
@@ -1384,7 +1529,7 @@ class VMDeviceService(CRUDService):
             'vmdevice_create',
             Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'VNC', 'RAW'], required=True),
             Int('vm'),
-            Dict('attributes', additional_attrs=True),
+            Dict('attributes', additional_attrs=True, default=None),
             Int('order', default=None),
             register=True,
         ),
@@ -1394,7 +1539,7 @@ class VMDeviceService(CRUDService):
         if not data.get('vm'):
             raise ValidationError('vmdevice_create.vm', 'This field is required.')
 
-        await self.validate_device(data)
+        data = await self.validate_device(data)
         id = await self.middleware.call('datastore.insert', self._config.datastore, data)
         await self.__reorder_devices(id, data['vm'], data['order'])
 
@@ -1410,7 +1555,7 @@ class VMDeviceService(CRUDService):
         new = device.copy()
         new.update(data)
 
-        await self.validate_device(new, device)
+        new = await self.validate_device(new, device)
         await self.middleware.call('datastore.update', self._config.datastore, id, new)
         await self.__reorder_devices(id, device['vm'], new['order'])
 
@@ -1449,6 +1594,21 @@ class VMDeviceService(CRUDService):
     @private
     async def validate_device(self, device, old=None):
         verrors = ValidationErrors()
+        schema = self.DEVICE_ATTRS.get(device['dtype'])
+        if schema:
+            try:
+                device['attributes'] = schema.clean(device['attributes'])
+            except Error as e:
+                verrors.add(f'attributes.{e.attribute}', e.errmsg, e.errno)
+
+            try:
+                schema.validate(device['attributes'])
+            except ValidationErrors as e:
+                verrors.extend(e)
+
+            if verrors:
+                raise verrors
+
         if device.get('dtype') == 'DISK':
             if 'attributes' not in device:
                 verrors.add('attributes', 'This field is required.')
@@ -1467,17 +1627,43 @@ class VMDeviceService(CRUDService):
                     'pool.dataset.query', [('id', '=', parentzvol)]
                 ):
                     verrors.add(
-                        f'attributes.zvol_name',
+                        'attributes.zvol_name',
                         f'Parent dataset {parentzvol} does not exist.',
                         errno.ENOENT
                     )
             elif not path:
-                verrors.add('attributes.path', f'Disk path is required.')
+                verrors.add('attributes.path', 'Disk path is required.')
             elif path and not os.path.exists(path):
                 verrors.add('attributes.path', f'Disk path {path} does not exist.', errno.ENOENT)
 
+        elif device.get('dtype') == 'RAW':
+            path = device['attributes'].get('path')
+            exists = device['attributes'].pop('exists', True)
+            if not path:
+                verrors.add('attributes.path', 'Path is required.')
+            else:
+                if exists and not os.path.exists(path):
+                    verrors.add('attributes.path', 'Path must exist.')
+                if not exists and os.path.exists(path):
+                    verrors.add('attributes.path', 'Path must not exist.')
+                await check_path_resides_within_volume(
+                    verrors, self.middleware, 'attributes.path', path,
+                )
+        elif device.get('dtype') == 'CDROM':
+            path = device['attributes'].get('path')
+            if not path:
+                verrors.add('attributes.path', 'Path is required.')
+        elif device.get('dtype') == 'VNC':
+            vm = device.get('vm')
+            if vm:
+                vm = await self.middleware.call('vm.query', [('id', '=', vm)])
+                if vm and vm[0]['bootloader'] != 'UEFI':
+                    verrors.add('dtype', 'VNC only works with UEFI bootloader.')
+
         if verrors:
             raise verrors
+
+        return device
 
 
 async def kmod_load():

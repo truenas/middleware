@@ -12,9 +12,9 @@ from functools import wraps
 from threading import Lock
 
 
+# For freenasOS
 if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
-from freenasOS import Configuration
 
 BUILDTIME = None
 VERSION = None
@@ -187,6 +187,8 @@ def filter_list(_list, filters=None, options=None):
 
 
 def sw_buildtime():
+    # Lazy import to avoid freenasOS configure logging for us
+    from freenasOS import Configuration
     global BUILDTIME
     if BUILDTIME is None:
         conf = Configuration.Configuration()
@@ -197,6 +199,8 @@ def sw_buildtime():
 
 
 def sw_version():
+    # Lazy import to avoid freenasOS configure logging for us
+    from freenasOS import Configuration
     global VERSION
     if VERSION is None:
         conf = Configuration.Configuration()
@@ -207,6 +211,8 @@ def sw_version():
 
 
 def sw_version_is_stable():
+    # Lazy import to avoid freenasOS configure logging for us
+    from freenasOS import Configuration
     conf = Configuration.Configuration()
     train = conf.CurrentTrain()
     if train and 'stable' in train.lower():
