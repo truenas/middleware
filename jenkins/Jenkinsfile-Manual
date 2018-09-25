@@ -1,4 +1,7 @@
 pipeline {
+  triggers {
+    issueCommentTrigger('.*retest this please.*')
+  }
   agent {
     label 'FreeNAS-PR'
   }
@@ -11,9 +14,6 @@ pipeline {
   stages {
       
     stage('Init') {
-    when {
-      changelog 'Jenkins: test this please'
-    }
       steps {
         checkout scm
         echo '*** Checking out build repo ***'
