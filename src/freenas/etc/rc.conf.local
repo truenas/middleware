@@ -579,6 +579,7 @@ _asigra_config()
 {
 	_bool_svcconfig postgresql_enable asigra
 	_bool_svcconfig dssystem_enable asigra
+	echo "dssystem_env=\"PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin\""
 
 	local postgresql_path=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 		SELECT
