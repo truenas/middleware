@@ -1014,7 +1014,7 @@ class Middleware(object):
         self.loop = self.__loop = asyncio.get_event_loop()
 
         if self.loop_monitor:
-            self.__loop.set_debug(True)
+            # self.__loop.set_debug(True)
             # loop.slow_callback_duration(0.2)
             t = threading.Thread(target=self._loop_monitor_thread)
             t.setDaemon(True)
