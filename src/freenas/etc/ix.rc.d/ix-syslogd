@@ -101,6 +101,8 @@ log { source(src); filter(f_not_mdnsresponder); filter(f_not_nginx); filter(f_no
 _EOF_
 } >> /etc/local/syslog-ng.conf
 
+# Be sure and copy fresh file since we're appending
+cp /conf/base/etc/newsyslog.conf /etc/newsyslog.conf
 {
 cat << _EOF_
 
