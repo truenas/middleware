@@ -201,6 +201,9 @@ class Migrate(object):
                     props["dhcp"] = "yes"
                     props["bpf"] = "yes"
                     props["vnet"] = "on"
+                elif prop == 'AUTOCONF':
+                    props['ip6_addr'] = 'accept_rtadv'
+                    props['vnet'] = 'on'
                 else:
                     props[ioc_prop] = prop
 
@@ -366,7 +369,7 @@ class Migrate(object):
 
     def get_warden_release(self):
         jail_world = su.run(['file', f'{self.dataset}/bin/sh'], stdout=su.PIPE)
-        jail_world = jail_world.stdout.split()[-3].decode().rstrip(',')
+        jail_world = jail_world.stdout.split()[15].decode().rstrip(',')
 
         return f'{jail_world}-RELEASE'
 
