@@ -321,53 +321,6 @@ class AsigraService(Service):
 
         return True
 
-    def install_asigra(self):
-        ret = True
-
-        if os.path.exists("/asigra"):
-            dssystem_pkg = None
-
-            files = glob.glob("/asigra/DS-System_*/dssystem-*.txz")
-            for f in files:
-                dssystem_pkg = f
-
-            if dssystem_pkg:
-                with open("/tmp/dssystem_install.ini", "w") as f:
-                    f.write("silentmode=yes\n")
-
-                proc = Popen(
-                    ['/usr/sbin/pkg', 'add', '-f', dssystem_pkg],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    close_fds=True,
-                    env={'INSTALL_INI': '/tmp/dssystem_install.ini'}
-                )
-            else:
-                ret = False
-
-            output = (proc.communicate())[0].decode()
-            if proc.returncode != 0:
-                self.logger.error(output)
-                self.logger.error('Failed to install dssystem package:\n{}'.format(output))
-                ret = False
-
-            if ret is not False:
-                try:
-                    os.chmod("/usr/local/etc/rc.d/dssystem", 0o555)
-                    shutil.copyfile("/usr/local/etc/rc.d/dssystem", "/conf/base/etc/local/rc.d/dssystem")
-                    os.chmod("/conf/base/etc/local/rc.d/dssystem", 0o555)
-
-                except Exception:
-                    self.logger.error("Failed to install dssystem rc.d script")
-                    ret = False
-
-        return ret
-
-    def asigra_installed(self):
-        if not os.path.exists(os.path.join(self.dssystem_path, "libasigraencmodule.so")):
-            return False
-        return True
-
     def setup_asigra(self):
         asigra_config = None
         for row in self.middleware.call_sync('datastore.query', 'services.asigra'):
@@ -378,11 +331,6 @@ class AsigraService(Service):
         asigra_path = f'/mnt/{asigra_config["filesystem"]}/files'
         if not asigra_config["filesystem"] or not os.path.exists(asigra_path):
             return False
-
-        self.logger.debug("Checking to see if Asigra is installed")
-        if not self.asigra_installed():
-            self.logger.debug("Installing Asigra")
-            self.install_asigra()
 
         self.logger.debug("Checking to see if database exists")
         if not self.asigra_database_exists():
