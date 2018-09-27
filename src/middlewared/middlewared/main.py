@@ -1132,7 +1132,7 @@ class Middleware(object):
                 continue
             if last == current:
                 frame = sys._current_frames()[self.__thread_id]
-                stack = traceback.format_stack(frame, limit=10)
+                stack = traceback.format_stack(frame, limit=-10)
                 self.logger.warn(''.join(['Task seems blocked:'] + stack))
             last = current
 
