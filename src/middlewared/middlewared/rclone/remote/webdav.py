@@ -17,4 +17,4 @@ class WebDavRcloneRemote(BaseRcloneRemote):
     ]
 
     def get_task_extra(self, task):
-        return dict(vendor=task["attributes"]["vendor"].lower())
+        return dict(vendor=task["credentials"]["attributes"]["vendor"].lower())
