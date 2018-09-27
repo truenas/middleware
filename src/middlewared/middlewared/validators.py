@@ -124,8 +124,9 @@ class IpInUse:
         # ip is valid
         if ip not in self.exclude:
             ips = [
-                v.split('|')[1].split('/')[0] for jail in self.middleware.call_sync('jail.query')
-                for j_ip in [jail['ip4_addr'], jail['ip6_addr']] for v in j_ip.split(',') if j_ip != 'none'
+                v.split('|')[1].split('/')[0] if '|' in v else 'none'
+                for jail in self.middleware.call_sync('jail.query')
+                for j_ip in [jail['ip4_addr'], jail['ip6_addr']] for v in j_ip.split(',')
             ] + [
                 d['address'] for d in self.middleware.call_sync('interfaces.ip_in_use')
             ]

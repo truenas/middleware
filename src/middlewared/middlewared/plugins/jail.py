@@ -274,7 +274,7 @@ class JailService(CRUDService):
             exclude_ips = [
                 ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
                 for f in ('ip4_addr', 'ip6_addr') for ip in jail[f].split(',')
-                if ip != 'none'
+                if ip not in ('none', 'DHCP (not running)')
             ]
 
             self.validate_ips(
