@@ -19,26 +19,11 @@ export TERM
 : ${GB:=$((1000 * MB))} ${GiB:=$((1024 * MiB))}; readonly GB GiB
 : ${TB:=$((1000 * GB))} ${TiB:=$((1024 * GiB))}; readonly TB TiB
 
-# Checks if list $1 contains item $2
-# $1 must be a list delimited by newlines
-# $2 must not contain newlines
-list_contains()
-{
-    echo -n "$1" | grep -qF "$2"
-}
-
 is_truenas()
 {
 
     test "$AVATAR_PROJECT" = "TrueNAS"
     return $?
-}
-
-umass_sernums()
-{
-    sysctl dev.umass |
-	awk -F ": " '/%pnpinfo/ { print $2 }' |
-	sed 's/^.* sernum="\(.*[^\\]\)" .*$/\1/'
 }
 
 # Constant media size threshold for allowing swap partitions.
@@ -52,7 +37,7 @@ umass_sernums()
 # Sets SWAP_IS_SAFE to "YES" if
 #   we are on TrueNAS
 #   *or*
-#   every disk in $@ is >=64GB and none is USB
+#   every disk in $@ is >= ${MIN_SWAPSAFE_MEDIASIZE} and none is USB
 # Otherwise sets SWAP_IS_SAFE to "NO".
 #
 # Use `is_swap_safe` to check the value of ${SWAP_IS_SAFE}.
@@ -61,12 +46,11 @@ check_is_swap_safe()
     # We assume swap is safe on TrueNAS,
     # and we try to use the existing value for ${SWAP_IS_SAFE} if already set.
     if ! is_truenas && [ -z "${SWAP_IS_SAFE}" ] ; then
-	local _umass_sernums _safe _disk
-	readonly _umass_sernums="$(umass_sernums)"
+	local _disk
 	# Check every disk in $@, aborting if an unsafe disk is found.
 	for _disk ; do
 	    if [ $(diskinfo "${_disk}" | cut -f 3) -lt ${MIN_SWAPSAFE_MEDIASIZE} ] ||
-		list_contains "${_umass_sernums}" "$(diskinfo -s "${_disk}")" ; then
+		camcontrol identify "${_disk}" -v 2>&1 | grep -qF 'umass-sim' ; then
 		SWAP_IS_SAFE="NO"
 		break
 	    fi
