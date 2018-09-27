@@ -44,11 +44,11 @@ if len(argv) == 1:
     print(error_msg)
     exit()
 
+option_list = ["api=", "ip=", "password=", "interface=", 'test=']
+
 # look if all the argument are there.
 try:
-    myopts, args = getopt.getopt(argv[1:], 'aipItk:', ["api=", "ip=",
-                                                     "password=", "interface=",
-                                                     'test='])
+    myopts, args = getopt.getopt(argv[1:], 'aipItk:', option_list)
 except getopt.GetoptError as e:
     print(str(e))
     print(error_msg)
@@ -69,11 +69,12 @@ for output, arg in myopts:
         testName = arg
     elif output in ('-a', '--api'):
         api = arg
-        print(api)
     elif output == '-k':
         testexpr = arg
 
-if 'ip' not in locals() and 'password' not in locals() and 'interface' not in locals():
+if ('ip' not in locals() and
+        'password' not in locals() and
+        'interface' not in locals()):
     print("Mandatory option missing!\n")
     print(error_msg)
     exit()
