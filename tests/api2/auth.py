@@ -2,8 +2,6 @@
 
 # Author: Eric Turgeon
 # License: BSD
-# Location for tests into REST API of FreeNAS
-
 
 import pytest
 import sys
