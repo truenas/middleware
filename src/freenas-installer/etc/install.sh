@@ -12,11 +12,90 @@ export TERM
 
 . /etc/avatar.conf
 
+
+# Constants for base 10 and base 2 units
+: ${kB:=$((1000))}      ${kiB:=$((1024))};       readonly kB kiB
+: ${MB:=$((1000 * kB))} ${MiB:=$((1024 * kiB))}; readonly MB MiB
+: ${GB:=$((1000 * MB))} ${GiB:=$((1024 * MiB))}; readonly GB GiB
+: ${TB:=$((1000 * GB))} ${TiB:=$((1024 * GiB))}; readonly TB TiB
+
+# Checks if list $1 contains item $2
+# $1 must be a list delimited by newlines
+# $2 must not contain newlines
+list_contains()
+{
+    echo -n "$1" | grep -qF "$2"
+}
+
 is_truenas()
 {
 
     test "$AVATAR_PROJECT" = "TrueNAS"
     return $?
+}
+
+umass_sernums()
+{
+    sysctl dev.umass |
+	awk -F ": " '/%pnpinfo/ { print $2 }' |
+	sed 's/^.* sernum="\(.*[^\\]\)" .*$/\1/'
+}
+
+# Constant media size threshold for allowing swap partitions.
+: ${MIN_SWAPSAFE_MEDIASIZE:=$((60 * GB))}; readonly MIN_SWAPSAFE_MEDIASIZE
+
+# Check if it is safe to create swap partitions on the given disks.
+#
+# The result can be forced by setting SWAP_IS_SAFE in the environment to either
+# "YES" or "NO".
+#
+# Sets SWAP_IS_SAFE to "YES" if
+#   we are on TrueNAS
+#   *or*
+#   every disk in $@ is >=64GB and none is USB
+# Otherwise sets SWAP_IS_SAFE to "NO".
+#
+# Use `is_swap_safe` to check the value of ${SWAP_IS_SAFE}.
+check_is_swap_safe()
+{
+    # We assume swap is safe on TrueNAS,
+    # and we try to use the existing value for ${SWAP_IS_SAFE} if already set.
+    if ! is_truenas && [ -z "${SWAP_IS_SAFE}" ] ; then
+	local _umass_sernums _safe _disk
+	readonly _umass_sernums="$(umass_sernums)"
+	# Check every disk in $@, aborting if an unsafe disk is found.
+	for _disk ; do
+	    if [ $(diskinfo "${_disk}" | cut -f 3) -lt ${MIN_SWAPSAFE_MEDIASIZE} ] ||
+		list_contains "${_umass_sernums}" "$(diskinfo -s "${_disk}")" ; then
+		SWAP_IS_SAFE="NO"
+		break
+	    fi
+	done
+    fi
+    # Make sure we have a valid value for ${SWAP_IS_SAFE}.
+    # If unset, we are either on TrueNAS or didn't find an unsafe disk.
+    case "${SWAP_IS_SAFE:="YES"}" in
+	# Accept YES or NO (case-insensitive).
+	[Yy][Ee][Ss]) ;;
+	[Nn][Oo]) ;;
+	# Reject other values.
+	*)  echo "Ignoring invalid value for SWAP_IS_SAFE: ${SWAP_IS_SAFE}"
+	    unset SWAP_IS_SAFE
+	    check_is_swap_safe "$@"
+	    ;;
+    esac
+    export SWAP_IS_SAFE
+}
+
+# A specialized checkyesno for SWAP_IS_SAFE.
+# Returns 0 if it is ok to set up swap on the chosen disks, otherwise 1.
+# `check_is_swap_safe` must be called once before calling `is_swap_safe`.
+is_swap_safe()
+{
+    case "${SWAP_IS_SAFE:?}" in
+	[Yy][Ee][Ss]) true;;
+	*) false;;
+    esac
 }
 
 do_sata_dom()
@@ -112,6 +191,7 @@ bootManager=bsd
 commitDiskPart
 EOF
 }
+
 build_config()
 {
     # build_config ${_disk} ${_image} ${_config_file}
@@ -425,7 +505,7 @@ create_partitions() {
 	  fi
 	fi
 
-	if is_truenas; then
+	if is_swap_safe; then
 	    gpart add -t freebsd-swap -s 16g -i 3 ${_disk}
 	fi
 	if gpart add -t freebsd-zfs -a 4k -i 2 ${_size} ${_disk}; then
@@ -472,15 +552,16 @@ get_minimum_size() {
     echo ${_min}k
 }
 
-partition_disk() {
+partition_disks() {
 	local _disks _disksparts
 	local _mirror
 	local _minsize
 
 	_disks=$*
 
-	if is_truenas; then
-		gmirror destroy -f swap || true
+	check_is_swap_safe ${_realdisks}
+	if is_swap_safe; then
+	    gmirror destroy -f swap || true
 	fi
 	# Erase both typical metadata area.
 	for _disk in ${_disks}; do
@@ -1069,7 +1150,7 @@ menu_install()
       # We repartition on fresh install, or old upgrade_style
       # This destroys all of the pool data, and
       # ensures a clean filesystems.
-      partition_disk ${_realdisks}
+      partition_disks ${_realdisks}
       mount_disk /tmp/data
     fi
 
@@ -1094,7 +1175,7 @@ menu_install()
     /usr/local/bin/freenas-install -P /.mount/${OS}/Packages -M /.mount/${OS}-MANIFEST /tmp/data
 
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
-    if is_truenas; then
+    if is_swap_safe; then
        make_swap ${_realdisks}
     fi
     ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
@@ -1174,30 +1255,12 @@ menu_install()
 	fi
     fi
     : > /tmp/data/${FIRST_INSTALL_SENTINEL}
-    # Finally, before we unmount, start a srub.
+    # Finally, before we unmount, start a scrub.
     # zpool scrub freenas-boot || true
 
     umount /tmp/data/dev
     umount /tmp/data/var
     umount /tmp/data/
-
-    # We created a 16m swap partition earlier, for TrueNAS
-    # And created /data/fstab.swap as well.
-    if is_truenas ; then
-#        # Put a swap partition on newly created installation image
-#        if [ -e /dev/${_disk}s3 ]; then
-#            gpart delete -i 3 ${_disk}
-#            gpart add -t freebsd ${_disk}
-#            echo "/dev/${_disk}s3.eli		none			swap		sw		0	0" > /tmp/fstab.swap
-#        fi
-#
-#        mkdir -p /tmp/data
-#        mount /dev/${_disk}s4 /tmp/data
-#        ls /tmp/data > /dev/null
-#        mv /tmp/fstab.swap /tmp/data/
-#        umount /tmp/data
-#        rmdir /tmp/data
-    fi
 
     # End critical section.
     set +e
