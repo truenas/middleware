@@ -41,5 +41,5 @@ def test_05_check_system_debug():
 
 
 # Reboot system to enable tunable
-# def test_05_Reboot_system_to_enable_tunable():
+# def test_06_Reboot_system_to_enable_tunable():
 #     assert POST("/system/reboot/") == 200
