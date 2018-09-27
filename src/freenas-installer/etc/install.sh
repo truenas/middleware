@@ -37,7 +37,7 @@ is_truenas()
 # Sets SWAP_IS_SAFE to "YES" if
 #   we are on TrueNAS
 #   *or*
-#   every disk in $@ is >= ${MIN_SWAPSAFE_MEDIASIZE} and none is USB
+#   every disk in $@ is >= ${MIN_SWAPSAFE_MEDIASIZE} and none is USB and user says ok
 # Otherwise sets SWAP_IS_SAFE to "NO".
 #
 # Use `is_swap_safe` to check the value of ${SWAP_IS_SAFE}.
@@ -60,7 +60,16 @@ check_is_swap_safe()
     # If unset, we are either on TrueNAS or didn't find an unsafe disk.
     case "${SWAP_IS_SAFE:="YES"}" in
 	# Accept YES or NO (case-insensitive).
-	[Yy][Ee][Ss]) ;;
+	[Yy][Ee][Ss])
+	    # Confirm swap setup with FreeNAS users.
+	    if ! is_truenas &&
+		! dialog --clear --title "${AVATAR_PROJECT}" \
+		    --yes-label "Create swap" --no-label "No swap" --yesno  \
+		    "Create mirrored 16GB swap partitions on boot devices?" \
+		    7 74 ; then
+		SWAP_IS_SAFE="NO"
+	    fi
+	    ;;
 	[Nn][Oo]) ;;
 	# Reject other values.
 	*)  echo "Ignoring invalid value for SWAP_IS_SAFE: ${SWAP_IS_SAFE}"
@@ -543,10 +552,10 @@ partition_disks() {
 
 	_disks=$*
 
-	check_is_swap_safe ${_realdisks}
-	if is_swap_safe; then
-	    gmirror destroy -f swap || true
-	fi
+	check_is_swap_safe ${_disks}
+
+	gmirror destroy -f swap || true
+
 	# Erase both typical metadata area.
 	for _disk in ${_disks}; do
 	    gpart destroy -F ${_disk} >/dev/null 2>&1 || true
