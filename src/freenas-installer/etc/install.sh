@@ -65,7 +65,7 @@ check_is_swap_safe()
 	    if ! is_truenas &&
 		! dialog --clear --title "${AVATAR_PROJECT}" \
 		    --yes-label "Create swap" --no-label "No swap" --yesno  \
-		    "Create mirrored 16GB swap partitions on boot devices?" \
+		    "Create 16GB swap partition on boot devices?" \
 		    7 74 ; then
 		SWAP_IS_SAFE="NO"
 	    fi
