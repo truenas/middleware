@@ -10,6 +10,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST
 from auto_config import disk0, disk1, disk2
+
 global all_results
 all_results = {}
 
