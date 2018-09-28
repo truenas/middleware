@@ -583,7 +583,7 @@ _asigra_config()
 
 	local postgresql_path=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 		SELECT
-			asigra_postgresql_path
+			'/mnt/' || filesystem || '/database'
 		FROM
 			services_asigra
 		ORDER BY
