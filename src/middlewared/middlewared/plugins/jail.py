@@ -193,11 +193,18 @@ class JailService(CRUDService):
     def validate_ips(self, verrors, options, schema='options.props', exclude=None):
         for item in options['props']:
             for f in ('ip4_addr', 'ip6_addr'):
+                # valid ip values can be
+                # "none" "interface|accept_rtadv" "interface|ip/subnet" "interface|ip"
+                # we explicitly check these
                 if f in item:
-                    for ip in item.split('=')[1].split(','):
+                    for ip in [
+                        ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
+                        for ip in item.split('=')[1].split(',')
+                        if ip != 'none' and (ip.count('|') and ip.split('|')[1] != 'accept_rtadv')
+                    ]:
                         try:
                             IpInUse(self.middleware, exclude)(
-                                ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
+                                ip
                             )
                         except ShouldBe as e:
                             verrors.add(
