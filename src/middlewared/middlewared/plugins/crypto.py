@@ -728,6 +728,10 @@ class CertificateService(CRUDService):
             if not verrors:
                 new['type'] = CERT_TYPE_EXISTING
 
+                new.update(self.load_certificate(new['certificate']))
+
+                new['chain'] = True if len(RE_CERTIFICATE.findall(new['certificate'])) > 1 else False
+
         if new['name'] != old['name']:
 
             await validate_cert_name(self.middleware, data['name'], self._config.datastore, verrors,
@@ -845,8 +849,14 @@ class CertificateAuthorityService(CRUDService):
 
             ca_signed_certs.extend((await child_serials(ca_id)))
 
+            # There is for a case when user might have old certs in the db whose serial value
+            # isn't set in the db
+            ca_signed_certs = list(filter(None.__ne__, ca_signed_certs))
+
             if not ca_signed_certs:
-                return int((await self._get_instance(ca_id))['serial']) + 1
+                return int(
+                    (await self._get_instance(ca_id))['serial'] or 0
+                ) + 1
             else:
                 return max(ca_signed_certs) + 1
 
