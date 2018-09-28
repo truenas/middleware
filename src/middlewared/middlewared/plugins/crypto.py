@@ -728,7 +728,9 @@ class CertificateService(CRUDService):
             if not verrors:
                 new['type'] = CERT_TYPE_EXISTING
 
-                new.update(self.load_certificate(new['certificate']))
+                new.update(
+                    (await self.middleware.run_in_thread(self.load_certificate, new['certificate']))
+                )
 
                 new['chain'] = True if len(RE_CERTIFICATE.findall(new['certificate'])) > 1 else False
 
@@ -851,7 +853,7 @@ class CertificateAuthorityService(CRUDService):
 
             # There is for a case when user might have old certs in the db whose serial value
             # isn't set in the db
-            ca_signed_certs = list(filter(None.__ne__, ca_signed_certs))
+            ca_signed_certs = list(filter(None, ca_signed_certs))
 
             if not ca_signed_certs:
                 return int(
