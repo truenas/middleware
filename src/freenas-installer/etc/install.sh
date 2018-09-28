@@ -50,7 +50,7 @@ check_is_swap_safe()
 	# Check every disk in $@, aborting if an unsafe disk is found.
 	for _disk ; do
 	    if [ $(diskinfo "${_disk}" | cut -f 3) -lt ${MIN_SWAPSAFE_MEDIASIZE} ] ||
-		camcontrol identify "${_disk}" -v 2>&1 | grep -qF 'umass-sim' ; then
+		camcontrol negotiate "${_disk}" -v | grep -qF 'umass-sim' ; then
 		SWAP_IS_SAFE="NO"
 		break
 	    fi
