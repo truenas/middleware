@@ -130,7 +130,7 @@ class IpInUse:
             ]
 
             if ip in ips:
-                raise ShouldBe(
+                raise ValueError(
                     f'{ip} is already being used by the system. Please select another IP'
                 )
 
@@ -139,4 +139,4 @@ class MACAddr:
 
     def __call__(self, value):
         if not re.match('[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$', value.lower()):
-            raise ShouldBe('Please provide a valid MAC address')
+            raise ValueError('Please provide a valid MAC address')

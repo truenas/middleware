@@ -25,7 +25,7 @@ gstat_to_json(){
   #Still sets the "_tmp" variable as output
   _i=0
   _max_i=10 #10 columns in output as of 8/31/18 (Ken Moore)
-  local _out=$( gstat -b |
+  local _out=$( gstat -bp |
   while read line
   do
     #Output Fields:
@@ -105,6 +105,22 @@ ifstat_to_json(){
   _tmp="[${_out}]"
 }
 
+get_cpu_temp_to_json(){
+  _tmp=""
+  local _out=$(sysctl -q dev.cpu. | grep temperature | 
+  while read line
+  do
+    num=`echo "${line}" | cut -d . -f 3`
+    val=`echo "${line}" | cut -w -f 2 | cut -d C -f 1` #need to cut the "C" off the end of the value as well
+    #Now echo out that variable/value pair
+    echo ",\"${num}\":${val}"
+  done
+  )
+  if [ -n "${_out}" ] ; then
+    _tmp="{\"units\":\"C\", ${_out}}"
+  fi
+}
+
 #Get the memory per kernel zone
 _tmp=`vmstat -z --libxo json`
 if [ -n "${_tmp}" ] ; then
@@ -119,6 +135,11 @@ fi
 _tmp=`vmstat -P --libxo json`
 if [ -n "${_tmp}" ] ; then
   append_json_to_object "vmstat_summary" "${_tmp}"
+fi
+#Get the CPU temperatures
+get_cpu_temp_to_json
+if [ -n "${_tmp}" ] ; then
+  append_json_to_object "cpu_temperatures" "${_tmp}"
 fi
 #disk I/O stats
 gstat_to_json

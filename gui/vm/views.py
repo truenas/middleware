@@ -26,11 +26,13 @@
 #####################################################################
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.middleware.client import client
-from freenasUI.vm import models, utils
+from freenasUI.middleware.client import client, ValidationErrors
+from freenasUI.middleware.form import handle_middleware_validation
+from freenasUI.vm import forms, models, utils
 
 import json
 
@@ -52,36 +54,76 @@ def home(request):
     })
 
 
+def add(request):
+
+    if request.method == 'POST':
+        uuid = request.GET.get('uuid')
+        if uuid:
+            with client as c:
+                jobs = c.call('core.get_jobs', [('id', '=', int(uuid))])
+                if jobs:
+                    job = jobs[0]
+                    if job['state'] in ('FAILED', 'ABORTED'):
+                        initial = request.session.get('vm_add') or {}
+                        form = forms.VMForm(initial)
+                        form.is_valid()
+                        form._errors['__all__'] = form.error_class([f'Error creating VM: {job.get("error")}'])
+                        return render(request, 'vm/vm_add.html', {
+                            'form': form,
+                        })
+                    elif job['state'] == 'SUCCESS':
+                        return JsonResp(
+                            request,
+                            message=_('VM has been successfully created.'),
+                        )
+                return HttpResponse(uuid, status=202)
+        form = forms.VMForm(request.POST)
+        if form.is_valid():
+            try:
+                obj = form.save()
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
+            else:
+                if isinstance(obj, int):
+                    request.session['vm_add'] = request.POST.copy()
+                    request.session['vm_add_job'] = obj
+                    return HttpResponse(obj, status=202)
+                return JsonResp(request, message=_('VM has been successfully created.'))
+        return JsonResp(request, form=form)
+    else:
+        request.session['vm_add_job'] = None
+        form = forms.VMForm()
+
+    return render(request, 'vm/vm_add.html', {
+        'form': form,
+    })
+
+
+def add_progress(request):
+    jobid = request.session.get('vm_add_job')
+    data = {'indeterminate': True}
+    if jobid:
+        try:
+            with client as c:
+                jobs = c.call('core.get_jobs', [('id', '=', int(jobid))])
+                if jobs:
+                    job = jobs[0]
+                    data.update({
+                        'finished': job['state'] in ('SUCCESS', 'FAILED', 'ABORTED'),
+                        'error': job['error'],
+                        'percent': job['progress'].get('percent'),
+                        'indeterminate': True if job['progress']['percent'] is None else False,
+                        'details': job['progress'].get('description'),
+                        'step': 1,
+                    })
+        except Exception:
+            pass
+    return HttpResponse(json.dumps(data), content_type='application/json')
+
+
 def start(request, id):
     vm = models.VM.objects.get(id=id)
-    raw_file_cnt = None
-    raw_file_resize = 0
     if request.method == 'POST':
-        if vm.vm_type == 'Container Provider':
-            devices = models.Device.objects.filter(vm__id=vm.id)
-            for device in devices:
-                if device.dtype == 'RAW' and device.attributes.get('boot'):
-                    raw_file_cnt = device.attributes.get('path')
-                    raw_file_resize = device.attributes.get('size')
-
-            with client as c:
-                job_id = c.call('vm.fetch_image', 'RancherOS')
-                status = None
-                while status != 'SUCCESS':
-                    __call = c.call('vm.get_download_status', job_id)
-                    status = __call.get('state')
-                    utils.dump_download_progress(__call)
-                    if status == 'FAILED':
-                        return HttpResponse('Error: Image download failed!')
-                    elif status == 'ABORTED':
-                        return HttpResponse('Error: Download aborted!')
-                if status == 'SUCCESS':
-                    prebuilt_image = c.call('vm.image_path', 'RancherOS')
-                    if prebuilt_image and raw_file_cnt:
-                        c.call('vm.decompress_gzip', prebuilt_image, raw_file_cnt)
-                        c.call('vm.raw_resize', raw_file_cnt, raw_file_resize)
-                    elif prebuilt_image is False:
-                        return HttpResponse('Error: Checksum error in downloaded image. Image removed. Please retry.')
         with client as c:
             c.call('vm.start', id)
         return JsonResp(request, message='VM Started')

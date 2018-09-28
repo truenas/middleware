@@ -1,0 +1,24 @@
+{% extends "freeadmin/generic_model_add.html" %}
+{% block post_form %}
+<script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
+doSubmit({
+  form: this,
+  event: e,
+  url: '{{ request.path }}',
+  longRunning: true,
+  progressbar: {
+    mode: "single",
+    steps: [
+       {"label": gettext("Setting up VM")},
+    ],
+    poolUrl: '{% url "vm_add_progress" %}',
+    fileUpload: false
+  }
+});
+</script>
+<script type="dojo/method">
+addToStack(function() {
+    vmTypeToggle();
+});
+</script>
+{% endblock %}

@@ -1,4 +1,5 @@
 import binascii
+import bsd
 import errno
 import grp
 import os
@@ -206,6 +207,25 @@ class FilesystemService(Service):
         if mode:
             os.chmod(path, mode)
         return True
+
+    @accepts(Str('path'))
+    def statfs(self, path):
+        """
+        Return stats from the filesystem of a given path.
+
+        Raises:
+            CallError(ENOENT) - Path not found
+        """
+        try:
+            statfs = bsd.statfs(path)
+        except FileNotFoundError:
+            raise CallError('Path not found.', errno.ENOENT)
+        return {
+            **statfs.__getstate__(),
+            'total_bytes': statfs.total_blocks * statfs.blocksize,
+            'free_bytes': statfs.free_blocks * statfs.blocksize,
+            'avail_bytes': statfs.avail_blocks * statfs.blocksize,
+        }
 
 
 class FileFollowTailEventSource(EventSource):

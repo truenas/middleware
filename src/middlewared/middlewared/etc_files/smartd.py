@@ -70,7 +70,7 @@ def get_smartd_schedule(disk):
         get_smartd_schedule_piece(disk['smarttest_dayweek'], 1, 7, dict(zip([
             "mon", "tue", "wed", "thu", "fri", "sat", "sun"
         ], range(1, 8)))),
-        get_smartd_schedule_piece(disk['smarttest_hour'], 0, 23, "%02d"),
+        get_smartd_schedule_piece(disk['smarttest_hour'], 0, 23),
     ])
 
 

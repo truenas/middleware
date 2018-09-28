@@ -4,12 +4,15 @@ import time
 import subprocess as su
 
 import iocage_lib.iocage as ioc
+import iocage_lib.ioc_exceptions as ioc_exceptions
+
 import libzfs
 import requests
 import itertools
 import pathlib
 import json
 import sqlite3
+import errno
 from iocage_lib.ioc_check import IOCCheck
 from iocage_lib.ioc_clean import IOCClean
 from iocage_lib.ioc_fetch import IOCFetch
@@ -23,7 +26,7 @@ from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
-from middlewared.validators import IpInUse, MACAddr, ShouldBe
+from middlewared.validators import IpInUse, MACAddr
 
 
 SHUTDOWN_LOCK = asyncio.Lock()
@@ -78,7 +81,7 @@ class JailService(CRUDService):
                             jail['ip4_addr'] = f'{interface}|' \
                                 f'{out.splitlines()[2].split()[1].decode()}'
                         else:
-                            jail['ip4_address'] = 'DHCP (not running)'
+                            jail['ip4_addr'] = 'DHCP (not running)'
                     jails.append(jail)
         except BaseException:
             # Brandon is working on fixing this generic except, till then I
@@ -291,8 +294,8 @@ class JailService(CRUDService):
                         len(value.split()) != 2 or
                         any(value.split().count(v) > 1 for v in value.split())
                     ):
-                        raise ShouldBe('Exception')
-                except ShouldBe:
+                        raise ValueError('Exception')
+                except ValueError:
                     verrors.add(
                         key,
                         'Please Enter two valid and different '
@@ -313,7 +316,10 @@ class JailService(CRUDService):
 
     @private
     def check_dataset_existence(self):
-        IOCCheck()
+        try:
+            IOCCheck()
+        except ioc_exceptions.PoolNotActivated as e:
+            raise CallError(e, errno=errno.ENOENT)
 
     @private
     def check_jail_existence(self, jail, skip=True):
@@ -366,7 +372,7 @@ class JailService(CRUDService):
         if verrors:
             raise verrors
 
-        def progress_callback(content):
+        def progress_callback(content, exception):
             level = content['level']
             msg = content['message'].strip('\n')
             rel_up = f'* Updating {release} to the latest patch level... '
