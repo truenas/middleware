@@ -9,8 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET
-# from auto_config import user, password, ip
+from functions import GET  # , POST
 
 
 def test_01_check_if_system_is_ready_to_use():
