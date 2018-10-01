@@ -586,7 +586,7 @@ class CoreService(Service):
                 if i not in options:
                     raise ValidationError(i, f'{i} is required for PYDEV')
             os.environ['PATHS_FROM_ECLIPSE_TO_PYTHON'] = json.dumps([
-                [options['local_path'], '/usr/local/lib/python3.6/site-packages/middlewared'],
+                [options['local_path'], '/usr/local/lib/python3.7/site-packages/middlewared'],
             ])
             import pydevd
             pydevd.stoptrace()
