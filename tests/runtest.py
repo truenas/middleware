@@ -44,11 +44,11 @@ if len(argv) == 1:
     print(error_msg)
     exit()
 
+option_list = ["api=", "ip=", "password=", "interface=", 'test=']
+
 # look if all the argument are there.
 try:
-    myopts, args = getopt.getopt(argv[1:], 'aipItk:', ["api=", "ip=",
-                                                     "password=", "interface=",
-                                                     'test='])
+    myopts, args = getopt.getopt(argv[1:], 'aipItk:', option_list)
 except getopt.GetoptError as e:
     print(str(e))
     print(error_msg)
@@ -69,21 +69,22 @@ for output, arg in myopts:
         testName = arg
     elif output in ('-a', '--api'):
         api = arg
-        print(api)
     elif output == '-k':
         testexpr = arg
 
-if 'ip' not in locals() and 'password' not in locals() and 'interface' not in locals():
+if ('ip' not in locals() and
+        'password' not in locals() and
+        'interface' not in locals()):
     print("Mandatory option missing!\n")
     print(error_msg)
     exit()
 
 if interface == "vtnet0":
-    disk = 'disk1 = "vtbd1"\ndisk2 = "vtbd2"'
+    disk = 'disk0 = "vtbd0"\ndisk1 = "vtbd1"\ndisk2 = "vtbd2"'
 elif api == "1.0":
-    disk = 'disk1 = "da1"\ndisk2 = "da2"'
+    disk = 'disk0 = "da0"\ndisk1 = "da1"\ndisk2 = "da2"'
 else:
-    disk = 'disk1 = "ada1"\ndisk2 = "ada2"'
+    disk = 'disk0 = "ada0"\ndisk1 = "ada1"\ndisk2 = "ada2"'
 
 cfg_content = """#!/usr/bin/env python3.6
 
