@@ -8,7 +8,7 @@ from .schema import ResolverError, Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from .utils import start_daemon_thread, load_modules, load_classes
 from .webui_auth import WebUIAuth
-from .worker import ProcessPoolExecutor, main_worker
+from .worker import main_worker, worker_init
 from aiohttp import web
 from aiohttp.web_exceptions import HTTPPermanentRedirect
 from aiohttp.web_middlewares import normalize_path_middleware
@@ -737,7 +737,10 @@ class Middleware(object):
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
         multiprocessing.set_start_method('spawn')
-        self.__procpool = ProcessPoolExecutor(max_workers=2)
+        self.__procpool = concurrent.futures.ProcessPoolExecutor(
+            max_workers=2,
+            initializer=worker_init,
+        )
         self.__threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
         self.jobs = JobsQueue(self)
         self.__schemas = {}
