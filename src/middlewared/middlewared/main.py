@@ -1128,7 +1128,7 @@ class Middleware(object):
         last = None
         while True:
             time.sleep(2)
-            current = asyncio.Task.current_task(loop=self.__loop)
+            current = asyncio.current_task(loop=self.__loop)
             if current is None:
                 last = None
                 continue
@@ -1215,7 +1215,7 @@ class Middleware(object):
                 except Exception as e:
                     self.logger.error('Failed to terminate %s', service_name, exc_info=True)
 
-        for task in asyncio.Task.all_tasks():
+        for task in asyncio.all_tasks(loop=self.__loop):
             task.cancel()
 
         self.__loop.stop()
