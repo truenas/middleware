@@ -191,7 +191,7 @@ class VMWareService(CRUDService):
                         'remote_hostnames': host_mount_info.volume.remoteHostNames,
                         'username': host_mount_info.volume.userName,
                     }
-                elif host_mount_info.volume.type == 'OTHER' or host_mount_info.volume.type == 'VFFS':
+                elif host_mount_info.volume.type in ('OTHER', 'VFFS'):
                     # Ignore VFFS type, it does not store VM's
                     # Ignore OTHER type, it does not seem to be meaningful
                     pass
