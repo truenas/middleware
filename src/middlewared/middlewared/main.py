@@ -8,7 +8,7 @@ from .schema import ResolverError, Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from .utils import start_daemon_thread, load_modules, load_classes
 from .webui_auth import WebUIAuth
-from .worker import ProcessPoolExecutor, main_worker
+from .worker import main_worker, worker_init
 from aiohttp import web
 from aiohttp.web_exceptions import HTTPPermanentRedirect
 from aiohttp.web_middlewares import normalize_path_middleware
@@ -737,7 +737,10 @@ class Middleware(object):
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
         multiprocessing.set_start_method('spawn')
-        self.__procpool = ProcessPoolExecutor(max_workers=2)
+        self.__procpool = concurrent.futures.ProcessPoolExecutor(
+            max_workers=2,
+            initializer=worker_init,
+        )
         self.__threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
         self.jobs = JobsQueue(self)
         self.__schemas = {}
@@ -876,7 +879,7 @@ class Middleware(object):
         """
         for hook in self.__hooks[name]:
             try:
-                fut = hook['method'](*args, **kwargs)
+                fut = hook['method'](self, *args, **kwargs)
                 if hook['sync']:
                     await fut
                 else:
@@ -999,8 +1002,7 @@ class Middleware(object):
     async def _call_worker(self, serviceobj, name, *args, job=None):
         return await self.run_in_proc(
             main_worker,
-            # For now only plugins in middlewared.plugins are supported
-            f'middlewared.plugins.{serviceobj.__class__.__module__}',
+            serviceobj.__class__.__module__,
             serviceobj.__class__.__name__,
             name.rsplit('.', 1)[-1],
             args,
@@ -1126,7 +1128,7 @@ class Middleware(object):
         last = None
         while True:
             time.sleep(2)
-            current = asyncio.Task.current_task(loop=self.__loop)
+            current = asyncio.current_task(loop=self.__loop)
             if current is None:
                 last = None
                 continue
@@ -1213,7 +1215,7 @@ class Middleware(object):
                 except Exception as e:
                     self.logger.error('Failed to terminate %s', service_name, exc_info=True)
 
-        for task in asyncio.Task.all_tasks():
+        for task in asyncio.all_tasks(loop=self.__loop):
             task.cancel()
 
         self.__loop.stop()

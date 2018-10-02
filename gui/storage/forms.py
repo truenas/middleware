@@ -23,9 +23,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 from datetime import datetime, time
-from decimal import Decimal
 
 import base64
 import logging
@@ -48,22 +47,21 @@ from dojango import forms
 from dojango.forms import CheckboxSelectMultiple
 from freenasUI import choices
 from freenasUI.account.models import bsdUsers
-from freenasUI.common import humanize_number_si, humansize_to_bytes
+from freenasUI.common import humanize_number_si
 from freenasUI.common.forms import ModelForm, Form, mchoicefield
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.forms import (
     CronMultiple, UserField, GroupField, WarningSelect,
-    PathField,
+    PathField, SizeField,
 )
 from freenasUI.freeadmin.utils import key_order
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.middleware import zfs
-from freenasUI.middleware.client import client
+from freenasUI.middleware.client import client, ClientException, ValidationErrors
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.util import JobAborted, JobFailed, upload_job_and_wait
-from freenasUI.services.models import iSCSITargetExtent, services
+from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import dedup_enabled
@@ -133,37 +131,6 @@ class Disk(object):
     def __iter__(self):
         yield self.dev
         yield str(self)
-
-
-def _clean_zfssize_fields(form, attrs, prefix):
-
-    cdata = form.cleaned_data
-    for field in [prefix + x for x in attrs]:
-        if field not in cdata:
-            cdata[field] = ''
-
-    r = re.compile(r'^(\d+(?:\.\d+)?)([BKMGTP](?:iB)?)?$', re.I)
-    msg = _("Specify the size with IEC suffixes or 0, e.g. 10 GiB")
-
-    for attr in attrs:
-        formfield = '%s%s' % (prefix, attr)
-        match = r.match(cdata[formfield].replace(' ', ''))
-
-        if not match and cdata[formfield] != "0":
-            form._errors[formfield] = form.error_class([msg])
-            del cdata[formfield]
-        elif match:
-            number, suffix = match.groups()
-            if suffix and suffix.lower().endswith('ib'):
-                cdata[formfield] = '%s%s' % (number, suffix[0])
-            try:
-                Decimal(number)
-            except Exception:
-                form._errors[formfield] = form.error_class([
-                    _("%s is not a valid number") % (number, ),
-                ])
-                del cdata[formfield]
-    return cdata
 
 
 def _inherit_choices(choices, inheritvalue):
@@ -260,83 +227,59 @@ class VolumeManagerForm(VolumeMixin, Form):
     def save(self):
         formset = self._formset
         volume_name = self.cleaned_data.get("volume_name")
-        init_rand = self.cleaned_data.get("encryption_inirand", False)
-        if self.cleaned_data.get("encryption", False):
-            volume_encrypt = 1
+        encryption = self.cleaned_data.get("encryption", False)
+
+        volume = models.Volume.objects.filter(vol_name=volume_name)
+        if volume.count() > 0:
+            add = volume[0]
         else:
-            volume_encrypt = 0
-        dedup = self.cleaned_data.get("dedup", False)
+            add = False
 
-        volume = scrub = None
-        try:
-            vols = models.Volume.objects.filter(vol_name=volume_name)
-            if vols.count() > 0:
-                volume = vols[0]
-                add = True
-            else:
-                add = False
-                volume = models.Volume(vol_name=volume_name, vol_encrypt=volume_encrypt)
-                volume.save()
+        topology = defaultdict(list)
+        for i, form in enumerate(formset):
+            if not form.cleaned_data.get('vdevtype'):
+                continue
 
-            self.volume = volume
-
-            grouped = OrderedDict()
-            # FIXME: Make log as log mirror
-            for i, form in enumerate(formset):
-                if not form.cleaned_data.get('vdevtype'):
-                    continue
-                grouped[i] = {
-                    'type': form.cleaned_data.get("vdevtype"),
+            vdevtype = form.cleaned_data.get("vdevtype")
+            if vdevtype in ('raidz', 'raidz2', 'raidz3', 'mirror', 'stripe'):
+                topology['data'].append({
+                    'type': 'RAIDZ1' if vdevtype == 'raidz' else vdevtype.upper(),
                     'disks': form.cleaned_data.get("disks"),
-                }
+                })
+            elif vdevtype == 'cache':
+                topology['cache'].append({
+                    'type': 'STRIPE',
+                    'disks': form.cleaned_data.get("disks"),
+                })
+            elif vdevtype == 'log':
+                topology['log'].append({
+                    'type': 'STRIPE',
+                    'disks': form.cleaned_data.get("disks"),
+                })
+            elif vdevtype == 'log mirror':
+                topology['log'].append({
+                    'type': 'MIRROR',
+                    'disks': form.cleaned_data.get("disks"),
+                })
+            elif vdevtype == 'spare':
+                topology['spares'].extend(form.cleaned_data.get("disks"))
 
-            if add:
-                for gtype, group in list(grouped.items()):
-                    notifier().zfs_volume_attach_group(
-                        volume,
-                        group)
-
-            else:
-                notifier().create_volume(volume, groups=grouped, init_rand=init_rand)
-
-                if dedup:
-                    notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
-
-                scrub = models.Scrub.objects.create(scrub_volume=volume)
-        except Exception as e:
-            if not add and volume:
-                volume.delete(destroy=False, cascade=False)
-            if scrub:
-                scrub.delete()
-            raise e
-
-        if volume.vol_encrypt >= 2 and add:
-            # FIXME: ask current passphrase to the user
-            notifier().geli_passphrase(volume, None)
-            volume.vol_encrypt = 1
-            volume.save()
-
-        # Send geli keyfile to the other node
-        _n = notifier()
-        if volume_encrypt > 0 and not _n.is_freenas() and _n.failover_licensed():
-            with client as c:
-                _n.sync_file_send(c, volume.get_geli_keyfile())
-
-        # This must be outside transaction block to make sure the changes
-        # are committed before the call of ix-fstab
-        notifier().reload("disk")
-        if not add:
-            notifier().start("ix-syslogd")
-            notifier().restart("system_datasets")
-        # For scrub cronjob
-        notifier().restart("cron")
-
-        # restart smartd to enable monitoring for any new drives added
-        if (services.objects.get(srv_service='smartd').srv_enable):
-            notifier().restart("smartd")
+        with client as c:
+            try:
+                if add:
+                    pool = c.call('pool.update', add.id, {'topology': topology}, job=True)
+                else:
+                    pool = c.call('pool.create', {
+                        'name': volume_name,
+                        'encryption': encryption,
+                        'topology': topology,
+                    }, job=True)
+            except ValidationErrors as e:
+                self._errors['__all__'] = self.error_class([err.errmsg for err in e.errors])
+                return False
 
         # ModelForm compatibility layer for API framework
-        self.instance = volume
+        self.instance = self.volume = models.Volume.objects.filter(pk=pool['id'])
 
         return volume
 
@@ -351,18 +294,8 @@ class VolumeVdevForm(Form):
     )
 
     def clean_disks(self):
-        vdev = self.cleaned_data.get("vdevtype")
         # TODO: Safe?
         disks = eval(self.cleaned_data.get("disks"))
-        errmsg = _("You need at least %d disks")
-        if vdev == "mirror" and len(disks) < 2:
-            raise forms.ValidationError(errmsg % 2)
-        elif vdev == "raidz" and len(disks) < 3:
-            raise forms.ValidationError(errmsg % 3)
-        elif vdev == "raidz2" and len(disks) < 4:
-            raise forms.ValidationError(errmsg % 4)
-        elif vdev == "raidz3" and len(disks) < 5:
-            raise forms.ValidationError(errmsg % 5)
         return disks
 
     def clean(self):
@@ -376,119 +309,11 @@ class VolumeVdevForm(Form):
 
 class VdevFormSet(BaseFormSet):
 
-    def _clean_vdevtype(self, vdevfound, vdevtype):
-        if vdevtype in (
-            'cache',
-            'log',
-            'log mirror',
-            'spare',
-        ):
-            if vdevtype == 'log mirror':
-                name = 'log'
-            else:
-                name = vdevtype
-            if vdevfound[name] is True:
-                raise forms.ValidationError(_(
-                    'Only one row for the vitual device of type %s'
-                    ' is allowed.'
-                ) % name)
-            else:
-                vdevfound[name] = True
-
     def clean(self):
         if any(self.errors):
             # Don't bother validating the formset unless each form
             # is valid on its own
             return
-
-        vdevfound = defaultdict(lambda: False)
-        if not self.pform.cleaned_data.get("volume_add"):
-            """
-            We need to make sure at least one vdev is a
-            data vdev (non-log/cache/spare)
-            """
-            has_datavdev = False
-            datatype = None
-            for i in range(0, self.total_form_count()):
-                form = self.forms[i]
-                vdevtype = form.cleaned_data.get('vdevtype')
-                if vdevtype in (
-                    'mirror', 'stripe', 'raidz', 'raidz2', 'raidz3'
-                ):
-                    has_datavdev = True
-                    if datatype is not None and datatype != vdevtype:
-                        raise forms.ValidationError(_(
-                            "You are not allowed to create a volume with "
-                            "different data vdev types (%(vdev1)s and "
-                            "%(vdev2)s)"
-                        ) % {
-                            'vdev1': datatype,
-                            'vdev2': vdevtype,
-                        })
-                    datatype = vdevtype
-                    continue
-                self._clean_vdevtype(vdevfound, vdevtype)
-            if not has_datavdev:
-                raise forms.ValidationError(_("You need a data disk group"))
-        else:
-            zpool = notifier().zpool_parse(
-                self.pform.cleaned_data.get("volume_add")
-            )
-
-            for i in range(0, self.total_form_count()):
-                form = self.forms[i]
-                vdevtype = form.cleaned_data.get('vdevtype')
-                if not vdevtype:
-                    continue
-
-                if vdevtype in (
-                    'cache',
-                    'log',
-                    'log mirror',
-                    'spare',
-                ):
-                    self._clean_vdevtype(vdevfound, vdevtype)
-
-            for vdev in zpool.data:
-
-                for i in range(0, self.total_form_count()):
-                    errors = []
-                    form = self.forms[i]
-                    vdevtype = form.cleaned_data.get('vdevtype')
-                    if not vdevtype:
-                        continue
-
-                    if vdevtype in (
-                        'cache',
-                        'log',
-                        'log mirror',
-                        'spare',
-                    ):
-                        continue
-
-                    disks = form.cleaned_data.get('disks')
-
-                    if vdev.type != vdevtype:
-                        errors.append(_(
-                            "You are trying to add a virtual device of type "
-                            "'%(addtype)s' in a pool that has a virtual "
-                            "device of type '%(vdevtype)s'"
-                        ) % {
-                            'addtype': vdevtype,
-                            'vdevtype': vdev.type,
-                        })
-
-                    if len(disks) != len(list(iter(vdev))):
-                        errors.append(_(
-                            "You are trying to add a virtual device consisting"
-                            " of %(addnum)s device(s) in a pool that has a "
-                            "virtual device consisting of %(vdevnum)s device(s)"
-                        ) % {
-                            'addnum': len(disks),
-                            'vdevnum': len(list(iter(vdev))),
-                        })
-                    if errors:
-                        raise forms.ValidationError(errors[0])
 
 
 class ZFSVolumeWizardForm(Form):
@@ -671,82 +496,62 @@ class ZFSVolumeWizardForm(Form):
         )
         disk_list = self.cleaned_data['volume_disks']
         dedup = self.cleaned_data.get("dedup", False)
-        init_rand = self.cleaned_data.get("encini", False)
         if self.cleaned_data.get("enc", False):
-            volume_encrypt = 1
+            volume_encrypt = True
         else:
-            volume_encrypt = 0
+            volume_encrypt = False
 
         if (len(disk_list) < 2):
             group_type = 'stripe'
         else:
             group_type = self.cleaned_data['group_type']
+        if group_type == 'raidz':
+            group_type = 'raidz1'
+        group_type = group_type.upper()
 
-        volume = scrub = None
-        try:
-            vols = models.Volume.objects.filter(vol_name=volume_name)
-            if vols.count() == 1:
-                volume = vols[0]
-                add = True
-            else:
-                add = False
-                volume = models.Volume(vol_name=volume_name, vol_encrypt=volume_encrypt)
-                volume.save()
+        vols = models.Volume.objects.filter(vol_name=volume_name)
+        if vols.count() == 1:
+            add = vols[0]
+        else:
+            add = False
 
-            self.volume = volume
+        topology = defaultdict(list)
+        topology['data'].append({'type': group_type, 'disks': disk_list})
 
-            zpoolfields = re.compile(r'zpool_(.+)')
-            grouped = OrderedDict()
-            grouped['root'] = {'type': group_type, 'disks': disk_list}
-            for i, gtype in list(request.POST.items()):
-                if zpoolfields.match(i):
-                    if gtype == 'none':
-                        continue
-                    disk = zpoolfields.search(i).group(1)
-                    if gtype in grouped:
-                        # if this is a log vdev we need to mirror it for safety
-                        if gtype == 'log':
-                            grouped[gtype]['type'] = 'log mirror'
-                        grouped[gtype]['disks'].append(disk)
-                    else:
-                        grouped[gtype] = {'type': gtype, 'disks': [disk, ]}
+        zpoolfields = re.compile(r'zpool_(.+)')
+        for i, gtype in list(request.POST.items()):
+            if zpoolfields.match(i):
+                if gtype == 'none':
+                    continue
+                disk = zpoolfields.search(i).group(1)
+                # if this is a log vdev we need to mirror it for safety
+                if gtype in topology:
+                    if gtype == 'log':
+                        topology[gtype][0]['type'] = 'MIRROR'
+                    topology[gtype][0]['disks'].append(disk)
+                else:
+                    topology[gtype].append({
+                        'type': 'STRIPE',
+                        'disks': [disk],
+                    })
 
-            if len(disk_list) > 0 and add:
-                notifier().zfs_volume_attach_group(volume, grouped['root'])
+        with client as c:
+            try:
+                if add:
+                    c.call('pool.update', add.id, {'topology': topology}, job=True)
+                else:
+                    c.call('pool.create', {
+                        'name': volume_name,
+                        'encryption': volume_encrypt,
+                        'topology': topology,
+                        'deduplication': dedup.upper(),
+                    }, job=True)
+            except ValidationErrors as e:
+                self._errors['__all__'] = self.error_class([err.errmsg for err in e.errors])
+                return False
 
-            if add:
-                for grp_type in grouped:
-                    if grp_type in ('log', 'cache', 'spare'):
-                        notifier().zfs_volume_attach_group(
-                            volume,
-                            grouped.get(grp_type)
-                        )
-
-            else:
-                notifier().create_volume(volume, groups=grouped, init_rand=init_rand)
-
-                if dedup:
-                    notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
-
-                scrub = models.Scrub.objects.create(scrub_volume=volume)
-
-                try:
-                    notifier().zpool_enclosure_sync(volume.vol_name)
-                except Exception as e:
-                    log.error("Error syncing enclosure: %s", e)
-        except Exception:
-            if volume:
-                volume.delete(destroy=False, cascade=False)
-            if scrub:
-                scrub.delete()
-            raise
-
-        # This must be outside transaction block to make sure the changes
-        # are committed before the call of ix-fstab
-        notifier().reload("disk")
-        # For scrub cronjob
-        notifier().restart("cron")
         super(ZFSVolumeWizardForm, self).done(request, events)
+        return True
 
 
 class VolumeImportForm(Form):
@@ -1197,6 +1002,27 @@ class DiskEditBulkForm(Form):
         return models.Disk.objects.filter(pk__in=primary_keys)
 
 
+DATASET_COMMON_MAPPING = [
+    ('dataset_comments', 'comments', None),
+    ('dataset_sync', 'sync', str.upper),
+    ('dataset_compression', 'compression', str.upper),
+    ('dataset_share_type', 'share_type', str.upper),
+    ('dataset_atime', 'atime', str.upper),
+    ('dataset_refquota', 'refquota', lambda v: v or None),
+    ('refquota_warning', 'refquota_warning', None),
+    ('refquota_critical', 'refquota_critical', None),
+    ('dataset_quota', 'quota', lambda v: v or None),
+    ('quota_warning', 'quota_warning', None),
+    ('quota_critical', 'quota_critical', None),
+    ('dataset_refreservation', 'refreservation', None),
+    ('dataset_reservation', 'reservation', None),
+    ('dataset_dedup', 'deduplication', str.upper),
+    ('dataset_readonly', 'readonly', str.upper),
+    ('dataset_exec', 'exec', str.upper),
+    ('dataset_recordsize', 'recordsize', str.upper),
+]
+
+
 class ZFSDatasetCommonForm(Form):
     dataset_comments = forms.CharField(
         max_length=1024,
@@ -1222,23 +1048,43 @@ class ZFSDatasetCommonForm(Form):
         widget=forms.RadioSelect(attrs=attrs_dict),
         label=_('Enable atime'),
         initial=choices.ZFS_AtimeChoices[0][0])
-    dataset_refquota = forms.CharField(
-        max_length=128,
+    dataset_refquota = SizeField(
+        required=False,
         initial=0,
         label=_('Quota for this dataset'),
         help_text=_('0=Unlimited; example: 1 GiB'))
-    dataset_quota = forms.CharField(
-        max_length=128,
+    refquota_warning = forms.CharField(
+        required=False,
+        initial=None,
+        label=_('Quota warning alert at, %'),
+        help_text=_('0=Disabled, blank=inherit'))
+    refquota_critical = forms.CharField(
+        required=False,
+        initial=None,
+        label=_('Quota critical alert at, %'),
+        help_text=_('0=Disabled, blank=inherit'))
+    dataset_quota = SizeField(
+        required=False,
         initial=0,
         label=_('Quota for this dataset and all children'),
         help_text=_('0=Unlimited; example: 1 GiB'))
-    dataset_refreservation = forms.CharField(
-        max_length=128,
+    quota_warning = forms.CharField(
+        required=False,
+        initial=None,
+        label=_('Quota warning alert at, %'),
+        help_text=_('0=Disabled, blank=inherit'))
+    quota_critical = forms.CharField(
+        required=False,
+        initial=None,
+        label=_('Quota critical alert at, %'),
+        help_text=_('0=Disabled, blank=inherit'))
+    dataset_refreservation = SizeField(
+        required=False,
         initial=0,
         label=_('Reserved space for this dataset'),
         help_text=_('0=None; example: 1 GiB'))
-    dataset_reservation = forms.CharField(
-        max_length=128,
+    dataset_reservation = SizeField(
+        required=False,
         initial=0,
         label=_('Reserved space for this dataset and all children'),
         help_text=_('0=None; example: 1 GiB'))
@@ -1259,15 +1105,15 @@ class ZFSDatasetCommonForm(Form):
         initial=choices.ZFS_ExecChoices[0][0],
     )
     dataset_recordsize = forms.ChoiceField(
-        choices=(('inherit', _('Inherit')), ) + choices.ZFS_RECORDSIZE,
         label=_('Record Size'),
-        initial="",
+        choices=choices.ZFS_RECORDSIZE,
+        initial=choices.ZFS_RECORDSIZE[0][0],
         required=False,
         help_text=_(
             "Specifies a suggested block size for files in the file system. "
             "This property is designed solely for use with database workloads "
-            "that access files in fixed-size records.  ZFS automatically tunes"
-            " block sizes according to internal algorithms optimized for "
+            "that access files in fixed-size records.  ZFS automatically tunes "
+            "block sizes according to internal algorithms optimized for "
             "typical access patterns."
         )
     )
@@ -1275,14 +1121,16 @@ class ZFSDatasetCommonForm(Form):
     advanced_fields = (
         'dataset_readonly',
         'dataset_refquota',
+        'refquota_warning',
+        'refquota_critical',
         'dataset_quota',
+        'quota_warning',
+        'quota_critical',
         'dataset_refreservation',
         'dataset_reservation',
         'dataset_recordsize',
         'dataset_exec',
     )
-
-    zfs_size_fields = ['quota', 'refquota', 'reservation', 'refreservation']
 
     def __init__(self, *args, fs=None, **kwargs):
         self._fs = fs
@@ -1291,27 +1139,31 @@ class ZFSDatasetCommonForm(Form):
         if hasattr(self, 'parentdata'):
             self.fields['dataset_atime'].choices = _inherit_choices(
                 choices.ZFS_AtimeChoices,
-                self.parentdata['atime'][0]
+                self.parentdata['atime']['value'].lower()
             )
             self.fields['dataset_sync'].choices = _inherit_choices(
                 choices.ZFS_SyncChoices,
-                self.parentdata['sync'][0]
+                self.parentdata['sync']['value'].lower()
             )
             self.fields['dataset_compression'].choices = _inherit_choices(
                 choices.ZFS_CompressionChoices,
-                self.parentdata['compression'][0]
+                self.parentdata['compression']['value'].lower()
             )
             self.fields['dataset_dedup'].choices = _inherit_choices(
                 choices.ZFS_DEDUP_INHERIT,
-                self.parentdata['dedup'][0]
+                self.parentdata['deduplication']['value'].lower()
             )
             self.fields['dataset_readonly'].choices = _inherit_choices(
                 choices.ZFS_ReadonlyChoices,
-                self.parentdata['readonly'][0]
+                self.parentdata['readonly']['value'].lower()
             )
             self.fields['dataset_exec'].choices = _inherit_choices(
                 choices.ZFS_ExecChoices,
-                self.parentdata['exec'][0]
+                self.parentdata['exec']['value'].lower()
+            )
+            self.fields['dataset_recordsize'].choices = _inherit_choices(
+                choices.ZFS_RECORDSIZE,
+                self.parentdata['recordsize']['value']
             )
 
         if not dedup_enabled():
@@ -1325,59 +1177,58 @@ class ZFSDatasetCommonForm(Form):
                 'assistance.</span><br />'
             )
 
-    def clean_dataset_name(self):
-        name = self.cleaned_data["dataset_name"]
-        if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:. ]*$', name):
-            raise forms.ValidationError(_(
-                "Dataset names must begin with an "
-                "alphanumeric character and may only contain "
-                "\"-\", \"_\", \":\", \" \" and \".\"."))
+    def clean_quota_warning(self):
+        if self.cleaned_data["quota_warning"]:
+            if not self.cleaned_data["quota_warning"].isdigit():
+                raise forms.ValidationError("Not a valid integer")
 
-        return name
+            if not (0 <= int(self.cleaned_data["quota_warning"]) <= 100):
+                raise forms.ValidationError("Should be between 0 and 100")
 
-    def clean_data_to_props(self):
-        props = dict()
-        for prop in self.zfs_size_fields:
-            value = self.cleaned_data.get('dataset_%s' % prop)
-            if value and value == '0':
-                value = 'none'
+            return int(self.cleaned_data["quota_warning"])
 
-            props[prop] = value
+        return 'INHERIT'
 
-        for prop in (
-            'org.freenas:description', 'sync', 'compression', 'atime', 'dedup',
-            'aclmode', 'recordsize', 'casesensitivity', 'readonly', 'exec',
-        ):
-            if prop == 'org.freenas:description':
-                value = self.cleaned_data.get('dataset_comments')
-            elif prop == 'recordsize':
-                value = self.clean_dataset_recordsize()
-            elif prop == 'casesensitivity':
-                value = self.cleaned_data.get('dataset_case_sensitivity')
-            else:
-                value = self.cleaned_data.get('dataset_%s' % prop)
+    def clean_quota_critical(self):
+        if self.cleaned_data["quota_critical"]:
+            if not self.cleaned_data["quota_critical"].isdigit():
+                raise forms.ValidationError("Not a valid integer")
 
-            if value or prop in ('org.freenas:description',):
-                props[prop] = value
+            if not (0 <= int(self.cleaned_data["quota_critical"]) <= 100):
+                raise forms.ValidationError("Should be between 0 and 100")
 
-        return props
+            return int(self.cleaned_data["quota_critical"])
 
-    def clean_dataset_recordsize(self):
-        rs = self.cleaned_data.get("dataset_recordsize")
-        if not rs or rs == 'inherit':
-            return 'inherit'
+        return 'INHERIT'
 
-        try:
-            return int(rs)
-        except ValueError:
-            if rs[-1].lower() == 'm':
-                rs = int(rs[:-1]) * 1024 * 1024
-                return rs
-            elif rs[-1].lower() == 'k':
-                rs = int(rs[:-1]) * 1024
-                return rs
+    def clean_refquota_warning(self):
+        if self.cleaned_data["refquota_warning"]:
+            if not self.cleaned_data["refquota_warning"].isdigit():
+                raise forms.ValidationError("Not a valid integer")
 
-        raise forms.ValidationError(_('invalid recordsize provided'))
+            if not (0 <= int(self.cleaned_data["refquota_warning"]) <= 100):
+                raise forms.ValidationError("Should be between 0 and 100")
+
+            return int(self.cleaned_data["refquota_warning"])
+
+        return 'INHERIT'
+
+    def clean_refquota_critical(self):
+        if self.cleaned_data["refquota_critical"]:
+            if not self.cleaned_data["refquota_critical"].isdigit():
+                raise forms.ValidationError("Not a valid integer")
+
+            if not (0 <= int(self.cleaned_data["refquota_critical"]) <= 100):
+                raise forms.ValidationError("Should be between 0 and 100")
+
+            return int(self.cleaned_data["refquota_critical"])
+
+        return 'INHERIT'
+
+
+DATASET_IMMUTABLE_MAPPING = [
+    ('dataset_case_sensitivity', 'casesensitivity', str.upper),
+]
 
 
 class ZFSDatasetCreateForm(ZFSDatasetCommonForm):
@@ -1395,167 +1246,158 @@ class ZFSDatasetCreateForm(ZFSDatasetCommonForm):
     def __init__(self, *args, fs=None, **kwargs):
         # Common form expects a parentdata
         # We use `fs` as parent data because thats where we inherit props from
-        self.parentdata = notifier().zfs_get_options(fs)
+        with client as c:
+            self.parentdata = c.call('pool.dataset.query', [['name', '=', fs]], {'get': True})
         super(ZFSDatasetCreateForm, self).__init__(*args, fs=fs, **kwargs)
 
-    def clean(self):
-        cleaned_data = _clean_zfssize_fields(
-            self,
-            self.zfs_size_fields,
-            'dataset_')
-
-        full_dataset_name = "%s/%s" % (self._fs, cleaned_data.get("dataset_name"))
-
-        path = f'/mnt/{full_dataset_name}'
-        if os.path.exists(path):
-            raise forms.ValidationError(_('The path %s already exists.') % path)
-
-        if len(zfs.list_datasets(path=full_dataset_name)) > 0:
-            msg = _("You already have a dataset with the same name")
-            self._errors["dataset_name"] = self.error_class([msg])
-            del cleaned_data["dataset_name"]
-
-        return cleaned_data
-
     def save(self):
-        props = self.clean_data_to_props()
-        path = '%s/%s' % (self._fs, self.cleaned_data.get('dataset_name'))
+        data = {}
+        for old, new, save in DATASET_IMMUTABLE_MAPPING + DATASET_COMMON_MAPPING:
+            v = (save or (lambda x: x))(self.cleaned_data[old])
+            if v != 'INHERIT':
+                data[new] = v
 
-        err, msg = notifier().create_zfs_dataset(path=path, props=props)
-        if err:
-            self._errors['__all__'] = self.error_class([msg])
+        try:
+            with client as c:
+                c.call('pool.dataset.create', dict(
+                    data, name=f"{self.parentdata['name']}/{self.cleaned_data['dataset_name']}", type="FILESYSTEM"))
+
+            return True
+        except ValidationErrors as e:
+            m = {new: old for old, new, save in DATASET_IMMUTABLE_MAPPING + DATASET_COMMON_MAPPING}
+            for err in e.errors:
+                field_name = m.get(err.attribute.split('.', 1)[-1])
+                error_message = err.errmsg
+
+                if field_name not in self.fields:
+                    field_name = '__all__'
+
+                if field_name not in self._errors:
+                    self._errors[field_name] = self.error_class([error_message])
+                else:
+                    self._errors[field_name] += [error_message]
+
             return False
-
-        notifier().change_dataset_share_type(path, self.cleaned_data.get('dataset_share_type'))
-
-        return True
 
 
 class ZFSDatasetEditForm(ZFSDatasetCommonForm):
 
     def __init__(self, *args, fs=None, **kwargs):
-        # Common form expects a parentdata
-        # We use parent `fs` as parent data because thats where we inherit props from
-        self.parentdata = notifier().zfs_get_options(fs.rsplit('/', 1)[0])
+        with client as c:
+            zdata = c.call('pool.dataset.query', [['name', '=', fs]], {'get': True})
+            self.parentdata = c.call('pool.dataset.query', [['name', '=', fs.rsplit('/', 1)[0]]], {'get': True})
+
         super(ZFSDatasetEditForm, self).__init__(*args, fs=fs, **kwargs)
 
-        zdata = notifier().zfs_get_options(self._fs)
+        if 'comments' in zdata and zdata['comments']['source'] == 'LOCAL':
+            self.fields['dataset_comments'].initial = zdata['comments']['value']
 
-        if 'org.freenas:description' in zdata and zdata['org.freenas:description'][2] == 'local':
-            self.fields['dataset_comments'].initial = zdata['org.freenas:description'][0]
-
-        for k, v in self.get_initial_data(self._fs).items():
+        for k, v in self.get_initial_data(zdata).items():
             self.fields[k].initial = v
 
     @classmethod
-    def get_initial_data(cls, fs):
+    def get_initial_data(cls, zdata):
         """
         Method to get initial data for the form.
         This is a separate method to share with API code.
         """
-        zdata = notifier().zfs_get_options(fs)
         data = {}
 
-        if 'org.freenas:description' in zdata and zdata['org.freenas:description'][2] == 'local':
-            data['dataset_comments'] = zdata['org.freenas:description'][0]
-        for prop in cls.zfs_size_fields:
+        for prop in ['quota', 'refquota', 'reservation', 'refreservation']:
             field_name = f'dataset_{prop}'
-            if zdata[prop][0] == '0' or zdata[prop][0] == 'none':
+            if zdata[prop]['value'] == '0' or zdata[prop]['value'] == 'none':
                 data[field_name] = 0
             else:
-                if zdata[prop][2] == 'local':
-                    data[field_name] = zdata[prop][0]
+                if zdata[prop]['source'] == 'LOCAL':
+                    data[field_name] = zdata[prop]['value']
 
-        if zdata['dedup'][2] == 'inherit':
+        if zdata['deduplication']['source'] in ['DEFAULT', 'INHERITED']:
             data['dataset_dedup'] = 'inherit'
-        elif zdata['dedup'][0] in ('on', 'off', 'verify'):
-            data['dataset_dedup'] = zdata['dedup'][0]
-        elif zdata['dedup'][0] == 'sha256,verify':
+        elif zdata['deduplication']['value'] in ('ON', 'OFF', 'VERIFY'):
+            data['dataset_dedup'] = zdata['deduplication']['value'].lower()
+        elif zdata['deduplication']['value'] == 'SHA256,VERIFY':
             data['dataset_dedup'] = 'verify'
         else:
             data['dataset_dedup'] = 'off'
 
-        if zdata['sync'][2] == 'inherit':
+        if zdata['sync']['source'] in ['DEFAULT', 'INHERITED']:
             data['dataset_sync'] = 'inherit'
         else:
-            data['dataset_sync'] = zdata['sync'][0]
+            data['dataset_sync'] = zdata['sync']['value'].lower()
 
-        if zdata['compression'][2] == 'inherit':
+        if zdata['compression']['source'] in ['DEFAULT', 'INHERITED']:
             data['dataset_compression'] = 'inherit'
         else:
-            data['dataset_compression'] = zdata['compression'][0]
+            data['dataset_compression'] = zdata['compression']['value'].lower()
 
-        if zdata['atime'][2] == 'inherit':
+        if zdata['atime']['source'] in ['DEFAULT', 'INHERITED']:
             data['dataset_atime'] = 'inherit'
-        elif zdata['atime'][0] in ('on', 'off'):
-            data['dataset_atime'] = zdata['atime'][0]
+        elif zdata['atime']['value'] in ('ON', 'OFF'):
+            data['dataset_atime'] = zdata['atime']['value'].lower()
         else:
             data['dataset_atime'] = 'off'
 
-        if zdata['readonly'][2] == 'inherit':
+        if zdata['readonly']['source'] in ['DEFAULT', 'INHERITED']:
             data['dataset_readonly'] = 'inherit'
-        elif zdata['readonly'][0] in ('on', 'off'):
-            data['dataset_readonly'] = zdata['readonly'][0]
+        elif zdata['readonly']['value'] in ('ON', 'OFF'):
+            data['dataset_readonly'] = zdata['readonly']['value'].lower()
         else:
             data['dataset_readonly'] = 'off'
 
-        if zdata['exec'][2] == 'inherit':
+        if zdata['exec']['source'] in ['DEFAULT', 'INHERITED']:
             data['dataset_exec'] = 'inherit'
-        elif zdata['exec'][0] in ('on', 'off'):
-            data['dataset_exec'] = zdata['exec'][0]
+        elif zdata['exec']['value'] in ('ON', 'OFF'):
+            data['dataset_exec'] = zdata['exec']['value'].lower()
         else:
             data['dataset_exec'] = 'off'
 
-        if zdata['recordsize'][2] == 'inherit':
+        if zdata['recordsize']['source'] in ['DEFAULT', 'INHERITED']:
             data['dataset_recordsize'] = 'inherit'
         else:
-            data['dataset_recordsize'] = zdata['recordsize'][0]
+            data['dataset_recordsize'] = zdata['recordsize']['value']
 
-        data['dataset_share_type'] = notifier().get_dataset_share_type(fs)
+        data['dataset_share_type'] = zdata['share_type'].lower()
+
+        for k in ['quota_warning', 'quota_critical', 'refquota_warning', 'refquota_critical']:
+            if k in zdata and zdata[k]['source'] == 'LOCAL':
+                try:
+                    data[k] = int(zdata[k]['value'])
+                except ValueError:
+                    pass
 
         return data
 
-    def clean(self):
-        cleaned_data = _clean_zfssize_fields(
-            self,
-            self.zfs_size_fields,
-            'dataset_')
-
-        return cleaned_data
-
     def save(self):
-        props = self.clean_data_to_props()
-        name = self._fs
+        data = {}
+        for old, new, save in DATASET_COMMON_MAPPING:
+            v = (save or (lambda x: x))(self.cleaned_data[old])
+            data[new] = v
 
-        error = False
-        errors = dict()
+        try:
+            with client as c:
+                c.call('pool.dataset.update', self._fs, data)
 
-        for item, value in props.items():
-            if value == 'inherit':
-                success, msg = notifier().zfs_inherit_option(name, item)
-            else:
-                success, msg = notifier().zfs_set_option(name, item, value)
+            return True
+        except ValidationErrors as e:
+            m = {new: old for old, new, save in DATASET_COMMON_MAPPING}
+            for err in e.errors:
+                field_name = m.get(err.attribute.split('.', 1)[-1])
+                error_message = err.errmsg
 
-            error |= not success
-            if not success:
-                error = True
-                errors[f'dataset_{item}'] = msg
+                if field_name not in self.fields:
+                    field_name = '__all__'
 
-        notifier().change_dataset_share_type(name, self.cleaned_data.get('dataset_share_type'))
+                if field_name not in self._errors:
+                    self._errors[field_name] = self.error_class([error_message])
+                else:
+                    self._errors[field_name] += [error_message]
 
-        for field, err in list(errors.items()):
-            self._errors[field] = self.error_class([err])
-
-        if error:
             return False
-
-        return True
 
 
 class CommonZVol(Form):
     zvol_comments = forms.CharField(max_length=120, label=_('Comments'), required=False)
-    zvol_volsize = forms.CharField(
-        max_length=128,
+    zvol_volsize = SizeField(
         label=_('Size for this zvol'),
         help_text=_('Example: 1 GiB'),
     )
@@ -1588,15 +1430,15 @@ class CommonZVol(Form):
         if hasattr(self, 'parentdata'):
             self.fields['zvol_sync'].choices = _inherit_choices(
                 choices.ZFS_SyncChoices,
-                self.parentdata['sync'][0]
+                self.parentdata['sync']['value'].lower()
             )
             self.fields['zvol_compression'].choices = _inherit_choices(
                 choices.ZFS_CompressionChoices,
-                self.parentdata['compression'][0]
+                self.parentdata['compression']['value'].lower()
             )
             self.fields['zvol_dedup'].choices = _inherit_choices(
                 choices.ZFS_DEDUP_INHERIT,
-                self.parentdata['dedup'][0]
+                self.parentdata['deduplication']['value'].lower()
             )
 
         if not dedup_enabled():
@@ -1610,48 +1452,15 @@ class CommonZVol(Form):
                 'assistance.</span><br />'
             )
 
-    def _zvol_force(self):
-        if self._force:
-            if not self.cleaned_data.get('zvol_force'):
-                self._errors['zvol_volsize'] = self.error_class([
-                    'It is not recommended to use more than 80% of your '
-                    'available space for your zvol!'
-                ])
 
-    def clean_zvol_volsize(self):
-        size = self.cleaned_data.get('zvol_volsize').replace(' ', '')
-        reg = re.search(r'^(\d+(?:\.\d+)?)([BKMGTP](?:iB)?)$', size, re.I)
-        if not reg:
-            raise forms.ValidationError(
-                _('Specify the size with IEC suffixes, e.g. 10 GiB')
-            )
-
-        number, suffix = reg.groups()
-        if suffix.lower().endswith('ib'):
-            size = '%s%s' % (number, suffix[0])
-
-        zlist = zfs.zfs_list(path=self.parentds, include_root=True, recursive=True, hierarchical=False)
-        if zlist:
-            dataset = zlist.get(self.parentds)
-            _map = {
-                'P': 1125899906842624,
-                'T': 1099511627776,
-                'G': 1073741824,
-                'M': 1048576,
-            }
-            if suffix in _map:
-                cmpsize = Decimal(number) * _map.get(suffix)
-            else:
-                cmpsize = Decimal(number)
-            avail = dataset.avail
-            if hasattr(self, 'name'):
-                zvol = zlist.get(self.name)
-                if zvol:
-                    avail += zvol.used
-            if cmpsize > avail * 0.80:
-                self._force = True
-
-        return size
+ZVOL_COMMON_MAPPING = [
+    ('zvol_comments', 'comments', None),
+    ('zvol_sync', 'sync', str.upper),
+    ('zvol_compression', 'compression', str.upper),
+    ('zvol_dedup', 'deduplication', str.upper),
+    ('zvol_volsize', 'volsize', None),
+    ('zvol_force', 'force_size', None),
+]
 
 
 class ZVol_EditForm(CommonZVol):
@@ -1660,28 +1469,28 @@ class ZVol_EditForm(CommonZVol):
         # parentds is required for CommonZVol
         self.name = kwargs.pop('name')
         self.parentds = self.name.rsplit('/', 1)[0]
-        _n = notifier()
-        self.parentdata = _n.zfs_get_options(self.parentds)
+        with client as c:
+            self.zdata = c.call('pool.dataset.query', [['name', '=', self.name]], {'get': True})
+            self.parentdata = c.call('pool.dataset.query', [['name', '=', self.parentds]], {'get': True})
         super(ZVol_EditForm, self).__init__(*args, **kwargs)
 
-        self.zdata = _n.zfs_get_options(self.name)
-        if 'org.freenas:description' in self.zdata and self.zdata['org.freenas:description'][2] == 'local':
-            self.fields['zvol_comments'].initial = self.zdata['org.freenas:description'][0]
-        if self.zdata['sync'][2] == 'inherit':
+        if self.zdata['comments']['source'] == 'LOCAL':
+            self.fields['zvol_comments'].initial = self.zdata['comments']['value']
+        if self.zdata['sync']['source'] in ['DEFAULT', 'INHERITED']:
             self.fields['zvol_sync'].initial = 'inherit'
         else:
-            self.fields['zvol_sync'].initial = self.zdata['sync'][0]
-        if self.zdata['compression'][2] == 'inherit':
+            self.fields['zvol_sync'].initial = self.zdata['sync']['value'].lower()
+        if self.zdata['compression']['source'] in ['DEFAULT', 'INHERITED']:
             self.fields['zvol_compression'].initial = 'inherit'
         else:
-            self.fields['zvol_compression'].initial = self.zdata['compression'][0]
-        self.fields['zvol_volsize'].initial = self.zdata['volsize'][0]
+            self.fields['zvol_compression'].initial = self.zdata['compression']['value'].lower()
+        self.fields['zvol_volsize'].initial = self.zdata['volsize']['parsed']
 
-        if self.zdata['dedup'][2] == 'inherit':
+        if self.zdata['deduplication']['source'] in ['DEFAULT', 'INHERITED']:
             self.fields['zvol_dedup'].initial = 'inherit'
-        elif self.zdata['dedup'][0] in ('on', 'off', 'verify'):
-            self.fields['zvol_dedup'].initial = self.zdata['dedup'][0]
-        elif self.zdata['dedup'][0] == 'sha256,verify':
+        elif self.zdata['deduplication']['value'] in ('ON', 'OFF', 'VERIFY'):
+            self.fields['zvol_dedup'].initial = self.zdata['deduplication']['value'].lower()
+        elif self.zdata['deduplication']['value'] == 'SHA256,VERIFY':
             self.fields['zvol_dedup'].initial = 'verify'
         else:
             self.fields['zvol_dedup'].initial = 'off'
@@ -1697,51 +1506,49 @@ class ZVol_EditForm(CommonZVol):
                 'assistance.</span><br />'
             )
 
-    def clean(self):
-        cleaned_data = _clean_zfssize_fields(self, ('volsize', ), "zvol_")
-        volsize = cleaned_data.get('zvol_volsize')
-        if volsize and 'zvol_volsize' not in self._errors:
-            if humansize_to_bytes(self.zdata['volsize'][0]) > humansize_to_bytes(volsize):
-                self._errors['zvol_volsize'] = self.error_class([
-                    _('You cannot shrink a zvol from GUI, this may lead to data loss.')
-                ])
-        self._zvol_force()
-        return cleaned_data
-
     def save(self):
-        _n = notifier()
-        error = False
-        for attr, formfield, can_inherit in (
-            ('org.freenas:description', 'zvol_comments', False),
-            ('sync', None, True),
-            ('compression', None, True),
-            ('dedup', None, True),
-            ('volsize', None, True),
-        ):
-            if not formfield:
-                formfield = f'zvol_{attr}'
-            if can_inherit and self.cleaned_data[formfield] == 'inherit':
-                success, err = _n.zfs_inherit_option(self.name, attr)
-            else:
-                success, err = _n.zfs_set_option(
-                    self.name, attr, self.cleaned_data[formfield]
-                )
-            if not success:
-                error = True
-                self._errors[formfield] = self.error_class([err])
+        data = {}
+        for old, new, save in ZVOL_COMMON_MAPPING:
+            data[new] = (save or (lambda x: x))(self.cleaned_data[old])
 
-        if error:
+        if data['volsize'] == self.zdata['volsize']['parsed']:
+            data.pop('volsize')
+
+        try:
+            with client as c:
+                c.call('pool.dataset.update', self.name, data)
+
+            return True
+        except ClientException as e:
+            field_name = '__all__'
+            error_message = e.error
+
+            if field_name not in self._errors:
+                self._errors[field_name] = self.error_class([error_message])
+            else:
+                self._errors[field_name] += [error_message]
+        except ValidationErrors as e:
+            m = {new: old for old, new, save in ZVOL_COMMON_MAPPING}
+            for err in e.errors:
+                field_name = m.get(err.attribute.split('.', 1)[-1])
+                error_message = err.errmsg
+
+                if field_name not in self.fields:
+                    field_name = '__all__'
+
+                if field_name not in self._errors:
+                    self._errors[field_name] = self.error_class([error_message])
+                else:
+                    self._errors[field_name] += [error_message]
+
             return False
-        extents = iSCSITargetExtent.objects.filter(
-            iscsi_target_extent_type='ZVOL',
-            iscsi_target_extent_path=f'zvol/{self.name}')
-        if (
-            'volsize' in self.zdata and self.zdata['volsize'][0] and
-            self.zdata['volsize'][0] != self.cleaned_data.get('zvol_volsize', '').upper() and
-            extents.exists()
-        ):
-            _n.reload('iscsitarget')
-        return True
+
+
+ZVOL_IMMUTABLE_MAPPING = [
+    ('zvol_name', 'name', None),
+    ('zvol_sparse', 'sparse', None),
+    ('zvol_blocksize', 'volblocksize', str.upper),
+]
 
 
 class ZVol_CreateForm(CommonZVol):
@@ -1773,80 +1580,43 @@ class ZVol_CreateForm(CommonZVol):
 
     def __init__(self, *args, **kwargs):
         self.parentds = kwargs.pop('parentds')
-        self.parentdata = notifier().zfs_get_options(self.parentds)
-        zpool = notifier().zpool_parse(self.parentds.split('/')[0])
-        numdisks = 4
-        for vdev in zpool.data:
-            if vdev.type in (
-                'cache',
-                'spare',
-                'log',
-                'log mirror',
-            ):
-                continue
-            if vdev.type == 'raidz':
-                num = len(list(iter(vdev))) - 1
-            elif vdev.type == 'raidz2':
-                num = len(list(iter(vdev))) - 2
-            elif vdev.type == 'raidz3':
-                num = len(list(iter(vdev))) - 3
-            elif vdev.type == 'mirror':
-                num = 1
-            else:
-                num = len(list(iter(vdev)))
-            if num > numdisks:
-                numdisks = num
+        with client as c:
+            self.parentdata = c.call('pool.dataset.query', [['name', '=', self.parentds]], {'get': True})
+            size = c.call('pool.dataset.recommended_zvol_blocksize', self.parentds)
         super(ZVol_CreateForm, self).__init__(*args, **kwargs)
         key_order(self, 0, 'zvol_name', instance=True)
-        size = '%dK' % 2 ** ((numdisks * 4) - 1).bit_length()
 
         if size in [y[0] for y in choices.ZFS_VOLBLOCKSIZE]:
             self.fields['zvol_blocksize'].initial = size
 
-    def clean_zvol_name(self):
-        name = self.cleaned_data["zvol_name"]
-        if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:.]*$', name):
-            raise forms.ValidationError(_(
-                "ZFS Volume names must begin with "
-                "an alphanumeric character and may only contain "
-                "(-), (_), (:) and (.)."))
-        return name
-
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        full_zvol_name = "%s/%s" % (
-            self.parentds,
-            cleaned_data.get("zvol_name"))
-        if len(zfs.list_datasets(path=full_zvol_name)) > 0:
-            msg = _("You already have a dataset with the same name")
-            self._errors["zvol_name"] = self.error_class([msg])
-            del cleaned_data["zvol_name"]
-
-        self._zvol_force()
-        return cleaned_data
-
     def save(self):
-        props = {}
-        zvol_volsize = self.cleaned_data.get('zvol_volsize')
-        zvol_blocksize = self.cleaned_data.get("zvol_blocksize")
-        zvol_name = f"{self.parentds}/{self.cleaned_data.get('zvol_name')}"
-        zvol_comments = self.cleaned_data.get('zvol_comments')
-        zvol_sync = self.cleaned_data.get('zvol_sync')
-        zvol_compression = self.cleaned_data.get('zvol_compression')
-        props['sync'] = str(zvol_sync)
-        props['compression'] = str(zvol_compression)
-        if zvol_blocksize:
-            props['volblocksize'] = zvol_blocksize
-        errno, errmsg = notifier().create_zfs_vol(
-            name=str(zvol_name),
-            size=str(zvol_volsize),
-            sparse=self.cleaned_data.get("zvol_sparse", False),
-            props=props)
-        notifier().zfs_set_option(name=str(zvol_name), item="org.freenas:description", value=zvol_comments)
-        if errno != 0:
-            self._errors['__all__'] = self.error_class([errmsg])
+        data = {}
+        for old, new, save in ZVOL_IMMUTABLE_MAPPING + ZVOL_COMMON_MAPPING:
+            v = (save or (lambda x: x))(self.cleaned_data[old])
+            if v != 'INHERIT':
+                data[new] = v
+
+        try:
+            with client as c:
+                c.call('pool.dataset.create', dict(data, name=f"{self.parentds}/{self.cleaned_data['zvol_name']}",
+                                                   type="VOLUME"))
+
+            return True
+        except ValidationErrors as e:
+            m = {new: old for old, new, save in ZVOL_IMMUTABLE_MAPPING + ZVOL_COMMON_MAPPING}
+            for err in e.errors:
+                field_name = m.get(err.attribute.split('.', 1)[-1])
+                error_message = err.errmsg
+
+                if field_name not in self.fields:
+                    field_name = '__all__'
+
+                if field_name not in self._errors:
+                    self._errors[field_name] = self.error_class([error_message])
+                else:
+                    self._errors[field_name] += [error_message]
+
             return False
-        return True
 
 
 class MountPointAccessForm(Form):
@@ -1889,38 +1659,24 @@ class MountPointAccessForm(Form):
 
         path = kwargs.get('initial', {}).get('path', None)
         if path:
-            if os.path.exists(os.path.join(path, ".windows")):
-                self.fields['mp_acl'].initial = 'windows'
-                self.fields['mp_mode'].widget.attrs['disabled'] = 'disabled'
-            elif os.path.exists(os.path.join(path, ".mac")):
-                self.fields['mp_acl'].initial = 'mac'
-            else:
-                self.fields['mp_acl'].initial = 'unix'
-            # 8917: This needs to be handled by an upper layer but for now
-            # just prevent a backtrace.
-            try:
-                self.fields['mp_mode'].initial = "%.3o" % (
-                    notifier().mp_get_permission(path),
-                )
-                user, group = notifier().mp_get_owner(path)
-                self.fields['mp_user'].initial = user
-                self.fields['mp_group'].initial = group
-            except Exception:
-                pass
+            with client as c:
+                stat = c.call('filesystem.stat', path)
+
+                self.fields['mp_acl'].initial = stat['acl']
+
+                if stat['acl'] == 'windows':
+                    self.fields['mp_mode'].widget.attrs['disabled'] = 'disabled'
+
+                self.fields['mp_mode'].initial = "%.3o" % stat['mode']
+                self.fields['mp_user'].initial = stat['user']
+                self.fields['mp_group'].initial = stat['group']
+
         self.fields['mp_acl'].widget.attrs['onChange'] = "mpAclChange(this);"
 
-    def clean(self):
-        if (
-            (self.cleaned_data.get("mp_acl") == "unix" or
-                self.cleaned_data.get("mp_acl") == "mac") and not
-                self.cleaned_data.get("mp_mode")
-        ):
-            self._errors['mp_mode'] = self.error_class([
-                _("This field is required")
-            ])
-        return self.cleaned_data
+    def commit(self, path):
 
-    def commit(self, path='/mnt/'):
+        with client as c:
+            dataset = c.call('pool.dataset.query', [['mountpoint', '=', path.rstrip('/')]], {'get': True})
 
         kwargs = {}
 
@@ -1933,12 +1689,28 @@ class MountPointAccessForm(Form):
         if self.cleaned_data.get('mp_user_en'):
             kwargs['user'] = self.cleaned_data['mp_user']
 
-        notifier().mp_change_permission(
-            path=path,
-            recursive=self.cleaned_data['mp_recursive'],
-            acl=self.cleaned_data['mp_acl'],
-            **kwargs
-        )
+        kwargs['acl'] = self.cleaned_data['mp_acl'].upper()
+
+        kwargs['recursive'] = self.cleaned_data['mp_recursive']
+
+        with client as c:
+            try:
+                c.call('pool.dataset.permission', dataset['id'], kwargs)
+                return True
+            except ValidationErrors as e:
+                for err in e.errors:
+                    field_name = 'mp_' + err.attribute.split('.', 1)[-1]
+                    error_message = err.errmsg
+
+                    if field_name not in self.fields:
+                        field_name = '__all__'
+
+                    if field_name not in self._errors:
+                        self._errors[field_name] = self.error_class([error_message])
+                    else:
+                        self._errors[field_name] += [error_message]
+
+                return False
 
 
 class ResilverForm(MiddlewareModelForm, ModelForm):
@@ -2176,7 +1948,6 @@ class ZFSDiskReplacementForm(Form):
     force = forms.BooleanField(
         label=_("Force"),
         required=False,
-        widget=forms.widgets.HiddenInput(),
     )
     replace_disk = forms.ChoiceField(
         choices=(),
@@ -2192,11 +1963,6 @@ class ZFSDiskReplacementForm(Form):
         self.disk = disk
         super(ZFSDiskReplacementForm, self).__init__(*args, **kwargs)
 
-        if self.data:
-            devname = self.data.get('replace_disk')
-            if devname:
-                if not notifier().disk_check_clean(devname):
-                    self.fields['force'].widget = forms.widgets.CheckboxInput()
         if self.volume.vol_encrypt == 2:
             self.fields['pass'] = forms.CharField(
                 label=_("Passphrase"),
@@ -2207,45 +1973,20 @@ class ZFSDiskReplacementForm(Form):
                 widget=forms.widgets.PasswordInput(),
             )
         self.fields['replace_disk'].choices = self._populate_disk_choices()
-        self.fields['replace_disk'].choices.sort(
-            key=lambda a: float(
-                re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])
-            ))
 
     def _populate_disk_choices(self):
+        diskchoices = []
+        with client as c:
+            unused_disks = c.call('disk.get_unused')
 
-        diskchoices = dict()
-        used_disks = []
-        for v in models.Volume.objects.all():
-            used_disks.extend(v.get_disks())
-
-        # Grab partition list
-        # NOTE: This approach may fail if device nodes are not accessible.
-        disks = notifier().get_disks()
-
-        for disk in disks:
-            if disk in used_disks:
-                continue
-            devname, capacity = disks[disk]['devname'], disks[disk]['capacity']
-            capacity = humanize_number_si(int(capacity))
-            diskchoices[devname] = "%s (%s)" % (devname, capacity)
-
-        choices = list(diskchoices.items())
-        choices.sort(key=lambda a: float(
-            re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])
-        ))
-        return choices
-
-    def clean_replace_disk(self):
-        devname = self.cleaned_data.get('replace_disk')
-        force = self.cleaned_data.get('force')
-        if not devname:
-            return devname
-        if not force and not notifier().disk_check_clean(devname):
-            self._errors['force'] = self.error_class([_(
-                "Disk is not clear, partitions or ZFS labels were found."
-            )])
-        return devname
+        for disk in unused_disks:
+            if disk['size']:
+                capacity = humanize_number_si(disk['size'])
+                label = f'{disk["devname"]} ({capacity})'
+            else:
+                label = disk['devname']
+            diskchoices.append((disk['devname'], label))
+        return diskchoices
 
     def clean_pass2(self):
         passphrase = self.cleaned_data.get("pass")
@@ -2254,41 +1995,28 @@ class ZFSDiskReplacementForm(Form):
             raise forms.ValidationError(
                 _("Confirmation does not match passphrase")
             )
-        passfile = tempfile.mktemp(dir='/tmp/')
-        with open(passfile, 'w') as f:
-            os.chmod(passfile, 600)
-            f.write(passphrase)
-        if not notifier().geli_testkey(self.volume, passphrase=passfile):
-            self._errors['pass'] = self.error_class([
-                _("Passphrase is not valid")
-            ])
-        os.unlink(passfile)
         return passphrase
 
     def done(self):
         devname = self.cleaned_data['replace_disk']
         passphrase = self.cleaned_data.get("pass")
-        if passphrase is not None:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
-                f.write(passphrase)
-        else:
-            passfile = None
 
-        rv = notifier().zfs_replace_disk(
-            self.volume,
-            self.label,
-            devname,
-            force=self.cleaned_data.get('force'),
-            passphrase=passfile
-        )
-        if rv == 0:
-            if (services.objects.get(srv_service='smartd').srv_enable):
-                notifier().restart("smartd")
-            return True
-        else:
-            return False
+        replace_args = {}
+        if passphrase:
+            replace_args['passphrase'] = passphrase
+
+        with client as c:
+            identifier = c.call('disk.query', [('devname', '=', devname)])[0]['identifier']
+            try:
+                c.call('pool.replace', self.volume.id, dict({
+                    'label': self.label,
+                    'disk': identifier,
+                    'force': self.cleaned_data.get('force'),
+                }, **replace_args), job=True)
+            except ValidationErrors as e:
+                self._errors['__all__'] = self.error_class([err.errmsg for err in e.errors])
+                return False
+        return True
 
 
 class ReplicationForm(MiddlewareModelForm, ModelForm):
@@ -2499,14 +2227,26 @@ class VolumeExport(Form):
                 required=False,
                 label=_("Also delete the share's configuration"))
 
+    def done(self, request, events, **kwargs):
+        cascade = self.cleaned_data.get('cascade')
+        if cascade is None:
+            cascade = True
+        with client as c:
+            c.call('pool.export', self.instance.id, {
+                'cascade': cascade,
+                'destroy': self.cleaned_data.get('mark_new'),
+            }, job=True)
+        super().done(request, events, **kwargs)
+
 
 class Dataset_Destroy(Form):
     def __init__(self, *args, **kwargs):
         self.fs = kwargs.pop('fs')
         self.datasets = kwargs.pop('datasets', [])
         super(Dataset_Destroy, self).__init__(*args, **kwargs)
-        snaps = notifier().zfs_snapshot_list(path=self.fs)
-        if len(snaps.get(self.fs, [])) > 0:
+        with client as c:
+            snaps = c.call("zfs.snapshot.query", [["dataset", "=", self.fs]])
+        if len(snaps) > 0:
             label = ungettext(
                 "I'm aware this will destroy snapshots within this dataset",
                 ("I'm aware this will destroy all child datasets and "
@@ -2646,18 +2386,8 @@ class CreatePassphraseForm(Form):
 
     def done(self, volume):
         passphrase = self.cleaned_data.get("passphrase")
-        if passphrase is not None:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
-                f.write(passphrase)
-        else:
-            passfile = None
-        notifier().geli_passphrase(volume, passfile, rmrecovery=True)
-        if passfile is not None:
-            os.unlink(passfile)
-        volume.vol_encrypt = 2
-        volume.save()
+        with client as c:
+            return c.call('pool.passphrase', volume.id, {'passphrase': passphrase})
 
 
 class ChangePassphraseForm(Form):
@@ -2688,19 +2418,6 @@ class ChangePassphraseForm(Form):
             self.fields['passphrase'].widget.attrs['disabled'] = 'disabled'
             self.fields['passphrase2'].widget.attrs['disabled'] = 'disabled'
 
-    def clean_adminpw(self):
-        pw = self.cleaned_data.get("adminpw")
-        valid = False
-        for user in bsdUsers.objects.filter(bsdusr_uid=0):
-            if user.check_password(pw):
-                valid = True
-                break
-        if valid is False:
-            raise forms.ValidationError(
-                _("Invalid password")
-            )
-        return pw
-
     def clean_passphrase2(self):
         pass1 = self.cleaned_data.get("passphrase")
         pass2 = self.cleaned_data.get("passphrase2")
@@ -2723,20 +2440,24 @@ class ChangePassphraseForm(Form):
         else:
             passphrase = self.cleaned_data.get("passphrase")
 
-        if passphrase is not None:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
-                f.write(passphrase)
-        else:
-            passfile = None
-        notifier().geli_passphrase(volume, passfile)
-        if passfile is not None:
-            os.unlink(passfile)
-            volume.vol_encrypt = 2
-        else:
-            volume.vol_encrypt = 1
-        volume.save()
+        try:
+            with client as c:
+                return c.call('pool.passphrase', volume.id, {
+                    'admin_password': self.cleaned_data.get('adminpw'),
+                    'passphrase': passphrase,
+                })
+        except ValidationErrors as e:
+            for err in e.errors:
+                if err.attribute == 'options.admin_password':
+                    field = 'adminpw'
+                elif err.attribute == 'options.passphrase':
+                    field = 'passphrase'
+                else:
+                    field = '__all__'
+                if field not in self._errors:
+                    self._errors[field] = self.error_class()
+                self._errors[field].append(err.errmsg)
+            return False
 
 
 class UnlockPassphraseForm(Form):
@@ -2763,20 +2484,10 @@ class UnlockPassphraseForm(Form):
 
     def __init__(self, *args, **kwargs):
         super(UnlockPassphraseForm, self).__init__(*args, **kwargs)
-        app = appPool.get_app('plugins')
-        choices = [
-            ('afp', _('AFP')),
-            ('cifs', _('CIFS')),
-            ('ftp', _('FTP')),
-            ('iscsitarget', _('iSCSI')),
-            ('nfs', _('NFS')),
-            ('webdav', _('WebDAV')),
-        ]
-        if getattr(app, 'unlock_restart', False):
-            choices.append(
-                ('jails', _('Jails/Plugins')),
+        with client as c:
+            self.fields['services'].choices = list(
+                c.call('pool.unlock_services_restart_choices').items()
             )
-        self.fields['services'].choices = choices
 
     def clean(self):
         passphrase = self.cleaned_data.get("passphrase")
@@ -2791,48 +2502,29 @@ class UnlockPassphraseForm(Form):
     def done(self, volume):
         passphrase = self.cleaned_data.get("passphrase")
         key = self.cleaned_data.get("key") or self.cleaned_data.get('recovery_key')
+
         if passphrase:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
-                f.write(passphrase)
-            failed = notifier().geli_attach(volume, passphrase=passfile)
-            os.unlink(passfile)
+            with client as c:
+                c.call('pool.unlock', volume.id, {
+                    'passphrase': passphrase,
+                    'services_restart': self.cleaned_data.get('services'),
+                }, job=True)
         elif key is not None:
             keyfile = tempfile.mktemp(dir='/tmp/')
-            with open(keyfile, 'wb') as f:
+            with open(keyfile, 'wb+') as f:
                 os.chmod(keyfile, 600)
                 f.write(key.read() if not isinstance(key, str) else base64.b64decode(key))
-            failed = notifier().geli_attach(
-                volume,
-                passphrase=None,
-                key=keyfile)
+                f.flush()
+                f.seek(0)
+                upload_job_and_wait(f, 'pool.unlock', volume.id, {
+                    'recoverykey': True,
+                    'services_restart': self.cleaned_data.get('services'),
+                })
             os.unlink(keyfile)
         else:
             raise ValueError("Need a passphrase or recovery key")
-        zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid, first_time=False)
-        if not zimport:
-            if failed > 0:
-                msg = _(
-                    "Volume could not be imported: %d devices failed to "
-                    "decrypt"
-                ) % failed
-            else:
-                msg = _("Volume could not be imported")
-            raise MiddlewareError(msg)
-        notifier().sync_encrypted(volume=volume)
 
-        _notifier = notifier()
-        for svc in self.cleaned_data.get("services"):
-            if svc == 'jails':
-                with client as c:
-                    c.call('core.bulk', 'service.restart', [['jails']])
-                    c.call('core.bulk', 'jail.rc_action', [['RESTART']])
-            else:
-                _notifier.restart(svc)
-        _notifier.start("ix-warden")
-        _notifier.restart("system_datasets")
-        _notifier.reload("disk")
+        """
         if not _notifier.is_freenas() and _notifier.failover_licensed():
             from freenasUI.failover.enc_helper import LocalEscrowCtl
             escrowctl = LocalEscrowCtl()
@@ -2844,6 +2536,7 @@ class UnlockPassphraseForm(Form):
                 log.warn('Failed to set key on standby node, is it down?', exc_info=True)
             if _notifier.failover_status() != 'MASTER':
                 _notifier.failover_force_master()
+        """
 
 
 class KeyForm(Form):
@@ -2880,7 +2573,16 @@ class ReKeyForm(KeyForm):
         super(ReKeyForm, self).__init__(*args, **kwargs)
 
     def done(self):
-        notifier().geli_rekey(self.volume)
+        options = {}
+        adminpw = self.cleaned_data.get('adminpw')
+        if adminpw is not None:
+            options['admin_password'] = adminpw
+        try:
+            with client as c:
+                return c.call('pool.rekey', self.volume.id, options)
+        except ClientException as e:
+            self._errors['__all__'] = self.error_class([str(e)])
+            return False
 
 
 class VMWarePluginForm(MiddlewareModelForm, ModelForm):

@@ -657,19 +657,6 @@ class iSCSITargetExtent(Model):
             except Exception:
                 return self.iscsi_target_extent_path
 
-    def delete(self):
-        for te in iSCSITargetToExtent.objects.filter(iscsi_extent=self):
-            te.delete()
-        super(iSCSITargetExtent, self).delete()
-        notifier().reload("iscsitarget")
-
-    def save(self, *args, **kwargs):
-        if not self.iscsi_target_extent_naa:
-            self.iscsi_target_extent_naa = '0x6589cfc000000%s' % (
-                hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest()[0:19]
-            )
-        return super(iSCSITargetExtent, self).save(*args, **kwargs)
-
 
 class iSCSITargetPortal(Model):
     iscsi_target_portal_tag = models.IntegerField(
@@ -706,19 +693,6 @@ class iSCSITargetPortal(Model):
             )
         else:
             return str(self.iscsi_target_portal_tag)
-
-    def delete(self):
-        super(iSCSITargetPortal, self).delete()
-        portals = iSCSITargetPortal.objects.all().order_by(
-            'iscsi_target_portal_tag')
-        for portal, idx in zip(portals, range(1, len(portals) + 1)):
-            portal.iscsi_target_portal_tag = idx
-            portal.save()
-        started = notifier().reload("iscsitarget")
-        if started is False and services.objects.get(
-                srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget",
-                                _("The iSCSI service failed to reload."))
 
 
 class iSCSITargetPortalIP(Model):
@@ -821,16 +795,6 @@ class iSCSITargetAuthorizedInitiator(Model):
         else:
             return str(self.iscsi_target_initiator_tag)
 
-    def delete(self):
-        super(iSCSITargetAuthorizedInitiator, self).delete()
-        portals = iSCSITargetAuthorizedInitiator.objects.all().order_by(
-            'iscsi_target_initiator_tag')
-        idx = 1
-        for portal in portals:
-            portal.iscsi_target_initiator_tag = idx
-            portal.save()
-            idx += 1
-
 
 class iSCSITargetAuthCredential(Model):
     iscsi_target_auth_tag = models.IntegerField(
@@ -923,18 +887,6 @@ class iSCSITarget(Model):
     def __str__(self):
         return self.iscsi_target_name
 
-    def delete(self):
-        for te in iSCSITargetToExtent.objects.filter(iscsi_target=self):
-            te.delete()
-        super(iSCSITarget, self).delete()
-        started = notifier().reload("iscsitarget")
-        if started is False and services.objects.get(
-                srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed(
-                "iscsitarget",
-                _("The iSCSI service failed to reload.")
-            )
-
 
 class iSCSITargetGroups(Model):
     iscsi_target = models.ForeignKey(
@@ -1013,14 +965,6 @@ class iSCSITargetToExtent(Model):
 
     def __str__(self):
         return str(self.iscsi_target) + ' / ' + str(self.iscsi_extent)
-
-    def delete(self):
-        super(iSCSITargetToExtent, self).delete()
-        started = notifier().reload("iscsitarget")
-        if started is False and services.objects.get(
-                srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget",
-                                _("The iSCSI service failed to reload."))
 
 
 class FibreChannelToTarget(Model):
@@ -1345,6 +1289,14 @@ class UPS(Model):
         verbose_name=_("Power Off UPS"),
         help_text=_("Signal the UPS to power off after FreeNAS shuts down."),
         default=True,
+    )
+    ups_hostsync = models.IntegerField(
+        default=15,
+        verbose_name=_("Host Sync"),
+        help_text=_(
+            "Upsmon will wait up to this many seconds in master mode "
+            "for the slaves to disconnect during a shutdown situation"
+        )
     )
 
     def __init__(self, *args, **kwargs):

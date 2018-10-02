@@ -955,6 +955,9 @@ class ServiceService(CRUDService):
     async def _start_loader(self, **kwargs):
         await self._service("ix-loader", "start", quiet=True, **kwargs)
 
+    async def _restart_disk(self, **kwargs):
+        await self._reload_disk(**kwargs)
+
     async def _reload_disk(self, **kwargs):
         await self._service("ix-fstab", "start", quiet=True, **kwargs)
         await self._service("ix-swap", "start", quiet=True, **kwargs)

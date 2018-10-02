@@ -33,7 +33,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
-from freenasUI.freeadmin.models import DictField, Model, UserField, PathField
+from freenasUI.freeadmin.models import DictField, ListField, Model, UserField, PathField
 from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Disk
@@ -79,6 +79,26 @@ class CloudSync(Model):
     )
     attributes = DictField(
         editable=False,
+    )
+    snapshot = models.BooleanField(
+        verbose_name=_("Take snapshot"),
+        help_text=_(
+            "Take dataset snapshot before pushing data.",
+        ),
+    )
+    pre_script = models.TextField(
+        blank=True,
+        verbose_name=_("Pre-script"),
+        help_text=_(
+            "Script to execute before running sync.",
+        ),
+    )
+    post_script = models.TextField(
+        blank=True,
+        verbose_name=_("Post-script"),
+        help_text=_(
+            "Script to execute after running sync.",
+        ),
     )
     encryption = models.BooleanField(
         verbose_name=_("Remote encryption"),
@@ -145,6 +165,12 @@ class CloudSync(Model):
         max_length=100,
         default="*",
         verbose_name=_("Day of week"),
+    )
+    bwlimit = ListField(
+        editable=False,
+    )
+    exclude = ListField(
+        editable=False,
     )
     enabled = models.BooleanField(
         default=True,
@@ -258,13 +284,6 @@ class CronJob(Model):
             "-i", str(self.id),
         ])
         proc.communicate()
-
-    def delete(self):
-        super(CronJob, self).delete()
-        try:
-            notifier().restart("cron")
-        except:
-            pass
 
 
 class InitShutdown(Model):
@@ -575,13 +594,6 @@ class Rsync(Model):
         ])
         proc.communicate()
 
-    def delete(self):
-        super(Rsync, self).delete()
-        try:
-            notifier().restart("cron")
-        except:
-            pass
-
 
 class SMARTTest(Model):
     smarttest_disks = models.ManyToManyField(
@@ -634,13 +646,6 @@ class SMARTTest(Model):
             self.get_smarttest_type_display(),
             disks
         )
-
-    def delete(self):
-        super(SMARTTest, self).delete()
-        try:
-            notifier().restart("smartd")
-        except:
-            pass
 
     class Meta:
         verbose_name = _("S.M.A.R.T. Test")

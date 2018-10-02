@@ -1,4 +1,4 @@
-from middlewared.schema import Bool, Dict, Int, List, Str, accepts
+from middlewared.schema import Bool, Dict, Int, List, Ref, Str, accepts
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, periodic, private
 
 from datetime import datetime, timedelta
@@ -7,6 +7,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate
 from lockfile import LockFile, LockTimeout
+from mako.lookup import TemplateLookup
+import markdown2
 
 import base64
 import errno
@@ -96,9 +98,10 @@ class MailService(ConfigService):
         Str('outgoingserver'),
         Int('port'),
         Str('security', enum=['PLAIN', 'SSL', 'TLS']),
-        Bool('smtp', default=False),
+        Bool('smtp'),
         Str('user'),
         Str('pass'),
+        update=True
     ))
     async def do_update(self, data):
         config = await self.config()
@@ -120,8 +123,9 @@ class MailService(ConfigService):
 
     @accepts(Dict(
         'mail-message',
-        Str('subject'),
+        Str('subject', required=True),
         Str('text', required=True),
+        Str('html'),
         List('to', items=[Str('email')]),
         List('cc', items=[Str('email')]),
         Int('interval'),
@@ -130,7 +134,12 @@ class MailService(ConfigService):
         Bool('attachments', default=False),
         Bool('queue', default=True),
         Dict('extra_headers', additional_attrs=True),
-    ), Dict('mailconfig', additional_attrs=True))
+        register=True
+    ), Dict(
+        'mail-config',
+        additional_attrs=True,
+        register=True
+    ))
     @job(pipes=['input'], check_pipes=False)
     def send(self, job, message, config=None):
         """
@@ -164,6 +173,27 @@ class MailService(ConfigService):
         ]
         """
 
+        gc = self.middleware.call_sync('datastore.config', 'network.globalconfiguration')
+
+        hostname = f'{gc["gc_hostname"]}.{gc["gc_domain"]}'
+
+        message['subject'] = f'{hostname}: {message["subject"]}'
+
+        if 'html' not in message:
+            lookup = TemplateLookup(
+                directories=[os.path.join(os.path.dirname(os.path.realpath(__file__)), '../assets/templates')],
+                module_directory="/tmp/mako/templates")
+
+            tmpl = lookup.get_template('mail.html')
+
+            message['html'] = tmpl.render(body=markdown2.markdown(message['text']))
+
+        return self.send_raw(job, message, config)
+
+    @accepts(Ref('mail-message'), Ref('mail-config'))
+    @job(pipes=['input'], check_pipes=False)
+    @private
+    def send_raw(self, job, message, config=None):
         interval = message.get('interval')
         if interval is None:
             interval = timedelta()
@@ -226,21 +256,25 @@ class MailService(ConfigService):
         else:
             attachments = None
 
-        if attachments:
+        if 'html' in message or attachments:
             msg = MIMEMultipart()
             msg.preamble = message['text']
-            for attachment in attachments:
-                m = Message()
-                m.set_payload(attachment['content'])
-                for header in attachment.get('headers'):
-                    m.add_header(header['name'], header['value'], **(header.get('params') or {}))
-                msg.attach(m)
+            if 'html' in message:
+                msg2 = MIMEMultipart('alternative')
+                msg2.attach(MIMEText(message['text'], 'plain', _charset='utf-8'))
+                msg2.attach(MIMEText(message['html'], 'html', _charset='utf-8'))
+                msg.attach(msg2)
+            if attachments:
+                for attachment in attachments:
+                    m = Message()
+                    m.set_payload(attachment['content'])
+                    for header in attachment.get('headers'):
+                        m.add_header(header['name'], header['value'], **(header.get('params') or {}))
+                    msg.attach(m)
         else:
             msg = MIMEText(message['text'], _charset='utf-8')
 
-        subject = message.get('subject')
-        if subject:
-            msg['Subject'] = subject
+        msg['Subject'] = message['subject']
 
         msg['From'] = config['fromemail']
         msg['To'] = ', '.join(to)

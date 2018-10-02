@@ -12,6 +12,7 @@ async def test__get_smartctl_args__arcmsr():
     assert await get_smartctl_args("ada0", {
         "driver": "arcmsrX",
         "controller_id": 1000,
+        "bus": 0,
         "channel_no": 100,
         "lun_id": 10,
     }) == ["/dev/arcmsr1000", "-d", "areca,811"]
@@ -22,6 +23,7 @@ async def test__get_smartctl_args__rr274x_3x():
     assert await get_smartctl_args("ada0", {
         "driver": "rr274x_3x",
         "controller_id": 1,
+        "bus": 0,
         "channel_no": 2,
         "lun_id": 10,
     }) == ["/dev/rr274x_3x", "-d", "hpt,2/3"]
@@ -32,6 +34,7 @@ async def test__get_smartctl_args__rr274x_3x__1():
     assert await get_smartctl_args("ada0", {
         "driver": "rr274x_3x",
         "controller_id": 1,
+        "bus": 0,
         "channel_no": 18,
         "lun_id": 10,
     }) == ["/dev/rr274x_3x", "-d", "hpt,2/3"]
@@ -42,6 +45,7 @@ async def test__get_smartctl_args__rr274x_3x__2():
     assert await get_smartctl_args("ada0", {
         "driver": "rr274x_3x",
         "controller_id": 1,
+        "bus": 0,
         "channel_no": 10,
         "lun_id": 10,
     }) == ["/dev/rr274x_3x", "-d", "hpt,2/3"]
@@ -52,6 +56,7 @@ async def test__get_smartctl_args__hpt():
     assert await get_smartctl_args("ada0", {
         "driver": "hptX",
         "controller_id": 1,
+        "bus": 0,
         "channel_no": 2,
         "lun_id": 10,
     }) == ["/dev/hptX", "-d", "hpt,2/3"]
@@ -62,6 +67,7 @@ async def test__get_smartctl_args__ciss():
     assert await get_smartctl_args("ada0", {
         "driver": "cissX",
         "controller_id": 1,
+        "bus": 0,
         "channel_no": 2,
         "lun_id": 10,
     }) == ["/dev/cissX1", "-d", "cciss,2"]
@@ -76,6 +82,7 @@ async def test__get_smartctl_args__twa():
         assert await get_smartctl_args("ada0", {
             "driver": "twaX",
             "controller_id": 1,
+            "bus": 0,
             "channel_no": 2,
             "lun_id": 10,
         }) == ["/dev/twaX1", "-d", "3ware,29"]
@@ -96,6 +103,7 @@ async def test_get_disk__unknown_usb_bridge():
         assert await get_smartctl_args("ada0", {
             "driver": "ata",
             "controller_id": 1,
+            "bus": 0,
             "channel_no": 2,
             "lun_id": 10,
         }) == ["/dev/ada0", "-d", "sat"]
@@ -113,6 +121,7 @@ async def test_get_disk__generic():
         assert await get_smartctl_args("ada0", {
             "driver": "ata",
             "controller_id": 1,
+            "bus": 0,
             "channel_no": 2,
             "lun_id": 10,
         }) == ["/dev/ada0"]

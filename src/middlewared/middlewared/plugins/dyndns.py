@@ -28,6 +28,7 @@ class DynDNSService(SystemServiceService):
         Str('username'),
         Str('password'),
         Int('period'),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()

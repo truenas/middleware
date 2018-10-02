@@ -317,9 +317,10 @@ def bootenv_add(request, source=None):
 def bootenv_scrub(request):
     if request.method == "POST":
         try:
-            notifier().zfs_scrub('freenas-boot')
+            with client as c:
+                c.call('zfs.pool.scrub', 'freenas-boot')
             return JsonResp(request, message=_("Scrubbing the Boot Pool..."))
-        except Exception as e:
+        except ClientException as e:
             return JsonResp(request, error=True, message=repr(e))
     return render(request, 'system/boot_scrub.html')
 
@@ -839,7 +840,7 @@ def testmail(request):
             mailconfig = form.middleware_prepare()
             try:
                 c.call('mail.send', {
-                    'subject': f'Test message from your {sw_name} system hostname {socket.gethostname()}',
+                    'subject': f'Test message from your {sw_name}',
                     'text': f'This is a message test from {sw_name}',
                     'to': [email],
                     'timeout': 10,
@@ -1970,6 +1971,29 @@ def CA_export_privatekey(request, id):
     response['Content-Disposition'] = 'attachment; filename=%s.key' % ca
 
     return response
+
+
+def certificate_csr_import(request):
+
+    if request.method == "POST":
+        form = forms.CertificateCSRImportForm(request.POST)
+        if form.is_valid():
+            try:
+                form.save()
+                return JsonResp(
+                    request,
+                    message=_("Certificate Signing Request successfully imported.")
+                )
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
+        return JsonResp(request, form=form)
+
+    else:
+        form = forms.CertificateCSRImportForm()
+
+    return render(request, "system/certificate/CSR_import.html", {
+        'form': form
+    })
 
 
 def certificate_import(request):

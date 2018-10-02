@@ -104,7 +104,7 @@ class UserService(CRUDService):
         Bool('microsoft_account', default=False),
         Bool('sudo', default=False),
         Str('sshpubkey'),
-        List('groups'),
+        List('groups', default=[]),
         Dict('attributes', additional_attrs=True),
         register=True,
     ))
@@ -135,7 +135,7 @@ class UserService(CRUDService):
         if verrors:
             raise verrors
 
-        groups = data.pop('groups') or []
+        groups = data.pop('groups')
         create = data.pop('group_create')
 
         if create:

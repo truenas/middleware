@@ -126,6 +126,7 @@ class NetworkConfigurationService(ConfigService):
             Bool('netwait_enabled'),
             List('netwait_ip', items=[Str('netwait_ip')]),
             Str('hosts'),
+            update=True
         )
     )
     async def do_update(self, data):

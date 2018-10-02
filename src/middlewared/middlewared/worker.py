@@ -3,42 +3,15 @@ from middlewared.client import Client
 
 import asyncio
 import concurrent.futures
-from concurrent.futures.process import _process_worker
 import functools
 import importlib
 import logging
-import multiprocessing
 import os
 import select
 import setproctitle
 import threading
 
 MIDDLEWARE = None
-
-
-def _process_worker_wrapper(*args, **kwargs):
-    """
-    We need to define a wrapper to initialize the process
-    as soon as it is started to load everything we need
-    or the first call will take too long.
-    """
-    init()
-    return _process_worker(*args, **kwargs)
-
-
-class ProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
-    def _adjust_process_count(self):
-        """
-        Method copied from concurrent.futures.ProcessPoolExecutor
-        replacing _process_worker with _process_worker_wrapper
-        """
-        for _ in range(len(self._processes), self._max_workers):
-            p = multiprocessing.Process(
-                target=_process_worker_wrapper,
-                args=(self._call_queue,
-                      self._result_queue))
-            p.start()
-            self._processes[p.pid] = p
 
 
 class FakeMiddleware(object):
@@ -154,7 +127,7 @@ def watch_parent():
     os._exit(1)
 
 
-def init():
+def worker_init():
     global MIDDLEWARE
     MIDDLEWARE = FakeMiddleware()
     setproctitle.setproctitle('middlewared (worker)')

@@ -69,11 +69,7 @@ class CronJobService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call(
-            'service.restart',
-            'cron',
-            {'onetime': False}
-        )
+        await self.middleware.call('service.restart', 'cron')
 
         return data
 
@@ -103,11 +99,7 @@ class CronJobService(CRUDService):
                 {'prefix': self._config.datastore_prefix}
             )
 
-            await self.middleware.call(
-                'service.restart',
-                'cron',
-                {'onetime': False}
-            )
+            await self.middleware.call('service.restart', 'cron')
 
         return await self.query(filters=[('id', '=', id)], options={'get': True})
 
@@ -120,5 +112,7 @@ class CronJobService(CRUDService):
             self._config.datastore,
             id
         )
+
+        await self.middleware.call('service.restart', 'cron')
 
         return response

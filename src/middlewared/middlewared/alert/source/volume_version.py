@@ -14,7 +14,7 @@ class VolumeVersionAlertSource(ThreadedAlertSource):
     def check_sync(self):
         alerts = []
         for pool in self.middleware.call_sync("pool.query"):
-            if not self.is_upgraded(pool):
+            if not self.middleware.call_sync('pool.is_upgraded', pool["id"]):
                 alerts.append(Alert(
                     "New feature flags are available for volume %s. Refer "
                     "to the \"Upgrading a ZFS Pool\" subsection in the "
@@ -38,31 +38,3 @@ class VolumeVersionAlertSource(ThreadedAlertSource):
             ))
 
         return alerts
-
-    def is_upgraded(self, pool):
-        if not pool["is_decrypted"]:
-            return True
-
-        try:
-            version = self.middleware.call_sync("notifier.zpool_version", pool["name"])
-        except ValueError:
-            return True
-
-        if version == "-":
-            proc = subprocess.Popen([
-                "zpool",
-                "get",
-                "-H", "-o", "property,value",
-                "all",
-                pool["name"],
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf8")
-            data = proc.communicate()[0].strip("\n")
-            for line in data.split("\n"):
-                if not line.startswith("feature") or "\t" not in line:
-                    continue
-                prop, value = line.split("\t", 1)
-                if value not in ("active", "enabled"):
-                    return False
-            return True
-
-        return False

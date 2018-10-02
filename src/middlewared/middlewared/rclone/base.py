@@ -5,6 +5,8 @@ class BaseRcloneRemote:
     buckets = False
     readonly = False
 
+    fast_list = False
+
     rclone_type = NotImplemented
 
     credentials_schema = NotImplemented

@@ -1279,14 +1279,18 @@ require([
     }
 
     mpAclChange = function(acl) {
+      var mode_en = registry.byId("id_mp_mode_en");
       var mode = registry.byId("id_mp_mode");
       if(acl.get('value') === false) {
         // do noting
       } else if(acl.get('value') == 'unix') {
+        mode_en.set('disabled', false);
         mode.set('disabled', false);
       } else if(acl.get('value') == 'mac') {
+        mode_en.set('disabled', false);
         mode.set('disabled', false);
       } else {
+        mode_en.set('disabled', true);
         mode.set('disabled', true);
       }
     }
@@ -1662,6 +1666,20 @@ require([
         updateAttributes();
     }
 
+    cloudSyncDirectionToggle = function() {
+
+        var direction = registry.byId("id_direction");
+        var snapshot = registry.byId("id_snapshot");
+        var tr = snapshot.domNode.parentNode.parentNode;
+        if(direction.get('value') == 'PUSH') {
+            domStyle.set(tr, "display", "table-row");
+        } else {
+            snapshot.set("value", false);
+            domStyle.set(tr, "display", "none");
+        }
+
+    }
+
     cloudSyncEncryptionToggle = function() {
 
         var checkbox = registry.byId("id_encryption");
@@ -1816,6 +1834,7 @@ require([
         var e = registry.byId("id_ups_extrausers");
         var m = registry.byId("id_ups_rmonitor");
         var o = registry.byId("id_ups_options");
+        var h = registry.byId("id_ups_hostsync");
         var trh = rh.domNode.parentNode.parentNode;
         var trp = rp.domNode.parentNode.parentNode;
         var td = d.domNode.parentNode.parentNode;
@@ -1823,6 +1842,7 @@ require([
         var te = e.domNode.parentNode.parentNode;
         var tm = m.domNode.parentNode.parentNode;
         var to = o.domNode.parentNode.parentNode;
+        var th = h.domNode.parentNode.parentNode;
         if(select.get('value') == 'master') {
             domStyle.set(trh, "display", "none");
             domStyle.set(trp, "display", "none");
@@ -1831,6 +1851,7 @@ require([
             domStyle.set(te, "display", "table-row");
             domStyle.set(tm, "display", "table-row");
             domStyle.set(to, "display", "table-row");
+            domStyle.set(th, "display", "table-row");
         } else {
             domStyle.set(trp, "display", "table-row");
             domStyle.set(trh, "display", "table-row");
@@ -1840,6 +1861,7 @@ require([
             domStyle.set(te, "display", "none");
             domStyle.set(tm, "display", "none");
             domStyle.set(to, "display", "none");
+            domStyle.set(th, "display", "none");
         }
 
     }

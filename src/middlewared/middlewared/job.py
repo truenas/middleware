@@ -10,7 +10,7 @@ import time
 import traceback
 import threading
 
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, ValidationError, ValidationErrors
 from middlewared.pipe import Pipes
 
 logger = logging.getLogger(__name__)
@@ -222,6 +222,7 @@ class Job(object):
         self.result = None
         self.error = None
         self.exception = None
+        self.exc_info = None
         self.state = State.WAITING
         self.progress = {
             'percent': None,
@@ -230,7 +231,7 @@ class Job(object):
         }
         self.time_started = datetime.now()
         self.time_finished = None
-        self.loop = None
+        self.loop = asyncio.get_event_loop()
         self.future = None
 
         self.logs_path = None
@@ -267,6 +268,7 @@ class Job(object):
     def set_exception(self, exc_info):
         self.error = str(exc_info[1])
         self.exception = ''.join(traceback.format_exception(*exc_info))
+        self.exc_info = exc_info
 
     def set_state(self, state):
         if self.state == State.WAITING:
@@ -327,7 +329,6 @@ class Job(object):
 
         self.set_state('RUNNING')
         try:
-            self.loop = asyncio.get_event_loop()
             self.future = asyncio.ensure_future(self.__run_body())
             await self.future
         except asyncio.CancelledError:
@@ -401,6 +402,23 @@ class Job(object):
         await self.middleware.run_in_thread(close_pipes)
 
     def __encode__(self):
+        exc_info = None
+        if self.exc_info:
+            etype = self.exc_info[0]
+            evalue = self.exc_info[1]
+            if isinstance(evalue, ValidationError):
+                extra = [(evalue.attribute, evalue.errmsg, evalue.errno)]
+                etype = 'VALIDATION'
+            elif isinstance(evalue, ValidationErrors):
+                extra = list(evalue)
+                etype = 'VALIDATION'
+            else:
+                etype = etype.__name__
+                extra = None
+            exc_info = {
+                'type': etype,
+                'extra': extra,
+            }
         return {
             'id': self.id,
             'method': self.method_name,
@@ -411,6 +429,7 @@ class Job(object):
             'result': self.result,
             'error': self.error,
             'exception': self.exception,
+            'exc_info': exc_info,
             'state': self.state.name,
             'time_started': self.time_started,
             'time_finished': self.time_finished,

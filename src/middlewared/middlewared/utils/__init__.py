@@ -158,6 +158,8 @@ def filter_list(_list, filters=None, options=None):
                     if not opmap[op](source, value):
                         valid = False
                         break
+                else:
+                    raise ValueError("Invalid filter {0}".format(f))
             if not valid:
                 continue
             rv.append(i)
@@ -283,9 +285,14 @@ def load_modules(directory):
         if not f.endswith('.py'):
             continue
         f = f[:-3]
+        name = '.'.join(
+            ['middlewared'] +
+            os.path.relpath(directory, os.path.dirname(os.path.dirname(__file__))).split('/') +
+            [f]
+        )
         fp, pathname, description = imp.find_module(f, [directory])
         try:
-            modules.append(imp.load_module(f, fp, pathname, description))
+            modules.append(imp.load_module(name, fp, pathname, description))
         finally:
             if fp:
                 fp.close()

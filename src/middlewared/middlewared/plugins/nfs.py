@@ -35,12 +35,13 @@ class NFSService(SystemServiceService):
         Bool('v4_v3owner'),
         Bool('v4_krb'),
         List('bindip', items=[IPAddr('ip')]),
-        Int('mountd_port', required=False, validators=[Range(min=1, max=65535)]),
-        Int('rpcstatd_port', required=False, validators=[Range(min=1, max=65535)]),
-        Int('rpclockd_port', required=False, validators=[Range(min=1, max=65535)]),
+        Int('mountd_port', null=True, validators=[Range(min=1, max=65535)]),
+        Int('rpcstatd_port', null=True, validators=[Range(min=1, max=65535)]),
+        Int('rpclockd_port', null=True, validators=[Range(min=1, max=65535)]),
         Bool('userd_manage_gids'),
         Bool('mountd_log'),
         Bool('statd_lockd_log'),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()
@@ -80,16 +81,20 @@ class SharingNFSService(CRUDService):
         "sharingnfs_create",
         List("paths", items=[Dir("path")], empty=False),
         Str("comment"),
-        List("networks", items=[IPAddr("network", cidr=True)]),
-        List("hosts", items=[Str("host")]),
+        List("networks", items=[IPAddr("network", cidr=True)], default=[]),
+        List("hosts", items=[Str("host")], default=[]),
         Bool("alldirs"),
         Bool("ro"),
         Bool("quiet"),
-        Str("maproot_user", required=False, default=None),
-        Str("maproot_group", required=False, default=None),
-        Str("mapall_user", required=False, default=None),
-        Str("mapall_group", required=False, default=None),
-        List("security", items=[Str("provider", enum=["SYS", "KRB5", "KRB5I", "KRB5P"])]),
+        Str("maproot_user", required=False, default=None, null=True),
+        Str("maproot_group", required=False, default=None, null=True),
+        Str("mapall_user", required=False, default=None, null=True),
+        Str("mapall_group", required=False, default=None, null=True),
+        List(
+            "security",
+            default=[],
+            items=[Str("provider", enum=["SYS", "KRB5", "KRB5I", "KRB5P"])],
+        ),
         register=True,
     ))
     async def do_create(self, data):
@@ -118,7 +123,7 @@ class SharingNFSService(CRUDService):
             )
         await self.extend(data)
 
-        await self.middleware.call("service.reload", "nfs")
+        await self._service_change("nfs", "reload")
 
         return data
 
@@ -132,14 +137,7 @@ class SharingNFSService(CRUDService):
     )
     async def do_update(self, id, data):
         verrors = ValidationErrors()
-        old = await self.middleware.call(
-            "datastore.query", self._config.datastore, [("id", "=", id)],
-            {
-                "extend": self._config.datastore_extend,
-                "prefix": self._config.datastore_prefix,
-                "get": True
-            },
-        )
+        old = await self._get_instance(id)
 
         new = old.copy()
         new.update(data)
@@ -170,7 +168,7 @@ class SharingNFSService(CRUDService):
         await self.extend(new)
         new["paths"] = paths
 
-        await self.middleware.call("service.reload", "nfs")
+        await self._service_change("nfs", "reload")
 
         return new
 
@@ -178,11 +176,15 @@ class SharingNFSService(CRUDService):
     async def do_delete(self, id):
         await self.middleware.call("datastore.delete", "sharing.nfs_share_path", [["share_id", "=", id]])
         await self.middleware.call("datastore.delete", self._config.datastore, id)
+        await self._service_change("nfs", "reload")
 
     @private
     async def validate(self, data, schema_name, verrors, old=None):
         if not data["paths"]:
             verrors.add(f"{schema_name}.paths", "At least one path is required")
+
+        if verrors:
+            raise verrors
 
         await self.middleware.run_in_thread(self.validate_paths, data, schema_name, verrors)
 
@@ -194,7 +196,8 @@ class SharingNFSService(CRUDService):
             sum([share["hosts"] for share in other_shares], []) + data["hosts"]
         )
         await self.middleware.run_in_thread(
-            self.validate_hosts_and_networks, other_shares, data, schema_name, verrors, dns_cache
+            self.validate_hosts_and_networks, other_shares,
+            data, schema_name, verrors, dns_cache
         )
 
         for k in ["maproot", "mapall"]:

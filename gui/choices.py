@@ -848,6 +848,7 @@ FTP_TLS_POLICY_CHOICES = (
 
 
 ZFS_RECORDSIZE = (
+    ('inherit', _('Inherit')),
     ('512', '512'),
     ('1K', '1K'),
     ('2K', '2K'),
@@ -1121,6 +1122,11 @@ VNC_RESOLUTION = (
 VM_DISKMODETYPES = (
     ('AHCI', _('AHCI')),
     ('VIRTIO', _('VirtIO')),
+)
+
+VM_TIMECHOICES = (
+    ('LOCAL', _('Local Time')),
+    ('UTC', _('UTC')),
 )
 
 S3_MODES = (

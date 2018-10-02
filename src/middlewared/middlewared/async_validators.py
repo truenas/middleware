@@ -3,7 +3,7 @@ import os
 import socket
 
 
-from middlewared.validators import ShouldBe, IpAddress
+from middlewared.validators import IpAddress
 
 
 async def check_path_resides_within_volume(verrors, middleware, name, path):
@@ -23,7 +23,7 @@ async def resolve_hostname(middleware, verrors, name, hostname):
                 ip = IpAddress()
                 ip(hostname)
                 return hostname
-            except ShouldBe:
+            except ValueError:
                 return socket.gethostbyname(hostname)
         except Exception:
             return False

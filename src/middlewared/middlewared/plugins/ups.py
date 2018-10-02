@@ -6,7 +6,7 @@ import re
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
-from middlewared.validators import Email
+from middlewared.validators import Email, Range
 
 
 DRIVER_BIN_DIR = '/usr/local/libexec/nut'
@@ -123,9 +123,10 @@ class UPSService(SystemServiceService):
             Bool('emailnotify'),
             Bool('powerdown'),
             Bool('rmonitor'),
-            Int('nocommwarntime'),
+            Int('nocommwarntime', null=True),
             Int('remoteport'),
             Int('shutdowntimer'),
+            Int('hostsync', validators=[Range(min=0)]),
             Str('description'),
             Str('driver'),
             Str('extrausers'),
@@ -141,6 +142,7 @@ class UPSService(SystemServiceService):
             Str('shutdowncmd'),
             Str('subject'),
             List('toemail', items=[Str('email', validators=[Email()])]),
+            update=True
         )
     )
     async def do_update(self, data):

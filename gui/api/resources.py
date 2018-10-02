@@ -122,6 +122,7 @@ from freenasUI.system.forms import (
     CertificateCreateCSRForm,
     CertificateCreateInternalForm,
     CertificateImportForm,
+    CertificateCSRImportForm,
     ManualUpdateTemporaryLocationForm,
     ManualUpdateUploadForm,
     ManualUpdateWizard,
@@ -421,15 +422,14 @@ class PermissionResource(DojoResource):
             'mp_user_en': deserialized.get('mp_user_en', True),
         })
         form = MountPointAccessForm(data=deserialized)
-        if not form.is_valid():
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, form.errors)
-            )
-        else:
-            form.commit(path=deserialized.get('mp_path'))
-        return HttpResponse(
-            'Mount Point permissions successfully updated.',
-            status=201,
+        if form.is_valid():
+            if form.commit(deserialized.get('mp_path')):
+                return HttpResponse(
+                    'Mount Point permissions successfully updated.',
+                    status=201,
+                )
+        raise ImmediateHttpResponse(
+            response=self.error_response(request, form.errors)
         )
 
 
@@ -917,12 +917,13 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
-        if request.method == 'POST':
-            notifier().zfs_scrub(str(obj.vol_name))
-            return HttpResponse('Volume scrub started.', status=202)
-        elif request.method == 'DELETE':
-            notifier().zfs_scrub(str(obj.vol_name), stop=True)
-            return HttpResponse('Volume scrub stopped.', status=202)
+        with client as c:
+            if request.method == 'POST':
+                c.call('pool.scrub', obj.id, 'START', job=True)
+                return HttpResponse('Volume scrub started.', status=202)
+            elif request.method == 'DELETE':
+                c.call('pool.scrub', obj.id, 'STOP', job=True)
+                return HttpResponse('Volume scrub stopped.', status=202)
 
     def unlock(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
@@ -955,8 +956,8 @@ class VolumeResourceMixin(NestedMixin):
                 response=self.error_response(request, _('Volume is not encrypted.'))
             )
 
-        _n = notifier()
-        _n.volume_detach(obj)
+        with client as c:
+            c.call('pool.lock', obj.id, job=True)
 
         return HttpResponse('Volume has been locked.', status=202)
 
@@ -965,18 +966,9 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
-        errmsg = _('Pool output could not be parsed. Is the pool imported?')
-        try:
-            notifier().zpool_version(obj.vol_name)
-        except Exception:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, errmsg)
-            )
-        upgrade = notifier().zpool_upgrade(str(obj.vol_name))
-        if upgrade is not True:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, errmsg)
-            )
+        with client as c:
+            c.call('pool.upgrade', obj.id)
+
         return HttpResponse('Volume has been upgraded.', status=202)
 
     def recoverykey(self, request, **kwargs):
@@ -1008,12 +1000,10 @@ class VolumeResourceMixin(NestedMixin):
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
         form = ReKeyForm(data=deserialized, volume=obj, api_validation=True)
-        if not form.is_valid():
+        if not (form.is_valid() and form.done()):
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)
             )
-        else:
-            form.done()
         return HttpResponse('Volume has been rekeyed.', status=202)
 
     def keypassphrase(self, request, **kwargs):
@@ -1043,12 +1033,10 @@ class VolumeResourceMixin(NestedMixin):
                 deserialized['passphrase2'] = deserialized.get('passphrase')
 
             form = ChangePassphraseForm(deserialized)
-            if not form.is_valid():
+            if not (form.is_valid() and form.done(obj)):
                 raise ImmediateHttpResponse(
                     response=self.error_response(request, form.errors)
                 )
-            else:
-                form.done(obj)
 
             if deserialized.get('remove'):
                 return HttpResponse('Volume passphrase has been removed', status=201)
@@ -1531,10 +1519,11 @@ class VolumeResourceMixin(NestedMixin):
             bundle.request.body or '{}',
             format=_format,
         )
-        bundle.obj.delete(
-            destroy=deserialized.get('destroy', True),
-            cascade=deserialized.get('cascade', True),
-        )
+        with client as c:
+            c.call('pool.export', bundle.obj.id, {
+                'destroy': deserialized.get('destroy', True),
+                'cascade': deserialized.get('cascade', True),
+            }, job=True)
 
 
 class ScrubResourceMixin(object):
@@ -3132,6 +3121,9 @@ class CertificateAuthorityResourceMixin(object):
         else:
             deserialized = {}
 
+        if 'cert_passphrase2' not in deserialized and 'cert_passphrase' in deserialized:
+            deserialized['cert_passphrase2'] = deserialized.get('cert_passphrase')
+
         form = CertificateAuthorityImportForm(data=deserialized)
         if not form.is_valid():
             raise ImmediateHttpResponse(
@@ -3257,12 +3249,43 @@ class CertificateResourceMixin(object):
                 self.wrap_view('importcert'),
             ),
             url(
+                r"^(?P<resource_name>%s)/import_csr%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('import_csr'),
+            ),
+            url(
                 r"^(?P<resource_name>%s)/internal%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('internal'),
             ),
         ]
+
+    def import_csr(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
+
+        if 'cert_passphrase2' not in deserialized and 'cert_passphrase' in deserialized:
+            deserialized['cert_passphrase2'] = deserialized.get('cert_passphrase')
+
+        form = CertificateCSRImportForm(data=deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('Certificate Signing Request imported.', status=201)
 
     def csr(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
@@ -3298,6 +3321,9 @@ class CertificateResourceMixin(object):
             )
         else:
             deserialized = {}
+
+        if 'cert_passphrase2' not in deserialized and 'cert_passphrase' in deserialized:
+            deserialized['cert_passphrase2'] = deserialized.get('cert_passphrase')
 
         form = CertificateImportForm(data=deserialized)
         if not form.is_valid():

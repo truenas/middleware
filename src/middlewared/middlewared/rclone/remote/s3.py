@@ -9,12 +9,15 @@ class S3RcloneRemote(BaseRcloneRemote):
     title = "Amazon S3"
 
     buckets = True
+
+    fast_list = True
+
     rclone_type = "s3"
 
     credentials_schema = [
-        Str("access_key_id", verbose="Access Key ID", required=True),
-        Str("secret_access_key", verbose="Secret Access Key", required=True),
-        Str("endpoint", verbose="Endpoint URL"),
+        Str("access_key_id", title="Access Key ID", required=True),
+        Str("secret_access_key", title="Secret Access Key", required=True),
+        Str("endpoint", title="Endpoint URL"),
     ]
 
     task_schema = [

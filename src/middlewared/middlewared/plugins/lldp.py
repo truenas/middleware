@@ -11,7 +11,8 @@ class LLDPService(SystemServiceService):
         'lldp_update',
         Bool('intdesc'),
         Str('country'),
-        Str('location')
+        Str('location'),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()

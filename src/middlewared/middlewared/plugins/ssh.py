@@ -28,6 +28,7 @@ class SSHService(SystemServiceService):
         Str('sftp_log_facility', enum=["", "DAEMON", "USER", "AUTH", "LOCAL0", "LOCAL1", "LOCAL2", "LOCAL3", "LOCAL4",
                                        "LOCAL5", "LOCAL6", "LOCAL7"]),
         Str('options'),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()

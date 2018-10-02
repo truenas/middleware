@@ -37,7 +37,7 @@ import glob
 import asyncio
 
 from collections import defaultdict
-from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, Ref, List, Patch
+from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch
 from middlewared.validators import Range, Match
 from middlewared.service import (
     Service, job, CallError, CRUDService, private, SystemServiceService, ValidationErrors
@@ -268,7 +268,8 @@ class RsyncdService(SystemServiceService):
     @accepts(Dict(
         'rsyncd_update',
         Int('port', validators=[Range(min=1, max=65535)]),
-        Str('auxiliary')
+        Str('auxiliary'),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()
@@ -288,7 +289,7 @@ class RsyncModService(CRUDService):
         datastore_prefix = 'rsyncmod_'
 
     @accepts(Dict(
-        'rsyncmod',
+        'rsyncmod_create',
         Str('name', validators=[Match(r'[^/\]]')]),
         Str('comment'),
         Str('path'),
@@ -296,8 +297,8 @@ class RsyncModService(CRUDService):
         Int('maxconn'),
         Str('user'),
         Str('group'),
-        List('hostsallow', items=[Str('hostsallow')]),
-        List('hostsdeny', items=[Str('hostdeny')]),
+        List('hostsallow', items=[Str('hostsallow')], default=[]),
+        List('hostsdeny', items=[Str('hostdeny')], default=[]),
         Str('auxiliary'),
         register=True,
     ))
@@ -318,10 +319,10 @@ class RsyncModService(CRUDService):
             data,
             {'prefix': self._config.datastore_prefix}
         )
-        await self.middleware.call('service.reload', 'rsync')
+        await self._service_change('rsync', 'reload')
         return data
 
-    @accepts(Int('id'), Ref('rsyncmod'))
+    @accepts(Int('id'), Patch('rsyncmod_create', 'rsyncmod_update', ('attr', {'update': True})))
     async def do_update(self, id, data):
         module = await self.middleware.call(
             'datastore.query',
@@ -341,7 +342,7 @@ class RsyncModService(CRUDService):
             data,
             {'prefix': self._config.datastore_prefix}
         )
-        await self.middleware.call('service.reload', 'rsync')
+        await self._service_change('rsync', 'reload')
 
         return module
 

@@ -3,7 +3,8 @@ import json
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Model
 
-from freenasUI.freeadmin.models.fields import DictField
+from freenasUI.freeadmin.apppool import appPool
+from freenasUI.freeadmin.models.fields import DictField, ListField
 from freenasUI.middleware.client import client, ClientException
 from freenasUI.services.exceptions import ServiceFailed
 
@@ -81,7 +82,7 @@ class MiddlewareModelForm:
         except FieldDoesNotExist:
             pass
         else:
-            if isinstance(field, DictField):
+            if isinstance(field, (DictField, ListField)):
                 return json.loads(v)
 
         return v
@@ -112,3 +113,10 @@ class MiddlewareModelForm:
                     raise ServiceFailed(e.extra[0], e.error)
                 else:
                     raise
+
+    def delete(self, request=None, events=None, **kwargs):
+        with client as c:
+            c.call(f"{self.middleware_plugin}.delete", self.instance.id)
+
+        fname = str(type(self).__name__)
+        appPool.hook_form_delete(fname, self, request, events)

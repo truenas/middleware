@@ -51,6 +51,8 @@ class CloudSyncFAdmin(BaseFreeAdmin):
         'hour',
         'minute',
         'month',
+        'bwlimit',
+        'exclude',
         'attributes',
         'transfer_mode',
         'encryption',
@@ -203,6 +205,7 @@ class SMARTTestFAdmin(BaseFreeAdmin):
         for idx, column in enumerate(human_colums[1:]):
             columns.insert(3 + idx, dict(column))
         return columns
+
 
 site.register(models.CloudSync, CloudSyncFAdmin)
 site.register(models.CronJob, CronJobFAdmin)

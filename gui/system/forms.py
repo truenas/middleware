@@ -404,12 +404,12 @@ class InitialWizard(CommonWizard):
                             'status for more details.'
                         ) % volume_name)
 
-                volume = Volume(vol_name=volume_name)
-                volume.save()
-                model_objs.append(volume)
+                    volume = Volume(vol_name=volume_name)
+                    volume.save()
+                    model_objs.append(volume)
 
-                scrub = Scrub.objects.create(scrub_volume=volume)
-                model_objs.append(scrub)
+                    scrub = Scrub.objects.create(scrub_volume=volume)
+                    model_objs.append(scrub)
 
                 if volume_form:
                     bysize = volume_form._get_unused_disks_by_size()
@@ -419,7 +419,14 @@ class InitialWizard(CommonWizard):
                     else:
                         groups = volume_form._grp_predefined(bysize, volume_type)
 
-                    _n.create_volume(volume, groups=groups, init_rand=False)
+                    with client as c:
+                        c.call('pool.create', {
+                            'name': volume_name,
+                            'topology': groups,
+                        })
+
+                    volume = Volume.objects.get(vol_name=volume_name)
+                    model_objs.append(volume)
 
                 # Create SMART tests for every disk available
                 disks = []
@@ -2086,32 +2093,31 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
     @staticmethod
     def _grp_type(num):
         check = OrderedDict((
-            ('mirror', lambda y: y == 2),
+            ('MIRROR', lambda y: y == 2),
             (
-                'raidz',
+                'RAIDZ1',
                 lambda y: False if y < 3 else math.log(y - 1, 2) % 1 == 0
             ),
             (
-                'raidz2',
+                'RAIDZ2',
                 lambda y: False if y < 4 else math.log(y - 2, 2) % 1 == 0
             ),
             (
-                'raidz3',
+                'RAIDZ3',
                 lambda y: False if y < 5 else math.log(y - 3, 2) % 1 == 0
             ),
-            ('stripe', lambda y: True),
+            ('STRIPE', lambda y: True),
         ))
         for name, func in list(check.items()):
             if func(num):
                 return name
-        return 'stripe'
+        return 'STRIPE'
 
     @classmethod
     def _grp_autoselect(cls, disks):
 
         higher = cls._higher_disks_group(disks)
-        groups = OrderedDict()
-        grpid = 0
+        groups = defaultdict(list)
 
         for size, devs in [(higher[0], disks[higher[0]])]:
             num = len(devs)
@@ -2153,17 +2159,12 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
                 mod = 0
 
             for i in range(rows):
-                groups[grpid] = {
+                groups['data'].append({
                     'type': vdevtype,
                     'disks': devs[i * perrow:perrow * (i + 1)],
-                }
-                grpid += 1
+                })
             if mod > 0:
-                groups[grpid] = {
-                    'type': 'spare',
-                    'disks': devs[-mod:],
-                }
-                grpid += 1
+                groups['spares'] += devs[-mod:]
         return groups
 
     @classmethod
@@ -2173,19 +2174,18 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
 
         maindisks = disks[higher[0]]
 
-        groups = OrderedDict()
-        grpid = 0
+        groups = defaultdict(list)
 
         if grptype == 'raid10':
             for i in range(int(len(maindisks) / 2)):
-                groups[grpid] = {
-                    'type': 'mirror',
+                groups['data'].append({
+                    'type': 'MIRROR',
                     'disks': maindisks[i * 2:2 * (i + 1)],
-                }
-                grpid += 1
+                })
         elif grptype.startswith('raidz'):
             if grptype == 'raidz':
                 optimalrow = 9
+                grptype = 'raidz1'
             elif grptype == 'raidz2':
                 optimalrow = 10
             else:
@@ -2196,16 +2196,15 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
                 div += 1
             perrow = int(len(maindisks) / (div if div else 1))
             for i in range(div):
-                groups[grpid] = {
-                    'type': grptype,
+                groups['data'].append({
+                    'type': grptype.upper(),
                     'disks': maindisks[i * perrow:perrow * (i + 1)],
-                }
-                grpid += 1
+                })
         else:
-            groups[grpid] = {
-                'type': grptype,
+            groups['data'].append({
+                'type': grptype.upper(),
                 'disks': maindisks,
-            }
+            })
 
         return groups
 
@@ -2220,7 +2219,7 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
     def _groups_to_disks_size(self, bysize, groups, swapsize):
         size = 0
         disks = []
-        for group in list(groups.values()):
+        for group in list(groups['data']):
             lower = None
             for disk in group['disks']:
                 _size = self._get_disk_size(disk, bysize)
@@ -2229,13 +2228,13 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
             if not lower:
                 continue
 
-            if group['type'] == 'mirror':
+            if group['type'] == 'MIRROR':
                 size += lower
-            elif group['type'] == 'raidz1':
+            elif group['type'] == 'RAIDZ1':
                 size += lower * (len(group['disks']) - 1)
-            elif group['type'] == 'raidz2':
+            elif group['type'] == 'RAIDZ2':
                 size += lower * (len(group['disks']) - 2)
-            elif group['type'] == 'stripe':
+            elif group['type'] == 'STRIPE':
                 size += lower * len(group['disks'])
             disks.extend(group['disks'])
         return disks, humanize_size(size)
@@ -2523,6 +2522,11 @@ class CertificateAuthorityCreateInternalForm(MiddlewareModelForm, ModelForm):
         required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_organization').help_text
     )
+    cert_organizational_unit = forms.CharField(
+        label=models.CertificateAuthority._meta.get_field('cert_organizational_unit').verbose_name,
+        required=False,
+        help_text=models.CertificateAuthority._meta.get_field('cert_organizational_unit').help_text
+    )
     cert_email = forms.CharField(
         label=models.CertificateAuthority._meta.get_field('cert_email').verbose_name,
         required=True,
@@ -2613,6 +2617,11 @@ class CertificateAuthorityCreateIntermediateForm(MiddlewareModelForm, ModelForm)
         label=models.CertificateAuthority._meta.get_field('cert_organization').verbose_name,
         required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_organization').help_text
+    )
+    cert_organizational_unit = forms.CharField(
+        label=models.CertificateAuthority._meta.get_field('cert_organizational_unit').verbose_name,
+        required=False,
+        help_text=models.CertificateAuthority._meta.get_field('cert_organizational_unit').help_text
     )
     cert_email = forms.CharField(
         label=models.CertificateAuthority._meta.get_field('cert_email').verbose_name,
@@ -2754,22 +2763,15 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_CSR').help_text
     )
-    cert_certificate = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_certificate').verbose_name,
-        widget=forms.Textarea(),
-        required=False,
-        help_text=models.Certificate._meta.get_field('cert_certificate').help_text
-    )
 
     def __init__(self, *args, **kwargs):
         super(CertificateCSREditForm, self).__init__(*args, **kwargs)
 
+        self.fields['cert_name'].widget.attrs['readonly'] = False
         self.fields['cert_CSR'].widget.attrs['readonly'] = True
 
     def middleware_clean(self, data):
         data.pop('CSR', None)
-        if not data.get('certificate'):
-            data.pop('certificate', None)
         return data
 
     class Meta:
@@ -2780,27 +2782,34 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
         model = models.Certificate
 
 
-class CertificateImportForm(MiddlewareModelForm, ModelForm):
+class CertificateCSRImportForm(MiddlewareModelForm, ModelForm):
 
     middleware_plugin = 'certificate'
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
 
+    class Meta:
+        fields = [
+            'cert_name',
+            'cert_csr',
+            'cert_privatekey',
+            'cert_passphrase'
+        ]
+        model = models.Certificate
+
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
         required=True,
         help_text=models.Certificate._meta.get_field('cert_name').help_text
     )
-    cert_certificate = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_certificate').verbose_name,
+    cert_csr = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_CSR').verbose_name,
         widget=forms.Textarea(),
         required=True,
         help_text=_(
-            "Cut and paste the contents of your certificate here.<br>"
-            "Order in which you should paste this: <br>"
-            "The Primary Certificate.<br>The Intermediate CA's Certificate(s) (optional)."
-            "<br>The Root CA Certificate (optional)"),
+            'Cut and paste the contents of your certificate signing request here'
+        )
     )
     cert_privatekey = forms.CharField(
         label=models.Certificate._meta.get_field('cert_privatekey').verbose_name,
@@ -2832,18 +2841,108 @@ class CertificateImportForm(MiddlewareModelForm, ModelForm):
         return passphrase
 
     def middleware_clean(self, data):
-        data['create_type'] = 'CERTIFICATE_CREATE_IMPORTED'
+        data['create_type'] = 'CERTIFICATE_CREATE_IMPORTED_CSR'
         data.pop('passphrase2', None)
+        data['CSR'] = data.pop('csr')
         return data
+
+
+class CertificateImportForm(MiddlewareModelForm, ModelForm):
+
+    middleware_plugin = 'certificate'
+    middleware_attr_prefix = 'cert_'
+    middleware_attr_schema = 'certificate'
+    is_singletone = False
 
     class Meta:
         fields = [
             'cert_name',
+            'cert_csr',
+            'cert_csr_id',
             'cert_certificate',
             'cert_privatekey',
             'cert_passphrase'
         ]
         model = models.Certificate
+
+    cert_csr = forms.BooleanField(
+        required=False,
+        initial=False,
+        label='CSR exists on FreeNAS',
+        help_text=_(
+            'Check this box if importing a certificate for which a CSR '
+            'exists on the FreeNAS system'
+        )
+    )
+
+    cert_csr_id = forms.ModelChoiceField(
+        queryset=models.Certificate.objects.filter(cert_CSR__isnull=False),
+        label=(_("CSRs")),
+        required=False
+    )
+
+    cert_name = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_name').verbose_name,
+        required=True,
+        help_text=models.Certificate._meta.get_field('cert_name').help_text
+    )
+    cert_certificate = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_certificate').verbose_name,
+        widget=forms.Textarea(),
+        required=True,
+        help_text=_(
+            "Cut and paste the contents of your certificate here.<br>"
+            "Order in which you should paste this: <br>"
+            "The Primary Certificate.<br>The Intermediate CA's Certificate(s) (optional)."
+            "<br>The Root CA Certificate (optional)"),
+    )
+    cert_privatekey = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_privatekey').verbose_name,
+        widget=forms.Textarea(),
+        required=False,
+        help_text=models.Certificate._meta.get_field('cert_privatekey').help_text
+    )
+    cert_passphrase = forms.CharField(
+        label=_("Passphrase"),
+        required=False,
+        help_text=_("Passphrase for encrypted private keys"),
+        widget=forms.PasswordInput(render_value=True),
+    )
+    cert_passphrase2 = forms.CharField(
+        label=_("Confirm Passphrase"),
+        required=False,
+        widget=forms.PasswordInput(render_value=True),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(CertificateImportForm, self).__init__(*args, **kwargs)
+
+        self.fields['cert_csr'].widget.attrs['onChange'] = (
+            'toggleGeneric("id_cert_csr", ["id_cert_passphrase",'
+            ' "id_cert_passphrase2", "id_cert_privatekey"], false); '
+            'toggleGeneric("id_cert_csr", ["id_cert_csr_id"], true);'
+        )
+
+    def clean_cert_passphrase2(self):
+        cdata = self.cleaned_data
+        passphrase = cdata.get('cert_passphrase')
+        passphrase2 = cdata.get('cert_passphrase2')
+
+        if passphrase and passphrase != passphrase2:
+            raise forms.ValidationError(_(
+                'Passphrase confirmation does not match.'
+            ))
+        return passphrase
+
+    def middleware_clean(self, data):
+        data['create_type'] = 'CERTIFICATE_CREATE_IMPORTED'
+        data.pop('passphrase2', None)
+        if data.pop('csr', False):
+            data.pop('passphrase', None)
+        else:
+            data.pop('csr_id', None)
+
+        return data
 
 
 class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
@@ -2896,6 +2995,11 @@ class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
         label=models.Certificate._meta.get_field('cert_organization').verbose_name,
         required=True,
         help_text=models.Certificate._meta.get_field('cert_organization').help_text
+    )
+    cert_organizational_unit = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_organizational_unit').verbose_name,
+        required=False,
+        help_text=models.Certificate._meta.get_field('cert_organizational_unit').help_text
     )
     cert_email = forms.CharField(
         label=models.Certificate._meta.get_field('cert_email').verbose_name,
@@ -3000,6 +3104,11 @@ class CertificateCreateCSRForm(MiddlewareModelForm, ModelForm):
         label=models.Certificate._meta.get_field('cert_organization').verbose_name,
         required=True,
         help_text=models.Certificate._meta.get_field('cert_organization').help_text
+    )
+    cert_organizational_unit = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_organizational_unit').verbose_name,
+        required=False,
+        help_text=models.Certificate._meta.get_field('cert_organizational_unit').help_text
     )
     cert_email = forms.CharField(
         label=models.Certificate._meta.get_field('cert_email').verbose_name,

@@ -69,6 +69,7 @@ class SystemDatasetService(ConfigService):
         Str('pool'),
         Bool('syslog'),
         Bool('rrd'),
+        update=True
     ))
     @job(lock='sysdataset_update')
     async def do_update(self, job, data):
@@ -104,9 +105,9 @@ class SystemDatasetService(ConfigService):
             await self.middleware.call('service.restart', 'collectd')
         return config
 
-    @accepts(Bool('mount', default=True))
+    @accepts(Bool('mount', default=True), Str('exclude_pool', default=None, null=True))
     @private
-    async def setup(self, mount):
+    async def setup(self, mount, exclude_pool=None):
         config = await self.config()
 
         if not await self.middleware.call('system.is_freenas'):
@@ -131,6 +132,8 @@ class SystemDatasetService(ConfigService):
         elif not config['pool']:
             pool = None
             for p in await self.middleware.call('pool.query', [], {'order_by': ['encrypt']}):
+                if exclude_pool and p['name'] == exclude_pool:
+                    continue
                 if p['is_decrypted']:
                     pool = p
                     break

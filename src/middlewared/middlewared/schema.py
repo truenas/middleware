@@ -7,7 +7,8 @@ import os
 from croniter import croniter
 
 from middlewared.service_exception import ValidationErrors
-from middlewared.validators import ShouldBe
+
+NOT_PROVIDED = object()
 
 
 class Error(Exception):
@@ -29,6 +30,7 @@ class EnumMixin(object):
         super(EnumMixin, self).__init__(*args, **kwargs)
 
     def clean(self, value):
+        value = super().clean(value)
         if self.enum is None:
             return value
         if not isinstance(value, (list, tuple)):
@@ -43,18 +45,28 @@ class EnumMixin(object):
 
 class Attribute(object):
 
-    def __init__(self, name, verbose=None, required=False, empty=True, private=False, validators=None, register=False, **kwargs):
+    def __init__(self, name, title=None, description=None, required=False, null=False, empty=True, private=False,
+                 validators=None, register=False, **kwargs):
         self.name = name
         self.has_default = 'default' in kwargs
         self.default = kwargs.pop('default', None)
         self.required = required
+        self.null = null
         self.empty = empty
         self.private = private
-        self.verbose = verbose or name
+        self.title = title or name
+        self.description = description
         self.validators = validators or []
         self.register = register
 
     def clean(self, value):
+        if value is None and self.null is False:
+            raise Error(self.name, 'null not allowed')
+        if value is NOT_PROVIDED:
+            if self.has_default:
+                return copy.deepcopy(self.default)
+            else:
+                raise Error(self.name, 'attribute required')
         return value
 
     def dump(self, value):
@@ -69,8 +81,8 @@ class Attribute(object):
         for validator in self.validators:
             try:
                 validator(value)
-            except ShouldBe as e:
-                verrors.add(self.name, f"Should be {e.what}")
+            except ValueError as e:
+                verrors.add(self.name, str(e))
 
         if verrors:
             raise verrors
@@ -104,13 +116,18 @@ class Attribute(object):
 class Any(Attribute):
 
     def to_json_schema(self, parent=None):
-        schema = {'anyOf': [
-            {'type': 'string'},
-            {'type': 'integer'},
-            {'type': 'boolean'},
-            {'type': 'object'},
-            {'type': 'array'},
-        ], 'title': self.verbose}
+        schema = {
+            'anyOf': [
+                {'type': 'string'},
+                {'type': 'integer'},
+                {'type': 'boolean'},
+                {'type': 'object'},
+                {'type': 'array'},
+            ],
+            'title': self.title,
+        }
+        if self.description:
+            schema['description'] = self.description
         if not parent:
             schema['_required_'] = self.required
         return schema
@@ -120,10 +137,10 @@ class Str(EnumMixin, Attribute):
 
     def clean(self, value):
         value = super(Str, self).clean(value)
-        if value is None and not self.required:
-            return self.default
-        if isinstance(value, int):
-            return str(value)
+        if value is None:
+            return value
+        if isinstance(value, int) and not isinstance(value, bool):
+            value = str(value)
         if not isinstance(value, str):
             raise Error(self.name, 'Not a string')
         if not self.empty and not value:
@@ -133,7 +150,9 @@ class Str(EnumMixin, Attribute):
     def to_json_schema(self, parent=None):
         schema = {}
         if not parent:
-            schema['title'] = self.verbose
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
             schema['_required_'] = self.required
         if not self.required:
             schema['type'] = ['string', 'null']
@@ -147,6 +166,9 @@ class Str(EnumMixin, Attribute):
 class Dir(Str):
 
     def validate(self, value):
+        if value is None:
+            return
+
         verrors = ValidationErrors()
 
         if value:
@@ -164,6 +186,9 @@ class Dir(Str):
 class File(Str):
 
     def validate(self, value):
+        if value is None:
+            return
+
         verrors = ValidationErrors()
 
         if value:
@@ -210,6 +235,9 @@ class IPAddr(Str):
         super(IPAddr, self).__init__(*args, **kwargs)
 
     def validate(self, value):
+        if value is None:
+            return
+
         verrors = ValidationErrors()
 
         if value:
@@ -238,8 +266,9 @@ class IPAddr(Str):
 class Bool(Attribute):
 
     def clean(self, value):
-        if value is None and not self.required:
-            return self.default
+        value = super().clean(value)
+        if value is None:
+            return value
         if not isinstance(value, bool):
             raise Error(self.name, 'Not a boolean')
         return value
@@ -249,7 +278,9 @@ class Bool(Attribute):
             'type': ['boolean', 'null'] if not self.required else 'boolean',
         }
         if not parent:
-            schema['title'] = self.verbose
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
             schema['_required_'] = self.required
         return schema
 
@@ -258,9 +289,9 @@ class Int(EnumMixin, Attribute):
 
     def clean(self, value):
         value = super(Int, self).clean(value)
-        if value is None and not self.required:
-            return self.default
-        if not isinstance(value, int):
+        if value is None:
+            return value
+        if not isinstance(value, int) or isinstance(value, bool):
             if isinstance(value, str) and value.isdigit():
                 return int(value)
             raise Error(self.name, 'Not an integer')
@@ -269,6 +300,33 @@ class Int(EnumMixin, Attribute):
     def to_json_schema(self, parent=None):
         schema = {
             'type': ['integer', 'null'] if not self.required else 'integer',
+        }
+        if not parent:
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
+            schema['_required_'] = self.required
+        return schema
+
+
+class Float(EnumMixin, Attribute):
+
+    def clean(self, value):
+        value = super(Float, self).clean(value)
+        if value is None and not self.required:
+            return self.default
+        try:
+            # float(False) = 0.0
+            # float(True) = 1.0
+            if isinstance(value, bool):
+                raise TypeError()
+            return float(value)
+        except (TypeError, ValueError):
+            raise Error(self.name, 'Not a floating point number')
+
+    def to_json_schema(self, parent=None):
+        schema = {
+            'type': ['float', 'null'] if not self.required else 'float',
         }
         if not parent:
             schema['title'] = self.verbose
@@ -280,14 +338,12 @@ class List(EnumMixin, Attribute):
 
     def __init__(self, *args, **kwargs):
         self.items = kwargs.pop('items', [])
-        if 'default' not in kwargs:
-            kwargs['default'] = []
         super(List, self).__init__(*args, **kwargs)
 
     def clean(self, value):
         value = super(List, self).clean(value)
-        if value is None and not self.required:
-            return copy.copy(self.default)
+        if value is None:
+            return copy.deepcopy(self.default)
         if not isinstance(value, list):
             raise Error(self.name, 'Not a list')
         if not self.empty and not value:
@@ -312,6 +368,9 @@ class List(EnumMixin, Attribute):
         return value
 
     def validate(self, value):
+        if value is None:
+            return
+
         verrors = ValidationErrors()
 
         for i, v in enumerate(value):
@@ -324,10 +383,14 @@ class List(EnumMixin, Attribute):
         if verrors:
             raise verrors
 
+        super().validate(value)
+
     def to_json_schema(self, parent=None):
         schema = {'type': 'array'}
         if not parent:
-            schema['title'] = self.verbose
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
             schema['_required_'] = self.required
         if self.required:
             schema['type'] = ['array', 'null']
@@ -364,14 +427,18 @@ class Dict(Attribute):
         # Update property is used to disable requirement on all attributes
         # as well to not populate default values for not specified attributes
         self.update = kwargs.pop('update', False)
+        if 'default' not in kwargs:
+            kwargs['default'] = {}
         super(Dict, self).__init__(name, **kwargs)
         self.attrs = {}
         for i in attrs:
             self.attrs[i.name] = i
 
     def clean(self, data):
-        if data is None and not self.required:
-            data = {}
+        data = super().clean(data)
+
+        if data is None:
+            return copy.deepcopy(self.default)
 
         self.errors = []
         if not isinstance(data, dict):
@@ -391,12 +458,10 @@ class Dict(Attribute):
         # Do not make any field and required and not populate default values
         if not self.update:
             for attr in list(self.attrs.values()):
-
-                if attr.required and attr.name not in data:
-                    raise Error(attr.name, 'This field is required')
-
-                if attr.name not in data and attr.has_default:
-                    data[attr.name] = copy.copy(attr.default)
+                if attr.name not in data and (
+                    attr.required or attr.has_default
+                ):
+                    data[attr.name] = attr.clean(NOT_PROVIDED)
 
         return data
 
@@ -418,6 +483,9 @@ class Dict(Attribute):
         return value
 
     def validate(self, value):
+        if value is None:
+            return
+
         verrors = ValidationErrors()
 
         for attr in self.attrs.values():
@@ -437,7 +505,9 @@ class Dict(Attribute):
             'additionalProperties': self.additional_attrs,
         }
         if not parent:
-            schema['title'] = self.verbose
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
             schema['_required_'] = self.required
         for name, attr in list(self.attrs.items()):
             schema['properties'][name] = attr.to_json_schema(parent=self)
@@ -467,8 +537,8 @@ class Cron(Dict):
 
     @staticmethod
     def convert_schedule_to_db_format(data_dict, schedule_name='schedule'):
-        if data_dict.get(schedule_name):
-            schedule = data_dict.pop(schedule_name)
+        schedule = data_dict.pop(schedule_name, None)
+        if schedule:
             db_fields = ['minute', 'hour', 'daymonth', 'month', 'dayweek']
             for index, field in enumerate(Cron.FIELDS):
                 if field in schedule:
@@ -558,7 +628,10 @@ class Patch(object):
         schema.name = self.newname
         for operation, patch in self.patches:
             if operation == 'add':
-                new = self.convert(dict(patch))
+                if isinstance(patch, dict):
+                    new = self.convert(dict(patch))
+                else:
+                    new = copy.deepcopy(patch)
                 schema.attrs[new.name] = new
             elif operation == 'rm':
                 del schema.attrs[patch['name']]
@@ -639,8 +712,7 @@ def accepts(*schema):
                 elif len(nf.accepts) >= i + args_index:
                     attr = nf.accepts[i]
                     i += 1
-
-                    value = None
+                    value = NOT_PROVIDED
                 else:
                     i += 1
                     continue
@@ -682,14 +754,12 @@ def accepts(*schema):
     return wrap
 
 
-class UnixPerm(Attribute):
-
-    def clean(self, value):
-        if value is None and not self.required:
-            return self.default
-        return value
+class UnixPerm(Str):
 
     def validate(self, value):
+        if value is None:
+            return
+
         try:
             mode = int(value, 8)
         except ValueError:
@@ -705,6 +775,8 @@ class UnixPerm(Attribute):
             'type': ['string', 'null'] if not self.required else 'string',
         }
         if not parent:
-            schema['title'] = self.verbose
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
             schema['_required_'] = self.required
         return schema

@@ -17,7 +17,8 @@ class TFTPService(SystemServiceService):
         Int('port', validators=[Port()]),
         Str('options'),
         Str('umask', validators=[Match(r"^[0-7]{3}$")]),
-        Str('username')
+        Str('username'),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()

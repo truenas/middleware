@@ -24,6 +24,7 @@ class AFPService(SystemServiceService):
         Str('global_aux'),
         Str('map_acls', enum=["rights", "mode", "none"]),
         Str('chmod_request', enum=["preserve", "simple", "ignore"]),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()
@@ -57,10 +58,10 @@ class SharingAFPService(CRUDService):
         Bool('home', default=False),
         Str('name'),
         Str('comment'),
-        List('allow'),
-        List('deny'),
-        List('ro'),
-        List('rw'),
+        List('allow', default=[]),
+        List('deny', default=[]),
+        List('ro', default=[]),
+        List('rw', default=[]),
         Bool('timemachine', default=False),
         Int('timemachine_quota', default=0),
         Bool('nodev', default=False),
@@ -69,8 +70,8 @@ class SharingAFPService(CRUDService):
         UnixPerm('fperm', default='644'),
         UnixPerm('dperm', default='755'),
         UnixPerm('umask', default='000'),
-        List('hostsallow', items=[IPAddr('ip', cidr=True)]),
-        List('hostsdeny', items=[IPAddr('ip', cidr=True)]),
+        List('hostsallow', items=[IPAddr('ip', cidr=True)], default=[]),
+        List('hostsdeny', items=[IPAddr('ip', cidr=True)], default=[]),
         Str('auxparams'),
         register=True
     ))
@@ -99,7 +100,7 @@ class SharingAFPService(CRUDService):
             {'prefix': self._config.datastore_prefix})
         await self.extend(data)
 
-        await self.middleware.call('service.reload', 'afp')
+        await self._service_change('afp', 'reload')
 
         return data
 
@@ -145,14 +146,15 @@ class SharingAFPService(CRUDService):
             {'prefix': self._config.datastore_prefix})
         await self.extend(new)
 
-        await self.middleware.call('service.reload', 'afp')
+        await self._service_change('afp', 'reload')
 
         return new
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        return await self.middleware.call(
-            'datastore.delete', self._config.datastore, id)
+        result = await self.middleware.call('datastore.delete', self._config.datastore, id)
+        await self._service_change('afp', 'reload')
+        return result
 
     @private
     async def clean(self, data, schema_name, verrors, id=None):

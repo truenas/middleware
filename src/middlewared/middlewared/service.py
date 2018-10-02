@@ -100,6 +100,7 @@ class ServiceBase(type):
       - datastore: name of the datastore mainly used in the service
       - datastore_extend: datastore `extend` option used in common `query` method
       - datastore_prefix: datastore `prefix` option used in helper methods
+      - datastore_filters: datastore default filters to be used in `query` method
       - service: system service `name` option used by `SystemServiceService`
       - service_model: system service datastore model option used by `SystemServiceService` (`service` if used if not provided)
       - service_verb: verb to be used on update (default to `reload`)
@@ -128,6 +129,7 @@ class ServiceBase(type):
             'datastore': None,
             'datastore_prefix': None,
             'datastore_extend': None,
+            'datastore_filters': None,
             'service': None,
             'service_model': None,
             'service_verb': 'reload',
@@ -256,6 +258,10 @@ class CRUDService(ServiceChangeMixin, Service):
             options['prefix'] = self._config.datastore_prefix
         if self._config.datastore_extend:
             options['extend'] = self._config.datastore_extend
+        if self._config.datastore_filters:
+            if not filters:
+                filters = []
+            filters += self._config.datastore_filters
         # In case we are extending which may transform the result in numerous ways
         # we can only filter the final result.
         if 'extend' in options:
@@ -354,7 +360,7 @@ class CoreService(Service):
             }
         return services
 
-    @accepts(Str('service'))
+    @accepts(Str('service', default=None, null=True))
     def get_methods(self, service=None):
         """Return methods metadata of every available service.
 
@@ -479,7 +485,7 @@ class CoreService(Service):
 
     @accepts(
         Str('method'),
-        List('args'),
+        List('args', default=[]),
         Str('filename'),
     )
     async def download(self, method, args, filename):
@@ -580,13 +586,13 @@ class CoreService(Service):
                 if i not in options:
                     raise ValidationError(i, f'{i} is required for PYDEV')
             os.environ['PATHS_FROM_ECLIPSE_TO_PYTHON'] = json.dumps([
-                [options['local_path'], '/usr/local/lib/python3.6/site-packages/middlewared'],
+                [options['local_path'], '/usr/local/lib/python3.7/site-packages/middlewared'],
             ])
             import pydevd
             pydevd.stoptrace()
             pydevd.settrace(host=options['host'])
 
-    @accepts(Str("method"), List("params"))
+    @accepts(Str("method"), List("params", default=[]))
     @job(lock=lambda args: f"bulk:{args[0]}")
     async def bulk(self, job, method, params):
         """

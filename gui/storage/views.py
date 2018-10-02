@@ -44,7 +44,6 @@ from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -268,9 +267,8 @@ def volumemanager_zfs(request):
     if request.method == "POST":
 
         form = forms.ZFSVolumeWizardForm(request.POST)
-        if form.is_valid():
-            events = []
-            form.done(request, events)
+        events = []
+        if form.is_valid() and form.done(request, events):
             return JsonResp(
                 request,
                 message=_("Volume successfully added."),
@@ -462,24 +460,19 @@ def zvol_delete(request, name):
 
     if request.method == 'POST':
         form = forms.ZvolDestroyForm(request.POST, fs=name)
-        extents = iSCSITargetExtent.objects.filter(
-            iscsi_target_extent_type='ZVOL',
-            iscsi_target_extent_path='zvol/' + name)
-        if extents.count() > 0:
+        if form.is_valid():
+            with client as c:
+                try:
+                    c.call('pool.dataset.delete', name)
+                except ClientException as e:
+                    return JsonResp(
+                        request,
+                        error=True,
+                        message=e.error)
+
             return JsonResp(
                 request,
-                error=True,
-                message=_(
-                    "This is in use by the iscsi target, please remove "
-                    "it there first."))
-        if form.is_valid():
-            retval = notifier().destroy_zfs_vol(name, recursive=True)
-            if retval == '':
-                return JsonResp(
-                    request,
-                    message=_("ZFS Volume successfully destroyed."))
-            else:
-                return JsonResp(request, error=True, message=retval)
+                message=_("ZFS Volume successfully destroyed."))
     else:
         form = forms.ZvolDestroyForm(fs=name)
     return render(request, 'storage/zvol_confirm_delete.html', {
@@ -510,10 +503,10 @@ def mp_permission(request, path):
     if request.method == 'POST':
         form = forms.MountPointAccessForm(request.POST)
         if form.is_valid():
-            form.commit(path=path)
-            return JsonResp(
-                request,
-                message=_("Mount Point permissions successfully updated."))
+            if form.commit(path):
+                return JsonResp(
+                    request,
+                    message=_("Mount Point permissions successfully updated."))
     else:
         form = forms.MountPointAccessForm(initial={'path': path})
     return render(request, 'storage/permission.html', {
@@ -523,18 +516,19 @@ def mp_permission(request, path):
 
 
 def dataset_delete(request, name):
-
-    datasets = zfs.list_datasets(path=name, recursive=True)
+    with client as c:
+        datasets = c.call("pool.dataset.query", [["name", "=", name]], {"get": True})["children"]
     if request.method == 'POST':
         form = forms.Dataset_Destroy(request.POST, fs=name, datasets=datasets)
         if form.is_valid():
-            retval = notifier().destroy_zfs_dataset(path=name, recursive=True)
-            if retval == '':
-                return JsonResp(
-                    request,
-                    message=_("Dataset successfully destroyed."))
-            else:
-                return JsonResp(request, error=True, message=retval)
+            with client as c:
+                try:
+                    c.call("pool.dataset.delete", name, True)
+                    return JsonResp(
+                        request,
+                        message=_("Dataset successfully destroyed."))
+                except ClientException as e:
+                    return JsonResp(request, error=True, message=e.error)
     else:
         form = forms.Dataset_Destroy(fs=name, datasets=datasets)
     return render(request, 'storage/dataset_confirm_delete.html', {
@@ -710,10 +704,11 @@ def volume_detach(request, vid):
     volume = models.Volume.objects.get(pk=vid)
     usedbytes = volume._get_used_bytes()
     usedsize = humanize_size(usedbytes) if usedbytes else None
-    services = {
-        key: val
-        for key, val in list(volume.has_attachments().items()) if len(val) > 0
-    }
+    with client as c:
+        services = {
+            key: val
+            for key, val in list(c.call('pool.attachments', volume.id).items()) if len(val) > 0
+        }
     if volume.vol_encrypt > 0:
         request.session["allow_gelikey"] = True
     if request.method == "POST":
@@ -732,9 +727,6 @@ def volume_detach(request, vid):
                     return JsonResp(request, confirm=message)
             try:
                 events = []
-                volume.delete(
-                    destroy=form.cleaned_data['mark_new'],
-                    cascade=form.cleaned_data.get('cascade', True))
                 form.done(request, events)
                 return JsonResp(
                     request,
@@ -768,15 +760,16 @@ def zpool_scrub(request, vid):
             _('Pool output could not be parsed. Is the pool imported?')
         )
     if request.method == "POST":
-        if request.POST["action"] == "start":
-            notifier().zfs_scrub(str(volume.vol_name))
-            return JsonResp(request, message=_("The scrub process has been started"))
-        elif request.POST["action"] == "stop":
-            notifier().zfs_scrub(str(volume.vol_name), stop=True)
-            return JsonResp(request, message=_("The scrub process has been stopped"))
-        elif request.POST["action"] == "pause":
-            notifier().zfs_scrub(str(volume.vol_name), pause=True)
-            return JsonResp(request, message=_("The scrub process has been paused"))
+        with client as c:
+            if request.POST["action"] == "start":
+                c.call('pool.scrub', vid, 'START')
+                return JsonResp(request, message=_("The scrub process has been started"))
+            elif request.POST["action"] == "stop":
+                c.call('pool.scrub', vid, 'STOP')
+                return JsonResp(request, message=_("The scrub process has been stopped"))
+            elif request.POST["action"] == "pause":
+                c.call('pool.scrub', vid, 'PAUSE')
+                return JsonResp(request, message=_("The scrub process has been paused"))
 
     return render(request, 'storage/scrub_confirm.html', {
         'volume': volume,
@@ -793,17 +786,11 @@ def zpool_disk_replace(request, vname, label):
             volume=volume,
             label=label,
         )
-        if form.is_valid():
-            if form.done():
-                return JsonResp(
-                    request,
-                    message=_("Disk replacement has been initiated."))
-            else:
-                return JsonResp(
-                    request,
-                    error=True,
-                    message=_("An error occurred."))
-
+        if form.is_valid() and form.done():
+            return JsonResp(
+                request,
+                message=_("Disk replacement has been initiated."))
+        return JsonResp(request, form=form)
     else:
         form = forms.ZFSDiskReplacementForm(volume=volume, label=label)
     return render(request, 'storage/zpool_disk_replace.html', {
@@ -929,10 +916,13 @@ def volume_create_passphrase(request, object_id):
     if request.method == "POST":
         form = forms.CreatePassphraseForm(request.POST)
         if form.is_valid():
-            form.done(volume=volume)
-            return JsonResp(
-                request,
-                message=_("Passphrase created"))
+            try:
+                form.done(volume=volume)
+                return JsonResp(
+                    request,
+                    message=_("Passphrase created"))
+            except ClientException as e:
+                form._errors['__all__'] = form.error_class([str(e)])
     else:
         form = forms.CreatePassphraseForm()
     return render(request, "storage/create_passphrase.html", {
@@ -946,8 +936,7 @@ def volume_change_passphrase(request, object_id):
     volume = models.Volume.objects.get(id=object_id)
     if request.method == "POST":
         form = forms.ChangePassphraseForm(request.POST)
-        if form.is_valid():
-            form.done(volume=volume)
+        if form.is_valid() and form.done(volume=volume):
             return JsonResp(
                 request,
                 message=_("Passphrase updated"))
@@ -975,7 +964,10 @@ def volume_lock(request, object_id):
                 })
                 return JsonResp(request, confirm=message)
 
-        notifier().volume_detach(volume)
+        with client as c:
+            c.call('pool.lock', volume.id, job=True)
+
+        """
         if hasattr(notifier, 'failover_status') and notifier().failover_status() == 'MASTER':
             from freenasUI.failover.enc_helper import LocalEscrowCtl
             escrowctl = LocalEscrowCtl()
@@ -989,7 +981,7 @@ def volume_lock(request, object_id):
                     c.call('failover.call_remote', 'failover.encryption_clearkey')
             except Exception:
                 log.warn('Failed to clear key on standby node, is it down?', exc_info=True)
-        notifier().restart("system_datasets")
+        """
         return JsonResp(request, message=_("Volume locked"))
     return render(request, "storage/lock.html")
 
@@ -1092,8 +1084,7 @@ def volume_rekey(request, object_id):
     volume = models.Volume.objects.get(id=object_id)
     if request.method == "POST":
         form = forms.ReKeyForm(request.POST, volume=volume)
-        if form.is_valid():
-            form.done()
+        if form.is_valid() and form.done():
             return JsonResp(
                 request,
                 message=_("Encryption re-key succeeded"))
@@ -1169,21 +1160,12 @@ def volume_recoverykey_remove(request, object_id):
 
 def volume_upgrade(request, object_id):
     volume = models.Volume.objects.get(pk=object_id)
-    try:
-        notifier().zpool_version(volume.vol_name)
-    except Exception:
-        raise MiddlewareError(
-            _('Pool output could not be parsed. Is the pool imported?')
-        )
-    if request.method == "POST":
-        upgrade = notifier().zpool_upgrade(str(volume.vol_name))
-        if upgrade is not True:
-            return JsonResp(
-                request,
-                message=_("The pool failed to upgraded: %s") % upgrade,
-            )
-        else:
-            return JsonResp(request, message=_("The pool has been upgraded"))
+
+    if request.method == 'POST':
+        with client as c:
+            c.call('pool.upgrade', object_id)
+
+        return JsonResp(request, message=_('The pool has been upgraded'))
 
     return render(request, 'storage/upgrade_confirm.html', {
         'volume': volume,

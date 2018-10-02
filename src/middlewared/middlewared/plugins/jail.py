@@ -26,7 +26,7 @@ from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
-from middlewared.validators import IpInUse, MACAddr, ShouldBe
+from middlewared.validators import IpInUse, MACAddr
 
 
 SHUTDOWN_LOCK = asyncio.Lock()
@@ -41,7 +41,7 @@ class JailService(CRUDService):
     # using `process_pool`
     # @filterable
     @accepts(
-        List('query-filters'),
+        List('query-filters', default=[]),
         Dict('query-options', additional_attrs=True),
     )
     def query(self, filters=None, options=None):
@@ -206,7 +206,7 @@ class JailService(CRUDService):
                             IpInUse(self.middleware, exclude)(
                                 ip
                             )
-                        except ShouldBe as e:
+                        except ValueError as e:
                             verrors.add(
                                 f'{schema}.{f}',
                                 str(e)
@@ -301,8 +301,8 @@ class JailService(CRUDService):
                         len(value.split()) != 2 or
                         any(value.split().count(v) > 1 for v in value.split())
                     ):
-                        raise ShouldBe('Exception')
-                except ShouldBe:
+                        raise ValueError('Exception')
+                except ValueError:
                     verrors.add(
                         key,
                         'Please Enter two valid and different '
@@ -358,7 +358,7 @@ class JailService(CRUDService):
             Str("password", default="anonymous@"),
             Str("name", default=None),
             Bool("accept", default=True),
-            List("props"),
+            List("props", default=[]),
             List(
                 "files",
                 default=["MANIFEST", "base.txz", "lib32.txz", "doc.txz"]
@@ -694,7 +694,7 @@ class JailService(CRUDService):
 
     @accepts(
         Str("jail"),
-        List("command"),
+        List("command", default=[]),
         Dict("options", Str("host_user", default="root"), Str("jail_user")))
     def exec(self, jail, command, options):
         """Issues a command inside a jail."""
@@ -917,6 +917,18 @@ class JailService(CRUDService):
         await SHUTDOWN_LOCK.acquire()
 
 
+async def jail_pool_pre_lock(middleware, pool):
+    """
+    We need to stop jails before unlocking a pool because of used
+    resources in it.
+    """
+    activated_pool = await middleware.call('jail.get_activated_pool')
+    if activated_pool == pool['name']:
+        jails = await middleware.call('jail.query', [('state', '=', 'up')])
+        for j in jails:
+            await middleware.call('jail.stop', j['host_hostuuid'])
+
+
 async def __event_system(middleware, event_type, args):
     """
     Method called when system is ready or shutdown, supposed to start/stop jails
@@ -932,4 +944,5 @@ async def __event_system(middleware, event_type, args):
 
 
 def setup(middleware):
+    middleware.register_hook('pool.pre_lock', jail_pool_pre_lock)
     middleware.event_subscribe('system', __event_system)
