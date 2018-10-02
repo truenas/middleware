@@ -1781,7 +1781,7 @@ class PeriodicSnapForm(MiddlewareModelForm, ModelForm):
         self.fields['task_filesystem'] = forms.ChoiceField(
             label=self.fields['task_filesystem'].label,
         )
-        filesystem_choices = list(choices.FILESYSTEM_CHOICES())
+        filesystem_choices = sorted(list(choices.FILESYSTEM_CHOICES()))
         if self.instance.id and self.instance.task_filesystem not in dict(filesystem_choices):
             filesystem_choices.append((self.instance.task_filesystem, self.instance.task_filesystem))
         self.fields['task_filesystem'].choices = filesystem_choices
