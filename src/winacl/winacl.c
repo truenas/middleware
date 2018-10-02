@@ -34,6 +34,7 @@
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sysexits.h>
@@ -43,27 +44,30 @@ struct windows_acl_info {
 
 #define	WA_NULL			0x00000000	/* nothing */
 #define	WA_FILES		0x00000001	/* only files */
-#define	WA_DIRECTORIES	0x00000002	/* only directories */
+#define	WA_DIRECTORIES		0x00000002	/* only directories */
 #define	WA_APPEND		0x00000004	/* append entrie(s) */
 #define	WA_REMOVE		0x00000008	/* remove entrie(s) */
 #define	WA_UPDATE		0x00000010	/* update entrie(s) */
-#define	WA_RECURSIVE	0x00000020	/* recursive */
+#define	WA_RECURSIVE		0x00000020	/* recursive */
 #define	WA_VERBOSE		0x00000040	/* print more stuff */
 #define	WA_RESET		0x00000080	/* set defaults */
-#define WA_DOSATTRIB	0x00000100	/* DOS extended attribute */
+#define WA_DOSATTRIB		0x00000100	/* DOS extended attribute */
+#define WA_CLONE		0x00000200	/* clone an ACL */
 
 /* default ACL entries if none are specified */
 #define	WA_ENTRY_OWNER		"owner@:rwxpDdaARWcCos:fd:allow"
 #define	WA_ENTRY_GROUP		"group@:rwxpDdaARWcCos:fd:allow"
 #define	WA_ENTRY_EVERYONE	"everyone@:rxaRc:fd:allow"
 
-#define	WA_OP_SET	(WA_APPEND|WA_REMOVE|WA_UPDATE|WA_RESET)
+#define	WA_OP_SET	(WA_APPEND|WA_CLONE|WA_REMOVE|WA_UPDATE|WA_RESET)
 #define	WA_OP_CHECK(flags, bit) ((flags & ~bit) & WA_OP_SET)
 
 	char *owner_entry;
 	char *group_entry;
 	char *everyone_entry;
+	char *source;
 	char *path;
+	acl_t source_acl;
 	acl_t dacl;
 	acl_t facl;
 	uid_t uid;
@@ -78,6 +82,7 @@ struct {
 	int action;
 } actions[] = {
 	{	"append",	WA_APPEND	},
+	{	"clone",	WA_CLONE	},
 	{	"update",	WA_UPDATE	},
 	{	"remove",	WA_REMOVE	},
 	{	"reset",	WA_RESET	}
@@ -154,7 +159,9 @@ new_windows_acl_info(void)
 	w->owner_entry = NULL;
 	w->group_entry = NULL;
 	w->everyone_entry = NULL;
+	w->source = NULL;
 	w->path = NULL;
+	w->source_acl = NULL;
 	w->dacl = NULL;
 	w->facl = NULL;
 	w->uid = -1;
@@ -175,7 +182,9 @@ free_windows_acl_info(struct windows_acl_info *w)
 	free(w->owner_entry);
 	free(w->group_entry);
 	free(w->everyone_entry);
+	free(w->source);
 	free(w->path);
+	acl_free(w->source_acl);
 	acl_free(w->dacl);
 	acl_free(w->facl);
 	free(w);
@@ -185,24 +194,36 @@ free_windows_acl_info(struct windows_acl_info *w)
 static void
 usage(char *path)
 {
+	if (strcmp(path, "cloneacl") == 0) {
 	fprintf(stderr,
 		"Usage: %s [OPTIONS] ...\n"
 		"Where option is:\n"
-		"    -a <add|update|remove|reset> # action to perform\n"
-		"    -o <owner permission>        # owner ACL entry\n"
-		"    -g <group permission>        # group ACL entry\n"
-		"    -e <everyone permission>     # everyone ACL entry\n"
-		"    -O <owner>                   # change owner\n"
-		"    -G <group>                   # change group\n"
-		"    -p <path>                    # path to set\n"
-		"    -i <index>                   # Index\n"
-		"    -f                           # only set files\n"
-		"    -d                           # only set directories\n"
-		"    -r                           # recursive\n"
-		"    -v                           # verbose\n"
-		"    -x                           # remove DOSATTRIB EA\n",
+		"    -s <path>                    # source for ACL. If none specified then ACL taken from -p\n"
+		"    -p <path>                    # path to recursively set ACL\n"
+		"    -v                           # verbose\n",
 		path
 	);
+	} else {
+	fprintf(stderr,
+		"Usage: %s [OPTIONS] ...\n"
+		"Where option is:\n"
+		"    -a <append|clone|update|remove|reset> 	# action to perform\n"
+		"    -o <owner permission>       	 	# owner ACL entry\n"
+		"    -g <group permission>        		# group ACL entry\n"
+		"    -e <everyone permission>     		# everyone ACL entry\n"
+		"    -O <owner>                   		# change owner\n"
+		"    -G <group>                   		# change group\n"
+		"    -s <source>         			# source (if cloning ACL)\n"
+		"    -p <path>                   		# path to set\n"
+		"    -i <index>                   		# Index\n"
+		"    -f                           		# only set files\n"
+		"    -d                           		# only set directories\n"
+		"    -r                           		# recursive\n"
+		"    -v                           		# verbose\n"
+		"    -x                           		# remove DOSATTRIB EA\n",
+		path
+	);
+	}
 
 	exit(0);
 }
@@ -333,7 +354,31 @@ merge_acl(acl_t acl, acl_t *prev_acl, const char *path)
 
 	return (0);
 }
+ 
+/* add inherited flag to ACES in ACL */
+static int
+set_inherited_flag(acl_t *acl)
+{
+        int entry_id;
+        acl_entry_t acl_entry;
+        acl_flagset_t acl_flags;
+                 
+        entry_id = ACL_FIRST_ENTRY;
+        while (acl_get_entry(*acl, entry_id, &acl_entry) > 0) {
+                entry_id = ACL_NEXT_ENTRY;
 
+                if (acl_get_flagset_np(acl_entry, &acl_flags) < 0)
+                        err(EX_OSERR, "acl_get_flagset_np() failed");
+                if ((*acl_flags & ACL_ENTRY_INHERITED) == 0) {
+                    acl_add_flag_np(acl_flags, ACL_ENTRY_INHERITED);
+
+                    if (acl_set_flagset_np(acl_entry, acl_flags) < 0)
+                            err(EX_OSERR, "acl_set_flagset_np() failed");
+                }
+        }
+
+        return (0);
+}
 
 /* only directories can have inherit flags set */
 static int
@@ -349,14 +394,17 @@ remove_inherit_flags(acl_t *acl)
 
 		if (acl_get_flagset_np(acl_entry, &acl_flags) < 0)
 			err(EX_OSERR, "acl_get_flagset_np() failed");
+		if (*acl_flags & (ACL_ENTRY_FILE_INHERIT|ACL_ENTRY_DIRECTORY_INHERIT|
+				  ACL_ENTRY_NO_PROPAGATE_INHERIT|ACL_ENTRY_INHERIT_ONLY)) {
+			acl_delete_flag_np(acl_flags, (
+				ACL_ENTRY_FILE_INHERIT|ACL_ENTRY_DIRECTORY_INHERIT|
+				ACL_ENTRY_NO_PROPAGATE_INHERIT|ACL_ENTRY_INHERIT_ONLY
+				));
 
-		acl_delete_flag_np(acl_flags, ACL_ENTRY_FILE_INHERIT);
-		acl_delete_flag_np(acl_flags, ACL_ENTRY_DIRECTORY_INHERIT);
-		acl_delete_flag_np(acl_flags, ACL_ENTRY_NO_PROPAGATE_INHERIT);
-		acl_delete_flag_np(acl_flags, ACL_ENTRY_INHERIT_ONLY);
+			if (acl_set_flagset_np(acl_entry, acl_flags) < 0)
+				err(EX_OSERR, "acl_set_flagset_np() failed");
 
-		if (acl_set_flagset_np(acl_entry, acl_flags) < 0)
-			err(EX_OSERR, "acl_set_flagset_np() failed");
+		}
 	}
 
 	return (0);
@@ -420,7 +468,6 @@ windows_acl_append(struct windows_acl_info *w, const char *path)
 	return (0);
 }
 
-
 /* remove an ACL */
 static int
 windows_acl_remove(struct windows_acl_info *w, const char *path)
@@ -443,9 +490,9 @@ windows_acl_remove(struct windows_acl_info *w, const char *path)
 }
 
 
-/* reset an ACL */
+/* clone or reset an ACL */
 static int
-windows_acl_reset(struct windows_acl_info *w, const char *path)
+windows_acl_reset(struct windows_acl_info *w, const char *path, bool is_rootdir)
 {
 	char *buf;
 	struct stat st;
@@ -465,7 +512,13 @@ windows_acl_reset(struct windows_acl_info *w, const char *path)
 	if (stat(path, &st) < 0)
 		err(EX_OSERR, "%s: acl_from_text() failed", path);
 
-	acl_new = (S_ISDIR(st.st_mode) == 0) ? w->facl : w->dacl;
+	/* don't set inherited flag on root dir. This is required for zfsacl:map_dacl_protected */
+        if (is_rootdir) {
+                acl_new = w->source_acl;
+        }
+        else {
+                acl_new = (S_ISDIR(st.st_mode) == 0) ? w->facl : w->dacl;
+        }
 
 	/* merge the new acl with the existing acl */
 	if (merge_acl(acl_new, &acl, path) < 0)
@@ -493,7 +546,7 @@ clear_dosattrib(struct windows_acl_info *w, const char *path)
 
 
 static int
-set_windows_acl(struct windows_acl_info *w, FTSENT *fts_entry)
+set_windows_acl(struct windows_acl_info *w, FTSENT *fts_entry, bool is_rootdir)
 {
 	char *path;
 
@@ -509,10 +562,12 @@ set_windows_acl(struct windows_acl_info *w, FTSENT *fts_entry)
 		windows_acl_update(w, path);
 	else if (w->flags & WA_APPEND)
 		windows_acl_append(w, path);
+	else if (w->flags & WA_CLONE)
+		windows_acl_reset(w, path, is_rootdir);
 	else if (w->flags & WA_REMOVE)
 		windows_acl_remove(w, path);
 	else if (w->flags & WA_RESET)
-		windows_acl_reset(w, path);
+		windows_acl_reset(w, path, is_rootdir);
 
 	if (w->flags & WA_DOSATTRIB)
 		clear_dosattrib(w, path);
@@ -541,13 +596,14 @@ set_windows_acls(struct windows_acl_info *w)
 	int options = 0;
 	char *paths[4];
 	int rval;
+	bool is_rootdir;
 
 	if (w == NULL)
 		return (-1);
 
 	/* recursive not set, only do this entry */
 	if (!(w->flags & WA_RECURSIVE)) {
-		set_windows_acl(w, NULL);
+		set_windows_acl(w, NULL, 1);
 		return (0);
 	}
 
@@ -560,23 +616,27 @@ set_windows_acls(struct windows_acl_info *w)
 
 	/* traverse directory hierarchy */
 	for (rval = 0; (entry = fts_read(tree)) != NULL;) {
-		switch (entry->fts_info) {
-			case FTS_D:
-				if (w->flags & WA_DIRECTORIES)
-					set_windows_acl(w, entry);
-				break;	
-
-			case FTS_F:
-				if (w->flags & WA_FILES)
-					set_windows_acl(w, entry);
-				break;	
-
-			case FTS_ERR:
-				warnx("%s: %s", entry->fts_path, strerror(entry->fts_errno));
-				rval = -2;
-				continue;
+		if ((entry->fts_level) == FTS_ROOTLEVEL) {
+			is_rootdir = 1;
+			set_windows_acl(w, entry, is_rootdir);
 		}
-	}
+		else {
+			switch (entry->fts_info) {
+				case FTS_D:
+					set_windows_acl(w, entry, 0);
+					break;	
+
+				case FTS_F:
+					set_windows_acl(w, entry, 0);
+					break;	
+
+				case FTS_ERR:
+					warnx("%s: %s", entry->fts_path, strerror(entry->fts_errno));
+					rval = -2;
+					continue;
+			}
+		}
+	} 
 
 	return (rval);
 }
@@ -634,10 +694,16 @@ make_acls(struct windows_acl_info *w)
 	if ((acl = acl_from_text(buf)) == NULL)
 		err(EX_OSERR, "acl_from_text() failed");
 
+	/* set the source ACL for top level directory */
+	if ((w->source_acl = acl_dup(acl)) == NULL) {
+		err(EX_OSERR, "acl_dup() failed");
+	}
+
 	/* create a directory acl */
 	if (w->flags & WA_DIRECTORIES) {
 		if ((w->dacl = acl_dup(acl)) == NULL)
 			err(EX_OSERR, "acl_dup() failed");
+		set_inherited_flag(&w->dacl);	
 	}
 
 	/* create a file acl */
@@ -645,17 +711,34 @@ make_acls(struct windows_acl_info *w)
 		if ((w->facl = acl_dup(acl)) == NULL)
 			err(EX_OSERR, "acl_dup() failed");
 		remove_inherit_flags(&w->facl);
+		set_inherited_flag(&w->facl);	
 	}
 
 	acl_free(acl);
 }
 
+static void
+clone_acls(struct windows_acl_info *w)
+{
+	/* create a directory acl */
+	if ((w->dacl = acl_dup(w->source_acl)) == NULL)
+		err(EX_OSERR, "acl_dup() failed");
+	set_inherited_flag(&w->dacl);
+
+	/* create a file acl */
+	if ((w->facl = acl_dup(w->source_acl)) == NULL)
+		err(EX_OSERR, "acl_dup() failed");
+	remove_inherit_flags(&w->facl);
+	set_inherited_flag(&w->facl);
+}
 
 int
 main(int argc, char **argv)
 {
-	int ch;
-	struct windows_acl_info *w;
+	int 	ch, ret;
+	struct 	windows_acl_info *w;
+	acl_t	source_acl;
+	char *p = argv[0];
 
 	if (argc < 2)
 		usage(argv[0]);
@@ -663,84 +746,127 @@ main(int argc, char **argv)
 	w = new_windows_acl_info();
 	w->flags = (WA_FILES|WA_DIRECTORIES);
 
-	while ((ch = getopt(argc, argv, "a:o:g:e:O:G:p:i:fdrvx")) != -1) {
-		switch (ch) {
-			case 'a': {
-				int action = get_action(optarg);
-				if (action == WA_NULL)
-					errx(EX_USAGE, "invalid action");
-				if (WA_OP_CHECK(w->flags, action))
-					errx(EX_USAGE, "only one action can be specified");
-				w->flags |= action;
+	if (strcmp(p, "cloneacl") == 0) {
+		w->flags |= WA_CLONE;
+		w->flags |= WA_RECURSIVE;
+		while ((ch = getopt(argc, argv, "s:p:v")) != -1) {
+			switch(ch) {
+			case 's':
+				setarg(&w->source, optarg);
 				break;
-			}
-
-			case 'o':
-				setarg(&w->owner_entry, optarg);
-				break;
-
-			case 'g':
-				setarg(&w->group_entry, optarg);
-				break;
-
-			case 'e':
-				setarg(&w->everyone_entry, optarg);
-				break;
-
-			case 'O': {
-				struct passwd *p = getpwnam(optarg);
-				if (p == NULL)
-					errx(EX_OSERR, "getpwnam() failed");
-				w->uid = p->pw_uid;
-				break;
-			}
-
-			case 'G': {
-				struct group *g = getgrnam(optarg);
-				if (g == NULL)
-					errx(EX_OSERR, "getgrnam() failed");
-				w->gid = g->gr_gid;
-				break;
-			}
-
 			case 'p':
 				setarg(&w->path, optarg);
 				break;
-
-			case 'i':
-				w->index = strtol(optarg, NULL, 10);
-				break;
-
-			case 'f':
-				w->flags &= ~WA_DIRECTORIES;
-				break;
-
-			case 'd':
-				w->flags &= ~WA_FILES;
-				break;
-
-			case 'r':
-				w->flags |= WA_RECURSIVE;
-				break;
-
 			case 'v':
 				w->flags |= WA_VERBOSE;
 				break;
-
-			case 'x':
-				w->flags |= WA_DOSATTRIB;
-				break;
-
 			case '?':
 			default:
 				usage(argv[0]);
+			}
+		}
+	} else {
+		while ((ch = getopt(argc, argv, "a:o:g:e:O:G:s:p:i:fdrvx")) != -1) {
+			switch (ch) {
+				case 'a': {
+					int action = get_action(optarg);
+					if (action == WA_NULL)
+						errx(EX_USAGE, "invalid action");
+					if (WA_OP_CHECK(w->flags, action))
+						errx(EX_USAGE, "only one action can be specified");
+					w->flags |= action;
+					break;
+				}
+
+				case 'o':
+					setarg(&w->owner_entry, optarg);
+					break;
+
+				case 'g':
+					setarg(&w->group_entry, optarg);
+					break;
+
+				case 'e':
+					setarg(&w->everyone_entry, optarg);
+					break;
+
+				case 'O': {
+					struct passwd *p = getpwnam(optarg);
+					if (p == NULL)
+						errx(EX_OSERR, "getpwnam() failed");
+					w->uid = p->pw_uid;
+					break;
+				}
+
+				case 'G': {
+					struct group *g = getgrnam(optarg);
+					if (g == NULL)
+						errx(EX_OSERR, "getgrnam() failed");
+					w->gid = g->gr_gid;
+					break;
+				}
+
+				case 's':
+					setarg(&w->source, optarg);
+					break;
+
+				case 'p':
+					setarg(&w->path, optarg);
+					break;
+
+				case 'i':
+					w->index = strtol(optarg, NULL, 10);
+					break;
+
+				case 'f':
+					w->flags &= ~WA_DIRECTORIES;
+					break;
+
+				case 'd':
+					w->flags &= ~WA_FILES;
+					break;
+
+				case 'r':
+					w->flags |= WA_RECURSIVE;
+					break;
+
+				case 'v':
+					w->flags |= WA_VERBOSE;
+					break;
+
+				case 'x':
+					w->flags |= WA_DOSATTRIB;
+					break;
+
+				case '?':
+				default:
+					usage(argv[0]);
+			}
 		}
 	}
 
-	make_acls(w);
+	/* set the source to the destination if we lack -s */
+	if (w->source == NULL) {
+		w->source = w->path;
+	}
+
+	if (ret < 0) {
+		warn("%s: pathconf(..., _PC_ACL_NFS4) failed. Path does not support NFS4 ACL.", w->source);
+		free_windows_acl_info(w);
+		return (-1);
+	}
+
+	if (w->flags & WA_CLONE){
+		source_acl = acl_get_file(w->source, ACL_TYPE_NFS4);
+		w->source_acl = acl_dup(source_acl);
+		acl_free(source_acl);
+		clone_acls(w);
+	} else {
+		make_acls(w);
+	}
+
 	usage_check(w);
 	set_windows_acls(w);
-
 	free_windows_acl_info(w);
 	return (0);
 }

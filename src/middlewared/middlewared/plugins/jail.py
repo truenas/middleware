@@ -193,11 +193,18 @@ class JailService(CRUDService):
     def validate_ips(self, verrors, options, schema='options.props', exclude=None):
         for item in options['props']:
             for f in ('ip4_addr', 'ip6_addr'):
+                # valid ip values can be
+                # "none" "interface|accept_rtadv" "interface|ip/subnet" "interface|ip"
+                # we explicitly check these
                 if f in item:
-                    for ip in item.split('=')[1].split(','):
+                    for ip in [
+                        ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
+                        for ip in item.split('=')[1].split(',')
+                        if ip != 'none' and (ip.count('|') and ip.split('|')[1] != 'accept_rtadv')
+                    ]:
                         try:
                             IpInUse(self.middleware, exclude)(
-                                ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
+                                ip
                             )
                         except ValueError as e:
                             verrors.add(
@@ -274,7 +281,7 @@ class JailService(CRUDService):
             exclude_ips = [
                 ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
                 for f in ('ip4_addr', 'ip6_addr') for ip in jail[f].split(',')
-                if ip != 'none'
+                if ip not in ('none', 'DHCP (not running)')
             ]
 
             self.validate_ips(
@@ -566,14 +573,14 @@ class JailService(CRUDService):
         """Adds an fstab mount to the jail"""
         uuid, _, iocage = self.check_jail_existence(jail, skip=False)
         status, jid = IOCList.list_get_jid(uuid)
+        action = options['action'].lower()
 
-        if status:
+        if status and action != 'list':
             raise CallError(
                 f'{jail} should not be running when adding a mountpoint')
 
         verrors = ValidationErrors()
 
-        action = options['action'].lower()
         source = options.get('source')
         if source:
             if not os.path.exists(source):
@@ -636,8 +643,20 @@ class JailService(CRUDService):
 
         if action == "list":
             split_list = {}
+            system_mounts = (
+                '/root/bin', '/root/boot', '/root/lib', '/root/libexec',
+                '/root/rescue', '/root/sbin', '/root/usr/bin',
+                '/root/usr/include', '/root/usr/lib', '/root/usr/libexec',
+                '/root/usr/sbin', '/root/usr/share', '/root/usr/libdata',
+                '/root/usr/lib32'
+            )
+
             for i in _list:
-                split_list[i[0]] = i[1].split()
+                fstab_entry = i[1].split()
+                _fstab_type = 'SYSTEM' if fstab_entry[0].endswith(
+                    system_mounts) else 'USER'
+
+                split_list[i[0]] = {'entry': fstab_entry, 'type': _fstab_type}
 
             return split_list
 

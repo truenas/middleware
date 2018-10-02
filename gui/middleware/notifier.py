@@ -183,12 +183,17 @@ class notifier(metaclass=HookMetaclass):
         log.debug("%s -> %s", command, proc.returncode)
         return None
 
-    def start(self, what, timeout=None, onetime=False):
+    def start(self, what, timeout=None, onetime=False, wait=None, sync=None):
         kwargs = {}
         if timeout:
             kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.start', what, {'onetime': onetime}, **kwargs)
+            return c.call(
+                'service.start',
+                what,
+                {'onetime': onetime, 'wait': wait, 'sync': sync},
+                **kwargs
+            )
 
     def started(self, what, timeout=None):
         kwargs = {}
@@ -197,26 +202,41 @@ class notifier(metaclass=HookMetaclass):
         with client as c:
             return c.call('service.started', what, **kwargs)
 
-    def stop(self, what, timeout=None, onetime=False):
+    def stop(self, what, timeout=None, onetime=False, wait=None, sync=None):
         kwargs = {}
         if timeout:
             kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.stop', what, {'onetime': onetime}, **kwargs)
+            return c.call(
+                'service.stop',
+                what,
+                {'onetime': onetime, 'wait': wait, 'sync': sync},
+                **kwargs,
+            )
 
-    def restart(self, what, timeout=None, onetime=False):
+    def restart(self, what, timeout=None, onetime=False, wait=None, sync=None):
         kwargs = {}
         if timeout:
             kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.restart', what, {'onetime': onetime}, **kwargs)
+            return c.call(
+                'service.restart',
+                what,
+                {'onetime': onetime, 'wait': wait, 'sync': sync},
+                **kwargs,
+            )
 
-    def reload(self, what, timeout=None, onetime=False):
+    def reload(self, what, timeout=None, onetime=False, wait=None, sync=None):
         kwargs = {}
         if timeout:
             kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.reload', what, {'onetime': onetime}, **kwargs)
+            return c.call(
+                'service.reload',
+                what,
+                {'onetime': onetime, 'wait': wait, 'sync': sync},
+                **kwargs,
+            )
 
     def clear_activedirectory_config(self):
         with client as c:

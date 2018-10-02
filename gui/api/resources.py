@@ -844,13 +844,13 @@ class VolumeResourceMixin(NestedMixin):
             request.body,
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
+        deserialized['force'] = deserialized.get('force', False)
+        if deserialized.get('pass') and not deserialized.get('pass2'):
+            deserialized['pass2'] = deserialized.get('pass')
         form = ZFSDiskReplacementForm(
             volume=obj,
             label=deserialized.get('label'),
-            data={
-                'replace_disk': deserialized.get('replace_disk'),
-                'force': deserialized.get('force', False),
-            },
+            data=deserialized,
         )
         if not form.is_valid():
             raise ImmediateHttpResponse(

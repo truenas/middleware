@@ -9,8 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET
-# from auto_config import user, password, ip
+from functions import GET  # , POST
 
 
 def test_01_check_if_system_is_ready_to_use():
@@ -41,5 +40,5 @@ def test_05_check_system_debug():
 
 
 # Reboot system to enable tunable
-# def test_05_Reboot_system_to_enable_tunable():
+# def test_06_Reboot_system_to_enable_tunable():
 #     assert POST("/system/reboot/") == 200
