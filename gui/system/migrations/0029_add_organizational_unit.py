@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0026_keyvalue'),
+        ('system', '0028_cert_serials'),
     ]
 
     operations = [
