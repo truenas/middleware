@@ -106,7 +106,6 @@ def test_08_verify_iocage_list_with_ssh():
     assert results['result'] is True, results2['output']
 
 
-
 def test_09_update_jail_description():
     global JAIL_NAME
 

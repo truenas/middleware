@@ -4,11 +4,9 @@
 import sys
 import os
 import pytest
-
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-
-from functions import POST, GET, PUT, SSH_TEST, GET, DELETE
+from functions import POST, PUT, SSH_TEST, GET, DELETE
 from auto_config import user, password, ip
 
 TESTSCRIPT = '/tmp/.testFileCreatedViaInitScript'
