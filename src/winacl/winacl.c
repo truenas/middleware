@@ -369,11 +369,12 @@ set_inherited_flag(acl_t *acl)
 
                 if (acl_get_flagset_np(acl_entry, &acl_flags) < 0)
                         err(EX_OSERR, "acl_get_flagset_np() failed");
- 
-                acl_add_flag_np(acl_flags, ACL_ENTRY_INHERITED);
+                if ((*acl_flags & ACL_ENTRY_INHERITED) == 0) {
+                    acl_add_flag_np(acl_flags, ACL_ENTRY_INHERITED);
 
-                if (acl_set_flagset_np(acl_entry, acl_flags) < 0)
-                        err(EX_OSERR, "acl_set_flagset_np() failed");
+                    if (acl_set_flagset_np(acl_entry, acl_flags) < 0)
+                            err(EX_OSERR, "acl_set_flagset_np() failed");
+                }
         }
 
         return (0);
@@ -393,14 +394,17 @@ remove_inherit_flags(acl_t *acl)
 
 		if (acl_get_flagset_np(acl_entry, &acl_flags) < 0)
 			err(EX_OSERR, "acl_get_flagset_np() failed");
+		if (*acl_flags & (ACL_ENTRY_FILE_INHERIT|ACL_ENTRY_DIRECTORY_INHERIT|
+				  ACL_ENTRY_NO_PROPAGATE_INHERIT|ACL_ENTRY_INHERIT_ONLY)) {
+			acl_delete_flag_np(acl_flags, (
+				ACL_ENTRY_FILE_INHERIT|ACL_ENTRY_DIRECTORY_INHERIT|
+				ACL_ENTRY_NO_PROPAGATE_INHERIT|ACL_ENTRY_INHERIT_ONLY
+				));
 
-		acl_delete_flag_np(acl_flags, ACL_ENTRY_FILE_INHERIT);
-		acl_delete_flag_np(acl_flags, ACL_ENTRY_DIRECTORY_INHERIT);
-		acl_delete_flag_np(acl_flags, ACL_ENTRY_NO_PROPAGATE_INHERIT);
-		acl_delete_flag_np(acl_flags, ACL_ENTRY_INHERIT_ONLY);
+			if (acl_set_flagset_np(acl_entry, acl_flags) < 0)
+				err(EX_OSERR, "acl_set_flagset_np() failed");
 
-		if (acl_set_flagset_np(acl_entry, acl_flags) < 0)
-			err(EX_OSERR, "acl_set_flagset_np() failed");
+		}
 	}
 
 	return (0);
