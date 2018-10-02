@@ -505,7 +505,6 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                 run('/usr/sbin/service netatalk forcestop')
                 run('/usr/sbin/service netatalk quietstart')
 
-            conn.close()
             log.warn('Service restarts complete.')
 
             # TODO: This is 4 years old at this point.  Is it still needed?
@@ -544,6 +543,12 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             run('/usr/sbin/service smartd-daemon quietrestart')
             run('/usr/sbin/service netdata forcestop')
             run('/usr/sbin/service netdata quietstart')
+
+            c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "asigra"')                                   ret = c.fetchone()
+            if ret and ret[0] == 1:
+                run('/usr/local/bin/midclt call service.start asigra \'{"onetime": true}\'')
+
+            conn.close()
 
             log.warn('Failover event complete.')
     except AlreadyLocked:
