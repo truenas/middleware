@@ -577,8 +577,11 @@ _watchdogd_config()
 
 _asigra_config()
 {
-	_bool_svcconfig postgresql_enable asigra
-	_bool_svcconfig dssystem_enable asigra
+	local failover_licensed=$1
+	if [ ${failover_licensed} -eq 0 ]; then
+		_bool_svcconfig postgresql_enable asigra
+		_bool_svcconfig dssystem_enable asigra
+	fi
 	echo "dssystem_env=\"PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin\""
 
 	local postgresql_path=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
@@ -646,7 +649,7 @@ _gen_conf()
 		_nis_config
 	fi
 
-	_asigra_config
+	_asigra_config ${failover_licensed}
 	_snmp_config
 
 	_ldap_config
