@@ -77,6 +77,13 @@ class IPMIService(CRUDService):
             raise CallError('The ipmi device could not be found')
 
         verrors = ValidationErrors()
+
+        if data.get('password') and len(data.get('password')) > 20:
+            verrors.add(
+                'ipmi_update.password',
+                'A maximum of 20 characters are allowed'
+            )
+
         if not data.get('dhcp'):
             for k in ['ipaddress', 'netmask', 'gateway']:
                 if not data.get(k):
