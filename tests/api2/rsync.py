@@ -28,7 +28,7 @@ def test_02_Checking_that_API_reports_rsyncd_service():
 
 def test_03_Creating_rsync_task(rsynctask_dict):
     results = POST('/rsynctask/', {'user': 'root', 'mode': 'bar',
-                                  'remotehost': 'foobar'})
+                                   'remotehost': 'foobar'})
     assert results.status_code == 200, results.text
     rsynctask_dict.update(results.json())
     assert isinstance(rsynctask_dict['id'], int) is True
