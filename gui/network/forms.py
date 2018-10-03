@@ -417,17 +417,13 @@ class InterfacesDeleteForm(forms.Form):
 
 
 class IPMIForm(Form):
-    # Max password length via IPMI v2.0 is 20 chars. We only support IPMI
-    # v2.0+ compliant boards thus far.
     ipmi_password1 = forms.CharField(
         label=_("Password"),
-        max_length=20,
         widget=forms.PasswordInput,
         required=False
     )
     ipmi_password2 = forms.CharField(
         label=_("Password confirmation"),
-        max_length=20,
         widget=forms.PasswordInput,
         help_text=_("Enter the same password as above, for verification."),
         required=False
@@ -506,6 +502,15 @@ class IPMIForm(Form):
                 _("The two password fields didn't match.")
             )
         return ipmi_password2
+
+    def clean(self):
+        # Max password length via IPMI v2.0 is 20 chars. We only support IPMI
+        # v2.0+ compliant boards thus far.
+
+        cleaned_data = self.cleaned_data
+        if len(cleaned_data.get("ipmi_password1", "")) > 20:
+            self._errors["ipmi_password1"] = self.error_class([_("A maximum of 20 characters are allowed")])
+        return cleaned_data
 
     def clean_ipv4netmaskbit(self):
         try:
