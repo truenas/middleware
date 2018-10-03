@@ -693,7 +693,7 @@ class SystemGeneralService(ConfigService):
         Dict(
             'general_settings',
             IPAddr('ui_address'),
-            Int('ui_certificate'),
+            Int('ui_certificate', null=True),
             Int('ui_httpsport', validators=[Range(min=1, max=65535)]),
             Bool('ui_httpsredirect'),
             Int('ui_port', validators=[Range(min=1, max=65535)]),
@@ -704,7 +704,8 @@ class SystemGeneralService(ConfigService):
             Str('sysloglevel', enum=['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE',
                                      'F_INFO', 'F_DEBUG', 'F_IS_DEBUG']),
             Str('syslogserver'),
-            Str('timezone')
+            Str('timezone'),
+            update=True,
         )
     )
     async def do_update(self, data):
