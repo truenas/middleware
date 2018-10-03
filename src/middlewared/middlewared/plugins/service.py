@@ -174,8 +174,8 @@ class ServiceService(CRUDService):
         Dict(
             'service-control',
             Bool('onetime', default=True),
-            Bool('wait', default=None),
-            Bool('sync', default=None),
+            Bool('wait', default=None, null=True),
+            Bool('sync', default=None, null=True),
             register=True,
         ),
     )
