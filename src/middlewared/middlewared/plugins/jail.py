@@ -372,6 +372,9 @@ class JailService(CRUDService):
         fetch_output = {'error': False, 'install_notes': []}
         release = options.get('release', None)
 
+        if options['branch'] is None:
+            options['branch'] = self.get_version()
+
         verrors = ValidationErrors()
 
         self.validate_ips(verrors, options)
@@ -915,6 +918,16 @@ class JailService(CRUDService):
     @private
     async def terminate(self):
         await SHUTDOWN_LOCK.acquire()
+
+    @private
+    def get_version(self):
+        """
+        Uses system.version and parses it out for the RELEASE branch we need
+        """
+        version = self.middleware.call_sync('system.version')
+        version = f'{round(float(version.split("-")[1]), 1)}-RELEASE'
+
+        return version
 
 
 async def jail_pool_pre_lock(middleware, pool):
