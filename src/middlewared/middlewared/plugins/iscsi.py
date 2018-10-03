@@ -943,7 +943,7 @@ class iSCSITargetService(CRUDService):
     @accepts(Dict(
         'iscsi_target_create',
         Str('name', required=True),
-        Str('alias'),
+        Str('alias', null=True),
         Str('mode', enum=['ISCSI', 'FC', 'BOTH'], default='ISCSI'),
         List('groups', default=[], items=[
             Dict(
