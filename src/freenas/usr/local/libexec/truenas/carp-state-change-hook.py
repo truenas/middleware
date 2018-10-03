@@ -544,7 +544,8 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             run('/usr/sbin/service netdata forcestop')
             run('/usr/sbin/service netdata quietstart')
 
-            c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "asigra"')                                   ret = c.fetchone()
+            c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "asigra"')
+            ret = c.fetchone()
             if ret and ret[0] == 1:
                 run('/usr/local/bin/midclt call service.start asigra \'{"onetime": true}\'')
 
