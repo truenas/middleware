@@ -1571,7 +1571,8 @@ class ZVol_CreateForm(CommonZVol):
             'on the number of the disks in the pool for a general use case.'
         ),
         required=False,
-        choices=(('', _('Inherit')), ) + choices.ZFS_VOLBLOCKSIZE,
+        choices=(('INHERIT', _('Inherit')), ) + choices.ZFS_VOLBLOCKSIZE,
+        initial='INHERIT',
     )
 
     advanced_fields = (
