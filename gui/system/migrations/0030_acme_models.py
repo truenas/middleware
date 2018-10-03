@@ -10,7 +10,7 @@ import freenasUI.freeadmin.models.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0028_merge_20180807_0642'),
+        ('system', '0029_add_organizational_unit'),
     ]
 
     operations = [
