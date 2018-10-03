@@ -314,6 +314,7 @@ class SizeField(forms.CharField):
     widget = SizeWidget
 
     def to_python(self, value):
+        value = str(value)
         if not self.required and value.strip() in ['', '0']:
             return 0
 
