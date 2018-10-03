@@ -19,7 +19,7 @@ class FTPService(SystemServiceService):
         Int('timeout', validators=[Range(min=0, max=10000)]),
         Bool('rootlogin'),
         Bool('onlyanonymous'),
-        Dir('anonpath'),
+        Dir('anonpath', null=True),
         Bool('onlylocal'),
         Str('banner'),
         Str('filemask', validators=[Match(r"^[0-7]{3}$")]),
@@ -51,7 +51,7 @@ class FTPService(SystemServiceService):
         Bool('tls_opt_stdenvvars'),
         Bool('tls_opt_dns_name_required'),
         Bool('tls_opt_ip_address_required'),
-        Int('ssltls_certificate'),
+        Int('ssltls_certificate', null=True),
         Str('options'),
         update=True
     ))
