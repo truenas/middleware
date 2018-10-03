@@ -279,7 +279,7 @@ class VolumeManagerForm(VolumeMixin, Form):
                 return False
 
         # ModelForm compatibility layer for API framework
-        self.instance = self.volume = models.Volume.objects.filter(pk=pool['id'])
+        self.instance = self.volume = models.Volume.objects.get(pk=pool['id'])
 
         return volume
 
