@@ -118,6 +118,7 @@ zfs_l2arc_misses = agent.Counter32(oidstr="FREENAS-MIB::zfsL2ArcMisses")
 zfs_l2arc_read = agent.Counter32(oidstr="FREENAS-MIB::zfsL2ArcRead")
 zfs_l2arc_write = agent.Counter32(oidstr="FREENAS-MIB::zfsL2ArcWrite")
 zfs_l2arc_size = agent.Unsigned32(oidstr="FREENAS-MIB::zfsL2ArcSize")
+zfs_l2arc_asize = agent.Unsigned32(oidstr="FREENAS-MIB::zfsL2ArcActualSize")
 
 zfs_zilstat_ops1 = agent.Counter64(oidstr="FREENAS-MIB::zfsZilstatOps1sec")
 zfs_zilstat_ops5 = agent.Counter64(oidstr="FREENAS-MIB::zfsZilstatOps5sec")
@@ -325,6 +326,7 @@ if __name__ == "__main__":
             zfs_l2arc_read.update(int(kstat["kstat.zfs.misc.arcstats.l2_read_bytes"] / 1024 % 2 ** 32))
             zfs_l2arc_write.update(int(kstat["kstat.zfs.misc.arcstats.l2_write_bytes"] / 1024 % 2 ** 32))
             zfs_l2arc_size.update(int(kstat["kstat.zfs.misc.arcstats.l2_size"] / 1024))
+            zfs_l2arc_asize.update(int(kstat["kstat.zfs.misc.arcstats.l2_asize"] / 1024))
 
             zfs_zilstat_ops1.update(zilstat_1_thread.value["ops"])
             zfs_zilstat_ops5.update(zilstat_5_thread.value["ops"])
