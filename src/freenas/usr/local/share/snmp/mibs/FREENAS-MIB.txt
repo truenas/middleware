@@ -495,6 +495,14 @@ zfsL2ArcSize OBJECT-TYPE
         ""
     ::= { l2arc 5 }
 
+zfsL2ArcActualSize OBJECT-TYPE
+    SYNTAX     Gauge32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "(compressed)"
+    ::= { l2arc 6 }
+
 zfsZilstatOps1sec OBJECT-TYPE
     SYNTAX     Counter64
     MAX-ACCESS read-only
