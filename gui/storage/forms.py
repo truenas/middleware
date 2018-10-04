@@ -2109,10 +2109,10 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
                 "This field will be empty if you have not "
                 "setup a periodic snapshot task"),
         )
-        fs = list(set([
+        fs = sorted(list(set([
             (task.task_filesystem, task.task_filesystem)
             for task in models.Task.objects.all()
-        ]))
+        ])))
         self.fields['repl_filesystem'].choices = fs
 
         if not self.instance.id:
