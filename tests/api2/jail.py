@@ -79,22 +79,22 @@ def test_05_verify_bsd_release():
 def test_06_create_jail():
     if freeze is True:
         pytest.skip(freeze_msg)
-    else:
-        global JOB_ID
-        results = POST(
-            '/jail/', {
-                'release': RELEASE,
-                'uuid': JAIL_NAME,
-                'props': [
-                    'bpf=yes',
-                    'dhcp=on',
-                    'vnet=on'
-                ]
-            }
-        )
 
-        assert results.status_code == 200, results.text
-        JOB_ID = results.json()
+    global JOB_ID
+    results = POST(
+        '/jail/', {
+            'release': RELEASE,
+            'uuid': JAIL_NAME,
+            'props': [
+                'bpf=yes',
+                'dhcp=on',
+                'vnet=on'
+            ]
+        }
+    )
+
+    assert results.status_code == 200, results.text
+    JOB_ID = results.json()
 
 
 def test_07_verify_creation_of_jail():
@@ -102,68 +102,66 @@ def test_07_verify_creation_of_jail():
     global freeze_msg
     if freeze is True:
         pytest.skip(freeze_msg)
-    else:
-        freeze = False
-        stop_time = time.time() + 600
-        while True:
-            get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
-            job_status = get_job.json()[0]
-            if job_status['state'] in ('RUNNING', 'WAITING'):
-                if stop_time <= time.time():
-                    freeze = True
-                    freeze_msg = f"Failed to create jail {RELEASE}"
-                    assert False, get_job.text
-                    break
-                time.sleep(3)
-            else:
-                results = GET('/jail/')
-                assert results.status_code == 200, results.text
-                assert len(results.json()) > 0, get_job.text
+
+    freeze = False
+    stop_time = time.time() + 600
+    while True:
+        get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
+        job_status = get_job.json()[0]
+        if job_status['state'] in ('RUNNING', 'WAITING'):
+            if stop_time <= time.time():
+                freeze = True
+                freeze_msg = f"Failed to create jail {RELEASE}"
+                assert False, get_job.text
                 break
+            time.sleep(3)
+        else:
+            results = GET('/jail/')
+            assert results.status_code == 200, results.text
+            assert len(results.json()) > 0, get_job.text
+            break
 
 
 def test_08_verify_iocage_list_with_ssh():
     if freeze is True:
         pytest.skip(freeze_msg)
-    else:
-        cmd1 = f'iocage list | grep {JAIL_NAME} | grep -q 11.1-RELEASE'
-        results = SSH_TEST(cmd1, user, password, ip)
-        cmd2 = 'iocage list'
-        results2 = SSH_TEST(cmd2, user, password, ip)
-        assert results['result'] is True, results2['output']
+    cmd1 = f'iocage list | grep {JAIL_NAME} | grep -q 11.1-RELEASE'
+    results = SSH_TEST(cmd1, user, password, ip)
+    cmd2 = 'iocage list'
+    results2 = SSH_TEST(cmd2, user, password, ip)
+    assert results['result'] is True, results2['output']
 
 
 def test_09_update_jail_description():
     if freeze is True:
         pytest.skip(freeze_msg)
-    else:
-        global JAIL_NAME
 
-        results = PUT(
-            f'/jail/id/{JAIL_NAME}/', {
-                'name': JAIL_NAME + '_renamed'
-            }
-        )
-        assert results.status_code == 200, results.text
-        assert results.json() is True, results.text
-        JAIL_NAME += '_renamed'
+    global JAIL_NAME
+    results = PUT(
+        f'/jail/id/{JAIL_NAME}/', {
+            'name': JAIL_NAME + '_renamed'
+        }
+    )
+    assert results.status_code == 200, results.text
+    assert results.json() is True, results.text
+    JAIL_NAME += '_renamed'
 
 
 def test_10_start_jail():
     if freeze is True:
         pytest.skip(freeze_msg)
-    else:
-        results = POST('/jail/start/', JAIL_NAME)
-        assert results.status_code == 200, results.text
+
+    results = POST('/jail/start/', JAIL_NAME)
+    assert results.status_code == 200, results.text
 
 
 def test_11_verify_jail_started():
     if freeze is True:
         pytest.skip(freeze_msg)
-    else:
-        results = GET('/jail/')
-        assert results.status_code == 200, results.test
-        assert results.json()[0]['state'].lower() == 'up', results.text
+
+    results = GET('/jail/')
+    assert results.status_code == 200, results.test
+    assert results.json()[0]['state'].lower() == 'up', results.text
 
 
 def test_12_export_call():
@@ -177,30 +175,30 @@ def test_12_export_call():
 def test_13_exec_call():
     if freeze is True:
         pytest.skip(freeze_msg)
-    else:
-        results = POST(
-            '/jail/exec/', {
-                'jail': JAIL_NAME,
-                'command': ['echo "exec successful"']
-            }
-        )
-        assert results.status_code == 200, results.text
-        assert 'exec successful' in results.json().lower(), results.text
+
+    results = POST(
+        '/jail/exec/', {
+            'jail': JAIL_NAME,
+            'command': ['echo "exec successful"']
+        }
+    )
+    assert results.status_code == 200, results.text
+    assert 'exec successful' in results.json().lower(), results.text
 
 
 def test_14_upgrade_jail():
     if freeze is True:
         pytest.skip(freeze_msg)
-    else:
-        global JOB_ID
-        results = POST(
-            '/jail/upgrade/', {
-                'jail': JAIL_NAME,
-                'release': '11.2-RELEASE'
-            }
-        )
-        assert results.status_code == 200, results.text
-        JOB_ID = results.json()
+
+    global JOB_ID
+    results = POST(
+        '/jail/upgrade/', {
+            'jail': JAIL_NAME,
+            'release': '11.2-RELEASE'
+        }
+    )
+    assert results.status_code == 200, results.text
+    JOB_ID = results.json()
 
 
 def test_15_verify_bsd_release():
@@ -208,55 +206,55 @@ def test_15_verify_bsd_release():
     global freeze_msg
     if freeze is True:
         pytest.skip(freeze_msg)
-    else:
-        freeze = False
-        stop_time = time.time() + 600
-        while True:
-            get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
-            job_status = get_job.json()[0]
-            if job_status['state'] in ('RUNNING', 'WAITING'):
-                if stop_time <= time.time():
-                    freeze = True
-                    freeze_msg = f"Failed to update jail to {RELEASE}"
-                    assert False, get_job.text
-                    break
-                time.sleep(3)
-            else:
-                time.sleep(3)
-                results = GET('/jail/')
-                assert results.status_code == 200, results.text
-                assert len(results.json()) > 0, get_job.text
-                release = results.json()[0]['release']
-                assert '11.2-release' in release.lower(), get_job.text
+
+    freeze = False
+    stop_time = time.time() + 600
+    while True:
+        get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
+        job_status = get_job.json()[0]
+        if job_status['state'] in ('RUNNING', 'WAITING'):
+            if stop_time <= time.time():
+                freeze = True
+                freeze_msg = f"Failed to update jail to {RELEASE}"
+                assert False, get_job.text
                 break
+            time.sleep(3)
+        else:
+            time.sleep(3)
+            results = GET('/jail/')
+            assert results.status_code == 200, results.text
+            assert len(results.json()) > 0, get_job.text
+            release = results.json()[0]['release']
+            assert '11.2-release' in release.lower(), get_job.text
+            break
 
 
 def test_16_verify_iocage_list_with_ssh():
     if freeze is True:
         pytest.skip(freeze_msg)
-    else:
-        cmd1 = f'iocage list | grep "{JAIL_NAME}" | grep -q "11.2-RELEASE"'
-        results = SSH_TEST(cmd1, user, password, ip)
-        cmd2 = 'iocage list'
-        results2 = SSH_TEST(cmd2, user, password, ip)
-        assert results['result'] is True, results2['output']
+
+    cmd1 = f'iocage list | grep "{JAIL_NAME}" | grep -q "11.2-RELEASE"'
+    results = SSH_TEST(cmd1, user, password, ip)
+    cmd2 = 'iocage list'
+    results2 = SSH_TEST(cmd2, user, password, ip)
+    assert results['result'] is True, results2['output']
 
 
 def test_17_stop_jail():
     if freeze is True:
         pytest.skip(freeze_msg)
-    else:
-        results = POST('/jail/stop/', JAIL_NAME)
-        assert results.status_code == 200, results.text
+
+    results = POST('/jail/stop/', JAIL_NAME)
+    assert results.status_code == 200, results.text
 
 
 def test_18_verify_jail_stopped():
     if freeze is True:
         pytest.skip(freeze_msg)
-    else:
-        results = GET('/jail/')
-        assert results.status_code == 200, results.text
-        assert results.json()[0]['state'].lower() == 'down', results.text
+
+    results = GET('/jail/')
+    assert results.status_code == 200, results.text
+    assert results.json()[0]['state'].lower() == 'down', results.text
 
 
 def test_19_rc_action():
