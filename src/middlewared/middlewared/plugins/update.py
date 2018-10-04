@@ -276,7 +276,7 @@ class UpdateService(Service):
         data['version'] = manifest.Version()
         return data
 
-    @accepts(Str('path'))
+    @accepts(Str('path', null=True))
     async def get_pending(self, path=None):
         """
         Gets a list of packages already downloaded and ready to be applied.
