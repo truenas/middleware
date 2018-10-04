@@ -16,8 +16,8 @@ def test_01_get_update_trains():
     results = GET('/update/get_trains/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict) is True, results.text
-    global selected_tranis
-    selected_tranis = results.json()['selected']
+    global selected_trains
+    selected_trains = results.json()['selected']
 
 
 def test_02_check_available_update():
@@ -73,7 +73,7 @@ def test_06_get_pending_update():
     if upgrade is False:
         pytest.skip('No update found')
     elif download_hang is True:
-        pytest.skip(f'Downloading {selected_tranis} failed')
+        pytest.skip(f'Downloading {selected_trains} failed')
     else:
         results = POST('/update/get_pending/')
         assert results.status_code == 200, results.text
@@ -85,10 +85,10 @@ def test_07_install_update():
     if upgrade is False:
         pytest.skip('No update found')
     elif download_hang is True:
-        pytest.skip(f'Downloading {selected_tranis} failed')
+        pytest.skip(f'Downloading {selected_trains} failed')
     else:
         payload = {
-            "train": selected_tranis,
+            "train": selected_trains,
             "reboot": False
         }
         results = POST('/update/update/', payload)
@@ -102,7 +102,7 @@ def test_08_verify_the_update_is_successful():
     if upgrade is False:
         pytest.skip('No update found')
     elif download_hang is True:
-        pytest.skip(f'Downloading {selected_tranis} failed')
+        pytest.skip(f'Downloading {selected_trains} failed')
     else:
         while True:
             job_status = GET(f'/core/get_jobs/?id={JOB_ID}').json()[0]
@@ -117,7 +117,7 @@ def test_09_verify_system_is_ready_to_reboot():
     if upgrade is False:
         pytest.skip('No update found')
     elif download_hang is True:
-        pytest.skip(f'Downloading {selected_tranis} failed')
+        pytest.skip(f'Downloading {selected_trains} failed')
     else:
         results = POST('/update/check_available/')
         assert results.status_code == 200, results.text
