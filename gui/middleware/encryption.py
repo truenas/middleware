@@ -33,6 +33,8 @@ import tempfile
 import threading
 import time
 
+from freenasUI.common.pipesubr import SIG_SETMASK
+
 log = logging.getLogger('middleware.encryption')
 PROGRESS = 0.0
 
@@ -62,7 +64,7 @@ class RandomWorker(threading.Thread):
         mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
         pmask = ctypes.pointer(mask)
         pomask = ctypes.pointer(omask)
-        libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
+        libc.sigprocmask(SIG_SETMASK, pmask, pomask)
 
         proc = subprocess.Popen(
             [
@@ -80,7 +82,7 @@ class RandomWorker(threading.Thread):
         proc.communicate()
         self._exit = proc.returncode
 
-        libc.sigprocmask(signal.SIGQUIT, pomask, None)
+        libc.sigprocmask(SIG_SETMASK, pomask, None)
 
     def progress(self):
         with open(self._tmp, 'r') as f:

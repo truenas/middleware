@@ -95,6 +95,7 @@ from freenasUI.common.acl import (ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE,
 from freenasUI.common.freenasacl import ACL
 from freenasUI.common.jail import Jls
 from freenasUI.common.locks import mntlock
+from freenasUI.common.pipesubr import SIG_SETMASK
 from freenasUI.common.pbi import pbi_delete, pbi_info, PBI_INFO_FLAGS_VERBOSE
 from freenasUI.common.system import (
     FREENAS_DATABASE,
@@ -135,7 +136,7 @@ class notifier(metaclass=HookMetaclass):
         mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
         pmask = ctypes.pointer(mask)
         pomask = ctypes.pointer(omask)
-        libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
+        libc.sigprocmask(SIG_SETMASK, pmask, pomask)
         try:
             p = Popen(
                 "(" + command + ") 2>&1",
@@ -147,7 +148,7 @@ class notifier(metaclass=HookMetaclass):
             p.wait()
             ret = p.returncode
         finally:
-            libc.sigprocmask(signal.SIGQUIT, pomask, None)
+            libc.sigprocmask(SIG_SETMASK, pomask, None)
         log.debug("Executed: %s -> %s", command, ret)
         return ret
 
@@ -160,7 +161,7 @@ class notifier(metaclass=HookMetaclass):
         mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
         pmask = ctypes.pointer(mask)
         pomask = ctypes.pointer(omask)
-        libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
+        libc.sigprocmask(SIG_SETMASK, pmask, pomask)
         try:
             p = Popen(
                 "(" + command + ") >/dev/null 2>&1",
@@ -168,7 +169,7 @@ class notifier(metaclass=HookMetaclass):
             p.communicate()
             retval = p.returncode
         finally:
-            libc.sigprocmask(signal.SIGQUIT, pomask, None)
+            libc.sigprocmask(SIG_SETMASK, pomask, None)
         log.debug("Executed: %s; returned %d", command, retval)
         return retval
 
