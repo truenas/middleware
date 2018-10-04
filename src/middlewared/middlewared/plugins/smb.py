@@ -309,6 +309,12 @@ class SharingSMBService(CRUDService):
                 verrors, self.middleware, f"{schema_name}.path", data['path']
             )
 
+        if data.get('name') and data['name'] == 'global':
+            verrors.add(
+                f'{schema_name}.name',
+                'Global is a reserved section name, please select another one'
+            )
+
     @private
     async def home_exists(self, home, schema_name, verrors, old=None):
         home_filters = [('home', '=', True)]
