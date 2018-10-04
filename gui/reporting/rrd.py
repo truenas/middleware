@@ -1251,17 +1251,17 @@ class ARCSizePlugin(RRDBase):
 
         args = [
             'DEF:arc_size=%s:value:MAX' % cachearc,
-            'DEF:l2arc_size=%s:value:MAX' % cachel2,
+            'DEF:l2arc_asize=%s:value:MAX' % cachel2,
             'LINE1:arc_size#0000FF:ARC  ',
             'GPRINT:arc_size:MIN:%5.1lf%s Min\g',
             'GPRINT:arc_size:AVERAGE: %5.1lf%s Avg\g',
             'GPRINT:arc_size:MAX: %5.1lf%s Max\g',
             'GPRINT:arc_size:LAST: %5.1lf%s Last\l',
-            'LINE1:l2arc_size#FF0000:L2ARC',
-            'GPRINT:l2arc_size:MIN:%5.1lf%s Min\g',
-            'GPRINT:l2arc_size:AVERAGE: %5.1lf%s Avg\g',
-            'GPRINT:l2arc_size:MAX: %5.1lf%s Max\g',
-            'GPRINT:l2arc_size:LAST: %5.1lf%s Last\l',
+            'LINE1:l2arc_asize#FF0000:L2ARC',
+            'GPRINT:l2arc_asize:MIN:%5.1lf%s Min\g',
+            'GPRINT:l2arc_asize:AVERAGE: %5.1lf%s Avg\g',
+            'GPRINT:l2arc_asize:MAX: %5.1lf%s Max\g',
+            'GPRINT:l2arc_asize:LAST: %5.1lf%s Last\l',
         ]
 
         return args
