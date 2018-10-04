@@ -73,7 +73,7 @@ def test_06_get_pending_update():
     if upgrade is False:
         pytest.skip('No update found')
     elif download_hang is True:
-        pytest.skip('Download fail')
+        pytest.skip(f'Downloading {selected_tranis} failed')
     else:
         results = POST('/update/get_pending/')
         assert results.status_code == 200, results.text
@@ -85,7 +85,7 @@ def test_07_install_update():
     if upgrade is False:
         pytest.skip('No update found')
     elif download_hang is True:
-        pytest.skip('Download fail')
+        pytest.skip(f'Downloading {selected_tranis} failed')
     else:
         payload = {
             "train": selected_tranis,
@@ -102,7 +102,7 @@ def test_08_verify_the_update_is_successful():
     if upgrade is False:
         pytest.skip('No update found')
     elif download_hang is True:
-        pytest.skip('Download fail')
+        pytest.skip(f'Downloading {selected_tranis} failed')
     else:
         while True:
             job_status = GET(f'/core/get_jobs/?id={JOB_ID}').json()[0]
@@ -117,7 +117,7 @@ def test_09_verify_system_is_ready_to_reboot():
     if upgrade is False:
         pytest.skip('No update found')
     elif download_hang is True:
-        pytest.skip('Download fail')
+        pytest.skip(f'Downloading {selected_tranis} failed')
     else:
         results = POST('/update/check_available/')
         assert results.status_code == 200, results.text
