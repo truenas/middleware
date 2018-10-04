@@ -43,7 +43,7 @@ def expect_state(job_id, state):
 def test_01_setup_function():
     DELETE(f"/pool/dataset/id/{urllib.parse.quote(DATASET, '')}/")
 
-    result = POST("/pool/dataseti/", {"name": DATASET})
+    result = POST("/pool/dataset/", {"name": DATASET})
     assert result.status_code == 200, result.text
 
     for image in ["msdosfs", "msdosfs-nonascii", "ntfs"]:
