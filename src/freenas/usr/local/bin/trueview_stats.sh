@@ -113,11 +113,13 @@ get_cpu_temp_to_json(){
     num=`echo "${line}" | cut -d . -f 3`
     val=`echo "${line}" | cut -w -f 2 | cut -d C -f 1` #need to cut the "C" off the end of the value as well
     #Now echo out that variable/value pair
-    echo ",\"${num}\":${val}"
+    if [ -n "${num}" ] && [ -n "${val}" ] ; then
+      echo ",\"${num}\":${val}"
+    fi
   done
   )
   if [ -n "${_out}" ] ; then
-    _tmp="{\"units\":\"C\", ${_out}}"
+    _tmp="{\"units\":\"C\"${_out}}"
   fi
 }
 
