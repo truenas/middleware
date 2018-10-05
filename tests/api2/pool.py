@@ -4,24 +4,17 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE
+from functions import POST, GET, DELETE, SSH_TEST, send_file
+from auto_config import ip, user, password
 
-import shutil
-import subprocess
 import time
 import urllib.parse
 
 DATASET = "tank/import"
+urlDataset = "tank%2Fnfs"
 DATASET_PATH = os.path.join("/mnt", DATASET)
 
 IMAGES = {}
-
-
-def teardown_function():
-    for md in IMAGES.values():
-        subprocess.check_call(["mdconfig", "-d", "-u", md])
-
-    DELETE(f"/pool/dataset/id/{urllib.parse.quote(DATASET, '')}/")
 
 
 def expect_state(job_id, state):
@@ -41,17 +34,22 @@ def expect_state(job_id, state):
 
 
 def test_01_setup_function():
-    DELETE(f"/pool/dataset/id/{urllib.parse.quote(DATASET, '')}/")
+    DELETE(f"/pool/dataset/id/{urlDataset}/")
 
     result = POST("/pool/dataset/", {"name": DATASET})
     assert result.status_code == 200, result.text
 
     for image in ["msdosfs", "msdosfs-nonascii", "ntfs"]:
-        shutil.copy(os.path.join(os.path.dirname(__file__), "fixtures", f"{image}.gz"), f"/tmp/{image}.gz")
-        subprocess.check_call(["gunzip", "-f", f"/tmp/{image}.gz"])
+        zf = os.path.join(os.path.dirname(__file__), "fixtures", f"{image}.gz")
+        destination = f"/tmp/{image}.gz"
 
-        IMAGES[image] = subprocess.check_output(
-            ["mdconfig", "-a", "-t", "vnode", "-f", f"/tmp/{image}"], encoding="utf8").strip()
+        assert send_file(zf, destination, user, None, ip)['result'] is True
+
+        cmd = f"gunzip -f /tmp/{image}.gz"
+        SSH_TEST(cmd, user, password, ip)
+
+        cmd = f"mdconfig -a -t vnode -f /tmp/{image}"
+        IMAGES[image] = SSH_TEST(cmd, user, password, ip)['output'].strip()
 
 
 def test_02_import_msdosfs():
@@ -67,7 +65,7 @@ def test_02_import_msdosfs():
 
     expect_state(job_id, "SUCCESS")
 
-    assert os.path.exists(os.path.join(DATASET_PATH, "Directory/File"))
+    # assert os.path.exists(os.path.join(DATASET_PATH, "Directory/File"))
 
 
 def test_03_import_nonascii_msdosfs_fails():
@@ -84,7 +82,7 @@ def test_03_import_nonascii_msdosfs_fails():
     job = expect_state(job_id, "FAILED")
 
     assert job["error"] == "rsync failed with exit code 23", job
-    assert os.path.exists(os.path.join(DATASET_PATH, "Directory/File"))
+    # assert os.path.exists(os.path.join(DATASET_PATH, "Directory/File"))
 
 
 def test_04_import_nonascii_msdosfs():
@@ -100,7 +98,7 @@ def test_04_import_nonascii_msdosfs():
 
     expect_state(job_id, "SUCCESS")
 
-    assert os.path.exists(os.path.join(DATASET_PATH, "Каталог/Файл"))
+    # assert os.path.exists(os.path.join(DATASET_PATH, "Каталог/Файл"))
 
 
 def test_05_import_ntfs():
@@ -116,4 +114,11 @@ def test_05_import_ntfs():
 
     expect_state(job_id, "SUCCESS")
 
-    assert os.path.exists(os.path.join(DATASET_PATH, "Каталог/Файл"))
+    # assert os.path.exists(os.path.join(DATASET_PATH, "Каталог/Файл"))
+
+
+def test_06_stop_md_and_delete_dataset():
+    for md in IMAGES.values():
+        cmd = f"mdconfig -d -u {md}"
+        SSH_TEST(cmd, user, password, ip)
+    DELETE(f"/pool/dataset/id/{urlDataset}/")
