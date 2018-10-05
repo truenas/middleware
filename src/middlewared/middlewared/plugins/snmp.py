@@ -34,17 +34,23 @@ class SNMPService(SystemServiceService):
 
         verrors = ValidationErrors()
 
-        if not data['v3'] and not data['community']:
+        if not new['v3'] and not new['community']:
             verrors.add('snmp_update.community', 'This field is required when SNMPv3 is disabled')
 
-        if data['v3_authtype'] and not data['v3_password']:
-            verrors.add('snmp_update.v3_password', 'This field is requires when SNMPv3 auth type is specified')
+        if new['v3_authtype'] and not new['v3_password']:
+            verrors.add(
+                'snmp_update.v3_password',
+                'This field is requires when SNMPv3 auth type is specified',
+            )
 
-        if data['v3_password'] and len(data['v3_password']) < 8:
+        if new['v3_password'] and len(new['v3_password']) < 8:
             verrors.add('snmp_update.v3_password', 'Password must contain at least 8 characters')
 
-        if data['v3_privproto'] and not data['v3_privpassphrase']:
-            verrors.add('snmp_update.v3_privpassphrase', 'This field is requires when SNMPv3 private protocol is specified')
+        if new['v3_privproto'] and not new['v3_privpassphrase']:
+            verrors.add(
+                'snmp_update.v3_privpassphrase',
+                'This field is requires when SNMPv3 private protocol is specified',
+            )
 
         if verrors:
             raise verrors
