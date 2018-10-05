@@ -175,6 +175,23 @@ def SSH_TEST(command, username, passwrd, host):
         return {'result': True, 'output': output}
 
 
+def send_file(file, distination, username, passwrd, host):
+    if passwrd is None:
+        cmd = ""
+    else:
+        cmd = f"sshpass -p {passwrd} "
+    cmd += "scp -o StrictHostKeyChecking=no "
+    cmd += "-o UserKnownHostsFile=/dev/null "
+    cmd += "-o VerifyHostKeyDNS=no "
+    cmd += f"{file} {user}@{host}:{distination}"
+    process = run(cmd, shell=True, stdout=PIPE, universal_newlines=True)
+    output = process.stdout
+    if process.returncode != 0:
+        return {'result': False, 'output': output}
+    else:
+        return {'result': True, 'output': output}
+
+
 def RC_TEST(command):
     process = run(command, shell=True)
     if process.returncode != 0:
