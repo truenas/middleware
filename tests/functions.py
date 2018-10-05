@@ -188,7 +188,7 @@ def send_file(file, destination, username, passwrd, host):
         file,
         f"{user}@{host}:{destination}"
     ]
-    process = run(cmd, shell=True, stdout=PIPE, universal_newlines=True)
+    process = run(cmd, stdout=PIPE, universal_newlines=True)
     output = process.stdout
     if process.returncode != 0:
         return {'result': False, 'output': output}
