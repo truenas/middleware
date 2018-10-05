@@ -41,9 +41,9 @@ def test_01_setup_function():
 
     for image in ["msdosfs", "msdosfs-nonascii", "ntfs"]:
         zf = os.path.join(os.path.dirname(__file__), "fixtures", f"{image}.gz")
-        distination = f"/tmp/{image}.gz"
+        destination = f"/tmp/{image}.gz"
 
-        assert send_file(zf, distination, user, None, ip)['result'] is True
+        assert send_file(zf, destination, user, None, ip)['result'] is True
 
         cmd = f"gunzip -f /tmp/{image}.gz"
         SSH_TEST(cmd, user, password, ip)
