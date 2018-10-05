@@ -175,7 +175,7 @@ def SSH_TEST(command, username, passwrd, host):
         return {'result': True, 'output': output}
 
 
-def send_file(file, distination, username, passwrd, host):
+def send_file(file, destination, username, passwrd, host):
     if passwrd is None:
         cmd = ""
     else:
@@ -183,7 +183,7 @@ def send_file(file, distination, username, passwrd, host):
     cmd += "scp -o StrictHostKeyChecking=no "
     cmd += "-o UserKnownHostsFile=/dev/null "
     cmd += "-o VerifyHostKeyDNS=no "
-    cmd += f"{file} {user}@{host}:{distination}"
+    cmd += f"{file} {user}@{host}:{destination}"
     process = run(cmd, shell=True, stdout=PIPE, universal_newlines=True)
     output = process.stdout
     if process.returncode != 0:
