@@ -243,8 +243,14 @@ __EOF__
 			fi
 
 			cat << __EOF__
-	listen			${addr}:${httpsport} default_server ssl http2;
-	listen			[${addr6}]:${httpsport} default_server ssl http2;
+	for i4 in ${addr}
+	do
+		listen			${i4}:${httpsport} default_server ssl http2;
+	done
+	for i6 in ${addr6}
+	do
+		listen			[${i6}]:${httpsport} default_server ssl http2;
+	done
 
 	ssl_certificate		"${httpdcert}";
 	ssl_certificate_key	"${httpdkey}";
@@ -275,8 +281,14 @@ __EOF__
 	fi
 
 	if [ ! ${working_ssl} -o "${proto}" = "http" -o "${proto}" = "httphttps" ]; then
-		echo "        listen       ${addr}:${port};"
-		echo "        listen       [${addr6}]:${port};"
+		for i4 in ${addr}
+		do
+			echo "        listen       ${i4}:${port};"
+		done
+		for i6 in ${addr6}
+		do
+			echo "        listen       [${i6}]:${port};"
+		done
 	fi
 
 	if ! is_freenas; then
@@ -438,8 +450,14 @@ __EOF__
 	if [ "${proto}" = "https" -a "${working_ssl}" = true -a "${httpsredirect}" = "1" ]; then
 		cat << __EOF__
     server {
-	listen ${addr}:80;
-	listen [${addr6}]:80;
+	for i4 in ${addr}
+	do
+		listen ${i4}:80;
+	done
+	for i6 in ${addr6}
+	do
+		listen [${i6}]:80;
+	done
 	server_name localhost;
 	return 307 https://\$host:${httpsport}\$request_uri;
     }
@@ -563,15 +581,15 @@ get_nginx_settings()
 	)
 
 	local proto=$(echo ${settings}|cut -f1 -d"|" -s|tr A-Z a-z)
-	local addr=$(echo ${settings}|cut -f2 -d"|" -s)
-	local addr6=$(echo ${settings}|cut -f3 -d"|" -s)
+	local ipaddr=$(echo ${settings}|cut -f2 -d"|" -s)
+	local ipaddr6=$(echo ${settings}|cut -f3 -d"|" -s)
 	local port=$(echo ${settings}|cut -f4 -d"|" -s)
 	local httpsport=$(echo ${settings}|cut -f5 -d"|" -s)
 	local httpsredirect=$(echo ${settings}|cut -f6 -d"|" -s)
 
 	: ${proto:="http"}
-	: ${addr:="0.0.0.0"}
-	: ${addr6:="::"}
+	: ${ipaddr:="0.0.0.0"}
+	: ${ipaddr6:="::"}
 
 	if [ -z "${httpsport}" ]
 	then
@@ -582,15 +600,31 @@ get_nginx_settings()
 		port="80"
 	fi
 
-	if [ "${addr}" != "0.0.0.0" -a \
-		-z "$(/sbin/ifconfig -a|grep ${addr})" ]; then
-		addr="0.0.0.0"
-	fi
+	local addr=""
+	for i4 in $ipaddr
+	do
+		if [ "${i4}" != "0.0.0.0" -a \
+			-z "$(/sbin/ifconfig -a|grep ${i4})" ]; then
+			if [ -z "$(echo '$addr'|grep ${i4})" ]; then
+				addr="$addr 0.0.0.0"
+			fi
+		else
+			addr="$addr $i4"
+		fi
+	done
 
-	if [ "${addr6}" != "::" -a \
-		-z "$(/sbin/ifconfig -a|grep ${addr6})" ]; then
-		addr6="::"
-	fi
+	local addr6=""
+	for i6 in $ipaddr6
+	do
+		if [ "${i6}" != "::" -a \
+			-z "$(/sbin/ifconfig -a|grep '${i6}')" ]; then
+			if [ -z "$(echo '$addr6'|grep ${i6})" ]; then
+				addr6="$addr6 ::"
+			fi
+		else
+			addr6="$addr6 $i6"
+		fi
+	done
 
 	echo "${proto}|${addr}|${addr6}|${port}|${httpsport}|${httpsredirect}"
 }
