@@ -620,7 +620,7 @@ class SystemGeneralService(ConfigService):
             ):
                 verrors.add(
                     f'{schema}.ui_address',
-                    'Selected ipv4 address is not associated with this machine'
+                    f'{ip4_address} ipv4 address is not associated with this machine'
                 )
 
         ip6_addresses = data.get('ui_v6address')
@@ -632,7 +632,7 @@ class SystemGeneralService(ConfigService):
             ):
                 verrors.add(
                     f'{schema}.ui_v6address',
-                    'Selected ipv6 address is not associated with this machine'
+                    f'{ip6_address} ipv6 address is not associated with this machine'
                 )
 
         syslog_server = data.get('syslogserver')
