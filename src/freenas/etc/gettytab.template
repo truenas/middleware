@@ -164,7 +164,8 @@ X|Xwindow|X window system:\
 	:fd@:nd@:cd@:rw:sp#9600:
 
 P|Pc|Pc console:\
-	:ht:np:sp#115200:lo=/etc/netcli.sh:
+	:ht:np:lo=/etc/netcli.sh:sp#115200:al=:
+
 
 #
 # Weirdo special case for fast crt's with hardcopy devices

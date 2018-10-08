@@ -1337,18 +1337,17 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     i18n.apply_language()
 
-
     with client as c:
         console = c.call('system.advanced.config')['consolemenu']
 
-    if console:
-        while True:
-            try:
-                if console:
-                    main_menu()
-            except SystemExit as e:
-                sys.exit(e.code)
-            except Exception:
-                exit(1)
-    else:
-        show_ip()
+    while True:
+        try:
+            if console:
+                main_menu()
+            else:
+                show_ip()
+                os.system('exec /usr/bin/login')
+        except SystemExit as e:
+            sys.exit(e.code)
+        except Exception:
+            exit(1)
