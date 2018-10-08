@@ -32,7 +32,7 @@ class VMForm(ModelForm):
     )
     size = forms.IntegerField(
         label=_("Size of Docker Disk File (GiB)"),
-        initial=2,
+        initial=20,
         required=False,
     )
 
