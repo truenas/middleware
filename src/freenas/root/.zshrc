@@ -8,7 +8,6 @@ setopt APPEND_HISTORY
 bindkey "^[[F" end-of-line
 bindkey "^[[H" beginning-of-line
 bindkey "^[[3~" delete-char
-bindkey '^H' backward-delete-word
 
 # Enable the builtin emacs(1) command line editor in sh(1),
 # e.g. C-a -> beginning-of-line.
