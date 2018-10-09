@@ -163,8 +163,14 @@ l|lsi chess terminal:\
 X|Xwindow|X window system:\
 	:fd@:nd@:cd@:rw:sp#9600:
 
+#P|Pc|Pc console:\
+#	:ht:np:lo=/etc/netcli.sh:sp#115200:al=root:im=\n\n%d\n\n%s/%m (%h) (%t)\n:to=0:
+
 P|Pc|Pc console:\
-	:ht:np:lo=/etc/netcli.sh:sp#115200:al=root:im=\n\n%d\n\n%s/%m (%h) (%t)\n:
+	:ht:np:nc:sp#115200:im=:
+
+showurl|showurl console:\
+    :ht:np:lo=/etc/netcli.sh:sp#115200:al=root:im=\n\n%d\n\n%s/%m (%h) (%t)\n:
 
 
 #

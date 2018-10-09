@@ -1346,7 +1346,7 @@ if __name__ == '__main__':
                 main_menu()
             else:
                 show_ip()
-                os.system('exec /usr/bin/login')
+                os.execv('/usr/libexec/getty', ['/usr/libexec/getty', 'Pc'])
         except SystemExit as e:
             sys.exit(e.code)
         except Exception:
