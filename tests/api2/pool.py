@@ -2,13 +2,11 @@
 
 import sys
 import os
+import time
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, SSH_TEST, send_file
 from auto_config import ip, user, password
-
-import time
-import urllib.parse
 
 DATASET = "tank/import"
 urlDataset = "tank%2Fnfs"
