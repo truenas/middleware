@@ -1,5 +1,7 @@
 {% extends "freeadmin/generic_form.html" %}
 {% block onSubmit %}
+getDialog(this).set('title', 'Update Status');
+
 doSubmit({
     form: this,
     event: e,
