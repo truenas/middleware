@@ -1337,11 +1337,11 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     i18n.apply_language()
 
-    with client as c:
-        console = c.call('system.advanced.config')['consolemenu']
-
     while True:
         try:
+            with client as c:
+                console = c.call('system.advanced.config')['consolemenu']
+
             if console:
                 main_menu()
             else:
