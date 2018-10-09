@@ -1,0 +1,46 @@
+# $FreeBSD: src/etc/profile,v 1.14 2004/06/06 11:46:27 schweikh Exp $
+#
+# System-wide .profile file for sh(1).
+#
+# Uncomment this to give you the default 4.2 behavior, where disk
+# information is shown in K-Blocks
+# BLOCKSIZE=K; export BLOCKSIZE
+#
+# For the setting of languages and character sets please see
+# login.conf(5) and in particular the charset and lang options.
+# For full locales list check /usr/share/locale/*
+# You should also read the setlocale(3) man page for information
+# on how to achieve more precise control of locale settings.
+#
+# Read system messages
+# msgs -f
+# Allow terminal messages
+# mesg y
+if [ -z "$LANG" -o "$LANG" = "C" ] ; then
+  LANG="en_US.UTF-8"; export LANG
+fi
+#LC_CTYPE="en_US.UTF-8"; export LC_CTYPE
+#LC_COLLATE="POSIX"; export LC_COLLATE
+EDITOR=ee;      export EDITOR
+PAGER=less;     export PAGER
+BLOCKSIZE=K;    export BLOCKSIZE
+
+if [ `id -u` = 0 ]; then
+    set -o emacs
+    PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:~/bin:/usr/local/fusion-io
+    export PATH
+    TERM=${TERM:-xterm}; export TERM
+    PAGER=more; export PAGER
+
+    HOME=/root; export HOME
+
+    # History file since / is read-only (see #4776)
+    HISTFILE=/tmp/.hist$$
+    PS1="`hostname -s`# "
+
+    # set ENV to a file invoked each time sh is started for interactive use.
+    ENV=$HOME/.shrc; export ENV
+else
+    PS1="`hostname -s`% "
+fi
+
