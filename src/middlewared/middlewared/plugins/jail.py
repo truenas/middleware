@@ -836,7 +836,7 @@ class JailService(CRUDService):
 
             r_plugins = requests.get(
                 'https://raw.githubusercontent.com/freenas/'
-                'iocage-ix-plugins/master/INDEX'
+                f'iocage-ix-plugins/{branch}/INDEX'
             )
             r_plugins.raise_for_status()
 
