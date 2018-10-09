@@ -515,7 +515,7 @@ class DiskService(CRUDService):
 
     @accepts(
         List('devices', items=[Str('device')]),
-        Str('passphrase', private=True),
+        Str('passphrase', null=True, private=True),
     )
     @job(pipes=['input'])
     def decrypt(self, job, devices, passphrase=None):

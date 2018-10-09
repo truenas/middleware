@@ -2014,14 +2014,15 @@ class PoolDatasetService(CRUDService):
         return await self.middleware.call('zfs.dataset.promote', id)
 
     @accepts(
-        Str('id', default=None, required=True),
-        Dict('pool_dataset_permission',
-             Str('user'),
-             Str('group'),
-             UnixPerm('mode'),
-             Str('acl', enum=['UNIX', 'MAC', 'WINDOWS'], default='UNIX'),
-             Bool('recursive', default=False)
-             )
+        Str('id', required=True),
+        Dict(
+            'pool_dataset_permission',
+            Str('user'),
+            Str('group'),
+            UnixPerm('mode'),
+            Str('acl', enum=['UNIX', 'MAC', 'WINDOWS'], default='UNIX'),
+            Bool('recursive', default=False),
+        ),
     )
     @item_method
     async def permission(self, id, data):

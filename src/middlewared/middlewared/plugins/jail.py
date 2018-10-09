@@ -356,14 +356,14 @@ class JailService(CRUDService):
             Str("server", default="download.freebsd.org"),
             Str("user", default="anonymous"),
             Str("password", default="anonymous@"),
-            Str("name", default=None),
+            Str("name", default=None, null=True),
             Bool("accept", default=True),
             List("props", default=[]),
             List(
                 "files",
                 default=["MANIFEST", "base.txz", "lib32.txz", "doc.txz"]
             ),
-            Str("branch", default=None)
+            Str("branch", default=None, null=True)
         )
     )
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
