@@ -811,11 +811,14 @@ class JailService(CRUDService):
         repo and returns a list with the pkg version and plugin revision
         """
         try:
-            pkg_dict = self.middleware.call_sync('cache.get', 'iocage_rpkgdict')
+            pkg_dict = self.middleware.call_sync('cache.get',
+                                                 'iocage_rpkgdict')
             r_plugins = self.middleware.call_sync('cache.get',
                                                   'iocage_rplugins')
         except KeyError:
-            r_pkgs = requests.get('http://pkg.cdn.trueos.org/iocage/All')
+            branch = self.get_version()
+            r_pkgs = requests.get(
+                f'http://pkg.cdn.trueos.org/iocage/{branch}/All')
             r_pkgs.raise_for_status()
             pkg_dict = {}
             for i in r_pkgs.iter_lines():
@@ -915,6 +918,16 @@ class JailService(CRUDService):
     @private
     async def terminate(self):
         await SHUTDOWN_LOCK.acquire()
+
+    @private
+    def get_version(self):
+        """
+        Uses system.version and parses it out for the RELEASE branch we need
+        """
+        version = self.middleware.call_sync('system.version')
+        version = f'{round(float(version.split("-")[1]), 1)}-RELEASE'
+
+        return version
 
 
 async def jail_pool_pre_lock(middleware, pool):
