@@ -133,7 +133,6 @@ def get_tests():
         apidir = 'api1/'
         rv = ['network', 'ssh', 'storage']
     elif api == '2.0':
-        skip_tests = ['pool_import_disk']
         apidir = 'api2/'
         rv = ['interfaces', 'network', 'ssh', 'volume']
 
@@ -143,7 +142,6 @@ def get_tests():
             filename = re.sub('.py$', '', filename)
             if filename not in skip_tests and filename not in rv:
                 rv.append(filename)
-
     return rv
 
 
@@ -154,12 +152,12 @@ if api == "1.0":
         call(["py.test-3.6", "-v", "--junitxml",
               f"{results_xml}{i}_tests_result.xml"] + (
                   ["-k", testexpr] if testexpr else []
-              ) + [f"api1/{i}.py"])
+        ) + [f"api1/{i}.py"])
 elif api == "2.0":
     for i in get_tests():
         if testName is not None and testName != i:
             continue
-        call(["py.test-3.6", "-vs", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               f"{results_xml}{i}_tests_result.xml"] + (
                   ["-k", testexpr] if testexpr else []
-              ) + [f"api2/{i}.py"])
+        ) + [f"api2/{i}.py"])
