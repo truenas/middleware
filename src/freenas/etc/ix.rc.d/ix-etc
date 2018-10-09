@@ -12,7 +12,7 @@
 copy_templates()
 {
 	# Copy over FreeNAS specific /etc template files
-	for file in $(ls /conf/base/etc/*.template /etc/*.template 2>/dev/null)
+	for file in $(ls /etc/*.template 2>/dev/null)
 	do
 		nfile=$(echo $file | sed 's|.template||g')
 		cp ${file} ${nfile}
