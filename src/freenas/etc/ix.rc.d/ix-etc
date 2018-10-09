@@ -9,8 +9,23 @@
 
 . /etc/rc.subr
 
+copy_templates()
+{
+	# Copy over FreeNAS specific /etc template files
+	for file in $(ls /etc/*.template 2>/dev/null)
+	do
+		nfile=$(echo $file | sed 's|.template||g')
+		cp ${file} ${nfile}
+		if [ $? -ne 0 ] ; then
+			echo "WARNING: Failed to copy template file $file -> $nfile"
+		fi
+	done
+}
+
 generate_etc()
 {
+	copy_templates
+
 	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate_all > /dev/null
 }
 
