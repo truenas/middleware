@@ -924,8 +924,22 @@ class JailService(CRUDService):
         """
         Uses system.version and parses it out for the RELEASE branch we need
         """
-        version = self.middleware.call_sync('system.version')
-        version = f'{round(float(version.split("-")[1]), 1)}-RELEASE'
+        try:
+            version = self.middleware.call_sync(
+                'cache.get', 'iocage_branch')
+
+            return version
+        except KeyError:
+            freebsd_version = su.run(['freebsd-version'],
+                                     stdout=su.PIPE,
+                                     stderr=su.STDOUT)
+            r = freebsd_version.stdout.decode().rstrip().split('-', 1)[0]
+
+            version = f'{round(float(r.split("-")[0]), 1)}-RELEASE'
+            self.middleware.call_sync(
+                'cache.put', 'iocage_branch', version,
+                604800
+            )
 
         return version
 
