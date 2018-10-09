@@ -778,8 +778,8 @@ class VMService(CRUDService):
         else:
             return False
 
-    @accepts(Str('pool_name'))
-    def activate_sharefs(self, pool_name=None):
+    @accepts(Str('pool_name', default=None, null=True))
+    def activate_sharefs(self, pool_name):
         """
         Create a pool for pre built containers images.
         """
@@ -1490,7 +1490,7 @@ class VMDeviceService(CRUDService):
         'NIC': Dict(
             'attributes',
             Str('type', enum=['E1000', 'VIRTIO'], default='E1000'),
-            Str('nic_attach', default=None),
+            Str('nic_attach', default=None, null=True),
             Str('mac'),
         ),
         'VNC': Dict(
@@ -1499,10 +1499,10 @@ class VMDeviceService(CRUDService):
                 '1920x1200', '1920x1080', '1600x1200', '1600x900', '1280x1024',
                 '1280x720', '1024x768', '800x600', '640x480',
             ], default='1024x768'),
-            Int('vnc_port', default=None),
+            Int('vnc_port', default=None, null=True),
             Str('vnc_bind'),
             Bool('wait', default=False),
-            Str('vnc_password', default=None, password=True),
+            Str('vnc_password', default=None, null=True, password=True),
             Bool('vnc_web', default=False),
         ),
     }
@@ -1530,7 +1530,7 @@ class VMDeviceService(CRUDService):
             Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'VNC', 'RAW'], required=True),
             Int('vm'),
             Dict('attributes', additional_attrs=True, default=None),
-            Int('order', default=None),
+            Int('order', default=None, null=True),
             register=True,
         ),
     )
