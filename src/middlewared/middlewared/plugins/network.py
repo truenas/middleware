@@ -1167,30 +1167,44 @@ class InterfacesService(CRUDService):
             internal_interfaces.extend(await self.middleware.call('notifier.failover_internal_interfaces') or [])
         internal_interfaces = tuple(internal_interfaces)
 
-        # Destroy interfaces which are not in database
+        dhclient_aws = []
         for name, iface in list(netif.list_interfaces().items()):
             # Skip internal interfaces
             if name.startswith(internal_interfaces):
                 continue
-            # Skip interfaces in database
-            if name in interfaces:
-                continue
 
-            # Interface not in database lose addresses
-            for address in iface.addresses:
-                iface.remove_address(address)
+            # If there are no interfaces configured we start DHCP on all
+            if not interfaces:
+                dhclient_running = dhclient_status(name)[0]
+                if not dhclient_running:
+                    dhclient_aws.append(asyncio.ensure_future(
+                        self.dhclient_start(name, wait_dhcp)
+                    ))
+            else:
+                # Destroy interfaces which are not in database
 
-            # Kill dhclient if its running for this interface
-            dhclient_running, dhclient_pid = dhclient_status(name)
-            if dhclient_running:
-                os.kill(dhclient_pid, signal.SIGTERM)
+                # Skip interfaces in database
+                if name in interfaces:
+                    continue
 
-            # If we have vlan or lagg not in the database at all
-            # It gets destroy, otherwise just bring it down
-            if name not in cloned_interfaces and name.startswith(('lagg', 'vlan')):
-                netif.destroy_interface(name)
-            elif name not in parent_interfaces:
-                iface.down()
+                # Interface not in database lose addresses
+                for address in iface.addresses:
+                    iface.remove_address(address)
+
+                dhclient_running, dhclient_pid = dhclient_status(name)
+                # Kill dhclient if its running for this interface
+                if dhclient_running:
+                    os.kill(dhclient_pid, signal.SIGTERM)
+
+                # If we have vlan or lagg not in the database at all
+                # It gets destroy, otherwise just bring it down
+                if name not in cloned_interfaces and name.startswith(('lagg', 'vlan')):
+                    netif.destroy_interface(name)
+                elif name not in parent_interfaces:
+                    iface.down()
+
+        if wait_dhcp and dhclient_aws:
+            await asyncio.wait(dhclient_aws, timeout=30)
 
     @private
     def alias_to_addr(self, alias):
