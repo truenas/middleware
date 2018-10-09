@@ -141,7 +141,11 @@ class JobsQueue(object):
             await self.queue_event.wait()
             found = None
             for job in self.queue:
-                lock = self.get_lock(job)
+                try:
+                    lock = self.get_lock(job)
+                except Exception:
+                    logger.error('Failed to get lock for %r', job, exc_info=True)
+                    lock = None
                 # Get job in the queue if it has no lock or its not locked
                 if lock is None or not lock.locked():
                     found = job
