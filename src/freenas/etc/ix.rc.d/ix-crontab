@@ -16,7 +16,7 @@ generate_crontab()
 	eval local $f
 	local sf=$(var_to_sf $f)
 	local cron_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin"
-	cp /conf/base/etc/crontab /etc/crontab
+	cp /conf/base/etc/crontab.template /etc/crontab
 	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 
