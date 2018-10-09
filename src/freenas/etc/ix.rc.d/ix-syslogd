@@ -102,7 +102,7 @@ _EOF_
 } >> /etc/local/syslog-ng.conf
 
 # Be sure and copy fresh file since we're appending
-cp /conf/base/etc/newsyslog.conf /etc/newsyslog.conf
+cp /conf/base/etc/newsyslog.conf.template /etc/newsyslog.conf
 {
 cat << _EOF_
 
