@@ -26,6 +26,7 @@ from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.validators import IpInUse, MACAddr
+from collections import deque
 
 
 SHUTDOWN_LOCK = asyncio.Lock()
@@ -725,20 +726,25 @@ class JailService(CRUDService):
     def update_to_latest_patch(self, job, jail):
         """Updates specified jail to latest patch level."""
         job.set_progress(0, f'Updating {jail}')
+        msg_queue = deque(maxlen=10)
 
         def progress_callback(content, exception):
             msg = content['message'].strip('\n')
+            msg_queue.append(msg)
+            final_msg = '\n'.join(msg_queue)
 
             if 'Inspecting system... done' in msg:
-                job.set_progress(20, msg)
+                job.set_progress(20)
             elif 'Preparing to download files... done.' in msg:
-                job.set_progress(50, msg)
+                job.set_progress(50)
             elif 'Applying patches... done.' in msg:
-                job.set_progress(75, msg)
+                job.set_progress(75)
             elif 'Installing updates... done.' in msg:
-                job.set_progress(90, msg)
+                job.set_progress(90)
             elif f'{jail} has been updated successfully' in msg:
-                job.set_progress(100, msg)
+                job.set_progress(100)
+
+            job.set_progress(None, description=final_msg)
 
         _, _, iocage = self.check_jail_existence(
             jail,
