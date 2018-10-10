@@ -15,7 +15,6 @@ import sqlite3
 import errno
 from iocage_lib.ioc_check import IOCCheck
 from iocage_lib.ioc_clean import IOCClean
-from iocage_lib.ioc_fetch import IOCFetch
 from iocage_lib.ioc_image import IOCImage
 from iocage_lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
@@ -329,10 +328,14 @@ class JailService(CRUDService):
             raise CallError(e, errno=errno.ENOENT)
 
     @private
-    def check_jail_existence(self, jail, skip=True):
+    def check_jail_existence(self, jail, skip=True, callback=None):
         """Wrapper for iocage's API, as a few commands aren't ported to it"""
         try:
-            iocage = ioc.IOCage(skip_jails=skip, jail=jail)
+            if callback is not None:
+                iocage = ioc.IOCage(callback=callback,
+                                    skip_jails=skip, jail=jail)
+            else:
+                iocage = ioc.IOCage(skip_jails=skip, jail=jail)
             jail, path = iocage.__check_jail_existence__()
         except (SystemExit, RuntimeError):
             raise CallError(f"jail '{jail}' not found!")
@@ -715,39 +718,33 @@ class JailService(CRUDService):
         host_user = "" if jail_user and host_user == "root" else host_user
         msg = iocage.exec(command, host_user, jail_user, msg_return=True)
 
-        return msg.decode("utf-8")
+        return msg
 
     @accepts(Str("jail"))
     @job(lock=lambda args: f"jail_update:{args[-1]}")
     def update_to_latest_patch(self, job, jail):
         """Updates specified jail to latest patch level."""
+        job.set_progress(0, f'Updating {jail}')
 
-        uuid, path, _ = self.check_jail_existence(jail)
-        status, jid = IOCList.list_get_jid(uuid)
-        conf = IOCJson(path).json_load()
+        def progress_callback(content, exception):
+            msg = content['message'].strip('\n')
 
-        # Sometimes if they don't have an existing patch level, this
-        # becomes 11.1 instead of 11.1-RELEASE
-        _release = conf["release"].rsplit("-", 1)[0]
-        release = _release if "-RELEASE" in _release else conf["release"]
+            if 'Inspecting system... done' in msg:
+                job.set_progress(20, msg)
+            elif 'Preparing to download files... done.' in msg:
+                job.set_progress(50, msg)
+            elif 'Applying patches... done.' in msg:
+                job.set_progress(75, msg)
+            elif 'Installing updates... done.' in msg:
+                job.set_progress(90, msg)
+            elif f'{jail} has been updated successfully' in msg:
+                job.set_progress(100, msg)
 
-        started = False
-
-        if conf["type"] == "jail":
-            if not status:
-                self.start(jail)
-                started = True
-        else:
-            return False
-
-        if conf["basejail"] != "yes":
-            IOCFetch(release).fetch_update(True, uuid)
-        else:
-            # Basejails only need their base RELEASE updated
-            IOCFetch(release).fetch_update()
-
-        if started:
-            self.stop(jail)
+        _, _, iocage = self.check_jail_existence(
+            jail,
+            callback=progress_callback
+        )
+        iocage.update()
 
         return True
 
