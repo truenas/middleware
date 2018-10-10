@@ -246,9 +246,9 @@ __EOF__
 			for ip in $ips
 			do
 				if [ -z "$(echo ${ip}|grep .*:.*)" ]; then
-					echo "        listen                  ${ip}:${httpsport} default_server ssl http2;"
+					echo "	listen			${ip}:${httpsport} default_server ssl http2;"
 				else
-					echo "        listen                  [${ip}]:${httpsport} default_server ssl http2;"
+					echo "	listen			[${ip}]:${httpsport} default_server ssl http2;"
 				fi
 			done
 
@@ -456,9 +456,9 @@ __EOF__
 		for ip in $ips
 			do
 				if [ -z "$(echo ${ip}|grep .*:.*)" ]; then
-					echo "        listen ${ip}:80;"
+					echo "	listen ${ip}:80;"
 				else
-					echo "        listen [${ip}]:80;"
+					echo "	listen [${ip}]:80;"
 				fi
 			done
 
