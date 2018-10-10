@@ -154,6 +154,7 @@ generate_nginx_conf()
 	local default_ui="ui"
 	local dhparams_file="/data/dhparam.pem"
 	local dojo=$(env PYTHONPATH=/usr/local/www/freenasUI/ /usr/local/bin/python -B -S -c 'import settings; print(settings.DOJANGO_DOJO_VERSION)')
+	local ips="$addr $addr6"
 
 	[ -s /data/dhparam.pem ] || openssl dhparam -rand - 2048 > /data/dhparam.pem
 	[ -s /data/dhparam1024.pem ] || openssl dhparam -rand - 1024 > /data/dhparam1024.pem
@@ -242,15 +243,16 @@ __EOF__
 				rm /tmp/alert_invalid_ssl_nginx
 			fi
 
+			for ip in $ips
+			do
+				if [ -z "$(echo ${ip}|grep .*:.*)" ]; then
+					echo "        listen                  ${ip}:${httpsport} default_server ssl http2;"
+				else
+					echo "        listen                  [${ip}]:${httpsport} default_server ssl http2;"
+				fi
+			done
+
 			cat << __EOF__
-	for i4 in ${addr}
-	do
-		listen			${i4}:${httpsport} default_server ssl http2;
-	done
-	for i6 in ${addr6}
-	do
-		listen			[${i6}]:${httpsport} default_server ssl http2;
-	done
 
 	ssl_certificate		"${httpdcert}";
 	ssl_certificate_key	"${httpdkey}";
@@ -281,14 +283,16 @@ __EOF__
 	fi
 
 	if [ ! ${working_ssl} -o "${proto}" = "http" -o "${proto}" = "httphttps" ]; then
-		for i4 in ${addr}
+
+		for ip in $ips
 		do
-			echo "        listen       ${i4}:${port};"
+			if [ -z "$(echo ${ip}|grep .*:.*)" ]; then
+				echo "        listen       ${ip}:${port};"
+			else
+				echo "        listen       [${ip}]:${port};"
+			fi
 		done
-		for i6 in ${addr6}
-		do
-			echo "        listen       [${i6}]:${port};"
-		done
+
 	fi
 
 	if ! is_freenas; then
@@ -448,16 +452,17 @@ __EOF__
 __EOF__
 
 	if [ "${proto}" = "https" -a "${working_ssl}" = true -a "${httpsredirect}" = "1" ]; then
+		echo "    server {"
+		for ip in $ips
+			do
+				if [ -z "$(echo ${ip}|grep .*:.*)" ]; then
+					echo "        listen ${ip}:80;"
+				else
+					echo "        listen [${ip}]:80;"
+				fi
+			done
+
 		cat << __EOF__
-    server {
-	for i4 in ${addr}
-	do
-		listen ${i4}:80;
-	done
-	for i6 in ${addr6}
-	do
-		listen [${i6}]:80;
-	done
 	server_name localhost;
 	return 307 https://\$host:${httpsport}\$request_uri;
     }
