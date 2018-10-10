@@ -43,10 +43,10 @@ update_ttys()
 		# Setup VGA and UART TTYs according to console configuration.
 		tmp=$(mktemp /tmp/tmp.XXXXXX)
 		if [ "${adv_consolemenu}" -eq "1" ]; then
-			sed -E -e "s,^(ttyv0.*)Pc(.*)\$,\1freenas\2," /etc/ttys | \
+			sed -E -e "s,^(ttyv0.*)freenas.115200|Pc(.*)\$,\1freenas\2," /etc/ttys | \
 			    sed -E -e "s,^(ttyu.*)(freenas|3wire)(\.[0-9]+)?(.*)\$,\1freenas${serspeed}\4," > "${tmp}"
 		else
-			sed -E -e "s,^(ttyv0.*)freenas(.*)\$,\1Pc\2," /etc/ttys | \
+			sed -E -e "s,^(ttyv0.*)freenas(.*)\$,\1freenas.115200\2," /etc/ttys | \
 			    sed -E -e "s,^(ttyu.*)(freenas|3wire)(\.[0-9]+)?(.*)\$,\13wire${serspeed}\4," > "${tmp}"
 		fi
 

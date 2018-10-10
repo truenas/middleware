@@ -69,7 +69,7 @@ from freenasUI.common.system import get_sw_version
 from freenasUI.network.models import GlobalConfiguration, Interfaces, \
 	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
 from freenasUI.system.models import Settings, Support
-from freenasUI.middleware.client import client
+from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.notifier import notifier
 
 from requests.packages.urllib3 import poolmanager
@@ -1339,8 +1339,17 @@ if __name__ == '__main__':
 
     while True:
         try:
-            main_menu()
+            try:
+                with client as c:
+                    console = c.call('system.advanced.config')['consolemenu']
+            except ClientException:
+                    console = True
+            if console:
+                main_menu()
+            else:
+                show_ip()
+                os.execv('/usr/libexec/getty', ['/usr/libexec/getty', 'Pc'])
         except SystemExit as e:
             sys.exit(e.code)
-        except:
+        except Exception:
             exit(1)
