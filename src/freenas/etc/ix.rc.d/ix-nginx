@@ -581,15 +581,15 @@ get_nginx_settings()
 	)
 
 	local proto=$(echo ${settings}|cut -f1 -d"|" -s|tr A-Z a-z)
-	local ipaddr=$(echo ${settings}|cut -f2 -d"|" -s)
-	local ipaddr6=$(echo ${settings}|cut -f3 -d"|" -s)
+	local addr=$(echo ${settings}|cut -f2 -d"|" -s)
+	local addr6=$(echo ${settings}|cut -f3 -d"|" -s)
 	local port=$(echo ${settings}|cut -f4 -d"|" -s)
 	local httpsport=$(echo ${settings}|cut -f5 -d"|" -s)
 	local httpsredirect=$(echo ${settings}|cut -f6 -d"|" -s)
 
 	: ${proto:="http"}
-	: ${ipaddr:="0.0.0.0"}
-	: ${ipaddr6:="::"}
+	: ${addr:="0.0.0.0"}
+	: ${addr6:="::"}
 
 	if [ -z "${httpsport}" ]
 	then
@@ -600,31 +600,28 @@ get_nginx_settings()
 		port="80"
 	fi
 
-	local addr=""
-	for i4 in $ipaddr
-	do
-		if [ "${i4}" != "0.0.0.0" -a \
-			-z "$(/sbin/ifconfig -a|grep ${i4})" ]; then
-			if [ -z "$(echo '$addr'|grep ${i4})" ]; then
-				addr="$addr 0.0.0.0"
-			fi
-		else
-			addr="$addr $i4"
-		fi
-	done
 
-	local addr6=""
-	for i6 in $ipaddr6
-	do
-		if [ "${i6}" != "::" -a \
-			-z "$(/sbin/ifconfig -a|grep '${i6}')" ]; then
-			if [ -z "$(echo '$addr6'|grep ${i6})" ]; then
-				addr6="$addr6 ::"
+	initialize_ip_vars(){
+		local field=""
+		local val="${1}"
+		local skip="${2}"
+		for ip in $val
+		do
+			if [ "${ip}" != "${skip}" -a \
+				-z "$(/sbin/ifconfig -a|grep ${ip})" ]; then
+					ip=$skip
 			fi
-		else
-			addr6="$addr6 $i6"
-		fi
-	done
+
+			if [ -z "$(echo ${field}|grep ${ip})" ]; then
+				field="$field $ip"
+			fi
+		done
+
+		echo "${field}"
+	}
+
+	addr=$( initialize_ip_vars "$addr" "0.0.0.0" )
+	addr6=$( initialize_ip_vars "$addr6" "::" )
 
 	echo "${proto}|${addr}|${addr6}|${port}|${httpsport}|${httpsredirect}"
 }
