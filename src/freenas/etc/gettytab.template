@@ -164,8 +164,7 @@ X|Xwindow|X window system:\
 	:fd@:nd@:cd@:rw:sp#9600:
 
 P|Pc|Pc console:\
-	:ht:np:sp#115200:im=:
-
+	:ht:np:sp#115200:
 
 #
 # Weirdo special case for fast crt's with hardcopy devices
@@ -251,4 +250,4 @@ freenas.38400:\
 freenas.57600:\
 	:ht:np:nc:sp#57600:lo=/etc/netcli.sh:al=root:
 freenas.115200:\
-	:ht:np:nc:sp#115200:lo=/etc/netcli.sh:al=root:im=\n%s/%m (%h) (%t)\n:
+	:ht:np:nc:sp#115200:lo=/etc/netcli.sh:al=root:

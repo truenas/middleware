@@ -69,7 +69,7 @@ from freenasUI.common.system import get_sw_version
 from freenasUI.network.models import GlobalConfiguration, Interfaces, \
 	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
 from freenasUI.system.models import Settings, Support
-from freenasUI.middleware.client import client
+from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.notifier import notifier
 
 from requests.packages.urllib3 import poolmanager
@@ -1339,9 +1339,11 @@ if __name__ == '__main__':
 
     while True:
         try:
-            with client as c:
-                console = c.call('system.advanced.config')['consolemenu']
-
+            try:
+                with client as c:
+                    console = c.call('system.advanced.config')['consolemenu']
+            except ClientException:
+                    console = True
             if console:
                 main_menu()
             else:
