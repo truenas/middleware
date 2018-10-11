@@ -354,6 +354,13 @@ class SettingsResourceMixin(object):
             bundle.data['stg_guicertificate'] = None
         return bundle
 
+    def hydrate(self, bundle):
+        bundle = super(SettingsResourceMixin, self).hydrate(bundle)
+        for key in ['stg_guiaddress', 'stg_guiv6address']:
+            if isinstance(bundle.data.get(key), str):
+                bundle.data[key] = bundle.data[key].split()
+        return bundle
+
 
 class DiskResourceMixin(object):
 

@@ -673,11 +673,11 @@ List resource
                 "stg_guihttpsport": 443,
                 "stg_guihttpsredirect": true,
                 "stg_guiprotocol": "http",
-                "stg_guiv6address": "::",
+                "stg_guiv6address": ["::"],
                 "stg_syslogserver": "",
                 "stg_language": "en",
                 "stg_directoryservice": "",
-                "stg_guiaddress": "0.0.0.0",
+                "stg_guiaddress": ["0.0.0.0"],
                 "stg_kbdmap": "",
                 "id": 1
         }
@@ -718,11 +718,11 @@ Update resource
                 "stg_guihttpsport": 443,
                 "stg_guihttpsredirect": true,
                 "stg_guiprotocol": "http",
-                "stg_guiv6address": "::",
+                "stg_guiv6address": ["::"],
                 "stg_syslogserver": "",
                 "stg_language": "en",
                 "stg_directoryservice": "",
-                "stg_guiaddress": "0.0.0.0",
+                "stg_guiaddress": ["0.0.0.0"],
                 "stg_guicertificate": 1,
                 "stg_kbdmap": "",
                 "id": 1
@@ -730,8 +730,8 @@ Update resource
 
    :json string stg_guiprotocol: http, https
    :json integer stg_guicertificate: Certificate ID
-   :json string stg_guiaddress: WebGUI IPv4 Address
-   :json string stg_guiv6address: WebGUI IPv6 Address
+   :json list stg_guiaddress: List of WebGUI IPv4 Address
+   :json list stg_guiv6address: List of WebGUI IPv6 Address
    :json integer stg_guiport: WebGUI Port for HTTP
    :json integer stg_guihttpsport: WebGUI Port for HTTPS
    :json boolean stg_guihttpsredirect: Redirect HTTP (port 80) to HTTPS when only the HTTPS protocol is enabled

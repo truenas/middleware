@@ -1,6 +1,6 @@
 from datetime import datetime, date
 from middlewared.event import EventSource
-from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, Str
+from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
 from middlewared.service import ConfigService, no_auth_required, job, private, Service, ValidationErrors
 from middlewared.utils import Popen, start_daemon_thread, sw_buildtime, sw_version
 from middlewared.validators import Range
@@ -609,27 +609,36 @@ class SystemGeneralService(ConfigService):
         ip4_addresses_list = [alias_dict['address'] for alias_dict in ip_addresses if alias_dict['type'] == 'INET']
         ip6_addresses_list = [alias_dict['address'] for alias_dict in ip_addresses if alias_dict['type'] == 'INET6']
 
-        ip4_address = data.get('ui_address')
-        if (
-            ip4_address and
-            ip4_address != '0.0.0.0' and
-            ip4_address not in ip4_addresses_list
-        ):
-            verrors.add(
-                f'{schema}.ui_address',
-                'Selected ipv4 address is not associated with this machine'
-            )
+        ip4_addresses = data.get('ui_address')
+        for ip4_address in ip4_addresses:
+            if (
+                ip4_address and
+                ip4_address != '0.0.0.0' and
+                ip4_address not in ip4_addresses_list
+            ):
+                verrors.add(
+                    f'{schema}.ui_address',
+                    f'{ip4_address} ipv4 address is not associated with this machine'
+                )
 
-        ip6_address = data.get('ui_v6address')
-        if (
-            ip6_address and
-            ip6_address != '::' and
-            ip6_address not in ip6_addresses_list
-        ):
-            verrors.add(
-                f'{schema}.ui_v6address',
-                'Selected ipv6 address is not associated with this machine'
-            )
+        ip6_addresses = data.get('ui_v6address')
+        for ip6_address in ip6_addresses:
+            if (
+                ip6_address and
+                ip6_address != '::' and
+                ip6_address not in ip6_addresses_list
+            ):
+                verrors.add(
+                    f'{schema}.ui_v6address',
+                    f'{ip6_address} ipv6 address is not associated with this machine'
+                )
+
+        for key, wildcard, ips in [('ui_address', '0.0.0.0', ip4_addresses), ('ui_v6address', '::', ip6_addresses)]:
+            if wildcard in ips and len(ips) > 1:
+                verrors.add(
+                    f'{schema}.{key}',
+                    f'When "{wildcard}" has been selected, selection of other addresses is not allowed'
+                )
 
         syslog_server = data.get('syslogserver')
         if syslog_server:
@@ -692,13 +701,13 @@ class SystemGeneralService(ConfigService):
     @accepts(
         Dict(
             'general_settings',
-            IPAddr('ui_address'),
             Int('ui_certificate', null=True),
             Int('ui_httpsport', validators=[Range(min=1, max=65535)]),
             Bool('ui_httpsredirect'),
             Int('ui_port', validators=[Range(min=1, max=65535)]),
             Str('ui_protocol', enum=['HTTP', 'HTTPS', 'HTTPHTTPS']),
-            IPAddr('ui_v6address'),
+            List('ui_address', items=[IPAddr('addr')], empty=False),
+            List('ui_v6address', items=[IPAddr('addr')], empty=False),
             Str('kbdmap'),
             Str('language'),
             Str('sysloglevel', enum=['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE',
@@ -712,39 +721,40 @@ class SystemGeneralService(ConfigService):
         config = await self.config()
         new_config = config.copy()
         new_config.update(data)
+
         verrors = await self.validate_general_settings(new_config, 'general_settings_update')
         if verrors:
             raise verrors
 
-        if len(set(new_config.items()) ^ set(config.items())) > 0:
-            # Converting new_config to map the database table fields
-            new_config['sysloglevel'] = new_config['sysloglevel'].lower()
-            new_config['ui_protocol'] = new_config['ui_protocol'].lower()
-            keys = new_config.keys()
-            for key in keys:
-                if key.startswith('ui_'):
-                    new_config['gui' + key[3:]] = new_config.pop(key)
+        # Converting new_config to map the database table fields
+        new_config['sysloglevel'] = new_config['sysloglevel'].lower()
+        new_config['ui_protocol'] = new_config['ui_protocol'].lower()
+        keys = new_config.keys()
+        for key in keys:
+            if key.startswith('ui_'):
+                new_config['gui' + key[3:]] = new_config.pop(key)
 
-            await self.middleware.call(
-                'datastore.update',
-                self._config.datastore,
-                config['id'],
-                new_config,
-                {'prefix': 'stg_'}
-            )
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            config['id'],
+            new_config,
+            {'prefix': 'stg_'}
+        )
 
-            # case insensitive comparison should be performed for sysloglevel
-            if (
-                config['sysloglevel'].lower() != new_config['sysloglevel'].lower() or
-                    config['syslogserver'] != new_config['syslogserver']
-            ):
-                await self.middleware.call('service.restart', 'syslogd')
+        # case insensitive comparison should be performed for sysloglevel
+        if (
+            config['sysloglevel'].lower() != new_config['sysloglevel'].lower() or
+                config['syslogserver'] != new_config['syslogserver']
+        ):
+            await self.middleware.call('service.restart', 'syslogd')
 
-            if config['timezone'] != new_config['timezone']:
-                await self.middleware.call('service.reload', 'timeservices')
-                await self.middleware.call('service.restart', 'cron')
+        if config['timezone'] != new_config['timezone']:
+            await self.middleware.call('service.reload', 'timeservices')
+            await self.middleware.call('service.restart', 'cron')
 
-            await self.middleware.call('service._start_ssl', 'nginx')
+        await self.middleware.call('service._start_ssl', 'nginx')
+
         return await self.config()
 
 

@@ -382,7 +382,7 @@ class DojoModelResource(ResourceMixin, ModelResource):
 
         """
         Get rid of None values, it means they were not
-        passed to the API and will faill serialization
+        passed to the API and will fail serialization
         """
         querydict = data.copy()
         for key, val in list(querydict.items()):

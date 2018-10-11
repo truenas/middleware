@@ -187,12 +187,12 @@ class SettingsResourceTest(APITestCase):
         data = self.deserialize(resp)
         self.assertEqual(data, {
             'id': self._settings.id,
-            'stg_guiaddress': '0.0.0.0',
+            'stg_guiaddress': ['0.0.0.0'],
             'stg_guihttpsport': 443,
             'stg_guiport': 80,
             'stg_guihttpsredirect': True,
             'stg_guiprotocol': 'http',
-            'stg_guiv6address': '::',
+            'stg_guiv6address': ['::'],
             'stg_kbdmap': '',
             'stg_language': 'en',
             'stg_syslogserver': '',
