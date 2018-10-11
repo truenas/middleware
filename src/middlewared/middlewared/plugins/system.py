@@ -403,8 +403,6 @@ class SystemGeneralService(ConfigService):
         data['sysloglevel'] = data['sysloglevel'].upper()
         data['ui_protocol'] = data['ui_protocol'].upper()
         data['ui_certificate'] = data['ui_certificate']['id'] if data['ui_certificate'] else None
-        data['ui_address'] = data['ui_address'].split()
-        data['ui_v6address'] = data['ui_v6address'].split()
         return data
 
     @accepts()
@@ -731,39 +729,35 @@ class SystemGeneralService(ConfigService):
         if verrors:
             raise verrors
 
-        for key in ['ui_address', 'ui_v6address']:
-            config[key] = ' '.join(config[key])
-            new_config[key] = ' '.join(new_config[key])
+        # Converting new_config to map the database table fields
+        new_config['sysloglevel'] = new_config['sysloglevel'].lower()
+        new_config['ui_protocol'] = new_config['ui_protocol'].lower()
+        keys = new_config.keys()
+        for key in keys:
+            if key.startswith('ui_'):
+                new_config['gui' + key[3:]] = new_config.pop(key)
 
-        if len(set(new_config.items()) ^ set(config.items())) > 0:
-            # Converting new_config to map the database table fields
-            new_config['sysloglevel'] = new_config['sysloglevel'].lower()
-            new_config['ui_protocol'] = new_config['ui_protocol'].lower()
-            keys = new_config.keys()
-            for key in keys:
-                if key.startswith('ui_'):
-                    new_config['gui' + key[3:]] = new_config.pop(key)
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            config['id'],
+            new_config,
+            {'prefix': 'stg_'}
+        )
 
-            await self.middleware.call(
-                'datastore.update',
-                self._config.datastore,
-                config['id'],
-                new_config,
-                {'prefix': 'stg_'}
-            )
+        # case insensitive comparison should be performed for sysloglevel
+        if (
+            config['sysloglevel'].lower() != new_config['sysloglevel'].lower() or
+                config['syslogserver'] != new_config['syslogserver']
+        ):
+            await self.middleware.call('service.restart', 'syslogd')
 
-            # case insensitive comparison should be performed for sysloglevel
-            if (
-                config['sysloglevel'].lower() != new_config['sysloglevel'].lower() or
-                    config['syslogserver'] != new_config['syslogserver']
-            ):
-                await self.middleware.call('service.restart', 'syslogd')
+        if config['timezone'] != new_config['timezone']:
+            await self.middleware.call('service.reload', 'timeservices')
+            await self.middleware.call('service.restart', 'cron')
 
-            if config['timezone'] != new_config['timezone']:
-                await self.middleware.call('service.reload', 'timeservices')
-                await self.middleware.call('service.restart', 'cron')
+        await self.middleware.call('service._start_ssl', 'nginx')
 
-            await self.middleware.call('service._start_ssl', 'nginx')
         return await self.config()
 
 

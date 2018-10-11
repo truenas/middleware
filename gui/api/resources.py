@@ -353,9 +353,6 @@ class SettingsResourceMixin(object):
         else:
             bundle.data['stg_guicertificate'] = None
 
-        bundle.data['stg_guiaddress'] = bundle.obj.stg_guiaddress.split()
-        bundle.data['stg_guiv6address'] = bundle.obj.stg_guiv6address.split()
-
         return bundle
 
     def hydrate(self, bundle):

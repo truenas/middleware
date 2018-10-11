@@ -39,7 +39,7 @@ from django.utils.translation import ugettext_lazy as _
 from OpenSSL import crypto
 
 from freenasUI import choices
-from freenasUI.freeadmin.models import DictField, EncryptedDictField, Model, UserField
+from freenasUI.freeadmin.models import DictField, EncryptedDictField, ListField, Model, UserField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.support.utils import get_license
 from licenselib.license import ContractType
@@ -74,14 +74,12 @@ class Settings(Model):
         blank=True,
         null=True
     )
-    stg_guiaddress = models.CharField(
-        max_length=120,
+    stg_guiaddress = ListField(
         blank=True,
         default='0.0.0.0',
         verbose_name=_("WebGUI IPv4 Address")
     )
-    stg_guiv6address = models.CharField(
-        max_length=120,
+    stg_guiv6address = ListField(
         blank=True,
         default='::',
         verbose_name=_("WebGUI IPv6 Address")
