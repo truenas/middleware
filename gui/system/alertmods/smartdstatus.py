@@ -1,5 +1,6 @@
 import subprocess
 
+from freenasUI.common.pipesubr import unblock_sigchld
 from freenasUI.middleware.notifier import notifier
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
 from freenasUI.services.models import services
@@ -22,7 +23,8 @@ class SMARTDAlert(BaseAlert):
                 return None
             if hasattr(notifier, 'failover_status') and notifier().failover_status() != 'MASTER':
                 return None
-            p1 = subprocess.Popen(["/usr/sbin/service", "smartd-daemon", "status"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, encoding='utf8')
+            p1 = subprocess.Popen(["/usr/sbin/service", "smartd-daemon", "status"], stdin=subprocess.PIPE,
+                                  stdout=subprocess.PIPE, preexec_fn=unblock_sigchld, encoding='utf8')
             status = p1.communicate()[0]
             if p1.returncode == 1:
                 alerts.append(Alert(Alert.WARN, status))
