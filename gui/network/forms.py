@@ -432,6 +432,13 @@ class InterfacesDeleteForm(forms.Form):
                 _('Interfaces that belong to Link Aggregation cannot be deleted.')
             ])
 
+        if models.VLAN.objects.filter(
+            vlan_pint=self.instance.int_interface
+        ).exists():
+            self._errors['__all__'] = self.error_class([
+                _('Interfaces that belong to VLAN cannot be deleted.')
+            ])
+
         _n = notifier()
         if not _n.is_freenas() and _n.failover_status() == 'MASTER':
             from freenasUI.failover.models import Failover

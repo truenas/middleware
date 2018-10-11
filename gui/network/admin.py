@@ -55,7 +55,7 @@ class InterfacesFAdmin(NetworkInterruptMixin, BaseFreeAdmin):
 
     create_modelform = "InterfacesForm"
     delete_form = "InterfacesDeleteForm"
-    edit_modelform = "InterfacesEditForm"
+    edit_modelform = "InterfacesForm"
     icon_object = "InterfacesIcon"
     icon_model = "InterfacesIcon"
     icon_add = "AddInterfaceIcon"
