@@ -1560,33 +1560,34 @@ def smb4_import_groups(client):
             client.call('notifier.samba4', 'group_addmembers', [g, groups[g]])
 
 
-def smb4_group_mapped(groupmap, group):
-    if not groupmap:
-        return False
+def smb4_is_disallowed_group(groupmap, group):
+    disallowed_list = []
+    # Ticket # 23435 In order for local groups to be available through samba, they need to
+    # be properly mapped to NT groups in the group_mapping.tdb file. This file should:
+    # (1) contain no duplicate or inconsistent entries
+    # (2) contain no group names that are identical to usernames
+    # (3) prevent duplicate entries for NT names associated with builtin/well-known sids.
 
+    default_builtin_groups = ['Users', 'Administrators']
+    localusers = list(pwd.getpwall())
+    for localuser in localusers:
+        disallowed_list.append(localuser[0].upper())
+    for default_builtin_group in default_builtin_groups:
+        disallowed_list.append(default_builtin_group.upper())
     for gm in groupmap:
-        unixgroup = gm['unixgroup']
-        if group == unixgroup:
-            return True
+        disallowed_list.append(gm['unixgroup'].upper())
+
+    if group.upper() in disallowed_list:
+        return True
 
     return False
-
-
-# Windows no likey
-def smb4_groupname_is_username(group):
-    try:
-        pwd.getpwnam(group)
-    except KeyError:
-        return False
-
-    return True
 
 
 def smb4_map_groups(client):
     groupmap = client.call('notifier.groupmap_list')
     groups = get_groups(client)
     for g in groups:
-        if not (smb4_group_mapped(groupmap, g) or smb4_groupname_is_username(g)):
+        if not (smb4_is_disallowed_group(groupmap, g)):
             client.call('notifier.groupmap_add', g, g)
 
 
