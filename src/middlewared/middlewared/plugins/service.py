@@ -521,6 +521,10 @@ class ServiceService(CRUDService):
         os.environ['TZ'] = await self.middleware.call('datastore.query', 'system.settings', [], {'order_by': ['-id'], 'get': True})['stg_timezone']
         time.tzset()
 
+    async def _reload_smartd(self, **kwargs):
+        await self._service("ix-smartd", "start", quiet=True, **kwargs)
+        await self._service("smartd-daemon", "reload", **kwargs)
+
     async def _restart_smartd(self, **kwargs):
         await self._service("ix-smartd", "start", quiet=True, **kwargs)
         await self._service("smartd-daemon", "stop", force=True, **kwargs)
