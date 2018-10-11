@@ -82,7 +82,7 @@ class MiddlewareModelForm:
         except FieldDoesNotExist:
             pass
         else:
-            if isinstance(field, (DictField, ListField)) and isinstance(v, str):
+            if isinstance(field, (DictField, ListField)) and isinstance(v, (str, bytes, bytearray)):
                 return json.loads(v)
 
         return v

@@ -10,7 +10,7 @@ from freenasUI.freeadmin.models.fields import ListField
 
 def ip_update(apps, schema_editor):
 
-    settings_obj = apps.get_model('system', 'settings').objects.get(pk=1)
+    settings_obj = apps.get_model('system', 'settings').objects.order_by('-id')[0]
     for key in ['stg_guiaddress', 'stg_guiv6address']:
         if getattr(settings_obj, key):
             setattr(settings_obj, key, json.dumps([getattr(settings_obj, key)]))

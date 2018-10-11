@@ -352,7 +352,6 @@ class SettingsResourceMixin(object):
             bundle.data['stg_guicertificate'] = bundle.obj.stg_guicertificate.id
         else:
             bundle.data['stg_guicertificate'] = None
-
         return bundle
 
     def hydrate(self, bundle):
