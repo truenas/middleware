@@ -1002,17 +1002,18 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
             label=self.fields['stg_guiaddress'].label,
             required=False
         )
-        self.fields['stg_guiaddress'].choices = [
-            ['0.0.0.0', '0.0.0.0']
-        ] + list(choices.IPChoices(ipv6=False))
+        ipv4_choices = list(choices.IPChoices(ipv6=False))
+        ipv6_choices = list(choices.IPChoices(ipv4=False))
 
         self.fields['stg_guiv6address'] = forms.MultipleChoiceField(
             label=self.fields['stg_guiv6address'].label,
             required=False
         )
-        self.fields['stg_guiv6address'].choices = [
-            ['::', '::']
-        ] + list(choices.IPChoices(ipv4=False))
+
+        for key, value, choice in [
+            ('stg_guiaddress', ('0.0.0.0', '0.0.0.0'), ipv4_choices), ('stg_guiv6address', ('::', '::'), ipv6_choices)
+        ]:
+            self.fields[key].choices = choice if value in choice else [value] + choice
 
     def middleware_clean(self, update):
         keys = update.keys()
@@ -1038,10 +1039,10 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
             self.original_instance['stg_guihttpsredirect'] != self.instance.stg_guihttpsredirect or
             self.original_instance['stg_guicertificate_id'] != self.instance.stg_guicertificate_id
         ):
-            if "0.0.0.0" in self.instance.stg_guiaddress.split():
+            if "0.0.0.0" in self.instance.stg_guiaddress:
                 address = request.META['HTTP_HOST'].split(':')[0]
             else:
-                address = self.instance.stg_guiaddress.split()[0]
+                address = self.instance.stg_guiaddress[0]
             if self.instance.stg_guiprotocol == 'httphttps':
                 protocol = 'http'
             else:

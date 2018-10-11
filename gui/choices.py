@@ -586,7 +586,7 @@ class IPChoices(NICChoices):
             self._IPlist.sort()
 
         if not self._IPlist:
-            return iter([('0.0.0.0', '0.0.0.0')])
+            return iter([('0.0.0.0', '0.0.0.0')]) if self.ipv4 else iter([('::', '::')])
         return iter((i, i) for i in self._IPlist)
 
 
