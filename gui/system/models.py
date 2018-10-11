@@ -76,12 +76,12 @@ class Settings(Model):
     )
     stg_guiaddress = ListField(
         blank=True,
-        default='0.0.0.0',
+        default=['0.0.0.0'],
         verbose_name=_("WebGUI IPv4 Address")
     )
     stg_guiv6address = ListField(
         blank=True,
-        default='::',
+        default=['::'],
         verbose_name=_("WebGUI IPv6 Address")
     )
     stg_guiport = models.IntegerField(
