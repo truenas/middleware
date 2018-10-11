@@ -622,6 +622,11 @@ class SystemGeneralService(ConfigService):
                     f'{schema}.ui_address',
                     f'{ip4_address} ipv4 address is not associated with this machine'
                 )
+        if '0.0.0.0' in ip4_addresses and len(ip4_addresses) > 1:
+            verrors.add(
+                f'{schema}.ui_address',
+                'When wildcard "0.0.0.0" has been selected, selection of other addresses is not allowed'
+            )
 
         ip6_addresses = data.get('ui_v6address')
         for ip6_address in ip6_addresses:
@@ -634,6 +639,11 @@ class SystemGeneralService(ConfigService):
                     f'{schema}.ui_v6address',
                     f'{ip6_address} ipv6 address is not associated with this machine'
                 )
+        if '::' in ip6_addresses and len(ip6_addresses) > 1:
+            verrors.add(
+                f'{schema}.ui_v6address',
+                'When wildcard "::" has been selected, selection of other addresses is not allowed'
+            )
 
         syslog_server = data.get('syslogserver')
         if syslog_server:

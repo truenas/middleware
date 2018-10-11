@@ -1038,7 +1038,7 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
             self.original_instance['stg_guihttpsredirect'] != self.instance.stg_guihttpsredirect or
             self.original_instance['stg_guicertificate_id'] != self.instance.stg_guicertificate_id
         ):
-            if "0.0.0.0" in self.instance.stg_guiaddress:
+            if "0.0.0.0" in self.instance.stg_guiaddress.split():
                 address = request.META['HTTP_HOST'].split(':')[0]
             else:
                 address = self.instance.stg_guiaddress.split()[0]
