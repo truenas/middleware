@@ -57,15 +57,16 @@ def test_05_verify_the_update_download_is_successful():
         stop_time = time() + 600
         download_hang = False
         while True:
-            job_status = GET(f'/core/get_jobs/?id={JOB_ID}').json()[0]
+            get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
+            job_status = get_job.json()[0]
             if job_status['state'] in ('RUNNING', 'WAITING'):
                 if stop_time <= time():
                     download_hang = True
-                    assert False, job_status
+                    assert False, get_job.text
                     break
                 sleep(5)
             else:
-                assert job_status['state'] == 'SUCCESS', job_status
+                assert job_status['state'] == 'SUCCESS', get_job.text
                 break
 
 
@@ -105,11 +106,12 @@ def test_08_verify_the_update_is_successful():
         pytest.skip(f'Downloading {selected_trains} failed')
     else:
         while True:
-            job_status = GET(f'/core/get_jobs/?id={JOB_ID}').json()[0]
+            get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
+            job_status = get_job.json()[0]
             if job_status['state'] in ('RUNNING', 'WAITING'):
                 sleep(5)
             else:
-                assert job_status['state'] == 'SUCCESS', job_status
+                assert job_status['state'] == 'SUCCESS', get_job.text
                 break
 
 
