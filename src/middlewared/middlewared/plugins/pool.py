@@ -288,7 +288,7 @@ class PoolService(CRUDService):
         if oid:
             filters.append(('id', '=', oid))
         for pool in await self.query(filters):
-            if pool['is_decrypted']:
+            if pool['is_decrypted'] and pool['status'] != 'OFFLINE':
                 for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
                     yield i
             else:
@@ -297,14 +297,24 @@ class PoolService(CRUDService):
                     'storage.encrypteddisk',
                     [('encrypted_volume', '=', pool['id'])]
                 ):
-                    disk = encrypted_disk["encrypted_disk"]
-                    if not disk:
+                    # Use provider and not disk because a disk is not a guarantee
+                    # to point to correct device if its locked and its not in the system
+                    # (e.g. temporarily). See #50291
+                    prov = encrypted_disk["encrypted_provider"]
+                    if not prov:
                         continue
 
-                    disk = {k[len("disk_"):]: v for k, v in disk.items()}
-                    name = await self.middleware.call("disk.get_name", disk)
-                    if os.path.exists(os.path.join("/dev", name)):
-                        yield name
+                    disk_name = await self.middleware.call('disk.label_to_disk', prov)
+                    if not disk_name:
+                        continue
+
+                    disk = await self.middleware.call('disk.query', [('name', '=', disk_name)])
+                    if not disk:
+                        continue
+                    disk = disk[0]
+
+                    if os.path.exists(os.path.join("/dev", disk['devname'])):
+                        yield disk['devname']
 
     @item_method
     @accepts(Int('id'))
