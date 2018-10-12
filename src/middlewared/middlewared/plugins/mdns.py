@@ -729,7 +729,7 @@ class mDNSServiceSFTPThread(mDNSServiceThread):
             response = self.middleware.call_sync('datastore.query', 'services.ssh', [], {'get': True})
             if response:
                 self.port = response['ssh_tcpport']
-                self.regtype = "_sftp._tcp."
+                self.regtype = "_sftp-ssh._tcp."
 
 
 class mDNSServiceHTTPThread(mDNSServiceThread):
