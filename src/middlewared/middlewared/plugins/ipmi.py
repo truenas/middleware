@@ -1,7 +1,7 @@
 from bsd import kld
 
 from middlewared.schema import Bool, Dict, Int, Str, accepts
-from middlewared.service import CallError, CRUDService, filterable
+from middlewared.service import CallError, CRUDService, filterable, ValidationErrors
 from middlewared.utils import filter_list, run
 
 import errno
@@ -75,6 +75,25 @@ class IPMIService(CRUDService):
 
         if not await self.is_loaded():
             raise CallError('The ipmi device could not be found')
+
+        verrors = ValidationErrors()
+
+        if data.get('password') and len(data.get('password')) > 20:
+            verrors.add(
+                'ipmi_update.password',
+                'A maximum of 20 characters are allowed'
+            )
+
+        if not data.get('dhcp'):
+            for k in ['ipaddress', 'netmask', 'gateway']:
+                if not data.get(k):
+                    verrors.add(
+                        f'ipmi_update.{k}',
+                        'This field is required when dhcp is not given'
+                    )
+
+        if verrors:
+            raise verrors
 
         args = ['ipmitool', 'lan', 'set', str(id)]
         rv = 0
