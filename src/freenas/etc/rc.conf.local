@@ -38,7 +38,7 @@ http_ssl_enabled()
 		FROM
 			system_settings
 		WHERE
-			stg_guihttpsredirect = '1'
+			stg_guihttpsredirect = 1
 		ORDER BY
 			-id
 		LIMIT 1

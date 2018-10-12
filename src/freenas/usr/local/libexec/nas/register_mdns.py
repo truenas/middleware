@@ -47,27 +47,25 @@ def main():
 
     webui = client.call('datastore.query', 'system.settings')
 
-    if not webui[0]['stg_guihttpsredirect']:
-        http_port = int(webui[0]['stg_guiport'] or 80)
-        t = threading.Thread(target=register,
-                             args=(hostname, '_http._tcp.', http_port))
-        t.daemon = False
-        t.start()
+    http_port = int(webui[0]['stg_guiport'] or 80)
+    t = threading.Thread(target=register,
+                         args=(hostname, '_http._tcp.', http_port))
+    t.daemon = False
+    t.start()
 
-        t = threading.Thread(target=register, args=(hostname, '_middlwre-http._tcp.', http_port))
-        t.daemon = False
-        t.start()
+    t = threading.Thread(target=register, args=(hostname, '_middlwre-http._tcp.', http_port))
+    t.daemon = False
+    t.start()
 
-    if webui[0]['stg_guihttpsredirect']:
-        https_port = int(webui[0]['stg_guihttpsport'] or 443)
-        t = threading.Thread(target=register,
-                             args=(hostname, '_https._tcp.', https_port))
-        t.daemon = False
-        t.start()
+    https_port = int(webui[0]['stg_guihttpsport'] or 443)
+    t = threading.Thread(target=register,
+                         args=(hostname, '_https._tcp.', https_port))
+    t.daemon = False
+    t.start()
 
-        t = threading.Thread(target=register, args=(hostname, '_middlwre-https._tcp.', https_port))
-        t.daemon = False
-        t.start()
+    t = threading.Thread(target=register, args=(hostname, '_middlwre-https._tcp.', https_port))
+    t.daemon = False
+    t.start()
 
 if __name__ == "__main__":
     main()

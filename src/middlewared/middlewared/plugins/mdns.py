@@ -739,9 +739,8 @@ class mDNSServiceHTTPThread(mDNSServiceThread):
 
     def setup(self):
         webui = self.middleware.call_sync('datastore.query', 'system.settings')
-        if not webui[0]['stg_guihttpsredirect']:
-            self.port = int(webui[0]['stg_guiport'] or 80)
-            self.regtype = '_http._tcp.'
+        self.port = int(webui[0]['stg_guiport'] or 80)
+        self.regtype = '_http._tcp.'
 
 
 class mDNSServiceHTTPSThread(mDNSServiceThread):
