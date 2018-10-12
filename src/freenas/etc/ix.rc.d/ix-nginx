@@ -586,8 +586,8 @@ get_nginx_settings()
 	)
 
 	local proto=$(echo ${settings}|cut -f1 -d"|" -s|tr A-Z a-z)
-	local addr=$(echo ${settings}|cut -f2 -d"|" -s)
-	local addr6=$(echo ${settings}|cut -f3 -d"|" -s)
+	local addr="$(echo ${settings}|cut -f2 -d"|" -s| tr '[\[,\]\"]' ' ' )"
+	local addr6="$(echo ${settings}|cut -f3 -d"|" -s| tr '[\[,\]\"]' ' ' )"
 	local port=$(echo ${settings}|cut -f4 -d"|" -s)
 	local httpsport=$(echo ${settings}|cut -f5 -d"|" -s)
 	local httpsredirect=$(echo ${settings}|cut -f6 -d"|" -s)
@@ -604,7 +604,6 @@ get_nginx_settings()
 	then
 		port="80"
 	fi
-
 
 	initialize_ip_vars(){
 		local field=""
