@@ -1,4 +1,5 @@
-import asyncio
+import base64
+import errno
 import os
 import random
 import re
@@ -265,3 +266,62 @@ class KeychainCredentialService(CRUDService):
                 "connect_timeout": data["connect_timeout"],
             }
         })
+
+    @private
+    @accepts(Dict(
+        "keychain_ssh_pair",
+        Str("remote_hostname", required=True),
+        Str("username", default="root"),
+        Str("public_key", required=True),
+    ))
+    async def ssh_pair(self, data):
+        """
+        Receives public key, storing it to accept SSH connection and return
+        pertinent SSH data of this machine.
+        """
+        service = await self.middleware.call(
+            "datastore.query", "services.services", [("srv_service", "=", "ssh")], {"get": True})
+        ssh = await self.middleware.call("datastore.query", "services.ssh", None, {"get": True})
+        try:
+            user = await self.middleware.call(
+                "datastore.query", "account.bsdusers", [("bsdusr_username", "=", data["username"])],
+                {"get": True})
+        except IndexError:
+            raise CallError(f"User {data['username']} does not exist")
+
+        if user["bsdusr_home"].startswith("/nonexistent") or not os.path.exists(user["bsdusr_home"]):
+            raise CallError(f"Home directory {user['bsdusr_home']} does not exist", errno.ENOENT)
+
+        # Make sure SSH is enabled
+        if not service["srv_enable"]:
+            await self.middleware.call("datastore.update", "services.services", service["id"], {"srv_enable": True})
+            await self.middleware.call("notifier.start", "ssh")
+
+            # This might be the first time of the service being enabled
+            # which will then result in new host keys we need to grab
+            ssh = await self.middleware.call("datastore.query", "services.ssh", None, {"get": True})
+
+        # If .ssh dir does not exist, create it
+        dotsshdir = os.path.join(user["bsdusr_home"], ".ssh")
+        if not os.path.exists(dotsshdir):
+            os.mkdir(dotsshdir)
+            os.chown(dotsshdir, user["bsdusr_uid"], user["bsdusr_group"]["bsdgrp_gid"])
+
+        # Write public key in user authorized_keys for SSH
+        authorized_keys_file = f"{dotsshdir}/authorized_keys"
+        with open(authorized_keys_file, "a+") as f:
+            f.seek(0)
+            if data["public-key"] not in f.read():
+                f.write("\n" + data["public-key"])
+
+        ssh_hostkey = "{0} {1}\n{0} {2}\n{0} {3}\n".format(
+            data["remote_hostname"],
+            base64.b64decode(ssh["ssh_host_rsa_key_pub"].encode()).decode(),
+            base64.b64decode(ssh["ssh_host_ecdsa_key_pub"].encode()).decode(),
+            base64.b64decode(ssh["ssh_host_ed25519_key_pub"].encode()).decode(),
+        )
+
+        return {
+            "port": ssh["ssh_tcpport"],
+            "host_key": ssh_hostkey,
+        }
