@@ -780,3 +780,21 @@ class UnixPerm(Str):
                 schema['description'] = self.description
             schema['_required_'] = self.required
         return schema
+
+
+def validate_attributes(schema, data, additional_attrs=False):
+    verrors = ValidationErrors()
+
+    schema = Dict("attributes", *schema, additional_attrs=additional_attrs)
+
+    try:
+        data["attributes"] = schema.clean(data["attributes"])
+    except Error as e:
+        verrors.add(e.attribute, e.errmsg, e.errno)
+
+    try:
+        schema.validate(data["attributes"])
+    except ValidationErrors as e:
+        verrors.extend(e)
+
+    return verrors
