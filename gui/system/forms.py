@@ -3167,6 +3167,11 @@ class CloudCredentialsForm(ModelForm):
         widget=forms.widgets.HiddenInput,
     )
 
+    verify = forms.CharField(
+        required=False,
+        widget=forms.widgets.HiddenInput(),
+    )
+
     class Meta:
         fields = [
             'name',
@@ -3198,6 +3203,17 @@ class CloudCredentialsForm(ModelForm):
                 'provider': self.cleaned_data.get('provider'),
                 'attributes': json.loads(self.cleaned_data.get('attributes')),
             }
+
+            if self.cleaned_data.get("verify") == "1":
+                result = c.call("cloudsync.credentials.verify", {"provider": data["provider"],
+                                                                 "attributes": data["attributes"]})
+                if result["valid"]:
+                    msg = "Credentials are valid"
+                else:
+                    msg = f"Credentials are invalid: {result['error']}"
+
+                raise ValidationErrors([["__all__", msg, errno.EINVAL]])
+
             if self.instance.id:
                 c.call('cloudsync.credentials.update', self.instance.id, data)
             else:

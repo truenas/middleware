@@ -43,8 +43,6 @@ class RcloneConfig:
 
     def __enter__(self):
         self.tmp_file = tempfile.NamedTemporaryFile(mode="w+")
-        if self.cloud_sync["exclude"]:
-            self.tmp_file_exclude = tempfile.NamedTemporaryFile(mode="w+")
 
         # Make sure only root can read it as there is sensitive data
         os.chmod(self.tmp_file.name, 0o600)
@@ -78,6 +76,7 @@ class RcloneConfig:
                 remote_path = "encrypted:/"
 
             if self.cloud_sync["exclude"]:
+                self.tmp_file_exclude = tempfile.NamedTemporaryFile(mode="w+")
                 self.tmp_file_exclude.write("\n".join(self.cloud_sync["exclude"]))
                 self.tmp_file_exclude.flush()
                 extra_args.extend(["--exclude-from", self.tmp_file_exclude.name])
@@ -297,6 +296,23 @@ class CredentialsService(CRUDService):
         datastore = "system.cloudcredentials"
 
     @accepts(Dict(
+        "cloud_sync_credentials_verify",
+        Str("provider", required=True),
+        Dict("attributes", additional_attrs=True, required=True),
+    ))
+    async def verify(self, data):
+        data = dict(data, name="")
+        await self._validate("cloud_sync_credentials_create", data)
+
+        with RcloneConfig({"credentials": data}) as config:
+            proc = await run(["rclone", "--config", config.config_path, "lsjson", "remote:"],
+                             check=False, encoding="utf8")
+            if proc.returncode == 0:
+                return {"valid": True}
+            else:
+                return {"valid": False, "error": proc.stderr}
+
+    @accepts(Dict(
         "cloud_sync_credentials_create",
         Str("name", required=True),
         Str("provider", required=True),
@@ -304,7 +320,7 @@ class CredentialsService(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
-        await self._validate("cloud_sync_credentials", data)
+        await self._validate("cloud_sync_credentials_create", data)
 
         data["id"] = await self.middleware.call(
             "datastore.insert",
@@ -327,7 +343,7 @@ class CredentialsService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        await self._validate("cloud_sync_credentials", new, id)
+        await self._validate("cloud_sync_credentials_update", new, id)
 
         await self.middleware.call(
             "datastore.update",
