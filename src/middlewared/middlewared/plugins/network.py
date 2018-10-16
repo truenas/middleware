@@ -484,6 +484,14 @@ class InterfacesService(CRUDService):
         self._rollback_timer = None
         self._original_datastores = {}
 
+    @accepts()
+    async def checkin_waiting(self):
+        """
+        Returns wether or not we are waiting user to checkin the applied network changes
+        before they are rolled back.
+        """
+        return self._rollback_timer is not None
+
     @accepts(Dict(
         'options',
         Bool('rollback', default=True),
