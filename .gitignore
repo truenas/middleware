@@ -11,6 +11,7 @@ __pycache__
 config.py
 auto_config.py
 .DS_Store
+.idea/
 .vscode/
 /docs/api/_build/
 /docs/userguide/_build/
@@ -22,6 +23,7 @@ gui/static/
 /pbi/
 /sbin/
 src/middlewared/build/
+src/middlewared/dist/
 src/middlewared/middlewared.egg-info/
 .git-repo-setting
 nas_source/
