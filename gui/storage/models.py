@@ -37,6 +37,7 @@ from django.db.models import Q
 from django.utils.translation import ugettext as __, ugettext_lazy as _
 
 from freenasUI import choices
+from freenasUI.freeadmin.models import ListField
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.client import client
@@ -597,6 +598,9 @@ class Task(Model):
         default=False,
         verbose_name=_("Recursive"),
     )
+    task_exclude = ListField(
+        verbose_name=_("Exclude child datasets"),
+    )
     task_ret_count = models.PositiveIntegerField(
         default=2,
         verbose_name=_("Snapshot lifetime value"),
@@ -606,6 +610,45 @@ class Task(Model):
         max_length=120,
         choices=choices.RetentionUnit_Choices,
         verbose_name=_("Snapshot lifetime unit"),
+    )
+    task_naming_schema = models.CharField(
+        max_length=150,
+        verbose_name=_("Naming schema"),
+    )
+    task_minute = models.CharField(
+        max_length=100,
+        default="00",
+        verbose_name=_("Minute"),
+        help_text=_(
+            "Values allowed:"
+            "<br>Slider: 0-30 (as it is every Nth minute)."
+            "<br>Specific Minute: 0-59."),
+    )
+    task_hour = models.CharField(
+        max_length=100,
+        default="*",
+        verbose_name=_("Hour"),
+        help_text=_("Values allowed:"
+                    "<br>Slider: 0-12 (as it is every Nth hour)."
+                    "<br>Specific Hour: 0-23."),
+    )
+    task_daymonth = models.CharField(
+        max_length=100,
+        default="*",
+        verbose_name=_("Day of month"),
+        help_text=_("Values allowed:"
+                    "<br>Slider: 0-15 (as its is every Nth day)."
+                    "<br>Specific Day: 1-31."),
+    )
+    task_month = models.CharField(
+        max_length=100,
+        default='*',
+        verbose_name=_("Month"),
+    )
+    task_dayweek = models.CharField(
+        max_length=100,
+        default="*",
+        verbose_name=_("Day of week"),
     )
     task_begin = models.TimeField(
         default=time(hour=9),
@@ -617,37 +660,6 @@ class Task(Model):
         verbose_name=_("End"),
         help_text=_("Do not snapshot after"),
     )
-    task_interval = models.PositiveIntegerField(
-        default=60,
-        choices=choices.TASK_INTERVAL,
-        verbose_name=_("Interval"),
-        help_text=_(
-            "How much time has been passed between two snapshot attempts."),
-    )
-    task_repeat_unit = models.CharField(
-        default='weekly',
-        max_length=120,
-        choices=choices.RepeatUnit_Choices,
-        verbose_name=_("Occurrence"),
-        help_text=_("How the task is repeated"),
-    )
-    task_byweekday = models.CharField(
-        max_length=120,
-        default="1,2,3,4,5",
-        verbose_name=_("Weekday"),
-        blank=True,
-    )
-#    task_bymonth = models.CharField(
-#            max_length = 120,
-#            default = "1,2,3,4,5,6,7,8,9,a,b,c",
-#            verbose_name = _("Month"),
-#            blank = True,
-#            )
-#    task_bymonthday = models.CharField(
-#            max_length = 120,
-#            verbose_name = _("Day"),
-#            blank = True,
-#            )
     task_enabled = models.BooleanField(
         default=True,
         verbose_name=_("Enabled"),
