@@ -1185,3 +1185,9 @@ class Filesystem(Model):
 class KeyValue(Model):
     key = models.CharField(max_length=255, unique=True)
     value = models.TextField()
+
+
+class KeychainCredential(Model):
+    name = models.CharField(max_length=255)
+    type = models.CharField(max_length=255)
+    attributes = EncryptedDictField()
