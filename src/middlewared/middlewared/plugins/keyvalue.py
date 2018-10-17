@@ -16,7 +16,7 @@ class KeyValueService(Service):
         except KeyError:
             return False
 
-    @accepts(Str('key'), Any('default'))
+    @accepts(Str('key'), Any('default', null=True, default=None))
     async def get(self, key, default):
         try:
             return json.loads(
