@@ -1,5 +1,6 @@
 import asyncio
 import copy
+from datetime import time
 import errno
 import ipaddress
 import os
@@ -261,6 +262,24 @@ class IPAddr(Str):
             raise verrors
 
         return super().validate(value)
+
+
+class Time(Str):
+
+    def clean(self, value):
+        value = super(Time, self).clean(value)
+        if value is None:
+            return value
+
+        try:
+            hours, minutes = value.split(':')
+        except ValueError:
+            raise ValueError('Time should be in 24 hour format like "18:00"')
+        else:
+            try:
+                return time(int(hours), int(minutes))
+            except TypeError:
+                raise ValueError('Time should be in 24 hour format like "18:00"')
 
 
 class Bool(Attribute):
