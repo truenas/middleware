@@ -16,19 +16,23 @@ from config import *
 BRIDGENETMASKReason = "BRIDGENETMASK not in ixautomation.conf"
 
 
-def test_01_get_interfaces_driver():
-    get_interface = GET('/interfaces/query?name=%s' % interface).json()[0]
-    assert get_interface["name"] == interface
+def test_01_get_interfaces_name():
+    results = GET(f'/interfaces?name={interface}')
+    assert results.status_code == 200, results.text
+    assert results.json()[0]["name"] == interface, results.text
 
 
 def test_02_get_interfaces_ip():
-    getip = GET('/interfaces/query?name=%s' % interface).json()[0]
-    assert getip['aliases'][1]['address'] == ip
+    results = GET(f'/interfaces?name={interface}')
+    assert results.status_code == 200, results.text
+    interface_ip = results.json()[0]['state']['aliases'][1]['address']
+    assert interface_ip == ip, results.text
 
 
 @pytest.mark.skipif("BRIDGENETMASK" not in locals(),
                     reason=BRIDGENETMASKReason)
 def test_03_get_interfaces_netmask():
-    getinfo = GET('/interfaces/query?name=%s' % interface).json()
-    getinfo = getinfo[0]['aliases'][1]['netmask']
-    assert str(getinfo) == BRIDGENETMASK
+    results = GET(f'/interfaces?name={interface}')
+    assert results.status_code == 200, results.text
+    netmask = results.json()[0]['state']['aliases'][1]['netmask']
+    assert netmask == int(BRIDGENETMASK), results.text
