@@ -12,9 +12,9 @@ from functions import GET, POST
 source_list = []
 source_dict = {}
 sources = GET('/stats/get_sources/').json()
-
 for source, types in sources.items():
-    source_list.append(source)
+    if 'interface-vnet0' not in source:
+        source_list.append(source)
 
 
 def test_01_get_stats_sources():

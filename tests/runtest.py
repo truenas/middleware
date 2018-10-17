@@ -12,8 +12,8 @@ import re
 
 apifolder = getcwd()
 sys.path.append(apifolder)
-
-results_xml = getcwd() + '/results/'
+workdir = getcwd()
+results_xml = f'{workdir}/results/'
 localHome = path.expanduser('~')
 dotsshPath = localHome + '/.ssh'
 keyPath = localHome + '/.ssh/test_id_rsa'
@@ -106,7 +106,7 @@ cfg_file = open("auto_config.py", 'w')
 cfg_file.writelines(cfg_content)
 cfg_file.close()
 
-from functions import setup_ssh_agent, create_key, add_ssh_key
+from functions import setup_ssh_agent, create_key, add_ssh_key, get_file
 
 # Setup ssh agent befor starting test.
 setup_ssh_agent()
@@ -161,3 +161,17 @@ elif api == "2.0":
               f"{results_xml}{i}_tests_result.xml"] + (
                   ["-k", testexpr] if testexpr else []
         ) + [f"api2/{i}.py"])
+
+# get useful logs
+artifacts = f"{workdir}/artifacts"
+logs_list = [
+    "/var/log/middlewared.log",
+    "/var/log/messages",
+    "/var/log/debug.log",
+    "/var/log/console.log"
+]
+if not path.exists(artifacts):
+    makedirs(artifacts)
+
+for log in logs_list:
+    get_file(log, artifacts, 'root', 'testing', ip)
