@@ -19,7 +19,6 @@ from iocage_lib.ioc_image import IOCImage
 from iocage_lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
 from iocage_lib.ioc_list import IOCList
-from iocage_lib.ioc_upgrade import IOCUpgrade
 
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private
@@ -754,28 +753,70 @@ class JailService(CRUDService):
 
         return True
 
-    @accepts(Str("jail"), Str("release"))
+    @accepts(
+        Str("jail"),
+        Dict("options",
+             Str("release", required=False),
+             Bool("plugin", default=False))
+    )
     @job(lock=lambda args: f"jail_upgrade:{args[-1]}")
-    def upgrade(self, job, jail, release):
+    def upgrade(self, job, jail, options):
         """Upgrades specified jail to specified RELEASE."""
+        verrors = ValidationErrors()
+        release = options.get('release', None)
+        plugin = options['plugin']
 
-        uuid, path, _ = self.check_jail_existence(jail)
-        status, jid = IOCList.list_get_jid(uuid)
-        conf = IOCJson(path).json_load()
-        root_path = f"{path}/root"
-        started = False
+        if release is None and not plugin:
+            verrors.add(
+                'options.release',
+                'Must not be None if options.plugin is False.'
+            )
+            raise verrors
 
-        if conf["type"] == "jail":
-            if not status:
-                self.start(jail)
-                started = True
-        else:
-            return False
+        job.set_progress(0, f'Upgrading {jail}')
+        msg_queue = deque(maxlen=10)
 
-        IOCUpgrade(conf, release, root_path).upgrade_jail()
+        def progress_callback(content, exception):
+            msg = content['message'].strip('\n')
+            msg_queue.append(msg)
+            final_msg = '\n'.join(msg_queue)
 
-        if started:
-            self.stop(jail)
+            if plugin:
+                plugin_progress(job, msg)
+            else:
+                jail_progress(job, msg)
+
+            job.set_progress(None, description=final_msg)
+
+        def plugin_progress(job, msg):
+            if 'Snapshotting' in msg:
+                job.set_progress(20)
+            elif 'Updating plugin INDEX' in msg:
+                job.set_progress(40)
+            elif 'Running upgrade' in msg:
+                job.set_progress(70)
+            elif 'Installing plugin packages' in msg:
+                job.set_progress(90)
+            elif f'{jail} successfully upgraded' in msg:
+                job.set_progress(100)
+
+        def jail_progress(job, msg):
+            if 'Inspecting system' in msg:
+                job.set_progress(20)
+            elif 'Preparing to download files' in msg:
+                job.set_progress(50)
+            elif 'Applying patches' in msg:
+                job.set_progress(75)
+            elif 'Installing updates' in msg:
+                job.set_progress(90)
+            elif f'{jail} successfully upgraded' in msg:
+                job.set_progress(100)
+
+        _, _, iocage = self.check_jail_existence(
+            jail,
+            callback=progress_callback
+        )
+        iocage.upgrade(release=release)
 
         return True
 
