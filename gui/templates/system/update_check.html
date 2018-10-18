@@ -1,5 +1,6 @@
 {% extends "freeadmin/generic_form.html" %}
 {% block onSubmit %}
+
 doSubmit({
     form: this,
     event: e,
@@ -14,6 +15,12 @@ doSubmit({
       fileUpload: false
     }
 });
+
+dlg = getDialog(this);
+if(dlg != null){
+    dlg.set('title', 'Update Status');
+}
+
 {% endblock %}
 {% block form %}
 <tr>
