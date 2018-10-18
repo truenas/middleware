@@ -527,7 +527,8 @@ get_minimum_size() {
     do
 	_size=""
 	if create_partitions ${_disk} 1>&2; then
-	    _size=$(diskinfo /dev/${_disk}p2 | cut -f 3)
+	    _size=$(diskinfo ${_disk}p2 | cut -f 3)
+	    gmirror destroy -f swap || true
 	    gpart destroy -F ${_disk} 1>&2
 	fi
 	if [ -z "${_size}" ]; then
