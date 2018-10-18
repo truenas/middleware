@@ -123,12 +123,14 @@ class PoolResilverService(ConfigService):
         datastore = 'storage.resilver'
         datastore_extend = 'pool.resilver.resilver_extend'
 
+    @private
     async def resilver_extend(self, data):
         data['begin'] = data['begin'].strftime('%H:%M')
         data['end'] = data['end'].strftime('%H:%M')
         data['weekday'] = [int(v) for v in data['weekday'].split(',')]
         return data
 
+    @private
     async def validate_fields_and_update(self, data, schema):
         verrors = ValidationErrors()
 
@@ -162,6 +164,32 @@ class PoolResilverService(ConfigService):
         )
     )
     async def do_update(self, data):
+        """
+        Configure Pool Resilver Priority.
+
+        If `begin` time is greater than `end` time it means it will rollover the day, e.g.
+        begin = "19:00", end = "05:00" will increase pool resilver priority from 19:00 of one day
+        until 05:00 of the next day.
+
+        `weekday` follows crontab(5) values 0-7 (0 or 7 is Sun).
+
+        .. examples(websocket)::
+
+          Enable pool resilver priority all business days from 7PM to 5AM.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.resilver.update",
+                "params": [{
+                    "enabled": true,
+                    "begin": "19:00",
+                    "end": "05:00",
+                    "weekday": [1, 2, 3, 4, 5]
+                }]
+            }
+        """
         config = await self.config()
         original_config = config.copy()
         config.update(data)
@@ -238,11 +266,28 @@ class PoolService(CRUDService):
 
     @item_method
     @accepts(
-        Int('oid', required=True),
+        Int('id', required=True),
         Str('action', enum=['START', 'STOP', 'PAUSE'], required=True)
     )
     @job()
     async def scrub(self, job, oid, action):
+        """
+        Performs a scrub action to pool of `id`.
+
+        `action` can be either of "START", "STOP" or "PAUSE".
+
+        .. examples(websocket)::
+
+          Start scrub on pool of id 1.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.scrub",
+                "params": [1, "START"]
+            }
+        """
         pool = await self._get_instance(oid)
         return await job.wrap(
             await self.middleware.call('zfs.pool.scrub', pool['name'], action)
@@ -250,6 +295,21 @@ class PoolService(CRUDService):
 
     @accepts()
     async def filesystem_choices(self):
+        """
+        Returns all available datasets, except system datasets.
+
+        .. examples(websocket)::
+
+          Get all datasets.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.filesystem_choices",
+                "params": []
+            }
+        """
         vol_names = [vol['name'] for vol in (await self.query())]
         return [
             y['name'] for y in await self.middleware.call(
@@ -261,9 +321,25 @@ class PoolService(CRUDService):
             )
         ]
 
-    @accepts(Int('oid', required=True))
+    @accepts(Int('id', required=True))
     @item_method
     async def is_upgraded(self, oid):
+        """
+        Returns whether or not the pool of `id` is on the latest version and with all feature
+        flags enabled.
+
+        .. examples(websocket)::
+
+          Check if pool of id 1 is upgraded.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.is_upgraded",
+                "params": [1]
+            }
+        """
         name = (await self._get_instance(oid))['name']
         proc = await Popen(
             f'zpool get -H -o value version {name}',
@@ -293,9 +369,24 @@ class PoolService(CRUDService):
         else:
             return False
 
-    @accepts(Int('oid', required=True))
+    @accepts(Int('id'))
     @item_method
     async def upgrade(self, oid):
+        """
+        Upgrade pool of `id` to latest version with all feature flags.
+
+        .. examples(websocket)::
+
+          Upgrade pool of id 1.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.upgrade",
+                "params": [1]
+            }
+        """
         # Should we check first if upgrade is required ?
         await self.middleware.call(
             'zfs.pool.upgrade',
@@ -399,6 +490,55 @@ class PoolService(CRUDService):
     ))
     @job(lock='pool_createupdate')
     async def do_create(self, job, data):
+        """
+        Create a new ZFS Pool.
+
+        `topology` is a object which requires at least one `data` entry.
+        All of `data` entries (vdevs) require to be of the same type.
+
+        Example of `topology`:
+
+            {
+                "data": [
+                    {"type": "RAIDZ1", "disks": ["da1", "da2", "da3"]}
+                ],
+                "cache": [
+                    {"type": "STRIPE", "disks": ["da4"]}
+                ],
+                "log": [
+                    {"type": "RAIDZ1", "disks": ["da5"]}
+                ],
+                "spares": ["da6"]
+            }
+
+
+        .. examples(websocket)::
+
+          Create a pool named "tank", raidz1 with 3 disks, 1 cache disk, 1 ZIL/log disk
+          and 1 hot spare disk.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.create",
+                "params": [{
+                    "name": "tank",
+                    "topology": {
+                        "data": [
+                            {"type": "RAIDZ1", "disks": ["da1", "da2", "da3"]}
+                        ],
+                        "cache": [
+                            {"type": "STRIPE", "disks": ["da4"]}
+                        ],
+                        "log": [
+                            {"type": "RAIDZ1", "disks": ["da5"]}
+                        ],
+                        "spares": ["da6"]
+                    }
+                }]
+            }
+        """
 
         verrors = ValidationErrors()
 
@@ -521,7 +661,29 @@ class PoolService(CRUDService):
     ))
     @job(lock='pool_createupdate')
     async def do_update(self, job, id, data):
+        """
+        Update pool of `id`, adding the new topology.
 
+        The `type` of `data` must be the same of existing vdevs.
+
+        .. examples(websocket)::
+
+          Add a new set of raidz1 to pool of id 1.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.update",
+                "params": [1, {
+                    "topology": {
+                        "data": [
+                            {"type": "RAIDZ1", "disks": ["da7", "da8", "da9"]}
+                        ]
+                    }
+                }]
+            }
+        """
         pool = await self._get_instance(id)
 
         verrors = ValidationErrors()
@@ -784,6 +946,21 @@ class PoolService(CRUDService):
 
         `label` is the ZFS guid or a device name
         `disk` is the identifier of a disk
+
+        .. examples(websocket)::
+
+          Replace missing ZFS device with disk {serial}FOO.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.replace",
+                "params": [1, {
+                    "label": "80802394992848654",
+                    "disk": "{serial}FOO"
+                }]
+            }
         """
         pool = await self._get_instance(oid)
 
@@ -905,6 +1082,20 @@ class PoolService(CRUDService):
         Detach a disk from pool of id `id`.
 
         `label` is the vdev guid or device name.
+
+        .. examples(websocket)::
+
+          Detach ZFS device.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.detach,
+                "params": [1, {
+                    "label": "80802394992848654"
+                }]
+            }
         """
         pool = await self._get_instance(oid)
 
@@ -940,6 +1131,20 @@ class PoolService(CRUDService):
         Offline a disk from pool of id `id`.
 
         `label` is the vdev guid or device name.
+
+        .. examples(websocket)::
+
+          Offline ZFS device.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.offline,
+                "params": [1, {
+                    "label": "80802394992848654"
+                }]
+            }
         """
         pool = await self._get_instance(oid)
 
@@ -977,6 +1182,20 @@ class PoolService(CRUDService):
         Online a disk from pool of id `id`.
 
         `label` is the vdev guid or device name.
+
+        .. examples(websocket)::
+
+          Online ZFS device.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.online,
+                "params": [1, {
+                    "label": "80802394992848654"
+                }]
+            }
         """
         pool = await self._get_instance(oid)
 
@@ -1012,6 +1231,20 @@ class PoolService(CRUDService):
         Remove a disk from pool of id `id`.
 
         `label` is the vdev guid or device name.
+
+        .. examples(websocket)::
+
+          Remove ZFS device.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.remove,
+                "params": [1, {
+                    "label": "80802394992848654"
+                }]
+            }
         """
         pool = await self._get_instance(oid)
 
@@ -1050,6 +1283,21 @@ class PoolService(CRUDService):
 
         Setting passphrase to null will remove the passphrase.
         `admin_password` is required when changing or removing passphrase.
+
+        .. examples(websocket)::
+
+          Change passphrase for pool 1.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.passphrase,
+                "params": [1, {
+                    "passphrase": "mysecretpassphrase",
+                    "admin_password": "rootpassword"
+                }]
+            }
         """
         pool = await self._get_instance(oid)
 
@@ -1097,6 +1345,20 @@ class PoolService(CRUDService):
     async def rekey(self, oid, options):
         """
         Rekey encrypted pool `id`.
+
+        .. examples(websocket)::
+
+          Rekey pool 1.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.rekey,
+                "params": [1, {
+                    "admin_password": "rootpassword"
+                }]
+            }
         """
         pool = await self._get_instance(oid)
 
@@ -1142,6 +1404,20 @@ class PoolService(CRUDService):
     async def recoverykey_rm(self, oid, options):
         """
         Remove recovery key for encrypted pool `id`.
+
+        .. examples(websocket)::
+
+          Remove recovery key for pool 1.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.recoverykey_rm,
+                "params": [1, {
+                    "admin_password": "rootpassword"
+                }]
+            }
         """
         pool = await self._get_instance(oid)
 
@@ -1153,6 +1429,10 @@ class PoolService(CRUDService):
 
     @accepts()
     async def unlock_services_restart_choices(self):
+        """
+        Get a mapping of services identifiers and labels that can be restart
+        on volume unlock.
+        """
         svcs = {
             'afp': 'AFP',
             'cifs': 'SMB',
@@ -1175,6 +1455,29 @@ class PoolService(CRUDService):
     async def unlock(self, job, oid, options):
         """
         Unlock encrypted pool `id`.
+
+        `passphrase` is required of a recovery key is not provided.
+
+        If `recoverykey` is true this method expects the recovery key file to be uploaded using
+        the /_upload/ endpoint.
+
+        `services_restart` is a list of services to be restarted when the pool gets unlocked.
+        Said list be be retrieve using `pool.unlock_services_restart_choices`.
+
+        .. examples(websocket)::
+
+          Unlock pool of id 1, restarting "cifs" service.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.unlock,
+                "params": [1, {
+                    "passphrase": "mysecretpassphrase",
+                    "services_restart": ["cifs"]
+                }]
+            }
         """
         pool = await self._get_instance(oid)
 
@@ -1375,10 +1678,29 @@ class PoolService(CRUDService):
     @job(lock='import_pool', pipes=['input'], check_pipes=False)
     async def import_pool(self, job, data):
         """
-        Import a pool.
+        Import a pool found with `pool.import_find`.
+
+        If a `name` is specified the pool will be imported using that new name.
+
+        `devices` is required while importing an encrypted pool. In that case this method needs to
+        be called using /_upload/ endpoint with the encryption key.
 
         Errors:
             ENOENT - Pool not found
+
+        .. examples(websocket)::
+
+          Import pool of guid 5571830764813710860.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.import_pool,
+                "params": [{
+                    "guid": "5571830764813710860"
+                }]
+            }
         """
 
         pool = None
@@ -1398,12 +1720,34 @@ class PoolService(CRUDService):
         await self.middleware.call('notifier.volume_import', data.get('name') or pool['name'], data['guid'], *args)
         return True
 
-    @accepts(Str('volume'), Str('fs_type'), Dict('fs_options', additional_attrs=True), Str('dst_path'))
+    @accepts(
+        Str('device'),
+        Str('fs_type'),
+        Dict('fs_options', additional_attrs=True),
+        Str('dst_path')
+    )
     @job(lock=lambda args: 'volume_import', logs=True)
-    async def import_disk(self, job, volume, fs_type, fs_options, dst_path):
+    async def import_disk(self, job, device, fs_type, fs_options, dst_path):
+        """
+        Import a disk, by copying its content to a pool.
+
+        .. examples(websocket)::
+
+          Import a FAT32 (msdosfs) disk.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.import_disk,
+                "params": [
+                    "/dev/da0", "msdosfs", {}, "/mnt/tank/mydisk"
+                ]
+            }
+        """
         job.set_progress(None, description="Mounting")
 
-        src = os.path.join('/var/run/importcopy/tmpdir', os.path.relpath(volume, '/'))
+        src = os.path.join('/var/run/importcopy/tmpdir', os.path.relpath(device, '/'))
 
         if os.path.exists(src):
             os.rmdir(src)
@@ -1413,7 +1757,7 @@ class PoolService(CRUDService):
 
             async with KernelModuleContextManager({"msdosfs": "msdosfs_iconv",
                                                    "ntfs": "fuse"}.get(fs_type)):
-                async with MountFsContextManager(self.middleware, volume, src, fs_type, fs_options, ["ro"]):
+                async with MountFsContextManager(self.middleware, device, src, fs_type, fs_options, ["ro"]):
                     job.set_progress(None, description="Importing")
 
                     line = [
@@ -1464,6 +1808,9 @@ class PoolService(CRUDService):
 
     @accepts()
     def import_disk_msdosfs_locales(self):
+        """
+        Get a list of locales for msdosfs type to be used in `pool.import_disk`.
+        """
         return [
             locale.strip()
             for locale in subprocess.check_output(["locale", "-a"], encoding="utf-8").split("\n")
@@ -1481,6 +1828,27 @@ class PoolService(CRUDService):
     )
     @job(lock='pool_export')
     async def export(self, job, oid, options):
+        """
+        Export pool of `id`.
+
+        `cascade` will remove all attachments of the given pool (`pool.attachments`).
+        `destroy` will also PERMANENTLY destroy the pool/data.
+
+        .. examples(websocket)::
+
+          Export pool of id 1.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.export,
+                "params": [1, {
+                    "cascade": true,
+                    "destroy": false
+                }]
+            }
+        """
         pool = await self._get_instance(oid)
 
         job.set_progress(5, 'Retrieving pool attachments')
@@ -1783,6 +2151,22 @@ class PoolDatasetService(CRUDService):
         Creates a dataset/zvol.
 
         `volsize` is required for type=VOLUME and is supposed to be a multiple of the block size.
+        `sparse` and `volblocksize` are only used for type=VOLUME.
+
+        .. examples(websocket)::
+
+          Create a dataset within tank pool.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.dataset.create,
+                "params": [{
+                    "name": "tank/myuser",
+                    "comments": "Dataset for myuser"
+                }]
+            }
         """
 
         verrors = ValidationErrors()
@@ -1875,6 +2259,20 @@ class PoolDatasetService(CRUDService):
     async def do_update(self, id, data):
         """
         Updates a dataset/zvol `id`.
+
+        .. examples(websocket)::
+
+          Update the `comments` for "tank/myuser".
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.dataset.update,
+                "params": ["tank/myuser", {
+                    "comments": "Dataset for myuser, UPDATE #1"
+                }]
+            }
         """
 
         verrors = ValidationErrors()
@@ -2001,6 +2399,23 @@ class PoolDatasetService(CRUDService):
 
     @accepts(Str('id'), Bool('recursive', default=False))
     async def do_delete(self, id, recursive):
+        """
+        Delete dataset/zvol `id`.
+
+        `recursive` will also delete/destroy all children datasets.
+
+        .. examples(websocket)::
+
+          Delete "tank/myuser" dataset.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.dataset.delete",
+                "params": ["tank/myuser"]
+            }
+        """
         iscsi_target_extents = await self.middleware.call('iscsi.extent.query', [
             ['type', '=', 'DISK'],
             ['path', '=', f'zvol/{id}']
@@ -2014,7 +2429,7 @@ class PoolDatasetService(CRUDService):
     @accepts(Str('id'))
     async def promote(self, id):
         """
-        Promote the cloned dataset `id`
+        Promote the cloned dataset `id`.
         """
         dataset = await self.middleware.call('zfs.dataset.query', [('id', '=', id)])
         if not dataset:
@@ -2036,7 +2451,26 @@ class PoolDatasetService(CRUDService):
     )
     @item_method
     async def permission(self, id, data):
+        """
+        Set permissions for a dataset `id`.
 
+        .. examples(websocket)::
+
+          Change permissions of dataset "tank/myuser" to myuser:wheel and 755.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.dataset.permission",
+                "params": ["tank/myuser", {
+                    "user": "myuser",
+                    "group": "wheel",
+                    "mode": "755",
+                    "recursive": true,
+                }]
+            }
+        """
         path = (await self._get_instance(id))['mountpoint']
         user = data.get('user', None)
         group = data.get('group', None)
@@ -2058,6 +2492,21 @@ class PoolDatasetService(CRUDService):
 
     @accepts(Str('pool'))
     async def recommended_zvol_blocksize(self, pool):
+        """
+        Helper method to get recommended size for a new zvol (dataset of type VOLUME).
+
+        .. examples(websocket)::
+
+          Get blocksize for pool "tank".
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.dataset.recommended_zvol_blocksize",
+                "params": ["tank"]
+            }
+        """
         pool = await self.middleware.call('pool.query', [['name', '=', pool]], {'get': True})
         numdisks = 4
         for vdev in pool['topology']['data']:
@@ -2132,11 +2581,37 @@ class PoolScrubService(CRUDService):
             Int('threshold', validators=[Range(min=0)]),
             Str('description'),
             Cron('schedule'),
-            Bool('enabled'),
+            Bool('enabled', default=True),
             register=True
         )
     )
     async def do_create(self, data):
+        """
+        Create a scrub task for a pool.
+
+        `threshold` refers to the minimum amount of time in days has to be passed before
+        a scrub can run again.
+
+        .. examples(websocket)::
+
+          Create a scrub task for pool of id 1, to run every sunday but with a threshold of
+          35 days.
+          The check will run at 3AM every sunday.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.scrub.create"
+                "params": [{
+                    "pool": 1,
+                    "threshold": 35,
+                    "description": "Monthly scrub for tank",
+                    "schedule": "0 3 * * 7",
+                    "enabled": true
+                }]
+            }
+        """
         verrors, data = await self.validate_data(data, 'pool_scrub_create')
 
         if verrors:
@@ -2161,7 +2636,10 @@ class PoolScrubService(CRUDService):
         Patch('pool_scrub_create', 'pool_scrub_update', ('attr', {'update': True}))
     )
     async def do_update(self, id, data):
-        task_data = await self.query(filters=[('id', '=', id)], options={'get': True})
+        """
+        Update scrub task of `id`.
+        """
+        task_data = await self._get_instance(id)
         original_data = task_data.copy()
         task_data['original_pool_id'] = original_data['pool']
         task_data.update(data)
@@ -2190,10 +2668,11 @@ class PoolScrubService(CRUDService):
 
         return await self.query(filters=[('id', '=', id)], options={'get': True})
 
-    @accepts(
-        Int('id')
-    )
+    @accepts(Int('id'))
     async def do_delete(self, id):
+        """
+        Delete scrub task of `id`.
+        """
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
