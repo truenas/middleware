@@ -716,9 +716,12 @@ class JailService(CRUDService):
             command = ["/bin/sh", "-c"] + command
 
         host_user = "" if jail_user and host_user == "root" else host_user
-        msg = iocage.exec(command, host_user, jail_user, msg_return=True)
+        try:
+            msg = iocage.exec(command, host_user, jail_user, msg_return=True)
+        except RuntimeError as e:
+            raise CallError(e)
 
-        return msg
+        return '\n'.join(msg)
 
     @accepts(Str("jail"))
     @job(lock=lambda args: f"jail_update:{args[-1]}")
