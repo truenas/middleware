@@ -163,7 +163,7 @@ elif api == "2.0":
         ) + [f"api2/{i}.py"])
 
 # get useful logs
-artifacts = f"{workdir}/artifacts"
+artifacts = f"{workdir}/artifacts/{api}"
 logs_list = [
     "/var/log/middlewared.log",
     "/var/log/messages",
