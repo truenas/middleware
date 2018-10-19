@@ -138,6 +138,7 @@ class MailService(ConfigService):
     ), Dict(
         'mail-config',
         additional_attrs=True,
+        null=True,
         register=True
     ))
     @job(pipes=['input'], check_pipes=False)
