@@ -42,6 +42,7 @@ from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.client import client
 from freenasUI.freeadmin.models import Model, UserField
+from freenasUI.system.models import KeychainCredential
 
 log = logging.getLogger('storage.models')
 REPL_RESULTFILE = '/tmp/.repl-result'
@@ -442,91 +443,100 @@ class EncryptedDisk(Model):
     )
 
 
-# TODO: Refactor replication out from the storage model to its
-# own application
-class ReplRemote(Model):
-    ssh_remote_hostname = models.CharField(
-        max_length=120,
-        verbose_name=_("Remote hostname"),
-    )
-    ssh_remote_port = models.IntegerField(
-        default=22,
-        verbose_name=_("Remote port"),
-    )
-    ssh_remote_dedicateduser_enabled = models.BooleanField(
-        default=False,
-        verbose_name=_("Remote Dedicated User Enabled"),
-    )
-    ssh_remote_dedicateduser = UserField(
-        verbose_name=_("Remote Dedicated User"),
-        blank=True,
-        null=True,
-        default='',
-    )
-    ssh_remote_hostkey = models.CharField(
-        max_length=2048,
-        verbose_name=_("Remote hostkey"),
-    )
-    ssh_cipher = models.CharField(
-        max_length=20,
-        verbose_name=_('Encryption Cipher'),
-        choices=choices.REPL_CIPHER,
-        default='standard',
-    )
-
-    class Meta:
-        verbose_name = _("Remote Replication Host")
-        verbose_name_plural = _("Remote Replication Hosts")
-
-    def __str__(self):
-        return "%s:%s" % (self.ssh_remote_hostname, self.ssh_remote_port)
-
-
 class Replication(Model):
-    repl_filesystem = models.CharField(
-        max_length=150,
-        verbose_name=_("Volume/Dataset"),
-        blank=True,
+    repl_direction = models.CharField(
+        max_length=4,
+        choices=[("push", "PUSH"), ("pull", "PULL")],
+        default="push",
+        verbose_name=_("Replication Direction"),
     )
-    repl_lastsnapshot = models.CharField(
-        max_length=120,
-        blank=True,
-        editable=False,
-        verbose_name=_('Last snapshot sent to remote side'),
+    repl_transport = models.CharField(
+        max_length=10,
+        choices=[("ssh", "SSH"), ("ssh+netcat", "SSH+netcat"), ("local", "Local"), ("legacy", "Legacy")],
+        default="ssh",
+        verbose_name=_("Replication Transport"),
     )
-    repl_remote = models.ForeignKey(
-        ReplRemote,
+    repl_ssh_credentials = models.ForeignKey(
+        KeychainCredential,
+        null=True,
         verbose_name=_("Remote Host"),
     )
-    repl_zfs = models.CharField(
+    repl_netcat_active_side = models.CharField(
+        max_length=5,
+        choices=[("local", "Local"), ("remote", "Remote")],
+        default="local",
+        null=True,
+        verbose_name=_("Netcat Active Side"),
+    )
+    repl_netcat_active_side_port_min = models.PositiveIntegerField(
+        null=True,
+        verbose_name=_("Netcat Active Side Min Port"),
+    )
+    repl_netcat_active_side_port_max = models.PositiveIntegerField(
+        null=True,
+        verbose_name=_("Netcat Active Side Max Port"),
+    )
+    repl_source_datasets = ListField(
+        verbose_name=_("Source Datasets"),
+    )
+    repl_target_dataset = models.CharField(
         max_length=120,
-        verbose_name=_("Remote ZFS Volume/Dataset"),
+        verbose_name=_("Target Dataset"),
         help_text=_(
             "This should be the name of the ZFS filesystem on "
             "remote side. eg: Volumename/Datasetname not the mountpoint or "
             "filesystem path"),
     )
-    repl_userepl = models.BooleanField(
+    repl_recursive = models.BooleanField(
         default=False,
         verbose_name=_("Recursively replicate child dataset's snapshots"),
     )
-    repl_followdelete = models.BooleanField(
-        default=False,
-        verbose_name=_(
-            "Delete stale snapshots on remote system"),
+    repl_exclude = ListField(
+        verbose_name=_("Exclude child datasets"),
     )
-    repl_compression = models.CharField(
-        max_length=5,
-        choices=choices.Repl_CompressionChoices,
-        default="lz4",
-        verbose_name=_("Replication Stream Compression"),
+    repl_tasks = models.ManyToManyField("Task", related_name="replication_tasks")
+    repl_also_include_naming_schema = models.CharField(
+        max_length=120,
+        blank=True,
+        verbose_name=_("Also replicate snapshots matching naming schema"),
     )
-    repl_limit = models.IntegerField(
-        default=0,
-        verbose_name=_("Limit (kbps)"),
+    repl_auto = models.BooleanField(
+        verbose_name=_("Run automatically")
+    )
+    repl_minute = models.CharField(
+        max_length=100,
+        default="00",
+        verbose_name=_("Minute"),
         help_text=_(
-            "Limit the replication speed. Unit in "
-            "kilobits/second. 0 = unlimited."),
+            "Values allowed:"
+            "<br>Slider: 0-30 (as it is every Nth minute)."
+            "<br>Specific Minute: 0-59."),
+    )
+    repl_hour = models.CharField(
+        max_length=100,
+        default="*",
+        verbose_name=_("Hour"),
+        help_text=_("Values allowed:"
+                    "<br>Slider: 0-12 (as it is every Nth hour)."
+                    "<br>Specific Hour: 0-23."),
+    )
+    repl_daymonth = models.CharField(
+        max_length=100,
+        default="*",
+        verbose_name=_("Day of month"),
+        help_text=_("Values allowed:"
+                    "<br>Slider: 0-15 (as its is every Nth day)."
+                    "<br>Specific Day: 1-31."),
+    )
+    repl_month = models.CharField(
+        max_length=100,
+        default='*',
+        verbose_name=_("Month"),
+    )
+    repl_dayweek = models.CharField(
+        max_length=100,
+        default="*",
+        verbose_name=_("Day of week"),
     )
     repl_begin = models.TimeField(
         default=time(hour=0),
@@ -537,6 +547,31 @@ class Replication(Model):
         default=time(hour=23, minute=59),
         verbose_name=_("End"),
         help_text=_("Do not start replication after"),
+    )
+    repl_only_matching_schedule = models.BooleanField(
+        verbose_name=_("Only replicate snapshots matching schedule"),
+    )
+    repl_allow_from_scratch = models.BooleanField(
+        verbose_name=_("Replicate from scratch if incremental is not possible"),
+    )
+    repl_retention_policy = models.CharField(
+        max_length=5,
+        choices=[("source", "Same as source"), ("custom", "Custom"), ("none", "None")],
+        default="none",
+        verbose_name=_("Snapshot retention policy"),
+    )
+    repl_compression = models.CharField(
+        max_length=5,
+        choices=choices.Repl_CompressionChoices,
+        default="lz4",
+        verbose_name=_("Replication Stream Compression"),
+    )
+    repl_speed_limit = models.IntegerField(
+        default=0,
+        verbose_name=_("Limit (kbps)"),
+        help_text=_(
+            "Limit the replication speed. Unit in "
+            "kilobits/second. 0 = unlimited."),
     )
     repl_enabled = models.BooleanField(
         default=True,
@@ -549,7 +584,6 @@ class Replication(Model):
     class Meta:
         verbose_name = _("Replication Task")
         verbose_name_plural = _("Replication Tasks")
-        ordering = ["repl_filesystem"]
 
     def __str__(self):
         return '%s -> %s:%s' % (
@@ -601,11 +635,11 @@ class Task(Model):
     task_exclude = ListField(
         verbose_name=_("Exclude child datasets"),
     )
-    task_ret_count = models.PositiveIntegerField(
+    task_lifetime_value = models.PositiveIntegerField(
         default=2,
         verbose_name=_("Snapshot lifetime value"),
     )
-    task_ret_unit = models.CharField(
+    task_lifetime_unit = models.CharField(
         default='week',
         max_length=120,
         choices=choices.RetentionUnit_Choices,
