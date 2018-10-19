@@ -100,6 +100,7 @@ localHome = "%s"
 %s
 keyPath = "%s"
 results_xml = "%s"
+pool_name = "tank"
 """ % (passwd, ip, api, interface, localHome, disk, keyPath, results_xml)
 
 cfg_file = open("auto_config.py", 'w')
@@ -133,8 +134,9 @@ def get_tests():
         apidir = 'api1/'
         rv = ['network', 'ssh', 'storage']
     elif api == '2.0':
+        skip_tests = ['volume']
         apidir = 'api2/'
-        rv = ['interfaces', 'network', 'ssh', 'volume']
+        rv = ['interfaces', 'network', 'ssh', 'pool']
 
     for filename in listdir(apidir):
         if filename.endswith('.py') and \
