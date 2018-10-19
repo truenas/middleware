@@ -53,7 +53,7 @@ def test_02_setup_function(image):
 
 def test_03_import_msdosfs():
     payload = {
-        "volume": f"/dev/{IMAGES['msdosfs']}s1",
+        "device": f"/dev/{IMAGES['msdosfs']}s1",
         "fs_type": "msdosfs",
         "fs_options": {},
         "dst_path": DATASET_PATH,
@@ -74,7 +74,7 @@ def test_04_look_if_Directory_slash_File():
 
 def test_05_import_nonascii_msdosfs_fails():
     payload = {
-        "volume": f"/dev/{IMAGES['msdosfs-nonascii']}s1",
+        "device": f"/dev/{IMAGES['msdosfs-nonascii']}s1",
         "fs_type": "msdosfs",
         "fs_options": {},
         "dst_path": DATASET_PATH,
@@ -98,7 +98,7 @@ def test_06_look_if_Directory_slash_File():
 
 def test_07_import_nonascii_msdosfs():
     payload = {
-        "volume": f"/dev/{IMAGES['msdosfs-nonascii']}s1",
+        "device": f"/dev/{IMAGES['msdosfs-nonascii']}s1",
         "fs_type": "msdosfs",
         "fs_options": {"locale": "ru_RU.UTF-8"},
         "dst_path": DATASET_PATH,
@@ -119,7 +119,7 @@ def test_08_look_if_Каталог_slash_Файл():
 
 def test_09_import_ntfs():
     payload = {
-        "volume": f"/dev/{IMAGES['ntfs']}s1",
+        "device": f"/dev/{IMAGES['ntfs']}s1",
         "fs_type": "ntfs",
         "fs_options": {},
         "dst_path": DATASET_PATH,
