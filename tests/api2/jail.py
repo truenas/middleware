@@ -191,12 +191,14 @@ def test_14_upgrade_jail():
         pytest.skip(freeze_msg)
 
     global JOB_ID
-    results = POST(
-        '/jail/upgrade/', {
-            'jail': JAIL_NAME,
-            'release': '11.2-RELEASE'
+    payload = {
+        'jail': JAIL_NAME,
+        "options": {
+            "release": '11.2-RELEASE',
+            "plugin": True
         }
-    )
+    }
+    results = POST('/jail/upgrade/', payload)
     assert results.status_code == 200, results.text
     JOB_ID = results.json()
 
