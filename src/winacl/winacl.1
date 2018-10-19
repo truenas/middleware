@@ -33,10 +33,12 @@
 .Nd recursively set ACL information
 .Sh SYNOPSIS
 .Nm
-.Op Fl aslpvx
+.Op Fl lrvx
 .Op Fl a Ar clone | reset
-.Op Fl s Ar file
-.Op Fl p Ar file
+.Op Fl O Ar owner
+.Op Fl G Ar group
+.Op Fl s Ar file 
+.Op Fl p Ar file 
 .Sh DESCRIPTION
 The
 .Nm
@@ -46,7 +48,7 @@ and a path via -p.
 .Pp
 The following options are available:
 .Bl -tag -width indent
-.It Fl a Ar clone reset
+.It Fl a Ar clone reset 
 Perform the specified ACL related operation. There are two options.
 .Ar clone,
 copy the ACL from the specificied source path and recursively
@@ -54,20 +56,24 @@ set the ACL on the target path. If no source path is specified, then the
 ACL is copied from the root of the target path.
 .Ar reset,
 apply a default ACL recursively to the specified path. Default ACL
-is
+is 
 .Dq Li owner@:rwxpDdaARWcCos:fd:allow
 .Dq Li group@:rwxpDdaARWcCos:fd:allow
 .Dq Li everyone@:rxaRc:fd:allow
+.It Fl O Ar owner,
+Optional parameter. Change file owner to specified user. 
+.It Fl G Ar group,
+Optional parameter. Change file owner group to specified group. 
 .It Fl l
 If the target of the operation is a symbolic link, perform the operation
 on the symbolic link itself, rather than following the link.
-.It Fl s
+.It Fl s 
 Source file for ACL operations when using the .Ar clone action. When cloning
 the ACL from the source file is recursively set on the target path. If no
-source is specified for the clone action, then the ACL is taken from the
+source is specified for the clone action, then the ACL is taken from the 
 file specified by -p.
-.It Fl p
-Target file for ACL operations when using the .Ar clone and .Ar reset actions.
+.It Fl p 
+Target file for ACL operations when using the .Ar clone and .Ar reset actions. 
 By default winacl follows symlinks.
 .It Fl v
 Print paths of targets of ACL operation as new ACL is applied.
@@ -76,7 +82,7 @@ Traverse device / filesystem  boundaries.
 .Sh EXIT STATUS
 .Ex -std
 .Sh EXAMPLES
-.Dl winacl -a reset -v -p /zroot/samba
+.Dl winacl -a reset -v -O root -G wheel -p /zroot/samba 
 .Dl winacl -a clone -s /zroot/samba/share1 -p /zroot/samba/share2
 .Dl winacl -a clone -p /zroot/samba/share2
 .Pp

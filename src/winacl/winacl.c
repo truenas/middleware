@@ -193,6 +193,7 @@ usage(char *path)
 		"    -s <source>         	# source (if cloning ACL). If none specified then ACL taken from -p\n"
 		"    -p <path>                 	# path to set\n"
 		"    -l                        	# do not traverse symlinks\n"
+		"    -r                        	# recursive\n"
 		"    -v                        	# verbose\n"
 		"    -x                        	# traverse filesystem mountpoints\n",
 		path
@@ -332,6 +333,13 @@ set_windows_acls(struct windows_acl_info *w)
 
 	/* traverse directory hierarchy */
 	for (rval = 0; (entry = fts_read(tree)) != NULL;) {
+		if ((w->flags & WA_RECURSIVE) == 0) {
+			if (entry->fts_level == FTS_ROOTLEVEL){
+				rval = set_windows_acl(w, entry);
+				break;
+			}
+		}
+
 		switch (entry->fts_info) {
 			case FTS_D:
 				rval = set_windows_acl(w, entry);
@@ -495,6 +503,7 @@ main(int argc, char **argv)
 					break;
 
 				case 'r':
+					w->flags |= WA_RECURSIVE;
 					break;
 
 				case 'v':
