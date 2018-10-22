@@ -291,7 +291,10 @@ class InterfacesService(CRUDService):
         for name, iface in netif.list_interfaces().items():
             if iface.cloned and name not in configs:
                 continue
-            data[name] = self.iface_extend(iface.__getstate__(), configs)
+            try:
+                data[name] = self.iface_extend(iface.__getstate__(), configs)
+            except OSError:
+                self.logger.warn('Failed to get interface state for %s', name, exc_info=True)
         for name, config in filter(lambda x: x[0] not in data, configs.items()):
             data[name] = self.iface_extend({
                 'name': config['int_interface'],
