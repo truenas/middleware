@@ -1114,6 +1114,7 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
         model = models.Advanced
         widgets = {
             'adv_sed_passwd': forms.widgets.PasswordInput(render_value=False),
+            'adv_boot_scrub': forms.widgets.HiddenInput()
         }
 
     def __init__(self, *args, **kwargs):

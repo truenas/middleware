@@ -112,6 +112,7 @@ class SytemAdvancedService(ConfigService):
             'system_advanced_update',
             Bool('advancedmode'),
             Bool('autotune'),
+            Int('boot_scrub', validators=[Range(min=1)]),
             Bool('consolemenu'),
             Bool('consolemsg'),
             Bool('cpu_in_percentage'),
@@ -157,6 +158,9 @@ class SytemAdvancedService(ConfigService):
                 config_data,
                 {'prefix': self._config.datastore_prefix}
             )
+
+            if original_data['boot_scrub'] != config_data['boot_scrub']:
+                await self.middleware.call('service.restart', 'cron')
 
             loader_reloaded = False
             if original_data['motd'] != config_data['motd']:
