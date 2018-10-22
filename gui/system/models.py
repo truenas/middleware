@@ -321,7 +321,6 @@ class Advanced(Model):
     )
     adv_boot_scrub = models.IntegerField(
         default=7,
-        editable=False,
     )
     adv_periodic_notifyuser = UserField(
         default="root",
