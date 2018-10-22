@@ -16,6 +16,11 @@ dataset_path = os.path.join("/mnt", dataset)
 IMAGES = {}
 
 
+@pytest.fixture(scope='module')
+def pool_data():
+    return {}
+
+
 def expect_state(job_id, state):
     for _ in range(60):
         job = GET(f"/core/get_jobs/?id={job_id}").json()[0]
@@ -32,9 +37,11 @@ def expect_state(job_id, state):
 def test_01_get_pool():
     results = GET("/pool/")
     assert results.status_code == 200, results.text
+    assert isinstance(results.json(), list), results.text
 
 
 def test_02_creating_a_pool():
+    global payload
     payload = {
         "name": pool_name,
         "encryption": False,
@@ -50,13 +57,44 @@ def test_02_creating_a_pool():
     expect_state(job_id, "SUCCESS")
 
 
-def test_03_create_dataset():
+def test_03_get_pool_id(pool_data):
+    results = GET(f"/pool?name={pool_name}")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), list), results.text
+    pool_data['id'] = results.json()[0]['id']
+
+
+def test_04_get_pool_id_info(pool_data):
+    results = GET(f"/pool/id/{pool_data['id']}/")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    global pool_info
+    pool_info = results
+
+
+@pytest.mark.parametrize('pool_keys', ["name", "topology:data:disks"])
+def test_05_looking_pool_info_of_(pool_keys):
+    results = pool_info
+    if ':' in pool_keys:
+        keys_list = pool_keys.split(':')
+        if 'disks' in keys_list:
+            info = results.json()[keys_list[0]][keys_list[1]]
+            disk_list = payload[keys_list[0]][keys_list[1]][0][keys_list[2]]
+            assert disk_list[0] in info[0]['device'], results.text
+            assert disk_list[1] in info[1]['device'], results.text
+        else:
+            info = results.json()[keys_list[0]][keys_list[1]][keys_list[2]]
+    else:
+        assert payload[pool_keys] == results.json()[pool_keys], results.text
+
+
+def test_05_create_dataset():
     result = POST("/pool/dataset/", {"name": dataset})
     assert result.status_code == 200, result.text
 
 
 @pytest.mark.parametrize('image', ["msdosfs", "msdosfs-nonascii", "ntfs"])
-def test_04_setup_function(image):
+def test_06_setup_function(image):
     zf = os.path.join(os.path.dirname(__file__), "fixtures", f"{image}.gz")
     destination = f"/tmp/{image}.gz"
     send_results = send_file(zf, destination, user, None, ip)
@@ -72,7 +110,7 @@ def test_04_setup_function(image):
     IMAGES[image] = mdconfig_results['output'].strip()
 
 
-def test_06_import_msdosfs():
+def test_07_import_msdosfs():
     payload = {
         "device": f"/dev/{IMAGES['msdosfs']}s1",
         "fs_type": "msdosfs",
@@ -85,13 +123,13 @@ def test_06_import_msdosfs():
     expect_state(job_id, "SUCCESS")
 
 
-def test_07_look_if_Directory_slash_File():
+def test_08_look_if_Directory_slash_File():
     cmd = f'test -f {dataset_path}/Directory/File'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
-def test_08_import_nonascii_msdosfs_fails():
+def test_09_import_nonascii_msdosfs_fails():
     payload = {
         "device": f"/dev/{IMAGES['msdosfs-nonascii']}s1",
         "fs_type": "msdosfs",
@@ -108,13 +146,13 @@ def test_08_import_nonascii_msdosfs_fails():
     assert job["error"] == "rsync failed with exit code 23", job
 
 
-def test_09_look_if_Directory_slash_File():
+def test_10_look_if_Directory_slash_File():
     cmd = f'test -f {dataset_path}/Directory/File'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
-def test_10_import_nonascii_msdosfs():
+def test_11_import_nonascii_msdosfs():
     payload = {
         "device": f"/dev/{IMAGES['msdosfs-nonascii']}s1",
         "fs_type": "msdosfs",
@@ -127,13 +165,13 @@ def test_10_import_nonascii_msdosfs():
     expect_state(job_id, "SUCCESS")
 
 
-def test_08_look_if_Каталог_slash_Файл():
+def test_12_look_if_Каталог_slash_Файл():
     cmd = f'test -f {dataset_path}/Каталог/Файл'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
-def test_11_import_ntfs():
+def test_13_import_ntfs():
     payload = {
         "device": f"/dev/{IMAGES['ntfs']}s1",
         "fs_type": "ntfs",
@@ -148,14 +186,14 @@ def test_11_import_ntfs():
     expect_state(job_id, "SUCCESS")
 
 
-def test_12_look_if_Каталог_slash_Файл():
+def test_14_look_if_Каталог_slash_Файл():
     cmd = f'test -f {dataset_path}/Каталог/Файл'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 @pytest.mark.parametrize('image', ["msdosfs", "msdosfs-nonascii", "ntfs"])
-def test_13_stop_image_with_mdconfig(image):
+def test_15_stop_image_with_mdconfig(image):
     cmd = f"mdconfig -d -u {IMAGES[image]}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -169,6 +207,6 @@ def test_13_stop_image_with_mdconfig(image):
     assert rm_results['result'] is True, rm_results['output']
 
 
-def test_14_delete_dataset():
+def test_17_delete_dataset():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
