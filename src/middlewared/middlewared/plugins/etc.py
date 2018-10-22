@@ -65,7 +65,7 @@ class EtcService(Service):
         #
         'kerberos': [
             {'type': 'mako', 'path': 'krb5.conf'},
-            {'type': 'py', 'path': 'krb5.keytab.py'},
+            {'type': 'py', 'path': 'krb5.keytab'},
         ],
 
         'ldap': [
