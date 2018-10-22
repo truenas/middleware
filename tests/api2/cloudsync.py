@@ -6,12 +6,12 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE
-
+from auto_config import pool_name
 import time
 import urllib.parse
 
-DATASET = "tank/backup"
-DATASET_PATH = os.path.join("/mnt", DATASET)
+dataset = f"{pool_name}/cloudsync"
+dataset_path = os.path.join("/mnt", dataset)
 
 
 @pytest.fixture(scope="module")
@@ -37,7 +37,7 @@ def task():
 
 
 def test_01_create_dataset():
-    result = POST("/pool/dataset/", {"name": DATASET})
+    result = POST("/pool/dataset/", {"name": dataset})
     assert result.status_code == 200, result.text
 
 
@@ -74,7 +74,7 @@ def test_04_create_cloud_sync(env, credentials, task):
         "description": "Test",
         "direction": "PULL",
         "transfer_mode": "COPY",
-        "path": DATASET_PATH,
+        "path": dataset_path,
         "credentials": credentials["id"],
         "schedule": {
             "minute": "00",
@@ -100,7 +100,7 @@ def test_05_update_cloud_sync(env, credentials, task):
         "description": "Test",
         "direction": "PULL",
         "transfer_mode": "COPY",
-        "path": DATASET_PATH,
+        "path": dataset_path,
         "credentials": credentials["id"],
         "schedule": {
             "minute": "00",
@@ -141,7 +141,7 @@ def test_06_run_cloud_sync(env, task):
 
         assert state["job"]["state"] == "SUCCESS", state
 
-        with open(os.path.join(DATASET_PATH, "freenas-test.txt")) as f:
+        with open(os.path.join(dataset_path, "freenas-test.txt")) as f:
             assert f.read() == "freenas-test\n"
 
         return
@@ -162,6 +162,6 @@ def test_08_delete_cloud_credentials(env, credentials):
 
 
 def test_09_destroy_dataset():
-    result = DELETE(f"/pool/dataset/id/{urllib.parse.quote(DATASET, '')}/")
+    result = DELETE(f"/pool/dataset/id/{urllib.parse.quote(dataset, '')}/")
 
     assert result.status_code == 200, result.text

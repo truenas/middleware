@@ -11,14 +11,16 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST
-from auto_config import ip
+from auto_config import ip, pool_name
 from config import *
+
 if "BRIDGEHOST" in locals():
     MOUNTPOINT = "/tmp/smb-cifs" + BRIDGEHOST
-DATASET = "tank/smb-cifs"
-urlDataset = "tank%2Fsmb-cifs"
+
+dataset = f"{pool_name}/smb-cifs"
+dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "TestCifsSMB"
-SMB_PATH = "/mnt/" + DATASET
+SMB_PATH = "/mnt/" + dataset
 VOL_GROUP = "wheel"
 Reason = "BRIDGEHOST are missing in ixautomation.conf"
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
@@ -48,7 +50,7 @@ def test_01_setting_auxilary_parameters_for_mount_smbfs():
 
 
 def test_02_creating_smb_dataset():
-    results = POST("/pool/dataset/", {"name": DATASET})
+    results = POST("/pool/dataset/", {"name": dataset})
     assert results.status_code == 200, results.text
 
 
@@ -413,5 +415,5 @@ def test_49_checking_if_cifs_is_stop():
 
 # Check destroying a SMB dataset
 def test_50_destroying_smb_dataset():
-    results = DELETE(f"/pool/dataset/id/{urlDataset}/")
+    results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text

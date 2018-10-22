@@ -4,14 +4,13 @@ import pytest
 import sys
 import os
 import time
-import urllib.parse
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, SSH_TEST, send_file
 from auto_config import ip, user, password, pool_name, disk1, disk2
 
 dataset = f"{pool_name}/test_pool"
-urlDataset = urllib.parse.quote(dataset, '')
+dataset_url = dataset.replace('/', '%2F')
 dataset_path = os.path.join("/mnt", dataset)
 
 IMAGES = {}
@@ -171,5 +170,5 @@ def test_13_stop_image_with_mdconfig(image):
 
 
 def test_14_delete_dataset():
-    results = DELETE(f"/pool/dataset/id/{urlDataset}/")
+    results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text

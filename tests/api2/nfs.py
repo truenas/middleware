@@ -11,15 +11,15 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE
-from auto_config import ip
+from auto_config import ip, pool_name
 from config import *
 
 if "BRIDGEHOST" in locals():
     MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
 
-DATASET = "tank/nfs"
-urlDataset = "tank%2Fnfs"
-NFS_PATH = "/mnt/" + DATASET
+dataset = f"{pool_name}/nfs"
+dataset_url = dataset.replace('/', '%2F')
+NFS_PATH = "/mnt/" + dataset
 Reason = "BRIDGEHOST is missing in ixautomation.conf"
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 
@@ -48,7 +48,7 @@ def test_01_creating_the_nfs_server():
 
 
 def test_02_creating_dataset_nfs():
-    payload = {"name": DATASET}
+    payload = {"name": dataset}
     results = POST("/pool/dataset/", payload)
     assert results.status_code == 200, results.text
 
@@ -278,5 +278,5 @@ def test_32_checking_nfs_disable_at_boot():
 
 # Check destroying a SMB dataset
 def test_33_destroying_smb_dataset():
-    results = DELETE(f"/pool/dataset/id/{urlDataset}/")
+    results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
