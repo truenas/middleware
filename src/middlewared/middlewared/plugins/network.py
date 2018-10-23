@@ -279,7 +279,10 @@ class InterfacesService(Service):
         for name, iface in netif.list_interfaces().items():
             if name in ('lo0', 'pfsync0', 'pflog0'):
                 continue
-            data.append(self.iface_extend(iface.__getstate__()))
+            try:
+                data.append(self.iface_extend(iface.__getstate__()))
+            except OSError:
+                self.logger.warn('Failed to get interface state for %s', name, exc_info=True)
         return filter_list(data, filters, options)
 
     @private
