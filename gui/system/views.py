@@ -336,15 +336,8 @@ def bootenv_scrub_interval(request):
             message=_('Interval must be an integer.'),
         )
 
-    try:
-        advanced = models.Advanced.objects.order_by('-id')[0]
-    except Exception:
-        advanced = models.Advanced.objects.create()
-
-    advanced.adv_boot_scrub = int(interval)
-    advanced.save()
-
-    notifier().restart("cron")
+    with client as c:
+        c.call('system.advanced.update', {'boot_scrub': interval})
 
     return JsonResp(
         request,
