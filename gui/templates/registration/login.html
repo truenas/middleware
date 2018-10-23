@@ -68,7 +68,7 @@ require(["dojo/_base/fx", "dojo/dom", "dojo/fx/easing", "dojo/_base/html", "dojo
 <input type="hidden" name="next" value="{{ next }}" />
 <img src="{{ STATIC_URL }}ix/ix_login_logo.png" border="0" alt="iXsystems, Inc." style="float:right" />
 {% if sw_name|lower == "freenas" %}
-<div style="margin-top: 9px;"><a href="/ui/">Try the Beta UI!</a></div>
+<button style="margin-top:7px;display:flex;justify-content:center" data-dojo-type="dijit.form.Button" type="button" data-dojo-props="type:'button'" onclick="location.href='/ui/'">{% trans "New Web Interface" %}</button>
 {% endif %}
 </form>
     </div>
