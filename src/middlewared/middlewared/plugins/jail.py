@@ -372,7 +372,7 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
     def fetch(self, job, options):
         """Fetches a release or plugin."""
-        fetch_output = {'error': False, 'install_notes': []}
+        fetch_output = {'install_notes': []}
         release = options.get('release', None)
 
         verrors = ValidationErrors()
@@ -383,17 +383,12 @@ class JailService(CRUDService):
             raise verrors
 
         def progress_callback(content, exception):
-            level = content['level']
             msg = content['message'].strip('\n')
             rel_up = f'* Updating {release} to the latest patch level... '
 
             if job.progress['percent'] == 90 and options['name'] is not None:
                 for split_msg in msg.split('\n'):
                     fetch_output['install_notes'].append(split_msg)
-
-            if level == 'EXCEPTION':
-                fetch_output['error'] = True
-                raise CallError(msg)
 
             job.set_progress(None, msg)
 
