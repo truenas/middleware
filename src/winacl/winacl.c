@@ -354,6 +354,11 @@ set_windows_acls(struct windows_acl_info *w)
 				rval = -2;
 				continue;
 		}
+		if (rval < 0) {
+			err(EX_OSERR, "%s: set_windows_acl() failed", entry->fts_accpath);
+			continue;
+		}
+
 	} 
 
 	return (rval);
