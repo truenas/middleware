@@ -1,0 +1,111 @@
+.\"-
+.\" Copyright (c) 2018 iXsystems, Inc. ła
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" $FreeBSD$
+.\"
+.Dd October 19, 2018
+.Dt WINACL 1
+.Os
+.Sh NAME
+.Nm winacl
+.Nd recursively set ACL information
+.Sh SYNOPSIS
+.Nm
+.Op Fl lrvx
+.Op Fl a Ar clone | reset
+.Op Fl O Ar owner
+.Op Fl G Ar group
+.Op Fl s Ar file 
+.Op Fl p Ar file 
+.Sh DESCRIPTION
+The
+.Nm
+utility recursivvely sets NFSv4 discretionary access control information on
+the specified path. An action (reset or clone) must be speciifed via -a
+and a path via -p.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl a Ar clone reset 
+Perform the specified ACL related operation. There are two options.
+.Ar clone,
+copy the ACL from the specificied source path and recursively
+set the ACL on the target path. If no source path is specified, then the
+ACL is copied from the root of the target path.
+.Ar reset,
+apply a default ACL recursively to the specified path. Default ACL
+is 
+.Dq Li owner@:rwxpDdaARWcCos:fd:allow
+.Dq Li group@:rwxpDdaARWcCos:fd:allow
+.Dq Li everyone@:rxaRc:fd:allow
+.It Fl O Ar owner,
+Optional parameter. Change file owner to specified user. 
+.It Fl G Ar group,
+Optional parameter. Change file owner group to specified group. 
+.It Fl l
+If the target of the operation is a symbolic link, perform the operation
+on the symbolic link itself, rather than following the link.
+.It Fl s 
+Source file for ACL operations when using the .Ar clone action. When cloning
+the ACL from the source file is recursively set on the target path. If no
+source is specified for the clone action, then the ACL is taken from the 
+file specified by -p.
+.It Fl p 
+Target file for ACL operations when using the .Ar clone and .Ar reset actions. 
+By default winacl follows symlinks.
+.It Fl v
+Print paths of targets of ACL operation as new ACL is applied.
+.It Fl x
+Traverse device / filesystem  boundaries.
+.Sh EXIT STATUS
+.Ex -std
+.Sh EXAMPLES
+.Dl winacl -a reset -v -O root -G wheel -p /zroot/samba 
+.Dl winacl -a clone -s /zroot/samba/share1 -p /zroot/samba/share2
+.Dl winacl -a clone -p /zroot/samba/share2
+.Pp
+.Sh SEE ALSO
+.Xr getfacl 1 ,
+.Xr acl 3 ,
+.Xr getextattr 8 ,
+.Xr setextattr 8 ,
+.Xr acl 9 ,
+.Xr extattr 9
+.Sh HISTORY
+Extended Attribute and Access Control List support was developed
+as part of the
+.Tn TrustedBSD
+Project and introduced in
+.Fx 5.0 .
+NFSv4 ACL support was introduced in
+.Fx 8.1 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+utility was initially written by
+.An John Hixson .
+Clone functionality added by
+.An Andrew Walker .

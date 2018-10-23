@@ -785,7 +785,7 @@ class notifier(metaclass=HookMetaclass):
         if len(apply_paths) > 1:
             apply_paths.insert(0, (path, ''))
         for apath, flags in apply_paths:
-            fargs = args + "%s -p '%s' -x" % (flags, apath)
+            fargs = args + "%s -p '%s'" % (flags, apath)
             cmd = "%s %s" % (winacl, fargs)
             log.debug("winacl_reset: cmd = %s", cmd)
             self._system(cmd)
