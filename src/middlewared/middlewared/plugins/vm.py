@@ -134,7 +134,7 @@ class VMSupervisor(object):
         for device in sorted(self.vm['devices'], key=lambda x: (x['order'], x['id'])):
             if device['dtype'] in ('CDROM', 'DISK', 'RAW'):
 
-                disk_sector_size = int(device['attributes'].get('sectorsize', 0))
+                disk_sector_size = int(device['attributes'].get('sectorsize') or 0)
                 if disk_sector_size > 0:
                     sectorsize_args = ',sectorsize=' + str(disk_sector_size)
                 else:
