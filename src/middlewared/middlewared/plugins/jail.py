@@ -566,10 +566,10 @@ class JailService(CRUDService):
             Str("action", enum=["ADD", "EDIT", "REMOVE", "REPLACE", "LIST"], required=True),
             Str("source"),
             Str("destination"),
-            Str("fstype"),
-            Str("fsoptions"),
-            Str("dump"),
-            Str("pass"),
+            Str("fstype", default='nullfs'),
+            Str("fsoptions", default='ro'),
+            Str("dump", default='0'),
+            Str("pass", default='0'),
             Int("index", default=None),
         ))
     def fstab(self, jail, options):
