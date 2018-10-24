@@ -427,7 +427,7 @@ create_partitions()
 	# leaving units in MiB (2^20).
 	_size="-s $(( (_size >> 24) << 4 ))m"
     fi
-    if gpart create -s GPT -f active ${_disk}; then
+    if gpart create -s GPT ${_disk}; then
 	if [ "$BOOTMODE" = "UEFI" ] ; then
 	  # EFI Mode
 	  sysctl kern.geom.debugflags=16
