@@ -130,6 +130,7 @@ pre_install_check()
     fi
     return 0
 }
+
 # Convert /etc/version* to /etc/avatar.conf
 #
 # 1 - old /etc/version* file
@@ -387,7 +388,8 @@ EOD
     return $?
 }
 
-install_loader() {
+install_loader()
+{
     local _disk _disks
     local _mnt
 
@@ -428,7 +430,8 @@ install_loader() {
     return 0
 }
 
-save_serial_settings() {
+save_serial_settings()
+{
     _mnt="$1"
 
     # If the installer was booted with serial mode enabled, we should
@@ -460,7 +463,8 @@ save_serial_settings() {
     fi
 }
 
-mount_disk() {
+mount_disk()
+{
 	local _mnt
 
 	if [ $# -ne 1 ]; then
@@ -474,7 +478,8 @@ mount_disk() {
 	return 0
 }
 
-create_partitions() {
+create_partitions()
+{
     local _disk="$1"
     local _size=""
 
@@ -509,7 +514,8 @@ create_partitions() {
     return 1
 }
 
-get_minimum_size() {
+get_minimum_size()
+{
     local _min=0
     local _disk
     local _size
@@ -546,7 +552,8 @@ get_minimum_size() {
     echo ${_min}k
 }
 
-partition_disks() {
+partition_disks()
+{
 	local _disks _disksparts
 	local _mirror
 	local _minsize
@@ -737,32 +744,33 @@ disk_is_freenas()
 	if [ -f /tmp/data_old/conf/base/etc/hostid ]; then
 	    cp -p /tmp/data_old/conf/base/etc/hostid /tmp/
 	fi
-        if [ -d /tmp/data_old/root/.ssh ]; then
-            cp -pR /tmp/data_old/root/.ssh /tmp/
-        fi
-        if [ -d /tmp/data_old/boot/modules ]; then
-            mkdir -p /tmp/modules
-            for i in `ls /tmp/data_old/boot/modules`
-            do
-                cp -p /tmp/data_old/boot/modules/$i /tmp/modules/
-            done
-        fi
-        if [ -d /tmp/data_old/usr/local/fusionio ]; then
-            cp -pR /tmp/data_old/usr/local/fusionio /tmp/
-        fi
+	if [ -d /tmp/data_old/root/.ssh ]; then
+	    cp -pR /tmp/data_old/root/.ssh /tmp/
+	fi
+	if [ -d /tmp/data_old/boot/modules ]; then
+	    mkdir -p /tmp/modules
+	    for i in `ls /tmp/data_old/boot/modules`
+	    do
+		cp -p /tmp/data_old/boot/modules/$i /tmp/modules/
+	    done
+	fi
+	if [ -d /tmp/data_old/usr/local/fusionio ]; then
+	    cp -pR /tmp/data_old/usr/local/fusionio /tmp/
+	fi
 	if [ -f /tmp/data_old/boot.config ]; then
 	    cp /tmp/data_old/boot.config /tmp/
 	fi
 	if [ -f /tmp/data_old/boot/loader.conf.local ]; then
 	    cp /tmp/data_old/boot/loader.conf.local /tmp/
 	fi
-        umount /tmp/data_old
+	umount /tmp/data_old
     fi
     rmdir /tmp/data_old
     return $_rv
 }
 
-prompt_password() {
+prompt_password()
+{
 
     local values value password="" password1 password2 _counter _tmpfile="/tmp/pwd.$$"
 
@@ -1402,7 +1410,8 @@ fi
 # The output is suitable to be used as the arguments
 # to main(), which will directl ycall menu_install().
 
-yesno() {
+yesno()
+{
     # Output "true" or "false" depending on the argument
     if [ $# -ne 1 ]; then
 	echo "false"
@@ -1415,7 +1424,8 @@ yesno() {
     return 0
 }
 
-getsize() {
+getsize()
+{
     # Given a size specifier, convert it to bytes.
     # No suffix, or a suffix of "[bBcC]", means bytes;
     # [kK] is 1024, etc.
@@ -1434,7 +1444,8 @@ getsize() {
     return 0
 }
 	
-parse_config() {
+parse_config()
+{
     local _conf="/etc/install.conf"
     local _diskList=""
     local _minSize=""
