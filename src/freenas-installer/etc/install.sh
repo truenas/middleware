@@ -53,10 +53,9 @@ get_image_name()
 # This does memory size only for now.
 pre_install_check()
 {
-    # We need at least this many GB of RAM
-    local readonly minmemgb=8
-    # subtract 1GB to allow for reserved memory
-    local readonly minmem=$(expr \( ${minmemgb} \- 1 \) \* 1024 \* 1024 \* 1024)
+    # We need at least 8 GB of RAM
+    # minus 1 GB to allow for reserved memory
+    local minmem=$((7 * GiB))
     local memsize=$(sysctl -n hw.physmem)
 
     if [ ${memsize} -lt ${minmem} ]; then
@@ -207,20 +206,25 @@ get_media_description()
 	_description=`geom disk list ${_media} 2>/dev/null \
 	    | sed -ne 's/^   descr: *//p'`
 	if [ -z "$_description" ] ; then
-		_description="Unknown Device"
+	    _description="Unknown Device"
 	fi
-        _cap=`diskinfo ${_media} | awk '{
+	_cap=`diskinfo ${_media} | awk \
+	    -v TiB=${TiB}.0 \
+	    -v GiB=${GiB}.0 \
+	    -v MiB=${MiB}.0 \
+	'{
             capacity = $3;
-            if (capacity >= 1099511627776) {
-                printf("%.1f TiB", capacity / 1099511627776.0);
-            } else if (capacity >= 1073741824) {
-                printf("%.1f GiB", capacity / 1073741824.0);
-            } else if (capacity >= 1048576) {
-                printf("%.1f MiB", capacity / 1048576.0);
+            if (capacity >= TiB) {
+                printf("%.1f TiB", capacity / TiB);
+            } else if (capacity >= GiB) {
+                printf("%.1f GiB", capacity / GiB);
+            } else if (capacity >= MiB) {
+                printf("%.1f MiB", capacity / MiB);
             } else {
                 printf("%d Bytes", capacity);
-        }}'`
-        VAL="${_description} -- ${_cap}"
+	    }
+	}'`
+	VAL="${_description} -- ${_cap}"
     fi
     export VAL
 }
@@ -416,10 +420,12 @@ mount_disk()
 create_partitions()
 {
     local _disk="$1"
-    local _size=""
+    local _size="$2"
 
-    if [ $# -eq 2 ]; then
-	_size="-s $2"
+    if [ -n "${_size}" ]; then
+	# Round ZFS partition size down to a multiple of 16 MiB (2^24),
+	# leaving units in MiB (2^20).
+	_size="-s $(( (_size >> 24) << 4 ))m"
     fi
     if gpart create -s GPT -f active ${_disk}; then
 	if [ "$BOOTMODE" = "UEFI" ] ; then
@@ -454,15 +460,6 @@ get_minimum_size()
     local _min=0
     local _disk
     local _size
-    # We use 1mbyte because the fat16 partition is 512k,
-    # and there's some header space.
-    # Now we use 8MBytes because gpart and some thumb drives
-    # misbehave.
-    local _m1=$(expr 1024 \* 1024 \* 8)
-    # If we decide we want to round it down,
-    # set this to the size (eg, 256 * 1024 * 1024)
-    local _round=0
-    local _g16=$(expr 16 \* 1024 \* 1024 \* 1024)
 
     for _disk
     do
@@ -476,66 +473,69 @@ get_minimum_size()
 	    echo "Could not do anything with ${_disk}, skipping" 1>&2
 	    continue
 	fi
-	if [ ${_round} -gt 0 ]; then
-	    _size=$(expr \( ${_size} / ${_round} \) \* ${_round})
-	fi
-	_size=$(expr ${_size} / 1024)
 	if [ ${_min} -eq 0 -o ${_size} -lt ${_min} ]; then
 	    _min=${_size}
 	fi
     done
-    echo ${_min}k
+
+    echo ${_min}
 }
+
+# Minimum required space for an installation.
+# Docs state 8 GiB is the bare minimum, but we specify 8 GB here for wiggle room.
+# That should leave enough slop for alignment, boot partition, etc.
+: ${MIN_ZFS_PARTITION_SIZE:=$((8 * GB))}; readonly MIN_ZFS_PARTITION_SIZE
 
 partition_disks()
 {
-	local _disks _disksparts
-	local _mirror
-	local _minsize
+    local _disks _disksparts
+    local _mirror
+    local _minsize
+    local _size
 
-	_disks=$*
+    _disks=$*
 
-	if is_truenas; then
-		gmirror destroy -f swap || true
+    if is_truenas; then
+	gmirror destroy -f swap || true
+    fi
+    # Erase both typical metadata area.
+    for _disk in ${_disks}; do
+	gpart destroy -F ${_disk} >/dev/null 2>&1 || true
+	dd if=/dev/zero of=/dev/${_disk} bs=1m count=2 >/dev/null
+	_size=$(diskinfo ${_disk} | cut -f 3)
+	dd if=/dev/zero of=/dev/${_disk} bs=1m oseek=$((_size / MiB - 2)) >/dev/null || true
+    done
+
+    _minsize=$(get_minimum_size ${_disks})
+
+    if [ ${_minsize} -lt ${MIN_ZFS_PARTITION_SIZE} ]; then
+	echo "Disk is too small to install ${AVATAR_PROJECT}" 1>&2
+	return 1
+    fi
+
+    _disksparts=$(for _disk in ${_disks}; do
+	create_partitions ${_disk} ${_minsize} >&2
+	if [ "$BOOTMODE" != "UEFI" ] ; then
+	    # Make the disk active
+	    gpart set -a active ${_disk} >&2
 	fi
-	# Erase both typical metadata area.
-	for _disk in ${_disks}; do
-	    gpart destroy -F ${_disk} >/dev/null 2>&1 || true
-	    dd if=/dev/zero of=/dev/${_disk} bs=1m count=2 >/dev/null
-	    dd if=/dev/zero of=/dev/${_disk} bs=1m oseek=$(diskinfo /dev/${_disk} | awk '{ print int($3/(1024*1024))-2 }') >/dev/null || true
-	done
+	echo ${_disk}p2
+    done)
 
-	_minsize=$(get_minimum_size ${_disks})
+    if [ $# -gt 1 ]; then
+	_mirror="mirror"
+    else
+	_mirror=""
+    fi
+    zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_mirror} ${_disksparts}
+    zpool set feature@async_destroy=enabled freenas-boot
+    zpool set feature@empty_bpobj=enabled freenas-boot
+    zpool set feature@lz4_compress=enabled freenas-boot
+    zfs set compress=lz4 freenas-boot
+    zfs create -o canmount=off freenas-boot/ROOT
+    zfs create -o mountpoint=legacy freenas-boot/ROOT/${BENAME}
 
-	if [ "${_minsize}" = "0k" ]; then
-	    echo "Disk is too small to install ${AVATAR_PROJECT}" 1>&2
-	    return 1
-	fi
-
-	_disksparts=$(for _disk in ${_disks}; do
-	    create_partitions ${_disk} ${_minsize} >&2
-	    if [ "$BOOTMODE" != "UEFI" ] ; then
-	      # Make the disk active
-	      gpart set -a active ${_disk} >&2
-	    fi
-
-	    echo ${_disk}p2
-	done)
-
-	if [ $# -gt 1 ]; then
-	    _mirror="mirror"
-	else
-	    _mirror=""
-	fi
-	zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_mirror} ${_disksparts}
-	zpool set feature@async_destroy=enabled freenas-boot
-	zpool set feature@empty_bpobj=enabled freenas-boot
-	zpool set feature@lz4_compress=enabled freenas-boot
-	zfs set compress=lz4 freenas-boot
-	zfs create -o canmount=off freenas-boot/ROOT
-	zfs create -o mountpoint=legacy freenas-boot/ROOT/${BENAME}
-
-	return 0
+    return 0
 }
 
 disk_is_freenas()
