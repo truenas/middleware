@@ -644,12 +644,9 @@ disk_is_freenas()
 	# This code is very clumsy.  There
 	# should be a way to structure it such that
 	# all of the cleanup happens as we want it to.
-	if zdb -l ${os_part} | grep "name: 'freenas-boot'" > /dev/null ; then
-	    :
-	else
-	    return 1
-	fi
+	zdb -l ${os_part} | fgrep -q "name: 'freenas-boot'" || return 1
 	zpool import -N -f freenas-boot || return 1
+
 	# Now we want to figure out which dataset to use.
 	DS=$(zpool list -H -o bootfs freenas-boot | head -n 1 | cut -d '/' -f 3)
 	if [ -z "$DS" ] ; then
