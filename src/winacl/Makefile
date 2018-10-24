@@ -1,3 +1,5 @@
+MK_MAN=	no
+
 .include <bsd.own.mk>
 
 PROG=	winacl
