@@ -10,10 +10,11 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE
+from auto_config import pool_name
 
-DATASET = "tank/backup"
-urlDataset = "tank%2Fbackup"
-BACKUP_PATH = "/mnt/" + DATASET
+dataset = f"{pool_name}/backup"
+dataset_url = dataset.replace('/', '%2F')
+backup_path = "/mnt/" + dataset
 
 
 def test_01_check_backup():
@@ -22,7 +23,7 @@ def test_01_check_backup():
 
 
 def test_02_creating_dataset_backup():
-    payload = {"name": DATASET}
+    payload = {"name": dataset}
     results = POST("/pool/dataset/", payload)
     assert results.status_code == 200, results.text
 
@@ -32,7 +33,7 @@ def test_03_creating_backup_backup():
     payload = {"description": "Test backup",
                "direction": "PULL",
                "transfer_mode": "COPY",
-               "path": "/mnt/tank/backup",
+               "path": backup_path,
                "credential": 0,
                "minute": "1",
                "hour": "0",
@@ -46,5 +47,5 @@ def test_03_creating_backup_backup():
 
 # Check destroying a SMB dataset
 def test_02_destroying_backup_dataset():
-    results = DELETE(f"/pool/dataset/id/{urlDataset}/")
+    results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text

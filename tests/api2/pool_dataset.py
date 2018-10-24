@@ -8,10 +8,10 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT
-from auto_config import disk1, disk2
+from auto_config import pool_name
 
-
-DATASET_NAME = 'tank%2Fdataset1'
+dataset = f'{pool_name}/dataset1'
+dataset_url = dataset.replace('/', '%2F')
 
 
 def test_01_check_dataset_endpoint():
@@ -21,21 +21,21 @@ def test_01_check_dataset_endpoint():
 def test_02_create_dataset():
     result = POST(
         '/pool/dataset/', {
-            'name': DATASET_NAME.replace('%2F', '/')
+            'name': dataset
         }
     )
     assert result.status_code == 200, result.text
 
 
 def test_03_query_dataset_by_name():
-    dataset = GET(f'/pool/dataset/?id={DATASET_NAME}')
+    dataset = GET(f'/pool/dataset/?id={dataset_url}')
 
     assert isinstance(dataset.json()[0], dict)
 
 
 def test_04_update_dataset_description():
     result = PUT(
-        f'/pool/dataset/id/{DATASET_NAME}/', {
+        f'/pool/dataset/id/{dataset_url}/', {
             'comments': 'testing dataset'
         }
     )
@@ -45,7 +45,7 @@ def test_04_update_dataset_description():
 
 def test_05_set_permissions_for_dataset():
     result = POST(
-        f'/pool/dataset/id/{DATASET_NAME}/permission/', {
+        f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': 'UNIX',
             'mode': '777',
             'group': 'nobody',
@@ -64,6 +64,6 @@ def test_06_promoting_dataset():
 
 def test_07_delete_dataset():
     result = DELETE(
-        f'/pool/dataset/id/{DATASET_NAME}/'
+        f'/pool/dataset/id/{dataset_url}/'
     )
     assert result.status_code == 200, result.text

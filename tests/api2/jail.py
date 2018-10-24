@@ -9,10 +9,10 @@ import os
 import time
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import user, ip, password
+from auto_config import user, ip, password, pool_name
 from functions import GET, POST, PUT, SSH_TEST
 
-IOCAGE_POOL = 'tank'
+IOCAGE_POOL = pool_name
 JOB_ID = None
 RELEASE = None
 JAIL_NAME = 'jail1'
