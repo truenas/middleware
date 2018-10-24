@@ -510,13 +510,12 @@ create_partitions()
 	fi
 
 	if is_swap_safe; then
-	    gpart add -t freebsd-swap -s 16g -i 3 ${_disk}
+	    gpart add -t freebsd-swap -a 4k -s 16g -i 3 ${_disk}
 	fi
 	if gpart add -t freebsd-zfs -a 4k -i 2 ${_size} ${_disk}; then
 	    return 0
 	fi
     fi
-
     return 1
 }
 
