@@ -278,15 +278,15 @@ get_media_description()
 	    -v GiB=${GiB}.0 \
 	    -v MiB=${MiB}.0 \
 	'{
-            capacity = $3;
-            if (capacity >= TiB) {
-                printf("%.1f TiB", capacity / TiB);
-            } else if (capacity >= GiB) {
-                printf("%.1f GiB", capacity / GiB);
-            } else if (capacity >= MiB) {
-                printf("%.1f MiB", capacity / MiB);
-            } else {
-                printf("%d Bytes", capacity);
+	    capacity = $3;
+	    if (capacity >= TiB) {
+	        printf("%.1f TiB", capacity / TiB);
+	    } else if (capacity >= GiB) {
+	        printf("%.1f GiB", capacity / GiB);
+	    } else if (capacity >= MiB) {
+	        printf("%.1f MiB", capacity / MiB);
+	    } else {
+	        printf("%d Bytes", capacity);
 	    }
 	}'`
 	VAL="${_description} -- ${_cap}"
