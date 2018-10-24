@@ -574,7 +574,7 @@ disk_is_freenas()
 	if [ -z "$DS" ]; then
 	    zpool export freenas-boot || true
 	    return 1
-        elif mount -t zfs freenas-boot/ROOT/"${DS}" /tmp/data_old; then
+	elif mount -t zfs freenas-boot/ROOT/"${DS}" /tmp/data_old; then
 	    # If the active dataset doesn't have a database file,
 	    # then it's not FN as far as we're concerned (the upgrade code
 	    # will go badly).
@@ -614,7 +614,7 @@ disk_is_freenas()
 	    umount /tmp/data_old || return 1
 	    zpool export freenas-boot || return 1
 	    return 0
-        fi # elif mount ...
+	fi # elif mount ...
     fi # if [ "${upgrade_style}" = "new" ]
 
     # This is now legacy code, to support the old
