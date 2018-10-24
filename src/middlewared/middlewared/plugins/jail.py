@@ -539,18 +539,35 @@ class JailService(CRUDService):
     @accepts(Str("jail"))
     def start(self, jail):
         """Takes a jail and starts it."""
-        _, _, iocage = self.check_jail_existence(jail)
+        uuid, _, iocage = self.check_jail_existence(jail)
+        status, _ = IOCList.list_get_jid(uuid)
 
-        iocage.start()
+        if not status:
+            iocage.start()
 
         return True
 
     @accepts(Str("jail"))
     def stop(self, jail):
         """Takes a jail and stops it."""
-        _, _, iocage = self.check_jail_existence(jail)
+        uuid, _, iocage = self.check_jail_existence(jail)
+        status, _ = IOCList.list_get_jid(uuid)
 
-        iocage.stop()
+        if status:
+            iocage.stop()
+
+        return True
+
+    @accepts(Str('jail'))
+    def restart(self, jail):
+        """Takes a jail and restarts it."""
+        uuid, _, iocage = self.check_jail_existence(jail)
+        status, _ = IOCList.list_get_jid(uuid)
+
+        if status:
+            iocage.stop()
+
+        iocage.start()
 
         return True
 
