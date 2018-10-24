@@ -609,9 +609,9 @@ make_swap()
 
     # Skip the swap creation if installing into a BE (Swap already exists in that case)
     if [ "${_upgrade_type}" != "inplace" ] ; then
-      _swapparts=$(for _disk in $*; do echo ${_disk}p3; done)
-      gmirror destroy -f swap || true
-      gmirror label -b prefer swap ${_swapparts}
+	_swapparts=$(for _disk in $*; do echo ${_disk}p3; done)
+	gmirror destroy -f swap || true
+	gmirror label -b prefer swap ${_swapparts}
     fi
     echo "/dev/mirror/swap.eli		none			swap		sw		0	0" > /tmp/data/data/fstab.swap
 }
@@ -649,40 +649,35 @@ disk_is_freenas()
 
 	# Now we want to figure out which dataset to use.
 	DS=$(zpool list -H -o bootfs freenas-boot | head -n 1 | cut -d '/' -f 3)
-	if [ -z "$DS" ] ; then
+	if [ -z "$DS" ]; then
 	    zpool export freenas-boot || true
 	    return 1
-	fi
-	# There should always be a "set default=" line in a grub.cfg
-	# that we created.
-        if [ -n "${DS}" ]; then
-    	   # Okay, mount this pool
-	   if mount -t zfs freenas-boot/ROOT/"${DS}" /tmp/data_old; then
-		    # If the active dataset doesn't have a database file,
-		    # then it's not FN as far as we're concerned (the upgrade code
-		    # will go badly).
-		    # We also check for the Corral database directory.
-		    if [ ! -f /tmp/data_old/data/freenas-v1.db -o \
-			   -d /tmp/data_old/data/freenas.db ]; then
-			umount /tmp/data_old || true
-			zpool export freenas-boot || true
-			return 1
-		    fi
-		    cp -pR /tmp/data_old/data/. /tmp/data_preserved
-		    # Don't want to keep the old pkgdb around, since we're
-		    # nuking the filesystem
-		    rm -rf /tmp/data_preserved/pkgdb
-		    if [ -f /tmp/data_old/conf/base/etc/hostid ]; then
-			cp -p /tmp/data_old/conf/base/etc/hostid /tmp/
-		    fi
-		    if [ -d /tmp/data_old/root/.ssh ]; then
-			cp -pR /tmp/data_old/root/.ssh /tmp/
-		    fi
-		    if [ -d /tmp/data_old/boot/modules ]; then
-			mkdir -p /tmp/modules
-			for i in `ls /tmp/data_old/boot/modules`
+        elif mount -t zfs freenas-boot/ROOT/"${DS}" /tmp/data_old; then
+	    # If the active dataset doesn't have a database file,
+	    # then it's not FN as far as we're concerned (the upgrade code
+	    # will go badly).
+	    # We also check for the Corral database directory.
+	    if [ ! -f /tmp/data_old/data/freenas-v1.db -o \
+		   -d /tmp/data_old/data/freenas.db ]; then
+		umount /tmp/data_old || true
+		zpool export freenas-boot || true
+		return 1
+	    fi
+	    cp -pR /tmp/data_old/data/. /tmp/data_preserved
+	    # Don't want to keep the old pkgdb around, since we're
+	    # nuking the filesystem
+	    rm -rf /tmp/data_preserved/pkgdb
+	    if [ -f /tmp/data_old/conf/base/etc/hostid ]; then
+		cp -p /tmp/data_old/conf/base/etc/hostid /tmp/
+	    fi
+	    if [ -d /tmp/data_old/root/.ssh ]; then
+		cp -pR /tmp/data_old/root/.ssh /tmp/
+	    fi
+	    if [ -d /tmp/data_old/boot/modules ]; then
+		mkdir -p /tmp/modules
+		for i in `ls /tmp/data_old/boot/modules`
 		do
-	    cp -p /tmp/data_old/boot/modules/$i /tmp/modules/
+		    cp -p /tmp/data_old/boot/modules/$i /tmp/modules/
 		done
 	    fi
 	    if [ -d /tmp/data_old/usr/local/fusionio ]; then
@@ -697,9 +692,8 @@ disk_is_freenas()
 	    umount /tmp/data_old || return 1
 	    zpool export freenas-boot || return 1
 	    return 0
-        fi
-      fi
-    fi # End of if NEW upgrade style
+        fi # elif mount ...
+    fi # if [ "${upgrade_style}" = "new" ]
 
     # This is now legacy code, to support the old
     # partitioning scheme (freenas-9.2 and earlier)
@@ -709,7 +703,7 @@ disk_is_freenas()
 
     ls /tmp/data_old > /tmp/data_old.ls
     if [ -f /tmp/data_old/freenas-v1.db ]; then
-        _rv=0
+	_rv=0
     fi
     # XXX side effect, shouldn't be here!
     cp -pR /tmp/data_old/. /tmp/data_preserved
