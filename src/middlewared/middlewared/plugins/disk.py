@@ -872,10 +872,21 @@ class DiskService(CRUDService):
                     c = consumers[0]
                     await self.swaps_remove_disks([c.provider.geom.name])
                 else:
-                    swap_devices.append(f'mirror/{g.name}')
+                    mirror_name = f'mirror/{g.name}'
+                    swap_devices.append(mirror_name)
                     for c in consumers:
                         # Add all partitions used in swap, removing .eli
                         used_partitions.add(c.provider.name.strip('.eli'))
+
+                    # If mirror has been configured automatically (not by middlewared)
+                    # and there is no geli attached yet we should look for core in it.
+                    if g.config.get('Type') == 'AUTOMATIC' and not os.path.exists(
+                        f'/dev/{mirror_name}.eli'
+                    ):
+                        await run(
+                            'savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{mirror_name}',
+                            check=False
+                        )
 
         klass = geom.class_by_name('PART')
         if not klass:
