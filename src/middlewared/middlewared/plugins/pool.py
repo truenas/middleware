@@ -1552,7 +1552,7 @@ class PoolService(CRUDService):
         return True
 
     @item_method
-    @accepts(Int('id'), Str('passphrase'))
+    @accepts(Int('id'), Str('passphrase', password=True))
     @job(lock='lock_pool')
     async def lock(self, job, oid, passphrase):
         """
