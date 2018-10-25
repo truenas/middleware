@@ -1581,6 +1581,11 @@ class PoolService(CRUDService):
 
         await self.middleware.call('zfs.pool.export', pool['name'])
 
+        for ed in await self.middleware.call(
+                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+        ):
+            await self.middleware.call('disk.geli_detach_single', ed['encrypted_provider'])
+
         await self.middleware.call_hook('pool.post_lock', pool=pool)
         await self.middleware.call('service.restart', 'system_datasets')
 
