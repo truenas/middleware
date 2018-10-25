@@ -81,7 +81,8 @@ from freenasUI.jails.forms import (
 )
 from freenasUI.jails.models import JailTemplate
 from freenasUI.middleware import zfs
-from freenasUI.middleware.client import client
+from freenasUI.middleware.client import client, ValidationErrors
+from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.util import run_alerts
@@ -103,6 +104,7 @@ from freenasUI.storage.forms import (
     CreatePassphraseForm,
     ChangePassphraseForm,
     ManualSnapshotForm,
+    LockPassphraseForm,
     UnlockPassphraseForm,
     VolumeAutoImportForm,
     VolumeManagerForm,
@@ -958,15 +960,30 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
-        if obj.vol_encrypt == 0:
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+
+        form = LockPassphraseForm(
+            data=deserialized
+        )
+
+        valid = form.is_valid()
+        if valid:
+            try:
+                form.done(obj)
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
+                valid = False
+
+        if not valid:
             raise ImmediateHttpResponse(
-                response=self.error_response(request, _('Volume is not encrypted.'))
+                response=self.error_response(request, form.errors)
             )
-
-        with client as c:
-            c.call('pool.lock', obj.id, job=True)
-
-        return HttpResponse('Volume has been locked.', status=202)
+        else:
+            return HttpResponse('Volume has been locked.', status=202)
 
     def upgrade(self, request, **kwargs):
         self.method_check(request, allowed=['post'])

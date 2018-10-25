@@ -1552,9 +1552,9 @@ class PoolService(CRUDService):
         return True
 
     @item_method
-    @accepts(Int('id'))
+    @accepts(Int('id'), Str('passphrase', password=True))
     @job(lock='lock_pool')
-    async def lock(self, job, oid):
+    async def lock(self, job, oid, passphrase):
         """
         Lock encrypted pool `id`.
         """
@@ -1566,6 +1566,13 @@ class PoolService(CRUDService):
             verrors.add('id', 'Pool is not encrypted.')
         elif pool['status'] == 'OFFLINE':
             verrors.add('id', 'Pool already locked.')
+
+        if not verrors:
+            if not await self.middleware.call('disk.geli_testkey', pool, passphrase):
+                verrors.add(
+                    'passphrase',
+                    'Please provide a valid passphrase to lock the pool'
+                )
 
         if verrors:
             raise verrors
