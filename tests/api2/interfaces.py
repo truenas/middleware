@@ -56,7 +56,7 @@ def test_05_looking_main_interfaces_ipv4_dhcp_if_is_false():
     assert results.json()['ipv4_dhcp'] is False, results.text
 
 
-def test_06_creating_VLAN_interface():
+def test_06_creating_vlan1_interface():
     global payload
     payload = {
         "ipv4_dhcp": True,
@@ -76,11 +76,11 @@ def test_06_creating_VLAN_interface():
 
 @pytest.mark.parametrize('dkey', ["ipv4_dhcp", "name", "vlan_parent_interface",
                                   "type", "vlan_tag", "vlan_pcp"])
-def test_07_looking_at_the_created_interface_results_output_(dkey):
+def test_07_looking_at_vlan1_created_interfaces_results_output_(dkey):
     assert results.json()[dkey] == payload[dkey], results.text
 
 
-def test_08_get_the_interface_id_results():
+def test_08_get_the_vlan1_interface_results():
     global results
     results = GET(f'/interfaces/id/{interfaces_id}')
     assert results.status_code == 200, results.text
@@ -89,5 +89,10 @@ def test_08_get_the_interface_id_results():
 
 @pytest.mark.parametrize('dkey', ["ipv4_dhcp", "name", "vlan_parent_interface",
                                   "type", "vlan_tag", "vlan_pcp"])
-def test_07_looking_at_the_interface_id_results_output_(dkey):
+def test_09_looking_at_vlan1_interface_results_output_(dkey):
     assert results.json()[dkey] == payload[dkey], results.text
+
+
+def test_10_delete_interfaces_vlan1():
+    results = DELETE(f'/interfaces/id/{interfaces_id}')
+    assert results.status_code == 200, results.text
