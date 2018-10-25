@@ -906,6 +906,10 @@ Lock
       POST /api/v1.0/storage/volume/tank/lock/ HTTP/1.1
       Content-Type: application/json
 
+        {
+                "passphrase": "mypassphrase"
+        }
+
    **Example response**:
 
    .. sourcecode:: http
@@ -916,6 +920,7 @@ Lock
 
       Volume has been locked.
 
+   :json string passphrase: passphrase to lock the volume
    :resheader Content-Type: content type of the response
    :statuscode 202: no error
 
