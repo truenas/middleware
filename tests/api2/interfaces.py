@@ -13,7 +13,8 @@ from auto_config import interface, ip
 from functions import GET, PUT, POST, DELETE
 from config import *
 
-BRIDGENETMASKReason = "BRIDGENETMASK not in ixautomation.conf"
+broadcast = ip.replace(ip.split('.')[3], '255')
+aliases = {'address': ip, 'broadcast': broadcast}
 
 
 def test_01_get_interfaces_name():
@@ -23,7 +24,7 @@ def test_01_get_interfaces_name():
     assert results.json()[0]["name"] == interface, results.text
 
 
-def test_02_get_interfaces_ip():
+def test_02_get_interfaces_aliases_ip():
     results = GET(f'/interfaces?name={interface}')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list) is True, results.text
@@ -31,14 +32,29 @@ def test_02_get_interfaces_ip():
     assert interface_ip == ip, results.text
 
 
-@pytest.mark.skipif("BRIDGENETMASK" not in locals(),
-                    reason=BRIDGENETMASKReason)
-def test_03_get_interfaces_netmask():
+def test_03_get_interfaces_aliases_broadcast_ip():
+    results = GET(f'/interfaces?name={interface}')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), list) is True, results.text
+    broadcast_ip = results.json()[0]['state']['aliases'][1]['broadcast']
+    assert broadcast_ip == broadcast, results.text
+
+
+def test_04_get_interfaces_aliases_type():
+    results = GET(f'/interfaces?name={interface}')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), list) is True, results.text
+    broadcast_ip = results.json()[0]['state']['aliases'][1]['type']
+    aliases['type'] = broadcast_ip
+    assert isinstance(broadcast_ip, str) is True, results.text
+
+def test_05_get_interfaces_aliases_netmask():
     results = GET(f'/interfaces?name={interface}')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list) is True, results.text
     netmask = results.json()[0]['state']['aliases'][1]['netmask']
-    assert netmask == int(BRIDGENETMASK), results.text
+    aliases['netmask'] = netmask
+    assert isinstance(netmask, int) is True, results.text
 
 
 def test_04_set_main_interfaces_ipv4_to_false():
@@ -60,7 +76,7 @@ def test_06_creating_vlan1_interface():
     global payload
     payload = {
         "ipv4_dhcp": True,
-        "name": "vlan1",
+        "name": "vlan2",
         "vlan_parent_interface": interface,
         "type": "VLAN",
         "vlan_tag": 1,
@@ -91,6 +107,17 @@ def test_08_get_the_vlan1_interface_results():
                                   "type", "vlan_tag", "vlan_pcp"])
 def test_09_looking_at_vlan1_interface_results_output_(dkey):
     assert results.json()[dkey] == payload[dkey], results.text
+
+
+def test_10_get_interfaces_ipv4_in_use():
+    global results
+    results = POST("/interfaces/ip_in_use", {"ipv4": True})
+    assert results.status_code == 200, results.text
+
+
+@pytest.mark.parametrize('dkey', ['type', 'address', 'netmask', 'broadcast'])
+def test_11_look_at_interfaces_ipv4_in_use_output_(dkey):
+    assert results.json()[0][dkey] == aliases[dkey], results.text
 
 
 def test_10_delete_interfaces_vlan1():
