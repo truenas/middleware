@@ -18,7 +18,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         data['begin'] = str(data['begin'])
         data['end'] = str(data['end'])
         data['ret_unit'] = data['ret_unit'].upper()
-        data['dow'] = [int(day) for day in data.pop('byweekday').split(',')]
+        data['dow'] = [int(day) for day in data.pop('byweekday').split(',') if day]
         data.pop('repeat_unit', None)
         return data
 
