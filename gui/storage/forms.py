@@ -331,7 +331,10 @@ class VolumeManagerForm(VolumeMixin, Form):
 
         # restart smartd to enable monitoring for any new drives added
         if (services.objects.get(srv_service='smartd').srv_enable):
-            notifier().restart("smartd")
+            with client as c:
+                # Restart in the background as it may take a long time
+                # depending on the number of disks.
+                c.call('core.bulk', 'service.restart', [['smartd']])
 
         # ModelForm compatibility layer for API framework
         self.instance = volume
