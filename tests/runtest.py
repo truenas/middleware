@@ -87,6 +87,7 @@ elif api == "1.0":
     disk = 'disk0 = "da0"\ndisk1 = "da1"\ndisk2 = "da2"'
 else:
     disk = 'disk0 = "ada0"\ndisk1 = "ada1"\ndisk2 = "ada2"'
+
 digit = ''.join(random.choices(string.digits, k=2))
 hostname = f'freenas_test{digit}'
 
