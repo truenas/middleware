@@ -127,7 +127,7 @@ class PoolResilverService(ConfigService):
     async def resilver_extend(self, data):
         data['begin'] = data['begin'].strftime('%H:%M')
         data['end'] = data['end'].strftime('%H:%M')
-        data['weekday'] = [int(v) for v in data['weekday'].split(',')]
+        data['weekday'] = [int(v) for v in data['weekday'].split(',') if v]
         return data
 
     @private
@@ -143,14 +143,13 @@ class PoolResilverService(ConfigService):
             data['end'] = time(int(end.split(':')[0]), int(end.split(':')[1]))
 
         weekdays = data.get('weekday')
-        if weekdays:
-            if len([day for day in weekdays if day not in range(1, 8)]) > 0:
-                verrors.add(
-                    f'{schema}.weekday',
-                    'The week days should be in range of 1-7 inclusive'
-                )
-            else:
-                data['weekday'] = ','.join([str(day) for day in weekdays])
+        if not weekdays:
+            verrors.add(
+                f'{schema}.weekday',
+                'At least one weekday should be selected'
+            )
+        else:
+            data['weekday'] = ','.join([str(day) for day in weekdays])
 
         return verrors, data
 
@@ -160,7 +159,7 @@ class PoolResilverService(ConfigService):
             Str('begin', validators=[Time()]),
             Str('end', validators=[Time()]),
             Bool('enabled'),
-            List('weekday', items=[Int('weekday')])
+            List('weekday', items=[Int('weekday', validators=[Range(min=1, max=7)])])
         )
     )
     async def do_update(self, data):
