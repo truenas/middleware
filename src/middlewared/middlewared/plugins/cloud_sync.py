@@ -293,7 +293,7 @@ class CloudSyncService(CRUDService):
     @private
     async def _validate(self, verrors, name, data):
         if data["encryption"]:
-            if not data["encryption_password"]:
+            if not data.get("encryption_password"):
                 verrors.add(f"{name}.encryption_password", "This field is required when encryption is enabled")
 
         credentials = await self._get_credentials(data["credentials"])
