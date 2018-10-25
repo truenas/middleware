@@ -22,7 +22,7 @@ def data():
 def test_01_looking_vm_flags():
     results = GET('/vm/flags/')
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict) is True
+    assert isinstance(results.json(), dict) is True, results.text
 
 
 def test_02_creating_vm(data):
@@ -59,20 +59,20 @@ def test_04_look_vm_query_(dkey):
 def test_05_start_vm(data):
     results = POST(f'/vm/id/{data["vmid"]}/start/')
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), bool) is True
+    assert isinstance(results.json(), bool) is True, results.text
 
 
 def test_06_vm_status(data):
     results = POST(f'/vm/id/{data["vmid"]}/status/')
     assert results.status_code == 200, results.text
     status = results.json()
-    assert isinstance(status, dict) is True
+    assert isinstance(status, dict) is True, results.text
 
 
 def test_07_stop_vm(data):
     results = POST(f'/vm/id/{data["vmid"]}/stop/')
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), bool) is True
+    assert isinstance(results.json(), bool) is True, results.text
 
 
 def test_08_update_vm(data):
