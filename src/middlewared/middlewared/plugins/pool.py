@@ -96,7 +96,7 @@ class PoolResilverService(ConfigService):
     async def resilver_extend(self, data):
         data['begin'] = data['begin'].strftime('%H:%M')
         data['end'] = data['end'].strftime('%H:%M')
-        data['weekday'] = [int(v) for v in data['weekday'].split(',')]
+        data['weekday'] = [int(v) for v in data['weekday'].split(',') if v]
         return data
 
     async def validate_fields_and_update(self, data, schema):
