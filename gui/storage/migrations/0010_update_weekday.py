@@ -23,7 +23,7 @@ def snapshot_value_update(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('storage', '0010_auto_20180618_0340'),
+        ('storage', '0009_disk_disk_passwd'),
     ]
 
     operations = [
