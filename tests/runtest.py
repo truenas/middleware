@@ -9,6 +9,8 @@ from os import path, getcwd, makedirs, listdir
 import getopt
 import sys
 import re
+import random
+import string
 
 apifolder = getcwd()
 sys.path.append(apifolder)
@@ -86,22 +88,25 @@ elif api == "1.0":
 else:
     disk = 'disk0 = "ada0"\ndisk1 = "ada1"\ndisk2 = "ada2"'
 
-cfg_content = """#!/usr/bin/env python3.6
+digit = ''.join(random.choices(string.digits, k=2))
+hostname = f'freenas_test{digit}'
+
+cfg_content = f"""#!/usr/bin/env python3.6
 
 user = "root"
-password = "%s"
-ip = "%s"
-default_api_url = 'http://' + ip + '/api/v%s'
+password = "{passwd}"
+ip = "{ip}"
+hostname = "{hostname}"
+default_api_url = 'http://' + ip + '/api/v{api}'
 api1_url = 'http://' + ip + '/api/v1.0'
 api2_url = 'http://' + ip + '/api/v2.0'
-interface = "%s"
+interface = "{interface}"
 ntpServer = "10.20.20.122"
-localHome = "%s"
-%s
-keyPath = "%s"
-results_xml = "%s"
+localHome = "{localHome}"
+{disk}
+keyPath = "{keyPath}"
 pool_name = "tank"
-""" % (passwd, ip, api, interface, localHome, disk, keyPath, results_xml)
+"""
 
 cfg_file = open("auto_config.py", 'w')
 cfg_file.writelines(cfg_content)
