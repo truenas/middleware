@@ -46,12 +46,6 @@ class SMBService(SystemServiceService):
     async def __validate_netbios_name(self, name):
         return RE_NETBIOSNAME.match(name)
 
-    # TODO: Remove this once choices.doscharset has been taken care of
-    async def doscharset_choices(self):
-        return await self.generate_choices(
-            ['CP437', 'CP850', 'CP852', 'CP866', 'CP932', 'CP949', 'CP950', 'CP1026', 'CP1251', 'ASCII']
-        )
-
     async def unixcharset_choices(self):
         return await self.generate_choices(
             ['UTF-8', 'ISO-8859-1', 'ISO-8859-15', 'GB2312', 'EUC-JP', 'ASCII']
