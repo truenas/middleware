@@ -99,6 +99,12 @@ class EtcService(Service):
         'smartd': [
             {'type': 'py', 'path': 'smartd'},
         ],
+        'smb': [
+            {'type': 'mako', 'path': 'local/smb4.conf'},
+        ],
+        'smb_share': [
+            {'type': 'mako', 'path': 'local/smb4_share.conf'},
+        ],
     }
 
     class Config:

@@ -231,20 +231,6 @@ def smb4_activedirectory_enabled(client):
     return ret
 
 
-def smb4_autorid_enabled(client):
-    ret = False
-
-    try:
-        ad = Struct(client.call('datastore.query', 'directoryservice.ActiveDirectory', None, {'get': True}))
-    except Exception as e:
-        return ret
-
-    if ad.ad_idmap_backend.lower() == "autorid":
-        ret = True
-
-    return ret
-
-
 def config_share_for_nfs4(share):
     confset1(share, "nfs4:mode = special")
     confset1(share, "nfs4:acedup = merge")
@@ -710,18 +696,6 @@ IDMAP_FUNCTIONS = {
 }
 
 
-def configure_idmap_backend(client, smb4_conf, idmap, domain):
-    if not domain:
-        domain = "*"
-
-    try:
-        idmap_str = client.call('notifier.ds_idmap_type_code_to_string', idmap.idmap_backend_type)
-        IDMAP_FUNCTIONS[idmap_str](smb4_conf, idmap, domain)
-    except Exception as e:
-        log.warn('Failed to configure idmap', exc_info=True)
-        pass
-
-
 def set_ldap_password(client):
     try:
         ldap = Struct(client.call('datastore.query', 'directoryservice.LDAP', None, {'get': True}))
@@ -738,170 +712,6 @@ def set_ldap_password(client):
                 if not line:
                     continue
                 print(line)
-
-
-def add_ldap_conf(client, smb4_conf):
-    try:
-        ldap = Struct(client.call('datastore.query', 'directoryservice.LDAP', None, {'get': True}))
-        ldap.ds_type = 2  # FIXME: DS_TYPE_LDAP = 2
-        cifs = Struct(client.call('smb.config'))
-    except Exception as e:
-        return
-
-    confset1(smb4_conf, "security = user")
-
-    confset1(
-        smb4_conf,
-        "passdb backend = ldapsam:%s://%s" % (
-            "ldaps" if ldap.ldap_ssl == 'on' else "ldap",
-            ldap.ldap_hostname
-        )
-    )
-
-    ldap_workgroup = cifs.workgroup.upper()
-
-    confset2(smb4_conf, "ldap admin dn = %s", ldap.ldap_binddn)
-    confset2(smb4_conf, "ldap suffix = %s", ldap.ldap_basedn)
-    confset2(smb4_conf, "ldap user suffix = %s", ldap.ldap_usersuffix)
-    confset2(smb4_conf, "ldap group suffix = %s", ldap.ldap_groupsuffix)
-    confset2(smb4_conf, "ldap machine suffix = %s", ldap.ldap_machinesuffix)
-    confset2(
-        smb4_conf,
-        "ldap ssl = %s",
-        "start tls" if (ldap.ldap_ssl == 'start_tls') else 'off'
-    )
-
-    confset1(smb4_conf, "ldap replication sleep = 1000")
-    confset1(smb4_conf, "ldap passwd sync = yes")
-    confset1(smb4_conf, "ldapsam:trusted = yes")
-
-    confset2(smb4_conf, "workgroup = %s", ldap_workgroup)
-    confset1(smb4_conf, "domain logons = yes")
-
-    idmap = Struct(client.call('notifier.ds_get_idmap_object', ldap.ds_type, ldap.id, ldap.ldap_idmap_backend))
-    configure_idmap_backend(client, smb4_conf, idmap, ldap_workgroup)
-
-
-def add_activedirectory_conf(client, smb4_conf):
-    cachedir = "/var/tmp/.cache/.samba"
-
-    try:
-        ad = Struct(client.call('datastore.query', 'directoryservice.ActiveDirectory', None, {'get': True}))
-        ad.ds_type = 1  # FIXME: DS_TYPE_ACTIVEDIRECTORY = 1
-    except Exception as e:
-        return
-
-    try:
-        os.makedirs(cachedir)
-        os.chmod(cachedir, 0o755)
-    except Exception as e:
-        pass
-
-    ad_workgroup = None
-
-    # First try to get the workgroup from LDAP. If that fails, automatically generate based on ad_domainname
-    # This is to allow us to generate a functional config even if a DC isn't available when we're generating the config
-    try:
-        fad = Struct(client.call('notifier.directoryservice', 'AD'))
-        ad_workgroup = fad.netbiosname.upper()
-    except Exception as e:
-        ad_workgroup = ad.ad_domainname.upper().split(".")[0]
-
-    confset2(smb4_conf, "workgroup = %s", ad_workgroup)
-    confset2(smb4_conf, "realm = %s", ad.ad_domainname.upper())
-    confset1(smb4_conf, "security = ADS")
-    confset1(smb4_conf, "client use spnego = yes")
-
-    confset1(smb4_conf, "local master = no")
-    confset1(smb4_conf, "domain master = no")
-    confset1(smb4_conf, "preferred master = no")
-
-    confset2(smb4_conf, "ads dns update = %s",
-             "yes" if ad.ad_allow_dns_updates else "no")
-
-    confset1(smb4_conf, "winbind cache time = 7200")
-    confset1(smb4_conf, "winbind offline logon = yes")
-    confset1(smb4_conf, "winbind enum users = yes")
-    confset1(smb4_conf, "winbind enum groups = yes")
-    confset1(smb4_conf, "winbind nested groups = yes")
-    confset2(smb4_conf, "winbind use default domain = %s",
-             "yes" if ad.ad_use_default_domain else "no")
-    confset1(smb4_conf, "winbind refresh tickets = yes")
-
-    if ad.ad_nss_info:
-        confset2(smb4_conf, "winbind nss info = %s", ad.ad_nss_info)
-
-    idmap = Struct(client.call('notifier.ds_get_idmap_object', ad.ds_type, ad.id, ad.ad_idmap_backend))
-    configure_idmap_backend(client, smb4_conf, idmap, ad_workgroup)
-
-    confset2(smb4_conf, "allow trusted domains = %s",
-             "yes" if ad.ad_allow_trusted_doms else "no")
-
-    confset2(smb4_conf, "client ldap sasl wrapping = %s",
-             ad.ad_ldap_sasl_wrapping)
-
-    confset1(smb4_conf, "template shell = /bin/sh")
-    cifs_homedir = "%s/%%D/%%U" % get_cifs_homedir(client)
-    confset2(smb4_conf, "template homedir = %s", cifs_homedir)
-
-
-def add_domaincontroller_conf(client, smb4_conf):
-    try:
-        dc = Struct(client.call('datastore.query', 'services.DomainController', None, {'get': True}))
-        cifs = Struct(client.call('smb.config'))
-    except Exception as e:
-        return
-
-    # server_services = get_server_services()
-    # dcerpc_endpoint_servers = get_dcerpc_endpoint_servers()
-
-    confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
-    if cifs.netbiosalias:
-        confset2(smb4_conf, "netbios aliases = %s", cifs.netbiosalias.upper())
-    confset2(smb4_conf, "workgroup = %s", dc.dc_domain.upper())
-    confset2(smb4_conf, "realm = %s", dc.dc_realm)
-    confset2(smb4_conf, "dns forwarder = %s", dc.dc_dns_forwarder)
-    confset1(smb4_conf, "idmap_ldb:use rfc2307 = yes")
-
-    # We have to manually add vfs objects here until we get more general fix to DC
-    # code in loadparm.c
-    confset1(smb4_conf, "vfs objects = dfs_samba4 zfsacl")
-
-    # confset2(smb4_conf, "server services = %s",
-    #    string.join(server_services, ',').rstrip(','))
-    # confset2(smb4_conf, "dcerpc endpoint servers = %s",
-    #    string.join(dcerpc_endpoint_servers, ',').rstrip(','))
-
-    ipv4_addrs = []
-    if cifs.bindip:
-        for i in cifs.bindip:
-            try:
-                socket.inet_aton(i)
-                ipv4_addrs.append(i)
-            except Exception as e:
-                pass
-
-    else:
-        interfaces = client.call('notifier.choices', 'IPChoices', [True, False])
-        for i in interfaces:
-            try:
-                socket.inet_aton(i[0])
-                ipv4_addrs.append(i[0])
-            except Exception as e:
-                pass
-
-    with open("/usr/local/etc/lmhosts", "w") as f:
-        for ipv4 in ipv4_addrs:
-            f.write("%s\t%s\n" % (ipv4, dc.dc_domain.upper()))
-
-
-def get_smb4_users(client):
-    return client.call('datastore.query', 'account.bsdusers', [
-        ['OR', [
-            ('bsdusr_smbhash', '~', r'^.+:.+:[X]{32}:.+$'),
-            ('bsdusr_smbhash', '~', r'^.+:.+:[A-F0-9]{32}:.+$'),
-        ]],
-    ])
 
 
 def get_disabled_users(client):
@@ -933,339 +743,6 @@ def generate_smb4_tdb(client, smb4_tdb):
             smb4_tdb.append(u['bsdusr_smbhash'])
     except Exception as e:
         return
-
-
-def generate_smb4_conf(client, smb4_conf, role):
-    global is_truenas_ha
-
-    cifs = Struct(client.call('smb.config'))
-
-    if not cifs.guest:
-        cifs.guest = 'ftp'
-    if not cifs.filemask:
-        cifs.filemask = "0666"
-    if not cifs.dirmask:
-        cifs.dirmask = "0777"
-
-    # standard stuff... should probably do this differently
-    confset1(smb4_conf, "[global]", space=0)
-
-    if os.path.exists("/usr/local/etc/smbusers"):
-        confset1(smb4_conf, "username map = /usr/local/etc/smbusers")
-
-    server_min_protocol = fs().services.smb.config.server_min_protocol
-    if server_min_protocol != 'NONE':
-        confset2(smb4_conf, "server min protocol = %s", server_min_protocol)
-
-    server_max_protocol = fs().services.smb.config.server_max_protocol
-    if server_max_protocol != 'NONE':
-        confset2(smb4_conf, "server max protocol = %s", server_max_protocol)
-
-    server_multi_channel = fs().services.smb.config.server_multi_channel
-    if server_multi_channel != 0:
-        confset1(smb4_conf, "server multi channel support = yes")
-
-    if cifs.bindip:
-        interfaces = []
-
-        bindips = ' '.join(cifs.bindip)
-        if role != 'dc':
-            bindips = "127.0.0.1 %s" % bindips
-
-        bindips = bindips.split()
-        for bindip in bindips:
-            if not bindip:
-                continue
-            bindip = bindip.strip()
-            iface = client.call('notifier.get_interface', bindip)
-
-            is_carp_interface = False
-            if iface:
-                try:
-                    is_carp_interface = client.call('notifier.is_carp_interface', iface)
-                except Exception as e:
-                    pass
-
-            if iface and is_carp_interface:
-                parent_iface = client.call('notifier.get_parent_interface', iface)
-                if not parent_iface:
-                    continue
-
-                parent_iinfo = client.call('notifier.get_interface_info', parent_iface[0])
-                if not parent_iinfo:
-                    continue
-
-                interfaces.append("%s/%s" % (bindip, parent_iface[2]))
-            else:
-                interfaces.append(bindip)
-
-        if interfaces:
-            confset2(smb4_conf, "interfaces = %s", ' '.join(interfaces))
-        confset1(smb4_conf, "bind interfaces only = yes")
-
-    confset1(smb4_conf, "encrypt passwords = yes")
-    confset1(smb4_conf, "dns proxy = no")
-    confset1(smb4_conf, "strict locking = no")
-    confset1(smb4_conf, "oplocks = yes")
-    confset1(smb4_conf, "deadtime = 15")
-    confset1(smb4_conf, "max log size = 51200")
-
-    if is_truenas_ha:
-        confset1(smb4_conf, "private dir = /root/samba/private")
-
-    confset2(smb4_conf, "max open files = %d",
-             int(get_sysctl('kern.maxfilesperproc')) - 25)
-
-    loglevel = "0"
-    if cifs.loglevel and cifs.loglevel is not True:
-        for k, v in LOGLEVEL_MAP.items():
-            if cifs.loglevel == v:
-                loglevel = k
-                break
-
-    if cifs.syslog:
-        confset1(smb4_conf, "logging = syslog:%s" % loglevel)
-    else:
-        confset1(smb4_conf, "logging = file")
-
-    if is_truenas_ha:
-        confset1(smb4_conf, "winbind netbios alias spn = false")
-
-    confset1(smb4_conf, "load printers = no")
-    confset1(smb4_conf, "printing = bsd")
-    confset1(smb4_conf, "printcap name = /dev/null")
-    confset1(smb4_conf, "disable spoolss = yes")
-    confset1(smb4_conf, "getwd cache = yes")
-    confset2(smb4_conf, "guest account = %s", cifs.guest)
-    confset1(smb4_conf, "map to guest = Bad User")
-    confset2(smb4_conf, "obey pam restrictions = %s",
-             "yes" if cifs.obey_pam_restrictions else "no")
-    confset2(smb4_conf, "ntlm auth = %s",
-             "yes" if cifs.ntlmv1_auth else "no")
-    confset1(smb4_conf, "directory name cache size = 0")
-    confset1(smb4_conf, "kernel change notify = no")
-
-    confset1(smb4_conf,
-             "panic action = /usr/local/libexec/samba/samba-backtrace")
-    confset1(smb4_conf, "nsupdate command = /usr/local/bin/samba-nsupdate -g")
-
-    confset2(smb4_conf, "server string = %s", cifs.description)
-    confset1(smb4_conf, "ea support = yes")
-    confset1(smb4_conf, "store dos attributes = yes")
-    confset1(smb4_conf, "lm announce = yes")
-    confset2(smb4_conf, "hostname lookups = %s",
-             "yes" if cifs.hostlookup else False)
-    confset2(smb4_conf, "unix extensions = %s",
-             "no" if not cifs.unixext else False)
-    confset2(smb4_conf, "time server = %s",
-             "yes" if cifs.timeserver else False)
-    confset2(smb4_conf, "null passwords = %s",
-             "yes" if cifs.nullpw else False)
-    confset2(smb4_conf, "acl allow execute always = %s",
-             "true" if cifs.allow_execute_always else "false")
-    confset1(smb4_conf, "dos filemode = yes")
-    confset2(smb4_conf, "multicast dns register = %s",
-             "yes" if cifs.zeroconf else "no")
-
-    if not smb4_ldap_enabled(client):
-        confset2(smb4_conf, "domain logons = %s",
-                 "yes" if cifs.domain_logons else "no")
-
-    if not client.call('notifier.common', 'system', 'activedirectory_enabled'):
-        confset2(smb4_conf, "local master = %s",
-                 "yes" if cifs.localmaster else "no")
-
-    if not smb4_autorid_enabled(client):
-        # 5 = DS_TYPE_CIFS
-        idmap = Struct(client.call('notifier.ds_get_idmap_object', 5, cifs.id, 'tdb'))
-        configure_idmap_backend(client, smb4_conf, idmap, None)
-
-    if role == 'auto':
-        confset1(smb4_conf, "server role = auto")
-
-    elif role == 'classic':
-        confset1(smb4_conf, "server role = classic primary domain controller")
-
-    elif role == 'netbios':
-        confset1(smb4_conf, "server role = netbios backup domain controller")
-
-    elif role == 'dc':
-        confset1(smb4_conf, "server role = active directory domain controller")
-        add_domaincontroller_conf(client, smb4_conf)
-
-    elif role == 'member':
-        confset1(smb4_conf, "server role = member server")
-
-        if smb4_ldap_enabled(client):
-            add_ldap_conf(client, smb4_conf)
-
-        elif client.call('notifier.common', 'system', 'activedirectory_enabled'):
-            add_activedirectory_conf(client, smb4_conf)
-
-        confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
-        if cifs.netbiosalias:
-            confset2(smb4_conf, "netbios aliases = %s", cifs.netbiosalias.upper())
-
-    elif role == 'standalone':
-        confset1(smb4_conf, "server role = standalone")
-        confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
-        if cifs.netbiosalias:
-            confset2(smb4_conf, "netbios aliases = %s", cifs.netbiosalias.upper())
-        confset2(smb4_conf, "workgroup = %s", cifs.workgroup.upper())
-        confset1(smb4_conf, "security = user")
-
-    confset2(smb4_conf, "create mask = %s", cifs.filemask)
-    confset2(smb4_conf, "directory mask = %s", cifs.dirmask)
-    confset2(smb4_conf, "client ntlmv2 auth = %s",
-             "yes" if not cifs.ntlmv1_auth else "no")
-    confset2(smb4_conf, "dos charset = %s", cifs.doscharset)
-    confset2(smb4_conf, "unix charset = %s", cifs.unixcharset)
-
-    if cifs.loglevel and cifs.loglevel is not True:
-        confset2(smb4_conf, "log level = %s", loglevel)
-
-    smb_options = cifs.smb_options.strip()
-    for line in smb_options.split('\n'):
-        line = line.strip()
-        if not line:
-            continue
-        confset1(smb4_conf, line)
-
-
-def generate_smb4_shares(client, smb4_shares):
-    shares = client.call('datastore.query', 'sharing.CIFS_Share')
-
-    if len(shares) == 0:
-        return
-
-    for share in shares:
-        share = Struct(share)
-        if (not share.cifs_home and
-                not os.path.isdir(share.cifs_path)):
-            continue
-
-        confset1(smb4_shares, "\n")
-        if share.cifs_home:
-            confset1(smb4_shares, "[homes]", space=0)
-
-            valid_users_path = "%U"
-            valid_users = "%U"
-
-            if client.call('notifier.common', 'system', 'activedirectory_enabled'):
-                valid_users_path = "%D/%U"
-                valid_users = "%D\%U"
-
-                try:
-                    ad = Struct(client.call('notifier.directoryservice', 'AD'))
-                    for w in ad.workgroups:
-                        homedir_path = "%s/%s" % (share.cifs_path, w)
-                        if not os.access(homedir_path, os.F_OK):
-                            smb4_mkdir(homedir_path)
-
-                except Exception as e:
-                    pass
-
-            confset2(smb4_shares, "valid users = %s", valid_users)
-
-            if share.cifs_path:
-                cifs_homedir_path = ("%s/%s" %
-                                     (share.cifs_path, valid_users_path))
-                confset2(smb4_shares, "path = %s", qw(cifs_homedir_path))
-            if share.cifs_comment:
-                confset2(smb4_shares,
-                         "comment = %s", share.cifs_comment)
-            else:
-                confset1(smb4_shares, "comment = Home Directories")
-        else:
-            confset2(smb4_shares, "[%s]", share.cifs_name, space=0)
-            confset2(smb4_shares, "path = %s", qw(share.cifs_path))
-            confset2(smb4_shares, "comment = %s", share.cifs_comment)
-        confset1(smb4_shares, "printable = no")
-        confset1(smb4_shares, "veto files = /.snapshot/.windows/.mac/.zfs/")
-        confset2(smb4_shares, "writeable = %s",
-                 "no" if share.cifs_ro else "yes")
-        confset2(smb4_shares, "browseable = %s",
-                 "yes" if share.cifs_browsable else "no")
-        confset2(smb4_shares, "access based share enum = %s",
-                 "yes" if share.cifs_abe else "no")
-
-        task = None
-        if share.cifs_storage_task:
-            task = share.cifs_storage_task
-
-        vfs_objects = []
-        if task:
-            vfs_objects.append('shadow_copy2')
-        extend_vfs_objects_for_zfs(share.cifs_path, vfs_objects)
-        vfs_objects.extend(share.cifs_vfsobjects)
-
-        if share.cifs_recyclebin:
-            vfs_objects.append('recycle')
-            confset1(smb4_shares, "recycle:repository = .recycle/%U")
-            confset1(smb4_shares, "recycle:keeptree = yes")
-            confset1(smb4_shares, "recycle:versions = yes")
-            confset1(smb4_shares, "recycle:touch = yes")
-            confset1(smb4_shares, "recycle:directory_mode = 0777")
-            confset1(smb4_shares, "recycle:subdir_mode = 0700")
-
-        if task:
-            confset1(smb4_shares, "shadow:snapdir = .zfs/snapshot")
-            confset1(smb4_shares, "shadow:sort = desc")
-            confset1(smb4_shares, "shadow:localtime = yes")
-            confset1(smb4_shares,
-                     "shadow:format = auto-%%Y%%m%%d.%%H%%M-%s%s" %
-                     (task.task_ret_count, task.task_ret_unit[0]))
-            confset1(smb4_shares, "shadow:snapdirseverywhere = yes")
-
-        config_share_for_vfs_objects(smb4_shares, vfs_objects)
-
-        confset2(smb4_shares, "hide dot files = %s",
-                 "no" if share.cifs_showhiddenfiles else "yes")
-        confset2(smb4_shares, "hosts allow = %s", share.cifs_hostsallow)
-        confset2(smb4_shares, "hosts deny = %s", share.cifs_hostsdeny)
-        confset2(smb4_shares, "guest ok = %s",
-                 "yes" if share.cifs_guestok else "no")
-
-        confset2(smb4_shares, "guest only = %s",
-                 "yes" if share.cifs_guestonly else False)
-
-        config_share_for_nfs4(smb4_shares)
-        config_share_for_zfs(smb4_shares)
-
-        for line in share.cifs_auxsmbconf.split('\n'):
-            line = line.strip()
-            if not line:
-                continue
-            confset1(smb4_shares, line)
-
-
-def generate_smb4_system_shares(client, smb4_shares):
-    if client.call('notifier.common', 'system', 'domaincontroller_enabled'):
-        try:
-            dc = Struct(client.call('datastore.query', 'services.DomainController', None, {'get': True}))
-            sysvol_path = "/var/db/samba4/sysvol"
-
-            for share in ["sysvol", "netlogon"]:
-                confset1(smb4_shares, "\n")
-                confset1(smb4_shares, "[%s]" % (share), space=0)
-
-                if share == "sysvol":
-                    path = sysvol_path
-                else:
-                    path = "%s/%s/scripts" % (sysvol_path, dc.dc_realm.lower())
-
-                confset1(smb4_shares, "path = %s" % (path))
-                confset1(smb4_shares, "read only = no")
-                # map_dacl_protected=true and nfs4:mode=simple are required
-                # to pass samba-tool ACL validation on GPOs
-                confset1(smb4_shares, "zfsacl:map_dacl_protected=true")
-                confset1(smb4_shares, "nfs4:mode=simple")
-                confset1(smb4_shares, "nfs4:chown=true")
-
-                config_share_for_zfs(smb4_shares)
-
-        except Exception as e:
-            pass
 
 
 def generate_smbusers(client):
@@ -1323,12 +800,8 @@ def smb4_unlink(dir):
 
 
 def smb4_setup(client):
-    global is_truenas_ha
     statedir = "/var/db/samba4"
     privatedir = "/var/db/samba4/private"
-
-    if is_truenas_ha:
-        privatedir = "/root/samba/private"
 
     if not os.access(privatedir, os.F_OK):
         smb4_mkdir(privatedir)
@@ -1336,6 +809,7 @@ def smb4_setup(client):
 
     smb4_mkdir("/var/run/samba")
     smb4_mkdir("/var/run/samba4")
+    smb4_mkdir("/root/samba/private")
 
     smb4_mkdir("/var/log/samba4")
     os.chmod("/var/log/samba4", 0o755)
@@ -1672,8 +1146,6 @@ def smb4_do_migrations(client):
 
 
 def main():
-    global is_truenas_ha
-
     smb4_tdb = []
     smb4_conf = []
     smb4_shares = []
@@ -1681,13 +1153,6 @@ def main():
     smb_conf_path = "/usr/local/etc/smb4.conf"
 
     client = Client()
-
-    if not client.call('notifier.is_freenas') and client.call('notifier.failover_licensed'):
-        is_truenas_ha = True
-
-    privatedir = "/var/db/samba4/private"
-    if is_truenas_ha:
-        privatedir = "/root/samba/private"
 
     smb4_setup(client)
     smb4_do_migrations(client)
@@ -1700,18 +1165,12 @@ def main():
 
     generate_smbusers(client)
     generate_smb4_tdb(client, smb4_tdb)
-    generate_smb4_conf(client, smb4_conf, role)
-    generate_smb4_system_shares(client, smb4_shares)
-    generate_smb4_shares(client, smb4_shares)
 
     if role == 'dc' and not client.call('notifier.samba4', 'domain_provisioned'):
         provision_smb4(client)
 
-    with open(smb_conf_path, "w") as f:
-        for line in smb4_conf:
-            f.write(line + '\n')
-        for line in smb4_shares:
-            f.write(line + '\n')
+    client.call('etc.generate', 'smb')
+    client.call('etc.generate', 'smb_share')
 
     smb4_set_SID(client, role)
 
@@ -1726,8 +1185,6 @@ def main():
                 smb4_tdb,
                 privatedir + "/passdb.tdb"
             )
-            if role != 'member':
-                smb4_grant_rights()
 
             client.call('notifier.samba4', 'user_import_sentinel_file_create')
 

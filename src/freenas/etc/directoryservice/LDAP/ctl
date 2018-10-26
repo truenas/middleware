@@ -87,7 +87,7 @@ cifs_restart()
 
 cifs_reset()
 {
-	ldapctl_cmd ${service} ix-pre-samba start
+	ldapctl_cmd ${python} ${notifier} call etc.generate smb 
 
 	if cifs_enabled;
 	then
