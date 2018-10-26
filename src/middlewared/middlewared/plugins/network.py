@@ -1758,6 +1758,10 @@ async def _event_ifnet(middleware, event_type, args):
     if not iface:
         return
 
+    # We dont handle the following interfaces in middlwared
+    if iface.startswith(('epair', 'tun', 'tap')):
+        return
+
     iface = await middleware.call('interfaces.query', [('name', '=', iface)])
     if not iface:
         return
