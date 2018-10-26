@@ -115,6 +115,12 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/netdata/stream.conf'},
             {'type': 'py', 'path': 'local/netdata/alarms'}
         ]
+        'smb': [
+            {'type': 'mako', 'path': 'local/smb4.conf'},
+        ],
+        'smb_share': [
+            {'type': 'mako', 'path': 'local/smb4_share.conf'},
+        ],
     }
 
     class Config:

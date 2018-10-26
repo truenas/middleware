@@ -4,7 +4,6 @@
 #
 
 # PROVIDE: ix-activedirectory
-# REQUIRE: ix-pre-samba ix-kinit
 # BEFORE: samba_server
 
 . /etc/rc.freenas
