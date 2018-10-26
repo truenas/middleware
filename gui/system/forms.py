@@ -1039,13 +1039,8 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
             if "0.0.0.0" in self.instance.stg_guiaddress:
                 address = request.META['HTTP_HOST'].split(':')[0]
             else:
-<<<<<<< HEAD
-                address = self.instance.stg_guiaddress[0]
-            if self.instance.stg_guiprotocol == 'httphttps':
-=======
                 address = self.instance.stg_guiaddress
             if not self.instance.stg_guihttpsredirect:
->>>>>>> Default protocl for freenas set to https+https. Still some todos left to cover and the code needs to be refined
                 protocol = 'http'
             else:
                 protocol = 'https'
