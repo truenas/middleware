@@ -42,8 +42,9 @@ def test_03_get_interfaces_aliases_broadcast_ip():
         if ip in aliases_list['address']:
             broadcast_ip = aliases_list['broadcast']
             break
-    assert isinstance(broadcast_ip['type'], str) is True, results.text
+    assert isinstance(broadcast_ip, str) is True, results.text
     aliases['broadcast'] = broadcast_ip
+
 
 def test_04_get_interfaces_aliases_type():
     results = GET(f'/interfaces?name={interface}')
