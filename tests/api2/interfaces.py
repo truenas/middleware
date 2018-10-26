@@ -12,8 +12,7 @@ sys.path.append(apifolder)
 from auto_config import interface, ip
 from functions import GET, PUT, POST, DELETE
 
-broadcast = ip.replace(ip.split('.')[3], '255')
-aliases = {'address': ip, 'broadcast': broadcast}
+aliases = {'address': ip}
 
 
 def test_01_get_interfaces_name():
@@ -43,7 +42,8 @@ def test_03_get_interfaces_aliases_broadcast_ip():
         if ip in aliases_list['address']:
             broadcast_ip = aliases_list['broadcast']
             break
-    assert broadcast_ip == broadcast, results.text
+    assert isinstance(broadcast_ip, str) is True, results.text
+    aliases['broadcast'] = broadcast_ip
 
 
 def test_04_get_interfaces_aliases_type():
