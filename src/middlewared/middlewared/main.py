@@ -13,6 +13,7 @@ from aiohttp import web
 from aiohttp.web_exceptions import HTTPPermanentRedirect
 from aiohttp.web_middlewares import normalize_path_middleware
 from aiohttp_wsgi import WSGIHandler
+from bsd.threading import set_thread_name
 from collections import defaultdict
 
 import argparse
@@ -741,7 +742,10 @@ class Middleware(object):
             max_workers=2,
             initializer=worker_init,
         )
-        self.__threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
+        self.__threadpool = concurrent.futures.ThreadPoolExecutor(
+            initializer=lambda: set_thread_name('threadpool_ws'),
+            max_workers=10,
+        )
         self.jobs = JobsQueue(self)
         self.__schemas = Schemas()
         self.__services = {}
@@ -920,7 +924,10 @@ class Middleware(object):
         return await self.run_in_executor(self.__procpool, method, *args, **kwargs)
 
     async def run_in_thread(self, method, *args, **kwargs):
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=1,
+            initializer=lambda: set_thread_name('io_thread'),
+        )
         try:
             return await self.loop.run_in_executor(executor, functools.partial(method, *args, **kwargs))
         finally:
@@ -1104,6 +1111,7 @@ class Middleware(object):
         DISCLAIMER/TODO: This is not free of race condition so it may show
         false positives.
         """
+        set_thread_name('loop_monitor')
         last = None
         while True:
             time.sleep(2)
@@ -1118,6 +1126,7 @@ class Middleware(object):
             last = current
 
     def run(self):
+        set_thread_name('asyncio_loop')
         self.loop = self.__loop = asyncio.get_event_loop()
 
         if self.loop_debug:

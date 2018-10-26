@@ -10,6 +10,7 @@ import socket
 import subprocess
 import threading
 
+from bsd.threading import set_thread_name
 from pybonjour import (
     kDNSServiceFlagsMoreComing,
     kDNSServiceFlagsAdd,
@@ -313,6 +314,7 @@ class DiscoverThread(mDNSThread):
         )
 
     def run(self):
+        set_thread_name('mdns_discover')
         if not self.mdnsd.is_alive():
             self.mdnsd.wait(timeout=10)
 
@@ -395,6 +397,7 @@ class ServicesThread(mDNSThread):
             self.service_queue.put(obj)
 
     def run(self):
+        set_thread_name('mdns_services')
         while True:
             if not self.mdnsd.is_alive():
                 self.mdnsd.wait(timeout=10)
@@ -471,6 +474,7 @@ class ResolveThread(mDNSThread):
         sdRef.close()
 
     def run(self):
+        set_thread_name('mdns_resolve')
         while True:
             if not self.mdnsd.is_alive():
                 self.mdnsd.wait(timeout=10)
@@ -688,6 +692,7 @@ class mDNSServiceThread(threading.Thread):
             self._register(self.hostname, self.regtype, self.port)
 
     def run(self):
+        set_thread_name(f'mdns_svc_{self.service}')
         try:
             self.register()
         except pybonjour.BonjourError:
@@ -764,6 +769,7 @@ class mDNSServiceMiddlewareThread(mDNSServiceThread):
     def __init__(self, **kwargs):
         kwargs['service'] = 'middleware'
         super(mDNSServiceMiddlewareThread, self).__init__(**kwargs)
+        set_thread_name(f'mdns_{self.service}')
 
     def setup(self):
         webui = self.middleware.call_sync('datastore.query', 'system.settings')
