@@ -711,7 +711,6 @@ class SystemGeneralService(ConfigService):
             Int('ui_port', validators=[Range(min=1, max=65535)]),
             List('ui_address', items=[IPAddr('addr')], empty=False),
             List('ui_v6address', items=[IPAddr('addr')], empty=False),
-            IPAddr('ui_v6address'),
             Str('kbdmap'),
             Str('language'),
             Str('sysloglevel', enum=['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE',
