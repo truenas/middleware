@@ -938,7 +938,10 @@ async def __event_system(middleware, event_type, args):
     # We need to call a method in Jail service to make sure it runs in the
     # process pool because of py-libzfs thread safety issue with iocage and middlewared
     if args['id'] == 'ready':
-        await middleware.call('jail.start_on_boot')
+        try:
+            await middleware.call('jail.start_on_boot')
+        except ioc_exceptions.PoolNotActivated:
+            pass
     elif args['id'] == 'shutdown':
         async with SHUTDOWN_LOCK:
             await middleware.call('jail.stop_on_shutdown')
