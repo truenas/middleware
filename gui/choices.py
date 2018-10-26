@@ -182,6 +182,7 @@ def UNIXCHARSET_CHOICES():
         return choices
 
 
+# TODO: How should this be removed ? We use this in initial migration for CIFS Model ?
 def DOSCHARSET_CHOICES():
     with client as c:
         choices = list(c.call('smb.doscharset_choices').items())

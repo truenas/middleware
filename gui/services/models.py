@@ -101,11 +101,6 @@ class CIFS(Model):
         blank=True,
         help_text=_("Server description. This can usually be left blank."),
     )
-    cifs_srv_doscharset = models.CharField(
-        max_length=120,
-        default="CP437",
-        verbose_name=_("DOS charset"),
-    )
     cifs_srv_unixcharset = models.CharField(
         max_length=120,
         default="UTF-8",
