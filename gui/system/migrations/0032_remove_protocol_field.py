@@ -18,7 +18,7 @@ def correct_default_value_for_https_redirect(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0030_ip_fields'),
+        ('system', '0031_adv_boot_scrub'),
     ]
 
     operations = [

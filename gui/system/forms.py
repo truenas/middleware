@@ -1039,7 +1039,7 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
             if "0.0.0.0" in self.instance.stg_guiaddress:
                 address = request.META['HTTP_HOST'].split(':')[0]
             else:
-                address = self.instance.stg_guiaddress
+                address = self.instance.stg_guiaddress[0]
             if not self.instance.stg_guihttpsredirect:
                 protocol = 'http'
             else:

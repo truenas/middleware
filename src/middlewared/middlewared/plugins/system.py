@@ -709,13 +709,9 @@ class SystemGeneralService(ConfigService):
             Int('ui_httpsport', validators=[Range(min=1, max=65535)]),
             Bool('ui_httpsredirect'),
             Int('ui_port', validators=[Range(min=1, max=65535)]),
-<<<<<<< HEAD
-            Str('ui_protocol', enum=['HTTP', 'HTTPS', 'HTTPHTTPS']),
             List('ui_address', items=[IPAddr('addr')], empty=False),
             List('ui_v6address', items=[IPAddr('addr')], empty=False),
-=======
             IPAddr('ui_v6address'),
->>>>>>> Default protocl for freenas set to https+https. Still some todos left to cover and the code needs to be refined
             Str('kbdmap'),
             Str('language'),
             Str('sysloglevel', enum=['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE',
@@ -735,7 +731,6 @@ class SystemGeneralService(ConfigService):
         if verrors:
             raise verrors
 
-<<<<<<< HEAD
         # Converting new_config to map the database table fields
         new_config['sysloglevel'] = new_config['sysloglevel'].lower()
         new_config['ui_protocol'] = new_config['ui_protocol'].lower()
@@ -751,15 +746,6 @@ class SystemGeneralService(ConfigService):
             new_config,
             {'prefix': 'stg_'}
         )
-=======
-        if len(set(new_config.items()) ^ set(config.items())) > 0:
-            # Converting new_config to map the database table fields
-            new_config['sysloglevel'] = new_config['sysloglevel'].lower()
-            keys = new_config.keys()
-            for key in keys:
-                if key.startswith('ui_'):
-                    new_config['gui' + key[3:]] = new_config.pop(key)
->>>>>>> Default protocl for freenas set to https+https. Still some todos left to cover and the code needs to be refined
 
         # case insensitive comparison should be performed for sysloglevel
         if (
