@@ -9,17 +9,16 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import interface, ip
+from auto_config import interface, ip, hostname
 from functions import GET, PUT
 from config import *
 
 BRIDGEGWReason = "BRIDGEGW not in ixautomation.conf"
 BRIDGENETMASKReason = "BRIDGENETMASK not in ixautomation.conf"
-Reason = "BRIDGEDOMAIN BRIDGEHOST BRIDGEDNS BRIDGEGW "
-Reason += "are missing in ixautomation.conf"
+Reason = "BRIDGEDOMAIN BRIDGEDNS BRIDGEGW " \
+    "are missing in ixautomation.conf"
 
 route_and_dns_cfg = pytest.mark.skipif(all(["BRIDGEDOMAIN" in locals(),
-                                            "BRIDGEHOST" in locals(),
                                             "BRIDGEDNS" in locals(),
                                             "BRIDGEGW" in locals()
                                             ]) is False, reason=Reason)
@@ -43,7 +42,7 @@ def test_02_get_default_routes_info():
 @route_and_dns_cfg
 def test_03_setting_default_domain_host_and_dns():
     payload = {"domain": BRIDGEDOMAIN,
-               "hostname": BRIDGEHOST,
+               "hostname": hostname,
                "ipv4gateway": BRIDGEGW,
                "nameserver1": BRIDGEDNS}
     results = PUT("/network/configuration/", payload)
@@ -59,7 +58,7 @@ def test_04_look_if_domain_was_set():
 @route_and_dns_cfg
 def test_05_look_if_hostname_was_set():
     results = GET("/network/configuration/")
-    assert results.json()["hostname"] == BRIDGEHOST, results.text
+    assert results.json()["hostname"] == hostname, results.text
 
 
 @route_and_dns_cfg
