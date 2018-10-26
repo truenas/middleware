@@ -66,7 +66,7 @@ class SystemDatasetService(ConfigService):
 
     @accepts(Dict(
         'sysdataset_update',
-        Str('pool'),
+        Str('pool', null=True),
         Bool('syslog'),
         Bool('rrd'),
         update=True
@@ -79,17 +79,24 @@ class SystemDatasetService(ConfigService):
         new.update(data)
 
         verrors = ValidationErrors()
-        if not await self.middleware.call('zfs.pool.query', [('name', '=', data['pool'])]):
-            verrors.add('sysdataset_update.pool', f'Pool "{data["pool"]}" not found', errno.ENOENT)
-        if verrors:
-            raise verrors
+        if new['pool'] and not await self.middleware.call(
+            'zfs.pool.query', [('name', '=', new['pool'])]
+        ):
+            verrors.add('sysdataset_update.pool', f'Pool "{new["pool"]}" not found', errno.ENOENT)
+        elif not new['pool']:
+            for pool in await self.middleware.call('pool.query'):
+                new['pool'] = pool['name']
+                break
+            else:
+                new['pool'] = 'freenas-boot'
+        verrors.check()
 
         new['syslog_usedataset'] = new['syslog']
         new['rrd_usedataset'] = new['rrd']
         await self.middleware.call('datastore.update', 'system.systemdataset', config['id'], new, {'prefix': 'sys_'})
 
-        if 'pool' in data and config['pool'] and data['pool'] != config['pool']:
-            await self.migrate(config['pool'], data['pool'])
+        if config['pool'] != new['pool']:
+            await self.migrate(config['pool'], new['pool'])
 
         if config['rrd'] != new['rrd']:
             # Stop collectd to flush data
@@ -121,7 +128,7 @@ class SystemDatasetService(ConfigService):
 
         if config['pool'] and config['pool'] != 'freenas-boot':
             if not await self.middleware.call('pool.query', [('name', '=', config['pool'])]):
-                job = await self.middleware.call('systemdataset.update', {'pool': ''})
+                job = await self.middleware.call('systemdataset.update', {'pool': None})
                 await job.wait()
                 config = await self.config()
 
@@ -333,7 +340,7 @@ class SystemDatasetService(ConfigService):
             await self.middleware.call('service.stop', i)
 
         for src, dest in rsyncs:
-            cp = await run('rsync', '-az', f'{src}/', dest)
+            cp = await run('rsync', '-az', f'{src}/', dest, check=False)
 
         if _from and cp.returncode == 0:
             await self.__umount(_from, config['uuid'])

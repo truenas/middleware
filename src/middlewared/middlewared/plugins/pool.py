@@ -1580,8 +1580,10 @@ class PoolService(CRUDService):
 
         sysds = await self.middleware.call('systemdataset.config')
         if sysds['pool'] == pool['name']:
-            job = await self.middleware.call('systemdataset.update', {'pool': ''})
+            job = await self.middleware.call('systemdataset.update', {'pool': None})
             await job.wait()
+            if job.error:
+                raise CallError(job.error)
             await self.middleware.call('systemdataset.setup', True, pool['name'])
             await self.middleware.call('service.restart', 'system_datasets')
 
@@ -1883,8 +1885,10 @@ class PoolService(CRUDService):
         sysds = await self.middleware.call('systemdataset.config')
         if sysds['pool'] == pool['name']:
             job.set_progress(40, 'Reconfiguring system dataset')
-            sysds_job = await self.middleware.call('systemdataset.update', {'pool': ''})
+            sysds_job = await self.middleware.call('systemdataset.update', {'pool': None})
             await sysds_job.wait()
+            if sysds_job.error:
+                raise CallError(sysds_job.error)
             await self.middleware.call('systemdataset.setup', True, pool['name'])
             await self.middleware.call('service.restart', 'system_datasets')
 
@@ -1895,7 +1899,7 @@ class PoolService(CRUDService):
             job.set_progress(60, 'Destroying pool')
             try:
                 # TODO: Remove me when legacy UI is gone
-                if await self.middleware.call('notifier.contais_jail_root', pool['path']):
+                if await self.middleware.call('notifier.contains_jail_root', pool['path']):
                     await self.middleware.call('notifier.delete_plugins')
             except Exception:
                 pass
