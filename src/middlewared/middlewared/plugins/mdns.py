@@ -606,11 +606,9 @@ class mDNSBrowserService(Service):
     def start(self):
         self.logger.trace("mDNSBrowserService: start()")
 
-        self.lock.acquire()
-        if self.initialized:
-            self.lock.release()
-            return
-        self.lock.release()
+        with self.lock:
+            if self.initialized:
+                return
 
         self.dq = queue.Queue()
         self.sq = queue.Queue()
@@ -623,21 +621,25 @@ class mDNSBrowserService(Service):
         self.sthread.start()
         self.rthread.start()
 
-        self.lock.acquire()
-        self.initialized = True
-        self.lock.release()
+        with self.lock:
+            self.initialized = True
 
     @private
     def stop(self):
         self.logger.trace("mDNSBrowserService: stop()")
 
-        self.rthread.cancel()
-        self.sthread.cancel()
-        self.dthread.cancel()
+        if self.rthread:
+            self.rthread.cancel()
+            self.rthread = None
+        if self.sthread:
+            self.sthread.cancel()
+            self.sthread = None
+        if self.dthread:
+            self.dthread.cancel()
+            self.dthread = None
 
-        self.lock.acquire()
-        self.initialized = False
-        self.lock.release()
+        with self.lock:
+            self.initialized = False
 
     @private
     def restart(self):
@@ -794,11 +796,9 @@ class mDNSAdvertiseService(Service):
 
     @private
     def start(self):
-        self.lock.acquire()
-        if self.initialized:
-            self.lock.release()
-            return
-        self.lock.release()
+        with self.lock:
+            if self.initialized:
+                return
 
         self.mdnsd.wait(timeout=10)
 
@@ -823,9 +823,8 @@ class mDNSAdvertiseService(Service):
             self.threads[thread_name] = thread
             thread.start()
 
-        self.lock.acquire()
-        self.initialized = True
-        self.lock.release()
+        with self.lock:
+            self.initialized = True
 
     @private
     def stop(self):
@@ -835,9 +834,8 @@ class mDNSAdvertiseService(Service):
             del self.threads[thread.service]
         self.threads = {}
 
-        self.lock.acquire()
-        self.initialized = False
-        self.lock.release()
+        with self.lock:
+            self.initialized = False
 
     @private
     def restart(self):
