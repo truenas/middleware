@@ -733,7 +733,7 @@ class SystemGeneralService(ConfigService):
         # Converting new_config to map the database table fields
         new_config['sysloglevel'] = new_config['sysloglevel'].lower()
         keys = new_config.keys()
-        for key in keys:
+        for key in list(keys):
             if key.startswith('ui_'):
                 new_config['gui' + key[3:]] = new_config.pop(key)
 
