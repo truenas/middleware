@@ -1118,7 +1118,6 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset2(smb4_conf, "directory mask = %s", cifs.dirmask)
     confset2(smb4_conf, "client ntlmv2 auth = %s",
              "yes" if not cifs.ntlmv1_auth else "no")
-    confset2(smb4_conf, "dos charset = %s", cifs.doscharset)
     confset2(smb4_conf, "unix charset = %s", cifs.unixcharset)
 
     if cifs.loglevel and cifs.loglevel is not True:

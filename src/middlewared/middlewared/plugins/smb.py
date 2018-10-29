@@ -46,11 +46,6 @@ class SMBService(SystemServiceService):
     async def __validate_netbios_name(self, name):
         return RE_NETBIOSNAME.match(name)
 
-    async def doscharset_choices(self):
-        return await self.generate_choices(
-            ['CP437', 'CP850', 'CP852', 'CP866', 'CP932', 'CP949', 'CP950', 'CP1026', 'CP1251', 'ASCII']
-        )
-
     async def unixcharset_choices(self):
         return await self.generate_choices(
             ['UTF-8', 'ISO-8859-1', 'ISO-8859-15', 'GB2312', 'EUC-JP', 'ASCII']
@@ -109,7 +104,6 @@ class SMBService(SystemServiceService):
         Str('netbiosalias'),
         Str('workgroup'),
         Str('description'),
-        Str('doscharset'),
         Str('unixcharset'),
         Str('loglevel', enum=['NONE', 'MINIMUM', 'NORMAL', 'FULL', 'DEBUG']),
         Bool('syslog'),
@@ -138,12 +132,11 @@ class SMBService(SystemServiceService):
 
         verrors = ValidationErrors()
 
-        for k, m in [('unixcharset', self.unixcharset_choices), ('doscharset', self.doscharset_choices)]:
-            if data.get(k) and data[k] not in await m():
-                verrors.add(
-                    f'smb_update.{k}',
-                    f'Please provide a valid value for {k}'
-                )
+        if data.get('unixcharset') and data['unixcharset'] not in await self.unixcharset_choices():
+            verrors.add(
+                'smb_update.unixcharset',
+                'Please provide a valid value for unixcharset'
+            )
 
         for i in ('workgroup', 'netbiosname', 'netbiosname_b', 'netbiosalias'):
             if i not in data or not data[i]:

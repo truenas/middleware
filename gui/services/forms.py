@@ -123,11 +123,6 @@ class CIFSForm(MiddlewareModelForm, ModelForm):
         required=False,
         initial='UTF-8'
     )
-    cifs_srv_doscharset = forms.ChoiceField(
-        label=models.CIFS._meta.get_field('cifs_srv_doscharset').verbose_name,
-        required=False,
-        initial='CP437'
-    )
 
     class Meta:
         fields = '__all__'
@@ -146,7 +141,6 @@ class CIFSForm(MiddlewareModelForm, ModelForm):
 
         self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices(noloopback=False))
         self.fields['cifs_srv_unixcharset'].choices = choices.UNIXCHARSET_CHOICES()
-        self.fields['cifs_srv_doscharset'].choices = choices.DOSCHARSET_CHOICES()
 
         if self.instance.id and self.instance.cifs_srv_bindip:
             bindips = []

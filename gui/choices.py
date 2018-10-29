@@ -182,13 +182,6 @@ def UNIXCHARSET_CHOICES():
         return choices
 
 
-def DOSCHARSET_CHOICES():
-    with client as c:
-        choices = list(c.call('smb.doscharset_choices').items())
-        choices.sort()
-        return choices
-
-
 LOGLEVEL_CHOICES = (
     ('0', _('None')),
     ('1', _('Minimum')),
