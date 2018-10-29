@@ -565,6 +565,7 @@ class Cron(Dict):
 
     def __init__(self, name, **kwargs):
         self.additional_attrs = kwargs.pop('additional_attrs', False)
+        self.begin_end = kwargs.pop('begin_end', False)
         # Update property is used to disable requirement on all attributes
         # as well to not populate default values for not specified attributes
         self.update = kwargs.pop('update', False)
@@ -572,23 +573,34 @@ class Cron(Dict):
         self.attrs = {}
         for i in Cron.FIELDS:
             self.attrs[i] = Str(i)
+        if self.begin_end:
+            self.attrs['begin'] = Time('begin')
+            self.attrs['end'] = Time('end')
 
     @staticmethod
-    def convert_schedule_to_db_format(data_dict, schedule_name='schedule'):
+    def convert_schedule_to_db_format(data_dict, schedule_name='schedule', begin_end=False):
         schedule = data_dict.pop(schedule_name, None)
         if schedule:
             db_fields = ['minute', 'hour', 'daymonth', 'month', 'dayweek']
             for index, field in enumerate(Cron.FIELDS):
                 if field in schedule:
                     data_dict[db_fields[index]] = schedule[field]
+            if begin_end:
+                for field in ['begin', 'end']:
+                    if field in schedule:
+                        data_dict[field] = schedule[field]
 
     @staticmethod
-    def convert_db_format_to_schedule(data_dict, schedule_name='schedule'):
+    def convert_db_format_to_schedule(data_dict, schedule_name='schedule', begin_end=False):
         db_fields = ['minute', 'hour', 'daymonth', 'month', 'dayweek']
         data_dict[schedule_name] = {}
         for index, field in enumerate(db_fields):
             if field in data_dict:
                 data_dict[schedule_name][Cron.FIELDS[index]] = data_dict.pop(field)
+        if begin_end:
+            for field in ['begin', 'end']:
+                if field in data_dict:
+                    data_dict[schedule_name][field] = str(data_dict.pop(field))[:5]
 
     def validate(self, value):
         verrors = ValidationErrors()
@@ -615,6 +627,9 @@ class Cron(Dict):
             croniter(cron_expression)
         except Exception as e:
             verrors.add(self.name, 'Please ensure fields match cron syntax - ' + str(e))
+
+        if value.get('begin') and value.get('end') and not (value.get('begin') <= value.get('end')):
+            verrors.add(self.name, 'Begin time should be less or equal than end time')
 
         if verrors:
             raise verrors
