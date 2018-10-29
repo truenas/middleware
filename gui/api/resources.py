@@ -180,7 +180,7 @@ def _common_human_fields(bundle):
         elif index == 1:
             bundle.data[human] = _wording_helper('hour', 24)
         elif index == 2:
-            bundle.data[human] = _wording_helper('day', 30)
+            bundle.data[human] = _wording_helper('day', {v: v for v in range(1, 32)})
         elif index == 3:
             bundle.data[human] = _wording_helper(
                 'month', {int(k): v for k, v in dict(choices.MONTHS_CHOICES).items()}
