@@ -2203,7 +2203,7 @@ class ReplRemoteForm(ModelForm):
 
     class Meta:
         fields = '__all__'
-        model = models.ReplRemote
+        model = models.Task
 
     def save(self):
         rv = super(ReplRemoteForm, self).save()

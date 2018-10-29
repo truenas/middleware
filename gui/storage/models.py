@@ -446,13 +446,13 @@ class EncryptedDisk(Model):
 class Replication(Model):
     repl_direction = models.CharField(
         max_length=4,
-        choices=[("push", "PUSH"), ("pull", "PULL")],
+        choices=[("PUSH", "Push"), ("PULL", "Pull")],
         default="push",
         verbose_name=_("Replication Direction"),
     )
     repl_transport = models.CharField(
         max_length=10,
-        choices=[("ssh", "SSH"), ("ssh+netcat", "SSH+netcat"), ("local", "Local"), ("legacy", "Legacy")],
+        choices=[("SSH", "SSH"), ("SSH+NETCAT", "SSH+netcat"), ("LOCAL", "Local"), ("LEGACY", "Legacy")],
         default="ssh",
         verbose_name=_("Replication Transport"),
     )
@@ -463,7 +463,7 @@ class Replication(Model):
     )
     repl_netcat_active_side = models.CharField(
         max_length=5,
-        choices=[("local", "Local"), ("remote", "Remote")],
+        choices=[("LOCAL", "Local"), ("REMOTE", "Remote")],
         default="local",
         null=True,
         verbose_name=_("Netcat Active Side"),
@@ -495,9 +495,7 @@ class Replication(Model):
         verbose_name=_("Exclude child datasets"),
     )
     repl_tasks = models.ManyToManyField("Task", related_name="replication_tasks")
-    repl_also_include_naming_schema = models.CharField(
-        max_length=120,
-        blank=True,
+    repl_naming_schema = ListField(
         verbose_name=_("Also replicate snapshots matching naming schema"),
     )
     repl_auto = models.BooleanField(
@@ -554,24 +552,101 @@ class Replication(Model):
     repl_allow_from_scratch = models.BooleanField(
         verbose_name=_("Replicate from scratch if incremental is not possible"),
     )
+    repl_hold_pending_snapshots = models.BooleanField(
+        verbose_name=_("Hold pending snapshots"),
+    )
     repl_retention_policy = models.CharField(
         max_length=5,
-        choices=[("source", "Same as source"), ("custom", "Custom"), ("none", "None")],
+        choices=[("SOURCE", "Same as source"), ("CUSTOM", "Custom"), ("NONE", "None")],
         default="none",
         verbose_name=_("Snapshot retention policy"),
     )
+    repl_lifetime_value = models.PositiveIntegerField(
+        null=True,
+        default=2,
+        verbose_name=_("Snapshot lifetime value"),
+    )
+    repl_lifetime_unit = models.CharField(
+        null=True,
+        default='WEEK',
+        max_length=120,
+        choices=choices.RetentionUnit_Choices,
+        verbose_name=_("Snapshot lifetime unit"),
+    )
     repl_compression = models.CharField(
+        null=True,
         max_length=5,
         choices=choices.Repl_CompressionChoices,
-        default="lz4",
+        default="LZ4",
         verbose_name=_("Replication Stream Compression"),
     )
     repl_speed_limit = models.IntegerField(
-        default=0,
+        null=True,
+        default=None,
         verbose_name=_("Limit (kbps)"),
         help_text=_(
             "Limit the replication speed. Unit in "
             "kilobits/second. 0 = unlimited."),
+    )
+    repl_dedup = models.BooleanField(
+        default=False,
+        verbose_name=_('Send deduplicated stream'),
+        help_text=_(
+            'Blocks	which would have been '
+            'sent multiple times in	the send stream	will only be sent '
+            'once. The receiving system must also support this feature to '
+            'receive a deduplicated	stream. This flag can be used regard-'
+            'less of the dataset\'s dedup property, but performance will be '
+            'much better if	the filesystem uses a dedup-capable checksum '
+            '(eg. sha256).'
+        ),
+    )
+    repl_large_block = models.BooleanField(
+        default=True,
+        verbose_name=_('Allow blocks larger than 128KB'),
+        help_text=_(
+            'Generate a stream which may contain blocks larger than	128KB. '
+            'This flag has no effect if the	large_blocks pool feature is '
+            'disabled, or if the recordsize	property of this filesystem '
+            'has never been	set above 128KB. The receiving	system must '
+            'have the large_blocks pool feature enabled as well. See '
+            'zpool-features(7) for details on ZFS feature flags and	the '
+            'large_blocks feature.'
+        ),
+    )
+    repl_embed = models.BooleanField(
+        default=True,
+        verbose_name=_('Allow WRITE_EMBEDDED records'),
+        help_text=_(
+            'Generate a more compact stream by using WRITE_EMBEDDED '
+            'records for blocks which are stored more compactly on disk by '
+            'the embedded_data pool feature. This flag has no effect if '
+            'the embedded_data feature is disabled. The receiving system '
+            'must have the embedded_data feature enabled. If the '
+            'lz4_compress feature is active on the sending system, then '
+            'the receiving system must have that feature enabled as well. '
+            'See zpool-features(7) for details on ZFS feature flags and '
+            'the embedded_data feature.'
+        ),
+    )
+    repl_compressed = models.BooleanField(
+        default=True,
+        verbose_name=_('Allow compressed WRITE records'),
+        help_text=_(
+            'Generate a more compact stream by using compressed WRITE '
+            'records for blocks which are compressed on disk and in memory '
+            '(see the compression property for details). If the '
+            'lz4_compress feature is active on the sending system, then '
+            'the receiving system must have that feature enabled as well. '
+            'If the large_blocks feature is enabled on the sending system '
+            'but the -L option is not supplied in conjunction with -c then '
+            'the data will be decompressed before sending so it can be '
+            'split into smaller block sizes. '
+        ),
+    )
+    repl_retries = models.PositiveIntegerField(
+        default=5,
+        verbose_name=_("Number of retries for failed replications"),
     )
     repl_enabled = models.BooleanField(
         default=True,
@@ -624,7 +699,7 @@ class Replication(Model):
 
 
 class Task(Model):
-    task_filesystem = models.CharField(
+    task_dataset = models.CharField(
         max_length=150,
         verbose_name=_("Volume/Dataset"),
     )
@@ -640,7 +715,7 @@ class Task(Model):
         verbose_name=_("Snapshot lifetime value"),
     )
     task_lifetime_unit = models.CharField(
-        default='week',
+        default='WEEK',
         max_length=120,
         choices=choices.RetentionUnit_Choices,
         verbose_name=_("Snapshot lifetime unit"),
@@ -710,7 +785,7 @@ class Task(Model):
     class Meta:
         verbose_name = _("Periodic Snapshot Task")
         verbose_name_plural = _("Periodic Snapshot Tasks")
-        ordering = ["task_filesystem"]
+        ordering = ["task_dataset"]
 
 
 class VMWarePlugin(Model):
