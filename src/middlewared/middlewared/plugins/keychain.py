@@ -31,8 +31,8 @@ class SSHKeyPair(KeychainCredentialType):
     title = "SSH Key Pair"
 
     credentials_schema = [
-        Str("private_key"),
-        Str("public_key"),
+        Str("private_key", null=True, default=None),
+        Str("public_key", null=True, default=None),
     ]
 
     async def validate_and_pre_save(self, middleware, verrors, schema_name, attributes):
