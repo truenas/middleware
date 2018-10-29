@@ -10,7 +10,7 @@ import freenasUI.freeadmin.models.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0029_add_organizational_unit'),
+        ('system', '0031_adv_boot_scrub'),
     ]
 
     operations = [
