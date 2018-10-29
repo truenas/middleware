@@ -34,6 +34,8 @@ class EnumMixin(object):
         value = super().clean(value)
         if self.enum is None:
             return value
+        if value is None and self.null:
+            return value
         if not isinstance(value, (list, tuple)):
             tmp = [value]
         else:
