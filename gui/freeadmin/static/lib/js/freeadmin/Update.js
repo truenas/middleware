@@ -85,7 +85,7 @@ define([
       me.dapUpdateTrainInfoLink.innerHTML = gettext('Train Descriptions');
 
       me.dapCurrentTrain.innerHTML = gettext( me.currentTrain ? me.currentTrain : 'Loading');
-      me.dapAutoCheckText.innerHTML = gettext('Automatically check for updates');
+      me.dapAutoCheckText.innerHTML = gettext('Check for Updates Daily and Download if Available');
       me.dapCurrentTrainText.innerHTML = gettext('Current Train');
       me.dapUpdateServerText.innerHTML = gettext('Update Server');
       me.dapUpdateGridText.innerHTML = gettext('Pending Updates');
