@@ -184,3 +184,39 @@ def test_19_get_interfaces_has_pending_changes():
 def test_20_delete_interfaces_vlan1():
     results = DELETE(f'/interfaces/id/{interfaces_id}')
     assert results.status_code == 200, results.text
+
+
+def test_21_get_interfaces_has_pending_changes():
+    results = GET('/interfaces/has_pending_changes')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), bool) is True, results.text
+    assert results.json() is True, results.text
+
+
+def test_22_commite_interface():
+    payload = {
+        "rollback": True,
+        "checkin_timeout": 10
+    }
+    results = POST('/interfaces/commit/', payload)
+    assert results.status_code == 200, results.text
+
+
+def test_23_get_interfaces_checkin_waiting():
+    results = GET('/interfaces/checkin_waiting/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), bool) is True, results.text
+    assert results.json() is True, results.text
+
+
+def test_24_get_interfaces_checkin():
+    results = GET('/interfaces/checkin/')
+    assert results.status_code == 200, results.text
+    assert results.json() is None, results.text
+
+
+def test_25_get_interfaces_has_pending_changes():
+    results = GET('/interfaces/has_pending_changes')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), bool) is True, results.text
+    assert results.json() is False, results.text
