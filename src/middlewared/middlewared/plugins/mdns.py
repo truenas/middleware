@@ -614,35 +614,34 @@ class mDNSBrowserService(Service):
             if self.initialized:
                 return
 
-        self.dq = queue.Queue()
-        self.sq = queue.Queue()
+            self.dq = queue.Queue()
+            self.sq = queue.Queue()
 
-        self.dthread = DiscoverThread(queue=self.dq, middleware=self.middleware, timeout=5)
-        self.sthread = ServicesThread(queue=self.dq, service_queue=self.sq, middleware=self.middleware, timeout=5)
-        self.rthread = ResolveThread(queue=self.sq, middleware=self.middleware, timeout=5)
+            self.dthread = DiscoverThread(queue=self.dq, middleware=self.middleware, timeout=5)
+            self.sthread = ServicesThread(queue=self.dq, service_queue=self.sq, middleware=self.middleware, timeout=5)
+            self.rthread = ResolveThread(queue=self.sq, middleware=self.middleware, timeout=5)
 
-        self.dthread.start()
-        self.sthread.start()
-        self.rthread.start()
+            self.dthread.start()
+            self.sthread.start()
+            self.rthread.start()
 
-        with self.lock:
             self.initialized = True
 
     @private
     def stop(self):
         self.logger.trace("mDNSBrowserService: stop()")
 
-        if self.rthread:
-            self.rthread.cancel()
-            self.rthread = None
-        if self.sthread:
-            self.sthread.cancel()
-            self.sthread = None
-        if self.dthread:
-            self.dthread.cancel()
-            self.dthread = None
-
         with self.lock:
+            if self.rthread:
+                self.rthread.cancel()
+                self.rthread = None
+            if self.sthread:
+                self.sthread.cancel()
+                self.sthread = None
+            if self.dthread:
+                self.dthread.cancel()
+                self.dthread = None
+
             self.initialized = False
 
     @private
