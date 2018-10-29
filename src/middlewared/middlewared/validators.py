@@ -1,6 +1,8 @@
 import ipaddress
 import re
 
+from zettarepl.snapshot.task.naming_schema import validate_snapshot_naming_schema
+
 from datetime import time
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -141,3 +143,8 @@ class MACAddr:
     def __call__(self, value):
         if not re.match('[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$', value.lower()):
             raise ValueError('Please provide a valid MAC address')
+
+
+class ReplicationSnapshotNamingSchema:
+    def __call__(self, value):
+        validate_snapshot_naming_schema(value)
