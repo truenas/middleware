@@ -47,7 +47,7 @@ class VCenterService(ConfigService):
         if action and action != 'UNINSTALL':
             if (
                 not (await self.middleware.call('vcenteraux.config'))['enable_https'] and
-                (await self.middleware.call('system.general.config'))['ui_protocol'].upper() == 'HTTPS'
+                (await self.middleware.call('system.general.config'))['ui_httpsredirect']
             ):
                 verrors.add(
                     f'{schema_name}.action',
@@ -85,7 +85,7 @@ class VCenterService(ConfigService):
 
         action = new.pop('action')
         system_general = await self.middleware.call('system.general.config')
-        ui_protocol = system_general['ui_protocol']
+        ui_protocol = 'https' if system_general['ui_httpsredirect'] else 'http'
         ui_port = system_general['ui_port'] if ui_protocol.lower() != 'https' else system_general['ui_httpsport']
         fingerprint = await self.middleware.call(
             'certificate.get_host_certificates_thumbprint',
