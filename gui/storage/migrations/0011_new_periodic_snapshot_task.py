@@ -13,6 +13,13 @@ def set_naming_schema(apps, schema_editor):
         task.save()
 
 
+def lifetime_unit_upper(apps, schema_editor):
+    Task = apps.get_model('storage', 'Task')
+    for task in Task.objects.all():
+        task.task_lifetime_unit = task.task_lifetime_unit.upper()
+        task.save()
+
+
 def migrate_schedule(apps, schema_editor):
     Task = apps.get_model('storage', 'Task')
     for task in Task.objects.all():
@@ -58,6 +65,16 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RenameField(
+            model_name='task',
+            old_name='task_filesystem',
+            new_name='task_dataset',
+        ),
+        migrations.AlterModelOptions(
+            name='task',
+            options={'verbose_name': 'Periodic Snapshot Task', 'verbose_name_plural': 'Periodic Snapshot Tasks', 'ordering': ['task_dataset']},
+        ),
+
         migrations.AddField(
             model_name='task',
             name='task_exclude',
@@ -120,5 +137,18 @@ class Migration(migrations.Migration):
         migrations.RemoveField(
             model_name='task',
             name='task_byweekday',
+        ),
+        migrations.RenameField(
+            model_name='task',
+            old_name='task_ret_unit',
+            new_name='task_lifetime_unit',
+        ),
+        migrations.RunPython(
+            lifetime_unit_upper,
+        ),
+        migrations.RenameField(
+            model_name='task',
+            old_name='task_ret_count',
+            new_name='task_lifetime_value',
         ),
     ]

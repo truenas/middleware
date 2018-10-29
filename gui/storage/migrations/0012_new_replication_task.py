@@ -19,6 +19,14 @@ def is_child(child: str, parent: str):
     return rel == "." or not rel.startswith("..")
 
 
+def uppercase(apps, schema_editor):
+    Replication = apps.get_model('storage', 'Replication')
+    for replication in Replication.objects.all():
+        replication.repl_compression = (
+            None if replication.repl_compression == "off" else replication.repl_compression.upper())
+        replication.save()
+
+
 def migrate_replremotes(apps, schema_editor):
     ReplRemote = apps.get_model('storage', 'ReplRemote')
     KeychainCredential = apps.get_model('system', 'KeychainCredential')
@@ -42,15 +50,15 @@ def migrate_replremotes(apps, schema_editor):
 
     if legacy_replication_key_pair:
         for repl_remote in ReplRemote.objects.all():
-            cipher = "standard"
+            cipher = "STANDARD"
             ciphers = set(
-                replication.ssh_cipher
-                for replication in repl_remote.replication_set
+                replication.repl_remote.ssh_cipher
+                for replication in repl_remote.replication_set.all()
             )
-            if "none" in ciphers:
-                cipher = "none"
             if "fast" in ciphers:
-                cipher = "fast"
+                cipher = "FAST"
+            if "none" in ciphers:
+                cipher = "NONE"
 
             username = (repl_remote.ssh_remote_dedicateduser if repl_remote.ssh_remote_dedicateduser_enabled else 'root')
             credential = KeychainCredential()
@@ -67,7 +75,7 @@ def migrate_replremotes(apps, schema_editor):
             }
             credential.save()
 
-            for replication in repl_remote.replication_set:
+            for replication in repl_remote.replication_set.all():
                 replication.repl_ssh_credentials = credential
                 replication.save()
 
@@ -75,7 +83,7 @@ def migrate_replremotes(apps, schema_editor):
 def migrate_filesystem(apps, schema_editor):
     Replication = apps.get_model('storage', 'Replication')
     for replication in Replication.objects.all():
-        replication.repl_source_datasets = [replication.filesystem]
+        replication.repl_source_datasets = [replication.repl_filesystem]
         replication.save()
 
 
@@ -87,8 +95,8 @@ def migrate_tasks(apps, schema_editor):
             task
             for task in Task.objects.all()
             if (
-                replication.repl_source_datasets[0] == task.filesystem or
-                (task.task_recursive and is_child(replication.repl_source_datasets[0], task.filesystem))
+                replication.repl_source_datasets[0] == task.task_dataset or
+                (task.task_recursive and is_child(replication.repl_source_datasets[0], task.task_dataset))
             )
         ]
         replication.save()
@@ -98,7 +106,7 @@ def migrate_followdelete(apps, schema_editor):
     Replication = apps.get_model('storage', 'Replication')
     for replication in Replication.objects.all():
         if replication.repl_followdelete:
-            replication.repl_retention_policy = "source"
+            replication.repl_retention_policy = "SOURCE"
             replication.save()
 
 
@@ -110,21 +118,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameField(
-            model_name='task',
-            old_name='task_ret_unit',
-            new_name='task_lifetime_unit',
-        ),
-        migrations.RenameField(
-            model_name='task',
-            old_name='task_ret_count',
-            new_name='task_lifetime_value',
-        ),
+        migrations.RunPython(uppercase),
 
         migrations.AddField(
             model_name='replication',
             name='repl_direction',
-            field=models.CharField(choices=[('push', 'PUSH'), ('pull', 'PULL')], default='push', max_length=4,
+            field=models.CharField(choices=[('push', 'PUSH'), ('pull', 'PULL')], default='PUSH', max_length=4,
                                    verbose_name='Replication Direction'),
         ),
 
@@ -133,7 +132,7 @@ class Migration(migrations.Migration):
             name='repl_transport',
             field=models.CharField(
                 choices=[('ssh', 'SSH'), ('ssh+netcat', 'SSH+netcat'), ('local', 'Local'), ('legacy', 'Legacy')],
-                default='legacy', max_length=10, verbose_name='Replication Direction'),
+                default='LEGACY', max_length=10, verbose_name='Replication Direction'),
         ),
 
         migrations.AddField(
@@ -211,9 +210,8 @@ class Migration(migrations.Migration):
 
         migrations.AddField(
             model_name='replication',
-            name='repl_also_include_naming_schema',
-            field=models.CharField(blank=True, max_length=120,
-                                   verbose_name='Also replicate snapshots matching naming schema'),
+            name='repl_naming_schema',
+            field=freenasUI.freeadmin.models.fields.ListField(default=[], verbose_name='Also replicate snapshots matching naming schema'),
         ),
         migrations.AddField(
             model_name='replication',
@@ -262,11 +260,28 @@ class Migration(migrations.Migration):
                                       verbose_name='Replicate from scratch if incremental is not possible'),
             preserve_default=False,
         ),
+        migrations.AddField(
+            model_name='replication',
+            name='repl_hold_pending_snapshots',
+            field=models.BooleanField(default=False,
+                                      verbose_name='Hold pending snapshots'),
+            preserve_default=False,
+        ),
 
         migrations.AddField(
             model_name='replication',
             name='repl_retention_policy',
-            field=models.CharField(choices=[('source', 'Same as source'), ('custom', 'Custom'), ('none', 'None')], default='none', max_length=5, verbose_name='Snapshot retention policy'),
+            field=models.CharField(choices=[('source', 'Same as source'), ('custom', 'Custom'), ('none', 'None')], default='NONE', max_length=5, verbose_name='Snapshot retention policy'),
+        ),
+        migrations.AddField(
+            model_name='replication',
+            name='repl_lifetime_unit',
+            field=models.CharField(choices=[('hour', 'Hour(s)'), ('day', 'Day(s)'), ('week', 'Week(s)'), ('month', 'Month(s)'), ('year', 'Year(s)')], default=None, max_length=120, null=True, verbose_name='Snapshot lifetime unit'),
+        ),
+        migrations.AddField(
+            model_name='replication',
+            name='repl_lifetime_value',
+            field=models.PositiveIntegerField(default=None, null=True, verbose_name='Snapshot lifetime value'),
         ),
         migrations.RunPython(migrate_followdelete),
         migrations.RemoveField(
@@ -274,10 +289,51 @@ class Migration(migrations.Migration):
             name='repl_followdelete',
         ),
 
+        migrations.AlterField(
+            model_name='replication',
+            name='repl_compression',
+            field=models.CharField(choices=[('LZ4', 'lz4 (fastest)'), ('PIGZ', 'pigz (all rounder)'), ('PLZIP', 'plzip (best compression)')], default='LZ4', max_length=5, null=True, verbose_name='Replication Stream Compression'),
+        ),
+
         migrations.RenameField(
             model_name='replication',
             old_name='repl_limit',
             new_name='repl_speed_limit',
+        ),
+
+        migrations.AddField(
+            model_name='replication',
+            name='repl_dedup',
+            field=models.BooleanField(default=False,
+                                      help_text="Blocks\twhich would have been sent multiple times in\tthe send stream\twill only be sent once. The receiving system must also support this feature to receive a deduplicated\tstream. This flag can be used regard-less of the dataset's dedup property, but performance will be much better if\tthe filesystem uses a dedup-capable checksum (eg. sha256).",
+                                      verbose_name='Send deduplicated stream'),
+        ),
+        migrations.AddField(
+            model_name='replication',
+            name='repl_large_block',
+            field=models.BooleanField(default=False,
+                                      help_text='Generate a stream which may contain blocks larger than\t128KB. This flag has no effect if the\tlarge_blocks pool feature is disabled, or if the recordsize\tproperty of this filesystem has never been\tset above 128KB. The receiving\tsystem must have the large_blocks pool feature enabled as well. See zpool-features(7) for details on ZFS feature flags and\tthe large_blocks feature.',
+                                      verbose_name='Allow blocks larger than 128KB'),
+        ),
+        migrations.AddField(
+            model_name='replication',
+            name='repl_embed',
+            field=models.BooleanField(default=False,
+                                      help_text='Generate a more compact stream by using WRITE_EMBEDDED records for blocks which are stored more compactly on disk by the embedded_data pool feature. This flag has no effect if the embedded_data feature is disabled. The receiving system must have the embedded_data feature enabled. If the lz4_compress feature is active on the sending system, then the receiving system must have that feature enabled as well. See zpool-features(7) for details on ZFS feature flags and the embedded_data feature.',
+                                      verbose_name='Allow WRITE_EMBEDDED records'),
+        ),
+        migrations.AddField(
+            model_name='replication',
+            name='repl_compressed',
+            field=models.BooleanField(default=False,
+                                      help_text='Generate a more compact stream by using compressed WRITE records for blocks which are compressed on disk and in memory (see the compression property for details). If the lz4_compress feature is active on the sending system, then the receiving system must have that feature enabled as well. If the large_blocks feature is enabled on the sending system but the -L option is not supplied in conjunction with -c then the data will be decompressed before sending so it can be split into smaller block sizes. ',
+                                      verbose_name='Allow compressed WRITE records'),
+        ),
+
+        migrations.AddField(
+            model_name='replication',
+            name='repl_retries',
+            field=models.PositiveIntegerField(default=1, verbose_name='Number of retries for failed replications'),
         ),
 
         migrations.RemoveField(
