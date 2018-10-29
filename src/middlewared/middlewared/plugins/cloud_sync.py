@@ -1,5 +1,5 @@
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import accepts, Bool, Cron, Dict, Error, Int, List, Patch, Str
+from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, item_method, job, private
 )
@@ -269,24 +269,6 @@ def get_dataset_recursive(datasets, directory):
 
 def flatten_datasets(datasets):
     return sum([[ds] + flatten_datasets(ds["children"]) for ds in datasets], [])
-
-
-def validate_attributes(schema, data, additional_attrs=False):
-    verrors = ValidationErrors()
-
-    schema = Dict("attributes", *schema, additional_attrs=additional_attrs)
-
-    try:
-        data["attributes"] = schema.clean(data["attributes"])
-    except Error as e:
-        verrors.add(e.attribute, e.errmsg, e.errno)
-
-    try:
-        schema.validate(data["attributes"])
-    except ValidationErrors as e:
-        verrors.extend(e)
-
-    return verrors
 
 
 class CredentialsService(CRUDService):

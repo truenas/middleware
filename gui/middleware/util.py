@@ -30,8 +30,7 @@ def get_validation_errors(id):
         )
 
     if (
-        job and job[0]['state'] == 'FAILED' and
-        job[0]['exc_info']['type'] == 'VALIDATION'
+        job and job[0]['state'] == 'FAILED' and job[0]['exc_info']['type'] == 'VALIDATION'
     ):
         return ValidationErrors(Error(*e) for e in job[0]['exc_info']['extra'])
 

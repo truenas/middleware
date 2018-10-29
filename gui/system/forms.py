@@ -2805,10 +2805,10 @@ class CertificateACMEForm(MiddlewareModelForm, ModelForm):
         help_text=models.Certificate._meta.get_field('cert_name').help_text
     )
     cert_acme_directory_uri = forms.ChoiceField(
-            label=_('ACME Server Directory URI'),
-            required=True,
-            help_text=_('Please specify URI of ACME Server Directory')
-        )
+        label=_('ACME Server Directory URI'),
+        required=True,
+        help_text=_('Please specify URI of ACME Server Directory')
+    )
 
     class Meta:
         fields = [
