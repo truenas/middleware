@@ -58,7 +58,11 @@ def migrate_cloud_credentials(apps, schema_editor):
     connection = schema_editor.connection
     with connection.cursor() as cursor:
         for id, provider, attributes in cursor.execute("SELECT id, provider, attributes FROM system_cloudcredentials").fetchall():
-            attributes = json.loads(pwenc_decrypt(attributes))
+            try:
+                attributes = json.loads(pwenc_decrypt(attributes))
+            except (UnicodeDecodeError, json.decoder.JSONDecodeError):
+                # Running migration with an invalid pwenc_secret
+                continue
 
             if provider == "AMAZON":
                 provider = "S3"
