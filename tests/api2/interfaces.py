@@ -6,6 +6,7 @@
 import pytest
 import sys
 import os
+import random
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -13,6 +14,9 @@ from auto_config import interface, ip
 from functions import GET, PUT, POST, DELETE
 
 aliases = {'address': ip}
+
+# Create a random IP
+vlan1_ip = f"192.168.0.{random.randint(10, 250)}"
 
 
 def test_01_get_interfaces_name():
@@ -112,7 +116,7 @@ def test_11_creating_vlan1_interface():
     global payload
     payload = {
         "ipv4_dhcp": False,
-        "aliases": [f"192.168.1.123/{aliases['netmask']}"],
+        "aliases": [f"{vlan1_ip}/{aliases['netmask']}"],
         "vlan_parent_interface": interface,
         "name": "vlan1",
         "type": "VLAN",
