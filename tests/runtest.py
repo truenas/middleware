@@ -113,7 +113,7 @@ cfg_file.writelines(cfg_content)
 cfg_file.close()
 
 from functions import setup_ssh_agent, create_key, add_ssh_key, get_file
-
+from functions import SSH_TEST
 # Setup ssh agent befor starting test.
 setup_ssh_agent()
 if path.isdir(dotsshPath) is False:
@@ -184,3 +184,9 @@ if not path.exists(artifacts):
 
 for log in logs_list:
     get_file(log, artifacts, 'root', 'testing', ip)
+
+# get dmesg and put it in artifacs
+results = SSH_TEST('dmesg -a', 'root', 'testing', ip)
+dmsg = open(f'{artifacts}/dmesg', 'w')
+dmsg.writelines(results['output'])
+dmsg.close()
