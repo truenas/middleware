@@ -1420,6 +1420,8 @@ class notifier(metaclass=HookMetaclass):
         winacl = os.path.join(path, ACL_WINDOWS_FILE)
         macacl = os.path.join(path, ACL_MAC_FILE)
         winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
+        zfs_dataset = libzfs.ZFS().get_dataset_by_path(path)
+
         if acl == 'windows':
             if not winexists:
                 open(winacl, 'a').close()
@@ -1439,6 +1441,7 @@ class notifier(metaclass=HookMetaclass):
                 os.unlink(macacl)
 
         if winexists:
+            self.zfs_set_option(zfs_dataset.name, "aclmode", "restricted", recursive)
             script = "/usr/local/bin/winacl"
             args = ''
             if user is not None:
@@ -1460,6 +1463,7 @@ class notifier(metaclass=HookMetaclass):
                 self._system(cmd)
 
         else:
+            self.zfs_set_option(zfs_dataset.name, "aclmode", "passthrough", recursive)
             if recursive:
                 apply_paths = exclude_path(path, exclude)
                 apply_paths = [(y, '-R') for y in apply_paths]
