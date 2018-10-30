@@ -41,7 +41,7 @@ class ISCSIGlobalService(SystemServiceService):
         'iscsiglobal_update',
         Str('basename'),
         List('isns_servers', items=[Str('server')]),
-        Int('pool_avail_threshold', validators=[Range(min=1, max=99)]),
+        Int('pool_avail_threshold', validators=[Range(min=1, max=99)], null=True),
         Bool('alua'),
         update=True
     ))
@@ -410,7 +410,7 @@ class iSCSITargetExtentService(CRUDService):
         Int('filesize', default=0),
         Int('blocksize', enum=[512, 1024, 2048, 4096], default=512),
         Bool('pblocksize'),
-        Int('avail_threshold', validators=[Range(min=1, max=99)]),
+        Int('avail_threshold', validators=[Range(min=1, max=99)], null=True),
         Str('comment'),
         Bool('insecure_tpc', default=True),
         Bool('xen'),
