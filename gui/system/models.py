@@ -62,7 +62,7 @@ def time_now():
 class Settings(Model):
     stg_guicertificate = models.ForeignKey(
         "Certificate",
-        verbose_name=_("Certificate"),
+        verbose_name=_("Certificate for HTTPS"),
         limit_choices_to={'cert_type__in': [CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL]},
         on_delete=models.SET_NULL,
         blank=True,
