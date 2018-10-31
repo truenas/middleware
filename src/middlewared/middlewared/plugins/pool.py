@@ -1580,12 +1580,12 @@ class PoolService(CRUDService):
 
         sysds = await self.middleware.call('systemdataset.config')
         if sysds['pool'] == pool['name']:
-            job = await self.middleware.call('systemdataset.update', {'pool': None})
+            job = await self.middleware.call('systemdataset.update', {
+                'pool': None, 'pool_exclude': pool['name'],
+            })
             await job.wait()
             if job.error:
                 raise CallError(job.error)
-            await self.middleware.call('systemdataset.setup', True, pool['name'])
-            await self.middleware.call('service.restart', 'system_datasets')
 
         await self.middleware.call('zfs.pool.export', pool['name'])
 
@@ -1885,12 +1885,12 @@ class PoolService(CRUDService):
         sysds = await self.middleware.call('systemdataset.config')
         if sysds['pool'] == pool['name']:
             job.set_progress(40, 'Reconfiguring system dataset')
-            sysds_job = await self.middleware.call('systemdataset.update', {'pool': None})
+            sysds_job = await self.middleware.call('systemdataset.update', {
+                'pool': None, 'pool_exclude': pool['name'],
+            })
             await sysds_job.wait()
             if sysds_job.error:
                 raise CallError(sysds_job.error)
-            await self.middleware.call('systemdataset.setup', True, pool['name'])
-            await self.middleware.call('service.restart', 'system_datasets')
 
         if pool['status'] == 'OFFLINE':
             # Pool exists only in database, its not imported
