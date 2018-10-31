@@ -58,16 +58,6 @@
 : ${SSLCADIR:="${SSLDIR}/CA"}
 
 #
-#	HTTPD settings
-#
-: ${HTTPD:="/usr/local/sbin/nginx"}
-: ${HTTPDDIR:="/usr/local/etc/nginx"}
-: ${HTTPDSCRIPT:="/usr/local/etc/rc.d/nginx"}
-: ${HTTPDCONF:="${HTTPDDIR}/nginx.conf"}
-: ${HTTPDSSLPORT:="443"}
-: ${HTTPDPORT:="80"}
-
-#
 #	Misc settings
 #
 : ${FREENAS_CACHEDIR:="/var/tmp/.cache"}

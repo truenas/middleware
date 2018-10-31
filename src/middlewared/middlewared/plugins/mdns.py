@@ -745,10 +745,8 @@ class mDNSServiceHTTPThread(mDNSServiceThread):
 
     def setup(self):
         webui = self.middleware.call_sync('datastore.query', 'system.settings')
-        if (webui[0]['stg_guiprotocol'] == 'http' or
-           webui[0]['stg_guiprotocol'] == 'httphttps'):
-            self.port = int(webui[0]['stg_guiport'] or 80)
-            self.regtype = "_http._tcp."
+        self.port = int(webui[0]['stg_guiport'] or 80)
+        self.regtype = '_http._tcp.'
 
 
 class mDNSServiceHTTPSThread(mDNSServiceThread):
@@ -758,10 +756,8 @@ class mDNSServiceHTTPSThread(mDNSServiceThread):
 
     def setup(self):
         webui = self.middleware.call_sync('datastore.query', 'system.settings')
-        if (webui[0]['stg_guiprotocol'] == 'https' or
-           webui[0]['stg_guiprotocol'] == 'httphttps'):
-            self.port = int(webui[0]['stg_guihttpsport'] or 443)
-            self.regtype = "_https._tcp."
+        self.port = int(webui[0]['stg_guihttpsport'] or 443)
+        self.regtype = '_https._tcp.'
 
 
 class mDNSServiceMiddlewareThread(mDNSServiceThread):
@@ -771,11 +767,8 @@ class mDNSServiceMiddlewareThread(mDNSServiceThread):
         set_thread_name(f'mdns_{self.service}')
 
     def setup(self):
-        webui = self.middleware.call_sync('datastore.query', 'system.settings')
-        if (webui[0]['stg_guiprotocol'] == 'http' or
-           webui[0]['stg_guiprotocol'] == 'httphttps'):
-            self.port = int(webui[0]['stg_guiport'] or 80)
-            self.regtype = "_middleware._tcp."
+        self.port = 6000
+        self.regtype = "_middleware._tcp."
 
 
 class mDNSServiceMiddlewareSSLThread(mDNSServiceThread):
@@ -785,10 +778,8 @@ class mDNSServiceMiddlewareSSLThread(mDNSServiceThread):
 
     def setup(self):
         webui = self.middleware.call_sync('datastore.query', 'system.settings')
-        if (webui[0]['stg_guiprotocol'] == 'https' or
-           webui[0]['stg_guiprotocol'] == 'httphttps'):
-            self.port = int(webui[0]['stg_guihttpsport'] or 443)
-            self.regtype = "_middleware-ssl._tcp."
+        self.port = int(webui[0]['stg_guihttpsport'] or 443)
+        self.regtype = '_middleware-ssl._tcp.'
 
 
 class mDNSAdvertiseService(Service):

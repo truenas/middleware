@@ -30,48 +30,6 @@
 . /etc/rc.freenas
 
 
-http_ssl_enabled()
-{
-	local ssl=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-		SELECT
-			stg_guiprotocol
-		FROM
-			system_settings
-		WHERE
-			stg_guiprotocol = 'https'
-		ORDER BY
-			-id
-		LIMIT 1
-	")
-
-	if [ -n "${ssl}" ]
-	then
-		return 0
-	fi
-
-	return 1
-}
-
-ftp_tls_enabled()
-{
-	local ssl=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-		SELECT
-			ftp_tls
-		FROM
-			services_ftp
-		ORDER BY
-			-id
-		LIMIT 1
-	")
-
-	if [ "${ssl}" -gt "0" ]
-	then
-		return 0
-	fi
-
-	return 1
-}
-
 _interface_config()
 {
 	local failover_status="${1}"
@@ -481,24 +439,6 @@ _snmp_config()
 	echo "snmpd_flags=\"-LS${snmpd_loglevel}d\""
 }
 
-_ssl_config()
-{
-	local ssl_list
-
-	if http_ssl_enabled
-	then
-		ssl_list="${ssl_list} nginx"
-	fi
-
-	if ftp_tls_enabled
-	then
-		ssl_list="${ssl_list} proftpd"
-	fi
-
-	ssl_list=$(echo ${ssl_list}|xargs)
-	echo "ixssl_list=\"${ssl_list}\""
-}
-
 _ldap_config()
 {
 
@@ -789,7 +729,6 @@ _gen_conf()
 	done
 
 	_s3_config
-	_ssl_config
 
 	local kbdmap
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_kbdmap FROM system_settings ORDER BY -id LIMIT 1" | \

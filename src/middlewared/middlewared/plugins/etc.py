@@ -99,6 +99,9 @@ class EtcService(Service):
         'smartd': [
             {'type': 'py', 'path': 'smartd'},
         ],
+        'nginx': [
+            {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
+        ]
     }
 
     class Config:

@@ -3404,6 +3404,11 @@ class CertificateResourceMixin(object):
                         }
                     )
 
+                with client as c:
+                    sys_cert = c.call('system.general.config')['ui_certificate']
+
+                bundle.data['cert_system_used'] = True if sys_cert['id'] == bundle.obj.id else False
+
                 bundle.data['_edit_url'] = reverse(
                     'certificate_edit',
                     kwargs={

@@ -62,8 +62,8 @@ start_command()
 	sed -i "" -e /SECRET_KEY.*/d ${django_config} 2> /dev/null
         # changed ">>" below to ">" as I want it to write a new file each time
         echo "SECRET_KEY = '${new_string}'" > ${django_config}
-        local webguiproto=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_guiprotocol from system_settings")
-        if [ "${webguiproto}" = "https" -a ! -f /tmp/alert_invalid_ssl_nginx ]; then
+        local webguiproto=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_guihttpsredirect from system_settings")
+        if [ "${webguiproto}" = "1" -a ! -f /tmp/alert_invalid_ssl_nginx ]; then
             echo "SESSION_COOKIE_SECURE = True" >> ${django_config}
             echo "CSRF_COOKIE_SECURE = True" >> ${django_config}
         fi

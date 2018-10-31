@@ -60,15 +60,9 @@ def time_now():
 
 
 class Settings(Model):
-    stg_guiprotocol = models.CharField(
-        max_length=120,
-        choices=choices.PROTOCOL_CHOICES,
-        default="http",
-        verbose_name=_("Protocol")
-    )
     stg_guicertificate = models.ForeignKey(
         "Certificate",
-        verbose_name=_("Certificate"),
+        verbose_name=_("Certificate for HTTPS"),
         limit_choices_to={'cert_type__in': [CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL]},
         on_delete=models.SET_NULL,
         blank=True,
@@ -96,10 +90,9 @@ class Settings(Model):
     )
     stg_guihttpsredirect = models.BooleanField(
         verbose_name=_('WebGUI HTTP -> HTTPS Redirect'),
-        default=True,
+        default=False,
         help_text=_(
-            'Redirect HTTP (port 80) to HTTPS when only the HTTPS protocol is '
-            'enabled'
+            'Redirect all incoming HTTP requests to HTTPS'
         ),
     )
     stg_language = models.CharField(

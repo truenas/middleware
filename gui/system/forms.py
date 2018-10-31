@@ -977,7 +977,6 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
         'ui_httpsport': 'stg_guihttpsport',
         'ui_httpsredirect': 'stg_guihttpsredirect',
         'ui_port': 'stg_guiport',
-        'ui_protocol': 'stg_guiprotocol',
         'ui_v6address': 'stg_guiv6address'
     }
 
@@ -1021,7 +1020,6 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
             if key.startswith('gui'):
                 update['ui_' + key[3:]] = update.pop(key)
 
-        update['ui_protocol'] = update['ui_protocol'].upper()
         update['sysloglevel'] = update['sysloglevel'].upper()
         for key in ('ui_address', 'ui_v6address'):
             if not update.get(key):
@@ -1032,7 +1030,6 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
         cache.set('guiLanguage', self.instance.stg_language)
 
         if (
-            self.original_instance['stg_guiprotocol'] != self.instance.stg_guiprotocol or
             self.original_instance['stg_guiaddress'] != self.instance.stg_guiaddress or
             self.original_instance['stg_guiport'] != self.instance.stg_guiport or
             self.original_instance['stg_guihttpsport'] != self.instance.stg_guihttpsport or
@@ -1043,22 +1040,22 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
                 address = request.META['HTTP_HOST'].split(':')[0]
             else:
                 address = self.instance.stg_guiaddress[0]
-            if self.instance.stg_guiprotocol == 'httphttps':
+            if not self.instance.stg_guihttpsredirect:
                 protocol = 'http'
             else:
-                protocol = self.instance.stg_guiprotocol
+                protocol = 'https'
 
             newurl = "%s://%s/legacy/" % (
                 protocol,
                 address
             )
 
-            if self.instance.stg_guiport and protocol == 'http':
+            if self.instance.stg_guiport and not self.instance.stg_guihttpsredirect:
                 newurl += ":" + str(self.instance.stg_guiport)
-            elif self.instance.stg_guihttpsport and protocol == 'https':
+            elif self.instance.stg_guihttpsport and self.instance.stg_guihttpsredirect:
                 newurl += ":" + str(self.instance.stg_guihttpsport)
 
-            if self.original_instance['stg_guiprotocol'] != self.instance.stg_guiprotocol:
+            if self.original_instance['stg_guihttpsredirect'] != self.instance.stg_guihttpsredirect:
                 events.append("evilrestartHttpd('%s')" % newurl)
             else:
                 events.append("restartHttpd('%s')" % newurl)

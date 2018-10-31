@@ -337,6 +337,26 @@ class CertificateService(CRUDService):
     # HELPER METHODS
 
     @private
+    def create_self_signed_cert(self):
+        key = generate_key(2048)
+        cert = crypto.X509()
+        cert.get_subject().C = 'US'
+        cert.get_subject().O = 'iXsystems'
+        cert.get_subject().CN = 'localhost'
+        cert.set_serial_number(1)
+
+        cert.get_subject().emailAddress = 'info@ixsystems.com'
+
+        cert.gmtime_adj_notBefore(0)
+        cert.gmtime_adj_notAfter(3600 * (60 * 60 * 24))
+
+        cert.set_issuer(cert.get_subject())
+        cert.set_version(2)
+        cert.set_pubkey(key)
+        cert.sign(key, 'SHA256')
+        return cert, key
+
+    @private
     @accepts(
         Str('hostname', required=True),
         Int('port', required=True)
@@ -837,10 +857,20 @@ class CertificateService(CRUDService):
         return await self._get_instance(id)
 
     @accepts(
-        Int('id')
+        Int('id'),
     )
     async def do_delete(self, id):
         certificate = await self._get_instance(id)
+
+        if (await self.middleware.call('system.general.config'))['ui_certificate']['id'] == id:
+            verrors = ValidationErrors()
+
+            verrors.add(
+                'certificate_delete.id',
+                'Selected certificate is being used by system HTTPS server, please select another one'
+            )
+
+            raise verrors
 
         response = await self.middleware.call(
             'datastore.delete',
@@ -1269,7 +1299,7 @@ class CertificateAuthorityService(CRUDService):
         Int('id')
     )
     async def do_delete(self, id):
-        ca = self._get_instance(id)
+        ca = await self._get_instance(id)
 
         response = await self.middleware.call(
             'datastore.delete',
@@ -1289,3 +1319,29 @@ class CertificateAuthorityService(CRUDService):
             await self.middleware.call('alert.process_alerts')
 
         return response
+
+
+async def setup(middlewared):
+    system_cert = (await middlewared.call('system.general.config'))['ui_certificate']
+    certs = await middlewared.call('certificate.query')
+    if not system_cert or system_cert['id'] not in [c['id'] for c in certs]:
+        # create a self signed cert if it doesn't exist and set ui_certificate to it's value
+        if not any('freenas_default' == c['name'] for c in certs):
+            cert, key = await middlewared.call('certificate.create_self_signed_cert')
+            default_cert = await middlewared.call(
+                'certificate.create', {
+                    'create_type': 'CERTIFICATE_CREATE_IMPORTED',
+                    'certificate': crypto.dump_certificate(crypto.FILETYPE_PEM, cert).decode(),
+                    'privatekey': crypto.dump_privatekey(crypto.FILETYPE_PEM, key).decode(),
+                    'name': 'freenas_default'
+                }
+            )
+
+            id = default_cert['id']
+            middlewared.logger.debug('Default certificate for System created')
+        else:
+            id = [c['id'] for c in certs if c['name'] == 'freenas_default'][0]
+
+        await middlewared.call('system.general.update', {'ui_certificate': id})
+
+    middlewared.logger.debug('Certificate setup for System complete')

@@ -191,7 +191,6 @@ class SettingsResourceTest(APITestCase):
             'stg_guihttpsport': 443,
             'stg_guiport': 80,
             'stg_guihttpsredirect': True,
-            'stg_guiprotocol': 'http',
             'stg_guiv6address': ['::'],
             'stg_kbdmap': '',
             'stg_language': 'en',

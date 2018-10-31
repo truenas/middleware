@@ -278,6 +278,10 @@ class NotifierService(Service):
         # Being used by VCenter Service
         return settings.HERE
 
+    def dojango_dojo_version(self):
+        # Being used by nginx.conf in etc plugin
+        return settings.DOJANGO_DOJO_VERSION
+
     def humanize_size(self, number):
         """Temporary wrapper to return a human readable bytesize"""
         try:

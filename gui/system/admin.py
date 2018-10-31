@@ -389,6 +389,7 @@ class CertificateFAdmin(BaseFreeAdmin):
                     editObject('Delete', data._delete_url, [mybtn,]);
                 }
             }""",
+            'on_select_after': hide_me % 'row.data.cert_system_used'
         }
 
         return actions
