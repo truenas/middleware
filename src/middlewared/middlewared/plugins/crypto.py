@@ -1214,6 +1214,16 @@ class CertificateService(CRUDService):
     @job(lock='cert_delete')
     def do_delete(self, job, id, force=False):
 
+        if (self.middleware.call_sync('system.general.config'))['ui_certificate']['id'] == id:
+            verrors = ValidationErrors()
+
+            verrors.add(
+                'certificate_delete.id',
+                'Selected certificate is being used by system HTTPS server, please select another one'
+            )
+
+            raise verrors
+
         certificate = self.middleware.call_sync('certificate._get_instance', id)
 
         if certificate.get('acme'):
