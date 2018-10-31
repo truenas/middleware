@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Bool, Dict, Str
-from middlewared.service import ConfigService, ValidationErrors, job, private
+from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
 from middlewared.utils import Popen, run
 
 import asyncio
@@ -130,11 +130,15 @@ class SystemDatasetService(ConfigService):
             if not await self.middleware.call('pool.query', [('name', '=', config['pool'])]):
                 job = await self.middleware.call('systemdataset.update', {'pool': None})
                 await job.wait()
+                if job.error:
+                    raise CallError(job.error)
                 config = await self.config()
 
         if not config['pool'] and not await self.middleware.call('system.is_freenas'):
             job = await self.middleware.call('systemdataset.update', {'pool': 'freenas-boot'})
             await job.wait()
+            if job.error:
+                raise CallError(job.error)
             config = await self.config()
         elif not config['pool']:
             pool = None
@@ -147,6 +151,8 @@ class SystemDatasetService(ConfigService):
             if pool:
                 job = await self.middleware.call('systemdataset.update', {'pool': pool['name']})
                 await job.wait()
+                if job.error:
+                    raise CallError(job.error)
                 config = await self.config()
 
         if not config['basename']:
