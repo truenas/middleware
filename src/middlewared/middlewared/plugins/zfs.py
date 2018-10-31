@@ -345,10 +345,10 @@ class ZFSSnapshot(CRUDService):
     @filterable
     def query(self, filters=None, options=None):
         # Special case for faster listing of snapshot names (#53149)
-        if options and (options.get('select') or []) == ['name']:
+        if options and options.get('select') == ['name']:
             # Using zfs list -o name is dozens of times faster than py-libzfs
             cmd = ['zfs', 'list', '-H', '-o', 'name', '-t', 'snapshot']
-            order_by = options.get('order_by') or []
+            order_by = options.get('order_by')
             # -s name makes it even faster
             if not order_by or order_by == ['name']:
                 cmd += ['-s', 'name']
