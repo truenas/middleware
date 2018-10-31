@@ -1245,7 +1245,7 @@ class CertificateService(CRUDService):
             {'onetime': False}
         )
 
-        sentinel = f'/tmp/alert_invalidCA_{certificate["name"]}'
+        sentinel = f'/tmp/alert_invalidcert_{certificate["name"]}'
         if os.path.exists(sentinel):
             os.unlink(sentinel)
             self.middleware.call_sync('alert.process_alerts')
