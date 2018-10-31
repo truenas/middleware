@@ -343,9 +343,33 @@ class ZFSSnapshot(CRUDService):
         namespace = 'zfs.snapshot'
 
     @filterable
-    def query(self, filters, options):
+    def query(self, filters=None, options=None):
+        # Special case for faster listing of snapshot names (#53149)
+        if options and options.get('select') == ['name']:
+            # Using zfs list -o name is dozens of times faster than py-libzfs
+            cmd = ['zfs', 'list', '-H', '-o', 'name', '-t', 'snapshot']
+            order_by = options.get('order_by')
+            # -s name makes it even faster
+            if not order_by or order_by == ['name']:
+                cmd += ['-s', 'name']
+            cp = subprocess.run(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+            )
+            if cp.returncode != 0:
+                raise CallError(f'Failed to retrieve snapshots: {cp.stderr}')
+            snaps = [{'name': i} for i in cp.stdout.strip().split()]
+            if filters:
+                return filter_list(snaps, filters, options)
+            return snaps
         with libzfs.ZFS() as zfs:
-            snapshots = [i.__getstate__() for i in list(zfs.snapshots)]
+            # Handle `id` filter to avoid getting all snapshots first
+            if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
+                snapshots = [zfs.get_snapshot(filters[0][2]).__getstate__()]
+            else:
+                snapshots = [i.__getstate__() for i in list(zfs.snapshots)]
         # FIXME: awful performance with hundreds/thousands of snapshots
         return filter_list(snapshots, filters, options)
 

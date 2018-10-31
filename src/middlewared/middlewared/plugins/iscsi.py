@@ -668,8 +668,9 @@ class iSCSITargetExtentService(CRUDService):
         async for pdisk in await self.middleware.call('pool.get_disks'):
             used_disks.append(pdisk)
 
-        zfs_snaps = await self.middleware.call('zfs.snapshot.query', [],
-                                               {'order_by': ['name']})
+        zfs_snaps = await self.middleware.call(
+            'zfs.snapshot.query', [], {'select': ['name'], 'order_by': ['name']}
+        )
 
         zvols = await self.middleware.call(
             'pool.dataset.query',
@@ -685,14 +686,9 @@ class iSCSITargetExtentService(CRUDService):
                 diskchoices[f'zvol/{zvol_name}'] = f'{zvol_name} ({zvol_size})'
 
         for snap in zfs_snaps:
-            ds_name, snap_name = snap['properties']['name'][
-                'value'].rsplit('@', 1)
-            full_name = f'{ds_name}@{snap_name}'
-            snap_size = snap['properties']['referenced']['value']
-
+            ds_name, snap_name = snap['name'].rsplit('@', 1)
             if ds_name in zvol_list:
-                diskchoices[f'zvol/{full_name}'] = \
-                    f'{full_name} ({snap_size}) [ro]'
+                diskchoices[f'zvol/{snap["name"]}'] = f'{snap["name"]} [ro]'
 
         notifier_disks = await self.middleware.call('notifier.get_disks')
         for name, disk in notifier_disks.items():
