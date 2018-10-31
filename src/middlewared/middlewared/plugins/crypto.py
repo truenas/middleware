@@ -1170,12 +1170,8 @@ class CertificateService(CRUDService):
                     {'prefix': self._config.datastore_prefix}
                 )
 
-    @accepts(
-        Int('id'),
-        Bool('force', default=False)
-    )
-    @job(lock='cert_delete')
-    def do_delete(self, job, id, force=False):
+    @private
+    def revoke_acme_certificate(self, id):
 
         if (self.middleware.call_sync('system.general.config'))['ui_certificate']['id'] == id:
             verrors = ValidationErrors()
@@ -1197,10 +1193,7 @@ class CertificateService(CRUDService):
         certificate = self.middleware.call_sync('certificate._get_instance', id)
 
         if certificate.get('acme'):
-
             client, key = self.get_acme_client_and_key(certificate['acme']['directory'], True)
-
-            job.set_progress(60)
 
             try:
                 client.revoke(
@@ -1209,11 +1202,26 @@ class CertificateService(CRUDService):
                     ),
                     0
                 )
-            except errors.ClientError as e:
-                if not force:
-                    raise CallError(f'Unable to revoke certificate : {e}')
+            except (errors.ClientError, messages.Error) as e:
+                return str(e)
             else:
-                job.set_progress(80, 'Certificate successfully revoked')
+                return True
+
+    @accepts(
+        Int('id'),
+        Bool('force', default=False)
+    )
+    @job(lock='cert_delete')
+    def do_delete(self, job, id, force=False):
+
+        certificate = self.middleware.call_sync('certificate._get_instance', id)
+
+        if certificate.get('acme'):
+            revoke = self.revoke_acme_certificate(id)
+            if revoke is not True and not force:
+                raise CallError(
+                    f'Unable to revoke certificate: {revoke}'
+                )
 
         response = self.middleware.call_sync(
             'datastore.delete',
@@ -1227,7 +1235,7 @@ class CertificateService(CRUDService):
             {'onetime': False}
         )
 
-        sentinel = f'/tmp/alert_invalidcert_{certificate["name"]}'
+        sentinel = f'/tmp/alert_invalidCA_{certificate["name"]}'
         if os.path.exists(sentinel):
             os.unlink(sentinel)
             self.middleware.call_sync('alert.process_alerts')
