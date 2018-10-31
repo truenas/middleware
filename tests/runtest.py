@@ -190,3 +190,9 @@ results = SSH_TEST('dmesg -a', 'root', 'testing', ip)
 dmsg = open(f'{artifacts}/dmesg', 'w')
 dmsg.writelines(results['output'])
 dmsg.close()
+
+# get core.get_jobs and put it in artifacs
+results = SSH_TEST('midclt call core.get_jobs | jq .', 'root', 'testing', ip)
+dmsg = open(f'{artifacts}/core_get_job', 'w')
+dmsg.writelines(results['output'])
+dmsg.close()
