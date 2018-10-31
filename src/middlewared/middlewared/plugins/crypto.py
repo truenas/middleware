@@ -650,6 +650,11 @@ class CertificateService(CRUDService):
                     'acme_create.dns_mapping',
                     f'Domain {domain} name cannot end with a period'
                 )
+            if '*' in domain and not domain.startswith('*.'):
+                verrors.add(
+                    'acme_create.dns_mapping',
+                    'Wildcards must be at the start of domain name followed by a period'
+                )
         for domain in data['dns_mapping']:
             if domain not in domains:
                 verrors.add(
@@ -684,17 +689,16 @@ class CertificateService(CRUDService):
         # resource, a domain name dns mapping is available
         # For multiple domain providers in domain names, I think we should ask the end user to specify which domain
         # provider is used for which domain so authorizations can be handled gracefully
-        # https://serverfault.com/questions/906407/lets-encrypt-dns-challenge-with-multiple-public-dns-providers
 
-        max_progress = (progress * 4) - progress - (progress * 4 / 5)  # TODO: Refine this
+        max_progress = (progress * 4) - progress - (progress * 4 / 5)
 
+        dns_mapping = {d.replace('*.', ''): v for d, v in domain_names_dns_mapping.items()}
         for authorization_resource in order.authorizations:
             try:
                 status = False
                 progress += (max_progress / len(order.authorizations))
-                domain = authorization_resource.body.identifier.value  # TODO: handle wildcards
-                # BOULDER DOES NOT RETURN WILDCARDS FOR NOW - WILDCARDS SHOULD BE GRACEFULLY HANDLED IN THE DOMAIN DNS
-                # MAPPING DICT
+                domain = authorization_resource.body.identifier.value
+                # BOULDER DOES NOT RETURN WILDCARDS FOR NOW
                 # OTHER IMPLEMENTATIONS RIGHT NOW ASSUME THAT EVERY DOMAIN HAS A WILD CARD IN CASE OF DNS CHALLENGE
                 challenge = None
                 for chg in authorization_resource.body.challenges:
@@ -708,7 +712,7 @@ class CertificateService(CRUDService):
 
                 self.middleware.call_sync(
                     'acme.dns.authenticator.update_txt_record', {
-                        'authenticator': domain_names_dns_mapping[domain],
+                        'authenticator': dns_mapping[domain],
                         'challenge': challenge.json_dumps(),
                         'domain': domain,
                         'key': key.json_dumps()
