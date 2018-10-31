@@ -15,12 +15,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 
-'''
-TODO'S:
-1) IS THERE A MIN KEY SIZE REQUIRED BY LETS ENCRYPT IN CSR - HANDLE THE EXCEPTION GRACEFULLY
-2) Domain names should not end in periods ? research
-3) See what can be done to respect rate limits
-'''
+# TODO: See what can be done to respect rate limits
 
 
 class ACMERegistrationService(CRUDService):

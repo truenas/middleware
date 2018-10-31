@@ -645,6 +645,11 @@ class CertificateService(CRUDService):
                     'acme_create.dns_mapping',
                     f'Provided DNS Authenticator id for {domain} does not exist'
                 )
+            if domain.endswith('.'):
+                verrors.add(
+                    'acme_create.dns_mapping',
+                    f'Domain {domain} name cannot end with a period'
+                )
         for domain in data['dns_mapping']:
             if domain not in domains:
                 verrors.add(
