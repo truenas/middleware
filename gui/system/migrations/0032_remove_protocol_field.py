@@ -6,11 +6,7 @@ from django.db import migrations
 def correct_default_value_for_https_redirect(apps, schema_editor):
     settings_model = apps.get_model('system', 'settings')
     settings = settings_model.objects.order_by('-id')[0]
-    if (
-        (settings.stg_guiprotocol != 'HTTPS') or (
-            settings.stg_guiprotocol == 'HTTPS' and not settings.stg_guihttpsredirect
-        )
-    ):
+    if settings.stg_guiprotocol != 'HTTPS':
         settings.stg_guihttpsredirect = False
         settings.save()
 
