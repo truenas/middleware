@@ -1092,15 +1092,16 @@ class Middleware(object):
         connection = Application(self, self.__loop, request, ws)
         connection.on_open()
 
-        async for msg in ws:
-            x = json.loads(msg.data)
-            try:
-                await connection.on_message(x)
-            except Exception as e:
-                self.logger.error('Connection closed unexpectedly', exc_info=True)
-                await ws.close(message=str(e).encode('utf-8'))
-
-        await connection.on_close()
+        try:
+            async for msg in ws:
+                x = json.loads(msg.data)
+                try:
+                    await connection.on_message(x)
+                except Exception as e:
+                    self.logger.error('Connection closed unexpectedly', exc_info=True)
+                    await ws.close(message=str(e).encode('utf-8'))
+        finally:
+            await connection.on_close()
         return ws
 
     def _loop_monitor_thread(self):
