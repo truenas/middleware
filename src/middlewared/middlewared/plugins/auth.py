@@ -85,9 +85,16 @@ class AuthService(Service):
             return False
         return crypt.crypt(password, user['bsdusr_unixhash']) == user['bsdusr_unixhash']
 
-    @accepts(Int('ttl', default=None, null=True), Dict('attrs', additional_attrs=True))
+    @accepts(Int('ttl', default=600, null=True), Dict('attrs', additional_attrs=True))
     def generate_token(self, ttl=None, attrs=None):
-        """Generate a token to be used for authentication."""
+        """
+        Generate a token to be used for authentication.
+
+        `ttl` stands for Time To Live, in seconds. The token will be invalidated if the connection
+        has been inactive for a time greater than this.
+
+        `attrs` is a general purpose object/dictionary to hold information about the token.
+        """
         if ttl is None:
             ttl = 600
         return self.authtokens.new(ttl, attrs=attrs)['id']
