@@ -44,4 +44,6 @@ jails_func()
 	section_header "iocage list"
 	iocage list
 	section_footer
+
+	iocage debug -d "$FREENAS_DEBUG_DIRECTORY/Jails/iocage-debug"
 }
