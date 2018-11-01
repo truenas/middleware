@@ -93,7 +93,7 @@ class ACMERegistrationService(CRUDService):
             )
 
         # For now we assume that only root is responsible for certs issued under ACME protocol
-        email = (self.middleware.call_sync('user.query', [['id', '=', 1]]))[0]['email']
+        email = (self.middleware.call_sync('user.query', [['uid', '=', 0]]))[0]['email']
         if not email:
             raise CallError(
                 'Please specify root email address which will be used with the ACME server'
@@ -221,7 +221,7 @@ class DNSAuthenticatorService(CRUDService):
         return await self._get_instance(id)
 
     @accepts(
-        Int('id', required=True),
+        Int('id'),
         Dict(
             'dns_authenticator_update',
             Str('name'),
