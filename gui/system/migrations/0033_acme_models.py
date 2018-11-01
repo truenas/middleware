@@ -10,7 +10,7 @@ import freenasUI.freeadmin.models.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0031_adv_boot_scrub'),
+        ('system', '0032_remove_protocol_field'),
     ]
 
     operations = [
