@@ -5,7 +5,7 @@ import requests
 import time
 
 from middlewared.schema import Bool, Dict, Int, Str, ValidationErrors
-from middlewared.service import accepts, CallError, CRUDService, private
+from middlewared.service import accepts, CallError, CRUDService, filterable, private
 from middlewared.validators import validate_attributes
 
 from acme import client, messages
@@ -26,7 +26,16 @@ class ACMERegistrationService(CRUDService):
         namespace = 'acme.registration'
         private = True
 
+    @filterable
     async def query(self, filters=None, options=None):
+
+        """
+
+        We should normalize directory uri if it is specified in filters
+        :param filters: List of filters i.e [["id", "=", 1]]
+        :param options: Dictionary for customizing output
+        :return: List of dictionaries or a dictionary
+        """
         for filter in filters or []:
             if len(filter) == 3 and filter[0] == 'directory':
                 # Let's normalize directory uri for query
@@ -34,6 +43,7 @@ class ACMERegistrationService(CRUDService):
 
         return await super().query(filters, options)
 
+    @private
     async def register_extend(self, data):
         data['body'] = {
             key: value for key, value in
@@ -44,6 +54,7 @@ class ACMERegistrationService(CRUDService):
         }
         return data
 
+    @private
     def get_directory(self, acme_directory_uri):
         try:
             response = requests.get(acme_directory_uri).json()
@@ -66,6 +77,13 @@ class ACMERegistrationService(CRUDService):
         )
     )
     def do_create(self, data):
+
+        """
+        Create a regisration object for a specific ACME Server registering root user with the ACME Server
+        :param data: Dictionary containing some keys which are used to specify certain parameters for creating a
+        JWK key and the ACME Server directory URI endpoint
+        :return: Created acme registration dictionary
+        """
 
         # STEPS FOR CREATION
         # 1) CREATE KEY
@@ -166,6 +184,12 @@ class DNSAuthenticatorService(CRUDService):
 
     @accepts()
     def authenticator_schemas(self):
+
+        """
+
+        :return: List of dictionaries specifying different DNS providers we support for ACME DNS Challenge and the
+        necessary keys associated with each DNS provider required for the user to provide to complete DNS Authenticator
+        """
         return [
             {'schema': [v.to_json_schema() for v in value], 'key': key}
             for key, value in self.schemas.items()
@@ -210,6 +234,15 @@ class DNSAuthenticatorService(CRUDService):
         )
     )
     async def do_create(self, data):
+
+        """
+
+        Create an object of a specific DNS Authenticator containing required authentication details for the said
+        provider to successfully connect with it
+        :param data: Dictionary containing `authenticator` name of the DNS provider we provide support for and
+        `attributes` is a dictionary containing necessary details to connect to the said DNS provider
+        :return: Created DNS Authenticator object dictionary
+        """
         await self.common_validation(data, 'dns_authenticator_create')
 
         id = await self.middleware.call(
@@ -229,6 +262,14 @@ class DNSAuthenticatorService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+
+        """
+
+        Update `id` DNS Authenticator details
+        :param id: integer specifying DNS Authenticator
+        :param data: Dictionary containing updates to the DNS Authenticator
+        :return: Updated DNS Authenticator object's dictionary
+        """
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
@@ -249,6 +290,12 @@ class DNSAuthenticatorService(CRUDService):
     )
     async def do_delete(self, id):
 
+        """
+
+        Delete `id` DNS Authenticator
+        :param id: integer
+        :return: Boolean value depending on successful deletion of the DNS Authenticator
+        """
         await self.middleware.call('certificate.delete_domains_authenticator', id)
 
         return await self.middleware.call(
