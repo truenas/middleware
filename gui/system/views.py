@@ -1971,15 +1971,18 @@ def certificate_progress(request):
     with client as c:
         job = c.call(
             'core.get_jobs',
-            [['id', '=', request.session['certificate_create']['job_id']]],
-            {'get': True}
+            [['id', '=', request.session.get('certificate_create', {}).get('job_id', -1)]]
         )
 
+    if job:
+        job = job[0]
+
     return HttpResponse(json.dumps({
-        "status": "finished" if job["state"] in ["SUCCESS", "FAILED", "ABORTED"] else job["progress"]["description"],
-        "volume": job["arguments"][0],
-        "extra": job["progress"]["extra"],
-        "percent": job["progress"]["percent"],
+        "status": "finished" if not job or job["state"] in ["SUCCESS", "FAILED", "ABORTED"] else
+        job["progress"]["description"],
+        "volume": job["arguments"][0] if job else {},
+        "extra": job["progress"]["extra"] if job else None,
+        "percent": job["progress"]["percent"] if job else None,
     }), content_type='application/json')
 
 
