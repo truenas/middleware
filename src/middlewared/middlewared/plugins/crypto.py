@@ -1792,24 +1792,27 @@ async def setup(middlewared):
     certs = await middlewared.call('certificate.query')
     if not system_cert or system_cert['id'] not in [c['id'] for c in certs]:
         # create a self signed cert if it doesn't exist and set ui_certificate to it's value
-        if not any('freenas_default' == c['name'] for c in certs):
-            cert, key = await middlewared.call('certificate.create_self_signed_cert')
-            default_cert_job = await middlewared.call(
-                'certificate.create', {
-                    'create_type': 'CERTIFICATE_CREATE_IMPORTED',
-                    'certificate': crypto.dump_certificate(crypto.FILETYPE_PEM, cert).decode(),
-                    'privatekey': crypto.dump_privatekey(crypto.FILETYPE_PEM, key).decode(),
-                    'name': 'freenas_default'
-                }
-            )
+        try:
+            if not any('freenas_default' == c['name'] for c in certs):
+                cert, key = await middlewared.call('certificate.create_self_signed_cert')
+                default_cert_job = await middlewared.call(
+                    'certificate.create', {
+                        'create_type': 'CERTIFICATE_CREATE_IMPORTED',
+                        'certificate': crypto.dump_certificate(crypto.FILETYPE_PEM, cert).decode(),
+                        'privatekey': crypto.dump_privatekey(crypto.FILETYPE_PEM, key).decode(),
+                        'name': 'freenas_default'
+                    }
+                )
 
-            await default_cert_job.wait()
-            default_cert = await middlewared.call('certificate.query', [['name', '=', 'freenas_default']])
-            id = default_cert[0]['id']
-            middlewared.logger.debug('Default certificate for System created')
-        else:
-            id = [c['id'] for c in certs if c['name'] == 'freenas_default'][0]
+                await default_cert_job.wait()
+                default_cert = await middlewared.call('certificate.query', [['name', '=', 'freenas_default']])
+                id = default_cert[0]['id']
+                middlewared.logger.debug('Default certificate for System created')
+            else:
+                id = [c['id'] for c in certs if c['name'] == 'freenas_default'][0]
 
-        await middlewared.call('system.general.update', {'ui_certificate': id})
+            await middlewared.call('system.general.update', {'ui_certificate': id})
+        except Exception as e:
+            middlewared.logger.debug(f'Failed to set certificate for system.general plugin: {e}')
 
     middlewared.logger.debug('Certificate setup for System complete')
