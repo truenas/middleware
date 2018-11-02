@@ -217,9 +217,9 @@ class CertificateService(CRUDService):
             'CERTIFICATE_CREATE_INTERNAL': self.__create_internal,
             'CERTIFICATE_CREATE_IMPORTED': self.__create_imported_certificate,
             'CERTIFICATE_CREATE_IMPORTED_CSR': self.__create_imported_csr,
-            'CERTIFICATE_CREATE': self.__create_certificate,
             'CERTIFICATE_CREATE_CSR': self.__create_csr,
-            'CERTIFICATE_CREATE_ACME': self.__create_acme_certificate
+            'CERTIFICATE_CREATE_ACME': self.__create_acme_certificate,
+            'CERTIFICATE_CREATE': self.__create_certificate
         }
 
     @private
@@ -774,6 +774,12 @@ class CertificateService(CRUDService):
 
     @accepts()
     async def acme_server_choices(self):
+
+        """
+
+        :return: Dictionary of popular ACME Servers with their directory URI endpoints which we display automatically
+        in UI
+        """
         return {
             'https://acme-staging-v02.api.letsencrypt.org/directory': 'Let\'s Encrypt Staging Directory',
             'https://acme-v02.api.letsencrypt.org/directory': 'Let\'s Encrypt Production Directory'
@@ -787,9 +793,11 @@ class CertificateService(CRUDService):
     # CERTIFICATE_CREATE_INTERNAL     - __create_internal
     # CERTIFICATE_CREATE_IMPORTED     - __create_imported_certificate
     # CERTIFICATE_CREATE_IMPORTED_CSR - __create_imported_csr
-    # CERTIFICATE_CREATE              - __create_certificate
     # CERTIFICATE_CREATE_CSR          - __create_csr
     # CERTIFICATE_CREATE_ACME         - __create_acme_certificate
+
+    # TODO: Make the following method inaccessible publicly
+    # CERTIFICATE_CREATE              - __create_certificate ( ONLY TO BE USED INTERNALLY )
 
     @accepts(
         Dict(
@@ -818,8 +826,8 @@ class CertificateService(CRUDService):
             Str('state'),
             Str('create_type', enum=[
                 'CERTIFICATE_CREATE_INTERNAL', 'CERTIFICATE_CREATE_IMPORTED',
-                'CERTIFICATE_CREATE', 'CERTIFICATE_CREATE_CSR',
-                'CERTIFICATE_CREATE_IMPORTED_CSR', 'CERTIFICATE_CREATE_ACME'], required=True),
+                'CERTIFICATE_CREATE_CSR', 'CERTIFICATE_CREATE_IMPORTED_CSR',
+                'CERTIFICATE_CREATE_ACME', 'CERTIFICATE_CREATE'], required=True),
             Str('digest_algorithm', enum=['SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512']),
             List('san', items=[Str('san')]),
             register=True
@@ -827,6 +835,44 @@ class CertificateService(CRUDService):
     )
     @job(lock='cert_create')
     async def do_create(self, job, data):
+
+        """
+
+        Create a certificate in the system based on the params provided in `data`. Following types are supported with
+        the necessary keywords to be passed for key `create_type` in data
+        1) Internal Certificate                 -  CERTIFICATE_CREATE_INTERNAL
+        2) Imported Certificate                 -  CERTIFICATE_CREATE_IMPORTED
+        3) Certificate Signing Request          -  CERTIFICATE_CREATE_CSR
+        4) Imported Certificate Signing Request -  CERTIFICATE_CREATE_IMPORTED_CSR
+        5) ACME Certificate                     -  CERTIFICATE_CREATE_ACME
+
+        Based on `create_type` a type is selected by Certificate Service and rest of the values in `data` are validated
+        accordingly and finally a certificate is made based on the selected type.
+
+        Examples ( Rest API Calls )
+        1) ACME Certificate
+        {
+            "tos": true,
+            "csr_id": 1,
+            "acme_directory_uri": "ACME Server Directory URI endpoint",
+            "name": "acme_certificate",
+            "dns_mapping": {
+                "domain1.com": "1"
+            },
+            "create_type": "CERTIFICATE_CREATE_ACME"
+        }
+
+        2) Certificate Signing Request
+        {
+            "name": "csr",
+            "CSR": "CSR string",
+            "privatekey": "Private key string",
+            "create_type": "CERTIFICATE_CREATE_CSR"
+        }
+
+        :param data: dictionary
+        :return: Created Certificate object's dictionary
+        """
 
         if not data.get('dns_mapping'):
             data.pop('dns_mapping')  # Default dict added
@@ -1111,6 +1157,13 @@ class CertificateService(CRUDService):
     )
     @job(lock='cert_update')
     async def do_update(self, job, id, data):
+
+        """
+
+        :param id: integer
+        :param data: dictionary
+        :return: Updated Certificate object's dictionary
+        """
         old = await self._get_instance(id)
         # signedby is changed back to integer from a dict
         old['signedby'] = old['signedby']['id'] if old.get('signedby') else None
@@ -1197,6 +1250,17 @@ class CertificateService(CRUDService):
     @job(lock='cert_delete')
     def do_delete(self, job, id, force=False):
 
+        """
+
+        Delete `id` certificate. If the certificate is an ACME based certificate, certificate service will try to
+        revoke the certificate by updating it's status with the ACME server, if it fails an exception is raised
+        and the certificate is not deleted from the system. However, if force is set to True, certificate is deleted
+        from the system even if some error occurred while revoking the certificate with the ACME Server
+
+        :param id: integer
+        :param force: boolean
+        :return: boolean
+        """
         if (self.middleware.call_sync('system.general.config'))['ui_certificate']['id'] == id:
             verrors = ValidationErrors()
 
@@ -1363,6 +1427,31 @@ class CertificateAuthorityService(CRUDService):
         )
     )
     async def do_create(self, data):
+
+        """
+
+        Create a certificate authority in the system based on the params provided in `data`.
+        Following types are supported with
+        the necessary keywords to be passed for key `create_type` in data
+        1) Internal Certificate Authority       -  CA_CREATE_INTERNAL
+        2) Imported Certificate Authority       -  CA_CREATE_IMPORTED
+        3) Intermediate Certificate Authority   -  CA_CREATE_INTERMEDIATE
+
+        Based on `create_type` a type is selected by Certificate Authority Service and rest of the values in `data`
+        are validated accordingly and finally a certificate is made based on the selected type.
+
+        Example ( Rest API Calls )
+        1) Imported Certificate Authority
+        {
+            "name": "internal ca",
+            "certificate": "certificate string",
+            "privatekey": "private key string",
+            "create_type": "CA_CREATE_IMPORTED"
+        }
+
+        :param data: dictionary
+        :return: Created Certificate Authority object's dictionary
+        """
         verrors = await self.validate_common_attributes(data, 'certificate_authority_create')
 
         await validate_cert_name(
@@ -1405,6 +1494,15 @@ class CertificateAuthorityService(CRUDService):
         )
     )
     def ca_sign_csr(self, data):
+
+        """
+
+        Sign CSR and generate a certificate from it. `ca_id` in `data` provides which CA is to be used for signing
+        CSR `csr_cert_id`
+
+        :param data: dictionary
+        :return: Created signed certificate object's dictionary
+        """
         return self.__ca_sign_csr(data)
 
     @accepts(
@@ -1603,6 +1701,15 @@ class CertificateAuthorityService(CRUDService):
     )
     async def do_update(self, id, data):
 
+        """
+
+        Update a Certificate Authority cert's name
+
+        :param id: integer
+        :param data: dictionary
+        :return: Updated Certificate Authority object's dictionary
+        """
+
         if data.pop('create_type', '') == 'CA_SIGN_CSR':
             # BEING USED BY OLD LEGACY FOR SIGNING CSR'S. THIS CAN BE REMOVED WHEN LEGACY UI IS REMOVED
             data['ca_id'] = id
@@ -1650,6 +1757,14 @@ class CertificateAuthorityService(CRUDService):
         Int('id')
     )
     async def do_delete(self, id):
+
+        """
+
+        Delete a Certificate Authority object
+
+        :param id: integer
+        :return: boolean
+        """
         ca = await self._get_instance(id)
 
         response = await self.middleware.call(

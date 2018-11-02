@@ -32,6 +32,7 @@ class ACMERegistrationService(CRUDService):
         """
 
         We should normalize directory uri if it is specified in filters
+
         :param filters: List of filters i.e [["id", "=", 1]]
         :param options: Dictionary for customizing output
         :return: List of dictionaries or a dictionary
@@ -80,6 +81,7 @@ class ACMERegistrationService(CRUDService):
 
         """
         Create a regisration object for a specific ACME Server registering root user with the ACME Server
+
         :param data: Dictionary containing some keys which are used to specify certain parameters for creating a
         JWK key and the ACME Server directory URI endpoint
         :return: Created acme registration dictionary
@@ -239,6 +241,7 @@ class DNSAuthenticatorService(CRUDService):
 
         Create an object of a specific DNS Authenticator containing required authentication details for the said
         provider to successfully connect with it
+
         :param data: Dictionary containing `authenticator` name of the DNS provider we provide support for and
         `attributes` is a dictionary containing necessary details to connect to the said DNS provider
         :return: Created DNS Authenticator object dictionary
@@ -266,6 +269,7 @@ class DNSAuthenticatorService(CRUDService):
         """
 
         Update `id` DNS Authenticator details
+
         :param id: integer specifying DNS Authenticator
         :param data: Dictionary containing updates to the DNS Authenticator
         :return: Updated DNS Authenticator object's dictionary
@@ -293,8 +297,9 @@ class DNSAuthenticatorService(CRUDService):
         """
 
         Delete `id` DNS Authenticator
+
         :param id: integer
-        :return: Boolean value depending on successful deletion of the DNS Authenticator
+        :return: boolean
         """
         await self.middleware.call('certificate.delete_domains_authenticator', id)
 
