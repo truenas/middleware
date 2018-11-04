@@ -31,11 +31,8 @@ class ACMERegistrationService(CRUDService):
 
         """
 
-        We should normalize directory uri if it is specified in filters
+        Query Registered ACME Servers for user "root"
 
-        :param filters: List of filters i.e [["id", "=", 1]]
-        :param options: Dictionary for customizing output
-        :return: List of dictionaries or a dictionary
         """
         for filter in filters or []:
             if len(filter) == 3 and filter[0] == 'directory':
@@ -80,11 +77,32 @@ class ACMERegistrationService(CRUDService):
     def do_create(self, data):
 
         """
-        Create a regisration object for a specific ACME Server registering root user with the ACME Server
 
-        :param data: Dictionary containing some keys which are used to specify certain parameters for creating a
-        JWK key and the ACME Server directory URI endpoint
-        :return: Created acme registration dictionary
+        Register with ACME Server
+
+        Create a regisration for a specific ACME Server registering root user with it
+
+        `acme_directory_uri` is a directory endpoint for any ACME Server
+
+        .. example(websocket)::
+
+            Register with ACME Server
+
+                :::javascript
+                {
+                    "id": "6841f242-840a-11e6-a437-00e04d680384",
+                    "msg": "method",
+                    "method": "acme.registration.create",
+                    "params": [{
+                        "tos": true,
+                        "acme_directory_uri": "https://acme-staging-v02.api.letsencrypt.org/directory"
+                        "JWK_create": {
+                            "key_size": 2048,
+                            "public_exponent": 65537
+                        }
+                    }]
+                }
+
         """
 
         # STEPS FOR CREATION
@@ -189,8 +207,9 @@ class DNSAuthenticatorService(CRUDService):
 
         """
 
-        :return: List of dictionaries specifying different DNS providers we support for ACME DNS Challenge and the
-        necessary keys associated with each DNS provider required for the user to provide to complete DNS Authenticator
+        Get all DNS providers we support for ACME DNS Challenge and the respective attributes required for connecting
+        to them while validating a DNS Challenge
+
         """
         return [
             {'schema': [v.to_json_schema() for v in value], 'key': key}
@@ -239,12 +258,30 @@ class DNSAuthenticatorService(CRUDService):
 
         """
 
-        Create an object of a specific DNS Authenticator containing required authentication details for the said
+        Create a DNS Authenticator
+
+        Create a specific DNS Authenticator containing required authentication details for the said
         provider to successfully connect with it
 
-        :param data: Dictionary containing `authenticator` name of the DNS provider we provide support for and
-        `attributes` is a dictionary containing necessary details to connect to the said DNS provider
-        :return: Created DNS Authenticator object dictionary
+        .. example(websocket)::
+
+            Create a DNS Authenticator for Route53
+
+                :::javascript
+                {
+                    "id": "6841f242-840a-11e6-a437-00e04d680384",
+                    "msg": "method",
+                    "method": "acme.dns.authenticator.create",
+                    "params": [{
+                        "name": "route53_authenticator",
+                        "authenticator": "route53",
+                        "attributes": {
+                            "access_key_id": "AQX13",
+                            "secret_access_key": "JKW90"
+                        }
+                    }]
+                }
+
         """
         await self.common_validation(data, 'dns_authenticator_create')
 
@@ -268,11 +305,29 @@ class DNSAuthenticatorService(CRUDService):
 
         """
 
-        Update `id` DNS Authenticator details
+        Update DNS Authenticator of `id`
 
-        :param id: integer specifying DNS Authenticator
-        :param data: Dictionary containing updates to the DNS Authenticator
-        :return: Updated DNS Authenticator object's dictionary
+        .. example(websocket)::
+
+            Update a DNS Authenticator of `id`
+
+                :::javascript
+                {
+                    "id": "6841f242-840a-11e6-a437-00e04d680384",
+                    "msg": "method",
+                    "method": "acme.dns.authenticator.update",
+                    "params": [
+                        1,
+                        {
+                            "name": "route53_authenticator",
+                            "attributes": {
+                                "access_key_id": "AQX13",
+                                "secret_access_key": "JKW90"
+                            }
+                        }
+                    ]
+                }
+
         """
         old = await self._get_instance(id)
         new = old.copy()
@@ -296,10 +351,22 @@ class DNSAuthenticatorService(CRUDService):
 
         """
 
-        Delete `id` DNS Authenticator
+        Delete DNS Authenticator of `id`
 
-        :param id: integer
-        :return: boolean
+        .. example(websocket)::
+
+            Delete a DNS Authenticator of `id`
+
+                :::javascript
+                {
+                    "id": "6841f242-840a-11e6-a437-00e04d680384",
+                    "msg": "method",
+                    "method": "acme.dns.authenticator.delete",
+                    "params": [
+                        1
+                    ]
+                }
+
         """
         await self.middleware.call('certificate.delete_domains_authenticator', id)
 

@@ -1203,7 +1203,7 @@ class CertificateService(CRUDService):
 
         Only name attribute can be updated
 
-        .. examples(websocket)::
+        .. example(websocket)::
 
             Update a certificate of `id`
 
@@ -1296,7 +1296,7 @@ class CertificateService(CRUDService):
         and the certificate is not deleted from the system. However, if `force` is set to True, certificate is deleted
         from the system even if some error occurred while revoking the certificate with the ACME Server
 
-        .. examples(websocket)::
+        .. example(websocket)::
 
             Delete certificate of `id`
 
