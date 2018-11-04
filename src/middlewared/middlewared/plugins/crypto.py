@@ -838,8 +838,11 @@ class CertificateService(CRUDService):
 
         """
 
-        Create a certificate in the system based on the params provided in `data`. Following types are supported with
-        the necessary keywords to be passed for key `create_type` in data
+        Create a new Certificate
+
+        Certificates are classified under following types and the necessary keywords to be passed
+        for `create_type` attribute to create the respective type of certificate
+
         1) Internal Certificate                 -  CERTIFICATE_CREATE_INTERNAL
         2) Imported Certificate                 -  CERTIFICATE_CREATE_IMPORTED
         3) Certificate Signing Request          -  CERTIFICATE_CREATE_CSR
@@ -870,8 +873,6 @@ class CertificateService(CRUDService):
             "create_type": "CERTIFICATE_CREATE_CSR"
         }
 
-        :param data: dictionary
-        :return: Created Certificate object's dictionary
         """
 
         if not data.get('dns_mapping'):
@@ -1160,9 +1161,10 @@ class CertificateService(CRUDService):
 
         """
 
-        :param id: integer
-        :param data: dictionary
-        :return: Updated Certificate object's dictionary
+        Update certificate of `id`
+
+        Only name attribute can be updated
+
         """
         old = await self._get_instance(id)
         # signedby is changed back to integer from a dict
@@ -1232,14 +1234,13 @@ class CertificateService(CRUDService):
 
         """
 
-        Delete `id` certificate. If the certificate is an ACME based certificate, certificate service will try to
+        Delete certificate of `id`.
+
+        If the certificate is an ACME based certificate, certificate service will try to
         revoke the certificate by updating it's status with the ACME server, if it fails an exception is raised
-        and the certificate is not deleted from the system. However, if force is set to True, certificate is deleted
+        and the certificate is not deleted from the system. However, if `force` is set to True, certificate is deleted
         from the system even if some error occurred while revoking the certificate with the ACME Server
 
-        :param id: integer
-        :param force: boolean
-        :return: boolean
         """
         if (self.middleware.call_sync('system.general.config'))['ui_certificate']['id'] == id:
             verrors = ValidationErrors()
@@ -1417,17 +1418,20 @@ class CertificateAuthorityService(CRUDService):
 
         """
 
-        Create a certificate authority in the system based on the params provided in `data`.
-        Following types are supported with
-        the necessary keywords to be passed for key `create_type` in data
+        Create a new Certificate Authority
+
+        Certificate Authorities are classified under following types with the necessary keywords to be passed
+        for `create_type` attribute to create the respective type of certificate authority
+
         1) Internal Certificate Authority       -  CA_CREATE_INTERNAL
         2) Imported Certificate Authority       -  CA_CREATE_IMPORTED
         3) Intermediate Certificate Authority   -  CA_CREATE_INTERMEDIATE
 
-        Based on `create_type` a type is selected by Certificate Authority Service and rest of the values in `data`
+        Based on `create_type` a type is selected by Certificate Authority Service and rest of the values
         are validated accordingly and finally a certificate is made based on the selected type.
 
         Example ( Rest API Calls )
+
         1) Imported Certificate Authority
         {
             "name": "internal ca",
@@ -1436,8 +1440,6 @@ class CertificateAuthorityService(CRUDService):
             "create_type": "CA_CREATE_IMPORTED"
         }
 
-        :param data: dictionary
-        :return: Created Certificate Authority object's dictionary
         """
         verrors = await self.validate_common_attributes(data, 'certificate_authority_create')
 
@@ -1484,11 +1486,11 @@ class CertificateAuthorityService(CRUDService):
 
         """
 
-        Sign CSR and generate a certificate from it. `ca_id` in `data` provides which CA is to be used for signing
-        CSR `csr_cert_id`
+        Sign CSR by Certificate Authority of `ca_id`
 
-        :param data: dictionary
-        :return: Created signed certificate object's dictionary
+        Sign CSR's and generate a certificate from it. `ca_id` provides which CA is to be used for signing
+        a CSR of `csr_cert_id` which exists in the system
+
         """
         return self.__ca_sign_csr(data)
 
@@ -1690,11 +1692,10 @@ class CertificateAuthorityService(CRUDService):
 
         """
 
-        Update a Certificate Authority cert's name
+        Update Certificate Authority of `id`
 
-        :param id: integer
-        :param data: dictionary
-        :return: Updated Certificate Authority object's dictionary
+        Only name attribute can be updated
+
         """
 
         if data.pop('create_type', '') == 'CA_SIGN_CSR':
@@ -1747,10 +1748,8 @@ class CertificateAuthorityService(CRUDService):
 
         """
 
-        Delete a Certificate Authority object
+        Delete a Certificate Authority of `id`
 
-        :param id: integer
-        :return: boolean
         """
         ca = await self._get_instance(id)
 
