@@ -1223,26 +1223,6 @@ class CertificateService(CRUDService):
                     {'prefix': self._config.datastore_prefix}
                 )
 
-    @private
-    def revoke_acme_certificate(self, id):
-
-        certificate = self.middleware.call_sync('certificate._get_instance', id)
-
-        if certificate.get('acme'):
-            client, key = self.get_acme_client_and_key(certificate['acme']['directory'], True)
-
-            try:
-                client.revoke(
-                    jose.ComparableX509(
-                        crypto.load_certificate(crypto.FILETYPE_PEM, certificate['certificate'])
-                    ),
-                    0
-                )
-            except (errors.ClientError, messages.Error) as e:
-                return str(e)
-            else:
-                return True
-
     @accepts(
         Int('id'),
         Bool('force', default=False)
@@ -1274,11 +1254,18 @@ class CertificateService(CRUDService):
         certificate = self.middleware.call_sync('certificate._get_instance', id)
 
         if certificate.get('acme'):
-            revoke = self.revoke_acme_certificate(id)
-            if revoke is not True and not force:
-                raise CallError(
-                    f'Unable to revoke certificate: {revoke}'
+            client, key = self.get_acme_client_and_key(certificate['acme']['directory'], True)
+
+            try:
+                client.revoke(
+                    jose.ComparableX509(
+                        crypto.load_certificate(crypto.FILETYPE_PEM, certificate['certificate'])
+                    ),
+                    0
                 )
+            except (errors.ClientError, messages.Error) as e:
+                if not force:
+                    raise CallError(f'Failed to revoke certificate: {e}')
 
         response = self.middleware.call_sync(
             'datastore.delete',
