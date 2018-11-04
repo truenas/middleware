@@ -852,26 +852,64 @@ class CertificateService(CRUDService):
         Based on `create_type` a type is selected by Certificate Service and rest of the values in `data` are validated
         accordingly and finally a certificate is made based on the selected type.
 
-        Examples ( Rest API Calls )
-        1) ACME Certificate
-        {
-            "tos": true,
-            "csr_id": 1,
-            "acme_directory_uri": "ACME Server Directory URI endpoint",
-            "name": "acme_certificate",
-            "dns_mapping": {
-                "domain1.com": "1"
-            },
-            "create_type": "CERTIFICATE_CREATE_ACME"
-        }
+        .. examples(websocket)::
 
-        2) Certificate Signing Request
-        {
-            "name": "csr",
-            "CSR": "CSR string",
-            "privatekey": "Private key string",
-            "create_type": "CERTIFICATE_CREATE_CSR"
-        }
+            Create an ACME based certificate
+
+                :::javascript
+                {
+                    "id": "6841f242-840a-11e6-a437-00e04d680384",
+                    "msg": "method",
+                    "method": "certificate.create",
+                    "params": [{
+                        "tos": true,
+                        "csr_id": 1,
+                        "acme_directory_uri": "https://acme-staging-v02.api.letsencrypt.org/directory",
+                        "name": "acme_certificate",
+                        "dns_mapping": {
+                            "domain1.com": "1"
+                        },
+                        "create_type": "CERTIFICATE_CREATE_ACME"
+                    }]
+                }
+
+            Create an Imported Certificate Signing Request
+
+                :::javascript
+                {
+                    "id": "6841f242-840a-11e6-a437-00e04d680384",
+                    "msg": "method",
+                    "method": "certificate.create",
+                    "params": [{
+                        "name": "csr",
+                        "CSR": "CSR string",
+                        "privatekey": "Private key string",
+                        "create_type": "CERTIFICATE_CREATE_IMPORTED_CSR"
+                    }]
+                }
+
+            Create an Internal Certificate
+
+                :::javascript
+                {
+                    "id": "6841f242-840a-11e6-a437-00e04d680384",
+                    "msg": "method",
+                    "method": "certificate.create",
+                    "params": [{
+                        "name": "internal_cert",
+                        "key_length": 2048,
+                        "lifetime": 3600,
+                        "city": "Nashville",
+                        "common": "domain1.com",
+                        "country": "US",
+                        "email": "dev@ixsystems.com",
+                        "organization": "iXsystems",
+                        "state": "Tennessee",
+                        "digest_algorithm": "SHA256",
+                        "signedby": 4,
+                        "create_type": "CERTIFICATE_CREATE_INTERNAL"
+                    }]
+                }
 
         """
 
@@ -1165,6 +1203,23 @@ class CertificateService(CRUDService):
 
         Only name attribute can be updated
 
+        .. examples(websocket)::
+
+            Update a certificate of `id`
+
+                :::javascript
+                {
+                    "id": "6841f242-840a-11e6-a437-00e04d680384",
+                    "msg": "method",
+                    "method": "certificate.update",
+                    "params": [
+                        1,
+                        {
+                            "name": "updated_name"
+                        }
+                    ]
+                }
+
         """
         old = await self._get_instance(id)
         # signedby is changed back to integer from a dict
@@ -1240,6 +1295,21 @@ class CertificateService(CRUDService):
         revoke the certificate by updating it's status with the ACME server, if it fails an exception is raised
         and the certificate is not deleted from the system. However, if `force` is set to True, certificate is deleted
         from the system even if some error occurred while revoking the certificate with the ACME Server
+
+        .. examples(websocket)::
+
+            Delete certificate of `id`
+
+                :::javascript
+                {
+                    "id": "6841f242-840a-11e6-a437-00e04d680384",
+                    "msg": "method",
+                    "method": "certificate.delete",
+                    "params": [
+                        1,
+                        true
+                    ]
+                }
 
         """
         if (self.middleware.call_sync('system.general.config'))['ui_certificate']['id'] == id:
@@ -1430,15 +1500,44 @@ class CertificateAuthorityService(CRUDService):
         Based on `create_type` a type is selected by Certificate Authority Service and rest of the values
         are validated accordingly and finally a certificate is made based on the selected type.
 
-        Example ( Rest API Calls )
+        .. examples(websocket)::
 
-        1) Imported Certificate Authority
-        {
-            "name": "internal ca",
-            "certificate": "certificate string",
-            "privatekey": "private key string",
-            "create_type": "CA_CREATE_IMPORTED"
-        }
+            Create an Internal Certificate Authority
+
+                :::javascript
+                {
+                    "id": "6841f242-840a-11e6-a437-00e04d680384",
+                    "msg": "method",
+                    "method": "certificateauthority.create",
+                    "params": [{
+                        "name": "internal_ca",
+                        "key_length": 2048,
+                        "lifetime": 3600,
+                        "city": "Nashville",
+                        "common": "domain1.com",
+                        "country": "US",
+                        "email": "dev@ixsystems.com",
+                        "organization": "iXsystems",
+                        "state": "Tennessee",
+                        "digest_algorithm": "SHA256"
+                        "create_type": "CA_CREATE_INTERNAL"
+                    }]
+                }
+
+            Create an Imported Certificate Authority
+
+                :::javascript
+                {
+                    "id": "6841f242-840a-11e6-a437-00e04d680384",
+                    "msg": "method",
+                    "method": "certificateauthority.create",
+                    "params": [{
+                        "name": "imported_ca",
+                        "certificate": "Certificate string",
+                        "privatekey": "Private key string",
+                        "create_type": "CA_CREATE_IMPORTED"
+                    }]
+                }
 
         """
         verrors = await self.validate_common_attributes(data, 'certificate_authority_create')
@@ -1490,6 +1589,22 @@ class CertificateAuthorityService(CRUDService):
 
         Sign CSR's and generate a certificate from it. `ca_id` provides which CA is to be used for signing
         a CSR of `csr_cert_id` which exists in the system
+
+        .. example(websocket)::
+
+            Sign CSR of `csr_cert_id` by Certificate Authority of `ca_id`
+
+                :::javascript
+                {
+                    "id": "6841f242-840a-11e6-a437-00e04d680384",
+                    "msg": "method",
+                    "method": "certificateauthority.ca_sign_csr",
+                    "params": [{
+                        "ca_id": 1,
+                        "csr_cert_id": 1,
+                        "name": "signed_cert"
+                    }]
+                }
 
         """
         return self.__ca_sign_csr(data)
@@ -1696,6 +1811,23 @@ class CertificateAuthorityService(CRUDService):
 
         Only name attribute can be updated
 
+        .. example(websocket)::
+
+            Update a Certificate Authority of `id`
+
+                :::javascript
+                {
+                    "id": "6841f242-840a-11e6-a437-00e04d680384",
+                    "msg": "method",
+                    "method": "certificateauthority.update",
+                    "params": [
+                        1,
+                        {
+                            "name": "updated_ca_name"
+                        }
+                    ]
+                }
+
         """
 
         if data.pop('create_type', '') == 'CA_SIGN_CSR':
@@ -1749,6 +1881,20 @@ class CertificateAuthorityService(CRUDService):
         """
 
         Delete a Certificate Authority of `id`
+
+        .. example(websocket)::
+
+            Delete a Certificate Authority of `id`
+
+                :::javascript
+                {
+                    "id": "6841f242-840a-11e6-a437-00e04d680384",
+                    "msg": "method",
+                    "method": "certificateauthority.delete",
+                    "params": [
+                        1
+                    ]
+                }
 
         """
         ca = await self._get_instance(id)
