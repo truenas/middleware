@@ -1927,18 +1927,31 @@ async def setup(middlewared):
         try:
             if not any('freenas_default' == c['name'] for c in certs):
                 cert, key = await middlewared.call('certificate.create_self_signed_cert')
-                default_cert_job = await middlewared.call(
-                    'certificate.create', {
-                        'create_type': 'CERTIFICATE_CREATE_IMPORTED',
-                        'certificate': crypto.dump_certificate(crypto.FILETYPE_PEM, cert).decode(),
-                        'privatekey': crypto.dump_privatekey(crypto.FILETYPE_PEM, key).decode(),
-                        'name': 'freenas_default'
-                    }
+
+                cert_dict = {
+                    'certificate': crypto.dump_certificate(crypto.FILETYPE_PEM, cert).decode(),
+                    'privatekey': crypto.dump_privatekey(crypto.FILETYPE_PEM, key).decode(),
+                    'name': 'freenas_default',
+                    'type': CERT_TYPE_EXISTING,
+                    'chain': False,
+
+                }
+                cert_dict.update((await middlewared.call('certificate.load_certificate', cert_dict['certificate'])))
+
+                # We use datastore.insert to directly insert in db as jobs cannot be waited for at this point
+                id = await middlewared.call(
+                    'datastore.insert',
+                    'system.certificate',
+                    cert_dict,
+                    {'prefix': 'cert_'}
                 )
 
-                await default_cert_job.wait()
-                default_cert = await middlewared.call('certificate.query', [['name', '=', 'freenas_default']])
-                id = default_cert[0]['id']
+                await middlewared.call(
+                    'service.start',
+                    'ix-ssl',
+                    {'onetime': False}
+                )
+
                 middlewared.logger.debug('Default certificate for System created')
             else:
                 id = [c['id'] for c in certs if c['name'] == 'freenas_default'][0]
