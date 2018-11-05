@@ -28,11 +28,8 @@ class ACMERegistrationService(CRUDService):
 
     @filterable
     async def query(self, filters=None, options=None):
-
         """
-
         Query Registered ACME Servers for user "root"
-
         """
         for filter in filters or []:
             if len(filter) == 3 and filter[0] == 'directory':
@@ -75,36 +72,32 @@ class ACMERegistrationService(CRUDService):
         )
     )
     def do_create(self, data):
-
         """
-
         Register with ACME Server
 
         Create a regisration for a specific ACME Server registering root user with it
 
         `acme_directory_uri` is a directory endpoint for any ACME Server
 
-        .. example(websocket)::
+        .. examples(websocket)::
 
-            Register with ACME Server
+          Register with ACME Server
 
-                :::javascript
-                {
-                    "id": "6841f242-840a-11e6-a437-00e04d680384",
-                    "msg": "method",
-                    "method": "acme.registration.create",
-                    "params": [{
-                        "tos": true,
-                        "acme_directory_uri": "https://acme-staging-v02.api.letsencrypt.org/directory"
-                        "JWK_create": {
-                            "key_size": 2048,
-                            "public_exponent": 65537
-                        }
-                    }]
-                }
-
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "acme.registration.create",
+                "params": [{
+                    "tos": true,
+                    "acme_directory_uri": "https://acme-staging-v02.api.letsencrypt.org/directory"
+                    "JWK_create": {
+                        "key_size": 2048,
+                        "public_exponent": 65537
+                    }
+                }]
+            }
         """
-
         # STEPS FOR CREATION
         # 1) CREATE KEY
         # 2) REGISTER CLIENT
@@ -138,7 +131,7 @@ class ACMERegistrationService(CRUDService):
             )
 
         if self.middleware.call_sync(
-                'acme.registration.query', [['directory', '=', data['acme_directory_uri']]]
+            'acme.registration.query', [['directory', '=', data['acme_directory_uri']]]
         ):
             verrors.add(
                 'acme_registration_create.acme_directory_uri',
@@ -204,12 +197,9 @@ class DNSAuthenticatorService(CRUDService):
 
     @accepts()
     def authenticator_schemas(self):
-
         """
-
-        Get all DNS providers we support for ACME DNS Challenge and the respective attributes required for connecting
-        to them while validating a DNS Challenge
-
+        Get the schemas for all DNS providers we support for ACME DNS Challenge and the respective attributes
+        required for connecting to them while validating a DNS Challenge
         """
         return [
             {'schema': [v.to_json_schema() for v in value], 'key': key}
@@ -255,33 +245,30 @@ class DNSAuthenticatorService(CRUDService):
         )
     )
     async def do_create(self, data):
-
         """
-
         Create a DNS Authenticator
 
         Create a specific DNS Authenticator containing required authentication details for the said
         provider to successfully connect with it
 
-        .. example(websocket)::
+        .. examples(websocket)::
 
-            Create a DNS Authenticator for Route53
+          Create a DNS Authenticator for Route53
 
-                :::javascript
-                {
-                    "id": "6841f242-840a-11e6-a437-00e04d680384",
-                    "msg": "method",
-                    "method": "acme.dns.authenticator.create",
-                    "params": [{
-                        "name": "route53_authenticator",
-                        "authenticator": "route53",
-                        "attributes": {
-                            "access_key_id": "AQX13",
-                            "secret_access_key": "JKW90"
-                        }
-                    }]
-                }
-
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "acme.dns.authenticator.create",
+                "params": [{
+                    "name": "route53_authenticator",
+                    "authenticator": "route53",
+                    "attributes": {
+                        "access_key_id": "AQX13",
+                        "secret_access_key": "JKW90"
+                    }
+                }]
+            }
         """
         await self.common_validation(data, 'dns_authenticator_create')
 
@@ -302,32 +289,29 @@ class DNSAuthenticatorService(CRUDService):
         )
     )
     async def do_update(self, id, data):
-
         """
-
         Update DNS Authenticator of `id`
 
-        .. example(websocket)::
+        .. examples(websocket)::
 
-            Update a DNS Authenticator of `id`
+          Update a DNS Authenticator of `id`
 
-                :::javascript
-                {
-                    "id": "6841f242-840a-11e6-a437-00e04d680384",
-                    "msg": "method",
-                    "method": "acme.dns.authenticator.update",
-                    "params": [
-                        1,
-                        {
-                            "name": "route53_authenticator",
-                            "attributes": {
-                                "access_key_id": "AQX13",
-                                "secret_access_key": "JKW90"
-                            }
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "acme.dns.authenticator.update",
+                "params": [
+                    1,
+                    {
+                        "name": "route53_authenticator",
+                        "attributes": {
+                            "access_key_id": "AQX13",
+                            "secret_access_key": "JKW90"
                         }
-                    ]
-                }
-
+                    }
+                ]
+            }
         """
         old = await self._get_instance(id)
         new = old.copy()
@@ -348,25 +332,22 @@ class DNSAuthenticatorService(CRUDService):
         Int('id', required=True)
     )
     async def do_delete(self, id):
-
         """
-
         Delete DNS Authenticator of `id`
 
-        .. example(websocket)::
+        .. examples(websocket)::
 
-            Delete a DNS Authenticator of `id`
+          Delete a DNS Authenticator of `id`
 
-                :::javascript
-                {
-                    "id": "6841f242-840a-11e6-a437-00e04d680384",
-                    "msg": "method",
-                    "method": "acme.dns.authenticator.delete",
-                    "params": [
-                        1
-                    ]
-                }
-
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "acme.dns.authenticator.delete",
+                "params": [
+                    1
+                ]
+            }
         """
         await self.middleware.call('certificate.delete_domains_authenticator', id)
 

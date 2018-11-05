@@ -774,10 +774,8 @@ class CertificateService(CRUDService):
 
     @accepts()
     async def acme_server_choices(self):
-
         """
-
-        :return: Dictionary of popular ACME Servers with their directory URI endpoints which we display automatically
+        Dictionary of popular ACME Servers with their directory URI endpoints which we display automatically
         in UI
         """
         return {
@@ -835,18 +833,20 @@ class CertificateService(CRUDService):
     )
     @job(lock='cert_create')
     async def do_create(self, job, data):
-
         """
-
         Create a new Certificate
 
         Certificates are classified under following types and the necessary keywords to be passed
         for `create_type` attribute to create the respective type of certificate
 
         1) Internal Certificate                 -  CERTIFICATE_CREATE_INTERNAL
+
         2) Imported Certificate                 -  CERTIFICATE_CREATE_IMPORTED
+
         3) Certificate Signing Request          -  CERTIFICATE_CREATE_CSR
+
         4) Imported Certificate Signing Request -  CERTIFICATE_CREATE_IMPORTED_CSR
+
         5) ACME Certificate                     -  CERTIFICATE_CREATE_ACME
 
         Based on `create_type` a type is selected by Certificate Service and rest of the values in `data` are validated
@@ -854,65 +854,63 @@ class CertificateService(CRUDService):
 
         .. examples(websocket)::
 
-            Create an ACME based certificate
+          Create an ACME based certificate
 
-                :::javascript
-                {
-                    "id": "6841f242-840a-11e6-a437-00e04d680384",
-                    "msg": "method",
-                    "method": "certificate.create",
-                    "params": [{
-                        "tos": true,
-                        "csr_id": 1,
-                        "acme_directory_uri": "https://acme-staging-v02.api.letsencrypt.org/directory",
-                        "name": "acme_certificate",
-                        "dns_mapping": {
-                            "domain1.com": "1"
-                        },
-                        "create_type": "CERTIFICATE_CREATE_ACME"
-                    }]
-                }
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificate.create",
+                "params": [{
+                    "tos": true,
+                    "csr_id": 1,
+                    "acme_directory_uri": "https://acme-staging-v02.api.letsencrypt.org/directory",
+                    "name": "acme_certificate",
+                    "dns_mapping": {
+                        "domain1.com": "1"
+                    },
+                    "create_type": "CERTIFICATE_CREATE_ACME"
+                }]
+            }
 
-            Create an Imported Certificate Signing Request
+          Create an Imported Certificate Signing Request
 
-                :::javascript
-                {
-                    "id": "6841f242-840a-11e6-a437-00e04d680384",
-                    "msg": "method",
-                    "method": "certificate.create",
-                    "params": [{
-                        "name": "csr",
-                        "CSR": "CSR string",
-                        "privatekey": "Private key string",
-                        "create_type": "CERTIFICATE_CREATE_IMPORTED_CSR"
-                    }]
-                }
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificate.create",
+                "params": [{
+                    "name": "csr",
+                    "CSR": "CSR string",
+                    "privatekey": "Private key string",
+                    "create_type": "CERTIFICATE_CREATE_IMPORTED_CSR"
+                }]
+            }
 
-            Create an Internal Certificate
+          Create an Internal Certificate
 
-                :::javascript
-                {
-                    "id": "6841f242-840a-11e6-a437-00e04d680384",
-                    "msg": "method",
-                    "method": "certificate.create",
-                    "params": [{
-                        "name": "internal_cert",
-                        "key_length": 2048,
-                        "lifetime": 3600,
-                        "city": "Nashville",
-                        "common": "domain1.com",
-                        "country": "US",
-                        "email": "dev@ixsystems.com",
-                        "organization": "iXsystems",
-                        "state": "Tennessee",
-                        "digest_algorithm": "SHA256",
-                        "signedby": 4,
-                        "create_type": "CERTIFICATE_CREATE_INTERNAL"
-                    }]
-                }
-
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificate.create",
+                "params": [{
+                    "name": "internal_cert",
+                    "key_length": 2048,
+                    "lifetime": 3600,
+                    "city": "Nashville",
+                    "common": "domain1.com",
+                    "country": "US",
+                    "email": "dev@ixsystems.com",
+                    "organization": "iXsystems",
+                    "state": "Tennessee",
+                    "digest_algorithm": "SHA256",
+                    "signedby": 4,
+                    "create_type": "CERTIFICATE_CREATE_INTERNAL"
+                }]
+            }
         """
-
         if not data.get('dns_mapping'):
             data.pop('dns_mapping')  # Default dict added
 
@@ -1196,30 +1194,27 @@ class CertificateService(CRUDService):
     )
     @job(lock='cert_update')
     async def do_update(self, job, id, data):
-
         """
-
         Update certificate of `id`
 
         Only name attribute can be updated
 
-        .. example(websocket)::
+        .. examples(websocket)::
 
-            Update a certificate of `id`
+          Update a certificate of `id`
 
-                :::javascript
-                {
-                    "id": "6841f242-840a-11e6-a437-00e04d680384",
-                    "msg": "method",
-                    "method": "certificate.update",
-                    "params": [
-                        1,
-                        {
-                            "name": "updated_name"
-                        }
-                    ]
-                }
-
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificate.update",
+                "params": [
+                    1,
+                    {
+                        "name": "updated_name"
+                    }
+                ]
+            }
         """
         old = await self._get_instance(id)
         # signedby is changed back to integer from a dict
@@ -1286,9 +1281,7 @@ class CertificateService(CRUDService):
     )
     @job(lock='cert_delete')
     def do_delete(self, job, id, force=False):
-
         """
-
         Delete certificate of `id`.
 
         If the certificate is an ACME based certificate, certificate service will try to
@@ -1296,21 +1289,20 @@ class CertificateService(CRUDService):
         and the certificate is not deleted from the system. However, if `force` is set to True, certificate is deleted
         from the system even if some error occurred while revoking the certificate with the ACME Server
 
-        .. example(websocket)::
+        .. examples(websocket)::
 
-            Delete certificate of `id`
+          Delete certificate of `id`
 
-                :::javascript
-                {
-                    "id": "6841f242-840a-11e6-a437-00e04d680384",
-                    "msg": "method",
-                    "method": "certificate.delete",
-                    "params": [
-                        1,
-                        true
-                    ]
-                }
-
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificate.delete",
+                "params": [
+                    1,
+                    true
+                ]
+            }
         """
         if (self.middleware.call_sync('system.general.config'))['ui_certificate']['id'] == id:
             verrors = ValidationErrors()
@@ -1485,16 +1477,16 @@ class CertificateAuthorityService(CRUDService):
         )
     )
     async def do_create(self, data):
-
         """
-
         Create a new Certificate Authority
 
         Certificate Authorities are classified under following types with the necessary keywords to be passed
         for `create_type` attribute to create the respective type of certificate authority
 
         1) Internal Certificate Authority       -  CA_CREATE_INTERNAL
+
         2) Imported Certificate Authority       -  CA_CREATE_IMPORTED
+
         3) Intermediate Certificate Authority   -  CA_CREATE_INTERMEDIATE
 
         Based on `create_type` a type is selected by Certificate Authority Service and rest of the values
@@ -1502,43 +1494,42 @@ class CertificateAuthorityService(CRUDService):
 
         .. examples(websocket)::
 
-            Create an Internal Certificate Authority
+          Create an Internal Certificate Authority
 
-                :::javascript
-                {
-                    "id": "6841f242-840a-11e6-a437-00e04d680384",
-                    "msg": "method",
-                    "method": "certificateauthority.create",
-                    "params": [{
-                        "name": "internal_ca",
-                        "key_length": 2048,
-                        "lifetime": 3600,
-                        "city": "Nashville",
-                        "common": "domain1.com",
-                        "country": "US",
-                        "email": "dev@ixsystems.com",
-                        "organization": "iXsystems",
-                        "state": "Tennessee",
-                        "digest_algorithm": "SHA256"
-                        "create_type": "CA_CREATE_INTERNAL"
-                    }]
-                }
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificateauthority.create",
+                "params": [{
+                    "name": "internal_ca",
+                    "key_length": 2048,
+                    "lifetime": 3600,
+                    "city": "Nashville",
+                    "common": "domain1.com",
+                    "country": "US",
+                    "email": "dev@ixsystems.com",
+                    "organization": "iXsystems",
+                    "state": "Tennessee",
+                    "digest_algorithm": "SHA256"
+                    "create_type": "CA_CREATE_INTERNAL"
+                }]
+            }
 
-            Create an Imported Certificate Authority
+          Create an Imported Certificate Authority
 
-                :::javascript
-                {
-                    "id": "6841f242-840a-11e6-a437-00e04d680384",
-                    "msg": "method",
-                    "method": "certificateauthority.create",
-                    "params": [{
-                        "name": "imported_ca",
-                        "certificate": "Certificate string",
-                        "privatekey": "Private key string",
-                        "create_type": "CA_CREATE_IMPORTED"
-                    }]
-                }
-
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificateauthority.create",
+                "params": [{
+                    "name": "imported_ca",
+                    "certificate": "Certificate string",
+                    "privatekey": "Private key string",
+                    "create_type": "CA_CREATE_IMPORTED"
+                }]
+            }
         """
         verrors = await self.validate_common_attributes(data, 'certificate_authority_create')
 
@@ -1582,30 +1573,27 @@ class CertificateAuthorityService(CRUDService):
         )
     )
     def ca_sign_csr(self, data):
-
         """
-
         Sign CSR by Certificate Authority of `ca_id`
 
         Sign CSR's and generate a certificate from it. `ca_id` provides which CA is to be used for signing
         a CSR of `csr_cert_id` which exists in the system
 
-        .. example(websocket)::
+        .. examples(websocket)::
 
-            Sign CSR of `csr_cert_id` by Certificate Authority of `ca_id`
+          Sign CSR of `csr_cert_id` by Certificate Authority of `ca_id`
 
-                :::javascript
-                {
-                    "id": "6841f242-840a-11e6-a437-00e04d680384",
-                    "msg": "method",
-                    "method": "certificateauthority.ca_sign_csr",
-                    "params": [{
-                        "ca_id": 1,
-                        "csr_cert_id": 1,
-                        "name": "signed_cert"
-                    }]
-                }
-
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificateauthority.ca_sign_csr",
+                "params": [{
+                    "ca_id": 1,
+                    "csr_cert_id": 1,
+                    "name": "signed_cert"
+                }]
+            }
         """
         return self.__ca_sign_csr(data)
 
@@ -1804,32 +1792,28 @@ class CertificateAuthorityService(CRUDService):
         )
     )
     async def do_update(self, id, data):
-
         """
-
         Update Certificate Authority of `id`
 
         Only name attribute can be updated
 
-        .. example(websocket)::
+        .. examples(websocket)::
 
-            Update a Certificate Authority of `id`
+          Update a Certificate Authority of `id`
 
-                :::javascript
-                {
-                    "id": "6841f242-840a-11e6-a437-00e04d680384",
-                    "msg": "method",
-                    "method": "certificateauthority.update",
-                    "params": [
-                        1,
-                        {
-                            "name": "updated_ca_name"
-                        }
-                    ]
-                }
-
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificateauthority.update",
+                "params": [
+                    1,
+                    {
+                        "name": "updated_ca_name"
+                    }
+                ]
+            }
         """
-
         if data.pop('create_type', '') == 'CA_SIGN_CSR':
             # BEING USED BY OLD LEGACY FOR SIGNING CSR'S. THIS CAN BE REMOVED WHEN LEGACY UI IS REMOVED
             data['ca_id'] = id
@@ -1877,25 +1861,22 @@ class CertificateAuthorityService(CRUDService):
         Int('id')
     )
     async def do_delete(self, id):
-
         """
-
         Delete a Certificate Authority of `id`
 
-        .. example(websocket)::
+        .. examples(websocket)::
 
-            Delete a Certificate Authority of `id`
+          Delete a Certificate Authority of `id`
 
-                :::javascript
-                {
-                    "id": "6841f242-840a-11e6-a437-00e04d680384",
-                    "msg": "method",
-                    "method": "certificateauthority.delete",
-                    "params": [
-                        1
-                    ]
-                }
-
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificateauthority.delete",
+                "params": [
+                    1
+                ]
+            }
         """
         ca = await self._get_instance(id)
 
