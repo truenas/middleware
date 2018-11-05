@@ -271,7 +271,7 @@ class ZFSPoolService(CRUDService):
         Str('action', enum=['START', 'STOP', 'PAUSE'], default='START')
     )
     @job(lock=lambda i: f'{i[0]}-{i[1] if len(i) >= 2 else "START"}')
-    def scrub(self, job, name, action):
+    def scrub(self, job, name, action=None):
         """
         Start/Stop/Pause a scrub on pool `name`.
         """

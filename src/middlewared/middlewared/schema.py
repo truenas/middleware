@@ -744,7 +744,7 @@ def accepts(*schema):
                 i += 1
 
             # Use i counter to map keyword argument to rpc positional
-            for x in list(range(i + 1, f.__code__.co_argcount)):
+            for x in list(range(i + args_index, f.__code__.co_argcount)):
                 kwarg = f.__code__.co_varnames[x]
 
                 if kwarg in kwargs:
@@ -752,7 +752,7 @@ def accepts(*schema):
                     i += 1
 
                     value = kwargs[kwarg]
-                elif len(nf.accepts) >= i + args_index:
+                elif len(nf.accepts) >= i + 1:
                     attr = nf.accepts[i]
                     i += 1
                     value = NOT_PROVIDED
