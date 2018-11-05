@@ -101,6 +101,16 @@ class CIFS(Model):
         blank=True,
         help_text=_("Server description. This can usually be left blank."),
     )
+    cifs_srv_allow_smb1 = models.BooleanField(
+        verbose_name=_("Allow SMB1 clients"),
+        default=False,
+        help_text=_(
+            "Use this option to allow legacy SMB clients to connect to the"
+            "server. Note that SMB1 is being deprecated and it is advised"
+            "to upgrade clients to operating system versions that support"
+            "modern versions of the SMB protocol."
+        ),
+    )
     cifs_srv_unixcharset = models.CharField(
         max_length=120,
         default="UTF-8",
