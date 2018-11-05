@@ -5,7 +5,7 @@ import requests
 import time
 
 from middlewared.schema import Bool, Dict, Int, Str, ValidationErrors
-from middlewared.service import accepts, CallError, CRUDService, filterable, private
+from middlewared.service import accepts, CallError, CRUDService, private
 from middlewared.validators import validate_attributes
 
 from acme import client, messages
