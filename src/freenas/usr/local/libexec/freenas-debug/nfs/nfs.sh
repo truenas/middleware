@@ -70,10 +70,6 @@ nfs_func()
 	sc /etc/exports
 	section_footer
 
-	section_header "showmount -e"
-	showmount -e
-	section_footer
-
 	section_header "rpcinfo -p"
 	rpcinfo -p
 	section_footer
