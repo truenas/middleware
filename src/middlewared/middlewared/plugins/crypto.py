@@ -972,11 +972,11 @@ class CertificateService(CRUDService):
             'certificate._get_instance', data['csr_id']
         )
 
+        data['acme_directory_uri'] += '/' if data['acme_directory_uri'][-1] != '/' else ''
+
         final_order = self.acme_issue_certificate(job, 25, data, csr_data)
 
         job.set_progress(95, 'Final order received from ACME server')
-
-        data['acme_directory_uri'] += '/' if data['acme_directory_uri'][-1] != '/' else ''
 
         cert_dict = {
             'acme': self.middleware.call_sync(

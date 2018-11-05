@@ -26,18 +26,6 @@ class ACMERegistrationService(CRUDService):
         namespace = 'acme.registration'
         private = True
 
-    @filterable
-    async def query(self, filters=None, options=None):
-        """
-        Query Registered ACME Servers for user "root"
-        """
-        for filter in filters or []:
-            if len(filter) == 3 and filter[0] == 'directory':
-                # Let's normalize directory uri for query
-                filter[2] += '/' if filter[2][-1] != '/' else ''
-
-        return await super().query(filters, options)
-
     @private
     async def register_extend(self, data):
         data['body'] = {
@@ -52,6 +40,7 @@ class ACMERegistrationService(CRUDService):
     @private
     def get_directory(self, acme_directory_uri):
         try:
+            acme_directory_uri = acme_directory_uri[0:-1] if acme_directory_uri[-1] == '/' else acme_directory_uri
             response = requests.get(acme_directory_uri).json()
             return messages.Directory({
                 key: response[key] for key in ['newAccount', 'newNonce', 'newOrder', 'revokeCert']
