@@ -150,22 +150,39 @@ def filter_list(_list, filters=None, options=None):
 
     rv = []
     if filters:
+
+        def filterop(f):
+            if len(f) != 3:
+                raise ValueError(f'Invalid filter {f}')
+            name, op, value = f
+            if op not in opmap:
+                raise ValueError('Invalid operation: {}'.format(op))
+            if isinstance(i, dict):
+                source = get(i, name)
+            else:
+                source = getattr(i, name)
+            if opmap[op](source, value):
+                return True
+            return False
+
         for i in _list:
             valid = True
             for f in filters:
-                if len(f) == 3:
-                    name, op, value = f
-                    if op not in opmap:
-                        raise ValueError('Invalid operation: {}'.format(op))
-                    if isinstance(i, dict):
-                        source = get(i, name)
+                if len(f) == 2:
+                    op, value = f
+                    if op == 'OR':
+                        for f in value:
+                            if filterop(f):
+                                break
+                        else:
+                            valid = False
+                            break
                     else:
-                        source = getattr(i, name)
-                    if not opmap[op](source, value):
-                        valid = False
-                        break
-                else:
-                    raise ValueError("Invalid filter {0}".format(f))
+                        raise ValueError(f'Invalid operation: {op}')
+                elif not filterop(f):
+                    valid = False
+                    break
+
             if not valid:
                 continue
             if select:
