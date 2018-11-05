@@ -5,6 +5,7 @@
 
 import sys
 import os
+from time import time, sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET
@@ -28,6 +29,23 @@ def test_02_get_boot_state():
 
 
 def test_03_get_boot_scrub():
+    global JOB_ID
     results = GET('/boot/scrub/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), int) is True, results.text
+    JOB_ID = results.json()
+
+
+def test_04_verify_boot_scrub_job():
+    stop_time = time() + 600
+    while True:
+        get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
+        job_status = get_job.json()[0]
+        if job_status['state'] in ('RUNNING', 'WAITING'):
+            if stop_time <= time():
+                assert False, "Job Timeout\n\n" + get_job.text
+                break
+            sleep(5)
+        else:
+            assert job_status['state'] == 'SUCCESS', get_job.text
+            break
