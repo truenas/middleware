@@ -121,6 +121,10 @@ class EtcService(Service):
         'smb_share': [
             {'type': 'mako', 'path': 'local/smb4_share.conf'},
         ],
+        'smb_configure': [
+            {'type': 'mako', 'path': 'local/smbusername.map'},
+            {'type': 'py', 'path': 'smb_configure'},
+        ],
     }
 
     class Config:
