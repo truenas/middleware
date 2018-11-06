@@ -40,7 +40,7 @@ class ACMERegistrationService(CRUDService):
     @private
     def get_directory(self, acme_directory_uri):
         try:
-            acme_directory_uri = acme_directory_uri[0:-1] if acme_directory_uri[-1] == '/' else acme_directory_uri
+            acme_directory_uri = acme_directory_uri.rstrip('/')
             response = requests.get(acme_directory_uri).json()
             return messages.Directory({
                 key: response[key] for key in ['newAccount', 'newNonce', 'newOrder', 'revokeCert']
