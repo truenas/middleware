@@ -312,10 +312,6 @@ __EOF__
             alias /usr/local/www/swagger-ui/node_modules/swagger-ui-dist;
         }
 
-        location /docs {
-            alias /usr/local/www/data/docs;
-        }
-
         location /ui {
             try_files \$uri \$uri/ /index.html =404;
             alias /usr/local/www/webui;
