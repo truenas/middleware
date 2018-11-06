@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-pre-samba
+# REQUIRE: FILESYSTEMS mountlate
+# REQUIRE: ix-pam
+# BEFORE: samba_server
+
+. /etc/rc.freenas
+
+samba_pre_init()
+{
+    /usr/local/bin/midclt call etc.generate smb_configure > /dev/null
+}
+
+name="ix-pre-samba"
+start_cmd='samba_pre_init'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

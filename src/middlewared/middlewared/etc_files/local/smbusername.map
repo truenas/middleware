@@ -1,0 +1,21 @@
+#
+# SMB.CONF(5)		The configuration file for the Samba suite 
+#
+<%
+    """
+    The username map is required for proper support of microsoft accounts
+    that are also email addresses. See SMB.CONF(5) for more details.
+    """
+    users = middleware.call_sync('datastore.query', 'account.bsdusers', [
+        ('bsdusr_microsoft_account', '=', True),
+        ('bsdusr_email', '!=', None),
+        ('bsdusr_email', '!=', ''),
+    ])
+
+%>
+
+% if users:
+% for user in users:
+    ${user['bsdusr_username']} = ${user['bsdusr_email']}
+% endfor
+% endif
