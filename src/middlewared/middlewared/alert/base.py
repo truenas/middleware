@@ -9,7 +9,7 @@ from middlewared.alert.schedule import IntervalSchedule
 
 __all__ = ["AlertLevel", "UnavailableException",
            "Alert", "AlertSource", "DismissableAlertSource", "FilePresenceAlertSource",
-           "ThreadedAlertSource",
+           "ThreadedAlertSource", "OneShotAlertSource",
            "AlertService", "ThreadedAlertService", "ProThreadedAlertService",
            "format_alerts", "ellipsis"]
 
@@ -71,7 +71,6 @@ class AlertSource:
 
     hardware = False
 
-    onetime = False
     schedule = IntervalSchedule(timedelta())
 
     run_on_backup_node = True
@@ -106,6 +105,16 @@ class ThreadedAlertSource(AlertSource):
 class DismissableAlertSource:
     async def dismiss(self, alerts):
         raise NotImplementedError
+
+
+class OneShotAlertSource(AlertSource):
+    async def check(self):
+        raise RuntimeError("check() called on one-shot alert source")
+
+    async def create(self, args):
+        raise NotImplementedError
+
+    async def delete(self, alerts, query):
 
 
 class AlertService:
@@ -180,7 +189,7 @@ def format_alerts(alerts, gone_alerts, new_alerts):
         text += "Gone alerts:\n" + "".join(["* %s\n" % format_alert(alert) for alert in gone_alerts]) + "\n"
 
     if alerts:
-        text += "Alerts:\n" + "".join(["* %s\n" % format_alert(alert) for alert in new_alerts]) + "\n"
+        text += "Alerts:\n" + "".join(["* %s\n" % format_alert(alert) for alert in alerts]) + "\n"
 
     return text
 

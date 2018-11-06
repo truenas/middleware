@@ -12,13 +12,14 @@ from middlewared.alert.base import (
     Alert,
     AlertSource,
     FilePresenceAlertSource,
+    OneShotAlertSource,
     ThreadedAlertSource,
     ThreadedAlertService,
     ProThreadedAlertService,
     DismissableAlertSource,
 )
 from middlewared.alert.base import UnavailableException, AlertService as _AlertService
-from middlewared.schema import Dict, Str, Bool, Int, accepts, Patch
+from middlewared.schema import Any, Bool, Dict, Int, Str, accepts, Patch
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
     job, periodic, private,
@@ -99,7 +100,8 @@ class AlertService(Service):
         sources_dirs.insert(0, main_sources_dir)
         for sources_dir in sources_dirs:
             for module in load_modules(sources_dir):
-                for cls in load_classes(module, AlertSource, (FilePresenceAlertSource, ThreadedAlertSource)):
+                for cls in load_classes(module, AlertSource, (FilePresenceAlertSource, ThreadedAlertSource,
+                                                              OneShotAlertSource)):
                     source = cls(self.middleware)
                     ALERT_SOURCES[source.name] = source
 
@@ -136,7 +138,8 @@ class AlertService(Service):
             dict(alert.__dict__,
                  id=f"{alert.node};{alert.source};{alert.key}",
                  level=alert.level.name,
-                 formatted=alert.formatted)
+                 formatted=alert.formatted,
+                 one_shot=isinstance(ALERT_SOURCES.get(alert.source, None), OneShotAlertSource))
             for alert in sorted(self.__get_all_alerts(), key=lambda alert: alert.title)
         ]
 
@@ -151,6 +154,8 @@ class AlertService(Service):
         alert_source = ALERT_SOURCES.get(source)
         if alert_source and isinstance(alert_source, DismissableAlertSource):
             self.alerts[node][source] = await alert_source.dismiss(self.alerts[node][source])
+        elif alert_source and isinstance(alert_source, OneShotAlertSource):
+            self.alerts[node][source].pop(key, None)
         else:
             alert.dismissed = True
 
@@ -178,6 +183,11 @@ class AlertService(Service):
 
         await self.__run_alerts()
 
+        await self.middleware.call("alert.send_alerts")
+
+    @private
+    @job(lock="process_alerts", transient=True)
+    async def send_alerts(self, job):
         default_settings = (await self.middleware.call("alertdefaultsettings.config"))["settings"]
 
         all_alerts = self.__get_all_alerts()
@@ -288,6 +298,9 @@ class AlertService(Service):
                             run_on_backup_node = True
 
         for alert_source in ALERT_SOURCES.values():
+            if isinstance(alert_source, OneShotAlertSource):
+                continue
+
             if not alert_source.schedule.should_run(datetime.utcnow(), self.alert_source_last_run[alert_source.name]):
                 continue
 
@@ -332,22 +345,25 @@ class AlertService(Service):
                 alert.node = backup_node
 
             for alert in alerts_a + alerts_b:
-                existing_alert = self.alerts[alert.node][alert_source.name].get(alert.key)
-
-                alert.source = alert_source.name
-                if existing_alert is None:
-                    alert.datetime = datetime.utcnow()
-                else:
-                    alert.datetime = existing_alert.datetime
-                alert.level = alert.level or alert_source.level
-                alert.title = alert.title or alert_source.title
-                if existing_alert is None:
-                    alert.dismissed = False
-                else:
-                    alert.dismissed = existing_alert.dismissed
+                self.__handle_alert(alert_source, alert)
 
             self.alerts["A"][alert_source.name] = {alert.key: alert for alert in alerts_a}
             self.alerts["B"][alert_source.name] = {alert.key: alert for alert in alerts_b}
+
+    def __handle_alert(self, alert_source, alert):
+        existing_alert = self.alerts[alert.node][alert_source.name].get(alert.key)
+
+        alert.source = alert_source.name
+        if existing_alert is None:
+            alert.datetime = datetime.utcnow()
+        else:
+            alert.datetime = existing_alert.datetime
+        alert.level = alert.level or alert_source.level
+        alert.title = alert.title or alert_source.title
+        if existing_alert is None:
+            alert.dismissed = False
+        else:
+            alert.dismissed = existing_alert.dismissed
 
     @private
     async def run_source(self, source_name):
@@ -399,6 +415,50 @@ class AlertService(Service):
 
     def __get_all_alerts(self):
         return sum([sum([list(vv.values()) for vv in v.values()], []) for v in self.alerts.values()], [])
+
+    @private
+    @accepts(Str("source"), Any("args"))
+    @job(lock="process_alerts", transient=True)
+    async def oneshot_create(self, job, source, args):
+        try:
+            alert_source = ALERT_SOURCES[source]
+        except KeyError:
+            raise CallError(f"Invalid alert source: {source!r}")
+
+        if not isinstance(alert_source, OneShotAlertSource):
+            raise CallError(f"Alert source {source!r} is not a one-shot alert source")
+
+        alert = await alert_source.create(args)
+        if alert is None:
+            return
+
+        alert.node = self.node
+
+        self.__handle_alert(alert_source, alert)
+
+        self.alerts[alert.node][alert_source.name][alert.key] = alert
+
+        await self.middleware.call("alert.send_alerts")
+
+    @private
+    @accepts(Str("source"), Any("query"))
+    @job(lock="process_alerts", transient=True)
+    async def oneshot_delete(self, job, source, query):
+        try:
+            alert_source = ALERT_SOURCES[source]
+        except KeyError:
+            raise CallError(f"Invalid alert source: {source!r}")
+
+        if not isinstance(alert_source, OneShotAlertSource):
+            raise CallError(f"Alert source {source!r} is not a one-shot alert source")
+
+        alerts = set(alert.key
+                     for alert in await alert_source.delete(self.alerts[self.node][alert_source.name].values(), query))
+        for k in list(self.alerts[self.node][alert_source.name].keys()):
+            if k not in alerts:
+                self.alerts[self.node][alert_source.name].pop(k, None)
+
+        await self.middleware.call("alert.send_alerts")
 
 
 class AlertServiceService(CRUDService):
