@@ -51,7 +51,7 @@ def get_smartd_config(disk):
     else:
         config += f" -m root"
 
-    config += " -M exec /usr/local/www/freenasUI/tools/smart_alert.py"
+    config += " -M exec /usr/local/libexec/smart_alert.py"
 
     if disk.get('smarttest_type'):
         config += f"\\\n-s {disk['smarttest_type']}/" + get_smartd_schedule(disk) + "\\\n"

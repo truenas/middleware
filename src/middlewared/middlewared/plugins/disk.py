@@ -7,7 +7,6 @@ import os
 import re
 import signal
 import subprocess
-import sys
 import sysctl
 import tempfile
 
@@ -20,11 +19,6 @@ from middlewared.service import filterable, job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
 
-# FIXME: temporary import of SmartAlert until alert is implemented
-# in middlewared
-if '/usr/local/www' not in sys.path:
-    sys.path.insert(0, '/usr/local/www')
-from freenasUI.services.utils import SmartAlert
 
 DISK_EXPIRECACHE_DAYS = 7
 MIRROR_MAX = 5
@@ -1124,11 +1118,7 @@ async def _event_devfs(middleware, event_type, args):
             await middleware.call('disk.sync', data['cdev'])
             await middleware.call('disk.sed_unlock', data['cdev'])
             await middleware.call('disk.multipath_sync')
-            try:
-                with SmartAlert() as sa:
-                    sa.device_delete(data['cdev'])
-            except Exception:
-                pass
+            await middleware.call('alert.oneshot_delete', 'SMART', data['cdev'])
     elif data['type'] == 'DESTROY':
         # Device notified about is not a disk
         if not RE_ISDISK.match(data['cdev']):
@@ -1138,11 +1128,7 @@ async def _event_devfs(middleware, event_type, args):
         if os.path.exists('/tmp/.sync_disk_done'):
             await (await middleware.call('disk.sync_all')).wait()
             await middleware.call('disk.multipath_sync')
-            try:
-                with SmartAlert() as sa:
-                    sa.device_delete(data['cdev'])
-            except Exception:
-                pass
+            await middleware.call('alert.oneshot_delete', 'SMART', data['cdev'])
             # If a disk dies we need to reconfigure swaps so we are not left
             # with a single disk mirror swap, which may be a point of failure.
             await middleware.call('disk.swaps_configure')
