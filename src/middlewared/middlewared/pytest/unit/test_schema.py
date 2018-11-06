@@ -1,6 +1,7 @@
 import pytest
 from mock import Mock
 
+from middlewared.service import job
 from middlewared.service_exception import ValidationErrors
 from middlewared.schema import (
     accepts, Bool, Cron, Dict, Dir, Error, File, Float, Int, IPAddr, List, Str, UnixPerm,
@@ -505,3 +506,30 @@ def test__schema_ipaddr_cidr(value, expected):
             ipaddrv(self, value)
     else:
         assert ipaddrv(self, value) == expected
+
+
+def test__schema_str_default():
+
+    @accepts(Str('foo'), Str('bar', default='BAR'))
+    def strdef(self, foo, bar):
+        return bar
+
+    self = Mock()
+
+    assert strdef(self, 'foo') == 'BAR'
+
+
+def test__schema_str_job_default():
+    """
+    Job changes the order of the parameters in schema\
+    """
+
+    @accepts(Str('foo'), Str('bar', default='BAR'))
+    @job()
+    def strdef(self, job, foo, bar):
+        return bar
+
+    self = Mock()
+    jobm = Mock()
+
+    assert strdef(self, jobm, 'foo') == 'BAR'
