@@ -11,6 +11,11 @@
 
 generate_crontab()
 {
+	local failover_status=""
+	if ! is_freenas; then
+		failover_status="$(ulimit -n 1000; /usr/local/bin/midclt call notifier.failover_status 2> /dev/null)"
+	fi
+	
 	local IFS=""
 	local f="cron_minute cron_hour cron_daymonth cron_month cron_dayweek cron_user cron_command cron_stdout cron_stderr"
 	eval local $f
@@ -23,80 +28,85 @@ generate_crontab()
 	local boot_scrub=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT adv_boot_scrub FROM system_advanced ORDER BY -id LIMIT 1")
 	echo "45	3	*	*	*	root	/usr/local/libexec/nas/scrub -t ${boot_scrub} freenas-boot" >> /etc/crontab
 
-	# Generate cronjobs
-	${FREENAS_SQLITE_CMD} -separator "" ${RO_FREENAS_CONFIG} \
-	"SELECT $sf FROM tasks_cronjob WHERE cron_enabled = 1 ORDER BY id" | \
-	while eval read -r $f; do
-		# Note that echo -e will do the wrong thing with certain characters. Read the commit
-		# history for more details.
-		echo -n "${cron_minute}	${cron_hour}	${cron_daymonth}	${cron_month}	${cron_dayweek}	${cron_user}	PATH=\"$cron_PATH\" ${cron_command}" | sed -e 's/%/\\%/g' | tr -d "\n"
-		if [ ${cron_stdout} -eq 1 ]; then
-			echo -n " > /dev/null"
+	# Don't run these on TrueNAS HA passive controllers 
+	# Redmine 55908
+	if [ ${failover_status} != "BACKUP" ]; then
+		# Generate cronjobs
+		${FREENAS_SQLITE_CMD} -separator "" ${RO_FREENAS_CONFIG} \
+		"SELECT $sf FROM tasks_cronjob WHERE cron_enabled = 1 ORDER BY id" | \
+		while eval read -r $f; do
+			# Note that echo -e will do the wrong thing with certain characters. Read the commit
+			# history for more details.
+			echo -n "${cron_minute}	${cron_hour}	${cron_daymonth}	${cron_month}	${cron_dayweek}	${cron_user}	PATH=\"$cron_PATH\" ${cron_command}" | sed -e 's/%/\\%/g' | tr -d "\n"
+			if [ ${cron_stdout} -eq 1 ]; then
+				echo -n " > /dev/null"
+			fi
+			if [ ${cron_stderr} -eq 1 ]; then
+				echo -n " 2> /dev/null"
+			fi
+			echo
+		done >> /etc/crontab
+
+		local f="id rsync_path rsync_mode rsync_minute rsync_hour rsync_daymonth rsync_month rsync_dayweek rsync_user rsync_remotehost rsync_remoteport rsync_remotemodule rsync_remotepath rsync_direction rsync_recursive rsync_times rsync_compress rsync_archive rsync_delete rsync_quiet rsync_preserveperm rsync_preserveattr rsync_extra"
+		eval local $f
+		local sf=$(var_to_sf $f)
+		local rsync_command
+		# Generate rsync
+		${FREENAS_SQLITE_CMD} -separator "" ${RO_FREENAS_CONFIG} \
+		"SELECT $sf FROM tasks_rsync WHERE rsync_enabled = 1 ORDER BY id" | \
+		while eval read -r $f; do
+			rsync_command=$(/usr/local/bin/midclt call notifier.rsync_command ${id})
+			# Note that echo -e will do the wrong thing with certain characters. Read the commit
+			# history for more details.
+			echo "${rsync_minute}	${rsync_hour}	${rsync_daymonth}	${rsync_month}	${rsync_dayweek}	${rsync_user}	PATH=\"$cron_PATH\" ${rsync_command} 2>&1 |/usr/bin/logger -t rsync" >> /etc/crontab
+		done
+
+		local f="id minute hour daymonth month dayweek"
+		eval local $f
+		local sf=$(var_to_sf $f)
+		# Generate cloud sync
+		${FREENAS_SQLITE_CMD} -separator "" ${RO_FREENAS_CONFIG} \
+		"SELECT $sf FROM tasks_cloudsync WHERE enabled = 1 ORDER BY id" | \
+		while eval read -r $f; do
+			echo "${minute}	${hour}	${daymonth}	${month}	${dayweek}	root	/usr/local/bin/midclt call cloudsync.sync ${id} > /dev/null"
+		done >> /etc/crontab
+
+
+		local f="scrub_threshold scrub_minute scrub_hour scrub_daymonth scrub_month scrub_dayweek vol_name"
+		eval local $f
+		local sf=$(var_to_sf $f)
+		${FREENAS_SQLITE_CMD} -separator "" ${RO_FREENAS_CONFIG} \
+		"SELECT $sf FROM storage_scrub s, storage_volume v WHERE s.scrub_volume_id = v.id AND scrub_enabled = 1 ORDER BY v.id" | \
+		while eval read -r $f; do
+			# Note that echo -e will do the wrong thing with certain characters. Read the commit
+			# history for more details.
+			echo "${scrub_minute}	${scrub_hour}	${scrub_daymonth}	${scrub_month}	${scrub_dayweek}	root	PATH=\"$cron_PATH\" /usr/local/libexec/nas/scrub -t ${scrub_threshold} ${vol_name}" >> /etc/crontab
+		done
+
+		local f="begin end"
+		eval local $f
+		local sf=$(var_to_sf $f)
+		local begin_hour begin_minute end_hour end_minute
+		# Generate resilver priority
+		${FREENAS_SQLITE_CMD} -separator "" ${RO_FREENAS_CONFIG} \
+		"SELECT $sf FROM storage_resilver WHERE enabled = 1 ORDER BY -id" | \
+		while eval read -r $f; do
+			begin_hour=$(echo ${begin}|cut -d: -f 1)
+			begin_minute=$(echo ${begin}|cut -d: -f 2)
+			end_hour=$(echo ${end}|cut -d: -f 1)
+			end_minute=$(echo ${end}|cut -d: -f 2)
+			echo "${begin_minute}	${begin_hour}	*	*	*	root	/usr/local/bin/midclt call pool.configure_resilver_priority > /dev/null 2>&1" >> /etc/crontab
+			echo "${end_minute}	${end_hour}	*	*	*	root	/usr/local/bin/midclt call pool.configure_resilver_priority > /dev/null 2>&1" >> /etc/crontab
+		done
+
+		# For periodic snapshot.
+		snaptasks=`${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT COUNT(id) FROM storage_task WHERE task_enabled = 1;"`
+		if [ ${snaptasks} -gt 0 ]; then
+			echo "*		*	*	*	*	root	/usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1" >> /etc/crontab
+		else
+			echo "15	4	*	*	6	root	/usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1" >> /etc/crontab
 		fi
-		if [ ${cron_stderr} -eq 1 ]; then
-			echo -n " 2> /dev/null"
-		fi
-		echo
-	done >> /etc/crontab
 
-	local f="id rsync_path rsync_mode rsync_minute rsync_hour rsync_daymonth rsync_month rsync_dayweek rsync_user rsync_remotehost rsync_remoteport rsync_remotemodule rsync_remotepath rsync_direction rsync_recursive rsync_times rsync_compress rsync_archive rsync_delete rsync_quiet rsync_preserveperm rsync_preserveattr rsync_extra"
-	eval local $f
-	local sf=$(var_to_sf $f)
-	local rsync_command
-	# Generate rsync
-	${FREENAS_SQLITE_CMD} -separator "" ${RO_FREENAS_CONFIG} \
-	"SELECT $sf FROM tasks_rsync WHERE rsync_enabled = 1 ORDER BY id" | \
-	while eval read -r $f; do
-		rsync_command=$(/usr/local/bin/midclt call notifier.rsync_command ${id})
-		# Note that echo -e will do the wrong thing with certain characters. Read the commit
-		# history for more details.
-		echo "${rsync_minute}	${rsync_hour}	${rsync_daymonth}	${rsync_month}	${rsync_dayweek}	${rsync_user}	PATH=\"$cron_PATH\" ${rsync_command} 2>&1 |/usr/bin/logger -t rsync" >> /etc/crontab
-	done
-
-	local f="id minute hour daymonth month dayweek"
-	eval local $f
-	local sf=$(var_to_sf $f)
-
-	# Generate cloud sync
-	${FREENAS_SQLITE_CMD} -separator "" ${RO_FREENAS_CONFIG} \
-	"SELECT $sf FROM tasks_cloudsync WHERE enabled = 1 ORDER BY id" | \
-	while eval read -r $f; do
-		echo "${minute}	${hour}	${daymonth}	${month}	${dayweek}	root	/usr/local/bin/midclt call cloudsync.sync ${id} > /dev/null"
-	done >> /etc/crontab
-
-	local f="scrub_threshold scrub_minute scrub_hour scrub_daymonth scrub_month scrub_dayweek vol_name"
-	eval local $f
-	local sf=$(var_to_sf $f)
-	${FREENAS_SQLITE_CMD} -separator "" ${RO_FREENAS_CONFIG} \
-	"SELECT $sf FROM storage_scrub s, storage_volume v WHERE s.scrub_volume_id = v.id AND scrub_enabled = 1 ORDER BY v.id" | \
-	while eval read -r $f; do
-		# Note that echo -e will do the wrong thing with certain characters. Read the commit
-		# history for more details.
-		echo "${scrub_minute}	${scrub_hour}	${scrub_daymonth}	${scrub_month}	${scrub_dayweek}	root	PATH=\"$cron_PATH\" /usr/local/libexec/nas/scrub -t ${scrub_threshold} ${vol_name}" >> /etc/crontab
-	done
-
-	local f="begin end"
-	eval local $f
-	local sf=$(var_to_sf $f)
-	local begin_hour begin_minute end_hour end_minute
-	# Generate resilver priority
-	${FREENAS_SQLITE_CMD} -separator "" ${RO_FREENAS_CONFIG} \
-	"SELECT $sf FROM storage_resilver WHERE enabled = 1 ORDER BY -id" | \
-	while eval read -r $f; do
-		begin_hour=$(echo ${begin}|cut -d: -f 1)
-		begin_minute=$(echo ${begin}|cut -d: -f 2)
-		end_hour=$(echo ${end}|cut -d: -f 1)
-		end_minute=$(echo ${end}|cut -d: -f 2)
-		echo "${begin_minute}	${begin_hour}	*	*	*	root	/usr/local/bin/midclt call pool.configure_resilver_priority > /dev/null 2>&1" >> /etc/crontab
-		echo "${end_minute}	${end_hour}	*	*	*	root	/usr/local/bin/midclt call pool.configure_resilver_priority > /dev/null 2>&1" >> /etc/crontab
-	done
-
-	# For periodic snapshot.
-	snaptasks=`${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT COUNT(id) FROM storage_task WHERE task_enabled = 1;"`
-	if [ ${snaptasks} -gt 0 ]; then
-		echo "*	*	*	*	*	root	/usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1" >> /etc/crontab
-	else
-		echo "15	4	*	*	6	root	/usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1" >> /etc/crontab
 	fi
 
 	local r1 r2
@@ -106,11 +116,6 @@ generate_crontab()
 
 	# Update the smartctl database
 	echo "@weekly root /usr/local/sbin/update-smart-drivedb > /dev/null 2>&1" >> /etc/crontab
-	# Ugly and dirty custom crontab scripts
-	ls /etc/ix.rc.d/ix-crontab-custom-* 2> /dev/null | \
-	while read -r cron; do
-		. ${cron}
-	done
 
 }
 
