@@ -36,7 +36,7 @@ verify_func()
 	local config_db="/data/freenas-v1.db"
 
 	section_header "Verification Results - 'freenas-verify'"
-	freenas-verify
+	sc /root/verify.txt
 	section_footer
 
 	section_header "Configuration Database Integrity Check"

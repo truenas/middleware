@@ -29,6 +29,10 @@ PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 
 0	*	*	*	*	root	/usr/local/bin/python /usr/local/bin/mfistatus.py > /dev/null 2>&1
 
+# Run freenas-verify and save results to file
+# This helps speed up freenas-debug
+# Redmine 55752
+0	1	*	*	*	root	/usr/local/bin/python /usr/local/bin/freenas-verify > /root/verify.txt 2>&1
 15	3	*	*	*	root	/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py expire >/dev/null 2>&1
 30	3	*	*	*	root 	/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py fill >/dev/null 2>&1
 45	3	*	*	*	root	/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py backup_db >/dev/null 2>&1
