@@ -13,9 +13,9 @@ class Migration(migrations.Migration):
             name='cifs_srv_allow_smb1',
             field=models.BooleanField(default=False,
                 help_text=(
-                    'Use this option to allow legacy SMB clients to connect to the'
-                    'server. Note that SMB1 is being deprecated and it is advised'
-                    'to upgrade clients to operating system versions that support'
+                    'Use this option to allow legacy SMB clients to connect to the '
+                    'server. Note that SMB1 is being deprecated and it is advised '
+                    'to upgrade clients to operating system versions that support '
                     'modern versions of the SMB protocol.'
                 ),
                 verbose_name='Allow SMB1 clients'
