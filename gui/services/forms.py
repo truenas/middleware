@@ -2007,6 +2007,16 @@ class S3Form(ModelForm):
             )
         return s3_secret_key2
 
+    def clean_s3_disks(self):
+        s3_disks = self.cleaned_data.get("s3_disks")
+        if len(s3_disks.replace('/', ' ').split()) < 3:
+            raise forms.ValidationError(
+                _("Top level datasets are not allowed. i.e /mnt/tank/dataset is allowed")
+            )
+        if not os.path.exists(s3_disks):
+            os.makedirs(s3_disks)
+        return s3_disks
+
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("s3_secret_key"):
