@@ -2,7 +2,7 @@ import logging
 import os
 import time
 
-from middlewared.utils import run, Popen
+from middlewared.utils import run
 
 logger = logging.getLogger(__name__)
 
@@ -29,16 +29,16 @@ async def get_smb4conf_parm(parm):
     if tp.returncode != 0:
         logger.debug(f'Command {TPCMD} for parameter {parm} failed with error: {tp.stderr.decode()}')
         return False
-    parm_value = tp.stdout.decode().rstrip() 
+    parm_value = tp.stdout.decode().rstrip()
 
-    return parm_value 
+    return parm_value
 
 async def get_config(middleware):
     conf = {}
     conf['systemdataset'] = await middleware.call('systemdataset.config')
-    # If the system dataset hasn't finished importing yet, exit quickly so that we don't perform unnecessary db operations. 
+    # If the system dataset hasn't finished importing yet, exit quickly so that we don't perform unnecessary db operations.
     if conf['systemdataset']['path'] is None:
-        return conf 
+        return conf
 
     conf['cifs'] = await middleware.call('smb.config')
     conf['smb_users'] = await middleware.call('datastore.query', 'account.bsdusers', [
@@ -47,7 +47,9 @@ async def get_config(middleware):
             ('bsdusr_smbhash', '~', r'^.+:.+:[A-F0-9]{32}:.+$'),
         ]]
     ])
-    dc = await middleware.call('datastore.query', 'services.services', [('srv_service','=','domaincontroller')], {'get' : True})
+    dc = await middleware.call('datastore.query', 'services.services',
+                               [('srv_service', '=', 'domaincontroller')],
+                               {'get': True})
     logger.debug(f'{dc}')
 
     if dc['srv_enable']:
@@ -55,15 +57,15 @@ async def get_config(middleware):
     else:
         conf['role'] = 'file_server'
 
-    parm_to_test = ['privatedir','state directory']
+    parm_to_test = ['privatedir', 'state directory']
     for parm in parm_to_test:
         conf[parm] = await get_smb4conf_parm(parm)
 
-    return conf 
+    return conf
 
 async def hb_command(command, dir_path):
     try:
-        command(dir_path) 
+        command(dir_path)
         return True
     except Exception as e:
         logger.debug(f"Commmand '{command.__name__}' failed on path {dir_path} with ({e})")
@@ -72,14 +74,14 @@ async def hb_command(command, dir_path):
 async def setup_samba_dirs(middleware, conf):
     statedir = conf['state directory']
     samba_dirs = [
-        statedir,
-        conf['privatedir'],
-        "/var/run/samba",
-        "/var/run/samba4",
-        "/var/log/samba4"
-        ]
+                 statedir,
+                 conf['privatedir'],
+                 "/var/run/samba",
+                 "/var/run/samba4",
+                 "/var/log/samba4"
+                 ]
     for dir in samba_dirs:
-        if not os.path.exists(dir): 
+        if not os.path.exists(dir):
             os.mkdir(dir)
 
     if not conf['systemdataset']['is_decrypted']:
@@ -104,10 +106,10 @@ async def setup_samba_dirs(middleware, conf):
             try:
                 os.rename(statedir, olddir)
             except Exception as e:
-                logger.debug(f"Unable to rename {statedir} to {olddir} ({e}") 
+                logger.debug(f"Unable to rename {statedir} to {olddir} ({e}")
                 return False
 
-        try:   
+        try:
             logger.debug(f"Preparing to create symlink {basename_realpath} -> {statedir} ")
             os.symlink(basename_realpath, statedir)
         except Exception as e:
@@ -132,7 +134,7 @@ async def setup_samba_dirs(middleware, conf):
 
 """
    Code to make ensure that the local / domain SID persists across upgrades, reboots,
-   db restores, etc. The SID value is normally randomized, and this can cause 
+   db restores, etc. The SID value is normally randomized, and this can cause
    Samba's group mapping database to become corrupted and users to lose access to
    shares. This situation is most likely to occur in standalone configurations because
    they rely on the group mapping database for access via local groups. Symptoms of this
@@ -154,7 +156,7 @@ async def get_system_SID(sidtype):
         logger.debug(f'The following exception occured while executing {sidtype}: ({e})')
         SID = None
 
-    return SID 
+    return SID
 
 
 async def set_database_SID(middleware, config, SID):
@@ -165,7 +167,7 @@ async def set_database_SID(middleware, config, SID):
     except Exception as e:
         logger.debug(f'The following exception occured while setting database SID: ({e})')
 
-    return ret 
+    return ret
 
 
 async def set_system_SID(sidtype, SID):
@@ -175,7 +177,7 @@ async def set_system_SID(sidtype, SID):
     setSID = await run([NETCMD, "-d 0", sidtype, SID])
     if setSID.returncode != 0:
         logger.debug(f'Command {sidtype} failed with error: {setSID.stderr.decode()}')
-        return False 
+        return False
 
     return True
 
@@ -208,20 +210,20 @@ async def set_SID(middleware, config):
 
 """
     Import local users into Samba's passdb.tdb file. Current behavior is to:
-    1) dump the contents of users bsdusr_smbhash to a tempory file, 
+    1) dump the contents of users bsdusr_smbhash to a tempory file,
     2) import it as a legacy smbpasswd file,
     3) remove the temporary file
     4) disable users that are locked or have password disabled in the GUI
 
-    .users_imported sentinel file is no longer used. Instead compare the user 
-    count in passdb.tdb with the list of smb users the in freenas-v1.db file. 
+    .users_imported sentinel file is no longer used. Instead compare the user
+    count in passdb.tdb with the list of smb users the in freenas-v1.db file.
 """
 
 async def count_passdb_users():
     pdb_list = await run([PDBCMD, '-d 0', '-L'])
     if pdb_list.returncode != 0:
         logger.debug(f'pdbedit -L command failed. Could not obtain count of users in passdb.tdb')
-        return False, 0 
+        return False, 0
 
     usercount = len(pdb_list.stdout.decode().splitlines())
     return True, usercount
@@ -241,11 +243,11 @@ async def write_legacy_smbpasswd(middleware, conf):
 async def disable_passdb_users(smb_users):
     for user in smb_users:
         if user['bsdusr_locked'] or user['bsdusr_password_disabled']:
-            flags = '-d' 
+            flags = '-d'
         else:
             flags = '-e'
 
-        set_pdb_flags = await run([SMBPASSWDCMD, flags, user["bsdusr_username"]], check=False) 
+        set_pdb_flags = await run([SMBPASSWDCMD, flags, user["bsdusr_username"]], check=False)
         if set_pdb_flags.returncode != 0:
             logger.debug(f'failed to set flags {flags} for user {user["bsdusr_username"]} in passdb.tdb with error: {set_pdb_flags.stderr.decode()}')
             return False
@@ -265,9 +267,9 @@ async def import_local_users(middleware, conf):
         logger.debug('Removing out-of-sync passdb.tdb file')
         os.unlink(passdb_file)
 
-    pdb_import = await run([PDBCMD, '-d 1', 
-        f"-i smbpasswd:{TMPSMBPASSWD}"],
-        check=False)
+    pdb_import = await run([PDBCMD, '-d 1',
+                           f"-i smbpasswd:{TMP_SMBPASSWD}"],
+                           check=False)
 
     os.unlink(TMP_SMBPASSWD)
     if pdb_import.returncode != 0:
@@ -277,7 +279,7 @@ async def import_local_users(middleware, conf):
     ret = await disable_passdb_users(conf['smb_users'])
     if not ret:
         return False
- 
+
 """
     Validate contents of group_mapping.tdb, which maps local Unix groups to Windows group
     SIDs. This file should:
@@ -287,10 +289,10 @@ async def import_local_users(middleware, conf):
     To do: add validation of SID values in the tdb file.
 """
 async def groupmap_add(config, unixgroup, ntgroup):
-    gm_add = await run([NETCMD, '-d 1', 'groupmap', 'add', 
-        f'unixgroup={unixgroup}',
-        f'ntgroup={ntgroup}',
-        ], check=False)
+    gm_add = await run([NETCMD, '-d 1', 'groupmap', 'add',
+                       f'unixgroup={unixgroup}',
+                       f'ntgroup={ntgroup}'],
+                       check=False)
 
     if gm_add.returncode != 0:
         logger.debug(f'Failed to map {unixgroup} to nt group {ntgroup}: {gm_add.stderr.decode()}')
@@ -317,7 +319,7 @@ async def get_groups(middleware):
         key = str(g['bsdgrp_group'])
         _groups[key] = []
         members = await middleware.call('datastore.query', 'account.bsdGroupMembership',
-            [('bsdgrpmember_group', '=', g['id'])])
+                                        [('bsdgrpmember_group', '=', g['id'])])
         for m in members:
             if m['bsdgrpmember_user']:
                 _groups[key].append(str(m['bsdgrpmember_user']['bsdusr_username']))
@@ -326,7 +328,7 @@ async def get_groups(middleware):
 
 async def validate_group_mappings(middleware, conf):
     groupmap = await middleware.call('notifier.groupmap_list')
-    groups = await get_groups(middleware) 
+    groups = await get_groups(middleware)
     for g in groups:
         if not await is_disallowed_group(middleware, conf, groupmap, g):
             ret = await groupmap_add(conf, g, g)
@@ -339,12 +341,12 @@ async def render(service, middleware):
     if conf['systemdataset']['path'] is None:
         logger.debug("systemdataset.config returned 'None' as dataset path. Possible zpool import in progress. Exiting configure.")
         return
-        
+
     ret = await setup_samba_dirs(middleware, conf)
     if not ret:
         logger.debug("Failed to configure samba directories")
         return
     await set_SID(middleware, conf)
     if conf['role'] == "file_server":
-        await import_local_users(middleware, conf) 
+        await import_local_users(middleware, conf)
         await validate_group_mappings(middleware, conf)
