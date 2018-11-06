@@ -33,7 +33,8 @@ require([
     "dojo/request/xhr",
     "dijit/_base/manager",
     "dijit/Dialog",
-    "dojox/timing"
+    "dijit/Tooltip",
+    "dojox/timing",
     ], function(
     lang,
     dom,
@@ -42,6 +43,7 @@ require([
     xhr,
     manager,
     Dialog,
+    Tooltip,
     timing
     ) {
 
