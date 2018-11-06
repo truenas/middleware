@@ -1071,6 +1071,52 @@ Create Internal Certificate
    :statuscode 201: no error
 
 
+Create ACME Certificate
++++++++++++++++++++++++
+
+.. http:post:: /api/v1.0/system/certificate/acme/
+
+   Creates an ACME based Certificate and returns the object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/certificate/acme/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "cert_tos": true,
+                "csr_id": 1,
+                "cert_name": "acme_cert",
+                "cert_renew_days": 10,
+                "cert_acme_directory_uri": "https://acme-staging-v02.api.letsencrypt.org/directory",
+                "domain_acme.example.ixsystems.com": 4
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+        ACME Certificate successfully created.
+
+    NOTE: All the domains which exist in the csr are to be added in the payload. If there's a domain "acme.example.ixsystems.com" in csr,
+          how to add this in the payload is "domain_acme.example.ixsystems.com". "domain_" prefix is used for this purpose
+
+   :json boolean cert_tos: terms of service for the acme server
+   :json string cert_name: identifier
+   :json string cert_acme_directory_uri: acme server directory uri
+   :json integer csr_id: id of the csr on which the ACME certificate is to be issued
+   :json integer domain_: all domains in the specified csr will be added and must begin with prefix "domain_". The value would be a valid DNS Authenticator id
+   :json integer cert_renew_days: renew certificate "days" before it expires
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 201: no error
+
 Create CSR
 ++++++++++
 
@@ -1214,6 +1260,74 @@ Delete resource
    .. sourcecode:: http
 
       DELETE /api/v1.0/system/certificate/1/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 204 No Response
+      Vary: Accept
+      Content-Type: application/json
+
+   :statuscode 204: no error
+
+
+ACME DNS AUTHENTICATOR
+-----------------
+
+The ACME DNS AUTHENTICATOR resource represents DNS authenticators for ACME based DNS challenges.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/system/acmednsauthenticator/
+
+   Returns a list of DNS Authenticators.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/system/acmednsauthenticator/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      [
+        {
+            'attributes': "{'secret_access_key': '6qBNN', "
+                "'access_key_id': 'Z8Exkg=='}",
+            'authenticator': 'route53',
+            'id': 1,
+            'name': 'acme_route53'
+        }
+      ]
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 20
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Delete resource
++++++++++++++++
+
+.. http:delete:: /api/v1.0/system/acmednsauthenticator/(int:id)/
+
+   Delete Authenticator `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/system/acmednsauthenticator/1/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:

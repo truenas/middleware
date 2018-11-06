@@ -27,7 +27,6 @@ import json
 import logging
 import os
 import tarfile
-import signal
 
 from uuid import uuid4
 
@@ -39,11 +38,51 @@ from freenasOS import Update
 from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.middleware.client import client
-from freenasUI.middleware.util import run_alerts
+from freenasUI.middleware.form import handle_middleware_validation
+from freenasUI.middleware.util import get_validation_errors, run_alerts
+from freenasUI.system import forms
 
 log = logging.getLogger('system.utils')
 
 UPDATE_APPLIED_SENTINEL = '/tmp/.updateapplied'
+
+
+def certificate_common_post_create(action, request, **kwargs):
+
+    form, job, verrors, job_id = None, None, None, None
+
+    if request.session.get('certificate_create'):
+        form = getattr(
+            forms, request.session['certificate_create']['form']
+        )(request.session['certificate_create']['payload'], **kwargs)
+        job_id = request.session['certificate_create']['job_id']
+        form.is_valid()
+        form._middleware_action = action
+        verrors = get_validation_errors(job_id)
+        if verrors:
+            handle_middleware_validation(form, verrors)
+        with client as c:
+            job = c.call(
+                'core.get_jobs',
+                [['id', '=', job_id]],
+            )
+
+        del request.session['certificate_create']
+
+    if not job:
+        if job_id:
+            error = f'Job {job_id} does not exist'
+        else:
+            error = '"certificate_create" key does not exist in session'
+
+        job = {
+            'state': 'FAILED',
+            'error': error
+        }
+    else:
+        job = job[0]
+
+    return form, job, verrors
 
 
 def is_update_applied(update_version, create_alert=True):

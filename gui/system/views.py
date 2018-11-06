@@ -82,7 +82,8 @@ from freenasUI.system.utils import (
     debug_generate,
     factory_restore,
     run_updated,
-    is_update_applied
+    is_update_applied,
+    certificate_common_post_create
 )
 from middlewared.plugins.update import CheckUpdateHandler, get_changelog, parse_changelog
 
@@ -1966,19 +1967,102 @@ def CA_export_privatekey(request, id):
     return response
 
 
+def certificate_progress(request):
+    with client as c:
+        job = c.call(
+            'core.get_jobs',
+            [['id', '=', request.session.get('certificate_create', {}).get('job_id', -1)]]
+        )
+
+    if job:
+        job = job[0]
+
+    return HttpResponse(json.dumps({
+        "status": "finished" if not job or job["state"] in ["SUCCESS", "FAILED", "ABORTED"] else
+        job["progress"]["description"],
+        "volume": job["arguments"][0] if job else {},
+        "extra": job["progress"]["extra"] if job else None,
+        "percent": job["progress"]["percent"] if job else None,
+    }), content_type='application/json')
+
+
+def certificate_acme_create(request, csr_id):
+    if request.session.get('certificate_create'):
+
+        form, job, verrors = certificate_common_post_create(
+            'create', request, csr_id=csr_id
+        )
+
+        if job['state'] == 'SUCCESS':
+            return JsonResp(request, message=_('ACME Certificate successfully created'))
+        else:
+            if not verrors:
+                raise MiddlewareError(job['error'])
+            else:
+                return render(request, 'system/certificate/certificate_create_ACME.html', {
+                    'form': form
+                })
+
+    if request.method == "POST":
+        form = forms.CertificateACMEForm(request.POST, csr_id=csr_id)
+        if form.is_valid():
+            job_id = form.save()
+            request.session['certificate_create'] = {
+                'job_id': job_id,
+                'form': form.__class__.__name__,
+                'payload': request.POST,
+            }
+
+            return render(
+                request, 'system/certificate/certificate_progress.html', {
+                    'certificate_url': reverse('certificate_acme_create', kwargs={'csr_id': csr_id}),
+                    'dialog_name': 'Create ACME Certificate'
+                }
+            )
+        return JsonResp(request, form=form)
+
+    else:
+        form = forms.CertificateACMEForm(csr_id=csr_id)
+
+    return render(request, "system/certificate/certificate_create_ACME.html", {
+        'form': form
+    })
+
+
 def certificate_csr_import(request):
+
+    if request.session.get('certificate_create'):
+
+        form, job, verrors = certificate_common_post_create(
+            'create', request
+        )
+
+        if job['state'] == 'SUCCESS':
+            return JsonResp(request, message=_('Certificate Signing Request successfully Imported'))
+        else:
+            if not verrors:
+                raise MiddlewareError(job['error'])
+            else:
+                return render(request, 'system/certificate/CSR_import.html', {
+                    'form': form
+                })
 
     if request.method == "POST":
         form = forms.CertificateCSRImportForm(request.POST)
         if form.is_valid():
-            try:
-                form.save()
-                return JsonResp(
-                    request,
-                    message=_("Certificate Signing Request successfully imported.")
-                )
-            except ValidationErrors as e:
-                handle_middleware_validation(form, e)
+            job_id = form.save()
+            request.session['certificate_create'] = {
+                'job_id': job_id,
+                'form': form.__class__.__name__,
+                'payload': request.POST,
+            }
+
+            return render(
+                request, 'system/certificate/certificate_progress.html', {
+                    'certificate_url': reverse('certificate_import_csr'),
+                    'dialog_name': 'Import Certificate Signing Request'
+                }
+            )
         return JsonResp(request, form=form)
 
     else:
@@ -1991,17 +2075,38 @@ def certificate_csr_import(request):
 
 def certificate_import(request):
 
+    if request.session.get('certificate_create'):
+
+        form, job, verrors = certificate_common_post_create(
+            'create', request,
+        )
+
+        if job['state'] == 'SUCCESS':
+            return JsonResp(request, message=_('Certificate successfully Imported'))
+        else:
+            if not verrors:
+                raise MiddlewareError(job['error'])
+            else:
+                return render(request, 'system/certificate/certificate_import.html', {
+                    'form': form
+                })
+
     if request.method == "POST":
         form = forms.CertificateImportForm(request.POST)
         if form.is_valid():
-            try:
-                form.save()
-                return JsonResp(
-                    request,
-                    message=_("Certificate successfully imported.")
-                )
-            except ValidationErrors as e:
-                handle_middleware_validation(form, e)
+            job_id = form.save()
+            request.session['certificate_create'] = {
+                'job_id': job_id,
+                'form': form.__class__.__name__,
+                'payload': request.POST,
+            }
+
+            return render(
+                request, 'system/certificate/certificate_progress.html', {
+                    'certificate_url': reverse('certificate_import'),
+                    'dialog_name': 'Import Certificate'
+                }
+            )
         return JsonResp(request, form=form)
 
     else:
@@ -2014,19 +2119,40 @@ def certificate_import(request):
 
 def certificate_create_internal(request):
 
+    if request.session.get('certificate_create'):
+
+        form, job, verrors = certificate_common_post_create(
+            'create', request
+        )
+
+        if job['state'] == 'SUCCESS':
+            return JsonResp(request, message=_('Certificate successfully Created'))
+        else:
+            if not verrors:
+                raise MiddlewareError(job['error'])
+            else:
+                return render(request, 'system/certificate/certificate_create_internal.html', {
+                    'form': form
+                })
+
     if request.method == "POST":
         form = forms.CertificateCreateInternalForm(request.POST)
         if form.is_valid():
-            try:
-                form.save()
-                return JsonResp(
-                    request,
-                    message=_("Internal Certificate successfully created.")
-                )
-            except ValidationErrors as e:
-                handle_middleware_validation(form, e)
-        return JsonResp(request, form=form)
+            job_id = form.save()
+            request.session['certificate_create'] = {
+                'job_id': job_id,
+                'form': form.__class__.__name__,
+                'payload': request.POST,
+            }
 
+            return render(
+                request, 'system/certificate/certificate_progress.html', {
+                    'certificate_url': reverse('certificate_create_internal'),
+                    'dialog_name': 'Create Internal Certificate'
+                }
+            )
+
+        return JsonResp(request, form=form)
     else:
         form = forms.CertificateCreateInternalForm()
 
@@ -2037,17 +2163,38 @@ def certificate_create_internal(request):
 
 def certificate_create_CSR(request):
 
+    if request.session.get('certificate_create'):
+
+        form, job, verrors = certificate_common_post_create(
+            'create', request
+        )
+
+        if job['state'] == 'SUCCESS':
+            return JsonResp(request, message=_('Certificate Signing Request successfully Created'))
+        else:
+            if not verrors:
+                raise MiddlewareError(job['error'])
+            else:
+                return render(request, 'system/certificate/certificate_create_CSR.html', {
+                    'form': form
+                })
+
     if request.method == "POST":
         form = forms.CertificateCreateCSRForm(request.POST)
         if form.is_valid():
-            try:
-                form.save()
-                return JsonResp(
-                    request,
-                    message=_("Certificate CSR successfully created.")
-                )
-            except ValidationErrors as e:
-                handle_middleware_validation(form, e)
+            job_id = form.save()
+            request.session['certificate_create'] = {
+                'job_id': job_id,
+                'form': form.__class__.__name__,
+                'payload': request.POST,
+            }
+
+            return render(
+                request, 'system/certificate/certificate_progress.html', {
+                    'certificate_url': reverse('certificate_create_CSR'),
+                    'dialog_name': 'Create CSR'
+                }
+            )
         return JsonResp(request, form=form)
 
     else:
@@ -2062,17 +2209,38 @@ def certificate_edit(request, id):
 
     cert = models.Certificate.objects.get(pk=id)
 
+    if request.session.get('certificate_create'):
+
+        form, job, verrors = certificate_common_post_create(
+            'update', request, instance=cert
+        )
+
+        if job['state'] == 'SUCCESS':
+            return JsonResp(request, message=_('Certificate successfully edited'))
+        else:
+            if not verrors:
+                raise MiddlewareError(job['error'])
+            else:
+                return render(request, 'system/certificate/certificate_edit.html', {
+                    'form': form
+                })
+
     if request.method == "POST":
         form = forms.CertificateEditForm(request.POST, instance=cert)
         if form.is_valid():
-            try:
-                form.save()
-                return JsonResp(
-                    request,
-                    message=_("Internal Certificate successfully edited.")
-                )
-            except ValidationErrors as e:
-                handle_middleware_validation(form, e)
+            job_id = form.save()
+            request.session['certificate_create'] = {
+                'job_id': job_id,
+                'form': form.__class__.__name__,
+                'payload': request.POST,
+            }
+
+            return render(
+                request, 'system/certificate/certificate_progress.html', {
+                    'certificate_url': reverse('certificate_edit', kwargs={'id': id}),
+                    'dialog_name': 'Edit Certificate'
+                }
+            )
         return JsonResp(request, form=form)
 
     else:
@@ -2084,20 +2252,40 @@ def certificate_edit(request, id):
 
 
 def CSR_edit(request, id):
-
     cert = models.Certificate.objects.get(pk=id)
+
+    if request.session.get('certificate_create'):
+
+        form, job, verrors = certificate_common_post_create(
+            'update', request, instance=cert
+        )
+
+        if job['state'] == 'SUCCESS':
+            return JsonResp(request, message=_('CSR successfully edited'))
+        else:
+            if not verrors:
+                raise MiddlewareError(job['error'])
+            else:
+                return render(request, 'system/certificate/CSR_edit.html', {
+                    'form': form
+                })
 
     if request.method == "POST":
         form = forms.CertificateCSREditForm(request.POST, instance=cert)
         if form.is_valid():
-            try:
-                form.save()
-                return JsonResp(
-                    request,
-                    message=_("CSR successfully edited.")
-                )
-            except ValidationErrors as e:
-                handle_middleware_validation(form, e)
+            job_id = form.save()
+            request.session['certificate_create'] = {
+                'job_id': job_id,
+                'form': form.__class__.__name__,
+                'payload': request.POST,
+            }
+
+            return render(
+                request, 'system/certificate/certificate_progress.html', {
+                    'certificate_url': reverse('CSR_edit', kwargs={'id': id}),
+                    'dialog_name': 'Edit CSR'
+                }
+            )
         return JsonResp(request, form=form)
 
     else:

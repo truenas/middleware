@@ -125,6 +125,7 @@ from freenasUI.system.forms import (
     CertificateCreateInternalForm,
     CertificateImportForm,
     CertificateCSRImportForm,
+    CertificateACMEForm,
     ManualUpdateTemporaryLocationForm,
     ManualUpdateUploadForm,
     ManualUpdateWizard,
@@ -3279,12 +3280,51 @@ class CertificateResourceMixin(object):
                 self.wrap_view('import_csr'),
             ),
             url(
+                r"^(?P<resource_name>%s)/acme%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('acme_cert'),
+            ),
+            url(
                 r"^(?P<resource_name>%s)/internal%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('internal'),
             ),
         ]
+
+    def acme_cert(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
+
+        csr_id = deserialized.pop('csr_id')
+
+        with client as c:
+            domains = c.call('certificate.get_domain_names', csr_id)
+
+        data = {k: v for k, v in deserialized.items() if not k.startswith('domain_')}
+
+        for n, domain in enumerate(domains):
+            if f'domain_{domain}' in deserialized:
+                data[f'domain_{n}'] = deserialized[f'domain_{domain}']
+
+        form = CertificateACMEForm(data=data, csr_id=csr_id, middleware_job_wait=True)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('ACME Certificate successfully created.', status=201)
 
     def import_csr(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
@@ -3302,7 +3342,7 @@ class CertificateResourceMixin(object):
         if 'cert_passphrase2' not in deserialized and 'cert_passphrase' in deserialized:
             deserialized['cert_passphrase2'] = deserialized.get('cert_passphrase')
 
-        form = CertificateCSRImportForm(data=deserialized)
+        form = CertificateCSRImportForm(data=deserialized, middleware_job_wait=True)
         if not form.is_valid():
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)
@@ -3324,7 +3364,7 @@ class CertificateResourceMixin(object):
         else:
             deserialized = {}
 
-        form = CertificateCreateCSRForm(data=deserialized)
+        form = CertificateCreateCSRForm(data=deserialized, middleware_job_wait=True)
         if not form.is_valid():
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)
@@ -3349,7 +3389,7 @@ class CertificateResourceMixin(object):
         if 'cert_passphrase2' not in deserialized and 'cert_passphrase' in deserialized:
             deserialized['cert_passphrase2'] = deserialized.get('cert_passphrase')
 
-        form = CertificateImportForm(data=deserialized)
+        form = CertificateImportForm(data=deserialized, middleware_job_wait=True)
         if not form.is_valid():
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)
@@ -3371,7 +3411,7 @@ class CertificateResourceMixin(object):
         else:
             deserialized = {}
 
-        form = CertificateCreateInternalForm(data=deserialized)
+        form = CertificateCreateInternalForm(data=deserialized, middleware_job_wait=True)
         if not form.is_valid():
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)
@@ -3401,6 +3441,12 @@ class CertificateResourceMixin(object):
                         'CSR_edit',
                         kwargs={
                             'id': bundle.obj.id
+                        }
+                    )
+                    bundle.data['_ACME_create_url'] = reverse(
+                        'certificate_acme_create',
+                        kwargs={
+                            'csr_id': bundle.obj.id
                         }
                     )
 

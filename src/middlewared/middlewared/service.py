@@ -45,6 +45,14 @@ def job(lock=None, lock_queue_size=None, logs=False, process=False, pipes=None, 
     return check_job
 
 
+def skip_arg(count=0):
+    """Skip "count" arguments when validating accepts"""
+    def wrap(fn):
+        fn._skip_arg = count
+        return fn
+    return wrap
+
+
 def threaded(pool):
     def m(fn):
         fn._thread_pool = pool

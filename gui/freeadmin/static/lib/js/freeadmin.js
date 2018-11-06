@@ -1580,9 +1580,10 @@ require([
 
     }
 
-    cloudCredentialsProvider = function() {
 
-        var provider = registry.byId("id_provider").get('value');
+    credentialsProvider = function(provider_id, class_name) {
+
+        var provider = registry.byId(provider_id).get('value');
         var credentialsSchemas = JSON.parse(registry.byId("id_credentials_schemas").get('value'));
 
         var attributesInput = dom.byId("id_attributes");
@@ -1603,7 +1604,7 @@ require([
 
         while (true)
         {
-            var old = document.getElementsByClassName("cloud-credentials-attribute");
+            var old = document.getElementsByClassName(class_name);
             if (!old.length)
             {
                 break;
@@ -2683,6 +2684,10 @@ require([
         canceled = true;
         dialog.hide();
 
+    };
+
+    submitCertificateForm = function(btn_id) {
+        dom.byId(btn_id).click();
     };
 
     refreshById = function(id) {

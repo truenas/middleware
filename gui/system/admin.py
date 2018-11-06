@@ -356,6 +356,17 @@ class CertificateFAdmin(BaseFreeAdmin):
             }""",
             'on_select_after': hide_me % '!row.data.cert_type_CSR',
         }
+        actions['create_acme'] = {
+            'button_name': 'Create ACME Certificate',
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('Edit',data._ACME_create_url, [mybtn,]);
+                }
+            }""",
+            'on_select_after': hide_me % '!row.data.cert_type_CSR'
+        }
 
         actions['export_privatekey'] = {
             'button_name': 'Export Private Key',
@@ -409,6 +420,19 @@ class CertificateFAdmin(BaseFreeAdmin):
         return func
 
 
+class ACMEDNSAuthenticatorFAdmin(BaseFreeAdmin):
+
+    icon_object = "CertificateIcon"
+    icon_model = "CertificateIcon"
+    icon_add = "CertificateIcon"
+    icon_view = "CertificateIcon"
+
+    exclude_fields = (
+        'id',
+        'attributes',
+    )
+
+
 class CloudCredentialsFAdmin(BaseFreeAdmin):
 
     exclude_fields = (
@@ -432,5 +456,6 @@ site.register(None, BootStatusFAdmin)
 site.register(models.CertificateAuthority, CertificateAuthorityFAdmin)
 site.register(models.Certificate, CertificateFAdmin)
 site.register(models.CloudCredentials, CloudCredentialsFAdmin)
+site.register(models.ACMEDNSAuthenticator, ACMEDNSAuthenticatorFAdmin)
 site.register(models.Settings, SettingsFAdmin)
 site.register(models.Update, UpdateFAdmin)

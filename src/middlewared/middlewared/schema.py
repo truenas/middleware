@@ -717,6 +717,8 @@ def accepts(*schema):
             args_index += 1
         if hasattr(f, '_job'):
             args_index += 1
+        if hasattr(f, '_skip_arg'):
+            args_index += f._skip_arg
         assert len(schema) == f.__code__.co_argcount - args_index  # -1 for self
 
         def clean_and_validate_args(args, kwargs):

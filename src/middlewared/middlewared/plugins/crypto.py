@@ -1,5 +1,8 @@
+import datetime
 import dateutil
 import dateutil.parser
+import josepy as jose
+import json
 import os
 import random
 import re
@@ -7,9 +10,11 @@ import socket
 import ssl
 
 from middlewared.async_validators import validate_country
-from middlewared.schema import accepts, Dict, Int, List, Patch, Ref, Str
-from middlewared.service import CRUDService, private, ValidationErrors
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
+from middlewared.service import CallError, CRUDService, job, periodic, private, skip_arg, ValidationErrors
 from middlewared.validators import Email, IpAddress, Range
+
+from acme import client, errors, messages
 from OpenSSL import crypto, SSL
 
 
@@ -26,7 +31,7 @@ RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", r
 
 
 def get_context_object():
-    # BEING USED IN VCENTERPLUGIN SERVICE
+    # BEING USED IN VCENTER SERVICE
     try:
         ssl._create_default_https_context = ssl._create_unverified_context
     except AttributeError:
@@ -187,6 +192,13 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
                 'Please provide a valid CSR'
             )
 
+    csr_id = data.get('csr_id')
+    if csr_id and not await middleware.call('certificate.query', [['id', '=', csr_id], ['CSR', '!=', None]]):
+        verrors.add(
+            f'{schema_name}.csr_id',
+            'Please provide a valid csr_id which has a valid CSR filed'
+        )
+
     await middleware.run_in_thread(
         _validate_certificate_with_key, certificate, private_key, schema_name, verrors
     )
@@ -205,8 +217,9 @@ class CertificateService(CRUDService):
             'CERTIFICATE_CREATE_INTERNAL': self.__create_internal,
             'CERTIFICATE_CREATE_IMPORTED': self.__create_imported_certificate,
             'CERTIFICATE_CREATE_IMPORTED_CSR': self.__create_imported_csr,
-            'CERTIFICATE_CREATE': self.__create_certificate,
-            'CERTIFICATE_CREATE_CSR': self.__create_csr
+            'CERTIFICATE_CREATE_CSR': self.__create_csr,
+            'CERTIFICATE_CREATE_ACME': self.__create_acme_certificate,
+            'CERTIFICATE_CREATE': self.__create_certificate
         }
 
     @private
@@ -217,6 +230,7 @@ class CertificateService(CRUDService):
 
             # We query for signedby again to make sure it's keys do not have the "cert_" prefix and it has gone through
             # the cert_extend method
+            # Datastore query is used instead of certificate.query to stop an infinite recursive loop
 
             cert['signedby'] = await self.middleware.call(
                 'datastore.query',
@@ -228,6 +242,11 @@ class CertificateService(CRUDService):
                     'get': True
                 }
             )
+
+        # Remove ACME related keys if cert is not an ACME based cert
+        if not cert.get('acme'):
+            for key in ['acme', 'acme_uri', 'domains_authenticators', 'renew_days']:
+                cert.pop(key, None)
 
         # convert san to list
         cert['san'] = (cert.pop('san', '') or '').split()
@@ -242,13 +261,13 @@ class CertificateService(CRUDService):
             root_path = CERT_ROOT_PATH
         cert['root_path'] = root_path
         cert['certificate_path'] = os.path.join(
-            root_path, '{0}.crt'.format(cert['name'])
+            root_path, f'{cert["name"]}.crt'
         )
         cert['privatekey_path'] = os.path.join(
-            root_path, '{0}.key'.format(cert['name'])
+            root_path, f'{cert["name"]}.key'
         )
         cert['csr_path'] = os.path.join(
-            root_path, '{0}.csr'.format(cert['name'])
+            root_path, f'{cert["name"]}.csr'
         )
 
         def cert_issuer(cert):
@@ -290,21 +309,21 @@ class CertificateService(CRUDService):
                         crypto.dump_certificate(crypto.FILETYPE_PEM, cert_obj).decode()
                     )
         except Exception:
-            self.logger.debug('Failed to load certificate {0}'.format(cert['name']), exc_info=True)
+            self.logger.debug(f'Failed to load certificate {cert["name"]}', exc_info=True)
 
         try:
             if cert['privatekey']:
                 key_obj = crypto.load_privatekey(crypto.FILETYPE_PEM, cert['privatekey'])
                 cert['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, key_obj).decode()
         except Exception:
-            self.logger.debug('Failed to load privatekey {0}'.format(cert['name']), exc_info=True)
+            self.logger.debug(f'Failed to load privatekey {cert["name"]}', exc_info=True)
 
         try:
             if cert['CSR']:
                 csr_obj = crypto.load_certificate_request(crypto.FILETYPE_PEM, cert['CSR'])
                 cert['CSR'] = crypto.dump_certificate_request(crypto.FILETYPE_PEM, csr_obj).decode()
         except Exception:
-            self.logger.debug('Failed to load csr {0}'.format(cert['name']), exc_info=True)
+            self.logger.debug(f'Failed to load csr {cert["name"]}', exc_info=True)
 
         cert['internal'] = 'NO' if cert['type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING) else 'YES'
 
@@ -423,14 +442,11 @@ class CertificateService(CRUDService):
 
     @private
     async def get_fingerprint_of_cert(self, certificate_id):
-        certificate_list = await self.query(filters=[('id', '=', certificate_id)])
-        if len(certificate_list) == 0:
-            return None
-        else:
-            return await self.middleware.run_in_thread(
-                self.fingerprint,
-                certificate_list[0]['certificate']
-            )
+        cert = await self._get_instance(certificate_id)
+        return await self.middleware.run_in_thread(
+            self.fingerprint,
+            cert['certificate']
+        )
 
     @private
     @accepts(
@@ -467,7 +483,7 @@ class CertificateService(CRUDService):
         Dict(
             'certificate_cert_info',
             Int('key_length'),
-            Int('serial', required=False),
+            Int('serial', required=False, null=True),
             Int('lifetime', required=True),
             Str('country', required=True),
             Str('state', required=True),
@@ -477,7 +493,7 @@ class CertificateService(CRUDService):
             Str('common', required=True),
             Str('email', validators=[Email()], required=True),
             Str('digest_algorithm', enum=['SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512']),
-            List('san', items=[Str('san')]),
+            List('san', items=[Str('san')], null=True),
             register=True
         )
     )
@@ -563,6 +579,210 @@ class CertificateService(CRUDService):
 
         return verrors
 
+    @private
+    async def get_domain_names(self, cert_id):
+        data = await self._get_instance(int(cert_id))
+        names = [data['common']]
+        names.extend(data['san'])
+        return names
+
+    @private
+    def get_acme_client_and_key(self, acme_directory_uri, tos=False):
+        data = self.middleware.call_sync('acme.registration.query', [['directory', '=', acme_directory_uri]])
+        if not data:
+            data = self.middleware.call_sync(
+                'acme.registration.create',
+                {'tos': tos, 'acme_directory_uri': acme_directory_uri}
+            )
+        else:
+            data = data[0]
+        # Making key now
+        key = jose.JWKRSA.fields_from_json(json.loads(data['body']['key']))
+        key_dict = key.fields_to_partial_json()
+        # Making registration resource now
+        registration = messages.RegistrationResource.from_json({
+            'uri': data['uri'],
+            'terms_of_service': data['tos'],
+            'body': {
+                'contact': [data['body']['contact']],
+                'status': data['body']['status'],
+                'key': {
+                    'e': key_dict['e'],
+                    'kty': 'RSA',
+                    'n': key_dict['n']
+                }
+            }
+        })
+
+        return client.ClientV2(
+            messages.Directory({
+                'newAccount': data['new_account_uri'],
+                'newNonce': data['new_nonce_uri'],
+                'newOrder': data['new_order_uri'],
+                'revokeCert': data['revoke_cert_uri']
+            }),
+            client.ClientNetwork(key, account=registration)
+        ), key
+
+    @private
+    def acme_issue_certificate(self, job, progress, data, csr_data):
+        verrors = ValidationErrors()
+
+        # TODO: Add ability to complete DNS validation challenge manually
+
+        # Validate domain dns mapping for handling DNS challenges
+        # Ensure that there is an authenticator for each domain in the CSR
+        domains = self.middleware.call_sync('certificate.get_domain_names', csr_data['id'])
+        dns_authenticator_ids = [o['id'] for o in self.middleware.call_sync('acme.dns.authenticator.query')]
+        for domain in domains:
+            if domain not in data['dns_mapping']:
+                verrors.add(
+                    'acme_create.dns_mapping',
+                    f'Please provide DNS authenticator id for {domain}'
+                )
+            elif data['dns_mapping'][domain] not in dns_authenticator_ids:
+                verrors.add(
+                    'acme_create.dns_mapping',
+                    f'Provided DNS Authenticator id for {domain} does not exist'
+                )
+            if domain.endswith('.'):
+                verrors.add(
+                    'acme_create.dns_mapping',
+                    f'Domain {domain} name cannot end with a period'
+                )
+            if '*' in domain and not domain.startswith('*.'):
+                verrors.add(
+                    'acme_create.dns_mapping',
+                    'Wildcards must be at the start of domain name followed by a period'
+                )
+        for domain in data['dns_mapping']:
+            if domain not in domains:
+                verrors.add(
+                    'acme_create.dns_mapping',
+                    f'{domain} not specified in the CSR'
+                )
+
+        if verrors:
+            raise verrors
+
+        acme_client, key = self.get_acme_client_and_key(data['acme_directory_uri'], data['tos'])
+        try:
+            # perform operations and have a cert issued
+            order = acme_client.new_order(csr_data['CSR'])
+        except messages.Error as e:
+            raise CallError(f'Failed to issue a new order for Certificate : {e}')
+        else:
+            job.set_progress(progress, 'New order for certificate issuance placed')
+
+            self.handle_authorizations(job, progress, order, data['dns_mapping'], acme_client, key)
+
+            try:
+                # Polling for a maximum of 10 minutes while trying to finalize order
+                # Should we try .poll() instead first ? research please
+                return acme_client.poll_and_finalize(order, datetime.datetime.now() + datetime.timedelta(minutes=10))
+            except errors.TimeoutError:
+                raise CallError('Certificate request for final order timed out')
+
+    @private
+    def handle_authorizations(self, job, progress, order, domain_names_dns_mapping, acme_client, key):
+        # When this is called, it should be ensured by the function calling this function that for all authorization
+        # resource, a domain name dns mapping is available
+        # For multiple domain providers in domain names, I think we should ask the end user to specify which domain
+        # provider is used for which domain so authorizations can be handled gracefully
+
+        max_progress = (progress * 4) - progress - (progress * 4 / 5)
+
+        dns_mapping = {d.replace('*.', ''): v for d, v in domain_names_dns_mapping.items()}
+        for authorization_resource in order.authorizations:
+            try:
+                status = False
+                progress += (max_progress / len(order.authorizations))
+                domain = authorization_resource.body.identifier.value
+                # BOULDER DOES NOT RETURN WILDCARDS FOR NOW
+                # OTHER IMPLEMENTATIONS RIGHT NOW ASSUME THAT EVERY DOMAIN HAS A WILD CARD IN CASE OF DNS CHALLENGE
+                challenge = None
+                for chg in authorization_resource.body.challenges:
+                    if chg.typ == 'dns-01':
+                        challenge = chg
+
+                if not challenge:
+                    raise CallError(
+                        f'DNS Challenge not found for domain {authorization_resource.body.identifier.value}'
+                    )
+
+                self.middleware.call_sync(
+                    'acme.dns.authenticator.update_txt_record', {
+                        'authenticator': dns_mapping[domain],
+                        'challenge': challenge.json_dumps(),
+                        'domain': domain,
+                        'key': key.json_dumps()
+                    }
+                )
+
+                try:
+                    status = acme_client.answer_challenge(challenge, challenge.response(key))
+                except errors.UnexpectedUpdate as e:
+                    raise CallError(
+                        f'Error answering challenge for {domain} : {e}'
+                    )
+            finally:
+                job.set_progress(
+                    progress,
+                    f'DNS challenge {"completed" if status else "failed"} for {domain}'
+                )
+
+    @periodic(86400, run_on_start=True)
+    @private
+    @job(lock='acme_cert_renewal')
+    def renew_certs(self, job):
+        certs = self.middleware.call_sync(
+            'certificate.query',
+            [['acme', '!=', None]]
+        )
+
+        progress = 0
+        for cert in certs:
+            progress += (100 / len(certs))
+
+            if (
+                datetime.datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') - datetime.datetime.utcnow()
+            ).days < cert['renew_days']:
+                # renew cert
+                self.logger.debug(f'Renewing certificate {cert["name"]}')
+                final_order = self.acme_issue_certificate(
+                    job, progress / 4, {
+                        'tos': True,
+                        'acme_directory_uri': cert['acme']['directory'],
+                        'dns_mapping': cert['domains_authenticators']
+                    },
+                    cert
+                )
+
+                self.middleware.call_sync(
+                    'datastore.update',
+                    self._config.datastore,
+                    cert['id'],
+                    {
+                        'certificate': final_order.fullchain_pem,
+                        'acme_uri': final_order.uri,
+                        'chain': True if len(RE_CERTIFICATE.findall(final_order.fullchain_pem)) > 1 else False,
+                    },
+                    {'prefix': self._config.datastore_prefix}
+                )
+
+            job.set_progress(progress)
+
+    @accepts()
+    async def acme_server_choices(self):
+        """
+        Dictionary of popular ACME Servers with their directory URI endpoints which we display automatically
+        in UI
+        """
+        return {
+            'https://acme-staging-v02.api.letsencrypt.org/directory': 'Let\'s Encrypt Staging Directory',
+            'https://acme-v02.api.letsencrypt.org/directory': 'Let\'s Encrypt Production Directory'
+        }
+
     # CREATE METHODS FOR CREATING CERTIFICATES
     # "do_create" IS CALLED FIRST AND THEN BASED ON THE TYPE OF THE CERTIFICATE WHICH IS TO BE CREATED THE
     # APPROPRIATE METHOD IS CALLED
@@ -571,18 +791,25 @@ class CertificateService(CRUDService):
     # CERTIFICATE_CREATE_INTERNAL     - __create_internal
     # CERTIFICATE_CREATE_IMPORTED     - __create_imported_certificate
     # CERTIFICATE_CREATE_IMPORTED_CSR - __create_imported_csr
-    # CERTIFICATE_CREATE              - __create_certificate
     # CERTIFICATE_CREATE_CSR          - __create_csr
+    # CERTIFICATE_CREATE_ACME         - __create_acme_certificate
+
+    # TODO: Make the following method inaccessible publicly
+    # CERTIFICATE_CREATE              - __create_certificate ( ONLY TO BE USED INTERNALLY )
 
     @accepts(
         Dict(
             'certificate_create',
+            Bool('tos'),
+            Dict('dns_mapping', additional_attrs=True),
             Int('csr_id'),
             Int('signedby'),
             Int('key_length'),
+            Int('renew_days'),
             Int('type'),
             Int('lifetime'),
             Int('serial', validators=[Range(min=1)]),
+            Str('acme_directory_uri'),
             Str('certificate'),
             Str('city'),
             Str('common'),
@@ -597,16 +824,95 @@ class CertificateService(CRUDService):
             Str('state'),
             Str('create_type', enum=[
                 'CERTIFICATE_CREATE_INTERNAL', 'CERTIFICATE_CREATE_IMPORTED',
-                'CERTIFICATE_CREATE', 'CERTIFICATE_CREATE_CSR',
-                'CERTIFICATE_CREATE_IMPORTED_CSR'], required=True),
+                'CERTIFICATE_CREATE_CSR', 'CERTIFICATE_CREATE_IMPORTED_CSR',
+                'CERTIFICATE_CREATE_ACME', 'CERTIFICATE_CREATE'], required=True),
             Str('digest_algorithm', enum=['SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512']),
             List('san', items=[Str('san')]),
             register=True
         )
     )
-    async def do_create(self, data):
-        if not data.get('san'):
-            data.pop('san', None)
+    @job(lock='cert_create')
+    async def do_create(self, job, data):
+        """
+        Create a new Certificate
+
+        Certificates are classified under following types and the necessary keywords to be passed
+        for `create_type` attribute to create the respective type of certificate
+
+        1) Internal Certificate                 -  CERTIFICATE_CREATE_INTERNAL
+
+        2) Imported Certificate                 -  CERTIFICATE_CREATE_IMPORTED
+
+        3) Certificate Signing Request          -  CERTIFICATE_CREATE_CSR
+
+        4) Imported Certificate Signing Request -  CERTIFICATE_CREATE_IMPORTED_CSR
+
+        5) ACME Certificate                     -  CERTIFICATE_CREATE_ACME
+
+        Based on `create_type` a type is selected by Certificate Service and rest of the values in `data` are validated
+        accordingly and finally a certificate is made based on the selected type.
+
+        .. examples(websocket)::
+
+          Create an ACME based certificate
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificate.create",
+                "params": [{
+                    "tos": true,
+                    "csr_id": 1,
+                    "acme_directory_uri": "https://acme-staging-v02.api.letsencrypt.org/directory",
+                    "name": "acme_certificate",
+                    "dns_mapping": {
+                        "domain1.com": "1"
+                    },
+                    "create_type": "CERTIFICATE_CREATE_ACME"
+                }]
+            }
+
+          Create an Imported Certificate Signing Request
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificate.create",
+                "params": [{
+                    "name": "csr",
+                    "CSR": "CSR string",
+                    "privatekey": "Private key string",
+                    "create_type": "CERTIFICATE_CREATE_IMPORTED_CSR"
+                }]
+            }
+
+          Create an Internal Certificate
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificate.create",
+                "params": [{
+                    "name": "internal_cert",
+                    "key_length": 2048,
+                    "lifetime": 3600,
+                    "city": "Nashville",
+                    "common": "domain1.com",
+                    "country": "US",
+                    "email": "dev@ixsystems.com",
+                    "organization": "iXsystems",
+                    "state": "Tennessee",
+                    "digest_algorithm": "SHA256",
+                    "signedby": 4,
+                    "create_type": "CERTIFICATE_CREATE_INTERNAL"
+                }]
+            }
+        """
+        if not data.get('dns_mapping'):
+            data.pop('dns_mapping')  # Default dict added
 
         verrors = await self.validate_common_attributes(data, 'certificate_create')
 
@@ -618,14 +924,18 @@ class CertificateService(CRUDService):
         if verrors:
             raise verrors
 
-        # TODO: ENFORCE THAT THE RIGHT PARAMETERS GO TO THE NEXT CREATE FUNCTION
+        job.set_progress(10, 'Initial validation complete')
 
         data = await self.middleware.run_in_thread(
             self.map_functions[data.pop('create_type')],
-            data
+            job, data
         )
 
         data['san'] = ' '.join(data.pop('san', []) or [])
+
+        # Patch creates another copy of dns_mapping
+        data.pop('dns_mapping', None)
+        data.pop('csr_id', None)
 
         pk = await self.middleware.call(
             'datastore.insert',
@@ -640,7 +950,53 @@ class CertificateService(CRUDService):
             {'onetime': False}
         )
 
+        job.set_progress(100, 'Certificate created successfully')
+
         return await self._get_instance(pk)
+
+    @accepts(
+        Dict(
+            'acme_create',
+            Bool('tos', default=False),
+            Int('csr_id', required=True),
+            Int('renew_days', default=10, validators=[Range(min=1)]),
+            Str('acme_directory_uri', required=True),
+            Str('name', required=True),
+            Dict('dns_mapping', additional_attrs=True, required=True)
+        )
+    )
+    @skip_arg(count=1)
+    def __create_acme_certificate(self, job, data):
+
+        csr_data = self.middleware.call_sync(
+            'certificate._get_instance', data['csr_id']
+        )
+
+        data['acme_directory_uri'] += '/' if data['acme_directory_uri'][-1] != '/' else ''
+
+        final_order = self.acme_issue_certificate(job, 25, data, csr_data)
+
+        job.set_progress(95, 'Final order received from ACME server')
+
+        cert_dict = {
+            'acme': self.middleware.call_sync(
+                'acme.registration.query',
+                [['directory', '=', data['acme_directory_uri']]]
+            )[0]['id'],
+            'acme_uri': final_order.uri,
+            'certificate': final_order.fullchain_pem,
+            'CSR': csr_data['CSR'],
+            'privatekey': csr_data['privatekey'],
+            'name': data['name'],
+            'chain': True if len(RE_CERTIFICATE.findall(final_order.fullchain_pem)) > 1 else False,
+            'type': CERT_TYPE_EXISTING,
+            'domains_authenticators': data['dns_mapping'],
+            'renew_days': data['renew_days']
+        }
+
+        cert_dict.update(self.load_certificate(final_order.fullchain_pem))
+
+        return cert_dict
 
     @accepts(
         Patch(
@@ -649,7 +1005,8 @@ class CertificateService(CRUDService):
             ('rm', {'name': 'lifetime'})
         )
     )
-    def __create_csr(self, data):
+    @skip_arg(count=1)
+    def __create_csr(self, job, data):
         # no signedby, lifetime attributes required
         cert_info = get_cert_info_from_data(data)
 
@@ -657,8 +1014,12 @@ class CertificateService(CRUDService):
 
         req, key = self.create_certificate_signing_request(cert_info)
 
+        job.set_progress(80)
+
         data['CSR'] = crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
         data['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
+
+        job.set_progress(90, 'Finalizing changes')
 
         return data
 
@@ -671,12 +1032,16 @@ class CertificateService(CRUDService):
             Str('passphrase')
         )
     )
-    def __create_imported_csr(self, data):
+    @skip_arg(count=1)
+    def __create_imported_csr(self, job, data):
+
+        # TODO: We should validate csr with private key ?
 
         data['type'] = CERT_TYPE_CSR
 
-        for k, v in self.load_certificate_request(data['CSR']).items():
-            data[k] = v
+        data.update(self.load_certificate_request(data['CSR']))
+
+        job.set_progress(80)
 
         if 'passphrase' in data:
             data['privatekey'] = export_private_key(
@@ -685,6 +1050,8 @@ class CertificateService(CRUDService):
             )
 
         data.pop('passphrase', None)
+
+        job.set_progress(90, 'Finalizing changes')
 
         return data
 
@@ -697,10 +1064,12 @@ class CertificateService(CRUDService):
             ('rm', {'name': 'create_type'})
         )
     )
-    def __create_certificate(self, data):
+    @skip_arg(count=1)
+    def __create_certificate(self, job, data):
 
-        for k, v in self.load_certificate(data['certificate']).items():
-            data[k] = v
+        data.update(self.load_certificate(data['certificate']))
+
+        job.set_progress(90, 'Finalizing changes')
 
         return data
 
@@ -714,7 +1083,8 @@ class CertificateService(CRUDService):
             Str('privatekey')
         )
     )
-    def __create_imported_certificate(self, data):
+    @skip_arg(count=1)
+    def __create_imported_certificate(self, job, data):
         verrors = ValidationErrors()
 
         csr_id = data.pop('csr_id', None)
@@ -724,16 +1094,12 @@ class CertificateService(CRUDService):
                 [
                     ['id', '=', csr_id],
                     ['CSR', '!=', None]
-                ]
+                ],
+                {'get': True}
             )
-            if not csr_obj:
-                verrors.add(
-                    'certificate_create.csr_id',
-                    f'No CSR exists with id {csr_id}'
-                )
-            else:
-                data['privatekey'] = csr_obj[0]['privatekey']
-                data.pop('passphrase', None)
+
+            data['privatekey'] = csr_obj['privatekey']
+            data.pop('passphrase', None)
         elif not data.get('privatekey'):
             verrors.add(
                 'certificate_create.privatekey',
@@ -743,9 +1109,11 @@ class CertificateService(CRUDService):
         if verrors:
             raise verrors
 
+        job.set_progress(50, 'Validation complete')
+
         data['type'] = CERT_TYPE_EXISTING
 
-        data = self.__create_certificate(data)
+        data = self.__create_certificate(job, data)
 
         data['chain'] = True if len(RE_CERTIFICATE.findall(data['certificate'])) > 1 else False
 
@@ -776,7 +1144,8 @@ class CertificateService(CRUDService):
             register=True
         )
     )
-    def __create_internal(self, data):
+    @skip_arg(count=1)
+    def __create_internal(self, job, data):
 
         cert_info = get_cert_info_from_data(data)
         data['type'] = CERT_TYPE_INTERNAL
@@ -798,6 +1167,8 @@ class CertificateService(CRUDService):
             crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=cert),
         ])
 
+        job.set_progress(75)
+
         cert_serial = self.middleware.call_sync(
             'certificateauthority.get_serial_for_certificate',
             data['signedby']
@@ -810,6 +1181,8 @@ class CertificateService(CRUDService):
         data['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, public_key)
         data['serial'] = cert_serial
 
+        job.set_progress(90, 'Finalizing changes')
+
         return data
 
     @accepts(
@@ -819,10 +1192,35 @@ class CertificateService(CRUDService):
             Str('name')
         )
     )
-    async def do_update(self, id, data):
+    @job(lock='cert_update')
+    async def do_update(self, job, id, data):
+        """
+        Update certificate of `id`
+
+        Only name attribute can be updated
+
+        .. examples(websocket)::
+
+          Update a certificate of `id`
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificate.update",
+                "params": [
+                    1,
+                    {
+                        "name": "updated_name"
+                    }
+                ]
+            }
+        """
         old = await self._get_instance(id)
         # signedby is changed back to integer from a dict
         old['signedby'] = old['signedby']['id'] if old.get('signedby') else None
+        if old.get('acme'):
+            old['acme'] = old['acme']['id']
 
         new = old.copy()
 
@@ -832,8 +1230,9 @@ class CertificateService(CRUDService):
 
             verrors = ValidationErrors()
 
-            await validate_cert_name(self.middleware, data['name'], self._config.datastore, verrors,
-                                     'certificate_update.name')
+            await validate_cert_name(
+                self.middleware, data['name'], self._config.datastore, verrors, 'certificate_update.name'
+            )
 
             if verrors:
                 raise verrors
@@ -854,15 +1253,58 @@ class CertificateService(CRUDService):
                 {'onetime': False}
             )
 
+        job.set_progress(90, 'Finalizing changes')
+
         return await self._get_instance(id)
+
+    @private
+    async def delete_domains_authenticator(self, auth_id):
+        # Delete provided auth_id from all ACME based certs domains_authenticators
+        for cert in await self.query([['acme', '!=', None]]):
+            if auth_id in cert['domains_authenticators'].values():
+                await self.middleware.call(
+                    'datastore.update',
+                    self._config.datastore,
+                    cert['id'],
+                    {
+                        'domains_authenticators': {
+                            k: v for k, v in cert['domains_authenticators'].items()
+                            if v != auth_id
+                        }
+                    },
+                    {'prefix': self._config.datastore_prefix}
+                )
 
     @accepts(
         Int('id'),
+        Bool('force', default=False)
     )
-    async def do_delete(self, id):
-        certificate = await self._get_instance(id)
+    @job(lock='cert_delete')
+    def do_delete(self, job, id, force=False):
+        """
+        Delete certificate of `id`.
 
-        if (await self.middleware.call('system.general.config'))['ui_certificate']['id'] == id:
+        If the certificate is an ACME based certificate, certificate service will try to
+        revoke the certificate by updating it's status with the ACME server, if it fails an exception is raised
+        and the certificate is not deleted from the system. However, if `force` is set to True, certificate is deleted
+        from the system even if some error occurred while revoking the certificate with the ACME Server
+
+        .. examples(websocket)::
+
+          Delete certificate of `id`
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificate.delete",
+                "params": [
+                    1,
+                    true
+                ]
+            }
+        """
+        if (self.middleware.call_sync('system.general.config'))['ui_certificate']['id'] == id:
             verrors = ValidationErrors()
 
             verrors.add(
@@ -872,13 +1314,29 @@ class CertificateService(CRUDService):
 
             raise verrors
 
-        response = await self.middleware.call(
+        certificate = self.middleware.call_sync('certificate._get_instance', id)
+
+        if certificate.get('acme'):
+            client, key = self.get_acme_client_and_key(certificate['acme']['directory'], True)
+
+            try:
+                client.revoke(
+                    jose.ComparableX509(
+                        crypto.load_certificate(crypto.FILETYPE_PEM, certificate['certificate'])
+                    ),
+                    0
+                )
+            except (errors.ClientError, messages.Error) as e:
+                if not force:
+                    raise CallError(f'Failed to revoke certificate: {e}')
+
+        response = self.middleware.call_sync(
             'datastore.delete',
             self._config.datastore,
             id
         )
 
-        await self.middleware.call(
+        self.middleware.call_sync(
             'service.start',
             'ix-ssl',
             {'onetime': False}
@@ -887,8 +1345,9 @@ class CertificateService(CRUDService):
         sentinel = f'/tmp/alert_invalidcert_{certificate["name"]}'
         if os.path.exists(sentinel):
             os.unlink(sentinel)
-            await self.middleware.call('alert.process_alerts')
+            self.middleware.call_sync('alert.process_alerts')
 
+        job.set_progress(100)
         return response
 
 
@@ -1013,10 +1472,65 @@ class CertificateAuthorityService(CRUDService):
         Patch(
             'certificate_create', 'ca_create',
             ('edit', _set_enum('create_type')),
+            ('rm', {'name': 'dns_mapping'}),
             register=True
         )
     )
     async def do_create(self, data):
+        """
+        Create a new Certificate Authority
+
+        Certificate Authorities are classified under following types with the necessary keywords to be passed
+        for `create_type` attribute to create the respective type of certificate authority
+
+        1) Internal Certificate Authority       -  CA_CREATE_INTERNAL
+
+        2) Imported Certificate Authority       -  CA_CREATE_IMPORTED
+
+        3) Intermediate Certificate Authority   -  CA_CREATE_INTERMEDIATE
+
+        Based on `create_type` a type is selected by Certificate Authority Service and rest of the values
+        are validated accordingly and finally a certificate is made based on the selected type.
+
+        .. examples(websocket)::
+
+          Create an Internal Certificate Authority
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificateauthority.create",
+                "params": [{
+                    "name": "internal_ca",
+                    "key_length": 2048,
+                    "lifetime": 3600,
+                    "city": "Nashville",
+                    "common": "domain1.com",
+                    "country": "US",
+                    "email": "dev@ixsystems.com",
+                    "organization": "iXsystems",
+                    "state": "Tennessee",
+                    "digest_algorithm": "SHA256"
+                    "create_type": "CA_CREATE_INTERNAL"
+                }]
+            }
+
+          Create an Imported Certificate Authority
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificateauthority.create",
+                "params": [{
+                    "name": "imported_ca",
+                    "certificate": "Certificate string",
+                    "privatekey": "Private key string",
+                    "create_type": "CA_CREATE_IMPORTED"
+                }]
+            }
+        """
         verrors = await self.validate_common_attributes(data, 'certificate_authority_create')
 
         await validate_cert_name(
@@ -1059,6 +1573,28 @@ class CertificateAuthorityService(CRUDService):
         )
     )
     def ca_sign_csr(self, data):
+        """
+        Sign CSR by Certificate Authority of `ca_id`
+
+        Sign CSR's and generate a certificate from it. `ca_id` provides which CA is to be used for signing
+        a CSR of `csr_cert_id` which exists in the system
+
+        .. examples(websocket)::
+
+          Sign CSR of `csr_cert_id` by Certificate Authority of `ca_id`
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificateauthority.ca_sign_csr",
+                "params": [{
+                    "ca_id": 1,
+                    "csr_cert_id": 1,
+                    "name": "signed_cert"
+                }]
+            }
+        """
         return self.__ca_sign_csr(data)
 
     @accepts(
@@ -1139,12 +1675,17 @@ class CertificateAuthorityService(CRUDService):
             'signedby': ca_data['id']
         }
 
-        new_csr_dict = self.middleware.call_sync(
+        new_csr_job = self.middleware.call_sync(
             'certificate.create',
             new_csr
         )
 
-        return new_csr_dict
+        new_csr_job.wait_sync()
+
+        if new_csr_job.error:
+            raise CallError(new_csr_job.exception)
+        else:
+            return new_csr_job.result
 
     @accepts(
         Patch(
@@ -1200,8 +1741,7 @@ class CertificateAuthorityService(CRUDService):
         data['type'] = CA_TYPE_EXISTING
         data['chain'] = True if len(RE_CERTIFICATE.findall(data['certificate'])) > 1 else False
 
-        for k, v in self.middleware.call_sync('certificate.load_certificate', data['certificate']).items():
-            data[k] = v
+        data.update(self.middleware.call_sync('certificate.load_certificate', data['certificate']))
 
         if all(k in data for k in ('passphrase', 'privatekey')):
             data['privatekey'] = export_private_key(
@@ -1252,8 +1792,30 @@ class CertificateAuthorityService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update Certificate Authority of `id`
 
+        Only name attribute can be updated
+
+        .. examples(websocket)::
+
+          Update a Certificate Authority of `id`
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificateauthority.update",
+                "params": [
+                    1,
+                    {
+                        "name": "updated_ca_name"
+                    }
+                ]
+            }
+        """
         if data.pop('create_type', '') == 'CA_SIGN_CSR':
+            # BEING USED BY OLD LEGACY FOR SIGNING CSR'S. THIS CAN BE REMOVED WHEN LEGACY UI IS REMOVED
             data['ca_id'] = id
             return await self.middleware.run_in_thread(
                 self.__ca_sign_csr,
@@ -1299,6 +1861,23 @@ class CertificateAuthorityService(CRUDService):
         Int('id')
     )
     async def do_delete(self, id):
+        """
+        Delete a Certificate Authority of `id`
+
+        .. examples(websocket)::
+
+          Delete a Certificate Authority of `id`
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "certificateauthority.delete",
+                "params": [
+                    1
+                ]
+            }
+        """
         ca = await self._get_instance(id)
 
         response = await self.middleware.call(
@@ -1326,22 +1905,40 @@ async def setup(middlewared):
     certs = await middlewared.call('certificate.query')
     if not system_cert or system_cert['id'] not in [c['id'] for c in certs]:
         # create a self signed cert if it doesn't exist and set ui_certificate to it's value
-        if not any('freenas_default' == c['name'] for c in certs):
-            cert, key = await middlewared.call('certificate.create_self_signed_cert')
-            default_cert = await middlewared.call(
-                'certificate.create', {
-                    'create_type': 'CERTIFICATE_CREATE_IMPORTED',
+        try:
+            if not any('freenas_default' == c['name'] for c in certs):
+                cert, key = await middlewared.call('certificate.create_self_signed_cert')
+
+                cert_dict = {
                     'certificate': crypto.dump_certificate(crypto.FILETYPE_PEM, cert).decode(),
                     'privatekey': crypto.dump_privatekey(crypto.FILETYPE_PEM, key).decode(),
-                    'name': 'freenas_default'
+                    'name': 'freenas_default',
+                    'type': CERT_TYPE_EXISTING,
+                    'chain': False,
+
                 }
-            )
+                cert_dict.update((await middlewared.call('certificate.load_certificate', cert_dict['certificate'])))
 
-            id = default_cert['id']
-            middlewared.logger.debug('Default certificate for System created')
-        else:
-            id = [c['id'] for c in certs if c['name'] == 'freenas_default'][0]
+                # We use datastore.insert to directly insert in db as jobs cannot be waited for at this point
+                id = await middlewared.call(
+                    'datastore.insert',
+                    'system.certificate',
+                    cert_dict,
+                    {'prefix': 'cert_'}
+                )
 
-        await middlewared.call('system.general.update', {'ui_certificate': id})
+                await middlewared.call(
+                    'service.start',
+                    'ix-ssl',
+                    {'onetime': False}
+                )
+
+                middlewared.logger.debug('Default certificate for System created')
+            else:
+                id = [c['id'] for c in certs if c['name'] == 'freenas_default'][0]
+
+            await middlewared.call('system.general.update', {'ui_certificate': id})
+        except Exception as e:
+            middlewared.logger.debug(f'Failed to set certificate for system.general plugin: {e}')
 
     middlewared.logger.debug('Certificate setup for System complete')
