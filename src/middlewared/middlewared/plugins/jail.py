@@ -972,11 +972,19 @@ class JailService(CRUDService):
 
     @private
     def start_on_boot(self):
+        self.logger.debug('Starting jails on boot: PENDING')
         ioc.IOCage(rc=True).start()
+        self.logger.debug('Starting jails on boot: SUCCESS')
+
+        return True
 
     @private
     def stop_on_shutdown(self):
+        self.logger.debug('Stopping jails on shutdown: PENDING')
         ioc.IOCage(rc=True).stop()
+        self.logger.debug('Stopping jails on shutdown: SUCCESS')
+
+        return True
 
     @private
     async def terminate(self):
