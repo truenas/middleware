@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='cifs',
-            name='cifs_srv_allow_smb1',
+            name='cifs_srv_enable_smb1',
             field=models.BooleanField(default=False,
                 help_text=(
                     'Use this option to allow legacy SMB clients to connect to the '

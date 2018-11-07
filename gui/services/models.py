@@ -101,8 +101,8 @@ class CIFS(Model):
         blank=True,
         help_text=_("Server description. This can usually be left blank."),
     )
-    cifs_srv_allow_smb1 = models.BooleanField(
-        verbose_name=_("Allow SMB1 clients"),
+    cifs_srv_enable_smb1 = models.BooleanField(
+        verbose_name=_("Enable SMB1 support"),
         default=False,
         help_text=_(
             "Use this option to allow legacy SMB clients to connect to the"

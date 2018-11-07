@@ -104,7 +104,7 @@ class SMBService(SystemServiceService):
         Str('netbiosalias'),
         Str('workgroup'),
         Str('description'),
-        Bool('allow_smb1'),
+        Bool('enable_smb1'),
         Str('unixcharset'),
         Str('loglevel', enum=['NONE', 'MINIMUM', 'NORMAL', 'FULL', 'DEBUG']),
         Bool('syslog'),

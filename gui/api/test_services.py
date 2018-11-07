@@ -117,6 +117,7 @@ class CIFSResourceTest(APITestCase):
             'cifs_srv_aio_ws': 4096,
             'cifs_srv_allow_execute_always': True,
             'cifs_srv_description': '',
+            'cifs_srv_enable_smb1': '',
             'cifs_srv_dirmask': '',
             'cifs_srv_domain_logons': False,
             'cifs_srv_filemask': '',

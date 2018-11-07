@@ -215,6 +215,7 @@ List resource
         {
                 "cifs_srv_dirmask": "",
                 "cifs_srv_description": "FreeNAS Server",
+                "cifs_srv_enable_smb1": false,
                 "cifs_srv_loglevel": "0",
                 "cifs_srv_guest": "nobody",
                 "cifs_srv_filemask": "",
@@ -274,6 +275,7 @@ Update resource
         {
                 "cifs_srv_dirmask": "",
                 "cifs_srv_description": "FreeNAS Server",
+                "cifs_srv_enable_smb1": false,
                 "cifs_srv_loglevel": "0",
                 "cifs_srv_guest": "nobody",
                 "cifs_srv_filemask": "",
@@ -304,6 +306,7 @@ Update resource
    :json string cifs_srv_netbiosname: netbios name
    :json string cifs_srv_workgroup: workgroup
    :json string cifs_srv_description: server description
+   :json string cifs_srv_enable_smb1: enable smb1 support
    :json string cifs_srv_unixcharset: UTF-8, iso-8859-1, iso-8859-15, gb2312, EUC-JP, ASCII
    :json string cifs_srv_loglevel: 1, 2, 3, 10
    :json boolean cifs_srv_localmaster: local master
