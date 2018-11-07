@@ -94,7 +94,8 @@ class ReplicationService(CRUDService):
             Bool("compressed", default=True),
             Int("retries", default=5, validators=[Range(min=1)]),
             Bool("enabled", default=True),
-            register=True
+            register=True,
+            strict=True,
         )
     )
     async def do_create(self, data):

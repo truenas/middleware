@@ -462,15 +462,29 @@ class Dict(Attribute):
 
     def __init__(self, name, *attrs, **kwargs):
         self.additional_attrs = kwargs.pop('additional_attrs', False)
+        self.strict = kwargs.pop('strict', False)
         # Update property is used to disable requirement on all attributes
         # as well to not populate default values for not specified attributes
         self.update = kwargs.pop('update', False)
         if 'default' not in kwargs:
             kwargs['default'] = {}
         super(Dict, self).__init__(name, **kwargs)
+
         self.attrs = {}
         for i in attrs:
             self.attrs[i.name] = i
+
+        if self.strict:
+            for attr in self.attrs.values():
+                if attr.required:
+                    if attr.has_default:
+                        raise ValueError(f"Attribute {attr.name} is required and has default value at the same time, "
+                                         f"this is forbidden in strict mode")
+                else:
+                    if not attr.has_default:
+                        raise ValueError(f"Attribute {attr.name} is not required and does not have default value, "
+                                         f"this is forbidden in strict mode")
+
 
     def clean(self, data):
         data = super().clean(data)
