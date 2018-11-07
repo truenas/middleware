@@ -168,7 +168,7 @@ def test__get_smartd_config():
         "smarttest_hour": "*/1",
         "disk_smartoptions": "--options",
     }) == textwrap.dedent("""\
-        /dev/ada0 -d sat -n never -W 0,1,2 -m root -M exec /usr/local/www/freenasUI/tools/smart_alert.py\\
+        /dev/ada0 -d sat -n never -W 0,1,2 -m root -M exec /usr/local/libexec/smart_alert.py\\
         -s S/../.././..\\
          --options""")
 
@@ -183,4 +183,4 @@ def test__get_smartd_config_without_schedule():
         "smart_email": "",
         "disk_smartoptions": "--options",
     }) == textwrap.dedent("""\
-        /dev/ada0 -d sat -n never -W 0,1,2 -m root -M exec /usr/local/www/freenasUI/tools/smart_alert.py --options""")
+        /dev/ada0 -d sat -n never -W 0,1,2 -m root -M exec /usr/local/libexec/smart_alert.py --options""")
