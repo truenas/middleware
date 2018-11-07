@@ -315,9 +315,7 @@ class JailService(CRUDService):
     @accepts(Str("jail"))
     def do_delete(self, jail):
         """Takes a jail and destroys it."""
-        # Jails cannot have whitespace, but this is so a user can destroy a
-        # corrupt jail
-        _, _, iocage = self.check_jail_existence(jail.split()[0])
+        _, _, iocage = self.check_jail_existence(jail)
 
         # TODO: Port children checking, release destroying.
         iocage.destroy_jail()
@@ -912,11 +910,19 @@ class JailService(CRUDService):
 
     @private
     def start_on_boot(self):
+        self.logger.debug('Starting jails on boot: PENDING')
         ioc.IOCage(rc=True).start()
+        self.logger.debug('Starting jails on boot: SUCCESS')
+
+        return True
 
     @private
     def stop_on_shutdown(self):
+        self.logger.debug('Stopping jails on shutdown: PENDING')
         ioc.IOCage(rc=True).stop()
+        self.logger.debug('Stopping jails on shutdown: SUCCESS')
+
+        return True
 
     @private
     async def terminate(self):
