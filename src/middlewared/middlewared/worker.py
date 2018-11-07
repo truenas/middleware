@@ -6,12 +6,12 @@ import concurrent.futures
 from concurrent.futures.process import _process_worker
 import functools
 import importlib
-import logging
 import multiprocessing
 import os
 import select
 import setproctitle
 import threading
+from . import logger
 
 MIDDLEWARE = None
 
@@ -48,7 +48,9 @@ class FakeMiddleware(object):
 
     def __init__(self):
         self.client = None
-        self.logger = logging.getLogger('worker')
+        self.logger = logger.Logger('worker')
+        self.logger.getLogger()
+        self.logger.configure_logging('console')
 
     async def run_in_thread(self, method, *args, **kwargs):
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
