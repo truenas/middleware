@@ -104,7 +104,8 @@ class EtcService(Service):
         ],
         'netdata': [
             {'type': 'mako', 'path': 'local/netdata/netdata_editable_defaults.conf'},
-            {'type': 'mako', 'path': 'local/netdata/netdata.conf'}
+            {'type': 'mako', 'path': 'local/netdata/netdata.conf'},
+            {'type': 'mako', 'path': 'local/netdata/stream.conf'}
         ]
     }
 
