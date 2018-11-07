@@ -3302,3 +3302,109 @@ class SupportForm(ModelForm):
                     'This field is required.'
                 )])
         return data
+
+
+class SSHKeyPairKeychainCredentialForm(MiddlewareModelForm, ModelForm):
+    middleware_attr_map = {f"attributes.{k}": k for k in ["private_key", "public_key"]}
+    middleware_attr_prefix = ""
+    middleware_attr_schema = "keychain_credential"
+    middleware_plugin = "keychaincredential"
+    is_singletone = False
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("initial", {})
+        if "instance" in kwargs:
+            kwargs["initial"].update(kwargs["instance"].attributes or {})
+        super().__init__(*args, **kwargs)
+
+    def middleware_prepare(self):
+        attributes = super().middleware_prepare()
+        return {
+            "name": attributes.pop("name"),
+            "type": "SSH_KEY_PAIR",
+            "attributes": attributes,
+        }
+
+    name = forms.CharField(
+        label=_("Name"),
+    )
+    private_key = forms.CharField(
+        widget=forms.Textarea(),
+        required=True,
+    )
+    public_key = forms.CharField(
+        widget=forms.Textarea(),
+        required=False,
+    )
+
+    class Meta:
+        exclude = [
+            "type",
+            "attributes",
+        ]
+        model = models.SSHKeyPairKeychainCredential
+
+
+class SSHCredentialsKeychainCredentialForm(MiddlewareModelForm, ModelForm):
+    middleware_attr_map = {f"attributes.{k}": k for k in ["private_key", "public_key"]}
+    middleware_attr_prefix = ""
+    middleware_attr_schema = "keychain_credential"
+    middleware_plugin = "keychaincredential"
+    is_singletone = False
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("initial", {})
+        if "instance" in kwargs:
+            kwargs["initial"].update(kwargs["instance"].attributes or {})
+        super().__init__(*args, **kwargs)
+
+    def middleware_prepare(self):
+        attributes = super().middleware_prepare()
+        return {
+            "name": attributes.pop("name"),
+            "type": "SSH_CREDENTIALS",
+            "attributes": attributes,
+        }
+
+    name = forms.CharField(
+        label=_("Name"),
+    )
+    host = forms.CharField(
+        label=_("Host"),
+        required=True,
+    )
+    port = forms.IntegerField(
+        label=_("Port"),
+        initial=22,
+    )
+    username = forms.CharField(
+        label=_("Username"),
+        initial="root",
+        required=True,
+    )
+    private_key = forms.ModelChoiceField(
+        label=_("Private Key"),
+        queryset=models.SSHKeyPairKeychainCredential.objects.all(),
+    )
+    remote_host_key = forms.CharField(
+        required=True,
+        widget=forms.Textarea(),
+    )
+    cipher = forms.ChoiceField(
+        choices=(
+            ("STANDARD", "Standard"),
+            ("FAST", "Fast"),
+            ("DISABLED", "Disabled"),
+        ),
+    )
+    connect_timeout = forms.IntegerField(
+        label=_("Connect Timeout"),
+        initial=10,
+    )
+
+    class Meta:
+        exclude = [
+            "type",
+            "attributes",
+        ]
+        model = models.SSHCredentialsKeychainCredential

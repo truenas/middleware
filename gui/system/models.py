@@ -1191,3 +1191,62 @@ class KeychainCredential(Model):
     name = models.CharField(max_length=255)
     type = models.CharField(max_length=255)
     attributes = EncryptedDictField()
+
+    class Meta:
+        verbose_name = _("Keychain Credential")
+        verbose_name_plural = _("Keychain Credentials")
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class KeychainCredentialManager(models.Manager):
+    def __init__(self, type):
+        self.type = type
+        super().__init__()
+
+    def get_queryset(self):
+        return super().get_queryset().filter(type=self.type)
+
+
+class SSHKeyPairKeychainCredential(KeychainCredential):
+    objects = KeychainCredentialManager("SSH_KEY_PAIR")
+
+    class Meta:
+        proxy = True
+        verbose_name = _("SSH Keypair")
+        verbose_name_plural = _("SSH Keypairs")
+
+    class FreeAdmin:
+        icon_model = "SSHKeyPairKeychainCredentialIcon"
+        icon_object = "SSHKeyPairKeychainCredentialIcon"
+        icon_add = "SSHKeyPairKeychainCredentialIcon"
+        icon_view = "SSHKeyPairKeychainCredentialIcon"
+
+        exclude_fields = (
+            "id",
+            "type",
+            "attributes",
+        )
+
+
+class SSHCredentialsKeychainCredential(KeychainCredential):
+    objects = KeychainCredentialManager("SSH_CREDENTIALS")
+
+    class Meta:
+        proxy = True
+        verbose_name = _("SSH Connection")
+        verbose_name_plural = _("SSH Connections")
+
+    class FreeAdmin:
+        icon_model = "SSHCredentialsKeychainCredentialIcon"
+        icon_object = "SSHCredentialsKeychainCredentialIcon"
+        icon_add = "SSHCredentialsKeychainCredentialIcon"
+        icon_view = "SSHCredentialsKeychainCredentialIcon"
+
+        exclude_fields = (
+            "id",
+            "type",
+            "attributes",
+        )

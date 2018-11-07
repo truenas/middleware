@@ -10,7 +10,7 @@ import urllib.parse
 
 from middlewared.client import Client
 from middlewared.service_exception import CallError
-from middlewared.schema import (Bool, Dict, File, Int, Patch, Str,
+from middlewared.schema import (Dict, Int, Patch, Str,
                                 ValidationErrors, accepts, validate_attributes)
 from middlewared.service import CRUDService, private
 from middlewared.utils import run
@@ -51,7 +51,7 @@ class SSHKeyPair(KeychainCredentialType):
                     return
 
             if attributes["public_key"]:
-                if " ".join(attributes["public_key"].split()[:2]) != public_key:
+                if " ".join(attributes["public_key"].split()[:2]).strip() != public_key.strip():
                     verrors.add(f"{schema_name}.public_key", "Private key and public key do not match")
             else:
                 attributes["public_key"] = public_key
@@ -78,7 +78,7 @@ class SSHCredentials(KeychainCredentialType):
 
     credentials_schema = [
         Str("host", required=True),
-        Str("port", default=22),
+        Int("port", default=22),
         Str("username", default="root"),
         Int("private_key", required=True),
         Str("remote_host_key", required=True),
@@ -188,6 +188,21 @@ class KeychainCredentialService(CRUDService):
 
         await type.validate_and_pre_save(self.middleware, verrors, f"{schema_name}.attributes", data["attributes"])
 
+        if verrors:
+            raise verrors
+
+    @accepts(Int("id"), Str("type"))
+    async def get_of_type(self, id, type):
+        try:
+            credential = await self.middleware.call("keychaincredential.query", [["id", "=", id]], {"get": True})
+        except IndexError:
+            raise CallError("Credential does not exist")
+        else:
+            if credential["type"] != type:
+                raise ValueError(f"Credential is not of type {type}")
+
+            return credential
+
     @accepts()
     def generate_ssh_key_pair(self):
         key = os.path.join("/tmp", "".join(random.choice(string.ascii_letters) for _ in range(32)))
@@ -214,7 +229,7 @@ class KeychainCredentialService(CRUDService):
 
     @accepts(Dict(
         "keychain_remote_ssh_host_key_scan",
-        Str("host", required=True),
+        Str("host", required=True, empty=False),
         Str("port", default=22),
         Int("connect_timeout", default=10),
     ))
@@ -222,9 +237,12 @@ class KeychainCredentialService(CRUDService):
         proc = await run(["ssh-keyscan", "-p", str(data["port"]), "-T", str(data["connect_timeout"]), data["host"]],
                          check=False, encoding="utf8")
         if proc.returncode == 0:
-            return process_ssh_keyscan_output(proc.stdout)
+            try:
+                return process_ssh_keyscan_output(proc.stdout)
+            except Exception:
+                raise CallError(f"ssh-keyscan failed: {(proc.stdout + proc.stderr)!r}")
         else:
-            raise CallError(proc.stderr)
+            raise CallError(f"ssh-keyscan failed: {(proc.stdout + proc.stderr)!r}")
 
     @accepts(Dict(
         "keychain_remote_ssh_semiautomatic_setup",
