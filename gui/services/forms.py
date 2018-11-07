@@ -1337,6 +1337,9 @@ class S3Form(MiddlewareModelForm, ModelForm):
     middleware_exclude_fields = ('secret_key2', )
     middleware_plugin = "s3"
     is_singletone = True
+    middleware_attr_map = {
+        'storage_path': 's3_disks'
+    }
 
     s3_bindip = forms.ChoiceField(
         label=models.S3._meta.get_field("s3_bindip").verbose_name,
