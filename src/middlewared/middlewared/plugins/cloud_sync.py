@@ -98,6 +98,12 @@ class RcloneConfig:
 
 
 async def rclone(middleware, job, cloud_sync):
+    if not os.path.exists(cloud_sync["path"]):
+        raise CallError(f"Directory {cloud_sync['path']!r} does not exist")
+
+    if os.stat(cloud_sync["path"]).st_dev == os.stat("/mnt").st_dev:
+        raise CallError(f"Directory {cloud_sync['path']!r} must reside within volume mount point")
+
     # Use a temporary file to store rclone file
     with RcloneConfig(cloud_sync) as config:
         args = [
