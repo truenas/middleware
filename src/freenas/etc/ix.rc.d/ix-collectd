@@ -290,7 +290,7 @@ cat << EOF >> $cfg
 
 <Plugin "df">
     Mountpoint "/"
-    Mountpoint "/^\/mnt\//"
+    Mountpoint "^\/mnt(?:(?!\.zfs\/snapshot).)*$"
     FSType "zfs"
     LogOnce true
 </Plugin>
