@@ -7,14 +7,15 @@ import subprocess
 import tempfile
 import textwrap
 
+from middlewared.schema import Dict, Str, accepts
+from middlewared.service import CallError, SystemServiceService, ValidationErrors, private
 
-from middlewared.service import CallError, Service, private
 
-
-class AsigraService(Service):
+class AsigraService(SystemServiceService):
 
     class Config:
         service = "asigra"
+        datastore = "services.asigra"
         datastore_prefix = "asigra_"
 
     def __init__(self, middleware):
@@ -35,6 +36,27 @@ class AsigraService(Service):
         except Exception:
             self.pg_user_uid = 5432
             self.pg_group_gid = 5432
+
+    @accepts(Dict(
+        'asigra_update',
+        Str('filesystem'),
+        update=True,
+    ))
+    async def do_update(self, data):
+        config = await self.config()
+        new = config.copy()
+        new.update(data)
+
+        verrors = ValidationErrors()
+        if not new.get('filesystem'):
+            verrors.add('asigra_update.filesystem', 'Filesystem is required.')
+        elif new['filesystem'] not in (await self.middleware.call('pool.filesystem_choices')):
+            verrors.add('asigra_update.filesystem', 'Filesystem not found.', errno.ENOENT)
+        if verrors:
+            raise verrors
+
+        await self._update_service(config, new)
+        return await self.config()
 
     @private
     def setup_filesystems(self):
