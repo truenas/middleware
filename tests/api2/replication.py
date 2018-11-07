@@ -115,7 +115,7 @@ def test_00_bootstrap(credentials, periodic_snapshot_tasks):
         POST("/pool/dataset/", {"name": v["dataset"]})
 
         result = POST("/pool/snapshottask/", v)
-        assert result.status_code == 200
+        assert result.status_code == 200, result.text
 
         periodic_snapshot_tasks[k] = result.json()
 
@@ -144,11 +144,11 @@ def test_00_bootstrap(credentials, periodic_snapshot_tasks):
     (dict(direction="PULL", hold_pending_snapshots=True), "hold_pending_snapshots"),
 
     # SSH+Netcat
-    (dict(transport="SSH+NETCAT", credentials=True, netcat_active_side="LOCAL", netcat_active_side_port_min=1024,
+    (dict(transport="SSH+NETCAT", ssh_credentials=True, netcat_active_side="LOCAL", netcat_active_side_port_min=1024,
           netcat_active_side_port_max=50000),
      None),
     # Bad netcat_active_side_port_max
-    (dict(transport="SSH+NETCAT", credentials=True, netcat_active_side="LOCAL", netcat_active_side_port_min=60000,
+    (dict(transport="SSH+NETCAT", ssh_credentials=True, netcat_active_side="LOCAL", netcat_active_side_port_min=60000,
           netcat_active_side_port_max=50000),
      "netcat_active_side_port_max"),
     # SSH+Netcat + compression
@@ -170,7 +170,7 @@ def test_00_bootstrap(credentials, periodic_snapshot_tasks):
     # Legacy all periodic snapshot tasks
     (dict(transport="LEGACY", source_datasets=["tank/data/work"],
           periodic_snapshot_tasks=["data-recursive", "data-work-nonrecursive"],
-          credentials=True, auto=True, allow_from_scratch=True, dedup=False, large_block=False, embed=False,
+          ssh_credentials=True, auto=True, allow_from_scratch=True, dedup=False, large_block=False, embed=False,
           compressed=False),
      None),
 

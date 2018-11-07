@@ -123,7 +123,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='replication',
             name='repl_direction',
-            field=models.CharField(choices=[('push', 'PUSH'), ('pull', 'PULL')], default='PUSH', max_length=4,
+            field=models.CharField(choices=[('PUSH', 'Push'), ('PULL', 'Pull')], default='PUSH', max_length=4,
                                    verbose_name='Replication Direction'),
         ),
 
@@ -131,7 +131,7 @@ class Migration(migrations.Migration):
             model_name='replication',
             name='repl_transport',
             field=models.CharField(
-                choices=[('ssh', 'SSH'), ('ssh+netcat', 'SSH+netcat'), ('local', 'Local'), ('legacy', 'Legacy')],
+                choices=[('SSH', 'SSH'), ('SSH+NETCAT', 'SSH+netcat'), ('LOCAL', 'Local'), ('LEGACY', 'Legacy')],
                 default='LEGACY', max_length=10, verbose_name='Replication Direction'),
         ),
 
@@ -271,12 +271,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='replication',
             name='repl_retention_policy',
-            field=models.CharField(choices=[('source', 'Same as source'), ('custom', 'Custom'), ('none', 'None')], default='NONE', max_length=5, verbose_name='Snapshot retention policy'),
+            field=models.CharField(choices=[('SOURCE', 'Same as source'), ('CUSTOM', 'Custom'), ('NONE', 'None')], default='NONE', max_length=5, verbose_name='Snapshot retention policy'),
         ),
         migrations.AddField(
             model_name='replication',
             name='repl_lifetime_unit',
-            field=models.CharField(choices=[('hour', 'Hour(s)'), ('day', 'Day(s)'), ('week', 'Week(s)'), ('month', 'Month(s)'), ('year', 'Year(s)')], default=None, max_length=120, null=True, verbose_name='Snapshot lifetime unit'),
+            field=models.CharField(choices=[('HOUR', 'Hour(s)'), ('DAY', 'Day(s)'), ('WEEK', 'Week(s)'), ('MONTH', 'Month(s)'), ('YEAR', 'Year(s)')], default=None, max_length=120, null=True, verbose_name='Snapshot lifetime unit'),
         ),
         migrations.AddField(
             model_name='replication',
@@ -299,6 +299,11 @@ class Migration(migrations.Migration):
             model_name='replication',
             old_name='repl_limit',
             new_name='repl_speed_limit',
+        ),
+        migrations.AlterField(
+            model_name='replication',
+            name='repl_speed_limit',
+            field=models.IntegerField(default=None, help_text='Limit the replication speed. Unit in kilobits/second. 0 = unlimited.', null=True, verbose_name='Limit (kbps)'),
         ),
 
         migrations.AddField(
