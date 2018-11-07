@@ -1,3 +1,6 @@
+import os
+
+
 from middlewared.schema import accepts, Dict, Int, IPAddr, List, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
 from middlewared.validators import Port
@@ -16,6 +19,21 @@ class NetDataGlobalConfiguration(SystemServiceService):
     async def netdata_global_config_extend(self, data):
         data['memory_mode'] = data['memory_mode'].upper()
         return data
+
+    @private
+    async def list_alarms(self):
+        path = '/usr/local/etc/netdata/health.d/'
+        files = [
+            f for f in os.listdir(path) if 'sample' not in f
+        ]
+        alarms = {}
+        for file in files:
+            with open(path + file, 'r') as f:
+                data = f.readlines()
+                for line in data:
+                    if 'alarm:' in line:
+                        alarms[line.split(':')[1].strip()] = path + file
+        return alarms
 
     @private
     async def validate_attrs(self, data):
@@ -62,6 +80,7 @@ class NetDataGlobalConfiguration(SystemServiceService):
             data['additional_params'] = param_str + '\n'
         else:
             # Let's load up the default value for additional params
+            # TODO: Probably better approach is to use netdata.conf.sample and get this from there
             with open('/usr/local/etc/netdata/netdata_editable_defaults.conf', 'r') as file:
                 data['additional_params'] = file.read()
 
@@ -82,8 +101,40 @@ class NetDataGlobalConfiguration(SystemServiceService):
                 'This field is required'
             )
 
+        update_alarms = data.pop('update_alarms')
+        valid_alarms = await self.list_alarms()
+        if update_alarms:
+            for alarm in update_alarms:
+                if alarm not in valid_alarms:
+                    verrors.add(
+                        'netdata_update.alarms',
+                        f'{alarm} not a valid alarm'
+                    )
+                else:
+                    if not isinstance(alarm, str):
+                        verrors.add(
+                            'netdata_update.alarms',
+                            f'{alarm} key must be a string'
+                        )
+                    if not isinstance(update_alarms[alarm], bool):
+                        verrors.add(
+                            'netdata_update.alarms',
+                            f'{alarm} value can only be boolean'
+                        )
+
         if verrors:
             raise verrors
+
+        # TODO: See what can be done to improve this section - is very crude right now - We are probably not getting
+        # templates right now, look into that
+        for alarm in valid_alarms:
+            if alarm not in data['alarms']:
+                print('\n\nadding alarm')
+                data['alarms'][alarm] = True
+
+        for alarm in update_alarms:
+            # These are valid alarms
+            data['alarms'][alarm] = update_alarms[alarm]
 
         return data
 
@@ -91,6 +142,10 @@ class NetDataGlobalConfiguration(SystemServiceService):
         Dict(
             'netdata_update',
             Str('additional_params'),
+            Dict(
+                'alarms',
+                additional_attrs=True
+            ),
             IPAddr('bind_to'),  # TODO: nginx.conf will need to be adjusted accordingly
             Int('bind_to_port', validators=[Port()]),
             Int('history'),
@@ -103,6 +158,7 @@ class NetDataGlobalConfiguration(SystemServiceService):
         # TODO: ADD ALARMS
         old = await self.config()
         new = old.copy()
+        new['update_alarms'] = data.pop('alarms', {})
         new.update(data)
 
         new = await self.validate_attrs(new)
@@ -126,10 +182,10 @@ class NetDataStreamingMetrics(SystemServiceService):
     @accepts(
         Dict(
             'netdata_streaming_update',
-            List('allow_from', items=[Str()]),
+            List('allow_from', items=[Str('pattern')]),  # TODO: See if we can come up with regex to verify this pattern
             Str('api_key'),
             Int('default_history'),
-            List('destination', items=Str()),
+            List('destination', items=[Str('dest')]),
             Str('stream_mode', enum=['NONE', 'MASTER', 'SLAVE'])
         )
     )
@@ -137,6 +193,8 @@ class NetDataStreamingMetrics(SystemServiceService):
         old = await self.config()
         new = old.copy()
         new.update(data)
+
+        # TODO: Add Validation
 
         await self._update_service(old, new)
 
