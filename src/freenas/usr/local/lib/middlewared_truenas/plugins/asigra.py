@@ -1,15 +1,14 @@
-import glob
+import contextlib
 import os
-import psycopg2 as pg
 import pwd
 import re
 import shutil
 import subprocess
+import tempfile
+import textwrap
 
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
-from middlewared.service import Service, private
-from subprocess import Popen
+from middlewared.service import CallError, Service, private
 
 
 class AsigraService(Service):
@@ -60,7 +59,7 @@ class AsigraService(Service):
                 self.logger.error('Failed to create %s: %s', fs, stdout.decode())
                 return False
 
-    # Use etc plugin for this?
+    @private
     def setup_postgresql(self):
         asigra_config = None
         for row in self.middleware.call_sync('datastore.query', 'services.asigra'):
@@ -93,7 +92,7 @@ class AsigraService(Service):
             shutil.chown(asigra_postgresql_path, user=self.pg_user, group=self.pg_group)
 
         if not os.path.exists(asigra_pg_hba_conf):
-            proc = Popen(
+            proc = subprocess.Popen(
                 ['/usr/local/etc/rc.d/postgresql', 'oneinitdb'],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -107,7 +106,7 @@ class AsigraService(Service):
 
             self.logger.debug(output)
 
-            Popen(
+            subprocess.Popen(
                 ['/usr/sbin/chown', '-R', '{}:{}'.format(
                     self.pg_user, self.pg_group), asigra_postgresql_path],
                 stdout=subprocess.PIPE,
@@ -149,178 +148,6 @@ class AsigraService(Service):
 
         return True
 
-    # XXX
-    # We should probably write a postgresql middleware plugin
-    # We should also pass around a persistent DB handle
-    # XXX
-    def asigra_database_exists(self):
-        exists = False
-        con = None
-
-        try:
-            con = pg.connect("dbname='template1' user='{}'".format(self.pg_user))
-
-        except Exception as e:
-            self.logger.error("Can't connect to template1: {}".format(e))
-            return exists
-
-        cur = con.cursor()
-        try:
-            cur.execute("SELECT COUNT(*) from pg_database where datname = 'dssystem'")
-
-        except Exception as e:
-            self.logger.error("Can't query dssystem!: {}".format(e))
-            return exists
-
-        exists = False
-        try:
-            exists = (cur.fetchone()[0] != 0)
-        except Exception:
-            exists = False
-
-        cur.close()
-        con.close()
-
-        return exists
-
-    def asigra_database_create(self):
-        con = None
-
-        try:
-            con = pg.connect("dbname='template1' user='{}'".format(self.pg_user))
-
-        except Exception as e:
-            self.logger.error("Can't connect to template1: {}".format(e))
-            return False
-
-        con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        cur = con.cursor()
-
-        try:
-            self.logger.debug("there is no dssystem database found in the postgres database. Creating ...")
-            cur.execute("CREATE DATABASE dssystem")
-
-        except Exception as e:
-            self.logger.error("Can't create dssystem database: {}".format(e))
-            return False
-
-        cur.close()
-        con.close()
-
-        return True
-
-    def asigra_database_init(self):
-        con = None
-
-        try:
-            con = pg.connect("dbname='dssystem' user='{}'".format(self.pg_user))
-
-        except Exception as e:
-            self.logger.error("Can't connect to dssystem: {}".format(e))
-            return False
-
-        con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        cur = con.cursor()
-
-        with open(os.path.join(self.dssystem_db_path, "postgresdssystem.sql"), "r") as f:
-            try:
-                cur.execute(f.read())
-
-            except Exception as e:
-                self.logger.error("Can't init dssystem database: {}".format(e))
-                return False
-
-        with open(os.path.join(self.dssystem_db_path, "dssystem_locale_postgres.sql"), "r") as f:
-            try:
-                cur.execute(f.read())
-
-            except Exception as e:
-                self.logger.error("Can't init dssystem database: {}".format(e))
-                return False
-
-        cur.close()
-        con.close()
-
-        return True
-
-    def get_db_number(self):
-        db_number = 0
-        con = None
-
-        try:
-            con = pg.connect("dbname='dssystem' user='{}'".format(self.pg_user))
-
-        except Exception as e:
-            self.logger.error("Can't connect to dssystem: {}".format(e))
-            return db_number
-
-        cur = con.cursor()
-        try:
-            cur.execute("SELECT db_number FROM ds_data")
-
-        except Exception as e:
-            self.logger.error("Can't get db_number: {}".format(e))
-            return db_number
-
-        try:
-            db_number = cur.fetchone()[0]
-
-        except Exception as e:
-            self.logger.error("Can't get db_number results: {}".format(e))
-            return db_number
-
-        cur.close()
-        con.close()
-
-        return db_number
-
-    def asigra_database_update(self):
-        con = None
-
-        try:
-            con = pg.connect("dbname='dssystem' user='{}'".format(self.pg_user))
-
-        except Exception as e:
-            self.logger.error("Can't connect to dssystem: {}".format(e))
-            return False
-
-        con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        cur = con.cursor()
-
-        files = glob.glob("{}/dssp*.sql".format(self.dssystem_db_path))
-
-        max = 0
-        for f in files:
-            m = re.match('.*/dssp([0-9]+).sql', f)
-            if not m or len(m.groups()) != 1:
-                continue
-            if int(m.group(1)) > max:
-                max = int(m.group(1))
-
-        db_number = self.get_db_number()
-        if db_number < 0:
-            db_number *= -1
-
-        db_number += 1
-        while max >= db_number:
-            sql_patch = os.path.join(self.dssystem_db_path, "dssp{}.sql".format(db_number))
-
-            self.logger.debug("apply the patch dssp{}.sql".format(db_number))
-            with open(sql_patch, "r") as f:
-                try:
-                    cur.execute(f.read())
-
-                except Exception as e:
-                    self.logger.error("Can't init dssystem database: {}".format(e))
-                    return False
-
-            db_number += 1
-
-        cur.close()
-        con.close()
-
-        return True
-
     def setup_asigra(self):
         asigra_config = None
         for row in self.middleware.call_sync('datastore.query', 'services.asigra'):
@@ -332,17 +159,53 @@ class AsigraService(Service):
         if not asigra_config["filesystem"] or not os.path.exists(asigra_path):
             return False
 
-        self.logger.debug("Checking to see if database exists")
-        if not self.asigra_database_exists():
+        f = None
+        try:
+            f = tempfile.NamedTemporaryFile(mode='w+', delete=False)
+            # Copied from dssystem pkg install manifest
+            f.write(textwrap.dedent(
+                '''#!/bin/sh
+                pg_client_default=/usr/local/bin/psql
+                pg_user=postgres
+                pg_host=/tmp/
+                dest_dir=/usr/local/ds-system
+                echo command: ${pg_client_default} -U ${pg_user} $opt -h ${pg_host} -l -d template1
+                if [ -z "`${pg_client_default} -U ${pg_user} $opt -h ${pg_host} -l -d template1  | grep dssystem`"         ];then
+                        echo there is no dssystem database found in the postgres database. Creating ...
+                        ${pg_client_default} -U ${pg_user} $opt -h ${pg_host} -c "create database dssystem" -d template1
+                        ${pg_client_default} -U ${pg_user} $opt -h ${pg_host} -f ${dest_dir}/db/postgresdssystem.sql -d dssystem
+                        ${pg_client_default} -U ${pg_user} $opt -h ${pg_host} -f ${dest_dir}/db/dssystem_locale_postgres.sql -d dssystem
+                else
+                        MAX=`for i in /usr/local/ds-system/db/dssp*.sql;do
+                                echo ${i##*/}
+                             done | sed -e "s/dssp//g" -e "s/.sql//g" | awk 'BEGIN{max=0}{if ($1 > max)max=$1}END{print max}'`
+                        db_number=`${pg_client_default} -U ${pg_user} $opt -h ${pg_host} -c "select db_number from ds_data" -d dssystem | sed -n "3p" | awk '{print $1}'`
+                        if [ -n "`echo $db_number | grep -E '^-?[0-9][0-9]*$'`" ];then
+                                if [ "`echo $db_number | grep -E -o '^-'`" == "-" ];then
+                                        db_number=`echo $db_number | sed "s/^-//g"`
+                                fi
+                        fi
 
-            self.logger.debug("Creating database")
-            self.asigra_database_create()
+                        db_number=`expr $db_number + 1`
+                        while [ $MAX -ge $db_number ];do
+                                ${pg_client_default} -U ${pg_user} $opt -h ${pg_host} -f ${dest_dir}/db/dssp${db_number}.sql -d dssystem
+                                echo apply the patch dssp${db_number}.sql
+                                db_number=`expr $db_number + 1`
+                        done
+                fi
+                '''
+            ))
+            f.close()
+            os.chmod(f.name, 0o544)
 
-            self.logger.debug("Initializing database")
-            self.asigra_database_init()
+            proc = subprocess.Popen([f.name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stderr = proc.communicate()[1]
+        finally:
+            if f:
+                with contextlib.suppress(OSError):
+                    os.unlink(f.name)
 
-        else:
-            self.logger.debug("Updating database")
-            self.asigra_database_update()
+        if proc.returncode != 0:
+            raise CallError(f'Failed to setup database: {stderr.decode()}')
 
         return True
