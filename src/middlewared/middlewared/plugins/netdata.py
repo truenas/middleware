@@ -8,6 +8,7 @@ class NetDataGlobalConfiguration(SystemServiceService):
     class Config:
         service = 'netdata'
         service_model = 'netdataglobalsettings'
+        datastore_prefix = ''
         datastore_extend = 'netdata.configuration.netdata_global_config_extend'
         namespace = 'netdata.configuration'
 
@@ -29,7 +30,7 @@ class NetDataGlobalConfiguration(SystemServiceService):
             #   enabled = yes
 
             param_str = ''
-            for i in additional_params:
+            for i in additional_params.split('\n'):
                 i = i.strip()
                 if not i:
                     continue
@@ -40,12 +41,14 @@ class NetDataGlobalConfiguration(SystemServiceService):
                     else:
                         param_str += f'\n\t{i}'
 
+                    continue
+
                 if i.startswith('[') and not i.endswith(']'):
                     verrors.add(
                         'netdata_update.additional_params',
                         f'Please correct format for {i}. i.e [system.intr]'
                     )
-                elif '=' not in i:
+                elif not i.startswith('[') and '=' not in i:
                     verrors.add(
                         'netdata_update.additional_params',
                         f'Please correct format for {i}. i.e enabled = yes'
@@ -64,7 +67,11 @@ class NetDataGlobalConfiguration(SystemServiceService):
 
         bind_to_ip = data.get('bind_to')
         if bind_to_ip:
-            if not [ip for ip in await self.middleware.call('interfaces.ip_in_use') if ip['address'] == bind_to_ip]:
+            if (
+                    bind_to_ip != '127.0.0.1' and not [
+                        ip for ip in await self.middleware.call('interfaces.ip_in_use') if ip['address'] == bind_to_ip
+                    ]
+            ):
                 verrors.add(
                     'netdata_update.bind_to',
                     'Please provide a valid bind to ip'
