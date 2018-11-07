@@ -115,6 +115,7 @@ class OneShotAlertSource(AlertSource):
         raise NotImplementedError
 
     async def delete(self, alerts, query):
+        raise NotImplementedError
 
 
 class AlertService:

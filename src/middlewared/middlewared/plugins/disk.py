@@ -500,7 +500,6 @@ class DiskService(CRUDService):
         return failed
 
 
-
     @private
     def encrypt(self, devname, keypath, passphrase=None):
         self.__geli_setmetadata(devname, keypath, passphrase)
