@@ -41,7 +41,7 @@ from freenasUI.directoryservice.models import (
     KerberosRealm,
 )
 from freenasUI.freeadmin.models import (
-    Model, UserField, GroupField, PathField
+    Model, UserField, GroupField, PathField, DictField, ListField
 )
 from freenasUI.freeadmin.models.fields import MultiSelectField
 from freenasUI.middleware.notifier import notifier
@@ -2212,3 +2212,93 @@ class ServiceMonitor(Model):
         verbose_name=_("Enable"),
         default=False
     )
+
+
+class NetDataGlobalSettings(Model):
+
+    history = models.IntegerField(
+        default=86400,
+        null=False,
+        blank=False
+    )
+
+    memory_mode = models.CharField(
+        default='save',
+        blank=False,
+        null=False,
+        max_length=10
+    )
+
+    update_every = models.IntegerField(
+        default=1,
+        null=False,
+        blank=False
+    )
+
+    http_port_listen_backlog = models.IntegerField(
+        default=100,
+        null=False,
+        blank=False
+    )
+
+    bind_to = models.GenericIPAddressField(
+        default='127.0.0.1',
+        null=False,
+        blank=False,
+    )
+
+    bind_to_port = models.IntegerField(
+        default=19999,  # TODO: nginx.conf will need to be adjusted accordingly
+        null=False,
+        blank=False
+    )
+
+    additional_params = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    alarms = DictField()
+
+    class Meta:
+        verbose_name = _("Netdata Global Settings")
+
+    class FreeAdmin:
+        deletable = False
+
+
+class NetDataStreaming(Model):
+
+    stream_mode = models.CharField(
+        max_length=10,
+        blank=False,
+        null=False
+    )
+
+    api_key = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True
+    )
+
+    destination = ListField(
+        blank=True,
+        null=True
+    )
+
+    default_history = models.IntegerField(
+        default=3600,
+        blank=False,
+        null=False
+    )
+
+    allow_from = ListField(
+        default=['*'],
+        null=True,
+        blank=True
+    )
+
+    class FreeAdmin:
+        deletable = False
+
+
