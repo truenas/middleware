@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, Str
+from middlewared.schema import accepts, Dict, Int, IPAddr, List, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
 from middlewared.validators import Port
 
@@ -91,7 +91,7 @@ class NetDataGlobalConfiguration(SystemServiceService):
         Dict(
             'netdata_update',
             Str('additional_params'),
-            IPAddr('bind_to'),
+            IPAddr('bind_to'),  # TODO: nginx.conf will need to be adjusted accordingly
             Int('bind_to_port', validators=[Port()]),
             Int('history'),
             Int('http_port_listen_backlog'),
@@ -108,6 +108,35 @@ class NetDataGlobalConfiguration(SystemServiceService):
         new = await self.validate_attrs(new)
 
         new['memory_mode'] = new['memory_mode'].lower()
+
+        await self._update_service(old, new)
+
+        return await self.config()
+
+
+class NetDataStreamingMetrics(SystemServiceService):
+
+    class Config:
+        service = 'netdata'
+        service_model = 'netdatastreaming'
+        datastore_prefix = ''
+        datastore_extend = 'netdata.configuration.netdata_global_config_extend'
+        namespace = 'netdata.stream.metrics'
+
+    @accepts(
+        Dict(
+            'netdata_streaming_update',
+            List('allow_from', items=[Str()]),
+            Str('api_key'),
+            Int('default_history'),
+            List('destination', items=Str()),
+            Str('stream_mode', enum=['NONE', 'MASTER', 'SLAVE'])
+        )
+    )
+    async def do_update(self, data):
+        old = await self.config()
+        new = old.copy()
+        new.update(data)
 
         await self._update_service(old, new)
 

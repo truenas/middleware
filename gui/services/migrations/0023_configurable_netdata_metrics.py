@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
             name='NetDataStreaming',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('stream_mode', models.CharField(max_length=10)),
+                ('stream_mode', models.CharField(default='none', max_length=10)),
                 ('api_key', models.CharField(blank=True, max_length=64, null=True)),
                 ('destination', freenasUI.freeadmin.models.fields.ListField(blank=True, null=True)),
                 ('default_history', models.IntegerField(default=3600)),

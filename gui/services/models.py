@@ -2248,7 +2248,7 @@ class NetDataGlobalSettings(Model):
     )
 
     bind_to_port = models.IntegerField(
-        default=19999,  # TODO: nginx.conf will need to be adjusted accordingly
+        default=19999,
         null=False,
         blank=False
     )
@@ -2272,7 +2272,8 @@ class NetDataStreaming(Model):
     stream_mode = models.CharField(
         max_length=10,
         blank=False,
-        null=False
+        null=False,
+        default='none'
     )
 
     api_key = models.CharField(
