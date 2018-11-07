@@ -990,3 +990,11 @@ class ServiceService(CRUDService):
             # benefit in waiting for it since even if it fails it wont
             # tell the user anything useful.
             asyncio.ensure_future(self.restart("collectd", kwargs))
+
+    async def _start_netdata(self, **kwargs):
+        await self.middleware.call('etc.generate', 'netdata')
+        await self._service('netdata', 'start', **kwargs)
+
+    async def _restart_netdata(self, **kwargs):
+        await self._system('/usr/sbin/service netdata forcestop')
+        await self._start_netdata(**kwargs)
