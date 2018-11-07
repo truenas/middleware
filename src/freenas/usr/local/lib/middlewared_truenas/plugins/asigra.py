@@ -18,21 +18,15 @@ class AsigraService(SystemServiceService):
         datastore = "services.asigra"
         datastore_prefix = "asigra_"
 
-    def __init__(self, middleware):
-        super(AsigraService, self).__init__(middleware)
-
-        self.pg_home = "/usr/local/pgsql"
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.pg_user = "pgsql"
         self.pg_group = "pgsql"
-
-        self.dssystem_path = "/usr/local/ds-system"
-        self.dssystem_db_path = os.path.join(self.dssystem_path, "db")
 
         try:
             pw = pwd.getpwnam(self.pg_user)
             self.pg_user_uid = pw.pw_uid
             self.pg_group_gid = pw.pw_gid
-
         except Exception:
             self.pg_user_uid = 5432
             self.pg_group_gid = 5432
@@ -97,13 +91,13 @@ class AsigraService(SystemServiceService):
         asigra_pg_hba_conf = os.path.join(asigra_postgresql_path, "pg_hba.conf")
 
         # pgsql user home must exist before we can initialize postgresql data
-        if not os.path.exists(self.pg_home):
-            os.mkdir(self.pg_home, mode=0o750)
-            shutil.chown(self.pg_home, user=self.pg_user, group=self.pg_group)
+        if not os.path.exists(asigra_postgresql_path):
+            os.mkdir(asigra_postgresql_path, mode=0o750)
+            shutil.chown(asigra_postgresql_path, user=self.pg_user, group=self.pg_group)
 
-        s = os.stat(self.pg_home)
+        s = os.stat(asigra_postgresql_path)
         if (s.st_uid != self.pg_user_uid) or (s.st_gid != self.pg_group_gid):
-            shutil.chown(self.pg_home, user=self.pg_user, group=self.pg_group)
+            shutil.chown(asigra_postgresql_path, user=self.pg_user, group=self.pg_group)
 
         if not os.path.exists(asigra_postgresql_path):
             os.mkdir(asigra_postgresql_path, mode=0o750)
