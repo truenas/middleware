@@ -727,6 +727,8 @@ class ShellApplication(object):
 
 class Middleware(object):
 
+    CONSOLE_ONCE_PATH = '/tmp/.middlewared-console-once'
+
     def __init__(self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None):
         self.logger = logger.Logger('middlewared', debug_level).getLogger()
         self.crash_reporting = logger.CrashReporting()
@@ -755,7 +757,7 @@ class Middleware(object):
         self.__hooks = defaultdict(list)
         self.__server_threads = []
         self.__init_services()
-        self.__console_io = None
+        self.__console_io = False if os.path.exists(self.CONSOLE_ONCE_PATH) else None
 
     def __init_services(self):
         from middlewared.service import CoreService
@@ -868,6 +870,13 @@ class Middleware(object):
                 self.__console_io = open('/dev/console', 'w')
             except Exception:
                 return
+            try:
+                # We need to make sure we only try to write to console one time
+                # in case middlewared crashes and keep writing to console in a loop.
+                with open(self.CONSOLE_ONCE_PATH, 'w'):
+                    pass
+            except Exception:
+                pass
         try:
             if append:
                 self.__console_io.write(text)
