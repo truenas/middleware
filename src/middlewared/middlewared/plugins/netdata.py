@@ -157,7 +157,7 @@ class NetDataGlobalConfiguration(SystemServiceService):
             Int('bind_to_port', validators=[Port()]),
             Int('history'),
             Int('http_port_listen_backlog'),
-            Str('memory_mode', enum=['SAVE', 'MAP', 'RAM']),
+            Str('memory_mode', enum=['SAVE', 'MAP', 'RAM', 'NONE']),
             Int('update_every')
         )
     )
