@@ -41,7 +41,7 @@ update_ttys()
 		fi
 
 		# Let's make sure that all virtual terminals are set to Pc before we make any changes
-		sed -E -e "s,^(ttyv.*)(freenas|freenas.115200|Pc)(.*)\$,\1Pc\3," /etc/ttys > /etc/ttys.bak && mv /etc/ttys.bak /etc/ttys
+		sed -i "" -E -e "s,^(ttyv.*)(freenas|freenas.115200|Pc)(.*)\$,\1Pc\3," /etc/ttys
 
 		# Setup VGA and UART TTYs according to console configuration.
 		tmp=$(mktemp /tmp/tmp.XXXXXX)
