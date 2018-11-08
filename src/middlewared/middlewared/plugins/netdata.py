@@ -11,6 +11,7 @@ class NetDataGlobalConfiguration(SystemServiceService):
     class Config:
         service = 'netdata'
         service_model = 'netdataglobalsettings'
+        service_verb = 'restart'
         datastore_prefix = ''
         datastore_extend = 'netdata.configuration.netdata_global_config_extend'
         namespace = 'netdata.configuration'
@@ -180,8 +181,9 @@ class NetDataStreamingMetrics(SystemServiceService):
     class Config:
         service = 'netdata'
         service_model = 'netdatastreaming'
+        service_verb = 'restart'
         datastore_prefix = ''
-        datastore_extend = 'netdata.configuration.netdata_global_config_extend'
+        #datastore_extend = 'netdata.configuration.netdata_global_config_extend'
         namespace = 'netdata.stream.metrics'
 
     @accepts(
