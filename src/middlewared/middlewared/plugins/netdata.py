@@ -80,7 +80,7 @@ class NetDataGlobalConfiguration(SystemServiceService):
             data['additional_params'] = param_str + '\n'
         else:
             # Let's load up the default value for additional params
-            # This is sort of a rollback to default configuration if blank string is provided for
+            # This is sort of a rollback to default configuration if a blank string is provided for
             # additional params - we will default to the defaults of netdata.conf giving users a chance
             # to come back to default configuration if they messed something up pretty bad
             with open('/usr/local/etc/netdata/netdata.conf.sample', 'r') as file:
@@ -92,7 +92,7 @@ class NetDataGlobalConfiguration(SystemServiceService):
         bind_to_ip = data.get('bind_to')
         if bind_to_ip:
             if (
-                    bind_to_ip != '127.0.0.1' and not [
+                    bind_to_ip not in ['127.0.0.1', '::1'] and not [
                         ip for ip in await self.middleware.call('interfaces.ip_in_use') if ip['address'] == bind_to_ip
                     ]
             ):
@@ -134,12 +134,13 @@ class NetDataGlobalConfiguration(SystemServiceService):
         # templates right now, look into that
         for alarm in valid_alarms:
             if alarm not in data['alarms']:
-                print('\n\nadding alarm')
                 data['alarms'][alarm] = True
 
         for alarm in update_alarms:
             # These are valid alarms
             data['alarms'][alarm] = update_alarms[alarm]
+
+        data['memory_mode'] = data['memory_mode'].lower()
 
         return data
 
@@ -160,15 +161,14 @@ class NetDataGlobalConfiguration(SystemServiceService):
         )
     )
     async def do_update(self, data):
-        # TODO: ADD ALARMS
         old = await self.config()
         new = old.copy()
+        # We separate alarms we have in db and the ones user supplies. If alarms are valid, we add them to db, else
+        # we keep the old ones
         new['update_alarms'] = data.pop('alarms', {})
         new.update(data)
 
         new = await self.validate_attrs(new)
-
-        new['memory_mode'] = new['memory_mode'].lower()
 
         await self._update_service(old, new)
 

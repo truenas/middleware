@@ -1,19 +1,18 @@
-async def render(service, middleware):
-    netdata_config = await middleware.call('netdata.configuration.config')
-    alarms = netdata_config['alarms']
-    valid_alarms = await middleware.call('netdata.configuration.list_alarms')
+def render(service, middleware):
+    alarms = middleware.call_sync('netdata.configuration.config')['alarms']
+    valid_alarms = middleware.call_sync('netdata.configuration.list_alarms')
     for alarm in valid_alarms:
+        # TODO: See if we can maybe parse these files differently and what pros and cons would that approach have ?
         # These are valid alarms and their respective config files exist as well
         if alarm in alarms:
             with open(valid_alarms[alarm], 'r') as file:
                 content = file.readlines()
-            # TODO: Execute this efficiently -- improve -- see different approaches
+
             with open(valid_alarms[alarm], 'w') as file:
                 check = False
                 for line in content:
                     if any(i in line for i in ('alarm:', 'template:')):
                         # A new entity is starting
-
                         if line.split(':')[1].strip() == alarm:
                             check = True
                         elif check:

@@ -2301,5 +2301,3 @@ class NetDataStreaming(Model):
 
     class FreeAdmin:
         deletable = False
-
-
