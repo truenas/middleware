@@ -19,6 +19,7 @@ class NetDataGlobalConfiguration(SystemServiceService):
     @private
     async def netdata_global_config_extend(self, data):
         data['memory_mode'] = data['memory_mode'].upper()
+        data['stream_mode'] = data['stream_mode'].upper()
         return data
 
     @private
@@ -142,6 +143,7 @@ class NetDataGlobalConfiguration(SystemServiceService):
             data['alarms'][alarm] = update_alarms[alarm]
 
         data['memory_mode'] = data['memory_mode'].lower()
+        data['stream_mode'] = data['stream_mode'].lower()
 
         return data
 
@@ -153,11 +155,15 @@ class NetDataGlobalConfiguration(SystemServiceService):
                 'alarms',
                 additional_attrs=True
             ),
+            List('allow_from', items=[Str('pattern')]),  # TODO: See if we can come up with regex to verify this pattern
+            Str('api_key'),
             IPAddr('bind_to'),  # TODO: nginx.conf will need to be adjusted accordingly
             Int('bind_to_port', validators=[Port()]),
+            List('destination', items=[Str('dest')]),
             Int('history'),
             Int('http_port_listen_backlog'),
             Str('memory_mode', enum=['SAVE', 'MAP', 'RAM', 'NONE']),
+            Str('stream_mode', enum=['NONE', 'MASTER', 'SLAVE']),
             Int('update_every')
         )
     )
@@ -170,38 +176,6 @@ class NetDataGlobalConfiguration(SystemServiceService):
         new.update(data)
 
         new = await self.validate_attrs(new)
-
-        await self._update_service(old, new)
-
-        return await self.config()
-
-
-class NetDataStreamingMetrics(SystemServiceService):
-
-    class Config:
-        service = 'netdata'
-        service_model = 'netdatastreaming'
-        service_verb = 'restart'
-        datastore_prefix = ''
-        #datastore_extend = 'netdata.configuration.netdata_global_config_extend'
-        namespace = 'netdata.stream.metrics'
-
-    @accepts(
-        Dict(
-            'netdata_streaming_update',
-            List('allow_from', items=[Str('pattern')]),  # TODO: See if we can come up with regex to verify this pattern
-            Str('api_key'),
-            Int('default_history'),
-            List('destination', items=[Str('dest')]),
-            Str('stream_mode', enum=['NONE', 'MASTER', 'SLAVE'])
-        )
-    )
-    async def do_update(self, data):
-        old = await self.config()
-        new = old.copy()
-        new.update(data)
-
-        # TODO: Add Validation
 
         await self._update_service(old, new)
 

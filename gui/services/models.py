@@ -2260,15 +2260,6 @@ class NetDataGlobalSettings(Model):
 
     alarms = DictField()
 
-    class Meta:
-        verbose_name = _("Netdata Global Settings")
-
-    class FreeAdmin:
-        deletable = False
-
-
-class NetDataStreaming(Model):
-
     stream_mode = models.CharField(
         max_length=10,
         blank=False,
@@ -2287,17 +2278,14 @@ class NetDataStreaming(Model):
         null=True
     )
 
-    default_history = models.IntegerField(
-        default=3600,
-        blank=False,
-        null=False
-    )
-
     allow_from = ListField(
         default=['*'],
         null=True,
         blank=True
     )
+
+    class Meta:
+        verbose_name = _("Netdata Global Settings")
 
     class FreeAdmin:
         deletable = False

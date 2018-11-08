@@ -21,23 +21,13 @@ class Migration(migrations.Migration):
                 ('bind_to_port', models.IntegerField(default=19999)),
                 ('additional_params', models.TextField(blank=True, null=True)),
                 ('alarms', freenasUI.freeadmin.models.fields.DictField()),
+                ('stream_mode', models.CharField(default='none', max_length=10)),
+                ('api_key', models.CharField(blank=True, max_length=64, null=True)),
+                ('destination', freenasUI.freeadmin.models.fields.ListField(blank=True, null=True)),
+                ('allow_from', freenasUI.freeadmin.models.fields.ListField(blank=True, default=['*'], null=True)),
             ],
             options={
                 'verbose_name': 'Netdata Global Settings',
             },
-        ),
-        migrations.CreateModel(
-            name='NetDataStreaming',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('stream_mode', models.CharField(default='none', max_length=10)),
-                ('api_key', models.CharField(blank=True, max_length=64, null=True)),
-                ('destination', freenasUI.freeadmin.models.fields.ListField(blank=True, null=True)),
-                ('default_history', models.IntegerField(default=3600)),
-                ('allow_from', freenasUI.freeadmin.models.fields.ListField(blank=True, default=['*'], null=True)),
-            ],
-            options={
-                'abstract': False,
-            },
-        ),
+        )
     ]
