@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
                 ('memory_mode', models.CharField(default='save', max_length=10)),
                 ('update_every', models.IntegerField(default=1)),
                 ('http_port_listen_backlog', models.IntegerField(default=100)),
-                ('bind_to', models.GenericIPAddressField(default='127.0.0.1')),
+                ('bind_to', freenasUI.freeadmin.models.fields.ListField(default=['*'])),
                 ('bind_to_port', models.IntegerField(default=19999)),
                 ('additional_params', models.TextField(blank=True, null=True)),
                 ('alarms', freenasUI.freeadmin.models.fields.DictField()),

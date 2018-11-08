@@ -2241,8 +2241,8 @@ class NetDataGlobalSettings(Model):
         blank=False
     )
 
-    bind_to = models.GenericIPAddressField(
-        default='127.0.0.1',
+    bind_to = ListField(
+        default=['*'],
         null=False,
         blank=False,
     )

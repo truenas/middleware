@@ -91,17 +91,17 @@ class NetDataGlobalConfiguration(SystemServiceService):
                 except IndexError:
                     self.logger.debug('Failed to set default value for additional params')
 
-        bind_to_ip = data.get('bind_to')
-        if bind_to_ip:
-            if (
-                    bind_to_ip not in ['127.0.0.1', '::1'] and not [
-                        ip for ip in await self.middleware.call('interfaces.ip_in_use') if ip['address'] == bind_to_ip
-                    ]
-            ):
-                verrors.add(
-                    'netdata_update.bind_to',
-                    'Please provide a valid bind to ip'
-                )
+        bind_to_ips = data.get('bind_to')
+        if bind_to_ips:
+            valid_ips = [ip['address'] for ip in await self.middleware.call('interfaces.ip_in_use')]
+            for bind_ip in bind_to_ips:
+                if (
+                        bind_ip not in ['127.0.0.1', '::1', '*'] and bind_ip not in valid_ips
+                ):
+                    verrors.add(
+                        'netdata_update.bind_to',
+                        f'Invalid {bind_ip} bind to IP'
+                    )
         else:
             verrors.add(
                 'netdata_update.bind_to',
@@ -157,7 +157,7 @@ class NetDataGlobalConfiguration(SystemServiceService):
             ),
             List('allow_from', items=[Str('pattern')]),  # TODO: See if we can come up with regex to verify this pattern
             Str('api_key'),
-            IPAddr('bind_to'),  # TODO: nginx.conf will need to be adjusted accordingly
+            List('bind_to'),  # TODO: nginx.conf will need to be adjusted accordingly
             Int('bind_to_port', validators=[Port()]),
             List('destination', items=[Str('dest')]),
             Int('history'),
