@@ -30,7 +30,7 @@ generate_crontab()
 
 	# Don't run these on TrueNAS HA passive controllers 
 	# Redmine 55908
-	if [ ${failover_status} != "BACKUP" ]; then
+	if [ "$failover_status" != "BACKUP" ]; then
 		# Generate cronjobs
 		${FREENAS_SQLITE_CMD} -separator "" ${RO_FREENAS_CONFIG} \
 		"SELECT $sf FROM tasks_cronjob WHERE cron_enabled = 1 ORDER BY id" | \
