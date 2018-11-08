@@ -1,9 +1,9 @@
 import os
 
 
-from middlewared.schema import accepts, Dict, Int, IPAddr, List, Str
+from middlewared.schema import accepts, Dict, Int, List, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
-from middlewared.validators import Port
+from middlewared.validators import IpAddress, Port, UUID
 
 
 class NetDataGlobalConfiguration(SystemServiceService):
@@ -129,6 +129,23 @@ class NetDataGlobalConfiguration(SystemServiceService):
                             f'{alarm} value can only be boolean'
                         )
 
+        # Validating streaming metrics now
+        stream_mode = data.get('stream_mode')
+        if stream_mode == 'SLAVE':
+            for key in ('api_key', 'destination'):
+                if not data.get(key):
+                    verrors.add(
+                        f'netdata_update.{key}',
+                        f'{key} is required with stream mode as SLAVE'
+                    )
+        elif stream_mode == 'MASTER':
+            for key in ('allow_from', 'api_key'):
+                if not data.get(key):
+                    verrors.add(
+                        f'netdata_update.{key}',
+                        f'{key} is required with stream mode as MASTER'
+                    )
+
         if verrors:
             raise verrors
 
@@ -155,11 +172,11 @@ class NetDataGlobalConfiguration(SystemServiceService):
                 'alarms',
                 additional_attrs=True
             ),
-            List('allow_from', items=[Str('pattern')]),  # TODO: See if we can come up with regex to verify this pattern
-            Str('api_key'),
+            List('allow_from', items=[Str('pattern')]),
+            Str('api_key', validators=[UUID()]),
             List('bind_to'),  # TODO: nginx.conf will need to be adjusted accordingly
             Int('bind_to_port', validators=[Port()]),
-            List('destination', items=[Str('dest')]),
+            List('destination', items=[Str('destination', validators=[IpAddress(port=True)])]),
             Int('history'),
             Int('http_port_listen_backlog'),
             Str('memory_mode', enum=['SAVE', 'MAP', 'RAM', 'NONE']),
