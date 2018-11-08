@@ -3,6 +3,7 @@
 # Simple script to fetch instantaneous system statistics and report them as a JSON block
 # This can run either as user or as root
 # Written by Ken Moore (ken@ixsystems.com) Aug 31, 2018
+# Updated: 11/8/18
 # ---------------------------------
 
 #time_t time (seconds since epoch)
@@ -24,8 +25,8 @@ gstat_to_json(){
   #Since gstat does not have a libxo output option, need to convert to JSON manually
   #Still sets the "_tmp" variable as output
   _i=0
-  _max_i=10 #10 columns in output as of 8/31/18 (Ken Moore)
-  local _out=$( gstat -bp |
+  _max_i=12 #10 columns in output as of 11/8/18 (Ken Moore)
+  local _out=$( gstat -bps |
   while read line
   do
     #Output Fields:
@@ -81,6 +82,9 @@ ifstat_to_json(){
     #echo "Got Interfaces: ${_ifaces}"
     for i in `jot ${inum} 1`
     do
+      #NOTES ABOUT FORMAT
+      # Labels are 2-words per value (4 words per interface)
+      # There are 2 values per interface (2 words per interface)
       iface=`echo ${_ifaces} | cut -w -f ${i}`
      if [ -n "${_tmp}" ] ; then
         _tmp="${_tmp}, "
@@ -88,15 +92,17 @@ ifstat_to_json(){
      _tmp="${_tmp}{ \"name\" : \"${iface}\","
       _num=`expr ${i} - 1`
       _num=`expr ${_num} \* 2`
+      _labnum=`expr ${_num} \* 2`
       _num=`expr ${_num} + 1`
-      _numend=`expr ${_num} + 1`
-      label=`echo ${_labels} | cut -w -f ${_num}-${_numend} | sed $'s/\t/ /g'`
+      _labnum=`expr ${_labnum} + 1`
+      _numend=`expr ${_labnum} + 1`
+      label=`echo ${_labels} | cut -w -f ${_labnum}-${_numend} | sed $'s/\t/ /g'`
       value=`echo ${line} | cut -w -f ${_num}`
       _tmp="${_tmp}\"${label}\" : \"${value}\","
-      _num=`expr ${_num} + 1`
-      _numend=`expr ${_num} + 2`
-      label=`echo ${_labels} | cut -w -f $(expr ${_num} + 1)-${_numend} | sed $'s/\t/ /g'`
-      value=`echo ${line} | cut -w -f ${_num}`
+      value=`echo ${line} | cut -w -f $(expr ${_num} + 1 )`
+      _labnum=`expr ${_labnum} + 2`
+      _numend=`expr ${_labnum} + 1`
+      label=`echo ${_labels} | cut -w -f ${_labnum}-${_numend} | sed $'s/\t/ /g'`
       _tmp="${_tmp}\"${label}\" : \"${value}\" }"
     done #interface loop
     echo "${_tmp}"
@@ -123,16 +129,44 @@ get_cpu_temp_to_json(){
   fi
 }
 
+sysctls_to_json(){
+#Inputs:
+# 1: sysctl's to search for (can be a group, such as "hw" or "dev.")
+# Note that the last field for the variable name is returned, not the whole path
+# And that this assumes a number is returned for the sysctl as well
+  local _out=$(sysctl -e ${1} | 
+  while read line
+  do
+    var=`echo "${line}" | cut -d = -f 1 | grep -oE "[^.]+$"`
+    val=`echo "${line}" | cut -d = -f 2`
+    #Now echo out that variable/value pair
+    if [ -n "${var}" ] && [ -n "${val}" ] ; then
+      if [ ${hit:-0} -eq 0 ] ; then
+       tmp="\"${var}\":${val}"
+       hit=1
+      else
+        tmp="${tmp},\"${var}\":${val}"
+      fi
+    fi
+  done
+  )
+  if [ -n "${_out}" ] ; then
+    _tmp="{${_out}}"
+  fi
+}
+
 #Get the memory per kernel zone
-_tmp=`vmstat -z --libxo json`
-if [ -n "${_tmp}" ] ; then
-  append_json_to_object "memory_zone" "${_tmp}"
-fi
+#_tmp=`vmstat -z --libxo json`
+#if [ -n "${_tmp}" ] ; then
+#  append_json_to_object "memory_zone" "${_tmp}"
+#fi
+
 #Get the memory summary
 _tmp=`vmstat -s --libxo json`
 if [ -n "${_tmp}" ] ; then
   append_json_to_object "memory_summary" "${_tmp}"
 fi
+
 #Get the CPU system status (broken down by CPU core)
 _tmp=`vmstat -P --libxo json`
 if [ -n "${_tmp}" ] ; then
@@ -143,11 +177,13 @@ get_cpu_temp_to_json
 if [ -n "${_tmp}" ] ; then
   append_json_to_object "cpu_temperatures" "${_tmp}"
 fi
+
 #disk I/O stats
 gstat_to_json
 if [ -n "${_tmp}" ] ; then
   append_json_to_object "gstat_summary" "${_tmp}"
 fi
+
 #network stats
 _tmp=`netstat -i -s --libxo json`
 if [ -n "${_tmp}" ] ; then
@@ -158,6 +194,18 @@ if [ -e "/usr/local/bin/ifstat" ] ; then
   if [ -n "${_tmp}" ] ; then
     append_json_to_object "network_usage" "${_tmp}"
   fi
+fi
+
+# ZFS arc stats
+sysctls_to_json "kstat.zfs.misc.arcstats"
+if [ -n "${_tmp}" ] ; then
+  append_json_to_object "zfs_arcstats" "${_tmp}"
+fi
+
+# Proc stats (memory?)
+_tmp=`ps --libxo json -ax -o pid,ppid,jail,jid,%cpu,systime,%mem,vsz,rss,state,nlwp,comm`
+if [ -n "${_tmp}" ] ; then
+  append_json_to_object "process_stats" "${_tmp}"
 fi
 
 #Append the timestamp to the output
