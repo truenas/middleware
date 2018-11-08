@@ -425,7 +425,10 @@ class AlertPlugins(metaclass=HookMetaclass):
             mail = a.getMail()
             if mail:
                 with client as c:
-                    c.call('mail.send', mail, job=True)
+                    try:
+                        c.call('mail.send', mail, job=True)
+                    except Exception as e:
+                        log.error(f'mail.send failed: {e!r}')
 
         if not notifier().is_freenas():
             # Automatically create ticket for new alerts tagged as possible
