@@ -103,7 +103,6 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
         ],
         'netdata': [
-            {'type': 'mako', 'path': 'local/netdata/netdata_editable_defaults.conf'},
             {'type': 'mako', 'path': 'local/netdata/netdata.conf'},
             {'type': 'mako', 'path': 'local/netdata/stream.conf'},
             {'type': 'py', 'path': 'local/netdata/alarms'}

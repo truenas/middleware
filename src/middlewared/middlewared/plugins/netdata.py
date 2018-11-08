@@ -80,9 +80,14 @@ class NetDataGlobalConfiguration(SystemServiceService):
             data['additional_params'] = param_str + '\n'
         else:
             # Let's load up the default value for additional params
-            # TODO: Probably better approach is to use netdata.conf.sample and get this from there
-            with open('/usr/local/etc/netdata/netdata_editable_defaults.conf', 'r') as file:
-                data['additional_params'] = file.read()
+            # This is sort of a rollback to default configuration if blank string is provided for
+            # additional params - we will default to the defaults of netdata.conf giving users a chance
+            # to come back to default configuration if they messed something up pretty bad
+            with open('/usr/local/etc/netdata/netdata.conf.sample', 'r') as file:
+                try:
+                    data['additional_params'] = file.read().split('per plugin configuration')[1]
+                except IndexError:
+                    self.logger.debug('Failed to set default value for additional params')
 
         bind_to_ip = data.get('bind_to')
         if bind_to_ip:
