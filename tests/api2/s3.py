@@ -7,7 +7,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, POST, PUT, DELETE
+from functions import GET, POST, PUT
 from auto_config import ip, pool_name
 
 
