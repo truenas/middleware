@@ -7,15 +7,14 @@ from middlewared.service import private, SystemServiceService, ValidationErrors
 from middlewared.validators import IpAddress, Port, UUID
 
 
-class NetDataGlobalConfiguration(SystemServiceService):
+class NetDataService(SystemServiceService):
 
     class Config:
         service = 'netdata'
         service_model = 'netdataglobalsettings'
         service_verb = 'restart'
         datastore_prefix = ''
-        datastore_extend = 'netdata.configuration.netdata_global_config_extend'
-        namespace = 'netdata.configuration'
+        datastore_extend = 'netdata.netdata_global_config_extend'
 
     @private
     async def netdata_global_config_extend(self, data):

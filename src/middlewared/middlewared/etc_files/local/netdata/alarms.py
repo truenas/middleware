@@ -29,7 +29,7 @@ async def render(service, middleware):
                         # For last alarm cases - is this ideal ?
                         file.write(f'      to: {"silent" if not alarms[alarm] else "sysadmin"}\n')
 
-    alarms = (await middleware.call('netdata.configuration.config'))['alarms']
-    valid_alarms = await middleware.call('netdata.configuration.list_alarms')
+    alarms = (await middleware.call('netdata.config'))['alarms']
+    valid_alarms = await middleware.call('netdata.list_alarms')
 
     await middleware.run_in_thread(update_alarms, alarms, valid_alarms)
