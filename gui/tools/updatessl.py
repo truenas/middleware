@@ -27,29 +27,14 @@
 
 import logging
 import os
+import re
 import sys
 
-sys.path.extend([
-    '/usr/local/www',
-    '/usr/local/www/freenasUI',
-])
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
-
-import django
-django.setup()
-
-from freenasUI.common.ssl import (
-    load_certificate,
-    export_privatekey,
-)
-from freenasUI.system.models import (
-    Settings,
-    Certificate,
-    CERT_TYPE_EXISTING,
-)
+from middlewared.client import Client
 
 log = logging.getLogger('tools.updatessl')
+
+RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
 
 
 def main(certfile, keyfile):
@@ -75,33 +60,24 @@ def main(certfile, keyfile):
         print("Cannot read keyfile specified at %s" % keyfile)
         sys.exit(1)
 
-    # Now for the actual parsing to meet the new cert ui reqs
-    # as well as the creation of the new cert object in the django db
-    cert_info = load_certificate(crt)
-    created_cert = Certificate.objects.create(
-        cert_name="freenas-pre-certui",
-        cert_type=CERT_TYPE_EXISTING,
-        cert_certificate=crt,
-        cert_privatekey=export_privatekey(key),
-        cert_country=cert_info['country'],
-        cert_state=cert_info['state'],
-        cert_city=cert_info['city'],
-        cert_organization=cert_info['organization'],
-        cert_common=cert_info['common'],
-        cert_email=cert_info['email'],
-        cert_digest_algorithm=cert_info['digest_algorithm']
-    )
+    with Client() as c:
+        created_cert = {
+            'name': 'freenas-pre-certui',
+            'type': 0x00000008,
+            'certificate': crt,
+            'privatekey': key,
+            'chain': True if len(RE_CERTIFICATE.findall(crt)) > 1 else False,
+        }
+        created_cert.update(c.call('certificate.load_certificate', crt))
 
-    # Now to set this cert as the webui cert in the system settings model
-    fnassettings = Settings.objects.all()[0]
-    fnassettings.stg_guicertificate = created_cert
-    fnassettings.save()
+        id = c.call(
+            'datastore.insert',
+            'system.certificate',
+            created_cert,
+            {'prefix': 'cert_'}
+        )
 
-    # Note we do not need to call ix-ssl as this python program is called
-    # by ix-update which is higher up in the rcorder than ix-ssl, as a result
-    # of which ix-ssl will be called later-on either ways.
-    # HOWEVER, if you do run this file as a standalone do call ix-ssl service
-    # yourself as well as run `midclt call service.http reload`.
+        c.call('system.general.update', {'ui_certificate': id})
 
 
 def usage():
