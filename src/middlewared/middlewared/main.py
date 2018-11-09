@@ -726,7 +726,10 @@ class ShellApplication(object):
 
 class Middleware(object):
 
-    def __init__(self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None):
+    def __init__(
+        self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None,
+        log_handler=None,
+    ):
         self.logger = logger.Logger('middlewared', debug_level).getLogger()
         self.crash_reporting = logger.CrashReporting()
         self.crash_reporting_semaphore = asyncio.Semaphore(value=2)
@@ -737,7 +740,9 @@ class Middleware(object):
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
         multiprocessing.set_start_method('spawn')
-        self.__procpool = ProcessPoolExecutor(max_workers=2)
+        self.__procpool = ProcessPoolExecutor(
+            max_workers=2, debug_level=debug_level, log_handler=log_handler
+        )
         self.__threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
         self.jobs = JobsQueue(self)
         self.__schemas = {}
@@ -1248,9 +1253,6 @@ def main():
     ], default='console')
     args = parser.parse_args()
 
-    _logger = logger.Logger('middleware', args.debug_level)
-    _logger.getLogger()
-
     pidpath = '/var/run/middlewared.pid'
 
     if args.restart:
@@ -1263,15 +1265,7 @@ def main():
                 if e.errno != errno.ESRCH:
                     raise
 
-    if 'file' in args.log_handler:
-        _logger.configure_logging('file')
-        stream = _logger.stream()
-        if stream is not None:
-            sys.stdout = sys.stderr = stream
-    elif 'console' in args.log_handler:
-        _logger.configure_logging('console')
-    else:
-        _logger.configure_logging('file')
+    logger.setup_logging('middleware', args.debug_level, args.log_handler)
 
     setproctitle.setproctitle('middlewared')
     # Workaround to tell django to not set up logging on its own
@@ -1286,6 +1280,7 @@ def main():
         loop_monitor=not args.disable_loop_monitor,
         overlay_dirs=args.overlay_dirs,
         debug_level=args.debug_level,
+        log_handler=args.log_handler,
     ).run()
 
 
