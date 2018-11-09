@@ -726,6 +726,8 @@ class ShellApplication(object):
 
 class Middleware(object):
 
+    CONSOLE_ONCE_PATH = '/tmp/.middlewared-console-once'
+
     def __init__(
         self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None,
         log_handler=None,
@@ -753,6 +755,7 @@ class Middleware(object):
         self.__hooks = defaultdict(list)
         self.__server_threads = []
         self.__init_services()
+        self.__console_io = False if os.path.exists(self.CONSOLE_ONCE_PATH) else None
 
     def __init_services(self):
         from middlewared.service import CoreService
@@ -769,6 +772,7 @@ class Middleware(object):
         plugins_dirs.insert(0, main_plugins_dir)
 
         self.logger.debug('Loading plugins from {0}'.format(','.join(plugins_dirs)))
+        self._console_write(f'loading plugins')
 
         setup_funcs = []
         for plugins_dir in plugins_dirs:
@@ -781,8 +785,9 @@ class Middleware(object):
                     self.add_service(cls(self))
 
                 if hasattr(mod, 'setup'):
-                    setup_funcs.append(mod.setup)
+                    setup_funcs.append((mod.__name__.rsplit('.', 1)[-1], mod.setup))
 
+        self._console_write(f'resolving plugins schemas')
         # Now that all plugins have been loaded we can resolve all method params
         # to make sure every schema is patched and references match
         from middlewared.schema import resolver  # Lazy import so namespace match
@@ -805,7 +810,10 @@ class Middleware(object):
 
         # Only call setup after all schemas have been resolved because
         # they can call methods with schemas defined.
-        for f in setup_funcs:
+        setup_total = len(setup_funcs)
+        for i, setup_func in enumerate(setup_funcs):
+            name, f = setup_func
+            self._console_write(f'setting up plugins ({name}) [{i + 1}/{setup_total}]')
             call = f(self)
             # Allow setup to be a coroutine
             if asyncio.iscoroutinefunction(f):
@@ -851,6 +859,59 @@ class Middleware(object):
                 method, service_name, service_obj, method_name, interval
             )
         )
+
+    def _console_write(self, text, fill_blank=True, append=False):
+        """
+        Helper method to write the progress of middlewared loading to the
+        system console.
+
+        There are some cases where loading will take a considerable amount of time,
+        giving user at least some basic feedback is fundamental.
+        """
+        # False means we are running in a terminal, no console needed
+        if self.__console_io is False:
+            return
+        elif self.__console_io is None:
+            if sys.stdin and sys.stdin.isatty():
+                self.__console_io = False
+                return
+            try:
+                self.__console_io = open('/dev/console', 'w')
+            except Exception:
+                return
+            try:
+                # We need to make sure we only try to write to console one time
+                # in case middlewared crashes and keep writing to console in a loop.
+                with open(self.CONSOLE_ONCE_PATH, 'w'):
+                    pass
+            except Exception:
+                pass
+        try:
+            if append:
+                self.__console_io.write(text)
+            else:
+                prefix = 'middlewared: '
+                maxlen = 60
+                text = text[:maxlen - len(prefix)]
+                # new line needs to go after all the blanks
+                if text.endswith('\n'):
+                    newline = '\n'
+                    text = text[:-1]
+                else:
+                    newline = ''
+                if fill_blank:
+                    blank = ' ' * (maxlen - (len(prefix) + len(text)))
+                else:
+                    blank = ''
+                writes = self.__console_io.write(
+                    f'\r{prefix}{text}{blank}{newline}'
+                )
+            self.__console_io.flush()
+            return writes
+        except OSError:
+            self.logger.debug('Failed to write to console', exc_info=True)
+        except Exception:
+            pass
 
     def register_wsclient(self, client):
         self.__wsclients[client.sessionid] = client
@@ -1143,6 +1204,9 @@ class Middleware(object):
             last = current
 
     def run(self):
+
+        self._console_write('starting')
+
         self.loop = self.__loop = asyncio.get_event_loop()
 
         if self.loop_debug:
@@ -1152,6 +1216,8 @@ class Middleware(object):
         # Needs to happen after setting debug or may cause race condition
         # http://bugs.python.org/issue30805
         self.__loop.run_until_complete(self.__plugins_load())
+
+        self._console_write('registering services')
 
         if self.loop_monitor:
             # Start monitor thread after plugins have been loaded
@@ -1198,6 +1264,7 @@ class Middleware(object):
         self.__loop.run_until_complete(web.UnixSite(runner, '/var/run/middlewared.sock').start())
 
         self.logger.debug('Accepting connections')
+        self._console_write('loading completed\n')
 
         try:
             self.__loop.run_forever()
