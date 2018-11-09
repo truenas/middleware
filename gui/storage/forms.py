@@ -1754,17 +1754,35 @@ class PeriodicSnapForm(MiddlewareModelForm, ModelForm):
     middleware_attr_schema = 'periodic_snapshot'
     middleware_attr_prefix = 'task_'
     middleware_plugin = 'pool.snapshottask'
-    middleware_attr_map = {
-        'dow': 'task_byweekday'
-    }
     is_singletone = False
+
+    task_exclude = forms.CharField(
+        required=False,
+        widget=forms.Textarea(),
+    )
 
     class Meta:
         fields = '__all__'
         model = models.Task
         widgets = {
-            'task_byweekday': CheckboxSelectMultiple(
-                choices=choices.WEEKDAYS_CHOICES),
+            'task_minute': CronMultiple(
+                attrs={'numChoices': 60, 'label': _("minute")}
+            ),
+            'task_hour': CronMultiple(
+                attrs={'numChoices': 24, 'label': _("hour")}
+            ),
+            'task_daymonth': CronMultiple(
+                attrs={
+                    'numChoices': 31, 'start': 1, 'label': _("day of month"),
+                }
+            ),
+            'task_dayweek': forms.CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES
+            ),
+            'task_month': forms.CheckboxSelectMultiple(
+                choices=choices.MONTHS_CHOICES
+            ),
+
             'task_begin': forms.widgets.TimeInput(attrs={
                 'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
             }),
@@ -1778,15 +1796,38 @@ class PeriodicSnapForm(MiddlewareModelForm, ModelForm):
             new = args[0].copy()
             fix_time_fields(new, ['task_begin', 'task_end'])
             args = (new,) + args[1:]
-        super(PeriodicSnapForm, self).__init__(*args, **kwargs)
-        self.fields['task_filesystem'] = forms.ChoiceField(
-            label=self.fields['task_filesystem'].label,
-        )
-        filesystem_choices = sorted(list(choices.FILESYSTEM_CHOICES()))
-        if self.instance.id and self.instance.task_filesystem not in dict(filesystem_choices):
-            filesystem_choices.append((self.instance.task_filesystem, self.instance.task_filesystem))
-        self.fields['task_filesystem'].choices = filesystem_choices
-        self.fields['task_repeat_unit'].widget = forms.HiddenInput()
+
+        if "instance" in kwargs:
+            kwargs.setdefault("initial", {})
+
+            kwargs["initial"]["task_exclude"] = "\n".join(kwargs["instance"].task_exclude)
+
+        super().__init__(*args, **kwargs)
+        mchoicefield(self, 'task_month', [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+        ])
+        mchoicefield(self, 'task_dayweek', [
+            1, 2, 3, 4, 5, 6, 7
+        ])
+
+    def clean_task_exclude(self):
+        return self.cleaned_data.get('task_exclude').split()
+
+    def clean_task_month(self):
+        m = self.data.getlist('task_month')
+        if len(m) == 12:
+            return '*'
+        m = ','.join(m)
+        return m
+
+    def clean_task_dayweek(self):
+        w = self.data.getlist('task_dayweek')
+        if w == '*':
+            return w
+        if len(w) == 7:
+            return '*'
+        w = ','.join(w)
+        return w
 
     def clean_task_begin(self):
         begin = self.cleaned_data.get('task_begin')
@@ -1796,14 +1837,16 @@ class PeriodicSnapForm(MiddlewareModelForm, ModelForm):
         end = self.cleaned_data.get('task_end')
         return end.strftime('%H:%M')
 
-    def clean_task_byweekday(self):
-        bwd = self.data.getlist('task_byweekday')
-        return bwd
-
     def middleware_clean(self, data):
-        data['dow'] = [int(day) for day in data.pop('byweekday')]
-        data.pop('repeat_unit', None)
-        data['ret_unit'] = data['ret_unit'].upper()
+        data['schedule'] = {
+            'minute': data.pop('minute'),
+            'hour': data.pop('hour'),
+            'dom': data.pop('daymonth'),
+            'month': data.pop('month'),
+            'dow': data.pop('dayweek'),
+            'begin': data.pop('begin'),
+            'end': data.pop('end'),
+        }
         return data
 
 

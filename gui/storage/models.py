@@ -721,6 +721,7 @@ class Task(Model):
         verbose_name=_("Snapshot lifetime unit"),
     )
     task_naming_schema = models.CharField(
+        default='auto-%Y-%m-%d_%H-%M',
         max_length=150,
         verbose_name=_("Naming schema"),
     )
@@ -775,11 +776,11 @@ class Task(Model):
     )
 
     def __str__(self):
-        return '%s - every %s - %d%s' % (
-            self.task_filesystem,
-            self.get_task_interval_display(),
-            self.task_ret_count,
-            self.task_ret_unit,
+        return '%s - %s - %d %s' % (
+            self.task_dataset,
+            self.task_naming_schema,
+            self.task_lifetime_value,
+            self.task_lifetime_unit.lower(),
         )
 
     class Meta:

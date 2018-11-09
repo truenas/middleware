@@ -606,43 +606,31 @@ class TaskFAdmin(BaseFreeAdmin):
     icon_add = "CreatePeriodicSnapIcon"
     icon_view = "ViewAllPeriodicSnapIcon"
     icon_object = "SnapIcon"
-    extra_js = "taskrepeat_checkings();"
-    composed_fields = (
-        ('Snapshot Lifetime', ('task_ret_count', 'task_ret_unit'), 'The amount of time these snapshots are retained before being automatically deleted'),
-    )
     resource_mixin = TaskResourceMixin
     exclude_fields = (
         'id',
-        'task_ret_count',
-        'task_ret_unit',
+        'task_exclude',
+        'task_lifetime_value',
+        'task_lifetime_unit',
+        'task_minute',
+        'task_hour',
+        'task_daymonth',
+        'task_month',
+        'task_dayweek',
         'task_begin',
         'task_end',
-        'task_interval',
-        'task_repeat_unit',
-        'task_byweekday',
     )
 
     def get_datagrid_columns(self):
         columns = super(TaskFAdmin, self).get_datagrid_columns()
-        columns.insert(2, {
-            'name': 'when',
-            'label': _('When'),
-            'sortable': False,
-        })
 
         columns.insert(3, {
-            'name': 'interv',
-            'label': _('Frequency'),
-            'sortable': False,
-        })
-
-        columns.insert(4, {
             'name': 'keepfor',
             'label': _('Keep snapshot for'),
             'sortable': False,
         })
 
-        columns.insert(5, {
+        columns.insert(4, {
             'name': 'vmwaresync',
             'label': _('VMware Sync'),
             'sortable': False,

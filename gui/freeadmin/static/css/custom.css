@@ -1446,6 +1446,19 @@ table.layoutTable > tr:first-child > td {
     right: -10px;
 }
 
+.dgrid-column-task_recursive {
+    width: 70px;
+}
+.dgrid-column-keepfor {
+    width: 130px;
+}
+.dgrid-column-vmwaresync {
+    width: 70px;
+}
+.dgrid-column-task_enabled {
+    width: 60px;
+}
+
 /* NFS Share datagrid column sizes */
 .dgrid-column-nfs_alldirs {
     width: 95px;

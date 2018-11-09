@@ -29,7 +29,7 @@ class PeriodicSnapshotTaskService(CRUDService):
             Int('lifetime_value', required=True),
             Str('lifetime_unit', enum=['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'], required=True),
             Str('naming_schema', required=True, validators=[ReplicationSnapshotNamingSchema()]),
-            Cron('schedule', required=True),
+            Cron('schedule', required=True, begin_end=True),
             Bool('enabled', default=True),
             register=True
         )
@@ -72,8 +72,8 @@ class PeriodicSnapshotTaskService(CRUDService):
             'datastore.query',
             'storage.replication',
             [
-                ['repl_tasks__id', '=', new['id']],
-                ['repl_transport', '=', 'LEGACY'],
+                ['tasks__id', '=', new['id']],
+                ['transport', '=', 'LEGACY'],
             ],
             {'prefix': 'repl_'}
         )

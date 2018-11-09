@@ -627,6 +627,8 @@ class Cron(Dict):
                     verrors.add_child(self.name, e)
 
         for v in value:
+            if self.begin_end and v in ['begin', 'end']:
+                continue
             if v not in Cron.FIELDS:
                 verrors.add(self.name, f'Unexpected {v} value')
 

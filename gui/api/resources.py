@@ -1642,43 +1642,22 @@ class TaskResourceMixin(object):
         bundle = super(TaskResourceMixin, self).dehydrate(bundle)
         if not self.is_webclient(bundle.request):
             return bundle
-        if bundle.obj.task_repeat_unit == "daily":
-            repeat = _('everyday')
-        elif bundle.obj.task_repeat_unit == "weekly":
-            wchoices = dict(choices.WEEKDAYS_CHOICES)
-            labels = []
-            for w in eval(bundle.obj.task_byweekday + ','):
-                labels.append(str(wchoices[str(w)]))
-            days = ', '.join(labels)
-            repeat = _('on every %(days)s') % {
-                'days': days,
-            }
-        else:
-            repeat = ''
-        bundle.data['when'] = _(
-            "From %(begin)s through %(end)s, %(repeat)s") % {
-            'begin': bundle.obj.task_begin,
-            'end': bundle.obj.task_end,
-            'repeat': repeat,
-        }
-        bundle.data['interv'] = "every %s" % (
-            bundle.obj.get_task_interval_display(),
-        )
-        bundle.data['keepfor'] = "%s %s" % (
-            bundle.obj.task_ret_count,
-            bundle.obj.task_ret_unit,
-        )
+
+        bundle.data['keepfor'] = f'{bundle.obj.task_lifetime_value} {bundle.obj.task_lifetime_unit.lower()}'
+
         if bundle.obj.task_recursive:
             lookup = (
-                Q(filesystem=bundle.obj.task_filesystem) |
-                Q(filesystem__startswith=bundle.obj.task_filesystem + '/')
+                Q(filesystem=bundle.obj.task_dataset) |
+                Q(filesystem__startswith=bundle.obj.task_dataset + '/')
             )
         else:
-            lookup = Q(filesystem=bundle.obj.task_filesystem)
+            lookup = Q(filesystem=bundle.obj.task_dataset)
+
         if VMWarePlugin.objects.filter(lookup).exists():
             bundle.data['vmwaresync'] = True
         else:
             bundle.data['vmwaresync'] = False
+
         return bundle
 
 
