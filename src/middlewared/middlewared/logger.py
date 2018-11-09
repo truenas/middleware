@@ -1,6 +1,7 @@
-import os
 import logging
 import logging.handlers
+import os
+import sys
 
 from logging.config import dictConfig
 from .utils import sw_version, sw_version_is_stable
@@ -260,3 +261,18 @@ class Logger(object):
             self._set_output_file()
 
         logging.root.setLevel(getattr(logging, self.debug_level))
+
+
+def setup_logging(name, debug_level, log_handler):
+    _logger = Logger(name, debug_level)
+    _logger.getLogger()
+
+    if 'file' in log_handler:
+        _logger.configure_logging('file')
+        stream = _logger.stream()
+        if stream is not None:
+            sys.stdout = sys.stderr = stream
+    elif 'console' in log_handler:
+        _logger.configure_logging('console')
+    else:
+        _logger.configure_logging('file')

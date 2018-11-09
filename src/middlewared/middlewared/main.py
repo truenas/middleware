@@ -729,7 +729,10 @@ class Middleware(object):
 
     CONSOLE_ONCE_PATH = '/tmp/.middlewared-console-once'
 
-    def __init__(self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None):
+    def __init__(
+        self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None,
+        log_handler=None,
+    ):
         self.logger = logger.Logger('middlewared', debug_level).getLogger()
         self.crash_reporting = logger.CrashReporting()
         self.crash_reporting_semaphore = asyncio.Semaphore(value=2)
@@ -742,7 +745,7 @@ class Middleware(object):
         multiprocessing.set_start_method('spawn')
         self.__procpool = concurrent.futures.ProcessPoolExecutor(
             max_workers=2,
-            initializer=worker_init,
+            initializer=functools.partial(worker_init, debug_level, log_handler),
         )
         self.__threadpool = concurrent.futures.ThreadPoolExecutor(
             initializer=lambda: set_thread_name('threadpool_ws'),
@@ -1305,9 +1308,6 @@ def main():
     ], default='console')
     args = parser.parse_args()
 
-    _logger = logger.Logger('middleware', args.debug_level)
-    _logger.getLogger()
-
     pidpath = '/var/run/middlewared.pid'
 
     if args.restart:
@@ -1320,15 +1320,7 @@ def main():
                 if e.errno != errno.ESRCH:
                     raise
 
-    if 'file' in args.log_handler:
-        _logger.configure_logging('file')
-        stream = _logger.stream()
-        if stream is not None:
-            sys.stdout = sys.stderr = stream
-    elif 'console' in args.log_handler:
-        _logger.configure_logging('console')
-    else:
-        _logger.configure_logging('file')
+    logger.setup_logging('middleware', args.debug_level, args.log_handler)
 
     setproctitle.setproctitle('middlewared')
     # Workaround to tell django to not set up logging on its own
@@ -1343,6 +1335,7 @@ def main():
         loop_monitor=not args.disable_loop_monitor,
         overlay_dirs=args.overlay_dirs,
         debug_level=args.debug_level,
+        log_handler=args.log_handler,
     ).run()
 
 
