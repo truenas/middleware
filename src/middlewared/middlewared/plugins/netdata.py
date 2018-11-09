@@ -186,6 +186,44 @@ class NetDataService(SystemServiceService):
         )
     )
     async def do_update(self, data):
+        """
+        Update Netdata Service Configuration
+
+        `alarms` is a dictionary where user specifies a key,value pair with key being alarm name and value is a boolean
+        value which represents should the alarm be enabled or not. Middlewared supports interacting (changing) alarms
+        in /usr/local/etc/netdata/health.d/ directory.
+
+        `allow_from` is used when netdata service is expected to be used as a master. It defaults to "['*']". This field
+        expects a list of Netdata patterns which Netdata will use to set restrictions on incoming connections from slave
+        accordingly.
+
+        `api_key` is a valid UUID which can be generated in command line by typing uuidgen.
+
+        `destination` is used when netdata service is expected to be used as a slave. Destination is a list of potential
+        destinations to which netdata should stream metrics. We expect the format to be IP:PORT ( port is optional ).
+        The first working destination is used by Netdata service.
+
+        `history` is the number of entries the netdata daemon will by default keep in memory for each chart dimension.
+        It defaults to 86400.
+
+        .. examples(websocket)::
+
+          Update Netdata Service Configuration
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "netdata.update",
+                "params": [{
+                    "history": 80000,
+                    "alarms": {
+                        "used_swap": "true",
+                        "ram_in_swap": "true"
+                    }
+                }]
+            }
+        """
         old = await self.config()
         new = old.copy()
         # We separate alarms we have in db and the ones user supplies. If alarms are valid, we add them to db, else
