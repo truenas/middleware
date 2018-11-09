@@ -944,11 +944,7 @@ class CertificateService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call(
-            'service.start',
-            'ix-ssl',
-            {'onetime': False}
-        )
+        await self.middleware.call('service.start', 'ssl')
 
         job.set_progress(100, 'Certificate created successfully')
 
@@ -1247,11 +1243,7 @@ class CertificateService(CRUDService):
                 {'prefix': self._config.datastore_prefix}
             )
 
-            await self.middleware.call(
-                'service.start',
-                'ix-ssl',
-                {'onetime': False}
-            )
+            await self.middleware.call('service.start', 'ssl')
 
         job.set_progress(90, 'Finalizing changes')
 
@@ -1336,11 +1328,7 @@ class CertificateService(CRUDService):
             id
         )
 
-        self.middleware.call_sync(
-            'service.start',
-            'ix-ssl',
-            {'onetime': False}
-        )
+        self.middleware.call_sync('service.start', 'ssl')
 
         sentinel = f'/tmp/alert_invalidcert_{certificate["name"]}'
         if os.path.exists(sentinel):
@@ -1555,11 +1543,7 @@ class CertificateAuthorityService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call(
-            'service.start',
-            'ix-ssl',
-            {'onetime': False}
-        )
+        await self.middleware.call('service.start', 'ssl')
 
         return await self._get_instance(pk)
 
@@ -1849,11 +1833,7 @@ class CertificateAuthorityService(CRUDService):
                 {'prefix': self._config.datastore_prefix}
             )
 
-            await self.middleware.call(
-                'service.start',
-                'ix-ssl',
-                {'onetime': False}
-            )
+            await self.middleware.call('service.start', 'ssl')
 
         return await self._get_instance(id)
 
@@ -1886,11 +1866,7 @@ class CertificateAuthorityService(CRUDService):
             id
         )
 
-        await self.middleware.call(
-            'service.start',
-            'ix-ssl',
-            {'onetime': False}
-        )
+        await self.middleware.call('service.start', 'ssl')
 
         sentinel = f'/tmp/alert_invalidCA_{ca["name"]}'
         if os.path.exists(sentinel):
@@ -1927,11 +1903,7 @@ async def setup(middlewared):
                     {'prefix': 'cert_'}
                 )
 
-                await middlewared.call(
-                    'service.start',
-                    'ix-ssl',
-                    {'onetime': False}
-                )
+                await middlewared.call('service.start', 'ssl')
 
                 middlewared.logger.debug('Default certificate for System created')
             else:

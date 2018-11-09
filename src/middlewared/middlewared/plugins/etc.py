@@ -99,6 +99,9 @@ class EtcService(Service):
         'smartd': [
             {'type': 'py', 'path': 'smartd'},
         ],
+        'ssl': [
+            {'type': 'py', 'path': 'generate_ssl_certs'},
+        ],
         'nginx': [
             {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
         ]
