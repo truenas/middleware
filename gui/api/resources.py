@@ -1583,80 +1583,35 @@ class VolumeImportResource(DojoResource):
 
 class ReplicationResourceMixin(object):
 
-    def dehydrate(self, bundle):
-        bundle = super(ReplicationResourceMixin, self).dehydrate(bundle)
-        bundle.data['repl_status'] = bundle.obj.status
-        bundle.data['repl_remote_hostname'] = (
-            bundle.obj.repl_remote.ssh_remote_hostname
-        )
-        bundle.data['repl_remote_hostkey'] = (
-            bundle.obj.repl_remote.ssh_remote_hostkey
-        )
-        bundle.data['repl_remote_port'] = (
-            bundle.obj.repl_remote.ssh_remote_port
-        )
-        bundle.data['repl_remote_dedicateduser_enabled'] = (
-            bundle.obj.repl_remote.ssh_remote_dedicateduser_enabled
-        )
-        bundle.data['repl_remote_dedicateduser'] = (
-            bundle.obj.repl_remote.ssh_remote_dedicateduser
-        )
-        bundle.data['repl_remote_cipher'] = (
-            bundle.obj.repl_remote.ssh_cipher
-        )
-        if 'repl_remote' in bundle.data:
-            del bundle.data['repl_remote']
-        result = bundle.obj.repl_lastresult or {}
-        if 'last_snapshot' in result:
-            last_snapshot = result['last_snapshot']
-        else:
-            last_snapshot = 'Not ran since boot'
-        bundle.data['repl_lastsnapshot'] = last_snapshot
-        return bundle
+    def dispatch_list(self, request, **kwargs):
+        with client as c:
+            self.__tasks = {task["id"]: task for task in c.call("replication.query")}
+        return super().dispatch_list(request, **kwargs)
 
-    def hydrate(self, bundle):
-        bundle = super(ReplicationResourceMixin, self).hydrate(bundle)
-        if bundle.obj.id:
-            if 'repl_remote_hostname' not in bundle.data:
-                bundle.data['repl_remote_hostname'] = bundle.obj.repl_remote.ssh_remote_hostname
-            if 'repl_remote_port' not in bundle.data:
-                bundle.data['repl_remote_port'] = bundle.obj.repl_remote.ssh_remote_port
-            if 'repl_remote_dedicateduser_enabled' not in bundle.data:
-                bundle.data['repl_remote_dedicateduser_enabled'] = bundle.obj.repl_remote.ssh_remote_dedicateduser_enabled
-            if 'repl_remote_dedicateduser' not in bundle.data:
-                bundle.data['repl_remote_dedicateduser'] = bundle.obj.repl_remote.ssh_remote_dedicateduser
-            if 'repl_remote_cipher' not in bundle.data:
-                bundle.data['repl_remote_cipher'] = bundle.obj.repl_remote.ssh_cipher
-            if 'repl_remote_hostkey' not in bundle.data:
-                bundle.data['repl_remote_hostkey'] = bundle.obj.repl_remote.ssh_remote_hostkey
-        else:
-            if 'repl_remote_mode' not in bundle.data:
-                bundle.data['repl_remote_mode'] = 'MANUAL'
+    def dehydrate(self, bundle):
+        bundle = super().dehydrate(bundle)
+
+        bundle.data['repl_ssh_credentials'] = (self.__tasks[bundle.data['id']]['ssh_credentials'] or {}).get('name', '-')
 
         return bundle
 
 
 class TaskResourceMixin(object):
 
+    def dispatch_list(self, request, **kwargs):
+        with client as c:
+            self.__tasks = {task["id"]: task for task in c.call("pool.snapshottask.query")}
+        return super().dispatch_list(request, **kwargs)
+
     def dehydrate(self, bundle):
         bundle = super(TaskResourceMixin, self).dehydrate(bundle)
         if not self.is_webclient(bundle.request):
             return bundle
 
-        bundle.data['keepfor'] = f'{bundle.obj.task_lifetime_value} {bundle.obj.task_lifetime_unit.lower()}'
+        bundle.data['keep_for'] = f'{bundle.obj.task_lifetime_value} {bundle.obj.task_lifetime_unit.lower()}'
 
-        if bundle.obj.task_recursive:
-            lookup = (
-                Q(filesystem=bundle.obj.task_dataset) |
-                Q(filesystem__startswith=bundle.obj.task_dataset + '/')
-            )
-        else:
-            lookup = Q(filesystem=bundle.obj.task_dataset)
-
-        if VMWarePlugin.objects.filter(lookup).exists():
-            bundle.data['vmwaresync'] = True
-        else:
-            bundle.data['vmwaresync'] = False
+        for k in ['legacy', 'vmware_sync']:
+            bundle.data[k] = self.__tasks[bundle.data['id']][k]
 
         return bundle
 

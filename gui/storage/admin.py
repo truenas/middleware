@@ -625,13 +625,19 @@ class TaskFAdmin(BaseFreeAdmin):
         columns = super(TaskFAdmin, self).get_datagrid_columns()
 
         columns.insert(3, {
-            'name': 'keepfor',
+            'name': 'keep_for',
             'label': _('Keep snapshot for'),
             'sortable': False,
         })
 
         columns.insert(4, {
-            'name': 'vmwaresync',
+            'name': 'legacy',
+            'label': _('Legacy'),
+            'sortable': False,
+        })
+
+        columns.insert(5, {
+            'name': 'vmware_sync',
             'label': _('VMware Sync'),
             'sortable': False,
         })
@@ -648,23 +654,39 @@ class ReplicationFAdmin(BaseFreeAdmin):
     resource_mixin = ReplicationResourceMixin
     exclude_fields = (
         'id',
-        'repl_remote',
-        'repl_userepl',
+        'repl_netcat_active_side',
+        'repl_netcat_active_side_port_min',
+        'repl_netcat_active_side_port_max',
+        'repl_exclude',
+        'repl_periodic_snapshot_tasks',
+        'repl_naming_schema',
+        'repl_minute',
+        'repl_hour',
+        'repl_daymonth',
+        'repl_month',
+        'repl_dayweek',
+        'repl_begin',
+        'repl_end',
+        'repl_only_matching_schedule',
+        'repl_allow_from_scratch',
+        'repl_hold_pending_snapshots',
+        'repl_retention_policy',
+        'repl_lifetime_value',
+        'repl_lifetime_unit',
+        'repl_compression',
+        'repl_speed_limit',
+        'repl_dedup',
+        'repl_large_block',
+        'repl_embed',
+        'repl_compressed',
+        'repl_retries',
     )
     refresh_time = 12000
 
     def get_datagrid_columns(self):
         columns = super(ReplicationFAdmin, self).get_datagrid_columns()
-        columns.insert(2, {
-            'name': 'repl_remote_hostname',
-            'label': _('Remote Hostname'),
-            'sortable': False,
-        })
-        columns.insert(3, {
-            'name': 'repl_status',
-            'label': _('Status'),
-            'sortable': False,
-        })
+        columns[5]['label'] = _('Recursive')
+        columns[6]['label'] = _('Auto')
         return columns
 
 

@@ -1,18 +1,13 @@
 import os
 
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
+from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
 from middlewared.service import private, CallError, CRUDService, ValidationErrors
-from middlewared.utils.path import normpath
+from middlewared.utils.path import is_child
 from middlewared.validators import Port, Range, ReplicationSnapshotNamingSchema, Unique
 
 from zettarepl.dataset.create import create_dataset
 from zettarepl.dataset.list import list_datasets
 from zettarepl.transport.create import create_transport
-
-
-def is_child(child: str, parent: str):
-    rel = os.path.relpath(child, parent)
-    return rel == "." or not rel.startswith("..")
 
 
 class ReplicationService(CRUDService):
@@ -25,9 +20,8 @@ class ReplicationService(CRUDService):
     @private
     async def extend(self, data):
         data["periodic_snapshot_tasks"] = [
-            await self.middleware.call("pool.snapshottask.extend", {k.replace("task_", ""): v
-                                                                    for k, v in task.items()})
-            for task in data.pop("tasks")
+            {k.replace("task_", ""): v for k, v in task.items()}
+            for task in data["periodic_snapshot_tasks"]
         ]
 
         if data["direction"] == "PUSH":
@@ -67,10 +61,10 @@ class ReplicationService(CRUDService):
             Str("netcat_active_side", enum=["LOCAL", "REMOTE"], null=True, default=None),
             Int("netcat_active_side_port_min", null=True, default=None, validators=[Port()]),
             Int("netcat_active_side_port_max", null=True, default=None, validators=[Port()]),
-            List("source_datasets", items=[Str("dataset", empty=False)], required=True, empty=False),
-            Str("target_dataset", required=True, empty=False),
+            List("source_datasets", items=[Path("dataset", empty=False)], required=True, empty=False),
+            Path("target_dataset", required=True, empty=False),
             Bool("recursive", required=True),
-            List("exclude", items=[Str("dataset", empty=False)], default=[]),
+            List("exclude", items=[Path("dataset", empty=False)], default=[]),
             List("periodic_snapshot_tasks", items=[Int("periodic_snapshot_task")], default=[],
                  validators=[Unique()]),
             List("naming_schema", items=[
@@ -78,8 +72,8 @@ class ReplicationService(CRUDService):
             List("also_include_naming_schema", items=[
                 Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])], default=[]),
             Bool("auto", required=True),
-            Cron("schedule"),
-            Cron("restrict_schedule"),
+            Cron("schedule", begin_end=True, null=True, default=None),
+            Cron("restrict_schedule", begin_end=True, null=True, default=None),
             Bool("only_matching_schedule", default=False),
             Bool("allow_from_scratch", default=False),
             Bool("hold_pending_snapshots", default=False),
@@ -167,10 +161,6 @@ class ReplicationService(CRUDService):
         return response
 
     async def _validate(self, data):
-        data["source_datasets"] = list(map(normpath, data["source_datasets"]))
-        data["target_dataset"] = normpath(data["target_dataset"])
-        data["exclude"] = list(map(normpath, data["exclude"]))
-
         verrors = ValidationErrors()
 
         # Direction
@@ -189,7 +179,7 @@ class ReplicationService(CRUDService):
                     verrors.add("schedule", "Push replication can't be bound to periodic snapshot task and have "
                                             "schedule at the same time")
             else:
-                if data["auto"] and not data["periodic_snapshot_tasks"]:
+                if data["auto"] and not data["periodic_snapshot_tasks"] and data["transport"] != "LEGACY":
                     verrors.add("auto", "Push replication that runs automatically must be either "
                                         "bound to periodic snapshot task or have schedule")
 
@@ -277,7 +267,7 @@ class ReplicationService(CRUDService):
                 if not data[should_be_true]:
                     verrors.add(should_be_true, "Legacy replication does not support disabling this option")
 
-            for should_be_false in ["exclude", "naming_schema", "also_include_naming_schema",
+            for should_be_false in ["exclude", "periodic_snapshot_tasks", "naming_schema", "also_include_naming_schema",
                                     "only_matching_schedule", "dedup", "large_block", "embed", "compressed"]:
                 if data[should_be_false]:
                     verrors.add(should_be_false, "Legacy replication does not support this option")
@@ -285,26 +275,11 @@ class ReplicationService(CRUDService):
             if data["direction"] != "PUSH":
                 verrors.add("direction", "Only push application is allowed for Legacy transport")
 
-            legacy_dataset = None
             if len(data["source_datasets"]) != 1:
                 verrors.add("source_datasets", "You can only have one source dataset for legacy replication")
-            else:
-                legacy_dataset = data["source_datasets"][0]
 
-            for i, snapshot_task in enumerate(snapshot_tasks):
-                if not snapshot_task["legacy_allowed"]:
-                    verrors.add(f"periodic_snapshot_tasks.{i}", "This periodic snapshot task is not suitable for "
-                                                                "legacy replication")
-
-            if legacy_dataset is not None:
-                for snapshot_task in await self.middleware.call(
-                        "pool.snapshottask.query", [["id", "nin", [task["id"] for task in snapshot_tasks]],
-                                                    ["enabled", "=", True]]):
-                    if (snapshot_task["dataset"] == legacy_dataset or
-                            (snapshot_task["recursive"] and is_child(legacy_dataset, snapshot_task["dataset"]))):
-                        verrors.add("periodic_snapshot_tasks", "Legacy replication should include all enabled snapshot "
-                                                               "tasks for it's source dataset")
-                        break
+            if data["retries"] != 1:
+                verrors.add("retries", "This value should be 1 for legacy replication")
 
         # Common for all directions and transports
 
@@ -343,11 +318,11 @@ class ReplicationService(CRUDService):
         return verrors
 
     async def _set_periodic_snapshot_tasks(self, replication_task_id, periodic_snapshot_tasks_ids):
-        await self.middleware.call("datastore.delete", "storage.replication_repl_tasks",
+        await self.middleware.call("datastore.delete", "storage.replication_repl_periodic_snapshot_tasks",
                                    [["replication_id", "=", replication_task_id]])
         for periodic_snapshot_task_id in periodic_snapshot_tasks_ids:
             await self.middleware.call(
-                "datastore.insert", "storage.replication_repl_tasks",
+                "datastore.insert", "storage.replication_repl_periodic_snapshot_tasks",
                 {
                     "replication_id": replication_task_id,
                     "task_id": periodic_snapshot_task_id,

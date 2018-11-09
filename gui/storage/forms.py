@@ -1758,6 +1758,7 @@ class PeriodicSnapForm(MiddlewareModelForm, ModelForm):
 
     task_exclude = forms.CharField(
         required=False,
+        label=_("Exclude"),
         widget=forms.Textarea(),
     )
 
@@ -1797,7 +1798,7 @@ class PeriodicSnapForm(MiddlewareModelForm, ModelForm):
             fix_time_fields(new, ['task_begin', 'task_end'])
             args = (new,) + args[1:]
 
-        if "instance" in kwargs:
+        if "instance" in kwargs and kwargs["instance"].id:
             kwargs.setdefault("initial", {})
 
             kwargs["initial"]["task_exclude"] = "\n".join(kwargs["instance"].task_exclude)
@@ -2063,7 +2064,278 @@ class ZFSDiskReplacementForm(Form):
         return True
 
 
+def is_child(child: str, parent: str):
+    rel = os.path.relpath(child, parent)
+    return rel == "." or not rel.startswith("..")
+
+
 class ReplicationForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "repl_"
+    middleware_attr_schema = "replication"
+    middleware_plugin = "replication"
+    is_singletone = False
+
+    repl_netcat_active_side_port_min = forms.CharField(
+        required=False,
+        label=_("Netcat Active Side Min Port"),
+    )
+    repl_netcat_active_side_port_max = forms.CharField(
+        required=False,
+        label=_("Netcat Active Side Max Port"),
+    )
+    repl_source_datasets = forms.CharField(
+        label=_("Source Datasets"),
+        widget=forms.Textarea(),
+    )
+    repl_exclude = forms.CharField(
+        required=False,
+        label=_("Exclude child datasets"),
+        widget=forms.Textarea(),
+    )
+    repl_naming_schema = forms.CharField(
+        required=False,
+        label=_("Naming schema"),
+        widget=forms.Textarea(),
+    )
+    repl_lifetime_value = forms.CharField(
+        required=False,
+        label=_("Snapshot lifetime value"),
+    )
+    repl_compression = forms.ChoiceField(
+        required=False,
+        label=_("Stream Compression"),
+        choices=((None, "disabled"),) + choices.Repl_CompressionChoices,
+    )
+    repl_speed_limit = forms.CharField(
+        required=False,
+        label=_("Limit (kbps)"),
+    )
+
+    class Meta:
+        fields = "__all__"
+        model = models.Replication
+
+        widgets = {
+            'repl_minute': CronMultiple(
+                attrs={'numChoices': 60, 'label': _("minute")}
+            ),
+            'repl_hour': CronMultiple(
+                attrs={'numChoices': 24, 'label': _("hour")}
+            ),
+            'repl_daymonth': CronMultiple(
+                attrs={
+                    'numChoices': 31, 'start': 1, 'label': _("day of month"),
+                }
+            ),
+            'repl_dayweek': forms.CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES
+            ),
+            'repl_month': forms.CheckboxSelectMultiple(
+                choices=choices.MONTHS_CHOICES
+            ),
+
+            'repl_begin': forms.widgets.TimeInput(attrs={
+                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
+            }),
+            'repl_end': forms.widgets.TimeInput(attrs={
+                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        if len(args) > 0 and isinstance(args[0], QueryDict):
+            new = args[0].copy()
+            fix_time_fields(new, ['repl_begin', 'repl_end'])
+            args = (new,) + args[1:]
+
+        if "instance" in kwargs and kwargs["instance"].id:
+            kwargs.setdefault("initial", {})
+
+            kwargs["initial"]["repl_source_datasets"] = "\n".join(kwargs["instance"].repl_source_datasets)
+            kwargs["initial"]["repl_exclude"] = "\n".join(kwargs["instance"].repl_exclude)
+            kwargs["initial"]["repl_naming_schema"] = "\n".join(kwargs["instance"].repl_naming_schema)
+
+            if kwargs["instance"].repl_transport == "LEGACY":
+                kwargs["initial"]["repl_periodic_snapshot_tasks"] = [
+                    task
+                    for task in models.Task.objects.all()
+                    if (
+                        task.task_dataset == kwargs["instance"].repl_source_datasets[0] or
+                        (task.task_recursive and
+                            is_child(kwargs["instance"].repl_source_datasets[0], task.task_dataset)) or
+                        (kwargs["instance"].repl_recursive and
+                            is_child(task.task_dataset, kwargs["instance"].repl_source_datasets[0]))
+                    )
+                ]
+
+        super().__init__(*args, **kwargs)
+
+        mchoicefield(self, 'repl_month', [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+        ])
+        mchoicefield(self, 'repl_dayweek', [
+            1, 2, 3, 4, 5, 6, 7
+        ])
+
+        for k in ["repl_netcat_active_side", "repl_minute", "repl_hour", "repl_daymonth", "repl_begin", "repl_end",
+                  "repl_lifetime_unit", "repl_retention_policy", "repl_retries"]:
+            self.fields[k].required = False
+
+        self.fields['repl_direction'].widget.attrs['onChange'] = "replicationDirectionToggle();"
+        self.fields['repl_transport'].widget.attrs['onChange'] = "replicationToggle();"
+        self.fields['repl_recursive'].widget.attrs['onChange'] = "replicationToggle();"
+        self.fields['repl_auto'].widget.attrs['onChange'] = "replicationToggle();"
+        self.fields['repl_retention_policy'].widget.attrs['onChange'] = "replicationToggle();"
+
+    def clean_repl_netcat_active_side_port_min(self):
+        value = self.cleaned_data.get('repl_netcat_active_side_port_min')
+        if value:
+            try:
+                return int(value)
+            except ValueError:
+                raise forms.ValidationError("Not a valid integer")
+        else:
+            return None
+
+    def clean_repl_netcat_active_side_port_max(self):
+        value = self.cleaned_data.get('repl_netcat_active_side_port_min')
+        if value:
+            try:
+                return int(value)
+            except ValueError:
+                raise forms.ValidationError("Not a valid integer")
+        else:
+            return None
+
+    def clean_repl_source_datasets(self):
+        return self.cleaned_data.get('repl_source_datasets').split()
+
+    def clean_repl_exclude(self):
+        return self.cleaned_data.get('repl_exclude').split()
+
+    def clean_repl_naming_schema(self):
+        return self.cleaned_data.get('repl_naming_schema').split()
+
+    def clean_repl_month(self):
+        m = self.data.getlist('repl_month')
+        if len(m) == 12:
+            return '*'
+        m = ','.join(m)
+        return m
+
+    def clean_repl_dayweek(self):
+        w = self.data.getlist('repl_dayweek')
+        if w == '*':
+            return w
+        if len(w) == 7:
+            return '*'
+        w = ','.join(w)
+        return w
+
+    def clean_repl_begin(self):
+        begin = self.cleaned_data.get('repl_begin')
+        if begin:
+            return begin.strftime('%H:%M')
+
+    def clean_repl_end(self):
+        end = self.cleaned_data.get('repl_end')
+        if end:
+            return end.strftime('%H:%M')
+
+    def clean_repl_retention_policy(self):
+        return self.cleaned_data.get('repl_retention_policy') or 'NONE'
+
+    def clean_repl_lifetime_value(self):
+        value = self.cleaned_data.get('repl_lifetime_value')
+        if value:
+            try:
+                return int(value)
+            except ValueError:
+                raise forms.ValidationError("Not a valid integer")
+        else:
+            return None
+
+    def clean_repl_speed_limit(self):
+        value = self.cleaned_data.get('repl_speed_limit')
+        if value:
+            try:
+                return int(value)
+            except ValueError:
+                raise forms.ValidationError("Not a valid integer")
+        else:
+            return None
+
+    def middleware_clean(self, data):
+        data["periodic_snapshot_tasks"] = [periodic_snapshot_task.id
+                                           for periodic_snapshot_task in data["periodic_snapshot_tasks"]]
+
+        if not data["compression"]:
+            data["compression"] = None
+
+        if data["transport"] == "SSH+NETCAT":
+            data["compression"] = None
+            data["speed_limit"] = None
+        else:
+            data["netcat_active_side"] = None
+            data["netcat_active_side_port_min"] = None
+            data["netcat_active_side_port_max"] = None
+
+        if data["transport"] == "LOCAL":
+            data["ssh_credentials"] = None
+            data["compression"] = None
+            data["speed_limit"] = None
+
+        if data["transport"] == "LEGACY":
+            data["auto"] = True
+            data["allow_from_scratch"] = True
+
+            data["exclude"] = []
+            data["periodic_snapshot_tasks"] = []
+            data["naming_schema"] = []
+            data["also_include_naming_schema"] = []
+            data["only_matching_schedule"] = False
+            data["dedup"] = False
+            data["large_block"] = False
+            data["embed"] = False
+            data["compressed"] = False
+            data["retries"] = 1
+
+        if data["retention_policy"] != "CUSTOM":
+            data["lifetime_value"] = None
+            data["lifetime_unit"] = None
+
+        schedule = {
+            'minute': data.pop('minute'),
+            'hour': data.pop('hour'),
+            'dom': data.pop('daymonth'),
+            'month': data.pop('month'),
+            'dow': data.pop('dayweek'),
+            'begin': data.pop('begin'),
+            'end': data.pop('end'),
+        }
+        if data["auto"]:
+            if data["direction"] == "PUSH":
+                if data["periodic_snapshot_tasks"]:
+                    data["schedule"] = None
+                    data["restrict_schedule"] = schedule
+                else:
+                    data["schedule"] = schedule
+                    data["restrict_schedule"] = None
+            else:
+                data["schedule"] = schedule
+                data["restrict_schedule"] = None
+        else:
+            data["schedule"] = None
+            data["restrict_schedule"] = None
+
+        if data["transport"] == "LEGACY":
+            data["schedule"] = None
+            data["restrict_schedule"] = None
+
+        return data
+
+    """
 
     middleware_attr_prefix = "repl_"
     middleware_attr_schema = "replication"
@@ -2240,18 +2512,7 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
             data['remote_port'] = remote_port
 
         return data
-
-
-class ReplRemoteForm(ModelForm):
-
-    class Meta:
-        fields = '__all__'
-        model = models.Task
-
-    def save(self):
-        rv = super(ReplRemoteForm, self).save()
-        notifier().reload("ssh")
-        return rv
+    """
 
 
 class VolumeExport(Form):

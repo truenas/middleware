@@ -42,7 +42,7 @@ from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.client import client
 from freenasUI.freeadmin.models import Model, UserField
-from freenasUI.system.models import KeychainCredential
+from freenasUI.system.models import SSHCredentialsKeychainCredential
 
 log = logging.getLogger('storage.models')
 REPL_RESULTFILE = '/tmp/.repl-result'
@@ -445,26 +445,27 @@ class EncryptedDisk(Model):
 
 class Replication(Model):
     repl_direction = models.CharField(
-        max_length=4,
+        max_length=120,
         choices=[("PUSH", "Push"), ("PULL", "Pull")],
-        default="push",
-        verbose_name=_("Replication Direction"),
+        default="PUSH",
+        verbose_name=_("Direction"),
     )
     repl_transport = models.CharField(
-        max_length=10,
+        max_length=120,
         choices=[("SSH", "SSH"), ("SSH+NETCAT", "SSH+netcat"), ("LOCAL", "Local"), ("LEGACY", "Legacy")],
-        default="ssh",
-        verbose_name=_("Replication Transport"),
+        default="SSH",
+        verbose_name=_("Transport"),
     )
     repl_ssh_credentials = models.ForeignKey(
-        KeychainCredential,
+        SSHCredentialsKeychainCredential,
+        blank=True,
         null=True,
-        verbose_name=_("Remote Host"),
+        verbose_name=_("SSH Connection"),
     )
     repl_netcat_active_side = models.CharField(
-        max_length=5,
+        max_length=120,
         choices=[("LOCAL", "Local"), ("REMOTE", "Remote")],
-        default="local",
+        default=None,
         null=True,
         verbose_name=_("Netcat Active Side"),
     )
@@ -494,7 +495,12 @@ class Replication(Model):
     repl_exclude = ListField(
         verbose_name=_("Exclude child datasets"),
     )
-    repl_tasks = models.ManyToManyField("Task", related_name="replication_tasks")
+    repl_periodic_snapshot_tasks = models.ManyToManyField(
+        "Task",
+        related_name="replication_tasks",
+        verbose_name=_("Periodic snapshot tasks"),
+        blank=True,
+    )
     repl_naming_schema = ListField(
         verbose_name=_("Also replicate snapshots matching naming schema"),
     )
@@ -556,9 +562,9 @@ class Replication(Model):
         verbose_name=_("Hold pending snapshots"),
     )
     repl_retention_policy = models.CharField(
-        max_length=5,
+        max_length=120,
         choices=[("SOURCE", "Same as source"), ("CUSTOM", "Custom"), ("NONE", "None")],
-        default="none",
+        default="NONE",
         verbose_name=_("Snapshot retention policy"),
     )
     repl_lifetime_value = models.PositiveIntegerField(
@@ -575,13 +581,15 @@ class Replication(Model):
     )
     repl_compression = models.CharField(
         null=True,
-        max_length=5,
+        blank=True,
+        max_length=120,
         choices=choices.Repl_CompressionChoices,
         default="LZ4",
-        verbose_name=_("Replication Stream Compression"),
+        verbose_name=_("Stream Compression"),
     )
     repl_speed_limit = models.IntegerField(
         null=True,
+        blank=True,
         default=None,
         verbose_name=_("Limit (kbps)"),
         help_text=_(
@@ -662,9 +670,10 @@ class Replication(Model):
 
     def __str__(self):
         return '%s -> %s:%s' % (
-            self.repl_filesystem,
-            self.repl_remote.ssh_remote_hostname,
-            self.repl_zfs)
+            ', '.join(self.repl_source_datasets),
+            self.repl_ssh_credentials.name if self.repl_ssh_credentials else '-',
+            self.repl_target_dataset
+        )
 
     @property
     def repl_lastresult(self):

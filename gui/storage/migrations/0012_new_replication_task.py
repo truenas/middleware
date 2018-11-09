@@ -19,7 +19,7 @@ def is_child(child: str, parent: str):
     return rel == "." or not rel.startswith("..")
 
 
-def uppercase(apps, schema_editor):
+def repl_compression(apps, schema_editor):
     Replication = apps.get_model('storage', 'Replication')
     for replication in Replication.objects.all():
         replication.repl_compression = (
@@ -83,22 +83,14 @@ def migrate_replremotes(apps, schema_editor):
 def migrate_filesystem(apps, schema_editor):
     Replication = apps.get_model('storage', 'Replication')
     for replication in Replication.objects.all():
-        replication.repl_source_datasets = [replication.repl_filesystem]
+        replication.repl_source_datasets = [os.path.normpath(replication.repl_filesystem.strip().strip("/").strip())]
         replication.save()
 
 
-def migrate_tasks(apps, schema_editor):
+def target_dataset_normpath(apps, schema_editor):
     Replication = apps.get_model('storage', 'Replication')
-    Task = apps.get_model('storage', 'Task')
     for replication in Replication.objects.all():
-        replication.repl_tasks = [
-            task
-            for task in Task.objects.all()
-            if (
-                replication.repl_source_datasets[0] == task.task_dataset or
-                (task.task_recursive and is_child(replication.repl_source_datasets[0], task.task_dataset))
-            )
-        ]
+        replication.repl_target_dataset = os.path.normpath(replication.repl_target_dataset.strip().strip("/").strip())
         replication.save()
 
 
@@ -110,6 +102,26 @@ def migrate_followdelete(apps, schema_editor):
             replication.save()
 
 
+def speed_limit(apps, schema_editor):
+    Replication = apps.get_model('storage', 'Replication')
+    for replication in Replication.objects.all():
+        if replication.repl.speed_limit == 0:
+            replication.repl.speed_limit = None
+            replication.save()
+
+
+def set_defaults(apps, schema_editor):
+    Replication = apps.get_model('storage', 'Replication')
+    for replication in Replication.objects.all():
+        replication.repl_transport = "LEGACY"
+        replication.repl_minute = "*"
+        replication.repl_large_block = False
+        replication.repl_embed = False
+        replication.repl_compressed = False
+        replication.repl_retries = 1
+        replication.save()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -118,28 +130,24 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(uppercase),
+        migrations.RunPython(repl_compression),
 
         migrations.AddField(
             model_name='replication',
             name='repl_direction',
-            field=models.CharField(choices=[('PUSH', 'Push'), ('PULL', 'Pull')], default='PUSH', max_length=4,
-                                   verbose_name='Replication Direction'),
+            field=models.CharField(choices=[('PUSH', 'Push'), ('PULL', 'Pull')], default='PUSH', max_length=120, verbose_name='Direction'),
         ),
 
         migrations.AddField(
             model_name='replication',
             name='repl_transport',
-            field=models.CharField(
-                choices=[('SSH', 'SSH'), ('SSH+NETCAT', 'SSH+netcat'), ('LOCAL', 'Local'), ('LEGACY', 'Legacy')],
-                default='LEGACY', max_length=10, verbose_name='Replication Direction'),
+            field=models.CharField(choices=[('SSH', 'SSH'), ('SSH+NETCAT', 'SSH+netcat'), ('LOCAL', 'Local'), ('LEGACY', 'Legacy')], default='SSH', max_length=120, verbose_name='Transport'),
         ),
 
         migrations.AddField(
             model_name='replication',
             name='repl_ssh_credentials',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE,
-                                    to='system.KeychainCredential', verbose_name='Remote Host'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='system.SSHCredentialsKeychainCredential', verbose_name='SSH Connection'),
         ),
         migrations.RunPython(migrate_replremotes),
         migrations.RemoveField(
@@ -153,7 +161,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='replication',
             name='repl_netcat_active_side',
-            field=models.CharField(choices=[('local', 'Local'), ('remote', 'Remote')], default=None, max_length=5, null=True, verbose_name='Netcat Active Side'),
+            field=models.CharField(choices=[('LOCAL', 'Local'), ('REMOTE', 'Remote')], default=None, max_length=120, null=True, verbose_name='Netcat Active Side'),
         ),
         migrations.AddField(
             model_name='replication',
@@ -187,6 +195,12 @@ class Migration(migrations.Migration):
             old_name='repl_zfs',
             new_name='repl_target_dataset',
         ),
+        migrations.RunPython(target_dataset_normpath),
+        migrations.AlterField(
+            model_name='replication',
+            name='repl_target_dataset',
+            field=models.CharField(help_text='This should be the name of the ZFS filesystem on remote side. eg: Volumename/Datasetname not the mountpoint or filesystem path', max_length=120, verbose_name='Target Dataset'),
+        ),
 
         migrations.RenameField(
             model_name='replication',
@@ -203,15 +217,14 @@ class Migration(migrations.Migration):
 
         migrations.AddField(
             model_name='replication',
-            name='repl_tasks',
-            field=models.ManyToManyField(related_name='replication_tasks', to='storage.Task'),
+            name='repl_periodic_snapshot_tasks',
+            field=models.ManyToManyField(blank=True, related_name='replication_tasks', to='storage.Task', verbose_name='Periodic snapshot tasks'),
         ),
-        migrations.RunPython(migrate_tasks),
 
         migrations.AddField(
             model_name='replication',
             name='repl_naming_schema',
-            field=freenasUI.freeadmin.models.fields.ListField(default=[], verbose_name='Also replicate snapshots matching naming schema'),
+            field=freenasUI.freeadmin.models.fields.ListField(verbose_name='Also replicate snapshots matching naming schema'),
         ),
         migrations.AddField(
             model_name='replication',
@@ -223,7 +236,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='replication',
             name='repl_minute',
-            field=models.CharField(default='*', help_text='Values allowed:<br>Slider: 0-30 (as it is every Nth minute).<br>Specific Minute: 0-59.', max_length=100, verbose_name='Minute'),
+            field=models.CharField(default='00', help_text='Values allowed:<br>Slider: 0-30 (as it is every Nth minute).<br>Specific Minute: 0-59.', max_length=100, verbose_name='Minute'),
         ),
         migrations.AddField(
             model_name='replication',
@@ -271,17 +284,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='replication',
             name='repl_retention_policy',
-            field=models.CharField(choices=[('SOURCE', 'Same as source'), ('CUSTOM', 'Custom'), ('NONE', 'None')], default='NONE', max_length=5, verbose_name='Snapshot retention policy'),
+            field=models.CharField(choices=[('SOURCE', 'Same as source'), ('CUSTOM', 'Custom'), ('NONE', 'None')], default='NONE', max_length=120, verbose_name='Snapshot retention policy'),
         ),
         migrations.AddField(
             model_name='replication',
             name='repl_lifetime_unit',
-            field=models.CharField(choices=[('HOUR', 'Hour(s)'), ('DAY', 'Day(s)'), ('WEEK', 'Week(s)'), ('MONTH', 'Month(s)'), ('YEAR', 'Year(s)')], default=None, max_length=120, null=True, verbose_name='Snapshot lifetime unit'),
+            field=models.CharField(choices=[('HOUR', 'Hour(s)'), ('DAY', 'Day(s)'), ('WEEK', 'Week(s)'), ('MONTH', 'Month(s)'), ('YEAR', 'Year(s)')], default='WEEK', max_length=120, null=True, verbose_name='Snapshot lifetime unit'),
         ),
         migrations.AddField(
             model_name='replication',
             name='repl_lifetime_value',
-            field=models.PositiveIntegerField(default=None, null=True, verbose_name='Snapshot lifetime value'),
+            field=models.PositiveIntegerField(default=2, null=True, verbose_name='Snapshot lifetime value'),
         ),
         migrations.RunPython(migrate_followdelete),
         migrations.RemoveField(
@@ -292,7 +305,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='replication',
             name='repl_compression',
-            field=models.CharField(choices=[('LZ4', 'lz4 (fastest)'), ('PIGZ', 'pigz (all rounder)'), ('PLZIP', 'plzip (best compression)')], default='LZ4', max_length=5, null=True, verbose_name='Replication Stream Compression'),
+            field=models.CharField(blank=True, choices=[('LZ4', 'lz4 (fastest)'), ('PIGZ', 'pigz (all rounder)'), ('PLZIP', 'plzip (best compression)')], default='LZ4', max_length=120, null=True, verbose_name='Stream Compression'),
         ),
 
         migrations.RenameField(
@@ -303,8 +316,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='replication',
             name='repl_speed_limit',
-            field=models.IntegerField(default=None, help_text='Limit the replication speed. Unit in kilobits/second. 0 = unlimited.', null=True, verbose_name='Limit (kbps)'),
+            field=models.IntegerField(blank=True, default=None, help_text='Limit the replication speed. Unit in kilobits/second. 0 = unlimited.', null=True, verbose_name='Limit (kbps)'),
         ),
+        migrations.RunPython(speed_limit),
 
         migrations.AddField(
             model_name='replication',
@@ -316,21 +330,21 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='replication',
             name='repl_large_block',
-            field=models.BooleanField(default=False,
+            field=models.BooleanField(default=True,
                                       help_text='Generate a stream which may contain blocks larger than\t128KB. This flag has no effect if the\tlarge_blocks pool feature is disabled, or if the recordsize\tproperty of this filesystem has never been\tset above 128KB. The receiving\tsystem must have the large_blocks pool feature enabled as well. See zpool-features(7) for details on ZFS feature flags and\tthe large_blocks feature.',
                                       verbose_name='Allow blocks larger than 128KB'),
         ),
         migrations.AddField(
             model_name='replication',
             name='repl_embed',
-            field=models.BooleanField(default=False,
+            field=models.BooleanField(default=True,
                                       help_text='Generate a more compact stream by using WRITE_EMBEDDED records for blocks which are stored more compactly on disk by the embedded_data pool feature. This flag has no effect if the embedded_data feature is disabled. The receiving system must have the embedded_data feature enabled. If the lz4_compress feature is active on the sending system, then the receiving system must have that feature enabled as well. See zpool-features(7) for details on ZFS feature flags and the embedded_data feature.',
                                       verbose_name='Allow WRITE_EMBEDDED records'),
         ),
         migrations.AddField(
             model_name='replication',
             name='repl_compressed',
-            field=models.BooleanField(default=False,
+            field=models.BooleanField(default=True,
                                       help_text='Generate a more compact stream by using compressed WRITE records for blocks which are compressed on disk and in memory (see the compression property for details). If the lz4_compress feature is active on the sending system, then the receiving system must have that feature enabled as well. If the large_blocks feature is enabled on the sending system but the -L option is not supplied in conjunction with -c then the data will be decompressed before sending so it can be split into smaller block sizes. ',
                                       verbose_name='Allow compressed WRITE records'),
         ),
@@ -338,11 +352,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='replication',
             name='repl_retries',
-            field=models.PositiveIntegerField(default=1, verbose_name='Number of retries for failed replications'),
+            field=models.PositiveIntegerField(default=5, verbose_name='Number of retries for failed replications'),
         ),
 
         migrations.RemoveField(
             model_name='replication',
             name='repl_lastsnapshot',
         ),
+
+        migrations.RunPython(set_defaults),
     ]

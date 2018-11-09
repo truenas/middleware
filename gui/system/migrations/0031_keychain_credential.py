@@ -23,6 +23,31 @@ class Migration(migrations.Migration):
             ],
             options={
                 'abstract': False,
+                'ordering': ['name'],
+                'verbose_name': 'Keychain Credential',
+                'verbose_name_plural': 'Keychain Credentials'
             },
+        ),
+        migrations.CreateModel(
+            name='SSHCredentialsKeychainCredential',
+            fields=[
+            ],
+            options={
+                'verbose_name': 'SSH Connection',
+                'verbose_name_plural': 'SSH Connections',
+                'proxy': True,
+            },
+            bases=('system.keychaincredential',),
+        ),
+        migrations.CreateModel(
+            name='SSHKeyPairKeychainCredential',
+            fields=[
+            ],
+            options={
+                'verbose_name': 'SSH Keypair',
+                'verbose_name_plural': 'SSH Keypairs',
+                'proxy': True,
+            },
+            bases=('system.keychaincredential',),
         ),
     ]

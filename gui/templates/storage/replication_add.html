@@ -3,16 +3,8 @@
 {{ block.super }}
 <script type="dojo/method">
 addToStack(function() {
-  repliRemoteMode();
+  replicationDirectionToggle();
+  replicationToggle();
 });
 </script>
-{% endblock %}
-
-{% block buttons_extra %}
-<button id="btn_Replication_SSHKeyScan" data-dojo-type="dijit.form.Button">
-  {% trans "SSH Key Scan" %}
-  <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
-    sshKeyScan('{% url "storage_replications_keyscan" %}', this);
-  </script>
-</button>
 {% endblock %}
