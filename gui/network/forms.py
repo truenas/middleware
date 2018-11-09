@@ -750,7 +750,8 @@ class VLANForm(ModelForm):
         vlan_pint = self.cleaned_data['vlan_pint']
         vlan_vint = self.cleaned_data['vlan_vint']
         with DBSync():
-            if len(models.Interfaces.objects.filter(int_interface=vlan_pint)) == 0:
+            qs = models.Interfaces.objects.filter(int_interface=vlan_pint)
+            if not qs.exists():
                 vlan_interface = models.Interfaces(
                     int_interface=vlan_pint,
                     int_name=vlan_pint,
@@ -759,6 +760,11 @@ class VLANForm(ModelForm):
                     int_options='up',
                 )
                 vlan_interface.save()
+            else:
+                vlan_interface = qs[0]
+                if 'up' not in vlan_interface.int_options:
+                    vlan_interface.int_options += ' up'
+                    vlan_interface.save()
             if not models.Interfaces.objects.filter(int_interface=vlan_vint).exists():
                 models.Interfaces.objects.create(
                     int_interface=vlan_vint,
