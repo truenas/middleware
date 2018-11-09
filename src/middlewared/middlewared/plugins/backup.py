@@ -231,6 +231,12 @@ class BackupService(CRUDService):
         if not credential:
             raise ValueError("Backup credential not found.")
 
+        if not os.path.exists(backup['path']):
+            raise CallError(f'Directory {backup["path"]!r} does not exist')
+
+        if os.stat(backup['path']).st_dev == os.stat('/mnt').st_dev:
+            raise CallError(f'Directory {backup["path"]!r} is not located within volume mount point')
+
         return await self._call_provider_method(credential['provider'], 'sync', job, backup, credential)
 
     @accepts(Int('credential_id'), Str('bucket'), Str('path'))
