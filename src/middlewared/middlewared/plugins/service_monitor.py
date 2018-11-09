@@ -11,7 +11,6 @@ from middlewared.service import Service, private
 
 if '/usr/local/www' not in sys.path:
     sys.path.append('/usr/local/www')
-#os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory
@@ -76,7 +75,7 @@ class ServiceMonitorThread(threading.Thread):
     def validate_time(self, ntp_server, permitted_clockskew):
         nas_time = datetime.datetime.now()
         service = self.name
-        c= ntplib.NTPClient()
+        c = ntplib.NTPClient()
         try:
             response = c.request(ntp_server)
         except Exception as e:
@@ -95,11 +94,22 @@ class ServiceMonitorThread(threading.Thread):
 
     @private
     def check_AD(self, host, port):
+        """
+        Basic health checks to determine whether we can recover the AD service if a disruption occurs.
+        Current tests:
+        - Clockskew from DC is not greater than 5 minutes (MIT default). Kerberos has strict time requirements.
+          This can vary based on the kerberos configuration, and so this may need to be a configurable field.
+        - DC connectivity. We check this by using DNS to get SRV records for LDAP, and then trying to open a socket
+          to the LDAP(S) port on each of the LDAP servers in the list.
+        Future tests:
+        - Validate service account password
+        - Verify presence of computer object in DA
+        """
         connected = False
         permitted_clockskew = datetime.timedelta(minutes=5)
         sm_timeout = _fs().middlewared.plugins.service_monitor.socket_timeout
-        
-        host_list = FreeNAS_ActiveDirectory.get_ldap_servers(host)
+
+        host_list = FreeNAS_ActiveDirectory.get_ldap_servers(host, self.config['ad_site'])
 
         if not host_list:
             self.alert(self.name, f'{self.name}: {host} not in connectable state. DNS query for SRV records for {host} failed.')
@@ -108,13 +118,13 @@ class ServiceMonitorThread(threading.Thread):
 
         for h in host_list:
             port_is_listening = FreeNAS_ActiveDirectory.port_is_listening(str(h.target),
-                                                                          h.port, 
-                                                                          errors=[], 
+                                                                          h.port,
+                                                                          errors=[],
                                                                           timeout=sm_timeout)
             if port_is_listening:
                 clockskew_within_spec = self.validate_time(str(h.target), permitted_clockskew)
                 if not clockskew_within_spec:
-                    return False 
+                    return False
 
                 return True
             else:
@@ -123,7 +133,7 @@ class ServiceMonitorThread(threading.Thread):
 
         if not connected:
             self.alert(self.name, f'{self.name}: Unable to contact domain controller for {host}. Domain not in connectable state.')
-            
+
         return connected
 
     @private
@@ -165,9 +175,6 @@ class ServiceMonitorThread(threading.Thread):
             # We should probably have a configurable threshold for number of
             # failures before starting or stopping the service
             #
-            for check in ['connected', 'started', 'enabled']:
-                check = False
-
             if self.finished.is_set():
                 # Thread.cancel() takes a while to propagate here
                 ServiceMonitorThread.reset_alerts(service)
@@ -184,7 +191,7 @@ class ServiceMonitorThread(threading.Thread):
 
             connected = self.tryConnect(self.host, self.port)
             if not connected:
-                self.logger.debug(f'[ServiceMonitorThread] AD domain is not in connectable state. Delaying further checks.') 
+                self.logger.debug(f'[ServiceMonitorThread] AD domain is not in connectable state. Delaying further checks.')
                 continue
 
             started = self.getStarted(service)
@@ -272,7 +279,7 @@ class ServiceMonitorService(Service):
 
             if thread_name in ('activedirectory', 'ldap', 'nis'):
                 s_config = await self.middleware.call('datastore.query', f'directoryservice.{thread_name}',
-                                                       None, {'get': True})
+                                                      None, {'get': True})
             else:
                 s_config = await self.middleware.call(f'{thread_name}.config')
 
