@@ -996,5 +996,5 @@ class ServiceService(CRUDService):
         await self._service('netdata', 'start', **kwargs)
 
     async def _restart_netdata(self, **kwargs):
-        await self._system('/usr/sbin/service netdata forcestop')
+        await self._service('netdata', 'stop')
         await self._start_netdata(**kwargs)

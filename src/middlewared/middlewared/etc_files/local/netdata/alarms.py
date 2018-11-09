@@ -1,7 +1,7 @@
 async def render(service, middleware):
     def update_alarms(alarms, valid_alarms):
         for alarm in valid_alarms:
-            # TODO: See if we can maybe parse these files differently and what pros and cons would that approach have ?
+
             # These are valid alarms and their respective config files exist as well
             if alarm in alarms:
                 with open(valid_alarms[alarm], 'r') as file:
@@ -28,6 +28,7 @@ async def render(service, middleware):
                     if check:
                         # For last alarm cases - is this ideal ?
                         file.write(f'      to: {"silent" if not alarms[alarm] else "sysadmin"}\n')
+
     alarms = (await middleware.call('netdata.configuration.config'))['alarms']
     valid_alarms = await middleware.call('netdata.configuration.list_alarms')
 
