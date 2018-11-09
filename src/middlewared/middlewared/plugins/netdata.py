@@ -47,6 +47,9 @@ class NetDataGlobalConfiguration(SystemServiceService):
             # [ipv6.icmpneighbor]
             #   history = 86400
             #   enabled = yes
+            #
+            # While we are here, we will also introduce basic formatting to the file to ensure
+            # that we can make it as compliable as possible
 
             param_str = ''
             for i in additional_params.split('\n'):
@@ -54,7 +57,7 @@ class NetDataGlobalConfiguration(SystemServiceService):
                 if not i:
                     continue
                 if i.startswith('#'):
-                    # Let's not validate this and write it as it is
+                    # Let's not validate this
                     if i.replace('#', '').startswith('['):
                         param_str += f'\n\n{i}'
                     else:
@@ -93,9 +96,11 @@ class NetDataGlobalConfiguration(SystemServiceService):
         bind_to_ips = data.get('bind_to')
         if bind_to_ips:
             valid_ips = [ip['address'] for ip in await self.middleware.call('interfaces.ip_in_use')]
+            valid_ips.extend(['127.0.0.1', '::1', '*'])
+
             for bind_ip in bind_to_ips:
                 if (
-                        bind_ip not in ['127.0.0.1', '::1', '*'] and bind_ip not in valid_ips
+                    bind_ip not in valid_ips
                 ):
                     verrors.add(
                         'netdata_update.bind_to',
@@ -145,12 +150,10 @@ class NetDataGlobalConfiguration(SystemServiceService):
                         f'{key} is required with stream mode as MASTER'
                     )
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
-        # TODO: See what can be done to improve this section - is very crude right now - We are probably not getting
-        # templates right now, look into that
         for alarm in valid_alarms:
+            # Let's add alarms to our db if they aren't already there
             if alarm not in data['alarms']:
                 data['alarms'][alarm] = True
 
