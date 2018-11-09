@@ -756,7 +756,7 @@ class SystemGeneralService(ConfigService):
             await self.middleware.call('service.reload', 'timeservices')
             await self.middleware.call('service.restart', 'cron')
 
-        await self.middleware.call('service._start_ssl', 'nginx')
+        await self.middleware.call('service.start', 'ssl')
 
         return await self.config()
 

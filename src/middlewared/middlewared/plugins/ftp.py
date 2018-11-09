@@ -87,6 +87,6 @@ class FTPService(SystemServiceService):
         await self._update_service(old, new)
 
         if not old['tls'] and new['tls']:
-            await self.middleware.call('service._start_ssl', 'proftpd')
+            await self.middleware.call('service.start', 'ssl')
 
         return new

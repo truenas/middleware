@@ -138,7 +138,7 @@ class WebDAVService(SystemServiceService):
         secure_protocol = False if new['protocol'] == 'HTTP' else True
 
         if new['certssl'] != 'None' and secure_protocol:
-            await self.middleware.call('notifier.start_ssl', 'webdav')
+            await self.middleware.call('service.start', 'ssl')
 
         return new
 

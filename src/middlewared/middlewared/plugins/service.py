@@ -544,7 +544,7 @@ class ServiceService(CRUDService):
         await self._service("openssh", "restart", **kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
-    async def _start_ssl(self, what=None):
+    async def _start_ssl(self):
         await self.middleware.call('etc.generate', 'ssl')
 
     async def _start_s3(self, **kwargs):
