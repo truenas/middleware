@@ -12,21 +12,27 @@ import os
 import select
 import setproctitle
 import threading
+from . import logger
 
 MIDDLEWARE = None
 
 
-def _process_worker_wrapper(*args, **kwargs):
+def _process_worker_wrapper(debug_level, log_handler, *args, **kwargs):
     """
     We need to define a wrapper to initialize the process
     as soon as it is started to load everything we need
     or the first call will take too long.
     """
-    init()
+    init(debug_level, log_handler)
     return _process_worker(*args, **kwargs)
 
 
 class ProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
+    def __init__(self, *args, debug_level=None, log_handler=None, **kwargs):
+        self.__debug_level = debug_level
+        self.__log_handler = log_handler
+        super().__init__(*args, **kwargs)
+
     def _adjust_process_count(self):
         """
         Method copied from concurrent.futures.ProcessPoolExecutor
@@ -35,7 +41,7 @@ class ProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
         for _ in range(len(self._processes), self._max_workers):
             p = multiprocessing.Process(
                 target=_process_worker_wrapper,
-                args=(self._call_queue,
+                args=(self.__debug_level, self.__log_handler, self._call_queue,
                       self._result_queue))
             p.start()
             self._processes[p.pid] = p
@@ -154,8 +160,9 @@ def watch_parent():
     os._exit(1)
 
 
-def init():
+def init(debug_level, log_handler):
     global MIDDLEWARE
     MIDDLEWARE = FakeMiddleware()
     setproctitle.setproctitle('middlewared (worker)')
     threading.Thread(target=watch_parent, daemon=True).start()
+    logger.setup_logging('worker', debug_level, log_handler)

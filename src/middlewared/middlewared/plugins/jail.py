@@ -83,11 +83,12 @@ class JailService(CRUDService):
                         else:
                             jail['ip4_addr'] = 'DHCP (not running)'
                     jails.append(jail)
+        except ioc_exceptions.JailMisconfigured as e:
+            self.logger.error(e, exc_info=True)
         except BaseException:
             # Brandon is working on fixing this generic except, till then I
             # am not going to make the perfect the enemy of the good enough!
-            self.logger.debug('iocage failed to fetch jails', exc_info=True)
-            pass
+            self.logger.debug('Failed to get list of jails', exc_info=True)
 
         return filter_list(jails, filters, options)
     query._fiterable = True
@@ -909,11 +910,19 @@ class JailService(CRUDService):
 
     @private
     def start_on_boot(self):
+        self.logger.debug('Starting jails on boot: PENDING')
         ioc.IOCage(rc=True).start()
+        self.logger.debug('Starting jails on boot: SUCCESS')
+
+        return True
 
     @private
     def stop_on_shutdown(self):
+        self.logger.debug('Stopping jails on shutdown: PENDING')
         ioc.IOCage(rc=True).stop()
+        self.logger.debug('Stopping jails on shutdown: SUCCESS')
+
+        return True
 
     @private
     async def terminate(self):
