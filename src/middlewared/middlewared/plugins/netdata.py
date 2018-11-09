@@ -1,4 +1,5 @@
 import os
+import re
 
 
 from middlewared.schema import accepts, Dict, Int, List, Str
@@ -25,16 +26,14 @@ class NetDataGlobalConfiguration(SystemServiceService):
     @private
     async def list_alarms(self):
         path = '/usr/local/etc/netdata/health.d/'
-        files = [
-            f for f in os.listdir(path) if 'sample' not in f
-        ]
         alarms = {}
-        for file in files:
+        pattern = re.compile('.*alarm: +(.*)\n')
+
+        for file in [f for f in os.listdir(path) if 'sample' not in f]:
             with open(path + file, 'r') as f:
-                data = f.readlines()
-                for line in data:
-                    if 'alarm:' in line:
-                        alarms[line.split(':')[1].strip()] = path + file
+                for alarm in re.findall(pattern, f.read()):
+                    alarms[alarm.strip()] = path + file
+
         return alarms
 
     @private
