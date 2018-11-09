@@ -175,7 +175,7 @@ class NetDataService(SystemServiceService):
             ),
             List('allow_from', items=[Str('pattern')]),
             Str('api_key', validators=[UUID()]),
-            List('bind_to'),  # TODO: nginx.conf will need to be adjusted accordingly
+            List('bind_to', items=[Str('bind_to_ip')]),
             Int('bind_to_port', validators=[Port()]),
             List('destination', items=[Str('destination', validators=[IpAddress(port=True)])]),
             Int('history'),
@@ -195,6 +195,7 @@ class NetDataService(SystemServiceService):
 
         new = await self.validate_attrs(new)
 
+        # If bind_to ip or port value is updated, we don't restart nginx, that has to be done manually
         await self._update_service(old, new)
 
         return await self.config()
