@@ -2,9 +2,9 @@ import os
 import re
 
 
-from middlewared.schema import accepts, Dict, Int, List, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
-from middlewared.validators import IpAddress, Port, UUID
+from middlewared.validators import IpAddress, Port, UUID, validate_attributes
 
 
 class NetDataService(SystemServiceService):
@@ -98,9 +98,7 @@ class NetDataService(SystemServiceService):
             valid_ips.extend(['127.0.0.1', '::1', '*'])
 
             for bind_ip in bind_to_ips:
-                if (
-                    bind_ip not in valid_ips
-                ):
+                if bind_ip not in valid_ips:
                     verrors.add(
                         'netdata_update.bind_to',
                         f'Invalid {bind_ip} bind to IP'
@@ -111,7 +109,7 @@ class NetDataService(SystemServiceService):
                 'This field is required'
             )
 
-        update_alarms = data.pop('update_alarms')
+        update_alarms = data.pop('update_alarms', {})
         valid_alarms = await self.list_alarms()
         if update_alarms:
             for alarm in update_alarms:
@@ -120,17 +118,10 @@ class NetDataService(SystemServiceService):
                         'netdata_update.alarms',
                         f'{alarm} not a valid alarm'
                     )
-                else:
-                    if not isinstance(alarm, str):
-                        verrors.add(
-                            'netdata_update.alarms',
-                            f'{alarm} key must be a string'
-                        )
-                    if not isinstance(update_alarms[alarm], bool):
-                        verrors.add(
-                            'netdata_update.alarms',
-                            f'{alarm} value can only be boolean'
-                        )
+
+            verrors.extend(
+                validate_attributes([Bool(key) for key in update_alarms], {'attributes': update_alarms})
+            )
 
         # Validating streaming metrics now
         stream_mode = data.get('stream_mode')
