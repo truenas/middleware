@@ -7,8 +7,11 @@ import subprocess
 import tempfile
 import textwrap
 
+from aiohttp import web
 from middlewared.schema import Dict, Str, accepts
 from middlewared.service import CallError, SystemServiceService, ValidationErrors, private
+
+ASIGRA_DSOPDIR = '/usr/local/www/asigra'
 
 
 class AsigraService(SystemServiceService):
@@ -227,3 +230,33 @@ class AsigraService(SystemServiceService):
             raise CallError(f'Failed to setup database: {stderr.decode()}')
 
         return True
+
+
+async def dsoperator_jnlp(request):
+    """
+    HTTP dynamic request to serve DSOP.jnlp replacing the URL to grab
+    the .jar files.
+    """
+    dsop_jnlp = f'{ASIGRA_DSOPDIR}/DSOP.jnlp'
+    if not os.path.exists(dsop_jnlp):
+        return web.Response(status=404)
+
+    with open(dsop_jnlp, 'rb') as f:
+        data = f.read()
+    data = data.replace(
+        b'http://192.168.50.142:8080/CDPA/dsoper/',
+        f'{request.scheme}://{request.host}/_plugins/asigra/static/'.encode()
+    )
+    data = data.replace(
+        b'DSOP.jnlp',
+        f'../DSOP.jnlp'.encode()
+    )
+    return web.Response(body=data, headers={
+        'Content-Disposition': 'attachment; filename="DSOP.jnlp"',
+        'Content-Length': str(len(data)),
+        'Content-Type': 'application/x-java-jnlp-file',
+    })
+
+
+async def setup(middleware):
+    middleware.plugin_route_add('asigra', 'DSOP.jnlp', dsoperator_jnlp)
