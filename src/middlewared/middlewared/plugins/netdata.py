@@ -1,3 +1,4 @@
+import copy
 import os
 import re
 
@@ -13,19 +14,49 @@ class NetDataService(SystemServiceService):
         service = 'netdata'
         service_model = 'netdataglobalsettings'
         service_verb = 'restart'
+        datastore_extend = 'netdata.netdata_extend'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._alarms = {}
+        self._initialize_alarms()
 
     @private
-    def list_alarms(self):
+    async def netdata_extend(self, data):
+        # We get alarms as a dict e.g
+        # {"alarms": {"alarm1": {"enabled": True}, "alarm2": {"enabled": True}}}
+        alarms = copy.deepcopy(self._alarms)
+        alarms.update(data['alarms'])
+        data['alarms'] = alarms
+        for alarm in data['alarms']:
+            # Remove conf file paths
+            data['alarms'][alarm].pop('path', None)
+        return data
+
+    @private
+    async def list_alarms(self):
+        alarms = copy.deepcopy(self._alarms)
+        config = await self.config()
+        for alarm in config['alarms']:
+            if alarm not in alarms:
+                # An unlikely case when a previously configured alarm does not exist in conf files anymore
+                alarms[alarm] = {}
+            alarms[alarm]['enabled'] = config['alarms'][alarm]['enabled']
+
+        return alarms
+
+    @private
+    def _initialize_alarms(self):
         path = '/usr/local/etc/netdata/health.d/'
-        alarms = {}
         pattern = re.compile('.*alarm: +(.*)\n')
 
         for file in [f for f in os.listdir(path) if 'sample' not in f]:
             with open(path + file, 'r') as f:
                 for alarm in re.findall(pattern, f.read()):
-                    alarms[alarm.strip()] = path + file
-
-        return alarms
+                    # By default all alarms are enabled in netdata
+                    # When we list alarms, alarms which have been configured by user to be disabled
+                    # will show up as disabled only
+                    self._alarms[alarm.strip()] = {'path': path + file, 'enabled': True}
 
     @private
     async def validate_attrs(self, data):
@@ -73,21 +104,11 @@ class NetDataService(SystemServiceService):
                     param_str += f'\n\t{i}'
 
             data['additional_params'] = param_str + '\n'
-        else:
-            # Let's load up the default value for additional params
-            # This is sort of a rollback to default configuration if a blank string is provided for
-            # additional params - we will default to the defaults of netdata.conf giving users a chance
-            # to come back to default configuration if they messed something up pretty bad
-            with open('/usr/local/etc/netdata/netdata.conf.sample', 'r') as file:
-                try:
-                    data['additional_params'] = file.read().split('per plugin configuration')[1]
-                except IndexError:
-                    self.logger.debug('Failed to set default value for additional params')
 
         bind_to_ips = data.get('bind')
         if bind_to_ips:
             valid_ips = [ip['address'] for ip in await self.middleware.call('interfaces.ip_in_use')]
-            valid_ips.extend(['127.0.0.1', '::1', '0.0.0.0', '*'])
+            valid_ips.extend(['127.0.0.1', '::1', '0.0.0.0', '::'])
 
             for bind_ip in bind_to_ips:
                 if bind_ip not in valid_ips:
@@ -102,7 +123,7 @@ class NetDataService(SystemServiceService):
             )
 
         update_alarms = data.pop('update_alarms', {})
-        valid_alarms = await self.middleware.run_in_thread(self.list_alarms)
+        valid_alarms = self._alarms
         if update_alarms:
             for alarm in update_alarms:
                 if alarm not in valid_alarms:
@@ -112,7 +133,10 @@ class NetDataService(SystemServiceService):
                     )
 
             verrors.extend(
-                validate_attributes([Bool(key) for key in update_alarms], {'attributes': update_alarms})
+                validate_attributes(
+                    [Dict(key, Bool('enabled', required=True)) for key in update_alarms],
+                    {'attributes': update_alarms}
+                )
             )
 
         # Validating streaming metrics now
@@ -157,14 +181,7 @@ class NetDataService(SystemServiceService):
 
         verrors.check()
 
-        for alarm in valid_alarms:
-            # Let's add alarms to our db if they aren't already there
-            if alarm not in data['alarms']:
-                data['alarms'][alarm] = True
-
-        for alarm in update_alarms:
-            # These are valid alarms
-            data['alarms'][alarm] = update_alarms[alarm]
+        data['alarms'].update(update_alarms)
 
         return data
 
@@ -184,7 +201,8 @@ class NetDataService(SystemServiceService):
             Int('history'),
             Int('http_port_listen_backlog'),
             Str('stream_mode', enum=['NONE', 'MASTER', 'SLAVE']),
-            Int('update_every')
+            Int('update_every'),
+            update=True
         )
     )
     async def do_update(self, data):
@@ -220,16 +238,15 @@ class NetDataService(SystemServiceService):
                 "params": [{
                     "history": 80000,
                     "alarms": {
-                        "used_swap": "true",
-                        "ram_in_swap": "true"
+                        "used_swap": {'enabled': true},
+                        "ram_in_swap": {'enabled': true}
                     }
                 }]
             }
         """
         old = await self.config()
         new = old.copy()
-        # We separate alarms we have in db and the ones user supplies. If alarms are valid, we add them to db, else
-        # we keep the old ones
+        # We separate alarms we have in db and the ones user supplies
         new['update_alarms'] = data.pop('alarms', {})
         new.update(data)
 

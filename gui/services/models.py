@@ -2235,7 +2235,7 @@ class NetDataGlobalSettings(Model):
     )
 
     bind = ListField(
-        default=['0.0.0.0'],
+        default=['0.0.0.0', '::'],
         null=False,
         blank=False,
     )
@@ -2248,7 +2248,8 @@ class NetDataGlobalSettings(Model):
 
     additional_params = models.TextField(
         blank=True,
-        null=True
+        null=True,
+        default=''
     )
 
     alarms = DictField()
