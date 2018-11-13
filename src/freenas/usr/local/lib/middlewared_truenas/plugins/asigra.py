@@ -27,6 +27,8 @@ class AsigraService(SystemServiceService):
             pw = pwd.getpwnam(self.pg_user)
             self.pg_user_uid = pw.pw_uid
             self.pg_group_gid = pw.pw_gid
+            if not os.path.exists(pw.pw_dir):
+                os.mkdir(pw.pw_dir)
         except Exception:
             self.pg_user_uid = 5432
             self.pg_group_gid = 5432
@@ -57,10 +59,10 @@ class AsigraService(SystemServiceService):
         config = self.middleware.call_sync('datastore.config', 'services.asigra')
 
         if not config['filesystem']:
-            return False
+            raise CallError('Configure a filesystem for Asigra DS-System.')
 
         if not self.middleware.call_sync('zfs.dataset.query', [('id', '=', config['filesystem'])]):
-            return False
+            raise CallError(f'Filesystem {config["filesystem"]!r} not found.')
 
         filesystems = ('files', 'database', 'upgrade')
         for fs in filesystems:
@@ -182,7 +184,7 @@ class AsigraService(SystemServiceService):
             f.write(textwrap.dedent(
                 '''#!/bin/sh
                 pg_client_default=/usr/local/bin/psql
-                pg_user=postgres
+                pg_user=pgsql
                 pg_host=/tmp/
                 dest_dir=/usr/local/ds-system
                 echo command: ${pg_client_default} -U ${pg_user} $opt -h ${pg_host} -l -d template1
