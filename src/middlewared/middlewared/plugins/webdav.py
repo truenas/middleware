@@ -153,6 +153,12 @@ class WebDAVService(SystemServiceService):
     async def upper(self, data):
         data['protocol'] = data['protocol'].upper()
         data['htauth'] = data['htauth'].upper()
+        if data['certssl']:
+            data['certssl'] = await self.middleware.call(
+                'certificate.query',
+                [['id', '=', data['certssl']['id']]],
+                {'get': True}
+            )
 
         return data
 
