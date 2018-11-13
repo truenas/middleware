@@ -1,6 +1,18 @@
 from django.db import migrations, models
 
 
+def move_sysctl_min_protocol(apps, schemaeditor):
+    tunables = apps.get_model('system', 'tunable')
+    smb1_sysctl = tunables.filter(tun_type='SYSCTL',
+                                  tun_var='freenas.services.smb.config.server_min_protocol',
+                                  tun_value='NT1')
+
+    if smb1_sysctl.exists():
+        cifs.cifs_srv_enable_smb1 = True
+        cifs.save
+        smb1_sysctl.delete()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -19,6 +31,10 @@ class Migration(migrations.Migration):
                     'modern versions of the SMB protocol.'
                 ),
                 verbose_name='Enable SMB1'
+            ),
+        ),
+        migrations.RunPython(
+            move_sysctl_min_protocol
         ),
     ]
 
