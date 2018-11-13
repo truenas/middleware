@@ -79,6 +79,12 @@ adctl_start()
 	local ad_started=0
 	touch "${start_file}"
 
+	#56751 - verify that servers in /etc/directoryservice/ActiveDirectory/config
+	#        are listening. If not, re-generate config.
+	if ! AD_validate_config
+		AD_remove_config
+	fi
+
 	if ! AD_init
 	then
 		activedirectory_set 1
