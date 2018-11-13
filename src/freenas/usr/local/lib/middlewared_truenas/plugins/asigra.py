@@ -169,6 +169,7 @@ class AsigraService(SystemServiceService):
 
         return True
 
+    @private
     def setup_asigra(self):
         asigra_config = None
         for row in self.middleware.call_sync('datastore.query', 'services.asigra'):
