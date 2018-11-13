@@ -379,7 +379,7 @@ class ServiceService(CRUDService):
         return False, []
 
     async def _start_webdav(self, **kwargs):
-        await self._service("ix-apache", "start", force=True, **kwargs)
+        await self.middleware.call('etc.generate', 'webdav')
         await self._service("apache24", "start", **kwargs)
 
     async def _stop_webdav(self, **kwargs):
@@ -387,11 +387,11 @@ class ServiceService(CRUDService):
 
     async def _restart_webdav(self, **kwargs):
         await self._service("apache24", "stop", force=True, **kwargs)
-        await self._service("ix-apache", "start", force=True, **kwargs)
+        await self.middleware.call('etc.generate', 'webdav')
         await self._service("apache24", "restart", **kwargs)
 
     async def _reload_webdav(self, **kwargs):
-        await self._service("ix-apache", "start", force=True, **kwargs)
+        await self.middleware.call('etc.generate', 'webdav')
         await self._service("apache24", "reload", **kwargs)
 
     async def _restart_django(self, **kwargs):
