@@ -305,12 +305,6 @@ class notifier(metaclass=HookMetaclass):
         else:
             self._system("/usr/sbin/service ix-ataidle quietstart")
 
-    def start_ssl(self, what=None):
-        if what is not None:
-            self._system("/usr/sbin/service ix-ssl quietstart %s" % what)
-        else:
-            self._system("/usr/sbin/service ix-ssl quietstart")
-
     def _open_db(self):
         """Open and return a cursor object for database access."""
         try:

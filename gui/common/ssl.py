@@ -28,18 +28,9 @@ import re
 
 from OpenSSL import crypto
 
-from freenasUI.middleware.client import client, ClientException
 
 log = logging.getLogger('common.ssl')
 CERT_CHAIN_REGEX = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
-
-
-def load_certificate(buf):
-    with client as c:
-        try:
-            return c.call('certificate.load_certificate', buf)
-        except ClientException as e:
-            raise e
 
 
 def export_certificate_chain(buf):
