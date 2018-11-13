@@ -15,11 +15,11 @@ def generate_webdav_config(middleware):
             data = f.read()
 
         data = re.sub(
-            'Listen .*\n',
+            'Listen .*\n\t<VirtualHost.*\n',
             f'Listen {webdav_config["tcpportssl"]}\n\t'
-            f'<VirtualHost *:8081>\n\t\tSSLEngine on\n\t\t'
+            f'<VirtualHost *:{webdav_config["tcpportssl"]}>\n\t\tSSLEngine on\n\t\t'
             f'SSLCertificateFile "{webdav_config["certssl"]["certificate_path"]}"\n\t\t'
-            f'SSLCertificateKeyFiile "${webdav_config["certssl"]["privatekey_path"]}"\n\t\t'
+            f'SSLCertificateKeyFile "{webdav_config["certssl"]["privatekey_path"]}"\n\t\t'
             f'SSLProtocol +TLSv1 +TLSv1.1 +TLSv1.2\n\t\t'
             f'SSLCipherSuite HIGH:MEDIUM\n\n',
             data
@@ -32,11 +32,16 @@ def generate_webdav_config(middleware):
             # Empty webdav.conf
             with open('/usr/local/etc/apache24/Includes/webdav.conf', 'w') as f:
                 f.write('')
+    else:
+        if webdav_config['protocol'] == 'HTTP':
+            # Empty webdav-ssl.conf
+            with open('/usr/local/etc/apache24/Includes/webdav-ssl.conf', 'w') as f:
+                f.write('')
 
 
 async def render(service, middleware):
 
-    if (await middleware.call('service.query', [['service', '=', 'webdav']]))['state'] != 'RUNNING':
+    if (await middleware.call('service.query', [['service', '=', 'webdav']]))[0]['state'] != 'RUNNING':
         await middleware.run_in_thread(empty_webdav_config_files)
     else:
         await middleware.run_in_thread(generate_webdav_config, middleware)
