@@ -1,13 +1,6 @@
 import re
 
 
-def empty_webdav_config_files():
-    path = '/usr/local/etc/apache24/Includes/'
-    for p in [path + 'webdav.conf', path + 'webdav-ssl.conf']:
-        with open(p, 'w') as f:
-            f.write('')
-
-
 def generate_webdav_config(middleware):
     webdav_config = middleware.call_sync('webdav.config')
     if webdav_config['protocol'] in ('HTTPS', 'HTTPHTTPS'):
@@ -40,8 +33,4 @@ def generate_webdav_config(middleware):
 
 
 async def render(service, middleware):
-
-    if (await middleware.call('service.query', [['service', '=', 'webdav']]))[0]['state'] != 'RUNNING':
-        await middleware.run_in_thread(empty_webdav_config_files)
-    else:
-        await middleware.run_in_thread(generate_webdav_config, middleware)
+    await middleware.run_in_thread(generate_webdav_config, middleware)

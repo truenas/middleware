@@ -137,7 +137,7 @@ class WebDAVService(SystemServiceService):
         await self.validate(new, 'webdav_update')
         await self._update_service(old, new)
 
-        if new['certssl'] and new['protocol'] != 'HTTP':
+        if new['certssl'] and new['protocol'] != 'http':
             await self.middleware.call('service.start', 'ssl')
 
         return await self.config()
