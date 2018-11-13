@@ -103,7 +103,7 @@ class DatastoreService(Service):
             List('select', default=[]),
             Bool('count', default=False),
             Bool('get', default=False),
-            Str('prefix'),
+            Str('prefix', null=True),
             default=None,
             null=True,
             register=True,
@@ -197,7 +197,7 @@ class DatastoreService(Service):
         options['get'] = True
         return self.query(name, None, options)
 
-    @accepts(Str('name'), Dict('data', additional_attrs=True), Dict('options', Str('prefix')))
+    @accepts(Str('name'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', null=True)))
     def insert(self, name, data, options=None):
         """
         Insert a new entry to `name`.
@@ -232,7 +232,7 @@ class DatastoreService(Service):
 
         return obj.pk
 
-    @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix')))
+    @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', null=True)))
     def update(self, name, id, data, options=None):
         """
         Update an entry `id` in `name`.

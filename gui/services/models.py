@@ -2222,13 +2222,6 @@ class NetDataGlobalSettings(Model):
         blank=False
     )
 
-    memory_mode = models.CharField(
-        default='save',
-        blank=False,
-        null=False,
-        max_length=10
-    )
-
     update_every = models.IntegerField(
         default=1,
         null=False,
@@ -2241,13 +2234,13 @@ class NetDataGlobalSettings(Model):
         blank=False
     )
 
-    bind_to = ListField(
-        default=['*'],
+    bind = ListField(
+        default=['0.0.0.0'],
         null=False,
         blank=False,
     )
 
-    bind_to_port = models.IntegerField(
+    port = models.IntegerField(
         default=19999,
         null=False,
         blank=False
@@ -2264,7 +2257,7 @@ class NetDataGlobalSettings(Model):
         max_length=10,
         blank=False,
         null=False,
-        default='none'
+        default='NONE'
     )
 
     api_key = models.CharField(

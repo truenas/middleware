@@ -4,10 +4,10 @@ async def render(service, middleware):
 
             # These are valid alarms and their respective config files exist as well
             if alarm in alarms:
-                with open(valid_alarms[alarm], 'r') as file:
-                    content = file.readlines()
+                with open(valid_alarms[alarm], 'r') as f:
+                    content = f.readlines()
 
-                with open(valid_alarms[alarm], 'w') as file:
+                with open(valid_alarms[alarm], 'w') as f:
                     check = False
                     for line in content:
                         if any(i in line for i in ('alarm:', 'template:')):
@@ -16,18 +16,18 @@ async def render(service, middleware):
                                 check = True
                             elif check:
                                 # This means to: wasn't present in the section of that alarm - let's write it
-                                file.write(f'      to: {"silent" if not alarms[alarm] else "sysadmin"}\n')
+                                f.write(f'      to: {"silent" if not alarms[alarm] else "sysadmin"}\n')
                                 check = False
 
                         if 'to:' in line and check:
-                            file.write(f'{line[:line.find(":") + 1]} {"silent" if not alarms[alarm] else "sysadmin"}\n')
+                            f.write(f'{line[:line.find(":") + 1]} {"silent" if not alarms[alarm] else "sysadmin"}\n')
                             check = False
                             continue
-                        file.write(line)
+                        f.write(line)
 
                     if check:
                         # For last alarm cases - is this ideal ?
-                        file.write(f'      to: {"silent" if not alarms[alarm] else "sysadmin"}\n')
+                        f.write(f'      to: {"silent" if not alarms[alarm] else "sysadmin"}\n')
 
     alarms = (await middleware.call('netdata.config'))['alarms']
     valid_alarms = await middleware.call('netdata.list_alarms')

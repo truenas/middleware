@@ -13,17 +13,9 @@ class NetDataService(SystemServiceService):
         service = 'netdata'
         service_model = 'netdataglobalsettings'
         service_verb = 'restart'
-        datastore_prefix = ''
-        datastore_extend = 'netdata.netdata_global_config_extend'
 
     @private
-    async def netdata_global_config_extend(self, data):
-        data['memory_mode'] = data['memory_mode'].upper()
-        data['stream_mode'] = data['stream_mode'].upper()
-        return data
-
-    @private
-    async def list_alarms(self):
+    def list_alarms(self):
         path = '/usr/local/etc/netdata/health.d/'
         alarms = {}
         pattern = re.compile('.*alarm: +(.*)\n')
@@ -92,25 +84,25 @@ class NetDataService(SystemServiceService):
                 except IndexError:
                     self.logger.debug('Failed to set default value for additional params')
 
-        bind_to_ips = data.get('bind_to')
+        bind_to_ips = data.get('bind')
         if bind_to_ips:
             valid_ips = [ip['address'] for ip in await self.middleware.call('interfaces.ip_in_use')]
-            valid_ips.extend(['127.0.0.1', '::1', '*'])
+            valid_ips.extend(['127.0.0.1', '::1', '0.0.0.0', '*'])
 
             for bind_ip in bind_to_ips:
                 if bind_ip not in valid_ips:
                     verrors.add(
-                        'netdata_update.bind_to',
-                        f'Invalid {bind_ip} bind to IP'
+                        'netdata_update.bind',
+                        f'Invalid {bind_ip} bind IP'
                     )
         else:
             verrors.add(
-                'netdata_update.bind_to',
+                'netdata_update.bind',
                 'This field is required'
             )
 
         update_alarms = data.pop('update_alarms', {})
-        valid_alarms = await self.list_alarms()
+        valid_alarms = await self.middleware.run_in_thread(self.list_alarms)
         if update_alarms:
             for alarm in update_alarms:
                 if alarm not in valid_alarms:
@@ -132,6 +124,29 @@ class NetDataService(SystemServiceService):
                         f'netdata_update.{key}',
                         f'{key} is required with stream mode as SLAVE'
                     )
+
+            destinations = data.get('destination')
+            if destinations:
+                ip_addr = IpAddress()
+                port = Port()
+                for dest in destinations:
+                    ip = dest.split(':')[0]
+                    try:
+                        ip_addr(ip)
+                    except ValueError as e:
+                        verrors.add(
+                            'netdata_update.destination',
+                            str(e)
+                        )
+                    else:
+                        if ':' in dest:
+                            try:
+                                port(dest.split(':')[1])
+                            except ValueError as e:
+                                verrors.add(
+                                    'netdata_update.destination',
+                                    f'Not a valid port: {e}'
+                                )
         elif stream_mode == 'MASTER':
             for key in ('allow_from', 'api_key'):
                 if not data.get(key):
@@ -151,9 +166,6 @@ class NetDataService(SystemServiceService):
             # These are valid alarms
             data['alarms'][alarm] = update_alarms[alarm]
 
-        data['memory_mode'] = data['memory_mode'].lower()
-        data['stream_mode'] = data['stream_mode'].lower()
-
         return data
 
     @accepts(
@@ -166,12 +178,11 @@ class NetDataService(SystemServiceService):
             ),
             List('allow_from', items=[Str('pattern')]),
             Str('api_key', validators=[UUID()]),
-            List('bind_to', items=[Str('bind_to_ip')]),
-            Int('bind_to_port', validators=[Port()]),
-            List('destination', items=[Str('destination', validators=[IpAddress(port=True)])]),
+            List('bind', items=[Str('bind_ip')]),
+            Int('port', validators=[Port()]),
+            List('destination', items=[Str('destination')]),
             Int('history'),
             Int('http_port_listen_backlog'),
-            Str('memory_mode', enum=['SAVE', 'MAP', 'RAM', 'NONE']),
             Str('stream_mode', enum=['NONE', 'MASTER', 'SLAVE']),
             Int('update_every')
         )

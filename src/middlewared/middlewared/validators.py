@@ -25,21 +25,11 @@ class Exact:
 
 
 class IpAddress:
-    def __init__(self, port=False):
-        self.port = port
-
     def __call__(self, value):
-        ip_value = value if not self.port else value.split(':')[0]
         try:
-            ipaddress.ip_address(ip_value)
+            ipaddress.ip_address(value)
         except ValueError:
             raise ValueError('Not a valid IP address')
-        else:
-            if self.port and ':' in value:
-                try:
-                    Port()(int(value.split(':')[1]))
-                except ValueError as e:
-                    raise ValueError(f'Not a valid port: {e}')
 
 
 class Time:
