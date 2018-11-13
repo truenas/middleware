@@ -121,6 +121,7 @@ class CIFSResourceTest(APITestCase):
             'cifs_srv_description': '',
             'cifs_srv_dirmask': '',
             'cifs_srv_domain_logons': False,
+            'cifs_srv_enable_smb1': False,
             'cifs_srv_doscharset': 'CP437',
             'cifs_srv_filemask': '',
             'cifs_srv_guest': 'nobody',
