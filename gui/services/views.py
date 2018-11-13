@@ -23,13 +23,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import os
 import json
 import logging
 import sysctl
 
 from django.core.urlresolvers import reverse
-from django.http import StreamingHttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 
@@ -47,7 +45,6 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.forms import (
-    AsigraForm,
     CIFSForm,
     S3Form
 )
@@ -55,8 +52,6 @@ from freenasUI.system.models import Tunable
 from freenasUI.support.utils import fc_enabled
 from middlewared.client import ValidationErrors
 
-from io import StringIO
-from wsgiref.util import FileWrapper
 
 log = logging.getLogger("services.views")
 
@@ -415,69 +410,3 @@ def services_netdata(request):
                   {
                       'started': started
                   })
-
-def services_asigra(request):
-    try:
-        asigra = models.Asigra.objects.all()[0]
-    except Exception:
-        asigra = models.Asigra()
-
-    if request.method == "POST":
-        form = AsigraForm(request.POST, instance=asigra)
-        if form.is_valid():
-            form.save()
-            return JsonResp(
-                request,
-                message=_("Asigra successfully edited.")
-            )
-        else:
-            return JsonResp(request, form=form)
-
-    else:
-        form = AsigraForm(instance=asigra)
-
-    asigra_dsoperator_url = reverse('services_asigra_dsoperator')
-    asigra_started = notifier().started('asigra')
-
-    return render(request, 'services/asigra.html', {
-        'form': form,
-        'asigra': asigra,
-        'asigra_started': asigra_started,
-        'asigra_dsoperator_url': asigra_dsoperator_url
-    })
-
-def services_asigra_dsoperator(request):
-    template = "/usr/local/www/asigra/DSOP.jnlp.template"
-    filename = "/usr/local/www/asigra/DSOP.jnlp"
-
-    contents = []
-    with open(template, 'r') as f:
-        contents = f.read()
-
-    addr = request.META.get("SERVER_ADDR") 
-    if ':' in addr:
-        addr = '[%s]' % addr
-    protocol = "http"
-    if request.is_secure():
-        protocol = "https"
-    url = "{}://{}/asigra/".format(protocol, addr)
-
-    contents = contents.replace("@@URL@@", url)
-    with open(filename, 'w') as f:
-        f.write(contents)
-
-    wrapper = FileWrapper(StringIO(contents))
-
-    response = StreamingHttpResponse(
-        wrapper, content_type='application/octet-stream'
-    )
-
-    response['Content-Length'] = len(contents)
-    response['Content-Disposition'] = (
-        'attachment; filename="{}"'.format(os.path.basename(filename))
-    )
-
-    try:
-        return response
-    finally:
-        pass
