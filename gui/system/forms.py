@@ -3539,7 +3539,6 @@ class CloudCredentialsForm(ModelForm):
     GCLOUD_keyfile = FileField(
         label=_('JSON Service Account Key'),
         required=False,
-        widget=forms.widgets.PasswordInput(render_value=True),
     )
 
     PROVIDER_MAP = {

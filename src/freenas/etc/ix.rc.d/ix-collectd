@@ -281,7 +281,7 @@ LoadPlugin zfs_arc_v2
 
 <Plugin "df">
     Mountpoint "/"
-    Mountpoint "/^\/mnt\//"
+    Mountpoint "^\/mnt(?:(?!\.zfs\/snapshot).)*$"
     FSType "zfs"
 </Plugin>
 EOF
