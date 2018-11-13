@@ -7,6 +7,12 @@ def generate_webdav_config(middleware):
         with open('/usr/local/etc/apache24/Includes/webdav.conf', 'r') as f:
             data = f.read()
 
+        webdav_config['certssl'] = middleware.call_sync(
+            'certificate.query',
+            [['id', '=', webdav_config['certssl']]],
+            {'get': True}
+        )
+
         data = re.sub(
             'Listen .*\n\t<VirtualHost.*\n',
             f'Listen {webdav_config["tcpportssl"]}\n\t'
@@ -23,13 +29,13 @@ def generate_webdav_config(middleware):
 
         if webdav_config['protocol'] == 'HTTPS':
             # Empty webdav.conf
-            with open('/usr/local/etc/apache24/Includes/webdav.conf', 'w') as f:
-                f.write('')
+            with open('/usr/local/etc/apache24/Includes/webdav.conf', 'w+') as f:
+                pass
     else:
         if webdav_config['protocol'] == 'HTTP':
             # Empty webdav-ssl.conf
-            with open('/usr/local/etc/apache24/Includes/webdav-ssl.conf', 'w') as f:
-                f.write('')
+            with open('/usr/local/etc/apache24/Includes/webdav-ssl.conf', 'w+') as f:
+                pass
 
 
 async def render(service, middleware):

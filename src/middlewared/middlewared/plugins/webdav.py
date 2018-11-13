@@ -137,9 +137,6 @@ class WebDAVService(SystemServiceService):
         await self.validate(new, 'webdav_update')
         await self._update_service(old, new)
 
-        if new['certssl'] and new['protocol'] != 'http':
-            await self.middleware.call('service.start', 'ssl')
-
         return await self.config()
 
     @private
@@ -154,11 +151,9 @@ class WebDAVService(SystemServiceService):
         data['protocol'] = data['protocol'].upper()
         data['htauth'] = data['htauth'].upper()
         if data['certssl']:
-            data['certssl'] = await self.middleware.call(
-                'certificate.query',
-                [['id', '=', data['certssl']['id']]],
-                {'get': True}
-            )
+            # FIXME: When we remove support for querying up foreign key objects in datastore, this should be fixed
+            # to reflect that change
+            data['certssl'] = data['certssl']['id']
 
         return data
 
@@ -173,13 +168,17 @@ class WebDAVService(SystemServiceService):
             )
 
         cert_ssl = data.get('certssl') or 0
-        if data.get('protocol') != 'http' and not (
-                await self.middleware.call('certificate.query', [['id', '=', cert_ssl]])
-        ):
-            verrors.add(
-                f"{schema_name}.certssl",
-                'WebDAV SSL protocol specified without choosing a certificate'
-            )
+        if data.get('protocol') != 'http':
+            if not cert_ssl:
+                verrors.add(
+                    f"{schema_name}.certssl",
+                    'WebDAV SSL protocol specified without choosing a certificate'
+                )
+            elif not (await self.middleware.call('certificate.query', [['id', '=', cert_ssl]])):
+                verrors.add(
+                    f"{schema_name}.certssl",
+                    'Please provide a valid certificate id'
+                )
 
         if verrors:
             raise verrors
