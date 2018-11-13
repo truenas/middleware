@@ -1069,7 +1069,7 @@ AD_generate_config()
 	fi
 	if [ ${res} = "1" ]
 	then
-		rm "${AD_CONFIG_FILE}"
+		AD_remove_config
 	fi
 
 	return ${res}
