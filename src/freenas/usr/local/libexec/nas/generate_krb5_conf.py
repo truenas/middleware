@@ -476,8 +476,17 @@ def main():
 
     ad_objects = client.call('datastore.query', 'directoryservice.ActiveDirectory')
     if ad_objects and ad_objects[0]['ad_enable']:
-        ad = Struct(client.call('notifier.directoryservice', 'AD',
-            timeout=fs().directoryservice.kerberos.timeout.start))
+        """
+        We first try to find the best kerberos server to speak to. If this fails
+        (for instance, due to stale entries in /etc/directoryservice/ActiveDirectory/config)
+        then we fall back to relying on DNS SRV records. Although this isn't perfect, it's
+        better than going production down.
+        """
+        try:
+            ad = Struct(client.call('notifier.directoryservice', 'AD',
+                timeout=fs().directoryservice.kerberos.timeout.start))
+        except:
+            pass
 
     for kr in realms:
         kr = Struct(kr)
