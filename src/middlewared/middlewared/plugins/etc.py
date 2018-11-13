@@ -105,7 +105,7 @@ class EtcService(Service):
         'webdav': [
             {'type': 'mako', 'path': 'local/apache24/httpd.conf'},
             {'type': 'mako', 'path': 'local/apache24/Includes/webdav.conf'},
-            {'type': 'mako', 'path': 'local/apache24/Includes/webdav-ssl.conf'},
+            {'type': 'py', 'path': 'local/apache24/Includes/webdav_config'},
         ],
         'nginx': [
             {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
