@@ -952,9 +952,17 @@ def generate_smb4_conf(client, smb4_conf, role):
     if os.path.exists("/usr/local/etc/smbusers"):
         confset1(smb4_conf, "username map = /usr/local/etc/smbusers")
 
-    server_min_protocol = fs().services.smb.config.server_min_protocol
-    if server_min_protocol != 'NONE':
-        confset2(smb4_conf, "server min protocol = %s", server_min_protocol)
+    sysctl_server_min_protocol = fs().services.smb.config.server_min_protocol
+
+    # Migrate to the enable_smb1_checkbox
+    if sysctl_server_min_protocol == 'NT1':
+        client.call('datastore.update', 'services.cifs', cifs.id, {'cifs_srv_enable_smb1': true})
+        confset2(smb4_conf, "server min protocol = NT1")
+    else:
+        if not cifs.enable_smb1:
+            confset2(smb4_conf, "server min protocol = SMB2_02")
+        else:
+            confset2(smb4_conf, "server min protocol = NT1")
 
     server_max_protocol = fs().services.smb.config.server_max_protocol
     if server_max_protocol != 'NONE':

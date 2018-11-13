@@ -161,12 +161,6 @@ class CIFSForm(ModelForm):
         else:
             self.fields['cifs_srv_bindip'].initial = ('')
 
-        # Disable UNIX extensions if not using SMB1 - We can probably disable other things too
-        proto = _fs().services.smb.config.server_min_protocol
-        if re.match('SMB[23]+', proto):
-            self.initial['cifs_srv_unixext'] = False
-            self.fields['cifs_srv_unixext'].widget.attrs['disabled'] = 'disabled'
-
         if activedirectory_enabled():
             self.initial['cifs_srv_localmaster'] = False
             self.fields['cifs_srv_localmaster'].widget.attrs['disabled'] = 'disabled'
