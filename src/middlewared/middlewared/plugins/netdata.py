@@ -48,7 +48,7 @@ class NetDataService(SystemServiceService):
     @private
     def _initialize_alarms(self):
         path = '/usr/local/etc/netdata/health.d/'
-        pattern = re.compile('.*alarm: +(.*)\n')
+        pattern = re.compile('alarm: +(.*)[\s\S]*?os: +(.*)\n')
 
         for file in [f for f in os.listdir(path) if 'sample' not in f]:
             with open(path + file, 'r') as f:
@@ -56,7 +56,8 @@ class NetDataService(SystemServiceService):
                     # By default all alarms are enabled in netdata
                     # When we list alarms, alarms which have been configured by user to be disabled
                     # will show up as disabled only
-                    self._alarms[alarm.strip()] = {'path': path + file, 'enabled': True}
+                    if 'freebsd' in alarm[1]:
+                        self._alarms[alarm[0].strip()] = {'path': path + file, 'enabled': True}
 
     @private
     async def validate_attrs(self, data):
