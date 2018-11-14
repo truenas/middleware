@@ -35,7 +35,7 @@ from freenasUI import choices
 from freenasUI.contrib.IPAddressField import (
     IPAddressField, IP4AddressField, IP6AddressField
 )
-from freenasUI.freeadmin.models import Model
+from freenasUI.freeadmin.models import ListField, Model
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import CIFS
@@ -464,6 +464,26 @@ class Alias(Model):
 
     class FreeAdmin:
         pass
+
+
+class Bridge(Model):
+    interface = models.OneToOneField(
+        Interfaces,
+        verbose_name=_("Interface"),
+        on_delete=models.CASCADE,
+    )
+    members = ListField(
+        verbose_name=_("Members"),
+        default=[],
+    )
+
+    class Meta:
+        verbose_name = _("Bridge")
+        verbose_name_plural = _("Bridges")
+        ordering = ["interface"]
+
+    def __str__(self):
+        return str(self.interface)
 
 
 class VLAN(Model):
