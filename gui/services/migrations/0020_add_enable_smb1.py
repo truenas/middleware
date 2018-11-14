@@ -3,9 +3,9 @@ from django.db import migrations, models
 
 def move_sysctl_min_protocol(apps, schemaeditor):
     tunables = apps.get_model('system', 'tunable')
-    smb1_sysctl = tunables.filter(tun_type='SYSCTL',
-                                  tun_var='freenas.services.smb.config.server_min_protocol',
-                                  tun_value='NT1')
+    smb1_sysctl = tunables.objects.filter(tun_type='SYSCTL',
+                                          tun_var='freenas.services.smb.config.server_min_protocol',
+                                          tun_value='NT1')
 
     cifs = apps.get_model('services', 'cifs').objects.order_by('-id')[0]
 
