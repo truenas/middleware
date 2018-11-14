@@ -5,7 +5,7 @@ import re
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
-from middlewared.validators import IpAddress, Port, UUID, validate_attributes
+from middlewared.validators import IpAddress, Port, Unique, UUID, validate_attributes
 
 
 class NetDataService(SystemServiceService):
@@ -48,7 +48,7 @@ class NetDataService(SystemServiceService):
     @private
     def _initialize_alarms(self):
         path = '/usr/local/etc/netdata/health.d/'
-        pattern = re.compile('alarm: +(.*)[\s\S]*?os: +(.*)\n')
+        pattern = re.compile(r'alarm: +(.*)(?:[\s\S]*?os: +(.*)\n)?')
 
         for file in [f for f in os.listdir(path) if 'sample' not in f]:
             with open(path + file, 'r') as f:
@@ -56,7 +56,7 @@ class NetDataService(SystemServiceService):
                     # By default all alarms are enabled in netdata
                     # When we list alarms, alarms which have been configured by user to be disabled
                     # will show up as disabled only
-                    if 'freebsd' in alarm[1]:
+                    if 'freebsd' in alarm[1] or not alarm[1]:
                         self._alarms[alarm[0].strip()] = {'path': path + file, 'enabled': True}
 
     @private
@@ -196,9 +196,9 @@ class NetDataService(SystemServiceService):
             ),
             List('allow_from', items=[Str('pattern')]),
             Str('api_key', validators=[UUID()]),
-            List('bind', items=[Str('bind_ip')]),
+            List('bind', validators=[Unique()], items=[Str('bind_ip')]),
             Int('port', validators=[Port()]),
-            List('destination', items=[Str('destination')]),
+            List('destination', validators=[Unique()], items=[Str('destination')]),
             Int('history'),
             Int('http_port_listen_backlog'),
             Str('stream_mode', enum=['NONE', 'MASTER', 'SLAVE']),
@@ -239,8 +239,8 @@ class NetDataService(SystemServiceService):
                 "params": [{
                     "history": 80000,
                     "alarms": {
-                        "used_swap": {'enabled': true},
-                        "ram_in_swap": {'enabled': true}
+                        "used_swap": {"enabled": true},
+                        "ram_in_swap": {"enabled": true}
                     }
                 }]
             }

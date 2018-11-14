@@ -7,17 +7,17 @@ async def render(service, middleware):
 
             # These are valid alarms and their respective config files exist as well
             if alarm.get('path'):
-                with open(alarm['path'], 'r') as f:
+                with open(alarm['path'], 'r+') as f:
                     content = f.read()
-
-                with open(alarm['path'], 'w') as f:
+                    f.seek(0)
                     f.write(
                         re.sub(
-                            f'(alarm: {key}[\s\S]*?to: )(.*)',
+                            fr'(alarm: {key}[\s\S]*?to: )(.*)',
                             fr'\1{"silent" if not alarm["enabled"] else "sysadmin"}',
                             content
                         )
                     )
+                    f.truncate()
             else:
                 middleware.logger.debug(f'Could not find config file for {key} alarm')
 
