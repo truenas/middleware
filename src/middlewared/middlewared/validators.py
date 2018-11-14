@@ -1,5 +1,6 @@
 import ipaddress
 import re
+import uuid
 
 from datetime import time
 from django.core.exceptions import ValidationError
@@ -28,7 +29,7 @@ class IpAddress:
         try:
             ipaddress.ip_address(value)
         except ValueError:
-            raise ValueError("Not a valid IP address")
+            raise ValueError('Not a valid IP address')
 
 
 class Time:
@@ -137,10 +138,17 @@ class IpInUse:
 
 
 class MACAddr:
-
     def __call__(self, value):
         if not re.match('[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$', value.lower()):
             raise ValueError('Please provide a valid MAC address')
+
+
+class UUID:
+    def __call__(self, value):
+        try:
+            uuid.UUID(value, version=4)
+        except ValueError as e:
+            raise ValueError(f'Invalid UUID: {e}')
 
 
 def validate_attributes(schema, data, additional_attrs=False, attr_key="attributes"):
