@@ -15,7 +15,7 @@ from bsd import geom, getswapinfo
 
 from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import get_smartctl_args
-from middlewared.schema import accepts, Bool, Dict, List, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
@@ -80,6 +80,9 @@ class DiskService(CRUDService):
             ]),
             Str('passwd', password=True),
             Str('smartoptions'),
+            Int('critical', null=True),
+            Int('difference', null=True),
+            Int('informational', null=True),
             update=True
         )
     )
