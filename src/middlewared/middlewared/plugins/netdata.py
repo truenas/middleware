@@ -23,7 +23,7 @@ class NetDataService(SystemServiceService):
 
     @private
     async def netdata_extend(self, data):
-        # We get alarms as a dict e.g
+        # We get data alarms as a dict e.g
         # {"alarms": {"alarm1": {"enabled": True}, "alarm2": {"enabled": True}}}
         alarms = copy.deepcopy(self._alarms)
         alarms.update(data['alarms'])
@@ -210,9 +210,9 @@ class NetDataService(SystemServiceService):
         """
         Update Netdata Service Configuration
 
-        `alarms` is a dictionary where user specifies a key,value pair with key being alarm name and value is a boolean
-        value which represents should the alarm be enabled or not. Middlewared supports interacting (changing) alarms
-        in /usr/local/etc/netdata/health.d/ directory.
+        `alarms` is a dictionary where user specifies a key,value pair with key being alarm name and value is a
+        dictionary which is of the schema "{'enabled': True}" indicating should the alarm be enabled or not.
+        Middlewared supports interacting (changing) alarms in /usr/local/etc/netdata/health.d/ directory.
 
         `allow_from` is used when netdata service is expected to be used as a master. It defaults to "['*']". This field
         expects a list of Netdata patterns which Netdata will use to set restrictions on incoming connections from slave
@@ -253,7 +253,7 @@ class NetDataService(SystemServiceService):
 
         new = await self.validate_attrs(new)
 
-        # If bind_to ip or port value is updated, we don't restart nginx, that has to be done manually
+        # If port value is updated, we don't restart nginx, that has to be done manually
         await self._update_service(old, new)
 
         return await self.config()
