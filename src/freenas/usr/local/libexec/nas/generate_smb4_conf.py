@@ -955,6 +955,8 @@ def generate_smb4_conf(client, smb4_conf, role):
 
     if not cifs.enable_smb1:
         confset2(smb4_conf, "server min protocol = SMB2_02")
+    else:
+        confset2(smb4_conf, "server min protocol = NT1")
 
     server_max_protocol = fs().services.smb.config.server_max_protocol
     if server_max_protocol != 'NONE':
