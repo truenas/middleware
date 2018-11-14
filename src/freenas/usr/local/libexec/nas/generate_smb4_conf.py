@@ -952,9 +952,10 @@ def generate_smb4_conf(client, smb4_conf, role):
     if os.path.exists("/usr/local/etc/smbusers"):
         confset1(smb4_conf, "username map = /usr/local/etc/smbusers")
 
-    server_min_protocol = fs().services.smb.config.server_min_protocol
-    if server_min_protocol != 'NONE':
-        confset2(smb4_conf, "server min protocol = %s", server_min_protocol)
+    if not cifs.enable_smb1:
+        confset1(smb4_conf, "server min protocol = SMB2_02")
+    else:
+        confset1(smb4_conf, "server min protocol = NT1")
 
     server_max_protocol = fs().services.smb.config.server_max_protocol
     if server_max_protocol != 'NONE':
