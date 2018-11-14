@@ -7,9 +7,11 @@ def move_sysctl_min_protocol(apps, schemaeditor):
                                   tun_var='freenas.services.smb.config.server_min_protocol',
                                   tun_value='NT1')
 
+    cifs = apps.get_model('services', 'cifs').objects.order_by('-id')[0]
+
     if smb1_sysctl.exists():
         cifs.cifs_srv_enable_smb1 = True
-        cifs.save
+        cifs.save()
         smb1_sysctl.delete()
 
 
