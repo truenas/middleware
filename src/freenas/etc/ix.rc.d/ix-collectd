@@ -289,10 +289,15 @@ cat << EOF >> $cfg
 </Plugin>
 
 <Plugin "df">
-    Mountpoint "/"
-    Mountpoint "^\/mnt(?:(?!\.zfs\/snapshot).)*$"
-    FSType "zfs"
-    LogOnce true
+    Mountpoint "/^\/boot/"
+    Mountpoint "/\.zfs\/snapshot/"
+    Mountpoint "/\.system/"
+    Mountpoint "/\.warden/"
+    FSType "tmpfs"
+    FSType "nullfs"
+    FSType "devfs"
+    FSType "fdescfs"
+    ignoreSelected true
 </Plugin>
 
 <Plugin python>
