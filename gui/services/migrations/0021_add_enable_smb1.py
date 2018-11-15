@@ -18,7 +18,7 @@ def move_sysctl_min_protocol(apps, schemaeditor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('services', '0019_add_asigra_model'),
+        ('services', '0020_make_lunid_non_null'),
     ]
 
     operations = [
