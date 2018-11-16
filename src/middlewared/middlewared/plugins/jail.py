@@ -689,16 +689,18 @@ class JailService(CRUDService):
         zfs = libzfs.ZFS(history=True, history_prefix="<iocage>")
         pools = zfs.pools
         prop = "org.freebsd.ioc:active"
+        activated = False
 
         for _pool in pools:
             if _pool.name == pool:
                 ds = zfs.get_dataset(_pool.name)
                 ds.properties[prop] = libzfs.ZFSUserProperty("yes")
+                activated = True
             else:
                 ds = zfs.get_dataset(_pool.name)
                 ds.properties[prop] = libzfs.ZFSUserProperty("no")
 
-        return True
+        return activated
 
     @accepts(Str("ds_type", enum=["ALL", "JAIL", "TEMPLATE", "RELEASE"]))
     def clean(self, ds_type):
