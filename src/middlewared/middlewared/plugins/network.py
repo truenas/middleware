@@ -308,10 +308,12 @@ class InterfacesService(CRUDService):
     @private
     def iface_extend(self, iface_state, configs, fake=False):
 
-        if iface_state['name'].startswith('vlan'):
-            itype = 'VLAN'
+        if iface_state['name'].startswith('bridge'):
+            itype = 'BRIDGE'
         elif iface_state['name'].startswith('lagg'):
             itype = 'LINK_AGGREGATION'
+        elif iface_state['name'].startswith('vlan'):
+            itype = 'VLAN'
         elif not iface_state['cloned']:
             itype = 'PHYSICAL'
         else:
@@ -343,7 +345,16 @@ class InterfacesService(CRUDService):
             'mtu': config['int_mtu'],
         })
 
-        if iface['name'].startswith('lagg'):
+        if iface['name'].startswith('bridge'):
+            bridge = self.middleware.call_sync(
+                'datastore.query',
+                'network.bridge',
+                [('interface', '=', config['id'])],
+            )
+            if bridge:
+                bridge = bridge[0]
+                iface.update({'bridge_members': bridge['members']})
+        elif iface['name'].startswith('lagg'):
             lag = self.middleware.call_sync(
                 'datastore.query',
                 'network.lagginterface',
@@ -422,6 +433,11 @@ class InterfacesService(CRUDService):
             i['alias_interface'] = i['alias_interface']['id']
             self._original_datastores['alias'].append(i)
 
+        self._original_datastores['bridge'] = []
+        for i in await self.middleware.call('datastore.query', 'network.bridge'):
+            i['interface'] = i['interface']['id'] if i['interface'] else None
+            self._original_datastores['bridge'].append(i)
+
         self._original_datastores['vlan'] = await self.middleware.call(
             'datastore.query', 'network.vlan'
         )
@@ -449,6 +465,9 @@ class InterfacesService(CRUDService):
 
         for i in self._original_datastores['alias']:
             await self.middleware.call('datastore.insert', 'network.alias', i)
+
+        for i in self._original_datastores['bridge']:
+            await self.middleware.call('datastore.insert', 'network.bridge', i)
 
         for i in self._original_datastores['vlan']:
             await self.middleware.call('datastore.insert', 'network.vlan', i)
@@ -528,7 +547,7 @@ class InterfacesService(CRUDService):
         'interface_create',
         Str('name'),
         Str('description'),
-        Str('type', enum=['LINK_AGGREGATION', 'VLAN'], required=True),
+        Str('type', enum=['BRIDGE', 'LINK_AGGREGATION', 'VLAN'], required=True),
         Bool('ipv4_dhcp', default=False),
         Bool('ipv6_auto', default=False),
         List('aliases', unique=True, items=[IPAddr('ip', cidr=True)], default=[]),
@@ -537,6 +556,7 @@ class InterfacesService(CRUDService):
         Int('failover_vhid'),
         List('failover_aliases', items=[IPAddr('ip', cidr=True)]),
         List('failover_virtual_aliases', items=[IPAddr('ip', cidr=True)]),
+        List('bridge_members'),
         Str('lag_protocol', enum=['LACP', 'FAILOVER', 'LOADBALANCE', 'ROUNDROBIN', 'NONE']),
         List('lag_ports', items=[Str('interface')]),
         Str('vlan_parent_interface'),
@@ -550,6 +570,8 @@ class InterfacesService(CRUDService):
         """
         Create virtual interfaces (Link Aggregation, VLAN)
 
+        For BRIDGE `type` the following attribute is required: bridge_members.
+
         For LINK_AGGREGATION `type` the following attributes are required: lag_ports,
         lag_protocol.
 
@@ -558,7 +580,9 @@ class InterfacesService(CRUDService):
         """
 
         verrors = ValidationErrors()
-        if data['type'] == 'LINK_AGGREGATION':
+        if data['type'] == 'BRIDGE':
+            required_attrs = ('bridge_members', )
+        elif data['type'] == 'LINK_AGGREGATION':
             required_attrs = ('lag_protocol', 'lag_ports')
         elif data['type'] == 'VLAN':
             required_attrs = ('vlan_parent_interface', 'vlan_tag')
@@ -584,23 +608,43 @@ class InterfacesService(CRUDService):
 
         await self.__save_datastores()
 
-        if data['type'] == 'LINK_AGGREGATION':
-            name = data.get('name')
-            if not name:
-                next_lagg = 0
-                laggs = [
-                    i['int_interface']
-                    for i in await self.middleware.call(
-                        'datastore.query',
-                        'network.interfaces',
-                        [('int_interface', '^', 'lagg')],
-                    )
-                ]
-                while f'lagg{next_lagg}' in laggs:
-                    next_lagg += 1
-                name = f'lagg{next_lagg}'
+        async def get_next(prefix):
+            number = 0
+            ifaces = [
+                i['int_interface']
+                for i in await self.middleware.call(
+                    'datastore.query',
+                    'network.interfaces',
+                    [('int_interface', '^', prefix)],
+                )
+            ]
+            while f'{prefix}{number}' in ifaces:
+                number += 1
+            return f'{prefix}{number}'
 
-            interface_id = None
+        interface_id = None
+        if data['type'] == 'BRIDGE':
+            name = data.get('name') or await get_next('bridge')
+            try:
+                async for i in self.__create_interface_datastore(data, {
+                    'interface': name,
+                }):
+                    interface_id = i
+
+                await self.middleware.call(
+                    'datastore.insert',
+                    'network.bridge',
+                    {'interface': interface_id, 'members': data['bridge_members']},
+                )
+            except Exception as e:
+                if interface_id:
+                    with contextlib.suppress(Exception):
+                        await self.middleware.call(
+                            'datastore.delete', 'network.interfaces', interface_id
+                        )
+                raise e
+        elif data['type'] == 'LINK_AGGREGATION':
+            name = data.get('name') or await get_next('lagg')
             lag_id = None
             lagports_ids = []
             try:
@@ -680,10 +724,7 @@ class InterfacesService(CRUDService):
                         )
                 raise e
         elif data['type'] == 'VLAN':
-            interface_id = None
-            name = data.get('name')
-            if not name:
-                name = f'vlan{data["vlan_tag"]}'
+            name = data.get('name') or f'vlan{data["vlan_tag"]}'
             try:
                 async for i in self.__create_interface_datastore(data, {
                     'interface': name,
@@ -762,6 +803,31 @@ class InterfacesService(CRUDService):
                             f'Interface in use by {data["name"]}. Attribute {i} cannot be changed'
                             ' on members interfaces.',
                         )
+        elif itype == 'BRIDGE':
+            if 'name' in data and not (
+                data['name'].startswith('bridge') and data['name'][6:].isdigit()
+            ):
+                verrors.add(
+                    f'{schema_name}.name',
+                    (
+                        'Bridge interface must start with "bridge" followed by an unique number.'
+                    ),
+                )
+            for i, member in enumerate(data.get('bridge_members') or []):
+                if member not in ifaces:
+                    verrors.add(f'{schema_name}.bridge_members.{i}', 'Not a valid interface.')
+                    continue
+                member_iface = ifaces[member]
+                if member in lag_used:
+                    verrors.add(
+                        f'{schema_name}.bridge_members.{i}',
+                        f'Interface {member} is currently in use by {lag_used[member]}.',
+                    )
+                elif member in vlan_used:
+                    verrors.add(
+                        f'{schema_name}.bridge_members.{i}',
+                        f'Interface {member} is currently in use by {vlan_used[member]}.',
+                    )
         elif itype == 'LINK_AGGREGATION':
             if 'name' in data and not (
                 data['name'].startswith('lagg') and data['name'][4:].isdigit()
@@ -1165,6 +1231,32 @@ class InterfacesService(CRUDService):
                 continue
             parent_interfaces.append(iface.parent)
             parent_iface.up()
+
+        bridges = await self.middleware.call('datastore.query', 'network.bridge')
+        for bridge in bridges:
+            name = bridge['interface']['int_interface']
+            cloned_interfaces.append(name)
+            self.logger.info(f'Setting up {name}')
+            try:
+                iface = netif.get_interface(name)
+            except KeyError:
+                netif.create_interface(name)
+                iface = netif.get_interface(name)
+
+            members = set(iface.members)
+            members_database = set(bridge['members'])
+
+            for member in members_database - members:
+                try:
+                    iface.add_member(member)
+                except FileNotFoundError:
+                    self.logger.error('Bridge member %s not found', member)
+
+            for member in members - members_database:
+                # These interfaces may be added dynamically for Jails/VMs
+                if member.startswith(('vnet', 'epair', 'tap')):
+                    continue
+                iface.delete_member(member)
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
         for interface in interfaces:
