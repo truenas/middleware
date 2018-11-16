@@ -18,6 +18,7 @@ class AsigraService(SystemServiceService):
 
     class Config:
         service = "asigra"
+        service_verb = "restart"
         datastore = "services.asigra"
         datastore_prefix = "asigra_"
 
