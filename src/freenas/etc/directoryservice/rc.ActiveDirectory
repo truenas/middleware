@@ -1067,8 +1067,46 @@ AD_generate_config()
 		res=$?
 		/bin/chmod 600 "${AD_CONFIG_FILE}"
 	fi
+	if [ ${res} = "1" ]
+	then
+		AD_remove_config
+	fi
 
 	return ${res}
+}
+
+AD_validate_config()
+{
+	if [ ! -s "${AD_CONFIG_FILE}" ]
+	then
+		return 1
+	fi
+
+	exec 3<&0
+	exec 0<"${AD_CONFIG_FILE}"
+
+	while read -r line
+	do
+		local is_dc="$(echo ${line}|grep 'ad_dcname')"
+		local is_gc="$(echo ${line}|grep 'ad_gcname')"
+		local is_krb="$(echo ${line}|grep 'ad_krbname')"
+		if [ "${is_dc}" ] || [ "${is_gc}" ] || [ "${is_krb}" ]
+		then
+			local val="$(echo ${line}|cut -f2- -d=|sed -Ee 's#^[[:space:]]+##' -e 's#[[:space:]]+$##')"
+			local server_address="$(echo ${val}|sed 's/\:/\ /')"
+			nc -vz -w 3 ${server_address} 2> /dev/null
+			res=$?
+
+			if [ ${res}  = "1" ]
+			then
+				return 1 
+			fi
+		fi
+
+	done
+	exec 0<&3
+
+	return 0
 }
 
 AD_remove_config()

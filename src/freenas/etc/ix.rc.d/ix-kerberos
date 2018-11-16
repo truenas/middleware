@@ -43,8 +43,16 @@ generate_kerberos_files()
 
 	if [ $# -eq 0 ] && activedirectory_enabled
 	then
-		AD_init
-		generate_krb5_conf default "$(AD_get ad_krb_realm)"
+		if ! AD_validate_config
+		then
+			AD_remove_config
+		fi
+		if ! AD_init
+		then
+			generate_krb5_conf
+		else
+			generate_krb5_conf default "$(AD_get ad_krb_realm)"
+		fi
 	else
 		generate_krb5_conf $*
 	fi
