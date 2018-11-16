@@ -1276,7 +1276,7 @@ class InterfacesService(CRUDService):
             except Exception:
                 self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
 
-        internal_interfaces = ['lo', 'pflog', 'pfsync', 'tun', 'tap', 'bridge', 'epair']
+        internal_interfaces = ['lo', 'pflog', 'pfsync', 'tun', 'tap', 'epair']
         if not await self.middleware.call('system.is_freenas'):
             internal_interfaces.extend(await self.middleware.call('notifier.failover_internal_interfaces') or [])
         internal_interfaces = tuple(internal_interfaces)
@@ -1285,6 +1285,10 @@ class InterfacesService(CRUDService):
         for name, iface in list(netif.list_interfaces().items()):
             # Skip internal interfaces
             if name.startswith(internal_interfaces):
+                continue
+
+            # bridge0/bridge1 are special, may be used by Jails/VM
+            if name in ('bridge0', 'bridge1'):
                 continue
 
             # If there are no interfaces configured we start DHCP on all
@@ -1310,9 +1314,9 @@ class InterfacesService(CRUDService):
                 if dhclient_running:
                     os.kill(dhclient_pid, signal.SIGTERM)
 
-                # If we have vlan or lagg not in the database at all
-                # It gets destroy, otherwise just bring it down
-                if name not in cloned_interfaces and name.startswith(('lagg', 'vlan')):
+                # If we have bridge/vlan/lagg not in the database at all
+                # it gets destroy, otherwise just bring it down.
+                if name not in cloned_interfaces and name.startswith(('bridge', 'lagg', 'vlan')):
                     netif.destroy_interface(name)
                 elif name not in parent_interfaces:
                     iface.down()
