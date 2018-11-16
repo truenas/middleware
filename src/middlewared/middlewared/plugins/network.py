@@ -608,8 +608,8 @@ class InterfacesService(CRUDService):
 
         await self.__save_datastores()
 
-        async def get_next(prefix):
-            number = 0
+        async def get_next(prefix, start=0):
+            number = start
             ifaces = [
                 i['int_interface']
                 for i in await self.middleware.call(
@@ -624,7 +624,9 @@ class InterfacesService(CRUDService):
 
         interface_id = None
         if data['type'] == 'BRIDGE':
-            name = data.get('name') or await get_next('bridge')
+            # For bridge we want to start with 2 because bridge0/bridge1 may have been used
+            # for Jails/VM.
+            name = data.get('name') or await get_next('bridge', start=2)
             try:
                 async for i in self.__create_interface_datastore(data, {
                     'interface': name,
