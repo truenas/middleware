@@ -74,6 +74,67 @@ INTERFACES_WITH_LAG = INTERFACES + [
 ]
 
 
+INTERFACES_WITH_BRIDGE = INTERFACES + [
+    {
+        'id': 'bridge0',
+        'name': 'bridge0',
+        'fake': False,
+        'type': 'BRIDGE',
+        'aliases': [],
+        'options': '',
+        'ipv4_dhcp': False,
+        'ipv6_auto': False,
+        'state': {
+            'cloned': True,
+        },
+        'bridge_members': ['em0'],
+    },
+]
+
+
+@pytest.mark.asyncio
+async def test__interfaces_service__create_bridge_invalid_ports():
+
+    m = Middleware()
+    m['interfaces.query'] = Mock(return_value=INTERFACES)
+
+    with pytest.raises(ValidationErrors) as ve:
+        await InterfacesService(m).create({
+            'type': 'BRIDGE',
+            'bridge_members': ['em0', 'igb2'],
+        })
+    assert 'interface_create.bridge_members.1' in ve.value
+
+
+@pytest.mark.asyncio
+async def test__interfaces_service__create_bridge_invalid_ports_used():
+
+    m = Middleware()
+    m['interfaces.query'] = Mock(return_value=INTERFACES_WITH_BRIDGE)
+
+    with pytest.raises(ValidationErrors) as ve:
+        await InterfacesService(m).create({
+            'type': 'BRIDGE',
+            'bridge_members': ['em0'],
+        })
+    assert 'interface_create.bridge_members.0' in ve.value
+
+
+@pytest.mark.asyncio
+async def test__interfaces_service__create_bridge_invalid_name():
+
+    m = Middleware()
+    m['interfaces.query'] = Mock(return_value=INTERFACES)
+
+    with pytest.raises(ValidationErrors) as ve:
+        await InterfacesService(m).create({
+            'type': 'BRIDGE',
+            'name': 'mybridge1',
+            'bridge_members': ['em0'],
+        })
+    assert 'interface_create.name' in ve.value
+
+
 @pytest.mark.asyncio
 async def test__interfaces_service__create_lagg_invalid_ports():
 
