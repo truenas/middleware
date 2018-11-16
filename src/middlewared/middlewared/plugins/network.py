@@ -608,25 +608,11 @@ class InterfacesService(CRUDService):
 
         await self.__save_datastores()
 
-        async def get_next(prefix, start=0):
-            number = start
-            ifaces = [
-                i['int_interface']
-                for i in await self.middleware.call(
-                    'datastore.query',
-                    'network.interfaces',
-                    [('int_interface', '^', prefix)],
-                )
-            ]
-            while f'{prefix}{number}' in ifaces:
-                number += 1
-            return f'{prefix}{number}'
-
         interface_id = None
         if data['type'] == 'BRIDGE':
             # For bridge we want to start with 2 because bridge0/bridge1 may have been used
             # for Jails/VM.
-            name = data.get('name') or await get_next('bridge', start=2)
+            name = data.get('name') or await self._get_next('bridge', start=2)
             try:
                 async for i in self.__create_interface_datastore(data, {
                     'interface': name,
@@ -646,7 +632,7 @@ class InterfacesService(CRUDService):
                         )
                 raise e
         elif data['type'] == 'LINK_AGGREGATION':
-            name = data.get('name') or await get_next('lagg')
+            name = data.get('name') or await self._get_next('lagg')
             lag_id = None
             lagports_ids = []
             try:
@@ -752,6 +738,20 @@ class InterfacesService(CRUDService):
                 raise e
 
         return await self._get_instance(name)
+
+    async def _get_next(self, prefix, start=0):
+        number = start
+        ifaces = [
+            i['int_interface']
+            for i in await self.middleware.call(
+                'datastore.query',
+                'network.interfaces',
+                [('int_interface', '^', prefix)],
+            )
+        ]
+        while f'{prefix}{number}' in ifaces:
+            number += 1
+        return f'{prefix}{number}'
 
     async def _common_validation(self, verrors, schema_name, data, itype, update=None):
         if update:
