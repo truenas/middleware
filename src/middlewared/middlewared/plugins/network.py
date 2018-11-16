@@ -785,6 +785,10 @@ class InterfacesService(CRUDService):
             self.__validate_aliases, verrors, schema_name, data, ifaces
         )
 
+        bridge_used = {}
+        for k, v in filter(lambda x: x[0].startswith('bridge'), ifaces.items()):
+            for port in (v.get('bridge_members') or []):
+                bridge_used[port] = k
         vlan_used = {
             v['vlan_parent_interface']: k
             for k, v in filter(lambda x: x[0].startswith('vlan'), ifaces.items())
@@ -818,7 +822,12 @@ class InterfacesService(CRUDService):
                     verrors.add(f'{schema_name}.bridge_members.{i}', 'Not a valid interface.')
                     continue
                 member_iface = ifaces[member]
-                if member in lag_used:
+                if member in bridge_used:
+                    verrors.add(
+                        f'{schema_name}.bridge_members.{i}',
+                        f'Interface {member} is currently in use by {bridge_used[member]}.',
+                    )
+                elif member in lag_used:
                     verrors.add(
                         f'{schema_name}.bridge_members.{i}',
                         f'Interface {member} is currently in use by {lag_used[member]}.',
