@@ -530,10 +530,10 @@ class InterfacesService(CRUDService):
         """
         try:
             await self.sync()
-        except Exception as e:
+        except Exception:
             if options['rollback']:
                 await self.rollback()
-            raise e
+            raise
 
         if options['rollback'] and options['checkin_timeout']:
             loop = asyncio.get_event_loop()
@@ -624,13 +624,13 @@ class InterfacesService(CRUDService):
                     'network.bridge',
                     {'interface': interface_id, 'members': data['bridge_members']},
                 )
-            except Exception as e:
+            except Exception:
                 if interface_id:
                     with contextlib.suppress(Exception):
                         await self.middleware.call(
                             'datastore.delete', 'network.interfaces', interface_id
                         )
-                raise e
+                raise
         elif data['type'] == 'LINK_AGGREGATION':
             name = data.get('name') or await self._get_next('lagg')
             lag_id = None
@@ -694,7 +694,7 @@ class InterfacesService(CRUDService):
                             'network.alias',
                             [('alias_interface', '=', portinterface['id'])],
                         )
-            except Exception as e:
+            except Exception:
                 for lagport_id in lagports_ids:
                     with contextlib.suppress(Exception):
                         await self.middleware.call(
@@ -710,7 +710,7 @@ class InterfacesService(CRUDService):
                         await self.middleware.call(
                             'datastore.delete', 'network.interfaces', interface_id
                         )
-                raise e
+                raise
         elif data['type'] == 'VLAN':
             name = data.get('name') or f'vlan{data["vlan_tag"]}'
             try:
@@ -729,13 +729,13 @@ class InterfacesService(CRUDService):
                     },
                     {'prefix': 'vlan_'},
                 )
-            except Exception as e:
+            except Exception:
                 if interface_id:
                     with contextlib.suppress(Exception):
                         await self.middleware.call(
                             'datastore.delete', 'network.interfaces', interface_id
                         )
-                raise e
+                raise
 
         return await self._get_instance(name)
 
@@ -1068,13 +1068,13 @@ class InterfacesService(CRUDService):
                         if alias_id:
                             await self.middleware.call('datastore.delete', 'network.alias', alias_id)
 
-        except Exception as e:
+        except Exception:
             if interface_id:
                 with contextlib.suppress(Exception):
                     await self.middleware.call(
                         'datastore.delete', 'network.interfaces', interface_id
                     )
-            raise e
+            raise
 
         return await self._get_instance(oid)
 
