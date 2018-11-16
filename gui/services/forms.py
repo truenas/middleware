@@ -1454,12 +1454,6 @@ class AsigraForm(MiddlewareModelForm, ModelForm):
             raise forms.ValidationError("Filesystem does not exist!")
         return fs
 
-    def save(self):
-        obj = super(AsigraForm, self).save()
-        if self._orig_filesystem != obj.filesystem:
-            notifier().restart("asigra")
-        return obj
-
     def started(self):
         with client as c:
             return c.call('service.started', 'asigra')
