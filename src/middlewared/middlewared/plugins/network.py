@@ -823,7 +823,6 @@ class InterfacesService(CRUDService):
                 if member not in ifaces:
                     verrors.add(f'{schema_name}.bridge_members.{i}', 'Not a valid interface.')
                     continue
-                member_iface = ifaces[member]
                 if member in bridge_used:
                     verrors.add(
                         f'{schema_name}.bridge_members.{i}',
