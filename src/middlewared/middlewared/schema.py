@@ -629,6 +629,9 @@ class Cron(Dict):
                     data_dict[schedule_name][field] = str(data_dict.pop(field))[:5]
 
     def validate(self, value):
+        if value is None:
+            return
+
         verrors = ValidationErrors()
 
         for attr in self.attrs.values():
