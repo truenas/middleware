@@ -166,6 +166,18 @@ class Str(EnumMixin, Attribute):
         return schema
 
 
+class Path(Str):
+
+    def clean(self, value):
+        value = super().clean(value)
+
+        if value is None:
+            return value
+
+        return os.path.normpath(value.strip().strip("/").strip())
+
+
+
 class Dir(Str):
 
     def validate(self, value):
