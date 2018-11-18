@@ -4,8 +4,9 @@ import os
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["normpath"]
+__all__ = ["is_child"]
 
 
-def normpath(s):
-    return os.path.normpath(s.strip().strip("/").strip())
+def is_child(child: str, parent: str):
+    rel = os.path.relpath(child, parent)
+    return rel == "." or not rel.startswith("..")
