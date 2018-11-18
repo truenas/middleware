@@ -129,6 +129,7 @@ class ServiceBase(type):
             'datastore': None,
             'datastore_prefix': None,
             'datastore_extend': None,
+            'datastore_extend_context': None,
             'datastore_filters': None,
             'service': None,
             'service_model': None,
@@ -192,10 +193,9 @@ class ConfigService(ServiceChangeMixin, Service):
     @accepts()
     async def config(self):
         options = {}
-        if self._config.datastore_prefix:
-            options['prefix'] = self._config.datastore_prefix
-        if self._config.datastore_extend:
-            options['extend'] = self._config.datastore_extend
+        options['extend'] = self._config.datastore_extend
+        options['extend_context'] = self._config.datastore_extend_context
+        options['prefix'] = self._config.datastore_prefix
         return await self._get_or_insert(self._config.datastore, options)
 
     async def update(self, data):
@@ -224,6 +224,7 @@ class SystemServiceService(ConfigService):
         return await self._get_or_insert(
             f'services.{self._config.service_model or self._config.service}', {
                 'extend': self._config.datastore_extend,
+                'extend_context': self._config.datastore_extend_context,
                 'prefix': self._config.datastore_prefix
             }
         )
@@ -253,18 +254,19 @@ class CRUDService(ServiceChangeMixin, Service):
                 f'{self._config.namespace}.query must be implemented or a '
                 '`datastore` Config attribute provided.'
             )
+
+        if not filters:
+            filters = []
+        filters += self._config.datastore_filters or []
+
         options = options or {}
-        if self._config.datastore_prefix:
-            options['prefix'] = self._config.datastore_prefix
-        if self._config.datastore_extend:
-            options['extend'] = self._config.datastore_extend
-        if self._config.datastore_filters:
-            if not filters:
-                filters = []
-            filters += self._config.datastore_filters
+        options['extend'] = self._config.datastore_extend
+        options['extend_context'] = self._config.datastore_extend_context
+        options['prefix'] = self._config.datastore_prefix
+
         # In case we are extending which may transform the result in numerous ways
         # we can only filter the final result.
-        if 'extend' in options:
+        if options['extend']:
             datastore_options = options.copy()
             datastore_options.pop('count', None)
             datastore_options.pop('get', None)
