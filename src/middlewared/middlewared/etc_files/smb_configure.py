@@ -100,7 +100,7 @@ async def setup_samba_dirs(middleware, conf):
     if (basename_realpath != statedir_realpath and os.path.exists(statedir)):
         ret = await hb_command(os.unlink, statedir)
         if not ret:
-            logger.debug(f"Path still exists. Attemping to rename it")
+            logger.debug("Path still exists. Attemping to rename it")
             olddir = f"{statedir}.{time.strftime('%Y%m%d%H%M%S')}"
             try:
                 os.rename(statedir, olddir)
@@ -121,7 +121,7 @@ async def setup_samba_dirs(middleware, conf):
         os.mkdir(statedir)
 
     if not os.path.exists(conf['privatedir']):
-        logger.debug(f"privatedir does not exist. Creating it.")
+        logger.debug("privatedir does not exist. Creating it.")
         os.mkdir(conf['privatedir'])
         os.chmod(conf['privatedir'], 0o700)
 
@@ -257,7 +257,7 @@ async def import_local_users(middleware, conf):
     passdb_file = f"{conf['privatedir']}/passdb.tdb"
     passdb_usercount = await count_passdb_users()
     if len(conf['smb_users']) == passdb_usercount[1]:
-        logger.debug(f'User count in config file and passdb is identical. Bypassing import')
+        logger.debug('User count in config file and passdb is identical. Bypassing import')
         return True
 
     ret = await write_legacy_smbpasswd(middleware, conf)
