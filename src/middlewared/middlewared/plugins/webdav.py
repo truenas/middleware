@@ -127,9 +127,6 @@ class WebDAVService(SystemServiceService):
     async def do_update(self, data):
         old = await self.config()
 
-        if old['certssl']:
-            old['certssl'] = old['certssl']['id']
-
         new = old.copy()
         new.update(data)
 
