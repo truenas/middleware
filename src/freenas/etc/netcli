@@ -846,7 +846,7 @@ def create_vlan():
     print(_("Saving VLAN interface:"), end=' ')
     try:
         vlan.save()
-        qs = models.Interfaces.objects.filter(int_interface=vlan_pint)
+        qs = Interfaces.objects.filter(int_interface=vlan_pint)
         if not qs.exists():
             vlan_interface = Interfaces(
                 int_interface=vlan_pint,
