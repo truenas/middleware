@@ -41,16 +41,15 @@ async def get_config(middleware):
         return conf
 
     conf['cifs'] = await middleware.call('smb.config')
-    conf['smb_users'] = await middleware.call('datastore.query', 'account.bsdusers', [
+    conf['smb_users'] = await middleware.call('user.query', [
         ['OR', [
-            ('bsdusr_smbhash', '~', r'^.+:.+:[X]{32}:.+$'),
-            ('bsdusr_smbhash', '~', r'^.+:.+:[A-F0-9]{32}:.+$'),
+            ('smbhash', '~', r'^.+:.+:[X]{32}:.+$'),
+            ('smbhash', '~', r'^.+:.+:[A-F0-9]{32}:.+$'),
         ]]
     ])
     dc = await middleware.call('datastore.query', 'services.services',
                                [('srv_service', '=', 'domaincontroller')],
                                {'get': True})
-    logger.debug(f'{dc}')
 
     if dc['srv_enable']:
         conf['role'] = 'domain_controller'
@@ -101,7 +100,7 @@ async def setup_samba_dirs(middleware, conf):
     if (basename_realpath != statedir_realpath and os.path.exists(statedir)):
         ret = await hb_command(os.unlink, statedir)
         if not ret:
-            logger.debug(f"Path still exists. Preparing to try to rename it")
+            logger.debug(f"Path still exists. Attemping to rename it")
             olddir = f"{statedir}.{time.strftime('%Y%m%d%H%M%S')}"
             try:
                 os.rename(statedir, olddir)
@@ -110,10 +109,10 @@ async def setup_samba_dirs(middleware, conf):
                 return False
 
         try:
-            logger.debug(f"Preparing to create symlink {basename_realpath} -> {statedir} ")
+            logger.debug(f"Attempting to create symlink: {basename_realpath} -> {statedir} ")
             os.symlink(basename_realpath, statedir)
         except Exception as e:
-            logger.debug(f"Unable to create symlink {basename_realpath} -> {statedir} ({e})")
+            logger.debug(f"Unable to create symlink: {basename_realpath} -> {statedir} ({e})")
             return False
 
     if os.path.islink(statedir) and not os.path.exists(statedir_realpath):
@@ -143,7 +142,7 @@ async def setup_samba_dirs(middleware, conf):
 
 async def get_system_SID(sidtype):
     SID = None
-    getSID = await run([NETCMD, "-d 0", sidtype])
+    getSID = await run([NETCMD, "-d", "0", sidtype])
     if getSID.returncode != 0:
         logger.debug(f'Command {sidtype} failed with error: {getSID.stderr.decode()}')
         return None
@@ -174,7 +173,7 @@ async def set_system_SID(sidtype, SID):
     if not SID:
         return False
 
-    setSID = await run([NETCMD, "-d 0", sidtype, SID])
+    setSID = await run([NETCMD, "-d", "0", sidtype, SID])
     if setSID.returncode != 0:
         logger.debug(f'Command {sidtype} failed with error: {setSID.stderr.decode()}')
         return False
@@ -210,7 +209,7 @@ async def set_SID(middleware, config):
 
 """
     Import local users into Samba's passdb.tdb file. Current behavior is to:
-    1) dump the contents of users bsdusr_smbhash to a tempory file,
+    1) dump the contents of users smbhash to a tempory file,
     2) import it as a legacy smbpasswd file,
     3) remove the temporary file
     4) disable users that are locked or have password disabled in the GUI
@@ -220,7 +219,7 @@ async def set_SID(middleware, config):
 """
 
 async def count_passdb_users():
-    pdb_list = await run([PDBCMD, '-d 0', '-L'])
+    pdb_list = await run([PDBCMD, '-d', '0', '-L'])
     if pdb_list.returncode != 0:
         logger.debug(f'pdbedit -L command failed. Could not obtain count of users in passdb.tdb')
         return False, 0
@@ -236,20 +235,20 @@ async def write_legacy_smbpasswd(middleware, conf):
 
     with open(TMP_SMBPASSWD, "w") as f:
         for user in conf['smb_users']:
-            f.write(user['bsdusr_smbhash'] + '\n')
+            f.write(user['smbhash'] + '\n')
 
     return True
 
 async def disable_passdb_users(smb_users):
     for user in smb_users:
-        if user['bsdusr_locked'] or user['bsdusr_password_disabled']:
+        if user['locked'] or user['password_disabled']:
             flags = '-d'
         else:
             flags = '-e'
 
-        set_pdb_flags = await run([SMBPASSWDCMD, flags, user["bsdusr_username"]], check=False)
+        set_pdb_flags = await run([SMBPASSWDCMD, flags, user["username"]], check=False)
         if set_pdb_flags.returncode != 0:
-            logger.debug(f'failed to set flags {flags} for user {user["bsdusr_username"]} in passdb.tdb with error: {set_pdb_flags.stderr.decode()}')
+            logger.debug(f'failed to set flags {flags} for user {user["username"]} in passdb.tdb with error: {set_pdb_flags.stderr.decode()}')
             return False
 
     return True
@@ -267,8 +266,8 @@ async def import_local_users(middleware, conf):
         logger.debug('Removing out-of-sync passdb.tdb file')
         os.unlink(passdb_file)
 
-    pdb_import = await run([PDBCMD, '-d 1',
-                           f"-i smbpasswd:{TMP_SMBPASSWD}"],
+    pdb_import = await run([PDBCMD, '-d', '0',
+                           '-i', f'smbpasswd:{TMP_SMBPASSWD}'],
                            check=False)
 
     os.unlink(TMP_SMBPASSWD)
@@ -289,7 +288,7 @@ async def import_local_users(middleware, conf):
     To do: add validation of SID values in the tdb file.
 """
 async def groupmap_add(config, unixgroup, ntgroup):
-    gm_add = await run([NETCMD, '-d 1', 'groupmap', 'add',
+    gm_add = await run([NETCMD, '-d', '0', 'groupmap', 'add',
                        f'unixgroup={unixgroup}',
                        f'ntgroup={ntgroup}'],
                        check=False)
@@ -303,7 +302,7 @@ async def groupmap_add(config, unixgroup, ntgroup):
 async def is_disallowed_group(middleware, conf, groupmap, group):
     disallowed_list = ['USERS', 'ADMINISTRATORS']
     for user in conf['smb_users']:
-        disallowed_list.append(user['bsdusr_username'].upper())
+        disallowed_list.append(user['username'].upper())
     for gm in groupmap:
         disallowed_list.append(gm['unixgroup'].upper())
 
@@ -314,15 +313,14 @@ async def is_disallowed_group(middleware, conf, groupmap, group):
 
 async def get_groups(middleware):
     _groups = {}
-    groups = await middleware.call('datastore.query', 'account.bsdGroups', [('bsdgrp_builtin', '=', False)])
+    groups = await middleware.call('group.query', [('builtin', '=', False)])
     for g in groups:
-        key = str(g['bsdgrp_group'])
+        key = str(g['group'])
         _groups[key] = []
-        members = await middleware.call('datastore.query', 'account.bsdGroupMembership',
-                                        [('bsdgrpmember_group', '=', g['id'])])
+        members = await middleware.call('user.query', [["id", "in", g["users"]]])
+
         for m in members:
-            if m['bsdgrpmember_user']:
-                _groups[key].append(str(m['bsdgrpmember_user']['bsdusr_username']))
+            _groups[key].append(str(m['username']))
 
     return _groups
 

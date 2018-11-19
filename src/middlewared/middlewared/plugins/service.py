@@ -896,6 +896,8 @@ class ServiceService(CRUDService):
         await self._service("netatalk", "reload", **kwargs)
 
     async def _restart_cifs(self, **kwargs):
+        await self.middleware.call("etc.generate", "smb")
+        await self.middleware.call("etc.generate", "smb_share")
         await self._service("samba_server", "stop", force=True, **kwargs)
         await self._service("samba_server", "restart", quiet=True, **kwargs)
         await self._service("mdnsd", "restart", **kwargs)
@@ -904,6 +906,8 @@ class ServiceService(CRUDService):
         await self._service("netatalk", "reload", **kwargs)
 
     async def _start_cifs(self, **kwargs):
+        await self.middleware.call("etc.generate", "smb")
+        await self.middleware.call("etc.generate", "smb_share")
         await self._service("samba_server", "start", quiet=True, **kwargs)
 
     async def _stop_cifs(self, **kwargs):
