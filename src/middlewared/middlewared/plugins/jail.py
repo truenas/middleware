@@ -739,7 +739,7 @@ class JailService(CRUDService):
         try:
             msg = iocage.exec(command, host_user, jail_user, msg_return=True)
         except RuntimeError as e:
-            raise CallError(e)
+            raise CallError(str(e))
 
         return '\n'.join(msg)
 
