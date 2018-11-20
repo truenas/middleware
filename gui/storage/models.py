@@ -404,6 +404,41 @@ class Disk(Model):
         verbose_name=_("Password for SED"),
         blank=True
     )
+    disk_difference = models.IntegerField(
+        default=None,
+        verbose_name=_("Difference"),
+        help_text=_(
+            "Report if the temperature has changed by at least N "
+            "degrees Celsius since the last report. 0 to disable."
+        ),
+        null=True,
+        blank=True,
+        editable=False
+    )
+    disk_informational = models.IntegerField(
+        default=None,
+        verbose_name=_("Informational"),
+        help_text=_(
+            "Report as informational in the system log if the "
+            "temperature is greater or equal than N degrees Celsius. "
+            "0 to disable."
+        ),
+        null=True,
+        blank=True,
+        editable=False
+    )
+    disk_critical = models.IntegerField(
+        default=None,
+        verbose_name=_("Critical"),
+        help_text=_(
+            "Report as critical in the system log and send an "
+            "email if the temperature is greater or equal than N "
+            "degrees Celsius. 0 to disable."
+        ),
+        null=True,
+        blank=True,
+        editable=False
+    )
 
     def identifier_to_device(self):
         """

@@ -43,8 +43,11 @@ async def ensure_smart_enabled(args):
 def get_smartd_config(disk):
     args = " ".join(disk["smartctl_args"])
 
-    config = f"{args} -n {disk['smart_powermode']} -W {disk['smart_difference']}," \
-             f"{disk['smart_informational']},{disk['smart_critical']}"
+    critical = disk['smart_critical'] if disk['disk_critical'] is None else disk['disk_critical']
+    difference = disk['smart_difference'] if disk['disk_difference'] is None else disk['disk_difference']
+    informational = disk['smart_informational'] if disk['disk_informational'] is None else disk['disk_informational']
+    config = f"{args} -n {disk['smart_powermode']} -W {difference}," \
+             f"{informational},{critical}"
 
     if disk['smart_email']:
         config += f" -m {disk['smart_email']}"
