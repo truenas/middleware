@@ -446,7 +446,24 @@ class SharingSMBService(CRUDService):
     def vfsobjects_choices(self):
         vfs_modules_path = '/usr/local/lib/shared-modules/vfs'
         vfs_modules = []
-        vfs_exclude = {'shadow_copy2', 'recycle', 'aio_pthread'}
+        vfs_exclude = {
+                      'acl_tdb',
+                      'acl_xattr',
+                      'aio_fork',
+                      'aio_pthread',
+                      'cacheprime',
+                      'commit',
+                      'expand_msdfs',
+                      'linux_xfs_sgid',
+                      'netatalk',
+                      'posix_eadb',
+                      'recycle',
+                      'shadow_copy',
+                      'shadow_copy2',
+                      'streams_depot',
+                      'syncops',
+                      'xattr_tdb'
+                      }
 
         if os.path.exists(vfs_modules_path):
             vfs_modules.extend(
