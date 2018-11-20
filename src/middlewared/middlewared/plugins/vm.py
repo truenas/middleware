@@ -1514,7 +1514,8 @@ class VMDeviceService(CRUDService):
 
     @private
     async def extend_device(self, device):
-        device['vm'] = device['vm']['id']
+        if device['vm']:
+            device['vm'] = device['vm']['id']
         if device['order'] is None:
             if device['dtype'] == 'CDROM':
                 device['order'] = 1000
