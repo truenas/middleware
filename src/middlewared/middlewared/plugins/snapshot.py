@@ -118,7 +118,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         if verrors:
             raise verrors
 
-        Cron.convert_schedule_to_db_format(data, begin_end=True)
+        Cron.convert_schedule_to_db_format(new, begin_end=True)
 
         await self.middleware.call(
             'datastore.update',
