@@ -33,6 +33,8 @@ class ReplicationService(CRUDService):
         schedule_name = self._schedule_name(data)
         if schedule_name:
             Cron.convert_db_format_to_schedule(data, schedule_name, begin_end=True)
+        data.setdefault("schedule", None)
+        data.setdefault("restrict_schedule", None)
 
         return data
 
