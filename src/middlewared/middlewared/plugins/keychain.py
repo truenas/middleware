@@ -25,6 +25,9 @@ class KeychainCredentialType:
     async def validate_and_pre_save(self, middleware, verrors, schema_name, attributes):
         pass
 
+    async def used_by(self, middleware, id):
+        raise NotImplementedError
+
 
 class SSHKeyPair(KeychainCredentialType):
     name = "SSH_KEY_PAIR"
@@ -71,6 +74,14 @@ class SSHKeyPair(KeychainCredentialType):
                 verrors.add(f"{schema_name}.public_key", "Invalid public key")
                 return
 
+    async def used_by(self, middleware, id):
+        used_by = []
+        for ssh_credentials in await middleware.call("keychaincredential.query", [["type", "=", "SSH_CREDENTIALS"]]):
+            if ssh_credentials["attributes"]["private_key"] == id:
+                used_by.append(f"SSH credentials {ssh_credentials['name']}")
+
+        return used_by
+
 
 class SSHCredentials(KeychainCredentialType):
     name = "SSH_CREDENTIALS"
@@ -85,6 +96,13 @@ class SSHCredentials(KeychainCredentialType):
         Str("cipher", enum=["STANDARD", "FAST", "DISABLED"], default="STANDARD"),
         Int("connect_timeout", default=10),
     ]
+
+    async def used_by(self, middleware, id):
+        used_by = []
+        for replication_task in await middleware.call("replication.query", [["ssh_credentials.id", "=", id]]):
+            used_by.append(f"Replication task {replication_task['id']}")
+
+        return used_by
 
 
 TYPES = {
@@ -163,6 +181,12 @@ class KeychainCredentialService(CRUDService):
 
     @accepts(Int("id"))
     async def do_delete(self, id):
+        instance = await self._get_instance(id)
+
+        used_by = await TYPES[instance["type"]].used_by(self.middleware, id)
+        if used_by:
+            raise CallError(f"Unable to delete this credential, it is used by: {', '.join(used_by)}")
+
         await self.middleware.call(
             "datastore.delete",
             self._config.datastore,
