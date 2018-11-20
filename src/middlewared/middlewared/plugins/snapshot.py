@@ -90,6 +90,17 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         verrors.add_child('periodic_snapshot_update', await self._validate(new))
 
+        if not data['enabled']:
+            for replication_task in await self.middleware.call('replication.query', [['enabled', '=', True]]):
+                if any(periodic_snapshot_task['id'] == id
+                       for periodic_snapshot_task in replication_task['periodic_snapshot_tasks']):
+                    verrors.add(
+                        'periodic_snapshot_update.enabled',
+                        (f'You can\'t disable this periodic snapshot task because it is bound to enabled replication '
+                         f'task {replication_task["id"]!r}')
+                    )
+                    break
+
         if verrors:
             raise verrors
 
