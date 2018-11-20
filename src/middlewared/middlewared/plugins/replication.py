@@ -317,6 +317,14 @@ class ReplicationService(CRUDService):
             if data["lifetime_unit"] is not None:
                 verrors.add("lifetime_unit", "This field has no sense for specified retention policy")
 
+        if data["enabled"]:
+            for i, snapshot_task in enumerate(snapshot_tasks):
+                if not snapshot_task["enabled"]:
+                    verrors.add(
+                        f"periodic_snapshot_tasks.{i}",
+                        "You can't bind disabled periodic snapshot task to enabled replication task"
+                    )
+
         return verrors
 
     async def _set_periodic_snapshot_tasks(self, replication_task_id, periodic_snapshot_tasks_ids):
