@@ -13,7 +13,7 @@ from freenasUI.support.utils import get_license, ADDRESS, LICENSE_FILE
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import Service, private
 
-EULA_PENDING_PATH = "/data/truenas_eula_pending"
+EULA_PENDING_PATH = "/data/truenas-eula-pending"
 REGISTER_URL = "https://%s/truenas/api/v1.0/register" % ADDRESS
 
 user_attrs = [
