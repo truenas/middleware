@@ -118,7 +118,10 @@ class DiskService(CRUDService):
         if any(new[key] != old[key] for key in ['hddstandby', 'advpowermgmt', 'acousticlevel']):
             await self.middleware.call('notifier.start_ataidle', new['name'])
 
-        if any(new[key] != old[key] for key in ['togglesmart', 'smartoptions']):
+        if any(
+                new[key] != old[key]
+                for key in ['togglesmart', 'smartoptions', 'critical', 'difference', 'informational']
+        ):
 
             if new['togglesmart']:
                 await self.toggle_smart_on(new['name'])
