@@ -1,13 +1,7 @@
-import os
-
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
 from middlewared.service import private, CallError, CRUDService, ValidationErrors
 from middlewared.utils.path import is_child
 from middlewared.validators import Port, Range, ReplicationSnapshotNamingSchema, Unique
-
-from zettarepl.dataset.create import create_dataset
-from zettarepl.dataset.list import list_datasets
-from zettarepl.transport.create import create_transport
 
 
 class ReplicationService(CRUDService):
@@ -371,50 +365,13 @@ class ReplicationService(CRUDService):
     @accepts(Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
              Int("ssh_credentials", null=True, default=None))
     async def list_datasets(self, transport, ssh_credentials=None):
-        try:
-            return list_datasets(await self._get_zettarepl_shell(transport, ssh_credentials))
-        except Exception as e:
-            raise CallError(repr(e))
+        return await self.middleware.call("zettarepl.list_datasets", transport, ssh_credentials)
 
     @accepts(Str("dataset", required=True),
              Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
              Int("ssh_credentials", null=True, default=None))
     async def create_dataset(self, dataset, transport, ssh_credentials=None):
-        try:
-            return create_dataset(await self._get_zettarepl_shell(transport, ssh_credentials), dataset)
-        except Exception as e:
-            raise CallError(repr(e))
-
-    async def _get_zettarepl_shell(self, transport, ssh_credentials):
-        if transport in ["SSH", "SSH+NETCAT", "LEGACY"]:
-            if ssh_credentials is None:
-                raise CallError(f"You should pass SSH credentials for {transport} transport")
-
-            ssh_credentials = await self.middleware.call("keychaincredential.get_of_type", ssh_credentials,
-                                                         "SSH_CREDENTIALS")
-
-            transport_definition = dict(type="ssh", **await self._define_ssh_transport(ssh_credentials))
-        else:
-            transport_definition = dict(type="local")
-
-        transport = create_transport(transport_definition)
-        return transport.shell(transport)
-
-    async def _define_ssh_transport(self, credentials):
-        try:
-            key_pair = await self.middleware.call("keychaincredential.get_of_type",
-                                                  credentials["attributes"]["private_key"], "SSH_KEY_PAIR")
-        except CallError as e:
-            raise CallError(f"Error while querying SSH key pair for credentials {credentials['id']}: {e!s}")
-
-        return {
-            "hostname": credentials["attributes"]["host"],
-            "port": credentials["attributes"]["port"],
-            "username": credentials["attributes"]["username"],
-            "private-key": key_pair["attributes"]["private_key"],
-            "host-key": credentials["attributes"]["remote_host_key"],
-            "connect-timeout": credentials["attributes"]["connect_timeout"],
-        }
+        return await self.middleware.call("zettarepl.create_dataset", dataset, transport, ssh_credentials)
 
     # Legacy pair support
     @private
