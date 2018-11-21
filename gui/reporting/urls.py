@@ -37,6 +37,7 @@ urlpatterns = [
     url(r'^disk/$', generic_graphs, {'names': ['disk', 'diskgeombusy', 'diskgeomlatency', 'diskgeomopsrwd', 'diskgeomqueue', 'disktemp']}, name="reporting_disk"),
     url(r'^memory/$', generic_graphs, {'names': ['memory', 'swap']}, name="reporting_memory"),
     url(r'^network/$', generic_graphs, {'names': ['interface']}, name="reporting_network"),
+    url(r'^nfs/$', generic_graphs, {'names': ['nfsstat']}, name="reporting_nfs_stats"),
     url(r'^partition/$', generic_graphs, {'names': ['df']}, name="reporting_partition"),
     url(r'^system/$', generic_graphs, {'names': ['processes', 'uptime']}, name="reporting_system"),
     url(r'^target/$', generic_graphs, {'names': ['ctl']}, name="reporting_target"),

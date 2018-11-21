@@ -1345,3 +1345,43 @@ class ARCResultPlugin(RRDBase):
         ]
 
         return args
+
+
+class NFSStatPlugin(RRDBase):
+
+    title = "NFS Stats"
+    vertical_label = "Bytes"
+
+    def graph(self):
+
+        read = os.path.join(f'{self.base_path}-client', 'nfsstat-read.rrd')
+        write = os.path.join(f'{self.base_path}-client', 'nfsstat-write.rrd')
+
+        args = [
+            f'DEF:min_read={read}:value:MIN',
+            f'DEF:avg_read={read}:value:AVERAGE',
+            f'DEF:max_read={read}:value:MAX',
+            f'DEF:min_write={write}:value:MIN',
+            f'DEF:avg_write={write}:value:AVERAGE',
+            f'DEF:max_write={write}:value:MAX',
+            'VDEF:total_read=avg_read,TOTAL',
+            'VDEF:total_write=avg_write,TOTAL',
+            'CDEF:read=avg_read',
+            'CDEF:write=avg_write',
+            'AREA:read#bfbfff',
+            'LINE1:read#bfbfff:Read',
+            'GPRINT:min_read:MIN:%5.1lf%s Min\g',
+            'GPRINT:avg_read:AVERAGE: %5.1lf%s Avg\g',
+            'GPRINT:max_read:MAX: %5.1lf%s Max\g',
+            'GPRINT:avg_read:LAST: %5.1lf%s Last\g',
+            'GPRINT:total_read: %3.0lf%s Total\l',
+            'AREA:write#00b000',
+            'LINE1:write#00b000:Write',
+            'GPRINT:min_write:MIN:%5.1lf%s Min\g',
+            'GPRINT:avg_write:AVERAGE: %5.1lf%s Avg\g',
+            'GPRINT:max_write:MAX: %5.1lf%s Max\g',
+            'GPRINT:avg_write:LAST: %5.1lf%s Last\g',
+            'GPRINT:total_write: %3.0lf%s Total\l',
+        ]
+
+        return args
