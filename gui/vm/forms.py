@@ -188,7 +188,7 @@ class DeviceForm(ModelForm):
     )
     NIC_attach = forms.ChoiceField(
         label=_('NIC to attach'),
-        choices=choices.NICChoices(exclude_configured=False),
+        choices=choices.NICChoices(exclude_configured=False, include_vlan_parent=True),
         required=False,
     )
     NIC_mac = forms.CharField(
