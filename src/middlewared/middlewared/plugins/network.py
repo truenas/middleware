@@ -1816,9 +1816,14 @@ class NetworkGeneralService(Service):
     async def summary(self):
         ips = defaultdict(lambda: defaultdict(list))
         for iface in await self.middleware.call('interfaces.query'):
-            for alias in iface['aliases']:
+            for alias in iface['state']['aliases']:
                 if alias['type'] == 'INET':
-                    ips[iface['name']]['IPV4'].append(f'{alias["address"]}/{alias["netmask"]}')
+                    key = 'IPV4'
+                elif alias['type'] == 'INET6':
+                    key = 'IPV6'
+                else:
+                    continue
+                ips[iface['name']][key].append(f'{alias["address"]}/{alias["netmask"]}')
 
         default_routes = []
         for route in await self.middleware.call('routes.system_routes', [('netmask', 'in', ['0.0.0.0', '::'])]):
