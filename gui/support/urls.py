@@ -27,13 +27,14 @@
 from django.conf.urls import url
 
 from .views import (
-    index, license_update, license_status, ticket_categories, ticket_progress,
+    index, eula, license_update, license_status, ticket_categories, ticket_progress,
     download_guide
 )
 
 
 urlpatterns = [
     url(r'^index/$', index, name="support_home"),
+    url(r'^eula/$', eula, name="support_eula"),
     url(r'^license/update/$', license_update, name="support_license_update"),
     url(r'^license/status/$', license_status, name="support_license_status"),
     url(r'^ticket/categories/$', ticket_categories, name="support_ticket_categories"),

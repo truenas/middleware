@@ -71,6 +71,23 @@
         {% trans "None" %}
       {% endfor %}
     </td>
+    <th>{% trans "EULA" %}</th>
+    <td>
+      {% if eula_not_accepted %}
+        <div style="color: #ff0000;">Not accepted</div>
+      {% else %}
+        <div data-dojo-type="freeadmin/UnacceptEula" data-dojo-props=""></div>
+        <form action="{% url "support_home" %}" method="post" enctype="multipart/form-data" id="unaccept_eula_form" style="margin: 0;">{% csrf_token %}
+            <input type="hidden" name="eula" value="unaccept" />
+        </form>
+      {% endif %}
+      <div data-dojo-type="dijit/form/Button">
+        {% trans "Show EULA" %}
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="e, e2">
+          window.open('{% url "support_eula" %}');
+        </script>
+      </div>
+    </td>
   </tr>
 {% else %}
   {% if license_invalid %}
