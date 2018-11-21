@@ -869,6 +869,7 @@ menu_install()
     local readonly NEED_UPDATE_SENTINEL="/data/need-update"
     # create a sentinel file for post-fresh-install boots
     local readonly FIRST_INSTALL_SENTINEL="/data/first-boot"
+    local readonly TRUENAS_EULA_PENDING_SENTINEL="/data/truenas-eula-pending"
     local readonly POOL="freenas-boot"
 
     _tmpfile="/tmp/answer"
@@ -1249,6 +1250,9 @@ menu_install()
 	fi
     fi
     : > /tmp/data/${FIRST_INSTALL_SENTINEL}
+    if is_truenas && [ "${_do_upgrade}" -eq 0 ]; then
+        : > /tmp/data/${TRUENAS_EULA_PENDING_SENTINEL}
+    fi
     # Finally, before we unmount, start a scrub.
     # zpool scrub freenas-boot || true
 
