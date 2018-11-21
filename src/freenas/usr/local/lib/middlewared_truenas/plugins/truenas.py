@@ -54,6 +54,10 @@ class TrueNASService(Service):
             if e.errno != errno.ENOENT:
                 raise
 
+    async def unaccept_eula(self):
+        with open(EULA_PENDING_PATH, "w"):
+            pass
+
     async def get_customer_information(self):
         result = await self.__fetch_customer_information()
         return result
