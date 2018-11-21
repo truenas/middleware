@@ -50,14 +50,6 @@ main()
 	local rc=0
 	local _last_scrub _scrub_diff _status pool
 
-	# Do not try to run scrub on passive node
-	if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
-		local failover="$(/usr/local/bin/midclt -q call notifier.failover_status 2> /dev/null)"
-		if [ "x${failover}" = "xBACKUP" ]; then
-			exit 0
-		fi
-	fi
-
 	while getopts "t:" opt
 	do
 		case "${opt}" in
@@ -79,6 +71,14 @@ main()
 	fi
 
 	pool=$1
+
+	# Do not try to run scrub on passive node
+	if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
+		local failover="$(/usr/local/bin/midclt -q call notifier.failover_status 2> /dev/null)"
+		if [ "${pool}" != "freenas-boot" -a "x${failover}" = "xBACKUP" ]; then
+			exit 0
+		fi
+	fi
 
 	pool_json=$(midclt call pool.query '[["name", "=","'${pool}'"]]' | jq '.[]')
 	pool_status=$(echo $pool_json | jq -r '.status')
