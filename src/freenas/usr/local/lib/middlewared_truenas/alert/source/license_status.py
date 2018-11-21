@@ -23,8 +23,6 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
     level = AlertLevel.CRITICAL
     title = 'Your TrueNAS has no license, contact support.'
 
-    run_on_backup_node = False
-
     def check_sync(self):
         license, errmsg = get_license()
         alerts = []
