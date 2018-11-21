@@ -28,13 +28,13 @@ import json
 import logging
 import os
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from wsgiref.util import FileWrapper
 
-from freenasUI.common.system import get_sw_name
+from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.client import client, ClientException
@@ -46,6 +46,13 @@ TICKET_PROGRESS = '/tmp/.ticketprogress'
 
 
 def index(request):
+    if request.method == 'POST':
+        if request.POST.get('eula') == 'unaccept':
+            request.session.pop('noeula', None)
+            with client as c:
+                c.call('truenas.unaccept_eula')
+            return HttpResponseRedirect('/')
+
     sw_name = get_sw_name().lower()
 
     license, reason = utils.get_license()
@@ -63,8 +70,25 @@ def index(request):
     }
     for c in appPool.hook_view_context('support.index', request):
         context.update(c)
+    if not notifier().is_freenas():
+        with client as c:
+            context['eula_not_accepted'] = not c.call('truenas.is_eula_accepted')
 
     return render(request, 'support/home.html', context)
+
+
+def eula(request):
+    eula = None
+    if os.path.exists('/usr/local/share/truenas/eula.html'):
+        with open('/usr/local/share/truenas/eula.html', 'r', encoding='utf8') as f:
+            eula = f.read()
+
+    return render(request, 'eula.html', {
+        'sw_name': get_sw_name(),
+        'sw_version': get_sw_version(),
+        'eula': eula,
+        'hide_buttons': True,
+    })
 
 
 def license_update(request):
