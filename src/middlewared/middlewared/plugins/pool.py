@@ -828,9 +828,34 @@ class PoolDatasetService(CRUDService):
                             'Volume size should be a multiple of volume block size'
                         )
 
-    @accepts(Str('id'), Bool('recursive', default=False))
-    async def do_delete(self, id, recursive):
-        return await self.middleware.call('zfs.dataset.delete', id, recursive)
+    @accepts(Str('id'), Dict(
+        'dataset_delete',
+        Bool('recursive', default=False),
+        Bool('force', default=False),
+    ))
+    async def do_delete(self, id, options):
+        """
+        Delete dataset/zvol `id`.
+
+        `recursive` will also delete/destroy all children datasets.
+        `force` will force delete busy datasets.
+
+        .. examples(websocket)::
+
+          Delete "tank/myuser" dataset.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.dataset.delete",
+                "params": ["tank/myuser"]
+            }
+        """
+        return await self.middleware.call('zfs.dataset.delete', id, {
+            'force': options['force'],
+            'recursive': options['recursive'],
+        })
 
     @item_method
     @accepts(Str('id'))
