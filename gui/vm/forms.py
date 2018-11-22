@@ -188,7 +188,7 @@ class DeviceForm(ModelForm):
     )
     NIC_attach = forms.ChoiceField(
         label=_('NIC to attach'),
-        choices=choices.NICChoices(exclude_configured=False, include_vlan_parent=True),
+        choices=(),
         required=False,
     )
     NIC_mac = forms.CharField(
@@ -244,6 +244,9 @@ class DeviceForm(ModelForm):
         )
 
         self.fields['VNC_bind'].choices = self.ipv4_list()
+        self.fields['NIC_attach'].choices = choices.NICChoices(
+            exclude_configured=False, include_vlan_parent=True, include_lagg_parent=False,
+        )
 
         diskchoices = {}
         _n = notifier()
