@@ -17,10 +17,10 @@ from pybonjour import (
 from middlewared.service import Service, private
 
 
-MDNSD_MONITOR = None
-
-
 class mDNSDaemonMonitor(threading.Thread):
+
+    instance = None
+
     def __init__(self, middleware):
         super(mDNSDaemonMonitor, self).__init__(daemon=True)
         self.middleware = middleware
@@ -29,6 +29,11 @@ class mDNSDaemonMonitor(threading.Thread):
         self.mdnsd_piddir = "/var/run/"
         self.mdnsd_running = threading.Event()
         self.dns_sync = threading.Event()
+
+        if self.__class__.instance:
+            raise RuntimeError('Can only be instantiated a single time')
+        self.__class__.instance = self
+        self.start()
 
     def run(self):
         set_thread_name('mdnsd_monitor')
@@ -189,7 +194,7 @@ class DiscoverThread(mDNSThread):
 
     def run(self):
         set_thread_name('mdns_discover')
-        if not MDNSD_MONITOR.mdnsd_running.wait(timeout=10):
+        if not mDNSDaemonMonitor.instance.mdnsd_running.wait(timeout=10):
             return
 
         sdRef = pybonjour.DNSServiceBrowse(
@@ -273,7 +278,7 @@ class ServicesThread(mDNSThread):
     def run(self):
         set_thread_name('mdns_services')
         while True:
-            if not MDNSD_MONITOR.mdnsd_running.wait(timeout=10):
+            if not mDNSDaemonMonitor.instance.mdnsd_running.wait(timeout=10):
                 return
 
             try:
@@ -350,7 +355,7 @@ class ResolveThread(mDNSThread):
     def run(self):
         set_thread_name('mdns_resolve')
         while True:
-            if not MDNSD_MONITOR.mdnsd_running.wait(timeout=10):
+            if not mDNSDaemonMonitor.instance.mdnsd_running.wait(timeout=10):
                 return
 
             try:
@@ -669,7 +674,7 @@ class mDNSAdvertiseService(Service):
             if self.initialized:
                 return
 
-        if not MDNSD_MONITOR.mdnsd_running.wait(timeout=10):
+        if not mDNSDaemonMonitor.instance.mdnsd_running.wait(timeout=10):
             return
 
         try:
@@ -714,12 +719,9 @@ class mDNSAdvertiseService(Service):
 
 
 async def dns_post_sync(middleware):
-    MDNSD_MONITOR.dns_sync.set()
+    mDNSDaemonMonitor.instance.dns_sync.set()
 
 
 def setup(middleware):
-    global MDNSD_MONITOR
-    MDNSD_MONITOR = mDNSDaemonMonitor(middleware)
-    MDNSD_MONITOR.start()
-
+    mDNSDaemonMonitor(middleware)
     middleware.register_hook('dns.post_sync', dns_post_sync)
