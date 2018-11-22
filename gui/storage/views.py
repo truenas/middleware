@@ -524,7 +524,7 @@ def dataset_delete(request, name):
         if form.is_valid():
             with client as c:
                 try:
-                    c.call("pool.dataset.delete", name, True)
+                    c.call("pool.dataset.delete", name, {'recursive': True})
                     return JsonResp(
                         request,
                         message=_("Dataset successfully destroyed."))
