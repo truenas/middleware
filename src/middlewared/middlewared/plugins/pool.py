@@ -2412,12 +2412,17 @@ class PoolDatasetService(CRUDService):
                             'Volume size should be a multiple of volume block size'
                         )
 
-    @accepts(Str('id'), Bool('recursive', default=False))
-    async def do_delete(self, id, recursive):
+    @accepts(Str('id'), Dict(
+        'dataset_delete',
+        Bool('recursive', default=False),
+        Bool('force', default=False),
+    ))
+    async def do_delete(self, id, options):
         """
         Delete dataset/zvol `id`.
 
         `recursive` will also delete/destroy all children datasets.
+        `force` will force delete busy datasets.
 
         .. examples(websocket)::
 
@@ -2438,7 +2443,10 @@ class PoolDatasetService(CRUDService):
         if iscsi_target_extents:
             raise CallError("This volume is in use by iSCSI extent, please remove it first.")
 
-        return await self.middleware.call('zfs.dataset.delete', id, recursive)
+        return await self.middleware.call('zfs.dataset.delete', id, {
+            'force': options['force'],
+            'recursive': options['recursive'],
+        })
 
     @item_method
     @accepts(Str('id'))
