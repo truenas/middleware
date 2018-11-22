@@ -105,6 +105,9 @@ class EtcService(Service):
         'nginx': [
             {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
         ],
+        'collectd': [
+            {'type': 'mako', 'path': 'local/collectd.conf'}
+        ],
         'netdata': [
             {'type': 'mako', 'path': 'local/netdata/netdata.conf'},
             {'type': 'mako', 'path': 'local/netdata/stream.conf'},
