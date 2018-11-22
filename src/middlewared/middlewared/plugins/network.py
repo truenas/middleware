@@ -1806,6 +1806,8 @@ class DNSService(Service):
         if proc.returncode != 0:
             self.logger.warn(f'Failed to run resolvconf: {data[1].decode()}')
 
+        await self.middleware.call_hook('dns.post_sync')
+
 
 class NetworkGeneralService(Service):
 
