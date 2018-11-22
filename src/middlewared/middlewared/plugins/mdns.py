@@ -35,7 +35,6 @@ class mDNSDaemonMonitor(threading.Thread):
         self.start()
 
     def run(self):
-        set_thread_name('mdnsd_monitor')
         while True:
             """
             If the system has not completely booted yet we need to way at least
