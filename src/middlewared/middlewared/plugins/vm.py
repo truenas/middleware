@@ -1525,6 +1525,15 @@ class VMDeviceService(CRUDService):
                 device['order'] = 1002
         return device
 
+    @accepts()
+    def nic_attach_choices(self):
+        """
+        Available choices for NIC Attach attribute.
+        """
+        return self.middleware.call_sync('interface.choices', {
+            'exclude': ['bridge', 'epair', 'tap', 'vnet'],
+        })
+
     @accepts(
         Dict(
             'vmdevice_create',
@@ -1654,6 +1663,12 @@ class VMDeviceService(CRUDService):
             path = device['attributes'].get('path')
             if not path:
                 verrors.add('attributes.path', 'Path is required.')
+        elif device.get('dtype') == 'NIC':
+            nic = device['attributes'].get('nic_attach')
+            if nic:
+                nic_choices = await self.middleware.call('vm.device.nic_attach_choices')
+                if nic not in nic_choices:
+                    verrors.add('attributes.nic_attach', 'Not a valid choice.')
         elif device.get('dtype') == 'VNC':
             vm = device.get('vm')
             if vm:
