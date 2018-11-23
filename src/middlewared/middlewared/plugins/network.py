@@ -274,7 +274,10 @@ def dhclient_leases(interface):
             return f.read()
 
 
-class InterfacesService(CRUDService):
+class InterfaceService(CRUDService):
+
+    class Config:
+        namespace_alias = 'interfaces'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1579,7 +1582,10 @@ class InterfacesService(CRUDService):
         return list_of_ip
 
 
-class RoutesService(Service):
+class RouteService(Service):
+
+    class Config:
+        namespace_alias = 'routes'
 
     @filterable
     def system_routes(self, filters, options):
