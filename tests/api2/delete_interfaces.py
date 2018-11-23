@@ -11,14 +11,14 @@ sys.path.append(apifolder)
 from functions import GET, POST, DELETE
 
 
-def test_01_delete_interfaces_vlan1():
-    id = GET('/interfaces?name=vlan1').json()[0]['id']
-    results = DELETE(f'/interfaces/id/{id}')
+def test_01_delete_interface_vlan1():
+    id = GET('/interface?name=vlan1').json()[0]['id']
+    results = DELETE(f'/interface/id/{id}')
     assert results.status_code == 200, results.text
 
 
-def test_02_get_interfaces_has_pending_changes():
-    results = GET('/interfaces/has_pending_changes')
+def test_02_get_interface_has_pending_changes():
+    results = GET('/interface/has_pending_changes')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), bool) is True, results.text
     assert results.json() is True, results.text
@@ -29,25 +29,25 @@ def test_03_commite_interface():
         "rollback": True,
         "checkin_timeout": 10
     }
-    results = POST('/interfaces/commit/', payload)
+    results = POST('/interface/commit/', payload)
     assert results.status_code == 200, results.text
 
 
-def test_04_get_interfaces_checkin_waiting():
-    results = GET('/interfaces/checkin_waiting/')
+def test_04_get_interface_checkin_waiting():
+    results = GET('/interface/checkin_waiting/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), bool) is True, results.text
     assert results.json() is True, results.text
 
 
-def test_05_get_interfaces_checkin():
-    results = GET('/interfaces/checkin/')
+def test_05_get_interface_checkin():
+    results = GET('/interface/checkin/')
     assert results.status_code == 200, results.text
     assert results.json() is None, results.text
 
 
-def test_06_get_interfaces_has_pending_changes():
-    results = GET('/interfaces/has_pending_changes')
+def test_06_get_interface_has_pending_changes():
+    results = GET('/interface/has_pending_changes')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), bool) is True, results.text
     assert results.json() is False, results.text
