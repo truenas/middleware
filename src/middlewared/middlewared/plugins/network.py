@@ -1149,6 +1149,40 @@ class InterfaceService(CRUDService):
                 if alias['address'] == local_ip:
                     return iface
 
+    @accepts(Dict(
+        'options',
+        Bool('lag_ports', default=False),
+        Bool('vlan_parent', default=True),
+        List('exclude', default=['epair', 'tap', 'vnet']),
+    ))
+    def choices(self, options):
+        """
+        Choices of available network interfaces.
+
+        `lag_ports` will include LINK_AGGREGATION ports.
+        `vlan_parent` will include VLAN parent interface.
+        `exclude` is a list of interfaces prefix to remove.
+        """
+        interfaces = self.middleware.call_sync('interface.query')
+        choices = {i['name']: i['description'] for i in interfaces}
+        for interface in interfaces:
+            for exclude in options['exclude']:
+                if interface['name'].startswith(exclude):
+                    choices.pop(interface['name'], None)
+                    continue
+            if interface['description'] != interface['name']:
+                choices[interface['name']] = f'{interface["name"]}: {interface["description"]}'
+            if not options['lag_ports']:
+                if interface['type'] == 'LINK_AGGREGATION':
+                    for port in interface['lag_ports']:
+                        choices.pop(port, None)
+                        continue
+            if not options['vlan_parent']:
+                if interface['type'] == 'VLAN':
+                    choices.pop(interface['vlan_parent_interface'], None)
+                    continue
+        return choices
+
     @private
     async def sync(self, wait_dhcp=False):
         """
