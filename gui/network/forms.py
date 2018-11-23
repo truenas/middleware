@@ -395,9 +395,9 @@ class InterfacesForm(ModelForm):
         with DBSync():
             super(InterfacesForm, self).delete(*args, **kwargs)
         with client as c:
-            c.call('interfaces.sync')
+            c.call('interface.sync')
             try:
-                c.call('routes.sync')
+                c.call('route.sync')
             except Exception:
                 # Syncing routes may fail if the interface changes network
                 # and old default gateway is still in place
@@ -408,9 +408,9 @@ class InterfacesForm(ModelForm):
         super(InterfacesForm, self).done(*args, **kwargs)
         if notifier().is_freenas():
             with client as c:
-                c.call('interfaces.sync')
+                c.call('interface.sync')
                 try:
-                    c.call('routes.sync')
+                    c.call('route.sync')
                 except Exception:
                     # Syncing routes may fail if the interface changes network
                     # and old default gateway is still in place

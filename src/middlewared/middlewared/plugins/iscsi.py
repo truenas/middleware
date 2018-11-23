@@ -116,7 +116,7 @@ class ISCSIPortalService(CRUDService):
             verrors.add(f'{schema}.listen', 'At least one listen entry is required.')
         else:
             system_ips = [
-                ip['address'] for ip in await self.middleware.call('interfaces.ip_in_use')
+                ip['address'] for ip in await self.middleware.call('interface.ip_in_use')
             ]
             system_ips.extend(['0.0.0.0', '::'])
             new_ips = set(i['ip'] for i in data['listen']) - set(i['ip'] for i in old['listen']) if old else set()
@@ -648,7 +648,7 @@ class iSCSITargetExtentService(CRUDService):
         # TODO Just ported, let's do something different later? - Brandon
         if serial is None:
             try:
-                nic = (await self.middleware.call('interfaces.query',
+                nic = (await self.middleware.call('interface.query',
                                                   [['name', 'rnin', 'vlan'],
                                                    ['name', 'rnin', 'lagg'],
                                                    ['name', 'rnin', 'epair'],

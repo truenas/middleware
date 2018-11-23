@@ -19,15 +19,15 @@ aliases = {'address': ip}
 vlan1_ip = f"192.168.0.{random.randint(10, 250)}"
 
 
-def test_01_get_interfaces_name():
-    results = GET(f'/interfaces?name={interface}')
+def test_01_get_interface_name():
+    results = GET(f'/interface?name={interface}')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list) is True, results.text
     assert results.json()[0]["name"] == interface, results.text
 
 
-def test_02_get_interfaces_aliases_ip():
-    results = GET(f'/interfaces?name={interface}')
+def test_02_get_interface_aliases_ip():
+    results = GET(f'/interface?name={interface}')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list) is True, results.text
     for aliases_list in results.json()[0]['state']['aliases']:
@@ -38,8 +38,8 @@ def test_02_get_interfaces_aliases_ip():
     assert interface_ip == ip, results.text
 
 
-def test_03_get_interfaces_aliases_broadcast_ip():
-    results = GET(f'/interfaces?name={interface}')
+def test_03_get_interface_aliases_broadcast_ip():
+    results = GET(f'/interface?name={interface}')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list) is True, results.text
     for aliases_list in results.json()[0]['state']['aliases']:
@@ -50,8 +50,8 @@ def test_03_get_interfaces_aliases_broadcast_ip():
     aliases['broadcast'] = broadcast_ip
 
 
-def test_04_get_interfaces_aliases_type():
-    results = GET(f'/interfaces?name={interface}')
+def test_04_get_interface_aliases_type():
+    results = GET(f'/interface?name={interface}')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list) is True, results.text
     for aliases_list in results.json()[0]['state']['aliases']:
@@ -63,8 +63,8 @@ def test_04_get_interfaces_aliases_type():
     aliases['type'] = types
 
 
-def test_05_get_interfaces_aliases_netmask():
-    results = GET(f'/interfaces?name={interface}')
+def test_05_get_interface_aliases_netmask():
+    results = GET(f'/interface?name={interface}')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list) is True, results.text
     for aliases_list in results.json()[0]['state']['aliases']:
@@ -75,38 +75,38 @@ def test_05_get_interfaces_aliases_netmask():
     aliases['netmask'] = netmask
 
 
-def test_06_get_interfaces_ipv4_in_use():
+def test_06_get_interface_ipv4_in_use():
     global results
-    results = POST("/interfaces/ip_in_use/", {"ipv4": True})
+    results = POST("/interface/ip_in_use/", {"ipv4": True})
     assert results.status_code == 200, results.text
 
 
 @pytest.mark.parametrize('dkey', ['type', 'address', 'netmask', 'broadcast'])
-def test_07_look_at_interfaces_ipv4_in_use_output_(dkey):
+def test_07_look_at_interface_ipv4_in_use_output_(dkey):
     assert results.json()[0][dkey] == aliases[dkey], results.text
 
 
-def test_08_set_main_interfaces_ipv4_to_false():
+def test_08_set_main_interface_ipv4_to_false():
     payload = {
         'ipv4_dhcp': False,
         "aliases": [f"{ip}/{aliases['netmask']}"]
     }
-    results = PUT(f'/interfaces/id/{interface}/', payload)
+    results = PUT(f'/interface/id/{interface}/', payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict) is True, results.text
     assert results.json()['ipv4_dhcp'] is False, results.text
 
 
-def test_09_looking_main_interfaces_ipv4_dhcp_if_is_false():
-    results = GET(f'/interfaces/id/{interface}')
+def test_09_looking_main_interface_ipv4_dhcp_if_is_false():
+    results = GET(f'/interface/id/{interface}')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict) is True, results.text
     assert results.json()['ipv4_dhcp'] is False, results.text
 
 
 @pytest.mark.parametrize('dkey', ['type', 'address', 'netmask'])
-def test_10_look_at_interfaces_aliases_output_(dkey):
-    results = GET(f'/interfaces/id/{interface}')
+def test_10_look_at_interface_aliases_output_(dkey):
+    results = GET(f'/interface/id/{interface}')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict) is True, results.text
     assert results.json()['aliases'][0][dkey] == aliases[dkey], results.text
@@ -124,7 +124,7 @@ def test_11_creating_vlan1_interface():
         "vlan_pcp": 1
     }
     global results
-    results = POST('/interfaces/', payload)
+    results = POST('/interface/', payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict) is True, results.text
     global interfaces_id
@@ -133,13 +133,13 @@ def test_11_creating_vlan1_interface():
 
 @pytest.mark.parametrize('dkey', ["ipv4_dhcp", "name", "vlan_parent_interface",
                                   "type", "vlan_tag", "vlan_pcp"])
-def test_12_compare_payload_with_created_vlan1_interfaces_result_output_(dkey):
+def test_12_compare_payload_with_created_vlan1_interface_result_output_(dkey):
     assert results.json()[dkey] == payload[dkey], results.text
 
 
 def test_13_get_the_vlan1_interface_results():
     global results
-    results = GET(f'/interfaces/id/{interfaces_id}/')
+    results = GET(f'/interface/id/{interfaces_id}/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict) is True, results.text
 
@@ -150,8 +150,8 @@ def test_14_compare_payload_with_get_vlan1_interface_result_output_(dkey):
     assert results.json()[dkey] == payload[dkey], results.text
 
 
-def test_15_get_interfaces_has_pending_changes():
-    results = GET('/interfaces/has_pending_changes')
+def test_15_get_interface_has_pending_changes():
+    results = GET('/interface/has_pending_changes')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), bool) is True, results.text
     assert results.json() is True, results.text
@@ -162,37 +162,37 @@ def test_16_commite_interface():
         "rollback": True,
         "checkin_timeout": 10
     }
-    results = POST('/interfaces/commit/', payload)
+    results = POST('/interface/commit/', payload)
     assert results.status_code == 200, results.text
 
 
-def test_17_get_interfaces_checkin_waiting():
-    results = GET('/interfaces/checkin_waiting/')
+def test_17_get_interface_checkin_waiting():
+    results = GET('/interface/checkin_waiting/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), bool) is True, results.text
     assert results.json() is True, results.text
 
 
-def test_18_get_interfaces_checkin():
-    results = GET('/interfaces/checkin/')
+def test_18_get_interface_checkin():
+    results = GET('/interface/checkin/')
     assert results.status_code == 200, results.text
     assert results.json() is None, results.text
 
 
-def test_19_get_interfaces_has_pending_changes():
-    results = GET('/interfaces/has_pending_changes')
+def test_19_get_interface_has_pending_changes():
+    results = GET('/interface/has_pending_changes')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), bool) is True, results.text
     assert results.json() is False, results.text
 
 
-# def test_20_delete_interfaces_vlan1():
-#     results = DELETE(f'/interfaces/id/{interfaces_id}')
+# def test_20_delete_interface_vlan1():
+#     results = DELETE(f'/interface/id/{interfaces_id}')
 #     assert results.status_code == 200, results.text
 
 
-# def test_21_get_interfaces_has_pending_changes():
-#     results = GET('/interfaces/has_pending_changes')
+# def test_21_get_interface_has_pending_changes():
+#     results = GET('/interface/has_pending_changes')
 #     assert results.status_code == 200, results.text
 #     assert isinstance(results.json(), bool) is True, results.text
 #     assert results.json() is True, results.text
@@ -203,25 +203,25 @@ def test_19_get_interfaces_has_pending_changes():
 #         "rollback": True,
 #         "checkin_timeout": 10
 #     }
-#     results = POST('/interfaces/commit/', payload)
+#     results = POST('/interface/commit/', payload)
 #     assert results.status_code == 200, results.text
 
 
-# def test_23_get_interfaces_checkin_waiting():
-#     results = GET('/interfaces/checkin_waiting/')
+# def test_23_get_interface_checkin_waiting():
+#     results = GET('/interface/checkin_waiting/')
 #     assert results.status_code == 200, results.text
 #     assert isinstance(results.json(), bool) is True, results.text
 #     assert results.json() is True, results.text
 
 
-# def test_24_get_interfaces_checkin():
-#     results = GET('/interfaces/checkin/')
+# def test_24_get_interface_checkin():
+#     results = GET('/interface/checkin/')
 #     assert results.status_code == 200, results.text
 #     assert results.json() is None, results.text
 
 
-# def test_25_get_interfaces_has_pending_changes():
-#     results = GET('/interfaces/has_pending_changes')
+# def test_25_get_interface_has_pending_changes():
+#     results = GET('/interface/has_pending_changes')
 #     assert results.status_code == 200, results.text
 #     assert isinstance(results.json(), bool) is True, results.text
 #     assert results.json() is False, results.text

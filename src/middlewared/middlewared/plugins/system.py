@@ -611,7 +611,7 @@ class SystemGeneralService(ConfigService):
                 )
 
         ip_addresses = await self.middleware.call(
-            'interfaces.ip_in_use'
+            'interface.ip_in_use'
         )
         ip4_addresses_list = [alias_dict['address'] for alias_dict in ip_addresses if alias_dict['type'] == 'INET']
         ip6_addresses_list = [alias_dict['address'] for alias_dict in ip_addresses if alias_dict['type'] == 'INET6']
