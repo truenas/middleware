@@ -113,6 +113,8 @@ class ServiceBase(type):
       - service_model: system service datastore model option used by `SystemServiceService` (`service` if used if not provided)
       - service_verb: verb to be used on update (default to `reload`)
       - namespace: namespace identifier of the service
+      - namespace_alias: another namespace identifier of the service, mostly used to rename and
+                         slowly deprecate old name.
       - private: whether or not the service is deemed private
       - verbose_name: human-friendly singular name for the service
       - thread_pool: thread pool to use for threaded methods
@@ -142,6 +144,7 @@ class ServiceBase(type):
             'service_model': None,
             'service_verb': 'reload',
             'namespace': namespace,
+            'namespace_alias': None,
             'private': False,
             'thread_pool': None,
             'process_pool': None,
