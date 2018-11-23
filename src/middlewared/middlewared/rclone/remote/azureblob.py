@@ -8,6 +8,7 @@ class AzureBlobRcloneRemote(BaseRcloneRemote):
 
     buckets = True
 
+    rclone_binary_path = "/usr/local/bin/rclone-1.42"
     rclone_type = "azureblob"
 
     credentials_schema = [

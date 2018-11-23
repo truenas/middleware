@@ -24,7 +24,7 @@ RE_TRANSF = re.compile(r"Transferred:\s*?(.+)$", re.S)
 
 REMOTES = {}
 
-RcloneConfigTuple = namedtuple("RcloneConfigTuple", ["config_path", "remote_path"])
+RcloneConfigTuple = namedtuple("RcloneConfigTuple", ["binary_path", "config_path", "remote_path"])
 
 
 class RcloneConfig:
@@ -32,6 +32,8 @@ class RcloneConfig:
         self.cloud_sync = cloud_sync
 
         self.provider = REMOTES[self.cloud_sync["credentials"]["provider"]]
+
+        self.binary_path = self.provider.rclone_binary_path
 
         self.tmp_file = None
         self.path = None
@@ -75,7 +77,7 @@ class RcloneConfig:
 
         self.tmp_file.flush()
 
-        return RcloneConfigTuple(self.tmp_file.name, remote_path)
+        return RcloneConfigTuple(self.binary_path, self.tmp_file.name, remote_path)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.tmp_file:
@@ -86,7 +88,7 @@ async def rclone(job, cloud_sync):
     # Use a temporary file to store rclone file
     with RcloneConfig(cloud_sync) as config:
         args = [
-            "/usr/local/bin/rclone",
+            config.binary_path,
             "--config", config.config_path,
             "-v",
             "--stats", "1s",
@@ -510,7 +512,7 @@ class CloudSyncService(CRUDService):
     @private
     async def ls(self, config, path):
         with RcloneConfig(config) as config:
-            proc = await run(["rclone", "--config", config.config_path, "lsjson", "remote:" + path],
+            proc = await run([config.binary_path, "--config", config.config_path, "lsjson", "remote:" + path],
                              check=False, encoding="utf8")
             if proc.returncode == 0:
                 return json.loads(proc.stdout)

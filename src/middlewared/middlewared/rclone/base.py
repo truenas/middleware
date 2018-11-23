@@ -5,6 +5,7 @@ class BaseRcloneRemote:
     buckets = False
     readonly = False
 
+    rclone_binary_path = "/usr/local/bin/rclone"
     rclone_type = NotImplemented
 
     credentials_schema = NotImplemented
