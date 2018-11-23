@@ -108,7 +108,7 @@ class NetDataService(SystemServiceService):
 
         bind_to_ips = data.get('bind')
         if bind_to_ips:
-            valid_ips = [ip['address'] for ip in await self.middleware.call('interfaces.ip_in_use')]
+            valid_ips = [ip['address'] for ip in await self.middleware.call('interface.ip_in_use')]
             valid_ips.extend(['127.0.0.1', '::1', '0.0.0.0', '::'])
 
             for bind_ip in bind_to_ips:

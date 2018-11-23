@@ -445,8 +445,8 @@ class ServiceService(CRUDService):
         await self._service("ix-sysctl", "reload", **kwargs)
 
     async def _start_network(self, **kwargs):
-        await self.middleware.call('interfaces.sync')
-        await self.middleware.call('routes.sync')
+        await self.middleware.call('interface.sync')
+        await self.middleware.call('route.sync')
 
     async def _stop_jails(self, **kwargs):
         for jail in await self.middleware.call('datastore.query', 'jails.jails'):

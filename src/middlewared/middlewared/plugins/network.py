@@ -83,7 +83,7 @@ class NetworkConfigurationService(ConfigService):
         ipv4_gateway_value = data.get('ipv4gateway')
         if ipv4_gateway_value:
             if not await self.middleware.call(
-                    'routes.ipv4gw_reachable',
+                    'route.ipv4gw_reachable',
                     ipaddress.ip_address(ipv4_gateway_value).exploded
             ):
                 verrors.add(
@@ -188,7 +188,7 @@ class NetworkConfigurationService(ConfigService):
                     new_config['ipv6gateway'] != config['ipv6gateway']
             ):
                 services_to_reload.append('networkgeneral')
-                await self.middleware.call('routes.sync')
+                await self.middleware.call('route.sync')
 
             if (
                     'hostname_virtual' in new_config.keys() and
@@ -764,7 +764,7 @@ class InterfaceService(CRUDService):
 
         ifaces = {
             i['name']: i
-            for i in await self.middleware.call('interfaces.query', filters)
+            for i in await self.middleware.call('interface.query', filters)
         }
 
         if 'name' in data and data['name'] in ifaces:
@@ -1092,7 +1092,7 @@ class InterfaceService(CRUDService):
 
         if iface['type'] == 'LINK_AGGREGATION':
             vlans = ', '.join([
-                i['name'] for i in await self.middleware.call('interfaces.query', [
+                i['name'] for i in await self.middleware.call('interface.query', [
                     ('type', '=', 'VLAN'), ('vlan_parent_interface', '=', iface['id'])
                 ])
             ])
@@ -1143,8 +1143,8 @@ class InterfaceService(CRUDService):
     @accepts()
     @pass_app
     async def websocket_interface(self, app):
-        local_ip = await self.middleware.call('interfaces.websocket_local_ip', app=app)
-        for iface in await self.middleware.call('interfaces.query'):
+        local_ip = await self.middleware.call('interface.websocket_local_ip', app=app)
+        for iface in await self.middleware.call('interface.query'):
             for alias in iface['aliases']:
                 if alias['address'] == local_ip:
                     return iface
@@ -1823,7 +1823,7 @@ class NetworkGeneralService(Service):
     @accepts()
     async def summary(self):
         ips = defaultdict(lambda: defaultdict(list))
-        for iface in await self.middleware.call('interfaces.query'):
+        for iface in await self.middleware.call('interface.query'):
             for alias in iface['state']['aliases']:
                 if alias['type'] == 'INET':
                     key = 'IPV4'
@@ -1834,7 +1834,7 @@ class NetworkGeneralService(Service):
                 ips[iface['name']][key].append(f'{alias["address"]}/{alias["netmask"]}')
 
         default_routes = []
-        for route in await self.middleware.call('routes.system_routes', [('netmask', 'in', ['0.0.0.0', '::'])]):
+        for route in await self.middleware.call('route.system_routes', [('netmask', 'in', ['0.0.0.0', '::'])]):
             default_routes.append(route['gateway'])
 
         nameservers = []
@@ -1881,7 +1881,7 @@ async def _event_ifnet(middleware, event_type, args):
     if iface.startswith(('epair', 'tun', 'tap')):
         return
 
-    iface = await middleware.call('interfaces.query', [('name', '=', iface)])
+    iface = await middleware.call('interface.query', [('name', '=', iface)])
     if not iface:
         return
 
@@ -1892,7 +1892,7 @@ async def _event_ifnet(middleware, event_type, args):
     if iface['state']['cloned']:
         return
 
-    await middleware.call('interfaces.sync_interface', iface['name'])
+    await middleware.call('interface.sync_interface', iface['name'])
 
 
 async def setup(middleware):

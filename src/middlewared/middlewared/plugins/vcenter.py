@@ -259,7 +259,7 @@ class VCenterService(ConfigService):
     @private
     async def get_management_ip_choices(self):
         ip_list = await self.middleware.call(
-            'interfaces.ip_in_use', {
+            'interface.ip_in_use', {
                 'ipv4': True
             }
         )

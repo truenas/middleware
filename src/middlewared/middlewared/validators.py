@@ -128,7 +128,7 @@ class IpInUse:
                 for jail in self.middleware.call_sync('jail.query')
                 for j_ip in [jail['ip4_addr'], jail['ip6_addr']] for v in j_ip.split(',')
             ] + [
-                d['address'] for d in self.middleware.call_sync('interfaces.ip_in_use')
+                d['address'] for d in self.middleware.call_sync('interface.ip_in_use')
             ]
 
             if ip in ips:

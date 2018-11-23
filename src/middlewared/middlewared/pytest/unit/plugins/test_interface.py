@@ -4,7 +4,7 @@ import pytest
 from asynctest import Mock
 
 from middlewared.service import ValidationErrors
-from middlewared.plugins.network import InterfacesService
+from middlewared.plugins.network import InterfaceService
 from middlewared.pytest.unit.middleware import Middleware
 
 
@@ -96,10 +96,10 @@ INTERFACES_WITH_BRIDGE = INTERFACES + [
 async def test__interfaces_service__create_bridge_invalid_ports():
 
     m = Middleware()
-    m['interfaces.query'] = Mock(return_value=INTERFACES)
+    m['interface.query'] = Mock(return_value=INTERFACES)
 
     with pytest.raises(ValidationErrors) as ve:
-        await InterfacesService(m).create({
+        await InterfaceService(m).create({
             'type': 'BRIDGE',
             'bridge_members': ['em0', 'igb2'],
         })
@@ -110,10 +110,10 @@ async def test__interfaces_service__create_bridge_invalid_ports():
 async def test__interfaces_service__create_bridge_invalid_ports_used():
 
     m = Middleware()
-    m['interfaces.query'] = Mock(return_value=INTERFACES_WITH_BRIDGE)
+    m['interface.query'] = Mock(return_value=INTERFACES_WITH_BRIDGE)
 
     with pytest.raises(ValidationErrors) as ve:
-        await InterfacesService(m).create({
+        await InterfaceService(m).create({
             'type': 'BRIDGE',
             'bridge_members': ['em0'],
         })
@@ -124,10 +124,10 @@ async def test__interfaces_service__create_bridge_invalid_ports_used():
 async def test__interfaces_service__create_bridge_invalid_name():
 
     m = Middleware()
-    m['interfaces.query'] = Mock(return_value=INTERFACES)
+    m['interface.query'] = Mock(return_value=INTERFACES)
 
     with pytest.raises(ValidationErrors) as ve:
-        await InterfacesService(m).create({
+        await InterfaceService(m).create({
             'type': 'BRIDGE',
             'name': 'mybridge1',
             'bridge_members': ['em0'],
@@ -139,10 +139,10 @@ async def test__interfaces_service__create_bridge_invalid_name():
 async def test__interfaces_service__create_lagg_invalid_ports():
 
     m = Middleware()
-    m['interfaces.query'] = Mock(return_value=INTERFACES)
+    m['interface.query'] = Mock(return_value=INTERFACES)
 
     with pytest.raises(ValidationErrors) as ve:
-        await InterfacesService(m).create({
+        await InterfaceService(m).create({
             'type': 'LINK_AGGREGATION',
             'lag_protocol': 'LACP',
             'lag_ports': ['em0', 'igb2'],
@@ -154,10 +154,10 @@ async def test__interfaces_service__create_lagg_invalid_ports():
 async def test__interfaces_service__create_lagg_invalid_ports_cloned():
 
     m = Middleware()
-    m['interfaces.query'] = Mock(return_value=INTERFACES_WITH_VLAN)
+    m['interface.query'] = Mock(return_value=INTERFACES_WITH_VLAN)
 
     with pytest.raises(ValidationErrors) as ve:
-        await InterfacesService(m).create({
+        await InterfaceService(m).create({
             'type': 'LINK_AGGREGATION',
             'lag_protocol': 'LACP',
             'lag_ports': ['em1', 'vlan5'],
@@ -169,10 +169,10 @@ async def test__interfaces_service__create_lagg_invalid_ports_cloned():
 async def test__interfaces_service__create_lagg_invalid_ports_used():
 
     m = Middleware()
-    m['interfaces.query'] = Mock(return_value=INTERFACES_WITH_LAG)
+    m['interface.query'] = Mock(return_value=INTERFACES_WITH_LAG)
 
     with pytest.raises(ValidationErrors) as ve:
-        await InterfacesService(m).create({
+        await InterfaceService(m).create({
             'type': 'LINK_AGGREGATION',
             'lag_protocol': 'LACP',
             'lag_ports': ['em0'],
@@ -184,10 +184,10 @@ async def test__interfaces_service__create_lagg_invalid_ports_used():
 async def test__interfaces_service__create_lagg_invalid_name():
 
     m = Middleware()
-    m['interfaces.query'] = Mock(return_value=INTERFACES)
+    m['interface.query'] = Mock(return_value=INTERFACES)
 
     with pytest.raises(ValidationErrors) as ve:
-        await InterfacesService(m).create({
+        await InterfaceService(m).create({
             'type': 'LINK_AGGREGATION',
             'name': 'mylag11',
             'lag_protocol': 'LACP',
@@ -200,11 +200,11 @@ async def test__interfaces_service__create_lagg_invalid_name():
 async def test__interfaces_service__create_lagg():
 
     m = Middleware()
-    m['interfaces.query'] = Mock(return_value=INTERFACES)
+    m['interface.query'] = Mock(return_value=INTERFACES)
     m['datastore.query'] = Mock(return_value=[])
     m['datastore.insert'] = Mock(return_value=5)
 
-    await InterfacesService(m).create({
+    await InterfaceService(m).create({
         'type': 'LINK_AGGREGATION',
         'lag_protocol': 'LACP',
         'lag_ports': ['em0', 'em1'],
@@ -221,10 +221,10 @@ async def test__interfaces_service__create_lagg():
 async def test__interfaces_service__lagg_update_members_invalid(attr_val):
 
     m = Middleware()
-    m['interfaces.query'] = m._query_filter(INTERFACES_WITH_LAG)
+    m['interface.query'] = m._query_filter(INTERFACES_WITH_LAG)
 
     with pytest.raises(ValidationErrors) as ve:
-        await InterfacesService(m).update('em0', {
+        await InterfaceService(m).update('em0', {
             attr_val[0]: attr_val[1],
         })
     assert f'interface_update.{attr_val[0]}' in ve.value
@@ -234,10 +234,10 @@ async def test__interfaces_service__lagg_update_members_invalid(attr_val):
 async def test__interfaces_service__create_vlan_invalid_parent():
 
     m = Middleware()
-    m['interfaces.query'] = Mock(return_value=INTERFACES)
+    m['interface.query'] = Mock(return_value=INTERFACES)
 
     with pytest.raises(ValidationErrors) as ve:
-        await InterfacesService(m).create({
+        await InterfaceService(m).create({
             'type': 'VLAN',
             'name': 'myvlan1',
             'vlan_tag': 5,
@@ -250,10 +250,10 @@ async def test__interfaces_service__create_vlan_invalid_parent():
 async def test__interfaces_service__create_vlan_invalid_parent_used():
 
     m = Middleware()
-    m['interfaces.query'] = Mock(return_value=INTERFACES_WITH_LAG)
+    m['interface.query'] = Mock(return_value=INTERFACES_WITH_LAG)
 
     with pytest.raises(ValidationErrors) as ve:
-        await InterfacesService(m).create({
+        await InterfaceService(m).create({
             'type': 'VLAN',
             'vlan_tag': 5,
             'vlan_parent_interface': 'em0',
@@ -265,10 +265,10 @@ async def test__interfaces_service__create_vlan_invalid_parent_used():
 async def test__interfaces_service__create_vlan_invalid_name():
 
     m = Middleware()
-    m['interfaces.query'] = Mock(return_value=INTERFACES)
+    m['interface.query'] = Mock(return_value=INTERFACES)
 
     with pytest.raises(ValidationErrors) as ve:
-        await InterfacesService(m).create({
+        await InterfaceService(m).create({
             'type': 'VLAN',
             'name': 'myvlan1',
             'vlan_tag': 5,
@@ -281,11 +281,11 @@ async def test__interfaces_service__create_vlan_invalid_name():
 async def test__interfaces_service__create_vlan():
 
     m = Middleware()
-    m['interfaces.query'] = Mock(return_value=INTERFACES)
+    m['interface.query'] = Mock(return_value=INTERFACES)
     m['datastore.query'] = Mock(return_value=[])
     m['datastore.insert'] = Mock(return_value=5)
 
-    await InterfacesService(m).create({
+    await InterfaceService(m).create({
         'type': 'VLAN',
         'vlan_tag': 5,
         'vlan_parent_interface': 'em0',
@@ -296,10 +296,10 @@ async def test__interfaces_service__create_vlan():
 async def test__interfaces_service__update_vlan_mtu_bigger_parent():
 
     m = Middleware()
-    m['interfaces.query'] = m._query_filter(INTERFACES_WITH_VLAN)
+    m['interface.query'] = m._query_filter(INTERFACES_WITH_VLAN)
 
     with pytest.raises(ValidationErrors) as ve:
-        await InterfacesService(m).update(INTERFACES_WITH_VLAN[-1]['id'], {
+        await InterfaceService(m).update(INTERFACES_WITH_VLAN[-1]['id'], {
             'mtu': 9000,
         })
     assert 'interface_update.mtu' in ve.value
@@ -312,12 +312,12 @@ async def test__interfaces_service__update_two_dhcp():
     interfaces_with_one_dhcp[0]['ipv4_dhcp'] = True
 
     m = Middleware()
-    m['interfaces.query'] = Mock(return_value=interfaces_with_one_dhcp)
+    m['interface.query'] = Mock(return_value=interfaces_with_one_dhcp)
 
     update_interface = interfaces_with_one_dhcp[1]
 
     with pytest.raises(ValidationErrors) as ve:
-        await InterfacesService(m).update(
+        await InterfaceService(m).update(
             update_interface['id'], {
                 'ipv4_dhcp': True,
             },
@@ -334,14 +334,14 @@ async def test__interfaces_service__update_two_same_network():
     ]
 
     m = Middleware()
-    m['interfaces.query'] = Mock(return_value=interfaces_one_network)
+    m['interface.query'] = Mock(return_value=interfaces_one_network)
     m['datastore.query'] = Mock(return_value=[])
     m['datastore.insert'] = Mock(return_value=5)
 
     update_interface = interfaces_one_network[1]
 
     with pytest.raises(ValidationErrors) as ve:
-        await InterfacesService(m).update(
+        await InterfaceService(m).update(
             update_interface['id'], {
                 'aliases': ['192.168.5.3/24'],
             },
@@ -353,13 +353,13 @@ async def test__interfaces_service__update_two_same_network():
 async def test__interfaces_service__update_mtu():
 
     m = Middleware()
-    m['interfaces.query'] = m._query_filter(INTERFACES)
+    m['interface.query'] = m._query_filter(INTERFACES)
     m['datastore.query'] = Mock(return_value=[])
     m['datastore.insert'] = Mock(return_value=5)
 
     update_interface = INTERFACES[1]
 
-    await InterfacesService(m).update(
+    await InterfaceService(m).update(
         update_interface['id'], {
             'mtu': 1550,
         },
@@ -370,14 +370,14 @@ async def test__interfaces_service__update_mtu():
 async def test__interfaces_service__update_mtu_options():
 
     m = Middleware()
-    m['interfaces.query'] = Mock(return_value=INTERFACES)
+    m['interface.query'] = Mock(return_value=INTERFACES)
     m['datastore.query'] = Mock(return_value=[])
     m['datastore.insert'] = Mock(return_value=5)
 
     update_interface = INTERFACES[1]
 
     with pytest.raises(ValidationErrors) as ve:
-        await InterfacesService(m).update(
+        await InterfaceService(m).update(
             update_interface['id'], {
                 'options': 'mtu 1550',
             },

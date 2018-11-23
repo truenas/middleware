@@ -674,7 +674,7 @@ class VMService(CRUDService):
            list: will return a list of available IPv4 address.
         """
         default_ifaces = ['0.0.0.0', '127.0.0.1']
-        ifaces_dict_list = self.middleware.call_sync('interfaces.ip_in_use', {'ipv4': True})
+        ifaces_dict_list = self.middleware.call_sync('interface.ip_in_use', {'ipv4': True})
         ifaces = [alias_dict['address'] for alias_dict in ifaces_dict_list]
 
         default_ifaces.extend(ifaces)
@@ -1444,7 +1444,7 @@ class VMService(CRUDService):
         """
         vnc_web = []
 
-        host = host or await self.middleware.call('interfaces.websocket_local_ip', app=app)
+        host = host or await self.middleware.call('interface.websocket_local_ip', app=app)
 
         for vnc_device in await self.get_vnc(id):
             if vnc_device.get('vnc_web', None) is True:
