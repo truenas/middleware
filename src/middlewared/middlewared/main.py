@@ -754,6 +754,7 @@ class Middleware(object):
         self.jobs = JobsQueue(self)
         self.__schemas = Schemas()
         self.__services = {}
+        self.__services_aliases = {}
         self.__wsclients = {}
         self.__event_sources = {}
         self.__event_subs = defaultdict(list)
@@ -955,9 +956,14 @@ class Middleware(object):
 
     def add_service(self, service):
         self.__services[service._config.namespace] = service
+        if service._config.namespace_alias:
+            self.__services_aliases[service._config.namespace_alias] = service
 
     def get_service(self, name):
-        return self.__services[name]
+        service = self.__services.get(name)
+        if service:
+            return service
+        return self.__services_aliases[name]
 
     def get_services(self):
         return self.__services
