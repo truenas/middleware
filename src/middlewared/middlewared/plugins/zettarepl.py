@@ -42,7 +42,7 @@ def lifetime_timedelta(value, unit):
 
 
 def timedelta_iso8601(timedelta):
-    return f"PT{timedelta.total_seconds()}S"
+    return f"PT{int(timedelta.total_seconds())}S"
 
 
 def lifetime_iso8601(value, unit):
@@ -70,7 +70,7 @@ class ZettareplProcess:
 
         definition = Definition.from_data(self.definition)
 
-        clock = Clock(True)
+        clock = Clock()
         tz_clock = TzClock(definition.timezone, clock.now)
 
         scheduler = Scheduler(clock, tz_clock)
@@ -84,6 +84,8 @@ class ZettareplProcess:
 
         try:
             self.zettarepl.run()
+        except Exception:
+            logging.getLogger("zettarepl").error("Unhandled exception", exc_info=True)
         finally:
             self.zettarepl = None
 
@@ -93,7 +95,7 @@ class ZettareplProcess:
             if command == "timezone":
                 self.zettarepl.scheduler.tz_clock.timezone = pytz.timezone(args)
             if command == "tasks":
-                self.zettarepl.scheduler.set_tasks(Definition.from_data(args).tasks)
+                self.zettarepl.set_tasks(Definition.from_data(args).tasks)
 
 
 class ZettareplService(Service):
@@ -109,6 +111,7 @@ class ZettareplService(Service):
         self.observer_queue = multiprocessing.Queue()
         self.observer_queue_reader = None
         self.state = {}
+        self.queue = None
         self.process = None
         self.zettarepl = None
 
@@ -152,7 +155,8 @@ class ZettareplService(Service):
                 self.process = None
 
     def update_timezone(self, timezone):
-        self.queue.put_item(("timezone", timezone))
+        if self.queue:
+            self.queue.put(("timezone", timezone))
 
     def update_tasks(self):
         try:
@@ -165,7 +169,7 @@ class ZettareplService(Service):
             self.middleware.call_sync("zettarepl.stop")
         else:
             self.middleware.call_sync("zettarepl.start")
-            self.queue.put_item("tasks", definition)
+            self.queue.put(("tasks", definition))
 
     async def list_datasets(self, transport, ssh_credentials=None):
         try:
@@ -311,7 +315,7 @@ class ZettareplService(Service):
         }
 
     def _is_empty_definition(self, definition):
-        return bool(definition["periodic-snapshot-tasks"] or definition["replication-tasks"])
+        return not definition["periodic-snapshot-tasks"] and not definition["replication-tasks"]
 
     def _observer_queue_reader(self):
         while True:
