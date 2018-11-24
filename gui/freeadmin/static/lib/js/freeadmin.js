@@ -1362,7 +1362,27 @@ require([
         }
     }
 
-    replicationDirectionToggle = function() {
+    replicationSetup = function() {
+        var tr;
+
+        tr = registry.byId("id_repl_enable_schedule").domNode.parentNode.parentNode;
+        for (var i = 0; i < 8; i++)
+        {
+            domStyle.set(tr, "background", "#ebffd7");
+            domStyle.set(tr.children[0], "background", "#ebffd7");
+            tr = tr.nextSibling;
+        }
+
+        tr = registry.byId("id_repl_enable_restrict_schedule").domNode.parentNode.parentNode;
+        for (var i = 0; i < 8; i++)
+        {
+            domStyle.set(tr, "background", "#ebd7ff");
+            domStyle.set(tr.children[0], "background", "#ebd7ff");
+            tr = tr.nextSibling;
+        }
+    }
+
+    replicationToggle = function() {
         if (registry.byId("id_repl_direction").get("value") == "PUSH")
         {
             document.querySelector('label[for="id_repl_naming_schema"]').innerHTML = "Also include naming schema";
@@ -1371,10 +1391,12 @@ require([
         {
             document.querySelector('label[for="id_repl_naming_schema"]').innerHTML = "Naming schema";
         }
-    }
 
-    replicationToggle = function() {
-        var schedule = ["minute", "hour", "month", "daymonth", "dayweek", "begin", "end"];
+        var schedule = ["schedule_minute", "schedule_hour", "schedule_month", "schedule_daymonth", "schedule_dayweek",
+                        "schedule_begin", "schedule_end"];
+        var restrictSchedule = ["restrict_schedule_minute", "restrict_schedule_hour", "restrict_schedule_month",
+                                "restrict_schedule_daymonth", "restrict_schedule_dayweek", "restrict_schedule_begin",
+                                "restrict_schedule_end"];
         var policies = {
             "SOURCE": [],
             "CUSTOM": ["lifetime_value", "lifetime_unit"],
@@ -1384,8 +1406,9 @@ require([
             ["exclude", "periodic_snapshot_tasks", "naming_schema", "auto", "only_matching_schedule",
              "allow_from_scratch", "hold_pending_snapshots", "retention_policy", "dedup", "large_block", "embed",
              "compressed", "retries"].
-            concat(schedule).
-            concat(policies["CUSTOM"])
+            concat("enable_schedule").concat(schedule).
+            concat("enable_restrict_schedule").concat(restrictSchedule).
+            concat(policies["SOURCE"]).concat(policies["CUSTOM"]).concat(policies["NONE"])
         );
         var transports = {
             "SSH": newFeatures.concat(["ssh_credentials", "compression", "speed_limit"]),
@@ -1416,6 +1439,12 @@ require([
             visible[name] = true;
         }
 
+        // Pull
+        if (registry.byId("id_repl_direction").get("value") == "PULL")
+        {
+            visible["periodic_snapshot_tasks"] = false;
+        }
+
         // Recursive
 
         if (!registry.byId("id_repl_recursive").get("value"))
@@ -1425,11 +1454,39 @@ require([
 
         // Auto
 
-        if (!registry.byId("id_repl_auto").get("value"))
+        var scheduleVisible = false;
+        var direction = registry.byId("id_repl_direction").get("value");
+        if (direction == "PUSH")
+        {
+            scheduleVisible = (
+                registry.byId("id_repl_auto").get("value") &&
+                registry.byId("id_repl_periodic_snapshot_tasks").get("value").length == 0
+            );
+        }
+        if (direction == "PULL")
+        {
+            scheduleVisible = (
+                registry.byId("id_repl_auto").get("value")
+            );
+        }
+        if (!scheduleVisible)
+        {
+            visible["enable_schedule"] = false;
+        }
+        if (!visible["enable_schedule"] || !registry.byId("id_repl_enable_schedule").get("value"))
         {
             for (var i in schedule)
             {
                 var name = schedule[i];
+                visible[name] = false;
+            }
+            visible["only_matching_schedule"] = false;
+        }
+        if (!visible["enable_restrict_schedule"] || !registry.byId("id_repl_enable_restrict_schedule").get("value"))
+        {
+            for (var i in restrictSchedule)
+            {
+                var name = restrictSchedule[i];
                 visible[name] = false;
             }
         }

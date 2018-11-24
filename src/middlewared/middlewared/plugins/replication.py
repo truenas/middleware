@@ -31,11 +31,8 @@ class ReplicationService(CRUDService):
         if data["direction"] == "PULL":
             data["also_include_naming_schema"] = []
 
-        schedule_name = self._schedule_name(data)
-        if schedule_name:
-            Cron.convert_db_format_to_schedule(data, schedule_name, begin_end=True)
-        data.setdefault("schedule", None)
-        data.setdefault("restrict_schedule", None)
+        Cron.convert_db_format_to_schedule(data, "schedule", key_prefix="schedule_", begin_end=True)
+        Cron.convert_db_format_to_schedule(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
 
         data["state"] = context["state"].get(f"replication_task_{data['id']}", {
             "state": "UNKNOWN",
@@ -49,11 +46,8 @@ class ReplicationService(CRUDService):
             data["naming_schema"] = data["also_include_naming_schema"]
         del data["also_include_naming_schema"]
 
-        schedule_name = self._schedule_name(data)
-        if schedule_name:
-            Cron.convert_schedule_to_db_format(data, schedule_name, begin_end=True)
-        data.pop("schedule", None)
-        data.pop("restrict_schedule", None)
+        Cron.convert_schedule_to_db_format(data, "schedule", key_prefix="schedule_", begin_end=True)
+        Cron.convert_schedule_to_db_format(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
 
         del data["periodic_snapshot_tasks"]
 
@@ -138,7 +132,7 @@ class ReplicationService(CRUDService):
         new.update(data)
 
         verrors = ValidationErrors()
-        verrors.add_child("replication_update", await self._validate(data))
+        verrors.add_child("replication_update", await self._validate(new))
 
         if verrors:
             raise verrors
@@ -196,27 +190,21 @@ class ReplicationService(CRUDService):
                     verrors.add("auto", "Push replication that runs automatically must be either "
                                         "bound to periodic snapshot task or have schedule")
 
-            if data["restrict_schedule"]:
-                if not data["auto"]:
-                    verrors.add("restrict_schedule", "You can only have restrict-schedule for replication that runs "
-                                                     "automatically")
-
-                if not data["periodic_snapshot_tasks"]:
-                    verrors.add("restrict_schedule", "You can only have restrict-schedule for replication that is "
-                                                     "bound to periodic snapshot tasks")
-
         if data["direction"] == "PULL":
+            if data["schedule"]:
+                pass
+            else:
+                if data["auto"]:
+                    verrors.add("auto", "Pull replication that runs automatically must have schedule")
+
             if data["periodic_snapshot_tasks"]:
-                verrors.add("periodic_snapshot_tasks", "This field has no sense for pull replication")
+                verrors.add("periodic_snapshot_tasks", "Pull replication can't be bound to periodic snapshot task")
 
             if not data["naming_schema"]:
                 verrors.add("naming_schema", "Naming schema is required for pull replication")
 
             if data["also_include_naming_schema"]:
                 verrors.add("also_include_naming_schema", "This field has no sense for pull replication")
-
-            if data["restrict_schedule"]:
-                verrors.add("restrict_schedule", "Restricting schedule has no sense for pull replication")
 
             if data["hold_pending_snapshots"]:
                 verrors.add("hold_pending_snapshots", "Pull replication tasks can't hold pending snapshots because "
@@ -317,6 +305,13 @@ class ReplicationService(CRUDService):
             if not any(v.startswith(ds + "/") for ds in data["source_datasets"]):
                 verrors.add(f"exclude.{i}", "This dataset is not a child of any of source datasets")
 
+        if data["schedule"]:
+            if not data["auto"]:
+                verrors.add("schedule", "You can't have schedule for replication that does not run automatically")
+        else:
+            if data["only_matching_schedule"]:
+                verrors.add("only_matching_schedule", "You can't have only-matching-schedule without schedule")
+
         if data["retention_policy"] == "CUSTOM":
             if data["lifetime_value"] is None:
                 verrors.add("lifetime_value", "This field is required for custom retention policy")
@@ -349,19 +344,6 @@ class ReplicationService(CRUDService):
                     "task_id": periodic_snapshot_task_id,
                 },
             )
-
-    def _schedule_name(self, data):
-        if not data["auto"]:
-            return None
-        
-        if data["direction"] == "PUSH":
-            if data["periodic_snapshot_tasks"]:
-                return "restrict_schedule"
-            else:
-                return "schedule"
-
-        if data["directon"] == "PULL":
-            return "schedule"
 
     async def _query_periodic_snapshot_tasks(self, ids):
         verrors = ValidationErrors()

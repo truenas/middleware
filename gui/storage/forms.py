@@ -2093,6 +2093,14 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
         label=_("Exclude child datasets"),
         widget=forms.Textarea(),
     )
+    repl_enable_schedule = forms.BooleanField(
+        required=False,
+        label=_("Schedule"),
+    )
+    repl_enable_restrict_schedule = forms.BooleanField(
+        required=False,
+        label=_("Restrict schedule"),
+    )
     repl_naming_schema = forms.CharField(
         required=False,
         label=_("Naming schema"),
@@ -2117,28 +2125,51 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
         model = models.Replication
 
         widgets = {
-            'repl_minute': CronMultiple(
+            'repl_schedule_minute': CronMultiple(
                 attrs={'numChoices': 60, 'label': _("minute")}
             ),
-            'repl_hour': CronMultiple(
+            'repl_schedule_hour': CronMultiple(
                 attrs={'numChoices': 24, 'label': _("hour")}
             ),
-            'repl_daymonth': CronMultiple(
+            'repl_schedule_daymonth': CronMultiple(
                 attrs={
                     'numChoices': 31, 'start': 1, 'label': _("day of month"),
                 }
             ),
-            'repl_dayweek': forms.CheckboxSelectMultiple(
+            'repl_schedule_dayweek': forms.CheckboxSelectMultiple(
                 choices=choices.WEEKDAYS_CHOICES
             ),
-            'repl_month': forms.CheckboxSelectMultiple(
+            'repl_schedule_month': forms.CheckboxSelectMultiple(
                 choices=choices.MONTHS_CHOICES
             ),
-
-            'repl_begin': forms.widgets.TimeInput(attrs={
+            'repl_schedule_begin': forms.widgets.TimeInput(attrs={
                 'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
             }),
-            'repl_end': forms.widgets.TimeInput(attrs={
+            'repl_schedule_end': forms.widgets.TimeInput(attrs={
+                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
+            }),
+
+            'repl_restrict_schedule_minute': CronMultiple(
+                attrs={'numChoices': 60, 'label': _("minute")}
+            ),
+            'repl_restrict_schedule_hour': CronMultiple(
+                attrs={'numChoices': 24, 'label': _("hour")}
+            ),
+            'repl_restrict_schedule_daymonth': CronMultiple(
+                attrs={
+                    'numChoices': 31, 'start': 1, 'label': _("day of month"),
+                }
+            ),
+            'repl_restrict_schedule_dayweek': forms.CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES
+            ),
+            'repl_restrict_schedule_month': forms.CheckboxSelectMultiple(
+                choices=choices.MONTHS_CHOICES
+            ),
+            'repl_restrict_schedule_begin': forms.widgets.TimeInput(attrs={
+                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
+            }),
+            'repl_restrict_schedule_end': forms.widgets.TimeInput(attrs={
                 'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
             }),
         }
@@ -2146,7 +2177,8 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
     def __init__(self, *args, **kwargs):
         if len(args) > 0 and isinstance(args[0], QueryDict):
             new = args[0].copy()
-            fix_time_fields(new, ['repl_begin', 'repl_end'])
+            fix_time_fields(new, ['repl_schedule_begin', 'repl_schedule_end',
+                                  'repl_restrict_schedule_begin', 'repl_restrict_schedule_end'])
             args = (new,) + args[1:]
 
         if "instance" in kwargs and kwargs["instance"].id:
@@ -2169,26 +2201,47 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
                     )
                 ]
 
+            if kwargs["instance"].repl_schedule_minute is not None:
+                kwargs["initial"]["repl_enable_schedule"] = True
+            if kwargs["instance"].repl_restrict_schedule_minute is not None:
+                kwargs["initial"]["repl_enable_restrict_schedule"] = True
+
             if kwargs["instance"].repl_speed_limit:
                 kwargs["initial"]["repl_speed_limit"] = int(kwargs["instance"].repl_speed_limit / 1024 + 0.5)
 
         super().__init__(*args, **kwargs)
 
-        mchoicefield(self, 'repl_month', [
+        mchoicefield(self, 'repl_schedule_month', [
             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
         ])
-        mchoicefield(self, 'repl_dayweek', [
+        mchoicefield(self, 'repl_restrict_schedule_month', [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+        ])
+        mchoicefield(self, 'repl_schedule_dayweek', [
+            1, 2, 3, 4, 5, 6, 7
+        ])
+        mchoicefield(self, 'repl_restrict_schedule_dayweek', [
             1, 2, 3, 4, 5, 6, 7
         ])
 
-        for k in ["repl_netcat_active_side", "repl_minute", "repl_hour", "repl_daymonth", "repl_begin", "repl_end",
+        for k in ["repl_netcat_active_side",
+
+                  "repl_schedule_minute", "repl_schedule_hour", "repl_schedule_daymonth",
+                  "repl_schedule_begin", "repl_schedule_end",
+
+                  "repl_restrict_schedule_minute", "repl_restrict_schedule_hour", "repl_restrict_schedule_daymonth",
+                  "repl_restrict_schedule_begin", "repl_restrict_schedule_end",
+
                   "repl_lifetime_unit", "repl_retention_policy", "repl_retries"]:
             self.fields[k].required = False
 
-        self.fields['repl_direction'].widget.attrs['onChange'] = "replicationDirectionToggle();"
+        self.fields['repl_direction'].widget.attrs['onChange'] = "replicationToggle();"
         self.fields['repl_transport'].widget.attrs['onChange'] = "replicationToggle();"
         self.fields['repl_recursive'].widget.attrs['onChange'] = "replicationToggle();"
+        self.fields['repl_periodic_snapshot_tasks'].widget.attrs['onChange'] = "replicationToggle();"
         self.fields['repl_auto'].widget.attrs['onChange'] = "replicationToggle();"
+        self.fields['repl_enable_schedule'].widget.attrs['onChange'] = "replicationToggle();"
+        self.fields['repl_enable_restrict_schedule'].widget.attrs['onChange'] = "replicationToggle();"
         self.fields['repl_retention_policy'].widget.attrs['onChange'] = "replicationToggle();"
 
     def clean_repl_netcat_active_side_port_min(self):
@@ -2220,15 +2273,15 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
     def clean_repl_naming_schema(self):
         return self.cleaned_data.get('repl_naming_schema').split()
 
-    def clean_repl_month(self):
-        m = self.data.getlist('repl_month')
+    def clean_repl_schedule_month(self):
+        m = self.data.getlist('repl_schedule_month')
         if len(m) == 12:
             return '*'
         m = ','.join(m)
         return m
 
-    def clean_repl_dayweek(self):
-        w = self.data.getlist('repl_dayweek')
+    def clean_repl_schedule_dayweek(self):
+        w = self.data.getlist('repl_schedule_dayweek')
         if w == '*':
             return w
         if len(w) == 7:
@@ -2236,13 +2289,39 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
         w = ','.join(w)
         return w
 
-    def clean_repl_begin(self):
-        begin = self.cleaned_data.get('repl_begin')
+    def clean_repl_restrict_schedule_month(self):
+        m = self.data.getlist('repl_restrict_schedule_month')
+        if len(m) == 12:
+            return '*'
+        m = ','.join(m)
+        return m
+
+    def clean_repl_restrict_schedule_dayweek(self):
+        w = self.data.getlist('repl_restrict_schedule_dayweek')
+        if w == '*':
+            return w
+        if len(w) == 7:
+            return '*'
+        w = ','.join(w)
+        return w
+
+    def clean_repl_schedule_begin(self):
+        begin = self.cleaned_data.get('repl_schedule_begin')
         if begin:
             return begin.strftime('%H:%M')
 
-    def clean_repl_end(self):
-        end = self.cleaned_data.get('repl_end')
+    def clean_repl_schedule_end(self):
+        end = self.cleaned_data.get('repl_schedule_end')
+        if end:
+            return end.strftime('%H:%M')
+
+    def clean_repl_restrict_schedule_begin(self):
+        begin = self.cleaned_data.get('repl_restrict_schedule_begin')
+        if begin:
+            return begin.strftime('%H:%M')
+
+    def clean_repl_restrict_schedule_end(self):
+        end = self.cleaned_data.get('repl_restrict_schedule_end')
         if end:
             return end.strftime('%H:%M')
 
@@ -2304,42 +2383,59 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
             data["compressed"] = False
             data["retries"] = 1
 
-        if data["retention_policy"] != "CUSTOM":
-            data["lifetime_value"] = None
-            data["lifetime_unit"] = None
-
-        schedule = {
-            'minute': data.pop('minute'),
-            'hour': data.pop('hour'),
-            'dom': data.pop('daymonth'),
-            'month': data.pop('month'),
-            'dow': data.pop('dayweek'),
-            'begin': data.pop('begin'),
-            'end': data.pop('end'),
-        }
-        if data["auto"]:
-            if data["direction"] == "PUSH":
-                if data["periodic_snapshot_tasks"]:
-                    data["schedule"] = None
-                    data["restrict_schedule"] = schedule
-                else:
-                    data["schedule"] = schedule
-                    data["restrict_schedule"] = None
-            else:
-                data["schedule"] = schedule
-                data["restrict_schedule"] = None
+        if data["direction"] == "PUSH":
+            data["also_include_naming_schema"] = data["naming_schema"]
+            data["naming_schema"] = []
         else:
+            data["also_include_naming_schema"] = []
+
+        data["schedule"] = {
+            'minute': data.pop('schedule_minute'),
+            'hour': data.pop('schedule_hour'),
+            'dom': data.pop('schedule_daymonth'),
+            'month': data.pop('schedule_month'),
+            'dow': data.pop('schedule_dayweek'),
+            'begin': data.pop('schedule_begin'),
+            'end': data.pop('schedule_end'),
+        }
+        if not (data.pop("enable_schedule") and data["auto"]):
             data["schedule"] = None
+
+        data["restrict_schedule"] = {
+            'minute': data.pop('restrict_schedule_minute'),
+            'hour': data.pop('restrict_schedule_hour'),
+            'dom': data.pop('restrict_schedule_daymonth'),
+            'month': data.pop('restrict_schedule_month'),
+            'dow': data.pop('restrict_schedule_dayweek'),
+            'begin': data.pop('restrict_schedule_begin'),
+            'end': data.pop('restrict_schedule_end'),
+        }
+        if not (data.pop("enable_restrict_schedule")):
             data["restrict_schedule"] = None
+
+        if data["direction"] == "PUSH":
+            if data["periodic_snapshot_tasks"]:
+                data["schedule"] = None
 
         if data["transport"] == "LEGACY":
             data["schedule"] = None
             data["restrict_schedule"] = None
 
+        if data["schedule"] is None:
+            data["only_matching_schedule"] = False
+
+        if data["retention_policy"] != "CUSTOM":
+            data["lifetime_value"] = None
+            data["lifetime_unit"] = None
+
         if data["speed_limit"] is not None:
             data["speed_limit"] = data["speed_limit"] * 1024
 
         return data
+
+
+key_order(ReplicationForm, 13, 'repl_enable_schedule')
+key_order(ReplicationForm, 21, 'repl_enable_restrict_schedule')
 
 
 class VolumeExport(Form):

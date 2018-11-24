@@ -44,6 +44,8 @@ def mchoicefield(form, field, default):
         cm = form.initial[field]
     else:
         cm = form.fields[field].initial
+    if cm is None:
+        cm = '*'
     if cm == '*':
         form.initial[field] = default
     else:

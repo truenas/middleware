@@ -630,29 +630,46 @@ class Cron(Dict):
             self.attrs['end'] = Time('end')
 
     @staticmethod
-    def convert_schedule_to_db_format(data_dict, schedule_name='schedule', begin_end=False):
-        schedule = data_dict.pop(schedule_name, None)
-        if schedule:
+    def convert_schedule_to_db_format(data_dict, schedule_name='schedule', key_prefix='', begin_end=False):
+        if schedule_name in data_dict:
+            schedule = data_dict.pop(schedule_name)
             db_fields = ['minute', 'hour', 'daymonth', 'month', 'dayweek']
-            for index, field in enumerate(Cron.FIELDS):
-                if field in schedule:
-                    data_dict[db_fields[index]] = schedule[field]
-            if begin_end:
-                for field in ['begin', 'end']:
+            if schedule is not None:
+                for index, field in enumerate(Cron.FIELDS):
                     if field in schedule:
-                        data_dict[field] = schedule[field]
+                        data_dict[key_prefix + db_fields[index]] = schedule[field]
+                if begin_end:
+                    for field in ['begin', 'end']:
+                        if field in schedule:
+                            data_dict[key_prefix + field] = schedule[field]
+            else:
+                for field in Cron.FIELDS:
+                    data_dict[key_prefix + field] = None
+                if begin_end:
+                    for field in ['begin', 'end']:
+                        data_dict[key_prefix + field] = None
 
     @staticmethod
-    def convert_db_format_to_schedule(data_dict, schedule_name='schedule', begin_end=False):
+    def convert_db_format_to_schedule(data_dict, schedule_name='schedule', key_prefix='', begin_end=False):
         db_fields = ['minute', 'hour', 'daymonth', 'month', 'dayweek']
         data_dict[schedule_name] = {}
         for index, field in enumerate(db_fields):
-            if field in data_dict:
-                data_dict[schedule_name][Cron.FIELDS[index]] = data_dict.pop(field)
+            key = key_prefix + field
+            if key in data_dict:
+                value = data_dict.pop(key)
+                if value is None:
+                    data_dict[schedule_name] = None
+                    return
+                data_dict[schedule_name][Cron.FIELDS[index]] = value
         if begin_end:
             for field in ['begin', 'end']:
-                if field in data_dict:
-                    data_dict[schedule_name][field] = str(data_dict.pop(field))[:5]
+                key = key_prefix + field
+                if key in data_dict:
+                    value = data_dict.pop(key)
+                    if value is None:
+                        data_dict[schedule_name] = None
+                        return
+                    data_dict[schedule_name][field] = str(value)[:5]
 
     def validate(self, value):
         if value is None:

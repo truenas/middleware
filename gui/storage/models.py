@@ -542,7 +542,7 @@ class Replication(Model):
     repl_auto = models.BooleanField(
         verbose_name=_("Run automatically")
     )
-    repl_minute = models.CharField(
+    repl_schedule_minute = models.CharField(
         max_length=100,
         default="00",
         verbose_name=_("Minute"),
@@ -550,42 +550,101 @@ class Replication(Model):
             "Values allowed:"
             "<br>Slider: 0-30 (as it is every Nth minute)."
             "<br>Specific Minute: 0-59."),
+        null=True,
     )
-    repl_hour = models.CharField(
+    repl_schedule_hour = models.CharField(
         max_length=100,
         default="*",
         verbose_name=_("Hour"),
         help_text=_("Values allowed:"
                     "<br>Slider: 0-12 (as it is every Nth hour)."
                     "<br>Specific Hour: 0-23."),
+        null=True,
     )
-    repl_daymonth = models.CharField(
+    repl_schedule_daymonth = models.CharField(
         max_length=100,
         default="*",
         verbose_name=_("Day of month"),
         help_text=_("Values allowed:"
                     "<br>Slider: 0-15 (as its is every Nth day)."
                     "<br>Specific Day: 1-31."),
+        null=True,
     )
-    repl_month = models.CharField(
+    repl_schedule_month = models.CharField(
         max_length=100,
         default='*',
         verbose_name=_("Month"),
+        null=True,
     )
-    repl_dayweek = models.CharField(
+    repl_schedule_dayweek = models.CharField(
         max_length=100,
         default="*",
         verbose_name=_("Day of week"),
+        null=True,
     )
-    repl_begin = models.TimeField(
+    repl_schedule_begin = models.TimeField(
         default=time(hour=0),
         verbose_name=_("Begin"),
         help_text=_("Do not start replication before"),
+        null=True,
     )
-    repl_end = models.TimeField(
+    repl_schedule_end = models.TimeField(
         default=time(hour=23, minute=59),
         verbose_name=_("End"),
         help_text=_("Do not start replication after"),
+        null=True,
+    )
+    repl_restrict_schedule_minute = models.CharField(
+        max_length=100,
+        default="00",
+        verbose_name=_("Minute"),
+        help_text=_(
+            "Values allowed:"
+            "<br>Slider: 0-30 (as it is every Nth minute)."
+            "<br>Specific Minute: 0-59."),
+        null=True,
+    )
+    repl_restrict_schedule_hour = models.CharField(
+        max_length=100,
+        default="*",
+        verbose_name=_("Hour"),
+        help_text=_("Values allowed:"
+                    "<br>Slider: 0-12 (as it is every Nth hour)."
+                    "<br>Specific Hour: 0-23."),
+        null=True,
+    )
+    repl_restrict_schedule_daymonth = models.CharField(
+        max_length=100,
+        default="*",
+        verbose_name=_("Day of month"),
+        help_text=_("Values allowed:"
+                    "<br>Slider: 0-15 (as its is every Nth day)."
+                    "<br>Specific Day: 1-31."),
+        null=True,
+    )
+    repl_restrict_schedule_month = models.CharField(
+        max_length=100,
+        default='*',
+        verbose_name=_("Month"),
+        null=True,
+    )
+    repl_restrict_schedule_dayweek = models.CharField(
+        max_length=100,
+        default="*",
+        verbose_name=_("Day of week"),
+        null=True,
+    )
+    repl_restrict_schedule_begin = models.TimeField(
+        default=time(hour=0),
+        verbose_name=_("Begin"),
+        help_text=_("Do not start replication before"),
+        null=True,
+    )
+    repl_restrict_schedule_end = models.TimeField(
+        default=time(hour=23, minute=59),
+        verbose_name=_("End"),
+        help_text=_("Do not start replication after"),
+        null=True,
     )
     repl_only_matching_schedule = models.BooleanField(
         verbose_name=_("Only replicate snapshots matching schedule"),
