@@ -9,7 +9,7 @@ import freenasUI.freeadmin.models.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0030_ip_fields'),
+        ('system', '0033_acme_models'),
     ]
 
     operations = [

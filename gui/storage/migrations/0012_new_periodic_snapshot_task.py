@@ -70,7 +70,7 @@ def migrate_schedule(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('storage', '0010_auto_20180618_0340'),
+        ('storage', '0011_disk_temperatures'),
     ]
 
     operations = [

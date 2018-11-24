@@ -125,8 +125,8 @@ def set_defaults(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('storage', '0011_new_periodic_snapshot_task'),
-        ('system', '0031_keychain_credential'),
+        ('storage', '0012_new_periodic_snapshot_task'),
+        ('system', '0034_keychain_credential'),
     ]
 
     operations = [
