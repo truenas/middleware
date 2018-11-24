@@ -93,6 +93,7 @@ from freenasUI.common.acl import (ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE,
 from freenasUI.common.freenasacl import ACL
 from freenasUI.common.jail import Jls
 from freenasUI.common.locks import mntlock
+from freenasUI.common.pipesubr import SIG_SETMASK
 from freenasUI.common.pbi import pbi_delete, pbi_info, PBI_INFO_FLAGS_VERBOSE
 from freenasUI.common.system import (
     FREENAS_DATABASE,
@@ -132,7 +133,7 @@ class notifier(metaclass=HookMetaclass):
         mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
         pmask = ctypes.pointer(mask)
         pomask = ctypes.pointer(omask)
-        libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
+        libc.sigprocmask(SIG_SETMASK, pmask, pomask)
         try:
             p = Popen(
                 "(" + command + ") 2>&1",
@@ -144,7 +145,7 @@ class notifier(metaclass=HookMetaclass):
             p.wait()
             ret = p.returncode
         finally:
-            libc.sigprocmask(signal.SIGQUIT, pomask, None)
+            libc.sigprocmask(SIG_SETMASK, pomask, None)
         log.debug("Executed: %s -> %s", command, ret)
         return ret
 
@@ -157,7 +158,7 @@ class notifier(metaclass=HookMetaclass):
         mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
         pmask = ctypes.pointer(mask)
         pomask = ctypes.pointer(omask)
-        libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
+        libc.sigprocmask(SIG_SETMASK, pmask, pomask)
         try:
             p = Popen(
                 "(" + command + ") >/dev/null 2>&1",
@@ -165,7 +166,7 @@ class notifier(metaclass=HookMetaclass):
             p.communicate()
             retval = p.returncode
         finally:
-            libc.sigprocmask(signal.SIGQUIT, pomask, None)
+            libc.sigprocmask(SIG_SETMASK, pomask, None)
         log.debug("Executed: %s; returned %d", command, retval)
         return retval
 
@@ -303,12 +304,6 @@ class notifier(metaclass=HookMetaclass):
             self._system("/usr/sbin/service ix-ataidle quietstart %s" % what)
         else:
             self._system("/usr/sbin/service ix-ataidle quietstart")
-
-    def start_ssl(self, what=None):
-        if what is not None:
-            self._system("/usr/sbin/service ix-ssl quietstart %s" % what)
-        else:
-            self._system("/usr/sbin/service ix-ssl quietstart")
 
     def _open_db(self):
         """Open and return a cursor object for database access."""
@@ -784,7 +779,7 @@ class notifier(metaclass=HookMetaclass):
         if len(apply_paths) > 1:
             apply_paths.insert(0, (path, ''))
         for apath, flags in apply_paths:
-            fargs = args + "%s -p '%s' -x" % (flags, apath)
+            fargs = args + "%s -p '%s'" % (flags, apath)
             cmd = "%s %s" % (winacl, fargs)
             log.debug("winacl_reset: cmd = %s", cmd)
             self._system(cmd)
@@ -811,6 +806,9 @@ class notifier(metaclass=HookMetaclass):
         winacl = os.path.join(path, ACL_WINDOWS_FILE)
         macacl = os.path.join(path, ACL_MAC_FILE)
         winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
+        with libzfs.ZFS() as zfs:
+            zfs_dataset_name = zfs.get_dataset_by_path(path).name
+
         if acl == 'windows':
             if not winexists:
                 open(winacl, 'a').close()
@@ -830,6 +828,7 @@ class notifier(metaclass=HookMetaclass):
                 os.unlink(macacl)
 
         if winexists:
+            self.zfs_set_option(zfs_dataset_name, "aclmode", "restricted", recursive)
             script = "/usr/local/bin/winacl"
             args = ''
             if user is not None:
@@ -851,6 +850,7 @@ class notifier(metaclass=HookMetaclass):
                 self._system(cmd)
 
         else:
+            self.zfs_set_option(zfs_dataset_name, "aclmode", "passthrough", recursive)
             if recursive:
                 apply_paths = exclude_path(path, exclude)
                 apply_paths = [(y, '-R') for y in apply_paths]

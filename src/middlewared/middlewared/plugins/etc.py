@@ -65,7 +65,7 @@ class EtcService(Service):
         #
         'kerberos': [
             {'type': 'mako', 'path': 'krb5.conf'},
-            {'type': 'py', 'path': 'krb5.keytab.py'},
+            {'type': 'py', 'path': 'krb5.keytab'},
         ],
 
         'ldap': [
@@ -99,6 +99,22 @@ class EtcService(Service):
         'smartd': [
             {'type': 'py', 'path': 'smartd'},
         ],
+        'ssl': [
+            {'type': 'py', 'path': 'generate_ssl_certs'},
+        ],
+        'webdav': [
+            {'type': 'mako', 'path': 'local/apache24/httpd.conf'},
+            {'type': 'mako', 'path': 'local/apache24/Includes/webdav.conf'},
+            {'type': 'py', 'path': 'local/apache24/webdav_config'},
+        ],
+        'nginx': [
+            {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
+        ],
+        'netdata': [
+            {'type': 'mako', 'path': 'local/netdata/netdata.conf'},
+            {'type': 'mako', 'path': 'local/netdata/stream.conf'},
+            {'type': 'py', 'path': 'local/netdata/alarms'}
+        ]
     }
 
     class Config:

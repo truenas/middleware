@@ -977,7 +977,6 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
         'ui_httpsport': 'stg_guihttpsport',
         'ui_httpsredirect': 'stg_guihttpsredirect',
         'ui_port': 'stg_guiport',
-        'ui_protocol': 'stg_guiprotocol',
         'ui_v6address': 'stg_guiv6address'
     }
 
@@ -1021,7 +1020,6 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
             if key.startswith('gui'):
                 update['ui_' + key[3:]] = update.pop(key)
 
-        update['ui_protocol'] = update['ui_protocol'].upper()
         update['sysloglevel'] = update['sysloglevel'].upper()
         for key in ('ui_address', 'ui_v6address'):
             if not update.get(key):
@@ -1032,7 +1030,6 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
         cache.set('guiLanguage', self.instance.stg_language)
 
         if (
-            self.original_instance['stg_guiprotocol'] != self.instance.stg_guiprotocol or
             self.original_instance['stg_guiaddress'] != self.instance.stg_guiaddress or
             self.original_instance['stg_guiport'] != self.instance.stg_guiport or
             self.original_instance['stg_guihttpsport'] != self.instance.stg_guihttpsport or
@@ -1043,22 +1040,22 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
                 address = request.META['HTTP_HOST'].split(':')[0]
             else:
                 address = self.instance.stg_guiaddress[0]
-            if self.instance.stg_guiprotocol == 'httphttps':
+            if not self.instance.stg_guihttpsredirect:
                 protocol = 'http'
             else:
-                protocol = self.instance.stg_guiprotocol
+                protocol = 'https'
 
             newurl = "%s://%s/legacy/" % (
                 protocol,
                 address
             )
 
-            if self.instance.stg_guiport and protocol == 'http':
+            if self.instance.stg_guiport and not self.instance.stg_guihttpsredirect:
                 newurl += ":" + str(self.instance.stg_guiport)
-            elif self.instance.stg_guihttpsport and protocol == 'https':
+            elif self.instance.stg_guihttpsport and self.instance.stg_guihttpsredirect:
                 newurl += ":" + str(self.instance.stg_guihttpsport)
 
-            if self.original_instance['stg_guiprotocol'] != self.instance.stg_guiprotocol:
+            if self.original_instance['stg_guihttpsredirect'] != self.instance.stg_guihttpsredirect:
                 events.append("evilrestartHttpd('%s')" % newurl)
             else:
                 events.append("restartHttpd('%s')" % newurl)
@@ -1114,6 +1111,7 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
         model = models.Advanced
         widgets = {
             'adv_sed_passwd': forms.widgets.PasswordInput(render_value=False),
+            'adv_boot_scrub': forms.widgets.HiddenInput()
         }
 
     def __init__(self, *args, **kwargs):
@@ -2714,12 +2712,155 @@ class CertificateAuthoritySignCSRForm(MiddlewareModelForm, ModelForm):
         model = models.Certificate
 
 
+class ACMEDNSAuthenticatorForm(MiddlewareModelForm, ModelForm):
+
+    middleware_plugin = 'acme.dns.authenticator'
+    middleware_attr_schema = 'dns_authenticator'
+    middleware_attr_prefix = ''
+    is_singletone = False
+
+    authenticator = forms.ChoiceField(
+        choices=(),
+    )
+    attributes = forms.CharField(
+        widget=forms.widgets.HiddenInput,
+    )
+    credentials_schemas = forms.CharField(
+        widget=forms.widgets.HiddenInput
+    )
+
+    class Meta:
+        fields = [
+            'name',
+            'authenticator',
+        ]
+        model = models.ACMEDNSAuthenticator
+
+    def __init__(self, *args, **kwargs):
+        super(ACMEDNSAuthenticatorForm, self).__init__(*args, **kwargs)
+        self.fields['authenticator'].widget.attrs['onChange'] = (
+            'credentialsProvider("id_authenticator", "dns-authenticators-attribute");'
+        )
+        with client as c:
+            schemas = c.call('acme.dns.authenticator.authenticator_schemas')
+
+        schemas = [
+            {
+                'name': data['key'],
+                'title': data['key'].replace('_', ' ').capitalize(),
+                'credentials_schema': [
+                    {
+                        'property': s['title'],
+                        'schema': {
+                            '_required_': s['_required_'], 'type': s['type'], 'title': s['title'].replace('_', ' ')
+                        }
+                    }
+                    for s in data['schema']
+                ]
+            }
+            for data in schemas
+        ]
+
+        self.fields['authenticator'].choices = [
+            (schema['name'], schema['title'])
+            for schema in schemas
+        ]
+        self.fields['attributes'].initial = json.dumps(self.instance.attributes if self.instance else {})
+        self.fields['credentials_schemas'].initial = json.dumps({
+            schema['name']: schema['credentials_schema']
+            for schema in schemas
+        })
+
+    def middleware_clean(self, data):
+        data['attributes'] = json.loads(self.cleaned_data.get('attributes'))
+        data.pop('credentials_schemas', None)
+        if self.instance.id:
+            data.pop('authenticator')
+        return data
+
+
+class CertificateACMEForm(MiddlewareModelForm, ModelForm):
+
+    middleware_plugin = 'certificate'
+    middleware_attr_prefix = 'cert_'
+    middleware_attr_schema = 'certificate'
+    is_singletone = False
+    middleware_job = True
+
+    cert_tos = forms.BooleanField(
+        required=False,
+        label=_('Terms Of Service'),
+        initial=False,
+        help_text=_('Please accept terms of service for the given ACME Server')
+    )
+    cert_renew_days = forms.IntegerField(
+        required=False,
+        initial=10,
+        label=models.Certificate._meta.get_field('cert_renew_days').verbose_name,
+        help_text=models.Certificate._meta.get_field('cert_renew_days').help_text
+    )
+    cert_name = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_name').verbose_name,
+        required=True,
+        help_text=models.Certificate._meta.get_field('cert_name').help_text
+    )
+    cert_acme_directory_uri = forms.ChoiceField(
+        label=_('ACME Server Directory URI'),
+        required=True,
+        help_text=_('Please specify URI of ACME Server Directory')
+    )
+
+    class Meta:
+        fields = [
+            'cert_name'
+        ]
+        model = models.Certificate
+
+    def __init__(self, *args, **kwargs):
+        self.csr_id = kwargs.pop('csr_id')
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
+
+        super(CertificateACMEForm, self).__init__(*args, **kwargs)
+
+        with client as c:
+            popular_acme_choices = c.call('certificate.acme_server_choices')
+            self.csr_domains = c.call('certificate.get_domain_names', self.csr_id)
+
+        self.fields['cert_acme_directory_uri'].widget = forms.widgets.ComboBox()
+        self.fields['cert_acme_directory_uri'].choices = [(v, v) for v in popular_acme_choices]
+
+        for n, domain in enumerate(self.csr_domains):
+            self.fields[f'domain_{n}'] = forms.ModelChoiceField(
+                queryset=models.ACMEDNSAuthenticator.objects.all(),
+                label=(_(f'Authenticator for {domain} ')),
+                required=True,
+                help_text=_(f'Specify Authenticator to be used for {domain} domain')
+            )
+
+    def clean_cert_tos(self):
+        if not self.cleaned_data.get('cert_tos'):
+            raise forms.ValidationError(_(
+                'Please accept Terms of Service for the ACME Server'
+            ))
+        else:
+            return True
+
+    def middleware_clean(self, data):
+        data['csr_id'] = self.csr_id
+        data['dns_mapping'] = {}
+        for n, domain_f in enumerate(self.csr_domains):
+            data['dns_mapping'][domain_f] = self.cleaned_data.get(f'domain_{n}').id
+        data['create_type'] = 'CERTIFICATE_CREATE_ACME'
+        return data
+
+
 class CertificateEditForm(MiddlewareModelForm, ModelForm):
 
     middleware_plugin = 'certificate'
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    middleware_job = True
 
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
@@ -2734,6 +2875,7 @@ class CertificateEditForm(MiddlewareModelForm, ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
         super(CertificateEditForm, self).__init__(*args, **kwargs)
 
         self.fields['cert_certificate'].widget.attrs['readonly'] = True
@@ -2757,6 +2899,7 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    middleware_job = True
 
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
@@ -2771,6 +2914,7 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
         super(CertificateCSREditForm, self).__init__(*args, **kwargs)
 
         self.fields['cert_name'].widget.attrs['readonly'] = False
@@ -2794,6 +2938,7 @@ class CertificateCSRImportForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    middleware_job = True
 
     class Meta:
         fields = [
@@ -2835,6 +2980,10 @@ class CertificateCSRImportForm(MiddlewareModelForm, ModelForm):
         widget=forms.PasswordInput(render_value=True),
     )
 
+    def __init__(self, *args, **kwargs):
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
+        super(CertificateCSRImportForm, self).__init__(*args, **kwargs)
+
     def clean_cert_passphrase2(self):
         cdata = self.cleaned_data
         passphrase = cdata.get('cert_passphrase')
@@ -2859,6 +3008,7 @@ class CertificateImportForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    middleware_job = True
 
     class Meta:
         fields = [
@@ -2882,7 +3032,7 @@ class CertificateImportForm(MiddlewareModelForm, ModelForm):
     )
 
     cert_csr_id = forms.ModelChoiceField(
-        queryset=models.Certificate.objects.filter(cert_CSR__isnull=False),
+        queryset=models.Certificate.objects.filter(cert_type=0x20),
         label=(_("CSRs")),
         required=False
     )
@@ -2921,6 +3071,7 @@ class CertificateImportForm(MiddlewareModelForm, ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
         super(CertificateImportForm, self).__init__(*args, **kwargs)
 
         self.fields['cert_csr'].widget.attrs['onChange'] = (
@@ -2957,6 +3108,7 @@ class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    middleware_job = True
 
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
@@ -3025,6 +3177,7 @@ class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
         super(CertificateCreateInternalForm, self).__init__(*args, **kwargs)
 
         self.fields['cert_signedby'].required = True
@@ -3071,6 +3224,7 @@ class CertificateCreateCSRForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    middleware_job = True
 
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
@@ -3133,6 +3287,10 @@ class CertificateCreateCSRForm(MiddlewareModelForm, ModelForm):
         help_text=models.Certificate._meta.get_field('cert_san').help_text
     )
 
+    def __init__(self, *args, **kwargs):
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
+        super(CertificateCreateCSRForm, self).__init__(*args, **kwargs)
+
     def middleware_clean(self, data):
         data['key_length'] = int(data['key_length'])
         data['san'] = data['san'].split()
@@ -3167,6 +3325,11 @@ class CloudCredentialsForm(ModelForm):
         widget=forms.widgets.HiddenInput,
     )
 
+    verify = forms.CharField(
+        required=False,
+        widget=forms.widgets.HiddenInput(),
+    )
+
     class Meta:
         fields = [
             'name',
@@ -3177,7 +3340,7 @@ class CloudCredentialsForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(CloudCredentialsForm, self).__init__(*args, **kwargs)
         self.fields['provider'].widget.attrs['onChange'] = (
-            'cloudCredentialsProvider();'
+            'credentialsProvider("id_provider", "cloud-credentials-attribute");'
         )
         with client as c:
             providers = c.call("cloudsync.providers")
@@ -3198,6 +3361,17 @@ class CloudCredentialsForm(ModelForm):
                 'provider': self.cleaned_data.get('provider'),
                 'attributes': json.loads(self.cleaned_data.get('attributes')),
             }
+
+            if self.cleaned_data.get("verify") == "1":
+                result = c.call("cloudsync.credentials.verify", {"provider": data["provider"],
+                                                                 "attributes": data["attributes"]})
+                if result["valid"]:
+                    msg = "Credentials are valid"
+                else:
+                    msg = f"Credentials are invalid: {result['error']}"
+
+                raise ValidationErrors([["__all__", msg, errno.EINVAL]])
+
             if self.instance.id:
                 c.call('cloudsync.credentials.update', self.instance.id, data)
             else:

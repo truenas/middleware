@@ -233,7 +233,6 @@ List resource
                 "cifs_srv_localmaster": true,
                 "cifs_srv_timeserver": true,
                 "cifs_srv_workgroup": "WORKGROUP",
-                "cifs_srv_doscharset": "CP437",
                 "cifs_srv_hostlookup": true,
                 "cifs_srv_netbiosname": "freenas",
                 "cifs_srv_nullpw": false,
@@ -293,7 +292,6 @@ Update resource
                 "cifs_srv_localmaster": true,
                 "cifs_srv_timeserver": true,
                 "cifs_srv_workgroup": "WORKGROUP",
-                "cifs_srv_doscharset": "CP437",
                 "cifs_srv_hostlookup": false,
                 "cifs_srv_netbiosname": "freenas",
                 "cifs_srv_nullpw": false,
@@ -306,7 +304,6 @@ Update resource
    :json string cifs_srv_netbiosname: netbios name
    :json string cifs_srv_workgroup: workgroup
    :json string cifs_srv_description: server description
-   :json string cifs_srv_doscharset: CP437, CP850, CP852, CP866, CP932, CP949, CP950, CP1026, CP1251, ASCII
    :json string cifs_srv_unixcharset: UTF-8, iso-8859-1, iso-8859-15, gb2312, EUC-JP, ASCII
    :json string cifs_srv_loglevel: 1, 2, 3, 10
    :json boolean cifs_srv_localmaster: local master

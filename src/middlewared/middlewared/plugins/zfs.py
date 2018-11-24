@@ -271,7 +271,7 @@ class ZFSPoolService(CRUDService):
         Str('action', enum=['START', 'STOP', 'PAUSE'], default='START')
     )
     @job(lock=lambda i: f'{i[0]}-{i[1] if len(i) >= 2 else "START"}')
-    def scrub(self, job, name, action):
+    def scrub(self, job, name, action=None):
         """
         Start/Stop/Pause a scrub on pool `name`.
         """
@@ -456,20 +456,29 @@ class ZFSDatasetService(CRUDService):
             self.logger.error('Failed to update dataset', exc_info=True)
             raise CallError(f'Failed to update dataset: {e}')
 
-    def do_delete(self, id, recursive=False):
+    def do_delete(self, id, options=None):
+        options = options or {}
+        defer = options.get('defer', False)
+        force = options.get('force', False)
+        recursive = options.get('recursive', False)
         try:
             with libzfs.ZFS() as zfs:
                 ds = zfs.get_dataset(id)
 
                 if ds.type == libzfs.DatasetType.FILESYSTEM:
-                    ds.umount()
+                    if recursive:
+                        ds.umount_recursive(force=force)
+                    else:
+                        ds.umount(force=force)
 
                 if recursive:
                     for dependent in ds.dependents:
-                        dependent.delete()
+                        dependent.delete(defer=defer)
 
-                ds.delete()
+                ds.delete(defer=defer)
         except libzfs.ZFSException as e:
+            if e.code == libzfs.Error.UMOUNTFAILED:
+                raise CallError('Dataset is busy', errno.EBUSY)
             self.logger.error('Failed to delete dataset', exc_info=True)
             raise CallError(f'Failed to delete dataset: {e}')
 
@@ -499,8 +508,32 @@ class ZFSSnapshot(CRUDService):
 
     @filterable
     def query(self, filters=None, options=None):
+        # Special case for faster listing of snapshot names (#53149)
+        if options and options.get('select') == ['name']:
+            # Using zfs list -o name is dozens of times faster than py-libzfs
+            cmd = ['zfs', 'list', '-H', '-o', 'name', '-t', 'snapshot']
+            order_by = options.get('order_by')
+            # -s name makes it even faster
+            if not order_by or order_by == ['name']:
+                cmd += ['-s', 'name']
+            cp = subprocess.run(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+            )
+            if cp.returncode != 0:
+                raise CallError(f'Failed to retrieve snapshots: {cp.stderr}')
+            snaps = [{'name': i} for i in cp.stdout.strip().split()]
+            if filters:
+                return filter_list(snaps, filters, options)
+            return snaps
         with libzfs.ZFS() as zfs:
-            snapshots = [i.__getstate__() for i in list(zfs.snapshots)]
+            # Handle `id` filter to avoid getting all snapshots first
+            if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
+                snapshots = [zfs.get_snapshot(filters[0][2]).__getstate__()]
+            else:
+                snapshots = [i.__getstate__() for i in list(zfs.snapshots)]
         # FIXME: awful performance with hundreds/thousands of snapshots
         return filter_list(snapshots, filters, options)
 

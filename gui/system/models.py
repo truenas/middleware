@@ -40,6 +40,7 @@ from OpenSSL import crypto
 
 from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, EncryptedDictField, ListField, Model, UserField
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.support.utils import get_license
 from licenselib.license import ContractType
@@ -60,15 +61,9 @@ def time_now():
 
 
 class Settings(Model):
-    stg_guiprotocol = models.CharField(
-        max_length=120,
-        choices=choices.PROTOCOL_CHOICES,
-        default="http",
-        verbose_name=_("Protocol")
-    )
     stg_guicertificate = models.ForeignKey(
         "Certificate",
-        verbose_name=_("Certificate"),
+        verbose_name=_("Certificate for HTTPS"),
         limit_choices_to={'cert_type__in': [CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL]},
         on_delete=models.SET_NULL,
         blank=True,
@@ -96,10 +91,9 @@ class Settings(Model):
     )
     stg_guihttpsredirect = models.BooleanField(
         verbose_name=_('WebGUI HTTP -> HTTPS Redirect'),
-        default=True,
+        default=False,
         help_text=_(
-            'Redirect HTTP (port 80) to HTTPS when only the HTTPS protocol is '
-            'enabled'
+            'Redirect all incoming HTTP requests to HTTPS'
         ),
     )
     stg_language = models.CharField(
@@ -313,7 +307,6 @@ class Advanced(Model):
     )
     adv_boot_scrub = models.IntegerField(
         default=7,
-        editable=False,
     )
     adv_periodic_notifyuser = UserField(
         default="root",
@@ -760,7 +753,8 @@ class CertificateBase(Model):
         "CertificateAuthority",
         blank=True,
         null=True,
-        verbose_name=_("Signing Certificate Authority")
+        verbose_name=_("Signing Certificate Authority"),
+        on_delete=models.CASCADE
     )
     cert_chain = models.BooleanField(
         default=False,
@@ -1015,6 +1009,28 @@ class CertificateAuthority(CertificateBase):
 
 class Certificate(CertificateBase):
 
+    cert_acme = models.ForeignKey(
+        'ACMERegistration',
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True
+    )
+    cert_acme_uri = models.URLField(
+        null=True,
+        blank=True
+    )
+    cert_domains_authenticators = EncryptedDictField(
+        null=True,
+        blank=True
+    )
+    cert_renew_days = models.IntegerField(
+        default=10,
+        verbose_name=_("Renew certificate day"),  # Should we change the name ?
+        help_text=_('Number of days to renew certificate before expiring'),
+        null=True,
+        blank=True
+    )
+
     class Meta:
         verbose_name = _("Certificate")
         verbose_name_plural = _("Certificates")
@@ -1176,6 +1192,67 @@ class Support(Model):
             bool
         """
         return self.is_available(support=self)[0] and self.enabled
+
+
+class ACMERegistrationBody(Model):
+    contact = models.EmailField(
+        verbose_name=_('Contact Email')
+    )
+    status = models.CharField(
+        verbose_name=_('Status'),
+        max_length=10
+    )
+    key = models.TextField(
+        verbose_name=_('JWKRSAKey')
+    )
+    acme = models.ForeignKey(
+        'ACMERegistration',
+        on_delete=models.CASCADE,
+    )
+
+
+class ACMERegistration(Model):
+    uri = models.URLField(
+        verbose_name=_('URI')
+    )
+    directory = models.URLField(
+        verbose_name=_('Directory URI'),
+        unique=True
+    )
+    tos = models.URLField(
+        verbose_name=_('Terms of Service')
+    )
+    new_account_uri = models.URLField(
+        verbose_name=_('New Account Uri')
+    )
+    new_nonce_uri = models.URLField(
+        verbose_name=_('New Nonce Uri')
+    )
+    new_order_uri = models.URLField(
+        verbose_name=_('New Order Uri')
+    )
+    revoke_cert_uri = models.URLField(
+        verbose_name=_('Revoke Certificate Uri')
+    )
+
+
+class ACMEDNSAuthenticator(Model):
+    authenticator = models.CharField(
+        max_length=64,
+        verbose_name=_('Authenticator')
+    )
+    name = models.CharField(
+        max_length=64,
+        unique=True,
+        verbose_name=_('Name')
+    )
+    attributes = EncryptedDictField()
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _('ACME DNS Authenticator')
 
 
 class Filesystem(Model):

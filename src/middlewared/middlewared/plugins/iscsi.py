@@ -41,7 +41,7 @@ class ISCSIGlobalService(SystemServiceService):
         'iscsiglobal_update',
         Str('basename'),
         List('isns_servers', items=[Str('server')]),
-        Int('pool_avail_threshold', validators=[Range(min=1, max=99)]),
+        Int('pool_avail_threshold', validators=[Range(min=1, max=99)], null=True),
         Bool('alua'),
         update=True
     ))
@@ -116,7 +116,7 @@ class ISCSIPortalService(CRUDService):
             verrors.add(f'{schema}.listen', 'At least one listen entry is required.')
         else:
             system_ips = [
-                ip['address'] for ip in await self.middleware.call('interfaces.ip_in_use')
+                ip['address'] for ip in await self.middleware.call('interface.ip_in_use')
             ]
             system_ips.extend(['0.0.0.0', '::'])
             new_ips = set(i['ip'] for i in data['listen']) - set(i['ip'] for i in old['listen']) if old else set()
@@ -410,7 +410,7 @@ class iSCSITargetExtentService(CRUDService):
         Int('filesize', default=0),
         Int('blocksize', enum=[512, 1024, 2048, 4096], default=512),
         Bool('pblocksize'),
-        Int('avail_threshold', validators=[Range(min=1, max=99)]),
+        Int('avail_threshold', validators=[Range(min=1, max=99)], null=True),
         Str('comment'),
         Bool('insecure_tpc', default=True),
         Bool('xen'),
@@ -648,7 +648,7 @@ class iSCSITargetExtentService(CRUDService):
         # TODO Just ported, let's do something different later? - Brandon
         if serial is None:
             try:
-                nic = (await self.middleware.call('interfaces.query',
+                nic = (await self.middleware.call('interface.query',
                                                   [['name', 'rnin', 'vlan'],
                                                    ['name', 'rnin', 'lagg'],
                                                    ['name', 'rnin', 'epair'],
@@ -701,8 +701,9 @@ class iSCSITargetExtentService(CRUDService):
         async for pdisk in await self.middleware.call('pool.get_disks'):
             used_disks.append(pdisk)
 
-        zfs_snaps = await self.middleware.call('zfs.snapshot.query', [],
-                                               {'order_by': ['name']})
+        zfs_snaps = await self.middleware.call(
+            'zfs.snapshot.query', [], {'select': ['name'], 'order_by': ['name']}
+        )
 
         zvols = await self.middleware.call(
             'pool.dataset.query',
@@ -718,14 +719,9 @@ class iSCSITargetExtentService(CRUDService):
                 diskchoices[f'zvol/{zvol_name}'] = f'{zvol_name} ({zvol_size})'
 
         for snap in zfs_snaps:
-            ds_name, snap_name = snap['properties']['name'][
-                'value'].rsplit('@', 1)
-            full_name = f'{ds_name}@{snap_name}'
-            snap_size = snap['properties']['referenced']['value']
-
+            ds_name, snap_name = snap['name'].rsplit('@', 1)
             if ds_name in zvol_list:
-                diskchoices[f'zvol/{full_name}'] = \
-                    f'{full_name} ({snap_size}) [ro]'
+                diskchoices[f'zvol/{snap["name"]}'] = f'{snap["name"]} [ro]'
 
         notifier_disks = await self.middleware.call('notifier.get_disks')
         for name, disk in notifier_disks.items():
@@ -819,7 +815,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         'iscsi_initiator_create',
         Int('tag', default=0),
         List('initiators', default=[]),
-        List('auth_network', items=[IPAddr('ip', cidr=True)], default=[]),
+        List('auth_network', items=[IPAddr('ip', network=True)], default=[]),
         Str('comment'),
         register=True
     ))

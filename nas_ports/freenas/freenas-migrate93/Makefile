@@ -15,7 +15,7 @@ RUN_DEPENDS=	python>0:${PORTSDIR}/lang/python \
 
 USES=		python
 USE_GITHUB=	yes
-GH_TUPLE+=	freenas:freenas-migrate93:c42555d \
+GH_TUPLE+=	freenas:freenas-migrate93:ac1edcd \
 		freenas:django:168674c:django
 
 NO_BUILD=	yes

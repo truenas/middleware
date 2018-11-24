@@ -688,11 +688,12 @@ def create_lagg_interface():
 
     order = 0
     for nic in lagg_nics:
-        lagg_iface_member = LAGGInterfaceMembers(lagg_interfacegroup =
-                                                 lagg_iface,
-                                                 lagg_ordernum = order,
-                                                 lagg_physnic = nic,
-                                                 lagg_deviceoptions = 'up')
+        lagg_iface_member = LAGGInterfaceMembers(
+            lagg_interfacegroup=lagg_iface, lagg_ordernum=order, lagg_physnic=nic,
+        )
+        interface = Interfaces.objects.filter(int_interface=nic)
+        if not interface.exists():
+            Interfaces.objects.create(int_interface=nic, int_name=f'member of {lagg_name}')
 
         print(_("Saving Link Aggregation member configuration:"), end=' ')
         try:
@@ -848,6 +849,21 @@ def create_vlan():
     print(_("Saving VLAN interface:"), end=' ')
     try:
         vlan.save()
+        qs = Interfaces.objects.filter(int_interface=vlan_pint)
+        if not qs.exists():
+            vlan_interface = Interfaces(
+                int_interface=vlan_pint,
+                int_name=vlan_pint,
+                int_dhcp=False,
+                int_ipv6auto=False,
+                int_options='up',
+            )
+            vlan_interface.save()
+        else:
+            vlan_interface = qs[0]
+            if 'up' not in vlan_interface.int_options:
+                vlan_interface.int_options += ' up'
+                vlan_interface.save()
     except:
         print(_("Failed"))
         return False

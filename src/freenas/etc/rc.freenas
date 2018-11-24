@@ -37,6 +37,8 @@
 : ${FREENAS_VERSIONFILE:="/etc/version"}
 : ${FREENAS_SYSTEMDATASET:="/var/db/system"}
 
+: ${FREENAS_MW_IFACES_FAILED:="/tmp/.middleware_interface_failed"}
+
 #
 #	Updater specific variables.
 #
@@ -54,16 +56,6 @@
 : ${OPENSSL:="/usr/local/bin/openssl"}
 : ${SSLDIR:="/etc/certificates"}
 : ${SSLCADIR:="${SSLDIR}/CA"}
-
-#
-#	HTTPD settings
-#
-: ${HTTPD:="/usr/local/sbin/nginx"}
-: ${HTTPDDIR:="/usr/local/etc/nginx"}
-: ${HTTPDSCRIPT:="/usr/local/etc/rc.d/nginx"}
-: ${HTTPDCONF:="${HTTPDDIR}/nginx.conf"}
-: ${HTTPDSSLPORT:="443"}
-: ${HTTPDPORT:="80"}
 
 #
 #	Misc settings

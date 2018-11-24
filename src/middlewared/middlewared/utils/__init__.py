@@ -21,24 +21,28 @@ VERSION = None
 
 
 def django_modelobj_serialize(middleware, obj, extend=None, extend_context=None, extend_context_value=None,
-                              field_prefix=None):
+                              field_prefix=None, select=None):
     from django.db.models.fields.related import ForeignKey, ManyToManyField
     from freenasUI.contrib.IPAddressField import (
         IPAddressField, IP4AddressField, IP6AddressField
     )
     data = {}
     for field in chain(obj._meta.fields, obj._meta.many_to_many):
-        name = field.name
+        origname = field.name
+        if field_prefix and origname.startswith(field_prefix):
+            name = origname[len(field_prefix):]
+        else:
+            name = origname
+        if select and name not in select:
+            continue
         try:
-            value = getattr(obj, name)
+            value = getattr(obj, origname)
         except Exception as e:
             # If foreign key does not exist set it to None
             if isinstance(field, ForeignKey) and isinstance(e, field.rel.model.DoesNotExist):
                 data[name] = None
                 continue
             raise
-        if field_prefix and name.startswith(field_prefix):
-            name = name[len(field_prefix):]
         if isinstance(field, (
             IPAddressField, IP4AddressField, IP6AddressField
         )):
@@ -146,29 +150,63 @@ def filter_list(_list, filters=None, options=None):
     if options is None:
         options = {}
 
+    select = options.get('select')
+
     rv = []
     if filters:
+
+        def filterop(f):
+            if len(f) != 3:
+                raise ValueError(f'Invalid filter {f}')
+            name, op, value = f
+            if op not in opmap:
+                raise ValueError('Invalid operation: {}'.format(op))
+            if isinstance(i, dict):
+                source = get(i, name)
+            else:
+                source = getattr(i, name)
+            if opmap[op](source, value):
+                return True
+            return False
+
         for i in _list:
             valid = True
             for f in filters:
-                if len(f) == 3:
-                    name, op, value = f
-                    if op not in opmap:
-                        raise ValueError('Invalid operation: {}'.format(op))
-                    if isinstance(i, dict):
-                        source = get(i, name)
+                if len(f) == 2:
+                    op, value = f
+                    if op == 'OR':
+                        for f in value:
+                            if filterop(f):
+                                break
+                        else:
+                            valid = False
+                            break
                     else:
-                        source = getattr(i, name)
-                    if not opmap[op](source, value):
-                        valid = False
-                        break
-                else:
-                    raise ValueError("Invalid filter {0}".format(f))
+                        raise ValueError(f'Invalid operation: {op}')
+                elif not filterop(f):
+                    valid = False
+                    break
+
             if not valid:
                 continue
-            rv.append(i)
+            if select:
+                entry = {}
+                for s in select:
+                    if s in i:
+                        entry[s] = i[s]
+            else:
+                entry = i
+            rv.append(entry)
             if options.get('get') is True:
-                return i
+                return entry
+    elif select:
+        rv = []
+        for i in _list:
+            entry = {}
+            for s in select:
+                if s in i:
+                    entry[s] = i[s]
+            rv.append(entry)
     else:
         rv = _list
 

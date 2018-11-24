@@ -43,6 +43,7 @@ class SystemHook(AppHook):
             models.Tunable,
             models.CertificateAuthority,
             models.Certificate,
+            models.ACMEDNSAuthenticator
         ]
 
         tabs = []

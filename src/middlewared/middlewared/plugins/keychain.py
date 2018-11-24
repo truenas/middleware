@@ -11,9 +11,10 @@ import urllib.parse
 from middlewared.client import Client
 from middlewared.service_exception import CallError
 from middlewared.schema import (Dict, Int, Patch, Str,
-                                ValidationErrors, accepts, validate_attributes)
+                                ValidationErrors, accepts)
 from middlewared.service import CRUDService, private
 from middlewared.utils import run
+from middlewared.validators import validate_attributes
 
 
 class KeychainCredentialType:

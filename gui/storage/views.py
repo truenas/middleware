@@ -44,8 +44,9 @@ from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.middleware.client import client, ClientException
+from freenasUI.middleware.client import client, ClientException, ValidationErrors
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.util import JobAborted, JobFailed, wait_job
 from freenasUI.system.models import Advanced
@@ -523,7 +524,7 @@ def dataset_delete(request, name):
         if form.is_valid():
             with client as c:
                 try:
-                    c.call("pool.dataset.delete", name, True)
+                    c.call("pool.dataset.delete", name, {'recursive': True})
                     return JsonResp(
                         request,
                         message=_("Dataset successfully destroyed."))
@@ -964,8 +965,14 @@ def volume_lock(request, object_id):
                 })
                 return JsonResp(request, confirm=message)
 
-        with client as c:
-            c.call('pool.lock', volume.id, job=True)
+        form = forms.LockPassphraseForm(request.POST)
+        if form.is_valid():
+            try:
+                form.done(volume)
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
+            else:
+                return JsonResp(request, message=_("Volume locked"))
 
         """
         if hasattr(notifier, 'failover_status') and notifier().failover_status() == 'MASTER':
@@ -982,8 +989,13 @@ def volume_lock(request, object_id):
             except Exception:
                 log.warn('Failed to clear key on standby node, is it down?', exc_info=True)
         """
-        return JsonResp(request, message=_("Volume locked"))
-    return render(request, "storage/lock.html")
+
+        return JsonResp(request, form=form)
+    else:
+        form = forms.LockPassphraseForm()
+        return render(request, "storage/lock.html", {
+            'form': form,
+        })
 
 
 def volume_unlock(request, object_id):

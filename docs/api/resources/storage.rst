@@ -591,6 +591,10 @@ ZFS Volumes
       DELETE /api/v1.0/storage/volume/tank/zvols/myzvol/ HTTP/1.1
       Content-Type: application/json
 
+      {
+        "cascade": true
+      }
+
    **Example response**:
 
    .. sourcecode:: http
@@ -599,6 +603,7 @@ ZFS Volumes
       Vary: Accept
       Content-Type: application/json
 
+   :json boolean cascade: Delete Recursively ( optional - it defaults to false )
    :resheader Content-Type: content type of the response
    :statuscode 204: no error
 
@@ -906,6 +911,10 @@ Lock
       POST /api/v1.0/storage/volume/tank/lock/ HTTP/1.1
       Content-Type: application/json
 
+        {
+                "passphrase": "mypassphrase"
+        }
+
    **Example response**:
 
    .. sourcecode:: http
@@ -916,6 +925,7 @@ Lock
 
       Volume has been locked.
 
+   :json string passphrase: passphrase to lock the volume
    :resheader Content-Type: content type of the response
    :statuscode 202: no error
 

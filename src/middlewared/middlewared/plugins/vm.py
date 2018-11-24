@@ -31,9 +31,9 @@ logger = middlewared.logger.Logger('vm').getLogger()
 
 CONTAINER_IMAGES = {
     'RancherOS': {
-        'URL': 'http://download.freenas.org/bhyve-templates/rancheros-bhyve-v1.4.1/rancheros-bhyve-v1.4.1.img.gz',
-        'GZIPFILE': 'rancheros-bhyve-v1.4.1.img.gz',
-        'SHA256': '8b6a3e04a0ecb8a4feaba469ee85908eaf71bb7bac60bbe41d860b37091a8b9f',
+        'URL': 'http://download.freenas.org/bhyve-templates/rancheros-bhyve-v1.4.2/rancheros-bhyve-v1.4.2.img.gz',
+        'GZIPFILE': 'rancheros-bhyve-v1.4.2.img.gz',
+        'SHA256': '9913e05287fc79407b4949c095419d2369491c4d833f9887a1a88d853701bb87',
     }
 }
 BUFSIZE = 65536
@@ -137,7 +137,7 @@ class VMSupervisor(object):
         for device in sorted(self.vm['devices'], key=lambda x: (x['order'], x['id'])):
             if device['dtype'] in ('CDROM', 'DISK', 'RAW'):
 
-                disk_sector_size = int(device['attributes'].get('sectorsize', 0))
+                disk_sector_size = int(device['attributes'].get('sectorsize') or 0)
                 if disk_sector_size > 0:
                     sectorsize_args = ',sectorsize=' + str(disk_sector_size)
                 else:
@@ -509,8 +509,8 @@ class VMUtils(object):
         ]
 
         grub_additional_args = {
-            'RancherOS': ['linux /boot/vmlinuz-4.14.67-rancher2 rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.resize_device=/dev/sda'.format(quote(password)),
-                          'initrd /boot/initrd-v1.4.1']
+            'RancherOS': ['linux /boot/vmlinuz-4.14.73-rancher rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.resize_device=/dev/sda'.format(quote(password)),
+                          'initrd /boot/initrd-v1.4.2']
         }
 
         vm_private_dir = sharefs_path + '/configs/' + str(vm_id) + '_' + vm_name + '/' + 'grub/'
@@ -674,7 +674,7 @@ class VMService(CRUDService):
            list: will return a list of available IPv4 address.
         """
         default_ifaces = ['0.0.0.0', '127.0.0.1']
-        ifaces_dict_list = self.middleware.call_sync('interfaces.ip_in_use', {'ipv4': True})
+        ifaces_dict_list = self.middleware.call_sync('interface.ip_in_use', {'ipv4': True})
         ifaces = [alias_dict['address'] for alias_dict in ifaces_dict_list]
 
         default_ifaces.extend(ifaces)
@@ -1444,7 +1444,7 @@ class VMService(CRUDService):
         """
         vnc_web = []
 
-        host = host or await self.middleware.call('interfaces.websocket_local_ip', app=app)
+        host = host or await self.middleware.call('interface.websocket_local_ip', app=app)
 
         for vnc_device in await self.get_vnc(id):
             if vnc_device.get('vnc_web', None) is True:
@@ -1514,7 +1514,8 @@ class VMDeviceService(CRUDService):
 
     @private
     async def extend_device(self, device):
-        device['vm'] = device['vm']['id']
+        if device['vm']:
+            device['vm'] = device['vm']['id']
         if device['order'] is None:
             if device['dtype'] == 'CDROM':
                 device['order'] = 1000

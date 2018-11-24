@@ -78,7 +78,8 @@ class IPMISELAlertSource(AlertSource, DismissableAlertSource):
 
         if records:
             if await self.middleware.call("keyvalue.has_key", self.dismissed_datetime_kv_key):
-                dismissed_datetime = await self.middleware.call("keyvalue.get", self.dismissed_datetime_kv_key)
+                dismissed_datetime = (
+                    await self.middleware.call("keyvalue.get", self.dismissed_datetime_kv_key)).replace(tzinfo=None)
             else:
                 # Prevent notifying about existing alerts on first install/upgrade
                 dismissed_datetime = max(record.datetime for record in records)

@@ -2765,6 +2765,21 @@ class ChangePassphraseForm(Form):
             return False
 
 
+class LockPassphraseForm(Form):
+
+    passphrase = forms.CharField(
+        label=_("Passphrase"),
+        widget=forms.widgets.PasswordInput(),
+        required=True,
+    )
+
+    def done(self, volume):
+        with client as c:
+            c.call(
+                'pool.lock', volume.id, self.cleaned_data.get("passphrase"), job=True
+            )
+
+
 class UnlockPassphraseForm(Form):
 
     passphrase = forms.CharField(

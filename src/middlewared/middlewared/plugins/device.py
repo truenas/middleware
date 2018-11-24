@@ -1,6 +1,5 @@
 import asyncio
 import os
-import shlex
 import socket
 
 from middlewared.schema import accepts, Str
@@ -72,6 +71,22 @@ async def devd_loop(middleware):
             await asyncio.sleep(1)
 
 
+def parse_devd_message(msg):
+    """
+    Parse devd messages using "=" char as separator.
+    We use the first word before "=" as key and every word minus 1 after "=" as value.
+    The caveat is that we cant properly parse messages containing "=" in the value,
+    however this seems good enough until kernel/devd can provide structured messages.
+    """
+    parsed = {}
+    parts = msg.strip().split('=')
+    for idx in range(len(parts) - 1):
+        key = parts[idx].rsplit(' ', 1)[-1]
+        value = parts[idx + 1].rsplit(' ', 1)[0].strip()
+        parsed[key] = value
+    return parsed
+
+
 async def devd_listen(middleware):
     s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     s.connect(DEVD_SOCKETFILE)
@@ -88,8 +103,8 @@ async def devd_listen(middleware):
             continue
 
         try:
-            parsed = await middleware.run_in_thread(lambda l: dict(t.split('=') for t in shlex.split(l)), line[1:])
-        except ValueError:
+            parsed = await middleware.run_in_thread(parse_devd_message, line[1:])
+        except Exception:
             middleware.logger.warn(f'Failed to parse devd message: {line}')
             continue
 

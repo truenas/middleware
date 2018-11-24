@@ -379,7 +379,7 @@ class ServiceService(CRUDService):
         return False, []
 
     async def _start_webdav(self, **kwargs):
-        await self._service("ix-apache", "start", force=True, **kwargs)
+        await self.middleware.call('etc.generate', 'webdav')
         await self._service("apache24", "start", **kwargs)
 
     async def _stop_webdav(self, **kwargs):
@@ -387,11 +387,11 @@ class ServiceService(CRUDService):
 
     async def _restart_webdav(self, **kwargs):
         await self._service("apache24", "stop", force=True, **kwargs)
-        await self._service("ix-apache", "start", force=True, **kwargs)
+        await self.middleware.call('etc.generate', 'webdav')
         await self._service("apache24", "restart", **kwargs)
 
     async def _reload_webdav(self, **kwargs):
-        await self._service("ix-apache", "start", force=True, **kwargs)
+        await self.middleware.call('etc.generate', 'webdav')
         await self._service("apache24", "reload", **kwargs)
 
     async def _restart_django(self, **kwargs):
@@ -445,8 +445,8 @@ class ServiceService(CRUDService):
         await self._service("ix-sysctl", "reload", **kwargs)
 
     async def _start_network(self, **kwargs):
-        await self.middleware.call('interfaces.sync')
-        await self.middleware.call('routes.sync')
+        await self.middleware.call('interface.sync')
+        await self.middleware.call('route.sync')
 
     async def _stop_jails(self, **kwargs):
         for jail in await self.middleware.call('datastore.query', 'jails.jails'):
@@ -512,6 +512,14 @@ class ServiceService(CRUDService):
         os.environ['TZ'] = settings['stg_timezone']
         time.tzset()
 
+    async def _start_smartd(self, **kwargs):
+        await self.middleware.call("etc.generate", "smartd")
+        await self._service("smartd-daemon", "start", **kwargs)
+
+    async def _reload_smartd(self, **kwargs):
+        await self.middleware.call("etc.generate", "smartd")
+        await self._service("smartd-daemon", "reload", **kwargs)
+
     async def _restart_smartd(self, **kwargs):
         await self.middleware.call("etc.generate", "smartd")
         await self._service("smartd-daemon", "stop", force=True, **kwargs)
@@ -540,11 +548,8 @@ class ServiceService(CRUDService):
         await self._service("openssh", "restart", **kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
-    async def _start_ssl(self, what=None):
-        if what is not None:
-            await self._service("ix-ssl", "start", quiet=True, extra=what)
-        else:
-            await self._service("ix-ssl", "start", quiet=True)
+    async def _start_ssl(self, **kwargs):
+        await self.middleware.call('etc.generate', 'ssl')
 
     async def _start_s3(self, **kwargs):
         await self.middleware.call('etc.generate', 's3')
@@ -940,12 +945,12 @@ class ServiceService(CRUDService):
         await self._service("snmp-agent", "start", quiet=True, **kwargs)
 
     async def _restart_http(self, **kwargs):
-        await self._service("ix-nginx", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "nginx")
         await self._service("ix_register", "reload", **kwargs)
         await self._service("nginx", "restart", **kwargs)
 
     async def _reload_http(self, **kwargs):
-        await self._service("ix-nginx", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "nginx")
         await self._service("ix_register", "reload", **kwargs)
         await self._service("nginx", "reload", **kwargs)
 
@@ -986,3 +991,11 @@ class ServiceService(CRUDService):
             # benefit in waiting for it since even if it fails it wont
             # tell the user anything useful.
             asyncio.ensure_future(self.restart("collectd", kwargs))
+
+    async def _start_netdata(self, **kwargs):
+        await self.middleware.call('etc.generate', 'netdata')
+        await self._service('netdata', 'start', **kwargs)
+
+    async def _restart_netdata(self, **kwargs):
+        await self._service('netdata', 'stop')
+        await self._start_netdata(**kwargs)

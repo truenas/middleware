@@ -257,7 +257,6 @@ class NavTree(object):
             name=_('Guide'),
             icon=get_sw_name() + 'GuideIcon',
             action='opendocumentation',
-            view='documentation_home',
             order=970,
         )
         tree_roots.register(nav)

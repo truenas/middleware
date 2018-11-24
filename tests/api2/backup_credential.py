@@ -10,10 +10,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET
 
-DATASET = "tank/backup"
-urlDataset = "tank%2Fbackup"
-BACKUP_PATH = "/mnt/" + DATASET
-
 
 def test_01_check_backup_credential():
     results = GET("/backup/credential/")

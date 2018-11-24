@@ -12,7 +12,7 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
-from auto_config import ip, user, password
+from auto_config import ip, user, password, pool_name
 # SHOULD IMPORT FOLLOWING VARIABLES - BSD_HOST, BSD_PASSWORD, BSD_USERNAME
 from config import *
 from functions import PUT, POST, GET, SSH_TEST, return_output, DELETE
@@ -74,7 +74,7 @@ def test_04_Add_ISCSI_extent():
         'type': 'FILE',
         'name': 'extent',
         'filesize': 536870912,
-        'path': '/mnt/tank/dataset03/iscsi'
+        'path': f'/mnt/{pool_name}/dataset03/iscsi'
     }
     results = POST("/iscsi/extent/", payload)
     assert isinstance(results.json(), dict), results.text

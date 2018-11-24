@@ -1,6 +1,3 @@
-#!/usr/local/bin/python
-from middlewared.client import Client
-
 import os
 
 
@@ -24,14 +21,8 @@ def write_certificates(certs):
                 f.write(cert['CSR'])
 
 
-def main():
-    client = Client()
+async def render(service, middleware):
+    certs = await middleware.call('certificate.query')
+    certs.extend((await middleware.call('certificateauthority.query')))
 
-    certs = client.call('certificate.query')
-    write_certificates(certs)
-
-    certs = client.call('certificateauthority.query')
-    write_certificates(certs)
-
-if __name__ == '__main__':
-    main()
+    await middleware.run_in_thread(write_certificates, certs)

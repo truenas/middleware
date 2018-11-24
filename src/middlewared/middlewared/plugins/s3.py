@@ -1,6 +1,8 @@
-from middlewared.schema import accepts, Bool, Dict, Dir, Int, Str
+from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.validators import Match, Range
 from middlewared.service import SystemServiceService, ValidationErrors, private
+
 
 import os
 
@@ -25,8 +27,8 @@ class S3Service(SystemServiceService):
         Str('access_key', validators=[Match("^\w+$")]),
         Str('secret_key', validators=[Match("^\w+$")]),
         Bool('browser'),
-        Dir('storage_path'),
-        Int('certificate'),
+        Str('storage_path'),
+        Int('certificate', null=True),
         update=True,
     ))
     async def do_update(self, data):
@@ -47,8 +49,22 @@ class S3Service(SystemServiceService):
                     f's3_update.{attr}', f'Attribute should be {minlen} to {maxlen} in length'
                 )
 
-        if not new['storage_path'] or not os.path.exists(new['storage_path']):
+        if not new['storage_path']:
             verrors.add('s3_update.storage_path', 'Storage path is required')
+
+        await check_path_resides_within_volume(
+            verrors, self.middleware, 's3_update.storage_path', new['storage_path']
+        )
+
+        if not verrors and new['storage_path'].rstrip('/').count('/') < 3:
+            verrors.add(
+                's3_update.storage_path',
+                'Top level datasets are not allowed. i.e /mnt/tank/dataset is allowed'
+            )
+        else:
+            # If the storage_path does not exist, let's create it
+            if not os.path.exists(new['storage_path']):
+                os.makedirs(new['storage_path'])
 
         if verrors:
             raise verrors

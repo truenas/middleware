@@ -81,7 +81,8 @@ from freenasUI.jails.forms import (
 )
 from freenasUI.jails.models import JailTemplate
 from freenasUI.middleware import zfs
-from freenasUI.middleware.client import client
+from freenasUI.middleware.client import client, ValidationErrors
+from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.util import run_alerts
@@ -103,6 +104,7 @@ from freenasUI.storage.forms import (
     CreatePassphraseForm,
     ChangePassphraseForm,
     ManualSnapshotForm,
+    LockPassphraseForm,
     UnlockPassphraseForm,
     VolumeAutoImportForm,
     VolumeManagerForm,
@@ -123,6 +125,7 @@ from freenasUI.system.forms import (
     CertificateCreateInternalForm,
     CertificateImportForm,
     CertificateCSRImportForm,
+    CertificateACMEForm,
     ManualUpdateTemporaryLocationForm,
     ManualUpdateUploadForm,
     ManualUpdateWizard,
@@ -178,7 +181,7 @@ def _common_human_fields(bundle):
         elif index == 1:
             bundle.data[human] = _wording_helper('hour', 24)
         elif index == 2:
-            bundle.data[human] = _wording_helper('day', 30)
+            bundle.data[human] = _wording_helper('day', {v: v for v in range(1, 32)})
         elif index == 3:
             bundle.data[human] = _wording_helper(
                 'month', {int(k): v for k, v in dict(choices.MONTHS_CHOICES).items()}
@@ -604,7 +607,7 @@ class ZVolResource(DojoResource):
     sync = fields.CharField(attribute='sync')
     compression = fields.CharField(attribute='compression')
     dedup = fields.CharField(attribute='dedup')
-    comments = fields.CharField(attribute='description')
+    comments = fields.CharField(attribute='description', null=True)
 
     class Meta:
         allowed_methods = ['get', 'post', 'delete', 'put']
@@ -702,10 +705,14 @@ class ZVolResource(DojoResource):
             raise NotFound("Dataset not found.")
 
     def obj_delete(self, bundle, **kwargs):
+        deserialized = self._meta.serializer.deserialize(
+            bundle.request.body or '{}',
+            format='application/json',
+        )
         retval = notifier().destroy_zfs_vol("%s/%s" % (
             kwargs.get('parent').vol_name,
             kwargs.get('pk'),
-        ))
+        ), deserialized.get('cascade', False))
         if retval:
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, retval)
@@ -958,15 +965,30 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
-        if obj.vol_encrypt == 0:
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+
+        form = LockPassphraseForm(
+            data=deserialized
+        )
+
+        valid = form.is_valid()
+        if valid:
+            try:
+                form.done(obj)
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
+                valid = False
+
+        if not valid:
             raise ImmediateHttpResponse(
-                response=self.error_response(request, _('Volume is not encrypted.'))
+                response=self.error_response(request, form.errors)
             )
-
-        with client as c:
-            c.call('pool.lock', obj.id, job=True)
-
-        return HttpResponse('Volume has been locked.', status=202)
+        else:
+            return HttpResponse('Volume has been locked.', status=202)
 
     def upgrade(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
@@ -3196,12 +3218,51 @@ class CertificateResourceMixin(object):
                 self.wrap_view('import_csr'),
             ),
             url(
+                r"^(?P<resource_name>%s)/acme%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('acme_cert'),
+            ),
+            url(
                 r"^(?P<resource_name>%s)/internal%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('internal'),
             ),
         ]
+
+    def acme_cert(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
+
+        csr_id = deserialized.pop('csr_id')
+
+        with client as c:
+            domains = c.call('certificate.get_domain_names', csr_id)
+
+        data = {k: v for k, v in deserialized.items() if not k.startswith('domain_')}
+
+        for n, domain in enumerate(domains):
+            if f'domain_{domain}' in deserialized:
+                data[f'domain_{n}'] = deserialized[f'domain_{domain}']
+
+        form = CertificateACMEForm(data=data, csr_id=csr_id, middleware_job_wait=True)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('ACME Certificate successfully created.', status=201)
 
     def import_csr(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
@@ -3219,7 +3280,7 @@ class CertificateResourceMixin(object):
         if 'cert_passphrase2' not in deserialized and 'cert_passphrase' in deserialized:
             deserialized['cert_passphrase2'] = deserialized.get('cert_passphrase')
 
-        form = CertificateCSRImportForm(data=deserialized)
+        form = CertificateCSRImportForm(data=deserialized, middleware_job_wait=True)
         if not form.is_valid():
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)
@@ -3241,7 +3302,7 @@ class CertificateResourceMixin(object):
         else:
             deserialized = {}
 
-        form = CertificateCreateCSRForm(data=deserialized)
+        form = CertificateCreateCSRForm(data=deserialized, middleware_job_wait=True)
         if not form.is_valid():
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)
@@ -3266,7 +3327,7 @@ class CertificateResourceMixin(object):
         if 'cert_passphrase2' not in deserialized and 'cert_passphrase' in deserialized:
             deserialized['cert_passphrase2'] = deserialized.get('cert_passphrase')
 
-        form = CertificateImportForm(data=deserialized)
+        form = CertificateImportForm(data=deserialized, middleware_job_wait=True)
         if not form.is_valid():
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)
@@ -3288,7 +3349,7 @@ class CertificateResourceMixin(object):
         else:
             deserialized = {}
 
-        form = CertificateCreateInternalForm(data=deserialized)
+        form = CertificateCreateInternalForm(data=deserialized, middleware_job_wait=True)
         if not form.is_valid():
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)
@@ -3320,6 +3381,17 @@ class CertificateResourceMixin(object):
                             'id': bundle.obj.id
                         }
                     )
+                    bundle.data['_ACME_create_url'] = reverse(
+                        'certificate_acme_create',
+                        kwargs={
+                            'csr_id': bundle.obj.id
+                        }
+                    )
+
+                with client as c:
+                    sys_cert = c.call('system.general.config')['ui_certificate']
+
+                bundle.data['cert_system_used'] = True if sys_cert['id'] == bundle.obj.id else False
 
                 bundle.data['_edit_url'] = reverse(
                     'certificate_edit',

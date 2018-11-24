@@ -9,11 +9,13 @@ from os import path, getcwd, makedirs, listdir
 import getopt
 import sys
 import re
+import random
+import string
 
 apifolder = getcwd()
 sys.path.append(apifolder)
-
-results_xml = getcwd() + '/results/'
+workdir = getcwd()
+results_xml = f'{workdir}/results/'
 localHome = path.expanduser('~')
 dotsshPath = localHome + '/.ssh'
 keyPath = localHome + '/.ssh/test_id_rsa'
@@ -86,28 +88,35 @@ elif api == "1.0":
 else:
     disk = 'disk0 = "ada0"\ndisk1 = "ada1"\ndisk2 = "ada2"'
 
-cfg_content = """#!/usr/bin/env python3.6
+# create random hostname and random fake domain
+digit = ''.join(random.choices(string.digits, k=2))
+hostname = f'test{digit}'
+domain = f'test{digit}.nb.ixsystems.com'
+
+cfg_content = f"""#!/usr/bin/env python3.6
 
 user = "root"
-password = "%s"
-ip = "%s"
-default_api_url = 'http://' + ip + '/api/v%s'
+password = "{passwd}"
+ip = "{ip}"
+hostname = "{hostname}"
+domain = "{domain}"
+default_api_url = 'http://' + ip + '/api/v{api}'
 api1_url = 'http://' + ip + '/api/v1.0'
 api2_url = 'http://' + ip + '/api/v2.0'
-interface = "%s"
+interface = "{interface}"
 ntpServer = "10.20.20.122"
-localHome = "%s"
-%s
-keyPath = "%s"
-results_xml = "%s"
-""" % (passwd, ip, api, interface, localHome, disk, keyPath, results_xml)
+localHome = "{localHome}"
+{disk}
+keyPath = "{keyPath}"
+pool_name = "tank"
+"""
 
 cfg_file = open("auto_config.py", 'w')
 cfg_file.writelines(cfg_content)
 cfg_file.close()
 
-from functions import setup_ssh_agent, create_key, add_ssh_key
-
+from functions import setup_ssh_agent, create_key, add_ssh_key, get_file
+from functions import SSH_TEST
 # Setup ssh agent befor starting test.
 setup_ssh_agent()
 if path.isdir(dotsshPath) is False:
@@ -126,6 +135,7 @@ cfg_file.close()
 
 def get_tests():
     rv = []
+    ev = []
     skip_tests = []
 
     if api == '1.0':
@@ -133,16 +143,18 @@ def get_tests():
         apidir = 'api1/'
         rv = ['network', 'ssh', 'storage']
     elif api == '2.0':
+        skip_tests = ['volume']
         apidir = 'api2/'
-        rv = ['interfaces', 'network', 'ssh', 'volume']
-
+        rv = ['interfaces', 'network', 'ssh', 'pool']
+        ev = ['delete_interfaces']
     for filename in listdir(apidir):
         if filename.endswith('.py') and \
                 not filename.startswith('__init__'):
             filename = re.sub('.py$', '', filename)
-            if filename not in skip_tests and filename not in rv:
+            if (filename not in skip_tests and filename not in rv and
+                    filename not in ev):
                 rv.append(filename)
-    return rv
+    return rv + ev
 
 
 if api == "1.0":
@@ -161,3 +173,29 @@ elif api == "2.0":
               f"{results_xml}{i}_tests_result.xml"] + (
                   ["-k", testexpr] if testexpr else []
         ) + [f"api2/{i}.py"])
+
+# get useful logs
+artifacts = f"{workdir}/artifacts/{api}"
+logs_list = [
+    "/var/log/middlewared.log",
+    "/var/log/messages",
+    "/var/log/debug.log",
+    "/var/log/console.log"
+]
+if not path.exists(artifacts):
+    makedirs(artifacts)
+
+for log in logs_list:
+    get_file(log, artifacts, 'root', 'testing', ip)
+
+# get dmesg and put it in artifacs
+results = SSH_TEST('dmesg -a', 'root', 'testing', ip)
+dmsg = open(f'{artifacts}/dmesg', 'w')
+dmsg.writelines(results['output'])
+dmsg.close()
+
+# get core.get_jobs and put it in artifacs
+results = SSH_TEST('midclt call core.get_jobs | jq .', 'root', 'testing', ip)
+dmsg = open(f'{artifacts}/core_get_job', 'w')
+dmsg.writelines(results['output'])
+dmsg.close()

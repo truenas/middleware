@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Bool, Dict, Str
-from middlewared.service import ConfigService, ValidationErrors, job, private
+from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
 from middlewared.utils import Popen, run
 
 import asyncio
@@ -66,7 +66,8 @@ class SystemDatasetService(ConfigService):
 
     @accepts(Dict(
         'sysdataset_update',
-        Str('pool'),
+        Str('pool', null=True),
+        Str('pool_exclude', null=True),
         Bool('syslog'),
         Bool('rrd'),
         update=True
@@ -79,17 +80,26 @@ class SystemDatasetService(ConfigService):
         new.update(data)
 
         verrors = ValidationErrors()
-        if not await self.middleware.call('zfs.pool.query', [('name', '=', data['pool'])]):
-            verrors.add('sysdataset_update.pool', f'Pool "{data["pool"]}" not found', errno.ENOENT)
-        if verrors:
-            raise verrors
+        if new['pool'] and not await self.middleware.call(
+            'zfs.pool.query', [('name', '=', new['pool'])]
+        ):
+            verrors.add('sysdataset_update.pool', f'Pool "{new["pool"]}" not found', errno.ENOENT)
+        elif not new['pool']:
+            for pool in await self.middleware.call('pool.query'):
+                if data.get('pool_exclude') == pool['name']:
+                    continue
+                new['pool'] = pool['name']
+                break
+            else:
+                new['pool'] = 'freenas-boot'
+        verrors.check()
 
         new['syslog_usedataset'] = new['syslog']
         new['rrd_usedataset'] = new['rrd']
         await self.middleware.call('datastore.update', 'system.systemdataset', config['id'], new, {'prefix': 'sys_'})
 
-        if 'pool' in data and config['pool'] and data['pool'] != config['pool']:
-            await self.migrate(config['pool'], data['pool'])
+        if config['pool'] != new['pool']:
+            await self.migrate(config['pool'], new['pool'])
 
         if config['rrd'] != new['rrd']:
             # Stop collectd to flush data
@@ -103,7 +113,7 @@ class SystemDatasetService(ConfigService):
         if config['rrd'] != new['rrd']:
             await self.rrd_toggle()
             await self.middleware.call('service.restart', 'collectd')
-        return config
+        return await self.config()
 
     @accepts(Bool('mount', default=True), Str('exclude_pool', default=None, null=True))
     @private
@@ -121,13 +131,19 @@ class SystemDatasetService(ConfigService):
 
         if config['pool'] and config['pool'] != 'freenas-boot':
             if not await self.middleware.call('pool.query', [('name', '=', config['pool'])]):
-                job = await self.middleware.call('systemdataset.update', {'pool': ''})
+                job = await self.middleware.call('systemdataset.update', {
+                    'pool': None, 'pool_exclude': exclude_pool,
+                })
                 await job.wait()
+                if job.error:
+                    raise CallError(job.error)
                 config = await self.config()
 
         if not config['pool'] and not await self.middleware.call('system.is_freenas'):
             job = await self.middleware.call('systemdataset.update', {'pool': 'freenas-boot'})
             await job.wait()
+            if job.error:
+                raise CallError(job.error)
             config = await self.config()
         elif not config['pool']:
             pool = None
@@ -140,6 +156,8 @@ class SystemDatasetService(ConfigService):
             if pool:
                 job = await self.middleware.call('systemdataset.update', {'pool': pool['name']})
                 await job.wait()
+                if job.error:
+                    raise CallError(job.error)
                 config = await self.config()
 
         if not config['basename']:
@@ -314,37 +332,37 @@ class SystemDatasetService(ConfigService):
 
         config = await self.config()
 
-        rsyncs = (
-            (SYSDATASET_PATH, '/tmp/system.new'),
-        )
-
-        if not os.path.exists('/tmp/system.new'):
-            os.mkdir('/tmp/system.new')
-
         await self.__setup_datasets(_to, config['uuid'])
-        await self.__mount(_to, config['uuid'], path='/tmp/system.new')
+
+        if _from:
+            path = '/tmp/system.new'
+            if not os.path.exists('/tmp/system.new'):
+                os.mkdir('/tmp/system.new')
+        else:
+            path = SYSDATASET_PATH
+        await self.__mount(_to, config['uuid'], path=path)
 
         restart = ['syslogd', 'collectd']
 
         if await self.middleware.call('service.started', 'cifs'):
             restart.append('cifs')
 
-        for i in restart:
-            await self.middleware.call('service.stop', i)
+        try:
+            for i in restart:
+                await self.middleware.call('service.stop', i)
 
-        for src, dest in rsyncs:
-            cp = await run('rsync', '-az', f'{src}/', dest)
+            if _from:
+                cp = await run('rsync', '-az', f'{SYSDATASET_PATH}/', '/tmp/system.new', check=False)
+                if cp.returncode == 0:
+                    await self.__umount(_from, config['uuid'])
+                    await self.__umount(_to, config['uuid'])
+                    await self.__mount(_to, config['uuid'], SYSDATASET_PATH)
+                    proc = await Popen(f'zfs list -H -o name {_from}/.system|xargs zfs destroy -r', shell=True)
+                    await proc.communicate()
 
-        if _from and cp.returncode == 0:
-            await self.__umount(_from, config['uuid'])
-            await self.__umount(_to, config['uuid'])
-            await self.__mount(_to, config['uuid'], SYSDATASET_PATH)
-            proc = await Popen(f'zfs list -H -o name {_from}/.system|xargs zfs destroy -r', shell=True)
-            await proc.communicate()
-
-        os.rmdir('/tmp/system.new')
-
-        for i in restart:
-            await self.middleware.call('service.start', i)
+                os.rmdir('/tmp/system.new')
+        finally:
+            for i in restart:
+                await self.middleware.call('service.start', i)
 
         await self.__nfsv4link(config)

@@ -123,6 +123,13 @@ class CertificateView(TreeNode):
     order = 15
 
 
+class ACMEDNSAuthenticator(TreeNode):
+
+    gname = 'ACMEDNSAuthenticator'
+    replace_only = True
+    append_to = 'system'
+
+
 class SupportTree(TreeNode):
 
     gname = 'Support'

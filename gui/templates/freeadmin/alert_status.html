@@ -1,7 +1,10 @@
 <ul>
 {% for alert in alerts %}
     <li>
-        <input id="cbox_Alert_{{ alert.id }}" data-dojo-type="dijit.form.CheckBox" type="checkbox" value="{{ alert.id }}" onClick="alertDismiss" {% if not alert.dismissed %} checked{% endif %} />
+        <input id="cbox_Alert_{{ forloop.counter }}" data-dojo-type="dijit.form.CheckBox" type="checkbox" value="{{ alert.id }}" onClick="alertDismiss" {% if not alert.dismissed %} checked{% endif %} />
+        {% if alert.one_shot %}
+            <span id="one_shot_Alert_{{ forloop.counter }}" role="presentation" class="dijitInline dijitIcon dijitTreeIcon AlertServiceIcon" data-dojo-attach-point="iconNode"></span>
+        {% endif %}
         {% if alert.level == 'INFO'%}
             <span style="color:green;font-weight:bold;">
             {% trans "OK" %}:
@@ -20,6 +23,11 @@
             Node {{ alert.node }} -
         {% endif %}
         {{ alert.formatted|safe }}
+        {% if alert.one_shot %}
+            <div data-dojo-type="dijit/Tooltip" data-dojo-props="connectId:'one_shot_Alert_{{ forloop.counter }}',position:['below']">
+                This is a <b>one-shot</b> alert, it won't be dismissed automatically
+            </div>
+        {% endif %}
     </li>
 {% empty %}
   <li>The system has no alerts</li>

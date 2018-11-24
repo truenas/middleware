@@ -1,10 +1,11 @@
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str, validate_attributes
+from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, item_method, job, private
 )
 from middlewared.utils import load_modules, load_classes, Popen, run
 from middlewared.validators import Range, Time
+from middlewared.validators import validate_attributes
 
 import asyncio
 import base64
@@ -43,8 +44,6 @@ class RcloneConfig:
 
     def __enter__(self):
         self.tmp_file = tempfile.NamedTemporaryFile(mode="w+")
-        if self.cloud_sync["exclude"]:
-            self.tmp_file_exclude = tempfile.NamedTemporaryFile(mode="w+")
 
         # Make sure only root can read it as there is sensitive data
         os.chmod(self.tmp_file.name, 0o600)
@@ -78,6 +77,7 @@ class RcloneConfig:
                 remote_path = "encrypted:/"
 
             if self.cloud_sync["exclude"]:
+                self.tmp_file_exclude = tempfile.NamedTemporaryFile(mode="w+")
                 self.tmp_file_exclude.write("\n".join(self.cloud_sync["exclude"]))
                 self.tmp_file_exclude.flush()
                 extra_args.extend(["--exclude-from", self.tmp_file_exclude.name])
@@ -98,6 +98,12 @@ class RcloneConfig:
 
 
 async def rclone(middleware, job, cloud_sync):
+    if not os.path.exists(cloud_sync["path"]):
+        raise CallError(f"Directory {cloud_sync['path']!r} does not exist")
+
+    if os.stat(cloud_sync["path"]).st_dev == os.stat("/mnt").st_dev:
+        raise CallError(f"Directory {cloud_sync['path']!r} must reside within volume mount point")
+
     # Use a temporary file to store rclone file
     with RcloneConfig(cloud_sync) as config:
         args = [
@@ -279,6 +285,23 @@ class CredentialsService(CRUDService):
         datastore = "system.cloudcredentials"
 
     @accepts(Dict(
+        "cloud_sync_credentials_verify",
+        Str("provider", required=True),
+        Dict("attributes", additional_attrs=True, required=True),
+    ))
+    async def verify(self, data):
+        data = dict(data, name="")
+        await self._validate("cloud_sync_credentials_create", data)
+
+        with RcloneConfig({"credentials": data}) as config:
+            proc = await run(["rclone", "--config", config.config_path, "lsjson", "remote:"],
+                             check=False, encoding="utf8")
+            if proc.returncode == 0:
+                return {"valid": True}
+            else:
+                return {"valid": False, "error": proc.stderr}
+
+    @accepts(Dict(
         "cloud_sync_credentials_create",
         Str("name", required=True),
         Str("provider", required=True),
@@ -286,7 +309,7 @@ class CredentialsService(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
-        await self._validate("cloud_sync_credentials", data)
+        await self._validate("cloud_sync_credentials_create", data)
 
         data["id"] = await self.middleware.call(
             "datastore.insert",
@@ -309,7 +332,7 @@ class CredentialsService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        await self._validate("cloud_sync_credentials", new, id)
+        await self._validate("cloud_sync_credentials_update", new, id)
 
         await self.middleware.call(
             "datastore.update",

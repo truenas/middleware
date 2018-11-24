@@ -8,7 +8,6 @@ import os
 import re
 import signal
 import subprocess
-import sys
 import sysctl
 import tempfile
 
@@ -16,16 +15,11 @@ from bsd import geom, getswapinfo
 
 from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import get_smartctl_args
-from middlewared.schema import accepts, Bool, Dict, List, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
 
-# FIXME: temporary import of SmartAlert until alert is implemented
-# in middlewared
-if '/usr/local/www' not in sys.path:
-    sys.path.insert(0, '/usr/local/www')
-from freenasUI.services.utils import SmartAlert
 
 DISK_EXPIRECACHE_DAYS = 7
 GELI_KEY_SLOT = 0
@@ -86,6 +80,9 @@ class DiskService(CRUDService):
             ]),
             Str('passwd', password=True),
             Str('smartoptions'),
+            Int('critical', null=True),
+            Int('difference', null=True),
+            Int('informational', null=True),
             update=True
         )
     )
@@ -121,7 +118,10 @@ class DiskService(CRUDService):
         if any(new[key] != old[key] for key in ['hddstandby', 'advpowermgmt', 'acousticlevel']):
             await self.middleware.call('notifier.start_ataidle', new['name'])
 
-        if any(new[key] != old[key] for key in ['togglesmart', 'smartoptions']):
+        if any(
+                new[key] != old[key]
+                for key in ['togglesmart', 'smartoptions', 'critical', 'difference', 'informational']
+        ):
 
             if new['togglesmart']:
                 await self.toggle_smart_on(new['name'])
@@ -504,7 +504,6 @@ class DiskService(CRUDService):
                 except Exception as e:
                     self.logger.warn('Failed to clear %s: %s', dev, e)
         return failed
-
 
 
     @private
@@ -1188,10 +1187,21 @@ class DiskService(CRUDService):
                     c = consumers[0]
                     await self.swaps_remove_disks([c.provider.geom.name])
                 else:
-                    swap_devices.append(f'mirror/{g.name}')
+                    mirror_name = f'mirror/{g.name}'
+                    swap_devices.append(mirror_name)
                     for c in consumers:
                         # Add all partitions used in swap, removing .eli
                         used_partitions.add(c.provider.name.strip('.eli'))
+
+                    # If mirror has been configured automatically (not by middlewared)
+                    # and there is no geli attached yet we should look for core in it.
+                    if g.config.get('Type') == 'AUTOMATIC' and not os.path.exists(
+                        f'/dev/{mirror_name}.eli'
+                    ):
+                        await run(
+                            'savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{mirror_name}',
+                            check=False
+                        )
 
         klass = geom.class_by_name('PART')
         if not klass:
@@ -1509,11 +1519,7 @@ async def _event_devfs(middleware, event_type, args):
             await middleware.call('disk.sync', data['cdev'])
             await middleware.call('disk.sed_unlock', data['cdev'])
             await middleware.call('disk.multipath_sync')
-            try:
-                with SmartAlert() as sa:
-                    sa.device_delete(data['cdev'])
-            except Exception:
-                pass
+            await middleware.call('alert.oneshot_delete', 'SMART', data['cdev'])
     elif data['type'] == 'DESTROY':
         # Device notified about is not a disk
         if not RE_ISDISK.match(data['cdev']):
@@ -1523,11 +1529,7 @@ async def _event_devfs(middleware, event_type, args):
         if os.path.exists('/tmp/.sync_disk_done'):
             await (await middleware.call('disk.sync_all')).wait()
             await middleware.call('disk.multipath_sync')
-            try:
-                with SmartAlert() as sa:
-                    sa.device_delete(data['cdev'])
-            except Exception:
-                pass
+            await middleware.call('alert.oneshot_delete', 'SMART', data['cdev'])
             # If a disk dies we need to reconfigure swaps so we are not left
             # with a single disk mirror swap, which may be a point of failure.
             await middleware.call('disk.swaps_configure')

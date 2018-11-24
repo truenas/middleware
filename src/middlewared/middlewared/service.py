@@ -45,6 +45,14 @@ def job(lock=None, lock_queue_size=None, logs=False, process=False, pipes=None, 
     return check_job
 
 
+def skip_arg(count=0):
+    """Skip "count" arguments when validating accepts"""
+    def wrap(fn):
+        fn._skip_arg = count
+        return fn
+    return wrap
+
+
 def threaded(pool):
     def m(fn):
         fn._thread_pool = pool
@@ -105,6 +113,8 @@ class ServiceBase(type):
       - service_model: system service datastore model option used by `SystemServiceService` (`service` if used if not provided)
       - service_verb: verb to be used on update (default to `reload`)
       - namespace: namespace identifier of the service
+      - namespace_alias: another namespace identifier of the service, mostly used to rename and
+                         slowly deprecate old name.
       - private: whether or not the service is deemed private
       - verbose_name: human-friendly singular name for the service
       - thread_pool: thread pool to use for threaded methods
@@ -135,6 +145,7 @@ class ServiceBase(type):
             'service_model': None,
             'service_verb': 'reload',
             'namespace': namespace,
+            'namespace_alias': None,
             'private': False,
             'thread_pool': None,
             'process_pool': None,

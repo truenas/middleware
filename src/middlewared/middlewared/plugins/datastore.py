@@ -44,6 +44,8 @@ class DatastoreService(Service):
             '~': 'regex',
             'in': 'in',
             'nin': 'in',
+            '^': 'startswith',
+            '$': 'endswith',
         }
 
         rv = []
@@ -84,14 +86,15 @@ class DatastoreService(Service):
         app, model = name.split('.', 1)
         return apps.get_model(app, model)
 
-    def __queryset_serialize(self, qs, extend, extend_context, field_prefix):
+    def __queryset_serialize(self, qs, extend, extend_context, field_prefix, select):
         if extend_context:
             extend_context_value = self.middleware.call_sync(extend_context)
         else:
             extend_context_value = None
         for i in qs:
             yield django_modelobj_serialize(self.middleware, i, extend=extend, extend_context=extend_context,
-                                            extend_context_value=extend_context_value, field_prefix=field_prefix)
+                                            extend_context_value=extend_context_value, field_prefix=field_prefix,
+                                            select=select)
 
     @accepts(
         Str('name'),
@@ -103,6 +106,7 @@ class DatastoreService(Service):
             Str('prefix', default=None, null=True),
             Dict('extra', additional_attrs=True),
             List('order_by', default=[]),
+            List('select', default=[]),
             Bool('count', default=False),
             Bool('get', default=False),
             default=None,
@@ -176,7 +180,7 @@ class DatastoreService(Service):
 
         result = []
         for i in self.__queryset_serialize(
-            qs, options.get('extend'), options.get('extend_context'), options.get('prefix')
+            qs, options.get('extend'), options.get('extend_context'), options.get('prefix'), options.get('select'),
         ):
             result.append(i)
 
@@ -197,7 +201,7 @@ class DatastoreService(Service):
         options['get'] = True
         return self.query(name, None, options)
 
-    @accepts(Str('name'), Dict('data', additional_attrs=True), Dict('options', Str('prefix')))
+    @accepts(Str('name'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', null=True)))
     def insert(self, name, data, options=None):
         """
         Insert a new entry to `name`.
@@ -232,7 +236,7 @@ class DatastoreService(Service):
 
         return obj.pk
 
-    @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix')))
+    @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', null=True)))
     def update(self, name, id, data, options=None):
         """
         Update an entry `id` in `name`.

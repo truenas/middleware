@@ -13,20 +13,20 @@ import pathlib
 import json
 import sqlite3
 import errno
+
 from iocage_lib.ioc_check import IOCCheck
 from iocage_lib.ioc_clean import IOCClean
-from iocage_lib.ioc_fetch import IOCFetch
 from iocage_lib.ioc_image import IOCImage
 from iocage_lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
 from iocage_lib.ioc_list import IOCList
-from iocage_lib.ioc_upgrade import IOCUpgrade
 
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.validators import IpInUse, MACAddr
+from collections import deque
 
 
 SHUTDOWN_LOCK = asyncio.Lock()
@@ -83,11 +83,12 @@ class JailService(CRUDService):
                         else:
                             jail['ip4_addr'] = 'DHCP (not running)'
                     jails.append(jail)
+        except ioc_exceptions.JailMisconfigured as e:
+            self.logger.error(e, exc_info=True)
         except BaseException:
             # Brandon is working on fixing this generic except, till then I
             # am not going to make the perfect the enemy of the good enough!
-            self.logger.debug('iocage failed to fetch jails', exc_info=True)
-            pass
+            self.logger.debug('Failed to get list of jails', exc_info=True)
 
         return filter_list(jails, filters, options)
     query._fiterable = True
@@ -230,6 +231,10 @@ class JailService(CRUDService):
 
         verrors = self.common_validation(verrors, options, True, jail)
 
+        if name is not None and plugin:
+            verrors.add('options.plugin',
+                        'Cannot be true while trying to rename')
+
         if verrors:
             raise verrors
 
@@ -329,10 +334,14 @@ class JailService(CRUDService):
             raise CallError(e, errno=errno.ENOENT)
 
     @private
-    def check_jail_existence(self, jail, skip=True):
+    def check_jail_existence(self, jail, skip=True, callback=None):
         """Wrapper for iocage's API, as a few commands aren't ported to it"""
         try:
-            iocage = ioc.IOCage(skip_jails=skip, jail=jail)
+            if callback is not None:
+                iocage = ioc.IOCage(callback=callback,
+                                    skip_jails=skip, jail=jail)
+            else:
+                iocage = ioc.IOCage(skip_jails=skip, jail=jail)
             jail, path = iocage.__check_jail_existence__()
         except (SystemExit, RuntimeError):
             raise CallError(f"jail '{jail}' not found!")
@@ -369,7 +378,7 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
     def fetch(self, job, options):
         """Fetches a release or plugin."""
-        fetch_output = {'error': False, 'install_notes': []}
+        fetch_output = {'install_notes': []}
         release = options.get('release', None)
 
         verrors = ValidationErrors()
@@ -380,17 +389,12 @@ class JailService(CRUDService):
             raise verrors
 
         def progress_callback(content, exception):
-            level = content['level']
             msg = content['message'].strip('\n')
             rel_up = f'* Updating {release} to the latest patch level... '
 
             if job.progress['percent'] == 90 and options['name'] is not None:
                 for split_msg in msg.split('\n'):
                     fetch_output['install_notes'].append(split_msg)
-
-            if level == 'EXCEPTION':
-                fetch_output['error'] = True
-                raise CallError(msg)
 
             job.set_progress(None, msg)
 
@@ -536,18 +540,35 @@ class JailService(CRUDService):
     @accepts(Str("jail"))
     def start(self, jail):
         """Takes a jail and starts it."""
-        _, _, iocage = self.check_jail_existence(jail)
+        uuid, _, iocage = self.check_jail_existence(jail)
+        status, _ = IOCList.list_get_jid(uuid)
 
-        iocage.start()
+        if not status:
+            iocage.start()
 
         return True
 
     @accepts(Str("jail"))
     def stop(self, jail):
         """Takes a jail and stops it."""
-        _, _, iocage = self.check_jail_existence(jail)
+        uuid, _, iocage = self.check_jail_existence(jail)
+        status, _ = IOCList.list_get_jid(uuid)
 
-        iocage.stop()
+        if status:
+            iocage.stop()
+
+        return True
+
+    @accepts(Str('jail'))
+    def restart(self, jail):
+        """Takes a jail and restarts it."""
+        uuid, _, iocage = self.check_jail_existence(jail)
+        status, _ = IOCList.list_get_jid(uuid)
+
+        if status:
+            iocage.stop()
+
+        iocage.start()
 
         return True
 
@@ -563,10 +584,10 @@ class JailService(CRUDService):
             Str("action", enum=["ADD", "EDIT", "REMOVE", "REPLACE", "LIST"], required=True),
             Str("source"),
             Str("destination"),
-            Str("fstype"),
-            Str("fsoptions"),
-            Str("dump"),
-            Str("pass"),
+            Str("fstype", default='nullfs'),
+            Str("fsoptions", default='ro'),
+            Str("dump", default='0'),
+            Str("pass", default='0'),
             Int("index", default=None),
         ))
     def fstab(self, jail, options):
@@ -668,16 +689,18 @@ class JailService(CRUDService):
         zfs = libzfs.ZFS(history=True, history_prefix="<iocage>")
         pools = zfs.pools
         prop = "org.freebsd.ioc:active"
+        activated = False
 
         for _pool in pools:
             if _pool.name == pool:
                 ds = zfs.get_dataset(_pool.name)
                 ds.properties[prop] = libzfs.ZFSUserProperty("yes")
+                activated = True
             else:
                 ds = zfs.get_dataset(_pool.name)
                 ds.properties[prop] = libzfs.ZFSUserProperty("no")
 
-        return True
+        return activated
 
     @accepts(Str("ds_type", enum=["ALL", "JAIL", "TEMPLATE", "RELEASE"]))
     def clean(self, ds_type):
@@ -713,66 +736,110 @@ class JailService(CRUDService):
             command = ["/bin/sh", "-c"] + command
 
         host_user = "" if jail_user and host_user == "root" else host_user
-        msg = iocage.exec(command, host_user, jail_user, msg_return=True)
+        try:
+            msg = iocage.exec(command, host_user, jail_user, msg_return=True)
+        except RuntimeError as e:
+            raise CallError(str(e))
 
-        return msg.decode("utf-8")
+        return '\n'.join(msg)
 
     @accepts(Str("jail"))
     @job(lock=lambda args: f"jail_update:{args[-1]}")
     def update_to_latest_patch(self, job, jail):
         """Updates specified jail to latest patch level."""
+        job.set_progress(0, f'Updating {jail}')
+        msg_queue = deque(maxlen=10)
 
-        uuid, path, _ = self.check_jail_existence(jail)
-        status, jid = IOCList.list_get_jid(uuid)
-        conf = IOCJson(path).json_load()
+        def progress_callback(content, exception):
+            msg = content['message'].strip('\n')
+            msg_queue.append(msg)
+            final_msg = '\n'.join(msg_queue)
 
-        # Sometimes if they don't have an existing patch level, this
-        # becomes 11.1 instead of 11.1-RELEASE
-        _release = conf["release"].rsplit("-", 1)[0]
-        release = _release if "-RELEASE" in _release else conf["release"]
+            if 'Inspecting system... done' in msg:
+                job.set_progress(20)
+            elif 'Preparing to download files... done.' in msg:
+                job.set_progress(50)
+            elif 'Applying patches... done.' in msg:
+                job.set_progress(75)
+            elif 'Installing updates... done.' in msg:
+                job.set_progress(90)
+            elif f'{jail} has been updated successfully' in msg:
+                job.set_progress(100)
 
-        started = False
+            job.set_progress(None, description=final_msg)
 
-        if conf["type"] == "jail":
-            if not status:
-                self.start(jail)
-                started = True
-        else:
-            return False
-
-        if conf["basejail"] != "yes":
-            IOCFetch(release).fetch_update(True, uuid)
-        else:
-            # Basejails only need their base RELEASE updated
-            IOCFetch(release).fetch_update()
-
-        if started:
-            self.stop(jail)
+        _, _, iocage = self.check_jail_existence(
+            jail,
+            callback=progress_callback
+        )
+        iocage.update()
 
         return True
 
-    @accepts(Str("jail"), Str("release"))
+    @accepts(
+        Str("jail"),
+        Dict("options",
+             Str("release", required=False),
+             Bool("plugin", default=False))
+    )
     @job(lock=lambda args: f"jail_upgrade:{args[-1]}")
-    def upgrade(self, job, jail, release):
+    def upgrade(self, job, jail, options):
         """Upgrades specified jail to specified RELEASE."""
+        verrors = ValidationErrors()
+        release = options.get('release', None)
+        plugin = options['plugin']
 
-        uuid, path, _ = self.check_jail_existence(jail)
-        status, jid = IOCList.list_get_jid(uuid)
-        conf = IOCJson(path).json_load()
-        root_path = f"{path}/root"
-        started = False
+        if release is None and not plugin:
+            verrors.add(
+                'options.release',
+                'Must not be None if options.plugin is False.'
+            )
+            raise verrors
 
-        if conf["type"] == "jail":
-            if not status:
-                self.start(jail)
-                started = True
-        else:
-            return False
+        job.set_progress(0, f'Upgrading {jail}')
+        msg_queue = deque(maxlen=10)
 
-        IOCUpgrade(conf, release, root_path).upgrade_jail()
+        def progress_callback(content, exception):
+            msg = content['message'].strip('\n')
+            msg_queue.append(msg)
+            final_msg = '\n'.join(msg_queue)
 
-        if started:
-            self.stop(jail)
+            if plugin:
+                plugin_progress(job, msg)
+            else:
+                jail_progress(job, msg)
+
+            job.set_progress(None, description=final_msg)
+
+        def plugin_progress(job, msg):
+            if 'Snapshotting' in msg:
+                job.set_progress(20)
+            elif 'Updating plugin INDEX' in msg:
+                job.set_progress(40)
+            elif 'Running upgrade' in msg:
+                job.set_progress(70)
+            elif 'Installing plugin packages' in msg:
+                job.set_progress(90)
+            elif f'{jail} successfully upgraded' in msg:
+                job.set_progress(100)
+
+        def jail_progress(job, msg):
+            if 'Inspecting system' in msg:
+                job.set_progress(20)
+            elif 'Preparing to download files' in msg:
+                job.set_progress(50)
+            elif 'Applying patches' in msg:
+                job.set_progress(75)
+            elif 'Installing updates' in msg:
+                job.set_progress(90)
+            elif f'{jail} successfully upgraded' in msg:
+                job.set_progress(100)
+
+        _, _, iocage = self.check_jail_existence(
+            jail,
+            callback=progress_callback
+        )
+        iocage.upgrade(release=release)
 
         return True
 
@@ -909,11 +976,19 @@ class JailService(CRUDService):
 
     @private
     def start_on_boot(self):
+        self.logger.debug('Starting jails on boot: PENDING')
         ioc.IOCage(rc=True).start()
+        self.logger.debug('Starting jails on boot: SUCCESS')
+
+        return True
 
     @private
     def stop_on_shutdown(self):
+        self.logger.debug('Stopping jails on shutdown: PENDING')
         ioc.IOCage(rc=True).stop()
+        self.logger.debug('Stopping jails on shutdown: SUCCESS')
+
+        return True
 
     @private
     async def terminate(self):
@@ -950,7 +1025,10 @@ async def __event_system(middleware, event_type, args):
     # We need to call a method in Jail service to make sure it runs in the
     # process pool because of py-libzfs thread safety issue with iocage and middlewared
     if args['id'] == 'ready':
-        await middleware.call('jail.start_on_boot')
+        try:
+            await middleware.call('jail.start_on_boot')
+        except ioc_exceptions.PoolNotActivated:
+            pass
     elif args['id'] == 'shutdown':
         async with SHUTDOWN_LOCK:
             await middleware.call('jail.stop_on_shutdown')
