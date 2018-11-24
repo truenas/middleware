@@ -2169,6 +2169,9 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
                     )
                 ]
 
+            if kwargs["instance"].repl_speed_limit:
+                kwargs["initial"]["repl_speed_limit"] = int(kwargs["instance"].repl_speed_limit / 1024 + 0.5)
+
         super().__init__(*args, **kwargs)
 
         mchoicefield(self, 'repl_month', [
@@ -2333,186 +2336,10 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
             data["schedule"] = None
             data["restrict_schedule"] = None
 
-        return data
-
-    """
-
-    middleware_attr_prefix = "repl_"
-    middleware_attr_schema = "replication"
-    middleware_plugin = "replication"
-    is_singletone = False
-
-    repl_remote_mode = forms.ChoiceField(
-        label=_('Setup mode'),
-        choices=(
-            ('MANUAL', _('Manual')),
-            ('SEMIAUTOMATIC', _('Semi-automatic')),
-        ),
-        initial='MANUAL',
-    )
-    repl_remote_hostname = forms.CharField(label=_("Remote hostname"))
-    repl_remote_port = forms.IntegerField(
-        label=_("Remote port"),
-        initial=22,
-        required=False,
-        widget=forms.widgets.TextInput(),
-    )
-    repl_remote_http_port = forms.CharField(
-        label=_('Remote HTTP/HTTPS Port'),
-        max_length=200,
-        initial=80,
-        required=False,
-    )
-    repl_remote_https = forms.BooleanField(
-        label=_('Remote HTTPS'),
-        required=False,
-        initial=False,
-    )
-    repl_remote_token = forms.CharField(
-        label=_('Remote Auth Token'),
-        max_length=100,
-        required=False,
-        help_text=_(
-            "On the remote host go to Storage -> Replication Tasks, click the "
-            "Temporary Auth Token button and paste the resulting value in to "
-            "this field."
-        ),
-    )
-    repl_remote_dedicateduser_enabled = forms.BooleanField(
-        label=_("Dedicated User Enabled"),
-        help_text=_("If disabled then root will be used for replication."),
-        required=False,
-    )
-    repl_remote_dedicateduser = UserField(
-        label=_("Dedicated User"),
-        required=False,
-    )
-    repl_remote_cipher = forms.ChoiceField(
-        label=_("Encryption Cipher"),
-        initial='standard',
-        choices=choices.REPL_CIPHER,
-    )
-    repl_remote_hostkey = forms.CharField(
-        label=_("Remote hostkey"),
-        widget=forms.Textarea(),
-        required=False,
-    )
-
-    class Meta:
-        fields = '__all__'
-        model = models.Replication
-        exclude = ('repl_lastsnapshot', 'repl_remote')
-        widgets = {
-            'repl_begin': forms.widgets.TimeInput(attrs={
-                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
-            }),
-            'repl_end': forms.widgets.TimeInput(attrs={
-                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
-            }),
-        }
-
-    def __init__(self, *args, **kwargs):
-        if len(args) > 0 and isinstance(args[0], QueryDict):
-            new = args[0].copy()
-            fix_time_fields(new, ['repl_begin', 'repl_end'])
-            args = (new,) + args[1:]
-        repl = kwargs.get('instance', None)
-        super(ReplicationForm, self).__init__(*args, **kwargs)
-        self.fields['repl_filesystem'] = forms.ChoiceField(
-            label=self.fields['repl_filesystem'].label,
-            help_text=_(
-                "This field will be empty if you have not "
-                "setup a periodic snapshot task"),
-        )
-        fs = sorted(list(set([
-            (task.task_filesystem, task.task_filesystem)
-            for task in models.Task.objects.all()
-        ])))
-        self.fields['repl_filesystem'].choices = fs
-
-        if not self.instance.id:
-            self.fields['repl_remote_mode'].widget.attrs['onChange'] = (
-                'repliRemoteMode'
-            )
-        else:
-            del self.fields['repl_remote_mode']
-            del self.fields['repl_remote_http_port']
-            del self.fields['repl_remote_https']
-            del self.fields['repl_remote_token']
-
-        self.fields['repl_remote_dedicateduser_enabled'].widget.attrs[
-            'onClick'
-        ] = (
-            'toggleGeneric("id_repl_remote_dedicateduser_enabled", '
-            '["id_repl_remote_dedicateduser"], true);')
-
-        self.fields['repl_remote_cipher'].widget.attrs['onChange'] = (
-            'remoteCipherConfirm'
-        )
-
-        if repl and repl.id:
-            self.fields['repl_remote_hostname'].initial = (
-                repl.repl_remote.ssh_remote_hostname)
-            self.fields['repl_remote_hostname'].required = False
-            self.fields['repl_remote_port'].initial = (
-                repl.repl_remote.ssh_remote_port)
-            self.fields['repl_remote_dedicateduser_enabled'].initial = (
-                repl.repl_remote.ssh_remote_dedicateduser_enabled)
-            self.fields['repl_remote_dedicateduser'].initial = (
-                repl.repl_remote.ssh_remote_dedicateduser)
-            self.fields['repl_remote_cipher'].initial = (
-                repl.repl_remote.ssh_cipher)
-            self.fields['repl_remote_hostkey'].initial = (
-                repl.repl_remote.ssh_remote_hostkey)
-            self.fields['repl_remote_hostkey'].required = False
-            if not repl.repl_remote.ssh_remote_dedicateduser_enabled:
-                self.fields['repl_remote_dedicateduser'].widget.attrs[
-                    'disabled'] = 'disabled'
-        else:
-            if not self.data.get("repl_remote_dedicateduser_enabled", False):
-                self.fields['repl_remote_dedicateduser'].widget.attrs[
-                    'disabled'] = 'disabled'
-
-        self.fields['repl_remote_cipher'].widget.attrs['data-dojo-props'] = (
-            mark_safe("'oldvalue': '%s'" % (
-                self.fields['repl_remote_cipher'].initial,
-            ))
-        )
-
-    def clean_repl_remote_port(self):
-        port = self.cleaned_data.get('repl_remote_port')
-        if not port:
-            return 22
-        return port
-
-    def clean_repl_remote_http_port(self):
-        port = self.cleaned_data.get('repl_remote_http_port')
-        mode = self.cleaned_data.get('repl_remote_mode')
-        if mode == 'SEMIAUTOMATIC' and not port:
-            return 80
-        return port
-
-    def clean_repl_begin(self):
-        return self.cleaned_data.get('repl_begin').strftime('%H:%M')
-
-    def clean_repl_end(self):
-        return self.cleaned_data.get('repl_end').strftime('%H:%M')
-
-    def middleware_clean(self, data):
-
-        data['compression'] = data['compression'].upper()
-        data['remote_cipher'] = data['remote_cipher'].upper()
-        remote_http_port = int(data.pop('remote_http_port', 80))
-        remote_port = int(data.pop('remote_port', 22))
-
-        mode = data.get('remote_mode', 'MANUAL')
-        if mode == 'SEMIAUTOMATIC':
-            data['remote_port'] = remote_http_port
-        else:
-            data['remote_port'] = remote_port
+        if data["speed_limit"] is not None:
+            data["speed_limit"] = data["speed_limit"] * 1024
 
         return data
-    """
 
 
 class VolumeExport(Form):
