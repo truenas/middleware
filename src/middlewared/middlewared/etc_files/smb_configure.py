@@ -64,7 +64,7 @@ async def get_config(middleware):
     return conf
 
 
-async def hb_command(command, dir_path):
+def hb_command(command, dir_path):
     try:
         command(dir_path)
         return True
@@ -73,7 +73,7 @@ async def hb_command(command, dir_path):
         return False
 
 
-async def setup_samba_dirs(middleware, conf):
+def setup_samba_dirs(middleware, conf):
     statedir = conf['state directory']
     samba_dirs = [
         statedir,
@@ -84,12 +84,15 @@ async def setup_samba_dirs(middleware, conf):
     ]
     for dir in samba_dirs:
         if not os.path.exists(dir):
-            os.mkdir(dir)
+            if dir in conf['privatedir']:
+                os.mkdir(dir, 0o700)
+            else:
+                os.mkdir(dir, 0o755)
 
     if not conf['systemdataset']['is_decrypted']:
         if os.path.islink(statedir):
             os.unlink(statedir)
-            os.mkdir(statedir)
+            os.mkdir(statedir, 0o755)
         return False
 
     systemdataset_path = conf['systemdataset']['path']
@@ -101,14 +104,14 @@ async def setup_samba_dirs(middleware, conf):
         os.unlink(conf['statedir'])
 
     if (basename_realpath != statedir_realpath and os.path.exists(statedir)):
-        ret = await hb_command(os.unlink, statedir)
+        ret = hb_command(os.unlink, statedir)
         if not ret:
-            logger.debug(f"Path still exists. Attemping to rename it")
+            logger.debug("Path still exists. Attemping to rename it")
             olddir = f"{statedir}.{time.strftime('%Y%m%d%H%M%S')}"
             try:
                 os.rename(statedir, olddir)
             except Exception as e:
-                logger.debug(f"Unable to rename {statedir} to {olddir} ({e}")
+                logger.debug(f"Unable to rename {statedir} to {olddir} ({e})")
                 return False
 
         try:
@@ -121,16 +124,11 @@ async def setup_samba_dirs(middleware, conf):
     if os.path.islink(statedir) and not os.path.exists(statedir_realpath):
         logger.debug(f"statedir detected as link and realpath {statedir_realpath}  does not exist")
         os.unlink(statedir)
-        os.mkdir(statedir)
+        os.mkdir(statedir, 0o755)
 
     if not os.path.exists(conf['privatedir']):
-        logger.debug(f"privatedir does not exist. Creating it.")
-        os.mkdir(conf['privatedir'])
-        os.chmod(conf['privatedir'], 0o700)
-
-    os.chmod(statedir, 0o755)
-    os.chmod(conf['privatedir'], 0o755)
-    os.chmod('/var/log/samba4', 0o755)
+        logger.debug("privatedir does not exist. Creating it.")
+        os.mkdir(conf['privatedir'], 0o700)
 
     return True
 
@@ -204,7 +202,7 @@ async def set_SID(middleware, config):
             return False
     else:
         if not system_SID:
-            logger.debug(f'Unable to determine system and database SIDs')
+            logger.debug('Unable to determine system and database SIDs')
             return False
 
         if not await set_database_SID(middleware, config, system_SID):
@@ -224,7 +222,7 @@ async def set_SID(middleware, config):
 async def count_passdb_users():
     pdb_list = await run([PDBCMD, '-d', '0', '-L'])
     if pdb_list.returncode != 0:
-        logger.debug(f'pdbedit -L command failed. Could not obtain count of users in passdb.tdb')
+        logger.debug('pdbedit -L command failed. Could not obtain count of users in passdb.tdb')
         return False, 0
 
     usercount = len(pdb_list.stdout.decode().splitlines())
@@ -233,8 +231,7 @@ async def count_passdb_users():
 
 async def write_legacy_smbpasswd(middleware, conf):
     if not os.path.exists(TMP_PRIVATEDIR):
-        os.mkdir(TMP_PRIVATEDIR)
-        os.chmod(TMP_PRIVATEDIR, 0o700)
+        os.mkdir(TMP_PRIVATEDIR, 0o700)
 
     with open(TMP_SMBPASSWD, "w") as f:
         for user in conf['smb_users']:
@@ -262,7 +259,7 @@ async def import_local_users(middleware, conf):
     passdb_file = f"{conf['privatedir']}/passdb.tdb"
     passdb_usercount = await count_passdb_users()
     if len(conf['smb_users']) == passdb_usercount[1]:
-        logger.debug(f'User count in config file and passdb is identical. Bypassing import')
+        logger.debug('User count in config file and passdb is identical. Bypassing import')
         return True
 
     ret = await write_legacy_smbpasswd(middleware, conf)
@@ -405,7 +402,7 @@ async def render(service, middleware):
         logger.debug("systemdataset.config returned 'None' as dataset path. Possible zpool import in progress. Exiting configure.")
         return
 
-    ret = await setup_samba_dirs(middleware, conf)
+    ret = middleware.run_in_thread(setup_samba_dirs, middleware, conf)
     if not ret:
         logger.debug("Failed to configure samba directories")
         return
