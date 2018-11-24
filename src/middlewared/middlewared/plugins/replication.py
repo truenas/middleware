@@ -10,9 +10,16 @@ class ReplicationService(CRUDService):
         datastore = "storage.replication"
         datastore_prefix = "repl_"
         datastore_extend = "replication.extend"
+        datastore_extend_context = "replication.extend_context"
 
     @private
-    async def extend(self, data):
+    async def extend_context(self):
+        return {
+            "state": await self.middleware.call("zettarepl.get_state"),
+        }
+
+    @private
+    async def extend(self, data, context):
         data["periodic_snapshot_tasks"] = [
             {k.replace("task_", ""): v for k, v in task.items()}
             for task in data["periodic_snapshot_tasks"]
@@ -29,6 +36,10 @@ class ReplicationService(CRUDService):
             Cron.convert_db_format_to_schedule(data, schedule_name, begin_end=True)
         data.setdefault("schedule", None)
         data.setdefault("restrict_schedule", None)
+
+        data["state"] = context["state"].get(f"replication_task_{data['id']}", {
+            "state": "UNKNOWN",
+        })
 
         return data
 
@@ -107,6 +118,9 @@ class ReplicationService(CRUDService):
 
         await self._set_periodic_snapshot_tasks(id, periodic_snapshot_tasks)
 
+        await self.middleware.call("service.restart", "cron")
+        await self.middleware.call("zettarepl.update_tasks")
+
         return await self._get_instance(id)
 
     @accepts(Int("id"), Patch(
@@ -141,6 +155,9 @@ class ReplicationService(CRUDService):
         )
 
         await self._set_periodic_snapshot_tasks(id, periodic_snapshot_tasks)
+
+        await self.middleware.call("service.restart", "cron")
+        await self.middleware.call("zettarepl.update_tasks")
 
         return await self._get_instance(id)
 

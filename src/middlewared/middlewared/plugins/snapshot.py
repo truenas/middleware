@@ -17,6 +17,7 @@ class PeriodicSnapshotTaskService(CRUDService):
     async def extend_context(self):
         return {
             'legacy_replication_tasks': await self._legacy_replication_tasks(),
+            'state': await self.middleware.call('zettarepl.get_state'),
             'vmware': await self.middleware.call('vmware.query'),
         }
 
@@ -33,6 +34,10 @@ class PeriodicSnapshotTaskService(CRUDService):
             )
             for vmware in context['vmware']
         )
+
+        data['state'] = context['state'].get(f'periodic_snapshot_task_{data["id"]}', {
+            'state': 'UNKNOWN',
+        })
 
         return data
 
@@ -74,6 +79,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         )
 
         await self.middleware.call('service.restart', 'cron')
+        await self.middleware.call('zettarepl.update_tasks')
 
         return await self._get_instance(data['id'])
 
@@ -129,6 +135,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         )
 
         await self.middleware.call('service.restart', 'cron')
+        await self.middleware.call('zettarepl.update_tasks')
 
         return await self._get_instance(id)
 
