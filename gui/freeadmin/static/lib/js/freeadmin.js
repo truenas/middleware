@@ -1339,6 +1339,29 @@ require([
 
     }
 
+    sshCredentialsTypeToggle = function() {
+        if (registry.byId("id_type").get("value") == "MANUAL")
+        {
+            setVisible("id_host", true);
+            setVisible("id_port", true);
+            setVisible("id_remote_host_key", true);
+            domStyle.set(registry.byId("btn_Fake").domNode, "display", "");
+
+            setVisible("id_url", false);
+            setVisible("id_token", false);
+        }
+        else
+        {
+            setVisible("id_host", false);
+            setVisible("id_port", false);
+            setVisible("id_remote_host_key", false);
+            domStyle.set(registry.byId("btn_Fake").domNode, "display", "none");
+
+            setVisible("id_url", true);
+            setVisible("id_token", true);
+        }
+    }
+
     replicationDirectionToggle = function() {
         if (registry.byId("id_repl_direction").get("value") == "PUSH")
         {

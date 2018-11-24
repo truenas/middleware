@@ -3524,13 +3524,29 @@ class SSHCredentialsKeychainCredentialForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = ""
     middleware_attr_schema = "keychain_credential"
     middleware_plugin = "keychaincredential"
+    middleware_exclude_fields = ["type", "url", "token"]
     is_singletone = False
 
+    class Meta:
+        exclude = [
+            "type",
+            "attributes",
+        ]
+        model = models.SSHCredentialsKeychainCredential
+
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault("initial", {})
-        if "instance" in kwargs:
+        if "instance" in kwargs and kwargs["instance"].id:
+            kwargs.setdefault("initial", {})
             kwargs["initial"].update(kwargs["instance"].attributes or {})
+
         super().__init__(*args, **kwargs)
+
+        if "instance" in kwargs and kwargs["instance"].id:
+            del self.fields['type']
+            del self.fields['url']
+            del self.fields['token']
+        else:
+            self.fields['type'].widget.attrs['onChange'] = "sshCredentialsTypeToggle();"
 
     def middleware_prepare(self):
         attributes = super().middleware_prepare()
@@ -3540,14 +3556,63 @@ class SSHCredentialsKeychainCredentialForm(MiddlewareModelForm, ModelForm):
             "attributes": attributes,
         }
 
+    def save(self):
+        if self.cleaned_data.get("type") == "SEMIAUTOMATIC":
+            data = self.middleware_prepare()
+            data["attributes"]["name"] = data["name"]
+            data = data["attributes"]
+            data.pop("host")
+            data.pop("port")
+            data.pop("remote_host_key")
+            data["url"] = self.cleaned_data.get("url")
+            data["token"] = self.cleaned_data.get("token")
+
+            self.middleware_attr_schema = "keychain"
+            self._middleware_action = "remote_ssh_semiautomatic_setup"
+
+            with client as c:
+                try:
+                    result = c.call(f"keychaincredential.remote_ssh_semiautomatic_setup", data)
+                except ClientException as e:
+                    raise ValidationErrors([["__all__", str(e), errno.EINVAL]])
+                else:
+                    self.instance = self._meta.model.objects.get(pk=result["id"])
+                    return self.instance
+
+        return super().save()
+
     name = forms.CharField(
         label=_("Name"),
     )
-    host = forms.CharField(
-        label=_("Host"),
-        required=True,
+    type = forms.ChoiceField(
+        label=("Setup method"),
+        choices=[
+            ("MANUAL", "Manual"),
+            ("SEMIAUTOMATIC", "Semi-automatic (FreeNAS only)"),
+        ],
     )
-    port = forms.IntegerField(
+    url = forms.CharField(
+        required=False,
+        label=_("FreeNAS URL"),
+        help_text=_(
+            "E.g. http://192.168.0.180"
+        ),
+    )
+    token = forms.CharField(
+        required=False,
+        label=_("Auth Token"),
+        help_text=_(
+            "On the remote host go to Storage -> Replication Tasks, click the "
+            "Temporary Auth Token button and paste the resulting value in to "
+            "this field."
+        ),
+    )
+    host = forms.CharField(
+        required=False,
+        label=_("Host"),
+    )
+    port = forms.CharField(
+        required=False,
         label=_("Port"),
         initial=22,
     )
@@ -3561,7 +3626,7 @@ class SSHCredentialsKeychainCredentialForm(MiddlewareModelForm, ModelForm):
         queryset=models.SSHKeyPairKeychainCredential.objects.all(),
     )
     remote_host_key = forms.CharField(
-        required=True,
+        required=False,
         widget=forms.Textarea(),
     )
     cipher = forms.ChoiceField(
@@ -3576,9 +3641,12 @@ class SSHCredentialsKeychainCredentialForm(MiddlewareModelForm, ModelForm):
         initial=10,
     )
 
-    class Meta:
-        exclude = [
-            "type",
-            "attributes",
-        ]
-        model = models.SSHCredentialsKeychainCredential
+    def clean_port(self):
+        value = self.cleaned_data.get('port')
+        if value:
+            try:
+                return int(value)
+            except ValueError:
+                raise forms.ValidationError("Not a valid integer")
+        else:
+            return None

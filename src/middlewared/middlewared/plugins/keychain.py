@@ -14,7 +14,7 @@ from middlewared.schema import (Dict, Int, Patch, Str,
                                 ValidationErrors, accepts)
 from middlewared.service import CRUDService, private
 from middlewared.utils import run
-from middlewared.validators import validate_attributes
+from middlewared.validators import validate_attributes, URL
 
 
 class KeychainCredentialType:
@@ -272,7 +272,7 @@ class KeychainCredentialService(CRUDService):
     @accepts(Dict(
         "keychain_remote_ssh_semiautomatic_setup",
         Str("name", required=True),
-        Str("url", required=True),
+        Str("url", required=True, validators=[URL()]),
         Str("token", required=True),
         Str("username", default="root"),
         Int("private_key", required=True),
@@ -283,7 +283,12 @@ class KeychainCredentialService(CRUDService):
         replication_key = self.middleware.run_coroutine(
             get_ssh_key_pair_with_private_key(self.middleware, data["private_key"]))
 
-        with Client(os.path.join(re.sub("^http", "ws", data["url"]), "websocket")) as c:
+        try:
+            client = Client(os.path.join(re.sub("^http", "ws", data["url"]), "websocket"))
+        except Exception as e:
+            raise CallError(f"Unable to connect to remote system: {e}")
+
+        with client as c:
             if not c.call("auth.token", data["token"]):
                 raise CallError("Invalid token")
 
@@ -354,8 +359,8 @@ class KeychainCredentialService(CRUDService):
         authorized_keys_file = f"{dotsshdir}/authorized_keys"
         with open(authorized_keys_file, "a+") as f:
             f.seek(0)
-            if data["public-key"] not in f.read():
-                f.write("\n" + data["public-key"])
+            if data["public_key"] not in f.read():
+                f.write("\n" + data["public_key"] + "\n")
 
         ssh_hostkey = "{0} {1}\n{0} {2}\n{0} {3}\n".format(
             data["remote_hostname"],
