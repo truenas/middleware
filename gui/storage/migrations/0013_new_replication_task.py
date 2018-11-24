@@ -105,8 +105,8 @@ def migrate_followdelete(apps, schema_editor):
 def speed_limit(apps, schema_editor):
     Replication = apps.get_model('storage', 'Replication')
     for replication in Replication.objects.all():
-        if replication.repl.speed_limit == 0:
-            replication.repl.speed_limit = None
+        if replication.repl_speed_limit == 0:
+            replication.repl_speed_limit = None
             replication.save()
 
 
