@@ -109,6 +109,9 @@ class EtcService(Service):
             {'type': 'py', 'path': 'local/sysrrd_disable'},
             {'type': 'mako', 'path': 'local/collectd.conf'}
         ],
+        'system_dataset': [
+            {'type': 'py', 'path': 'system_setup'}
+        ],
         'netdata': [
             {'type': 'mako', 'path': 'local/netdata/netdata.conf'},
             {'type': 'mako', 'path': 'local/netdata/stream.conf'},
