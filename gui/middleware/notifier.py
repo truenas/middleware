@@ -1500,7 +1500,9 @@ class notifier(metaclass=HookMetaclass):
             self.reload('webdav')
 
         self.reload("disk")
-        self.start("ix-system")
+        # FIXME: Handle this gracefully - see if we can consolidate the logic
+        with client as c:
+            c.call('etc.generate', 'system_dataset')
         self.start("ix-syslogd")
         self.start("ix-warden")
         # FIXME: do not restart collectd again
