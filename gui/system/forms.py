@@ -839,7 +839,6 @@ class InitialWizard(CommonWizard):
         with open(WIZARD_PROGRESSFILE, 'wb') as f:
             f.write(pickle.dumps(progress))
 
-        # FIXME: Handle this gracefully - see if we can consolidate the logic
         with client as c:
             c.call('etc.generate', 'system_dataset')
         _n.start("ix-syslogd")

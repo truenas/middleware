@@ -1499,15 +1499,6 @@ class notifier(metaclass=HookMetaclass):
         if WebDAV_Share.objects.filter(Q(webdav_path=path) | Q(webdav_path__startswith=f'{path}/')).exists():
             self.reload('webdav')
 
-        self.reload("disk")
-        # FIXME: Handle this gracefully - see if we can consolidate the logic
-        with client as c:
-            c.call('etc.generate', 'system_dataset')
-        self.start("ix-syslogd")
-        self.start("ix-warden")
-        # FIXME: do not restart collectd again
-        self.restart("system_datasets")
-
         return volume
 
     def __rmdir_mountpoint(self, path):

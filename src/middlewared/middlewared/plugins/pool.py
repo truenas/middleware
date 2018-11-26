@@ -1731,6 +1731,12 @@ class PoolService(CRUDService):
             args = []
 
         await self.middleware.call('notifier.volume_import', data.get('name') or pool['name'], data['guid'], *args)
+
+        await self.middleware.call('service.reload', 'disk')
+        await self.middleware.call('etc.generate', 'system_dataset')
+        await self.middleware.call('service.start', 'ix-syslogd')
+        await self.middleware.call('service.start', 'ix-warden')
+        await self.middleware.call('service.restart', 'system_datasets')
         return True
 
     @accepts(
