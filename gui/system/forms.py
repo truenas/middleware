@@ -840,7 +840,7 @@ class InitialWizard(CommonWizard):
             f.write(pickle.dumps(progress))
 
         with client as c:
-            c.call('etc.generate', 'system_dataset')
+            c.call('systemdataset.setup')
         _n.start("ix-syslogd")
         _n.restart("system_datasets")  # FIXME: may reload collectd again
         _n.reload("timeservices")
