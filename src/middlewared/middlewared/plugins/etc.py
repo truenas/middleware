@@ -129,6 +129,8 @@ class EtcService(Service):
         ],
     }
 
+    SKIP_LIST = ['system_dataset', 'collectd']
+
     class Config:
         private = True
 
@@ -213,11 +215,16 @@ class EtcService(Service):
             if not changes:
                 self.logger.debug(f'No new changes for {outfile}')
 
-    async def generate_all(self):
+    async def generate_all(self, skip_list=True):
         """
         Generate all configuration file groups
+        `skip_list` tells whether to skip groups in SKIP_LIST. This defaults to true.
         """
         for name in self.GROUPS.keys():
+            if skip_list and name in self.SKIP_LIST:
+                self.logger.info(f'Skipping {name} group generation')
+                continue
+
             try:
                 await self.generate(name)
             except Exception:

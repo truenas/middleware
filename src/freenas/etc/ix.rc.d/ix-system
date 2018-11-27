@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-system
+# BEFORE: samba_server ix-syslogd ix-collectd
+
+. /etc/rc.freenas
+
+system_start()
+{
+	# FIXME: THIS SHOULD BE REMOVED ONCE ix-zfs HAS BEEN PORTED OVER TO MIDDLEWARED
+	/usr/local/bin/midclt call etc.generate 'system_dataset' > /dev/null
+}
+
+name="ix-system"
+start_cmd='system_start'
+stop_cmd=':'
+status_cmd=':'
+
+load_rc_config $name
+run_rc_command $*

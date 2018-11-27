@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-collectd
+# REQUIRE: var
+# BEFORE: collectd
+
+. /etc/rc.freenas
+
+generate_collectd()
+{
+	# FIXME: THIS SHOULD BE REMOVED ONCE ix-zfs HAS BEEN PORTED OVER TO MIDDLEWARED
+	/usr/local/bin/midclt call etc.generate 'collectd' > /dev/null
+}
+
+name="ix-collectd"
+start_cmd='generate_collectd'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
