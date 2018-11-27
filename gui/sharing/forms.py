@@ -61,7 +61,7 @@ class CIFS_ShareForm(ModelForm):
             for line in zfsout:
                 try:
                     tasks = []
-                    zfs_mp, zfs_ds = line.split()
+                    zfs_mp, zfs_ds = line.split('\t')
                     if cifs_path == zfs_mp or cifs_path.startswith("%s/" % zfs_mp):
                         if cifs_path == zfs_mp:
                             tasks = Task.objects.filter(task_filesystem=zfs_ds)
