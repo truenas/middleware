@@ -429,6 +429,7 @@ class iSCSITargetExtentService(CRUDService):
             raise verrors
 
         await self.save(data, 'iscsi_extent_create', verrors)
+
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix}
@@ -454,15 +455,21 @@ class iSCSITargetExtentService(CRUDService):
         await self.compress(new)
         await self.validate(new)
         await self.clean(
-            new, 'iscsi_extent_update', verrors, old=old)
+            new, 'iscsi_extent_update', verrors, old=old
+        )
 
         if verrors:
             raise verrors
 
-        await self.save(data, 'iscsi_extent_update', verrors)
+        await self.save(new, 'iscsi_extent_update', verrors)
+
         await self.middleware.call(
-            'datastore.update', self._config.datastore, id, new,
-            {'prefix': self._config.datastore_prefix})
+            'datastore.update',
+            self._config.datastore,
+            id,
+            new,
+            {'prefix': self._config.datastore_prefix}
+        )
 
         return await self._get_instance(id)
 
@@ -522,6 +529,11 @@ class iSCSITargetExtentService(CRUDService):
         if extent_type != 'FILE':
             # ZVOL and HAST are type DISK
             extent_type = 'DISK'
+            # If extent is set to a disk ( not ZVOL and HAST ) - let's reflect this in the output
+
+            disk = await self.middleware.call('disk.query', [['identifier', '=', data['path']]])
+            if disk:
+                data['disk'] = disk[0]['name']
         else:
             extent_size = data['filesize']
 
