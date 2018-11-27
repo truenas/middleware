@@ -974,7 +974,7 @@ class ServiceService(CRUDService):
         asyncio.ensure_future(self.restart("collectd", kwargs))
 
     async def _reload_user(self, **kwargs):
-        await self._service("ix-passwd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "user")
         await self._service("ix-aliases", "start", quiet=True, **kwargs)
         await self._service("ix-sudoers", "start", quiet=True, **kwargs)
         await self.reload("cifs", kwargs)
