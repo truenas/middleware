@@ -55,19 +55,14 @@ class PyRenderer(object):
 class EtcService(Service):
 
     GROUPS = {
-        # 'user': [
-        #    {'type': 'mako', 'path': 'master.passwd'},
-        #    {'type': 'py', 'path': 'pwd_db'},
-        # ],
-
-        #
-        # Coming soon
-        #
+        'user': [
+           {'type': 'mako', 'path': 'master.passwd'},
+           {'type': 'py', 'path': 'pwd_db'},
+        ],
         'kerberos': [
             {'type': 'mako', 'path': 'krb5.conf'},
             {'type': 'py', 'path': 'krb5.keytab'},
         ],
-
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
         ],
