@@ -2,4 +2,4 @@ from middlewared.utils import run
 
 
 async def render(service, middleware):
-    await run('/usr/sbin/pwd_mkdb', '/etc/master.passwd', check=False)
+    await run('pwd_mkdb', '-p', '/etc/master.passwd', check=False)
