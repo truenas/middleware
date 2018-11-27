@@ -9,6 +9,7 @@ import asyncio
 from collections import defaultdict
 import contextlib
 import ipaddress
+import itertools
 import netif
 import os
 import re
@@ -599,9 +600,10 @@ class InterfaceService(CRUDService):
             data.pop('failover_group', None)
             data.pop('failover_aliases', None)
             data.pop('failover_vhid', None)
-            data.pop('failover_virtual_ips', None)
+            data.pop('failover_virtual_aliases', None)
         else:
-            raise CallError('Not yet implemented for this product')
+            if not await self.middleware.call('failover.licensed'):
+                raise CallError('Not licensed for HA.')
 
         verrors.check()
 
@@ -955,18 +957,22 @@ class InterfaceService(CRUDService):
     def __convert_aliases_to_datastore(self, data):
         iface = {
             'ipv4address': '',
+            'ipv4address_b': '',
             'v4netmaskbit': '',
             'ipv6address': '',
             'v6netmaskbit': '',
         }
         aliases = []
         aliases_cidr = []
-        for i in data['aliases']:
+        for field, i in itertools.chain(
+            map(lambda x: ('A', x), data['aliases']),
+            map(lambda x: ('B', x), data.get('failover_aliases') or []),
+        ):
             ipaddr = ipaddress.ip_interface(i)
             iface_ip = True
             if ipaddr.version == 4:
-                iface_addrfield = 'ipv4address'
-                alias_addrfield = 'v4address'
+                iface_addrfield = 'ipv4address' if field == 'A' else 'ipv4address_b'
+                alias_addrfield = 'v4address' if field == 'A' else 'v4address_b'
                 netfield = 'v4netmaskbit'
                 if iface.get(iface_addrfield) or data.get('ipv4_dhcp'):
                     iface_ip = False
