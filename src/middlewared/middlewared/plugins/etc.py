@@ -1,5 +1,4 @@
 from mako import exceptions
-from mako.template import Template
 from mako.lookup import TemplateLookup
 from middlewared.service import Service
 
@@ -56,9 +55,9 @@ class EtcService(Service):
 
     GROUPS = {
         'user': [
-           {'type': 'mako', 'path': 'group'},
-           {'type': 'mako', 'path': 'master.passwd'},
-           {'type': 'py', 'path': 'pwd_db'},
+            {'type': 'mako', 'path': 'group'},
+            {'type': 'mako', 'path': 'master.passwd'},
+            {'type': 'py', 'path': 'pwd_db'},
         ],
         'kerberos': [
             {'type': 'mako', 'path': 'krb5.conf'},
