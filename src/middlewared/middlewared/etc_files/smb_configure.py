@@ -24,6 +24,8 @@ TMP_SMBPASSWD = TMP_PRIVATEDIR + "/tmp_smbpasswd"
        are during HA failover and during boot.
     4) Validate and regenerate local user group mapping.
 """
+
+
 async def get_smb4conf_parm(parm):
     tp = await run([TPCMD, "-s", f"--parameter-name={parm}"], check=False)
     if tp.returncode != 0:
@@ -132,6 +134,7 @@ def setup_samba_dirs(middleware, conf):
 
     return True
 
+
 """
    Code to make ensure that the local / domain SID persists across upgrades, reboots,
    db restores, etc. The SID value is normally randomized, and this can cause
@@ -140,6 +143,7 @@ def setup_samba_dirs(middleware, conf):
    they rely on the group mapping database for access via local groups. Symptoms of this
    are seeing a SID (S-1-5-32-) rather than the group name in File Explorer.
 """
+
 
 async def get_system_SID(sidtype):
     SID = None
@@ -219,6 +223,7 @@ async def set_SID(middleware, config):
     count in passdb.tdb with the list of smb users the in freenas-v1.db file.
 """
 
+
 async def count_passdb_users():
     pdb_list = await run([PDBCMD, '-d', '0', '-L'])
     if pdb_list.returncode != 0:
@@ -289,11 +294,13 @@ async def import_local_users(middleware, conf):
 
     To do: add validation of SID values in the tdb file.
 """
+
+
 async def groupmap_add(config, unixgroup, ntgroup):
-    gm_add = await run([NETCMD, '-d', '0', 'groupmap', 'add',
-                       f'unixgroup={unixgroup}',
-                       f'ntgroup={ntgroup}'],
-                       check=False)
+    gm_add = await run(
+        [NETCMD, '-d', '0', 'groupmap', 'add', f'unixgroup={unixgroup}', f'ntgroup={ntgroup}'],
+        check=False
+    )
 
     if gm_add.returncode != 0:
         logger.debug(f'Failed to map {unixgroup} to nt group {ntgroup}: {gm_add.stderr.decode()}')
@@ -343,6 +350,8 @@ async def get_groups(middleware):
     this case, we will make best effort to fix the issue (up to deleting the group_mapping.tdb file and regenerating
     it).
 """
+
+
 async def get_domain_sid_from_group_sid(group_sid):
     group_sid_components = group_sid.split("-")
 
@@ -360,19 +369,23 @@ async def get_domain_sid_from_group_sid(group_sid):
 async def fixsid(middleware, conf, groupmap):
     well_known_SID_prefix = "S-1-5-32"
     db_SID = str(conf['cifs']['cifs_SID'])
+    group_SID = None
     groupmap_SID = None
+    domain_SID = None
     ret = True
     for group in groupmap:
         group_SID = str(group['SID'])
         if well_known_SID_prefix not in group_SID:
             domain_SID = await get_domain_sid_from_group_sid(group_SID)
             if groupmap_SID is not None and groupmap_SID is not domain_SID:
-                logger.debug(f"Groupmap table contains more than one unique domain SIDs ({groupmap_SID}) and ({domain_SID})")
+                logger.debug(f"Groupmap table contains more than one unique domain SIDs ({group_SID}) and ({domain_SID})")
                 logger.debug('Inconsistent entries in group_mapping.tdb. Situation uncorrectable. Removing corrupted tdb file.')
-                os.unlink(f"{conf['state_dir']}/group_mapping.tdb")
+                os.unlink(f"{conf['state directory']}/group_mapping.tdb")
                 return False
+            else:
+                groupmap_SID = domain_SID
 
-    if db_SID not in domain_SID:
+    if db_SID != domain_SID:
         logger.debug(f"Domain SID in group_mapping.tdb ({domain_SID}) is not SID in nas config ({db_SID}). Updating db")
         ret = await set_database_SID(middleware, conf, domain_SID)
         if not ret:
@@ -384,9 +397,10 @@ async def fixsid(middleware, conf, groupmap):
 
 async def validate_group_mappings(middleware, conf):
     groupmap = await middleware.call('notifier.groupmap_list')
-    sids_fixed = await fixsid(middleware, conf, groupmap)
-    if not sids_fixed:
-        groupmap = []
+    if groupmap:
+        sids_fixed = await fixsid(middleware, conf, groupmap)
+        if not sids_fixed:
+            groupmap = []
     groups = await get_groups(middleware)
     for g in groups:
         if not await is_disallowed_group(middleware, conf, groupmap, g):
@@ -410,3 +424,4 @@ async def render(service, middleware):
     if conf['role'] == "file_server":
         await import_local_users(middleware, conf)
         await validate_group_mappings(middleware, conf)
+
