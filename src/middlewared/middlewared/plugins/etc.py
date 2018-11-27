@@ -56,6 +56,7 @@ class EtcService(Service):
 
     GROUPS = {
         'user': [
+           {'type': 'mako', 'path': 'group'},
            {'type': 'mako', 'path': 'master.passwd'},
            {'type': 'py', 'path': 'pwd_db'},
         ],
