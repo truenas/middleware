@@ -19,7 +19,7 @@ class FailoverDisksAlertSource(AlertSource):
             return alerts
 
         local_disks = set((await self.middleware.call("device.get_info", "DISK")).keys())
-        remote_disks = set((await self.middleware.call("failover.call_remote", "device.get_info", "DISK")).keys())
+        remote_disks = set((await self.middleware.call("failover.call_remote", "device.get_info", ["DISK"])).keys())
 
         if local_disks - remote_disks:
             alerts.append(Alert(title="The following disks are not present on backup node: %(disks)s",
