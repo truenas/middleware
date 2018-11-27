@@ -3,6 +3,7 @@
 . /etc/rc.freenas
 
 service=/usr/sbin/service
+midclt=/usr/local/bin/midclt
 status_file="/var/run/directoryservice.nis"
 
 nisctl_cache_fill()
@@ -33,12 +34,12 @@ nisctl_start()
 {
 	nis_set 1
 
-	nisctl_cmd ${service} ix-passwd start
+	nisctl_cmd ${midclt} call etc.generate user
         nisctl_cmd ${service} ix-hostname start
 
 	if ! nisctl_cmd ${service} ix-nsswitch start
 	then
-		nisctl_cmd ${service} ix-passwd start
+		nisctl_cmd ${midclt} call etc.generate user
         	nisctl_cmd ${service} ix-hostname start
 		nis_set 0
 		return 1
@@ -46,7 +47,7 @@ nisctl_start()
 
 	if ! nisctl_cmd ${service} nisdomain start
 	then
-		nisctl_cmd ${service} ix-passwd start
+		nisctl_cmd ${midclt} call etc.generate user
         	nisctl_cmd ${service} ix-hostname start
 		nis_set 0
 		return 1
@@ -54,7 +55,7 @@ nisctl_start()
 
 	if ! nisctl_cmd ${service} ypbind start
 	then
-		nisctl_cmd ${service} ix-passwd start
+		nisctl_cmd ${midclt} call etc.generate user
         	nisctl_cmd ${service} ix-hostname start
 		nis_set 0
 		return 1
@@ -73,7 +74,7 @@ nisctl_stop()
 	nisctl_cmd ${service} nisdomain stop
 	nisctl_cmd ${service} ix-nsswitch stop
 	nisctl_cmd ${service} ix-hostname start
-	nisctl_cmd ${service} ix-passwd start
+	nisctl_cmd ${midclt} call etc.generate user
 
 	nis_set 0
 	. /etc/rc.conf.local
