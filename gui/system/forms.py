@@ -839,8 +839,7 @@ class InitialWizard(CommonWizard):
         with open(WIZARD_PROGRESSFILE, 'wb') as f:
             f.write(pickle.dumps(progress))
 
-        with client as c:
-            c.call('systemdataset.setup')
+        _n.start("ix-system")
         _n.start("ix-syslogd")
         _n.restart("system_datasets")  # FIXME: may reload collectd again
         _n.reload("timeservices")

@@ -428,7 +428,7 @@ class SystemDatasetService(ConfigService):
                     if data_dir_is_ramdisk:
                         # copy-umount-remove
                         subprocess.Popen(
-                            ['cp', '-a', f'"{data_dir}"', f'"{data_dir}.{time.strftime("%Y%m%d%H%M%S")}"'],
+                            ['cp', '-a', data_dir, f'{data_dir}.{time.strftime("%Y%m%d%H%M%S")}'],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE
                         ).communicate()
 
@@ -479,8 +479,9 @@ class SystemDatasetService(ConfigService):
         # Skip the case where "${hostname}" is "localhost", so symlink was not
         # (and is not) needed.
         if (
-            hostname != 'localhost' and os.path.isdir(os.path.join(pwd, hostname))
-            and not os.path.islink(os.path.join(pwd, hostname))
+            hostname != 'localhost' and os.path.isdir(os.path.join(pwd, hostname)) and not os.path.islink(
+                os.path.join(pwd, hostname)
+            )
         ):
             if os.path.exists(os.path.join(pwd, 'localhost')):
                 if os.path.islink(os.path.join(pwd, 'localhost')):
