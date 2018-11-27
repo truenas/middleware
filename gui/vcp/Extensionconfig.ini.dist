@@ -1,9 +1,0 @@
-[RegisterParam]
-
-company=iXsystem
-label="FreeNAS extension"
-description=Plugin for iXsystem
-key=com.ixsystems.truenas
-events=truenas-alert
-tasks=TrueNASCreateDatastoreTask
-auth=iXSystems.Discovery,iXSystems.Clones,iXSystems.Storage,iXSystems.Modify,iXSystems.Destroy
