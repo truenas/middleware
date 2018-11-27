@@ -28,9 +28,12 @@ import freenasUI.vcp.utils as utils
 
 from django.db import models
 from freenasUI.freeadmin.models import Model
-from django.utils.translation import ugettext_lazy as _
 from freenasUI.contrib.IPAddressField import IP4AddressField
 from django.core.validators import RegexValidator
+
+
+def _(l):
+    return l
 
 
 class VcenterConfiguration(Model):
