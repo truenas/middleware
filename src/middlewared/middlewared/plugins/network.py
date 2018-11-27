@@ -595,16 +595,6 @@ class InterfaceService(CRUDService):
             if not data.get(i):
                 verrors.add(f'interface_create.{i}', 'This field is required')
 
-        if await self.middleware.call('system.is_freenas'):
-            data.pop('failover_critical', None)
-            data.pop('failover_group', None)
-            data.pop('failover_aliases', None)
-            data.pop('failover_vhid', None)
-            data.pop('failover_virtual_aliases', None)
-        else:
-            if not await self.middleware.call('failover.licensed'):
-                raise CallError('Not licensed for HA.')
-
         verrors.check()
 
         await self._common_validation(verrors, 'interface_create', data, data['type'])
@@ -900,6 +890,44 @@ class InterfaceService(CRUDService):
                             f'{schema_name}.mtu',
                             f'VLAN MTU cannot be bigger than parent interface.',
                         )
+
+        if await self.middleware.call('system.is_freenas'):
+            data.pop('failover_critical', None)
+            data.pop('failover_group', None)
+            data.pop('failover_aliases', None)
+            data.pop('failover_vhid', None)
+            data.pop('failover_virtual_aliases', None)
+        else:
+            if not await self.middleware.call('failover.licensed'):
+                raise CallError('Not licensed for HA.')
+
+            if data.get('failover_virtual_aliases'):
+                found = True
+                for i in (
+                    'failover_critical', 'failover_group', 'failover_aliases', 'failover_vhid',
+                ):
+                    if i not in data:
+                        verrors.add(
+                            f'{schema_name}.{i}',
+                            'This attribute is required when configuring HA.',
+                        )
+                        found = False
+                if found:
+                    if len(data['aliases']) != len(data['failover_aliases']):
+                        verrors.add(
+                            f'{schema_name}.failover_aliases',
+                            'Number of IPs must be the same between controllers.',
+                        )
+
+                    if not update or update['failover_vhid'] != data['failover_vhid']:
+                        pass  # scan for VRRP
+
+                    if data['failover_critical'] and not data['failover_group']:
+                        verrors.add(
+                            f'{schema_name}.failover_group',
+                            'This attribute is required for critical failover interfaces.',
+                        )
+
 
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
         for i, alias in enumerate(data.get('aliases') or []):
