@@ -58,9 +58,10 @@ class AuthTokens(object):
 
     def pop_token(self, token_id):
         # Remove a token from both indexes
-        token = self.__tokens.pop(token_id)
-        for sessionid in token['sessions']:
-            self.__sessionid_map.pop(sessionid, None)
+        token = self.__tokens.pop(token_id, None)
+        if token:
+            for sessionid in token['sessions']:
+                self.__sessionid_map.pop(sessionid, None)
 
 
 class AuthService(Service):
@@ -84,9 +85,16 @@ class AuthService(Service):
             return False
         return crypt.crypt(password, user['bsdusr_unixhash']) == user['bsdusr_unixhash']
 
-    @accepts(Int('ttl', required=False), Dict('attrs', additional_attrs=True))
+    @accepts(Int('ttl', default=600, null=True), Dict('attrs', additional_attrs=True))
     def generate_token(self, ttl=None, attrs=None):
-        """Generate a token to be used for authentication."""
+        """
+        Generate a token to be used for authentication.
+
+        `ttl` stands for Time To Live, in seconds. The token will be invalidated if the connection
+        has been inactive for a time greater than this.
+
+        `attrs` is a general purpose object/dictionary to hold information about the token.
+        """
         if ttl is None:
             ttl = 600
         return self.authtokens.new(ttl, attrs=attrs)['id']
@@ -172,7 +180,7 @@ class AuthService(Service):
             return False
 
 
-async def check_permission(app):
+async def check_permission(middleware, app):
     """
     Authenticates connections comming from loopback and from
     root user.

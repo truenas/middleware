@@ -1,0 +1,32 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-syncmultipaths
+# REQUIRE: FILESYSTEMS
+
+. /etc/rc.subr
+
+syncmultipaths()
+{
+	echo "Syncing multipaths..."
+	if [ "$(/usr/local/bin/midclt call disk.multipath_sync 2> /dev/null)" = "BAD_CABLING" ]; then
+		cat << __EOF__ | logger -s -t multipath
+* * * * * * * * * * * * *
+MULTIPATH IS NOT CURRENTLY CONFIGURED BUT MULTIPATH WAS DETECTED.
+CHECK SAS EXPANSION CABLE.
+* * * * * * * * * * * * *
+__EOF__
+	fi
+	if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
+		checkyesno failover_enable || /usr/local/bin/midclt call notifier.zpool_enclosure_sync > /dev/null
+	fi
+}
+
+name="ix-syncmultipaths"
+start_cmd='syncmultipaths'
+stop_cmd=''
+
+load_rc_config $name
+run_rc_command "$1"

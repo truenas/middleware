@@ -1,6 +1,6 @@
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, item_method, private
+    CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private
 )
 from middlewared.utils import run, Popen
 
@@ -103,8 +103,8 @@ class UserService(CRUDService):
         Bool('locked', default=False),
         Bool('microsoft_account', default=False),
         Bool('sudo', default=False),
-        Str('sshpubkey'),
-        List('groups'),
+        Str('sshpubkey', null=True),
+        List('groups', default=[]),
         Dict('attributes', additional_attrs=True),
         register=True,
     ))
@@ -135,7 +135,7 @@ class UserService(CRUDService):
         if verrors:
             raise verrors
 
-        groups = data.pop('groups') or []
+        groups = data.pop('groups')
         create = data.pop('group_create')
 
         if create:
@@ -317,7 +317,7 @@ class UserService(CRUDService):
                     self.logger.warn(f"Failed to copy homedir: {e}")
                 set_home_mode()
 
-            asyncio.ensure_future(self.middleware.run_in_io_thread(do_home_copy))
+            asyncio.ensure_future(self.middleware.run_in_thread(do_home_copy))
         else:
             set_home_mode()
 
@@ -423,6 +423,23 @@ class UserService(CRUDService):
             last_uid = i['uid']
         return last_uid + 1
 
+    @no_auth_required
+    @accepts()
+    async def has_root_password(self):
+        return (await self.middleware.call(
+            'datastore.query', 'account.bsdusers', [('bsdusr_username', '=', 'root')], {'get': True}
+        ))['bsdusr_unixhash'] != '*'
+
+    @no_auth_required
+    @accepts(Str('password'))
+    @pass_app
+    async def set_root_password(self, app, password):
+        if not app.authenticated and await self.middleware.call('user.has_root_password'):
+            raise CallError('You can\'t call this method anonymously if root already has a password', errno.EACCES)
+
+        root = await self.middleware.call('user.query', [('username', '=', 'root')], {'get': True})
+        await self.middleware.call('user.update', root['id'], {'password': password})
+
     async def __common_validation(self, verrors, data, pk=None):
 
         exclude_filter = [('id', '!=', pk)] if pk else []
@@ -459,6 +476,16 @@ class UserService(CRUDService):
                     'home',
                     '"Home Directory" must begin with /mnt/ or set to '
                     '/nonexistent.'
+                )
+
+        if 'home_mode' in data:
+            try:
+                o = int(data['home_mode'], 8)
+                assert o & 0o777 == o
+            except (AssertionError, ValueError, TypeError):
+                verrors.add(
+                    'home_mode',
+                    'Please provide a valid value for home_mode attribute'
                 )
 
         if 'groups' in data:

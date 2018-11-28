@@ -1,3 +1,5 @@
+from collections import OrderedDict
+from datetime import time
 import json
 import logging
 
@@ -19,11 +21,38 @@ from .widgets import CloudSyncWidget
 log = logging.getLogger('tasks.forms')
 
 
+RCLONE_MAP = OrderedDict((
+    ('G', 1073741824.0),
+    ('M', 1048576.0),
+    ('k', 1024.0),
+    ('b', 1),
+))
+
+
+def humanize_size_rclone(number):
+    number = int(number)
+    for suffix, factor in list(RCLONE_MAP.items()):
+        if number % factor == 0:
+            return '%d%s' % (number / factor, suffix)
+
+
 class CloudSyncForm(ModelForm):
 
     attributes = forms.CharField(
         widget=CloudSyncWidget(),
         label=_('Provider'),
+    )
+    bwlimit = forms.CharField(
+        label=_('Bandwidth limit'),
+        help_text=_('Either single bandwidth limit or bandwidth limit schedule in rclone format.<br />'
+                    'Example: "08:00,512 12:00,10M 13:00,512 18:00,30M 23:00,off".<br />'
+                    'Default unit is kilobytes.')
+    )
+    exclude = forms.CharField(
+        label=_('Exclude'),
+        help_text=_('Newline-separated list of files and directories to exclude from sync.<br />'
+                    'See https://rclone.org/filtering/ for more details on --exclude option.'),
+        widget=forms.Textarea(),
     )
 
     class Meta:
@@ -62,6 +91,17 @@ class CloudSyncForm(ModelForm):
                 kwargs["initial"]["encryption_salt"] = notifier().pwenc_decrypt(kwargs["instance"].encryption_salt)
             except Exception:
                 pass
+
+            if len(kwargs["instance"].bwlimit) == 1 and kwargs["instance"].bwlimit[0]["time"] == "00:00":
+                kwargs["initial"]["bwlimit"] = humanize_size_rclone(kwargs["instance"].bwlimit[0]['bandwidth'])
+            else:
+                kwargs["initial"]["bwlimit"] = " ".join([
+                    f"{limit['time']},{humanize_size_rclone(limit['bandwidth']) if limit['bandwidth'] else 'off'}"
+                    for limit in kwargs["instance"].bwlimit
+                ])
+
+            kwargs["initial"]["exclude"] = "\n".join(kwargs["instance"].exclude)
+
         super(CloudSyncForm, self).__init__(*args, **kwargs)
         key_order(self, 2, 'attributes', instance=True)
         mchoicefield(self, 'month', [
@@ -75,6 +115,10 @@ class CloudSyncForm(ModelForm):
                 'credential': self.instance.credential.id,
             }
             self.fields['attributes'].initial.update(self.instance.attributes)
+
+        self.fields['direction'].widget.attrs['onChange'] = (
+            "cloudSyncDirectionToggle();"
+        )
 
     def clean_attributes(self):
         attributes = self.cleaned_data.get('attributes')
@@ -107,6 +151,54 @@ class CloudSyncForm(ModelForm):
             return '*'
         w = ','.join(w)
         return w
+
+    def clean_bwlimit(self):
+        v = self.cleaned_data.get('bwlimit')
+        if "," not in v:
+            v = f"00:00,{v}"
+
+        bwlimit = []
+        for t in v.split():
+            try:
+                time_, bandwidth = t.split(",", 1)
+            except ValueError:
+                raise forms.ValidationError(_('Invalid value: %r') % t)
+
+            try:
+                h, m = time_.split(":", 1)
+            except ValueError:
+                raise forms.ValidationError(_('Invalid time: %r') % time_)
+
+            try:
+                time(int(h), int(m))
+            except ValueError:
+                raise forms.ValidationError(_('Invalid time: %r') % time_)
+
+            if bandwidth == "off":
+                bandwidth = None
+            else:
+                try:
+                    bandwidth = int(bandwidth) * 1024
+                except ValueError:
+                    try:
+                        bandwidth = int(bandwidth[:-1]) * {
+                            "b": 1, "k": 1024, "M": 1024 * 1024, "G": 1024 * 1024 * 1024}[bandwidth[-1]]
+                    except (KeyError, ValueError):
+                        raise forms.ValidationError(_('Invalid bandwidth: %r') % bandwidth)
+
+            bwlimit.append({
+                "time": time_,
+                "bandwidth": bandwidth,
+            })
+
+        for a, b in zip(bwlimit, bwlimit[1:]):
+            if a["time"] >= b["time"]:
+                raise forms.ValidationError(_('Invalid time order: %s, %s') % (a["time"], b["time"]))
+
+        return bwlimit
+
+    def clean_exclude(self):
+        return list(filter(None, map(lambda s: s.strip(), self.cleaned_data.get('exclude').split('\n'))))
 
     def save(self, **kwargs):
         with client as c:
@@ -418,11 +510,7 @@ class SMARTTestForm(MiddlewareModelForm, ModelForm):
         return h
 
     def clean_smarttest_month(self):
-        m = eval(self.cleaned_data.get("smarttest_month"))
-        m = ",".join(m)
-        return m
+        return ",".join(self.data.getlist("smarttest_month"))
 
     def clean_smarttest_dayweek(self):
-        w = eval(self.cleaned_data.get("smarttest_dayweek"))
-        w = ",".join(w)
-        return w
+        return ",".join(self.data.getlist("smarttest_dayweek"))

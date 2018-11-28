@@ -193,10 +193,10 @@ class NotifierService(Service):
             pass
         return ret
 
-    async def ds_get_idmap_object(self, ds_type, id, idmap_backend):
+    def ds_get_idmap_object(self, ds_type, id, idmap_backend):
         """Temporary wrapper to serialize IDMAP objects"""
         obj = get_idmap_object(ds_type, id, idmap_backend)
-        data = await django_modelobj_serialize(self.middleware, obj)
+        data = django_modelobj_serialize(self.middleware, obj)
         data['idmap_backend_name'] = obj.idmap_backend_name
         data['idmap_backend_type'] = obj.idmap_backend_type
         # Only these types have SSL
@@ -204,7 +204,7 @@ class NotifierService(Service):
             return data
         cert = obj.get_certificate()
         if cert:
-            data['certificate'] = await django_modelobj_serialize(self.middleware, cert)
+            data['certificate'] = django_modelobj_serialize(self.middleware, cert)
         else:
             data['certificate'] = None
         data['ssl'] = obj.get_ssl()
@@ -277,6 +277,10 @@ class NotifierService(Service):
     def gui_base_path(self):
         # Being used by VCenter Service
         return settings.HERE
+
+    def dojango_dojo_version(self):
+        # Being used by nginx.conf in etc plugin
+        return settings.DOJANGO_DOJO_VERSION
 
     def humanize_size(self, number):
         """Temporary wrapper to return a human readable bytesize"""

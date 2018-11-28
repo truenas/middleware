@@ -581,34 +581,7 @@ define([
         },
 
         openDocumentation: function() {
-            var opened = false;
-            var p = registry.byId("content");
-
-            var c = p.getChildren();
-            for (var i=0; i<c.length; i++){
-                if(c[i].tab == 'documentation') {
-                    p.selectChild(c[i]);
-                    opened = true;
-                } else {
-                    p.removeChild(c[i]);
-                    c[i].destroy();
-                }
-            }
-            
-            if(opened != true) {
-
-                openurl = this.urlDocumentation;
-
-                var pane = new ContentPane({
-                    title: gettext('Documentation'),
-                    closable: false,
-                    href: openurl,
-                });
-                p.addChild(pane);
-                p.selectChild(pane);
-                domClass.add(pane.domNode,["objrefresh", "data_documentation_documentation"]);
-            }
-
+          window.open(this.urlDocumentation);
         },
 
         openDirectoryService: function(tab) {

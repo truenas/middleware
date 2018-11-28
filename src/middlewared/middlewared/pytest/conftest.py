@@ -2,7 +2,7 @@ import configparser
 import os
 import pytest
 
-from client import Client
+from .client import Client
 
 from middlewared.client import Client as WSClient
 

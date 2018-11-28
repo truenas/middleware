@@ -38,6 +38,7 @@ from freenasUI import choices
 from freenasUI.common.forms import Form, ModelForm
 from freenasUI.common.system import get_sw_name
 from freenasUI.contrib.IPAddressField import IP4AddressFormField
+from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.freeadmin.sqlite3_ha.base import DBSync
 from freenasUI.middleware.client import client
 from freenasUI.middleware.form import MiddlewareModelForm
@@ -48,6 +49,7 @@ from freenasUI.freeadmin.utils import key_order
 from ipaddr import IPNetwork
 
 log = logging.getLogger('network.forms')
+RE_MTU = re.compile(r'\bmtu (\d+)\b')
 SW_NAME = get_sw_name()
 
 
@@ -58,6 +60,7 @@ class InterfacesForm(ModelForm):
         fields = '__all__'
         model = models.Interfaces
         widgets = {
+            'int_mtu': forms.widgets.TextInput(),
             'int_vhid': forms.widgets.TextInput(),
         }
 
@@ -81,6 +84,14 @@ class InterfacesForm(ModelForm):
             del self.fields['int_critical']
             del self.fields['int_group']
             del self.fields['int_ipv4address_b']
+
+        if self.instance.id and models.LAGGInterfaceMembers.objects.filter(
+            lagg_physnic=self.instance.int_interface
+        ).exists():
+            for f in list(self.fields.keys()):
+                if f != 'int_options':
+                    self.fields.pop(f)
+            return
 
         self.fields['int_interface'].choices = choices.NICChoices()
         self.fields['int_dhcp'].widget.attrs['onChange'] = (
@@ -366,6 +377,14 @@ class InterfacesForm(ModelForm):
                     _("This field is required for failover")
                 ])
 
+        # API backward compatibility
+        options = cdata.get('int_options')
+        if options:
+            reg = RE_MTU.search(options)
+            if reg:
+                cdata['int_mtu'] = int(reg.group(1))
+                cdata['int_options'] = options.replace(reg.group(0), '')
+
         return cdata
 
     def save(self, *args, **kwargs):
@@ -376,9 +395,9 @@ class InterfacesForm(ModelForm):
         with DBSync():
             super(InterfacesForm, self).delete(*args, **kwargs)
         with client as c:
-            c.call('interfaces.sync')
+            c.call('interface.sync')
             try:
-                c.call('routes.sync')
+                c.call('route.sync')
             except Exception:
                 # Syncing routes may fail if the interface changes network
                 # and old default gateway is still in place
@@ -389,9 +408,9 @@ class InterfacesForm(ModelForm):
         super(InterfacesForm, self).done(*args, **kwargs)
         if notifier().is_freenas():
             with client as c:
-                c.call('interfaces.sync')
+                c.call('interface.sync')
                 try:
-                    c.call('routes.sync')
+                    c.call('route.sync')
                 except Exception:
                     # Syncing routes may fail if the interface changes network
                     # and old default gateway is still in place
@@ -406,6 +425,20 @@ class InterfacesDeleteForm(forms.Form):
         super(InterfacesDeleteForm, self).__init__(*args, **kwargs)
 
     def clean(self):
+        if models.LAGGInterfaceMembers.objects.filter(
+            lagg_physnic=self.instance.int_interface
+        ).exists():
+            self._errors['__all__'] = self.error_class([
+                _('Interfaces that belong to Link Aggregation cannot be deleted.')
+            ])
+
+        if models.VLAN.objects.filter(
+            vlan_pint=self.instance.int_interface
+        ).exists():
+            self._errors['__all__'] = self.error_class([
+                _('Interfaces that belong to VLAN cannot be deleted.')
+            ])
+
         _n = notifier()
         if not _n.is_freenas() and _n.failover_status() == 'MASTER':
             from freenasUI.failover.models import Failover
@@ -416,18 +449,26 @@ class InterfacesDeleteForm(forms.Form):
         return self.cleaned_data
 
 
+class AliasInlineFormSet(FreeBaseInlineFormSet):
+
+    def show_condition(self):
+        if not self.instance.id:
+            return True
+        if models.LAGGInterfaceMembers.objects.filter(
+            lagg_physnic=self.instance.int_interface
+        ).exists():
+            return False
+        return True
+
+
 class IPMIForm(Form):
-    # Max password length via IPMI v2.0 is 20 chars. We only support IPMI
-    # v2.0+ compliant boards thus far.
     ipmi_password1 = forms.CharField(
         label=_("Password"),
-        max_length=20,
         widget=forms.PasswordInput,
         required=False
     )
     ipmi_password2 = forms.CharField(
         label=_("Password confirmation"),
-        max_length=20,
         widget=forms.PasswordInput,
         help_text=_("Enter the same password as above, for verification."),
         required=False
@@ -506,6 +547,15 @@ class IPMIForm(Form):
                 _("The two password fields didn't match.")
             )
         return ipmi_password2
+
+    def clean(self):
+        # Max password length via IPMI v2.0 is 20 chars. We only support IPMI
+        # v2.0+ compliant boards thus far.
+
+        cleaned_data = self.cleaned_data
+        if len(cleaned_data.get("ipmi_password1", "")) > 20:
+            self._errors["ipmi_password1"] = self.error_class([_("A maximum of 20 characters are allowed")])
+        return cleaned_data
 
     def clean_ipv4netmaskbit(self):
         try:
@@ -700,7 +750,8 @@ class VLANForm(ModelForm):
         vlan_pint = self.cleaned_data['vlan_pint']
         vlan_vint = self.cleaned_data['vlan_vint']
         with DBSync():
-            if len(models.Interfaces.objects.filter(int_interface=vlan_pint)) == 0:
+            qs = models.Interfaces.objects.filter(int_interface=vlan_pint)
+            if not qs.exists():
                 vlan_interface = models.Interfaces(
                     int_interface=vlan_pint,
                     int_name=vlan_pint,
@@ -709,6 +760,11 @@ class VLANForm(ModelForm):
                     int_options='up',
                 )
                 vlan_interface.save()
+            else:
+                vlan_interface = qs[0]
+                if 'up' not in vlan_interface.int_options:
+                    vlan_interface.int_options += ' up'
+                    vlan_interface.save()
             if not models.Interfaces.objects.filter(int_interface=vlan_vint).exists():
                 models.Interfaces.objects.create(
                     int_interface=vlan_vint,
@@ -800,8 +856,11 @@ class LAGGInterfaceForm(ModelForm):
                         lagg_interfacegroup=lagg_interfacegroup,
                         lagg_ordernum=order,
                         lagg_physnic=interface,
-                        lagg_deviceoptions='up'
                     )
+                    model_objs.append(models.Interfaces.objects.create(
+                        int_interface=interface,
+                        int_name=f'member of {lagg_name}',
+                    ))
                     lagg_member_entry.save()
                     model_objs.append(lagg_member_entry)
                     order = order + 1

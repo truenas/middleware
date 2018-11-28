@@ -43,16 +43,17 @@ class CloudSyncWidget(DojoWidgetMixin, Widget):
         with client as c:
             providers = c.call("cloudsync.providers")
         buckets = {provider["name"]: provider["buckets"] for provider in providers}
+        bucket_title = {provider["name"]: provider["bucket_title"] for provider in providers}
         task_schemas = {provider["name"]: provider["task_schema"] for provider in providers}
         extra_attrs = {
             'data-dojo-name': name,
             'data-dojo-props': mark_safe("credentials: '{}', initial: '{}'".format(
                 json.dumps([
-                    (str(i), i.id, buckets[i.provider], task_schemas[i.provider])
+                    (str(i), i.id, buckets[i.provider], bucket_title[i.provider], task_schemas[i.provider])
                     for i in CloudCredentials.objects.all()
                 ]),
                 json.dumps(value),
-            ).replace('"', '&quot;')),
+            ).replace('"', '&quot;').replace("\\n", "\\\\n")),
         }
         final_attrs = self.build_attrs(attrs, name=name, **extra_attrs)
         return mark_safe('<div%s></div>' % (flatatt(final_attrs),))

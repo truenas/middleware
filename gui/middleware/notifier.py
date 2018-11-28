@@ -39,7 +39,6 @@ from decimal import Decimal
 import base64
 from Crypto.Cipher import AES
 import ctypes
-from functools import cmp_to_key
 import glob
 import grp
 import libzfs
@@ -52,7 +51,6 @@ import shutil
 import signal
 import socket
 import sqlite3
-import stat
 from subprocess import Popen, PIPE
 import subprocess
 import sys
@@ -95,6 +93,7 @@ from freenasUI.common.acl import (ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE,
 from freenasUI.common.freenasacl import ACL
 from freenasUI.common.jail import Jls
 from freenasUI.common.locks import mntlock
+from freenasUI.common.pipesubr import SIG_SETMASK
 from freenasUI.common.pbi import pbi_delete, pbi_info, PBI_INFO_FLAGS_VERBOSE
 from freenasUI.common.system import (
     FREENAS_DATABASE,
@@ -109,7 +108,6 @@ from freenasUI.common.warden import (Warden, WardenJail,
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client, ClientException
-from freenasUI.middleware.encryption import random_wipe
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.multipath import Multipath
 import sysctl
@@ -135,7 +133,7 @@ class notifier(metaclass=HookMetaclass):
         mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
         pmask = ctypes.pointer(mask)
         pomask = ctypes.pointer(omask)
-        libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
+        libc.sigprocmask(SIG_SETMASK, pmask, pomask)
         try:
             p = Popen(
                 "(" + command + ") 2>&1",
@@ -147,7 +145,7 @@ class notifier(metaclass=HookMetaclass):
             p.wait()
             ret = p.returncode
         finally:
-            libc.sigprocmask(signal.SIGQUIT, pomask, None)
+            libc.sigprocmask(SIG_SETMASK, pomask, None)
         log.debug("Executed: %s -> %s", command, ret)
         return ret
 
@@ -160,7 +158,7 @@ class notifier(metaclass=HookMetaclass):
         mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
         pmask = ctypes.pointer(mask)
         pomask = ctypes.pointer(omask)
-        libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
+        libc.sigprocmask(SIG_SETMASK, pmask, pomask)
         try:
             p = Popen(
                 "(" + command + ") >/dev/null 2>&1",
@@ -168,7 +166,7 @@ class notifier(metaclass=HookMetaclass):
             p.communicate()
             retval = p.returncode
         finally:
-            libc.sigprocmask(signal.SIGQUIT, pomask, None)
+            libc.sigprocmask(SIG_SETMASK, pomask, None)
         log.debug("Executed: %s; returned %d", command, retval)
         return retval
 
@@ -186,12 +184,17 @@ class notifier(metaclass=HookMetaclass):
         log.debug("%s -> %s", command, proc.returncode)
         return None
 
-    def start(self, what, timeout=None, onetime=False):
+    def start(self, what, timeout=None, onetime=False, wait=None, sync=None):
         kwargs = {}
         if timeout:
             kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.start', what, {'onetime': onetime}, **kwargs)
+            return c.call(
+                'service.start',
+                what,
+                {'onetime': onetime, 'wait': wait, 'sync': sync},
+                **kwargs
+            )
 
     def started(self, what, timeout=None):
         kwargs = {}
@@ -200,26 +203,41 @@ class notifier(metaclass=HookMetaclass):
         with client as c:
             return c.call('service.started', what, **kwargs)
 
-    def stop(self, what, timeout=None, onetime=False):
+    def stop(self, what, timeout=None, onetime=False, wait=None, sync=None):
         kwargs = {}
         if timeout:
             kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.stop', what, {'onetime': onetime}, **kwargs)
+            return c.call(
+                'service.stop',
+                what,
+                {'onetime': onetime, 'wait': wait, 'sync': sync},
+                **kwargs,
+            )
 
-    def restart(self, what, timeout=None, onetime=False):
+    def restart(self, what, timeout=None, onetime=False, wait=None, sync=None):
         kwargs = {}
         if timeout:
             kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.restart', what, {'onetime': onetime}, **kwargs)
+            return c.call(
+                'service.restart',
+                what,
+                {'onetime': onetime, 'wait': wait, 'sync': sync},
+                **kwargs,
+            )
 
-    def reload(self, what, timeout=None, onetime=False):
+    def reload(self, what, timeout=None, onetime=False, wait=None, sync=None):
         kwargs = {}
         if timeout:
             kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.reload', what, {'onetime': onetime}, **kwargs)
+            return c.call(
+                'service.reload',
+                what,
+                {'onetime': onetime, 'wait': wait, 'sync': sync},
+                **kwargs,
+            )
 
     def clear_activedirectory_config(self):
         with client as c:
@@ -276,7 +294,7 @@ class notifier(metaclass=HookMetaclass):
                 ):
                     running = True
                     break
-        except:
+        except Exception:
             pass
 
         return running
@@ -287,147 +305,17 @@ class notifier(metaclass=HookMetaclass):
         else:
             self._system("/usr/sbin/service ix-ataidle quietstart")
 
-    def start_ssl(self, what=None):
-        if what is not None:
-            self._system("/usr/sbin/service ix-ssl quietstart %s" % what)
-        else:
-            self._system("/usr/sbin/service ix-ssl quietstart")
-
     def _open_db(self):
         """Open and return a cursor object for database access."""
         try:
             from freenasUI.settings import DATABASES
             dbname = DATABASES['default']['NAME']
-        except:
+        except Exception:
             dbname = '/data/freenas-v1.db'
 
         conn = sqlite3.connect(dbname)
         c = conn.cursor()
         return c, conn
-
-    def __gpt_labeldisk(self, type, devname, swapsize=2):
-        """Label the whole disk with GPT under the desired label and type"""
-
-        # Calculate swap size.
-        swapgb = swapsize
-        swapsize = swapsize * 1024 * 1024 * 2
-        # Round up to nearest whole integral multiple of 128 and subtract by 34
-        # so next partition starts at mutiple of 128.
-        swapsize = (int((swapsize + 127) / 128)) * 128
-
-        with client as c:
-            c.call('disk.wipe', devname, 'QUICK', job=True)
-
-        try:
-            p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
-        except:
-            log.error("Unable to determine size of %s", devname)
-        else:
-            # The GPT header takes about 34KB + alignment, round it to 100
-            if size - 100 <= swapgb * 1024 * 1024:
-                raise MiddlewareError('Your disk size must be higher than %dGB' % (swapgb, ))
-
-        commands = []
-        commands.append("gpart create -s gpt /dev/%s" % (devname, ))
-        if swapsize > 0:
-            commands.append("gpart add -a 4k -b 128 -t freebsd-swap -s %d %s" % (swapsize, devname))
-            commands.append("gpart add -a 4k -t %s %s" % (type, devname))
-        else:
-            commands.append("gpart add -a 4k -b 128 -t %s %s" % (type, devname))
-
-        # Install a dummy boot block so system gives meaningful message if booting
-        # from the wrong disk.
-        commands.append("gpart bootcode -b /boot/pmbr-datadisk /dev/%s" % (devname))
-
-        for command in commands:
-            proc = self._pipeopen(command)
-            error = proc.communicate()[1]
-            if proc.returncode != 0:
-                raise MiddlewareError(f'Unable to GPT format the disk "{devname}": {error}')
-
-        # Invalidating confxml is required or changes wont be seen
-        self.__confxml = None
-        # We might need to sync with reality (e.g. devname -> uuid)
-        with client as c:
-            c.call('disk.sync', devname)
-
-    def __gpt_unlabeldisk(self, devname):
-        """Unlabel the disk"""
-        with client as c:
-            c.call('disk.swaps_remove_disks', [devname])
-        self._system("gpart destroy -F /dev/%s" % devname)
-
-        # Wipe out the partition table by doing an additional iterate of create/destroy
-        self._system("gpart create -s gpt /dev/%s" % devname)
-        self._system("gpart destroy -F /dev/%s" % devname)
-
-        # We might need to sync with reality (e.g. uuid -> devname)
-        with client as c:
-            c.call('disk.sync', devname)
-
-    def unlabel_disk(self, devname):
-        # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
-        self.__gpt_unlabeldisk(devname)
-
-    def __encrypt_device(self, devname, diskname, volume, passphrase=None):
-        from freenasUI.storage.models import Disk, EncryptedDisk
-
-        _geli_keyfile = volume.get_geli_keyfile()
-
-        self.__geli_setmetadata(devname, _geli_keyfile, passphrase)
-        self.geli_attach_single(devname, _geli_keyfile, passphrase)
-
-        # TODO: initialize the provider in background (wipe with random data)
-
-        if diskname.startswith('multipath/'):
-            diskobj = Disk.objects.get(
-                disk_multipath_name=diskname.replace('multipath/', '')
-            )
-        else:
-            with client as c:
-                ident = c.call('disk.device_to_identifier', diskname)
-            diskobj = Disk.objects.filter(disk_identifier=ident).order_by('disk_expiretime')
-            if diskobj.exists():
-                diskobj = diskobj[0]
-            else:
-                diskobj = Disk.objects.filter(disk_name=diskname).order_by('disk_expiretime')
-                if diskobj.exists():
-                    diskobj = diskobj[0]
-                else:
-                    raise ValueError("Could not find disk in cache table")
-        encdiskobj = EncryptedDisk()
-        encdiskobj.encrypted_volume = volume
-        encdiskobj.encrypted_disk = diskobj
-        encdiskobj.encrypted_provider = devname
-        encdiskobj.save()
-
-        return ("/dev/%s.eli" % devname)
-
-    def __create_keyfile(self, keyfile, size=64, force=False):
-        if force or not os.path.exists(keyfile):
-            keypath = os.path.dirname(keyfile)
-            if not os.path.exists(keypath):
-                self._system("mkdir -p %s" % keypath)
-            self._system("dd if=/dev/random of=%s bs=%d count=1" % (keyfile, size))
-            if not os.path.exists(keyfile):
-                raise MiddlewareError("Unable to create key file: %s" % keyfile)
-        else:
-            log.debug("key file %s already exists" % keyfile)
-
-    def __geli_setmetadata(self, dev, keyfile, passphrase=None):
-        self.__create_keyfile(keyfile)
-        _passphrase = "-J %s" % passphrase if passphrase else "-P"
-        command = "geli init -s 4096 -l 256 -B none %s -K %s %s" % (_passphrase, keyfile, dev)
-        err = self._pipeerr(command)
-        if err:
-            raise MiddlewareError("Unable to set geli metadata on %s: %s" % (dev, err))
-
-    def __geli_delkey(self, dev, slot=GELI_KEY_SLOT, force=False):
-        command = "geli delkey -n %s %s %s" % (slot, '-f' if force else '', dev)
-        err = self._pipeerr(command)
-        if err:
-            raise MiddlewareError("Unable to delete key %s on %s: %s" % (slot, dev, err))
 
     def geli_setkey(self, dev, key, slot=GELI_KEY_SLOT, passphrase=None, oldkey=None):
         command = ("geli setkey -n %s %s -K %s %s %s"
@@ -440,120 +328,18 @@ class notifier(metaclass=HookMetaclass):
         if err:
             raise MiddlewareError("Unable to set passphrase on %s: %s" % (dev, err))
 
-    def geli_passphrase(self, volume, passphrase, rmrecovery=False):
-        """
-        Set a passphrase in a geli
-        If passphrase is None then remove the passphrase
-
-        Raises:
-            MiddlewareError
-        """
-        geli_keyfile = volume.get_geli_keyfile()
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
-            if rmrecovery:
-                self.__geli_delkey(dev, GELI_RECOVERY_SLOT, force=True)
-            self.geli_setkey(dev, geli_keyfile, GELI_KEY_SLOT, passphrase)
-
-    def geli_rekey(self, volume, slot=GELI_KEY_SLOT):
-        """
-        Regenerates the geli global key and set it to devs
-        Removes the passphrase if it was present
-
-        Raises:
-            MiddlewareError
-        """
-
-        geli_keyfile = volume.get_geli_keyfile()
-        geli_keyfile_tmp = "%s.tmp" % geli_keyfile
-        devs = [ed.encrypted_provider for ed in volume.encrypteddisk_set.all()]
-
-        # keep track of which device has which key in case something goes wrong
-        dev_to_keyfile = dict((dev, geli_keyfile) for dev in devs)
-
-        # Generate new key as .tmp
-        log.debug("Creating new key file: %s", geli_keyfile_tmp)
-        self.__create_keyfile(geli_keyfile_tmp, force=True)
-        error = None
-        applied = []
-        for dev in devs:
-            try:
-                self.geli_setkey(dev, geli_keyfile_tmp, slot)
-                dev_to_keyfile[dev] = geli_keyfile_tmp
-                applied.append(dev)
-            except Exception as ee:
-                error = str(ee)
-                log.error(error)
-                break
-
-        # Try to be atomic in a certain way
-        # If rekey failed for one of the devs, revert for the ones already applied
-        if error:
-            could_not_restore = False
-            for dev in applied:
-                try:
-                    self.geli_setkey(dev, geli_keyfile, slot, oldkey=geli_keyfile_tmp)
-                    dev_to_keyfile[dev] = geli_keyfile
-                except Exception as ee:
-                    # this is very bad for the user, at the very least there
-                    # should be a notification that they will need to
-                    # manually rekey as they now have drives with different keys
-                    could_not_restore = True
-                    log.error(str(ee))
-            if could_not_restore:
-                try:
-                    open(GELI_REKEY_FAILED, 'w').close()
-                except:
-                    pass
-                log.error("Unable to rekey. Devices now have the following keys:%s%s",
-                          os.linesep,
-                          os.linesep.join(['%s: %s' % (dev, keyfile)
-                                           for dev, keyfile in dev_to_keyfile]))
-                raise MiddlewareError("Unable to rekey and devices have different "
-                                      "keys. See the log file.")
-            else:
-                raise MiddlewareError("Unable to set key: %s" % (error, ))
-        else:
-            if os.path.exists(GELI_REKEY_FAILED):
-                try:
-                    os.unlink(GELI_REKEY_FAILED)
-                except:
-                    pass
-            log.debug("%s -> %s", geli_keyfile_tmp, geli_keyfile)
-            os.rename(geli_keyfile_tmp, geli_keyfile)
-            if volume.vol_encrypt != 1:
-                volume.vol_encrypt = 1
-                volume.save()
-
-            # Sync new file to standby node
-            if not self.is_freenas() and self.failover_licensed():
-                with client as c:
-                    self.sync_file_send(c, geli_keyfile)
-
     def geli_recoverykey_add(self, volume, passphrase=None):
-        reckey_file = tempfile.mktemp(dir='/tmp/')
-        self.__create_keyfile(reckey_file, force=True)
-
-        errors = []
-
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
-            try:
-                self.geli_setkey(dev, reckey_file, GELI_RECOVERY_SLOT, passphrase)
-            except Exception as ee:
-                errors.append(str(ee))
-
-        if errors:
-            raise MiddlewareError("Unable to set recovery key for %d devices: %s" % (
-                len(errors),
-                ', '.join(errors),
-            ))
-        return reckey_file
+        from freenasUI.middleware.util import download_job
+        reckey = tempfile.NamedTemporaryFile(dir='/tmp/', delete=False)
+        download_job(reckey.name, 'recovery.key', 'pool.recoverykey_add', volume.id, {})
+        return reckey.name
 
     def geli_delkey(self, volume, slot=GELI_RECOVERY_SLOT, force=True):
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
-            self.__geli_delkey(dev, slot, force)
+        try:
+            with client as c:
+                c.call('pool.recoverykey_rm', volume.id)
+        except Exception as e:
+            raise MiddlewareError(f'Failed to remove recovery key: {str(e)}')
 
     def geli_is_decrypted(self, dev):
         doc = self._geom_confxml()
@@ -563,66 +349,6 @@ class notifier(metaclass=HookMetaclass):
         if geom:
             return True
         return False
-
-    def geli_attach_single(self, dev, key, passphrase=None, skip_existing=False):
-        if skip_existing or not os.path.exists("/dev/%s.eli" % dev):
-            command = "geli attach %s -k %s %s" % ("-j %s" % passphrase if passphrase else "-p",
-                                                   key,
-                                                   dev)
-            err = self._pipeerr(command)
-            if err or not os.path.exists("/dev/%s.eli" % dev):
-                raise MiddlewareError("Unable to geli attach %s: %s" % (dev, err))
-        else:
-            log.debug("%s already attached", dev)
-
-    def geli_attach(self, volume, passphrase=None, key=None):
-        """
-        Attach geli providers of a given volume
-
-        Returns the number of providers that failed to attach
-        """
-        failed = 0
-        geli_keyfile = key or volume.get_geli_keyfile()
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
-            try:
-                self.geli_attach_single(dev, geli_keyfile, passphrase)
-            except Exception as ee:
-                log.warn(str(ee))
-                failed += 1
-        return failed
-
-    def geli_testkey(self, volume, passphrase=None):
-        """
-        Test key for geli providers of a given volume
-        """
-        geli_keyfile = volume.get_geli_keyfile()
-
-        # Parse zpool status to get encrypted providers
-        # EncryptedDisk table might be out of sync for some reason,
-        # this is much more reliable!
-        devs = self.zpool_parse(volume.vol_name).get_devs()
-        for dev in devs:
-            name, ext = os.path.splitext(dev.name)
-            if ext == ".eli":
-                try:
-                    self.geli_attach_single(name,
-                                            geli_keyfile,
-                                            passphrase,
-                                            skip_existing=True)
-                except Exception as ee:
-                    if str(ee).find('Wrong key') != -1:
-                        return False
-        return True
-
-    def geli_clear(self, dev):
-        """
-        Clears the geli metadata on a provider
-        """
-        command = "geli clear %s" % dev
-        err = self._pipeerr(command)
-        if err:
-            raise MiddlewareError("Unable to geli clear %s: %s" % (dev, err))
 
     def geli_detach(self, dev):
         """
@@ -665,150 +391,10 @@ class notifier(metaclass=HookMetaclass):
                         providers.append((part, part))
         return providers
 
-    def __prepare_zfs_vdev(self, disks, swapsize, encrypt, volume):
-        vdevs = []
-        for disk in disks:
-            self.__gpt_labeldisk(type="freebsd-zfs",
-                                 devname=disk,
-                                 swapsize=swapsize)
-
-        self.__confxml = None  # Make sure to invalidate cache
-        doc = self._geom_confxml()
-        for disk in disks:
-            devname = self.part_type_from_device('zfs', disk)
-            if encrypt:
-                uuid = doc.xpath(
-                    "//class[name = 'PART']"
-                    "/geom//provider[name = '%s']/config/rawuuid" % (devname, )
-                )
-                if not uuid:
-                    log.warn("Could not determine GPT uuid for %s", devname)
-                    raise MiddlewareError('Unable to determine GPT UUID for %s' % devname)
-                else:
-                    devname = self.__encrypt_device("gptid/%s" % uuid[0].text, disk, volume)
-            else:
-                uuid = doc.xpath(
-                    "//class[name = 'PART']"
-                    "/geom//provider[name = '%s']/config/rawuuid" % (devname, )
-                )
-                if not uuid:
-                    log.warn("Could not determine GPT uuid for %s", devname)
-                    devname = "/dev/%s" % devname
-                else:
-                    devname = "/dev/gptid/%s" % uuid[0].text
-            vdevs.append(devname)
-
-        return vdevs
-
-    def create_volume(self, volume, groups=False, path=None, init_rand=False):
-        """Create a ZFS volume identified by volume id"""
-        swapsize = self.get_swapsize()
-        z_name = str(volume.vol_name)
-        z_vdev = ""
-        encrypt = (volume.vol_encrypt >= 1)
-        # Grab all disk groups' id matching the volume ID
-        device_list = []
-
-        """
-        stripe vdevs must come first because of the ordering in the
-        zpool create command.
-
-        e.g. zpool create tank ada0 mirror ada1 ada2
-             vs
-             zpool create tank mirror ada1 ada2 ada0
-
-        For further details see #2388
-        """
-        def stripe_first(a, b):
-            if a['type'] == 'stripe':
-                return -1
-            if b['type'] == 'stripe':
-                return 1
-            return 0
-
-        for vgrp in sorted(list(groups.values()), key=cmp_to_key(stripe_first)):
-            vgrp_type = vgrp['type']
-            if vgrp_type != 'stripe':
-                z_vdev += " " + vgrp_type
-            if vgrp_type in ('cache', 'log'):
-                vdev_swapsize = 0
-            else:
-                vdev_swapsize = swapsize
-            # Prepare disks nominated in this group
-            vdevs = self.__prepare_zfs_vdev(vgrp['disks'], vdev_swapsize, encrypt, volume)
-            z_vdev += " ".join([''] + vdevs)
-            device_list += vdevs
-
-        # Initialize devices with random data
-        if init_rand:
-            random_wipe(device_list)
-
-        # Finally, create the zpool.
-        # TODO: disallowing cachefile may cause problem if there is
-        # preexisting zpool having the exact same name.
-        if not os.path.isdir("/data/zfs"):
-            os.makedirs("/data/zfs")
-
-        altroot = 'none' if path else '/mnt'
-        mountpoint = path if path else ('/%s' % (z_name, ))
-
-        p1 = self._pipeopen(
-            "zpool create -o cachefile=/data/zfs/zpool.cache "
-            "-o failmode=continue "
-            "-o autoexpand=on "
-            "-O compression=lz4 "
-            "-O aclmode=passthrough -O aclinherit=passthrough "
-            "-f -m %s -o altroot=%s %s %s" % (mountpoint, altroot, z_name, z_vdev))
-        if p1.wait() != 0:
-            error = ", ".join(p1.communicate()[1].split('\n'))
-            raise MiddlewareError('Unable to create the pool: %s' % error)
-
-        # We've our pool, lets retrieve the GUID
-        p1 = self._pipeopen("zpool get guid %s" % z_name)
-        if p1.wait() == 0:
-            line = p1.communicate()[0].split('\n')[1].strip()
-            volume.vol_guid = re.sub('\s+', ' ', line).split(' ')[2]
-            volume.save()
-        else:
-            log.warn("The guid of the pool %s could not be retrieved", z_name)
-
-        self.zfs_inherit_option(z_name, 'mountpoint')
-
-        self._system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
-        # TODO: geli detach -l
-
     def get_swapsize(self):
         from freenasUI.system.models import Advanced
         swapsize = Advanced.objects.latest('id').adv_swapondrive
         return swapsize
-
-    def zfs_volume_attach_group(self, volume, group, encrypt=False):
-        """Attach a disk group to a zfs volume"""
-
-        vgrp_type = group['type']
-        if vgrp_type in ('log', 'cache'):
-            swapsize = 0
-        else:
-            swapsize = self.get_swapsize()
-
-        z_name = volume.vol_name
-        z_vdev = ""
-        encrypt = (volume.vol_encrypt >= 1)
-
-        # FIXME swapoff -a is overkill
-        self._system("swapoff -a")
-        if vgrp_type != 'stripe':
-            z_vdev += " " + vgrp_type
-
-        # Prepare disks nominated in this group
-        vdevs = self.__prepare_zfs_vdev(group['disks'], swapsize, encrypt, volume)
-        z_vdev += " ".join([''] + vdevs)
-
-        # Finally, attach new groups to the zpool.
-        self._system("zpool add -f %s %s" % (z_name, z_vdev))
-
-        # TODO: geli detach -l
-        self.reload('disk')
 
     def create_zfs_vol(self, name, size, props=None, sparse=False):
         """Internal procedure to create ZFS volume"""
@@ -890,7 +476,7 @@ class notifier(metaclass=HookMetaclass):
             if self.contains_jail_root(mp):
                 try:
                     self.delete_plugins(force=True)
-                except:
+                except Exception:
                     log.warn('Failed to delete plugins', exc_info=True)
 
             if recursive:
@@ -921,160 +507,31 @@ class notifier(metaclass=HookMetaclass):
         retval = zfsproc.communicate()[1]
         return retval
 
-    def __destroy_zfs_volume(self, volume):
-        """Internal procedure to destroy a ZFS volume identified by volume id"""
-        vol_name = str(volume.vol_name)
-        mp = self.__get_mountpath(vol_name)
-        if self.contains_jail_root(mp):
-            self.delete_plugins()
-        # First, destroy the zpool.
-        disks = volume.get_disks()
-        self._system("zpool destroy -f %s" % (vol_name, ))
+    def zfs_offline_disk(self, volume, label):
+        try:
+            with client as c:
+                c.call('pool.offline', volume.id, {'label': label})
+        except Exception as e:
+            raise MiddlewareError(f'Disk offline failed: {str(e)}')
 
-        # Clear out disks associated with the volume
-        for disk in disks:
-            self.__gpt_unlabeldisk(devname=disk)
+    def zfs_online_disk(self, volume, label):
+        try:
+            with client as c:
+                c.call('pool.online', volume.id, {'label': label})
+        except Exception as e:
+            raise MiddlewareError(f'Disk online failed: {str(e)}')
 
-    def zfs_replace_disk(self, volume, from_label, to_disk, force=False, passphrase=None):
-        """Replace disk in zfs called `from_label` to `to_disk`"""
-        from freenasUI.storage.models import Disk, EncryptedDisk
-        swapsize = self.get_swapsize()
+    def zfs_detach_disk(self, volume, label):
+        from freenasUI.storage.models import Volume
 
-        # TODO: Test on real hardware to see if ashift would persist across replace
-        from_disk = self.label_to_disk(from_label)
-        encrypt = (volume.vol_encrypt >= 1)
-
-        with client as c:
-            # to_disk _might_ have swap on, offline it before gpt label
-            c.call('disk.swaps_remove_disks', [from_disk, to_disk])
-
-        # Replace in-place
-        if from_disk == to_disk:
-            self._system('/sbin/zpool offline %s %s' % (volume.vol_name, from_label))
-
-        self.__gpt_labeldisk(type="freebsd-zfs", devname=to_disk, swapsize=swapsize)
-
-        # It has to be a freebsd-zfs partition there
-        to_label = self.part_type_from_device('zfs', to_disk)
-
-        if to_label == '':
-            raise MiddlewareError('freebsd-zfs partition could not be found')
-
-        self.__confxml = None  # Clear cache
-        doc = self._geom_confxml()
-        uuid = doc.xpath(
-            "//class[name = 'PART']"
-            "/geom//provider[name = '%s']/config/rawuuid" % (to_label, )
-        )
-        if not encrypt:
-            if not uuid:
-                log.warn("Could not determine GPT uuid for %s", to_label)
-                devname = to_label
-            else:
-                devname = "gptid/%s" % uuid[0].text
-        else:
-            if not uuid:
-                log.warn("Could not determine GPT uuid for %s", to_label)
-                raise MiddlewareError('Unable to determine GPT UUID for %s' % devname)
-            else:
-                from_diskobj = Disk.objects.filter(disk_name=from_disk, disk_expiretime=None)
-                if from_diskobj.exists():
-                    EncryptedDisk.objects.filter(encrypted_volume=volume, encrypted_disk=from_diskobj[0]).delete()
-                devname = self.__encrypt_device("gptid/%s" % uuid[0].text, to_disk, volume, passphrase=passphrase)
-
-        if force:
-            try:
-                with client as c:
-                    c.call('disk.wipe', devname.replace('/dev/', ''), 'QUICK', job=True)
-            except Exception:
-                log.debug('Failed to wipe disk {}'.format(to_disk), exc_info=True)
-
-        p1 = self._pipeopen('/sbin/zpool replace %s%s %s %s' % ('-f ' if force else '', volume.vol_name, from_label, devname))
-        stdout, stderr = p1.communicate()
-        ret = p1.returncode
-        if ret == 0:
-            # If we are replacing a faulted disk, kick it right after replace
-            # is initiated.
-            if from_label.isdigit():
-                self._system('/sbin/zpool detach %s %s' % (volume.vol_name, from_label))
-            # TODO: geli detach -l
-        else:
-            error = ", ".join(stderr.split('\n'))
-            if encrypt:
-                self._system('/sbin/geli detach %s' % (devname, ))
-            try:
-                with client as c:
-                    c.call('disk.swaps_configure')
-            except Exception as e:
-                log.warn('Failed to configure swaps', exc_info=True)
-            raise MiddlewareError('Disk replacement failed: "%s"' % error)
+        if isinstance(volume, str):
+            volume = Volume.objects.get(vol_name=volume)
 
         try:
             with client as c:
-                c.call('disk.swaps_configure')
-        except ClientException:
-            log.warn('Failed to reconfigure swaps', exc_info=True)
-
-        return ret
-
-    def zfs_offline_disk(self, volume, label):
-        from freenasUI.storage.models import EncryptedDisk
-
-        # TODO: Test on real hardware to see if ashift would persist across replace
-        disk = self.label_to_disk(label)
-
-        with client as c:
-            c.call('disk.swaps_remove_disks', [disk])
-
-        # Replace in-place
-        p1 = self._pipeopen('/sbin/zpool offline %s %s' % (volume.vol_name, label))
-        stderr = p1.communicate()[1]
-        if p1.returncode != 0:
-            error = ", ".join(stderr.split('\n'))
-            raise MiddlewareError('Disk offline failed: "%s"' % error)
-        if label.endswith(".eli"):
-            self._system("/sbin/geli detach /dev/%s" % label)
-            EncryptedDisk.objects.filter(
-                encrypted_volume=volume,
-                encrypted_provider=label[:-4]
-            ).delete()
-
-    def zfs_online_disk(self, volume, label):
-        assert volume.vol_encrypt == 0
-
-        p1 = self._pipeopen('/sbin/zpool online %s %s' % (volume.vol_name, label))
-        stderr = p1.communicate()[1]
-        if p1.returncode != 0:
-            error = ", ".join(stderr.split('\n'))
-            raise MiddlewareError('Disk online failed: "%s"' % error)
-
-    def zfs_detach_disk(self, volume, label):
-        """Detach a disk from zpool
-           (more technically speaking, a replaced disk.  The replacement actually
-           creates a mirror for the device to be replaced)"""
-
-        if isinstance(volume, str):
-            vol_name = volume
-        else:
-            vol_name = volume.vol_name
-
-        from_disk = self.label_to_disk(label)
-        if not from_disk:
-            if not re.search(r'^[0-9]+$', label):
-                log.warn("Could not find disk for the ZFS label %s", label)
-        else:
-            with client as c:
-                c.call('disk.swaps_remove_disks', [from_disk])
-
-        ret = self._system_nolog('/sbin/zpool detach %s %s' % (vol_name, label))
-
-        if not isinstance(volume, str):
-            self.sync_encrypted(volume)
-
-        if from_disk:
-            # TODO: This operation will cause damage to disk data which should be limited
-            self.__gpt_unlabeldisk(from_disk)
-        return ret
+                c.call('pool.detach', volume.id, {'label': label})
+        except Exception as e:
+            raise MiddlewareError(f'Failed to detach disk: {str(e)}')
 
     def zfs_remove_disk(self, volume, label):
         """
@@ -1082,24 +539,11 @@ class notifier(metaclass=HookMetaclass):
         Cache disks, inactive hot-spares (and log devices in zfs 28) can be removed
         """
 
-        from_disk = self.label_to_disk(label)
-        with client as c:
-            c.call('disk.swaps_remove_disks', [from_disk])
-
-        p1 = self._pipeopen('/sbin/zpool remove %s %s' % (volume.vol_name, label))
-        stderr = p1.communicate()[1]
-        if p1.returncode != 0:
-            error = ", ".join(stderr.split('\n'))
-            raise MiddlewareError('Disk could not be removed: "%s"' % error)
-
-        self.sync_encrypted(volume)
-
-        if volume.vol_encrypt >= 1:
-            self._system(f'/sbin/geli detach {label}')
-
-        # TODO: This operation will cause damage to disk data which should be limited
-        if from_disk:
-            self.__gpt_unlabeldisk(from_disk)
+        try:
+            with client as c:
+                c.call('pool.remove', volume.id, {'label': label})
+        except Exception as e:
+            raise MiddlewareError(f'Disk could not be removed: {str(e)}')
 
     def detach_volume_swaps(self, volume):
         """Detach all swaps associated with volume"""
@@ -1136,43 +580,6 @@ class notifier(metaclass=HookMetaclass):
             return stdout.strip()
 
         return os.path.join(mountpoint_root, name)
-
-    def volume_destroy(self, volume):
-        """Destroy a ZFS pool on the system
-
-        In the event that the volume is still in use in the OS, the end-result
-        is implementation defined depending on the filesystem, and the set of
-        commands used to export the filesystem.
-
-        Finally, this method goes and cleans up the mountpoint, as it's
-        assumed to be no longer needed. This is also a sanity check to ensure
-        that cleaning up everything worked.
-
-        XXX: doing recursive unmounting here might be a good idea.
-        XXX: better feedback about files in use might be a good idea...
-             someday. But probably before getting to this point. This is a
-             tricky problem to fix in a way that doesn't unnecessarily suck up
-             resources, but also ensures that the user is provided with
-             meaningful data.
-        XXX: divorce this from storage.models; depending on storage.models
-             introduces a circular dependency and creates design ugliness.
-
-        Parameters:
-            volume: a storage.models.Volume object.
-
-        Raises:
-            MiddlewareError: the volume could not be detached cleanly.
-            MiddlewareError: the volume's mountpoint couldn't be removed.
-            ValueError: 'destroy' isn't implemented for the said filesystem.
-        """
-
-        # volume_detach compatibility.
-        vol_name = volume.vol_name
-        vol_mountpath = self.__get_mountpath(vol_name)
-        self.__destroy_zfs_volume(volume)
-        self.reload('disk')
-        self._encvolume_detach(volume, destroy=True)
-        self.__rmdir_mountpoint(vol_mountpath)
 
     def groupmap_list(self):
         command = "/usr/local/bin/net groupmap list"
@@ -1231,7 +638,7 @@ class notifier(metaclass=HookMetaclass):
 
         try:
             share = CIFS_Share.objects.get(cifs_path=path)
-        except:
+        except Exception:
             share = None
 
         return share
@@ -1241,7 +648,7 @@ class notifier(metaclass=HookMetaclass):
 
         try:
             path = CIFS_Share.objects.get(cifs_name=share)
-        except:
+        except Exception:
             path = None
 
         return path
@@ -1259,7 +666,7 @@ class notifier(metaclass=HookMetaclass):
 
         try:
             SID = info.split(' ')[0].strip()
-        except:
+        except Exception:
             SID = None
 
         log.debug("owner_to_SID: %s -> %s", owner, SID)
@@ -1278,7 +685,7 @@ class notifier(metaclass=HookMetaclass):
 
         try:
             SID = info.split(' ')[0].strip()
-        except:
+        except Exception:
             SID = None
 
         log.debug("group_to_SID: %s -> %s", group, SID)
@@ -1307,7 +714,7 @@ class notifier(metaclass=HookMetaclass):
             add_cmd = "%s %s -a '%s'" % (sharesec, share, add_args)
             try:
                 self._pipeopen(add_cmd).communicate()
-            except:
+            except Exception:
                 log.debug("sharesec_add: %s failed", add_cmd)
                 ret = False
 
@@ -1325,7 +732,7 @@ class notifier(metaclass=HookMetaclass):
         ret = True
         try:
             self._pipeopen(delete_cmd).communicate()
-        except:
+        except Exception:
             log.debug("sharesec_delete: %s failed", delete_cmd)
             ret = False
 
@@ -1372,7 +779,7 @@ class notifier(metaclass=HookMetaclass):
         if len(apply_paths) > 1:
             apply_paths.insert(0, (path, ''))
         for apath, flags in apply_paths:
-            fargs = args + "%s -p '%s' -x" % (flags, apath)
+            fargs = args + "%s -p '%s'" % (flags, apath)
             cmd = "%s %s" % (winacl, fargs)
             log.debug("winacl_reset: cmd = %s", cmd)
             self._system(cmd)
@@ -1399,6 +806,9 @@ class notifier(metaclass=HookMetaclass):
         winacl = os.path.join(path, ACL_WINDOWS_FILE)
         macacl = os.path.join(path, ACL_MAC_FILE)
         winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
+        with libzfs.ZFS() as zfs:
+            zfs_dataset_name = zfs.get_dataset_by_path(path).name
+
         if acl == 'windows':
             if not winexists:
                 open(winacl, 'a').close()
@@ -1418,6 +828,7 @@ class notifier(metaclass=HookMetaclass):
                 os.unlink(macacl)
 
         if winexists:
+            self.zfs_set_option(zfs_dataset_name, "aclmode", "restricted", recursive)
             script = "/usr/local/bin/winacl"
             args = ''
             if user is not None:
@@ -1439,6 +850,7 @@ class notifier(metaclass=HookMetaclass):
                 self._system(cmd)
 
         else:
+            self.zfs_set_option(zfs_dataset_name, "aclmode", "passthrough", recursive)
             if recursive:
                 apply_paths = exclude_path(path, exclude)
                 apply_paths = [(y, '-R') for y in apply_paths]
@@ -1459,10 +871,6 @@ class notifier(metaclass=HookMetaclass):
         share = self.path_to_smb_share(path)
         if share:
             self.sharesec_reset(share, user, group)
-
-    def mp_get_permission(self, path):
-        if os.path.isdir(path):
-            return stat.S_IMODE(os.stat(path)[stat.ST_MODE])
 
     def mp_get_owner(self, path):
         """Gets the owner/group for a given mountpoint.
@@ -1609,7 +1017,7 @@ class notifier(metaclass=HookMetaclass):
                         break
                     try:
                         os.kill(proc.pid, signal.SIGINFO)
-                    except:
+                    except Exception:
                         break
                     time.sleep(1)
                     # TODO: We don't need to read the whole file
@@ -1924,13 +1332,6 @@ class notifier(metaclass=HookMetaclass):
             return True, ''
         return False, err
 
-    def disk_check_clean(self, disk):
-        doc = self._geom_confxml()
-        search = doc.xpath("//class[name = 'PART']/geom[name = '%s']" % disk)
-        if len(search) > 0:
-            return False
-        return True
-
     def detect_volumes(self, extra=None):
         """
         Responsible to detect existing volumes by running zpool commands
@@ -1999,85 +1400,6 @@ class notifier(metaclass=HookMetaclass):
         else:
             log.error("Importing %s [%s] failed with: %s", name, id, stderr)
         return False
-
-    def _encvolume_detach(self, volume, destroy=False):
-        """Detach GELI providers after detaching volume."""
-        """See bug: #3964"""
-        if volume.vol_encrypt > 0:
-            for ed in volume.encrypteddisk_set.all():
-                try:
-                    self.geli_detach(ed.encrypted_provider)
-                except Exception as ee:
-                    log.warn(str(ee))
-                if destroy:
-                    try:
-                        # bye bye data, it was nice knowing ya
-                        self.geli_clear(ed.encrypted_provider)
-                    except Exception as ee:
-                        log.warn(str(ee))
-                    try:
-                        os.remove(volume.get_geli_keyfile())
-                    except Exception as ee:
-                        log.warn(str(ee))
-
-    def volume_detach(self, volume):
-        """Detach a volume from the system
-
-        This either executes exports a zpool or umounts a generic volume (e.g.
-        NTFS, UFS, etc).
-
-        In the event that the volume is still in use in the OS, the end-result
-        is implementation defined depending on the filesystem, and the set of
-        commands used to export the filesystem.
-
-        Finally, this method goes and cleans up the mountpoint. This is a
-        sanity check to ensure that things are in synch.
-
-        XXX: recursive unmounting / needs for recursive unmounting here might
-             be a good idea.
-        XXX: better feedback about files in use might be a good idea...
-             someday. But probably before getting to this point. This is a
-             tricky problem to fix in a way that doesn't unnecessarily suck up
-             resources, but also ensures that the user is provided with
-             meaningful data.
-        XXX: this doesn't work with the alternate mountpoint functionality
-             available in UFS volumes.
-
-        Parameters:
-            volume: volume model object
-
-        Raises:
-            MiddlewareError: the volume could not be detached cleanly.
-            MiddlewareError: the volume's mountpoint couldn't be removed.
-        """
-
-        vol_name = volume.vol_name
-
-        succeeded = False
-
-        vol_mountpath = self.__get_mountpath(vol_name)
-        cmd = 'zpool export %s' % (vol_name)
-        cmdf = 'zpool export -f %s' % (vol_name)
-
-        self.stop("syslogd")
-
-        p1 = self._pipeopen(cmd)
-        stdout, stderr = p1.communicate()
-        if p1.returncode == 0:
-            succeeded = True
-        else:
-            p1 = self._pipeopen(cmdf)
-            stdout, stderr = p1.communicate()
-
-        self.start("syslogd")
-
-        if not succeeded and p1.returncode:
-            raise MiddlewareError('Failed to detach %s with "%s" (exited '
-                                  'with %d): %s' %
-                                  (vol_name, cmd, p1.returncode, stderr))
-
-        self._encvolume_detach(volume)
-        self.__rmdir_mountpoint(vol_mountpath)
 
     def volume_import(self, volume_name, volume_id, key=None, passphrase=None, enc_disks=None):
         from freenasUI.storage.models import Disk, EncryptedDisk, Scrub, Volume
@@ -2219,18 +1541,6 @@ class notifier(metaclass=HookMetaclass):
                 raise MiddlewareError('Failed to remove mountpoint %s: %s'
                                       % (path, str(ose), ))
 
-    def zfs_scrub(self, name, stop=False, pause=False):
-        if stop:
-            imp = self._pipeopen('zpool scrub -s %s' % str(name))
-        elif pause:
-            imp = self._pipeopen('zpool scrub -p %s' % str(name))
-        else:
-            imp = self._pipeopen('zpool scrub %s' % str(name))
-        stdout, stderr = imp.communicate()
-        if imp.returncode != 0:
-            raise MiddlewareError('Unable to scrub %s: %s' % (name, stderr))
-        return True
-
     def zfs_snapshot_list(self, path=None, sort=None, system=False):
         from freenasUI.storage.models import Volume
         fsinfo = dict()
@@ -2273,7 +1583,7 @@ class notifier(metaclass=HookMetaclass):
                 try:
                     snaplist = fsinfo[fs]
                     mostrecent = False
-                except:
+                except Exception:
                     snaplist = []
                     mostrecent = True
 
@@ -2372,7 +1682,7 @@ class notifier(metaclass=HookMetaclass):
                         "Failed to upload config, version newer than the "
                         "current installed."
                     )
-        except:
+        except Exception:
             os.unlink(config_file_name)
             return False, _('The uploaded file is not valid.')
 
@@ -2543,7 +1853,7 @@ class notifier(metaclass=HookMetaclass):
         try:
             iface = iface[0].strip()
 
-        except:
+        except Exception:
             pass
 
         return iface if iface else None
@@ -2556,7 +1866,7 @@ class notifier(metaclass=HookMetaclass):
         try:
             iface = iface[0].strip()
 
-        except:
+        except Exception:
             pass
 
         return iface if iface else None
@@ -2583,7 +1893,7 @@ class notifier(metaclass=HookMetaclass):
 
         try:
             out = out[0].strip()
-        except:
+        except Exception:
             return iface_info
 
         m = re.search('ether (([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2})', out, re.MULTILINE)
@@ -2633,7 +1943,7 @@ class notifier(metaclass=HookMetaclass):
             socket.inet_aton(addr)
             res = True
 
-        except:
+        except Exception:
             res = False
 
         return res
@@ -2645,7 +1955,7 @@ class notifier(metaclass=HookMetaclass):
             socket.inet_pton(socket.AF_INET6, addr)
             res = True
 
-        except:
+        except Exception:
             res = False
 
         return res
@@ -2868,24 +2178,6 @@ class notifier(metaclass=HookMetaclass):
         r = re.compile(r'scan: (resilver|scrub) in progress')
         return r.search(res) is not None
 
-    def zpool_version(self, name):
-        p1 = self._pipeopen("zpool get -H -o value version %s" % name, logger=None)
-        res, err = p1.communicate()
-        if p1.returncode != 0:
-            raise ValueError(err)
-        res = res.rstrip('\n')
-        try:
-            return int(res)
-        except:
-            return res
-
-    def zpool_upgrade(self, name):
-        p1 = self._pipeopen("zpool upgrade %s" % name)
-        res = p1.communicate()[0]
-        if p1.returncode == 0:
-            return True
-        return res
-
     def sync_disk_extra(self, disk, add=False):
         return
 
@@ -2896,7 +2188,10 @@ class notifier(metaclass=HookMetaclass):
         """
         from freenasUI.storage.models import Disk, EncryptedDisk, Volume
         if volume is not None:
-            volumes = [volume]
+            if isinstance(volume, int):
+                volumes = [Volume.objects.get(pk=volume)]
+            else:
+                volumes = [volume]
         else:
             volumes = Volume.objects.filter(vol_encrypt__gt=0)
 
@@ -2970,7 +2265,7 @@ class notifier(metaclass=HookMetaclass):
         try:
             zpool = self.zpool_parse('freenas-boot')
             return zpool.get_disks()
-        except:
+        except Exception:
             log.warn("Root device not found!")
             return []
 

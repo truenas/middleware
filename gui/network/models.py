@@ -35,7 +35,7 @@ from freenasUI import choices
 from freenasUI.contrib.IPAddressField import (
     IPAddressField, IP4AddressField, IP6AddressField
 )
-from freenasUI.freeadmin.models import Model
+from freenasUI.freeadmin.models import ListField, Model
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import CIFS
@@ -284,6 +284,11 @@ class Interfaces(Model):
         null=True,
         blank=True,
     )
+    int_mtu = models.PositiveIntegerField(
+        verbose_name=_("MTU"),
+        blank=True,
+        null=True,
+    )
     int_options = models.CharField(
         max_length=120,
         verbose_name=_("Options"),
@@ -300,13 +305,12 @@ class Interfaces(Model):
         self._original_int_options = self.int_options
 
     def delete(self):
-        LAGGInterface.objects.filter(lagg_interface__id=self.id).delete()
+        for lagg in LAGGInterface.objects.filter(lagg_interface__id=self.id):
+            lagg.delete()
         # Delete VLAN entries for this interface
         VLAN.objects.filter(vlan_vint=self.int_interface).delete()
         if self.id:
             super(Interfaces, self).delete()
-        os.system("sleep 2")
-        notifier().start("network")
 
     def save(self, *args, **kwargs):
         if self.int_vip and not self.int_pass:
@@ -454,16 +458,32 @@ class Alias(Model):
         else:
             return '%s/%s' % (self.alias_v6address, self.alias_v6netmaskbit)
 
-    def delete(self):
-        super(Alias, self).delete()
-        notifier().start("network")
-
     class Meta:
         verbose_name = _("Alias")
         verbose_name_plural = _("Aliases")
 
     class FreeAdmin:
         pass
+
+
+class Bridge(Model):
+    interface = models.OneToOneField(
+        Interfaces,
+        verbose_name=_("Interface"),
+        on_delete=models.CASCADE,
+    )
+    members = ListField(
+        verbose_name=_("Members"),
+        default=[],
+    )
+
+    class Meta:
+        verbose_name = _("Bridge")
+        verbose_name_plural = _("Bridges")
+        ordering = ["interface"]
+
+    def __str__(self):
+        return str(self.interface)
 
 
 class VLAN(Model):
@@ -554,6 +574,8 @@ class LAGGInterface(Model):
             interfaces)
 
     def delete(self):
+        for member in self.lagginterfacemembers_set.all():
+            Interfaces.objects.filter(int_interface=member.lagg_physnic).delete()
         super(LAGGInterface, self).delete()
         VLAN.objects.filter(
             vlan_pint=self.lagg_interface.int_interface
@@ -575,11 +597,6 @@ class LAGGInterfaceMembers(Model):
         unique=True,
         verbose_name=_("Physical NIC")
     )
-    lagg_deviceoptions = models.CharField(
-        max_length=120,
-        verbose_name=_("Options"),
-        default='up',
-    )
 
     def __str__(self):
         return self.lagg_physnic
@@ -595,7 +612,7 @@ class StaticRoute(Model):
         max_length=120,
         verbose_name=_("Destination network")
     )
-    sr_gateway = IP4AddressField(
+    sr_gateway = models.CharField(
         max_length=120,
         verbose_name=_("Gateway")
     )

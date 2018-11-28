@@ -7,6 +7,13 @@
       </script>
       </button>
 
+      <button id="datagridBtn_{{ module_name }}_ImportCSR" data-dojo-type="dijit.form.Button" type="button">
+          {% blocktrans with name=verbose_name %}Import Certificate Signing Request{% endblocktrans %}
+      <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+          editObject('{% trans "Import CSR"|escapejs %} {{ verbose_name }}', '{% url "certificate_import_csr" %}', [this,]);
+      </script>
+      </button>
+
       <button id="datagridBtn_{{ module_name }}_CreateInternal" data-dojo-type="dijit.form.Button" type="button">
           {% blocktrans with name=verbose_name %}Create Internal Certificate{% endblocktrans %}
       <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">

@@ -1,7 +1,7 @@
 from itertools import chain
 
 from middlewared.schema import accepts, Cron, Dict, Int, List, Patch, Str
-from middlewared.validators import Email, Range
+from middlewared.validators import Email, Range, Unique
 from middlewared.service import CRUDService, private, SystemServiceService, ValidationErrors
 
 
@@ -62,7 +62,7 @@ class SMARTTestService(CRUDService):
             'smart_task_create',
             Cron('schedule'),
             Str('desc'),
-            List('disks', items=[Str('disk')], required=True),
+            List('disks', items=[Str('disk')], default=[], required=True),
             Str('type', enum=['LONG', 'SHORT', 'CONVEYANCE', 'OFFLINE'], required=True),
             register=True
         )
@@ -89,11 +89,7 @@ class SMARTTestService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call(
-            'service.restart',
-            'smartd',
-            {'onetime': False}
-        )
+        await self._service_change('smartd', 'restart')
 
         return data
 
@@ -135,11 +131,7 @@ class SMARTTestService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call(
-            'service.restart',
-            'smartd',
-            {'onetime': False}
-        )
+        await self._service_change('smartd', 'restart')
 
         return await self.query(filters=[('id', '=', id)], options={'get': True})
 
@@ -152,6 +144,8 @@ class SMARTTestService(CRUDService):
             self._config.datastore,
             id
         )
+
+        await self._service_change('smartd', 'restart')
 
         return response
 
@@ -177,7 +171,8 @@ class SmartService(SystemServiceService):
         Int('difference'),
         Int('informational'),
         Int('critical'),
-        List('email', items=[Str('email', validators=[Email()])]),
+        List('email', validators=[Unique()], items=[Str('email', validators=[Email()])]),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()

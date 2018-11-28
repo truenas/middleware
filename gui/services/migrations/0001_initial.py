@@ -67,7 +67,7 @@ class Migration(migrations.Migration):
                 ('cifs_srv_netbiosalias', models.CharField(blank=True, max_length=120, null=True, verbose_name='NetBIOS alias')),
                 ('cifs_srv_workgroup', models.CharField(help_text='Workgroup the server will appear to be in when queried by clients (maximum 15 characters).', max_length=120, verbose_name='Workgroup')),
                 ('cifs_srv_description', models.CharField(blank=True, help_text='Server description. This can usually be left blank.', max_length=120, verbose_name='Description')),
-                ('cifs_srv_doscharset', models.CharField(choices=choices.DOSCHARSET_CHOICES, default='CP437', max_length=120, verbose_name='DOS charset')),
+                ('cifs_srv_doscharset', models.CharField(default='CP437', max_length=120, verbose_name='DOS charset')),
                 ('cifs_srv_unixcharset', models.CharField(choices=choices.UNIXCHARSET_CHOICES, default='UTF-8', max_length=120, verbose_name='UNIX charset')),
                 ('cifs_srv_loglevel', models.CharField(choices=choices.LOGLEVEL_CHOICES, default='0', max_length=120, verbose_name='Log level')),
                 ('cifs_srv_syslog', models.BooleanField(default=False, verbose_name='Use syslog only')),

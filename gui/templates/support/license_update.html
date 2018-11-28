@@ -1,11 +1,6 @@
 {% extends "freeadmin/generic_form.html" %}
 
 {% block form %}
-{% if eula %}
-<tr>
-  <td colspan="2"><pre style="padding: 8px; margin: 4px; max-height: 300px; overflow: auto; width: 800px; white-space: normal;">{{ eula|safe }}</pre></td>
-</tr>
-{% endif %}
 {% if license.expired %}
 <tr>
   <td colspan="2">{% trans "Your license has expired, please place a new one." %}</td>
@@ -13,4 +8,9 @@
 {% endif %}
 {{ block.super }}
 {% endblock %}
-{% block oklabel %}{% trans "I agree" %}{% endblock %}
+{% block buttons %}
+  <div style="padding-left: 10px;">
+    {{ block.super }}
+  </div>
+{% endblock %}
+{% block oklabel %}{% trans "Save License" %}{% endblock %}

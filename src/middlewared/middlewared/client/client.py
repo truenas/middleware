@@ -7,10 +7,11 @@ from ws4py.client.threadedclient import WebSocketClient
 from ws4py.websocket import WebSocket
 
 import argparse
-from base64 import b64encode
+from base64 import b64decode, b64encode
 import ctypes
 import errno
 import os
+import pickle
 import socket
 import ssl
 import sys
@@ -228,6 +229,7 @@ class Call(object):
         self.trace = None
         self.type = None
         self.extra = None
+        self.py_exception = None
 
 
 class ErrnoMixin:
@@ -279,7 +281,10 @@ class CallTimeout(ClientException):
 
 class Client(object):
 
-    def __init__(self, uri=None, reserved_ports=False, reserved_ports_blacklist=None):
+    def __init__(
+        self, uri=None, reserved_ports=False, reserved_ports_blacklist=None,
+        py_exceptions=False,
+    ):
         """
         Arguments:
            :reserved_ports(bool): whether the connection should origin using a reserved port (<= 1024)
@@ -290,6 +295,7 @@ class Client(object):
         self._jobs_lock = Lock()
         self._jobs_watching = False
         self._pings = {}
+        self._py_exceptions = py_exceptions
         self._event_callbacks = {}
         if uri is None:
             uri = 'ws+unix:///var/run/middlewared.sock'
@@ -345,6 +351,11 @@ class Client(object):
                     call.trace = message['error'].get('trace')
                     call.type = message['error'].get('type')
                     call.extra = message['error'].get('extra')
+                    call.py_exception = message['error'].get('py_exception')
+                    if self._py_exceptions and call.py_exception:
+                        call.py_exception = pickle.loads(b64decode(
+                            call.py_exception
+                        ))
                 call.returned.set()
                 self._unregister_call(call)
         elif msg in ('added', 'changed', 'removed'):
@@ -366,10 +377,14 @@ class Client(object):
                         break
 
     def on_open(self):
+        features = []
+        if self._py_exceptions:
+            features.append('PY_EXCEPTIONS')
         self._send({
             'msg': 'connect',
             'version': '1',
             'support': ['1'],
+            'features': features,
         })
 
     def on_close(self, code, reason=None):
@@ -432,6 +447,8 @@ class Client(object):
             raise CallTimeout("Call timeout")
 
         if c.errno:
+            if c.py_exception:
+                raise c.py_exception
             if c.trace and c.type == 'VALIDATION':
                 raise ValidationErrors(c.extra)
             raise ClientException(c.error, c.errno, c.trace, c.extra)
@@ -457,6 +474,8 @@ class Client(object):
             if job is None:
                 raise ClientException('No job event was received.')
             if job['state'] != 'SUCCESS':
+                if job['exc_info'] and job['exc_info']['type'] == 'VALIDATION':
+                    raise ValidationErrors(job['exc_info']['extra'])
                 raise ClientException(job['error'], trace=job['exception'])
             return job['result']
 

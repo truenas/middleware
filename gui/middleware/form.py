@@ -3,7 +3,8 @@ import json
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Model
 
-from freenasUI.freeadmin.models.fields import DictField
+from freenasUI.freeadmin.apppool import appPool
+from freenasUI.freeadmin.models.fields import DictField, ListField
 from freenasUI.middleware.client import client, ClientException
 from freenasUI.services.exceptions import ServiceFailed
 
@@ -48,14 +49,18 @@ class MiddlewareModelForm:
     middleware_plugin = NotImplemented
     middleware_job = False
     is_singletone = NotImplemented
+    middleware_job_wait = True
 
     middleware_exclude_fields = []
 
     def save(self):
         result = self.__save()
 
-        self.instance = self._meta.model.objects.get(pk=result["id"])
-        return self.instance
+        if self.middleware_job and not self.middleware_job_wait:
+            return result
+        else:
+            self.instance = self._meta.model.objects.get(pk=result["id"])
+            return self.instance
 
     def middleware_clean(self, data):
         return data
@@ -81,7 +86,7 @@ class MiddlewareModelForm:
         except FieldDoesNotExist:
             pass
         else:
-            if isinstance(field, DictField):
+            if isinstance(field, (DictField, ListField)) and isinstance(v, (str, bytes, bytearray)):
                 return json.loads(v)
 
         return v
@@ -101,7 +106,7 @@ class MiddlewareModelForm:
 
             args = (data,) + args
 
-        if self.middleware_job:
+        if self.middleware_job and self.middleware_job_wait:
             kwargs['job'] = True
 
         with client as c:
@@ -109,6 +114,13 @@ class MiddlewareModelForm:
                 return c.call(f"{self.middleware_plugin}.{self._middleware_action}", *args, **kwargs)
             except ClientException as e:
                 if e.errno == ClientException.ESERVICESTARTFAILURE:
-                    raise ServiceFailed(e.error, e.errno)
+                    raise ServiceFailed(e.extra[0], e.error)
                 else:
                     raise
+
+    def delete(self, request=None, events=None, **kwargs):
+        with client as c:
+            c.call(f"{self.middleware_plugin}.delete", self.instance.id)
+
+        fname = str(type(self).__name__)
+        appPool.hook_form_delete(fname, self, request, events)

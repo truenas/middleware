@@ -7,21 +7,40 @@ set timeout 1800
 set PID [spawn vm console "$vm"]
 send_user "Spawned PID: $PID \n"
 
-# Install menu, options being:
-# 1) Install, 2) Shell, 3) Reboot, 4) Shutdown
-# Options: [O]K, [C]ancel
+# ┌───────────FreeNAS 11.3-MASTER-201810170704 Console Setup──────────────┐
+# │ ┌───────────────────────────────────────────────────────────────────┐ │
+# │ │                        1  Install/Upgrade                         │ │
+# │ │                        2  Shell                                   │ │
+# │ │                        3  Reboot System                           │ │
+# │ │                        4  Shutdown System                         │ │
+# │ │                                                                   │ │
+# │ │                                                                   │ │
+# │ └───────────────────────────────────────────────────────────────────┘ │
+# ├───────────────────────────────────────────────────────────────────────┤
+# │                     <  OK  >           <Cancel>                       │
+# └───────────────────────────────────────────────────────────────────────┘
+
 expect {
   "Console Setup" {
     sleep .5
     send "1"
-    send "O"
     send "\r"
   }
 }
 
-# Choose destination media
-# Select a target drive with the spacebar (\040)
-# Options: [O]K, [C]ancel
+# ┌────────────────Choose destination media──────────────────┐
+# │ Select one or more drives where FreeNAS should be        │
+# │ installed (use arrow keys to navigate to the drive(s)    │
+# │ for installation; select a drive with the spacebar).     │
+# │ ┌──────────────────────────────────────────────────────┐ │
+# │ │            [*] vtbd0  (null) -- 20.0 GiB             │ │
+# │ │            [ ] vtbd1  (null) -- 50.0 GiB             │ │
+# │ │            [ ] vtbd2  (null) -- 50.0 GiB             │ │
+# │ └──────────────────────────────────────────────────────┘ │
+# ├──────────────────────────────────────────────────────────┤
+# │               <  OK  >        <Cancel>                   │
+# └──────────────────────────────────────────────────────────┘
+
 expect {
   "Choose destination media" {
     sleep .5
@@ -30,20 +49,41 @@ expect {
   }
 }
 
-# WARNING: This will erase ALL paritions and data, proceed?
-# Options: [Y]es, [N]o
+# ┌─────────────────────────FreeNAS installation───────────────────────────┐
+# │ WARNING:                                                               │
+# │ - This will erase ALL paritions and data on ada0.                      │
+# │ - You can't use ada0 for sharing data.                                 │
+# │                                                                        │
+# │ NOTE:                                                                  │
+# │ - Installing on flash media is preferred to install on a               │
+# │   hard drive                                                           │
+# │                                                                        │
+# │   Proceed with the installation?                                       │
+# ├────────────────────────────────────────────────────────────────────────┤
+# │                       < Yes >            < No  >                       │
+# └────────────────────────────────────────────────────────────────────────┘
+
 expect {
-  "Proceed with the installation?" {
+  "FreeNAS installation" {
     sleep .5
     send "Y"
     send "\r"
   }
 }
 
-# Set the default root account password:
-# Options: [O]K, [C]ancel
+# ┌────────────────────────────────────────────────┐
+# │ Enter your root password; cancel for no root   │
+# │ password                                       │
+# │ ┌────────────────────────────────────────────┐ │
+# │ │Password:          *******                  │ │
+# | |Confirm Password:  *******                  │ │
+# │ └────────────────────────────────────────────┘ │
+# ├────────────────────────────────────────────────┤
+# │           <  OK  >      <Cancel>               │
+# └────────────────────────────────────────────────┘
+
 expect {
-  "Password" {
+  "Enter your root password" {
     sleep .5
     send "testing"
     # Tab to next field
@@ -57,14 +97,37 @@ expect {
   }
 }
 
-# Select Boot via UEFI
-# Options: [B]oot via UEFI, Boot via B[I]OS
+# ┌──────────────────────────FreeNAS Boot Mode─────────────────────────────┐
+# │ FreeNAS can be booted in either BIOS or UEFI mode.                     │
+# │                                                                        │
+# | BIOS mode is recommended for legacy and enterprise hardware,           │
+# | whereas UEFI may be required for newer consumer motherboards.          │
+# ├────────────────────────────────────────────────────────────────────────┤
+# │               <Boot via UEFI>        <Boot via BIOS>                   │
+# └────────────────────────────────────────────────────────────────────────┘
+
 expect {
-  "BIOS mode is recommended for legacy and enterprise hardware," {
+  "FreeNAS Boot Mode" {
     sleep .5
     send "B"
   }
 }
+
+# ┌────────────────────────────────────────────────────────────────────────┐
+# │ The FreeNAS installation on vtbd0 succeeded!                           |
+# │                                                                        │
+# ├────────────────────────────────────────────────────────────────────────┤
+# │                               <  OK  >                                 │
+# └────────────────────────────────────────────────────────────────────────┘
+
+# Or
+
+# ┌────────────────────────────────────────────────────────────────────────┐
+# │ The FreeNAS installation on vtbd0 failed.                              |
+# │                                                                        │
+# ├────────────────────────────────────────────────────────────────────────┤
+# │                               <  OK  >                                 │
+# └────────────────────────────────────────────────────────────────────────┘
 
 # Installation complete!
 expect {
@@ -72,5 +135,11 @@ expect {
     send_user "Bhyve installation finished."
     sleep 5
     exit 0
+  }
+
+  "failed." {
+    send_user "Bhyve installation failed."
+    sleep 5
+    exit 1
   }
 }

@@ -61,11 +61,7 @@ class WebDAVSharingService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call(
-            'service.reload',
-            'webdav',
-            {'onetime': False}
-        )
+        await self._service_change('webdav', 'reload')
 
         return await self.query(filters=[('id', '=', data['id'])], options={'get': True})
 
@@ -92,11 +88,7 @@ class WebDAVSharingService(CRUDService):
                 {'prefix': self._config.datastore_prefix}
             )
 
-            await self.middleware.call(
-                'service.reload',
-                'webdav',
-                {'onetime': False}
-            )
+            await self._service_change('webdav', 'reload')
 
         return await self.query(filters=[('id', '=', id)], options={'get': True})
 
@@ -110,6 +102,8 @@ class WebDAVSharingService(CRUDService):
             self._config.datastore,
             id
         )
+
+        await self._service_change('webdav', 'reload')
 
         return response
 
@@ -127,7 +121,8 @@ class WebDAVService(SystemServiceService):
         Int('tcpportssl'),
         Str('password'),
         Str('htauth', enum=['NONE', 'BASIC', 'DIGEST']),
-        Int('certssl')
+        Int('certssl', null=True),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()
@@ -138,14 +133,8 @@ class WebDAVService(SystemServiceService):
         await self.lower(new)
         await self.validate(new, 'webdav_update')
         await self._update_service(old, new)
-        await self.upper(new)
 
-        secure_protocol = False if new['protocol'] == 'HTTP' else True
-
-        if new['certssl'] != 'None' and secure_protocol:
-            await self.middleware.call('notifier.start_ssl', 'webdav')
-
-        return new
+        return await self.config()
 
     @private
     async def lower(self, data):
@@ -158,6 +147,10 @@ class WebDAVService(SystemServiceService):
     async def upper(self, data):
         data['protocol'] = data['protocol'].upper()
         data['htauth'] = data['htauth'].upper()
+        if data['certssl']:
+            # FIXME: When we remove support for querying up foreign key objects in datastore, this should be fixed
+            # to reflect that change
+            data['certssl'] = data['certssl']['id']
 
         return data
 
@@ -165,16 +158,24 @@ class WebDAVService(SystemServiceService):
     async def validate(self, data, schema_name):
         verrors = ValidationErrors()
 
-        if (data.get('protocol') == 'httphttps' and data.get(
-                'tcpport') == data.get('tcpportssl')):
-            verrors.add(f"{schema_name}.tcpportssl",
-                        'The HTTP and HTTPS ports cannot be the same!')
-
-        if (data.get('protocol') != 'http' and data.get('certssl') is None):
+        if data.get('protocol') == 'httphttps' and data.get('tcpport') == data.get('tcpportssl'):
             verrors.add(
-                f"{schema_name}.certssl",
-                'WebDAV SSL protocol specified without choosing a certificate'
+                f"{schema_name}.tcpportssl",
+                'The HTTP and HTTPS ports cannot be the same!'
             )
+
+        cert_ssl = data.get('certssl') or 0
+        if data.get('protocol') != 'http':
+            if not cert_ssl:
+                verrors.add(
+                    f"{schema_name}.certssl",
+                    'WebDAV SSL protocol specified without choosing a certificate'
+                )
+            elif not (await self.middleware.call('certificate.query', [['id', '=', cert_ssl]])):
+                verrors.add(
+                    f"{schema_name}.certssl",
+                    'Please provide a valid certificate id'
+                )
 
         if verrors:
             raise verrors

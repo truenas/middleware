@@ -1,4 +1,4 @@
-@version:3.14
+@version:3.17
 
 #
 # options
@@ -45,7 +45,7 @@ destination nginx_error { file("/var/log/nginx/error.log"); };
 filter f_auth { facility(auth); };
 filter f_authpriv { facility(authpriv); };
 filter f_not_authpriv { not facility(authpriv); };
-#filter f_console { facility(console); };
+filter f_console { facility(console); };
 filter f_cron { facility(cron); };
 filter f_daemon { facility(daemon); };
 filter f_ftp { facility(ftp); };
@@ -166,7 +166,7 @@ log { source(src); filter(f_emerg); destination(allusers); };
 # uncomment this to log all writes to /dev/console to /var/log/console.log
 # console.info						/var/log/console.log
 #
-#log { source(src); filter(f_console); filter(f_info); destination(consolelog); };
+log { source(src); filter(f_console); filter(f_info); destination(consolelog); };
 
 #
 # uncomment this to enable logging of all log messages to /var/log/all.log

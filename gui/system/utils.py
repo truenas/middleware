@@ -27,7 +27,6 @@ import json
 import logging
 import os
 import tarfile
-import signal
 
 from uuid import uuid4
 

@@ -170,8 +170,7 @@ def smb4_set_database_SID(client, SID):
 
     try:
         cifs = Struct(client.call('datastore.query', 'services.cifs', None, {'get': True}))
-        cifs.cifs_SID = SID
-        cifs.save()
+        client.call('datastore.update', 'services.cifs', cifs.id, {'cifs_SID': SID})
         ret = True
 
     except Exception as e:
@@ -799,11 +798,14 @@ def add_activedirectory_conf(client, smb4_conf):
         pass
 
     ad_workgroup = None
+
+    # First try to get the workgroup from LDAP. If that fails, automatically generate based on ad_domainname
+    # This is to allow us to generate a functional config even if a DC isn't available when we're generating the config
     try:
         fad = Struct(client.call('notifier.directoryservice', 'AD'))
         ad_workgroup = fad.netbiosname.upper()
     except Exception as e:
-        return
+        ad_workgroup = ad.ad_domainname.upper().split(".")[0]
 
     confset2(smb4_conf, "workgroup = %s", ad_workgroup)
     confset2(smb4_conf, "realm = %s", ad.ad_domainname.upper())
@@ -860,6 +862,10 @@ def add_domaincontroller_conf(client, smb4_conf):
     confset2(smb4_conf, "realm = %s", dc.dc_realm)
     confset2(smb4_conf, "dns forwarder = %s", dc.dc_dns_forwarder)
     confset1(smb4_conf, "idmap_ldb:use rfc2307 = yes")
+
+    # We have to manually add vfs objects here until we get more general fix to DC
+    # code in loadparm.c
+    confset1(smb4_conf, "vfs objects = dfs_samba4 zfsacl")
 
     # confset2(smb4_conf, "server services = %s",
     #    string.join(server_services, ',').rstrip(','))
@@ -1112,7 +1118,6 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset2(smb4_conf, "directory mask = %s", cifs.dirmask)
     confset2(smb4_conf, "client ntlmv2 auth = %s",
              "yes" if not cifs.ntlmv1_auth else "no")
-    confset2(smb4_conf, "dos charset = %s", cifs.doscharset)
     confset2(smb4_conf, "unix charset = %s", cifs.unixcharset)
 
     if cifs.loglevel and cifs.loglevel is not True:
@@ -1250,13 +1255,12 @@ def generate_smb4_system_shares(client, smb4_shares):
 
                 confset1(smb4_shares, "path = %s" % (path))
                 confset1(smb4_shares, "read only = no")
+                # map_dacl_protected=true and nfs4:mode=simple are required
+                # to pass samba-tool ACL validation on GPOs
+                confset1(smb4_shares, "zfsacl:map_dacl_protected=true")
+                confset1(smb4_shares, "nfs4:mode=simple")
+                confset1(smb4_shares, "nfs4:chown=true")
 
-                vfs_objects = []
-
-                extend_vfs_objects_for_zfs(path, vfs_objects)
-                config_share_for_vfs_objects(smb4_shares, vfs_objects)
-
-                config_share_for_nfs4(smb4_shares)
                 config_share_for_zfs(smb4_shares)
 
         except Exception as e:
@@ -1558,33 +1562,34 @@ def smb4_import_groups(client):
             client.call('notifier.samba4', 'group_addmembers', [g, groups[g]])
 
 
-def smb4_group_mapped(groupmap, group):
-    if not groupmap:
-        return False
+def smb4_is_disallowed_group(groupmap, group):
+    disallowed_list = []
+    # Ticket # 23435 In order for local groups to be available through samba, they need to
+    # be properly mapped to NT groups in the group_mapping.tdb file. This file should:
+    # (1) contain no duplicate or inconsistent entries
+    # (2) contain no group names that are identical to usernames
+    # (3) prevent duplicate entries for NT names associated with builtin/well-known sids.
 
+    default_builtin_groups = ['Users', 'Administrators']
+    localusers = list(pwd.getpwall())
+    for localuser in localusers:
+        disallowed_list.append(localuser[0].upper())
+    for default_builtin_group in default_builtin_groups:
+        disallowed_list.append(default_builtin_group.upper())
     for gm in groupmap:
-        unixgroup = gm['unixgroup']
-        if group == unixgroup:
-            return True
+        disallowed_list.append(gm['unixgroup'].upper())
+
+    if group.upper() in disallowed_list:
+        return True
 
     return False
-
-
-# Windows no likey
-def smb4_groupname_is_username(group):
-    try:
-        pwd.getpwnam(group)
-    except KeyError:
-        return False
-
-    return True
 
 
 def smb4_map_groups(client):
     groupmap = client.call('notifier.groupmap_list')
     groups = get_groups(client)
     for g in groups:
-        if not (smb4_group_mapped(groupmap, g) or smb4_groupname_is_username(g)):
+        if not (smb4_is_disallowed_group(groupmap, g)):
             client.call('notifier.groupmap_add', g, g)
 
 

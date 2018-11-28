@@ -18,22 +18,18 @@ install_requires = [
 ]
 
 
-def get_etc_files(*args, **kwargs):
+def get_assets(name):
     """
-    Recursive get dirs from middlewared/etc_files/.
-    This is required for the etc plugin.
+    Recursive get dirs from middlewared/{name}
     """
     base_path = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
         'middlewared',
-        'etc_files',
     )
-    for root, dirs, files in os.walk(base_path):
-        if base_path == root:
-            yield 'etc_files/*'
-        else:
-            entry = root.replace(base_path, 'etc_files')
-            yield f'{entry}/*'
+    result = []
+    for root, dirs, files in os.walk(os.path.join(base_path, name)):
+        result.append(f'{os.path.relpath(root, base_path)}/*')
+    return result
 
 
 setup(
@@ -45,7 +41,7 @@ setup(
             'templates/websocket/*',
             'templates/*.*',
         ],
-        'middlewared': get_etc_files(),
+        'middlewared': get_assets('assets') + get_assets('etc_files'),
     },
     include_package_data=True,
     license='BSD',

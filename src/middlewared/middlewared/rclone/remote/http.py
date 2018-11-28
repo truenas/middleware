@@ -11,5 +11,5 @@ class HTTPRcloneRemote(BaseRcloneRemote):
     rclone_type = "http"
 
     credentials_schema = [
-        Str("url", verbose="URL", required=True),
+        Str("url", title="URL", required=True),
     ]

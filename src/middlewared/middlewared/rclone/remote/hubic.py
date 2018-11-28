@@ -7,9 +7,12 @@ class HubicRcloneRemote(BaseRcloneRemote):
     title = "Hubic"
 
     buckets = True
+    bucket_title = "Container"
+
+    fast_list = True
 
     rclone_type = "hubic"
 
     credentials_schema = [
-        Str("token", verbose="Access Token", required=True),
+        Str("token", title="Access Token", required=True),
     ]

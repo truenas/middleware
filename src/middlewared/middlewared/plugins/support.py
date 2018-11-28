@@ -189,8 +189,8 @@ class SupportService(Service):
             tjob = await self.middleware.call('support.attach_ticket', t, pipes=Pipes(input=self.middleware.pipe()))
 
             with open(debug_file, 'rb') as f:
-                await self.middleware.run_in_io_thread(shutil.copyfileobj, f, tjob.pipes.input.w)
-                await self.middleware.run_in_io_thread(tjob.pipes.input.w.close)
+                await self.middleware.run_in_thread(shutil.copyfileobj, f, tjob.pipes.input.w)
+                await self.middleware.run_in_thread(tjob.pipes.input.w.close)
 
             await tjob.wait()
         else:
@@ -222,7 +222,7 @@ class SupportService(Service):
         filename = data.pop('filename')
 
         try:
-            r = await self.middleware.run_in_io_thread(lambda: requests.post(
+            r = await self.middleware.run_in_thread(lambda: requests.post(
                 f'https://{ADDRESS}/{sw_name}/api/v1.0/ticket/attachment',
                 data=data,
                 timeout=10,

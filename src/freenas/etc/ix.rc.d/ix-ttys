@@ -40,13 +40,16 @@ update_ttys()
 			serspeed=""
 		fi
 
+		# Let's make sure that all virtual terminals are set to Pc before we make any changes
+		sed -i "" -E -e "s,^(ttyv.*)(freenas|freenas.115200|Pc)(.*)\$,\1Pc\3," /etc/ttys
+
 		# Setup VGA and UART TTYs according to console configuration.
 		tmp=$(mktemp /tmp/tmp.XXXXXX)
 		if [ "${adv_consolemenu}" -eq "1" ]; then
-			sed -E -e "s,^(ttyv0.*)Pc(.*)\$,\1freenas\2," /etc/ttys | \
+			sed -E -e "s,^(ttyv0.*)(freenas.115200|Pc)(.*)\$,\1freenas\3," /etc/ttys | \
 			    sed -E -e "s,^(ttyu.*)(freenas|3wire)(\.[0-9]+)?(.*)\$,\1freenas${serspeed}\4," > "${tmp}"
 		else
-			sed -E -e "s,^(ttyv0.*)freenas(.*)\$,\1Pc\2," /etc/ttys | \
+			sed -E -e "s,^(ttyv0.*)(freenas|Pc)(.*)\$,\1freenas.115200\3," /etc/ttys | \
 			    sed -E -e "s,^(ttyu.*)(freenas|3wire)(\.[0-9]+)?(.*)\$,\13wire${serspeed}\4," > "${tmp}"
 		fi
 

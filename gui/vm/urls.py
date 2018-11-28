@@ -26,10 +26,14 @@
 #####################################################################
 from django.conf.urls import url
 
-from .views import start, stop, power_off, restart, home, clone, vnc_web, download_progress
+from .views import (
+    add, add_progress, start, stop, power_off, restart, home, clone, vnc_web, download_progress,
+)
 
 urlpatterns = [
     url(r'^$', home, name="vm_home"),
+    url(r'^add/$', add, name="vm_add"),
+    url(r'^add/progress/$', add_progress, name="vm_add_progress"),
     url(r'^start/(?P<id>\d+)/$', start, name="vm_start"),
     url(r'^stop/(?P<id>\d+)/$', stop, name="vm_stop"),
     url(r'^poweroff/(?P<id>\d+)/$', power_off, name="vm_poweroff"),

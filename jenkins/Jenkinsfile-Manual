@@ -1,0 +1,86 @@
+pipeline {
+  agent {
+    label 'FreeNAS-PR'
+  }
+
+  environment {
+    GH_ORG = 'freenas'
+    GH_REPO = 'freenas'
+    GH_BUILD_BRANCH = 'master'
+  }
+  stages {
+
+    stage('Init') {
+      steps {
+        checkout scm
+        echo '*** Checking out build repo ***'
+        sh '(mount | grep "on /freenas-pr" | awk \'{print $3}\' | sort -r | xargs umount -f ) || true'
+        sh 'rm -rf /freenas-pr || true'
+        sh 'chflags -R noschg /freenas-pr || true'
+        sh 'rm -rf /freenas-pr || true'
+        sh 'git clone --depth=1 -b ${GH_BUILD_BRANCH} https://github.com/freenas/build.git /freenas-pr'
+      }
+    }
+
+    stage('Checkout') {
+      environment {
+         REPO_OS_URL = 'git://10.20.21.137/os'
+         REPO_FREENAS_URL = 'git://10.20.21.137/freenas'
+         REPO_WEBUI_URL = 'git://10.20.21.137/webui'
+         REPO_MDNSRESPONDER_URL = 'git://10.20.21.137/mDNSResponder'
+         REPO_FREENAS_DOCS_URL = 'git://10.20.21.137/freenas-docs'
+         REPO_FREENAS_DOCS_LEGACY_URL = 'git://10.20.21.137/freenas-docs'
+         REPO_FREENAS_PKGTOOLS_URL = 'git://10.20.21.137/freenas-pkgtools'
+         REPO_PORTS_URL = 'git://10.20.21.137/ports'
+         REPO_SAMBA_URL = 'git://10.20.21.137/samba'
+         REPO_NETATALK_URL = 'git://10.20.21.137/Netatalk'
+         REPO_IX_INSTALLER_URL = 'git://10.20.21.137/ix-installer'
+         REPO_PY_LIBZFS_URL = 'git://10.20.21.137/py-libzfs'
+         REPO_PY_BSD_URL = 'git://10.20.21.137/py-bsd'
+         REPO_IOCAGE_URL = 'git://10.20.21.137/iocage'
+      }
+      steps {
+        echo '*** Performing make checkout ***'
+        sh 'cd /freenas-pr && make checkout'
+        sh 'rm -rf /freenas-pr/freenas/_BE/freenas'
+        sh 'mkdir -p /freenas-pr/freenas/_BE/freenas'
+        sh 'tar cf - -C "${WORKSPACE}" . | tar xf - -C "/freenas-pr/freenas/_BE/freenas"'
+      }
+    }
+
+    stage('release') {
+      environment {
+         POUDRIERE_JOBS = '32'
+         BUILDWORLD_JOBS = '32'
+         LINT = ''
+      }
+      post {
+        always {
+          sh 'rm -rf ${WORKSPACE}/artifacts || true'
+          sh 'mkdir -p ${WORKSPACE}/artifacts'
+          sh 'mv /freenas-pr/freenas/_BE/release/* ${WORKSPACE}/artifacts/ || true'
+          sh 'rm ${WORKSPACE}/artifacts/LATEST || true'
+          sh 'mv /freenas-pr/freenas/_BE/objs/logs ${WORKSPACE}/artifacts/logs || true'
+          sh 'mv /freenas-pr/freenas/_BE/objs/ports/data/logs/bulk ${WORKSPACE}/artifacts/port-logs || true'
+          archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
+        }
+      }
+      steps {
+        echo '*** Performing make release ***'
+        sh 'cd /freenas-pr && make release TRAIN=freenas-pr'
+      }
+    }
+  }
+  post {
+    always {
+      sh 'rm -rf /usr/obj/freenas-pr'
+      sh '(mount | grep "on /freenas-pr" | awk \'{print $3}\' | sort -r | xargs umount -f ) || true'
+      sh 'rm -rf /freenas-pr || true'
+      sh 'chflags -R noschg /freenas-pr || true'
+      sh 'rm -rf /freenas-pr || true'
+      script {
+        cleanWs notFailBuild: true
+      }
+    }
+  }
+}

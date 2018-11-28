@@ -1,14 +1,10 @@
 import ipaddress
 import re
+import uuid
 
 from datetime import time
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-
-
-class ShouldBe(Exception):
-    def __init__(self, what):
-        self.what = what
 
 
 class Email:
@@ -16,7 +12,7 @@ class Email:
         try:
             validate_email(value)
         except ValidationError:
-            raise ShouldBe("valid E-Mail address")
+            raise ValueError("Not a valid E-Mail address")
 
 
 class Exact:
@@ -25,7 +21,7 @@ class Exact:
 
     def __call__(self, value):
         if value != self.value:
-            raise ShouldBe(f"{self.value!r}")
+            raise ValueError(f"Should be {self.value!r}")
 
 
 class IpAddress:
@@ -33,7 +29,7 @@ class IpAddress:
         try:
             ipaddress.ip_address(value)
         except ValueError:
-            raise ShouldBe("valid IP address")
+            raise ValueError('Not a valid IP address')
 
 
 class Time:
@@ -41,26 +37,25 @@ class Time:
         try:
             hours, minutes = value.split(':')
         except ValueError:
-            raise ShouldBe('Time should be in 24 hour format like "18:00"')
+            raise ValueError('Time should be in 24 hour format like "18:00"')
         else:
             try:
                 time(int(hours), int(minutes))
             except TypeError:
-                raise ShouldBe('Time should be in 24 hour format like "18:00"')
-            except ValueError as v:
-                raise ShouldBe(str(v))
+                raise ValueError('Time should be in 24 hour format like "18:00"')
 
 
 class Match:
-    def __init__(self, pattern, flags=0):
+    def __init__(self, pattern, flags=0, explanation=None):
         self.pattern = pattern
         self.flags = flags
+        self.explanation = explanation
 
         self.regex = re.compile(pattern, flags)
 
     def __call__(self, value):
         if not self.regex.match(value):
-            raise ShouldBe(f"{self.pattern}")
+            raise ValueError(self.explanation or f"Does not match {self.pattern}")
 
     def __deepcopy__(self, memo):
         return Match(self.pattern, self.flags)
@@ -71,17 +66,17 @@ class Or:
         self.validators = validators
 
     def __call__(self, value):
-        patterns = []
+        errors = []
 
         for validator in self.validators:
             try:
                 validator(value)
-            except ShouldBe as e:
-                patterns.append(e.what)
+            except ValueError as e:
+                errors.append(str(e))
             else:
                 return
 
-        raise ShouldBe(" or ".join(patterns))
+        raise ValueError(" or ".join(errors))
 
 
 class Range:
@@ -100,14 +95,77 @@ class Range:
         }[self.min is not None, self.max is not None]
 
         if self.min is not None and value < self.min:
-            raise ShouldBe(error)
+            raise ValueError(f"Should be {error}")
 
         if self.max is not None and value > self.max:
-            raise ShouldBe(error)
+            raise ValueError(f"Should be {error}")
 
 
-class Port:
+class Port(Range):
+    def __init__(self):
+        super().__init__(min=1, max=65535)
 
+
+class Unique:
     def __call__(self, value):
-        range_validator = Range(min=1, max=65535)
-        range_validator(value)
+        for item in value:
+            if value.count(item) > 1:
+                raise ValueError(f"Duplicate values are not allowed: {item!r}")
+
+
+class IpInUse:
+    def __init__(self, middleware, exclude=None):
+        self.middleware = middleware
+        self.exclude = exclude or []
+
+    def __call__(self, ip):
+        IpAddress()(ip)
+
+        # ip is valid
+        if ip not in self.exclude:
+            ips = [
+                v.split('|')[1].split('/')[0] if '|' in v else 'none'
+                for jail in self.middleware.call_sync('jail.query')
+                for j_ip in [jail['ip4_addr'], jail['ip6_addr']] for v in j_ip.split(',')
+            ] + [
+                d['address'] for d in self.middleware.call_sync('interface.ip_in_use')
+            ]
+
+            if ip in ips:
+                raise ValueError(
+                    f'{ip} is already being used by the system. Please select another IP'
+                )
+
+
+class MACAddr:
+    def __call__(self, value):
+        if not re.match('[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$', value.lower()):
+            raise ValueError('Please provide a valid MAC address')
+
+
+class UUID:
+    def __call__(self, value):
+        try:
+            uuid.UUID(value, version=4)
+        except ValueError as e:
+            raise ValueError(f'Invalid UUID: {e}')
+
+
+def validate_attributes(schema, data, additional_attrs=False, attr_key="attributes"):
+    from middlewared.schema import Dict, Error
+    from middlewared.service import ValidationErrors
+    verrors = ValidationErrors()
+
+    schema = Dict("attributes", *schema, additional_attrs=additional_attrs)
+
+    try:
+        data[attr_key] = schema.clean(data[attr_key])
+    except Error as e:
+        verrors.add(e.attribute, e.errmsg, e.errno)
+
+    try:
+        schema.validate(data[attr_key])
+    except ValidationErrors as e:
+        verrors.extend(e)
+
+    return verrors

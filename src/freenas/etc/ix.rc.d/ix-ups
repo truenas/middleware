@@ -45,7 +45,7 @@ EOF
 generate_upsmon()
 {
     local IFS="|"
-    local f="ups_mode ups_remotehost ups_remoteport ups_monuser ups_monpwd ups_identifier ups_shutdown ups_shutdowntimer ups_shutdowncmd ups_nocommwarntime ups_emailnotify ups_toemail ups_subject ups_powerdown"
+    local f="ups_mode ups_remotehost ups_remoteport ups_monuser ups_monpwd ups_identifier ups_shutdown ups_shutdowntimer ups_shutdowncmd ups_nocommwarntime ups_emailnotify ups_toemail ups_subject ups_powerdown ups_hostsync"
     eval local $f
     local sf=$(var_to_sf $f)
     local user passwd ident powerdown
@@ -85,6 +85,7 @@ NOTIFYFLAG FSD SYSLOG+EXEC
 NOTIFYFLAG SHUTDOWN SYSLOG+EXEC
 SHUTDOWNCMD "${ups_shutdowncmd}"
 POWERDOWNFLAG ${powerdown}
+HOSTSYNC ${ups_hostsync}
 EOF
 
 		if [ -n "${ups_nocommwarntime}" ]; then

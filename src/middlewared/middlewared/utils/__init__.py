@@ -2,6 +2,7 @@ import asyncio
 import imp
 import inspect
 import os
+import re
 import sys
 import subprocess
 import threading
@@ -11,46 +12,50 @@ from functools import wraps
 from threading import Lock
 
 
+# For freenasOS
 if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
-from freenasOS import Configuration
 
 BUILDTIME = None
 VERSION = None
 
 
-async def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
+def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None, select=None):
     from django.db.models.fields.related import ForeignKey, ManyToManyField
     from freenasUI.contrib.IPAddressField import (
         IPAddressField, IP4AddressField, IP6AddressField
     )
     data = {}
     for field in chain(obj._meta.fields, obj._meta.many_to_many):
-        name = field.name
+        origname = field.name
+        if field_prefix and origname.startswith(field_prefix):
+            name = origname[len(field_prefix):]
+        else:
+            name = origname
+        if select and name not in select:
+            continue
         try:
-            value = getattr(obj, name)
+            value = getattr(obj, origname)
         except Exception as e:
             # If foreign key does not exist set it to None
             if isinstance(field, ForeignKey) and isinstance(e, field.rel.model.DoesNotExist):
                 data[name] = None
                 continue
             raise
-        if field_prefix and name.startswith(field_prefix):
-            name = name[len(field_prefix):]
         if isinstance(field, (
             IPAddressField, IP4AddressField, IP6AddressField
         )):
             data[name] = str(value)
         elif isinstance(field, ForeignKey):
-            data[name] = await django_modelobj_serialize(middleware, value) if value is not None else value
+            data[name] = django_modelobj_serialize(middleware, value) if value is not None else value
         elif isinstance(field, ManyToManyField):
             data[name] = []
             for o in value.all():
-                data[name].append((await django_modelobj_serialize(middleware, o)))
+                data[name].append(django_modelobj_serialize(middleware, o))
         else:
             data[name] = value
     if extend:
-        data = await middleware.call(extend, data)
+        data = middleware.call_sync(extend, data)
     return data
 
 
@@ -123,10 +128,17 @@ def filter_list(_list, filters=None, options=None):
     opmap = {
         '=': lambda x, y: x == y,
         '!=': lambda x, y: x != y,
+        '>': lambda x, y: x > y,
+        '>=': lambda x, y: x >= y,
+        '<': lambda x, y: x < y,
+        '<=': lambda x, y: x <= y,
+        '~': lambda x, y: re.match(y, x),
         'in': lambda x, y: x in y,
         'nin': lambda x, y: x not in y,
         'rin': lambda x, y: y in x,
         'rnin': lambda x, y: y not in x,
+        '^': lambda x, y: x.startswith(y),
+        '$': lambda x, y: x.endswith(y),
     }
 
     if filters is None:
@@ -134,27 +146,63 @@ def filter_list(_list, filters=None, options=None):
     if options is None:
         options = {}
 
+    select = options.get('select')
+
     rv = []
     if filters:
+
+        def filterop(f):
+            if len(f) != 3:
+                raise ValueError(f'Invalid filter {f}')
+            name, op, value = f
+            if op not in opmap:
+                raise ValueError('Invalid operation: {}'.format(op))
+            if isinstance(i, dict):
+                source = get(i, name)
+            else:
+                source = getattr(i, name)
+            if opmap[op](source, value):
+                return True
+            return False
+
         for i in _list:
             valid = True
             for f in filters:
-                if len(f) == 3:
-                    name, op, value = f
-                    if op not in opmap:
-                        raise ValueError('Invalid operation: {}'.format(op))
-                    if isinstance(i, dict):
-                        source = get(i, name)
+                if len(f) == 2:
+                    op, value = f
+                    if op == 'OR':
+                        for f in value:
+                            if filterop(f):
+                                break
+                        else:
+                            valid = False
+                            break
                     else:
-                        source = getattr(i, name)
-                    if not opmap[op](source, value):
-                        valid = False
-                        break
+                        raise ValueError(f'Invalid operation: {op}')
+                elif not filterop(f):
+                    valid = False
+                    break
+
             if not valid:
                 continue
-            rv.append(i)
+            if select:
+                entry = {}
+                for s in select:
+                    if s in i:
+                        entry[s] = i[s]
+            else:
+                entry = i
+            rv.append(entry)
             if options.get('get') is True:
-                return i
+                return entry
+    elif select:
+        rv = []
+        for i in _list:
+            entry = {}
+            for s in select:
+                if s in i:
+                    entry[s] = i[s]
+            rv.append(entry)
     else:
         rv = _list
 
@@ -177,6 +225,8 @@ def filter_list(_list, filters=None, options=None):
 
 
 def sw_buildtime():
+    # Lazy import to avoid freenasOS configure logging for us
+    from freenasOS import Configuration
     global BUILDTIME
     if BUILDTIME is None:
         conf = Configuration.Configuration()
@@ -187,6 +237,8 @@ def sw_buildtime():
 
 
 def sw_version():
+    # Lazy import to avoid freenasOS configure logging for us
+    from freenasOS import Configuration
     global VERSION
     if VERSION is None:
         conf = Configuration.Configuration()
@@ -197,6 +249,8 @@ def sw_version():
 
 
 def sw_version_is_stable():
+    # Lazy import to avoid freenasOS configure logging for us
+    from freenasOS import Configuration
     conf = Configuration.Configuration()
     train = conf.CurrentTrain()
     if train and 'stable' in train.lower():
@@ -269,9 +323,14 @@ def load_modules(directory):
         if not f.endswith('.py'):
             continue
         f = f[:-3]
+        name = '.'.join(
+            ['middlewared'] +
+            os.path.relpath(directory, os.path.dirname(os.path.dirname(__file__))).split('/') +
+            [f]
+        )
         fp, pathname, description = imp.find_module(f, [directory])
         try:
-            modules.append(imp.load_module(f, fp, pathname, description))
+            modules.append(imp.load_module(name, fp, pathname, description))
         finally:
             if fp:
                 fp.close()

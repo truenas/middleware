@@ -1,5 +1,5 @@
 import logging
-import re
+import os
 
 from django.core.validators import RegexValidator
 from django.utils.translation import ugettext_lazy as _
@@ -20,51 +20,66 @@ log = logging.getLogger('vm.forms')
 
 class VMForm(ModelForm):
 
+    root_password = forms.CharField(
+        label=_("Root Password"),
+        widget=forms.PasswordInput(render_value=True),
+        required=False,
+    )
+    path = PathField(
+        label=_("Docker Disk File"),
+        dirsonly=False,
+        filesonly=False,
+    )
+    size = forms.IntegerField(
+        label=_("Size of Docker Disk File (GiB)"),
+        initial=20,
+        required=False,
+    )
+
     class Meta:
         fields = '__all__'
         model = models.VM
 
     def __init__(self, *args, **kwargs):
         super(VMForm, self).__init__(*args, **kwargs)
-        self.fields['vm_type'].widget.attrs['onChange'] = ("vmTypeToggle();")
-        key_order(self, 0, 'vm_type', instance=True)
-
-    def get_cpu_flags(self):
-        cpu_flags = {}
-        with client as c:
-            cpu_flags = c.call('vm.flags')
-        return cpu_flags
+        if self.instance.id:
+            for i in ('vm_type', 'root_password', 'path', 'size'):
+                del self.fields[i]
+            if self.instance.vm_type != 'Bhyve':
+                del self.fields['bootloader']
+        else:
+            self.fields['vm_type'].widget.attrs['onChange'] = ("vmTypeToggle();")
+            key_order(self, 0, 'vm_type', instance=True)
 
     def clean_name(self):
         name = self.cleaned_data.get('name')
         if name:
-            if not re.search(r'^[a-zA-Z _0-9]+$', name):
-                raise forms.ValidationError(_('Only alphanumeric characters are allowed and maximum of 150 characters.'))
             name = name.replace(' ', '')
         return name
 
-    def clean_vcpus(self):
-        cpu_flags = self.get_cpu_flags()
-        vcpus = self.cleaned_data.get('vcpus')
-
-        if cpu_flags.get('intel_vmx'):
-            if vcpus > 1 and cpu_flags.get('unrestricted_guest') is False:
-                raise forms.ValidationError(_('Only one Virtual CPU is allowed in this system.'))
-            else:
-                return vcpus
-        elif cpu_flags.get('amd_rvi'):
-            if vcpus > 1 and cpu_flags.get('amd_asids') is False:
-                raise forms.ValidationError(_('Only one Virtual CPU is allowed in this system.'))
-            else:
-                return vcpus
-
-    def clean_memory(self):
-        memory = self.cleaned_data.get('memory')
+    def clean_root_password(self):
         vm_type = self.cleaned_data.get('vm_type')
-        if vm_type == 'Container Provider' and memory < 1024:
-            raise forms.ValidationError(_('Minimum container memory is 1,024MiB.'))
-        else:
-            return memory
+        root_password = self.cleaned_data.get('root_password')
+        if vm_type != 'Bhyve' and not root_password:
+            raise forms.ValidationError(_('This field is required.'))
+        return root_password
+
+    def clean_path(self):
+        vm_type = self.cleaned_data.get('vm_type')
+        path = self.cleaned_data.get('path')
+        if vm_type != 'Bhyve':
+            if path and os.path.exists(path):
+                raise forms.ValidationError(_('File must not exist.'))
+            elif not path:
+                raise forms.ValidationError(_('File path is required.'))
+        return path
+
+    def clean_size(self):
+        vm_type = self.cleaned_data.get('vm_type')
+        size = self.cleaned_data.get('size')
+        if vm_type != 'Bhyve' and not size:
+            raise forms.ValidationError(_('This field is required.'))
+        return size
 
     def save(self, **kwargs):
         with client as c:
@@ -77,13 +92,27 @@ class VMForm(ModelForm):
             if self.instance.id:
                 c.call('vm.update', self.instance.id, cdata)
             else:
-                if self.instance.vm_type == 'Container Provider':
+                if cdata['vm_type'] == 'Container Provider':
                     cdata['devices'] = [
                         {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
-                        {'dtype': 'RAW', 'attributes': {'path': '', 'type': 'AHCI', 'sectorsize': 0}},
+                        {'dtype': 'RAW', 'attributes': {
+                            'path': cdata.pop('path'),
+                            'type': 'AHCI',
+                            'sectorsize': 0,
+                            'size': cdata.pop('size'),
+                            'exists': False,
+                        }},
                     ]
-                    c.call('vm.activate_sharefs')
-                elif self.instance.bootloader == 'UEFI' and self.instance.vm_type == 'Bhyve':
+                    cdata.pop('vm_type')
+                    cdata.pop('bootloader')
+                    cdata['type'] = 'RancherOS'
+                    return c.call('vm.create_container', cdata)
+
+                cdata.pop('root_password')
+                cdata.pop('path')
+                cdata.pop('size')
+
+                if cdata['bootloader'] == 'UEFI' and cdata['vm_type'] == 'Bhyve':
                     cdata['devices'] = [
                         {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
                         {'dtype': 'VNC', 'attributes': {'wait': False, 'vnc_web': False}},
@@ -159,7 +188,7 @@ class DeviceForm(ModelForm):
     )
     NIC_attach = forms.ChoiceField(
         label=_('NIC to attach'),
-        choices=choices.NICChoices(exclude_configured=False),
+        choices=(),
         required=False,
     )
     NIC_mac = forms.CharField(
@@ -215,6 +244,9 @@ class DeviceForm(ModelForm):
         )
 
         self.fields['VNC_bind'].choices = self.ipv4_list()
+        self.fields['NIC_attach'].choices = choices.NICChoices(
+            exclude_configured=False, include_vlan_parent=True, include_lagg_parent=False,
+        )
 
         diskchoices = {}
         _n = notifier()
@@ -299,9 +331,6 @@ class DeviceForm(ModelForm):
                 'sectorsize': self.cleaned_data['DISK_sectorsize'],
             }
         elif self.cleaned_data['dtype'] == 'RAW':
-            if self.is_container(vm.vm_type):
-                if self.cleaned_data['DISK_mode'] == 'VIRTIO':
-                    self._errors['dtype'] = self.error_class([_('Containers require AHCI mode.')])
             obj.attributes = {
                 'path': self.cleaned_data['DISK_raw'],
                 'type': self.cleaned_data['DISK_mode'],

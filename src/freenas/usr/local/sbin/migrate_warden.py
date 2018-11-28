@@ -36,6 +36,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import libzfs
 import shutil
+import pathlib
 from middlewared.client import Client, ClientException
 
 
@@ -161,15 +162,17 @@ class Migrate(object):
 
     async def migrate_jail(self):
         files = {
-            "name":        "host",
-            "ip4_addr":    "ipv4",
-            "ip6_addr":    "ipv6",
-            "mac":         "mac",
+            "name": "host",
+            "ip4_addr": "ipv4",
+            "ip6_addr": "ipv6",
+            "mac": "mac",
             "allow_props": "jail-flags",
-            "warden_id":   "id",
-            "vnet":        "vnet",
-            "boot":        "autostart",
-            "nat":         "nat"
+            "warden_id": "id",
+            "vnet": "vnet",
+            "boot": "autostart",
+            "nat": "nat",
+            "defaultrouter4": "defaultrouter-ipv4",
+            "defaultrouter6": "defaultrouter-ipv6"
         }
 
         pool_exists = self.ZFS.pool_exists()
@@ -186,6 +189,7 @@ class Migrate(object):
                   " first.")
             return
 
+        iocroot = self.zfs.get_dataset(f"{self.pool}/iocage").mountpoint
         props = {}
 
         for ioc_prop, warden_prop in files.items():
@@ -197,6 +201,9 @@ class Migrate(object):
                     props["dhcp"] = "yes"
                     props["bpf"] = "yes"
                     props["vnet"] = "on"
+                elif prop == 'AUTOCONF':
+                    props['ip6_addr'] = 'accept_rtadv'
+                    props['vnet'] = 'on'
                 else:
                     props[ioc_prop] = prop
 
@@ -207,7 +214,7 @@ class Migrate(object):
             print(f"  {self.jail} is running, please stop it first.")
             return
 
-        self.create_jail(props)
+        self.create_jail(props, iocroot)
 
         await asyncio.gather(
             asyncio.ensure_future(self.loop.run_in_executor(
@@ -230,7 +237,11 @@ class Migrate(object):
         )
 
         self.warden_dataset.destroy_snapshot(f"WardenMigration_{self.date}")
-        self.copy_fstab()
+
+        if os.path.isfile(f"{self.meta}/fstab"):
+            # We want to migrate their fstab
+            self.copy_fstab(iocroot)
+            self.fixup_fstab(iocroot)
 
     def is_jail_running(self):
         """
@@ -279,36 +290,59 @@ class Migrate(object):
     def activate_pool(self):
         su.check_call(["iocage", "activate", self.pool], stdout=su.PIPE)
 
-    def create_jail(self, props):
+    def create_jail(self, props, iocroot):
         name = props["name"]
         ip4 = props.get("ip4_addr", "none")
         ip6 = props.get("ip6_addr", "none")
-        mac = props.get("mac", "none")
+        mac = props.get("mac", "none").replace(':', '')
         vnet = props.get("vnet", "off")
         warden_id = props.get("warden_id", "none")
         boot = props.get("boot", "off")
         sysctls = props.get("allow_props", "")
+        release = self.get_warden_release()
+        defaultrouter4 = props.get('defaultrouter4', "none")
+        defaultrouter6 = props.get('defaultrouter6', "none")
 
         cmd = ["iocage", "create", "-n", name, "-e",
                f"notes=warden_id={warden_id}"] + sysctls.split()
 
         if vnet == "on":
-            # Warden only uses one mac, we use two for iocage.
-            cmd += ["vnet=on", f"ip4_addr=vnet0|{ip4}", f"ip6_addr=vnet0|{ip6}",
-                    f"vnet0_mac={mac},{mac}"]
+            ip6_addr = f'vnet0|{ip6}' if ip6 != 'none' else 'none'
+            ip4_addr = f'vnet0|{ip4}' if ip4 != 'none' else 'none'
+
+            if mac != 'none':
+                # Warden only uses one mac, we use two for iocage.
+                mac_a = int(mac, 16)
+                mac_b = mac_a + 1
+                vnet0_mac = f'{mac_a:012x},{mac_b:012x}'
+            else:
+                vnet0_mac = 'none'
+
+            cmd += ['vnet=on', f'ip4_addr={ip4_addr}', f'ip6_addr={ip6_addr}',
+                    f'vnet0_mac={vnet0_mac}',
+                    f'defaultrouter={defaultrouter4}',
+                    f'defaultrouter6={defaultrouter6}']
         else:
             # iocage allows non-interface only for non-vnet
-            cmd += [f"ip4_addr={ip4}", f"ip6_addr={ip6}"]
+            cmd += [f'ip4_addr={ip4}', f'ip6_addr={ip6}']
 
         su.check_call(cmd, stdout=su.PIPE)
+
+        with open(f'{iocroot}/jails/{name}/config.json', 'r') as config:
+            config = json.load(config)
 
         # If we don't do this after, iocage will try to start the 'nonexistent'
         # jail.
         if boot == "on":
-            su.check_call(["iocage", "set", "boot=on", name], stdout=su.PIPE)
+            config['boot'] = 'on'
 
-    def copy_fstab(self):
-        iocroot = self.zfs.get_dataset(f"{self.pool}/iocage").mountpoint
+        config['release'] = release
+
+        with open(f'{iocroot}/jails/{name}/config.json', 'w') as out:
+            json.dump(config, out, sort_keys=True, indent=4,
+                      ensure_ascii=False)
+
+    def copy_fstab(self, iocroot):
         try:
             os.remove(f"{iocroot}/jails/{self.jail}/fstab")
         except FileNotFoundError:
@@ -316,6 +350,28 @@ class Migrate(object):
             pass
 
         shutil.copy(f"{self.meta}/fstab", f"{iocroot}/jails/{self.jail}/fstab")
+
+    def fixup_fstab(self, iocroot):
+        with open(f"{self.meta}/fstab", 'r') as _fstab:
+            with open(f"{iocroot}/jails/{self.jail}/fstab", 'w') as fstab:
+                for line in _fstab:
+                    line = line.replace(f'{self.dataset}/',
+                                        f'{iocroot}/jails/{self.jail}/root')
+                    # This needs to exist now
+                    fstab_dest = line.rsplit(f'{iocroot}/jails/{self.jail}',
+                                             1)[-1].split()[0]
+                    destination = f'{iocroot}/jails/' \
+                        f'{self.jail}/root{fstab_dest}'
+                    pathlib.Path(
+                        destination).mkdir(parents=True, exist_ok=True)
+
+                    fstab.write(line)
+
+    def get_warden_release(self):
+        jail_world = su.run(['file', f'{self.dataset}/bin/sh'], stdout=su.PIPE)
+        jail_world = jail_world.stdout.split()[15].decode().rstrip(',')
+
+        return f'{jail_world}-RELEASE'
 
 
 async def main(argv, loop):

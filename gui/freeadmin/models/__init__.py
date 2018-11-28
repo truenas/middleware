@@ -33,8 +33,8 @@ from freenasUI.common.log import log_traceback
 from freenasUI.freeadmin.apppool import appPool
 
 #FIXME: Backward compatible
-from .fields import (
-    DictField, EncryptedDictField,    # NOQA
+from .fields import (  # NOQA
+    DictField, ListField, EncryptedDictField,
     UserField, GroupField, PathField, MACField, Network4Field, Network6Field
 )
 

@@ -9,6 +9,6 @@ class MegaRcloneRemote(BaseRcloneRemote):
     rclone_type = "mega"
 
     credentials_schema = [
-        Str("user", verbose="Username", required=True),
-        Str("pass", verbose="Password", required=True),
+        Str("user", title="Username", required=True),
+        Str("pass", title="Password", required=True),
     ]

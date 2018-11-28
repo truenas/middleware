@@ -4,14 +4,16 @@ from .event import EventSource
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
-from .schema import ResolverError, Error as SchemaError
+from .schema import Error as SchemaError, Schemas
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from .utils import start_daemon_thread, load_modules, load_classes
-from .worker import ProcessPoolExecutor, main_worker
+from .webui_auth import WebUIAuth
+from .worker import main_worker, worker_init
 from aiohttp import web
 from aiohttp.web_exceptions import HTTPPermanentRedirect
 from aiohttp.web_middlewares import normalize_path_middleware
 from aiohttp_wsgi import WSGIHandler
+from bsd.threading import set_thread_name
 from collections import defaultdict
 
 import argparse
@@ -24,6 +26,7 @@ import inspect
 import linecache
 import multiprocessing
 import os
+import pickle
 import queue
 import select
 import setproctitle
@@ -49,6 +52,8 @@ class Application(object):
         self.handshake = False
         self.logger = logger.Logger('application').getLogger()
         self.sessionid = str(uuid.uuid4())
+
+        self._py_exceptions = False
 
         """
         Callback index registered by services. They are blocking.
@@ -136,16 +141,19 @@ class Application(object):
         }
 
     def send_error(self, message, errno, reason=None, exc_info=None, etype=None, extra=None):
+        error_extra = {}
+        if self._py_exceptions and exc_info:
+            error_extra['py_exception'] = binascii.b2a_base64(pickle.dumps(exc_info[1])).decode()
         self._send({
             'msg': 'result',
             'id': message['id'],
-            'error': {
+            'error': dict({
                 'error': errno,
                 'type': etype,
                 'reason': reason,
                 'trace': self._tb_error(exc_info) if exc_info else None,
                 'extra': extra,
-            },
+            }, **error_extra),
         })
 
     async def call_method(self, message):
@@ -172,21 +180,30 @@ class Application(object):
         except (CallException, SchemaError) as e:
             # CallException and subclasses are the way to gracefully
             # send errors to the client
-            self.send_error(message, e.errno, str(e), sys.exc_info())
+            self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
         except Exception as e:
             self.send_error(message, errno.EINVAL, str(e), sys.exc_info())
-            self.logger.warn('Exception while calling {}(*{})'.format(
-                message['method'],
-                self.middleware.dump_args(message.get('params', []), method_name=message['method'])
-            ), exc_info=True)
+            if not self._py_exceptions:
+                self.logger.warn('Exception while calling {}(*{})'.format(
+                    message['method'],
+                    self.middleware.dump_args(message.get('params', []), method_name=message['method'])
+                ), exc_info=True)
+                asyncio.ensure_future(self.__crash_reporting(sys.exc_info()))
 
-            if self.middleware.crash_reporting.is_disabled():
-                self.logger.debug('[Crash Reporting] is disabled using sentinel file.')
-            else:
+    async def __crash_reporting(self, exc_info):
+        if self.middleware.crash_reporting.is_disabled():
+            self.logger.debug('[Crash Reporting] is disabled using sentinel file.')
+        elif self.middleware.crash_reporting_semaphore.locked():
+            self.logger.debug('[Crash Reporting] skipped due too many running instances')
+        else:
+            async with self.middleware.crash_reporting_semaphore:
                 extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-                asyncio.ensure_future(self.middleware.run_in_thread(
-                    self.middleware.crash_reporting.report, sys.exc_info(), None, extra_log_files
-                ))
+                await self.middleware.run_in_thread(
+                    self.middleware.crash_reporting.report,
+                    exc_info,
+                    None,
+                    extra_log_files,
+                )
 
     async def subscribe(self, ident, name):
 
@@ -285,6 +302,9 @@ class Application(object):
                     'version': '1',
                 })
             else:
+                features = message.get('features') or []
+                if 'PY_EXCEPTIONS' in features:
+                    self._py_exceptions = True
                 # aiohttp can cancel tasks if a request take too long to finish
                 # It is desired to prevent that in this stage in case we are debugging
                 # middlewared via gdb (which makes the program execution a lot slower)
@@ -396,7 +416,7 @@ class FileApplication(object):
                 asyncio.run_coroutine_threadsafe(resp.write(read), loop=self.loop).result()
 
         try:
-            await self.middleware.run_in_io_thread(do_copy)
+            await self.middleware.run_in_thread(do_copy)
         finally:
             await self._cleanup_job(job_id)
 
@@ -477,9 +497,9 @@ class FileApplication(object):
             job = await self.middleware.call(data['method'], *(data.get('params') or []),
                                              pipes=Pipes(input=self.middleware.pipe()))
             try:
-                await self.middleware.run_in_io_thread(copy)
+                await self.middleware.run_in_thread(copy)
             finally:
-                await self.middleware.run_in_io_thread(job.pipes.input.w.close)
+                await self.middleware.run_in_thread(job.pipes.input.w.close)
         except CallError as e:
             if e.errno == CallError.ENOMETHOD:
                 status_code = 422
@@ -707,26 +727,41 @@ class ShellApplication(object):
 
 class Middleware(object):
 
-    def __init__(self, loop_monitor=True, overlay_dirs=None, debug_level=None):
+    CONSOLE_ONCE_PATH = '/tmp/.middlewared-console-once'
+
+    def __init__(
+        self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None,
+        log_handler=None,
+    ):
         self.logger = logger.Logger('middlewared', debug_level).getLogger()
         self.crash_reporting = logger.CrashReporting()
+        self.crash_reporting_semaphore = asyncio.Semaphore(value=2)
+        self.loop_debug = loop_debug
         self.loop_monitor = loop_monitor
         self.overlay_dirs = overlay_dirs or []
         self.__loop = None
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
         multiprocessing.set_start_method('spawn')
-        self.__procpool = ProcessPoolExecutor(max_workers=2)
-        self.__threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
+        self.__procpool = concurrent.futures.ProcessPoolExecutor(
+            max_workers=2,
+            initializer=functools.partial(worker_init, debug_level, log_handler),
+        )
+        self.__threadpool = concurrent.futures.ThreadPoolExecutor(
+            initializer=lambda: set_thread_name('threadpool_ws'),
+            max_workers=10,
+        )
         self.jobs = JobsQueue(self)
-        self.__schemas = {}
+        self.__schemas = Schemas()
         self.__services = {}
+        self.__services_aliases = {}
         self.__wsclients = {}
         self.__event_sources = {}
         self.__event_subs = defaultdict(list)
         self.__hooks = defaultdict(list)
         self.__server_threads = []
         self.__init_services()
+        self.__console_io = False if os.path.exists(self.CONSOLE_ONCE_PATH) else None
 
     def __init_services(self):
         from middlewared.service import CoreService
@@ -743,6 +778,7 @@ class Middleware(object):
         plugins_dirs.insert(0, main_plugins_dir)
 
         self.logger.debug('Loading plugins from {0}'.format(','.join(plugins_dirs)))
+        self._console_write(f'loading plugins')
 
         setup_funcs = []
         for plugins_dir in plugins_dirs:
@@ -755,31 +791,24 @@ class Middleware(object):
                     self.add_service(cls(self))
 
                 if hasattr(mod, 'setup'):
-                    setup_funcs.append(mod.setup)
+                    setup_funcs.append((mod.__name__.rsplit('.', 1)[-1], mod.setup))
 
+        self._console_write(f'resolving plugins schemas')
         # Now that all plugins have been loaded we can resolve all method params
         # to make sure every schema is patched and references match
-        from middlewared.schema import resolver  # Lazy import so namespace match
+        from middlewared.schema import resolve_methods  # Lazy import so namespace match
         to_resolve = []
         for service in list(self.__services.values()):
             for attr in dir(service):
                 to_resolve.append(getattr(service, attr))
-        while len(to_resolve) > 0:
-            resolved = 0
-            for method in list(to_resolve):
-                try:
-                    resolver(self, method)
-                except ResolverError:
-                    pass
-                else:
-                    to_resolve.remove(method)
-                    resolved += 1
-            if resolved == 0:
-                raise ValueError(f'Not all schemas could be resolved: {to_resolve}')
+        resolve_methods(self.__schemas, to_resolve)
 
         # Only call setup after all schemas have been resolved because
         # they can call methods with schemas defined.
-        for f in setup_funcs:
+        setup_total = len(setup_funcs)
+        for i, setup_func in enumerate(setup_funcs):
+            name, f = setup_func
+            self._console_write(f'setting up plugins ({name}) [{i + 1}/{setup_total}]')
             call = f(self)
             # Allow setup to be a coroutine
             if asyncio.iscoroutinefunction(f):
@@ -826,6 +855,59 @@ class Middleware(object):
             )
         )
 
+    def _console_write(self, text, fill_blank=True, append=False):
+        """
+        Helper method to write the progress of middlewared loading to the
+        system console.
+
+        There are some cases where loading will take a considerable amount of time,
+        giving user at least some basic feedback is fundamental.
+        """
+        # False means we are running in a terminal, no console needed
+        if self.__console_io is False:
+            return
+        elif self.__console_io is None:
+            if sys.stdin and sys.stdin.isatty():
+                self.__console_io = False
+                return
+            try:
+                self.__console_io = open('/dev/console', 'w')
+            except Exception:
+                return
+            try:
+                # We need to make sure we only try to write to console one time
+                # in case middlewared crashes and keep writing to console in a loop.
+                with open(self.CONSOLE_ONCE_PATH, 'w'):
+                    pass
+            except Exception:
+                pass
+        try:
+            if append:
+                self.__console_io.write(text)
+            else:
+                prefix = 'middlewared: '
+                maxlen = 60
+                text = text[:maxlen - len(prefix)]
+                # new line needs to go after all the blanks
+                if text.endswith('\n'):
+                    newline = '\n'
+                    text = text[:-1]
+                else:
+                    newline = ''
+                if fill_blank:
+                    blank = ' ' * (maxlen - (len(prefix) + len(text)))
+                else:
+                    blank = ''
+                writes = self.__console_io.write(
+                    f'\r{prefix}{text}{blank}{newline}'
+                )
+            self.__console_io.flush()
+            return writes
+        except OSError:
+            self.logger.debug('Failed to write to console', exc_info=True)
+        except Exception:
+            pass
+
     def register_wsclient(self, client):
         self.__wsclients[client.sessionid] = client
 
@@ -855,7 +937,7 @@ class Middleware(object):
         """
         for hook in self.__hooks[name]:
             try:
-                fut = hook['method'](*args, **kwargs)
+                fut = hook['method'](self, *args, **kwargs)
                 if hook['sync']:
                     await fut
                 else:
@@ -874,22 +956,17 @@ class Middleware(object):
 
     def add_service(self, service):
         self.__services[service._config.namespace] = service
+        if service._config.namespace_alias:
+            self.__services_aliases[service._config.namespace_alias] = service
 
     def get_service(self, name):
-        return self.__services[name]
+        service = self.__services.get(name)
+        if service:
+            return service
+        return self.__services_aliases[name]
 
     def get_services(self):
         return self.__services
-
-    def add_schema(self, schema):
-        if schema.name in self.__schemas:
-            raise ValueError('Schema "{0}" is already registered'.format(
-                schema.name
-            ))
-        self.__schemas[schema.name] = schema
-
-    def get_schema(self, name):
-        return self.__schemas.get(name)
 
     async def run_in_executor(self, pool, method, *args, **kwargs):
         """
@@ -901,14 +978,26 @@ class Middleware(object):
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
 
-    async def run_in_thread(self, method, *args, **kwargs):
+    async def _run_in_conn_threadpool(self, method, *args, **kwargs):
+        """
+        Threads to handle websocket connection are gated on `__threadpool`.
+        Any other calls should use `run_in_thread` as that launches its own thread
+        and does not cause deadlock waiting another thread to finish in the pool
+        (which could happen on the stack call, e.g.
+           service.foo calls something in using the thread pool and something also
+           uses the thread pool. If service.foo is called many times before each thread
+           finishes we will have a deadlock)
+        """
         return await self.run_in_executor(self.__threadpool, method, *args, **kwargs)
 
     async def run_in_proc(self, method, *args, **kwargs):
         return await self.run_in_executor(self.__procpool, method, *args, **kwargs)
 
-    async def run_in_io_thread(self, method, *args, **kwargs):
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+    async def run_in_thread(self, method, *args, **kwargs):
+        executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=1,
+            initializer=lambda: set_thread_name('io_thread'),
+        )
         try:
             return await self.loop.run_in_executor(executor, functools.partial(method, *args, **kwargs))
         finally:
@@ -917,7 +1006,7 @@ class Middleware(object):
     def pipe(self):
         return Pipe(self)
 
-    async def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, io_thread=False):
+    async def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, io_thread=True):
 
         args = []
         if hasattr(methodobj, '_pass_app'):
@@ -961,16 +1050,15 @@ class Middleware(object):
                 return await self.run_in_executor(tpool, methodobj, *args)
 
             if io_thread:
-                run_method = self.run_in_io_thread
-            else:
                 run_method = self.run_in_thread
+            else:
+                run_method = self._run_in_conn_threadpool
             return await run_method(methodobj, *args)
 
     async def _call_worker(self, serviceobj, name, *args, job=None):
         return await self.run_in_proc(
             main_worker,
-            # For now only plugins in middlewared.plugins are supported
-            f'middlewared.plugins.{serviceobj.__class__.__module__}',
+            serviceobj.__class__.__module__,
             serviceobj.__class__.__name__,
             name.rsplit('.', 1)[-1],
             args,
@@ -1053,7 +1141,7 @@ class Middleware(object):
 
         self.logger.trace(f'Sending event "{event_type}":{kwargs}')
 
-        for sessionid, wsclient in self.__wsclients.items():
+        for sessionid, wsclient in list(self.__wsclients.items()):
             try:
                 wsclient.send_event(name, event_type, **kwargs)
             except Exception:
@@ -1074,15 +1162,16 @@ class Middleware(object):
         connection = Application(self, self.__loop, request, ws)
         connection.on_open()
 
-        async for msg in ws:
-            x = json.loads(msg.data)
-            try:
-                await connection.on_message(x)
-            except Exception as e:
-                self.logger.error('Connection closed unexpectedly', exc_info=True)
-                await ws.close(message=str(e).encode('utf-8'))
-
-        await connection.on_close()
+        try:
+            async for msg in ws:
+                x = json.loads(msg.data)
+                try:
+                    await connection.on_message(x)
+                except Exception as e:
+                    self.logger.error('Connection closed unexpectedly', exc_info=True)
+                    await ws.close(message=str(e).encode('utf-8'))
+        finally:
+            await connection.on_close()
         return ws
 
     def _loop_monitor_thread(self):
@@ -1093,29 +1182,36 @@ class Middleware(object):
         DISCLAIMER/TODO: This is not free of race condition so it may show
         false positives.
         """
+        set_thread_name('loop_monitor')
         last = None
         while True:
             time.sleep(2)
-            current = asyncio.Task.current_task(loop=self.__loop)
+            current = asyncio.current_task(loop=self.__loop)
             if current is None:
                 last = None
                 continue
             if last == current:
                 frame = sys._current_frames()[self.__thread_id]
-                stack = traceback.format_stack(frame, limit=10)
+                stack = traceback.format_stack(frame, limit=-10)
                 self.logger.warn(''.join(['Task seems blocked:'] + stack))
             last = current
 
     def run(self):
+
+        self._console_write('starting')
+
+        set_thread_name('asyncio_loop')
         self.loop = self.__loop = asyncio.get_event_loop()
 
-        if self.loop_monitor:
+        if self.loop_debug:
             self.__loop.set_debug(True)
-            # loop.slow_callback_duration(0.2)
+            self.__loop.slow_callback_duration = 0.2
 
         # Needs to happen after setting debug or may cause race condition
         # http://bugs.python.org/issue30805
         self.__loop.run_until_complete(self.__plugins_load())
+
+        self._console_write('registering services')
 
         if self.loop_monitor:
             # Start monitor thread after plugins have been loaded
@@ -1133,7 +1229,8 @@ class Middleware(object):
         ], loop=self.__loop)
         app.router.add_route('GET', '/websocket', self.ws_handler)
 
-        app.router.add_route("*", "/api/docs{path_info:.*}", WSGIHandler(apidocs_app))
+        app.router.add_route('*', '/api/docs{path_info:.*}', WSGIHandler(apidocs_app))
+        app.router.add_route('*', '/ui{path_info:.*}', WebUIAuth(self))
 
         self.fileapp = FileApplication(self, self.__loop)
         app.router.add_route('*', '/_download{path_info:.*}', self.fileapp.download)
@@ -1161,6 +1258,7 @@ class Middleware(object):
         self.__loop.run_until_complete(web.UnixSite(runner, '/var/run/middlewared.sock').start())
 
         self.logger.debug('Accepting connections')
+        self._console_write('loading completed\n')
 
         try:
             self.__loop.run_forever()
@@ -1170,10 +1268,6 @@ class Middleware(object):
 
     def terminate(self):
         self.logger.info('Terminating')
-
-        for task in asyncio.Task.all_tasks():
-            task.cancel()
-
         self.__loop.create_task(self.__terminate())
 
     async def __terminate(self):
@@ -1181,7 +1275,13 @@ class Middleware(object):
             # We're using this instead of having no-op `terminate`
             # in base class to reduce number of awaits
             if hasattr(service, "terminate"):
-                await service.terminate()
+                try:
+                    await service.terminate()
+                except Exception as e:
+                    self.logger.error('Failed to terminate %s', service_name, exc_info=True)
+
+        for task in asyncio.all_tasks(loop=self.__loop):
+            task.cancel()
 
         self.__loop.stop()
 
@@ -1199,6 +1299,7 @@ def main():
     parser.add_argument('restart', nargs='?')
     parser.add_argument('--pidfile', '-P', action='store_true')
     parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
+    parser.add_argument('--loop-debug', action='store_true')
     parser.add_argument('--overlay-dirs', '-o', action='append')
     parser.add_argument('--debug-level', choices=[
         'TRACE',
@@ -1213,9 +1314,6 @@ def main():
     ], default='console')
     args = parser.parse_args()
 
-    _logger = logger.Logger('middleware', args.debug_level)
-    _logger.getLogger()
-
     pidpath = '/var/run/middlewared.pid'
 
     if args.restart:
@@ -1228,13 +1326,7 @@ def main():
                 if e.errno != errno.ESRCH:
                     raise
 
-    if 'file' in args.log_handler:
-        _logger.configure_logging('file')
-        sys.stdout = sys.stderr = _logger.stream()
-    elif 'console' in args.log_handler:
-        _logger.configure_logging('console')
-    else:
-        _logger.configure_logging('file')
+    logger.setup_logging('middleware', args.debug_level, args.log_handler)
 
     setproctitle.setproctitle('middlewared')
     # Workaround to tell django to not set up logging on its own
@@ -1245,9 +1337,11 @@ def main():
             _pidfile.write(f"{str(os.getpid())}\n")
 
     Middleware(
+        loop_debug=args.loop_debug,
         loop_monitor=not args.disable_loop_monitor,
         overlay_dirs=args.overlay_dirs,
         debug_level=args.debug_level,
+        log_handler=args.log_handler,
     ).run()
 
 

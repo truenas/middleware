@@ -47,7 +47,7 @@ class VCenterService(ConfigService):
         if action and action != 'UNINSTALL':
             if (
                 not (await self.middleware.call('vcenteraux.config'))['enable_https'] and
-                (await self.middleware.call('system.general.config'))['ui_protocol'].upper() == 'HTTPS'
+                (await self.middleware.call('system.general.config'))['ui_httpsredirect']
             ):
                 verrors.add(
                     f'{schema_name}.action',
@@ -85,13 +85,13 @@ class VCenterService(ConfigService):
 
         action = new.pop('action')
         system_general = await self.middleware.call('system.general.config')
-        ui_protocol = system_general['ui_protocol']
+        ui_protocol = 'https' if system_general['ui_httpsredirect'] else 'http'
         ui_port = system_general['ui_port'] if ui_protocol.lower() != 'https' else system_general['ui_httpsport']
         fingerprint = await self.middleware.call(
             'certificate.get_host_certificates_thumbprint',
             new['management_ip'], new['port']
         )
-        plugin_file_name = await self.middleware.run_in_io_thread(
+        plugin_file_name = await self.middleware.run_in_thread(
             self.get_plugin_file_name
         )
         # TODO: URL will change once the plugin file's location is shifted
@@ -126,14 +126,14 @@ class VCenterService(ConfigService):
                     raise verrors
 
                 try:
-                    await self.middleware.run_in_io_thread(
+                    await self.middleware.run_in_thread(
                         self.__install_vcenter_plugin,
                         install_dict
                     )
                 except ValidationError as e:
                     verrors.add_validation_error(e)
                 else:
-                    new['version'] = await self.middleware.run_in_io_thread(self.get_plugin_version)
+                    new['version'] = await self.middleware.run_in_thread(self.get_plugin_version)
                     new['installed'] = True
 
         elif action == 'REPAIR':
@@ -153,7 +153,7 @@ class VCenterService(ConfigService):
                     credential_dict.pop('management_ip')
                     credential_dict.pop('fingerprint')
 
-                    found_plugin = await self.middleware.run_in_io_thread(
+                    found_plugin = await self.middleware.run_in_thread(
                         self._find_plugin,
                         credential_dict
                     )
@@ -172,7 +172,7 @@ class VCenterService(ConfigService):
                     try:
                         repair_dict = install_dict.copy()
                         repair_dict['install_mode'] = 'REPAIR'
-                        await self.middleware.run_in_io_thread(
+                        await self.middleware.run_in_thread(
                             self.__install_vcenter_plugin,
                             repair_dict
                         )
@@ -192,7 +192,7 @@ class VCenterService(ConfigService):
                     uninstall_dict = install_dict.copy()
                     uninstall_dict.pop('management_ip')
                     uninstall_dict.pop('fingerprint')
-                    await self.middleware.run_in_io_thread(
+                    await self.middleware.run_in_thread(
                         self.__uninstall_vcenter_plugin,
                         uninstall_dict
                     )
@@ -221,14 +221,14 @@ class VCenterService(ConfigService):
             else:
 
                 try:
-                    await self.middleware.run_in_io_thread(
+                    await self.middleware.run_in_thread(
                         self.__upgrade_vcenter_plugin,
                         install_dict
                     )
                 except ValidationError as e:
                     verrors.add_validation_error(e)
                 else:
-                    new['version'] = await self.middleware.run_in_io_thread(self.get_plugin_version)
+                    new['version'] = await self.middleware.run_in_thread(self.get_plugin_version)
 
         if verrors:
             raise verrors
@@ -247,7 +247,7 @@ class VCenterService(ConfigService):
 
     @private
     async def is_update_available(self):
-        latest_version = await self.middleware.run_in_io_thread(self.get_plugin_version)
+        latest_version = await self.middleware.run_in_thread(self.get_plugin_version)
         current_version = (await self.config())['version']
         return latest_version if current_version and \
                                  parse_version(latest_version) > parse_version(current_version) else None
@@ -259,7 +259,7 @@ class VCenterService(ConfigService):
     @private
     async def get_management_ip_choices(self):
         ip_list = await self.middleware.call(
-            'interfaces.ip_in_use', {
+            'interface.ip_in_use', {
                 'ipv4': True
             }
         )

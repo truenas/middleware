@@ -33,7 +33,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
-from freenasUI.freeadmin.models import DictField, Model, UserField, PathField
+from freenasUI.freeadmin.models import DictField, ListField, Model, UserField, PathField
 from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Disk
@@ -79,6 +79,26 @@ class CloudSync(Model):
     )
     attributes = DictField(
         editable=False,
+    )
+    snapshot = models.BooleanField(
+        verbose_name=_("Take snapshot"),
+        help_text=_(
+            "Take dataset snapshot before pushing data.",
+        ),
+    )
+    pre_script = models.TextField(
+        blank=True,
+        verbose_name=_("Pre-script"),
+        help_text=_(
+            "Script to execute before running sync.",
+        ),
+    )
+    post_script = models.TextField(
+        blank=True,
+        verbose_name=_("Post-script"),
+        help_text=_(
+            "Script to execute after running sync.",
+        ),
     )
     encryption = models.BooleanField(
         verbose_name=_("Remote encryption"),
@@ -146,6 +166,12 @@ class CloudSync(Model):
         default="*",
         verbose_name=_("Day of week"),
     )
+    bwlimit = ListField(
+        editable=False,
+    )
+    exclude = ListField(
+        editable=False,
+    )
     enabled = models.BooleanField(
         default=True,
         verbose_name=_("Enabled"),
@@ -161,57 +187,6 @@ class CloudSync(Model):
 
     def __str__(self):
         return self.description
-
-    def get_human_minute(self):
-        if self.minute == '*':
-            return _('Every minute')
-        elif self.minute.startswith('*/'):
-            return _('Every {0} minute(s)').format(
-                self.minute.split('*/')[1])
-        else:
-            return self.minute
-
-    def get_human_hour(self):
-        if self.hour == '*':
-            return _('Every hour')
-        elif self.hour.startswith('*/'):
-            return _('Every {0} hour(s)').format(
-                self.hour.split('*/')[1])
-        else:
-            return self.hour
-
-    def get_human_daymonth(self):
-        if self.daymonth == '*':
-            return _('Everyday')
-        elif self.daymonth.startswith('*/'):
-            return _('Every {0} days').format(
-                self.daymonth.split('*/')[1])
-        else:
-            return self.daymonth
-
-    def get_human_month(self):
-        months = self.month.split(',')
-        if len(months) == 12 or self.month == '*':
-            return _("Every month")
-        mchoices = dict(choices.MONTHS_CHOICES)
-        labels = []
-        for m in months:
-            labels.append(str(mchoices[m]))
-        return ', '.join(labels)
-
-    def get_human_dayweek(self):
-        weeks = self.dayweek.split(',')
-        if len(weeks) == 7 or self.dayweek == '*':
-            return _('Everyday')
-        if weeks == list(map(str, range(1, 6))):
-            return _('Weekdays')
-        if weeks == list(map(str, range(6, 8))):
-            return _('Weekends')
-        wchoices = dict(choices.WEEKDAYS_CHOICES)
-        labels = []
-        for w in weeks:
-            labels.append(str(wchoices[str(w)]))
-        return ', '.join(labels)
 
     def run(self):
         with client as c:
@@ -292,61 +267,6 @@ class CronJob(Model):
             return self.cron_description
         return "%d (%s)" % (self.id, self.cron_user)
 
-    def get_human_minute(self):
-        if self.cron_minute == '*':
-            return _('Every minute')
-        elif self.cron_minute.startswith('*/'):
-            return _('Every {0} minute(s)').format(
-                self.cron_minute.split('*/')[1])
-        else:
-            return self.cron_minute
-
-    def get_human_hour(self):
-        if self.cron_hour == '*':
-            return _('Every hour')
-        elif self.cron_hour.startswith('*/'):
-            return _('Every {0} hour(s)').format(
-                self.cron_hour.split('*/')[1])
-        else:
-            return self.cron_hour
-
-    def get_human_daymonth(self):
-        if self.cron_daymonth == '*':
-            return _('Everyday')
-        elif self.cron_daymonth.startswith('*/'):
-            return _('Every {0} days').format(
-                self.cron_daymonth.split('*/')[1])
-        else:
-            return self.cron_daymonth
-
-    def get_human_month(self):
-        months = self.cron_month.split(",")
-        if len(months) == 12 or self.cron_month == '*':
-            return _("Every month")
-        mchoices = dict(choices.MONTHS_CHOICES)
-        labels = []
-        for m in months:
-            labels.append(str(mchoices[m]))
-        return ', '.join(labels)
-
-    def get_human_dayweek(self):
-        # TODO:
-        # 1. Carve out the days input so that way one can say:
-        #    Mon-Fri + Saturday -> Weekdays + Saturday.
-        # 2. Get rid of the duplicate code.
-        weeks = self.cron_dayweek.split(',')
-        if len(weeks) == 7 or self.cron_dayweek == '*':
-            return _('Everyday')
-        if weeks == list(map(str, range(1, 6))):
-            return _('Weekdays')
-        if weeks == list(map(str, range(6, 8))):
-            return _('Weekends')
-        wchoices = dict(choices.WEEKDAYS_CHOICES)
-        labels = []
-        for w in weeks:
-            labels.append(str(wchoices[str(w)]))
-        return ', '.join(labels)
-
     def commandline(self):
         line = self.cron_command
         if self.cron_stdout:
@@ -364,13 +284,6 @@ class CronJob(Model):
             "-i", str(self.id),
         ])
         proc.communicate()
-
-    def delete(self):
-        super(CronJob, self).delete()
-        try:
-            notifier().restart("cron")
-        except:
-            pass
 
 
 class InitShutdown(Model):
@@ -600,57 +513,6 @@ class Rsync(Model):
         else:
             return self.rsync_remotepath
 
-    def get_human_minute(self):
-        if self.rsync_minute == '*':
-            return _('Every minute')
-        elif self.rsync_minute.startswith('*/'):
-            return _('Every {0} minute(s)').format(
-                self.rsync_minute.split('*/')[1])
-        else:
-            return self.rsync_minute
-
-    def get_human_hour(self):
-        if self.rsync_hour == '*':
-            return _('Every hour')
-        elif self.rsync_hour.startswith('*/'):
-            return _('Every {0} hour(s)').format(
-                self.rsync_hour.split('*/')[1])
-        else:
-            return self.rsync_hour
-
-    def get_human_daymonth(self):
-        if self.rsync_daymonth == '*':
-            return _('Everyday')
-        elif self.rsync_daymonth.startswith('*/'):
-            return _('Every {0} days').format(
-                self.rsync_daymonth.split('*/')[1])
-        else:
-            return self.rsync_daymonth
-
-    def get_human_month(self):
-        months = self.rsync_month.split(',')
-        if len(months) == 12 or self.rsync_month == '*':
-            return _("Every month")
-        mchoices = dict(choices.MONTHS_CHOICES)
-        labels = []
-        for m in months:
-            labels.append(str(mchoices[m]))
-        return ', '.join(labels)
-
-    def get_human_dayweek(self):
-        weeks = self.rsync_dayweek.split(',')
-        if len(weeks) == 7 or self.rsync_dayweek == '*':
-            return _('Everyday')
-        if weeks == list(map(str, range(1, 6))):
-            return _('Weekdays')
-        if weeks == list(map(str, range(6, 8))):
-            return _('Weekends')
-        wchoices = dict(choices.WEEKDAYS_CHOICES)
-        labels = []
-        for w in weeks:
-            labels.append(str(wchoices[str(w)]))
-        return ', '.join(labels)
-
     def commandline(self):
         line = '/usr/bin/lockf -s -t 0 -k "%s" /usr/local/bin/rsync' % (
             self.rsync_path
@@ -732,13 +594,6 @@ class Rsync(Model):
         ])
         proc.communicate()
 
-    def delete(self):
-        super(Rsync, self).delete()
-        try:
-            notifier().restart("cron")
-        except:
-            pass
-
 
 class SMARTTest(Model):
     smarttest_disks = models.ManyToManyField(
@@ -779,48 +634,6 @@ class SMARTTest(Model):
         verbose_name=_("Day of week"),
     )
 
-    def get_human_hour(self):
-        if self.smarttest_hour in ('..', '*'):
-            return _('Every hour')
-        elif self.smarttest_hour.startswith('*/'):
-            return _('Every {0} hour(s)').format(
-                self.smarttest_hour.split('*/')[1])
-        else:
-            return self.smarttest_hour
-
-    def get_human_daymonth(self):
-        if self.smarttest_daymonth in ('..', '*'):
-            return _('Everyday')
-        elif self.smarttest_daymonth.startswith('*/'):
-            return _('Every {0} days').format(
-                self.smarttest_daymonth.split('*/')[1])
-        else:
-            return self.smarttest_daymonth
-
-    def get_human_month(self):
-        months = self.smarttest_month.split(',')
-        if len(months) == 12 or self.smarttest_month == '*':
-            return _("Every month")
-        mchoices = dict(choices.MONTHS_CHOICES)
-        labels = []
-        for m in months:
-            labels.append(str(mchoices[m]))
-        return ', '.join(labels)
-
-    def get_human_dayweek(self):
-        weeks = self.smarttest_dayweek.split(',')
-        if len(weeks) == 7 or self.smarttest_dayweek == '*':
-            return _('Everyday')
-        if weeks == list(map(str, range(1, 6))):
-            return _('Weekdays')
-        if weeks == list(map(str, range(6, 8))):
-            return _('Weekends')
-        wchoices = dict(choices.WEEKDAYS_CHOICES)
-        labels = []
-        for w in weeks:
-            labels.append(str(wchoices[str(w)]))
-        return ', '.join(labels)
-
     def __str__(self):
         if self.smarttest_disks.count() > 3:
             disks = [d.disk_name for d in self.smarttest_disks.all()[:3]]
@@ -833,13 +646,6 @@ class SMARTTest(Model):
             self.get_smarttest_type_display(),
             disks
         )
-
-    def delete(self):
-        super(SMARTTest, self).delete()
-        try:
-            notifier().restart("smartd")
-        except:
-            pass
 
     class Meta:
         verbose_name = _("S.M.A.R.T. Test")

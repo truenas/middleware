@@ -70,29 +70,8 @@ class Volume(Model):
 
     @property
     def is_upgraded(self):
-        if not self.is_decrypted():
-            return True
-        try:
-            version = notifier().zpool_version(str(self.vol_name))
-        except ValueError:
-            return True
-        if version == '-':
-            proc = subprocess.Popen([
-                "zpool",
-                "get",
-                "-H", "-o", "property,value",
-                "all",
-                str(self.vol_name),
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-            data = proc.communicate()[0].strip('\n')
-            for line in data.split('\n'):
-                if not line.startswith('feature') or '\t' not in line:
-                    continue
-                prop, value = line.split('\t', 1)
-                if value not in ('active', 'enabled'):
-                    return False
-            return True
-        return False
+        with client as c:
+            return c.call('pool.is_upgraded', self.id)
 
     @property
     def vol_path(self):
@@ -184,272 +163,8 @@ class Volume(Model):
                     break
         return self.__is_decrypted
 
-    def has_attachments(self):
-        """
-        Return a dict composed by the name of services and ids of shares
-        dependent of this Volume
-
-        This is mainly used by the VolumeDelete form.
-        Responsible for telling the user whether there is a related
-        share, asking for confirmation
-        """
-        from freenasUI.jails.models import Jails, JailsConfiguration
-        from freenasUI.sharing.models import (
-            CIFS_Share, AFP_Share, NFS_Share_Path
-        )
-        from freenasUI.services.models import iSCSITargetExtent
-        attachments = {
-            'cifs': [],
-            'afp': [],
-            'nfs': [],
-            'iscsitarget': [],
-            'jails': [],
-            'jails_ng': [],
-            'collectd': [],
-            'vm': [],
-        }
-
-        for cifs in CIFS_Share.objects.filter(Q(cifs_path=self.vol_path) | Q(cifs_path__startswith=self.vol_path + '/')):
-            attachments['cifs'].append(cifs.id)
-        for afp in AFP_Share.objects.filter(Q(afp_path=self.vol_path) | Q(afp_path__startswith=self.vol_path + '/')):
-            attachments['afp'].append(afp.id)
-        for nfsp in NFS_Share_Path.objects.filter(Q(path=self.vol_path) | Q(path__startswith=self.vol_path + '/')):
-            if nfsp.share.id not in attachments['nfs']:
-                attachments['nfs'].append(nfsp.share.id)
-        # TODO: Refactor this into something not this ugly.  The problem
-        #       is that iSCSI Extent is not stored in proper relationship
-        #       model.
-        zvols = notifier().list_zfs_vols(self.vol_name)
-        for zvol in zvols:
-            qs = iSCSITargetExtent.objects.filter(
-                iscsi_target_extent_path='zvol/' + zvol,
-                iscsi_target_extent_type='ZVOL')
-            if qs.exists():
-                attachments['iscsitarget'].append(qs[0].id)
-
-        try:
-            jc = JailsConfiguration.objects.latest("id")
-        except:
-            jc = None
-        if jc and jc.jc_path.startswith(self.vol_path):
-            attachments['jails'].extend(
-                [j.id for j in Jails.objects.all()]
-            )
-
-        vms_attached = None
-        with client as c:
-            vms_attached = c.call('vm.stop_by_pool', self.vol_name)
-
-        if vms_attached:
-            for vm_attached in vms_attached:
-                attachments['vm'].append(vm_attached.get('device_id'))
-
-        with client as c:
-            attachments['jails_ng'] = [
-                ij['host_hostuuid'] for ij in c.call('jail.query')]
-
-        return attachments
-
-    def delete_attachments(self):
-        """
-        Some places reference a path which will not cascade delete
-        We need to manually find all paths within this volume mount point
-        """
-        from freenasUI.sharing.models import CIFS_Share, AFP_Share, NFS_Share
-        from freenasUI.services.models import iSCSITargetExtent
-        from freenasUI.vm.models import Device
-
-        reload_cifs = False
-        reload_afp = False
-        reload_nfs = False
-        reload_iscsi = False
-        reload_collectd = False
-
-        # Delete attached paths if they are under our tree.
-        # and report if some action needs to be done.
-        attachments = self.has_attachments()
-        if attachments['cifs']:
-            CIFS_Share.objects.filter(id__in=attachments['cifs']).delete()
-            reload_cifs = True
-        if attachments['afp']:
-            AFP_Share.objects.filter(id__in=attachments['afp']).delete()
-            reload_afp = True
-        if attachments['nfs']:
-            NFS_Share.objects.filter(id__in=attachments['nfs']).delete()
-            reload_nfs = True
-        if attachments['iscsitarget']:
-            for target in iSCSITargetExtent.objects.filter(
-                    id__in=attachments['iscsitarget']):
-                target.delete()
-            reload_iscsi = True
-        reload_jails = len(attachments['jails']) > 0
-
-        # If there is any guest vm attached to this volume, we stop them.
-        with client as c:
-            c.call('vm.stop_by_pool', self.vol_name, True)
-
-        if attachments['vm']:
-            for device_id in attachments['vm']:
-                Device.objects.filter(id=device_id).delete()
-
-        if attachments['jails_ng']:
-            with client as c:
-                for ioc_j in attachments['jails_ng']:
-                    c.call('jail.stop', ioc_j)
-
-        return (reload_cifs, reload_afp, reload_nfs, reload_iscsi,
-                reload_jails, reload_collectd)
-
-    def _delete(self, destroy=True, cascade=True, systemdataset=None):
-        """
-        Some places reference a path which will not cascade delete
-        We need to manually find all paths within this volume mount point
-        """
-        from freenasUI.services.models import iSCSITargetExtent
-
-        # If we are using this volume to store collectd data
-        # the service needs to be restarted
-        if systemdataset and systemdataset.sys_rrd_usedataset:
-            reload_collectd = True
-        else:
-            reload_collectd = False
-
-        # TODO: This is ugly.
-        svcs = ('cifs', 'afp', 'nfs', 'iscsitarget', 'jails', 'collectd')
-        reloads = (False, False, False, False, False, reload_collectd)
-
-        n = notifier()
-        if cascade:
-
-            reloads = list(map(sum, list(zip(reloads, self.delete_attachments()))))
-
-            zvols = n.list_zfs_vols(self.vol_name)
-            for zvol in zvols:
-                qs = iSCSITargetExtent.objects.filter(
-                    iscsi_target_extent_path='zvol/' + zvol,
-                    iscsi_target_extent_type='ZVOL')
-                if qs.exists():
-                    if destroy:
-                        notifier().destroy_zfs_vol(zvol)
-                    qs.delete()
-                reloads = list(map(sum, list(zip(
-                    reloads, (False, False, False, True, False,
-                              reload_collectd)
-                ))))
-
-        else:
-
-            attachments = self.has_attachments()
-            reloads = list(map(
-                sum,
-                list(zip(
-                    reloads,
-                    [len(attachments[svc]) for svc in svcs]
-                ))
-            ))
-
-        # If there is any guest vm attached to this volume, we stop them.
-        with client as c:
-            c.call('vm.stop_by_pool', self.vol_name, True)
-
-        # Delete scheduled snapshots for this volume
-        Task.objects.filter(
-            models.Q(task_filesystem=self.vol_name)
-            |
-            models.Q(task_filesystem__startswith="%s/" % self.vol_name)
-        ).delete()
-
-        for (svc, dirty) in zip(svcs, reloads):
-            if dirty:
-                n.stop(svc)
-
-        n.detach_volume_swaps(self)
-
-        # Ghosts volumes, does not exists anymore but is in database
-        ghost = False
-        try:
-            status = n.get_volume_status(self.vol_name)
-            ghost = status == 'UNKNOWN'
-        except:
-            ghost = True
-
-        if ghost:
-            pass
-        elif destroy:
-            n.volume_destroy(self)
-        else:
-            n.volume_detach(self)
-
-        return (svcs, reloads)
-
     def delete(self, destroy=True, cascade=True):
-        from freenasUI.system.models import SystemDataset
-
-        try:
-            systemdataset = SystemDataset.objects.filter(
-                sys_pool=self.vol_name
-            )[0]
-        except IndexError:
-            systemdataset = None
-
-        try:
-            svcs, reloads = Volume._delete(
-                self,
-                destroy=destroy,
-                cascade=cascade,
-                systemdataset=systemdataset,
-            )
-        finally:
-            if not os.path.isdir(self.vol_path):
-                do_reload = False
-
-                if do_reload:
-                    reloads = self.delete_attachments()
-
-                Task.objects.filter(task_filesystem=self.vol_name).delete()
-                Replication.objects.filter(repl_filesystem=self.vol_name).delete()
-
-                if do_reload:
-                    svcs = ('cifs', 'afp', 'nfs', 'iscsitarget')
-                    for (svc, dirty) in zip(svcs, reloads):
-                        if dirty:
-                            notifier().restart(svc)
-
-        n = notifier()
-
-        # The framework would cascade delete all database items
-        # referencing this volume.
-        super(Volume, self).delete()
-
-        # If there's a system dataset on this pool, stop using it.
-        if systemdataset:
-            systemdataset.sys_pool = ''
-            systemdataset.save()
-            n.restart('system_datasets')
-
-        # Refresh the fstab
-        n.reload("disk")
-        # For scrub tasks
-        n.restart("cron")
-
-        # Django signal could have been used instead
-        # Do it this way to make sure its ran in the time we want
-        self.post_delete()
-
-        if self.vol_encryptkey:
-            keyfile = self.get_geli_keyfile()
-            if os.path.exists(keyfile):
-                try:
-                    os.unlink(keyfile)
-                except:
-                    log.warn("Unable to delete geli key file: %s" % keyfile)
-
-        for (svc, dirty) in zip(svcs, reloads):
-            if dirty:
-                n.start(svc)
-
-    def post_delete(self):
-        pass
+        return super().delete()
 
     def save(self, *args, **kwargs):
         if not self.vol_encryptkey and self.vol_encrypt > 0:
@@ -561,65 +276,6 @@ class Scrub(Model):
 
     def __str__(self):
         return self.scrub_volume.vol_name
-
-    def get_human_minute(self):
-        if self.scrub_minute == '*':
-            return _('Every minute')
-        elif self.scrub_minute.startswith('*/'):
-            return _('Every {0} minute(s)').format(self.scrub_minute.split('*/')[1])
-        else:
-            return self.scrub_minute
-
-    def get_human_hour(self):
-        if self.scrub_hour == '*':
-            return _('Every hour')
-        elif self.scrub_hour.startswith('*/'):
-            return _('Every {0} hour(s)').format(self.scrub_hour.split('*/')[1])
-        else:
-            return self.scrub_hour
-
-    def get_human_daymonth(self):
-        if self.scrub_daymonth == '*':
-            return _('Everyday')
-        elif self.scrub_daymonth.startswith('*/'):
-            return _('Every {0} days').format(self.scrub_daymonth.split('*/')[1])
-        else:
-            return self.scrub_daymonth
-
-    def get_human_month(self):
-        months = self.scrub_month.split(",")
-        if len(months) == 12 or self.scrub_month == '*':
-            return _("Every month")
-        mchoices = dict(choices.MONTHS_CHOICES)
-        labels = []
-        for m in months:
-            labels.append(str(mchoices[m]))
-        return ', '.join(labels)
-
-    def get_human_dayweek(self):
-        # TODO:
-        # 1. Carve out the days input so that way one can say:
-        #    Mon-Fri + Saturday -> Weekdays + Saturday.
-        # 2. Get rid of the duplicate code.
-        weeks = self.scrub_dayweek.split(',')
-        if len(weeks) == 7 or self.scrub_dayweek == '*':
-            return _('Everyday')
-        if weeks == list(map(str, range(1, 6))):
-            return _('Weekdays')
-        if weeks == list(map(str, range(6, 8))):
-            return _('Weekends')
-        wchoices = dict(choices.WEEKDAYS_CHOICES)
-        labels = []
-        for w in weeks:
-            labels.append(str(wchoices[str(w)]))
-        return ', '.join(labels)
-
-    def delete(self):
-        super(Scrub, self).delete()
-        try:
-            notifier().restart("cron")
-        except:
-            pass
 
 
 class Resilver(Model):
@@ -748,6 +404,41 @@ class Disk(Model):
         verbose_name=_("Password for SED"),
         blank=True
     )
+    disk_difference = models.IntegerField(
+        default=None,
+        verbose_name=_("Difference"),
+        help_text=_(
+            "Report if the temperature has changed by at least N "
+            "degrees Celsius since the last report. 0 to disable."
+        ),
+        null=True,
+        blank=True,
+        editable=False
+    )
+    disk_informational = models.IntegerField(
+        default=None,
+        verbose_name=_("Informational"),
+        help_text=_(
+            "Report as informational in the system log if the "
+            "temperature is greater or equal than N degrees Celsius. "
+            "0 to disable."
+        ),
+        null=True,
+        blank=True,
+        editable=False
+    )
+    disk_critical = models.IntegerField(
+        default=None,
+        verbose_name=_("Critical"),
+        help_text=_(
+            "Report as critical in the system log and send an "
+            "email if the temperature is greater or equal than N "
+            "degrees Celsius. 0 to disable."
+        ),
+        null=True,
+        blank=True,
+        editable=False
+    )
 
     def identifier_to_device(self):
         """
@@ -761,16 +452,6 @@ class Disk(Model):
             return "multipath/%s" % self.disk_multipath_name
         else:
             return self.disk_name
-
-    def delete(self):
-        from freenasUI.services.models import iSCSITargetExtent
-        # Delete device extents depending on this Disk
-        qs = iSCSITargetExtent.objects.filter(
-            iscsi_target_extent_type='Disk',
-            iscsi_target_extent_path=str(self.pk))
-        if qs.exists():
-            qs.delete()
-        super(Disk, self).delete()
 
     class Meta:
         verbose_name = _("Disk")
@@ -830,11 +511,6 @@ class ReplRemote(Model):
     class Meta:
         verbose_name = _("Remote Replication Host")
         verbose_name_plural = _("Remote Replication Hosts")
-
-    def delete(self):
-        rv = super(ReplRemote, self).delete()
-        notifier().reload("ssh")
-        return rv
 
     def __str__(self):
         return "%s:%s" % (self.ssh_remote_hostname, self.ssh_remote_port)
@@ -946,32 +622,6 @@ class Replication(Model):
         if self.repl_lastresult:
             return self.repl_lastresult['msg']
 
-    def delete(self):
-        try:
-            if self.repl_lastsnapshot != "":
-                zfsname = self.repl_lastsnapshot.split('@')[0]
-                notifier().zfs_dataset_release_snapshots(zfsname, True)
-        except:
-            pass
-        if os.path.exists(REPL_RESULTFILE):
-            with open(REPL_RESULTFILE, 'rb') as f:
-                data = f.read()
-            try:
-                results = pickle.loads(data)
-                results.pop(self.id, None)
-                with open(REPL_RESULTFILE, 'wb') as f:
-                    f.write(pickle.dumps(results))
-            except Exception as e:
-                log.debug('Failed to remove replication from state file %s', e)
-        progressfile = '/tmp/.repl_progress_%d' % self.id
-        if os.path.exists(progressfile):
-            try:
-                os.unlink(progressfile)
-            except:
-                # Possible race condition?
-                pass
-        super(Replication, self).delete()
-
 
 class Task(Model):
     task_filesystem = models.CharField(
@@ -1046,20 +696,6 @@ class Task(Model):
             self.task_ret_unit,
         )
 
-    def save(self, *args, **kwargs):
-        super(Task, self).save(*args, **kwargs)
-        try:
-            notifier().restart("cron")
-        except:
-            pass
-
-    def delete(self, *args, **kwargs):
-        super(Task, self).delete(*args, **kwargs)
-        try:
-            notifier().restart("cron")
-        except:
-            pass
-
     class Meta:
         verbose_name = _("Periodic Snapshot Task")
         verbose_name_plural = _("Periodic Snapshot Tasks")
@@ -1109,16 +745,3 @@ class VMWarePlugin(Model):
 
     def get_password(self):
         return notifier().pwenc_decrypt(self.password)
-
-
-class QuotaExcess(Model):
-    class Meta:
-        unique_together = (("dataset_name", "quota_type"),)
-
-    dataset_name = models.CharField(max_length=256)
-    quota_type = models.CharField(max_length=32)
-    quota_value = models.IntegerField()
-    level = models.IntegerField()
-    used = models.IntegerField()
-    percent_used = models.FloatField()
-    uid = models.IntegerField()

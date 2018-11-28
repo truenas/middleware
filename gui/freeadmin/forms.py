@@ -289,6 +289,9 @@ class MACField(forms.CharField):
 
 class SizeWidget(widgets.TextInput):
     def format_value(self, value):
+        if isinstance(value, str):
+            return value
+
         for suffix, threshold in sorted(SizeField.SUFFIXES.items(), key=lambda item: -item[1]):
             if value >= threshold:
                 return ("%.3f" % (value / threshold)).rstrip("0").rstrip(".") + " " + suffix + ("iB" if suffix != "B"
@@ -311,6 +314,10 @@ class SizeField(forms.CharField):
     widget = SizeWidget
 
     def to_python(self, value):
+        value = str(value)
+        if not self.required and value.strip() in ['', '0']:
+            return 0
+
         value = value.replace(' ', '')
         reg = re.search(r'^(\d+(?:\.\d+)?)([BKMGTP](?:iB)?)$', value, re.I)
         if not reg:

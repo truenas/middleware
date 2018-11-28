@@ -33,6 +33,34 @@ smart_directory() { echo "SMART"; }
 smart_func()
 {
 
+	local smart_onoff=0
+	local smart_enabled="not start on boot."
+
+	smart_onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		srv_enable
+	FROM
+		services_services
+	WHERE
+		srv_service = 'smartd'
+	ORDER BY
+		-id
+	LIMIT 1
+	")
+
+	if [ "$smart_onoff" == "1" ]
+	then
+		smart_enabled="start on boot."
+	fi
+
+	section_header "SMARTD Boot Status"
+	echo "SMARTD will $smart_enabled"
+	section_footer
+
+	section_header "SMARTD Run Status"
+	service smartd-daemon onestatus
+	section_footer
+
 	section_header "Scheduled SMART Jobs"
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} -line "
 	SELECT *

@@ -1,9 +1,11 @@
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import accepts, Bool, Cron, Dict, Error, Int, Patch, Ref, Str
+from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, item_method, job, private
 )
 from middlewared.utils import load_modules, load_classes, Popen, run
+from middlewared.validators import Range, Time
+from middlewared.validators import validate_attributes
 
 import asyncio
 import base64
@@ -12,19 +14,21 @@ from collections import namedtuple
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
+from datetime import datetime
 import json
 import os
 import re
 import shlex
 import subprocess
 import tempfile
+import textwrap
 
 CHUNK_SIZE = 5 * 1024 * 1024
 RE_TRANSF = re.compile(r"Transferred:\s*?(.+)$", re.S)
 
 REMOTES = {}
 
-RcloneConfigTuple = namedtuple("RcloneConfigTuple", ["config_path", "remote_path"])
+RcloneConfigTuple = namedtuple("RcloneConfigTuple", ["config_path", "remote_path", "extra_args"])
 
 
 class RcloneConfig:
@@ -34,6 +38,8 @@ class RcloneConfig:
         self.provider = REMOTES[self.cloud_sync["credentials"]["provider"]]
 
         self.tmp_file = None
+        self.tmp_file_exclude = None
+
         self.path = None
 
     def __enter__(self):
@@ -48,6 +54,7 @@ class RcloneConfig:
             config["pass"] = rclone_encrypt_password(config["pass"])
 
         remote_path = None
+        extra_args = []
 
         if "attributes" in self.cloud_sync:
             config.update(dict(self.cloud_sync["attributes"], **self.provider.get_task_extra(self.cloud_sync)))
@@ -55,7 +62,7 @@ class RcloneConfig:
             remote_path = "remote:" + "/".join([self.cloud_sync["attributes"].get("bucket", ""),
                                                 self.cloud_sync["attributes"].get("folder", "")]).strip("/")
 
-            if self.cloud_sync.get("encryption"):
+            if self.cloud_sync["encryption"]:
                 self.tmp_file.write("[encrypted]\n")
                 self.tmp_file.write("type = crypt\n")
                 self.tmp_file.write(f"remote = {remote_path}\n")
@@ -63,11 +70,17 @@ class RcloneConfig:
                     "standard" if self.cloud_sync["filename_encryption"] else "off"))
                 self.tmp_file.write("password = {}\n".format(
                     rclone_encrypt_password(self.cloud_sync["encryption_password"])))
-                if self.cloud_sync.get("encryption_salt"):
+                if self.cloud_sync["encryption_salt"]:
                     self.tmp_file.write("password2 = {}\n".format(
                         rclone_encrypt_password(self.cloud_sync["encryption_salt"])))
 
                 remote_path = "encrypted:/"
+
+            if self.cloud_sync["exclude"]:
+                self.tmp_file_exclude = tempfile.NamedTemporaryFile(mode="w+")
+                self.tmp_file_exclude.write("\n".join(self.cloud_sync["exclude"]))
+                self.tmp_file_exclude.flush()
+                extra_args.extend(["--exclude-from", self.tmp_file_exclude.name])
 
         self.tmp_file.write("[remote]\n")
         for k, v in config.items():
@@ -75,14 +88,22 @@ class RcloneConfig:
 
         self.tmp_file.flush()
 
-        return RcloneConfigTuple(self.tmp_file.name, remote_path)
+        return RcloneConfigTuple(self.tmp_file.name, remote_path, extra_args)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.tmp_file:
             self.tmp_file.close()
+        if self.tmp_file_exclude:
+            self.tmp_file_exclude.close()
 
 
-async def rclone(job, cloud_sync):
+async def rclone(middleware, job, cloud_sync):
+    if not os.path.exists(cloud_sync["path"]):
+        raise CallError(f"Directory {cloud_sync['path']!r} does not exist")
+
+    if os.stat(cloud_sync["path"]).st_dev == os.stat("/mnt").st_dev:
+        raise CallError(f"Directory {cloud_sync['path']!r} must reside within volume mount point")
+
     # Use a temporary file to store rclone file
     with RcloneConfig(cloud_sync) as config:
         args = [
@@ -90,14 +111,56 @@ async def rclone(job, cloud_sync):
             "--config", config.config_path,
             "-v",
             "--stats", "1s",
-        ] + shlex.split(cloud_sync["args"]) + [
-            cloud_sync["transfer_mode"].lower(),
         ]
 
+        if cloud_sync["attributes"].get("fast_list"):
+            args.append("--fast-list")
+
+        if cloud_sync["bwlimit"]:
+            args.extend(["--bwlimit", " ".join([
+                f"{limit['time']},{str(limit['bandwidth']) + 'b' if limit['bandwidth'] else 'off'}"
+                for limit in cloud_sync["bwlimit"]
+            ])])
+
+        args += config.extra_args
+
+        args += shlex.split(cloud_sync["args"])
+
+        args += [cloud_sync["transfer_mode"].lower()]
+
+        snapshot = None
+        path = cloud_sync["path"]
         if cloud_sync["direction"] == "PUSH":
-            args.extend([cloud_sync["path"], config.remote_path])
+            if cloud_sync["snapshot"]:
+                dataset, recursive = get_dataset_recursive(
+                    await middleware.call("zfs.dataset.query"), cloud_sync["path"])
+                snapshot_name = f"cloud_sync-{cloud_sync['id']}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+
+                snapshot = {"dataset": dataset["name"], "name": snapshot_name}
+                await middleware.call("zfs.snapshot.create", dict(snapshot, recursive=recursive))
+
+                relpath = os.path.relpath(path, dataset["mountpoint"])
+                path = os.path.join(dataset["mountpoint"], ".zfs", "snapshot", snapshot_name, relpath)
+
+            args.extend([path, config.remote_path])
         else:
-            args.extend([config.remote_path, cloud_sync["path"]])
+            args.extend([config.remote_path, path])
+
+        env = {}
+        for k, v in (
+            [(k, v) for (k, v) in cloud_sync.items()
+             if k in ["id", "description", "direction", "transfer_mode", "encryption", "filename_encryption",
+                      "encryption_password", "encryption_salt", "snapshot"]] +
+            list(cloud_sync["credentials"]["attributes"].items()) +
+            list(cloud_sync["attributes"].items())
+        ):
+            if type(v) in (bool,):
+                env[f"CLOUD_SYNC_{k.upper()}"] = str(int(v))
+            if type(v) in (int, str):
+                env[f"CLOUD_SYNC_{k.upper()}"] = str(v)
+        env["CLOUD_SYNC_PATH"] = path
+
+        await run_script(job, env, cloud_sync["pre_script"], "Pre-script")
 
         proc = await Popen(
             args,
@@ -106,18 +169,63 @@ async def rclone(job, cloud_sync):
         )
         check_cloud_sync = asyncio.ensure_future(rclone_check_progress(job, proc))
         await proc.wait()
+        await asyncio.wait_for(check_cloud_sync, None)
+
+        if snapshot:
+            await middleware.call("zfs.snapshot.remove", snapshot)
+
         if proc.returncode != 0:
-            await asyncio.wait_for(check_cloud_sync, None)
             raise ValueError("rclone failed")
+
+        await run_script(job, env, cloud_sync["post_script"], "Post-script")
+
         return True
+
+
+async def run_script(job, env, hook, script_name):
+    hook = hook.strip()
+    if not hook:
+        return
+
+    if not hook.startswith("#!"):
+        hook = f"#!/bin/bash\n{hook}"
+
+    fd, name = tempfile.mkstemp()
+    os.close(fd)
+    try:
+        os.chmod(name, 0o700)
+        with open(name, "w+") as f:
+            f.write(hook)
+
+        proc = await Popen(
+            [name],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            env=env,
+        )
+        future = asyncio.ensure_future(run_script_check(job, proc, script_name))
+        await proc.wait()
+        await asyncio.wait_for(future, None)
+        if proc.returncode != 0:
+            raise ValueError(f"{script_name} failed with exit code {proc.returncode}")
+    finally:
+        os.unlink(name)
+
+
+async def run_script_check(job, proc, name):
+    while True:
+        read = await proc.stdout.readline()
+        if read == b"":
+            break
+        job.logs_fd.write(f"[{name}] ".encode("utf-8") + read)
 
 
 async def rclone_check_progress(job, proc):
     while True:
         read = (await proc.stdout.readline()).decode()
-        job.logs_fd.write(read.encode("utf-8", "ignore"))
         if read == "":
             break
+        job.logs_fd.write(read.encode("utf-8", "ignore"))
         reg = RE_TRANSF.search(read)
         if reg:
             transferred = reg.group(1).strip()
@@ -138,22 +246,35 @@ def rclone_encrypt_password(password):
     return base64.urlsafe_b64encode(encrypted).decode("ascii").rstrip("=")
 
 
-def validate_attributes(schema, data, additional_attrs=False):
-    verrors = ValidationErrors()
+def get_dataset_recursive(datasets, directory):
+    datasets = flatten_datasets(datasets)
 
-    schema = Dict("attributes", *schema, additional_attrs=additional_attrs)
+    datasets = [
+        dict(dataset, prefixlen=len(
+            os.path.dirname(os.path.commonprefix([dataset["mountpoint"] + "/", directory + "/"]))))
+        for dataset in datasets
+        if dataset["mountpoint"]
+    ]
 
-    try:
-        data["attributes"] = schema.clean(data["attributes"])
-    except Error as e:
-        verrors.add(e.attribute, e.errmsg, e.errno)
+    dataset = sorted(
+        [
+            dataset
+            for dataset in datasets
+            if (directory + "/").startswith(dataset["mountpoint"] + "/")
+        ],
+        key=lambda dataset: dataset["prefixlen"],
+        reverse=True
+    )[0]
 
-    try:
-        schema.validate(data["attributes"])
-    except ValidationErrors as e:
-        verrors.extend(e)
+    return dataset, any(
+        (ds["mountpoint"] + "/").startswith(directory + "/")
+        for ds in datasets
+        if ds != dataset
+    )
 
-    return verrors
+
+def flatten_datasets(datasets):
+    return sum([[ds] + flatten_datasets(ds["children"]) for ds in datasets], [])
 
 
 class CredentialsService(CRUDService):
@@ -164,14 +285,31 @@ class CredentialsService(CRUDService):
         datastore = "system.cloudcredentials"
 
     @accepts(Dict(
-        "cloud_sync_credentials",
-        Str("name"),
-        Str("provider"),
-        Dict("attributes", additional_attrs=True),
+        "cloud_sync_credentials_verify",
+        Str("provider", required=True),
+        Dict("attributes", additional_attrs=True, required=True),
+    ))
+    async def verify(self, data):
+        data = dict(data, name="")
+        await self._validate("cloud_sync_credentials_create", data)
+
+        with RcloneConfig({"credentials": data}) as config:
+            proc = await run(["rclone", "--config", config.config_path, "lsjson", "remote:"],
+                             check=False, encoding="utf8")
+            if proc.returncode == 0:
+                return {"valid": True}
+            else:
+                return {"valid": False, "error": proc.stderr}
+
+    @accepts(Dict(
+        "cloud_sync_credentials_create",
+        Str("name", required=True),
+        Str("provider", required=True),
+        Dict("attributes", additional_attrs=True, required=True),
         register=True,
     ))
     async def do_create(self, data):
-        self._validate("cloud_sync_credentials", data)
+        await self._validate("cloud_sync_credentials_create", data)
 
         data["id"] = await self.middleware.call(
             "datastore.insert",
@@ -180,15 +318,27 @@ class CredentialsService(CRUDService):
         )
         return data
 
-    @accepts(Int("id"), Ref("cloud_sync_credentials"))
+    @accepts(
+        Int("id"),
+        Patch(
+            "cloud_sync_credentials_create",
+            "cloud_sync_credentials_update",
+            ("attr", {"update": True})
+        )
+    )
     async def do_update(self, id, data):
-        self._validate("cloud_sync_credentials", data)
+        old = await self._get_instance(id)
+
+        new = old.copy()
+        new.update(data)
+
+        await self._validate("cloud_sync_credentials_update", new, id)
 
         await self.middleware.call(
             "datastore.update",
             "system.cloudcredentials",
             id,
-            data,
+            new,
         )
 
         data["id"] = id
@@ -203,8 +353,10 @@ class CredentialsService(CRUDService):
             id,
         )
 
-    def _validate(self, schema_name, data):
+    async def _validate(self, schema_name, data, id=None):
         verrors = ValidationErrors()
+
+        await self._ensure_unique(verrors, schema_name, "name", data["name"], id)
 
         if data["provider"] not in REMOTES:
             verrors.add(f"{schema_name}.provider", "Invalid provider")
@@ -253,12 +405,10 @@ class CloudSyncService(CRUDService):
     async def _extend(self, cloud_sync):
         cloud_sync["credentials"] = cloud_sync.pop("credential")
 
-        if "encryption_password" in cloud_sync:
-            cloud_sync["encryption_password"] = await self.middleware.call(
-                "notifier.pwenc_decrypt", cloud_sync["encryption_password"])
-        if "encryption_salt" in cloud_sync:
-            cloud_sync["encryption_salt"] = await self.middleware.call(
-                "notifier.pwenc_decrypt", cloud_sync["encryption_salt"])
+        cloud_sync["encryption_password"] = await self.middleware.call(
+            "notifier.pwenc_decrypt", cloud_sync["encryption_password"])
+        cloud_sync["encryption_salt"] = await self.middleware.call(
+            "notifier.pwenc_decrypt", cloud_sync["encryption_salt"])
 
         Cron.convert_db_format_to_schedule(cloud_sync)
 
@@ -266,15 +416,12 @@ class CloudSyncService(CRUDService):
 
     @private
     async def _compress(self, cloud_sync):
-        if "credentials" in cloud_sync:
-            cloud_sync["credential"] = cloud_sync.pop("credentials")
+        cloud_sync["credential"] = cloud_sync.pop("credentials")
 
-        if "encryption_password" in cloud_sync:
-            cloud_sync["encryption_password"] = await self.middleware.call(
-                "notifier.pwenc_encrypt", cloud_sync["encryption_password"])
-        if "encryption_salt" in cloud_sync:
-            cloud_sync["encryption_salt"] = await self.middleware.call(
-                "notifier.pwenc_encrypt", cloud_sync["encryption_salt"])
+        cloud_sync["encryption_password"] = await self.middleware.call(
+            "notifier.pwenc_encrypt", cloud_sync["encryption_password"])
+        cloud_sync["encryption_salt"] = await self.middleware.call(
+            "notifier.pwenc_encrypt", cloud_sync["encryption_salt"])
 
         Cron.convert_schedule_to_db_format(cloud_sync)
 
@@ -289,7 +436,7 @@ class CloudSyncService(CRUDService):
             return None
 
     @private
-    async def _validate(self, verrors, name, data):
+    async def _basic_validate(self, verrors, name, data):
         if data["encryption"]:
             if not data["encryption_password"]:
                 verrors.add(f"{name}.encryption_password", "This field is required when encryption is enabled")
@@ -297,6 +444,15 @@ class CloudSyncService(CRUDService):
         credentials = await self._get_credentials(data["credentials"])
         if not credentials:
             verrors.add(f"{name}.credentials", "Invalid credentials")
+
+        for i, (limit1, limit2) in enumerate(zip(data["bwlimit"], data["bwlimit"][1:])):
+            if limit1["time"] >= limit2["time"]:
+                verrors.add(f"{name}.bwlimit.{i + 1}.time", f"Invalid time order: {limit1['time']}, {limit2['time']}")
+
+        try:
+            shlex.split(data["args"])
+        except ValueError as e:
+            verrors.add(f"{name}.args", f"Parse error: {e.args[0]}")
 
         if verrors:
             raise verrors
@@ -306,11 +462,13 @@ class CloudSyncService(CRUDService):
         schema = []
 
         if provider.buckets:
-            schema.append(Str("bucket"))
+            schema.append(Str("bucket", required=True, empty=False))
 
-        schema.append(Str("folder"))
+        schema.append(Str("folder", required=True))
 
         schema.extend(provider.task_schema)
+
+        schema.extend(self.common_task_schema(provider))
 
         attributes_verrors = validate_attributes(schema, data, additional_attrs=True)
 
@@ -319,10 +477,13 @@ class CloudSyncService(CRUDService):
 
         verrors.add_child(f"{name}.attributes", attributes_verrors)
 
-        try:
-            shlex.split(data["args"])
-        except ValueError as e:
-            verrors.add(f"{name}.args", f"Parse error: {e.args[0]}")
+    @private
+    async def _validate(self, verrors, name, data):
+        await self._basic_validate(verrors, name, data)
+
+        if data["snapshot"]:
+            if data["direction"] != "PUSH":
+                verrors.add(f"{name}.snapshot", "This option can only be enabled for PUSH tasks")
 
     @private
     async def _validate_folder(self, verrors, name, data):
@@ -334,12 +495,12 @@ class CloudSyncService(CRUDService):
                 folder_basename = os.path.basename(data["attributes"]["folder"].strip("/"))
                 ls = await self.list_directory(dict(
                     credentials=data["credentials"],
-                    encryption=data.get("encryption"),
-                    filename_encryption=data.get("filename_encryption"),
-                    encryption_password=data.get("encryption_password"),
-                    encryption_salt=data.get("encryption_salt"),
+                    encryption=data["encryption"],
+                    filename_encryption=data["filename_encryption"],
+                    encryption_password=data["encryption_password"],
+                    encryption_salt=data["encryption_salt"],
                     attributes=dict(data["attributes"], folder=folder_parent),
-                    args=data.get("args"),
+                    args=data["args"],
                 ))
                 for item in ls:
                     if item["Name"] == folder_basename:
@@ -358,18 +519,25 @@ class CloudSyncService(CRUDService):
                 verrors.add(f"{name}.direction", "This remote is read-only")
 
     @accepts(Dict(
-        "cloud_sync",
-        Str("description"),
+        "cloud_sync_create",
+        Str("description", default=""),
         Str("direction", enum=["PUSH", "PULL"], required=True),
         Str("transfer_mode", enum=["SYNC", "COPY", "MOVE"], required=True),
         Str("path", required=True),
         Int("credentials", required=True),
         Bool("encryption", default=False),
         Bool("filename_encryption", default=False),
-        Str("encryption_password"),
-        Str("encryption_salt"),
-        Cron("schedule"),
-        Dict("attributes", additional_attrs=True),
+        Str("encryption_password", default=""),
+        Str("encryption_salt", default=""),
+        Cron("schedule", required=True),
+        List("bwlimit", default=[], items=[Dict("cloud_sync_bwlimit",
+                                                Str("time", validators=[Time()]),
+                                                Int("bandwidth", validators=[Range(min=1)], null=True))]),
+        List("exclude", default=[], items=[Str("path", empty=False)]),
+        Dict("attributes", additional_attrs=True, required=True),
+        Bool("snapshot", default=False),
+        Str("pre_script", default=""),
+        Str("post_script", default=""),
         Str("args", default=""),
         Bool("enabled", default=True),
         register=True,
@@ -424,7 +592,7 @@ class CloudSyncService(CRUDService):
         cloud_sync = await self._extend(cloud_sync)
         return cloud_sync
 
-    @accepts(Int("id"), Patch("cloud_sync", "cloud_sync_update", ("attr", {"update": True})))
+    @accepts(Int("id"), Patch("cloud_sync_create", "cloud_sync_update", ("attr", {"update": True})))
     async def do_update(self, id, data):
         """
         Updates the cloud_sync entry `id` with `data`.
@@ -480,18 +648,18 @@ class CloudSyncService(CRUDService):
 
     @accepts(Dict(
         "cloud_sync_ls",
-        Int("credentials"),
+        Int("credentials", required=True),
         Bool("encryption", default=False),
         Bool("filename_encryption", default=False),
-        Str("encryption_password"),
-        Str("encryption_salt"),
-        Dict("attributes", additional_attrs=True),
-        Str("args"),
+        Str("encryption_password", default=""),
+        Str("encryption_salt", default=""),
+        Dict("attributes", required=True, additional_attrs=True),
+        Str("args", default=""),
     ))
     async def list_directory(self, cloud_sync):
         verrors = ValidationErrors()
 
-        await self._validate(verrors, "cloud_sync", cloud_sync)
+        await self._basic_validate(verrors, "cloud_sync", dict(cloud_sync))
 
         if verrors:
             raise verrors
@@ -525,7 +693,7 @@ class CloudSyncService(CRUDService):
 
         cloud_sync = await self._get_instance(id)
 
-        return await rclone(job, cloud_sync)
+        return await rclone(self.middleware, job, cloud_sync)
 
     @accepts()
     async def providers(self):
@@ -542,18 +710,30 @@ class CloudSyncService(CRUDService):
                         for field in provider.credentials_schema
                     ],
                     "buckets": provider.buckets,
+                    "bucket_title": provider.bucket_title,
                     "task_schema": [
                         {
                             "property": field.name,
                             "schema": field.to_json_schema()
                         }
-                        for field in provider.task_schema
+                        for field in provider.task_schema + self.common_task_schema(provider)
                     ],
                 }
                 for provider in REMOTES.values()
             ],
             key=lambda provider: provider["title"].lower()
         )
+
+    def common_task_schema(self, provider):
+        schema = []
+
+        if provider.fast_list:
+            schema.append(Bool("fast_list", default=False, title="Use --fast-list", description=textwrap.dedent("""\
+                Use fewer transactions in exchange for more RAM. This may also speed up or slow down your
+                transfer. See [rclone documentation](https://rclone.org/docs/#fast-list) for more details.
+            """).rstrip()))
+
+        return schema
 
 
 async def setup(middleware):

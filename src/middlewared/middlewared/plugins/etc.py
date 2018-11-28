@@ -1,5 +1,4 @@
 from mako import exceptions
-from mako.template import Template
 from mako.lookup import TemplateLookup
 from middlewared.service import Service
 
@@ -55,19 +54,15 @@ class PyRenderer(object):
 class EtcService(Service):
 
     GROUPS = {
-        # 'user': [
-        #    {'type': 'mako', 'path': 'master.passwd'},
-        #    {'type': 'py', 'path': 'pwd_db'},
-        # ],
-
-        #
-        # Coming soon
-        #
-        # 'kerberos': [
-        #    {'type': 'mako', 'path': 'krb5.conf'},
-        #    {'type': 'mako', 'path': 'krb5.keytab'},
-        # ],
-
+        'user': [
+            {'type': 'mako', 'path': 'group'},
+            {'type': 'mako', 'path': 'master.passwd'},
+            {'type': 'py', 'path': 'pwd_db'},
+        ],
+        'kerberos': [
+            {'type': 'mako', 'path': 'krb5.conf'},
+            {'type': 'py', 'path': 'krb5.keytab'},
+        ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
         ],
@@ -99,6 +94,22 @@ class EtcService(Service):
         'smartd': [
             {'type': 'py', 'path': 'smartd'},
         ],
+        'ssl': [
+            {'type': 'py', 'path': 'generate_ssl_certs'},
+        ],
+        'webdav': [
+            {'type': 'mako', 'path': 'local/apache24/httpd.conf'},
+            {'type': 'mako', 'path': 'local/apache24/Includes/webdav.conf'},
+            {'type': 'py', 'path': 'local/apache24/webdav_config'},
+        ],
+        'nginx': [
+            {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
+        ],
+        'netdata': [
+            {'type': 'mako', 'path': 'local/netdata/netdata.conf'},
+            {'type': 'mako', 'path': 'local/netdata/stream.conf'},
+            {'type': 'py', 'path': 'local/netdata/alarms'}
+        ]
     }
 
     class Config:
@@ -160,7 +171,7 @@ class EtcService(Service):
             st = os.stat(outfile)
             if 'owner' in entry and entry['owner']:
                 try:
-                    pw = pwd.getpwnam(entry['owner'])
+                    pw = await self.middleware.run_in_thread(pwd.getpwnam, entry['owner'])
                     if st.st_uid != pw.pw_uid:
                         os.chown(outfile, pw.pw_uid, -1)
                         changes = True
@@ -168,7 +179,7 @@ class EtcService(Service):
                     pass
             if 'group' in entry and entry['group']:
                 try:
-                    gr = grp.getgrnam(entry['group'])
+                    gr = await self.middleware.run_in_thread(grp.getgrnam, entry['group'])
                     if st.st_gid != gr.gr_gid:
                         os.chown(outfile, -1, gr.gr_gid)
                         changes = True

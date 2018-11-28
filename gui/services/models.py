@@ -41,7 +41,7 @@ from freenasUI.directoryservice.models import (
     KerberosRealm,
 )
 from freenasUI.freeadmin.models import (
-    Model, UserField, GroupField, PathField
+    Model, UserField, GroupField, PathField, DictField, ListField
 )
 from freenasUI.freeadmin.models.fields import MultiSelectField
 from freenasUI.middleware.notifier import notifier
@@ -101,15 +101,8 @@ class CIFS(Model):
         blank=True,
         help_text=_("Server description. This can usually be left blank."),
     )
-    cifs_srv_doscharset = models.CharField(
-        max_length=120,
-        choices=choices.CHARSET(choices.DOSCHARSET_CHOICES),
-        default="CP437",
-        verbose_name=_("DOS charset"),
-    )
     cifs_srv_unixcharset = models.CharField(
         max_length=120,
-        choices=choices.CHARSET(choices.UNIXCHARSET_CHOICES),
         default="UTF-8",
         verbose_name=_("UNIX charset"),
     )
@@ -659,19 +652,6 @@ class iSCSITargetExtent(Model):
             except Exception:
                 return self.iscsi_target_extent_path
 
-    def delete(self):
-        for te in iSCSITargetToExtent.objects.filter(iscsi_extent=self):
-            te.delete()
-        super(iSCSITargetExtent, self).delete()
-        notifier().reload("iscsitarget")
-
-    def save(self, *args, **kwargs):
-        if not self.iscsi_target_extent_naa:
-            self.iscsi_target_extent_naa = '0x6589cfc000000%s' % (
-                hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest()[0:19]
-            )
-        return super(iSCSITargetExtent, self).save(*args, **kwargs)
-
 
 class iSCSITargetPortal(Model):
     iscsi_target_portal_tag = models.IntegerField(
@@ -708,19 +688,6 @@ class iSCSITargetPortal(Model):
             )
         else:
             return str(self.iscsi_target_portal_tag)
-
-    def delete(self):
-        super(iSCSITargetPortal, self).delete()
-        portals = iSCSITargetPortal.objects.all().order_by(
-            'iscsi_target_portal_tag')
-        for portal, idx in zip(portals, range(1, len(portals) + 1)):
-            portal.iscsi_target_portal_tag = idx
-            portal.save()
-        started = notifier().reload("iscsitarget")
-        if started is False and services.objects.get(
-                srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget",
-                                _("The iSCSI service failed to reload."))
 
 
 class iSCSITargetPortalIP(Model):
@@ -823,16 +790,6 @@ class iSCSITargetAuthorizedInitiator(Model):
         else:
             return str(self.iscsi_target_initiator_tag)
 
-    def delete(self):
-        super(iSCSITargetAuthorizedInitiator, self).delete()
-        portals = iSCSITargetAuthorizedInitiator.objects.all().order_by(
-            'iscsi_target_initiator_tag')
-        idx = 1
-        for portal in portals:
-            portal.iscsi_target_initiator_tag = idx
-            portal.save()
-            idx += 1
-
 
 class iSCSITargetAuthCredential(Model):
     iscsi_target_auth_tag = models.IntegerField(
@@ -866,6 +823,25 @@ class iSCSITargetAuthCredential(Model):
     class Meta:
         verbose_name = _("Authorized Access")
         verbose_name_plural = _("Authorized Accesses")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for attr in ('iscsi_target_auth_secret', 'iscsi_target_auth_peersecret'):
+            field = getattr(self, attr)
+            if field and self.id:
+                try:
+                    setattr(self, attr, notifier().pwenc_decrypt(field))
+                except Exception as e:
+                    log.debug(f'Failed to decrypt {attr} password', exc_info=True)
+                    setattr(self, attr, '')
+
+    def save(self, *args, **kwargs):
+        for attr in ('iscsi_target_auth_secret', 'iscsi_target_auth_peersecret'):
+            field = getattr(self, attr)
+            if field:
+                encrypted_val = notifier().pwenc_encrypt(field)
+                setattr(self, attr, encrypted_val)
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return str(self.iscsi_target_auth_tag)
@@ -905,18 +881,6 @@ class iSCSITarget(Model):
 
     def __str__(self):
         return self.iscsi_target_name
-
-    def delete(self):
-        for te in iSCSITargetToExtent.objects.filter(iscsi_target=self):
-            te.delete()
-        super(iSCSITarget, self).delete()
-        started = notifier().reload("iscsitarget")
-        if started is False and services.objects.get(
-                srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed(
-                "iscsitarget",
-                _("The iSCSI service failed to reload.")
-            )
 
 
 class iSCSITargetGroups(Model):
@@ -996,14 +960,6 @@ class iSCSITargetToExtent(Model):
 
     def __str__(self):
         return str(self.iscsi_target) + ' / ' + str(self.iscsi_extent)
-
-    def delete(self):
-        super(iSCSITargetToExtent, self).delete()
-        started = notifier().reload("iscsitarget")
-        if started is False and services.objects.get(
-                srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget",
-                                _("The iSCSI service failed to reload."))
 
 
 class FibreChannelToTarget(Model):
@@ -1096,21 +1052,6 @@ class DynamicDNS(Model):
 
     def __init__(self, *args, **kwargs):
         super(DynamicDNS, self).__init__(*args, **kwargs)
-        self._decrypt_password()
-
-    @classmethod
-    def from_db(cls, db, field_names, values):
-        instance = super().from_db(db, field_names, values)
-        instance._decrypt_password()
-        return instance
-
-    def _decrypt_password(self):
-        if self.ddns_password:
-            try:
-                self.ddns_password = notifier().pwenc_decrypt(self.ddns_password)
-            except Exception:
-                log.debug('Failed to decrypt DDNS password', exc_info=True)
-                self.ddns_password = ''
 
     class Meta:
         verbose_name = _("Dynamic DNS")
@@ -1343,6 +1284,14 @@ class UPS(Model):
         verbose_name=_("Power Off UPS"),
         help_text=_("Signal the UPS to power off after FreeNAS shuts down."),
         default=True,
+    )
+    ups_hostsync = models.IntegerField(
+        default=15,
+        verbose_name=_("Host Sync"),
+        help_text=_(
+            "Upsmon will wait up to this many seconds in master mode "
+            "for the slaves to disconnect during a shutdown situation"
+        )
     )
 
     def __init__(self, *args, **kwargs):
@@ -2217,7 +2166,7 @@ class S3(Model):
     s3_disks = PathField(
         verbose_name=_("Disks"),
         max_length=8192,
-        blank=True,
+        blank=False,
         null=True,
         help_text=_("S3 filesystem directory")
     )
@@ -2263,3 +2212,74 @@ class ServiceMonitor(Model):
         verbose_name=_("Enable"),
         default=False
     )
+
+
+class NetDataGlobalSettings(Model):
+
+    history = models.IntegerField(
+        default=86400,
+        null=False,
+        blank=False
+    )
+
+    update_every = models.IntegerField(
+        default=1,
+        null=False,
+        blank=False
+    )
+
+    http_port_listen_backlog = models.IntegerField(
+        default=100,
+        null=False,
+        blank=False
+    )
+
+    bind = ListField(
+        default=['0.0.0.0', '::'],
+        null=False,
+        blank=False,
+    )
+
+    port = models.IntegerField(
+        default=19999,
+        null=False,
+        blank=False
+    )
+
+    additional_params = models.TextField(
+        blank=True,
+        null=True,
+        default=''
+    )
+
+    alarms = DictField()
+
+    stream_mode = models.CharField(
+        max_length=10,
+        blank=False,
+        null=False,
+        default='NONE'
+    )
+
+    api_key = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True
+    )
+
+    destination = ListField(
+        blank=True,
+        null=True
+    )
+
+    allow_from = ListField(
+        default=['*'],
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        verbose_name = _("Netdata Global Settings")
+
+    class FreeAdmin:
+        deletable = False

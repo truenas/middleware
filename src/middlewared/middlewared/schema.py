@@ -7,7 +7,16 @@ import os
 from croniter import croniter
 
 from middlewared.service_exception import ValidationErrors
-from middlewared.validators import ShouldBe
+
+NOT_PROVIDED = object()
+
+
+class Schemas(dict):
+
+    def add(self, schema):
+        if schema.name in self:
+            raise ValueError(f'Schema "{schema.name}" is already registered')
+        super().__setitem__(schema.name, schema)
 
 
 class Error(Exception):
@@ -16,6 +25,7 @@ class Error(Exception):
         self.attribute = attribute
         self.errmsg = errmsg
         self.errno = errno
+        self.extra = None
 
     def __str__(self):
         return '[{0}] {1}'.format(self.attribute, self.errmsg)
@@ -28,6 +38,7 @@ class EnumMixin(object):
         super(EnumMixin, self).__init__(*args, **kwargs)
 
     def clean(self, value):
+        value = super().clean(value)
         if self.enum is None:
             return value
         if not isinstance(value, (list, tuple)):
@@ -42,17 +53,28 @@ class EnumMixin(object):
 
 class Attribute(object):
 
-    def __init__(self, name, verbose=None, required=False, private=False, validators=None, register=False, **kwargs):
+    def __init__(self, name, title=None, description=None, required=False, null=False, empty=True, private=False,
+                 validators=None, register=False, **kwargs):
         self.name = name
         self.has_default = 'default' in kwargs
         self.default = kwargs.pop('default', None)
         self.required = required
+        self.null = null
+        self.empty = empty
         self.private = private
-        self.verbose = verbose or name
+        self.title = title or name
+        self.description = description
         self.validators = validators or []
         self.register = register
 
     def clean(self, value):
+        if value is None and self.null is False:
+            raise Error(self.name, 'null not allowed')
+        if value is NOT_PROVIDED:
+            if self.has_default:
+                return copy.deepcopy(self.default)
+            else:
+                raise Error(self.name, 'attribute required')
         return value
 
     def dump(self, value):
@@ -67,8 +89,8 @@ class Attribute(object):
         for validator in self.validators:
             try:
                 validator(value)
-            except ShouldBe as e:
-                verrors.add(self.name, f"Should be {e.what}")
+            except ValueError as e:
+                verrors.add(self.name, str(e))
 
         if verrors:
             raise verrors
@@ -79,7 +101,7 @@ class Attribute(object):
         """
         raise NotImplementedError("Attribute must implement to_json_schema method")
 
-    def resolve(self, middleware):
+    def resolve(self, schemas):
         """
         After every plugin is initialized this method is called for every method param
         so that the real attribute is evaluated.
@@ -95,20 +117,25 @@ class Attribute(object):
         )
         """
         if self.register:
-            middleware.add_schema(self)
+            schemas.add(self)
         return self
 
 
 class Any(Attribute):
 
     def to_json_schema(self, parent=None):
-        schema = {'anyOf': [
-            {'type': 'string'},
-            {'type': 'integer'},
-            {'type': 'boolean'},
-            {'type': 'object'},
-            {'type': 'array'},
-        ], 'title': self.verbose}
+        schema = {
+            'anyOf': [
+                {'type': 'string'},
+                {'type': 'integer'},
+                {'type': 'boolean'},
+                {'type': 'object'},
+                {'type': 'array'},
+            ],
+            'title': self.title,
+        }
+        if self.description:
+            schema['description'] = self.description
         if not parent:
             schema['_required_'] = self.required
         return schema
@@ -118,18 +145,22 @@ class Str(EnumMixin, Attribute):
 
     def clean(self, value):
         value = super(Str, self).clean(value)
-        if value is None and not self.required:
-            return self.default
-        if isinstance(value, int):
-            return str(value)
+        if value is None:
+            return value
+        if isinstance(value, int) and not isinstance(value, bool):
+            value = str(value)
         if not isinstance(value, str):
             raise Error(self.name, 'Not a string')
+        if not self.empty and not value:
+            raise Error(self.name, 'Empty value not allowed')
         return value
 
     def to_json_schema(self, parent=None):
         schema = {}
         if not parent:
-            schema['title'] = self.verbose
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
             schema['_required_'] = self.required
         if not self.required:
             schema['type'] = ['string', 'null']
@@ -143,6 +174,9 @@ class Str(EnumMixin, Attribute):
 class Dir(Str):
 
     def validate(self, value):
+        if value is None:
+            return
+
         verrors = ValidationErrors()
 
         if value:
@@ -160,6 +194,9 @@ class Dir(Str):
 class File(Str):
 
     def validate(self, value):
+        if value is None:
+            return
+
         verrors = ValidationErrors()
 
         if value:
@@ -178,24 +215,31 @@ class IPAddr(Str):
 
     def __init__(self, *args, **kwargs):
         self.cidr = kwargs.pop('cidr', False)
-        self.cidr_strict = kwargs.pop('cidr_strict', False)
+        self.network = kwargs.pop('network', False)
+        self.network_strict = kwargs.pop('network_strict', False)
 
         self.v4 = kwargs.pop('v4', True)
         self.v6 = kwargs.pop('v6', True)
 
         if self.v4 and self.v6:
-            if self.cidr:
+            if self.network:
                 self.factory = ipaddress.ip_network
+            elif self.cidr:
+                self.factory = ipaddress.ip_interface
             else:
                 self.factory = ipaddress.ip_address
         elif self.v4:
-            if self.cidr:
+            if self.network:
                 self.factory = ipaddress.IPv4Network
+            elif self.cidr:
+                self.factory = ipaddress.IPv4Interface
             else:
                 self.factory = ipaddress.IPv4Address
         elif self.v6:
-            if self.cidr:
+            if self.network:
                 self.factory = ipaddress.IPv6Network
+            elif self.cidr:
+                self.factory = ipaddress.IPv6Interface
             else:
                 self.factory = ipaddress.IPv6Address
         else:
@@ -206,13 +250,21 @@ class IPAddr(Str):
         super(IPAddr, self).__init__(*args, **kwargs)
 
     def validate(self, value):
+        if value is None:
+            return
+
         verrors = ValidationErrors()
 
         if value:
             try:
-                if self.cidr:
-                    self.factory(value, strict=self.cidr_strict)
+                if self.network:
+                    self.factory(value, strict=self.network_strict)
                 else:
+                    if self.cidr and '/' not in value:
+                        raise ValueError(
+                            'Specified address should be in CIDR notation, e.g. 192.168.0.2/24'
+                        )
+
                     has_zone_index = False
                     if self.allow_zone_index and "%" in value:
                         has_zone_index = True
@@ -234,8 +286,9 @@ class IPAddr(Str):
 class Bool(Attribute):
 
     def clean(self, value):
-        if value is None and not self.required:
-            return self.default
+        value = super().clean(value)
+        if value is None:
+            return value
         if not isinstance(value, bool):
             raise Error(self.name, 'Not a boolean')
         return value
@@ -245,7 +298,9 @@ class Bool(Attribute):
             'type': ['boolean', 'null'] if not self.required else 'boolean',
         }
         if not parent:
-            schema['title'] = self.verbose
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
             schema['_required_'] = self.required
         return schema
 
@@ -254,9 +309,9 @@ class Int(EnumMixin, Attribute):
 
     def clean(self, value):
         value = super(Int, self).clean(value)
-        if value is None and not self.required:
-            return self.default
-        if not isinstance(value, int):
+        if value is None:
+            return value
+        if not isinstance(value, int) or isinstance(value, bool):
             if isinstance(value, str) and value.isdigit():
                 return int(value)
             raise Error(self.name, 'Not an integer')
@@ -265,6 +320,33 @@ class Int(EnumMixin, Attribute):
     def to_json_schema(self, parent=None):
         schema = {
             'type': ['integer', 'null'] if not self.required else 'integer',
+        }
+        if not parent:
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
+            schema['_required_'] = self.required
+        return schema
+
+
+class Float(EnumMixin, Attribute):
+
+    def clean(self, value):
+        value = super(Float, self).clean(value)
+        if value is None and not self.required:
+            return self.default
+        try:
+            # float(False) = 0.0
+            # float(True) = 1.0
+            if isinstance(value, bool):
+                raise TypeError()
+            return float(value)
+        except (TypeError, ValueError):
+            raise Error(self.name, 'Not a floating point number')
+
+    def to_json_schema(self, parent=None):
+        schema = {
+            'type': ['float', 'null'] if not self.required else 'float',
         }
         if not parent:
             schema['title'] = self.verbose
@@ -276,16 +358,17 @@ class List(EnumMixin, Attribute):
 
     def __init__(self, *args, **kwargs):
         self.items = kwargs.pop('items', [])
-        if 'default' not in kwargs:
-            kwargs['default'] = []
+        self.unique = kwargs.pop('unique', False)
         super(List, self).__init__(*args, **kwargs)
 
     def clean(self, value):
         value = super(List, self).clean(value)
-        if value is None and not self.required:
-            return copy.copy(self.default)
+        if value is None:
+            return copy.deepcopy(self.default)
         if not isinstance(value, list):
             raise Error(self.name, 'Not a list')
+        if not self.empty and not value:
+            raise Error(self.name, 'Empty value not allowed')
         if self.items:
             for index, v in enumerate(value):
                 for i in self.items:
@@ -306,9 +389,17 @@ class List(EnumMixin, Attribute):
         return value
 
     def validate(self, value):
+        if value is None:
+            return
+
         verrors = ValidationErrors()
 
+        s = set()
         for i, v in enumerate(value):
+            if self.unique:
+                if v in s:
+                    verrors.add(f"{self.name}.{i}", "This value is not unique.")
+                s.add(v)
             for attr in self.items:
                 try:
                     attr.validate(v)
@@ -318,10 +409,14 @@ class List(EnumMixin, Attribute):
         if verrors:
             raise verrors
 
+        super().validate(value)
+
     def to_json_schema(self, parent=None):
         schema = {'type': 'array'}
         if not parent:
-            schema['title'] = self.verbose
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
             schema['_required_'] = self.required
         if self.required:
             schema['type'] = ['array', 'null']
@@ -343,11 +438,11 @@ class List(EnumMixin, Attribute):
         schema['items'] = items
         return schema
 
-    def resolve(self, middleware):
+    def resolve(self, schemas):
         for index, i in enumerate(self.items):
-            self.items[index] = i.resolve(middleware)
+            self.items[index] = i.resolve(schemas)
         if self.register:
-            middleware.add_schema(self)
+            schemas.add(self)
         return self
 
 
@@ -358,14 +453,18 @@ class Dict(Attribute):
         # Update property is used to disable requirement on all attributes
         # as well to not populate default values for not specified attributes
         self.update = kwargs.pop('update', False)
+        if 'default' not in kwargs:
+            kwargs['default'] = {}
         super(Dict, self).__init__(name, **kwargs)
         self.attrs = {}
         for i in attrs:
             self.attrs[i.name] = i
 
     def clean(self, data):
-        if data is None and not self.required:
-            data = {}
+        data = super().clean(data)
+
+        if data is None:
+            return copy.deepcopy(self.default)
 
         self.errors = []
         if not isinstance(data, dict):
@@ -385,12 +484,10 @@ class Dict(Attribute):
         # Do not make any field and required and not populate default values
         if not self.update:
             for attr in list(self.attrs.values()):
-
-                if attr.required and attr.name not in data:
-                    raise Error(attr.name, 'This field is required')
-
-                if attr.name not in data and attr.has_default:
-                    data[attr.name] = copy.copy(attr.default)
+                if attr.name not in data and (
+                    attr.required or attr.has_default
+                ):
+                    data[attr.name] = attr.clean(NOT_PROVIDED)
 
         return data
 
@@ -412,6 +509,9 @@ class Dict(Attribute):
         return value
 
     def validate(self, value):
+        if value is None:
+            return
+
         verrors = ValidationErrors()
 
         for attr in self.attrs.values():
@@ -431,17 +531,19 @@ class Dict(Attribute):
             'additionalProperties': self.additional_attrs,
         }
         if not parent:
-            schema['title'] = self.verbose
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
             schema['_required_'] = self.required
         for name, attr in list(self.attrs.items()):
             schema['properties'][name] = attr.to_json_schema(parent=self)
         return schema
 
-    def resolve(self, middleware):
+    def resolve(self, schemas):
         for name, attr in list(self.attrs.items()):
-            self.attrs[name] = attr.resolve(middleware)
+            self.attrs[name] = attr.resolve(schemas)
         if self.register:
-            middleware.add_schema(self)
+            schemas.add(self)
         return self
 
 
@@ -461,8 +563,8 @@ class Cron(Dict):
 
     @staticmethod
     def convert_schedule_to_db_format(data_dict, schedule_name='schedule'):
-        if data_dict.get(schedule_name):
-            schedule = data_dict.pop(schedule_name)
+        schedule = data_dict.pop(schedule_name, None)
+        if schedule:
             db_fields = ['minute', 'hour', 'daymonth', 'month', 'dayweek']
             for index, field in enumerate(Cron.FIELDS):
                 if field in schedule:
@@ -511,8 +613,8 @@ class Ref(object):
     def __init__(self, name):
         self.name = name
 
-    def resolve(self, middleware):
-        schema = middleware.get_schema(self.name)
+    def resolve(self, schemas):
+        schema = schemas.get(self.name)
         if not schema:
             raise ResolverError('Schema {0} does not exist'.format(self.name))
         schema = copy.deepcopy(schema)
@@ -541,8 +643,8 @@ class Patch(object):
             return Dict(name, **spec)
         raise ValueError('Unknown type: {0}'.format(spec['type']))
 
-    def resolve(self, middleware):
-        schema = middleware.get_schema(self.name)
+    def resolve(self, schemas):
+        schema = schemas.get(self.name)
         if not schema:
             raise ResolverError(f'Schema {self.name} not found')
         elif not isinstance(schema, Dict):
@@ -552,7 +654,10 @@ class Patch(object):
         schema.name = self.newname
         for operation, patch in self.patches:
             if operation == 'add':
-                new = self.convert(dict(patch))
+                if isinstance(patch, dict):
+                    new = self.convert(dict(patch))
+                else:
+                    new = copy.deepcopy(patch)
                 schema.attrs[new.name] = new
             elif operation == 'rm':
                 del schema.attrs[patch['name']]
@@ -564,7 +669,7 @@ class Patch(object):
                 for key, val in list(patch.items()):
                     setattr(schema, key, val)
         if self.register:
-            middleware.add_schema(schema)
+            schemas.add(schema)
         return schema
 
 
@@ -572,7 +677,7 @@ class ResolverError(Exception):
     pass
 
 
-def resolver(middleware, f):
+def resolver(schemas, f):
     if not callable(f):
         return
     if not hasattr(f, 'accepts'):
@@ -580,13 +685,28 @@ def resolver(middleware, f):
     new_params = []
     for p in f.accepts:
         if isinstance(p, (Patch, Ref, Attribute)):
-            new_params.append(p.resolve(middleware))
+            new_params.append(p.resolve(schemas))
         else:
             raise ResolverError('Invalid parameter definition {0}'.format(p))
 
     # FIXME: for some reason assigning params (f.accepts = new_params) does not work
     f.accepts.clear()
     f.accepts.extend(new_params)
+
+
+def resolve_methods(schemas, to_resolve):
+    while len(to_resolve) > 0:
+        resolved = 0
+        for method in list(to_resolve):
+            try:
+                resolver(schemas, method)
+            except ResolverError:
+                pass
+            else:
+                to_resolve.remove(method)
+                resolved += 1
+        if resolved == 0:
+            raise ValueError(f'Not all schemas could be resolved: {to_resolve}')
 
 
 def accepts(*schema):
@@ -597,6 +717,8 @@ def accepts(*schema):
             args_index += 1
         if hasattr(f, '_job'):
             args_index += 1
+        if hasattr(f, '_skip_arg'):
+            args_index += f._skip_arg
         assert len(schema) == f.__code__.co_argcount - args_index  # -1 for self
 
         def clean_and_validate_args(args, kwargs):
@@ -622,7 +744,7 @@ def accepts(*schema):
                 i += 1
 
             # Use i counter to map keyword argument to rpc positional
-            for x in list(range(i + 1, f.__code__.co_argcount)):
+            for x in list(range(i + args_index, f.__code__.co_argcount)):
                 kwarg = f.__code__.co_varnames[x]
 
                 if kwarg in kwargs:
@@ -630,11 +752,10 @@ def accepts(*schema):
                     i += 1
 
                     value = kwargs[kwarg]
-                elif len(nf.accepts) >= i + args_index:
+                elif len(nf.accepts) >= i + 1:
                     attr = nf.accepts[i]
                     i += 1
-
-                    value = None
+                    value = NOT_PROVIDED
                 else:
                     i += 1
                     continue
@@ -676,14 +797,12 @@ def accepts(*schema):
     return wrap
 
 
-class UnixPerm(Attribute):
-
-    def clean(self, value):
-        if value is None and not self.required:
-            return self.default
-        return value
+class UnixPerm(Str):
 
     def validate(self, value):
+        if value is None:
+            return
+
         try:
             mode = int(value, 8)
         except ValueError:
@@ -699,6 +818,8 @@ class UnixPerm(Attribute):
             'type': ['string', 'null'] if not self.required else 'string',
         }
         if not parent:
-            schema['title'] = self.verbose
+            schema['title'] = self.title
+            if self.description:
+                schema['description'] = self.description
             schema['_required_'] = self.required
         return schema

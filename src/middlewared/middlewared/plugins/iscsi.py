@@ -4,13 +4,15 @@ from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
 from middlewared.service import (CallError, CRUDService, SystemServiceService,
                                  ValidationErrors, private)
 from middlewared.utils import run
-from middlewared.validators import IpAddress, Range, ShouldBe
+from middlewared.validators import IpAddress, Range
 
 import bidict
 import errno
+import hashlib
 import re
 import os
 import sysctl
+import uuid
 
 AUTHMETHOD_LEGACY_MAP = bidict.bidict({
     'None': 'NONE',
@@ -39,8 +41,9 @@ class ISCSIGlobalService(SystemServiceService):
         'iscsiglobal_update',
         Str('basename'),
         List('isns_servers', items=[Str('server')]),
-        Int('pool_avail_threshold', validators=[Range(min=1, max=99)]),
-        Bool('alua', default=False),
+        Int('pool_avail_threshold', validators=[Range(min=1, max=99)], null=True),
+        Bool('alua'),
+        update=True
     ))
     async def do_update(self, data):
         """
@@ -64,7 +67,7 @@ class ISCSIGlobalService(SystemServiceService):
                     ip_validator = IpAddress()
                     ip_validator(ip)
                     continue
-                except ShouldBe:
+                except ValueError:
                     pass
             verrors.add('iscsiglobal_update.isns_servers', f'Server "{server}" is not a valid IP(:PORT)? tuple.')
 
@@ -113,7 +116,7 @@ class ISCSIPortalService(CRUDService):
             verrors.add(f'{schema}.listen', 'At least one listen entry is required.')
         else:
             system_ips = [
-                ip['address'] for ip in await self.middleware.call('interfaces.ip_in_use')
+                ip['address'] for ip in await self.middleware.call('interface.ip_in_use')
             ]
             system_ips.extend(['0.0.0.0', '::'])
             new_ips = set(i['ip'] for i in data['listen']) - set(i['ip'] for i in old['listen']) if old else set()
@@ -153,14 +156,14 @@ class ISCSIPortalService(CRUDService):
         'iscsiportal_create',
         Str('comment'),
         Str('discovery_authmethod', default='NONE', enum=['NONE', 'CHAP', 'CHAP_MUTUAL']),
-        Int('discovery_authgroup', default=None),
+        Int('discovery_authgroup', default=None, null=True),
         List('listen', required=True, items=[
             Dict(
                 'listen',
                 IPAddr('ip', required=True),
                 Int('port', default=3260, validators=[Range(min=1, max=65535)]),
             ),
-        ]),
+        ], default=[]),
         register=True,
     ))
     async def do_create(self, data):
@@ -268,8 +271,17 @@ class ISCSIPortalService(CRUDService):
         """
         Delete iSCSI Portal `id`.
         """
-        return await self.middleware.call('datastore.delete', self._config.datastore, id)
-        # service is currently restarted by datastore/django model
+        result = await self.middleware.call('datastore.delete', self._config.datastore, id)
+
+        for i, portal in enumerate(await self.middleware.call('iscsi.portal.query', [], {'order_by': ['tag']})):
+            await self.middleware.call(
+                'datastore.update', self._config.datastore, portal['id'], {'tag': i + 1},
+                {'prefix': self._config.datastore_prefix}
+            )
+
+        await self._service_change('iscsitarget', 'reload')
+
+        return result
 
 
 class iSCSITargetAuthCredentialService(CRUDService):
@@ -278,13 +290,12 @@ class iSCSITargetAuthCredentialService(CRUDService):
         namespace = 'iscsi.auth'
         datastore = 'services.iscsitargetauthcredential'
         datastore_prefix = 'iscsi_target_auth_'
-        datastore_extend = 'iscsi.auth.extend'
 
     @accepts(Dict(
         'iscsi_auth_create',
         Int('tag'),
-        Str('user'),
-        Str('secret'),
+        Str('user', required=True),
+        Str('secret', required=True),
         Str('peeruser'),
         Str('peersecret'),
         register=True
@@ -296,12 +307,12 @@ class iSCSITargetAuthCredentialService(CRUDService):
         if verrors:
             raise verrors
 
-        await self.compress(data)
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
-            {'prefix': self._config.datastore_prefix})
+            {'prefix': self._config.datastore_prefix}
+        )
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(data['id'])
 
@@ -327,12 +338,12 @@ class iSCSITargetAuthCredentialService(CRUDService):
         if verrors:
             raise verrors
 
-        await self.compress(new)
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
-            {'prefix': self._config.datastore_prefix})
+            {'prefix': self._config.datastore_prefix}
+        )
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(id)
 
@@ -344,18 +355,21 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
     @private
     async def validate(self, data, schema_name, verrors):
-        secret = data.get('secret') or ''  # In case None is provided for secret or peer secret
-        peer_secret = data.get('peersecret') or ''
+        secret = data.get('secret')
+        peer_secret = data.get('peersecret')
         peer_user = data.get('peeruser', '')
 
         if not peer_user and peer_secret:
             verrors.add(
                 f'{schema_name}.peersecret',
-                'The peer user is required if you set a peer secret.')
+                'The peer user is required if you set a peer secret.'
+            )
 
         if len(secret) < 12 or len(secret) > 16:
-            verrors.add(f'{schema_name}.secret',
-                        'Secret must be between 12 and 16 characters.')
+            verrors.add(
+                f'{schema_name}.secret',
+                'Secret must be between 12 and 16 characters.'
+            )
 
         if not peer_user:
             return
@@ -363,39 +377,19 @@ class iSCSITargetAuthCredentialService(CRUDService):
         if not peer_secret:
             verrors.add(
                 f'{schema_name}.peersecret',
-                'The peer secret is required if you set a peer user.')
+                'The peer secret is required if you set a peer user.'
+            )
         elif peer_secret == secret:
             verrors.add(
                 f'{schema_name}.peersecret',
-                'The peer secret cannot be the same as user secret.')
+                'The peer secret cannot be the same as user secret.'
+            )
         elif peer_secret:
             if len(peer_secret) < 12 or len(peer_secret) > 16:
-                verrors.add(f'{schema_name}.peersecret',
-                            'Peer Secret must be between 12 and 16 characters.')
-
-    @private
-    async def extend(self, data):
-        secret = data.get('secret', '')
-        peersecret = data.get('peersecret', '')
-
-        data['secret'] = await self.middleware.call(
-            'notifier.pwenc_decrypt', secret)
-        data['peersecret'] = await self.middleware.call(
-            'notifier.pwenc_decrypt', peersecret)
-
-        return data
-
-    @private
-    async def compress(self, data):
-        secret = data.get('secret') or ''
-        peersecret = data.get('peersecret') or ''
-
-        data['secret'] = await self.middleware.call(
-            'notifier.pwenc_encrypt', secret)
-        data['peersecret'] = await self.middleware.call(
-            'notifier.pwenc_encrypt', peersecret)
-
-        return data
+                verrors.add(
+                    f'{schema_name}.peersecret',
+                    'Peer Secret must be between 12 and 16 characters.'
+                )
 
 
 class iSCSITargetExtentService(CRUDService):
@@ -410,13 +404,13 @@ class iSCSITargetExtentService(CRUDService):
         'iscsi_extent_create',
         Str('name', required=True),
         Str('type', enum=['DISK', 'FILE'], default='DISK'),
-        Str('disk', default=None),
-        Str('serial', default=None),
-        Str('path', default=None),
+        Str('disk', default=None, null=True),
+        Str('serial', default=None, null=True),
+        Str('path', default=None, null=True),
         Int('filesize', default=0),
         Int('blocksize', enum=[512, 1024, 2048, 4096], default=512),
         Bool('pblocksize'),
-        Int('avail_threshold', validators=[Range(min=1, max=99)]),
+        Int('avail_threshold', validators=[Range(min=1, max=99)], null=True),
         Str('comment'),
         Bool('insecure_tpc', default=True),
         Bool('xen'),
@@ -435,9 +429,11 @@ class iSCSITargetExtentService(CRUDService):
             raise verrors
 
         await self.save(data, 'iscsi_extent_create', verrors)
+
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
-            {'prefix': self._config.datastore_prefix})
+            {'prefix': self._config.datastore_prefix}
+        )
 
         return await self._get_instance(data['id'])
 
@@ -459,15 +455,21 @@ class iSCSITargetExtentService(CRUDService):
         await self.compress(new)
         await self.validate(new)
         await self.clean(
-            new, 'iscsi_extent_update', verrors, old=old)
+            new, 'iscsi_extent_update', verrors, old=old
+        )
 
         if verrors:
             raise verrors
 
-        await self.save(data, 'iscsi_extent_update', verrors)
+        await self.save(new, 'iscsi_extent_update', verrors)
+
         await self.middleware.call(
-            'datastore.update', self._config.datastore, id, new,
-            {'prefix': self._config.datastore_prefix})
+            'datastore.update',
+            self._config.datastore,
+            id,
+            new,
+            {'prefix': self._config.datastore_prefix}
+        )
 
         return await self._get_instance(id)
 
@@ -485,6 +487,9 @@ class iSCSITargetExtentService(CRUDService):
             if delete is not True:
                 raise CallError('Failed to remove extent file')
 
+        for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['extent', '=', id]]):
+            await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'])
+
         return await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
@@ -492,6 +497,7 @@ class iSCSITargetExtentService(CRUDService):
     @private
     async def validate(self, data):
         data['serial'] = await self.extent_serial(data['serial'])
+        data['naa'] = self.extent_naa(data.get('naa'))
 
     @private
     async def compress(self, data):
@@ -523,6 +529,11 @@ class iSCSITargetExtentService(CRUDService):
         if extent_type != 'FILE':
             # ZVOL and HAST are type DISK
             extent_type = 'DISK'
+            # If extent is set to a disk ( not ZVOL and HAST ) - let's reflect this in the output
+
+            disk = await self.middleware.call('disk.query', [['identifier', '=', data['path']]])
+            if disk:
+                data['disk'] = disk[0]['name']
         else:
             extent_size = data['filesize']
 
@@ -609,8 +620,9 @@ class iSCSITargetExtentService(CRUDService):
                 verrors.add(f'{schema_name}.path',
                             'You need to specify a filepath not a directory')
 
-            await check_path_resides_within_volume(verrors, self.middleware,
-                                                   schema_name, path)
+            await check_path_resides_within_volume(
+                verrors, self.middleware, f'{schema_name}.path', path
+            )
 
         return data
 
@@ -648,7 +660,7 @@ class iSCSITargetExtentService(CRUDService):
         # TODO Just ported, let's do something different later? - Brandon
         if serial is None:
             try:
-                nic = (await self.middleware.call('interfaces.query',
+                nic = (await self.middleware.call('interface.query',
                                                   [['name', 'rnin', 'vlan'],
                                                    ['name', 'rnin', 'lagg'],
                                                    ['name', 'rnin', 'epair'],
@@ -668,7 +680,14 @@ class iSCSITargetExtentService(CRUDService):
         else:
             return serial
 
-    @accepts(List('exclude'))
+    @private
+    def extent_naa(self, naa):
+        if naa is None:
+            return '0x6589cfc000000' + hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest()[0:19]
+        else:
+            return naa
+
+    @accepts(List('exclude', default=[]))
     async def disk_choices(self, exclude):
         """
         Exclude will exclude the path from being in the used_zvols list,
@@ -694,8 +713,9 @@ class iSCSITargetExtentService(CRUDService):
         async for pdisk in await self.middleware.call('pool.get_disks'):
             used_disks.append(pdisk)
 
-        zfs_snaps = await self.middleware.call('zfs.snapshot.query', [],
-                                               {'order_by': ['name']})
+        zfs_snaps = await self.middleware.call(
+            'zfs.snapshot.query', [], {'select': ['name'], 'order_by': ['name']}
+        )
 
         zvols = await self.middleware.call(
             'pool.dataset.query',
@@ -711,14 +731,9 @@ class iSCSITargetExtentService(CRUDService):
                 diskchoices[f'zvol/{zvol_name}'] = f'{zvol_name} ({zvol_size})'
 
         for snap in zfs_snaps:
-            ds_name, snap_name = snap['properties']['name'][
-                'value'].rsplit('@', 1)
-            full_name = f'{ds_name}@{snap_name}'
-            snap_size = snap['properties']['referenced']['value']
-
+            ds_name, snap_name = snap['name'].rsplit('@', 1)
             if ds_name in zvol_list:
-                diskchoices[f'zvol/{full_name}'] = \
-                    f'{full_name} ({snap_size}) [ro]'
+                diskchoices[f'zvol/{snap["name"]}'] = f'{snap["name"]} [ro]'
 
         notifier_disks = await self.middleware.call('notifier.get_disks')
         for name, disk in notifier_disks.items():
@@ -752,12 +767,12 @@ class iSCSITargetExtentService(CRUDService):
 
                 await run(['truncate', '-s', str(extent_size), path])
 
-            await self.middleware.call('service.reload', 'iscsitarget')
+            await self._service_change('iscsitarget', 'reload')
         else:
             data['path'] = disk
 
             if disk.startswith('multipath'):
-                await self.middleware.call('notifier.unlabel_disk', disk)
+                await self.middleware.call('disk.unlabel', disk)
                 await self.middleware.call(
                     'notifier.label_disk', f'extent_{disk}', disk
                 )
@@ -812,7 +827,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         'iscsi_initiator_create',
         Int('tag', default=0),
         List('initiators', default=[]),
-        List('auth_network', items=[IPAddr('ip', cidr=True)], default=[]),
+        List('auth_network', items=[IPAddr('ip', network=True)], default=[]),
         Str('comment'),
         register=True
     ))
@@ -832,7 +847,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(data['id'])
 
@@ -855,15 +870,25 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        return await self.middleware.call(
+        result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
+
+        for i, initiator in enumerate(await self.middleware.call('iscsi.initiator.query', [], {'order_by': ['tag']})):
+            await self.middleware.call(
+                'datastore.update', self._config.datastore, initiator['id'], {'tag': i + 1},
+                {'prefix': self._config.datastore_prefix}
+            )
+
+        await self._service_change('iscsitarget', 'reload')
+
+        return result
 
     @private
     async def compress(self, data):
@@ -926,15 +951,15 @@ class iSCSITargetService(CRUDService):
     @accepts(Dict(
         'iscsi_target_create',
         Str('name', required=True),
-        Str('alias'),
+        Str('alias', null=True),
         Str('mode', enum=['ISCSI', 'FC', 'BOTH'], default='ISCSI'),
         List('groups', default=[], items=[
             Dict(
                 'group',
                 Int('portal', required=True),
-                Int('initiator', default=None),
+                Int('initiator', default=None, null=True),
                 Str('authmethod', enum=['NONE', 'CHAP', 'CHAP_MUTUAL'], default='NONE'),
-                Int('auth', default=None),
+                Int('auth', default=None, null=True),
             ),
         ]),
         register=True
@@ -1093,8 +1118,10 @@ class iSCSITargetService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        rv = await self.middleware.call(
-            'datastore.delete', self._config.datastore, id)
+        for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['target', '=', id]]):
+            await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'])
+
+        rv = await self.middleware.call('datastore.delete', self._config.datastore, id)
         await self._service_change('iscsitarget', 'reload')
         return rv
 
@@ -1134,7 +1161,7 @@ class iSCSITargetToExtentService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(data['id'])
 
@@ -1162,15 +1189,19 @@ class iSCSITargetToExtentService(CRUDService):
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
 
-        await self.middleware.call('service.reload', 'iscsitarget')
+        await self._service_change('iscsitarget', 'reload')
 
         return await self._get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        return await self.middleware.call(
+        result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
+
+        await self._service_change('iscsitarget', 'reload')
+
+        return result
 
     @private
     async def extend(self, data):

@@ -59,6 +59,28 @@ class DictField(models.Field):
         return value
 
 
+class ListField(models.Field):
+    empty_strings_allowed = False
+
+    def get_internal_type(self):
+        return "TextField"
+
+    def get_db_prep_value(self, value, connection, prepared=False):
+        if not value:
+            value = []
+        return json.dumps(value)
+
+    def from_db_value(self, value, expression, connection, context):
+        return self.to_python(value)
+
+    def to_python(self, value):
+        if not value:
+            return []
+        if isinstance(value, str):
+            return json.loads(value)
+        return value
+
+
 class EncryptedDictField(models.Field):
     empty_strings_allowed = False
 

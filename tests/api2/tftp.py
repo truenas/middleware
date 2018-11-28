@@ -8,38 +8,39 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT
+from auto_config import pool_name
+
+dataset = f"{pool_name}/tftproot"
+dataset_url = dataset.replace('/', '%2F')
 
 
-DATASET_NAME = 'tank%2Ftftproot'
-
-
-def test_01_Creating_dataset_tank_tftproot():
+def test_01_Creating_dataset_tftproot():
     # THIS IS UNDER THE ASSUMPTION THAT A TANK VOLUME ALREADY EXISTS WHEN THIS TEST RUNS
 
     result = POST(
-        '/pool/dataset', {
-            'name': DATASET_NAME.replace('%2F', '/')
+        '/pool/dataset/', {
+            'name': dataset
         }
     )
 
     assert result.status_code == 200, result.text
 
 
-def test_02_Setting_permissions_for_TFTP_on_mnt_tank_tftproot():
+def test_02_Setting_permissions_for_TFTP_on_mnt_pool_name_tftproot():
     payload = {
         'acl': 'UNIX',
         'mode': '777',
         'group': 'nobody',
         'user': 'nobody'
     }
-    results = POST(f'/pool/dataset/id/{DATASET_NAME}/permission/', payload)
+    results = POST(f'/pool/dataset/id/{dataset_url}/permission/', payload)
 
     assert results.status_code == 200, results.text
 
 
 def test_03_Configuring_TFTP_service():
     payload = {
-        "directory": "/mnt/tank/tftproot",
+        "directory": f"/mnt/{pool_name}/tftproot",
         "username": "nobody",
         "newfiles": True
     }

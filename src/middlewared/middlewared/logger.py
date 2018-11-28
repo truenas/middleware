@@ -1,17 +1,21 @@
-import os
 import logging
 import logging.handlers
+import os
+import sys
 
 from logging.config import dictConfig
 from .utils import sw_version, sw_version_is_stable
 
 from raven import Client
+from raven.transport.http import HTTPTransport
 from raven.transport.threaded import ThreadedHTTPTransport
 
 # markdown debug is also considered useless
 logging.getLogger('MARKDOWN').setLevel(logging.INFO)
 # asyncio runs in debug mode but we do not need INFO/DEBUG
 logging.getLogger('asyncio').setLevel(logging.WARN)
+# We dont need internal aiohttp debug logging
+logging.getLogger('aiohttp.internal').setLevel(logging.WARN)
 # we dont need ws4py close debug messages
 logging.getLogger('ws4py').setLevel(logging.WARN)
 
@@ -33,9 +37,11 @@ class CrashReporting(object):
     Pseudo-Class for remote crash reporting
     """
 
-    def __init__(self, transport='threaded'):
+    def __init__(self, transport='sync'):
         if transport == 'threaded':
             transport = ThreadedHTTPTransport
+        elif transport == 'sync':
+            transport = HTTPTransport
         else:
             raise ValueError(f'Unknown transport: {transport}')
 
@@ -49,7 +55,9 @@ class CrashReporting(object):
             install_sys_hook=False,
             install_logging_hook=False,
             string_max_length=10240,
+            raise_send_errors=True,
             release=sw_version(),
+            transport=transport,
         )
 
     def is_disabled(self):
@@ -98,7 +106,7 @@ class CrashReporting(object):
         try:
             self.client.captureException(exc_info=exc_info, data=data, extra=extra_data)
         except Exception:
-            pass  # We don't care about the exception
+            self.logger.debug('Failed to send crash report', exc_info=True)
 
 
 class LoggerFormatter(logging.Formatter):
@@ -158,11 +166,22 @@ class LoggerStream(object):
             self.logger.debug(line.rstrip())
 
 
+class ErrorProneRotatingFileHandler(logging.handlers.RotatingFileHandler):
+    def handleError(self, record):
+        try:
+            super().handleError(record)
+        except ValueError:
+            # sys.stderr can be closed by core.reconfigure_logging which leads to
+            # ValueError: I/O operation on closed file. raised on every operation that
+            # involves logging
+            pass
+
+
 class Logger(object):
     """Pseudo-Class for Logger - Wrapper for logging module"""
     DEFAULT_LOGGING = {
         'version': 1,
-        'disable_existing_loggers': True,
+        'disable_existing_loggers': False,
         'root': {
             'level': 'NOTSET',
             'handlers': ['file'],
@@ -170,7 +189,7 @@ class Logger(object):
         'handlers': {
             'file': {
                 'level': 'DEBUG',
-                'class': 'logging.handlers.RotatingFileHandler',
+                'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
                 'filename': LOGFILE,
                 'mode': 'a',
                 'maxBytes': 10485760,
@@ -195,11 +214,20 @@ class Logger(object):
         return logging.getLogger(self.application_name)
 
     def stream(self):
-        return logging.root.handlers[0].stream
+        for handler in logging.root.handlers:
+            if isinstance(handler, ErrorProneRotatingFileHandler):
+                return handler.stream
 
     def _set_output_file(self):
         """Set the output format for file log."""
-        dictConfig(self.DEFAULT_LOGGING)
+        try:
+            dictConfig(self.DEFAULT_LOGGING)
+        except Exception:
+            # If something happens during system dataset reconfiguration, we have the chance of not having
+            # /var/log present leaving us with "ValueError: Unable to configure handler 'file':
+            # [Errno 2] No such file or directory: '/var/log/middlewared.log'"
+            # crashing the middleware during startup
+            pass
         # Make sure log file is not readable by everybody.
         # umask could be another approach but chmod was chosen so
         # it affects existing installs.
@@ -233,3 +261,18 @@ class Logger(object):
             self._set_output_file()
 
         logging.root.setLevel(getattr(logging, self.debug_level))
+
+
+def setup_logging(name, debug_level, log_handler):
+    _logger = Logger(name, debug_level)
+    _logger.getLogger()
+
+    if 'file' in log_handler:
+        _logger.configure_logging('file')
+        stream = _logger.stream()
+        if stream is not None:
+            sys.stdout = sys.stderr = stream
+    elif 'console' in log_handler:
+        _logger.configure_logging('console')
+    else:
+        _logger.configure_logging('file')

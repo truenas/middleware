@@ -1,4 +1,5 @@
 import asyncio
+import base64
 from collections import defaultdict
 from datetime import datetime, timedelta
 import errno
@@ -7,7 +8,6 @@ import os
 import re
 import signal
 import subprocess
-import sys
 import sysctl
 import tempfile
 
@@ -15,18 +15,16 @@ from bsd import geom, getswapinfo
 
 from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import get_smartctl_args
-from middlewared.schema import accepts, Bool, Dict, List, Str
-from middlewared.service import filterable, job, private, CallError, CRUDService
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str
+from middlewared.service import job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
 
-# FIXME: temporary import of SmartAlert until alert is implemented
-# in middlewared
-if '/usr/local/www' not in sys.path:
-    sys.path.insert(0, '/usr/local/www')
-from freenasUI.services.utils import SmartAlert
 
 DISK_EXPIRECACHE_DAYS = 7
+GELI_KEY_SLOT = 0
+GELI_RECOVERY_SLOT = 1
+GELI_REKEY_FAILED = '/tmp/.rekey_failed'
 MIRROR_MAX = 5
 RE_CAMCONTROL_DRIVE_LOCKED = re.compile(r'^drive locked\s+yes$', re.M)
 RE_DA = re.compile('^da[0-9]+$')
@@ -44,17 +42,7 @@ class DiskService(CRUDService):
         datastore = 'storage.disk'
         datastore_prefix = 'disk_'
         datastore_extend = 'disk.disk_extend'
-
-    @filterable
-    async def query(self, filters=None, options=None):
-        if filters is None:
-            filters = []
-        if options is None:
-            options = {}
-        options['prefix'] = 'disk_'
-        filters.append(('expiretime', '=', None))
-        options['extend'] = 'disk.disk_extend'
-        return await self.middleware.call('datastore.query', 'storage.disk', filters, options)
+        datastore_filters = [('expiretime', '=', None)]
 
     @private
     async def disk_extend(self, disk):
@@ -65,6 +53,14 @@ class DiskService(CRUDService):
         )
         for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
             disk[key] = disk[key].upper()
+        try:
+            disk['size'] = int(disk['size'])
+        except ValueError:
+            disk['size'] = None
+        if disk['multipath_name']:
+            disk['devname'] = f'multipath/{disk["multipath_name"]}'
+        else:
+            disk['devname'] = disk['name']
         return disk
 
     @accepts(
@@ -84,7 +80,10 @@ class DiskService(CRUDService):
             ]),
             Str('passwd', password=True),
             Str('smartoptions'),
-            register=True
+            Int('critical', null=True),
+            Int('difference', null=True),
+            Int('informational', null=True),
+            update=True
         )
     )
     async def do_update(self, id, data):
@@ -119,7 +118,10 @@ class DiskService(CRUDService):
         if any(new[key] != old[key] for key in ['hddstandby', 'advpowermgmt', 'acousticlevel']):
             await self.middleware.call('notifier.start_ataidle', new['name'])
 
-        if any(new[key] != old[key] for key in ['togglesmart', 'smartoptions']):
+        if any(
+                new[key] != old[key]
+                for key in ['togglesmart', 'smartoptions', 'critical', 'difference', 'informational']
+        ):
 
             if new['togglesmart']:
                 await self.toggle_smart_on(new['name'])
@@ -143,8 +145,8 @@ class DiskService(CRUDService):
         else:
             return disk["name"]
 
-    @accepts(Bool("join_partitions"))
-    async def get_unused(self, join_partitions=False):
+    @accepts(Bool("join_partitions", default=False))
+    async def get_unused(self, join_partitions):
         """
         Helper method to get all disks that are not in use, either by the boot
         pool or the user pools.
@@ -215,9 +217,304 @@ class DiskService(CRUDService):
 
         return providers
 
+    def __create_keyfile(self, keyfile, size=64, force=False):
+        if force or not os.path.exists(keyfile):
+            keypath = os.path.dirname(keyfile)
+            if not os.path.exists(keypath):
+                os.makedirs(keypath)
+            subprocess.run(
+                ['dd', 'if=/dev/random', f'of={keyfile}', f'bs={size}', 'count=1'],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+
+    def __geli_setmetadata(self, dev, keyfile, passphrase=None):
+        self.__create_keyfile(keyfile)
+        cp = subprocess.run([
+            'geli', 'init', '-s', '4096', '-l', '256', '-B', 'none',
+        ] + (
+            ['-J', passphrase] if passphrase else ['-P']
+        ) + ['-K', keyfile, dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if cp.stderr:
+            raise CallError(f'Unable to set geli metadata on {dev}: {cp.stderr.decode()}')
+
+    @private
+    def geli_attach_single(self, dev, key, passphrase=None, skip_existing=False):
+        if skip_existing or not os.path.exists(f'/dev/{dev}.eli'):
+            cp = subprocess.run([
+                'geli', 'attach',
+            ] + (['-j', passphrase] if passphrase else ['-p']) + [
+                '-k', key, dev,
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if cp.stderr or not os.path.exists(f'/dev/{dev}.eli'):
+                raise CallError(f'Unable to geli attach {dev}: {cp.stderr.decode()}')
+        else:
+            self.logger.debug(f'{dev} already attached')
+
+    @private
+    def geli_attach(self, pool, passphrase=None, key=None):
+        """
+        Attach geli providers of a given pool
+
+        Returns:
+            The number of providers that failed to attach
+        """
+        failed = 0
+        geli_keyfile = key or pool['encryptkey_path']
+
+        if passphrase:
+            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
+            os.chmod(passf.name, 0o600)
+            passf.write(passphrase)
+            passf.flush()
+            passphrase = passf.name
+        try:
+            for ed in self.middleware.call_sync(
+                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+            ):
+                dev = ed['encrypted_provider']
+                try:
+                    self.geli_attach_single(dev, geli_keyfile, passphrase)
+                except Exception as ee:
+                    self.logger.warn(str(ee))
+                    failed += 1
+        finally:
+            if passphrase:
+                passf.close()
+        return failed
+
+    @private
+    def geli_testkey(self, pool, passphrase):
+        """
+        Test key for geli providers of a given pool
+
+        Returns:
+            bool
+        """
+
+        with tempfile.NamedTemporaryFile(mode='w+', dir='/tmp') as tf:
+            os.chmod(tf.name, 0o600)
+            tf.write(passphrase)
+            tf.flush()
+            # EncryptedDisk table might be out of sync for some reason,
+            # this is much more reliable!
+            devs = self.middleware.call_sync('zfs.pool.get_devices', pool['name'])
+            for dev in devs:
+                name, ext = os.path.splitext(dev)
+                if ext != '.eli':
+                    continue
+                try:
+                    self.geli_attach_single(
+                        name, pool['encryptkey_path'], tf.name, skip_existing=True,
+                    )
+                except Exception as e:
+                    if str(e).find('Wrong key') != -1:
+                        return False
+        return True
+
+    @private
+    def geli_setkey(self, dev, key, slot=GELI_KEY_SLOT, passphrase=None, oldkey=None):
+        cp = subprocess.run([
+            'geli', 'setkey', '-n', str(slot),
+        ] + (
+            ['-J', passphrase] if passphrase else ['-P']
+        ) + ['-K', key] + (
+            ['-k', oldkey] if oldkey else []
+        ) + [dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if cp.stderr:
+            raise CallError(f'Unable to set passphrase on {dev}: {cp.stderr.decode()}')
+
+    @private
+    def geli_delkey(self, dev, slot=GELI_KEY_SLOT, force=False):
+        cp = subprocess.run([
+            'geli', 'delkey', '-n', str(slot),
+        ] + (
+            ['-f'] if force else []
+        ) + [dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if cp.stderr:
+            raise CallError(f'Unable to delete key {slot} on {dev}: {cp.stderr.decode()}')
+
+    @private
+    def geli_recoverykey_rm(self, pool):
+        for ed in self.middleware.call_sync(
+            'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+        ):
+            dev = ed['encrypted_provider']
+            self.geli_delkey(dev, GELI_RECOVERY_SLOT, True)
+
+    @private
+    def geli_passphrase(self, pool, passphrase, rmrecovery=False):
+        """
+        Set a passphrase in a geli
+        If passphrase is None then remove the passphrase
+        """
+        if passphrase:
+            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
+            os.chmod(passf.name, 0o600)
+            passf.write(passphrase)
+            passf.flush()
+            passphrase = passf.name
+        try:
+            for ed in self.middleware.call_sync(
+                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+            ):
+                dev = ed['encrypted_provider']
+                if rmrecovery:
+                    self.geli_delkey(dev, GELI_RECOVERY_SLOT, force=True)
+                self.geli_setkey(dev, pool['encryptkey_path'], GELI_KEY_SLOT, passphrase)
+        finally:
+            if passphrase:
+                passf.close()
+
+    @private
+    def geli_rekey(self, pool, slot=GELI_KEY_SLOT):
+        """
+        Regenerates the geli global key and set it to devices
+        Removes the passphrase if it was present
+        """
+
+        geli_keyfile = pool['encryptkey_path']
+        geli_keyfile_tmp = f'{geli_keyfile}.tmp'
+        devs = [
+            ed['encrypted_provider']
+            for ed in self.middleware.call_sync(
+                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+            )
+        ]
+
+        # keep track of which device has which key in case something goes wrong
+        dev_to_keyfile = {dev: geli_keyfile for dev in devs}
+
+        # Generate new key as .tmp
+        self.logger.debug("Creating new key file: %s", geli_keyfile_tmp)
+        self.__create_keyfile(geli_keyfile_tmp, force=True)
+        error = None
+        applied = []
+        for dev in devs:
+            try:
+                self.geli_setkey(dev, geli_keyfile_tmp, slot)
+                dev_to_keyfile[dev] = geli_keyfile_tmp
+                applied.append(dev)
+            except Exception as ee:
+                error = str(ee)
+                self.logger.error('Failed to set geli key on %s: %s', dev, error, exc_info=True)
+                break
+
+        # Try to be atomic in a certain way
+        # If rekey failed for one of the devs, revert for the ones already applied
+        if error:
+            could_not_restore = False
+            for dev in applied:
+                try:
+                    self.geli_setkey(dev, geli_keyfile, slot, oldkey=geli_keyfile_tmp)
+                    dev_to_keyfile[dev] = geli_keyfile
+                except Exception as ee:
+                    # this is very bad for the user, at the very least there
+                    # should be a notification that they will need to
+                    # manually rekey as they now have drives with different keys
+                    could_not_restore = True
+                    self.logger.error(
+                        'Failed to restore key on rekey for %s: %s', dev, str(ee), exc_info=True
+                    )
+            if could_not_restore:
+                try:
+                    open(GELI_REKEY_FAILED, 'w').close()
+                except Exception:
+                    pass
+                self.logger.error(
+                    'Unable to rekey. Devices now have the following keys: %s',
+                    '\n'.join([
+                        f'{dev}: {keyfile}'
+                        for dev, keyfile in dev_to_keyfile
+                    ])
+                )
+                raise CallError(
+                    'Unable to rekey and devices have different keys. See the log file.'
+                )
+            else:
+                raise CallError(f'Unable to set key: {error}')
+        else:
+            if os.path.exists(GELI_REKEY_FAILED):
+                try:
+                    os.unlink(GELI_REKEY_FAILED)
+                except Exception:
+                    pass
+            self.logger.debug("Rename geli key %s -> %s", geli_keyfile_tmp, geli_keyfile)
+            os.rename(geli_keyfile_tmp, geli_keyfile)
+
+    @private
+    def geli_recoverykey_add(self, pool):
+        with tempfile.NamedTemporaryFile(dir='/tmp/') as reckey:
+            reckey_file = reckey.name
+            self.__create_keyfile(reckey_file, force=True)
+            reckey.flush()
+
+            errors = []
+
+            for ed in self.middleware.call_sync(
+                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+            ):
+                dev = ed['encrypted_provider']
+                try:
+                    self.geli_setkey(dev, reckey_file, GELI_RECOVERY_SLOT, None)
+                except Exception as ee:
+                    errors.append(str(ee))
+
+            if errors:
+                raise CallError(
+                    'Unable to set recovery key for {len(errors)} devices: {", ".join(errors)}'
+                )
+            reckey.seek(0)
+            return base64.b64encode(reckey.read()).decode()
+
+    @private
+    def geli_detach_single(self, dev):
+        if not os.path.exists(f'/dev/{dev.replace(".eli", "")}.eli'):
+            return
+        cp = subprocess.run(
+            ['geli', 'detach', dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        if cp.returncode != 0:
+            raise CallError(f'Unable to geli dettach {dev}: {cp.stderr.decode()}')
+
+    @private
+    def geli_clear(self, dev):
+        cp = subprocess.run(
+            ['geli', 'clear', dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        if cp.returncode != 0:
+            raise CallError(f'Unable to geli clear {dev}: {cp.stderr.decode()}')
+
+    @private
+    def geli_detach(self, pool, clear=False):
+        failed = 0
+        for ed in self.middleware.call_sync(
+            'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+        ):
+            dev = ed['encrypted_provider']
+            try:
+                self.geli_detach_single(dev)
+            except Exception as ee:
+                self.logger.warn(str(ee))
+                failed += 1
+            if clear:
+                try:
+                    self.geli_clear(dev)
+                except Exception as e:
+                    self.logger.warn('Failed to clear %s: %s', dev, e)
+        return failed
+
+
+    @private
+    def encrypt(self, devname, keypath, passphrase=None):
+        self.__geli_setmetadata(devname, keypath, passphrase)
+        self.geli_attach_single(devname, keypath, passphrase)
+        return f'{devname}.eli'
+
     @accepts(
         List('devices', items=[Str('device')]),
-        Str('passphrase', private=True),
+        Str('passphrase', null=True, private=True),
     )
     @job(pipes=['input'])
     def decrypt(self, job, devices, passphrase=None):
@@ -225,6 +522,7 @@ class DiskService(CRUDService):
         Decrypt `devices` using uploaded encryption key
         """
         with tempfile.NamedTemporaryFile(dir='/tmp/') as f:
+            os.chmod(f.name, 0o600)
             f.write(job.pipes.input.r.read())
             f.flush()
 
@@ -239,7 +537,7 @@ class DiskService(CRUDService):
             for dev in devices:
                 try:
                     self.middleware.call_sync(
-                        'notifier.geli_attach_single',
+                        'disk.geli_attach_single',
                         dev,
                         f.name,
                         passphrase,
@@ -256,7 +554,7 @@ class DiskService(CRUDService):
 
     @private
     async def get_reserved(self):
-        reserved = [i async for i in await self.middleware.call('boot.get_disks')]
+        reserved = list(await self.middleware.call('boot.get_disks'))
         reserved += [i async for i in await self.middleware.call('pool.get_disks')]
         reserved += [i async for i in self.__get_iscsi_targets()]
         return reserved
@@ -275,7 +573,11 @@ class DiskService(CRUDService):
         partitions = []
         name = await self.middleware.call("disk.get_name", disk)
         for path in glob.glob(f"/dev/%s[a-fps]*" % name) or [f"/dev/{name}"]:
-            info = (await run("/usr/sbin/diskinfo", path)).stdout.decode("utf-8").split("\t")
+            cp = await run("/usr/sbin/diskinfo", path, check=False)
+            if cp.returncode:
+                self.logger.debug('Failed to get diskinfo for %s: %s', name, cp.stderr.decode())
+                continue
+            info = cp.stdout.decode("utf-8").split("\t")
             if len(info) > 3:
                 partitions.append({
                     "path": path,
@@ -389,6 +691,20 @@ class DiskService(CRUDService):
             return prov.text
 
     @private
+    def label_to_disk(self, label, geom_scan=True):
+        if geom_scan:
+            geom.scan()
+        dev = self.label_to_dev(label, geom_scan=False) or label
+        part = geom.class_by_name('PART').xml.find(f'.//provider[name="{dev}"]/../name')
+        if part is not None:
+            return part.text
+
+    @private
+    def check_clean(self, disk):
+        geom.scan()
+        return geom.class_by_name('PART').xml.find(f'.//geom[name="{disk}"]') is None
+
+    @private
     @accepts(Str('name'))
     async def sync(self, name):
         """
@@ -480,6 +796,9 @@ class DiskService(CRUDService):
                     await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                 elif disk['disk_expiretime'] < datetime.utcnow():
                     # Disk expire time has surpassed, go ahead and remove it
+                    for extent in await self.middleware.call(
+                            'iscsi.extent.query', [['type', '=', 'DISK'], ['path', '=', disk['disk_identifier']]]):
+                        await self.middleware.call('iscsi.extent.delete', extent['id'])
                     await self.middleware.call('datastore.delete', 'storage.disk', disk['disk_identifier'])
                 continue
             else:
@@ -791,6 +1110,12 @@ class DiskService(CRUDService):
         disks_pairs = [disks for disks in list(serials.values())]
         disks_pairs.sort(key=lambda x: int(x[0][2:]))
 
+        # If its TrueNAS, no multipath already exists but new multipath were detected
+        # we should not continue. Its likely there is wrong cabling in the system.
+        # See #42042 for details.
+        if not is_freenas and not mp_disks and any(map(lambda x: len(x) > 1, disks_pairs)):
+            return 'BAD_CABLING'
+
         # Mode is Active/Passive for FreeNAS
         mode = None if is_freenas else 'R'
         for disks in disks_pairs:
@@ -862,10 +1187,21 @@ class DiskService(CRUDService):
                     c = consumers[0]
                     await self.swaps_remove_disks([c.provider.geom.name])
                 else:
-                    swap_devices.append(f'mirror/{g.name}')
+                    mirror_name = f'mirror/{g.name}'
+                    swap_devices.append(mirror_name)
                     for c in consumers:
                         # Add all partitions used in swap, removing .eli
                         used_partitions.add(c.provider.name.strip('.eli'))
+
+                    # If mirror has been configured automatically (not by middlewared)
+                    # and there is no geli attached yet we should look for core in it.
+                    if g.config.get('Type') == 'AUTOMATIC' and not os.path.exists(
+                        f'/dev/{mirror_name}.eli'
+                    ):
+                        await run(
+                            'savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{mirror_name}',
+                            check=False
+                        )
 
         klass = geom.class_by_name('PART')
         if not klass:
@@ -1061,6 +1397,86 @@ class DiskService(CRUDService):
 
         await self.sync(dev)
 
+    @private
+    def format(self, disk, swapgb):
+
+        geom.scan()
+        g = geom.geom_by_name('DISK', disk)
+        if g and g.provider.mediasize:
+            size = g.provider.mediasize
+            # The GPT header takes about 34KB + alignment, round it to 100
+            if size - 100 <= swapgb * 1024 * 1024:
+                raise CallError(f'Your disk size must be higher than {swapgb}GB')
+        else:
+            self.logger.error(f'Unable to determine size of {disk}')
+
+        job = self.middleware.call_sync('disk.wipe', disk, 'QUICK')
+        job.wait_sync()
+        if job.error:
+            raise CallError(f'Failed to wipe disk {disk}: {job.error}')
+
+        # Calculate swap size.
+        swapsize = swapgb * 1024 * 1024 * 2
+        # Round up to nearest whole integral multiple of 128
+        # so next partition starts at mutiple of 128.
+        swapsize = (int((swapsize + 127) / 128)) * 128
+
+        commands = []
+        commands.append(('gpart', 'create', '-s', 'gpt', f'/dev/{disk}'))
+        if swapsize > 0:
+            commands.append(('gpart', 'add', '-a', '4k', '-b', '128', '-t', 'freebsd-swap', '-s', str(swapsize), disk))
+            commands.append(('gpart', 'add', '-a', '4k', '-t', 'freebsd-zfs', disk))
+        else:
+            commands.append(('gpart', 'add', '-a', '4k', '-b', '128', '-t', 'freebsd-zfs', disk))
+
+        # Install a dummy boot block so system gives meaningful message if booting
+        # from the wrong disk.
+        commands.append(('gpart', 'bootcode', '-b', '/boot/pmbr-datadisk', f'/dev/{disk}'))
+
+        for command in commands:
+            cp = subprocess.run(
+                command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
+            )
+            if cp.returncode != 0:
+                raise CallError(f'Unable to GPT format the disk "{disk}": {cp.stderr}')
+
+        # We might need to sync with reality (e.g. devname -> uuid)
+        self.middleware.call_sync('disk.sync', disk)
+
+    @private
+    def gptid_from_part_type(self, disk, part_type):
+        geom.scan()
+        g = geom.class_by_name('PART')
+        uuid = g.xml.find(f'.//geom[name="{disk}"]//config/[type="{part_type}"]/rawuuid')
+        if uuid is None:
+            raise ValueError(f'Partition type {part_type} not found on {disk}')
+        return f'gptid/{uuid.text}'
+
+    @private
+    def unlabel(self, disk):
+        self.middleware.call_sync('disk.swaps_remove_disks', [disk])
+
+        subprocess.run(
+            ['gpart', 'destroy', '-F', f'/dev/{disk}'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        # Wipe out the partition table by doing an additional iterate of create/destroy
+        subprocess.run(
+            ['gpart', 'create', '-s', 'gpt', f'/dev/{disk}'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        subprocess.run(
+            ['gpart', 'destroy', '-F', f'/dev/{disk}'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        # We might need to sync with reality (e.g. uuid -> devname)
+        self.middleware.call_sync('disk.sync', disk)
+
 
 def new_swap_name():
     """
@@ -1103,11 +1519,7 @@ async def _event_devfs(middleware, event_type, args):
             await middleware.call('disk.sync', data['cdev'])
             await middleware.call('disk.sed_unlock', data['cdev'])
             await middleware.call('disk.multipath_sync')
-            try:
-                with SmartAlert() as sa:
-                    sa.device_delete(data['cdev'])
-            except Exception:
-                pass
+            await middleware.call('alert.oneshot_delete', 'SMART', data['cdev'])
     elif data['type'] == 'DESTROY':
         # Device notified about is not a disk
         if not RE_ISDISK.match(data['cdev']):
@@ -1117,11 +1529,7 @@ async def _event_devfs(middleware, event_type, args):
         if os.path.exists('/tmp/.sync_disk_done'):
             await (await middleware.call('disk.sync_all')).wait()
             await middleware.call('disk.multipath_sync')
-            try:
-                with SmartAlert() as sa:
-                    sa.device_delete(data['cdev'])
-            except Exception:
-                pass
+            await middleware.call('alert.oneshot_delete', 'SMART', data['cdev'])
             # If a disk dies we need to reconfigure swaps so we are not left
             # with a single disk mirror swap, which may be a point of failure.
             await middleware.call('disk.swaps_configure')

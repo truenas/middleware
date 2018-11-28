@@ -1,6 +1,6 @@
 from datetime import datetime, date
 from middlewared.event import EventSource
-from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, Str
+from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
 from middlewared.service import ConfigService, no_auth_required, job, private, Service, ValidationErrors
 from middlewared.utils import Popen, start_daemon_thread, sw_buildtime, sw_version
 from middlewared.validators import Range
@@ -112,6 +112,7 @@ class SytemAdvancedService(ConfigService):
             'system_advanced_update',
             Bool('advancedmode'),
             Bool('autotune'),
+            Int('boot_scrub', validators=[Range(min=1)]),
             Bool('consolemenu'),
             Bool('consolemsg'),
             Bool('cpu_in_percentage'),
@@ -130,6 +131,7 @@ class SytemAdvancedService(ConfigService):
             Bool('anonstats'),
             Str('sed_user', enum=['USER', 'MASTER']),
             Str('sed_passwd', password=True),
+            update=True
         )
     )
     async def do_update(self, data):
@@ -156,6 +158,9 @@ class SytemAdvancedService(ConfigService):
                 config_data,
                 {'prefix': self._config.datastore_prefix}
             )
+
+            if original_data['boot_scrub'] != config_data['boot_scrub']:
+                await self.middleware.call('service.restart', 'cron')
 
             loader_reloaded = False
             if original_data['motd'] != config_data['motd']:
@@ -392,16 +397,19 @@ class SystemGeneralService(ConfigService):
         self._country_choices = {}
 
     @private
-    def general_system_extend(self, data):
+    async def general_system_extend(self, data):
         keys = data.keys()
         for key in keys:
             if key.startswith('gui'):
                 data['ui_' + key[3:]] = data.pop(key)
 
         data['sysloglevel'] = data['sysloglevel'].upper()
-        data['sysloglevel'] = data['sysloglevel'].upper()
-        data['ui_protocol'] = data['ui_protocol'].upper()
-        data['ui_certificate'] = data['ui_certificate']['id'] if data['ui_certificate'] else None
+        if data['ui_certificate']:
+            data['ui_certificate'] = await self.middleware.call(
+                'certificate.query',
+                [['id', '=', data['ui_certificate']['id']]],
+                {'get': True}
+            )
         return data
 
     @accepts()
@@ -550,7 +558,11 @@ class SystemGeneralService(ConfigService):
             for index, row in enumerate(reader):
                 if index != 0:
                     if row[cni] and row[two_li]:
-                        self._country_choices[row[two_li]] = row[cni]
+                        if row[two_li] in self._country_choices:
+                            # If two countries in the iso file have the same key, we concatenate their names
+                            self._country_choices[row[two_li]] += f' + {row[cni]}'
+                        else:
+                            self._country_choices[row[two_li]] = row[cni]
                 else:
                     # ONLY CNI AND TWO_LI ARE BEING CONSIDERED FROM THE CSV
                     cni = _get_index(row, 'Common Name')
@@ -599,32 +611,41 @@ class SystemGeneralService(ConfigService):
                 )
 
         ip_addresses = await self.middleware.call(
-            'interfaces.ip_in_use'
+            'interface.ip_in_use'
         )
         ip4_addresses_list = [alias_dict['address'] for alias_dict in ip_addresses if alias_dict['type'] == 'INET']
         ip6_addresses_list = [alias_dict['address'] for alias_dict in ip_addresses if alias_dict['type'] == 'INET6']
 
-        ip4_address = data.get('ui_address')
-        if (
-            ip4_address and
-            ip4_address != '0.0.0.0' and
-            ip4_address not in ip4_addresses_list
-        ):
-            verrors.add(
-                f'{schema}.ui_address',
-                'Selected ipv4 address is not associated with this machine'
-            )
+        ip4_addresses = data.get('ui_address')
+        for ip4_address in ip4_addresses:
+            if (
+                ip4_address and
+                ip4_address != '0.0.0.0' and
+                ip4_address not in ip4_addresses_list
+            ):
+                verrors.add(
+                    f'{schema}.ui_address',
+                    f'{ip4_address} ipv4 address is not associated with this machine'
+                )
 
-        ip6_address = data.get('ui_v6address')
-        if (
-            ip6_address and
-            ip6_address != '::' and
-            ip6_address not in ip6_addresses_list
-        ):
-            verrors.add(
-                f'{schema}.ui_v6address',
-                'Selected ipv6 address is not associated with this machine'
-            )
+        ip6_addresses = data.get('ui_v6address')
+        for ip6_address in ip6_addresses:
+            if (
+                ip6_address and
+                ip6_address != '::' and
+                ip6_address not in ip6_addresses_list
+            ):
+                verrors.add(
+                    f'{schema}.ui_v6address',
+                    f'{ip6_address} ipv6 address is not associated with this machine'
+                )
+
+        for key, wildcard, ips in [('ui_address', '0.0.0.0', ip4_addresses), ('ui_v6address', '::', ip6_addresses)]:
+            if wildcard in ips and len(ips) > 1:
+                verrors.add(
+                    f'{schema}.{key}',
+                    f'When "{wildcard}" has been selected, selection of other addresses is not allowed'
+                )
 
         syslog_server = data.get('syslogserver')
         if syslog_server:
@@ -642,89 +663,101 @@ class SystemGeneralService(ConfigService):
                         'Port specified should be between 0 - 65535'
                     )
 
-        protocol = data.get('ui_protocol')
-        if protocol:
-            if protocol != 'HTTP':
-                certificate_id = data.get('ui_certificate')
-                if not certificate_id:
+        certificate_id = data.get('ui_certificate')
+        if not certificate_id:
+            verrors.add(
+                f'{schema}.ui_certificate',
+                'Certificate is required'
+            )
+        else:
+            cert = await self.middleware.call(
+                'certificate.query',
+                [
+                    ["id", "=", certificate_id],
+                    ["CSR", "=", None]
+                ]
+            )
+            if not cert:
+                verrors.add(
+                    f'{schema}.ui_certificate',
+                    'Please specify a valid certificate which exists on the FreeNAS system'
+                )
+            else:
+                # getting fingerprint for certificate
+                fingerprint = await self.middleware.call(
+                    'certificate.get_fingerprint_of_cert',
+                    certificate_id
+                )
+                if fingerprint:
+                    syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
+                    syslog.syslog(syslog.LOG_ERR, 'Fingerprint of the certificate used in UI : ' + fingerprint)
+                    syslog.closelog()
+                else:
+                    # One reason value is None - error while parsing the certificate for fingerprint
                     verrors.add(
                         f'{schema}.ui_certificate',
-                        'Protocol has been selected as HTTPS, certificate is required'
+                        'Please check if the certificate has been added to the system and it is a '
+                        'valid certificate'
                     )
-                else:
-                    # getting fingerprint for certificate
-                    fingerprint = await self.middleware.call(
-                        'certificate.get_fingerprint_of_cert',
-                        certificate_id
-                    )
-                    if fingerprint:
-                        syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
-                        syslog.syslog(syslog.LOG_ERR, 'Fingerprint of the certificate used in UI : ' + fingerprint)
-                        syslog.closelog()
-                    else:
-                        # Two reasons value is None - certificate not found - error while parsing the certificate for
-                        # fingerprint
-                        verrors.add(
-                            f'{schema}.ui_certificate',
-                            'Kindly check if the certificate has been added to the system and it is a valid certificate'
-                        )
+
         return verrors
 
     @accepts(
         Dict(
             'general_settings',
-            IPAddr('ui_address'),
-            Int('ui_certificate'),
+            Int('ui_certificate', null=True),
             Int('ui_httpsport', validators=[Range(min=1, max=65535)]),
             Bool('ui_httpsredirect'),
             Int('ui_port', validators=[Range(min=1, max=65535)]),
-            Str('ui_protocol', enum=['HTTP', 'HTTPS', 'HTTPHTTPS']),
-            IPAddr('ui_v6address'),
+            List('ui_address', items=[IPAddr('addr')], empty=False),
+            List('ui_v6address', items=[IPAddr('addr')], empty=False),
             Str('kbdmap'),
             Str('language'),
             Str('sysloglevel', enum=['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE',
                                      'F_INFO', 'F_DEBUG', 'F_IS_DEBUG']),
             Str('syslogserver'),
-            Str('timezone')
+            Str('timezone'),
+            update=True,
         )
     )
     async def do_update(self, data):
         config = await self.config()
+        config['ui_certificate'] = config['ui_certificate']['id'] if config['ui_certificate'] else None
         new_config = config.copy()
         new_config.update(data)
+
         verrors = await self.validate_general_settings(new_config, 'general_settings_update')
         if verrors:
             raise verrors
 
-        if len(set(new_config.items()) ^ set(config.items())) > 0:
-            # Converting new_config to map the database table fields
-            new_config['sysloglevel'] = new_config['sysloglevel'].lower()
-            new_config['ui_protocol'] = new_config['ui_protocol'].lower()
-            keys = new_config.keys()
-            for key in keys:
-                if key.startswith('ui_'):
-                    new_config['gui' + key[3:]] = new_config.pop(key)
+        # Converting new_config to map the database table fields
+        new_config['sysloglevel'] = new_config['sysloglevel'].lower()
+        keys = new_config.keys()
+        for key in list(keys):
+            if key.startswith('ui_'):
+                new_config['gui' + key[3:]] = new_config.pop(key)
 
-            await self.middleware.call(
-                'datastore.update',
-                self._config.datastore,
-                config['id'],
-                new_config,
-                {'prefix': 'stg_'}
-            )
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            config['id'],
+            new_config,
+            {'prefix': 'stg_'}
+        )
 
-            # case insensitive comparison should be performed for sysloglevel
-            if (
-                config['sysloglevel'].lower() != new_config['sysloglevel'].lower() or
-                    config['syslogserver'] != new_config['syslogserver']
-            ):
-                await self.middleware.call('service.restart', 'syslogd')
+        # case insensitive comparison should be performed for sysloglevel
+        if (
+            config['sysloglevel'].lower() != new_config['sysloglevel'].lower() or
+                config['syslogserver'] != new_config['syslogserver']
+        ):
+            await self.middleware.call('service.restart', 'syslogd')
 
-            if config['timezone'] != new_config['timezone']:
-                await self.middleware.call('service.reload', 'timeservices')
-                await self.middleware.call('service.restart', 'cron')
+        if config['timezone'] != new_config['timezone']:
+            await self.middleware.call('service.reload', 'timeservices')
+            await self.middleware.call('service.restart', 'cron')
 
-            await self.middleware.call('service._start_ssl', 'nginx')
+        await self.middleware.call('service.start', 'ssl')
+
         return await self.config()
 
 

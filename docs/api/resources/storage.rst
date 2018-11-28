@@ -591,6 +591,10 @@ ZFS Volumes
       DELETE /api/v1.0/storage/volume/tank/zvols/myzvol/ HTTP/1.1
       Content-Type: application/json
 
+      {
+        "cascade": true
+      }
+
    **Example response**:
 
    .. sourcecode:: http
@@ -599,6 +603,7 @@ ZFS Volumes
       Vary: Accept
       Content-Type: application/json
 
+   :json boolean cascade: Delete Recursively ( optional - it defaults to false )
    :resheader Content-Type: content type of the response
    :statuscode 204: no error
 
@@ -700,7 +705,8 @@ Replace disk
         {
                 "label": "gptid/7c4dd4f1-1a1f-11e3-9786-080027c5e4f4",
                 "replace_disk": "ada4",
-                "force": true
+                "force": true,
+                "pass": "abcd"
         }
 
    **Example response**:
@@ -715,6 +721,7 @@ Replace disk
 
    :json string label: zfs label of the device
    :json string replace_disk: name of the new disk
+   :json string pass: passphrase for a protected pool ( optional - as required )
    :json bool force: force replacement of the new disk
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
@@ -868,7 +875,8 @@ Unlock
 
         {
                 "passphrase": "mypassphrase",
-                "recovery_key": "Ik9mXRNr2zj9CZF8kFoC9w7sUyQxo5kAAgWjeVtNDfTgFm0tERqS90OdJYzCaCr75V9LnKgLlRBmzJ0oj7F3nw=="
+                "recovery_key": "Ik9mXRNr2zj9CZF8kFoC9w7sUyQxo5kAAgWjeVtNDfTgFm0tERqS90OdJYzCaCr75V9LnKgLlRBmzJ0oj7F3nw==",
+                "services": ["iscsitarget", "webdav"]
         }
 
    **Example response**:
@@ -884,6 +892,7 @@ Unlock
    :json string passphrase: passphrase to unlock the volume
    :json string recovery_key: recovery key in base64 encoded string to unlock the volume ( Either passphrase
                               or recovery key are needed to unlock the volume )
+   :json list services: services to restart when unlocking a volume is complete. Valid options are: 'afp', 'cifs', 'ftp', 'iscsitarget', 'jails', 'nfs', 'webdav'
    :resheader Content-Type: content type of the response
    :statuscode 202: no error
 
@@ -902,6 +911,10 @@ Lock
       POST /api/v1.0/storage/volume/tank/lock/ HTTP/1.1
       Content-Type: application/json
 
+        {
+                "passphrase": "mypassphrase"
+        }
+
    **Example response**:
 
    .. sourcecode:: http
@@ -912,6 +925,7 @@ Lock
 
       Volume has been locked.
 
+   :json string passphrase: passphrase to lock the volume
    :resheader Content-Type: content type of the response
    :statuscode 202: no error
 

@@ -9,12 +9,15 @@ class S3RcloneRemote(BaseRcloneRemote):
     title = "Amazon S3"
 
     buckets = True
+
+    fast_list = True
+
     rclone_type = "s3"
 
     credentials_schema = [
-        Str("access_key_id", verbose="Access Key ID", required=True),
-        Str("secret_access_key", verbose="Secret Access Key", required=True),
-        Str("endpoint", verbose="Endpoint URL"),
+        Str("access_key_id", title="Access Key ID", required=True),
+        Str("secret_access_key", title="Secret Access Key", required=True),
+        Str("endpoint", title="Endpoint URL"),
     ]
 
     task_schema = [
@@ -34,8 +37,9 @@ class S3RcloneRemote(BaseRcloneRemote):
         if task["attributes"]["encryption"] not in (None, "", "AES256"):
             verrors.add("encryption", 'Encryption should be null or "AES256"')
 
-        response = await self.middleware.run_in_io_thread(self._get_client(credentials).get_bucket_location,
-                                                          Bucket=task["attributes"]["bucket"])
+        response = await self.middleware.run_in_thread(
+            self._get_client(credentials).get_bucket_location, Bucket=task["attributes"]["bucket"]
+        )
         task["attributes"]["region"] = response["LocationConstraint"] or "us-east-1"
 
     def get_remote_extra(self, task):

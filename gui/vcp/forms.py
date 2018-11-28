@@ -75,10 +75,6 @@ class VcenterConfigurationForm(MiddlewareModelForm, ModelForm):
         data['action'] = self.vcp_action
         return data
 
-    def get_sys_protocol(self):
-        with client as c:
-            return c.call('system.general.config')['ui_protocol']
-
     class Meta:
         model = models.VcenterConfiguration
         exclude = ['vc_version', 'vc_installed']
@@ -94,7 +90,9 @@ class VcenterConfigurationForm(MiddlewareModelForm, ModelForm):
             label=_('TrueNAS Management IP Address')
         )
 
-        self.is_https = True if 'https' in self.get_sys_protocol().lower() else False
+        with client as c:
+            self.is_https = c.call('system.general.config')['ui_httpsredirect']
+
         self.vcp_is_installed = self.instance.vc_installed
         self.is_update_needed()
 
@@ -121,7 +119,7 @@ class VcenterAuxSettingsForm(MiddlewareModelForm, ModelForm):
         with client as c:
             sys_config = c.call('system.general.config')
 
-        proto = sys_config['ui_protocol'] if sys_config['ui_protocol'].lower() != 'httphttps' else 'http'
+        proto = 'https' if sys_config['ui_httpsredirect'] else 'http'
         address = request_address if sys_config['ui_address'] == '0.0.0.0' else sys_config['ui_address']
         newurl = f'{proto}://{address}'
 

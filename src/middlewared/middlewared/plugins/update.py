@@ -5,7 +5,6 @@ import errno
 import os
 import re
 import shutil
-import socket
 import sys
 
 if '/usr/local/lib' not in sys.path:
@@ -277,7 +276,7 @@ class UpdateService(Service):
         data['version'] = manifest.Version()
         return data
 
-    @accepts(Str('path'))
+    @accepts(Str('path', null=True, default=None))
     async def get_pending(self, path=None):
         """
         Gets a list of packages already downloaded and ready to be applied.
@@ -408,12 +407,11 @@ class UpdateService(Service):
                 sequence = ''
 
             changelog = get_changelog(train, start=sequence, end=update.Sequence())
-            hostname = socket.gethostname()
 
             try:
                 # FIXME: Translation
                 self.middleware.call_sync('mail.send', {
-                    'subject': '{}: {}'.format(hostname, 'Update Available'),
+                    'subject': 'Update Available',
                     'text': '''A new update is available for the %(train)s train.
 Version: %(version)s
 Changelog:
@@ -475,7 +473,7 @@ Changelog:
         try:
             job.set_progress(10, 'Writing uploaded file to disk')
             with open(destfile, 'wb') as f:
-                await self.middleware.run_in_io_thread(
+                await self.middleware.run_in_thread(
                     shutil.copyfileobj, job.pipes.input.r, f, 1048576,
                 )
 
@@ -488,7 +486,7 @@ Changelog:
                 except Exception as e:
                     raise CallError(str(e))
 
-            await self.middleware.run_in_io_thread(do_update)
+            await self.middleware.run_in_thread(do_update)
 
             job.set_progress(95, 'Cleaning up')
 

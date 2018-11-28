@@ -1221,6 +1221,20 @@ require([
         directoryservice_mutex_toggle('nis_enable', nis);
     }
 
+    support_production_init = function() {
+        domStyle.set(registry.byId("id_send_debug").domNode.parentNode.parentNode, 'display', 'none');
+    }
+
+    support_production_toggle = function() {
+        if (registry.byId("id_production").get("value")) {
+            domStyle.set(registry.byId("id_send_debug").domNode.parentNode.parentNode, 'display', 'table-row');
+            registry.byId("id_send_debug").set("checked", true);
+        } else {
+            domStyle.set(registry.byId("id_send_debug").domNode.parentNode.parentNode, 'display', 'none');
+            registry.byId("id_send_debug").set("checked", false);
+        }
+    }
+
     directoryservice_idmap_onclick = function(eid, ds_type, ds_id) {
         var widget = registry.byId(eid);
         var idmap_type = widget.get("value");
@@ -1265,14 +1279,18 @@ require([
     }
 
     mpAclChange = function(acl) {
+      var mode_en = registry.byId("id_mp_mode_en");
       var mode = registry.byId("id_mp_mode");
       if(acl.get('value') === false) {
         // do noting
       } else if(acl.get('value') == 'unix') {
+        mode_en.set('disabled', false);
         mode.set('disabled', false);
       } else if(acl.get('value') == 'mac') {
+        mode_en.set('disabled', false);
         mode.set('disabled', false);
       } else {
+        mode_en.set('disabled', true);
         mode.set('disabled', true);
       }
     }
@@ -1387,11 +1405,20 @@ require([
     vmTypeToggle = function() {
         var vm_type = registry.byId("id_vm_type");
         var bootloader = registry.byId("id_bootloader").domNode.parentNode.parentNode;
+        var pwd = registry.byId("id_root_password").domNode.parentNode.parentNode;
+        var path = registry.byId("id_path").domNode.parentNode.parentNode;
+        var size = registry.byId("id_size").domNode.parentNode.parentNode;
 
         if (vm_type.get('value') == 'Container Provider') {
             domStyle.set(bootloader, "display", "none");
+            domStyle.set(pwd, "display", "");
+            domStyle.set(path, "display", "");
+            domStyle.set(size, "display", "");
         } else if (vm_type.get('value') == 'Bhyve') {
             domStyle.set(bootloader, "display", "");
+            domStyle.set(pwd, "display", "none");
+            domStyle.set(path, "display", "none");
+            domStyle.set(size, "display", "none");
         }
     }
 
@@ -1553,9 +1580,10 @@ require([
 
     }
 
-    cloudCredentialsProvider = function() {
 
-        var provider = registry.byId("id_provider").get('value');
+    credentialsProvider = function(provider_id, class_name) {
+
+        var provider = registry.byId(provider_id).get('value');
         var credentialsSchemas = JSON.parse(registry.byId("id_credentials_schemas").get('value'));
 
         var attributesInput = dom.byId("id_attributes");
@@ -1576,7 +1604,7 @@ require([
 
         while (true)
         {
-            var old = document.getElementsByClassName("cloud-credentials-attribute");
+            var old = document.getElementsByClassName(class_name);
             if (!old.length)
             {
                 break;
@@ -1637,6 +1665,20 @@ require([
         }
 
         updateAttributes();
+    }
+
+    cloudSyncDirectionToggle = function() {
+
+        var direction = registry.byId("id_direction");
+        var snapshot = registry.byId("id_snapshot");
+        var tr = snapshot.domNode.parentNode.parentNode;
+        if(direction.get('value') == 'PUSH') {
+            domStyle.set(tr, "display", "table-row");
+        } else {
+            snapshot.set("value", false);
+            domStyle.set(tr, "display", "none");
+        }
+
     }
 
     cloudSyncEncryptionToggle = function() {
@@ -1793,6 +1835,7 @@ require([
         var e = registry.byId("id_ups_extrausers");
         var m = registry.byId("id_ups_rmonitor");
         var o = registry.byId("id_ups_options");
+        var h = registry.byId("id_ups_hostsync");
         var trh = rh.domNode.parentNode.parentNode;
         var trp = rp.domNode.parentNode.parentNode;
         var td = d.domNode.parentNode.parentNode;
@@ -1800,6 +1843,7 @@ require([
         var te = e.domNode.parentNode.parentNode;
         var tm = m.domNode.parentNode.parentNode;
         var to = o.domNode.parentNode.parentNode;
+        var th = h.domNode.parentNode.parentNode;
         if(select.get('value') == 'master') {
             domStyle.set(trh, "display", "none");
             domStyle.set(trp, "display", "none");
@@ -1808,6 +1852,7 @@ require([
             domStyle.set(te, "display", "table-row");
             domStyle.set(tm, "display", "table-row");
             domStyle.set(to, "display", "table-row");
+            domStyle.set(th, "display", "table-row");
         } else {
             domStyle.set(trp, "display", "table-row");
             domStyle.set(trh, "display", "table-row");
@@ -1817,6 +1862,7 @@ require([
             domStyle.set(te, "display", "none");
             domStyle.set(tm, "display", "none");
             domStyle.set(to, "display", "none");
+            domStyle.set(th, "display", "none");
         }
 
     }
@@ -2640,6 +2686,10 @@ require([
 
     };
 
+    submitCertificateForm = function(btn_id) {
+        dom.byId(btn_id).click();
+    };
+
     refreshById = function(id) {
         registry.byId(id).refresh();
     };
@@ -2912,7 +2962,7 @@ require([
             } else if(item.type == 'openvcp') {
                 Menu.openVcp(item.gname);
             } else if(item.action == 'opendocumentation') {
-                Menu.openDocumentation(item.gname);
+                Menu.openDocumentation();
             } else if(item.type == 'opensharing') {
                 Menu.openSharing(item.gname);
             } else if(item.type == 'openstorage') {

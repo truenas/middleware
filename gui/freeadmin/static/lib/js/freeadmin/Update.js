@@ -85,7 +85,7 @@ define([
       me.dapUpdateTrainInfoLink.innerHTML = gettext('Train Descriptions');
 
       me.dapCurrentTrain.innerHTML = gettext( me.currentTrain ? me.currentTrain : 'Loading');
-      me.dapAutoCheckText.innerHTML = gettext('Automatically check for updates');
+      me.dapAutoCheckText.innerHTML = gettext('Check for Updates Daily and Download if Available');
       me.dapCurrentTrainText.innerHTML = gettext('Current Train');
       me.dapUpdateServerText.innerHTML = gettext('Update Server');
       me.dapUpdateGridText.innerHTML = gettext('Pending Updates');
@@ -306,7 +306,7 @@ define([
         ) {
           return "MINOR_UPGRADE";
         }
-        if(Number.isInteger(v1[1]) && Number.isInteger(v2[1]) && v1[1] > v2[1]) {
+        if(Number.isInteger(v1[1]) && (Number.isInteger(v2[1]) && v1[1] > v2[1]) || (!Number.isInteger(v2[1]) && v1[1] > 0)) {
           return "MINOR_DOWNGRADE";
         }
         var branch1 = v1[v1.length-1].toLowerCase();

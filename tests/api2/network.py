@@ -9,66 +9,56 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import interface, ip
+from auto_config import hostname, domain
 from functions import GET, PUT
 from config import *
 
 BRIDGEGWReason = "BRIDGEGW not in ixautomation.conf"
 BRIDGENETMASKReason = "BRIDGENETMASK not in ixautomation.conf"
-Reason = "BRIDGEDOMAIN BRIDGEHOST BRIDGEDNS BRIDGEGW "
-Reason += "are missing in ixautomation.conf"
+Reason = "BRIDGEDOMAIN BRIDGEDNS are missing in ixautomation.conf"
 
-route_and_dns_cfg = pytest.mark.skipif(all(["BRIDGEDOMAIN" in locals(),
-                                            "BRIDGEHOST" in locals(),
-                                            "BRIDGEDNS" in locals(),
-                                            "BRIDGEGW" in locals()
-                                            ]) is False, reason=Reason)
+dns_cfg = pytest.mark.skipif("BRIDGEDNS" not in locals(), reason=Reason)
 
 
-@pytest.mark.skipif("BRIDGENETMASK" not in locals(),
-                    reason=BRIDGENETMASKReason)
-def test_01_get_IPV4_info():
-    getinfo = GET("/network/general/summary").json()
-    getinfo = getinfo['ips'][interface]['IPV4']
-    assert getinfo == ['%s/%s' % (ip, BRIDGENETMASK)]
+def test_01_get_default_routes():
+    results = GET("/network/general/summary/")
+    assert results.status_code == 200
+    assert isinstance(results.json(), dict), results.text
+    assert isinstance(results.json()['default_routes'], list), results.text
+    global gateway
+    gateway = results.json()['default_routes'][0]
 
 
-@pytest.mark.skipif("BRIDGEGW" not in locals(), reason=BRIDGEGWReason)
-def test_02_get_default_routes_info():
-    getinfo = GET("/network/general/summary").json()
-    getinfo = getinfo['default_routes'][0]
-    assert getinfo == BRIDGEGW
-
-
-@route_and_dns_cfg
-def test_03_setting_default_domain_host_and_dns():
-    payload = {"domain": BRIDGEDOMAIN,
-               "hostname": BRIDGEHOST,
-               "ipv4gateway": BRIDGEGW,
+@dns_cfg
+def test_02_configure_setting_domain_hostname_and_dns():
+    global payload
+    payload = {"domain": domain,
+               "hostname": hostname,
+               "ipv4gateway": gateway,
                "nameserver1": BRIDGEDNS}
-    results = PUT("/network/configuration", payload)
+    global results
+    results = PUT("/network/configuration/", payload)
     assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
 
 
-@route_and_dns_cfg
-def test_04_look_if_domain_was_set():
-    results = GET("/network/configuration")
-    assert results.json()["domain"] == BRIDGEDOMAIN, results.text
+@dns_cfg
+@pytest.mark.parametrize('dkeys', ["domain", "hostname", "ipv4gateway",
+                                   "nameserver1"])
+def test_03_looking_put_network_configuration_output_(dkeys):
+    assert results.json()[dkeys] == payload[dkeys], results.text
 
 
-@route_and_dns_cfg
-def test_05_look_if_hostname_was_set():
-    results = GET("/network/configuration")
-    assert results.json()["hostname"] == BRIDGEHOST, results.text
+@dns_cfg
+def test_04_get_network_configuration_info_():
+    global results
+    results = GET("/network/configuration/")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
 
 
-@route_and_dns_cfg
-def test_06_look_if_ipv4_gateway_was_set():
-    results = GET("/network/configuration")
-    assert results.json()["ipv4gateway"] == BRIDGEGW, results.text
-
-
-@route_and_dns_cfg
-def test_07_look_if_dns_was_set():
-    results = GET("/network/configuration")
-    assert results.json()["nameserver1"] == BRIDGEDNS, results.text
+@dns_cfg
+@pytest.mark.parametrize('dkeys', ["domain", "hostname", "ipv4gateway",
+                                   "nameserver1"])
+def test_05_looking_get_network_configuration_output_(dkeys):
+    assert results.json()[dkeys] == payload[dkeys], results.text

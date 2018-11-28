@@ -5,14 +5,14 @@ clean:
 	rm -rf build
 
 reinstall: clean
-	rm -rf /usr/local/lib/python3.6/site-packages/middlewared*
+	rm -rf /usr/local/lib/python3.7/site-packages/middlewared*
 	python setup.py install --single-version-externally-managed --record=/dev/null
 
 dev: reinstall
 .if ${VERSION:MTrueNAS*}
-	middlewared restart -L -P -o /usr/local/lib/middlewared_truenas --debug-level 'TRACE'
+	middlewared restart --loop-debug -P -o /usr/local/lib/middlewared_truenas --debug-level 'TRACE'
 .else
-	middlewared restart -L -P --debug-level 'TRACE'
+	middlewared restart --loop-debug -P --debug-level 'TRACE'
 .endif
 
 reinstall-remote:

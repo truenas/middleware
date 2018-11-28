@@ -47,7 +47,7 @@ domain_controller_func()
 
 
 	#
-	#	First, check if the Domain Controller service is enabled.
+	#	Check if the Domain Controller is set to start on boot. 
 	#
 	onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
@@ -62,18 +62,24 @@ domain_controller_func()
 	LIMIT 1
 	")
 
-	enabled="DISABLED"
+	enabled="not start on boot."
 	if [ "${onoff}" = "1" ]
 	then
-		enabled="ENABLED"
+		enabled="start on boot."
 	fi
 
-	section_header "Domain Controller Status"
-	echo "Domain Controller is ${enabled}"
+	section_header "Domain Controller Boot Status"
+	echo "Domain Controller will ${enabled}"
 	section_footer
 
 	#
-	#	If Domain Controller isn't enabled, no need to run so exit
+	#	If Domain Controller isn't set to start on boot, exit this script.
+	#	We can not afford to run the wbinfo commands at the end of this script
+	#	on TrueNAS HA systems because it can potentially take an incredible amount of time
+	#	if the customers AD environment is quite large. It also hangs the freenas-debug process
+	#	from finishing in a timely manner.
+	#	
+	#	For now, we will exit if it isn't set to start on boot.
 	#
 	if [ "${onoff}" = "0" ]
 	then
@@ -81,7 +87,7 @@ domain_controller_func()
 	fi
 
 	#
-	#	If enabled, dump Domain Controller configuration
+	#	Dump Domain Controller configuration
 	#
 	local IFS="|"
 	read realm domain role dns_backend dns_forwarder forest_level \

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 async def annotate_disk_for_smart(devices, disk):
-    if disk["disk_name"] is None or "nvd" in disk["disk_name"] or "zvol" in disk["disk_name"]:
+    if disk["disk_name"] is None or re.match(r"/dev/nvd", disk["disk_name"]):
         return
 
     device = devices.get(disk["disk_name"])
@@ -20,6 +20,7 @@ async def annotate_disk_for_smart(devices, disk):
         args = await get_smartctl_args(disk["disk_name"], device)
         if args:
             if await ensure_smart_enabled(args):
+                args.extend(["-d", "removable"])
                 return dict(disk, smartctl_args=args)
 
 
@@ -43,15 +44,18 @@ async def ensure_smart_enabled(args):
 def get_smartd_config(disk):
     args = " ".join(disk["smartctl_args"])
 
-    config = f"{args} -n {disk['smart_powermode']} -W {disk['smart_difference']}," \
-             f"{disk['smart_informational']},{disk['smart_critical']}"
+    critical = disk['smart_critical'] if disk['disk_critical'] is None else disk['disk_critical']
+    difference = disk['smart_difference'] if disk['disk_difference'] is None else disk['disk_difference']
+    informational = disk['smart_informational'] if disk['disk_informational'] is None else disk['disk_informational']
+    config = f"{args} -n {disk['smart_powermode']} -W {difference}," \
+             f"{informational},{critical}"
 
     if disk['smart_email']:
         config += f" -m {disk['smart_email']}"
     else:
         config += f" -m root"
 
-    config += " -M exec /usr/local/www/freenasUI/tools/smart_alert.py"
+    config += " -M exec /usr/local/libexec/smart_alert.py"
 
     if disk.get('smarttest_type'):
         config += f"\\\n-s {disk['smarttest_type']}/" + get_smartd_schedule(disk) + "\\\n"
@@ -63,28 +67,37 @@ def get_smartd_config(disk):
 
 def get_smartd_schedule(disk):
     return "/".join([
-        get_smartd_schedule_piece(disk['smarttest_month'], 1, 12),
+        get_smartd_schedule_piece(disk['smarttest_month'], 1, 12, dict(zip([
+            "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"
+        ], range(1, 13)))),
         get_smartd_schedule_piece(disk['smarttest_daymonth'], 1, 31),
-        get_smartd_schedule_piece(disk['smarttest_dayweek'], 1, 7),
+        get_smartd_schedule_piece(disk['smarttest_dayweek'], 1, 7, dict(zip([
+            "mon", "tue", "wed", "thu", "fri", "sat", "sun"
+        ], range(1, 8)))),
         get_smartd_schedule_piece(disk['smarttest_hour'], 0, 23),
     ])
 
 
-def get_smartd_schedule_piece(value, min, max):
+def get_smartd_schedule_piece(value, min, max, enum=None):
+    enum = enum or {}
+
+    width = len(str(max))
+
     if value == "*":
-        return "." * len(str(max))
+        return "." * width
     m = re.match("\*/([0-9]+)", value)
     if m:
         d = int(m.group(1))
         if d == 1:
-            return "." * len(str(max))
+            return "." * width
         values = [v for v in range(min, max + 1) if v % d == 0]
     else:
-        values = list(map(int, value.split(",")))
+        values = list(filter(None, map(lambda s: enum.get(s.lower(), int(s) if re.match("([0-9]+)$", s) else None),
+                                       value.split(","))))
         if values == list(range(min, max + 1)):
-            return "." * len(str(max))
+            return "." * width
 
-    return "(" + "|".join(["%02d" % v for v in values]) + ")"
+    return "(" + "|".join([f"%0{width}d" % v for v in values]) + ")"
 
 
 async def render(service, middleware):

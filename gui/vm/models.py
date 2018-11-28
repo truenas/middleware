@@ -82,6 +82,13 @@ class VM(Model):
         help_text=_('Guest VM will start on boot.'),
         default=False,
     )
+    time = models.CharField(
+        verbose_name=_('System Clock'),
+        max_length=5,
+        help_text=_('Use localtime or UTC inside the VM'),
+        choices=choices.VM_TIMECHOICES,
+        default='LOCAL',
+    )
 
     class Meta:
         verbose_name = _(u"VM")
@@ -103,6 +110,10 @@ class Device(Model):
     )
     attributes = DictField(
         editable=False,
+    )
+    order = models.IntegerField(
+        editable=False,
+        null=True,
     )
 
     def __str__(self):

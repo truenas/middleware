@@ -42,7 +42,11 @@ sudoers_start()
 		echo "%${group} ALL=(ALL) ALL" >> "${SUDOERS_FILE}"
 	done
 
-	cat /conf/base/etc/local/sudoers >> "${SUDOERS_FILE}"
+	if [ -d "/conf/base/usr__local__etc" ] ; then
+		cat /conf/base/usr__local__etc/sudoers >> "${SUDOERS_FILE}"
+	else
+		cat /conf/base/etc/local/sudoers >> "${SUDOERS_FILE}"
+	fi
 }
 
 name="ix-sudoers"

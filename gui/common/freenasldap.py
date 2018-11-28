@@ -65,6 +65,8 @@ from freenasUI.common.freenascache import (
     FLAGS_CACHE_WRITE_GROUP
 )
 
+from middlewared.client import Client
+
 log = logging.getLogger('common.freenasldap')
 
 FREENAS_LDAP_NOSSL = " off"
@@ -1036,6 +1038,13 @@ class FreeNAS_ActiveDirectory_Base(object):
         best_host = None
         latencies = {}
 
+        if len(srv_hosts) > 5:
+            for s in srv_hosts:
+                host = s.target.to_text(True)
+                port = int(s.port)
+                if FreeNAS_ActiveDirectory.port_is_listening(host, port, errors=[], timeout=1):
+                    return (host, port)
+
         def callback(host, port, duration):
             latencies.setdefault(host, 0)
             latencies[host] += duration
@@ -1134,9 +1143,8 @@ class FreeNAS_ActiveDirectory_Base(object):
         )
 
         r = resolver.Resolver()
-        r.rotate = True
-        r.timeout = _fs().directoryservice.activedirectory.dns.timeout
         r.lifetime = _fs().directoryservice.activedirectory.dns.lifetime
+        r.timeout = r.lifetime / 3
 
         try:
 
@@ -1788,12 +1796,15 @@ class FreeNAS_ActiveDirectory_Base(object):
                             break
 
         if ipv4_site and ipv6_site and ipv4_site == ipv6_site:
+            Client().call('datastore.update', 'directoryservice.activedirectory', '1', {'ad_site': ipv4_site})
             return ipv4_site
 
         if not ipv6_site and ipv4_site:
+            Client().call('datastore.update', 'directoryservice.activedirectory', '1', {'ad_site': ipv4_site})
             return ipv4_site
 
         if not ipv4_site and ipv6_site:
+            Client().call('datastore.update', 'directoryservice.activedirectory', '1', {'ad_site': ipv6_site})
             return ipv6_site
 
         return None

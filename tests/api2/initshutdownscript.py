@@ -4,11 +4,9 @@
 import sys
 import os
 import pytest
-
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-
-from functions import POST, GET, PUT, SSH_TEST, GET, DELETE
+from functions import POST, PUT, SSH_TEST, GET, DELETE
 from auto_config import user, password, ip
 
 TESTSCRIPT = '/tmp/.testFileCreatedViaInitScript'
@@ -26,7 +24,7 @@ def initshutdownsc_dict():
 
 
 def test_01_Create_initshutdownscript_command(initshutdowncmd_dict):
-    results = POST('/initshutdownscript', {
+    results = POST('/initshutdownscript/', {
         'type': 'COMMAND',
         'command': TESTCMD,
         'when': 'PREINIT'
@@ -52,9 +50,9 @@ def test_03_Create_initshutdownscript_script(initshutdownsc_dict):
     assert isinstance(initshutdownsc_dict['id'], int) is True
 
 
-def test_04_Update_initshutdownscript_command_to_disabled(initshutdowncmd_dict):
+def test_04_Update_initshutdownscript_command_to_disable(initshutdowncmd_dict):
     id = initshutdowncmd_dict['id']
-    results = PUT(f'/initshutdownscript/id/{id}', {
+    results = PUT(f'/initshutdownscript/id/{id}/', {
         'enabled': False
     })
     assert results.status_code == 200, results.text
@@ -62,7 +60,7 @@ def test_04_Update_initshutdownscript_command_to_disabled(initshutdowncmd_dict):
 
 def test_05_Update_initshutdownscript_script_to_disabled(initshutdownsc_dict):
     id = initshutdownsc_dict['id']
-    results = PUT(f'/initshutdownscript/id/{id}', {
+    results = PUT(f'/initshutdownscript/id/{id}/', {
         'enabled': False
     })
     assert results.status_code == 200, results.text
@@ -87,13 +85,13 @@ def test_08_Delete_script_file():
 
 def test_09_Delete_initshutdown_command(initshutdowncmd_dict):
     id = initshutdowncmd_dict['id']
-    results = DELETE(f'/initshutdownscript/id/{id}')
+    results = DELETE(f'/initshutdownscript/id/{id}/')
     assert results.status_code == 200, results.text
 
 
 def test_10_Delete_initshutdown_script(initshutdownsc_dict):
     id = initshutdownsc_dict['id']
-    results = DELETE(f'/initshutdownscript/id/{id}')
+    results = DELETE(f'/initshutdownscript/id/{id}/')
     assert results.status_code == 200, results.text
 
 

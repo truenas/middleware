@@ -17,25 +17,25 @@ def rsynctask_dict():
 
 
 def test_01_Configuring_rsyncd_service():
-    results = PUT('/rsyncd', {'port': 873})
+    results = PUT('/rsyncd/', {'port': 873})
     assert results.status_code == 200
 
 
 def test_02_Checking_that_API_reports_rsyncd_service():
-    results = GET("/rsyncd")
+    results = GET("/rsyncd/")
     assert results.status_code == 200, results.text
 
 
 def test_03_Creating_rsync_task(rsynctask_dict):
-    results = POST('/rsynctask', {'user': 'root', 'mode': 'bar',
-                                  'remotehost': 'foobar'})
+    results = POST('/rsynctask/', {'user': 'root', 'mode': 'bar',
+                                   'remotehost': 'foobar'})
     assert results.status_code == 200, results.text
     rsynctask_dict.update(results.json())
     assert isinstance(rsynctask_dict['id'], int) is True
 
 
 def test_04_Enable_rsyncd_service():
-    results = PUT('/service/id/rsync', {'enable': True})
+    results = PUT('/service/id/rsync/', {'enable': True})
     assert results.status_code == 200, results.text
 
 
@@ -49,7 +49,7 @@ def test_06_Testing_rsync_access():
 
 
 def test_07_Starting_rsyncd_service():
-    results = POST("/service/start",
+    results = POST("/service/start/",
                    {'service': 'rsyncd', 'service-control': {'onetime': True}}
                    )
     assert results.status_code == 200, results.text
@@ -62,9 +62,7 @@ def test_08_Checking_to_see_if_rsyncd_service_is_running():
 
 def test_09_Disable_rsync_task(rsynctask_dict):
     id = rsynctask_dict['id']
-    results = PUT(f'/rsynctask/id/{id}', {
-        'enabled': False
-    })
+    results = PUT(f'/rsynctask/id/{id}/', {'enabled': False})
     assert results.status_code == 200, results.text
 
 
@@ -76,7 +74,7 @@ def test_10_Check_that_API_reports_the_rsync_task_as_disabled(rsynctask_dict):
 
 def test_11_Delete_rsync_task(rsynctask_dict):
     id = rsynctask_dict['id']
-    results = DELETE(f'/rsynctask/id/{id}')
+    results = DELETE(f'/rsynctask/id/{id}/')
     assert results.status_code == 200, results.text
 
 

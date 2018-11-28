@@ -48,15 +48,19 @@ nfs_func()
         LIMIT 1
         ")
 
-        enabled="DISABLED"
+        enabled="not start on boot."
         if [ "${onoff}" = "1" ]
         then
-                enabled="ENABLED"
+                enabled="start on boot."
         fi
 
-        section_header "NFS Status"
-        echo "NFS is ${enabled}"
+        section_header "NFS Boot Status"
+        echo "NFS will ${enabled}"
         section_footer
+
+	section_header "NFS Run Status"
+	service nfsd onestatus
+	section_footer
 	
 	section_header "/etc/hosts"
 	sc "/etc/hosts"
@@ -64,10 +68,6 @@ nfs_func()
 
 	section_header "/etc/exports"
 	sc /etc/exports
-	section_footer
-
-	section_header "showmount -e"
-	showmount -e
 	section_footer
 
 	section_header "rpcinfo -p"

@@ -44,6 +44,7 @@ class SystemHook(AppHook):
             models.AlertService,
             models.CertificateAuthority,
             models.Certificate,
+            models.ACMEDNSAuthenticator
         ]
 
         tabs = []
@@ -108,6 +109,7 @@ class SystemHook(AppHook):
             'focus': 'system.Support',
             'verbose_name': _('Support'),
             'url': reverse('support_home'),
+            'onload': 'support_production_init();' if not notifier().is_freenas() else ''
         })
 
         license = get_license()[0]
@@ -122,7 +124,7 @@ class SystemHook(AppHook):
 
             tabs.insert(15, {
                 'name': 'ViewEnclosure',
-                'focus': 'storage.ViewEnclosure',
+                'focus': 'system.ViewEnclosure',
                 'verbose_name': _('View Enclosure'),
                 'url': reverse('storage_enclosure_status'),
             })

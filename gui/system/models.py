@@ -39,9 +39,9 @@ from django.utils.translation import ugettext_lazy as _
 from OpenSSL import crypto
 
 from freenasUI import choices
-from freenasUI.freeadmin.models import DictField, EncryptedDictField, Model, UserField
+from freenasUI.freeadmin.models import DictField, EncryptedDictField, ListField, Model, UserField
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
-from freenasUI.middleware.util import run_alerts
 from freenasUI.support.utils import get_license
 from licenselib.license import ContractType
 
@@ -61,30 +61,22 @@ def time_now():
 
 
 class Settings(Model):
-    stg_guiprotocol = models.CharField(
-        max_length=120,
-        choices=choices.PROTOCOL_CHOICES,
-        default="http",
-        verbose_name=_("Protocol")
-    )
     stg_guicertificate = models.ForeignKey(
         "Certificate",
-        verbose_name=_("Certificate"),
+        verbose_name=_("Certificate for HTTPS"),
         limit_choices_to={'cert_type__in': [CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL]},
         on_delete=models.SET_NULL,
         blank=True,
         null=True
     )
-    stg_guiaddress = models.CharField(
-        max_length=120,
+    stg_guiaddress = ListField(
         blank=True,
-        default='0.0.0.0',
+        default=['0.0.0.0'],
         verbose_name=_("WebGUI IPv4 Address")
     )
-    stg_guiv6address = models.CharField(
-        max_length=120,
+    stg_guiv6address = ListField(
         blank=True,
-        default='::',
+        default=['::'],
         verbose_name=_("WebGUI IPv6 Address")
     )
     stg_guiport = models.IntegerField(
@@ -99,10 +91,9 @@ class Settings(Model):
     )
     stg_guihttpsredirect = models.BooleanField(
         verbose_name=_('WebGUI HTTP -> HTTPS Redirect'),
-        default=True,
+        default=False,
         help_text=_(
-            'Redirect HTTP (port 80) to HTTPS when only the HTTPS protocol is '
-            'enabled'
+            'Redirect all incoming HTTP requests to HTTPS'
         ),
     )
     stg_language = models.CharField(
@@ -214,11 +205,6 @@ class NTPServer(Model):
     def __str__(self):
         return self.ntp_address
 
-    def delete(self):
-        super(NTPServer, self).delete()
-        notifier().start("ix-ntpd")
-        notifier().restart("ntpd")
-
     class Meta:
         verbose_name = _("NTP Server")
         verbose_name_plural = _("NTP Servers")
@@ -321,7 +307,6 @@ class Advanced(Model):
     )
     adv_boot_scrub = models.IntegerField(
         default=7,
-        editable=False,
     )
     adv_periodic_notifyuser = UserField(
         default="root",
@@ -491,13 +476,6 @@ class Tunable(Model):
 
     def __str__(self):
         return str(self.tun_var)
-
-    def delete(self):
-        super(Tunable, self).delete()
-        if self.tun_type == 'loader':
-            notifier().reload("loader")
-        else:
-            notifier().reload("sysctl")
 
     class Meta:
         verbose_name = _("Tunable")
@@ -737,6 +715,13 @@ class CertificateBase(Model):
         verbose_name=_("Organization"),
         help_text=_("Organization Name (eg, company)"),
     )
+    cert_organizational_unit = models.CharField(
+        blank=True,
+        null=True,
+        max_length=120,
+        verbose_name=_("Organizational Unit"),
+        help_text=_("Organizational unit of the entity"),
+    )
     cert_email = models.CharField(
         blank=True,
         null=True,
@@ -768,7 +753,8 @@ class CertificateBase(Model):
         "CertificateAuthority",
         blank=True,
         null=True,
-        verbose_name=_("Signing Certificate Authority")
+        verbose_name=_("Signing Certificate Authority"),
+        on_delete=models.CASCADE
     )
     cert_chain = models.BooleanField(
         default=False,
@@ -1016,17 +1002,6 @@ class CertificateAuthority(CertificateBase):
         if not os.path.exists(self.cert_root_path):
             os.mkdir(self.cert_root_path, 0o755)
 
-    def delete(self):
-        temp_cert_name = self.cert_name
-        super(CertificateAuthority, self).delete()
-        # If this was a malformed CA then delete its alert sentinel file
-        try:
-            os.unlink('/tmp/alert_invalidCA_{0}'.format(temp_cert_name))
-            run_alerts()
-        except OSError:
-            # It was not a malformed CA after all!
-            pass
-
     class Meta:
         verbose_name = _("CA")
         verbose_name_plural = _("CAs")
@@ -1034,16 +1009,27 @@ class CertificateAuthority(CertificateBase):
 
 class Certificate(CertificateBase):
 
-    def delete(self):
-        temp_cert_name = self.cert_name
-        super(Certificate, self).delete()
-        # If this was a malformed CA then delete its alert sentinel file
-        try:
-            os.unlink('/tmp/alert_invalidcert_{0}'.format(temp_cert_name))
-            run_alerts()
-        except OSError:
-            # It was not a malformed CA after all!
-            pass
+    cert_acme = models.ForeignKey(
+        'ACMERegistration',
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True
+    )
+    cert_acme_uri = models.URLField(
+        null=True,
+        blank=True
+    )
+    cert_domains_authenticators = EncryptedDictField(
+        null=True,
+        blank=True
+    )
+    cert_renew_days = models.IntegerField(
+        default=10,
+        verbose_name=_("Renew certificate day"),  # Should we change the name ?
+        help_text=_('Number of days to renew certificate before expiring'),
+        null=True,
+        blank=True
+    )
 
     class Meta:
         verbose_name = _("Certificate")
@@ -1208,5 +1194,71 @@ class Support(Model):
         return self.is_available(support=self)[0] and self.enabled
 
 
+class ACMERegistrationBody(Model):
+    contact = models.EmailField(
+        verbose_name=_('Contact Email')
+    )
+    status = models.CharField(
+        verbose_name=_('Status'),
+        max_length=10
+    )
+    key = models.TextField(
+        verbose_name=_('JWKRSAKey')
+    )
+    acme = models.ForeignKey(
+        'ACMERegistration',
+        on_delete=models.CASCADE,
+    )
+
+
+class ACMERegistration(Model):
+    uri = models.URLField(
+        verbose_name=_('URI')
+    )
+    directory = models.URLField(
+        verbose_name=_('Directory URI'),
+        unique=True
+    )
+    tos = models.URLField(
+        verbose_name=_('Terms of Service')
+    )
+    new_account_uri = models.URLField(
+        verbose_name=_('New Account Uri')
+    )
+    new_nonce_uri = models.URLField(
+        verbose_name=_('New Nonce Uri')
+    )
+    new_order_uri = models.URLField(
+        verbose_name=_('New Order Uri')
+    )
+    revoke_cert_uri = models.URLField(
+        verbose_name=_('Revoke Certificate Uri')
+    )
+
+
+class ACMEDNSAuthenticator(Model):
+    authenticator = models.CharField(
+        max_length=64,
+        verbose_name=_('Authenticator')
+    )
+    name = models.CharField(
+        max_length=64,
+        unique=True,
+        verbose_name=_('Name')
+    )
+    attributes = EncryptedDictField()
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _('ACME DNS Authenticator')
+
+
 class Filesystem(Model):
     identifier = models.CharField(max_length=255, unique=True)
+
+
+class KeyValue(Model):
+    key = models.CharField(max_length=255, unique=True)
+    value = models.TextField()

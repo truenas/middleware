@@ -45,6 +45,14 @@ def job(lock=None, lock_queue_size=None, logs=False, process=False, pipes=None, 
     return check_job
 
 
+def skip_arg(count=0):
+    """Skip "count" arguments when validating accepts"""
+    def wrap(fn):
+        fn._skip_arg = count
+        return fn
+    return wrap
+
+
 def threaded(pool):
     def m(fn):
         fn._thread_pool = pool
@@ -100,10 +108,13 @@ class ServiceBase(type):
       - datastore: name of the datastore mainly used in the service
       - datastore_extend: datastore `extend` option used in common `query` method
       - datastore_prefix: datastore `prefix` option used in helper methods
+      - datastore_filters: datastore default filters to be used in `query` method
       - service: system service `name` option used by `SystemServiceService`
       - service_model: system service datastore model option used by `SystemServiceService` (`service` if used if not provided)
       - service_verb: verb to be used on update (default to `reload`)
       - namespace: namespace identifier of the service
+      - namespace_alias: another namespace identifier of the service, mostly used to rename and
+                         slowly deprecate old name.
       - private: whether or not the service is deemed private
       - verbose_name: human-friendly singular name for the service
       - thread_pool: thread pool to use for threaded methods
@@ -128,10 +139,12 @@ class ServiceBase(type):
             'datastore': None,
             'datastore_prefix': None,
             'datastore_extend': None,
+            'datastore_filters': None,
             'service': None,
             'service_model': None,
             'service_verb': 'reload',
             'namespace': namespace,
+            'namespace_alias': None,
             'private': False,
             'thread_pool': None,
             'process_pool': None,
@@ -174,7 +187,8 @@ class ServiceChangeMixin:
             if not started:
                 raise CallError(
                     f'The {service} service failed to start',
-                    CallError.ESERVICESTARTFAILURE
+                    CallError.ESERVICESTARTFAILURE,
+                    [service],
                 )
 
 
@@ -255,6 +269,10 @@ class CRUDService(ServiceChangeMixin, Service):
             options['prefix'] = self._config.datastore_prefix
         if self._config.datastore_extend:
             options['extend'] = self._config.datastore_extend
+        if self._config.datastore_filters:
+            if not filters:
+                filters = []
+            filters += self._config.datastore_filters
         # In case we are extending which may transform the result in numerous ways
         # we can only filter the final result.
         if 'extend' in options:
@@ -264,7 +282,7 @@ class CRUDService(ServiceChangeMixin, Service):
             result = await self.middleware.call(
                 'datastore.query', self._config.datastore, [], datastore_options
             )
-            return await self.middleware.run_in_io_thread(
+            return await self.middleware.run_in_thread(
                 filter_list, result, filters, options
             )
         else:
@@ -295,6 +313,14 @@ class CRUDService(ServiceChangeMixin, Service):
         if not instance:
             raise ValidationError(None, f'{self._config.verbose_name} {id} does not exist', errno.ENOENT)
         return instance[0]
+
+    async def _ensure_unique(self, verrors, schema_name, field_name, value, id=None):
+        f = [(field_name, '=', value)]
+        if id is not None:
+            f.append(('id', '!=', id))
+        instance = await self.middleware.call(f'{self._config.namespace}.query', f)
+        if instance:
+            verrors.add(f'{schema_name}.{field_name}', f'Object with this {field_name} already exists')
 
 
 class CoreService(Service):
@@ -345,7 +371,7 @@ class CoreService(Service):
             }
         return services
 
-    @accepts(Str('service'))
+    @accepts(Str('service', default=None, null=True))
     def get_methods(self, service=None):
         """Return methods metadata of every available service.
 
@@ -448,6 +474,7 @@ class CoreService(Service):
                     'examples': examples,
                     'accepts': accepts,
                     'item_method': True if item_method else hasattr(method, '_item_method'),
+                    'no_auth_required': hasattr(method, '_no_auth_required'),
                     'filterable': hasattr(method, '_filterable'),
                     'require_websocket': hasattr(method, '_pass_app'),
                     'job': hasattr(method, '_job'),
@@ -469,7 +496,7 @@ class CoreService(Service):
 
     @accepts(
         Str('method'),
-        List('args'),
+        List('args', default=[]),
         Str('filename'),
     )
     async def download(self, method, args, filename):
@@ -570,13 +597,13 @@ class CoreService(Service):
                 if i not in options:
                     raise ValidationError(i, f'{i} is required for PYDEV')
             os.environ['PATHS_FROM_ECLIPSE_TO_PYTHON'] = json.dumps([
-                [options['local_path'], '/usr/local/lib/python3.6/site-packages/middlewared'],
+                [options['local_path'], '/usr/local/lib/python3.7/site-packages/middlewared'],
             ])
             import pydevd
             pydevd.stoptrace()
             pydevd.settrace(host=options['host'])
 
-    @accepts(Str("method"), List("params"))
+    @accepts(Str("method"), List("params", default=[]))
     @job(lock=lambda args: f"bulk:{args[0]}")
     async def bulk(self, job, method, params):
         """

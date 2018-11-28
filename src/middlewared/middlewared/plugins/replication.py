@@ -178,27 +178,11 @@ class ReplicationService(CRUDService):
             remote_uri = f'ws{"s" if remote_https else ""}://{remote_hostname}:{remote_port}/websocket'
 
             try:
-                with Client(remote_uri) as c:
-                    if not c.call('auth.token', remote_token):
-                        verrors.add(
-                            'replication_create.remote_token',
-                            'Please provide a valid token'
-                        )
-                    else:
-                        try:
-                            with open(REPLICATION_KEY, 'r') as f:
-                                publickey = f.read()
-
-                            call_data = c.call('replication.pair', {
-                                'hostname': remote_hostname,
-                                'public-key': publickey,
-                                'user': remote_dedicated_user,
-                            })
-                        except Exception as e:
-                            raise CallError('Failed to set up replication ' + str(e))
-                        else:
-                            repl_remote_dict['ssh_remote_port'] = call_data['ssh_port']
-                            repl_remote_dict['ssh_remote_hostkey'] = call_data['ssh_hostkey']
+                call_data = await self.middleware.run_in_thread(self._semiautomatic_setup, verrors, remote_uri,
+                                                                remote_token, remote_hostname, remote_dedicated_user)
+                if call_data is not None:
+                    repl_remote_dict['ssh_remote_port'] = call_data['ssh_port']
+                    repl_remote_dict['ssh_remote_hostkey'] = call_data['ssh_hostkey']
             except Exception as e:
                 verrors.add(
                     'replication_create.remote_token',
@@ -214,11 +198,7 @@ class ReplicationService(CRUDService):
             repl_remote_dict
         )
 
-        await self.middleware.call(
-            'service.reload',
-            'ssh',
-            {'onetime': False}
-        )
+        await self._service_change('ssh', 'reload')
 
         data['remote'] = remote_pk
 
@@ -259,11 +239,7 @@ class ReplicationService(CRUDService):
             repl_remote_dict
         )
 
-        await self.middleware.call(
-            'service.reload',
-            'ssh',
-            {'onetime': False}
-        )
+        await self._service_change('ssh', 'reload')
 
         await self.middleware.call(
             'datastore.update',
@@ -280,13 +256,45 @@ class ReplicationService(CRUDService):
     )
     async def do_delete(self, id):
 
+        replication = await self._get_instance(id)
+
+        try:
+            if replication['lastsnapshot']:
+                zfsname = replication['lastsnapshot'].split('@')[0]
+                await self.middleware.call('notifier.zfs_dataset_release_snapshots', zfsname, True)
+        except Exception:
+            pass
+
+        await self.middleware.call('replication.remove_from_state_file', id)
+
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
             id
         )
 
+        await self._service_change('ssh', 'reload')
+
         return response
+
+    @private
+    def remove_from_state_file(self, id):
+        if os.path.exists(REPL_RESULTFILE):
+            with open(REPL_RESULTFILE, 'rb') as f:
+                data = f.read()
+            try:
+                results = pickle.loads(data)
+                results.pop(id, None)
+                with open(REPL_RESULTFILE, 'wb') as f:
+                    f.write(pickle.dumps(results))
+            except Exception as e:
+                self.logger.debug('Failed to remove replication from state file %s', e)
+
+        progressfile = '/tmp/.repl_progress_%d' % id
+        try:
+            os.unlink(progressfile)
+        except Exception:
+            pass
 
     @accepts()
     def public_key(self):
@@ -381,3 +389,25 @@ class ReplicationService(CRUDService):
             'ssh_port': ssh['ssh_tcpport'],
             'ssh_hostkey': ssh_hostkey,
         }
+
+    def _semiautomatic_setup(self, verrors, remote_uri, remote_token, remote_hostname, remote_dedicated_user):
+        with Client(remote_uri) as c:
+            if not c.call('auth.token', remote_token):
+                verrors.add(
+                    'replication_create.remote_token',
+                    'Please provide a valid token'
+                )
+            else:
+                try:
+                    with open(REPLICATION_KEY, 'r') as f:
+                        publickey = f.read()
+
+                    call_data = c.call('replication.pair', {
+                        'hostname': remote_hostname,
+                        'public-key': publickey,
+                        'user': remote_dedicated_user,
+                    })
+                except Exception as e:
+                    raise CallError('Failed to set up replication ' + str(e))
+                else:
+                    return call_data

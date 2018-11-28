@@ -27,8 +27,12 @@ def GET(testpath, **optional):
             raise ValueError('api parameter should be "1" or "2"')
     else:
         api_url = default_api_url
+    if optional.pop("anonymous", False):
+        auth = None
+    else:
+        auth = authentification
     getit = requests.get(api_url + testpath, headers=header,
-                         auth=authentification)
+                         auth=auth)
     return getit
 
 
@@ -52,12 +56,16 @@ def POST(testpath, payload=None, **optional):
             raise ValueError('api parameter should be "1" or "2"')
     else:
         api_url = default_api_url
+    if optional.pop("anonymous", False):
+        auth = None
+    else:
+        auth = authentification
     if payload is None:
         postit = requests.post(api_url + testpath, headers=header,
-                               auth=authentification)
+                               auth=auth)
     else:
         postit = requests.post(api_url + testpath, headers=header,
-                               auth=authentification, data=json.dumps(payload))
+                               auth=auth, data=json.dumps(payload))
     return postit
 
 
@@ -161,6 +169,48 @@ def SSH_TEST(command, username, passwrd, host):
     cmd += "> %s" % teststdout
     process = run(cmd, shell=True)
     output = open(teststdout, 'r').read()
+    if process.returncode != 0:
+        return {'result': False, 'output': output}
+    else:
+        return {'result': True, 'output': output}
+
+
+def send_file(file, destination, username, passwrd, host):
+    cmd = [] if passwrd is None else ["sshpass", "-p", passwrd]
+    cmd += [
+        "scp",
+        "-o",
+        "StrictHostKeyChecking=no",
+        "-o",
+        "UserKnownHostsFile=/dev/null",
+        "-o",
+        "VerifyHostKeyDNS=no",
+        file,
+        f"{user}@{host}:{destination}"
+    ]
+    process = run(cmd, stdout=PIPE, universal_newlines=True)
+    output = process.stdout
+    if process.returncode != 0:
+        return {'result': False, 'output': output}
+    else:
+        return {'result': True, 'output': output}
+
+
+def get_file(file, destination, username, passwrd, host):
+    cmd = [] if passwrd is None else ["sshpass", "-p", passwrd]
+    cmd += [
+        "scp",
+        "-o",
+        "StrictHostKeyChecking=no",
+        "-o",
+        "UserKnownHostsFile=/dev/null",
+        "-o",
+        "VerifyHostKeyDNS=no",
+        f"{user}@{host}:{file}",
+        destination
+    ]
+    process = run(cmd, stdout=PIPE, universal_newlines=True)
+    output = process.stdout
     if process.returncode != 0:
         return {'result': False, 'output': output}
     else:

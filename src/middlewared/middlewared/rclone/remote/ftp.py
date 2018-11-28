@@ -9,8 +9,8 @@ class FTPRcloneRemote(BaseRcloneRemote):
     rclone_type = "ftp"
 
     credentials_schema = [
-        Str("host", verbose="Host", required=True),
-        Int("port", verbose="Port"),
-        Str("user", verbose="Username", required=True),
-        Str("pass", verbose="Password", required=True),
+        Str("host", title="Host", required=True),
+        Int("port", title="Port"),
+        Str("user", title="Username", required=True),
+        Str("pass", title="Password", required=True),
     ]

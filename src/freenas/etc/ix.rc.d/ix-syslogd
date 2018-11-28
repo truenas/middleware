@@ -18,7 +18,11 @@ generate_syslog_conf()
 	local serverhost=""
 	local serverport=""
 
-	cp /conf/base/etc/local/syslog-ng.conf.freenas /etc/local/syslog-ng.conf
+	if [ -d "/conf/base/usr__local__etc/" ] ; then
+		cp /conf/base/usr__local__etc/syslog-ng.conf.freenas /usr/local/etc/syslog-ng.conf
+	else
+		cp /conf/base/etc/local/syslog-ng.conf.freenas /etc/local/syslog-ng.conf
+	fi
 
 	fqdn=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT adv_fqdn_syslog FROM system_advanced")
 	if [ "${fqdn}" -eq "1" ]; then
@@ -97,10 +101,12 @@ destination(other_controller_file);
 destination other_controller_file { file("$controller_file"); };
 destination other_controller { udp("$controller_other_ip" port($controller_port)); };
 
-log { source(src); filter(f_not_mdnsresponder); filter(f_not_nginx); filter(f_not_consul); destination(other_controller); };
+log { source(src); filter(f_not_mdnsresponder); filter(f_not_nginx); destination(other_controller); };
 _EOF_
 } >> /etc/local/syslog-ng.conf
 
+# Be sure and copy fresh file since we're appending
+cp /conf/base/etc/newsyslog.conf.template /etc/newsyslog.conf
 {
 cat << _EOF_
 

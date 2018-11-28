@@ -4,6 +4,7 @@
 #
 
 # PROVIDE: ix-update
+# REQUIRE: mountcritlocal
 # BEFORE: ix-fstab
 
 . /etc/rc.freenas
@@ -12,32 +13,6 @@ readonly UPDATE_FAILED_LOG="/data/update.failed"
 HBA_FIRMWARE_UPDATE="/data/.hba_firmware_update"
 REBOOT_REQUIRED=0
 
-# The function below takes two arguments
-# 1. The path you want it to write its output to (the .crt and .key files)
-# 2. The old pre-certui database (do not give it the post certmanager migrated db as it will fail)
-# It writes the cert file as "precertman.crt" and key file as "precertman.key"
-upgrade_cert_migration()
-{
-    local write_path="${1}"
-    local freenas_old_db="${2}"
-    local tmpcertfile=$(mktemp /tmp/tmp.XXXXXX)
-
-    ${FREENAS_SQLITE_CMD} ${freenas_old_db} "
-    SELECT
-           ssl_certfile
-
-    FROM
-           system_ssl
-
-    ORDER BY
-           -id
-
-    LIMIT 1
-           " > "${tmpcertfile}"
-    # Now seperate the certs and keys into seperate files
-    sed -nE '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----|end/p ' "${tmpcertfile}" > "${write_path}/precertman.crt"
-    sed -nE '/-----BEGIN RSA PRIVATE KEY-----/,/-----END RSA PRIVATE KEY-----|end/p' "${tmpcertfile}" > "${write_path}/precertman.key"
-}
 
 db_update_real()
 {
@@ -111,7 +86,6 @@ EOF
 
 db_update()
 {
-	local precertman
 	if [ -f ${HBA_FIRMWARE_UPDATE} ]; then
 		mount -uw /
 		if [ -f /usr/local/sbin/firmware_update.py ]; then
@@ -154,15 +128,6 @@ db_update()
 		fi
 	fi
 
-	# The call below checks if the version of freenas we are updating form is
-	# a pre-cert-UI version or not and stores its result in a local var.
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select * from system_ssl;" > /dev/null 2>&1
-	precertman=$?
-	if [ "${precertman}" == 0 ]; then
-		# The step below will parse and write the old cert and key to /root/precertman.crt/.key
-		upgrade_cert_migration "/root" ${FREENAS_CONFIG}
-	fi
-
 	set +e
 	db_update_real || handle_error
 	set -e
@@ -179,13 +144,6 @@ db_update()
 
 	echo "Database upgrade complete.  Rebooting."
 	cd /
-	if [ "${precertman}" == 0 ]; then
-		# Now that the migration is done we just take the earlier saved cert and key
-		# and add it to the current scheme of things (the call to the python code below
-		# does that) after it is done delete the precertman.crt and .key files
-		/usr/local/bin/python /usr/local/www/freenasUI/tools/updatessl.py /root/precertman.crt /root/precertman.key >/dev/null 2>&1
-	fi
-	rm -f /root/precertman.*
 	sleep 2
 	reboot
 }

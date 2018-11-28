@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-netif
+# BEFORE: netif
+
+. /etc/rc.freenas
+
+netif_start()
+{
+	echo "Starting interfaces..."
+	# If middlewared failed to start for some reason or the call failed
+	# we need to fallback to configuring interfaces using rc.d/netif for debugging.
+	# Sentinel file checked in rc.conf.local
+	if ! /usr/local/bin/midclt -t 120 call interfaces.sync true > /dev/null 2>&1; then
+		touch ${FREENAS_MW_IFACES_FAILED}
+		# Removing file makes sure rc.conf cache is regenerated on next rc.d call
+		rm -rf ${FREENAS_CONFIG_MD5}
+	fi
+
+}
+
+name="ix-netif"
+start_cmd='netif_start'
+stop_cmd=':'
+status_cmd=':'
+
+load_rc_config $name
+run_rc_command $*

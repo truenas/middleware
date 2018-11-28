@@ -118,6 +118,11 @@ class CIFSForm(MiddlewareModelForm, ModelForm):
         required=False,
         widget=forms.widgets.CheckedMultiSelect(),
     )
+    cifs_srv_unixcharset = forms.ChoiceField(
+        label=models.CIFS._meta.get_field('cifs_srv_unixcharset').verbose_name,
+        required=False,
+        initial='UTF-8'
+    )
 
     class Meta:
         fields = '__all__'
@@ -133,7 +138,10 @@ class CIFSForm(MiddlewareModelForm, ModelForm):
                     'cifs_srv_bindip',
                     self.data['cifs_srv_bindip'].split(',')
                 )
+
         self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices(noloopback=False))
+        self.fields['cifs_srv_unixcharset'].choices = choices.UNIXCHARSET_CHOICES()
+
         if self.instance.id and self.instance.cifs_srv_bindip:
             bindips = []
             for ip in self.instance.cifs_srv_bindip:
@@ -745,6 +753,8 @@ class iSCSITargetGlobalConfigurationForm(MiddlewareModelForm, ModelForm):
 
     def middleware_clean(self, data):
         data['isns_servers'] = data['isns_servers'].split()
+        if not data.get('pool_avail_threshold'):
+            data.pop('pool_avail_threshold', None)
         return data
 
 
@@ -797,7 +807,10 @@ class iSCSITargetExtentForm(MiddlewareModelForm, ModelForm):
                 exclude = [e] if not self._api else []
 
                 disk_choices = list(c.call(
-                    'iscsi.extent.disk_choices', exclude).items())
+                    'iscsi.extent.disk_choices', exclude
+                ).items())
+
+                disk_choices.sort(key=lambda x: x[1])
 
             if self.instance.iscsi_target_extent_type == 'File':
                 self.fields['iscsi_target_extent_type'].initial = 'File'
@@ -814,7 +827,10 @@ class iSCSITargetExtentForm(MiddlewareModelForm, ModelForm):
         elif not self._api:
             with client as c:
                 disk_choices = list(c.call(
-                    'iscsi.extent.disk_choices').items())
+                    'iscsi.extent.disk_choices'
+                ).items())
+
+                disk_choices.sort(key=lambda x: x[1])
 
             self.fields['iscsi_target_extent_disk'].choices = disk_choices
         self.fields['iscsi_target_extent_type'].widget.attrs['onChange'] = "iscsiExtentToggle();extentZvolToggle();"
@@ -856,6 +872,9 @@ class iSCSITargetExtentForm(MiddlewareModelForm, ModelForm):
         extent_rpm = data['rpm']
         data['type'] = extent_type.upper()
         data['rpm'] = extent_rpm.upper()
+
+        if not data.get('avail_threshold'):
+            data.pop('avail_threshold', None)
 
         return data
 
@@ -1045,7 +1064,8 @@ class iSCSITargetForm(MiddlewareModelForm, ModelForm):
     def middleware_clean(self, data):
         data['mode'] = data['mode'].upper()
         data['groups'] = self._groups
-        data['alias'] = data.get('alias') or None
+        if not data.get('alias'):
+            data.pop('alias', None)
         return data
 
 
@@ -1066,6 +1086,10 @@ class iSCSITargetGroupsForm(MiddlewareModelForm, ModelForm):
         super(iSCSITargetGroupsForm, self).__init__(*args, **kwargs)
         self.fields['iscsi_target_authgroup'].required = False
         self.fields['iscsi_target_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
+
+    def clean_iscsi_target_authgroup(self):
+        value = self.cleaned_data.get('iscsi_target_authgroup')
+        return None if value and int(value) == -1 else value
 
     def middleware_clean(self, data):
         targetobj = self.cleaned_data.get('iscsi_target')
@@ -1186,6 +1210,12 @@ class SMARTForm(MiddlewareModelForm, ModelForm):
             kwargs["initial"]["smart_email"] = " ".join(kwargs["instance"].smart_email.split(","))
 
         super(SMARTForm, self).__init__(*args, **kwargs)
+
+    def clean_smart_email(self):
+        if "," in self.cleaned_data["smart_email"]:
+            raise forms.ValidationError(_("Commas are not valid in an E-Mail address. "
+                                          "Separate multiple E-Mail addresses with a space."))
+        return self.cleaned_data["smart_email"]
 
     def middleware_clean(self, update):
         update["powermode"] = update["powermode"].upper()
@@ -1319,6 +1349,9 @@ class S3Form(MiddlewareModelForm, ModelForm):
     middleware_exclude_fields = ('secret_key2', )
     middleware_plugin = "s3"
     is_singletone = True
+    middleware_attr_map = {
+        'storage_path': 's3_disks'
+    }
 
     s3_bindip = forms.ChoiceField(
         label=models.S3._meta.get_field("s3_bindip").verbose_name,

@@ -11,15 +11,15 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE
-from auto_config import ip
+from auto_config import ip, pool_name
 from config import *
 
 if "BRIDGEHOST" in locals():
     MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
 
-DATASET = "tank/nfs"
-urlDataset = "tank%2Fnfs"
-NFS_PATH = "/mnt/" + DATASET
+dataset = f"{pool_name}/nfs"
+dataset_url = dataset.replace('/', '%2F')
+NFS_PATH = "/mnt/" + dataset
 Reason = "BRIDGEHOST is missing in ixautomation.conf"
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 
@@ -48,7 +48,7 @@ def test_01_creating_the_nfs_server():
 
 
 def test_02_creating_dataset_nfs():
-    payload = {"name": DATASET}
+    payload = {"name": dataset}
     results = POST("/pool/dataset/", payload)
     assert results.status_code == 200, results.text
 
@@ -80,7 +80,7 @@ def test_05_starting_nfs_service_at_boot():
 
 def test_06_checking_to_see_if_nfs_service_is_enabled_at_boot():
     results = GET("/service?service=nfs")
-    assert results.json()[0]["enable"] == True, results.text
+    assert results.json()[0]["enable"] is True, results.text
 
 
 def test_07_starting_nfs_service():
@@ -247,6 +247,7 @@ def test_27_removing_nfs_mountpoint():
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
+
 def test_28_delete_nfs_share():
     nfsid = GET('/sharing/nfs?comment=My Test Share').json()[0]['id']
     results = DELETE(f"/sharing/nfs/id/{nfsid}")
@@ -272,10 +273,10 @@ def test_31_disable_nfs_service_at_boot():
 
 def test_32_checking_nfs_disable_at_boot():
     results = GET("/service?service=nfs")
-    assert results.json()[0]['enable'] == False, results.text
+    assert results.json()[0]['enable'] is False, results.text
 
 
 # Check destroying a SMB dataset
 def test_33_destroying_smb_dataset():
-    results = DELETE(f"/pool/dataset/id/{urlDataset}/")
+    results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text

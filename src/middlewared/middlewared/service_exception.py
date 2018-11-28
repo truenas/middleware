@@ -11,9 +11,10 @@ class CallException(ErrnoMixin, Exception):
 
 
 class CallError(CallException):
-    def __init__(self, errmsg, errno=errno.EFAULT):
+    def __init__(self, errmsg, errno=errno.EFAULT, extra=None):
         self.errmsg = errmsg
         self.errno = errno
+        self.extra = extra
 
     def __str__(self):
         errname = get_errname(self.errno)
@@ -46,13 +47,17 @@ class ValidationErrors(CallException):
 
     def add(self, attribute, errmsg, errno=errno.EINVAL):
         self.errors.append(ValidationError(attribute, errmsg, errno))
-    
+
     def add_validation_error(self, validation_error):
         self.errors.append(validation_error)
 
     def add_child(self, attribute, child):
         for e in child.errors:
             self.add(f"{attribute}.{e.attribute}", e.errmsg, e.errno)
+
+    def check(self):
+        if self:
+            raise self
 
     def extend(self, errors):
         for e in errors.errors:

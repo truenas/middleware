@@ -15,30 +15,30 @@ from functions import PUT, GET, POST  # , RC_TEST
 
 def test_01_Configuring_ftp():
     payload = {"clients": 10, "rootlogin": True}
-    results = PUT("/ftp", payload)
+    results = PUT("/ftp/", payload)
     assert results.status_code == 200, results.text
 
 
 def test_02_Look_at_ftp_cofiguration():
-    results = GET("/ftp")
+    results = GET("/ftp/")
     assert results.json()["clients"] == 10, results.text
-    assert results.json()["rootlogin"] == True, results.text
+    assert results.json()["rootlogin"] is True, results.text
 
 
 def test_03_enable_ftp_service_at_boot():
     payload = {"enable": True}
-    results = PUT('/service/id/ftp', payload)
+    results = PUT('/service/id/ftp/', payload)
     assert results.status_code == 200, results.text
 
 
 def test_04_look_ftp_service_at_boot():
     results = GET('/service?service=ftp')
-    assert results.json()[0]["enable"] == True
+    assert results.json()[0]["enable"] is True
 
 
 def test_05_Starting_ftp_service():
     payload = {"service": "ftp", "service-control": {"onetime": True}}
-    results = POST("/service/start", payload)
+    results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
 
 

@@ -35,6 +35,7 @@ import urllib.parse
 import sysctl
 
 from collections import OrderedDict
+from croniter import croniter
 from django.conf.urls import url
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
@@ -80,7 +81,8 @@ from freenasUI.jails.forms import (
 )
 from freenasUI.jails.models import JailTemplate
 from freenasUI.middleware import zfs
-from freenasUI.middleware.client import client
+from freenasUI.middleware.client import client, ValidationErrors
+from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.util import run_alerts
@@ -102,6 +104,7 @@ from freenasUI.storage.forms import (
     CreatePassphraseForm,
     ChangePassphraseForm,
     ManualSnapshotForm,
+    LockPassphraseForm,
     UnlockPassphraseForm,
     VolumeAutoImportForm,
     VolumeManagerForm,
@@ -121,6 +124,8 @@ from freenasUI.system.forms import (
     CertificateCreateCSRForm,
     CertificateCreateInternalForm,
     CertificateImportForm,
+    CertificateCSRImportForm,
+    CertificateACMEForm,
     ManualUpdateTemporaryLocationForm,
     ManualUpdateUploadForm,
     ManualUpdateWizard,
@@ -142,17 +147,58 @@ log = logging.getLogger('api.resources')
 
 
 def _common_human_fields(bundle):
-    for human in (
+    for index, human in enumerate((
         'human_minute',
         'human_hour',
         'human_daymonth',
         'human_month',
         'human_dayweek',
-    ):
-        method = getattr(bundle.obj, "get_%s" % human, None)
-        if not method:
+    )):
+
+        field = next((v for v in dir(bundle.obj) if human[len('human_'):] in v.split('_')), None)
+        if not field:
             continue
-        bundle.data[human] = getattr(bundle.obj, "get_%s" % human)()
+
+        expression = ''
+        for i in range(0, 5):
+            expression += ('* ' if i != index else f'{getattr(bundle.obj, field)} ')
+        field_value = croniter(expression).expanded[index]
+
+        bundle.data[field] = field_value
+
+        def _wording_helper(w, v_choices):
+            if isinstance(v_choices, int):
+                v_choices = {v: v for v in range(0, v_choices)}
+            if field_value[0] == '*' or len(field_value) >= len(v_choices):
+                return f'Every {w}'
+            else:
+                return ', '.join([
+                    str(v_choices[v]) for v in field_value
+                ])
+
+        if index == 0:
+            bundle.data[human] = _wording_helper('minute', 60)
+        elif index == 1:
+            bundle.data[human] = _wording_helper('hour', 24)
+        elif index == 2:
+            bundle.data[human] = _wording_helper('day', {v: v for v in range(1, 32)})
+        elif index == 3:
+            bundle.data[human] = _wording_helper(
+                'month', {int(k): v for k, v in dict(choices.MONTHS_CHOICES).items()}
+            )
+        else:
+            # TODO:
+            # 1. Carve out the days input so that way one can say:
+            #    Mon-Fri + Saturday -> Weekdays + Saturday
+            if field_value == list(map(str, range(1, 6))):
+                bundle.data[human] = _('Weekdays')
+            elif field_value == list(map(str, range(6, 8))):
+                bundle.data[human] = _('Weekends')
+            else:
+                field_value = [v or 7 for v in field_value]
+                bundle.data[human] = _wording_helper(
+                    'day of week', {int(k): v for k, v in dict(choices.WEEKDAYS_CHOICES).items()}
+                )
 
 
 class NestedMixin(object):
@@ -311,6 +357,13 @@ class SettingsResourceMixin(object):
             bundle.data['stg_guicertificate'] = None
         return bundle
 
+    def hydrate(self, bundle):
+        bundle = super(SettingsResourceMixin, self).hydrate(bundle)
+        for key in ['stg_guiaddress', 'stg_guiv6address']:
+            if isinstance(bundle.data.get(key), str):
+                bundle.data[key] = bundle.data[key].split()
+        return bundle
+
 
 class DiskResourceMixin(object):
 
@@ -379,15 +432,14 @@ class PermissionResource(DojoResource):
             'mp_user_en': deserialized.get('mp_user_en', True),
         })
         form = MountPointAccessForm(data=deserialized)
-        if not form.is_valid():
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, form.errors)
-            )
-        else:
-            form.commit(path=deserialized.get('mp_path'))
-        return HttpResponse(
-            'Mount Point permissions successfully updated.',
-            status=201,
+        if form.is_valid():
+            if form.commit(deserialized.get('mp_path')):
+                return HttpResponse(
+                    'Mount Point permissions successfully updated.',
+                    status=201,
+                )
+        raise ImmediateHttpResponse(
+            response=self.error_response(request, form.errors)
         )
 
 
@@ -555,7 +607,7 @@ class ZVolResource(DojoResource):
     sync = fields.CharField(attribute='sync')
     compression = fields.CharField(attribute='compression')
     dedup = fields.CharField(attribute='dedup')
-    comments = fields.CharField(attribute='description')
+    comments = fields.CharField(attribute='description', null=True)
 
     class Meta:
         allowed_methods = ['get', 'post', 'delete', 'put']
@@ -653,10 +705,14 @@ class ZVolResource(DojoResource):
             raise NotFound("Dataset not found.")
 
     def obj_delete(self, bundle, **kwargs):
+        deserialized = self._meta.serializer.deserialize(
+            bundle.request.body or '{}',
+            format='application/json',
+        )
         retval = notifier().destroy_zfs_vol("%s/%s" % (
             kwargs.get('parent').vol_name,
             kwargs.get('pk'),
-        ))
+        ), deserialized.get('cascade', False))
         if retval:
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, retval)
@@ -802,13 +858,13 @@ class VolumeResourceMixin(NestedMixin):
             request.body,
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
+        deserialized['force'] = deserialized.get('force', False)
+        if deserialized.get('pass') and not deserialized.get('pass2'):
+            deserialized['pass2'] = deserialized.get('pass')
         form = ZFSDiskReplacementForm(
             volume=obj,
             label=deserialized.get('label'),
-            data={
-                'replace_disk': deserialized.get('replace_disk'),
-                'force': deserialized.get('force', False),
-            },
+            data=deserialized,
         )
         if not form.is_valid():
             raise ImmediateHttpResponse(
@@ -875,12 +931,13 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
-        if request.method == 'POST':
-            notifier().zfs_scrub(str(obj.vol_name))
-            return HttpResponse('Volume scrub started.', status=202)
-        elif request.method == 'DELETE':
-            notifier().zfs_scrub(str(obj.vol_name), stop=True)
-            return HttpResponse('Volume scrub stopped.', status=202)
+        with client as c:
+            if request.method == 'POST':
+                c.call('pool.scrub', obj.id, 'START', job=True)
+                return HttpResponse('Volume scrub started.', status=202)
+            elif request.method == 'DELETE':
+                c.call('pool.scrub', obj.id, 'STOP', job=True)
+                return HttpResponse('Volume scrub stopped.', status=202)
 
     def unlock(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
@@ -908,33 +965,39 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
-        if obj.vol_encrypt == 0:
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+
+        form = LockPassphraseForm(
+            data=deserialized
+        )
+
+        valid = form.is_valid()
+        if valid:
+            try:
+                form.done(obj)
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
+                valid = False
+
+        if not valid:
             raise ImmediateHttpResponse(
-                response=self.error_response(request, _('Volume is not encrypted.'))
+                response=self.error_response(request, form.errors)
             )
-
-        _n = notifier()
-        _n.volume_detach(obj)
-
-        return HttpResponse('Volume has been locked.', status=202)
+        else:
+            return HttpResponse('Volume has been locked.', status=202)
 
     def upgrade(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
 
         bundle, obj = self._get_parent(request, kwargs)
 
-        errmsg = _('Pool output could not be parsed. Is the pool imported?')
-        try:
-            notifier().zpool_version(obj.vol_name)
-        except Exception:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, errmsg)
-            )
-        upgrade = notifier().zpool_upgrade(str(obj.vol_name))
-        if upgrade is not True:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, errmsg)
-            )
+        with client as c:
+            c.call('pool.upgrade', obj.id)
+
         return HttpResponse('Volume has been upgraded.', status=202)
 
     def recoverykey(self, request, **kwargs):
@@ -966,12 +1029,10 @@ class VolumeResourceMixin(NestedMixin):
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
         form = ReKeyForm(data=deserialized, volume=obj, api_validation=True)
-        if not form.is_valid():
+        if not (form.is_valid() and form.done()):
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)
             )
-        else:
-            form.done()
         return HttpResponse('Volume has been rekeyed.', status=202)
 
     def keypassphrase(self, request, **kwargs):
@@ -1001,12 +1062,10 @@ class VolumeResourceMixin(NestedMixin):
                 deserialized['passphrase2'] = deserialized.get('passphrase')
 
             form = ChangePassphraseForm(deserialized)
-            if not form.is_valid():
+            if not (form.is_valid() and form.done(obj)):
                 raise ImmediateHttpResponse(
                     response=self.error_response(request, form.errors)
                 )
-            else:
-                form.done(obj)
 
             if deserialized.get('remove'):
                 return HttpResponse('Volume passphrase has been removed', status=201)
@@ -1489,10 +1548,11 @@ class VolumeResourceMixin(NestedMixin):
             bundle.request.body or '{}',
             format=_format,
         )
-        bundle.obj.delete(
-            destroy=deserialized.get('destroy', True),
-            cascade=deserialized.get('cascade', True),
-        )
+        with client as c:
+            c.call('pool.export', bundle.obj.id, {
+                'destroy': deserialized.get('destroy', True),
+                'cascade': deserialized.get('cascade', True),
+            }, job=True)
 
 
 class ScrubResourceMixin(object):
@@ -1959,6 +2019,7 @@ class CloudSyncResourceMixin(NestedMixin):
             bundle.data['credential'] = str(bundle.obj.credential)
         job = self.__tasks.get(bundle.obj.id, {}).get("job")
         if job:
+            bundle.data['job_id'] = job['id']
             if job['state'] == 'RUNNING':
                 bundle.data['status'] = '{}{}'.format(
                     job['state'],
@@ -1971,7 +2032,6 @@ class CloudSyncResourceMixin(NestedMixin):
                     job['state'],
                     job['error'],
                 )
-                bundle.data['job_id'] = job['id']
             else:
                 bundle.data['status'] = job['state']
         else:
@@ -3090,6 +3150,9 @@ class CertificateAuthorityResourceMixin(object):
         else:
             deserialized = {}
 
+        if 'cert_passphrase2' not in deserialized and 'cert_passphrase' in deserialized:
+            deserialized['cert_passphrase2'] = deserialized.get('cert_passphrase')
+
         form = CertificateAuthorityImportForm(data=deserialized)
         if not form.is_valid():
             raise ImmediateHttpResponse(
@@ -3215,12 +3278,82 @@ class CertificateResourceMixin(object):
                 self.wrap_view('importcert'),
             ),
             url(
+                r"^(?P<resource_name>%s)/import_csr%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('import_csr'),
+            ),
+            url(
+                r"^(?P<resource_name>%s)/acme%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('acme_cert'),
+            ),
+            url(
                 r"^(?P<resource_name>%s)/internal%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('internal'),
             ),
         ]
+
+    def acme_cert(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
+
+        csr_id = deserialized.pop('csr_id')
+
+        with client as c:
+            domains = c.call('certificate.get_domain_names', csr_id)
+
+        data = {k: v for k, v in deserialized.items() if not k.startswith('domain_')}
+
+        for n, domain in enumerate(domains):
+            if f'domain_{domain}' in deserialized:
+                data[f'domain_{n}'] = deserialized[f'domain_{domain}']
+
+        form = CertificateACMEForm(data=data, csr_id=csr_id, middleware_job_wait=True)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('ACME Certificate successfully created.', status=201)
+
+    def import_csr(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
+
+        if 'cert_passphrase2' not in deserialized and 'cert_passphrase' in deserialized:
+            deserialized['cert_passphrase2'] = deserialized.get('cert_passphrase')
+
+        form = CertificateCSRImportForm(data=deserialized, middleware_job_wait=True)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('Certificate Signing Request imported.', status=201)
 
     def csr(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
@@ -3235,7 +3368,7 @@ class CertificateResourceMixin(object):
         else:
             deserialized = {}
 
-        form = CertificateCreateCSRForm(data=deserialized)
+        form = CertificateCreateCSRForm(data=deserialized, middleware_job_wait=True)
         if not form.is_valid():
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)
@@ -3257,7 +3390,10 @@ class CertificateResourceMixin(object):
         else:
             deserialized = {}
 
-        form = CertificateImportForm(data=deserialized)
+        if 'cert_passphrase2' not in deserialized and 'cert_passphrase' in deserialized:
+            deserialized['cert_passphrase2'] = deserialized.get('cert_passphrase')
+
+        form = CertificateImportForm(data=deserialized, middleware_job_wait=True)
         if not form.is_valid():
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)
@@ -3279,7 +3415,7 @@ class CertificateResourceMixin(object):
         else:
             deserialized = {}
 
-        form = CertificateCreateInternalForm(data=deserialized)
+        form = CertificateCreateInternalForm(data=deserialized, middleware_job_wait=True)
         if not form.is_valid():
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)
@@ -3311,6 +3447,17 @@ class CertificateResourceMixin(object):
                             'id': bundle.obj.id
                         }
                     )
+                    bundle.data['_ACME_create_url'] = reverse(
+                        'certificate_acme_create',
+                        kwargs={
+                            'csr_id': bundle.obj.id
+                        }
+                    )
+
+                with client as c:
+                    sys_cert = c.call('system.general.config')['ui_certificate']
+
+                bundle.data['cert_system_used'] = True if sys_cert['id'] == bundle.obj.id else False
 
                 bundle.data['_edit_url'] = reverse(
                     'certificate_edit',

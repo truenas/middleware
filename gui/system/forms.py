@@ -404,12 +404,12 @@ class InitialWizard(CommonWizard):
                             'status for more details.'
                         ) % volume_name)
 
-                volume = Volume(vol_name=volume_name)
-                volume.save()
-                model_objs.append(volume)
+                    volume = Volume(vol_name=volume_name)
+                    volume.save()
+                    model_objs.append(volume)
 
-                scrub = Scrub.objects.create(scrub_volume=volume)
-                model_objs.append(scrub)
+                    scrub = Scrub.objects.create(scrub_volume=volume)
+                    model_objs.append(scrub)
 
                 if volume_form:
                     bysize = volume_form._get_unused_disks_by_size()
@@ -419,7 +419,14 @@ class InitialWizard(CommonWizard):
                     else:
                         groups = volume_form._grp_predefined(bysize, volume_type)
 
-                    _n.create_volume(volume, groups=groups, init_rand=False)
+                    with client as c:
+                        c.call('pool.create', {
+                            'name': volume_name,
+                            'topology': groups,
+                        })
+
+                    volume = Volume.objects.get(vol_name=volume_name)
+                    model_objs.append(volume)
 
                 # Create SMART tests for every disk available
                 disks = []
@@ -480,12 +487,16 @@ class InitialWizard(CommonWizard):
                     qs = bsdGroups.objects.filter(bsdgrp_group=share_group)
                     if not qs.exists():
                         if share_groupcreate:
-                            with client as c:
-                                group = c.call('group.create', {
-                                    'name': share_group,
-                                })
-                            group = bsdGroups.objects.get(pk=group)
-                            model_objs.append(group)
+                            try:
+                                with client as c:
+                                    group = c.call('group.create', {
+                                        'name': share_group,
+                                    })
+                            except ValidationErrors as e:
+                                raise MiddlewareError(str(e))
+                            else:
+                                group = bsdGroups.objects.get(pk=group)
+                                model_objs.append(group)
                         else:
                             group = bsdGroups.objects.all()[0]
                     else:
@@ -494,24 +505,22 @@ class InitialWizard(CommonWizard):
                     qs = bsdUsers.objects.filter(bsdusr_username=share_user)
                     if not qs.exists():
                         if share_usercreate:
-                            if share_userpw:
-                                password = share_userpw
-                                password_disabled = False
+                            try:
+                                with client as c:
+                                    user = c.call('user.create', {
+                                        'username': share_user,
+                                        'full_name': share_user,
+                                        'password': share_userpw if share_userpw else '',
+                                        'shell': '/bin/csh',
+                                        'home': '/nonexistent',
+                                        'password_disabled': False if share_userpw else True,
+                                        'group': group.id,
+                                    })
+                            except ValidationErrors as e:
+                                raise MiddlewareError(str(e))
                             else:
-                                password = '!'
-                                password_disabled = True
-                            with client as c:
-                                user = c.call('user.create', {
-                                    'username': share_user,
-                                    'full_name': share_user,
-                                    'password': password,
-                                    'shell': '/bin/csh',
-                                    'home': '/nonexistent',
-                                    'password_disabled': password_disabled,
-                                    'group': group.id,
-                                })
-                            user = bsdUsers.objects.get(pk=user)
-                            model_objs.append(user)
+                                user = bsdUsers.objects.get(pk=user)
+                                model_objs.append(user)
 
                 else:
                     errno, errmsg = _n.create_zfs_vol(
@@ -627,10 +636,14 @@ class InitialWizard(CommonWizard):
                         iscsi_target_extent_serial=serial,
                     )
                     model_objs.append(extent)
-                    model_objs.append(iSCSITargetToExtent.objects.create(
-                        iscsi_target=target,
-                        iscsi_extent=extent,
-                    ))
+                    with client as c:
+                        target_to_extent = c.call(
+                            'iscsi.targetextent.create', {
+                                'target': target.id,
+                                'extent': extent.id
+                            }
+                        )
+                    model_objs.append(iSCSITargetToExtent.objects.get(pk=target_to_extent['id']))
 
                 if share_purpose not in services_restart:
                     services.objects.filter(srv_service=share_purpose).update(
@@ -968,7 +981,6 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
         'ui_httpsport': 'stg_guihttpsport',
         'ui_httpsredirect': 'stg_guihttpsredirect',
         'ui_port': 'stg_guiport',
-        'ui_protocol': 'stg_guiprotocol',
         'ui_v6address': 'stg_guiv6address'
     }
 
@@ -989,19 +1001,22 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
 
         self.fields['stg_language'].choices = settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")
-        self.fields['stg_guiaddress'] = forms.ChoiceField(
-            label=self.fields['stg_guiaddress'].label
+        self.fields['stg_guiaddress'] = forms.MultipleChoiceField(
+            label=self.fields['stg_guiaddress'].label,
+            required=False
         )
-        self.fields['stg_guiaddress'].choices = [
-            ['0.0.0.0', '0.0.0.0']
-        ] + list(choices.IPChoices(ipv6=False))
+        ipv4_choices = list(choices.IPChoices(ipv6=False))
+        ipv6_choices = list(choices.IPChoices(ipv4=False))
 
-        self.fields['stg_guiv6address'] = forms.ChoiceField(
-            label=self.fields['stg_guiv6address'].label
+        self.fields['stg_guiv6address'] = forms.MultipleChoiceField(
+            label=self.fields['stg_guiv6address'].label,
+            required=False
         )
-        self.fields['stg_guiv6address'].choices = [
-            ['::', '::']
-        ] + list(choices.IPChoices(ipv4=False))
+
+        for key, value, choice in [
+            ('stg_guiaddress', ('0.0.0.0', '0.0.0.0'), ipv4_choices), ('stg_guiv6address', ('::', '::'), ipv6_choices)
+        ]:
+            self.fields[key].choices = choice if value in choice else [value] + choice
 
     def middleware_clean(self, update):
         keys = update.keys()
@@ -1009,41 +1024,42 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
             if key.startswith('gui'):
                 update['ui_' + key[3:]] = update.pop(key)
 
-        update['ui_protocol'] = update['ui_protocol'].upper()
         update['sysloglevel'] = update['sysloglevel'].upper()
+        for key in ('ui_address', 'ui_v6address'):
+            if not update.get(key):
+                update.pop(key, None)
         return update
 
     def done(self, request, events):
         cache.set('guiLanguage', self.instance.stg_language)
 
         if (
-            self.original_instance['stg_guiprotocol'] != self.instance.stg_guiprotocol or
             self.original_instance['stg_guiaddress'] != self.instance.stg_guiaddress or
             self.original_instance['stg_guiport'] != self.instance.stg_guiport or
             self.original_instance['stg_guihttpsport'] != self.instance.stg_guihttpsport or
             self.original_instance['stg_guihttpsredirect'] != self.instance.stg_guihttpsredirect or
             self.original_instance['stg_guicertificate_id'] != self.instance.stg_guicertificate_id
         ):
-            if self.instance.stg_guiaddress == "0.0.0.0":
+            if "0.0.0.0" in self.instance.stg_guiaddress:
                 address = request.META['HTTP_HOST'].split(':')[0]
             else:
-                address = self.instance.stg_guiaddress
-            if self.instance.stg_guiprotocol == 'httphttps':
+                address = self.instance.stg_guiaddress[0]
+            if not self.instance.stg_guihttpsredirect:
                 protocol = 'http'
             else:
-                protocol = self.instance.stg_guiprotocol
+                protocol = 'https'
 
             newurl = "%s://%s/legacy/" % (
                 protocol,
                 address
             )
 
-            if self.instance.stg_guiport and protocol == 'http':
+            if self.instance.stg_guiport and not self.instance.stg_guihttpsredirect:
                 newurl += ":" + str(self.instance.stg_guiport)
-            elif self.instance.stg_guihttpsport and protocol == 'https':
+            elif self.instance.stg_guihttpsport and self.instance.stg_guihttpsredirect:
                 newurl += ":" + str(self.instance.stg_guihttpsport)
 
-            if self.original_instance['stg_guiprotocol'] != self.instance.stg_guiprotocol:
+            if self.original_instance['stg_guihttpsredirect'] != self.instance.stg_guihttpsredirect:
                 events.append("evilrestartHttpd('%s')" % newurl)
             else:
                 events.append("restartHttpd('%s')" % newurl)
@@ -1094,10 +1110,12 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
     )
 
     class Meta:
+        exclude = ('adv_uploadcrash', )
         fields = '__all__'
         model = models.Advanced
         widgets = {
             'adv_sed_passwd': forms.widgets.PasswordInput(render_value=False),
+            'adv_boot_scrub': forms.widgets.HiddenInput()
         }
 
     def __init__(self, *args, **kwargs):
@@ -2083,32 +2101,31 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
     @staticmethod
     def _grp_type(num):
         check = OrderedDict((
-            ('mirror', lambda y: y == 2),
+            ('MIRROR', lambda y: y == 2),
             (
-                'raidz',
+                'RAIDZ1',
                 lambda y: False if y < 3 else math.log(y - 1, 2) % 1 == 0
             ),
             (
-                'raidz2',
+                'RAIDZ2',
                 lambda y: False if y < 4 else math.log(y - 2, 2) % 1 == 0
             ),
             (
-                'raidz3',
+                'RAIDZ3',
                 lambda y: False if y < 5 else math.log(y - 3, 2) % 1 == 0
             ),
-            ('stripe', lambda y: True),
+            ('STRIPE', lambda y: True),
         ))
         for name, func in list(check.items()):
             if func(num):
                 return name
-        return 'stripe'
+        return 'STRIPE'
 
     @classmethod
     def _grp_autoselect(cls, disks):
 
         higher = cls._higher_disks_group(disks)
-        groups = OrderedDict()
-        grpid = 0
+        groups = defaultdict(list)
 
         for size, devs in [(higher[0], disks[higher[0]])]:
             num = len(devs)
@@ -2150,17 +2167,12 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
                 mod = 0
 
             for i in range(rows):
-                groups[grpid] = {
+                groups['data'].append({
                     'type': vdevtype,
                     'disks': devs[i * perrow:perrow * (i + 1)],
-                }
-                grpid += 1
+                })
             if mod > 0:
-                groups[grpid] = {
-                    'type': 'spare',
-                    'disks': devs[-mod:],
-                }
-                grpid += 1
+                groups['spares'] += devs[-mod:]
         return groups
 
     @classmethod
@@ -2170,19 +2182,18 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
 
         maindisks = disks[higher[0]]
 
-        groups = OrderedDict()
-        grpid = 0
+        groups = defaultdict(list)
 
         if grptype == 'raid10':
             for i in range(int(len(maindisks) / 2)):
-                groups[grpid] = {
-                    'type': 'mirror',
+                groups['data'].append({
+                    'type': 'MIRROR',
                     'disks': maindisks[i * 2:2 * (i + 1)],
-                }
-                grpid += 1
+                })
         elif grptype.startswith('raidz'):
             if grptype == 'raidz':
                 optimalrow = 9
+                grptype = 'raidz1'
             elif grptype == 'raidz2':
                 optimalrow = 10
             else:
@@ -2193,16 +2204,15 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
                 div += 1
             perrow = int(len(maindisks) / (div if div else 1))
             for i in range(div):
-                groups[grpid] = {
-                    'type': grptype,
+                groups['data'].append({
+                    'type': grptype.upper(),
                     'disks': maindisks[i * perrow:perrow * (i + 1)],
-                }
-                grpid += 1
+                })
         else:
-            groups[grpid] = {
-                'type': grptype,
+            groups['data'].append({
+                'type': grptype.upper(),
                 'disks': maindisks,
-            }
+            })
 
         return groups
 
@@ -2217,7 +2227,7 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
     def _groups_to_disks_size(self, bysize, groups, swapsize):
         size = 0
         disks = []
-        for group in list(groups.values()):
+        for group in list(groups['data']):
             lower = None
             for disk in group['disks']:
                 _size = self._get_disk_size(disk, bysize)
@@ -2226,13 +2236,13 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
             if not lower:
                 continue
 
-            if group['type'] == 'mirror':
+            if group['type'] == 'MIRROR':
                 size += lower
-            elif group['type'] == 'raidz1':
+            elif group['type'] == 'RAIDZ1':
                 size += lower * (len(group['disks']) - 1)
-            elif group['type'] == 'raidz2':
+            elif group['type'] == 'RAIDZ2':
                 size += lower * (len(group['disks']) - 2)
-            elif group['type'] == 'stripe':
+            elif group['type'] == 'STRIPE':
                 size += lower * len(group['disks'])
             disks.extend(group['disks'])
         return disks, humanize_size(size)
@@ -2520,6 +2530,11 @@ class CertificateAuthorityCreateInternalForm(MiddlewareModelForm, ModelForm):
         required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_organization').help_text
     )
+    cert_organizational_unit = forms.CharField(
+        label=models.CertificateAuthority._meta.get_field('cert_organizational_unit').verbose_name,
+        required=False,
+        help_text=models.CertificateAuthority._meta.get_field('cert_organizational_unit').help_text
+    )
     cert_email = forms.CharField(
         label=models.CertificateAuthority._meta.get_field('cert_email').verbose_name,
         required=True,
@@ -2611,6 +2626,11 @@ class CertificateAuthorityCreateIntermediateForm(MiddlewareModelForm, ModelForm)
         required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_organization').help_text
     )
+    cert_organizational_unit = forms.CharField(
+        label=models.CertificateAuthority._meta.get_field('cert_organizational_unit').verbose_name,
+        required=False,
+        help_text=models.CertificateAuthority._meta.get_field('cert_organizational_unit').help_text
+    )
     cert_email = forms.CharField(
         label=models.CertificateAuthority._meta.get_field('cert_email').verbose_name,
         required=True,
@@ -2696,12 +2716,155 @@ class CertificateAuthoritySignCSRForm(MiddlewareModelForm, ModelForm):
         model = models.Certificate
 
 
+class ACMEDNSAuthenticatorForm(MiddlewareModelForm, ModelForm):
+
+    middleware_plugin = 'acme.dns.authenticator'
+    middleware_attr_schema = 'dns_authenticator'
+    middleware_attr_prefix = ''
+    is_singletone = False
+
+    authenticator = forms.ChoiceField(
+        choices=(),
+    )
+    attributes = forms.CharField(
+        widget=forms.widgets.HiddenInput,
+    )
+    credentials_schemas = forms.CharField(
+        widget=forms.widgets.HiddenInput
+    )
+
+    class Meta:
+        fields = [
+            'name',
+            'authenticator',
+        ]
+        model = models.ACMEDNSAuthenticator
+
+    def __init__(self, *args, **kwargs):
+        super(ACMEDNSAuthenticatorForm, self).__init__(*args, **kwargs)
+        self.fields['authenticator'].widget.attrs['onChange'] = (
+            'credentialsProvider("id_authenticator", "dns-authenticators-attribute");'
+        )
+        with client as c:
+            schemas = c.call('acme.dns.authenticator.authenticator_schemas')
+
+        schemas = [
+            {
+                'name': data['key'],
+                'title': data['key'].replace('_', ' ').capitalize(),
+                'credentials_schema': [
+                    {
+                        'property': s['title'],
+                        'schema': {
+                            '_required_': s['_required_'], 'type': s['type'], 'title': s['title'].replace('_', ' ')
+                        }
+                    }
+                    for s in data['schema']
+                ]
+            }
+            for data in schemas
+        ]
+
+        self.fields['authenticator'].choices = [
+            (schema['name'], schema['title'])
+            for schema in schemas
+        ]
+        self.fields['attributes'].initial = json.dumps(self.instance.attributes if self.instance else {})
+        self.fields['credentials_schemas'].initial = json.dumps({
+            schema['name']: schema['credentials_schema']
+            for schema in schemas
+        })
+
+    def middleware_clean(self, data):
+        data['attributes'] = json.loads(self.cleaned_data.get('attributes'))
+        data.pop('credentials_schemas', None)
+        if self.instance.id:
+            data.pop('authenticator')
+        return data
+
+
+class CertificateACMEForm(MiddlewareModelForm, ModelForm):
+
+    middleware_plugin = 'certificate'
+    middleware_attr_prefix = 'cert_'
+    middleware_attr_schema = 'certificate'
+    is_singletone = False
+    middleware_job = True
+
+    cert_tos = forms.BooleanField(
+        required=False,
+        label=_('Terms Of Service'),
+        initial=False,
+        help_text=_('Please accept terms of service for the given ACME Server')
+    )
+    cert_renew_days = forms.IntegerField(
+        required=False,
+        initial=10,
+        label=models.Certificate._meta.get_field('cert_renew_days').verbose_name,
+        help_text=models.Certificate._meta.get_field('cert_renew_days').help_text
+    )
+    cert_name = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_name').verbose_name,
+        required=True,
+        help_text=models.Certificate._meta.get_field('cert_name').help_text
+    )
+    cert_acme_directory_uri = forms.ChoiceField(
+        label=_('ACME Server Directory URI'),
+        required=True,
+        help_text=_('Please specify URI of ACME Server Directory')
+    )
+
+    class Meta:
+        fields = [
+            'cert_name'
+        ]
+        model = models.Certificate
+
+    def __init__(self, *args, **kwargs):
+        self.csr_id = kwargs.pop('csr_id')
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
+
+        super(CertificateACMEForm, self).__init__(*args, **kwargs)
+
+        with client as c:
+            popular_acme_choices = c.call('certificate.acme_server_choices')
+            self.csr_domains = c.call('certificate.get_domain_names', self.csr_id)
+
+        self.fields['cert_acme_directory_uri'].widget = forms.widgets.ComboBox()
+        self.fields['cert_acme_directory_uri'].choices = [(v, v) for v in popular_acme_choices]
+
+        for n, domain in enumerate(self.csr_domains):
+            self.fields[f'domain_{n}'] = forms.ModelChoiceField(
+                queryset=models.ACMEDNSAuthenticator.objects.all(),
+                label=(_(f'Authenticator for {domain} ')),
+                required=True,
+                help_text=_(f'Specify Authenticator to be used for {domain} domain')
+            )
+
+    def clean_cert_tos(self):
+        if not self.cleaned_data.get('cert_tos'):
+            raise forms.ValidationError(_(
+                'Please accept Terms of Service for the ACME Server'
+            ))
+        else:
+            return True
+
+    def middleware_clean(self, data):
+        data['csr_id'] = self.csr_id
+        data['dns_mapping'] = {}
+        for n, domain_f in enumerate(self.csr_domains):
+            data['dns_mapping'][domain_f] = self.cleaned_data.get(f'domain_{n}').id
+        data['create_type'] = 'CERTIFICATE_CREATE_ACME'
+        return data
+
+
 class CertificateEditForm(MiddlewareModelForm, ModelForm):
 
     middleware_plugin = 'certificate'
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    middleware_job = True
 
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
@@ -2716,6 +2879,7 @@ class CertificateEditForm(MiddlewareModelForm, ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
         super(CertificateEditForm, self).__init__(*args, **kwargs)
 
         self.fields['cert_certificate'].widget.attrs['readonly'] = True
@@ -2739,6 +2903,7 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    middleware_job = True
 
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
@@ -2751,22 +2916,16 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_CSR').help_text
     )
-    cert_certificate = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_certificate').verbose_name,
-        widget=forms.Textarea(),
-        required=False,
-        help_text=models.Certificate._meta.get_field('cert_certificate').help_text
-    )
 
     def __init__(self, *args, **kwargs):
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
         super(CertificateCSREditForm, self).__init__(*args, **kwargs)
 
+        self.fields['cert_name'].widget.attrs['readonly'] = False
         self.fields['cert_CSR'].widget.attrs['readonly'] = True
 
     def middleware_clean(self, data):
         data.pop('CSR', None)
-        if not data.get('certificate'):
-            data.pop('certificate', None)
         return data
 
     class Meta:
@@ -2777,27 +2936,35 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
         model = models.Certificate
 
 
-class CertificateImportForm(MiddlewareModelForm, ModelForm):
+class CertificateCSRImportForm(MiddlewareModelForm, ModelForm):
 
     middleware_plugin = 'certificate'
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    middleware_job = True
+
+    class Meta:
+        fields = [
+            'cert_name',
+            'cert_csr',
+            'cert_privatekey',
+            'cert_passphrase'
+        ]
+        model = models.Certificate
 
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
         required=True,
         help_text=models.Certificate._meta.get_field('cert_name').help_text
     )
-    cert_certificate = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_certificate').verbose_name,
+    cert_csr = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_CSR').verbose_name,
         widget=forms.Textarea(),
         required=True,
         help_text=_(
-            "Cut and paste the contents of your certificate here.<br>"
-            "Order in which you should paste this: <br>"
-            "The Primary Certificate.<br>The Intermediate CA's Certificate(s) (optional)."
-            "<br>The Root CA Certificate (optional)"),
+            'Cut and paste the contents of your certificate signing request here'
+        )
     )
     cert_privatekey = forms.CharField(
         label=models.Certificate._meta.get_field('cert_privatekey').verbose_name,
@@ -2817,6 +2984,106 @@ class CertificateImportForm(MiddlewareModelForm, ModelForm):
         widget=forms.PasswordInput(render_value=True),
     )
 
+    def __init__(self, *args, **kwargs):
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
+        super(CertificateCSRImportForm, self).__init__(*args, **kwargs)
+
+    def clean_cert_passphrase2(self):
+        cdata = self.cleaned_data
+        passphrase = cdata.get('cert_passphrase')
+        passphrase2 = cdata.get('cert_passphrase2')
+
+        if passphrase and passphrase != passphrase2:
+            raise forms.ValidationError(_(
+                'Passphrase confirmation does not match.'
+            ))
+        return passphrase
+
+    def middleware_clean(self, data):
+        data['create_type'] = 'CERTIFICATE_CREATE_IMPORTED_CSR'
+        data.pop('passphrase2', None)
+        data['CSR'] = data.pop('csr')
+        return data
+
+
+class CertificateImportForm(MiddlewareModelForm, ModelForm):
+
+    middleware_plugin = 'certificate'
+    middleware_attr_prefix = 'cert_'
+    middleware_attr_schema = 'certificate'
+    is_singletone = False
+    middleware_job = True
+
+    class Meta:
+        fields = [
+            'cert_name',
+            'cert_csr',
+            'cert_csr_id',
+            'cert_certificate',
+            'cert_privatekey',
+            'cert_passphrase'
+        ]
+        model = models.Certificate
+
+    cert_csr = forms.BooleanField(
+        required=False,
+        initial=False,
+        label='CSR exists on FreeNAS',
+        help_text=_(
+            'Check this box if importing a certificate for which a CSR '
+            'exists on the FreeNAS system'
+        )
+    )
+
+    cert_csr_id = forms.ModelChoiceField(
+        queryset=models.Certificate.objects.filter(cert_type=0x20),
+        label=(_("CSRs")),
+        required=False
+    )
+
+    cert_name = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_name').verbose_name,
+        required=True,
+        help_text=models.Certificate._meta.get_field('cert_name').help_text
+    )
+    cert_certificate = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_certificate').verbose_name,
+        widget=forms.Textarea(),
+        required=True,
+        help_text=_(
+            "Cut and paste the contents of your certificate here.<br>"
+            "Order in which you should paste this: <br>"
+            "The Primary Certificate.<br>The Intermediate CA's Certificate(s) (optional)."
+            "<br>The Root CA Certificate (optional)"),
+    )
+    cert_privatekey = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_privatekey').verbose_name,
+        widget=forms.Textarea(),
+        required=False,
+        help_text=models.Certificate._meta.get_field('cert_privatekey').help_text
+    )
+    cert_passphrase = forms.CharField(
+        label=_("Passphrase"),
+        required=False,
+        help_text=_("Passphrase for encrypted private keys"),
+        widget=forms.PasswordInput(render_value=True),
+    )
+    cert_passphrase2 = forms.CharField(
+        label=_("Confirm Passphrase"),
+        required=False,
+        widget=forms.PasswordInput(render_value=True),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
+        super(CertificateImportForm, self).__init__(*args, **kwargs)
+
+        self.fields['cert_csr'].widget.attrs['onChange'] = (
+            'toggleGeneric("id_cert_csr", ["id_cert_passphrase",'
+            ' "id_cert_passphrase2", "id_cert_privatekey"], false); '
+            'toggleGeneric("id_cert_csr", ["id_cert_csr_id"], true);'
+        )
+
     def clean_cert_passphrase2(self):
         cdata = self.cleaned_data
         passphrase = cdata.get('cert_passphrase')
@@ -2831,16 +3098,12 @@ class CertificateImportForm(MiddlewareModelForm, ModelForm):
     def middleware_clean(self, data):
         data['create_type'] = 'CERTIFICATE_CREATE_IMPORTED'
         data.pop('passphrase2', None)
-        return data
+        if data.pop('csr', False):
+            data.pop('passphrase', None)
+        else:
+            data.pop('csr_id', None)
 
-    class Meta:
-        fields = [
-            'cert_name',
-            'cert_certificate',
-            'cert_privatekey',
-            'cert_passphrase'
-        ]
-        model = models.Certificate
+        return data
 
 
 class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
@@ -2849,6 +3112,7 @@ class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    middleware_job = True
 
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
@@ -2894,6 +3158,11 @@ class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_organization').help_text
     )
+    cert_organizational_unit = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_organizational_unit').verbose_name,
+        required=False,
+        help_text=models.Certificate._meta.get_field('cert_organizational_unit').help_text
+    )
     cert_email = forms.CharField(
         label=models.Certificate._meta.get_field('cert_email').verbose_name,
         required=True,
@@ -2912,6 +3181,7 @@ class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
         super(CertificateCreateInternalForm, self).__init__(*args, **kwargs)
 
         self.fields['cert_signedby'].required = True
@@ -2958,6 +3228,7 @@ class CertificateCreateCSRForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = 'cert_'
     middleware_attr_schema = 'certificate'
     is_singletone = False
+    middleware_job = True
 
     cert_name = forms.CharField(
         label=models.Certificate._meta.get_field('cert_name').verbose_name,
@@ -2998,6 +3269,11 @@ class CertificateCreateCSRForm(MiddlewareModelForm, ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_organization').help_text
     )
+    cert_organizational_unit = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_organizational_unit').verbose_name,
+        required=False,
+        help_text=models.Certificate._meta.get_field('cert_organizational_unit').help_text
+    )
     cert_email = forms.CharField(
         label=models.Certificate._meta.get_field('cert_email').verbose_name,
         required=True,
@@ -3014,6 +3290,10 @@ class CertificateCreateCSRForm(MiddlewareModelForm, ModelForm):
         required=False,
         help_text=models.Certificate._meta.get_field('cert_san').help_text
     )
+
+    def __init__(self, *args, **kwargs):
+        self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
+        super(CertificateCreateCSRForm, self).__init__(*args, **kwargs)
 
     def middleware_clean(self, data):
         data['key_length'] = int(data['key_length'])
@@ -3049,6 +3329,11 @@ class CloudCredentialsForm(ModelForm):
         widget=forms.widgets.HiddenInput,
     )
 
+    verify = forms.CharField(
+        required=False,
+        widget=forms.widgets.HiddenInput(),
+    )
+
     class Meta:
         fields = [
             'name',
@@ -3059,7 +3344,7 @@ class CloudCredentialsForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(CloudCredentialsForm, self).__init__(*args, **kwargs)
         self.fields['provider'].widget.attrs['onChange'] = (
-            'cloudCredentialsProvider();'
+            'credentialsProvider("id_provider", "cloud-credentials-attribute");'
         )
         with client as c:
             providers = c.call("cloudsync.providers")
@@ -3080,6 +3365,17 @@ class CloudCredentialsForm(ModelForm):
                 'provider': self.cleaned_data.get('provider'),
                 'attributes': json.loads(self.cleaned_data.get('attributes')),
             }
+
+            if self.cleaned_data.get("verify") == "1":
+                result = c.call("cloudsync.credentials.verify", {"provider": data["provider"],
+                                                                 "attributes": data["attributes"]})
+                if result["valid"]:
+                    msg = "Credentials are valid"
+                else:
+                    msg = f"Credentials are invalid: {result['error']}"
+
+                raise ValidationErrors([["__all__", msg, errno.EINVAL]])
+
             if self.instance.id:
                 c.call('cloudsync.credentials.update', self.instance.id, data)
             else:
