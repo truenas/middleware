@@ -111,6 +111,7 @@ class ZettareplService(Service):
         self.observer_queue = multiprocessing.Queue()
         self.observer_queue_reader = None
         self.state = {}
+        self.last_snapshot = {}
         self.queue = None
         self.process = None
         self.zettarepl = None
@@ -119,7 +120,14 @@ class ZettareplService(Service):
         return self.process is not None and self.process.is_alive()
 
     def get_state(self):
-        return self.state
+        return {
+            k: (
+                dict(v, last_snapshot=self.last_snapshot.get(k))
+                if k.startswith("replication_task_")
+                else v
+            )
+            for k, v in self.state.items()
+        }
 
     def start(self, definition=None):
         if definition is None:
@@ -321,38 +329,45 @@ class ZettareplService(Service):
         while True:
             message = self.observer_queue.get()
 
-            if isinstance(message, PeriodicSnapshotTaskStart):
-                self.state[f"periodic_snapshot_{message.task_id}"] = {
-                    "state": "RUNNING",
-                    "datetime": datetime.utcnow(),
-                }
-            if isinstance(message, PeriodicSnapshotTaskSuccess):
-                self.state[f"periodic_snapshot_{message.task_id}"] = {
-                    "state": "FINISHED",
-                    "datetime": datetime.utcnow(),
-                }
-            if isinstance(message, PeriodicSnapshotTaskError):
-                self.state[f"periodic_snapshot_{message.task_id}"] = {
-                    "state": "ERROR",
-                    "datetime": datetime.utcnow(),
-                    "error": message.error,
-                }
-            if isinstance(message, ReplicationTaskStart):
-                self.state[f"replication_{message.task_id}"] = {
-                    "state": "RUNNING",
-                    "datetime": datetime.utcnow(),
-                }
-            if isinstance(message, ReplicationTaskSuccess):
-                self.state[f"replication_{message.task_id}"] = {
-                    "state": "FINISHED",
-                    "datetime": datetime.utcnow(),
-                }
-            if isinstance(message, ReplicationTaskError):
-                self.state[f"replication_{message.task_id}"] = {
-                    "state": "ERROR",
-                    "datetime": datetime.utcnow(),
-                    "error": message.error,
-                }
+            try:
+                self.logger.debug("Observer queue got %r", message)
+
+                if isinstance(message, PeriodicSnapshotTaskStart):
+                    self.state[f"periodic_snapshot_{message.task_id}"] = {
+                        "state": "RUNNING",
+                        "datetime": datetime.utcnow(),
+                    }
+                if isinstance(message, PeriodicSnapshotTaskSuccess):
+                    self.state[f"periodic_snapshot_{message.task_id}"] = {
+                        "state": "FINISHED",
+                        "datetime": datetime.utcnow(),
+                    }
+                if isinstance(message, PeriodicSnapshotTaskError):
+                    self.state[f"periodic_snapshot_{message.task_id}"] = {
+                        "state": "ERROR",
+                        "datetime": datetime.utcnow(),
+                        "error": message.error,
+                    }
+                if isinstance(message, ReplicationTaskStart):
+                    self.state[f"replication_{message.task_id}"] = {
+                        "state": "RUNNING",
+                        "datetime": datetime.utcnow(),
+                    }
+                if isinstance(message, ReplicationTaskSnapshotSuccess):
+                    self.last_snapshot[f"replication_{message.task_id}"] = f"{message.dataset}@{message.snapshot}"
+                if isinstance(message, ReplicationTaskSuccess):
+                    self.state[f"replication_{message.task_id}"] = {
+                        "state": "FINISHED",
+                        "datetime": datetime.utcnow(),
+                    }
+                if isinstance(message, ReplicationTaskError):
+                    self.state[f"replication_{message.task_id}"] = {
+                        "state": "ERROR",
+                        "datetime": datetime.utcnow(),
+                        "error": message.error,
+                    }
+            except Exception:
+                self.logger.warning("Unhandled exceptiom in observer_queue_reader", exc_info=True)
 
 
 async def setup(middleware):
