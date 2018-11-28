@@ -6,8 +6,8 @@ from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
-    DiskResourceMixin, ReplicationResourceMixin, ScrubResourceMixin,
-    TaskResourceMixin, VolumeResourceMixin
+    DiskResourceMixin, ReplicationResourceMixin, LegacyReplicationResourceMixin, ScrubResourceMixin,
+    TaskResourceMixin, LegacyTaskResourceMixin, VolumeResourceMixin
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
@@ -645,6 +645,11 @@ class TaskFAdmin(BaseFreeAdmin):
         return columns
 
 
+class LegacyTaskFAdmin(BaseFreeAdmin):
+
+    resource_mixin = LegacyTaskResourceMixin
+
+
 class ReplicationFAdmin(BaseFreeAdmin):
 
     icon_model = "ReplIcon"
@@ -697,6 +702,58 @@ class ReplicationFAdmin(BaseFreeAdmin):
         return columns
 
 
+class LegacyReplicationFAdmin(BaseFreeAdmin):
+
+    icon_model = "ReplIcon"
+    icon_add = "AddReplIcon"
+    icon_view = "ViewAllReplIcon"
+    icon_object = "ReplIcon"
+    resource_mixin = LegacyReplicationResourceMixin
+    exclude_fields = (
+        'id',
+        'repl_netcat_active_side',
+        'repl_netcat_active_side_port_min',
+        'repl_netcat_active_side_port_max',
+        'repl_exclude',
+        'repl_periodic_snapshot_tasks',
+        'repl_naming_schema',
+        'repl_schedule_minute',
+        'repl_schedule_hour',
+        'repl_schedule_daymonth',
+        'repl_schedule_month',
+        'repl_schedule_dayweek',
+        'repl_schedule_begin',
+        'repl_schedule_end',
+        'repl_restrict_schedule_minute',
+        'repl_restrict_schedule_hour',
+        'repl_restrict_schedule_daymonth',
+        'repl_restrict_schedule_month',
+        'repl_restrict_schedule_dayweek',
+        'repl_restrict_schedule_begin',
+        'repl_restrict_schedule_end',
+        'repl_only_matching_schedule',
+        'repl_allow_from_scratch',
+        'repl_hold_pending_snapshots',
+        'repl_retention_policy',
+        'repl_lifetime_value',
+        'repl_lifetime_unit',
+        'repl_compression',
+        'repl_speed_limit',
+        'repl_dedup',
+        'repl_large_block',
+        'repl_embed',
+        'repl_compressed',
+        'repl_retries',
+    )
+    refresh_time = 12000
+
+    def get_datagrid_columns(self):
+        columns = super(NewReplicationFAdmin, self).get_datagrid_columns()
+        columns[5]['label'] = _('Recursive')
+        columns[6]['label'] = _('Auto')
+        return columns
+
+
 class VMWarePluginFAdmin(BaseFreeAdmin):
     exclude_fields = (
         'id',
@@ -711,7 +768,9 @@ class VMWarePluginFAdmin(BaseFreeAdmin):
 site.register(models.Disk, DiskFAdmin)
 site.register(models.Scrub, ScrubFAdmin)
 site.register(models.Task, TaskFAdmin)
+site.register(models.LegacyTask, LegacyTaskFAdmin)
 site.register(models.Volume, VolumeFAdmin)
 site.register(models.Replication, ReplicationFAdmin)
+site.register(models.LegacyReplication, LegacyReplicationFAdmin)
 site.register(models.VMWarePlugin, VMWarePluginFAdmin)
 site.register(None, VolumeStatusFAdmin)

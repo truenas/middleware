@@ -1605,6 +1605,9 @@ class VolumeImportResource(DojoResource):
 
 class ReplicationResourceMixin(object):
 
+    class Meta:
+        resource_name = 'storage/replication2'
+
     def dispatch_list(self, request, **kwargs):
         with client as c:
             self.__tasks = {task["id"]: task for task in c.call("replication.query")}
@@ -1618,7 +1621,56 @@ class ReplicationResourceMixin(object):
         return bundle
 
 
+class LegacyReplicationResourceMixin(object):
+
+    class Meta:
+        resource_name = 'storage/replication'
+
+    def dispatch_list(self, request, **kwargs):
+        with client as c:
+            self.__tasks = {task["id"]: task for task in c.call("replication.query")}
+            self.__ssh_keypairs = {credential["id"]: credential for credential in c.call("keychaincredential.query")}
+        return super().dispatch_list(request, **kwargs)
+
+    def dehydrate(self, bundle):
+        bundle = super().dehydrate(bundle)
+
+        task = self.__tasks[bundle.data["id"]]
+
+        bundle.data = {
+            "id": bundle.data["id"],
+            "repl_begin": bundle.data["repl_schedule_begin"],
+            "repl_compression":
+                "none" if bundle.data["repl_compression"] is None else bundle.data["repl_compression"].lower(),
+            "repl_enabled": bundle.data["repl_enabled"],
+            "repl_end": bundle.data["repl_schedule_end"],
+            "repl_filesystem": bundle.data["repl_source_datasets"][0],
+            "repl_followdelete": bundle.data["repl_retention_policy"] == "SOURCE",
+            "repl_lastsnapshot": task["state"].get("last_snapshot"),
+            "repl_limit": bundle.data["repl_speed_limit"] or 0,
+            "repl_remote_cipher": task["ssh_credentials"]["attributes"]["cipher"].lower(),
+            "repl_remote_dedicateduser": (None if task["ssh_credentials"]["attributes"]["username"] == "root"
+                                          else task["ssh_credentials"]["attributes"]["username"]),
+            "repl_remote_dedicateduser_enabled": task["ssh_credentials"]["attributes"]["username"] != "root",
+            "repl_remote_hostkey": (task["ssh_credentials"]["attributes"]["host"] + " " +
+                                    self.__ssh_keypairs[task["ssh_credentials"]["attributes"]["private_key"]]
+                                        ["attributes"]["public_key"] + "" + "\n\n" +
+                                    task["ssh_credentials"]["attributes"]["host"] + " " +
+                                    task["ssh_credentials"]["attributes"]["remote_host_key"] + "\n\n"),
+            "repl_remote_hostname": task["ssh_credentials"]["attributes"]["host"],
+            "repl_remote_port": task["ssh_credentials"]["attributes"]["port"],
+            "repl_status": "Succeeded" if task["state"]["state"] == "FINISHED" else task["state"]["state"],
+            "repl_userepl": bundle.data["repl_recursive"],
+            "repl_zfs": bundle.data["repl_target_dataset"],
+        }
+
+        return bundle
+
+
 class TaskResourceMixin(object):
+
+    class Meta:
+        resource_name = 'storage/task2'
 
     def dispatch_list(self, request, **kwargs):
         with client as c:
@@ -1635,6 +1687,61 @@ class TaskResourceMixin(object):
         for k in ['legacy', 'vmware_sync']:
             bundle.data[k] = self.__tasks[bundle.data['id']][k]
 
+        return bundle
+
+
+class LegacyTaskResourceMixin(object):
+
+    class Meta:
+        resource_name = 'storage/task'
+
+    def dehydrate(self, bundle):
+        bundle = super(LegacyTaskResourceMixin, self).dehydrate(bundle)
+
+        task_repeat_unit = "weekly"
+        if bundle.data["task_dayweek"] == "*":
+            task_byweekday = "1,2,3,4,5,6,7"
+            task_repeat_unit = "daily"
+        elif bundle.data["task_dayweek"].startswith("*/"):
+            task_byweekday = ",".join([str(i) for i in range(1, 8) if i % int(bundle.data["task_dayweek"][2:]) == 0])
+            if int(bundle.data["task_dayweek"][2:]) == 1:
+                task_repeat_unit = "daily"
+        else:
+            task_byweekday = bundle.data["task_dayweek"]
+            if bundle.data["task_dayweek"] == "1,2,3,4,5,6,7":
+                task_repeat_unit = "daily"
+
+        if bundle.data["task_minute"] == "*":
+            task_interval = 1
+        elif bundle.data["task_minute"].startswith("*/"):
+            task_interval = int(bundle.data["task_minute"][2:])
+        elif bundle.data["task_hour"] == "*":
+            task_interval = 60
+        elif bundle.data["task_hour"].startswith("*/"):
+            task_interval = int(bundle.data["task_hour"][2:]) * 60
+        else:
+            if bundle.data["task_daymonth"] == "1":
+                task_interval = 40320
+            elif bundle.data["task_daymonth"] == "1,15":
+                task_interval = 20160
+            elif bundle.data["task_dayweek"] == "1":
+                task_interval = 10080
+            else:
+                task_interval = 1440
+
+        bundle.data = {
+            "id": bundle.data["id"],
+            "task_begin": bundle.data["task_begin"],
+            "task_byweekday": task_byweekday,
+            "task_enabled": bundle.data["task_enabled"],
+            "task_end": bundle.data["task_end"],
+            "task_filesystem": bundle.data["task_dataset"],
+            "task_interval": task_interval,
+            "task_recursive": bundle.data["task_recursive"],
+            "task_repeat_unit": task_repeat_unit,
+            "task_ret_count": bundle.data["task_lifetime_value"],
+            "task_ret_unit": bundle.data["task_lifetime_unit"].lower(),
+        }
         return bundle
 
 

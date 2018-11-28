@@ -769,36 +769,17 @@ class Replication(Model):
             self.repl_target_dataset
         )
 
-    @property
-    def repl_lastresult(self):
-        if not os.path.exists(REPL_RESULTFILE):
-            return {'msg': 'Waiting'}
-        with open(REPL_RESULTFILE, 'rb') as f:
-            data = f.read()
-        try:
-            results = pickle.loads(data)
-            return results[self.id]
-        except:
-            return {'msg': None}
 
-    @property
-    def status(self):
-        progressfile = '/tmp/.repl_progress_%d' % self.id
-        if os.path.exists(progressfile):
-            with open(progressfile, 'r') as f:
-                pid = int(f.read())
-            title = notifier().get_proc_title(pid)
-            if title:
-                reg = re.search(r'sending (\S+) \((\d+)%', title)
-                if reg:
-                    return _('Sending %(snapshot)s (%(percent)s%%)') % {
-                        'snapshot': reg.groups()[0],
-                        'percent': reg.groups()[1],
-                    }
-                else:
-                    return _('Sending')
-        if self.repl_lastresult:
-            return self.repl_lastresult['msg']
+class LegacyReplicationManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(repl_transport="LEGACY")
+
+
+class LegacyReplication(Replication):
+    objects = LegacyReplicationManager()
+
+    class Meta:
+        proxy = True
 
 
 class Task(Model):
@@ -890,6 +871,11 @@ class Task(Model):
         verbose_name = _("Periodic Snapshot Task")
         verbose_name_plural = _("Periodic Snapshot Tasks")
         ordering = ["task_dataset"]
+
+
+class LegacyTask(Task):
+    class Meta:
+        proxy = True
 
 
 class VMWarePlugin(Model):
