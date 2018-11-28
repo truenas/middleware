@@ -643,8 +643,8 @@ class Cron(Dict):
                         if field in schedule:
                             data_dict[key_prefix + field] = schedule[field]
             else:
-                for field in Cron.FIELDS:
-                    data_dict[key_prefix + field] = None
+                for index, field in enumerate(Cron.FIELDS):
+                    data_dict[key_prefix + db_fields[index]] = None
                 if begin_end:
                     for field in ['begin', 'end']:
                         data_dict[key_prefix + field] = None
