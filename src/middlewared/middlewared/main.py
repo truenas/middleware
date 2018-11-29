@@ -739,6 +739,8 @@ class Middleware(object):
         self.loop_debug = loop_debug
         self.loop_monitor = loop_monitor
         self.overlay_dirs = overlay_dirs or []
+        self.debug_level = debug_level
+        self.log_handler = log_handler
         self.__loop = None
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking

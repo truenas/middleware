@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-import functools
+import logging
 import multiprocessing
 import os
 import pytz
@@ -17,6 +17,7 @@ from zettarepl.transport.create import create_transport
 from zettarepl.transport.local import LocalShell
 from zettarepl.zettarepl import Zettarepl
 
+from middlewared.logger import setup_logging
 from middlewared.service import CallError, Service
 
 SCAN_THREADS = {}
@@ -57,16 +58,25 @@ def zettarepl_schedule(schedule):
 
 
 class ZettareplProcess:
-    def __init__(self, definition, command_queue, observer_queue):
+    def __init__(self, definition, debug_level, log_handler, command_queue, observer_queue):
         self.definition = definition
+        self.debug_level = debug_level
+        self.log_handler = log_handler
         self.command_queue = command_queue
         self.observer_queue = observer_queue
 
         self.zettarepl = None
 
     def __call__(self):
-        import logging
-        logging.basicConfig(level=logging.DEBUG)
+        if logging.getLevelName(self.debug_level) == logging.TRACE:
+            # If we want TRACE then we want all debug from zettarepl
+            debug_level = "DEBUG"
+        elif logging.getLevelName(self.debug_level) == logging.DEBUG:
+            # Regular development level. We don't need verbose debug from zettarepl
+            debug_level = "INFO"
+        else:
+            debug_level = self.debug_level
+        setup_logging("zettarepl", debug_level, self.log_handler)
 
         definition = Definition.from_data(self.definition)
 
@@ -142,7 +152,8 @@ class ZettareplService(Service):
                 self.queue = multiprocessing.Queue()
                 self.process = multiprocessing.Process(
                     name="zettarepl",
-                    target=ZettareplProcess(definition, self.queue, self.observer_queue)
+                    target=ZettareplProcess(definition, self.middleware.debug_level, self.middleware.log_handler,
+                                            self.queue, self.observer_queue)
                 )
                 self.process.start()
 
