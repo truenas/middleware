@@ -176,9 +176,10 @@ class KeychainCredentialService(CRUDService):
             new,
         )
 
-        data["id"] = id
+        if new["type"] in ["SSH_KEY_PAIR", "SSH_CREDENTIALS"]:
+            await self.middleware.call("zettarepl.update_tasks")
 
-        return data
+        return new
 
     @accepts(Int("id"))
     async def do_delete(self, id):
