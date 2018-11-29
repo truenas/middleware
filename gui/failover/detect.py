@@ -15,42 +15,26 @@ def ha_mode():
 
     hardware = None
     node = None
-    # Temporary workaround for VirtualBOX
-    #proc = subprocess.Popen([
-    #    '/usr/local/sbin/dmidecode',
-    #    '-s', 'bios-version',
-    #], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    #bios = proc.communicate()[0].strip()
-    #if bios == 'VirtualBox':
-    #if False:
-    #    hardware = 'ECHOSTREAM'
-    #    proc = subprocess.Popen([
-    #        '/usr/local/sbin/dmidecode',
-    #        '-s', 'system-uuid',
-    #    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-    #    systemuuid = proc.communicate()[0].strip()
-    #    if systemuuid == 'B9E1B270-1B0C-48C7-99C8-BFB965D71584':
-    #        node = 'A'
-    #    else:
-    #        node = 'B'
 
-    
-    #
-    # XXX hacky hack XXX
-    #
-    # For now, require /data/node for hardcoded A & B node on VMware
-    #
     proc = subprocess.Popen([
         '/usr/local/sbin/dmidecode',
-        '-s', 'system-manufacturer',
+        '-s', 'system-product-name',
     ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     manufacturer = proc.communicate()[0].strip()
 
-    if manufacturer == b"VMware, Inc.":
-        hardware = "VMWARE"
-        if os.path.exists("/data/node"):
-            with open("/data/node", 'r') as f:
-                node = f.read().strip()
+    if manufacturer == b"BHYVE":
+        hardware = "BHYVE"
+        proc = subprocess.Popen(
+            ['/sbin/camcontrol', 'inquiry', 'pass0'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        inq = proc.communicate()[0].decode(errors='ignore')
+        if proc.returncode == 0:
+            if 'TrueNAS_A' in inq:
+                node = 'A'
+            else:
+                node = 'B'
 
     else:
         enclosures = ["/dev/" + enc for enc in os.listdir("/dev") if enc.startswith("ses")]
