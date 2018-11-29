@@ -31,6 +31,7 @@ import os
 import re
 import subprocess
 import sys
+from types import SimpleNamespace
 
 sys.path.extend([
     '/usr/local/www',
@@ -43,11 +44,13 @@ import django
 django.setup()
 
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.storage.models import Replication, REPL_RESULTFILE
+from freenasUI.storage.models import REPL_RESULTFILE
 from freenasUI.common.timesubr import isTimeBetween
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import send_mail, get_sw_name
+from freenasUI.middleware.client import client
+from freenasUI.tools.replication_adapter import query_model
 
 
 #
@@ -237,8 +240,56 @@ def write_results():
 system_re = re.compile('^[^/]+/.system.*')
 
 # Traverse all replication tasks
-replication_tasks = Replication.objects.all()
+replication_tasks = query_model("storage/replication", "repl_enabled")
 for replication in replication_tasks:
+    # BEGIN REPLICATION ADAPTER
+    replication.repl_begin = datetime.time(*map(int, replication.repl_begin.split(':')))
+    replication.repl_end = datetime.time(*map(int, replication.repl_end.split(':')))
+
+    replication.repl_remote = SimpleNamespace(**dict({
+        k.replace("repl_", "ssh_"): v
+        for k, v in replication.__dict__.items()
+        if k.startswith("repl_remote_")
+    }, **{
+        k.replace("repl_remote_", "ssh_"): v
+        for k, v in replication.__dict__.items()
+        if k.startswith("repl_remote_")
+    }))
+
+    with client as c:
+        try:
+            keys = c.call(
+                "keychaincredential.query",
+                [
+                    [
+                        "id",
+                        "=",
+                        c.call("replication.query", [
+                            [
+                                "id",
+                                "=",
+                                replication.id
+                            ],
+                        ])[0]["ssh_credentials"]["attributes"]["private_key"]
+                    ],
+                ]
+            )[0]["attributes"]
+        except Exception:
+            log.warning("Unable to get private key for replication %r", replication.id, exc_info=True)
+            continue
+
+    os.makedirs("/data/ssh", exist_ok=True)
+    with open("/data/ssh/replication", "w") as f:
+        f.write(keys["private_key"] + "\n")
+    os.chmod("/data/ssh/replication", 0o400)
+    with open("/data/ssh/replication.pub", "w") as f:
+        f.write(keys["public_key"] + "\n")
+    os.chmod("/data/ssh/replication.pub", 0o400)
+
+    with open("/usr/local/etc/ssh/ssh_known_hosts", "w") as f:
+        f.write(replication.repl_remote_hostkey)
+    # END REPLICATION ADAPTER
+
     if not isTimeBetween(now, replication.repl_begin, replication.repl_end):
         continue
 
