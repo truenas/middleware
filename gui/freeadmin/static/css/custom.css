@@ -1162,11 +1162,6 @@ table.grid tr {
     width:16px;
     height:16px;
 }
-.VsphereIcon {
-    background-image:url('/static/images/ui/tree/vsphere.png');
-    width:16px;
-    height:16px;
-}
 .VMIcon {
     background-image:url('/static/images/ui/tree/vm.png');
     width:16px;

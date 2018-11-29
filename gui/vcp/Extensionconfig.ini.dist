@@ -1,9 +1,0 @@
-[RegisterParam]
-
-company=iXsystem
-label="Test extension"
-description=Plugin for iXsystem
-key=com.vmware.truenas
-events=truenas-alert
-tasks=TrueNASCreateDatastoreTask
-auth=iXSystems.Discovery,iXSystems.Clones,iXSystems.Storage,iXSystems.Modify,iXSystems.Destroy
