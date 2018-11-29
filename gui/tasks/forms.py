@@ -444,7 +444,9 @@ class SMARTTestForm(ModelForm):
 
     def save(self):
         super(SMARTTestForm, self).save()
-        notifier().restart("smartd")
+        # Ticket 60750
+        with client as c:
+            c.call('core.bulk', 'service.restart', [['smartd']])
 
     def clean_smarttest_hour(self):
         h = self.cleaned_data.get("smarttest_hour")
