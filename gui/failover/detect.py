@@ -25,13 +25,13 @@ def ha_mode():
     if manufacturer == b"BHYVE":
         hardware = "BHYVE"
         proc = subprocess.Popen(
-            ['/sbin/camcontrol', 'inquiry', 'pass0'],
+            ['/sbin/camcontrol', 'devlist'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        inq = proc.communicate()[0].decode(errors='ignore')
+        devlist = proc.communicate()[0].decode(errors='ignore')
         if proc.returncode == 0:
-            if 'TrueNAS_A' in inq:
+            if 'TrueNAS_A' in devlist:
                 node = 'A'
             else:
                 node = 'B'
