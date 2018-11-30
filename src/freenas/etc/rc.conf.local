@@ -143,8 +143,8 @@ _interface_config()
 				fi
 			elif [ "$(ha_hardware)" = "ULTIMATE" ]; then
 				internal_iface="igb1"
-			elif [ "$(ha_hardware)" = "VMWARE" ]; then
-				internal_iface="em1"
+			elif [ "$(ha_hardware)" = "BHYVE" ]; then
+				internal_iface="em0"
 			fi
 			local a=0
 			if [ -n "${ether}" ]; then
