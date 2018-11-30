@@ -82,6 +82,7 @@ adctl_start()
 	#56751 - verify that servers in /etc/directoryservice/ActiveDirectory/config
 	#        are listening. If not, re-generate config.
 	if ! AD_validate_config
+	then
 		AD_remove_config
 	fi
 
