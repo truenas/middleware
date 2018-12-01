@@ -1938,11 +1938,17 @@ class FreeNAS_ActiveDirectory_Base(object):
             basedn
 
         netbios_name = None
+        smb = Client().call('smb.config')
         results = self._search(
             self.dchandle, config, ldap.SCOPE_SUBTREE, filter
         )
         try:
             netbios_name = results[0][1]['nETBIOSName'][0].decode('utf8')
+            if netbios_name != smb['workgroup']:
+                log.debug(f"Database workgroup {smb['workgroup']} does not match LDAP value: {netbios_name}")
+                log.debug("Correcting value in freenas-v1.db")
+                Client().call('datastore.update', 'services.cifs', '1', {'cifs_srv_workgroup': netbios_name})
+
 
         except Exception:
             netbios_name = None
