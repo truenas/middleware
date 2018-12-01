@@ -1949,7 +1949,6 @@ class FreeNAS_ActiveDirectory_Base(object):
                 log.debug("Correcting value in freenas-v1.db")
                 Client().call('datastore.update', 'services.cifs', '1', {'cifs_srv_workgroup': netbios_name})
 
-
         except Exception:
             netbios_name = None
 
