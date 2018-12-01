@@ -191,14 +191,14 @@ adctl_stop()
 		adctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
 		activedirectory_set 0
-		adctl_cmd ${service} ix-pre-samba start
+		adctl_cmd ${python} ${notifier} call etc.generate smb 
 
 	elif [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "1" ]
 	then
 		adctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
 		activedirectory_set 0
-		adctl_cmd ${service} ix-pre-samba start
+		adctl_cmd ${python} ${notifier} call etc.generate smb 
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "0" ]
 	then

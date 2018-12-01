@@ -10,71 +10,9 @@
 
 . /etc/rc.freenas
 
-get_sambaSID()
-{
-	local sambaSID
-
-	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
-	SELECT
-		cifs_SID
-	FROM
-		services_cifs
-	ORDER BY
-		-id
-	LIMIT
-		1
-	" | while read sambaSID
-	do
-		echo ${sambaSID}
-	done
-}
-
-set_sambaSID()
-{
-	local sambaSID="$(get_sambaSID)"
-
-	if [ -n "${sambaSID}" ]
-	then
-		export LOGNAME=anonymous
-		/usr/local/bin/net setlocalsid "${sambaSID}"
-	fi
-}
-
-save_sambaSID()
-{
-	local sambaSID
-
-	export LOGNAME=anonymous
-	sambaSID="$(/usr/local/bin/net getlocalsid | \
-		cut -f2 -d: | awk '{ print $1 }')"
-
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	UPDATE
-		services_cifs
-	SET
-		cifs_SID = '${sambaSID}'
-	"
-}
-
-generate_smb_config()
-{
-	/usr/local/libexec/nas/generate_smb4_conf.py
-}
-
 samba_pre_init()
 {
-	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
-	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
-
-	local sambaSID="$(get_sambaSID)"
-
-	if [ -z "${sambaSID}" ] && [ -s "/usr/local/etc/smb4.conf" ]
-	then
-		save_sambaSID
-	fi
-
-	set_sambaSID
-	generate_smb_config
+    /usr/local/bin/midclt call etc.generate smb_configure > /dev/null
 }
 
 name="ix-pre-samba"
