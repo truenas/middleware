@@ -417,9 +417,9 @@ class SystemDatasetService(ConfigService):
 
         use_rrd_dataset = self.use_rrd_dataset()
 
-        # TODO: If not is_freenas: remove the rc.conf cache rc.conf.local will run again using the correct
-        # collectd_enable. See #5019
-        if is_freenas:
+        # If not is_freenas remove the rc.conf cache rc.conf.local will
+        # run again using the correct collectd_enable. See #5019
+        if not is_freenas:
             try:
                 os.remove('/var/tmp/freenas_config.md5')
             except FileNotFoundError:
