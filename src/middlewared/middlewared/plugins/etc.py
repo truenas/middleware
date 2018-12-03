@@ -194,7 +194,7 @@ class EtcService(Service):
                     if st.st_uid != pw.pw_uid:
                         os.chown(outfile, pw.pw_uid, -1)
                         changes = True
-                except Exception as e:
+                except Exception:
                     pass
             if 'group' in entry and entry['group']:
                 try:
@@ -202,14 +202,14 @@ class EtcService(Service):
                     if st.st_gid != gr.gr_gid:
                         os.chown(outfile, -1, gr.gr_gid)
                         changes = True
-                except Exception as e:
+                except Exception:
                     pass
             if 'mode' in entry and entry['mode']:
                 try:
                     if (st.st_mode & 0x3FF) != entry['mode']:
                         os.chmod(outfile, entry['mode'])
                         changes = True
-                except Exception as e:
+                except Exception:
                     pass
 
             if not changes:
