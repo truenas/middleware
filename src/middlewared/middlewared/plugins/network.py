@@ -111,7 +111,7 @@ class NetworkConfigurationService(ConfigService):
 
     @accepts(
         Dict(
-            'global_configuration',
+            'global_configuration_update',
             Str('hostname', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
             Str('hostname_b', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
             Str('hostname_virtual', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
