@@ -9,7 +9,7 @@ from collections import defaultdict
 
 from middlewared.client import Client, ClientException
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import private, CallError, ConfigService
+from middlewared.service import private, CallError, ConfigService, ValidationErrors
 from middlewared.utils import run
 
 # FIXME: temporary imports while license methods are still in django
@@ -31,6 +31,40 @@ class FailoverService(ConfigService):
 
     class Config:
         datastore = 'failover.failover'
+
+    @accepts(Dict(
+        'failover_update',
+        Bool('disabled'),
+        Int('timeout'),
+        Bool('master'),
+    ))
+    async def do_update(self, data):
+        """
+        Update failover state.
+
+        `disabled` as false will turn off HA.
+        `master` sets the state of current node. Standby node will have the opposite value.
+        """
+        old = await self.config()
+
+        new = old.copy()
+        new.update(data)
+
+        verrors = ValidationErrors()
+        if new['disabled'] is False:
+            if not await self.middleware.call('interface.query', [('critical', '=', True)]):
+                verrors.add(
+                    'failover_update.disabled',
+                    'You need at least one critical interface to enable failover.',
+                )
+        verrors.check()
+
+        await self.middleware.call('datastore.update', 'failover.failover', new['id'], new)
+
+        if await self.middleware.call('pool.query', [('status', '!=', 'OFFLINE')]):
+            await run('fenced', 'force')
+
+        return await self.config()
 
     @accepts()
     def licensed(self):
