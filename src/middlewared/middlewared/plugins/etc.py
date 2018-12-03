@@ -106,7 +106,6 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
         ],
         'collectd': [
-            {'type': 'py', 'path': 'local/sysrrd_disable'},
             {'type': 'mako', 'path': 'local/collectd.conf'}
         ],
         'system_dataset': [
