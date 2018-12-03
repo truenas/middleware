@@ -25,8 +25,6 @@ async def write_keytab(db_keytabname, db_keytabfile):
     if ktutil_errs:
         logger.debug(f'Keytab generation failed with error: {ktutil_errs}')
 
-    os.remove(temp_keytab)
-
 
 async def render(service, middleware):
     keytabs = await middleware.call("datastore.query", "directoryservice.kerberoskeytab")
