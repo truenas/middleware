@@ -488,8 +488,10 @@ class SystemDatasetService(ConfigService):
                     self.remove(os.path.join(pwd, 'localhost'))
                 else:
                     # This should not happen, but just in case
-                    shutil.move(os.path.join(pwd, 'localhost'),
-                                os.path.join(pwd, f'localhost.bak.{time.strftime("%Y%m%d%H%M%S")}'))
+                    shutil.move(
+                        os.path.join(pwd, 'localhost'),
+                        os.path.join(pwd, f'localhost.bak.{time.strftime("%Y%m%d%H%M%S")}')
+                    )
             shutil.move(os.path.join(pwd, hostname), os.path.join(pwd, 'localhost'))
 
         # Remove all directories except "localhost" and it's backups (that may be erroneously created by
