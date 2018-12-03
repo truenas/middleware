@@ -390,7 +390,7 @@ class SystemDatasetService(ConfigService):
                 yield tarinfo
 
     @private
-    def update_collectd_dataset(self):
+    def use_rrd_dataset(self):
         config = self.middleware.call_sync('systemdataset.config')
         is_freenas = self.middleware.call_sync('system.is_freenas')
         rrd_mount = ''
@@ -405,8 +405,19 @@ class SystemDatasetService(ConfigService):
         ):
             use_rrd_dataset = True
 
-        # TODO: FreeNAS Config MD5 is hardcoded, this should be looked in future to see if we can change that
-        # If there is a failover table remove the rc.conf cache rc.conf.local will run again using the correct
+        return use_rrd_dataset
+
+    @private
+    def update_collectd_dataset(self):
+        config = self.middleware.call_sync('systemdataset.config')
+        is_freenas = self.middleware.call_sync('system.is_freenas')
+        rrd_mount = ''
+        if config['path']:
+            rrd_mount = f'{config["path"]}/rrd-{config["uuid"]}'
+
+        use_rrd_dataset = self.use_rrd_dataset()
+
+        # TODO: If not is_freenas: remove the rc.conf cache rc.conf.local will run again using the correct
         # collectd_enable. See #5019
         if is_freenas:
             try:
