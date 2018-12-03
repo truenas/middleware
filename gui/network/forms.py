@@ -662,6 +662,8 @@ class GlobalConfigurationForm(MiddlewareModelForm, ModelForm):
     def middleware_clean(self, update):
         update['domains'] = update['domains'].split()
         update['netwait_ip'] = update['netwait_ip'].split()
+        if not update.get('hostname_virtual'):
+            update.pop('hostname_virtual', None)
         return update
 
     def done(self, request, events):
