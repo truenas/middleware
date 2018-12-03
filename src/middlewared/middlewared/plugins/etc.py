@@ -109,7 +109,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/netdata/netdata.conf'},
             {'type': 'mako', 'path': 'local/netdata/stream.conf'},
             {'type': 'py', 'path': 'local/netdata/alarms'}
-        ]
+        ],
         'smb': [
             {'type': 'mako', 'path': 'local/smb4.conf'},
         ],
