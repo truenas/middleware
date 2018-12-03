@@ -9,7 +9,7 @@ from collections import defaultdict
 
 from middlewared.client import Client, ClientException
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import private, CallError, Service
+from middlewared.service import private, CallError, ConfigService
 from middlewared.utils import run
 
 # FIXME: temporary imports while license methods are still in django
@@ -27,10 +27,10 @@ INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
 SYNC_FILE = '/var/tmp/sync_failed'
 
 
-class FailoverService(Service):
+class FailoverService(ConfigService):
 
     class Config:
-        private = True
+        datastore = 'failover.failover'
 
     @accepts()
     def licensed(self):
@@ -126,12 +126,14 @@ class FailoverService(Service):
         except ClientException as e:
             raise CallError(str(e), e.errno)
 
+    @private
     @accepts()
     def encryption_getkey(self):
         # FIXME: we could get rid of escrow, middlewared can do that job
         escrowctl = LocalEscrowCtl()
         return escrowctl.getkey()
 
+    @private
     @accepts(Str('passphrase'), Dict('options', Bool('sync', default=True)))
     def encryption_setkey(self, passphrase, options=None):
         # FIXME: we could get rid of escrow, middlewared can do that job
@@ -146,6 +148,7 @@ class FailoverService(Service):
                 self.logger.warn('Failed to set encryption key on standby node: %s', e)
         return rv
 
+    @private
     @accepts()
     def encryption_clearkey(self):
         # FIXME: we could get rid of escrow, middlewared can do that job
@@ -182,6 +185,7 @@ class FailoverService(Service):
             await self.middleware.call('datastore.update', 'failover.failover', failover['id'], failover)
             await self.middleware.call('service.start', 'ix-devd')
 
+    @private
     @accepts()
     def database_sync(self):
         dump = self.middleware.call_sync('datastore.dump')
