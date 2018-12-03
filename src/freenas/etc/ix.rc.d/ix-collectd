@@ -298,6 +298,7 @@ cat << EOF >> $cfg
     FSType "devfs"
     FSType "fdescfs"
     ignoreSelected true
+    LogOnce true
 </Plugin>
 
 <Plugin python>
