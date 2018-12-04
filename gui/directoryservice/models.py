@@ -32,7 +32,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from freenasUI import choices
 from freenasUI.freeadmin.models import Model, PathField
 from freenasUI.middleware.notifier import notifier
-from freenasUI.system.models import CertificateAuthority
+from freenasUI.system.models import Certificate
 
 log = logging.getLogger("directoryservice.models")
 
@@ -416,8 +416,9 @@ class idmap_ldap(idmap_base):
         default='off'
     )
     idmap_ldap_certificate = models.ForeignKey(
-        CertificateAuthority,
+        Certificate,
         verbose_name=_("Certificate"),
+        limit_choices_to={'cert_certificate__isnull': False, 'cert_privatekey__isnull': False},
         on_delete=models.SET_NULL,
         blank=True,
         null=True
@@ -586,8 +587,9 @@ class idmap_rfc2307(idmap_base):
         default='off'
     )
     idmap_rfc2307_certificate = models.ForeignKey(
-        CertificateAuthority,
+        Certificate,
         verbose_name=_("Certificate"),
+        limit_choices_to={'cert_certificate__isnull': False, 'cert_privatekey__isnull': False},
         on_delete=models.SET_NULL,
         blank=True,
         null=True
@@ -911,8 +913,9 @@ class ActiveDirectory(DirectoryServiceBase):
         default='off'
     )
     ad_certificate = models.ForeignKey(
-        CertificateAuthority,
+        Certificate,
         verbose_name=_("Certificate"),
+        limit_choices_to={'cert_certificate__isnull': False, 'cert_privatekey__isnull': False},
         on_delete=models.SET_NULL,
         blank=True,
         null=True
@@ -1244,8 +1247,9 @@ class LDAP(DirectoryServiceBase):
         default='off'
     )
     ldap_certificate = models.ForeignKey(
-        CertificateAuthority,
+        Certificate,
         verbose_name=_("Certificate"),
+        limit_choices_to={'cert_certificate__isnull': False, 'cert_privatekey__isnull': False},
         on_delete=models.SET_NULL,
         blank=True,
         null=True
