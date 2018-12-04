@@ -1189,6 +1189,8 @@ class InterfaceService(CRUDService):
         Sync interfaces configured in database to the OS.
         """
 
+        await self.middleware.call_hook('interface.pre_sync')
+
         interfaces = [i['int_interface'] for i in (await self.middleware.call('datastore.query', 'network.interfaces'))]
         cloned_interfaces = []
         parent_interfaces = []
