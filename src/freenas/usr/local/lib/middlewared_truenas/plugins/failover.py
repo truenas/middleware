@@ -52,10 +52,10 @@ class FailoverService(ConfigService):
 
         verrors = ValidationErrors()
         if new['disabled'] is False:
-            if not await self.middleware.call('interface.query', [('critical', '=', True)]):
+            if not await self.middleware.call('interface.query', [('failover_critical', '=', True)]):
                 verrors.add(
                     'failover_update.disabled',
-                    'You need at least one critical interface to enable failover.',
+                    'You need at least one critical interface to disable failover.',
                 )
         verrors.check()
 
@@ -63,6 +63,15 @@ class FailoverService(ConfigService):
 
         if await self.middleware.call('pool.query', [('status', '!=', 'OFFLINE')]):
             await run('fenced', 'force')
+
+        try:
+            await self.middleware.call('failover.call_remote', 'datastore.sql', [
+                "UPDATE system_failover SET master = %s", [str(int(not new['disabled']))]
+            ])
+        except Exception:
+            self.logger.warn('Failed to set master flag on standby node', exc_info=True)
+
+        await self.middleware.call('service.start', 'ix-devd')
 
         return await self.config()
 
