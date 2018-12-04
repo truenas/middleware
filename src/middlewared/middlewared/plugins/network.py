@@ -937,15 +937,20 @@ class InterfaceService(CRUDService):
                             f'VLAN MTU cannot be bigger than parent interface.',
                         )
 
-        if await self.middleware.call('system.is_freenas'):
+        failover_licensed = False
+        is_freenas = await self.middleware.call('system.is_freenas')
+        if not is_freenas:
+            failover_licensed = await self.middleware.call('failover.licensed')
+        if is_freenas or not failover_licensed:
             data.pop('failover_critical', None)
             data.pop('failover_group', None)
             data.pop('failover_aliases', None)
             data.pop('failover_vhid', None)
             data.pop('failover_virtual_aliases', None)
         else:
-            if not await self.middleware.call('failover.licensed'):
-                raise CallError('Not licensed for HA.')
+            failover = await self.middleware.call('failover.config')
+            if not failover['disabled']:
+                raise CallError('Failover needs to be disabled to perform network.')
 
             if data.get('failover_virtual_aliases'):
                 found = True
