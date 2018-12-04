@@ -13,11 +13,19 @@ import itertools
 import netif
 import os
 import re
+import sys
 import shlex
 import signal
 import socket
 import subprocess
 import urllib.request
+
+
+# TODO: move scan_for_vrrp to middleware
+if '/usr/local/www' not in sys.path:
+    sys.path.append('/usr/local/www')
+
+from freenasUI.tools.vhid import scan_for_vrrp
 
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 RE_MTU = re.compile(r'\bmtu\s+(\d+)')
@@ -955,14 +963,21 @@ class InterfaceService(CRUDService):
                         )
 
                     if not update or update['failover_vhid'] != data['failover_vhid']:
-                        pass  # scan for VRRP
+                        used_vhids = await self.middleware.run_in_thread(
+                            scan_for_vrrp, data['name'], count=None, timeout=5
+                        )
+                        if data['failover_vhid'] in used_vhids:
+                            used_vhids = ', '.join([str(i) for i in used_vhids])
+                            verrors.add(
+                                f'{schema_name}.failover_vhid',
+                                f'The following VHIDs are already in use: {used_vhids}.'
+                            )
 
                     if data['failover_critical'] and not data['failover_group']:
                         verrors.add(
                             f'{schema_name}.failover_group',
                             'This attribute is required for critical failover interfaces.',
                         )
-
 
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
         for i, alias in enumerate(data.get('aliases') or []):
