@@ -96,15 +96,14 @@ class FailoverService(Service):
 
     @accepts(
         Str('method'),
-        List('args'),
+        List('args', default=[]),
         Dict(
             'options',
             Int('timeout'),
             Bool('job', default=False),
         ),
     )
-    def call_remote(self, method, args=None, options=None):
-        args = args or []
+    def call_remote(self, method, args, options=None):
         options = options or {}
 
         node = self.node()
