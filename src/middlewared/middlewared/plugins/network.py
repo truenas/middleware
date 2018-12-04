@@ -300,11 +300,16 @@ class InterfaceService(CRUDService):
             i['int_interface']: i
             for i in self.middleware.call_sync('datastore.query', 'network.interfaces')
         }
+        is_freenas = self.middleware.call_sync('system.is_freenas')
+        if not is_freenas:
+            internal_ifaces = self.middleware.call_sync('failover.internal_interfaces')
         for name, iface in netif.list_interfaces().items():
             if iface.cloned and name not in configs:
                 continue
+            if not is_freenas and name in internal_ifaces:
+                continue
             try:
-                data[name] = self.iface_extend(iface.__getstate__(), configs)
+                data[name] = self.iface_extend(iface.__getstate__(), configs, is_freenas)
             except OSError:
                 self.logger.warn('Failed to get interface state for %s', name, exc_info=True)
         for name, config in filter(lambda x: x[0] not in data, configs.items()):
@@ -314,11 +319,11 @@ class InterfaceService(CRUDService):
                 'link_address': '',
                 'cloned': True,
                 'mtu': 1500,
-            }, configs, fake=True)
+            }, configs, is_freenas, fake=True)
         return filter_list(list(data.values()), filters, options)
 
     @private
-    def iface_extend(self, iface_state, configs, fake=False):
+    def iface_extend(self, iface_state, configs, is_freenas, fake=False):
 
         if iface_state['name'].startswith('bridge'):
             itype = 'BRIDGE'
@@ -357,8 +362,6 @@ class InterfaceService(CRUDService):
             'mtu': config['int_mtu'],
         })
 
-        # FIXME: use future extend context to avoid N calls of these
-        is_freenas = self.middleware.call_sync('system.is_freenas')
         if not is_freenas:
             iface.update({
                 'failover_critical': config['int_critical'],
