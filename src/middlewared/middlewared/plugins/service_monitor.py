@@ -273,18 +273,21 @@ class ServiceMonitorService(Service):
         for s in services:
             thread_name = s['sm_name']
             s_config = None
+            service_enabled = False
             # Remove stale alerts
             ServiceMonitorThread.reset_alerts(thread_name)
 
-            if not s['sm_enable']:
+            if thread_name in ('activedirectory', 'ldap', 'nis'):
+                service_name = 'ad' if thread_name == 'activedirectory' else thread_name
+                s_config = await self.middleware.call('datastore.query', f'directoryservice.{thread_name}', None, {'get': True})
+                service_enabled = s_config[f"{service_name}_enable"]
+            else:
+                s_config = await self.middleware.call('service.query', [('service', '=', f"{thread_name}")], {'get': True})
+                service_enabled = s_config['enable']
+
+            if not s['sm_enable'] or not service_enabled:
                 self.logger.debug("[ServiceMonitorService] skipping %s", thread_name)
                 continue
-
-            if thread_name in ('activedirectory', 'ldap', 'nis'):
-                s_config = await self.middleware.call('datastore.query', f'directoryservice.{thread_name}',
-                                                      None, {'get': True})
-            else:
-                s_config = await self.middleware.call(f'{thread_name}.config')
 
             self.logger.debug("[ServiceMonitorService] monitoring %s", thread_name)
 
