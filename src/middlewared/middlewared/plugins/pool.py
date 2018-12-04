@@ -1731,6 +1731,7 @@ class PoolService(CRUDService):
             args = []
 
         await self.middleware.call('notifier.volume_import', data.get('name') or pool['name'], data['guid'], *args)
+
         return True
 
     @accepts(

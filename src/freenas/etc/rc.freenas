@@ -198,7 +198,7 @@ done
 # TODO: add permanent store capability; using the mdconfig* rc.d scripts would
 # be a good idea as it features pre-populating / fsck functionality for memory
 # disk images, whereas mdmfs doesn't.
-# TODO: employ something similar for ix-collectd, but only after the permanent
+# TODO: employ something similar for etc collectd plugin, but only after the permanent
 # store capability has been added.
 create_cache_filesystem()
 {
