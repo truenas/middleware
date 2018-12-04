@@ -1,5 +1,6 @@
 import asyncio
 import errno
+import netif
 import os
 import socket
 import sys
@@ -89,6 +90,8 @@ class FailoverService(Service):
             return ['ntb0']
         elif hardware == 'ULTIMATE':
             return ['igb1']
+        elif hardware == 'BHYVE':
+            return ['em0']
         return []
 
     @accepts(
@@ -190,7 +193,7 @@ class FailoverService(Service):
         return restore
 
 
-async def ha_permission(app):
+async def ha_permission(middleware, app):
     # Skip if session was already authenticated
     if app.authenticated is True:
         return
@@ -261,6 +264,94 @@ async def journal_ha(middleware):
             middleware.logger.warn('Failed to sync journal', exc_info=True)
 
 
+def sync_internal_ips(middleware, iface, carp1_skew, carp2_skew, internal_ip):
+    try:
+        iface = netif.get_interface(iface)
+    except KeyError:
+        middleware.logger.error('Internal interface %s not found, skipping setup.', iface)
+        return
+
+    carp1_addr = '169.254.10.20'
+    carp2_addr = '169.254.10.80'
+
+    found_i = found_1 = found_2 = False
+    for address in iface.addresses:
+        if address.af != netif.AddressFamily.INET:
+            continue
+        if str(address.address) == internal_ip:
+            found_i = True
+        elif str(address.address) == carp1_addr:
+            found_1 = True
+        elif str(address.address) == carp2_addr:
+            found_2 = True
+        else:
+            iface.remove_address(address)
+
+    # VHID needs to be configured before aliases
+    found = 0
+    for carp_config in iface.carp_config:
+        if carp_config.vhid == 10 and carp_config.advskew == carp1_skew:
+            found += 1
+        elif carp_config.vhid == 20 and carp_config.advskew == carp2_skew:
+            found += 1
+        else:
+            found -= 1
+    if found != 2:
+        iface.carp_config = [
+            netif.CarpConfig(10, advskew=carp1_skew),
+            netif.CarpConfig(20, advskew=carp2_skew),
+        ]
+
+    if not found_i:
+        iface.add_address(middleware.call_sync('interface.alias_to_addr', {
+            'address': internal_ip,
+            'netmask': '24',
+        }))
+
+    if not found_1:
+        iface.add_address(middleware.call_sync('interface.alias_to_addr', {
+            'address': carp1_addr,
+            'netmask': '32',
+            'vhid': 10,
+        }))
+
+    if not found_2:
+        iface.add_address(middleware.call_sync('interface.alias_to_addr', {
+            'address': carp2_addr,
+            'netmask': '32',
+            'vhid': 20,
+        }))
+
+
+async def interface_pre_sync_hook(middleware):
+    hardware = await middleware.call('failover.hardware')
+    if hardware == 'MANUAL':
+        middleware.logger.debug('No HA hardware detected, skipping interfaces setup.')
+        return
+    node = await middleware.call('failover.node')
+    if node == 'A':
+        carp1_skew = 20
+        carp2_skew = 80
+        internal_ip = '169.254.10.1'
+    elif node == 'B':
+        carp1_skew = 80
+        carp2_skew = 20
+        internal_ip = '169.254.10.2'
+    else:
+        middleware.logger.debug('Could not determine HA node, skipping interfaces setup.')
+        return
+
+    iface = await middleware.call('failover.internal_interfaces')
+    if not iface:
+        middleware.logger.debug(f'No internal interfaces found for {hardware}.')
+        return
+    iface = iface[0]
+
+    await middleware.run_in_thread(
+        sync_internal_ips, middleware, iface, carp1_skew, carp2_skew, internal_ip
+    )
+
+
 def service_remote(middleware):
     """
     Most of service actions need to be replicated to the standby node so we don't lose
@@ -297,5 +388,6 @@ def service_remote(middleware):
 
 def setup(middleware):
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
+    middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
     middleware.register_hook('service.pre_action', service_remote(middleware), sync=False)
     asyncio.ensure_future(journal_ha(middleware))
