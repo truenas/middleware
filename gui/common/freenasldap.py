@@ -1167,6 +1167,10 @@ class FreeNAS_ActiveDirectory_Base(object):
 
     @staticmethod
     def get_ldap_servers(domain, site=None):
+        """
+        We will first try fo find DCs based on our AD site. If we don't find
+        a DC in our site, then we populate list for whole domain. Ticket #27584
+        """
         dcs = []
         if not domain:
             return dcs
@@ -1176,10 +1180,19 @@ class FreeNAS_ActiveDirectory_Base(object):
             host = "_ldap._tcp.%s._sites.%s" % (site, domain)
 
         dcs = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
+
+        if not dcs:
+            host = "_ldap._tcp.%s" % domain
+            dcs = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
+
         return dcs
 
     @staticmethod
     def get_domain_controllers(domain, site=None, ssl=FREENAS_LDAP_NOSSL):
+        """
+        We will first try fo find DCs based on our AD site. If we don't find
+        a DC in our site, then we populate list for whole domain. Ticket #27584
+        """
         dcs = []
         if not domain:
             return dcs
@@ -1189,6 +1202,11 @@ class FreeNAS_ActiveDirectory_Base(object):
             host = "_ldap._tcp.%s._sites.dc._msdcs.%s" % (site, domain)
 
         dcs = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
+
+        if not dcs:
+            host = "_ldap._tcp.dc._msdcs.%s" % domain
+            dcs = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
+
         if ssl == FREENAS_LDAP_USESSL:
             for dc in dcs:
                 dc.port = 636
@@ -1208,6 +1226,11 @@ class FreeNAS_ActiveDirectory_Base(object):
 
     @staticmethod
     def get_global_catalog_servers(domain, site=None, ssl=FREENAS_LDAP_NOSSL):
+        """
+        We will first try fo find Global Catalog Servers  based on our AD site. If we don't find
+        a Global Catalog in our site, then we populate list for whole domain. Ticket #27584
+        We use the Global Catalog for site detection.
+        """
         gcs = []
         if not domain:
             return gcs
@@ -1217,6 +1240,10 @@ class FreeNAS_ActiveDirectory_Base(object):
             host = "_gc._tcp.%s._sites.%s" % (site, domain)
 
         gcs = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
+        if not gcs:
+            host = "_gc._tcp.%s" % domain
+            gcs = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
+
         if ssl == FREENAS_LDAP_USESSL:
             for gc in gcs:
                 gc.port = 3269
