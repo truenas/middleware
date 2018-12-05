@@ -1022,7 +1022,6 @@ class InterfaceService(CRUDService):
             'name': data.get('description') or '',
             'dhcp': data['ipv4_dhcp'],
             'ipv6auto': data['ipv6_auto'],
-            'vip': None,
             'vhid': data.get('failover_vhid'),
             'critical': data.get('failover_critical') or False,
             'group': data.get('failover_group'),
@@ -1031,7 +1030,7 @@ class InterfaceService(CRUDService):
         }
 
     async def __create_interface_datastore(self, data, attrs):
-        interface_attrs, aliases = self.__convert_aliases_to_datastore(data)[0:2]
+        interface_attrs, aliases = self.__convert_aliases_to_datastore(data)
         interface_attrs.update(attrs)
 
         interface_id = await self.middleware.call(
@@ -1042,7 +1041,7 @@ class InterfaceService(CRUDService):
         )
         yield interface_id
 
-        for alias in aliases:
+        for alias in aliases.values():
             await self.middleware.call(
                 'datastore.insert',
                 'network.alias',
@@ -1057,19 +1056,27 @@ class InterfaceService(CRUDService):
             'v4netmaskbit': '',
             'ipv6address': '',
             'v6netmaskbit': '',
+            'vip': '',
         }
-        aliases = []
-        aliases_cidr = []
+        aliases = {}
         for field, i in itertools.chain(
             map(lambda x: ('A', x), data['aliases']),
             map(lambda x: ('B', x), data.get('failover_aliases') or []),
+            map(lambda x: ('V', x), data.get('failover_virtual_aliases') or []),
         ):
             ipaddr = ipaddress.ip_interface(f'{i["address"]}/{i["netmask"]}')
             iface_ip = True
             if ipaddr.version == 4:
-                iface_addrfield = 'ipv4address' if field == 'A' else 'ipv4address_b'
-                alias_addrfield = 'v4address' if field == 'A' else 'v4address_b'
                 netfield = 'v4netmaskbit'
+                if field == 'A':
+                    iface_addrfield = 'ipv4address'
+                    alias_addrfield = 'v4address'
+                elif field == 'B':
+                    iface_addrfield = 'ipv4address_b'
+                    alias_addrfield = 'v4address_b'
+                else:
+                    alias_addrfield = iface_addrfield = 'vip'
+                    netfield = None  # vip hardcodes to /32
                 if iface.get(iface_addrfield) or data.get('ipv4_dhcp'):
                     iface_ip = False
             else:
@@ -1081,14 +1088,16 @@ class InterfaceService(CRUDService):
 
             if iface_ip:
                 iface[iface_addrfield] = str(ipaddr.ip)
-                iface[netfield] = ipaddr.network.prefixlen
+                if netfield:
+                    iface[netfield] = ipaddr.network.prefixlen
             else:
-                aliases_cidr.append(i)
-                aliases.append({
+                cidr = f'{i["address"]}/{i["netmask"]}'
+                aliases[cidr] = {
                     alias_addrfield: str(ipaddr.ip),
-                    netfield: ipaddr.network.prefixlen,
-                })
-        return iface, aliases, aliases_cidr
+                }
+                if netfield:
+                    aliases[cidr][netfield] = ipaddr.network.prefixlen
+        return iface, aliases
 
     @accepts(
         Str('id'),
@@ -1125,10 +1134,7 @@ class InterfaceService(CRUDService):
                 }):
                     interface_id = i
             else:
-                if 'aliases' in data:
-                    interface_attrs, aliases_db, aliases_cidr = self.__convert_aliases_to_datastore(new)
-                else:
-                    interface_attrs = {}
+                interface_attrs, aliases = self.__convert_aliases_to_datastore(new)
                 config = config[0]
                 await self.middleware.call(
                     'datastore.update', 'network.interfaces', config['id'], dict(
@@ -1136,42 +1142,40 @@ class InterfaceService(CRUDService):
                     ), {'prefix': 'int_'}
                 )
 
-                if 'aliases' in data:
-                    old_aliases = set()
-                    alias_ids = {}
-                    if config:
-                        for i in await self.middleware.call(
-                            'datastore.query',
-                            'network.alias',
-                            [('interface', '=', config['id'])],
-                            {'prefix': 'alias_'},
+                old_aliases = set()
+                alias_ids = {}
+                if config:
+                    for i in await self.middleware.call(
+                        'datastore.query',
+                        'network.alias',
+                        [('interface', '=', config['id'])],
+                        {'prefix': 'alias_'},
+                    ):
+                        for name, netmask in (
+                            ('v4address', 'v4netmaskbit'),
+                            ('v4address_b', 'v4netmaskbit'),
+                            ('v6address', 'v6netmaskbit'),
+                            ('vip', None),
                         ):
                             alias = None
-                            if i['v4address']:
-                                alias = f'{i["v4address"]}/{i["v4netmaskbit"]}'
-                            if i['v6address']:
-                                alias = f'{i["v6address"]}/{i["v6netmaskbit"]}'
-                            if alias:
+                            if i[name]:
+                                alias = f'{i[name]}/{i[netmask] if netmask else "32"}'
                                 alias_ids[alias] = i['id']
                                 old_aliases.add(alias)
-                    new_aliases = set(aliases_cidr)
-                    for i in new_aliases - old_aliases:
-                        ip, netmask = i.split('/')
-                        if ':' in ip:
-                            alias = {'v6address': ip, 'v6netmaskbit': netmask}
-                        else:
-                            alias = {'v4address': ip, 'v4netmaskbit': netmask}
-                        await self.middleware.call(
-                            'datastore.insert',
-                            'network.alias',
-                            dict(interface=config['id'], **alias),
-                            {'prefix': 'alias_'}
-                        )
+                new_aliases = set(aliases.keys())
+                for i in new_aliases - old_aliases:
+                    alias = aliases[i]
+                    await self.middleware.call(
+                        'datastore.insert',
+                        'network.alias',
+                        dict(interface=config['id'], **alias),
+                        {'prefix': 'alias_'}
+                    )
 
-                    for i in old_aliases - new_aliases:
-                        alias_id = alias_ids.get(i)
-                        if alias_id:
-                            await self.middleware.call('datastore.delete', 'network.alias', alias_id)
+                for i in old_aliases - new_aliases:
+                    alias_id = alias_ids.get(i)
+                    if alias_id:
+                        await self.middleware.call('datastore.delete', 'network.alias', alias_id)
 
         except Exception:
             if interface_id:
