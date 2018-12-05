@@ -1,7 +1,7 @@
 from middlewared.service import (CallError, ConfigService, CRUDService, Service,
                                  filterable, pass_app, private)
 from middlewared.utils import Popen, filter_list, run
-from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Str,
+from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Ref, Str,
                                 ValidationErrors, accepts)
 from middlewared.validators import Match, Range
 
@@ -600,12 +600,20 @@ class InterfaceService(CRUDService):
         Str('type', enum=['BRIDGE', 'LINK_AGGREGATION', 'VLAN'], required=True),
         Bool('ipv4_dhcp', default=False),
         Bool('ipv6_auto', default=False),
-        List('aliases', unique=True, items=[IPAddr('ip', cidr=True)], default=[]),
+        List('aliases', unique=True, items=[
+            Dict(
+                'interface_alias',
+                Str('type', required=True, default='INET', enum=['INET', 'INET6']),
+                IPAddr('address', required=True),
+                Int('netmask', required=True),
+                register=True,
+            ),
+        ], default=[]),
         Bool('failover_critical', default=False),
         Int('failover_group'),
         Int('failover_vhid'),
-        List('failover_aliases', items=[IPAddr('ip', cidr=True)]),
-        List('failover_virtual_aliases', items=[IPAddr('ip', cidr=True)]),
+        List('failover_aliases', items=[Ref('interface_alias')]),
+        List('failover_virtual_aliases', items=[Ref('interface_alias')]),
         List('bridge_members'),
         Str('lag_protocol', enum=['LACP', 'FAILOVER', 'LOADBALANCE', 'ROUNDROBIN', 'NONE']),
         List('lag_ports', items=[Str('interface')]),
@@ -990,7 +998,9 @@ class InterfaceService(CRUDService):
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
         for i, alias in enumerate(data.get('aliases') or []):
             used_networks = []
-            alias_network = ipaddress.ip_network(alias, strict=False)
+            alias_network = ipaddress.ip_network(
+                f'{alias["address"]}/{alias["netmask"]}', strict=False
+            )
             for iface in ifaces.values():
                 for iface_alias in filter(
                     lambda x: x['type'] == ('INET' if alias_network.version == 4 else 'INET6'),
@@ -1054,7 +1064,7 @@ class InterfaceService(CRUDService):
             map(lambda x: ('A', x), data['aliases']),
             map(lambda x: ('B', x), data.get('failover_aliases') or []),
         ):
-            ipaddr = ipaddress.ip_interface(i)
+            ipaddr = ipaddress.ip_interface(f'{i["address"]}/{i["netmask"]}')
             iface_ip = True
             if ipaddr.version == 4:
                 iface_addrfield = 'ipv4address' if field == 'A' else 'ipv4address_b'
