@@ -402,6 +402,8 @@ class List(EnumMixin, Attribute):
         s = set()
         for i, v in enumerate(value):
             if self.unique:
+                if isinstance(v, dict):
+                    v = tuple(sorted(list(v.items())))
                 if v in s:
                     verrors.add(f"{self.name}.{i}", "This value is not unique.")
                 s.add(v)
