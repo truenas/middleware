@@ -25,8 +25,6 @@ import urllib.request
 if '/usr/local/www' not in sys.path:
     sys.path.append('/usr/local/www')
 
-from freenasUI.tools.vhid import scan_for_vrrp
-
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 RE_MTU = re.compile(r'\bmtu\s+(\d+)')
 
@@ -980,6 +978,8 @@ class InterfaceService(CRUDService):
                     )
 
                 if not update or update['failover_vhid'] != data['failover_vhid']:
+                    # FIXME: lazy load because of TrueNAS
+                    from freenasUI.tools.vhid import scan_for_vrrp
                     used_vhids = await self.middleware.run_in_thread(
                         scan_for_vrrp, data['name'], count=None, timeout=5
                     )
