@@ -955,7 +955,8 @@ class InterfaceService(CRUDService):
             data.pop('failover_virtual_aliases', None)
         else:
             failover = await self.middleware.call('failover.config')
-            if not failover['disabled']:
+            ha_configured = await self.middleware.call('notifier.failover_status') != 'SINGLE'
+            if ha_configured and not failover['disabled']:
                 raise CallError(
                     'Failover needs to be disabled to perform network configuration changes.'
                 )
@@ -977,7 +978,7 @@ class InterfaceService(CRUDService):
                         'Number of IPs must be the same between controllers.',
                     )
 
-                if not update or update['failover_vhid'] != data['failover_vhid']:
+                if not update or update.get('failover_vhid') != data['failover_vhid']:
                     # FIXME: lazy load because of TrueNAS
                     from freenasUI.tools.vhid import scan_for_vrrp
                     used_vhids = await self.middleware.run_in_thread(
@@ -1468,6 +1469,8 @@ class InterfaceService(CRUDService):
 
         if wait_dhcp and dhclient_aws:
             await asyncio.wait(dhclient_aws, timeout=30)
+
+        await self.middleware.call_hook('interface.post_sync')
 
     @private
     def alias_to_addr(self, alias):
