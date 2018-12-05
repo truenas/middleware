@@ -81,18 +81,17 @@ def test_06_create_jail():
         pytest.skip(freeze_msg)
 
     global JOB_ID
-    results = POST(
-        '/jail/', {
-            'release': RELEASE,
-            'uuid': JAIL_NAME,
-            'props': [
-                'bpf=yes',
-                'dhcp=on',
-                'vnet=on'
-            ]
-        }
-    )
-
+    payload = {
+        'release': RELEASE,
+        'uuid': JAIL_NAME,
+        'props': [
+            'bpf=yes',
+            'dhcp=on',
+            'vnet=on',
+            'vnet_default_interface=auto'
+        ]
+    }
+    results = POST('/jail/', payload)
     assert results.status_code == 200, results.text
     JOB_ID = results.json()
 
