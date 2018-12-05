@@ -958,7 +958,9 @@ class InterfaceService(CRUDService):
         else:
             failover = await self.middleware.call('failover.config')
             if not failover['disabled']:
-                raise CallError('Failover needs to be disabled to perform network.')
+                raise CallError(
+                    'Failover needs to be disabled to perform network configuration changes.'
+                )
 
             found = True
             for i in (
