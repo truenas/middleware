@@ -541,9 +541,7 @@ class JailService(CRUDService):
         elif action == "STOP":
             iocage.stop()
         else:
-            iocage.stop()
-            time.sleep(0.5)
-            iocage.start()
+            iocage.restart()
 
         return True
 
