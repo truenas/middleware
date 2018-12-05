@@ -120,6 +120,11 @@ class Attribute(object):
             schemas.add(self)
         return self
 
+    def copy(self):
+        cp = copy.deepcopy(self)
+        cp.register = False
+        return cp
+
 
 class Any(Attribute):
 
@@ -445,6 +450,13 @@ class List(EnumMixin, Attribute):
             schemas.add(self)
         return self
 
+    def copy(self):
+        cp = super().copy()
+        cp.items = []
+        for item in self.items:
+            cp.items.append(item.copy())
+        return cp
+
 
 class Dict(Attribute):
 
@@ -545,6 +557,13 @@ class Dict(Attribute):
         if self.register:
             schemas.add(self)
         return self
+
+    def copy(self):
+        cp = super().copy()
+        cp.attrs = {}
+        for name, attr in self.attrs.items():
+            cp.attrs[name] = attr.copy()
+        return cp
 
 
 class Cron(Dict):
@@ -650,7 +669,7 @@ class Patch(object):
         elif not isinstance(schema, Dict):
             raise ValueError('Patch non-dict is not allowed')
 
-        schema = copy.deepcopy(schema)
+        schema = schema.copy()
         schema.name = self.newname
         for operation, patch in self.patches:
             if operation == 'add':
