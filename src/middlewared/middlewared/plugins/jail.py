@@ -231,6 +231,10 @@ class JailService(CRUDService):
 
         verrors = self.common_validation(verrors, options, True, jail)
 
+        if name is not None and plugin:
+            verrors.add('options.plugin',
+                        'Cannot be true while trying to rename')
+
         if verrors:
             raise verrors
 
