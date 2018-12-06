@@ -387,7 +387,7 @@ class JailService(CRUDService):
 
         def progress_callback(content, exception):
             level = content['level']
-            msg = content['message'].strip('\n')
+            msg = content['message'].strip('\r\n')
             rel_up = f'* Updating {release} to the latest patch level... '
 
             if job.progress['percent'] == 90 and options['name'] is not None:
@@ -398,9 +398,15 @@ class JailService(CRUDService):
                 fetch_output['error'] = True
                 raise CallError(msg)
 
-            job.set_progress(None, msg)
-
             if options['name'] is None:
+                if 'Downloading : base.txz' in msg and '100%' in msg:
+                    job.set_progress(5, msg)
+                elif 'Downloading : lib32.txz' in msg and '100%' in msg:
+                    job.set_progress(10, msg)
+                elif 'Downloading : doc.txz' in msg and '100%' in msg:
+                    job.set_progress(15, msg)
+                elif 'Downloading : src.txz' in msg and '100%' in msg:
+                    job.set_progress(20, msg)
                 if 'Extracting: base.txz' in msg:
                     job.set_progress(25, msg)
                 elif 'Extracting: lib32.txz' in msg:
@@ -411,6 +417,8 @@ class JailService(CRUDService):
                     job.set_progress(90, msg)
                 elif rel_up in msg:
                     job.set_progress(95, msg)
+                else:
+                    job.set_progress(None, msg)
             else:
                 if '  These pkgs will be installed:' in msg:
                     job.set_progress(50, msg)
@@ -418,6 +426,8 @@ class JailService(CRUDService):
                     job.set_progress(75, msg)
                 elif 'Command output:' in msg:
                     job.set_progress(90, msg)
+                else:
+                    job.set_progress(None, msg)
 
         self.check_dataset_existence()  # Make sure our datasets exist.
         start_msg = f'{release} being fetched'
