@@ -1616,7 +1616,18 @@ class ReplicationResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super().dehydrate(bundle)
 
-        bundle.data['repl_ssh_credentials'] = (self.__tasks[bundle.data['id']]['ssh_credentials'] or {}).get('name', '-')
+        bundle.data['repl_ssh_credentials'] = \
+            (self.__tasks[bundle.data['id']]['ssh_credentials'] or {}).get('name', '-')
+
+        bundle.data['state'] = (
+            self.__tasks[bundle.data['id']]['state']['state'][:1] +
+            self.__tasks[bundle.data['id']]['state']['state'][1:].lower() + (
+                ': ' + self.__tasks[bundle.data['id']]['state']['error']
+                if self.__tasks[bundle.data['id']]['state']['state'] == 'ERROR'
+                else ''
+            )
+        )
+        bundle.data['last_snapshot'] = self.__tasks[bundle.data['id']]['state'].get('last_snapshot')
 
         return bundle
 
@@ -1686,16 +1697,6 @@ class TaskResourceMixin(object):
 
         for k in ['legacy', 'vmware_sync']:
             bundle.data[k] = self.__tasks[bundle.data['id']][k]
-
-        bundle.data['state'] = (
-            self.__tasks[bundle.data['id']]['state']['state'][:0] +
-            self.__tasks[bundle.data['id']]['state']['state'][1:].lower() + (
-                ': ' + self.__tasks[bundle.data['id']]['state']['error']
-                if self.__tasks[bundle.data['id']]['state']['state'] == 'ERROR'
-                else ''
-            )
-        )
-        bundle.data['last_snapshot'] = self.__tasks[bundle.data['id']]['state'].get('last_snapshot')
 
         return bundle
 

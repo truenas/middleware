@@ -1,3 +1,8 @@
+from collections import defaultdict
+from datetime import datetime
+import os
+import pickle
+
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
 from middlewared.service import private, CallError, CRUDService, ValidationErrors
 from middlewared.utils.path import is_child
@@ -14,9 +19,25 @@ class ReplicationService(CRUDService):
 
     @private
     async def extend_context(self):
+        legacy_result, legacy_result_datetime = await self.middleware.run_in_thread(self._legacy_extend_context)
+
         return {
             "state": await self.middleware.call("zettarepl.get_state"),
+            "legacy_result": legacy_result,
+            "legacy_result_datetime": legacy_result_datetime,
         }
+
+    def _legacy_extend_context(self):
+        try:
+            with open("/tmp/.repl-result", "rb") as f:
+                data = f.read()
+                legacy_result = pickle.loads(data)
+                legacy_result_datetime = datetime.fromtimestamp(os.stat("/tmp/.repl-result").st_mtime)
+        except Exception:
+            legacy_result = defaultdict(dict)
+            legacy_result_datetime = None
+
+        return legacy_result, legacy_result_datetime
 
     @private
     async def extend(self, data, context):
@@ -34,9 +55,34 @@ class ReplicationService(CRUDService):
         Cron.convert_db_format_to_schedule(data, "schedule", key_prefix="schedule_", begin_end=True)
         Cron.convert_db_format_to_schedule(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
 
-        data["state"] = context["state"].get(f"replication_task_{data['id']}", {
-            "state": "UNKNOWN",
-        })
+        if data["transport"] == 'LEGACY':
+            if data["id"] in context["legacy_result"]:
+                legacy_result = context["legacy_result"][data["id"]]
+
+                msg = legacy_result.get("msg")
+                if msg == "Running":
+                    state = "RUNNING"
+                elif msg in ["Succeeded", "Up to date"]:
+                    state = "FINISHED"
+                else:
+                    state = "ERROR"
+
+                data["state"] = {
+                    "datetime": context["legacy_result_datetime"],
+                    "state": state,
+                    "last_snapshot": legacy_result.get("last_snapshot"),
+                }
+
+                if state == "ERROR":
+                    data["state"]["error"] = msg
+            else:
+                data["state"] = {
+                    "state": "UNKNOWN",
+                }
+        else:
+            data["state"] = context["state"].get(f"replication_task_{data['id']}", {
+                "state": "UNKNOWN",
+            })
 
         return data
 

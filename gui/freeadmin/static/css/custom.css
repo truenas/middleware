@@ -1461,9 +1461,6 @@ table.layoutTable > tr:first-child > td {
 .dgrid-column-task_enabled {
     width: 60px;
 }
-.dgrid-column-state {
-    width: 70px;
-}
 
 .dgrid-column-repl_transport {
     width: 120px;
