@@ -739,6 +739,7 @@ class Middleware(object):
         self.loop_debug = loop_debug
         self.loop_monitor = loop_monitor
         self.overlay_dirs = overlay_dirs or []
+        self.app = None
         self.__loop = None
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
@@ -907,6 +908,9 @@ class Middleware(object):
             self.logger.debug('Failed to write to console', exc_info=True)
         except Exception:
             pass
+
+    def plugin_route_add(self, plugin_name, route, method):
+        self.app.router.add_route('*', f'/_plugins/{plugin_name}/{route}', method)
 
     def register_wsclient(self, client):
         self.__wsclients[client.sessionid] = client
@@ -1207,6 +1211,10 @@ class Middleware(object):
             self.__loop.set_debug(True)
             self.__loop.slow_callback_duration = 0.2
 
+        self.app = app = web.Application(middlewares=[
+            normalize_path_middleware(redirect_class=HTTPPermanentRedirect)
+        ], loop=self.__loop)
+
         # Needs to happen after setting debug or may cause race condition
         # http://bugs.python.org/issue30805
         self.__loop.run_until_complete(self.__plugins_load())
@@ -1224,9 +1232,6 @@ class Middleware(object):
         self.__loop.add_signal_handler(signal.SIGTERM, self.terminate)
         self.__loop.add_signal_handler(signal.SIGUSR1, self.pdb)
 
-        app = web.Application(middlewares=[
-            normalize_path_middleware(redirect_class=HTTPPermanentRedirect)
-        ], loop=self.__loop)
         app.router.add_route('GET', '/websocket', self.ws_handler)
 
         app.router.add_route('*', '/api/docs{path_info:.*}', WSGIHandler(apidocs_app))

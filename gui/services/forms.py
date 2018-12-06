@@ -1449,21 +1449,21 @@ class AsigraForm(MiddlewareModelForm, ModelForm):
         # for now until we get the go ahead to do this from asigra.
         # XXX
 
-         self._orig_filesystem = self.instance.filesystem
-         if self.instance.id and self.instance.filesystem:
-             if self.instance.filesystem:
-                 self.fields["filesystem"].widget.attrs["readonly"] = True
+        self._orig_filesystem = self.instance.filesystem
+        if self.instance.id and self.instance.filesystem:
+            if self.instance.filesystem:
+                self.fields["filesystem"].widget.attrs["readonly"] = True
 
-     def clean_filesystem(self):
-         fs = self.cleaned_data.get("filesystem")
-         if not fs:
-             raise forms.ValidationError("Filesystem can't be empty!")
-         if not os.path.exists(f'/mnt/{fs}'):
-             raise forms.ValidationError("Filesystem does not exist!")
-         return fs
+    def clean_filesystem(self):
+        fs = self.cleaned_data.get("filesystem")
+        if not fs:
+            raise forms.ValidationError("Filesystem can't be empty!")
+        if not os.path.exists(f'/mnt/{fs}'):
+            raise forms.ValidationError("Filesystem does not exist!")
+        return fs
 
     def save(self):
-         obj = super(AsigraForm, self).save()
-         if self._orig_filesystem != obj.filesystem:
-             notifier().restart("asigra")
-         return obj
+        obj = super(AsigraForm, self).save()
+        if self._orig_filesystem != obj.filesystem:
+            notifier().restart("asigra")
+        return obj
