@@ -2265,3 +2265,19 @@ class ServiceMonitor(Model):
         verbose_name=_("Enable"),
         default=False
     )
+
+
+class Asigra(Model):
+    filesystem = models.CharField(
+        verbose_name=_('Base Filesystem'),
+        max_length=255,
+        blank=True
+    )
+
+    class Meta:
+        verbose_name = _("Asigra")
+        verbose_name_plural = _("Asigra")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = "AsigraIcon"
