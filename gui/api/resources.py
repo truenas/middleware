@@ -597,7 +597,7 @@ class ZVolResource(DojoResource):
     sync = fields.CharField(attribute='sync')
     compression = fields.CharField(attribute='compression')
     dedup = fields.CharField(attribute='dedup')
-    comments = fields.CharField(attribute='description')
+    comments = fields.CharField(attribute='description', null=True)
 
     class Meta:
         allowed_methods = ['get', 'post', 'delete', 'put']
@@ -695,10 +695,14 @@ class ZVolResource(DojoResource):
             raise NotFound("Dataset not found.")
 
     def obj_delete(self, bundle, **kwargs):
+        deserialized = self._meta.serializer.deserialize(
+            bundle.request.body or '{}',
+            format='application/json',
+        )
         retval = notifier().destroy_zfs_vol("%s/%s" % (
             kwargs.get('parent').vol_name,
             kwargs.get('pk'),
-        ))
+        ), deserialized.get('cascade', False))
         if retval:
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, retval)
