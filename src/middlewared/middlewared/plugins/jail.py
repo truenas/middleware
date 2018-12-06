@@ -27,6 +27,7 @@ from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.validators import IpInUse, MACAddr, ShouldBe
+from collections import deque, Iterable
 
 
 SHUTDOWN_LOCK = asyncio.Lock()
@@ -643,8 +644,22 @@ class JailService(CRUDService):
         if verrors:
             raise verrors
 
-        _list = iocage.fstab(action, source, destination, fstype, fsoptions,
-                             dump, _pass, index=index)
+        try:
+            _list = iocage.fstab(
+                action, source, destination, fstype, fsoptions,
+                dump, _pass, index=index
+            )
+        except ioc_exceptions.ValidationFailed as e:
+            # CallError uses strings, the exception message may not always be a
+            # list.
+            if not isinstance(e.message, str) and isinstance(
+                e.message,
+                Iterable
+            ):
+                e.message = '\n'.join(e.message)
+
+            self.logger.error(f'{e!r}')
+            raise CallError(e.message)
 
         if action == "list":
             split_list = {}
