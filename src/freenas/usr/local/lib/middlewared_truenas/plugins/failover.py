@@ -398,6 +398,50 @@ async def interface_pre_sync_hook(middleware):
     )
 
 
+async def hook_setup_ha(middleware, *args, **kwargs):
+
+    if not await middleware.call('failover.licensed'):
+        return
+
+    if not await middleware.call('interface.query', [('failover_vhid', '!=', None)]):
+        return
+
+    if not await middleware.call('pool.query'):
+        return
+
+    try:
+        ha_configured = await middleware.call(
+            'failover.call_remote', 'notifier.failover_status'
+        ) != 'SINGLE'
+    except Exception:
+        ha_configured = False
+
+    if ha_configured:
+        return
+
+    middleware.logger.info('[HA] Setting up')
+
+    middleware.logger.debug('[HA] Synchronizing database and files')
+    await middleware.call('notifier.failover_sync_peer', 'to')
+
+    middleware.logger.debug('[HA] Configuring network on standby node')
+    await middleware.call('failover.call_remote', 'interface.sync')
+    try:
+        await middleware.call('failover.call_remote', 'route.sync')
+    except Exception as e:
+        middleware.logger.warn('Failed to sync routes on standby node: %s', e)
+
+    middleware.logger.debug('[HA] Restarting devd to enable failover')
+    await middleware.call('failover.call_remote', 'service.start', ['ix-devd'])
+    await middleware.call('failover.call_remote', 'service.restart', ['devd'])
+    await middleware.call('service.start', 'ix-devd')
+    await middleware.call('service.restart', 'devd')
+
+    middleware.logger.info('[HA] Setup complete')
+
+    middleware.send_event('failover.setup', 'ADDED', fields={})
+
+
 def service_remote(middleware):
     """
     Most of service actions need to be replicated to the standby node so we don't lose
@@ -435,5 +479,7 @@ def service_remote(middleware):
 def setup(middleware):
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
+    middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)
+    middleware.register_hook('pool.post_create_or_update', hook_setup_ha, sync=True)
     middleware.register_hook('service.pre_action', service_remote(middleware), sync=False)
     asyncio.ensure_future(journal_ha(middleware))
