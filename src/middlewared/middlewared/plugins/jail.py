@@ -1,6 +1,5 @@
 import asyncio
 import os
-import time
 import subprocess as su
 
 import iocage_lib.iocage as ioc
