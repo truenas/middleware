@@ -1583,7 +1583,7 @@ class FTP(Model):
     ftp_ssltls_certificate = models.ForeignKey(
         Certificate,
         verbose_name=_("Certificate"),
-        limit_choices_to={'cert_CSR__isnull': True},
+        limit_choices_to={'cert_certificate__isnull': False, 'cert_privatekey__isnull': False},
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
@@ -2226,7 +2226,7 @@ class S3(Model):
     s3_certificate = models.ForeignKey(
         Certificate,
         verbose_name=_("Certificate"),
-        limit_choices_to={'cert_CSR__isnull': True},
+        limit_choices_to={'cert_certificate__isnull': False, 'cert_privatekey__isnull': False},
         on_delete=models.SET_NULL,
         blank=True,
         null=True
