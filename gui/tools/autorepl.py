@@ -278,13 +278,12 @@ for replication in replication_tasks:
             log.warning("Unable to get private key for replication %r", replication.id, exc_info=True)
             continue
 
-    os.makedirs("/data/ssh", exist_ok=True)
-    with open("/data/ssh/replication", "w") as f:
+    with open("/tmp/.repl-key", "w") as f:
         f.write(keys["private_key"] + "\n")
-    os.chmod("/data/ssh/replication", 0o400)
-    with open("/data/ssh/replication.pub", "w") as f:
+    os.chmod("/tmp/.repl-key", 0o400)
+    with open("/tmp/.repl-key.pub", "w") as f:
         f.write(keys["public_key"] + "\n")
-    os.chmod("/data/ssh/replication.pub", 0o400)
+    os.chmod("/tmp/.repl-key.pub", 0o400)
 
     with open("/usr/local/etc/ssh/ssh_known_hosts", "w") as f:
         f.write(replication.repl_remote_hostkey)
@@ -315,7 +314,7 @@ for replication in replication_tasks:
     if cipher == 'fast':
         sshcmd = (
             '/usr/local/bin/ssh -c arcfour256,arcfour128,blowfish-cbc,'
-            'aes128-ctr,aes192-ctr,aes256-ctr -i /data/ssh/replication'
+            'aes128-ctr,aes192-ctr,aes256-ctr -i /tmp/.repl-key'
             ' -o BatchMode=yes -o StrictHostKeyChecking=yes'
             # There's nothing magical about ConnectTimeout, it's an average
             # of wiliam and josh's thoughts on a Wednesday morning.
@@ -323,11 +322,11 @@ for replication in replication_tasks:
             ' -o ConnectTimeout=7'
         )
     elif cipher == 'disabled':
-        sshcmd = ('/usr/local/bin/ssh -ononeenabled=yes -ononeswitch=yes -i /data/ssh/replication -o BatchMode=yes'
+        sshcmd = ('/usr/local/bin/ssh -ononeenabled=yes -ononeswitch=yes -i /tmp/.repl-key -o BatchMode=yes'
                   ' -o StrictHostKeyChecking=yes'
                   ' -o ConnectTimeout=7')
     else:
-        sshcmd = ('/usr/local/bin/ssh -i /data/ssh/replication -o BatchMode=yes'
+        sshcmd = ('/usr/local/bin/ssh -i /tmp/.repl-key -o BatchMode=yes'
                   ' -o StrictHostKeyChecking=yes'
                   ' -o ConnectTimeout=7')
 
