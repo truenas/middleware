@@ -4,6 +4,7 @@
 #
 
 # PROVIDE: ix-update
+# REQUIRE: mountcritlocal
 # BEFORE: ix-fstab
 
 . /etc/rc.freenas

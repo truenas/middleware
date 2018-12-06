@@ -1,5 +1,4 @@
 from mako import exceptions
-from mako.template import Template
 from mako.lookup import TemplateLookup
 from middlewared.service import Service
 
@@ -55,19 +54,15 @@ class PyRenderer(object):
 class EtcService(Service):
 
     GROUPS = {
-        # 'user': [
-        #    {'type': 'mako', 'path': 'master.passwd'},
-        #    {'type': 'py', 'path': 'pwd_db'},
-        # ],
-
-        #
-        # Coming soon
-        #
+        'user': [
+            {'type': 'mako', 'path': 'group'},
+            {'type': 'mako', 'path': 'master.passwd'},
+            {'type': 'py', 'path': 'pwd_db'},
+        ],
         'kerberos': [
             {'type': 'mako', 'path': 'krb5.conf'},
             {'type': 'py', 'path': 'krb5.keytab'},
         ],
-
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
         ],
@@ -110,12 +105,30 @@ class EtcService(Service):
         'nginx': [
             {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
         ],
+        'collectd': [
+            {'type': 'mako', 'path': 'local/collectd.conf'}
+        ],
+        'system_dataset': [
+            {'type': 'py', 'path': 'system_setup'}
+        ],
         'netdata': [
             {'type': 'mako', 'path': 'local/netdata/netdata.conf'},
             {'type': 'mako', 'path': 'local/netdata/stream.conf'},
             {'type': 'py', 'path': 'local/netdata/alarms'}
-        ]
+        ],
+        'smb': [
+            {'type': 'mako', 'path': 'local/smb4.conf'},
+        ],
+        'smb_share': [
+            {'type': 'mako', 'path': 'local/smb4_share.conf'},
+        ],
+        'smb_configure': [
+            {'type': 'mako', 'path': 'local/smbusername.map'},
+            {'type': 'py', 'path': 'smb_configure'},
+        ],
     }
+
+    SKIP_LIST = ['system_dataset', 'collectd']
 
     class Config:
         private = True
@@ -180,7 +193,7 @@ class EtcService(Service):
                     if st.st_uid != pw.pw_uid:
                         os.chown(outfile, pw.pw_uid, -1)
                         changes = True
-                except Exception as e:
+                except Exception:
                     pass
             if 'group' in entry and entry['group']:
                 try:
@@ -188,24 +201,29 @@ class EtcService(Service):
                     if st.st_gid != gr.gr_gid:
                         os.chown(outfile, -1, gr.gr_gid)
                         changes = True
-                except Exception as e:
+                except Exception:
                     pass
             if 'mode' in entry and entry['mode']:
                 try:
                     if (st.st_mode & 0x3FF) != entry['mode']:
                         os.chmod(outfile, entry['mode'])
                         changes = True
-                except Exception as e:
+                except Exception:
                     pass
 
             if not changes:
                 self.logger.debug(f'No new changes for {outfile}')
 
-    async def generate_all(self):
+    async def generate_all(self, skip_list=True):
         """
         Generate all configuration file groups
+        `skip_list` tells whether to skip groups in SKIP_LIST. This defaults to true.
         """
         for name in self.GROUPS.keys():
+            if skip_list and name in self.SKIP_LIST:
+                self.logger.info(f'Skipping {name} group generation')
+                continue
+
             try:
                 await self.generate(name)
             except Exception:

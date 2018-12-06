@@ -212,7 +212,7 @@ async def test__interfaces_service__create_lagg():
 
 
 @pytest.mark.parametrize('attr_val', [
-    ('aliases', ['192.168.8.2/24']),
+    ('aliases', [{'address': '192.168.8.2', 'netmask': 24}]),
     ('mtu', 1500),
     ('ipv4_dhcp', True),
     ('ipv6_auto', True),
@@ -343,7 +343,7 @@ async def test__interfaces_service__update_two_same_network():
     with pytest.raises(ValidationErrors) as ve:
         await InterfaceService(m).update(
             update_interface['id'], {
-                'aliases': ['192.168.5.3/24'],
+                'aliases': [{'address': '192.168.5.3', 'netmask': 24}],
             },
         )
     assert 'interface_update.aliases.0' in ve.value

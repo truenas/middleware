@@ -1731,6 +1731,7 @@ class PoolService(CRUDService):
             args = []
 
         await self.middleware.call('notifier.volume_import', data.get('name') or pool['name'], data['guid'], *args)
+
         return True
 
     @accepts(
@@ -1783,7 +1784,7 @@ class PoolService(CRUDService):
                         dst_path
                     ]
                     rsync_proc = await Popen(
-                        line, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0, preexec_fn=os.setsid,
+                        line, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, preexec_fn=os.setsid,
                     )
                     try:
                         progress_buffer = JobProgressBuffer(job)

@@ -167,14 +167,14 @@ dcctl_stop()
 		dcctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
 		domaincontroller_set 0
-		dcctl_cmd ${service} ix-pre-samba start
+		dcctl_cmd ${python} ${notifier} call etc.generate smb 
 
 	elif [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "1" ]
 	then
 		dcctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
 		domaincontroller_set 0
-		dcctl_cmd ${service} ix-pre-samba start
+		dcctl_cmd ${python} ${notifier} call etc.generate smb 
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "0" ]
 	then

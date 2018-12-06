@@ -436,3 +436,25 @@ class ReplicationService(CRUDService):
             "ssh_port": result["port"],
             "ssh_hostkey": result["host_key"],
         }
+
+    def _semiautomatic_setup(self, verrors, remote_uri, remote_token, remote_hostname, remote_dedicated_user):
+        with Client(remote_uri) as c:
+            if not c.call('auth.token', remote_token):
+                verrors.add(
+                    'replication_create.remote_token',
+                    'Please provide a valid token'
+                )
+            else:
+                try:
+                    with open(REPLICATION_KEY, 'r') as f:
+                        publickey = f.read()
+
+                    call_data = c.call('replication.pair', {
+                        'hostname': remote_hostname,
+                        'public-key': publickey,
+                        'user': remote_dedicated_user,
+                    })
+                except Exception as e:
+                    raise CallError('Failed to set up replication ' + str(e))
+                else:
+                    return call_data

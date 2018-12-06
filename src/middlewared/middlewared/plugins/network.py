@@ -1,7 +1,7 @@
 from middlewared.service import (CallError, ConfigService, CRUDService, Service,
                                  filterable, pass_app, private)
 from middlewared.utils import Popen, filter_list, run
-from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Str,
+from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Ref, Str,
                                 ValidationErrors, accepts)
 from middlewared.validators import Match, Range
 
@@ -9,14 +9,21 @@ import asyncio
 from collections import defaultdict
 import contextlib
 import ipaddress
+import itertools
 import netif
 import os
 import re
+import sys
 import shlex
 import signal
 import socket
 import subprocess
 import urllib.request
+
+
+# TODO: move scan_for_vrrp to middleware
+if '/usr/local/www' not in sys.path:
+    sys.path.append('/usr/local/www')
 
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 RE_MTU = re.compile(r'\bmtu\s+(\d+)')
@@ -113,7 +120,7 @@ class NetworkConfigurationService(ConfigService):
 
     @accepts(
         Dict(
-            'global_configuration',
+            'global_configuration_update',
             Str('hostname', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
             Str('hostname_b', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
             Str('hostname_virtual', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
@@ -291,11 +298,16 @@ class InterfaceService(CRUDService):
             i['int_interface']: i
             for i in self.middleware.call_sync('datastore.query', 'network.interfaces')
         }
+        is_freenas = self.middleware.call_sync('system.is_freenas')
+        if not is_freenas:
+            internal_ifaces = self.middleware.call_sync('failover.internal_interfaces')
         for name, iface in netif.list_interfaces().items():
             if iface.cloned and name not in configs:
                 continue
+            if not is_freenas and name in internal_ifaces:
+                continue
             try:
-                data[name] = self.iface_extend(iface.__getstate__(), configs)
+                data[name] = self.iface_extend(iface.__getstate__(), configs, is_freenas)
             except OSError:
                 self.logger.warn('Failed to get interface state for %s', name, exc_info=True)
         for name, config in filter(lambda x: x[0] not in data, configs.items()):
@@ -305,11 +317,11 @@ class InterfaceService(CRUDService):
                 'link_address': '',
                 'cloned': True,
                 'mtu': 1500,
-            }, configs, fake=True)
+            }, configs, is_freenas, fake=True)
         return filter_list(list(data.values()), filters, options)
 
     @private
-    def iface_extend(self, iface_state, configs, fake=False):
+    def iface_extend(self, iface_state, configs, is_freenas, fake=False):
 
         if iface_state['name'].startswith('bridge'):
             itype = 'BRIDGE'
@@ -347,6 +359,27 @@ class InterfaceService(CRUDService):
             'options': config['int_options'],
             'mtu': config['int_mtu'],
         })
+
+        if not is_freenas:
+            iface.update({
+                'failover_critical': config['int_critical'],
+                'failover_vhid': config['int_vhid'],
+                'failover_group': config['int_group'],
+                'failover_aliases': [],
+                'failover_virtual_aliases': [],
+            })
+            if config['int_ipv4address_b']:
+                iface['failover_aliases'].append({
+                    'type': 'INET',
+                    'address': config['int_ipv4address_b'],
+                    'netmask': int(config['int_v4netmaskbit']),
+                })
+            if config['int_vip']:
+                iface['failover_virtual_aliases'].append({
+                    'type': 'INET',
+                    'address': config['int_vip'],
+                    'netmask': 32,
+                })
 
         if iface['name'].startswith('bridge'):
             bridge = self.middleware.call_sync(
@@ -416,6 +449,18 @@ class InterfaceService(CRUDService):
                     'type': 'INET6',
                     'address': alias['alias_v6address'],
                     'netmask': int(alias['alias_v6netmaskbit']),
+                })
+            if not is_freenas and alias['alias_v4address_b']:
+                iface['failover_aliases'].append({
+                    'type': 'INET',
+                    'address': alias['alias_v4address_b'],
+                    'netmask': int(alias['alias_v4netmaskbit']),
+                })
+            if not is_freenas and alias['alias_vip']:
+                iface['failover_virtual_aliases'].append({
+                    'type': 'INET',
+                    'address': alias['alias_vip'],
+                    'netmask': 32,
                 })
 
         return iface
@@ -553,12 +598,20 @@ class InterfaceService(CRUDService):
         Str('type', enum=['BRIDGE', 'LINK_AGGREGATION', 'VLAN'], required=True),
         Bool('ipv4_dhcp', default=False),
         Bool('ipv6_auto', default=False),
-        List('aliases', unique=True, items=[IPAddr('ip', cidr=True)], default=[]),
+        List('aliases', unique=True, items=[
+            Dict(
+                'interface_alias',
+                Str('type', required=True, default='INET', enum=['INET', 'INET6']),
+                IPAddr('address', required=True),
+                Int('netmask', required=True),
+                register=True,
+            ),
+        ], default=[]),
         Bool('failover_critical', default=False),
         Int('failover_group'),
         Int('failover_vhid'),
-        List('failover_aliases', items=[IPAddr('ip', cidr=True)]),
-        List('failover_virtual_aliases', items=[IPAddr('ip', cidr=True)]),
+        List('failover_aliases', items=[Ref('interface_alias')]),
+        List('failover_virtual_aliases', items=[Ref('interface_alias')]),
         List('bridge_members'),
         Str('lag_protocol', enum=['LACP', 'FAILOVER', 'LOADBALANCE', 'ROUNDROBIN', 'NONE']),
         List('lag_ports', items=[Str('interface')]),
@@ -593,15 +646,6 @@ class InterfaceService(CRUDService):
         for i in required_attrs:
             if not data.get(i):
                 verrors.add(f'interface_create.{i}', 'This field is required')
-
-        if await self.middleware.call('system.is_freenas'):
-            data.pop('failover_critical', None)
-            data.pop('failover_group', None)
-            data.pop('failover_aliases', None)
-            data.pop('failover_vhid', None)
-            data.pop('failover_virtual_ips', None)
-        else:
-            raise CallError('Not yet implemented for this product')
 
         verrors.check()
 
@@ -899,10 +943,66 @@ class InterfaceService(CRUDService):
                             f'VLAN MTU cannot be bigger than parent interface.',
                         )
 
+        failover_licensed = False
+        is_freenas = await self.middleware.call('system.is_freenas')
+        if not is_freenas:
+            failover_licensed = await self.middleware.call('failover.licensed')
+        if is_freenas or not failover_licensed:
+            data.pop('failover_critical', None)
+            data.pop('failover_group', None)
+            data.pop('failover_aliases', None)
+            data.pop('failover_vhid', None)
+            data.pop('failover_virtual_aliases', None)
+        else:
+            failover = await self.middleware.call('failover.config')
+            ha_configured = await self.middleware.call('notifier.failover_status') != 'SINGLE'
+            if ha_configured and not failover['disabled']:
+                raise CallError(
+                    'Failover needs to be disabled to perform network configuration changes.'
+                )
+
+            found = True
+            for i in (
+                'failover_critical', 'failover_group', 'failover_aliases', 'failover_vhid',
+            ):
+                if i not in data:
+                    verrors.add(
+                        f'{schema_name}.{i}',
+                        'This attribute is required when configuring HA.',
+                    )
+                    found = False
+            if found:
+                if len(data['aliases']) != len(data['failover_aliases']):
+                    verrors.add(
+                        f'{schema_name}.failover_aliases',
+                        'Number of IPs must be the same between controllers.',
+                    )
+
+                if not update or update.get('failover_vhid') != data['failover_vhid']:
+                    # FIXME: lazy load because of TrueNAS
+                    from freenasUI.tools.vhid import scan_for_vrrp
+                    used_vhids = await self.middleware.run_in_thread(
+                        scan_for_vrrp, data['name'], count=None, timeout=5
+                    )
+                    if data['failover_vhid'] in used_vhids:
+                        used_vhids = ', '.join([str(i) for i in used_vhids])
+                        verrors.add(
+                            f'{schema_name}.failover_vhid',
+                            f'The following VHIDs are already in use: {used_vhids}.'
+                        )
+
+                if data['failover_critical'] and not data['failover_group']:
+                    verrors.add(
+                        f'{schema_name}.failover_group',
+                        'This attribute is required for critical failover interfaces.',
+                    )
+
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
         for i, alias in enumerate(data.get('aliases') or []):
             used_networks = []
-            alias_network = ipaddress.ip_network(alias, strict=False)
+            alias_network = ipaddress.ip_network(
+                f'{alias["address"]}/{alias["netmask"]}', strict=False
+            )
             for iface in ifaces.values():
                 for iface_alias in filter(
                     lambda x: x['type'] == ('INET' if alias_network.version == 4 else 'INET6'),
@@ -924,7 +1024,6 @@ class InterfaceService(CRUDService):
             'name': data.get('description') or '',
             'dhcp': data['ipv4_dhcp'],
             'ipv6auto': data['ipv6_auto'],
-            'vip': None,
             'vhid': data.get('failover_vhid'),
             'critical': data.get('failover_critical') or False,
             'group': data.get('failover_group'),
@@ -933,7 +1032,7 @@ class InterfaceService(CRUDService):
         }
 
     async def __create_interface_datastore(self, data, attrs):
-        interface_attrs, aliases = self.__convert_aliases_to_datastore(data)[0:2]
+        interface_attrs, aliases = self.__convert_aliases_to_datastore(data)
         interface_attrs.update(attrs)
 
         interface_id = await self.middleware.call(
@@ -944,7 +1043,7 @@ class InterfaceService(CRUDService):
         )
         yield interface_id
 
-        for alias in aliases:
+        for alias in aliases.values():
             await self.middleware.call(
                 'datastore.insert',
                 'network.alias',
@@ -955,19 +1054,31 @@ class InterfaceService(CRUDService):
     def __convert_aliases_to_datastore(self, data):
         iface = {
             'ipv4address': '',
+            'ipv4address_b': '',
             'v4netmaskbit': '',
             'ipv6address': '',
             'v6netmaskbit': '',
+            'vip': '',
         }
-        aliases = []
-        aliases_cidr = []
-        for i in data['aliases']:
-            ipaddr = ipaddress.ip_interface(i)
+        aliases = {}
+        for field, i in itertools.chain(
+            map(lambda x: ('A', x), data['aliases']),
+            map(lambda x: ('B', x), data.get('failover_aliases') or []),
+            map(lambda x: ('V', x), data.get('failover_virtual_aliases') or []),
+        ):
+            ipaddr = ipaddress.ip_interface(f'{i["address"]}/{i["netmask"]}')
             iface_ip = True
             if ipaddr.version == 4:
-                iface_addrfield = 'ipv4address'
-                alias_addrfield = 'v4address'
                 netfield = 'v4netmaskbit'
+                if field == 'A':
+                    iface_addrfield = 'ipv4address'
+                    alias_addrfield = 'v4address'
+                elif field == 'B':
+                    iface_addrfield = 'ipv4address_b'
+                    alias_addrfield = 'v4address_b'
+                else:
+                    alias_addrfield = iface_addrfield = 'vip'
+                    netfield = None  # vip hardcodes to /32
                 if iface.get(iface_addrfield) or data.get('ipv4_dhcp'):
                     iface_ip = False
             else:
@@ -979,14 +1090,16 @@ class InterfaceService(CRUDService):
 
             if iface_ip:
                 iface[iface_addrfield] = str(ipaddr.ip)
-                iface[netfield] = ipaddr.network.prefixlen
+                if netfield:
+                    iface[netfield] = ipaddr.network.prefixlen
             else:
-                aliases_cidr.append(i)
-                aliases.append({
+                cidr = f'{i["address"]}/{i["netmask"]}'
+                aliases[cidr] = {
                     alias_addrfield: str(ipaddr.ip),
-                    netfield: ipaddr.network.prefixlen,
-                })
-        return iface, aliases, aliases_cidr
+                }
+                if netfield:
+                    aliases[cidr][netfield] = ipaddr.network.prefixlen
+        return iface, aliases
 
     @accepts(
         Str('id'),
@@ -1023,10 +1136,7 @@ class InterfaceService(CRUDService):
                 }):
                     interface_id = i
             else:
-                if 'aliases' in data:
-                    interface_attrs, aliases_db, aliases_cidr = self.__convert_aliases_to_datastore(new)
-                else:
-                    interface_attrs = {}
+                interface_attrs, aliases = self.__convert_aliases_to_datastore(new)
                 config = config[0]
                 await self.middleware.call(
                     'datastore.update', 'network.interfaces', config['id'], dict(
@@ -1034,42 +1144,40 @@ class InterfaceService(CRUDService):
                     ), {'prefix': 'int_'}
                 )
 
-                if 'aliases' in data:
-                    old_aliases = set()
-                    alias_ids = {}
-                    if config:
-                        for i in await self.middleware.call(
-                            'datastore.query',
-                            'network.alias',
-                            [('interface', '=', config['id'])],
-                            {'prefix': 'alias_'},
+                old_aliases = set()
+                alias_ids = {}
+                if config:
+                    for i in await self.middleware.call(
+                        'datastore.query',
+                        'network.alias',
+                        [('interface', '=', config['id'])],
+                        {'prefix': 'alias_'},
+                    ):
+                        for name, netmask in (
+                            ('v4address', 'v4netmaskbit'),
+                            ('v4address_b', 'v4netmaskbit'),
+                            ('v6address', 'v6netmaskbit'),
+                            ('vip', None),
                         ):
                             alias = None
-                            if i['v4address']:
-                                alias = f'{i["v4address"]}/{i["v4netmaskbit"]}'
-                            if i['v6address']:
-                                alias = f'{i["v6address"]}/{i["v6netmaskbit"]}'
-                            if alias:
+                            if i[name]:
+                                alias = f'{i[name]}/{i[netmask] if netmask else "32"}'
                                 alias_ids[alias] = i['id']
                                 old_aliases.add(alias)
-                    new_aliases = set(aliases_cidr)
-                    for i in new_aliases - old_aliases:
-                        ip, netmask = i.split('/')
-                        if ':' in ip:
-                            alias = {'v6address': ip, 'v6netmaskbit': netmask}
-                        else:
-                            alias = {'v4address': ip, 'v4netmaskbit': netmask}
-                        await self.middleware.call(
-                            'datastore.insert',
-                            'network.alias',
-                            dict(interface=config['id'], **alias),
-                            {'prefix': 'alias_'}
-                        )
+                new_aliases = set(aliases.keys())
+                for i in new_aliases - old_aliases:
+                    alias = aliases[i]
+                    await self.middleware.call(
+                        'datastore.insert',
+                        'network.alias',
+                        dict(interface=config['id'], **alias),
+                        {'prefix': 'alias_'}
+                    )
 
-                    for i in old_aliases - new_aliases:
-                        alias_id = alias_ids.get(i)
-                        if alias_id:
-                            await self.middleware.call('datastore.delete', 'network.alias', alias_id)
+                for i in old_aliases - new_aliases:
+                    alias_id = alias_ids.get(i)
+                    if alias_id:
+                        await self.middleware.call('datastore.delete', 'network.alias', alias_id)
 
         except Exception:
             if interface_id:
@@ -1149,11 +1257,47 @@ class InterfaceService(CRUDService):
                 if alias['address'] == local_ip:
                     return iface
 
+    @accepts(Dict(
+        'options',
+        Bool('lag_ports', default=False),
+        Bool('vlan_parent', default=True),
+        List('exclude', default=['epair', 'tap', 'vnet']),
+    ))
+    def choices(self, options):
+        """
+        Choices of available network interfaces.
+
+        `lag_ports` will include LINK_AGGREGATION ports.
+        `vlan_parent` will include VLAN parent interface.
+        `exclude` is a list of interfaces prefix to remove.
+        """
+        interfaces = self.middleware.call_sync('interface.query')
+        choices = {i['name']: i['description'] for i in interfaces}
+        for interface in interfaces:
+            for exclude in options['exclude']:
+                if interface['name'].startswith(exclude):
+                    choices.pop(interface['name'], None)
+                    continue
+            if interface['description'] != interface['name']:
+                choices[interface['name']] = f'{interface["name"]}: {interface["description"]}'
+            if not options['lag_ports']:
+                if interface['type'] == 'LINK_AGGREGATION':
+                    for port in interface['lag_ports']:
+                        choices.pop(port, None)
+                        continue
+            if not options['vlan_parent']:
+                if interface['type'] == 'VLAN':
+                    choices.pop(interface['vlan_parent_interface'], None)
+                    continue
+        return choices
+
     @private
     async def sync(self, wait_dhcp=False):
         """
         Sync interfaces configured in database to the OS.
         """
+
+        await self.middleware.call_hook('interface.pre_sync')
 
         interfaces = [i['int_interface'] for i in (await self.middleware.call('datastore.query', 'network.interfaces'))]
         cloned_interfaces = []
@@ -1325,6 +1469,8 @@ class InterfaceService(CRUDService):
 
         if wait_dhcp and dhclient_aws:
             await asyncio.wait(dhclient_aws, timeout=30)
+
+        await self.middleware.call_hook('interface.post_sync')
 
     @private
     def alias_to_addr(self, alias):

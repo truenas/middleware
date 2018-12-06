@@ -430,13 +430,12 @@ class ServiceService(CRUDService):
         await self._service("ctld", "reload", **kwargs)
 
     async def _start_collectd(self, **kwargs):
-        await self._service("ix-collectd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'collectd')
         await self._service("collectd", "restart", **kwargs)
 
     async def _restart_collectd(self, **kwargs):
         await self._service("collectd", "stop", **kwargs)
-        await self._service("ix-collectd", "start", quiet=True, **kwargs)
-        await self._service("collectd", "start", **kwargs)
+        await self._start_collectd(**kwargs)
 
     async def _start_sysctl(self, **kwargs):
         await self._service("ix-sysctl", "start", quiet=True, **kwargs)
@@ -487,9 +486,7 @@ class ServiceService(CRUDService):
         await self._service("ix-hostname", "start", quiet=True, **kwargs)
         await self._service("hostname", "start", quiet=True, **kwargs)
         await self._service("mdnsd", "restart", quiet=True, **kwargs)
-        await self._service("collectd", "stop", **kwargs)
-        await self._service("ix-collectd", "start", quiet=True, **kwargs)
-        await self._service("collectd", "start", **kwargs)
+        await self._restart_collectd(**kwargs)
 
     async def _reload_resolvconf(self, **kwargs):
         await self._reload_hostname()
@@ -888,32 +885,30 @@ class ServiceService(CRUDService):
         asyncio.ensure_future(self._system("/bin/sleep 3 && /sbin/shutdown -p now"))
 
     async def _reload_cifs(self, **kwargs):
-        await self._service("ix-pre-samba", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "smb_share")
         await self._service("samba_server", "reload", force=True, **kwargs)
-        await self._service("ix-post-samba", "start", quiet=True, **kwargs)
         await self._service("mdnsd", "restart", **kwargs)
         # After mdns is restarted we need to reload netatalk to have it rereregister
         # with mdns. Ticket #7133
         await self._service("netatalk", "reload", **kwargs)
 
     async def _restart_cifs(self, **kwargs):
-        await self._service("ix-pre-samba", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "smb")
+        await self.middleware.call("etc.generate", "smb_share")
         await self._service("samba_server", "stop", force=True, **kwargs)
         await self._service("samba_server", "restart", quiet=True, **kwargs)
-        await self._service("ix-post-samba", "start", quiet=True, **kwargs)
         await self._service("mdnsd", "restart", **kwargs)
         # After mdns is restarted we need to reload netatalk to have it rereregister
         # with mdns. Ticket #7133
         await self._service("netatalk", "reload", **kwargs)
 
     async def _start_cifs(self, **kwargs):
-        await self._service("ix-pre-samba", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "smb")
+        await self.middleware.call("etc.generate", "smb_share")
         await self._service("samba_server", "start", quiet=True, **kwargs)
-        await self._service("ix-post-samba", "start", quiet=True, **kwargs)
 
     async def _stop_cifs(self, **kwargs):
         await self._service("samba_server", "stop", force=True, **kwargs)
-        await self._service("ix-post-samba", "start", quiet=True, **kwargs)
 
     async def _started_cifs(self, **kwargs):
         if await self._service("samba_server", "status", quiet=True, onetime=True, **kwargs):
@@ -974,7 +969,7 @@ class ServiceService(CRUDService):
         asyncio.ensure_future(self.restart("collectd", kwargs))
 
     async def _reload_user(self, **kwargs):
-        await self._service("ix-passwd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "user")
         await self._service("ix-aliases", "start", quiet=True, **kwargs)
         await self._service("ix-sudoers", "start", quiet=True, **kwargs)
         await self.reload("cifs", kwargs)
