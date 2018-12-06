@@ -5,6 +5,7 @@ import os
 import pytz
 import signal
 import threading
+import time
 
 from zettarepl.dataset.create import create_dataset
 from zettarepl.dataset.list import list_datasets
@@ -92,12 +93,12 @@ class ZettareplProcess:
 
         threading.Thread(daemon=True, target=self._process_command_queue).start()
 
-        try:
-            self.zettarepl.run()
-        except Exception:
-            logging.getLogger("zettarepl").error("Unhandled exception", exc_info=True)
-        finally:
-            self.zettarepl = None
+        while True:
+            try:
+                self.zettarepl.run()
+            except Exception:
+                logging.getLogger("zettarepl").error("Unhandled exception", exc_info=True)
+                time.sleep(10)
 
     def _process_command_queue(self):
         while self.zettarepl is not None:
