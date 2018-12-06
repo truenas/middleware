@@ -442,6 +442,28 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     middleware.send_event('failover.setup', 'ADDED', fields={})
 
 
+async def hook_sync_geli(middleware, pool=None):
+    """
+    When a new volume is created we need to sync geli file.
+    """
+    if not pool.get('encryptkey_path'):
+        return
+
+    if not await middleware.call('failover.licensed'):
+        return
+
+    try:
+        if await middleware.call(
+            'failover.call_remote', 'notifier.failover_status'
+        ) != 'BACKUP':
+            return
+    except Exception:
+        return
+
+    # TODO: failover_sync_peer is overkill as it will sync a bunch of other things
+    await middleware.call('notifier.failover_sync_peer', 'to')
+
+
 async def service_remote(middleware, service, verb, options):
     """
     Most of service actions need to be replicated to the standby node so we don't lose
@@ -479,5 +501,6 @@ def setup(middleware):
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
     middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_setup_ha, sync=True)
+    middleware.register_hook('pool.post_create_or_update', hook_sync_geli, sync=True)
     middleware.register_hook('service.pre_action', service_remote, sync=False)
     asyncio.ensure_future(journal_ha(middleware))
