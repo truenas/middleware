@@ -9,6 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('services', '0021_merge_20181116_1203'),
+        ('services', '0022_merge_20181206_0716'),
         ('services', '0023_configurable_netdata_metrics'),
     ]
 
