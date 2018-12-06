@@ -1,14 +1,11 @@
-import asyncio
-import ipaddress
+import threading
+import time
 import os
-import psutil
 import pybonjour
 import queue
-import re
 import select
 import socket
 import subprocess
-import threading
 
 from pybonjour import (
     kDNSServiceFlagsMoreComing,
@@ -19,198 +16,82 @@ from pybonjour import (
 from middlewared.service import Service, private
 
 
-class mDNSDaemonMonitor(object):
-    def __init__(self, *args, **kwargs):
-        super(mDNSDaemonMonitor, self).__init__()
-        self.middleware = kwargs.get('middleware')
+class mDNSDaemonMonitor(threading.Thread):
+
+    instance = None
+
+    def __init__(self, middleware):
+        super(mDNSDaemonMonitor, self).__init__(daemon=True)
+        self.middleware = middleware
         self.logger = self.middleware.logger
         self.mdnsd_pidfile = "/var/run/mdnsd.pid"
         self.mdnsd_piddir = "/var/run/"
+        self.mdnsd_running = threading.Event()
+        self.dns_sync = threading.Event()
 
-    def pidfile_exists(self):
-        return os.access(self.mdnsd_pidfile, os.F_OK)
+        if self.__class__.instance:
+            raise RuntimeError('Can only be instantiated a single time')
+        self.__class__.instance = self
+        self.start()
+
+    def run(self):
+        while True:
+            """
+            If the system has not completely booted yet we need to way at least
+            for DNS to be configured.
+
+            In case middlewared is started after boot, system.ready will be set after this plugin
+            is loaded, hence the dns_sync timeout.
+            """
+            if not self.middleware.call_sync('system.ready'):
+                if not self.dns_sync.wait(timeout=2):
+                    continue
+
+            pid = self.is_alive()
+            if not pid:
+                self.start_mdnsd()
+                time.sleep(2)
+                continue
+            kqueue = select.kqueue()
+            try:
+                kqueue.control([
+                    select.kevent(
+                        pid,
+                        filter=select.KQ_FILTER_PROC,
+                        flags=select.KQ_EV_ADD,
+                        fflags=select.KQ_NOTE_EXIT,
+                    )
+                ], 0, 0)
+            except ProcessLookupError:
+                continue
+            self.mdnsd_running.set()
+            self.middleware.call_sync('mdnsadvertise.restart')
+            self.middleware.call_sync('mdnsbrowser.restart')
+            kqueue.control(None, 1)
+            self.mdnsd_running.clear()
+            kqueue.close()
 
     def is_alive(self):
-        mdnsd_proc = None
-        alive = False
-
-        if not self.pidfile_exists():
+        if not os.path.exists(self.mdnsd_pidfile):
             return False
 
-        for proc in psutil.process_iter():
-            procdict = proc.as_dict(['name'])
-            procname = str(procdict['name'])
+        try:
+            with open(self.mdnsd_pidfile, 'r') as f:
+                pid = int(f.read().strip())
 
-            match = re.search("([^/]+)$", procname)
-            if not match:
-                continue
+            os.kill(pid, 0)
+        except (FileNotFoundError, ProcessLookupError, ValueError):
+            return False
+        except Exception as e:
+            self.logger.debug('Failed to read mdnsd pidfile', exc_info=True)
+            return False
 
-            procname = match.group(0)
-            if procname == "mdnsd":
-                mdnsd_proc = proc
-                break
+        return pid
 
-        if mdnsd_proc and mdnsd_proc.is_running():
-            alive = True
-
-        return alive
-
-    def start(self):
+    def start_mdnsd(self):
         p = subprocess.Popen(["/usr/local/etc/rc.d/mdnsd", "onestart"])
         p.wait()
         return p.returncode == 0
-
-    def wait_for_file_to_exist(self, path, timeout=0):
-        path_dir = os.path.abspath(os.path.realpath(os.path.dirname(path)))
-        filename = os.path.basename(path)
-        fullpath = os.path.join(path_dir, filename)
-        exists = False
-
-        fd = os.open(path_dir, os.O_RDONLY)
-        kq = select.kqueue()
-
-        events = [select.kevent(
-            fd, filter=select.KQ_FILTER_VNODE,
-            flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE | select.KQ_EV_CLEAR,
-            fflags=select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND
-        )]
-
-        events = kq.control(events, 0, 0)
-        while (not exists):
-            proc_events = kq.control([], 1024)
-            for event in proc_events:
-                if ((event.fflags & select.KQ_NOTE_WRITE) or
-                        (event.fflags & select.KQ_NOTE_EXTEND)):
-                        if os.access(fullpath, os.F_OK):
-                            exists = True
-
-            if exists is True:
-                break
-
-        kq.close()
-        os.close(fd)
-
-        return exists
-
-    def wait_for_file_change(self, path, timeout=0):
-        changed = False
-
-        with open(path, "r") as f:
-            fd = f.fileno()
-            kq = select.kqueue()
-
-            events = [select.kevent(
-                fd, filter=select.KQ_FILTER_VNODE,
-                flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE | select.KQ_EV_CLEAR,
-                fflags=select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND
-            )]
-
-            events = kq.control(events, 0, 0)
-            while (not changed):
-                proc_events = kq.control([], 1024)
-                for event in proc_events:
-                    if ((event.fflags & select.KQ_NOTE_WRITE) or
-                            (event.fflags & select.KQ_NOTE_EXTEND)):
-                            if os.access(path, os.F_OK):
-                                changed = True
-
-                if changed is True:
-                    break
-
-            kq.close()
-
-        return changed
-
-    def wait_for_file(self, path):
-        if not path:
-            return False
-
-        if not os.access(path, os.F_OK):
-            return self.wait_for_file_to_exist(path)
-
-        return self.wait_for_file_change(os.path.abspath(os.path.realpath(path)))
-
-    def check_resolv_conf(self, path):
-        if not path or not os.access(path, os.F_OK):
-            return False
-
-        ret = False
-        with open(path, "r") as f:
-            contents = f.read()
-            r = re.match('(.+)?^(\s+)?nameserver\s+([^\s]+)', contents, re.M | re.S | re.I)
-            if r and len(r.groups()) >= 3:
-                ip = r.group(3)
-                try:
-                    ipaddress.ip_address(ip)
-                    ret = True
-
-                except Exception:
-                    ret = False
-
-        return ret
-
-    def wait_for_system_dns(self):
-        filename = "/etc/resolv.conf"
-
-        while (not self.check_resolv_conf(filename)):
-            self.wait_for_file(filename)
-
-    def wait(self, timeout=0):
-        max_nevents = 1024
-        alive = False
-        t = 0
-
-        self.wait_for_system_dns()
-
-        if self.is_alive():
-            return True
-
-        fd = os.open(self.mdnsd_piddir, os.O_RDONLY)
-        kq = select.kqueue()
-
-        events = [select.kevent(
-            fd, filter=select.KQ_FILTER_VNODE,
-            flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE | select.KQ_EV_CLEAR,
-            fflags=select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND
-        )]
-
-        # This initializes kevent structure
-        events = kq.control(events, 0, 0)
-        if not self.is_alive() and self.pidfile_exists():
-            os.unlink(self.mdnsd_pidfile)
-
-        #
-        # Sleep for 1 second intervals and check if we have any events. If
-        # a timeout is specified and there are no events within it, break
-        # out of the loop.
-        #
-        while (not alive):
-            proc_events = kq.control([], max_nevents, 1)
-            for event in proc_events:
-                if ((event.fflags & select.KQ_NOTE_WRITE) or
-                        (event.fflags & select.KQ_NOTE_EXTEND)):
-                    if self.pidfile_exists() and self.is_alive():
-                        alive = True
-                        break
-            if timeout > 0 and t >= timeout:
-                break
-            t += 1
-
-        kq.close()
-        os.close(fd)
-
-        #
-        # If we have got this far and still no mdnsd, start it ourselves.
-        # This is a temporary workaround until we have a supervisor, which
-        # we will be getting when we migrate to OpenRC.
-        #
-        if not alive:
-            if self.start():
-                self.middleware.call_sync('mdnsadvertise.restart')
-                self.middleware.call_sync('mdnsbrowser.restart')
-                alive = True
-
-        return alive
 
 
 class mDNSObject(object):
@@ -280,9 +161,6 @@ class mDNSThread(threading.Thread):
         self.logger = self.middleware.logger
         self.timeout = kwargs.get('timeout', 30)
 
-        self.mdnsd = mDNSDaemonMonitor(middleware=self.middleware)
-        self.mdnsd.wait(timeout=10)
-
     def active(self, sdRef):
         return (bool(sdRef) and sdRef.fileno() != -1)
 
@@ -313,8 +191,8 @@ class DiscoverThread(mDNSThread):
         )
 
     def run(self):
-        if not self.mdnsd.is_alive():
-            self.mdnsd.wait(timeout=10)
+        if not mDNSDaemonMonitor.instance.mdnsd_running.wait(timeout=10):
+            return
 
         sdRef = pybonjour.DNSServiceBrowse(
             regtype=self.regtype,
@@ -396,8 +274,8 @@ class ServicesThread(mDNSThread):
 
     def run(self):
         while True:
-            if not self.mdnsd.is_alive():
-                self.mdnsd.wait(timeout=10)
+            if not mDNSDaemonMonitor.instance.mdnsd_running.wait(timeout=10):
+                return
 
             try:
                 obj = self.queue.get(block=True, timeout=self.timeout)
@@ -472,8 +350,8 @@ class ResolveThread(mDNSThread):
 
     def run(self):
         while True:
-            if not self.mdnsd.is_alive():
-                self.mdnsd.wait(timeout=10)
+            if not mDNSDaemonMonitor.instance.mdnsd_running.wait(timeout=10):
+                return
 
             try:
                 obj = self.queue.get(block=True, timeout=self.timeout)
@@ -791,7 +669,6 @@ class mDNSAdvertiseService(Service):
         self.threads = {}
         self.initialized = False
         self.lock = threading.Lock()
-        self.mdnsd = mDNSDaemonMonitor(middleware=self.middleware)
 
     @private
     def start(self):
@@ -799,7 +676,8 @@ class mDNSAdvertiseService(Service):
             if self.initialized:
                 return
 
-        self.mdnsd.wait(timeout=10)
+        if not mDNSDaemonMonitor.instance.mdnsd_running.wait(timeout=10):
+            return
 
         try:
             hostname = socket.gethostname().split('.')[0]
@@ -842,6 +720,10 @@ class mDNSAdvertiseService(Service):
         self.start()
 
 
+async def dns_post_sync(middleware):
+    mDNSDaemonMonitor.instance.dns_sync.set()
+
+
 def setup(middleware):
-    asyncio.ensure_future(middleware.call('mdnsadvertise.start'))
-    asyncio.ensure_future(middleware.call('mdnsbrowser.start'))
+    mDNSDaemonMonitor(middleware)
+    middleware.register_hook('dns.post_sync', dns_post_sync)
