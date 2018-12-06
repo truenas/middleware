@@ -433,9 +433,9 @@ class SharingSMBService(CRUDService):
 
         if not task:
             if path:
-                task_list = await self.get_storage_tasks(path=path)
+                task_list = await self.get_storage_tasks(path)
             elif home:
-                task_list = await self.get_storage_tasks(home=home)
+                task_list = await self.get_storage_tasks(home)
 
         if task_list:
             data['storage_task'] = list(task_list.keys())[0]
