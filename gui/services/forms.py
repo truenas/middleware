@@ -25,7 +25,6 @@
 #####################################################################
 import logging
 import os
-import re
 
 from django.db.models import Q
 from django.utils.safestring import mark_safe
