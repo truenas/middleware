@@ -645,8 +645,7 @@ class JailService(CRUDService):
                 action, source, destination, fstype, fsoptions,
                 dump, _pass, index=index
             )
-        except Exception as e:
-            # Broad exception for ValidationErrors or others
+        except ioc_exceptions.ValidationFailed as e:
             # CallError uses strings, the exception message may not always be a
             # list.
             if not isinstance(e.message, str) and isinstance(
@@ -655,7 +654,7 @@ class JailService(CRUDService):
             ):
                 e.message = '\n'.join(e.message)
 
-            self.logger.error(f'{e.__class__}: {e.message}')
+            self.logger.error(f'{e!r}')
             raise CallError(e.message)
 
         if action == "list":
