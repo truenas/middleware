@@ -1238,11 +1238,11 @@ def tasks_json(request, dataset=None):
                 if mp == zfs_mp or mp.startswith("/%s/" % zfs_mp):
                     if mp == zfs_mp:
                         task_list = models.Task.objects.filter(
-                            task_filesystem=zfs_ds
+                            task_dataset=zfs_ds
                         )
                     else:
                         task_list = models.Task.objects.filter(
-                            Q(task_filesystem=zfs_ds) &
+                            Q(task_dataset=zfs_ds) &
                             Q(task_recursive=True)
                         )
                     break
@@ -1250,7 +1250,7 @@ def tasks_json(request, dataset=None):
                 pass
 
     else:
-        task_list = models.Task.objects.order_by("task_filesystem").all()
+        task_list = models.Task.objects.order_by("task_dataset").all()
 
     for task in task_list:
         t = {}
@@ -1282,12 +1282,12 @@ def tasks_recursive_json(request, dataset=None):
     tasks = []
 
     if dataset:
-        task_list = models.Task.objects.order_by("task_filesystem").filter(
-            Q(task_filesystem=dataset) &
+        task_list = models.Task.objects.order_by("task_dataset").filter(
+            Q(task_dataset=dataset) &
             Q(task_recursive=True)
         )
     else:
-        task_list = models.Task.objects.order_by("task_filesystem").filter(
+        task_list = models.Task.objects.order_by("task_dataset").filter(
             task_recursive=True
         )
 
