@@ -109,6 +109,7 @@ class SMBService(SystemServiceService):
         Str('netbiosalias'),
         Str('workgroup'),
         Str('description'),
+        Bool('enable_smb1'),
         Str('doscharset'),
         Str('unixcharset'),
         Str('loglevel', enum=['NONE', 'MINIMUM', 'NORMAL', 'FULL', 'DEBUG']),
