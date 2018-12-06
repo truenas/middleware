@@ -2229,7 +2229,7 @@ class S3(Model):
     s3_disks = PathField(
         verbose_name=_("Disks"),
         max_length=8192,
-        blank=True,
+        blank=False,
         null=True,
         help_text=_("S3 filesystem directory")
     )
