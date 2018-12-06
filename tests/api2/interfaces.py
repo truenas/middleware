@@ -89,7 +89,10 @@ def test_07_look_at_interface_ipv4_in_use_output_(dkey):
 def test_08_set_main_interface_ipv4_to_false():
     payload = {
         'ipv4_dhcp': False,
-        "aliases": [f"{ip}/{aliases['netmask']}"]
+        "aliases": [{
+            "address": ip,
+            "netmask": aliases['netmask'],
+        }]
     }
     results = PUT(f'/interface/id/{interface}/', payload)
     assert results.status_code == 200, results.text
@@ -116,7 +119,10 @@ def test_11_creating_vlan1_interface():
     global payload
     payload = {
         "ipv4_dhcp": False,
-        "aliases": [f"{vlan1_ip}/{aliases['netmask']}"],
+        "aliases": [{
+            "address": vlan1_ip,
+            "netmask": aliases['netmask'],
+        }],
         "vlan_parent_interface": interface,
         "name": "vlan1",
         "type": "VLAN",
