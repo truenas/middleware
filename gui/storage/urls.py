@@ -31,7 +31,7 @@ from freenasUI.storage.forms import (
     AutoImportDecryptForm, show_decrypt_condition
 )
 from .views import (
-    home, tasks, replications, replications_keyscan,
+    home, replications_keyscan,
     replications_authtoken, snapshots, disk_editbulk, disk_wipe,
     disk_wipe_progress, dataset_create, dataset_delete, dataset_edit, promote_zfs,
     zvol_create, zvol_delete, zvol_edit, snapshot_delete, snapshot_delete_bulk,
@@ -49,8 +49,6 @@ from .views import (
 
 urlpatterns = [
     url(r'^home/$', home, name="storage_home"),
-    url(r'^tasks/$', tasks, name="storage_tasks"),
-    url(r'^replications/$', replications, name="storage_replications"),
     url(r'^replications/keyscan/$', replications_keyscan, name="storage_replications_keyscan"),
     url(r'^replications/authtoken/$', replications_authtoken, name="storage_replications_authtoken"),
     url(r'^snapshots/$', snapshots, name="storage_snapshots"),

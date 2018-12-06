@@ -89,21 +89,6 @@ def home(request):
     })
 
 
-def tasks(request):
-    task_list = models.Task.objects.order_by("task_filesystem").all()
-    return render(request, 'storage/tasks.html', {
-        'task_list': task_list,
-    })
-
-
-def replications(request):
-    zfsrepl_list = models.Replication.objects.select_related().all()
-    return render(request, 'storage/replications.html', {
-        'zfsrepl_list': zfsrepl_list,
-        'model': models.Replication,
-    })
-
-
 def replications_authtoken(request):
     with client as c:
         tokenid = c.call('auth.generate_token', 120)
