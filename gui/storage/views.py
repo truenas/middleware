@@ -104,14 +104,6 @@ def replications(request):
     })
 
 
-def replications_public_key(request):
-    with client as c:
-        key = c.call('replication.public_key')
-    return render(request, 'storage/replications_key.html', {
-        'key': key,
-    })
-
-
 def replications_authtoken(request):
     with client as c:
         tokenid = c.call('auth.generate_token', 120)
