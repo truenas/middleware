@@ -25,15 +25,11 @@
 #####################################################################
 
 from datetime import time
-import pickle
 import logging
 import os
-import re
 import uuid
-import subprocess
 
 from django.db import models
-from django.db.models import Q
 from django.utils.translation import ugettext as __, ugettext_lazy as _
 
 from freenasUI import choices
@@ -45,7 +41,6 @@ from freenasUI.freeadmin.models import Model, UserField
 from freenasUI.system.models import SSHCredentialsKeychainCredential
 
 log = logging.getLogger('storage.models')
-REPL_RESULTFILE = '/tmp/.repl-result'
 
 
 class Volume(Model):

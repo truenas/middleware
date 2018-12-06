@@ -44,7 +44,6 @@ import django
 django.setup()
 
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.storage.models import REPL_RESULTFILE
 from freenasUI.common.timesubr import isTimeBetween
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.locks import mntlock
@@ -52,6 +51,7 @@ from freenasUI.common.system import send_mail, get_sw_name
 from freenasUI.middleware.client import client
 from freenasUI.tools.replication_adapter import query_model
 
+REPL_RESULTFILE = '/tmp/.repl-result'
 
 #
 # Parse a list of 'zfs list -H -t snapshot -p -o name,creation' output
