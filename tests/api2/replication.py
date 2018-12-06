@@ -31,9 +31,13 @@ def periodic_snapshot_tasks():
 
 
 def test_00_bootstrap(credentials, periodic_snapshot_tasks):
-    for plugin in ["keychaincredential", "replication", "pool/snapshottask"]:
+    for plugin in ["replication", "pool/snapshottask"]:
         for i in GET(f"/{plugin}/").json():
             assert DELETE(f"/{plugin}/id/{i['id']}").status_code == 200
+    for i in GET("/keychaincredential/").json():
+        DELETE(f"/keychaincredential/id/{i['id']}")
+    for i in GET("/keychaincredential/").json():
+        assert DELETE(f"/keychaincredential/id/{i['id']}").status_code == 200
 
     result = POST("/keychaincredential/", {
         "name": "SSH Key Pair",
@@ -138,10 +142,11 @@ def test_00_bootstrap(credentials, periodic_snapshot_tasks):
     # Pull with naming schema
     (dict(direction="PULL", naming_schema=["snap-%Y%m%d-%H%M-1w"]), None),
     # Pull + also_include_naming_schema
-    (dict(direction="PULL", also_include_naming_schema=["snap-%Y%m%d-%H%M-2m"]), "also_include_naming_schema"),
-    # Pull + restrict_schedule
-    (dict(direction="PULL", restrict_schedule={"minute": "*/2"}), "restrict_schedule"),
-    (dict(direction="PULL", hold_pending_snapshots=True), "hold_pending_snapshots"),
+    (dict(direction="PULL", naming_schema=["snap-%Y%m%d-%H%M-1w"], also_include_naming_schema=["snap-%Y%m%d-%H%M-2m"]),
+     "also_include_naming_schema"),
+    # Pull + hold_pending_snapshots
+    (dict(direction="PULL", naming_schema=["snap-%Y%m%d-%H%M-1w"], hold_pending_snapshots=True),
+     "hold_pending_snapshots"),
 
     # SSH+Netcat
     (dict(transport="SSH+NETCAT", ssh_credentials=True, netcat_active_side="LOCAL", netcat_active_side_port_min=1024,
@@ -169,9 +174,8 @@ def test_00_bootstrap(credentials, periodic_snapshot_tasks):
      "periodic_snapshot_tasks"),
     # Legacy all periodic snapshot tasks
     (dict(transport="LEGACY", source_datasets=["tank/data/work"],
-          periodic_snapshot_tasks=["data-recursive", "data-work-nonrecursive"],
           ssh_credentials=True, auto=True, allow_from_scratch=True, dedup=False, large_block=False, embed=False,
-          compressed=False),
+          compressed=False, retries=1),
      None),
 
     # Does not exclude garbage
