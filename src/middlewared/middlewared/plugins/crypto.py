@@ -3,8 +3,6 @@ import dateutil.parser
 import os
 import random
 import re
-import socket
-import ssl
 
 from middlewared.async_validators import validate_country
 from middlewared.schema import accepts, Dict, Int, List, Patch, Ref, Str
@@ -23,17 +21,6 @@ CERT_TYPE_CSR = 0x20
 CERT_ROOT_PATH = '/etc/certificates'
 CERT_CA_ROOT_PATH = '/etc/certificates/CA'
 RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
-
-
-def get_context_object():
-    # BEING USED IN VCENTERPLUGIN SERVICE
-    try:
-        ssl._create_default_https_context = ssl._create_unverified_context
-    except AttributeError:
-        pass
-    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-    context.verify_mode = ssl.CERT_NONE
-    return context
 
 
 def get_cert_info_from_data(data):
@@ -325,23 +312,6 @@ class CertificateService(CRUDService):
         return cert
 
     # HELPER METHODS
-
-    @private
-    @accepts(
-        Str('hostname', required=True),
-        Int('port', required=True)
-    )
-    def get_host_certificates_thumbprint(self, hostname, port):
-        try:
-            conn = ssl.create_connection((hostname, port))
-            context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-            sock = context.wrap_socket(conn, server_hostname=hostname)
-            certificate = ssl.DER_cert_to_PEM_cert(sock.getpeercert(True))
-            return self.fingerprint(certificate)
-        except ConnectionRefusedError:
-            return ''
-        except socket.gaierror:
-            return ''
 
     @private
     @accepts(
