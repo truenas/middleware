@@ -332,19 +332,6 @@ class Jails(Model):
                     _("This jail is required by %d plugin(s)") % qs.count()
                 )
 
-        jail_path = self.jail_path
-        if jail_path.endswith('/'):
-            jail_path = jail_path.rstrip('/')
-        jail_dataset = jail_path.lstrip('/mnt/')
-        tasks = Task.objects.filter(task_filesystem__iregex=r'^%s\b' % jail_dataset)
-        for task in tasks:
-            try:
-                task.delete()
-            except Exception as e:
-                raise MiddlewareError(
-                    _("Unable to delete associated periodic snapshot %(task)s:%(error)s") % {'task': task, 'error': e}
-                )
-
         Warden().delete(jail=self.jail_host, flags=WARDEN_DELETE_FLAGS_CONFIRM)
 
     def is_linux_jail(self):
