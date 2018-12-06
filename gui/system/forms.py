@@ -629,10 +629,14 @@ class InitialWizard(CommonWizard):
                         iscsi_target_extent_serial=serial,
                     )
                     model_objs.append(extent)
-                    model_objs.append(iSCSITargetToExtent.objects.create(
-                        iscsi_target=target,
-                        iscsi_extent=extent,
-                    ))
+                    with client as c:
+                        target_to_extent = c.call(
+                            'iscsi.targetextent.create', {
+                                'target': target.id,
+                                'extent': extent.id
+                            }
+                        )
+                    model_objs.append(iSCSITargetToExtent.objects.get(pk=target_to_extent['id']))
 
                 if share_purpose not in services_restart:
                     services.objects.filter(srv_service=share_purpose).update(
