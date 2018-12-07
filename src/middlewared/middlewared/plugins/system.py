@@ -768,8 +768,10 @@ class SystemGeneralService(ConfigService):
 
         if config['ui_certificate']:
             protocol = 'https'
+            port = config['ui_httpsport']
         else:
             protocol = 'http'
+            port = config['ui_port']
 
         if '0.0.0.0' in config['ui_address'] or '127.0.0.1' in config['ui_address']:
             hosts = ['127.0.0.1']
@@ -781,11 +783,11 @@ class SystemGeneralService(ConfigService):
             try:
                 reader, writer = await asyncio.wait_for(asyncio.open_connection(
                     host,
-                    port=config['ui_httpsport'],
+                    port=port,
                 ), timeout=5)
                 writer.close()
 
-                return f'{protocol}://{host}:{config["ui_httpsport"]}'
+                return f'{protocol}://{host}:{port}'
 
             except Exception as e:
                 errors.append(f'{host}: {e}')
