@@ -787,6 +787,7 @@ def add_activedirectory_conf(client, smb4_conf):
 
     try:
         ad = Struct(client.call('datastore.query', 'directoryservice.ActiveDirectory', None, {'get': True}))
+        cifs = client.call('smb.config')
         ad.ds_type = 1  # FIXME: DS_TYPE_ACTIVEDIRECTORY = 1
     except Exception as e:
         return
@@ -805,7 +806,7 @@ def add_activedirectory_conf(client, smb4_conf):
         fad = Struct(client.call('notifier.directoryservice', 'AD'))
         ad_workgroup = fad.netbiosname.upper()
     except Exception as e:
-        ad_workgroup = ad.ad_domainname.upper().split(".")[0]
+        ad_workgroup = cifs['workgroup'].upper()
 
     confset2(smb4_conf, "workgroup = %s", ad_workgroup)
     confset2(smb4_conf, "realm = %s", ad.ad_domainname.upper())
