@@ -701,8 +701,9 @@ class AutoImportWizard(SessionWizardView):
         arg = {
             'guid': vol['guid'],
             'devices': enc_disks,
-            'passphrase': passphrase,
         }
+        if passphrase:
+            arg['passphrase'] = passphrase
 
         if enc_disks:
             try:
