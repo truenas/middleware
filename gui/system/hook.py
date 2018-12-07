@@ -38,12 +38,15 @@ class SystemHook(AppHook):
             models.Advanced,
             models.Email,
             models.SystemDataset,
+            models.ACMEDNSAuthenticator,
             models.AlertDefaultSettings,
             models.AlertService,
+            models.CloudCredentials,
+            models.SSHKeyPairKeychainCredential,
+            models.SSHCredentialsKeychainCredential,
             models.Tunable,
             models.CertificateAuthority,
             models.Certificate,
-            models.ACMEDNSAuthenticator
         ]
 
         tabs = []
@@ -96,14 +99,14 @@ class SystemHook(AppHook):
             'url': reverse('system_bootenv_datagrid'),
         })
 
-        tabs.insert(9, {
+        tabs.insert(13, {
             'name': 'Update',
             'focus': 'system.Update',
             'verbose_name': _('Update'),
             'url': reverse('system_update_index'),
         })
 
-        tabs.insert(12, {
+        tabs.insert(16, {
             'name': 'Support',
             'focus': 'system.Support',
             'verbose_name': _('Support'),
@@ -114,14 +117,14 @@ class SystemHook(AppHook):
         license = get_license()[0]
         if license is not None and not notifier().is_freenas():
             support = models.Support.objects.order_by('-id')[0]
-            tabs.insert(13, {
+            tabs.insert(17, {
                 'name': 'Proactive Support',
                 'focus': 'system.ProactiveSupport',
                 'verbose_name': _('Proactive Support'),
                 'url': support.get_edit_url() + '?inline=true',
             })
 
-            tabs.insert(14, {
+            tabs.insert(18, {
                 'name': 'ViewEnclosure',
                 'focus': 'system.ViewEnclosure',
                 'verbose_name': _('View Enclosure'),
