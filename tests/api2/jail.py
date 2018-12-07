@@ -209,7 +209,7 @@ def test_15_verify_bsd_release():
         pytest.skip(freeze_msg)
 
     freeze = False
-    stop_time = time.time() + 600
+    stop_time = time.time() + 900
     while True:
         get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
         job_status = get_job.json()[0]
