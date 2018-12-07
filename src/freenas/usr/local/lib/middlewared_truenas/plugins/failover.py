@@ -325,6 +325,17 @@ async def ha_permission(middleware, app):
         app.authenticated = True
 
 
+async def hook_geli_passphrase(middleware, pool, passphrase):
+    """
+    Hook to set pool passphrase when its changed.
+    """
+    if not passphrase:
+        return
+    if not await middleware.call('failover.licensed'):
+        return
+    await middleware.call('failover.encryption_setkey', passphrase, {'sync': True})
+
+
 def journal_sync(middleware, retries):
     with Journal() as j:
         for q in list(j.queries):
@@ -563,6 +574,7 @@ async def service_remote(middleware, service, verb, options):
 
 def setup(middleware):
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
+    middleware.register_hook('disk.post_geli_passphrase', hook_geli_passphrase, sync=False)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
     middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_setup_ha, sync=True)
