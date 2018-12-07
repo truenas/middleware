@@ -1,6 +1,5 @@
 import asyncio
 import os
-import time
 import subprocess as su
 
 import iocage_lib.iocage as ioc
@@ -543,9 +542,7 @@ class JailService(CRUDService):
         elif action == "STOP":
             iocage.stop()
         else:
-            iocage.stop()
-            time.sleep(0.5)
-            iocage.start()
+            iocage.restart()
 
         return True
 
