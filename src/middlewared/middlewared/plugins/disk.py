@@ -393,6 +393,15 @@ class DiskService(CRUDService):
             return prov.text
 
     @private
+    def label_to_disk(self, label, geom_scan=True):
+        if geom_scan:
+            geom.scan()
+        dev = self.label_to_dev(label, geom_scan=False) or label
+        part = geom.class_by_name('PART').xml.find(f'.//provider[name="{dev}"]/../name')
+        if part is not None:
+            return part.text
+
+    @private
     @accepts(Str('name'))
     async def sync(self, name):
         """
