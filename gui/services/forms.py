@@ -25,7 +25,6 @@
 #####################################################################
 import logging
 import os
-import re
 
 from django.db.models import Q
 from django.utils.safestring import mark_safe
@@ -150,12 +149,6 @@ class CIFSForm(MiddlewareModelForm, ModelForm):
             self.fields['cifs_srv_bindip'].initial = (bindips)
         else:
             self.fields['cifs_srv_bindip'].initial = ('')
-
-        # Disable UNIX extensions if not using SMB1 - We can probably disable other things too
-        proto = _fs().services.smb.config.server_min_protocol
-        if re.match('SMB[23]+', proto):
-            self.initial['cifs_srv_unixext'] = False
-            self.fields['cifs_srv_unixext'].widget.attrs['disabled'] = 'disabled'
 
         if activedirectory_enabled():
             self.initial['cifs_srv_localmaster'] = False
@@ -1424,3 +1417,51 @@ class S3Form(MiddlewareModelForm, ModelForm):
             data['storage_path'] = data.pop('disks')
         data.pop('mode', None)
         return data
+
+
+class AsigraForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = ''
+    middleware_attr_schema = 'asigra'
+    middleware_plugin = 'asigra'
+    is_singletone = True
+
+    class Meta:
+        fields = '__all__'
+        model = models.Asigra
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['filesystem'] = forms.ChoiceField(
+            label=self.fields['filesystem'].label,
+        )
+        with client as c:
+            self.fields['filesystem'].choices = [
+                (i, i) for i in c.call('pool.filesystem_choices')
+            ]
+        if self.instance.id:
+            self.fields['filesystem'].initial = self.instance.filesystem
+
+        # XXX
+        # At some point, we want to be able to change a path of necessary. This,
+        # coupled with the save() method accomplish that, but the asigra
+        # database needs to be updated for this to work. Keeping this in
+        # for now until we get the go ahead to do this from asigra.
+        # XXX
+
+        self._orig_filesystem = self.instance.filesystem
+        if self.instance.id and self.instance.filesystem:
+            if self.instance.filesystem:
+                self.fields["filesystem"].widget.attrs["readonly"] = True
+
+    def clean_filesystem(self):
+        fs = self.cleaned_data.get("filesystem")
+        if not fs:
+            raise forms.ValidationError("Filesystem can't be empty!")
+        if not os.path.exists(f'/mnt/{fs}'):
+            raise forms.ValidationError("Filesystem does not exist!")
+        return fs
+
+    def started(self):
+        with client as c:
+            return c.call('service.started', 'asigra')

@@ -56,7 +56,8 @@ define([
       'tftp': gettext('TFTP'),
       'ups': gettext('UPS'),
       'webdav': gettext('WebDAV'),
-      'netdata': gettext('Netdata')
+      'netdata': gettext('Netdata'),
+      'asigra': gettext('Asigra DS-System')
     }
 
     var Service = declare("freeadmin.Service", [ _Widget, _Templated ], {
@@ -246,6 +247,9 @@ define([
               me.sync();
             }
             me.stopLoading();
+          }, function(error) {
+            me.stopLoading();
+            setMessage(error.reason, "error");
           });
         } else {
           Middleware.call('notifier.start', [me.name, null, true], function(result) {
@@ -254,6 +258,9 @@ define([
               me.sync();
             }
             me.stopLoading();
+          }, function(error) {
+            me.stopLoading();
+            setMessage(error.reason, "error");
           });
         }
       }

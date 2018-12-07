@@ -65,7 +65,7 @@ from freenasUI.common.freenascache import (
     FLAGS_CACHE_WRITE_GROUP
 )
 
-from middlewared.client import Client
+from freenasUI.middleware.client import client
 
 log = logging.getLogger('common.freenasldap')
 
@@ -1823,15 +1823,18 @@ class FreeNAS_ActiveDirectory_Base(object):
                             break
 
         if ipv4_site and ipv6_site and ipv4_site == ipv6_site:
-            Client().call('datastore.update', 'directoryservice.activedirectory', '1', {'ad_site': ipv4_site})
+            with client as c:
+                c.call('datastore.update', 'directoryservice.activedirectory', '1', {'ad_site': ipv4_site})
             return ipv4_site
 
         if not ipv6_site and ipv4_site:
-            Client().call('datastore.update', 'directoryservice.activedirectory', '1', {'ad_site': ipv4_site})
+            with client as c:
+                c.call('datastore.update', 'directoryservice.activedirectory', '1', {'ad_site': ipv4_site})
             return ipv4_site
 
         if not ipv4_site and ipv6_site:
-            Client().call('datastore.update', 'directoryservice.activedirectory', '1', {'ad_site': ipv6_site})
+            with client as c:
+                c.call('datastore.update', 'directoryservice.activedirectory', '1', {'ad_site': ipv6_site})
             return ipv6_site
 
         return None
@@ -1920,11 +1923,18 @@ class FreeNAS_ActiveDirectory_Base(object):
             basedn
 
         netbios_name = None
+        with client as c:
+            smb = c.call('smb.config')
         results = self._search(
             self.dchandle, config, ldap.SCOPE_SUBTREE, filter
         )
         try:
             netbios_name = results[0][1]['nETBIOSName'][0].decode('utf8')
+            if netbios_name != smb['workgroup']:
+                log.debug(f"Database workgroup {smb['workgroup']} does not match LDAP value: {netbios_name}")
+                log.debug("Correcting value in freenas-v1.db")
+                with client as c:
+                    c.call('datastore.update', 'services.cifs', '1', {'cifs_srv_workgroup': netbios_name})
 
         except Exception:
             netbios_name = None

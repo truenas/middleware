@@ -270,14 +270,6 @@ class NotifierService(Service):
         """Temporary wrapper to return available languages in django"""
         return settings.LANGUAGES
 
-    def gui_static_root(self):
-        # Being used by VCenter Service
-        return settings.STATIC_ROOT
-
-    def gui_base_path(self):
-        # Being used by VCenter Service
-        return settings.HERE
-
     def dojango_dojo_version(self):
         # Being used by nginx.conf in etc plugin
         return settings.DOJANGO_DOJO_VERSION

@@ -190,54 +190,6 @@ define([
             }
 
         },
-        openVcp: function(tab) {
-            var opened = false;
-            var p = registry.byId("content");
-
-            var c = p.getChildren();
-            for(var i=0; i<c.length; i++){
-                if(c[i].tab == 'vcp'){
-                    p.selectChild(c[i]);
-                    opened = true;
-                    if(tab) {
-                        var tabnet = registry.byId("tab_vcpconfiguration");
-                        if(tabnet) {
-                            var c2 = tabnet.getChildren();
-                            for(var j=0; j<c2.length; j++){
-                                if(c2[j].domNode.getAttribute("tab") == tab)
-                                    tabnet.selectChild(c2[j]);
-                            }
-                        }
-                    } else {
-                         p.removeChild(c[i]);
-                         c[i].destroy();
-                         opened=false;
-                    }
-
-                } else {
-                  p.removeChild(c[i]);
-                  c[i].destroy();
-                }
-            }
-
-            if(opened != true) {
-                openurl = this.urlVcp;
-                if(tab) {
-                    openurl += '?tab='+tab;
-                }
-
-                var pane = new ContentPane({
-                    title: gettext('vCenter Plugin Configuration'),
-                    closable: false,
-                    //refreshOnShow: true,
-                    href: openurl,
-                });
-                pane.tab = 'vcp';
-                p.addChild(pane);
-                p.selectChild(pane);
-            }
-
-        },
         openSharing: function(tab) {
             var opened = false;
             var p = registry.byId("content");

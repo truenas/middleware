@@ -1870,40 +1870,6 @@ require([
 
     }
 
-    vcenter_https_enable_check = function () {
-        vc_enable_https = registry.byId('id_vc_enable_https');
-
-        val = vc_enable_https.get('checked');
-
-        if ( val === true ) {
-            var dialog = new Dialog({
-                title: gettext("Decreasing WebGUI https security!"),
-                id: "Vcenter_enable_https_scary_dialog",
-                content: domConstruct.create(
-                    "p", {
-                        innerHTML: gettext(
-                            gettext("<font color='red'>Warning: Selecting this reduces your https security.<br /><br />")
-                        )
-                    }
-                )
-            })
-
-            dialog.okButton = new Button({label: "Continue"});
-            dialog.cancelButton = new Button({label: "Go Back"});
-            dialog.addChild(dialog.okButton);
-            dialog.addChild(dialog.cancelButton);
-            dialog.okButton.on('click', function(e){
-                dialog.destroy();
-            });
-            dialog.cancelButton.on('click', function(e){
-                vc_enable_https.set('checked', false);
-                dialog.destroy();
-            });
-            dialog.startup();
-            dialog.show();
-        }
-    }
-
     ddnsCustomProviderToggle = function() {
         var dropdown = document.querySelector("input[name=ddns_provider]");
         var custom_ddns_server = registry.byId("id_ddns_custom_ddns_server");
@@ -3125,8 +3091,6 @@ require([
                 editObject(gettext("Wizard"), wizardUrl, []);
             } else if(item.action == 'opensupport') {
                 Menu.openSupport();
-            } else if(item.type == 'openvcp') {
-                Menu.openVcp(item.gname);
             } else if(item.action == 'opendocumentation') {
                 Menu.openDocumentation();
             } else if(item.type == 'opensharing') {

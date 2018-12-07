@@ -328,6 +328,11 @@ table.grid tr {
     border-bottom:1px #ccc solid;
 }
 
+.AsigraIcon {
+    background-image: url('/static/images/ui/tree/asigra.png');
+    width: 16px;
+    height: 16px;
+}
 .BootIcon {
     background-image:url('/legacy/static/images/ui/tree/boot.png');
     width:16px;
@@ -1154,11 +1159,6 @@ table.grid tr {
 }
 .CertificateIcon {
     background-image:url('/legacy/static/images/ui/tree/certificate.png');
-    width:16px;
-    height:16px;
-}
-.VsphereIcon {
-    background-image:url('/legacy/static/images/ui/tree/vsphere.png');
     width:16px;
     height:16px;
 }
