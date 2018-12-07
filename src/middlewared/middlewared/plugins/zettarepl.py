@@ -20,6 +20,7 @@ from zettarepl.zettarepl import Zettarepl
 
 from middlewared.logger import setup_logging
 from middlewared.service import CallError, Service
+from middlewared.utils import start_daemon_thread
 
 SCAN_THREADS = {}
 
@@ -91,7 +92,7 @@ class ZettareplProcess:
         self.zettarepl.set_observer(self.observer_queue.put)
         self.zettarepl.set_tasks(definition.tasks)
 
-        threading.Thread(daemon=True, target=self._process_command_queue).start()
+        start_daemon_thread(self._process_command_queue)
 
         while True:
             try:
@@ -159,8 +160,7 @@ class ZettareplService(Service):
                 self.process.start()
 
                 if self.observer_queue_reader is None:
-                    self.observer_queue_reader = threading.Thread(target=self._observer_queue_reader, daemon=True)
-                    self.observer_queue_reader.start()
+                    self.observer_queue_reader = start_daemon_thread(self._observer_queue_reader, daemon=True)
 
     def stop(self):
         with self.lock:
