@@ -397,7 +397,6 @@ class SharingSMBService(CRUDService):
             name = ds['name']
             mountpoint = ds['properties']['mountpoint']['parsed']
 
-            print(path, mountpoint, name)
             if path == mountpoint:
                 tasks = await self.middleware.call('pool.snapshottask.query', [['dataset', '=', name]])
             elif path.startswith(f'{mountpoint}/'):
