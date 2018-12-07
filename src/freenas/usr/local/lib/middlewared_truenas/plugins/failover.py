@@ -137,6 +137,71 @@ class FailoverService(ConfigService):
             return ['em0']
         return []
 
+    @accepts()
+    async def status(self):
+        """
+        Return the current status of this node in the failover
+
+        Returns:
+            MASTER
+            BACKUP
+            ELECTING
+            IMPORTING
+            ERROR
+            SINGLE
+        """
+        interfaces = await self.middleware.call('interface.query')
+        if not any(filter(lambda x: x.get('failover_virtual_aliases'), interfaces)):
+            return 'SINGLE'
+
+        pools = await self.middleware.call('pool.query')
+        if not pools:
+            return 'SINGLE'
+
+        if not await self.middleware.call('failover.licensed'):
+            return 'SINGLE'
+
+        masters = []
+        internal_interfaces = await self.middleware.call('failover.internal_interfaces')
+        for iface in interfaces:
+            if iface['name'] in internal_interfaces:
+                continue
+            if not iface['state']['carp_config']:
+                continue
+            if iface['state']['carp_config'][0]['state'] == 'MASTER':
+                masters.append(iface['name'])
+
+        if masters:
+            if any(filter(lambda x: x.get('status') != 'OFFLINE', pools)):
+                return 'MASTER'
+            if os.path.exists('/tmp/.failover_electing'):
+                return 'ELECTING'
+            elif os.path.exists('/tmp/.failover_importing'):
+                return 'IMPORTING'
+            elif os.path.exists('/tmp/.failover_failed'):
+                return 'ERROR'
+
+        try:
+            remote_imported = await self.middleware.call('failover.call_remote', 'pool.query', [
+                [['status', '!=', 'OFFLINE']]
+            ])
+            # Other node has the pool
+            if remote_imported or not pools:
+                # check for carp MASTER (any) in remote?
+                return 'BACKUP'
+            # Other node has no pool
+            elif not remote_imported:
+                # check for carp MASTER (none) in remote?
+                return 'ERROR'
+            # We couldn't contact the other node
+            else:
+                return 'UNKNOWN'
+        except Exception as e:
+            # Anything other than ClientException is unexpected and should be logged
+            if not isinstance(e, CallError):
+                self.logger.warn('Failed checking failover status', exc_info=True)
+            return 'UNKNOWN'
+
     @accepts(
         Str('method'),
         List('args', default=[]),
