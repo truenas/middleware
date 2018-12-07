@@ -92,7 +92,7 @@ class ZettareplProcess:
         self.zettarepl.set_observer(self.observer_queue.put)
         self.zettarepl.set_tasks(definition.tasks)
 
-        start_daemon_thread(self._process_command_queue)
+        start_daemon_thread(target=self._process_command_queue)
 
         while True:
             try:
@@ -160,7 +160,7 @@ class ZettareplService(Service):
                 self.process.start()
 
                 if self.observer_queue_reader is None:
-                    self.observer_queue_reader = start_daemon_thread(self._observer_queue_reader, daemon=True)
+                    self.observer_queue_reader = start_daemon_thread(target=self._observer_queue_reader)
 
     def stop(self):
         with self.lock:
