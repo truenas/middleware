@@ -2207,7 +2207,7 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
                 kwargs["initial"]["repl_enable_restrict_schedule"] = True
 
             if kwargs["instance"].repl_speed_limit:
-                kwargs["initial"]["repl_speed_limit"] = int(kwargs["instance"].repl_speed_limit / 1024 + 0.5)
+                kwargs["initial"]["repl_speed_limit"] = int(kwargs["instance"].repl_speed_limit / 1024)
 
         super().__init__(*args, **kwargs)
 
