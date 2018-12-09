@@ -64,7 +64,10 @@ class Settings(Model):
     stg_guicertificate = models.ForeignKey(
         "Certificate",
         verbose_name=_("Certificate for HTTPS"),
-        limit_choices_to={'cert_type__in': [CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL]},
+        limit_choices_to={
+            'cert_type__in': [CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL],
+            'cert_key_length__in': [1024, 2048, 4096]
+        },
         on_delete=models.SET_NULL,
         blank=True,
         null=True

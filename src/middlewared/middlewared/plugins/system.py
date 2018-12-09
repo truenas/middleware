@@ -663,42 +663,37 @@ class SystemGeneralService(ConfigService):
                         'Port specified should be between 0 - 65535'
                     )
 
-        certificate_id = data.get('ui_certificate')
-        if not certificate_id:
+        cert = await self.middleware.call(
+            'certificate.query',
+            [
+                ['id', '=', data.get('ui_certificate')],
+                ['certificate', '!=', None],
+                ['privatekey', '!=', None],
+                ['key_length', '>=', 1024]
+            ]
+        )
+        if not cert:
             verrors.add(
                 f'{schema}.ui_certificate',
-                'Certificate is required'
+                'Please specify a valid certificate which exists on the '
+                'system and key_length is greater then or equal to 1024'
             )
         else:
-            cert = await self.middleware.call(
-                'certificate.query',
-                [
-                    ["id", "=", certificate_id],
-                    ["CSR", "=", None]
-                ]
+            # getting fingerprint for certificate
+            fingerprint = await self.middleware.call(
+                'certificate.fingerprint',
+                cert[0]['certificate']
             )
-            if not cert:
+            if fingerprint:
+                syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
+                syslog.syslog(syslog.LOG_ERR, 'Fingerprint of the certificate used in UI : ' + fingerprint)
+                syslog.closelog()
+            else:
+                # Error while parsing the certificate for fingerprint
                 verrors.add(
                     f'{schema}.ui_certificate',
-                    'Please specify a valid certificate which exists on the FreeNAS system'
+                    'Kindly verify that the selected certificate is a valid certificate'
                 )
-            else:
-                # getting fingerprint for certificate
-                fingerprint = await self.middleware.call(
-                    'certificate.get_fingerprint_of_cert',
-                    certificate_id
-                )
-                if fingerprint:
-                    syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
-                    syslog.syslog(syslog.LOG_ERR, 'Fingerprint of the certificate used in UI : ' + fingerprint)
-                    syslog.closelog()
-                else:
-                    # One reason value is None - error while parsing the certificate for fingerprint
-                    verrors.add(
-                        f'{schema}.ui_certificate',
-                        'Please check if the certificate has been added to the system and it is a '
-                        'valid certificate'
-                    )
 
         return verrors
 
