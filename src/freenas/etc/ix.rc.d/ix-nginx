@@ -263,6 +263,11 @@ __EOF__
 		fi
 	fi
 
+	if [ "${proto}" = "http" -a -f /tmp/alert_invalid_ssl_nginx ]; then
+	# Let's remove ssl invalid nginx alert file if protocol is http
+		rm /tmp/alert_invalid_ssl_nginx
+	fi
+
 	if [ ! ${working_ssl} -o "${proto}" = "http" -o "${proto}" = "httphttps" ]; then
 		echo "        listen       ${addr}:${port};"
 		echo "        listen       [${addr6}]:${port};"
