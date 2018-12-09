@@ -133,18 +133,18 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
     private_key = data.get('privatekey')
     passphrase = data.get('passphrase')
     if private_key:
-        if not load_private_key(private_key, passphrase):
+        private_key_obj = load_private_key(private_key, passphrase)
+        if not private_key_obj:
             verrors.add(
                 f'{schema_name}.privatekey',
                 'Please provide a valid private key with matching passphrase ( if any )'
             )
-
-    key_length = data.get('key_length')
-    if key_length:
-        if key_length not in [1024, 2048, 4096]:
+        elif 'create' in schema_name and private_key_obj.bits() < 1024:
+            # When a cert/ca is being created, we disallow keys with size less then 1024
+            # Update is allowed for now for keeping compatibility with very old cert/keys
             verrors.add(
-                f'{schema_name}.key_length',
-                'Key length must be a valid value ( 1024, 2048, 4096 )'
+                f'{schema_name}.privatekey',
+                'Please provide a key with size greater then or equal to 1024'
             )
 
     signedby = data.get('signedby')
@@ -345,17 +345,6 @@ class CertificateService(CRUDService):
             return cert_info
 
     @private
-    async def get_fingerprint_of_cert(self, certificate_id):
-        certificate_list = await self.query(filters=[('id', '=', certificate_id)])
-        if len(certificate_list) == 0:
-            return None
-        else:
-            return await self.middleware.run_in_thread(
-                self.fingerprint,
-                certificate_list[0]['certificate']
-            )
-
-    @private
     @accepts(
         Str('cert_certificate', required=True)
     )
@@ -389,7 +378,7 @@ class CertificateService(CRUDService):
     @accepts(
         Dict(
             'certificate_cert_info',
-            Int('key_length'),
+            Int('key_length', enum=[1024, 2048, 4096]),
             Int('serial', required=False),
             Int('lifetime', required=True),
             Str('country', required=True),
@@ -495,7 +484,7 @@ class CertificateService(CRUDService):
         Dict(
             'certificate_create',
             Int('signedby'),
-            Int('key_length'),
+            Int('key_length', enum=[1024, 2048, 4096]),
             Int('type'),
             Int('lifetime'),
             Int('serial', validators=[Range(min=1)]),

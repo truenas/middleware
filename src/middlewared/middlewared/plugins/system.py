@@ -653,28 +653,36 @@ class SystemGeneralService(ConfigService):
         protocol = data.get('ui_protocol')
         if protocol:
             if protocol != 'HTTP':
-                certificate_id = data.get('ui_certificate')
-                if not certificate_id:
+                certificate = await self.middleware.call(
+                    'certificate.query',
+                    [
+                        ['id', '=', data.get('ui_certificate')],
+                        ['certificate', '!=', None],
+                        ['privatekey', '!=', None],
+                        ['key_length', '>=', 1024],
+                    ]
+                )
+                if not certificate:
                     verrors.add(
                         f'{schema}.ui_certificate',
-                        'Protocol has been selected as HTTPS, certificate is required'
+                        'Protocol has been selected as HTTPS, a valid certificate is '
+                        'required which has key_length greater then 1024'
                     )
                 else:
                     # getting fingerprint for certificate
                     fingerprint = await self.middleware.call(
-                        'certificate.get_fingerprint_of_cert',
-                        certificate_id
+                        'certificate.fingerprint',
+                        certificate[0]['certificate']
                     )
                     if fingerprint:
                         syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
                         syslog.syslog(syslog.LOG_ERR, 'Fingerprint of the certificate used in UI : ' + fingerprint)
                         syslog.closelog()
                     else:
-                        # Two reasons value is None - certificate not found - error while parsing the certificate for
-                        # fingerprint
+                        # Error while parsing the certificate for fingerprint
                         verrors.add(
                             f'{schema}.ui_certificate',
-                            'Kindly check if the certificate has been added to the system and it is a valid certificate'
+                            'Kindly verify that the selected certificate is a valid certificate'
                         )
         return verrors
 
