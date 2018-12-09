@@ -18,6 +18,7 @@ from zettarepl.transport.create import create_transport
 from zettarepl.transport.local import LocalShell
 from zettarepl.zettarepl import Zettarepl
 
+from middlewared.client import Client
 from middlewared.logger import setup_logging
 from middlewared.service import CallError, Service
 from middlewared.utils import start_daemon_thread
@@ -69,6 +70,8 @@ class ZettareplProcess:
 
         self.zettarepl = None
 
+        self.vmware_contexts = {}
+
     def __call__(self):
         if logging.getLevelName(self.debug_level) == logging.TRACE:
             # If we want TRACE then we want all debug from zettarepl
@@ -89,7 +92,7 @@ class ZettareplProcess:
         local_shell = LocalShell()
 
         self.zettarepl = Zettarepl(scheduler, local_shell)
-        self.zettarepl.set_observer(self.observer_queue.put)
+        self.zettarepl.set_observer(self._observer)
         self.zettarepl.set_tasks(definition.tasks)
 
         start_daemon_thread(target=self._process_command_queue)
@@ -100,6 +103,36 @@ class ZettareplProcess:
             except Exception:
                 logging.getLogger("zettarepl").error("Unhandled exception", exc_info=True)
                 time.sleep(10)
+
+    def _observer(self, message):
+        self.observer_queue.put(message)
+
+        logger = logging.getLogger("middlewared.plugins.zettarepl")
+
+        try:
+            if isinstance(message, (PeriodicSnapshotTaskStart, PeriodicSnapshotTaskSuccess, PeriodicSnapshotTaskError)):
+                task_id = int(message.task_id.split("_")[-1])
+
+                if isinstance(message, PeriodicSnapshotTaskStart):
+                    with Client(py_exceptions=True) as c:
+                        context = c.call("vmware.periodic_snapshot_task_begin", task_id)
+
+                    self.vmware_contexts[task_id] = context
+
+                    if context and context["vmsynced"]:
+                        # If there were no failures and we successfully took some VMWare snapshots
+                        # set the ZFS property to show the snapshot has consistent VM snapshots
+                        # inside it.
+                        return message.response(properties={"freenas:vmsynced": "Y"})
+
+                if isinstance(message, (PeriodicSnapshotTaskSuccess, PeriodicSnapshotTaskError)):
+                    context = self.vmware_contexts.pop(task_id, None)
+                    if context:
+                        with Client(py_exceptions=True) as c:
+                            c.call("vmware.periodic_snapshot_task_end", task_id, context)
+
+        except Exception:
+            logger.error("Unhandled exception in ZettareplProcess._observer", exc_info=True)
 
     def _process_command_queue(self):
         while self.zettarepl is not None:

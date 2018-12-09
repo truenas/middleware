@@ -2,15 +2,37 @@ import pickle as pickle
 
 from lockfile import LockFile
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import Alert, AlertLevel, OneShotAlertSource, ThreadedAlertSource
 
 VMWARE_FAILS = "/var/tmp/.vmwaresnap_fails"
 VMWARESNAPDELETE_FAILS = "/var/tmp/.vmwaresnapdelete_fails"
 
 
-class VMWareSnapshotFailedAlertSource(ThreadedAlertSource):
+class VMWareSnapshotCreateFailedAlertSource(OneShotAlertSource):
     level = AlertLevel.WARNING
     title = "VMWare snapshot failed"
+
+    def create(self, args):
+        return Alert("Creating VMWare snapshot %(snapshot)s of VM %(vm)s at %(hostname)s failed: %(error)s", args)
+
+    def delete(self, alerts, query):
+        pass
+
+
+class VMWareSnapshotDeleteFailedAlertSource(OneShotAlertSource):
+    level = AlertLevel.WARNING
+    title = "VMWare snapshot delete failed"
+
+    def create(self, args):
+        return Alert("Deleting VMWare snapshot %(snapshot)s of VM %(vm)s at %(hostname)s failed: %(error)s", args)
+
+    def delete(self, alerts, query):
+        pass
+
+
+class LegacyVMWareSnapshotFailedAlertSource(ThreadedAlertSource):
+    level = AlertLevel.WARNING
+    title = "VMWare snapshot failed (legacy replication)"
 
     def check_sync(self):
         try:
@@ -32,9 +54,9 @@ class VMWareSnapshotFailedAlertSource(ThreadedAlertSource):
         return alerts
 
 
-class VMWareSnapshotDeleteFailAlertSource(ThreadedAlertSource):
+class LegacyVMWareSnapshotDeleteFailAlertSource(ThreadedAlertSource):
     level = AlertLevel.WARNING
-    title = "VMWare snapshot delete failed"
+    title = "VMWare snapshot delete failed (legacy replication)"
 
     def check_sync(self):
         try:
