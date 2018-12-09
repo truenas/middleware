@@ -56,6 +56,47 @@ class PeriodicSnapshotTaskService(CRUDService):
         )
     )
     async def do_create(self, data):
+        """
+        Create a Periodic Snapshot Task
+
+        Create a Periodic Snapshot Task that will take snapshots of specified `dataset` at specified `schedule`.
+        Recursive snapshots can be created if `recursive` flag is enabled. You can `exclude` specific child datasets
+        from snapshot.
+        Snapshots will be automatically destroyed after a certain amount of time, specified by
+        `lifetime_value` and `lifetime_unit`.
+        Snapshots will be named according to `naming_schema` which is a `strftime`-like template for snapshot name
+        and must contain `%Y`, `%m`, `%d`, `%H` and `%M`.
+
+        .. examples(websocket)::
+
+          Create a recursive Periodic Snapshot Task for dataset `data/work` excluding `data/work/temp`. Snapshots
+          will be created on weekdays every hour from 09:00 to 18:00 and will be stored for two weeks.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.snapshottask.create",
+                "params": [{
+                    "dataset": "data/work",
+                    "recursive": true,
+                    "exclude": ["data/work/temp"],
+                    "lifetime_value": 2,
+                    "lifetime_unit": "WEEK",
+                    "naming_schema": "auto_%Y-%m-%d_%H-%M",
+                    "schedule": {
+                        "minute": "0",
+                        "hour": "*",
+                        "dom": "*",
+                        "month": "*",
+                        "dow": "1,2,3,4,5",
+                        "begin": "09:00",
+                        "end": "18:00"
+                    }
+                }]
+            }
+        """
+
         verrors = ValidationErrors()
 
         verrors.add_child('periodic_snapshot_create', await self._validate(data))
@@ -88,6 +129,41 @@ class PeriodicSnapshotTaskService(CRUDService):
         Patch('periodic_snapshot_create', 'periodic_snapshot_update', ('attr', {'update': True}))
     )
     async def do_update(self, id, data):
+        """
+        Update a Periodic Snapshot Task with specific `id`
+
+        See the documentation for `create` method for information on payload contents
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.snapshottask.update",
+                "params": [
+                    1,
+                    {
+                        "dataset": "data/work",
+                        "recursive": true,
+                        "exclude": ["data/work/temp"],
+                        "lifetime_value": 2,
+                        "lifetime_unit": "WEEK",
+                        "naming_schema": "auto_%Y-%m-%d_%H-%M",
+                        "schedule": {
+                            "minute": "0",
+                            "hour": "*",
+                            "dom": "*",
+                            "month": "*",
+                            "dow": "1,2,3,4,5",
+                            "begin": "09:00",
+                            "end": "18:00"
+                        }
+                    }
+                ]
+            }
+        """
+
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
@@ -143,6 +219,21 @@ class PeriodicSnapshotTaskService(CRUDService):
         Int('id')
     )
     async def do_delete(self, id):
+        """
+        Delete a Periodic Snapshot Task with specific `id`
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.snapshottask.delete",
+                "params": [
+                    1
+                ]
+            }
+        """
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,

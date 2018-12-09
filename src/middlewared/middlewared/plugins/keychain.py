@@ -144,6 +144,48 @@ class KeychainCredentialService(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
+        """
+        Create a Keychain Credential
+
+        Create a Keychain Credential of any type.
+        Every Keychain Credential has a `name` which is used to distinguish it from others.
+        The following `type`s are supported:
+         * `SSH_KEY_PAIR`
+           Which `attributes` are:
+           * `private_key`
+           * `public_key` (which can be omitted and thus automatically derived from private key)
+           At least one attribute is required.
+
+         * `SSH_CREDENTIALS`
+           Which `attributes` are:
+           * `host`
+           * `port` (default 22)
+           * `username` (default root)
+           * `private_key` (Keychain Credential ID)
+           * `remote_host_key` (you can use `keychaincredential.remote_ssh_host_key_scan` do discover it)
+           * `cipher`: one of `STANDARD`, `FAST`, or `DISABLED` (last requires special support from both SSH server and
+             client)
+           * `connect_timeout` (default 10)
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "keychaincredential.create",
+                "params": [{
+                    "name": "Work SSH connection",
+                    "type": "SSH_CREDENTIALS",
+                    "attributes": {
+                        "host": "work.freenas.org",
+                        "private_key": 12,
+                        "remote_host_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMn1VjdSMatGnxbOsrneKyai+dh6d4Hm"
+                    }
+                }]
+            }
+        """
+
         await self._validate("keychain_credential_create", data)
 
         data["id"] = await self.middleware.call(
@@ -158,10 +200,41 @@ class KeychainCredentialService(CRUDService):
         Patch(
             "keychain_credential_create",
             "keychain_credential_update",
-            ("attr", {"update": True})
+            ("attr", {"update": True}),
+            ("rm", {"name": "type"}),
         )
     )
     async def do_update(self, id, data):
+        """
+        Update a Keychain Credential with specific `id`
+
+        Please note that you can't change `type`
+
+        Also you must specify full `attributes` value
+
+        See the documentation for `create` method for information on payload contents
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "keychaincredential.update",
+                "params": [
+                    13,
+                    {
+                        "name": "Work SSH connection",
+                        "attributes": {
+                            "host": "work.ixsystems.com",
+                            "private_key": 12,
+                            "remote_host_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMn1VjdSMatGnxbOsrneKyai+dh6d4Hm"
+                        }
+                    }
+                ]
+            }
+        """
+
         old = await self._get_instance(id)
 
         new = old.copy()
@@ -183,6 +256,22 @@ class KeychainCredentialService(CRUDService):
 
     @accepts(Int("id"))
     async def do_delete(self, id):
+        """
+        Delete Keychain Credential with specific `id`
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "keychaincredential.delete",
+                "params": [
+                    13
+                ]
+            }
+        """
+
         instance = await self._get_instance(id)
 
         used_by = await TYPES[instance["type"]].used_by(self.middleware, id)
@@ -217,6 +306,7 @@ class KeychainCredentialService(CRUDService):
         if verrors:
             raise verrors
 
+    @private
     @accepts(Int("id"), Str("type"))
     async def get_of_type(self, id, type):
         try:
@@ -231,6 +321,22 @@ class KeychainCredentialService(CRUDService):
 
     @accepts()
     def generate_ssh_key_pair(self):
+        """
+        Generate a public/private key pair
+
+        Generate a public/private key pair (useful for `SSH_KEY_PAIR` type)
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "keychaincredential.generate_ssh_key_pair",
+                "params": []
+            }
+        """
+
         key = os.path.join("/tmp", "".join(random.choice(string.ascii_letters) for _ in range(32)))
         if os.path.exists(key):
             os.unlink(key)
@@ -260,6 +366,24 @@ class KeychainCredentialService(CRUDService):
         Int("connect_timeout", default=10),
     ))
     async def remote_ssh_host_key_scan(self, data):
+        """
+        Discover a remote host key
+
+        Discover a remote host key (useful for `SSH_CREDENTIALS`)
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "keychaincredential.delete",
+                "params": [{
+                    "host": "work.freenas.org"
+                }]
+            }
+        """
+
         proc = await run(["ssh-keyscan", "-p", str(data["port"]), "-T", str(data["connect_timeout"]), data["host"]],
                          check=False, encoding="utf8")
         if proc.returncode == 0:
@@ -281,6 +405,30 @@ class KeychainCredentialService(CRUDService):
         Int("connect_timeout", default=10),
     ))
     def remote_ssh_semiautomatic_setup(self, data):
+        """
+        Perform semi-automatic SSH connection setup with other FreeNAS machine
+
+        Perform semi-automatic SSH connection setup with other FreeNAS machine. It creates a `SSH_CREDENTIALS`
+        credential with specified `name` that can be used to connect to FreeNAS machine with specified `url` and
+        temporary auth `token`. Other FreeNAS machine adds `private_key` to allowed `username`'s private keys. Other
+        `SSH_CREDENTIALS` attributes such as `cipher` and `connect_timeout` can be specified as well.
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "keychaincredential.keychain_remote_ssh_semiautomatic_setup",
+                "params": [{
+                    "name": "Work SSH connection",
+                    "url": "https://work.freenas.org",
+                    "token": "8c8d5fd1-f749-4429-b379-9c186db4f834",
+                    "private_key": 12
+                }]
+            }
+        """
+
         replication_key = self.middleware.run_coroutine(
             get_ssh_key_pair_with_private_key(self.middleware, data["private_key"]))
 
