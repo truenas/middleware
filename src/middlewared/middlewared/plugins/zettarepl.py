@@ -10,7 +10,10 @@ import time
 from zettarepl.dataset.create import create_dataset
 from zettarepl.dataset.list import list_datasets
 from zettarepl.definition.definition import Definition
-from zettarepl.observer import *
+from zettarepl.observer import (
+    PeriodicSnapshotTaskStart, PeriodicSnapshotTaskSuccess, PeriodicSnapshotTaskError,
+    ReplicationTaskStart, ReplicationTaskSnapshotSuccess, ReplicationTaskSuccess, ReplicationTaskError
+)
 from zettarepl.scheduler.clock import Clock
 from zettarepl.scheduler.scheduler import Scheduler
 from zettarepl.scheduler.tz_clock import TzClock
