@@ -140,6 +140,82 @@ class ReplicationService(CRUDService):
         )
     )
     async def do_create(self, data):
+        """
+        Create a Replication Task
+
+        Create a Replication Task that will push or pull ZFS snapshots to or from remote host..
+
+        * `direction` specifies whether task will `PUSH` or `PULL` snapshots
+        * `transport` is a method of snapshots transfer:
+          * `SSH` transfers snapshots via SSH connection. This method is supported everywhere but does not achieve
+            great performance
+            `ssh_credentials` is a required field for this transport (Keychain Credential ID of type `SSH_CREDENTIALS`)
+          * `SSH+NETCAT` uses unencrypted connection for data transfer. This can only be used in trusted networks
+            and requires a port (specified by range from `netcat_active_side_port_min` to `netcat_active_side_port_max`)
+            to be open on `netcat_active_side`
+            `ssh_credentials` is also required for control connection
+          * `LOCAL` replicates to or from localhost
+          * `LEGACY` uses legacy replication engine prior to FreeNAS 11.3
+        * `source_datasets` is a non-empty list of datasets to replicate snapshots from
+        * `target_dataset` is a dataset to put snapshots into. It must exist on target side
+        * `recursive` and `exclude` have the same meaning as for Periodic Snapshot Task
+        * `periodic_snapshot_tasks` is a list of periodic snapshot task IDs that are sources of snapshots for this
+          replication task. Only push replication tasks can be bound to periodic snapshot tasks.
+        * `naming_schema` is a list of naming schemas for pull replication
+        * `also_include_naming_schema` is a list of naming schemas for push replication
+        * `auto` allows replication to run automatically on schedule or after bound periodic snapshot task
+        * `schedule` is a schedule to run replication task. Only `auto` replication tasks without bound periodic
+          snapshot tasks can have a schedule
+        * `restrict_schedule` restricts when replication task with bound periodic snapshot tasks runs. For example,
+          you can have periodic snapshot tasks that run every 15 minutes, but only run replication task every hour.
+        * Enabling `only_matching_schedule` will only replicate snapshots that match `schedule` or
+          `restrict_schedule`
+        * `allow_from_scratch` will destroy all snapshots on target side and replicate everything from scratch if none
+          of the snapshots on target side matches source snapshots
+        * `hold_pending_snapshots` will prevent source snapshots from being deleted by retention of replication fails
+          for some reason
+        * `retention_policy` specifies how to delete old snapshots on target side:
+          * `SOURCE` deletes snapshots that are absent on source side
+          * `CUSTOM` deletes snapshots that are older than `lifetime_value` and `lifetime_unit`
+          * `NONE` does not delete any snapshots
+        * `compression` compresses SSH stream. Available only for SSH transport
+        * `speed_limit` limits speed of SSH stream. Available only for SSH transport
+        * `dedup`, `large_block`, `embed` and `compressed` are various ZFS stream flag documented in `man zfs send`
+        * `retries` specifies number of retries before considering replication failed
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "replication.create",
+                "params": [{
+                    "direction": "PUSH",
+                    "transport": "SSH",
+                    "ssh_credentials": [12],
+                    "source_datasets", ["data/work"],
+                    "target_dataset": "repl/work",
+                    "recursive": true,
+                    "periodic_snapshot_tasks": [5],
+                    "auto": true,
+                    "restrict_schedule": {
+                        "minute": "0",
+                        "hour": "*/2",
+                        "dom": "*",
+                        "month": "*",
+                        "dow": "1,2,3,4,5",
+                        "begin": "09:00",
+                        "end": "18:00"
+                    },
+                    "only_matching_schedule": true,
+                    "retention_policy": "CUSTOM",
+                    "lifetime_value": 1,
+                    "lifetime_unit": "WEEK",
+                }]
+            }
+        """
+
         verrors = ValidationErrors()
         verrors.add_child("replication_create", await self._validate(data))
 
@@ -169,6 +245,47 @@ class ReplicationService(CRUDService):
         ("attr", {"update": True}),
     ))
     async def do_update(self, id, data):
+        """
+        Update a Replication Task with specific `id`
+
+        See the documentation for `create` method for information on payload contents
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "replication.update",
+                "params": [
+                    7,
+                    {
+                        "direction": "PUSH",
+                        "transport": "SSH",
+                        "ssh_credentials": [12],
+                        "source_datasets", ["data/work"],
+                        "target_dataset": "repl/work",
+                        "recursive": true,
+                        "periodic_snapshot_tasks": [5],
+                        "auto": true,
+                        "restrict_schedule": {
+                            "minute": "0",
+                            "hour": "*/2",
+                            "dom": "*",
+                            "month": "*",
+                            "dow": "1,2,3,4,5",
+                            "begin": "09:00",
+                            "end": "18:00"
+                        },
+                        "only_matching_schedule": true,
+                        "retention_policy": "CUSTOM",
+                        "lifetime_value": 1,
+                        "lifetime_unit": "WEEK",
+                    }
+                ]
+            }
+        """
+
         old = await self._get_instance(id)
 
         new = old.copy()
@@ -205,6 +322,22 @@ class ReplicationService(CRUDService):
         Int("id")
     )
     async def do_delete(self, id):
+        """
+        Delete a Replication Task with specific `id`
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "replication.delete",
+                "params": [
+                    1
+                ]
+            }
+        """
+
         response = await self.middleware.call(
             "datastore.delete",
             self._config.datastore,
@@ -410,12 +543,51 @@ class ReplicationService(CRUDService):
     @accepts(Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
              Int("ssh_credentials", null=True, default=None))
     async def list_datasets(self, transport, ssh_credentials=None):
+        """
+        List datasets on remote side
+
+        Accepts `transport` and SSH credentials ID (for non-local transport)
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "replication.list_datasets",
+                "params": [
+                    "SSH",
+                    7
+                ]
+            }
+        """
+
         return await self.middleware.call("zettarepl.list_datasets", transport, ssh_credentials)
 
     @accepts(Str("dataset", required=True),
              Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
              Int("ssh_credentials", null=True, default=None))
     async def create_dataset(self, dataset, transport, ssh_credentials=None):
+        """
+        Creates dataset on remote side
+
+        Accepts `dataset` name, `transport` and SSH credentials ID (for non-local transport)
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "replication.create_dataset",
+                "params": [
+                    "repl/work",
+                    "SSH",
+                    7
+                ]
+            }
+        """
+
         return await self.middleware.call("zettarepl.create_dataset", dataset, transport, ssh_credentials)
 
     # Legacy pair support
@@ -436,25 +608,3 @@ class ReplicationService(CRUDService):
             "ssh_port": result["port"],
             "ssh_hostkey": result["host_key"],
         }
-
-    def _semiautomatic_setup(self, verrors, remote_uri, remote_token, remote_hostname, remote_dedicated_user):
-        with Client(remote_uri) as c:
-            if not c.call('auth.token', remote_token):
-                verrors.add(
-                    'replication_create.remote_token',
-                    'Please provide a valid token'
-                )
-            else:
-                try:
-                    with open(REPLICATION_KEY, 'r') as f:
-                        publickey = f.read()
-
-                    call_data = c.call('replication.pair', {
-                        'hostname': remote_hostname,
-                        'public-key': publickey,
-                        'user': remote_dedicated_user,
-                    })
-                except Exception as e:
-                    raise CallError('Failed to set up replication ' + str(e))
-                else:
-                    return call_data

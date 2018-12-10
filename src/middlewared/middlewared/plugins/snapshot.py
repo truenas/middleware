@@ -234,6 +234,7 @@ class PeriodicSnapshotTaskService(CRUDService):
                 ]
             }
         """
+
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
