@@ -15,7 +15,7 @@ class FailoverDisksAlertSource(AlertSource):
     async def check(self):
         alerts = []
 
-        if not await self.middleware.call("notifier.failover_licensed"):
+        if not await self.middleware.call("failover.licensed"):
             return alerts
 
         local_disks = set((await self.middleware.call("device.get_info", "DISK")).keys())

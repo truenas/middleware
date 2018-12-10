@@ -14,7 +14,7 @@ class FailoverBootVolumeStatusAlertSource(AlertSource):
     async def check(self):
         alerts = []
 
-        if not await self.middleware.call("notifier.failover_licensed"):
+        if not await self.middleware.call("failover.licensed"):
             return alerts
 
         try:

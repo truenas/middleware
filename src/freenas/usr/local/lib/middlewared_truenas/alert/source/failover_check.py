@@ -27,7 +27,7 @@ class FailoverCheckAlertSource(ThreadedAlertSource):
     def check_sync(self):
         alerts = []
 
-        if not notifier().failover_licensed():
+        if not self.middleware.call_sync('failover.licensed'):
             return alerts
 
         if os.path.exists(INTERNAL_IFACE_NF):
