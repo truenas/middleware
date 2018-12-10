@@ -163,7 +163,7 @@ def main(subsystem, event):
                 from middlewared.client import Client
                 try:
                     with Client() as c:
-                        status = c.call('failover.call_remote', 'notifier.failover_status')
+                        status = c.call('failover.call_remote', 'failover.status')
                     if status == 'MASTER':
                         log.warn("Other node is already active, assuming backup.")
                         sys.exit()
