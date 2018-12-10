@@ -1828,7 +1828,7 @@ class PoolService(CRUDService):
         return [
             locale.strip()
             for locale in subprocess.check_output(["locale", "-a"], encoding="utf-8").split("\n")
-            if locale.strip()
+            if locale.strip() and locale.strip() not in ["C", "POSIX"]
         ]
 
     @item_method
