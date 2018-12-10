@@ -3,6 +3,7 @@ import errno
 import netif
 import os
 import socket
+import subprocess
 import sys
 
 from collections import defaultdict
@@ -201,6 +202,25 @@ class FailoverService(ConfigService):
             if not isinstance(e, CallError):
                 self.logger.warn('Failed checking failover status', exc_info=True)
             return 'UNKNOWN'
+
+    @accepts()
+    def force_master(self):
+        """
+        Force this controller to become MASTER.
+        """
+        cp = subprocess.run(['fenced', 'force'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+        if cp.returncode != 0:
+            return False
+        for i in self.middleware.call_sync('interface.query', [('failover_critical', '!=', None)]):
+            if i['failover_vhid']:
+                subprocess.run([
+                    'python',
+                    '/usr/local/libexec/truenas/carp-state-change-hook.py',
+                    f'{i["failover_vhid"]}@{i["name"]}',
+                    'forcetakeover',
+                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+                break
+        return False
 
     @accepts(
         Str('method'),
