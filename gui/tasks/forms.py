@@ -43,12 +43,14 @@ class CloudSyncForm(ModelForm):
         label=_('Provider'),
     )
     bwlimit = forms.CharField(
+        required=False,
         label=_('Bandwidth limit'),
         help_text=_('Either single bandwidth limit or bandwidth limit schedule in rclone format.<br />'
                     'Example: "08:00,512 12:00,10M 13:00,512 18:00,30M 23:00,off".<br />'
                     'Default unit is kilobytes.')
     )
     exclude = forms.CharField(
+        required=False,
         label=_('Exclude'),
         help_text=_('Newline-separated list of files and directories to exclude from sync.<br />'
                     'See https://rclone.org/filtering/ for more details on --exclude option.'),
@@ -80,7 +82,7 @@ class CloudSyncForm(ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        if "instance" in kwargs:
+        if "instance" in kwargs and kwargs["instance"].id:
             kwargs.setdefault("initial", {})
             try:
                 kwargs["initial"]["encryption_password"] = notifier().pwenc_decrypt(
