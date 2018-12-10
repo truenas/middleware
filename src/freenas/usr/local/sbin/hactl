@@ -20,7 +20,7 @@ def main(command, quiet):
     if fo_exists:
         failover = failover[0]
     if command == "status":
-        ret = client.call('notifier.failover_status')
+        ret = client.call('failover.status')
         if ret == "MASTER":
             print("Node status: Active")
         elif ret == "BACKUP":
@@ -76,7 +76,7 @@ def main(command, quiet):
                   "There's nothing to disable here.")
             sys.exit(8)
         if failover['disabled'] is False:
-            failover_status = client.call('notifier.failover_status')
+            failover_status = client.call('failover.status')
             if failover_status in ("MASTER", "IMPORTING"):
                 status = "master"
                 try:
@@ -101,7 +101,7 @@ def main(command, quiet):
             print("Failover not enabled.  Cannot disable!")
 
     elif command == "takeover":
-        ret = client.call('notifier.failover_status')
+        ret = client.call('failover.status')
         if ret != "BACKUP":
             print("Cannot takeover volume, not passive")
             sys.exit(5)
@@ -118,7 +118,7 @@ def main(command, quiet):
                 continue
         client.call('notifier.failover_force_master', timeout=100)
     elif command == "giveback":
-        ret = client.call('notifier.failover_status')
+        ret = client.call('failover.status')
         if ret == "BACKUP":
             print("Cannot giveback volume.  This unit is not Active!")
             sys.exit(6)
