@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import errno
 import netif
 import os
@@ -221,6 +222,62 @@ class FailoverService(ConfigService):
                 ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
                 break
         return False
+
+    @accepts(Dict(
+        'options',
+        Bool('reboot', default=False),
+    ))
+    def sync_to_peer(self, options):
+        """
+        Sync database and files to the other controller.
+
+        `reboot` as true will reboot the other controller after syncing.
+        """
+        self.logger.debug('Syncing database to standby controller')
+        self.database_sync()
+        self.logger.debug('Sending license and pwenc files')
+        self.send_small_file('/data/license')
+        self.send_small_file('/data/pwenc_secret')
+        self.send_small_file('/root/.ssh/authorized_keys')
+
+        for path in ('/data/geli', '/data/ssh'):
+            if not os.path.exists(path) or not os.path.isdir(path):
+                continue
+            for f in os.listdir(path):
+                fullpath = os.path.join(path, f)
+                if not os.path.isfile(fullpath):
+                    continue
+                self.send_small_file(fullpath)
+
+        self.middleware.call_sync('failover.call_remote', 'service.start', ['ix-devd'])
+
+        if options['reboot']:
+            self.middleware.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
+
+    @accepts()
+    def sync_from_peer(self):
+        """
+        Sync database and files from the other controller.
+        """
+        self.middleware.call_sync('failover.call_remote', 'failover.sync_to_peer')
+
+    @private
+    def send_small_file(self, path, dest=None):
+        if dest is None:
+            dest = path
+        if not os.path.exists(path):
+            return
+        mode = os.stat(path).st_mode
+        with open(path, 'rb') as f:
+            first = True
+            while True:
+                read = f.read(1024 * 1024 * 10)
+                if not read:
+                    break
+                self.middleware.call_sync('failover.call_remote', 'filesystem.file_receive', [
+                    dest, base64.b64encode(read).decode(), {'mode': mode, 'append': not first}
+                ])
+                first = False
 
     @accepts(
         Str('method'),
