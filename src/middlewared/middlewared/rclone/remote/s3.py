@@ -21,7 +21,7 @@ class S3RcloneRemote(BaseRcloneRemote):
     ]
 
     task_schema = [
-        Str("encryption", enum=[None, "AES256"], default=None),
+        Str("encryption", enum=[None, "AES256"], default=None, null=True),
     ]
 
     def _get_client(self, credentials):
