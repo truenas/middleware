@@ -487,7 +487,7 @@ async def hook_setup_ha(middleware, *args, **kwargs):
 
     try:
         ha_configured = await middleware.call(
-            'failover.call_remote', 'notifier.failover_status'
+            'failover.call_remote', 'failover.status'
         ) != 'SINGLE'
     except Exception:
         ha_configured = False
@@ -530,7 +530,7 @@ async def hook_sync_geli(middleware, pool=None):
 
     try:
         if await middleware.call(
-            'failover.call_remote', 'notifier.failover_status'
+            'failover.call_remote', 'failover.status'
         ) != 'BACKUP':
             return
     except Exception:
@@ -555,7 +555,7 @@ async def service_remote(middleware, service, verb, options):
         'webshell',
         'smartd',
         'system_datasets',
-    ) or await middleware.call('notifier.failover_status') != 'MASTER':
+    ) or await middleware.call('failover.status') != 'MASTER':
         return
     # Nginx should never be stopped on standby node
     if service == 'nginx' and verb == 'stop':
