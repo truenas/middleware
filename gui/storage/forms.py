@@ -567,7 +567,7 @@ class VolumeImportForm(Form):
                     "as a Volume is deprecated"),
     )
     volume_fstype = forms.ChoiceField(
-        choices=((x, x) for x in ('UFS', 'NTFS', 'MSDOSFS', 'EXT2FS')),
+        choices=((x, x) for x in ('Autodetect', 'UFS', 'NTFS', 'MSDOSFS', 'EXT2FS')),
         widget=forms.RadioSelect(attrs=attrs_dict),
         label=_('File System type'),
     )
@@ -586,6 +586,7 @@ class VolumeImportForm(Form):
     def __init__(self, *args, **kwargs):
         super(VolumeImportForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
+        self.fields['volume_disks'].widget.attrs['onChange'] = 'autodetectFs();'
         with client as c:
             self.fields['volume_msdosfs_locale'].choices = [('', 'Default')] + [
                 (locale, locale)

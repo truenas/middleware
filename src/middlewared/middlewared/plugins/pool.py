@@ -1820,6 +1820,40 @@ class PoolService(CRUDService):
         finally:
             os.rmdir(src)
 
+    @accepts(Str("device"))
+    def import_disk_autodetect_fs_type(self, device):
+        """
+        Autodetect filesystem type for `pool.import_disk`.
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.import_disk_autodetect_fs_type,
+                "params": ["/dev/da0"]
+            }
+        """
+        proc = subprocess.Popen(["blkid", device], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8")
+        output = proc.communicate()[0]
+        if proc.returncode != 0:
+            raise CallError(f"blkid failed with code {proc.returncode}: {output}")
+
+        m = re.search("TYPE=\"(.+?)\"", output)
+        if m is None:
+            raise CallError(f"blkid produced unexpected output: {output}")
+
+        fs = {
+            "ntfs": "ntfs",
+            "vfat": "msdosfs",
+        }.get(m.group(1))
+        if fs is None:
+            self.logger.info("Unknown FS: %s", m.group(1))
+            return None
+
+        return fs
+
     @accepts()
     def import_disk_msdosfs_locales(self):
         """
