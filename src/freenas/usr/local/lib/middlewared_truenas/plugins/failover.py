@@ -23,6 +23,7 @@ django.setup()
 from freenasUI.freeadmin.sqlite3_ha.base import Journal
 from freenasUI.failover.detect import ha_hardware, ha_node
 from freenasUI.failover.enc_helper import LocalEscrowCtl
+from freenasUI.middleware.notifier import notifier
 from freenasUI.support.utils import get_license
 
 INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
@@ -278,6 +279,49 @@ class FailoverService(ConfigService):
                     dest, base64.b64encode(read).decode(), {'mode': mode, 'append': not first}
                 ])
                 first = False
+
+    @accepts()
+    def disabled_reasons(self):
+        """
+        Returns a list of reasons why failover is not enabled/functional.
+
+        NO_VOLUME - There are no pools configured.
+        NO_VIP - There are no interfaces configured with Virtual IP.
+        NO_SYSTEM_READY - Other controller has not finished booting.
+        NO_PONG - Other controller is not communicable.
+        NO_FAILOVER - Failover is administratively disabled.
+        """
+        reasons = []
+        if not self.middleware.call_sync('pool.query'):
+            reasons.append('NO_VOLUME')
+        if not any(filter(
+            lambda x: x.get('failover_virtual_aliases'), self.middleware.call_sync('interface.query'))
+        ):
+            reasons.append('NO_VIP')
+        try:
+            assert self.middleware.call_sync('failover.call_remote', 'core.ping') == 'pong'
+            # This only matters if it has responded to 'ping', otherwise
+            # there is no reason to even try
+            if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
+                reasons.append('NO_SYSTEM_READY')
+        except CallError as e:
+            if e.errno not in (errno.ECONNREFUSED, errno.EHOSTDOWN, ClientException.ENOMETHOD):
+                reasons.append('NO_PONG')
+            else:
+                try:
+                    assert self.middleware.call_sync('failover.legacy_ping') == 'pong'
+                except Exception:
+                    reasons.append('NO_PONG')
+        except Exception:
+            reasons.append('NO_PONG')
+        if self.middleware.call_sync('failover.config')['disabled']:
+            reasons.append('NO_FAILOVER')
+        return reasons
+
+    @private
+    def legacy_ping(self):
+        # This is to communicate with legacy TrueNAS, pre middlewared for upgrading.
+        return notifier().failover_rpc().ping()
 
     @accepts(
         Str('method'),
