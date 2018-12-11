@@ -22,8 +22,6 @@ pool_data = {
     'vol_name': pool_name
 }
 
-datasets = ['share', 'jails', 'snapcheck', 'testzvol1', 'testzvol2']
-
 
 def test_01_Check_getting_disks():
     global results
