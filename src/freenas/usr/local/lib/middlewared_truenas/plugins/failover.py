@@ -318,6 +318,18 @@ class FailoverService(ConfigService):
             reasons.append('NO_FAILOVER')
         return reasons
 
+    @accepts(Dict(
+        'options',
+        Str('passphrase', password=True, required=True),
+    ))
+    def unlock(self, options):
+        """
+        Unlock pools in HA, syncing passphrase between controllers and forcing this controller
+        to be MASTER importing the pools.
+        """
+        self.middleware.call('failover.encryption_setkey', options['passphrase'])
+        return self.middleware.call('failover.force_master')
+
     @private
     def legacy_ping(self):
         # This is to communicate with legacy TrueNAS, pre middlewared for upgrading.
