@@ -46,7 +46,7 @@ class SytemAdvancedService(ConfigService):
         """
         if(
             not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('notifier.failover_hardware') == 'ECHOSTREAM'
+            await self.middleware.call('failover.hardware') == 'ECHOSTREAM'
         ):
             ports = ['0x3f8']
         else:

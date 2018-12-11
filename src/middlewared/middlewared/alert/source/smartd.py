@@ -21,7 +21,7 @@ class smartdAlertSource(ThreadedAlertSource):
                 # in these environments isn"t a huge deal.  So we"ll skip alerting.
                 return
             if not self.middleware.call_sync("system.is_freenas"):
-                if self.middleware.call_sync("notifier.failover_status") != "MASTER":
+                if self.middleware.call_sync("failover.status") != "MASTER":
                     return
             p1 = subprocess.Popen(["/usr/sbin/service", "smartd-daemon", "status"], stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE, encoding="utf8")

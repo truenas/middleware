@@ -81,7 +81,7 @@ class AlertService(Service):
     @private
     async def initialize(self):
         if not await self.middleware.call("system.is_freenas"):
-            if await self.middleware.call("notifier.failover_node") == "B":
+            if await self.middleware.call("failover.node") == "B":
                 self.node = "B"
 
         for alert in await self.middleware.call("datastore.query", "system.alert"):
@@ -176,8 +176,8 @@ class AlertService(Service):
 
         if (
             not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('notifier.failover_licensed') and
-            await self.middleware.call('notifier.failover_status') == 'BACKUP'
+            await self.middleware.call('failover.licensed') and
+            await self.middleware.call('failover.status') == 'BACKUP'
         ):
             return
 
@@ -283,13 +283,13 @@ class AlertService(Service):
         backup_node = "B"
         run_on_backup_node = False
         if not await self.middleware.call("system.is_freenas"):
-            if await self.middleware.call("notifier.failover_licensed"):
+            if await self.middleware.call("failover.licensed"):
                 master_node = await self.middleware.call("failover.node")
                 try:
                     backup_node = await self.middleware.call("failover.call_remote", "failover.node")
                     remote_version = await self.middleware.call("failover.call_remote", "system.version")
                     remote_failover_status = await self.middleware.call("failover.call_remote",
-                                                                        "notifier.failover_status")
+                                                                        "failover.status")
                 except Exception:
                     pass
                 else:
@@ -400,8 +400,8 @@ class AlertService(Service):
     async def flush_alerts(self):
         if (
             not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('notifier.failover_licensed') and
-            await self.middleware.call('notifier.failover_status') == 'BACKUP'
+            await self.middleware.call('failover.licensed') and
+            await self.middleware.call('failover.status') == 'BACKUP'
         ):
             return
 

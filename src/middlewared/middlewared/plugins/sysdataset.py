@@ -44,15 +44,12 @@ class SystemDatasetService(ConfigService):
         # Make `uuid` point to the uuid of current node
         config['uuid_a'] = config['uuid']
         if not await self.middleware.call('system.is_freenas'):
-            if await self.middleware.call('notifier.failover_node') == 'B':
+            if await self.middleware.call('failover.node') == 'B':
                 config['uuid'] = config['uuid_b']
 
         if not config['uuid']:
             config['uuid'] = uuid.uuid4().hex
-            if (
-                not await self.middleware.call('system.is_freenas') and
-                await self.middleware.call('notifier.failover_node') == 'B'
-            ):
+            if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.node') == 'B':
                 attr = 'uuid_b'
                 config[attr] = config['uuid']
             else:
@@ -126,7 +123,7 @@ class SystemDatasetService(ConfigService):
         config = await self.config()
 
         if not await self.middleware.call('system.is_freenas'):
-            if await self.middleware.call('notifier.failover_status') == 'BACKUP' and \
+            if await self.middleware.call('failover.status') == 'BACKUP' and \
                     ('basename' in config and config['basename'] and config['basename'] != 'freenas-boot/.system'):
                 try:
                     os.unlink(SYSDATASET_PATH)
@@ -289,7 +286,7 @@ class SystemDatasetService(ConfigService):
             return None
 
         restartfiles = ["/var/db/nfs-stablerestart", "/var/db/nfs-stablerestart.bak"]
-        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('notifier.failover_status') == 'BACKUP':
+        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.status') == 'BACKUP':
             return None
 
         for item in restartfiles:
@@ -400,7 +397,7 @@ class SystemDatasetService(ConfigService):
         use_rrd_dataset = False
         if (
             rrd_mount and config['rrd'] and (
-                is_freenas or (not is_freenas and self.middleware.call_sync('notifier.failover_status') != 'BACKUP')
+                is_freenas or (not is_freenas and self.middleware.call_sync('failover.status') != 'BACKUP')
             )
         ):
             use_rrd_dataset = True

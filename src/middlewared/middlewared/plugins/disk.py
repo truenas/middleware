@@ -713,8 +713,8 @@ class DiskService(CRUDService):
         # Skip sync disks on backup node
         if (
             not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('notifier.failover_licensed') and
-            await self.middleware.call('notifier.failover_status') == 'BACKUP'
+            await self.middleware.call('failover.licensed') and
+            await self.middleware.call('failover.status') == 'BACKUP'
         ):
             return
 
@@ -772,8 +772,8 @@ class DiskService(CRUDService):
         # Skip sync disks on backup node
         if (
             not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('notifier.failover_licensed') and
-            await self.middleware.call('notifier.failover_status') == 'BACKUP'
+            await self.middleware.call('failover.licensed') and
+            await self.middleware.call('failover.status') == 'BACKUP'
         ):
             return
 
