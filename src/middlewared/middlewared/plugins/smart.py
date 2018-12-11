@@ -1,6 +1,6 @@
 from itertools import chain
 
-from middlewared.schema import accepts, Cron, Dict, Int, List, Patch, Str
+from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.validators import Email, Range, Unique
 from middlewared.service import CRUDService, private, SystemServiceService, ValidationErrors
 
@@ -62,7 +62,8 @@ class SMARTTestService(CRUDService):
             'smart_task_create',
             Cron('schedule'),
             Str('desc'),
-            List('disks', items=[Str('disk')], default=[], required=True),
+            Bool('all_disks', default=False),
+            List('disks', items=[Str('disk')], default=[]),
             Str('type', enum=['LONG', 'SHORT', 'CONVEYANCE', 'OFFLINE'], required=True),
             register=True
         )
@@ -71,11 +72,18 @@ class SMARTTestService(CRUDService):
         data['type'] = data.pop('type')[0]
         verrors = await self.validate_data(data, 'smart_test_create')
 
-        if not data.get('disks'):
-            verrors.add(
-                'smart_test_create.disks',
-                'This field is required'
-            )
+        if data['all_disks']:
+            if data.get('disks'):
+                verrors.add(
+                    'smart_test_create.disks',
+                    'This test is already enabled for all disks'
+                )
+        else:
+            if not data.get('disks'):
+                verrors.add(
+                    'smart_test_create.disks',
+                    'This field is required'
+                )
 
         if verrors:
             raise verrors
@@ -112,11 +120,18 @@ class SMARTTestService(CRUDService):
 
         new['disks'] = [disk for disk in chain(new_disks, old['disks']) if disk not in deleted_disks]
 
-        if not new.get('disks'):
-            verrors.add(
-                'smart_test_update.disks',
-                'This field is required'
-            )
+        if new['all_disks']:
+            if new.get('disks'):
+                verrors.add(
+                    'smart_test_update.disks',
+                    'This test is already enabled for all disks'
+                )
+        else:
+            if not new.get('disks'):
+                verrors.add(
+                    'smart_test_update.disks',
+                    'This field is required'
+                )
 
         if verrors:
             raise verrors

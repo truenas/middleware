@@ -468,7 +468,11 @@ class SMARTTestForm(MiddlewareModelForm, ModelForm):
                 if everyx == hours:
                     ins.smarttest_hour = '*/%d' % gap
         super(SMARTTestForm, self).__init__(*args, **kwargs)
-        key_order(self, 0, 'smarttest_disks', instance=True)
+        self.fields['smarttest_all_disks'].widget.attrs['onChange'] = (
+            'toggleGeneric("id_smarttest_all_disks", ["id_smarttest_disks"], false);'
+        )
+        key_order(self, 1, 'smarttest_disks', instance=True)
+        self.fields['smarttest_disks'].required = False
         mchoicefield(self, 'smarttest_month', [
             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
         ])
