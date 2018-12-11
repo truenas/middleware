@@ -107,7 +107,7 @@ async def render(service, middleware):
         SELECT *
         FROM storage_disk d
         LEFT JOIN tasks_smarttest_smarttest_disks sd ON sd.disk_id = d.disk_identifier
-        LEFT JOIN tasks_smarttest s ON sd.smarttest_id = s.id
+        LEFT JOIN tasks_smarttest s ON s.id = sd.smarttest_id OR s.smarttest_all_disks = true
         WHERE disk_togglesmart = 1 AND disk_expiretime IS NULL
     """)
 
