@@ -1837,7 +1837,20 @@ class PoolService(CRUDService):
             }
         """
         proc = subprocess.Popen(["blkid", device], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8")
-        output = proc.communicate()[0]
+        output = proc.communicate()[0].strip()
+
+        if proc.returncode == 2:
+            proc = subprocess.Popen(["file", "-s", device], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                    encoding="utf-8")
+            output = proc.communicate()[0].strip()
+            if proc.returncode != 0:
+                raise CallError(f"blkid failed with code 2 and file failed with code {proc.returncode}: {output}")
+
+            if "Unix Fast File system" in output:
+                return "ufs"
+
+            raise CallError(f"blkid failed with code 2 and file produced unexpected output: {output}")
+
         if proc.returncode != 0:
             raise CallError(f"blkid failed with code {proc.returncode}: {output}")
 
