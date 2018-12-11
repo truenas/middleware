@@ -1,5 +1,8 @@
 from collections import defaultdict, namedtuple
+from datetime import datetime, timedelta
+from functools import wraps
 
+import asyncio
 import errno
 import inspect
 import json
@@ -51,6 +54,49 @@ def skip_arg(count=0):
         fn._skip_arg = count
         return fn
     return wrap
+
+
+class throttle(object):
+    """
+    Decorator to throttle calls to methods.
+
+    If a condition is provided it must return a tuple (shortcut, key).
+    shortcut will immediatly bypass throttle if true.
+    key is the key for the time of last calls dict, meaning methods can be throttled based
+    on some key (possibly argument of the method).
+    """
+
+    def __init__(self, seconds=0, condition=None, exc_class=RuntimeError):
+        self.exc_class = exc_class
+        self.condition = condition
+        self.throttle_period = timedelta(seconds=seconds)
+        self.last_calls = defaultdict(lambda: datetime.min)
+
+    def __call__(self, fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            now = datetime.now()
+            key = None
+            if self.condition:
+                allowed, key = self.condition(*args, **kwargs)
+                if allowed:
+                    self.last_calls[key] = now
+                    return fn(*args, **kwargs)
+
+            time_since_last_call = now - self.last_calls[key]
+
+            if time_since_last_call > self.throttle_period:
+                self.last_calls[key] = now
+                return fn(*args, **kwargs)
+            raise self.exc_class('{fn!r} called too many times')
+
+        @wraps(fn)
+        async def async_wrapper(*args, **kwargs):
+            return await wrapper(*args, **kwargs)
+
+        if asyncio.iscoroutinefunction(fn):
+            return async_wrapper
+        return wrapper
 
 
 def threaded(pool):
