@@ -161,7 +161,7 @@ class SupportService(Service):
 
             not_freenas = not (await self.middleware.call('system.is_freenas'))
             if not_freenas:
-                not_freenas &= await self.middleware.call('notifier.failover_licensed')
+                not_freenas &= await self.middleware.call('failover.licensed')
             if not_freenas:
                 debug_file = f'{direc}/debug.tar'
                 debug_name = 'debug-{}.tar'.format(time.strftime('%Y%m%d%H%M%S'))

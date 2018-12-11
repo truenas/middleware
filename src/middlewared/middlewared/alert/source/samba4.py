@@ -12,7 +12,7 @@ class Samba4AlertSource(AlertSource):
             return
 
         try:
-            if await self.middleware.call("notifier.failover_status") == "BACKUP":
+            if await self.middleware.call("failover.status") == "BACKUP":
                 return
         except Exception:
             return

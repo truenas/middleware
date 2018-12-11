@@ -144,7 +144,7 @@ class NetworkConfigurationService(ConfigService):
 
         if not (
                 not await self.middleware.call('system.is_freenas') and
-                await self.middleware.call('notifier.failover_licensed')
+                await self.middleware.call('failover.licensed')
         ):
             for key in ['hostname_virtual', 'hostname_b']:
                 data.pop(key, None)
@@ -955,7 +955,7 @@ class InterfaceService(CRUDService):
             data.pop('failover_virtual_aliases', None)
         else:
             failover = await self.middleware.call('failover.config')
-            ha_configured = await self.middleware.call('notifier.failover_status') != 'SINGLE'
+            ha_configured = await self.middleware.call('failover.status') != 'SINGLE'
             if ha_configured and not failover['disabled']:
                 raise CallError(
                     'Failover needs to be disabled to perform network configuration changes.'
@@ -1424,7 +1424,7 @@ class InterfaceService(CRUDService):
 
         internal_interfaces = ['lo', 'pflog', 'pfsync', 'tun', 'tap', 'epair']
         if not await self.middleware.call('system.is_freenas'):
-            internal_interfaces.extend(await self.middleware.call('notifier.failover_internal_interfaces') or [])
+            internal_interfaces.extend(await self.middleware.call('failover.internal_interfaces') or [])
         internal_interfaces = tuple(internal_interfaces)
 
         dhclient_aws = []
@@ -1506,7 +1506,7 @@ class InterfaceService(CRUDService):
 
         if (
             not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('notifier.failover_node') == 'B'
+            await self.middleware.call('failover.node') == 'B'
         ):
             ipv4_field = 'int_ipv4address_b'
             ipv6_field = 'int_ipv6address'
@@ -1603,7 +1603,7 @@ class InterfaceService(CRUDService):
         # in case removing the address removes the carp
         if carp_vhid:
             if not await self.middleware.call('system.is_freenas') and not advskew:
-                if await self.middleware.call('notifier.failover_node') == 'A':
+                if await self.middleware.call('failover.node') == 'A':
                     advskew = 20
                 else:
                     advskew = 80

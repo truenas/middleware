@@ -33,7 +33,7 @@ class SMBService(SystemServiceService):
     @private
     async def smb_extend(self, smb):
         """Extend smb for netbios."""
-        if not await self.middleware.call('notifier.is_freenas') and await self.middleware.call('notifier.failover_node') == 'B':
+        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.node') == 'B':
             smb['netbiosname'] = smb['netbiosname_b']
 
         for i in ('aio_enable', 'aio_rs', 'aio_ws'):
@@ -54,7 +54,7 @@ class SMBService(SystemServiceService):
     @private
     async def generate_choices(self, initial):
         def key_cp(encoding):
-            cp = re.compile("(?P<name>CP|GB|ISO-8859-|UTF-)(?P<num>\d+)").match(encoding)
+            cp = re.compile(r"(?P<name>CP|GB|ISO-8859-|UTF-)(?P<num>\d+)").match(encoding)
             if cp:
                 return tuple((cp.group('name'), int(cp.group('num'), 10)))
             else:

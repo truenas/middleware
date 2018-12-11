@@ -37,7 +37,7 @@ class VolumeStatusAlertSource(AlertSource):
 
     async def enabled(self):
         if not (await self.middleware.call("system.is_freenas")):
-            status = await self.middleware.call("notifier.failover_status")
+            status = await self.middleware.call("failover.status")
             return status in ("MASTER", "SINGLE")
 
         return True
