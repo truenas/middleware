@@ -11,7 +11,9 @@ from collections import defaultdict
 
 from middlewared.client import Client, ClientException
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import no_auth_required, private, CallError, ConfigService, ValidationErrors
+from middlewared.service import (
+    no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
+)
 from middlewared.utils import run
 
 # FIXME: temporary imports while license methods are still in django
@@ -28,6 +30,13 @@ from freenasUI.support.utils import get_license
 
 INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
 SYNC_FILE = '/var/tmp/sync_failed'
+
+
+def throttle_condition(middleware, app, *args, **kwargs):
+    # app is None means internal middleware call
+    if app is None or (app and app.authenticated):
+        return True, 'AUTHENTICATED'
+    return False, None
 
 
 class FailoverService(ConfigService):
@@ -141,8 +150,10 @@ class FailoverService(ConfigService):
         return []
 
     @no_auth_required
+    @throttle(seconds=2, condition=throttle_condition)
     @accepts()
-    async def status(self):
+    @pass_app
+    async def status(self, app):
         """
         Return the current status of this node in the failover
 
@@ -282,8 +293,10 @@ class FailoverService(ConfigService):
                 first = False
 
     @no_auth_required
+    @throttle(seconds=2, condition=throttle_condition)
     @accepts()
-    def disabled_reasons(self):
+    @pass_app
+    def disabled_reasons(self, app):
         """
         Returns a list of reasons why failover is not enabled/functional.
 
