@@ -221,7 +221,7 @@ class GroupField(forms.ChoiceField):
 
         if g is None:
             try:
-                g = pwd.getpwnam(group)
+                g = grp.getgrnam(group)
                 if g is None:
                     raise forms.ValidationError(_("The group %s is not valid.") % group)
             except:
