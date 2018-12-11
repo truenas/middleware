@@ -3018,4 +3018,23 @@ require([
         if(wizardShow) editObject(gettext("Initial Wizard"), wizardUrl, []);
 
     });
+
+    autodetectFs = function() {
+        var disk = registry.byId("id_volume_disks").get("value");
+        if (disk) {
+            var radio = registry.byId("id_volume_fstype_0");
+            var label = radio.domNode.parentNode.childNodes[1];
+
+            radio.set("disabled", true);
+            label.textContent = " Autodetecting...";
+
+            Middleware.call('pool.import_disk_autodetect_fs_type', ["/dev/" + disk], function(result) {
+                label.textContent = " Autodetected (" + result.toUpperCase() + ")";
+                radio.set("disabled", false);
+                radio.set("value", result.toUpperCase());
+            }, function(error) {
+                label.textContent = " Autodetect failed: " + error.reason;
+            });
+        }
+    }
 });
