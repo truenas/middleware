@@ -1769,7 +1769,8 @@ class PoolService(CRUDService):
         try:
             os.makedirs(src)
 
-            async with KernelModuleContextManager({"msdosfs": "msdosfs_iconv",
+            async with KernelModuleContextManager({"ext2fs": "ext2fs",
+                                                   "msdosfs": "msdosfs_iconv",
                                                    "ntfs": "fuse"}.get(fs_type)):
                 async with MountFsContextManager(self.middleware, device, src, fs_type, fs_options, ["ro"]):
                     job.set_progress(None, description="Importing")
@@ -1831,7 +1832,7 @@ class PoolService(CRUDService):
             {
                 "id": "6841f242-840a-11e6-a437-00e04d680384",
                 "msg": "method",
-                "method": "pool.import_disk_autodetect_fs_type,
+                "method": "pool.import_disk_autodetect_fs_type",
                 "params": ["/dev/da0"]
             }
         """
@@ -1845,6 +1846,8 @@ class PoolService(CRUDService):
             raise CallError(f"blkid produced unexpected output: {output}")
 
         fs = {
+            "ext2": "ext2fs",
+            "ext3": "ext2fs",
             "ntfs": "ntfs",
             "vfat": "msdosfs",
         }.get(m.group(1))
