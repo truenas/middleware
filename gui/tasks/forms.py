@@ -42,12 +42,13 @@ class CloudSyncForm(ModelForm):
         widget=CloudSyncWidget(),
         label=_('Provider'),
     )
-    transfers = forms.CharField(
+    transfers = forms.IntegerField(
         required=False,
         label=_('Transfers'),
         help_text=_('The number of file transfers to run in parallel. It can sometimes be useful to set this to a '
                     'smaller number if the remote is giving a lot of timeouts or bigger if you have lots of bandwidth '
-                    'and a fast remote.')
+                    'and a fast remote.'),
+        widget=forms.widgets.TextInput(),
     )
     bwlimit = forms.CharField(
         required=False,
@@ -160,16 +161,6 @@ class CloudSyncForm(ModelForm):
             return '*'
         w = ','.join(w)
         return w
-
-    def clean_transfers(self):
-        value = self.cleaned_data.get('transfers')
-        if value:
-            try:
-                return int(value)
-            except ValueError:
-                raise forms.ValidationError("Not a valid integer")
-        else:
-            return None
 
     def clean_bwlimit(self):
         v = self.cleaned_data.get('bwlimit')
