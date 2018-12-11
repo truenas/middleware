@@ -11,13 +11,13 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST
-from auto_config import ip
+from auto_config import ip, pool_name
 from config import *
 
 if "BRIDGEHOST" in locals():
     MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
 
-NFS_PATH = "/mnt/tank/share"
+NFS_PATH = f"/mnt/{pool_name}/share"
 Reason = "BRIDGEHOST is missing in ixautomation.conf"
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 

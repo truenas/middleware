@@ -10,6 +10,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, PUT_TIMEOUT
+from auto_config import pool_name
 from config import *
 
 Reason = "JAILIP, JAILGW and JAILNETMASK are missing in ixautomation.conf"
@@ -23,7 +24,7 @@ jail_test_cfg = pytest.mark.skipif(all(["JAILIP" in locals(),
 @jail_test_cfg
 def test_01_Configuring_jails():
     payload = {"jc_ipv4_network_start": JAILIP,
-               "jc_path": "/mnt/tank/jails"}
+               "jc_path": f"/mnt/{pool_name}/jails"}
     results = PUT_TIMEOUT("/jails/configuration/", payload, 60)
     assert results.status_code == 201, results.text
 
@@ -45,7 +46,7 @@ def test_03_Mount_tank_share_into_jail():
                "jail": "testjail",
                "mounted": True,
                "readonly": False,
-               "source": "/mnt/tank/share"}
+               "source": f"/mnt/{pool_name}/share"}
     results = POST("/jails/mountpoints/", payload)
     assert results.status_code == 201, results.text
 

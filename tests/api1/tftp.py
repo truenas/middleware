@@ -10,19 +10,20 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, POST
+from auto_config import pool_name
 
 TESTFILE_NAME = "tftp-testfile.txt"
 TESTFILE_PATH = "/tmp/"
 
 
-def test_01_Creating_dataset_tank_tftproot():
+def test_01_Creating_dataset_poolname_tftproot():
     payload = {"name": "tftproot"}
-    results = POST("/storage/volume/tank/datasets/", payload)
+    results = POST(f"/storage/volume/{pool_name}/datasets/", payload)
     assert results.status_code == 201, results.text
 
 
 def test_02_Setting_permissions_for_TFTP_on_mnt_tank_tftproot():
-    payload = {"mp_path": "/mnt/tank/tftproot",
+    payload = {"mp_path": f"/mnt/{pool_name}/tftproot",
                "mp_acl": "unix",
                "mp_mode": "777",
                "mp_user": "nobody",
@@ -32,7 +33,7 @@ def test_02_Setting_permissions_for_TFTP_on_mnt_tank_tftproot():
 
 
 def test_03_Configuring_TFTP_service():
-    payload = {"tftp_directory": "/mnt/tank/tftproot",
+    payload = {"tftp_directory": f"/mnt/{pool_name}/tftproot",
                "tftp_username": "nobody",
                "tftp_newfiles": True}
     results = PUT("/services/tftp/", payload)

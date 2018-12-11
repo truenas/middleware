@@ -10,6 +10,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET
+from auto_config import pool_name
 
 DATASET = "webdav-bsd-share"
 DATASET_PATH = "/mnt/tank/%s/" % DATASET
