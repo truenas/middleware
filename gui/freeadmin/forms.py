@@ -27,6 +27,7 @@ import logging
 import os
 import re
 import pwd
+import grp
 
 from django.forms.widgets import Widget, TextInput
 from django.forms.utils import flatatt
