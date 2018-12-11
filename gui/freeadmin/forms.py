@@ -151,12 +151,8 @@ class UserField(forms.ChoiceField):
             u = None
 
         if u is None:
-            try:
-                u = pwd.getpwnam(user)
-                if u is None:
-                    raise forms.ValidationError(_("The user %s is not valid.") % user)
-            except:
-                pass
+            raise forms.ValidationError(_("The user %s is not valid.") % user)
+
         return user
 
 
@@ -221,12 +217,7 @@ class GroupField(forms.ChoiceField):
             g = None
 
         if g is None:
-            try:
-                g = grp.getgrnam(group)
-                if g is None:
-                    raise forms.ValidationError(_("The group %s is not valid.") % group)
-            except:
-                pass
+            raise forms.ValidationError(_("The group %s is not valid.") % group)
 
         return group
 
