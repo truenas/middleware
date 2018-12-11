@@ -26,6 +26,7 @@
 import logging
 import os
 import re
+import pwd
 
 from django.forms.widgets import Widget, TextInput
 from django.forms.utils import flatatt
@@ -149,7 +150,12 @@ class UserField(forms.ChoiceField):
             u = None
 
         if u is None:
-            raise forms.ValidationError(_("The user %s is not valid.") % user)
+            try:
+                u = pwd.getpwnam(user)
+                if u is None:
+                    raise forms.ValidationError(_("The user %s is not valid.") % user)
+            except:
+                pass
         return user
 
 
@@ -214,9 +220,13 @@ class GroupField(forms.ChoiceField):
             g = None
 
         if g is None:
-            raise forms.ValidationError(
-                _("The group %s is not valid.") % group
-            )
+            try:
+                g = pwd.getpwnam(group)
+                if g is None:
+                    raise forms.ValidationError(_("The group %s is not valid.") % group)
+            except:
+                pass
+
         return group
 
 
