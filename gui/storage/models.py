@@ -535,7 +535,8 @@ class Replication(Model):
         verbose_name=_("Also replicate snapshots matching naming schema"),
     )
     repl_auto = models.BooleanField(
-        verbose_name=_("Run automatically")
+        default=True,
+        verbose_name=_("Run automatically"),
     )
     repl_schedule_minute = models.CharField(
         max_length=100,
