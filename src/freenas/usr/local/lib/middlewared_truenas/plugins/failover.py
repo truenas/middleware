@@ -11,7 +11,7 @@ from collections import defaultdict
 
 from middlewared.client import Client, ClientException
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import private, CallError, ConfigService, ValidationErrors
+from middlewared.service import no_auth_required, private, CallError, ConfigService, ValidationErrors
 from middlewared.utils import run
 
 # FIXME: temporary imports while license methods are still in django
@@ -140,6 +140,7 @@ class FailoverService(ConfigService):
             return ['em0']
         return []
 
+    @no_auth_required
     @accepts()
     async def status(self):
         """
@@ -280,6 +281,7 @@ class FailoverService(ConfigService):
                 ])
                 first = False
 
+    @no_auth_required
     @accepts()
     def disabled_reasons(self):
         """
