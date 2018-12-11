@@ -57,7 +57,7 @@ async def mount(device, path, fs_type, fs_options, options):
         executable = "/usr/local/bin/ntfs-3g"
     elif fs_type == "msdosfs" and fs_options:
         executable = "/sbin/mount_msdosfs"
-        if "locale" in fs_options:
+        if fs_options.get("locale"):
             arguments.extend(["-L", fs_options["locale"]])
         arguments.extend(sum([["-o", option] for option in options], []))
         options = []
@@ -499,7 +499,7 @@ class PoolService(CRUDService):
         return [
             locale.strip()
             for locale in subprocess.check_output(["locale", "-a"], encoding="utf-8").split("\n")
-            if locale.strip()
+            if locale.strip() and locale.strip() not in ["C", "POSIX"]
         ]
 
     """
