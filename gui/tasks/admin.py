@@ -192,6 +192,7 @@ class SMARTTestFAdmin(BaseFreeAdmin):
     icon_view = "ViewSMARTTestIcon"
     exclude_fields = (
         'id',
+        'smarttest_all_disks',
         'smarttest_daymonth',
         'smarttest_dayweek',
         'smarttest_hour',

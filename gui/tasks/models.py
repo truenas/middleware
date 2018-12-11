@@ -599,6 +599,11 @@ class Rsync(Model):
 
 
 class SMARTTest(Model):
+    smarttest_all_disks = models.BooleanField(
+        verbose_name=_("All Disks"),
+        help_text=_("Use this SMART test for all disks"),
+        default=False,
+    )
     smarttest_disks = models.ManyToManyField(
         Disk,
         limit_choices_to={'disk_expiretime': None},
@@ -638,7 +643,9 @@ class SMARTTest(Model):
     )
 
     def __str__(self):
-        if self.smarttest_disks.count() > 3:
+        if self.smarttest_all_disks:
+            disks = 'All disks'
+        elif self.smarttest_disks.count() > 3:
             disks = [d.disk_name for d in self.smarttest_disks.all()[:3]]
             disks = ', '.join(disks) + '...'
         else:
