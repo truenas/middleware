@@ -77,9 +77,12 @@ class JailService(CRUDService):
                                 interface = 'epair0b'
                             ip4_cmd = ['jexec', f'ioc-{uuid}', 'ifconfig',
                                        interface, 'inet']
-                            out = su.check_output(ip4_cmd)
-                            jail['ip4_addr'] = f'{interface}|' \
-                                f'{out.splitlines()[2].split()[1].decode()}'
+                            try:
+                                out = su.check_output(ip4_cmd)
+                                out = out.splitlines()[2].split()[1].decode()
+                                jail['ip4_addr'] = f'{interface}|{out}'
+                            except (su.CalledProcessError, IndexError):
+                                jail['ip4_addr'] = f'{interface}|ERROR'
                         else:
                             jail['ip4_addr'] = 'DHCP (not running)'
                     jails.append(jail)
