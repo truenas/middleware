@@ -135,8 +135,8 @@ def filter_list(_list, filters=None, options=None):
         '~': lambda x, y: re.match(y, x),
         'in': lambda x, y: x in y,
         'nin': lambda x, y: x not in y,
-        'rin': lambda x, y: y in x,
-        'rnin': lambda x, y: y not in x,
+        'rin': lambda x, y: x is not None and y in x,
+        'rnin': lambda x, y: x is not None and y not in x,
         '^': lambda x, y: x.startswith(y),
         '$': lambda x, y: x.endswith(y),
     }
