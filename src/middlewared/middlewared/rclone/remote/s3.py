@@ -42,5 +42,10 @@ class S3RcloneRemote(BaseRcloneRemote):
         )
         task["attributes"]["region"] = response["LocationConstraint"] or "us-east-1"
 
-    def get_remote_extra(self, task):
-        return dict(server_side_encryption=task.get("encryption"))
+    def get_task_extra(self, task):
+        result = dict(encryption="", server_side_encryption=task["attributes"].get("encryption") or "")
+
+        # Some legacy tasks have region=None, it's easier to fix it here than in migration
+        result["region"] = task["attributes"].get("region") or "us-east-1"
+
+        return result
