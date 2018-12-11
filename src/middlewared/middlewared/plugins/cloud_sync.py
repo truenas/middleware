@@ -116,6 +116,9 @@ async def rclone(middleware, job, cloud_sync):
         if cloud_sync["attributes"].get("fast_list"):
             args.append("--fast-list")
 
+        if cloud_sync["transfers"]:
+            args.extend(["--transfers", str(cloud_sync["transfers"])])
+
         if cloud_sync["bwlimit"]:
             args.extend(["--bwlimit", " ".join([
                 f"{limit['time']},{str(limit['bandwidth']) + 'b' if limit['bandwidth'] else 'off'}"
@@ -530,6 +533,7 @@ class CloudSyncService(CRUDService):
         Str("encryption_password", default=""),
         Str("encryption_salt", default=""),
         Cron("schedule", required=True),
+        Int("transfers", null=True, default=None, validators=[Range(min=1)]),
         List("bwlimit", default=[], items=[Dict("cloud_sync_bwlimit",
                                                 Str("time", validators=[Time()]),
                                                 Int("bandwidth", validators=[Range(min=1)], null=True))]),

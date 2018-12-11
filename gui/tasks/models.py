@@ -166,6 +166,9 @@ class CloudSync(Model):
         default="*",
         verbose_name=_("Day of week"),
     )
+    transfers = models.IntegerField(
+        null=True,
+    )
     bwlimit = ListField(
         editable=False,
     )
