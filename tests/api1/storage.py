@@ -9,17 +9,17 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, POST, DELETE
-from auto_config import disk0, disk1, disk2
+from auto_config import disk0, disk1, disk2, pool_name
 
 disk_list = [disk0, disk1, disk2]
 
 pool_data = {
     'is_decrypted': True,
-    'mountpoint': '/mnt/tank',
-    'name': 'tank',
+    'mountpoint': f'/mnt/{pool_name}',
+    'name': pool_name,
     'status': 'HEALTHY',
     'vol_encryptkey': '',
-    'vol_name': 'tank'
+    'vol_name': pool_name
 }
 
 datasets = ['share', 'jails', 'snapcheck', 'testzvol1', 'testzvol2']
@@ -52,7 +52,7 @@ def test_03_check_get_storage_volume():
 
 def test_04_creating_storage_volume():
     payload = {
-        "volume_name": "tank",
+        "volume_name": pool_name,
         "layout": [
             {
                 "vdevtype": "stripe",
@@ -73,30 +73,27 @@ def test_05_check_created_storage_volume_results_(data):
 
 def test_06_get_storage_volume():
     global results
-    results = GET("/storage/volume/")
+    results = GET(f"/storage/volume/{pool_name}/")
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), list), results.text
+    assert isinstance(results.json(), dict), results.text
 
 
 @pytest.mark.parametrize('data', list(pool_data.keys()))
 def test_07_check_get_storage_volume_results_(data):
-    assert results.json()[0][data] == pool_data[data], results.text
+    assert results.json()[data] == pool_data[data], results.text
 
 
 @pytest.mark.parametrize('dataset', ['share', 'jails'])
 def test_08_creating_dataset_(dataset):
-    if 'testzvol' in dataset:
-        payload = {"name": dataset, "volsize": "10M"}
-    else:
-        payload = {"name": dataset}
-    results = POST("/storage/volume/tank/datasets/", payload)
+    payload = {"name": dataset}
+    results = POST(f"/storage/volume/{pool_name}/datasets/", payload)
     assert results.status_code == 201, results.text
 
 
 @pytest.mark.parametrize('dataset', ['share', 'jails'])
 def test_09_changing_permissions_on_(dataset):
     payload = {
-        "mp_path": f"/mnt/tank/{dataset}",
+        "mp_path": f"/mnt/{pool_name}/{dataset}",
         "mp_acl": "unix",
         "mp_mode": "777",
         "mp_user": "root",
@@ -109,19 +106,14 @@ def test_09_changing_permissions_on_(dataset):
 # Check to verify snapshot was rolled back
 @pytest.mark.parametrize('dataset', ['share', 'jails'])
 def test_10_verify_the_existence_of_dataset_(dataset):
-    results = GET("/storage/volume/tank/datasets/")
+    results = GET(f"/storage/volume/{pool_name}/datasets/{dataset}/")
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), list), results.text
-    for name_dict in results.json():
-        if name_dict['name'] == dataset:
-            assert name_dict['name'] == dataset, results.text
-            break
-    else:
-        assert False, results.test
+    assert isinstance(results.json(), dict), results.text
+    assert results.json()['name'] == dataset, results.text
 
 
 def test_11_Creating_a_ZFS_snapshot():
-    payload = {"dataset": "tank", "name": "test"}
+    payload = {"dataset": pool_name, "name": "test"}
     results = POST("/storage/snapshot/", payload)
     assert results.status_code == 201, results.text
 
@@ -129,61 +121,63 @@ def test_11_Creating_a_ZFS_snapshot():
 @pytest.mark.parametrize('dataset', ['snapcheck'])
 def test_12_creating_dataset_(dataset):
     payload = {"name": dataset}
-    results = POST("/storage/volume/tank/datasets/", payload)
+    results = POST(f"/storage/volume/{pool_name}/datasets/", payload)
     assert results.status_code == 201, results.text
 
 
 @pytest.mark.parametrize('zvol', ['testzvol1', 'testzvol2'])
 def test_13_creating_zvol_(zvol):
     payload = {"name": zvol, "volsize": "10M"}
-    results = POST("/storage/volume/tank/zvols/", payload)
+    results = POST(f"/storage/volume/{pool_name}/zvols/", payload)
     assert results.status_code == 202, results.text
 
 
 # Check updating a ZVOL
 def test_14_updating_zvols_testzvol1():
     payload = {"volsize": "50M"}
-    results = PUT("/storage/volume/tank/zvols/testzvol1/", payload)
+    results = PUT(f"/storage/volume/{pool_name}/zvols/testzvol1/", payload)
     assert results.status_code == 201, results.text
 
 
 # Check rolling back a ZFS snapshot
-def test_15_Rolling_back_ZFS_snapshot_tank_test():
+def test_15_Rolling_back_ZFS_snapshot_pool_name_test():
     payload = {"force": True}
-    results = POST("/storage/snapshot/tank@test/rollback/", payload)
+    results = POST(f"/storage/snapshot/{pool_name}@test/rollback/", payload)
     assert results.status_code == 202, results.text
 
 
 # Check to verify snapshot was rolled back
 @pytest.mark.parametrize('dataset', ['snapcheck'])
 def test_16_verify_the_existence_of_dataset_(dataset):
-    results = GET(f"/storage/volume/tank/datasets/{dataset}/")
+    results = GET(f"/storage/volume/{pool_name}/datasets/{dataset}/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
+    assert results.json()['name'] == dataset, results.text
 
 
 @pytest.mark.parametrize('zvol', ['testzvol1', 'testzvol2'])
 def test_17_verify_the_existence_of_zvol_(zvol):
-    results = GET(f"/storage/volume/tank/zvols/{zvol}/")
+    results = GET(f"/storage/volume/{pool_name}/zvols/{zvol}/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
+    assert results.json()['name'] == zvol, results.text
 
 
 # Delete tests
 # Check destroying a ZFS snapshot
 def test_18_destroying_zfs_snapshot_IXBUILD_ROOT_ZVOL_test():
-    results = DELETE("/storage/snapshot/tank@test/")
+    results = DELETE(f"/storage/snapshot/{pool_name}@test/")
     assert results.status_code == 204, results.text
 
 
 @pytest.mark.parametrize('dataset', ['snapcheck'])
 def test_19_destroying_dataset_(dataset):
-    results = DELETE(f"/storage/volume/tank/datasets/{dataset}/")
+    results = DELETE(f"/storage/volume/{pool_name}/datasets/{dataset}/")
     assert results.status_code == 204, results.text
 
 
 # Check destroying a ZVOL
 @pytest.mark.parametrize('zvol', ['testzvol1', 'testzvol2'])
 def test_20_destroying_zvol_(zvol):
-    results = DELETE(f"/storage/volume/tank/zvols/{zvol}/")
+    results = DELETE(f"/storage/volume/{pool_name}/zvols/{zvol}/")
     assert results.status_code == 204, results.text
