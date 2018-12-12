@@ -11,11 +11,12 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET
+from auto_config import pool_name
 from config import *
 
 # define variables
 DATASET = "nis-bsd"
-NIS_PATH = "/mnt/tank/" + DATASET
+NIS_PATH = f"/mnt/{pool_name}/{DATASET}"
 Reason = "NISSERVER and NISDOMAIN are missing in ixautomation.conf"
 
 nis_test_cfg = pytest.mark.skipif(all(["NISSERVER" in locals(),
@@ -49,7 +50,7 @@ def test_04_Checking_if_NIS_service_is_enable():
 
 @nis_test_cfg
 def test_05_Creating_NIS_dataset():
-    results = POST("/storage/volume/tank/datasets/", {"name": DATASET})
+    results = POST(f"/storage/volume/{pool_name}/datasets/", {"name": DATASET})
     assert results.status_code == 201, results.text
 
 

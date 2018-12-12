@@ -13,7 +13,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, return_output, DELETE
 from functions import POSTNOJSON
-from auto_config import ip
+from auto_config import ip, pool_name
 from config import *
 
 if "BRIDGEHOST" in locals():
@@ -76,7 +76,7 @@ def test_05_Add_ISCSI_extent():
                "iscsi_target_extent_name": "extent",
                "iscsi_target_extent_filesize": "50MB",
                "iscsi_target_extent_rpm": "SSD",
-               "iscsi_target_extent_path": "/mnt/tank/dataset03/iscsi"}
+               "iscsi_target_extent_path": f"/mnt/{pool_name}/dataset03/iscsi"}
     results = POST("/services/iscsi/extent/", payload)
     assert results.status_code == 201, results.text
 

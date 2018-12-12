@@ -10,12 +10,13 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET_USER, DELETE, PUT
+from auto_config import pool_name
 
 
 # Create tests
-def test_01_Creating_home_dataset_tank_sur_testuser():
+def test_01_Creating_home_dataset_testuser():
     payload = {"name": "testuser"}
-    results = POST("/storage/volume/tank/datasets/", payload)
+    results = POST(f"/storage/volume/{pool_name}/datasets/", payload)
     assert results.status_code == 201, results.text
 
 
@@ -25,7 +26,7 @@ def test_02_Creating_user_testuser():
                "bsdusr_full_name": "Test User",
                "bsdusr_password": "test",
                "bsdusr_uid": 1111,
-               "bsdusr_home": "/mnt/tank/testuser",
+               "bsdusr_home": f"/mnt/{pool_name}/testuser",
                "bsdusr_mode": "755",
                "bsdusr_shell": "/bin/csh"}
     results = POST("/account/users/", payload)
@@ -47,7 +48,7 @@ def test_05_Updating_user_testuser():
                "bsdusr_full_name": "Test Renamed",
                "bsdusr_password": "testing123",
                "bsdusr_uid": 1112,
-               "bsdusr_home": "/mnt/tank/testuser",
+               "bsdusr_home": f"/mnt/{pool_name}/testuser",
                "bsdusr_mode": "755",
                "bsdusr_shell": "/bin/csh"}
     results = PUT("/account/users/%s/" % userid, payload)
@@ -67,4 +68,10 @@ def test_06_Updating_password_for_testuser():
 def test_08_Deleting_user_testuser():
     userid = GET_USER("testuser")
     results = DELETE("/account/users/%s/" % userid)
+    assert results.status_code == 204, results.text
+
+
+# Check destroying a SMB dataset
+def test_09_Destroying_testuser_dataset():
+    results = DELETE(f"/storage/volume/{pool_name}/datasets/testuser/")
     assert results.status_code == 204, results.text
