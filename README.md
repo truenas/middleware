@@ -52,15 +52,28 @@ If your Pull-Request needs to build aginst another build profile (I.E. fn_head) 
 | **py-libzfs**  | [master](https://github.com/freenas/py-libzfs/tree/master/) | Python interface to libzfs |
 
 
+#### FreeNAS 12 Nightlies
+(This branch will become the FreeNAS 12.0 feature release)
+| Repo         | Branch            | Description |
+|:-------------|:-----------------:|-------------|
+| **trueos**  | [freenas/12-stable](https://github.com/trueos/trueos/tree/freenas/12-stable/) | FreeNAS / TrueOS Build System|
+| **ports**  | [freenas/12-stable](https://github.com/trueos/trueos-ports/tree/freenas/12-stable/) | TrueOS Ports Tree|
+| **freenas**  | [master](https://github.com/freenas/freenas/tree/master/) | Core FreeNAS Sources - Legacy UI and Middleware/API |
+| **webui**  | [master](https://github.com/freenas/webui/tree/master/) | New Angular UI |
+| **freenas-docs**  | [master](https://github.com/freenas/freenas-docs/tree/master/) | Handbook |
+| **samba**  | [freenas/master](https://github.com/freenas/samba/tree/freenas/master) | Samba Sources |
+| **py-libzfs**  | [master](https://github.com/freenas/py-libzfs/tree/master/) | Python interface to libzfs |
+
+
+
 #### FreeNAS HEAD Nightlies
-(This branch will become the next major OS feature release, I.E. 12.0)
+(This branch will become the next major OS feature release, I.E. 13.0)
 
 | Repo         | Branch            | Description |
 |:-------------|:-----------------:|-------------|
-| **build**  | [master](https://github.com/freenas/build/tree/master/) | FreeNAS Build System (build profile: fn_head)|
+| **trueos**  | [freenas/master](https://github.com/trueos/trueos/tree/freenas/master/) | FreeNAS / TrueOS Build System|
+| **ports**  | [freenas/master](https://github.com/trueos/trueos-ports/tree/freenas/master/) | TrueOS Ports Tree|
 | **freenas**  | [master](https://github.com/freenas/freenas/tree/master/) | Core FreeNAS Sources - Legacy UI and Middleware/API |
-| **os**  | [freenas/master](https://github.com/freenas/os/tree/freenas/master/) | FreeBSD Operating System - [Upstream](https://github.com/freebsd/freebsd/tree/master) |
-| **ports**  | [freenas/master](https://github.com/freenas/ports/tree/freenas/master/) | FreeBSD Ports Tree - [Upstream](https://github.com/freebsd/freebsd-ports/tree/master) |
 | **webui**  | [master](https://github.com/freenas/webui/tree/master/) | New Angular UI |
 | **freenas-docs**  | [master](https://github.com/freenas/freenas-docs/tree/master/) | Handbook |
 | **samba**  | [freenas/master](https://github.com/freenas/samba/tree/freenas/master) | Samba Sources |
