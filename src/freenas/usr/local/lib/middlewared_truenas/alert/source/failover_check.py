@@ -12,10 +12,10 @@ import xmlrpc.client
 
 from freenasUI.failover.enc_helper import LocalEscrowCtl
 from freenasUI.failover.notifier import INTERNAL_IFACE_NF
-from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.notifier import notifier
 
 from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.service_exception import CallError
 
 FAILOVER_JSON = '/tmp/failover.json'
 
@@ -36,20 +36,19 @@ class FailoverCheckAlertSource(ThreadedAlertSource):
             ))
 
         try:
-            with client as c:
-                c.call('failover.call_remote', 'core.ping')
+            self.middleware.call_sync('failover.call_remote', 'core.ping')
 
-                local_version = c.call('system.version')
-                remote_version = c.call('failover.call_remote', 'system.version')
-                if local_version != remote_version:
-                    return [
-                        Alert(
-                            'TrueNAS versions mismatch in failover.  Update both nodes to the same version.',
-                        )
-                    ]
-        except Exception as e:
+            local_version = self.middleware.call_sync('system.version')
+            remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
+            if local_version != remote_version:
+                return [
+                    Alert(
+                        'TrueNAS versions mismatch in failover.  Update both nodes to the same version.',
+                    )
+                ]
+        except CallError as e:
             try:
-                if e.errno not in (errno.ECONNREFUSED, ClientException.ENOMETHOD) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                if e.errno not in (errno.ECONNREFUSED, errno.EHOSTDOWN, CallError.ENOMETHOD):
                     raise
                 try:
                     s = notifier().failover_rpc()
@@ -79,7 +78,7 @@ class FailoverCheckAlertSource(ThreadedAlertSource):
                     )
                 ]
 
-        status = notifier().failover_status()
+        status = self.middleware.call_sync('failover.status')
 
         fobj = None
         try:
@@ -108,7 +107,7 @@ class FailoverCheckAlertSource(ThreadedAlertSource):
                 'Could not determine external failover link status, check cabling.',
                 level=AlertLevel.WARNING,
             ))
-        internal_ifaces = notifier().failover_internal_interfaces()
+        internal_ifaces = self.middleware.call_sync('failover.internal_interfaces')
         if internal_ifaces:
             p1 = subprocess.Popen(
                 "/sbin/ifconfig %s|grep -E 'vhid (10|20) '|grep 'carp:'" % internal_ifaces[0],
@@ -134,7 +133,7 @@ class FailoverCheckAlertSource(ThreadedAlertSource):
                 pass
 
         if status == 'MASTER':
-            masters, backups = notifier().get_carp_states()
+            masters, backups = self.middleware.call_sync('failover.get_carp_states')
             if len(backups) > 0:
                 alerts.append(Alert(
                     'Check external failover links.',
@@ -150,8 +149,9 @@ class FailoverCheckAlertSource(ThreadedAlertSource):
                             'No escrowed passphrase for failover. Automatic failover disabled.',
                         ))
                         # Kick a syncfrompeer if we don't.
-                        with client as c:
-                            passphrase = c.call('failover.call_remote', 'failover.encryption_getkey')
+                        passphrase = self.middleware.call_sync(
+                            'failover.call_remote', 'failover.encryption_getkey'
+                        )
                         if passphrase:
                             escrowctl.setkey(passphrase)
             except:

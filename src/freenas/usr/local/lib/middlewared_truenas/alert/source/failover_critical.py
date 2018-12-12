@@ -7,7 +7,6 @@
 import re
 import subprocess
 
-from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Interfaces
 from freenasUI.failover.detect import ha_node
 
