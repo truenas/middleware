@@ -9,11 +9,11 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET
+from functions import PUT, POST, GET, DELETE
 from auto_config import pool_name
 
 DATASET = "webdav-bsd-share"
-DATASET_PATH = "/mnt/tank/%s/" % DATASET
+DATASET_PATH = f"/mnt/{pool_name}/{DATASET}/"
 TMP_FILE = "/tmp/testfile.txt"
 SHARE_NAME = "webdavshare"
 SHARE_USER = "webdav"
@@ -21,7 +21,7 @@ SHARE_PASS = "davtest"
 
 
 def test_01_Creating_dataset_for_WebDAV_use():
-    results = POST("/storage/volume/tank/datasets/", {"name": DATASET})
+    results = POST(f"/storage/volume/{pool_name}/datasets/", {"name": DATASET})
     assert results.status_code == 201, results.text
 
 
@@ -101,3 +101,8 @@ def test_12_Stopping_WebDAV_service():
 def test_13_Verifying_that_the_WebDAV_service_has_stopped():
     results = GET("/services/services/webdav")
     assert results.json()["srv_state"] == "STOPPED", results.text
+
+
+def test_14_Destroying_dataset():
+    results = DELETE(f"/storage/volume/{pool_name}/datasets/{DATASET}/")
+    assert results.status_code == 204, results.text

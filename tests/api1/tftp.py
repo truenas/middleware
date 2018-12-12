@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, GET, POST
+from functions import PUT, GET, POST, DELETE
 from auto_config import pool_name
 
 TESTFILE_NAME = "tftp-testfile.txt"
@@ -48,3 +48,9 @@ def test_04_Starting_TFTP_service():
 def test_05_Checking_to_see_if_TFTP_service_is_enabled():
     results = GET("/services/services/tftp/")
     assert results.json()["srv_state"] == "RUNNING", results.text
+
+
+# Check destroying a SMB dataset
+def test_06_Destroying_tftp_dataset():
+    results = DELETE(f"/storage/volume/{pool_name}/datasets/tftproot/")
+    assert results.status_code == 204, results.text
