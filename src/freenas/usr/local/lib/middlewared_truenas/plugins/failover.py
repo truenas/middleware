@@ -149,6 +149,23 @@ class FailoverService(ConfigService):
             return ['em0']
         return []
 
+    @private
+    async def get_carp_states(self, interfaces=None):
+        if interfaces is None:
+            interfaces = await self.middleware.call('interface.query')
+        masters, backups = [], []
+        internal_interfaces = await self.middleware.call('failover.internal_interfaces')
+        for iface in interfaces:
+            if iface['name'] in internal_interfaces:
+                continue
+            if not iface['state']['carp_config']:
+                continue
+            if iface['state']['carp_config'][0]['state'] == 'MASTER':
+                masters.append(iface['name'])
+            else:
+                backups.append(iface['name'])
+        return masters, backups
+
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
     @accepts()
@@ -176,16 +193,7 @@ class FailoverService(ConfigService):
         if not await self.middleware.call('failover.licensed'):
             return 'SINGLE'
 
-        masters = []
-        internal_interfaces = await self.middleware.call('failover.internal_interfaces')
-        for iface in interfaces:
-            if iface['name'] in internal_interfaces:
-                continue
-            if not iface['state']['carp_config']:
-                continue
-            if iface['state']['carp_config'][0]['state'] == 'MASTER':
-                masters.append(iface['name'])
-
+        masters = (await self.get_carp_states(interfaces))[0]
         if masters:
             if any(filter(lambda x: x.get('status') != 'OFFLINE', pools)):
                 return 'MASTER'
