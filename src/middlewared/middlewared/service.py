@@ -256,9 +256,11 @@ class ConfigService(ServiceChangeMixin, Service):
         return await self._get_or_insert(self._config.datastore, options)
 
     async def update(self, data):
-        return await self.middleware._call(
+        rv = await self.middleware._call(
             f'{self._config.namespace}.update', self, self.do_update, [data]
         )
+        await self.middleware.call_hook(f'{self._config.namespace}.post_update', rv)
+        return rv
 
     @private
     async def _get_or_insert(self, datastore, options):
@@ -337,19 +339,25 @@ class CRUDService(ServiceChangeMixin, Service):
             )
 
     async def create(self, data):
-        return await self.middleware._call(
+        rv = await self.middleware._call(
             f'{self._config.namespace}.create', self, self.do_create, [data]
         )
+        await self.middleware.call_hook(f'{self._config.namespace}.post_create', rv)
+        return rv
 
     async def update(self, id, data):
-        return await self.middleware._call(
+        rv = await self.middleware._call(
             f'{self._config.namespace}.update', self, self.do_update, [id, data]
         )
+        await self.middleware.call_hook(f'{self._config.namespace}.post_update', rv)
+        return rv
 
     async def delete(self, id, *args):
-        return await self.middleware._call(
+        rv = await self.middleware._call(
             f'{self._config.namespace}.delete', self, self.do_delete, [id] + list(args)
         )
+        await self.middleware.call_hook(f'{self._config.namespace}.post_delete', rv)
+        return rv
 
     async def _get_instance(self, id):
         """
