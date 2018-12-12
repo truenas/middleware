@@ -1307,7 +1307,7 @@ def main_menu():
                 try:
                     with client as c:
                         passphrase &= (
-                            c.call('failover.call_remote', 'notifier.failover_status') != 'MASTER'
+                            c.call('failover.call_remote', 'failover.status') != 'MASTER'
                         )
 
                 except Exception as e:

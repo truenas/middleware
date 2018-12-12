@@ -74,7 +74,7 @@ main()
 
 	# Do not try to run scrub on passive node
 	if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
-		local failover="$(/usr/local/bin/midclt -q call notifier.failover_status 2> /dev/null)"
+		local failover="$(/usr/local/bin/midclt -q call failover.status 2> /dev/null)"
 		if [ "${pool}" != "freenas-boot" -a "x${failover}" = "xBACKUP" ]; then
 			exit 0
 		fi

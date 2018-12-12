@@ -135,7 +135,7 @@ def main():
 
     gconf = Struct(client.call('datastore.query', 'services.iSCSITargetGlobalConfiguration', None, {'get': True}))
     if gconf.iscsi_alua:
-        node = client.call('notifier.failover_node')
+        node = client.call('failover.node')
 
     if gconf.iscsi_isns_servers:
         for server in gconf.iscsi_isns_servers.split(' '):
