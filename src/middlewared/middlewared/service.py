@@ -1,5 +1,4 @@
 from collections import defaultdict, namedtuple
-from datetime import datetime, timedelta
 from functools import wraps
 
 import asyncio
@@ -69,13 +68,13 @@ class throttle(object):
     def __init__(self, seconds=0, condition=None, exc_class=RuntimeError):
         self.exc_class = exc_class
         self.condition = condition
-        self.throttle_period = timedelta(seconds=seconds)
-        self.last_calls = defaultdict(lambda: datetime.min)
+        self.throttle_period = seconds
+        self.last_calls = defaultdict(lambda: 0)
 
     def __call__(self, fn):
         @wraps(fn)
         def wrapper(*args, **kwargs):
-            now = datetime.now()
+            now = time.monotonic()
             key = None
             if self.condition:
                 allowed, key = self.condition(*args, **kwargs)
