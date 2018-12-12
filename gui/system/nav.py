@@ -33,13 +33,6 @@ class BootEnv(TreeNode):
     order = -92
 
 
-class CloudCredentials(TreeNode):
-
-    gname = 'CloudCredentials'
-    replace_only = True
-    append_to = 'system'
-
-
 class Email(TreeNode):
 
     gname = 'Email'

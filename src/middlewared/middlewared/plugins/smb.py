@@ -399,27 +399,18 @@ class SharingSMBService(CRUDService):
             mountpoint = ds['properties']['mountpoint']['parsed']
 
             if path == mountpoint:
-                tasks = await self.middleware.call(
-                    'datastore.query', 'storage.task',
-                    [['task_filesystem', '=', name]])
+                tasks = await self.middleware.call('pool.snapshottask.query', [['dataset', '=', name]])
             elif path.startswith(f'{mountpoint}/'):
-                tasks = await self.middleware.call(
-                    'datastore.query', 'storage.task',
-                    [['task_filesystem', '=', name],
-                     ['task_recursive', '=', 'True']])
+                tasks = await self.middleware.call('pool.snapshottask.query', [['dataset', '=', name],
+                                                                               ['recursive', '=', True]])
 
             task_list.extend(tasks)
 
         for task in task_list:
             task_id = task['id']
-            fs = task['task_filesystem']
-            retcount = task['task_ret_count']
-            retunit = task['task_ret_unit']
-            _interval = task['task_interval']
-            interval = dict(await self.middleware.call(
-                'notifier.choices', 'TASK_INTERVAL'))[_interval]
 
-            msg = f'{fs} - every {interval} - {retcount}{retunit}'
+            msg = (f'{task["dataset"]} - {task["naming_schema"]} - '
+                   f'{task["lifetime_value"]}{task["lifetime_unit"].lower()[0]}')
 
             task_dict[task_id] = msg
 

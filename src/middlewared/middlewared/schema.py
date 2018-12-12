@@ -1,5 +1,6 @@
 import asyncio
 import copy
+from datetime import time
 import errno
 import ipaddress
 import os
@@ -40,6 +41,8 @@ class EnumMixin(object):
     def clean(self, value):
         value = super().clean(value)
         if self.enum is None:
+            return value
+        if value is None and self.null:
             return value
         if not isinstance(value, (list, tuple)):
             tmp = [value]
@@ -176,6 +179,18 @@ class Str(EnumMixin, Attribute):
         return schema
 
 
+class Path(Str):
+
+    def clean(self, value):
+        value = super().clean(value)
+
+        if value is None:
+            return value
+
+        return os.path.normpath(value.strip().strip("/").strip())
+
+
+
 class Dir(Str):
 
     def validate(self, value):
@@ -284,6 +299,41 @@ class IPAddr(Str):
 
         if verrors:
             raise verrors
+
+        return super().validate(value)
+
+
+class Time(Str):
+
+    def clean(self, value):
+        value = super(Time, self).clean(value)
+        if value is None:
+            return value
+
+        try:
+            hours, minutes = value.split(':')
+        except ValueError:
+            raise ValueError('Time should be in 24 hour format like "18:00"')
+        else:
+            try:
+                return time(int(hours), int(minutes))
+            except TypeError:
+                raise ValueError('Time should be in 24 hour format like "18:00"')
+
+
+class UnixPerm(Str):
+
+    def validate(self, value):
+        if value is None:
+            return
+
+        try:
+            mode = int(value, 8)
+        except ValueError:
+            raise ValueError('Not a valid integer. Must be between 000 and 777')
+
+        if mode & 0o777 != mode:
+            raise ValueError('Please supply a value between 000 and 777')
 
         return super().validate(value)
 
@@ -464,15 +514,29 @@ class Dict(Attribute):
 
     def __init__(self, name, *attrs, **kwargs):
         self.additional_attrs = kwargs.pop('additional_attrs', False)
+        self.strict = kwargs.pop('strict', False)
         # Update property is used to disable requirement on all attributes
         # as well to not populate default values for not specified attributes
         self.update = kwargs.pop('update', False)
         if 'default' not in kwargs:
             kwargs['default'] = {}
         super(Dict, self).__init__(name, **kwargs)
+
         self.attrs = {}
         for i in attrs:
             self.attrs[i.name] = i
+
+        if self.strict:
+            for attr in self.attrs.values():
+                if attr.required:
+                    if attr.has_default:
+                        raise ValueError(f"Attribute {attr.name} is required and has default value at the same time, "
+                                         f"this is forbidden in strict mode")
+                else:
+                    if not attr.has_default:
+                        raise ValueError(f"Attribute {attr.name} is not required and does not have default value, "
+                                         f"this is forbidden in strict mode")
+
 
     def clean(self, data):
         data = super().clean(data)
@@ -574,6 +638,7 @@ class Cron(Dict):
 
     def __init__(self, name, **kwargs):
         self.additional_attrs = kwargs.pop('additional_attrs', False)
+        self.begin_end = kwargs.pop('begin_end', False)
         # Update property is used to disable requirement on all attributes
         # as well to not populate default values for not specified attributes
         self.update = kwargs.pop('update', False)
@@ -581,25 +646,56 @@ class Cron(Dict):
         self.attrs = {}
         for i in Cron.FIELDS:
             self.attrs[i] = Str(i)
+        if self.begin_end:
+            self.attrs['begin'] = Time('begin')
+            self.attrs['end'] = Time('end')
 
     @staticmethod
-    def convert_schedule_to_db_format(data_dict, schedule_name='schedule'):
-        schedule = data_dict.pop(schedule_name, None)
-        if schedule:
+    def convert_schedule_to_db_format(data_dict, schedule_name='schedule', key_prefix='', begin_end=False):
+        if schedule_name in data_dict:
+            schedule = data_dict.pop(schedule_name)
             db_fields = ['minute', 'hour', 'daymonth', 'month', 'dayweek']
-            for index, field in enumerate(Cron.FIELDS):
-                if field in schedule:
-                    data_dict[db_fields[index]] = schedule[field]
+            if schedule is not None:
+                for index, field in enumerate(Cron.FIELDS):
+                    if field in schedule:
+                        data_dict[key_prefix + db_fields[index]] = schedule[field]
+                if begin_end:
+                    for field in ['begin', 'end']:
+                        if field in schedule:
+                            data_dict[key_prefix + field] = schedule[field]
+            else:
+                for index, field in enumerate(Cron.FIELDS):
+                    data_dict[key_prefix + db_fields[index]] = None
+                if begin_end:
+                    for field in ['begin', 'end']:
+                        data_dict[key_prefix + field] = None
 
     @staticmethod
-    def convert_db_format_to_schedule(data_dict, schedule_name='schedule'):
+    def convert_db_format_to_schedule(data_dict, schedule_name='schedule', key_prefix='', begin_end=False):
         db_fields = ['minute', 'hour', 'daymonth', 'month', 'dayweek']
         data_dict[schedule_name] = {}
         for index, field in enumerate(db_fields):
-            if field in data_dict:
-                data_dict[schedule_name][Cron.FIELDS[index]] = data_dict.pop(field)
+            key = key_prefix + field
+            if key in data_dict:
+                value = data_dict.pop(key)
+                if value is None:
+                    data_dict[schedule_name] = None
+                    return
+                data_dict[schedule_name][Cron.FIELDS[index]] = value
+        if begin_end:
+            for field in ['begin', 'end']:
+                key = key_prefix + field
+                if key in data_dict:
+                    value = data_dict.pop(key)
+                    if value is None:
+                        data_dict[schedule_name] = None
+                        return
+                    data_dict[schedule_name][field] = str(value)[:5]
 
     def validate(self, value):
+        if value is None:
+            return
+
         verrors = ValidationErrors()
 
         for attr in self.attrs.values():
@@ -610,6 +706,8 @@ class Cron(Dict):
                     verrors.add_child(self.name, e)
 
         for v in value:
+            if self.begin_end and v in ['begin', 'end']:
+                continue
             if v not in Cron.FIELDS:
                 verrors.add(self.name, f'Unexpected {v} value')
 
@@ -624,6 +722,9 @@ class Cron(Dict):
             croniter(cron_expression)
         except Exception as e:
             verrors.add(self.name, 'Please ensure fields match cron syntax - ' + str(e))
+
+        if value.get('begin') and value.get('end') and not (value.get('begin') <= value.get('end')):
+            verrors.add(self.name, 'Begin time should be less or equal than end time')
 
         if verrors:
             raise verrors
@@ -816,31 +917,3 @@ def accepts(*schema):
 
         return nf
     return wrap
-
-
-class UnixPerm(Str):
-
-    def validate(self, value):
-        if value is None:
-            return
-
-        try:
-            mode = int(value, 8)
-        except ValueError:
-            raise Error('mode',
-                        'Not a valid integer. Must be between 000 and 777')
-
-        if mode & 0o777 != mode:
-            raise Error('mode', 'Please supply a value between 000 and 777')
-        return super().validate(value)
-
-    def to_json_schema(self, parent=None):
-        schema = {
-            'type': ['string', 'null'] if not self.required else 'string',
-        }
-        if not parent:
-            schema['title'] = self.title
-            if self.description:
-                schema['description'] = self.description
-            schema['_required_'] = self.required
-        return schema

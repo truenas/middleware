@@ -86,11 +86,15 @@ class DatastoreService(Service):
         app, model = name.split('.', 1)
         return apps.get_model(app, model)
 
-    def __queryset_serialize(self, qs, extend=None, field_prefix=None, select=None):
+    def __queryset_serialize(self, qs, extend, extend_context, field_prefix, select):
+        if extend_context:
+            extend_context_value = self.middleware.call_sync(extend_context)
+        else:
+            extend_context_value = None
         for i in qs:
-            yield django_modelobj_serialize(
-                self.middleware, i, extend=extend, field_prefix=field_prefix, select=select
-            )
+            yield django_modelobj_serialize(self.middleware, i, extend=extend, extend_context=extend_context,
+                                            extend_context_value=extend_context_value, field_prefix=field_prefix,
+                                            select=select)
 
     @accepts(
         Str('name'),
@@ -98,12 +102,13 @@ class DatastoreService(Service):
         Dict(
             'query-options',
             Str('extend', default=None, null=True),
+            Str('extend_context', default=None, null=True),
+            Str('prefix', default=None, null=True),
             Dict('extra', additional_attrs=True),
             List('order_by', default=[]),
             List('select', default=[]),
             Bool('count', default=False),
             Bool('get', default=False),
-            Str('prefix', null=True),
             default=None,
             null=True,
             register=True,
@@ -175,8 +180,7 @@ class DatastoreService(Service):
 
         result = []
         for i in self.__queryset_serialize(
-            qs, extend=options.get('extend'), field_prefix=options.get('prefix'),
-            select=options.get('select'),
+            qs, options.get('extend'), options.get('extend_context'), options.get('prefix'), options.get('select'),
         ):
             result.append(i)
 

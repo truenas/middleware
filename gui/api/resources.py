@@ -1605,102 +1605,154 @@ class VolumeImportResource(DojoResource):
 
 class ReplicationResourceMixin(object):
 
+    class Meta:
+        resource_name = 'storage/replication2'
+
+    def dispatch_list(self, request, **kwargs):
+        with client as c:
+            self.__tasks = {task["id"]: task for task in c.call("replication.query")}
+        return super().dispatch_list(request, **kwargs)
+
     def dehydrate(self, bundle):
-        bundle = super(ReplicationResourceMixin, self).dehydrate(bundle)
-        bundle.data['repl_status'] = bundle.obj.status
-        bundle.data['repl_remote_hostname'] = (
-            bundle.obj.repl_remote.ssh_remote_hostname
+        bundle = super().dehydrate(bundle)
+
+        bundle.data['repl_ssh_credentials'] = \
+            (self.__tasks[bundle.data['id']]['ssh_credentials'] or {}).get('name', '-')
+
+        bundle.data['state'] = (
+            self.__tasks[bundle.data['id']]['state']['state'][:1] +
+            self.__tasks[bundle.data['id']]['state']['state'][1:].lower() + (
+                ': ' + self.__tasks[bundle.data['id']]['state']['error']
+                if self.__tasks[bundle.data['id']]['state']['state'] == 'ERROR'
+                else ''
+            )
         )
-        bundle.data['repl_remote_hostkey'] = (
-            bundle.obj.repl_remote.ssh_remote_hostkey
-        )
-        bundle.data['repl_remote_port'] = (
-            bundle.obj.repl_remote.ssh_remote_port
-        )
-        bundle.data['repl_remote_dedicateduser_enabled'] = (
-            bundle.obj.repl_remote.ssh_remote_dedicateduser_enabled
-        )
-        bundle.data['repl_remote_dedicateduser'] = (
-            bundle.obj.repl_remote.ssh_remote_dedicateduser
-        )
-        bundle.data['repl_remote_cipher'] = (
-            bundle.obj.repl_remote.ssh_cipher
-        )
-        if 'repl_remote' in bundle.data:
-            del bundle.data['repl_remote']
-        result = bundle.obj.repl_lastresult or {}
-        if 'last_snapshot' in result:
-            last_snapshot = result['last_snapshot']
-        else:
-            last_snapshot = 'Not ran since boot'
-        bundle.data['repl_lastsnapshot'] = last_snapshot
+        bundle.data['last_snapshot'] = self.__tasks[bundle.data['id']]['state'].get('last_snapshot')
+
         return bundle
 
-    def hydrate(self, bundle):
-        bundle = super(ReplicationResourceMixin, self).hydrate(bundle)
-        if bundle.obj.id:
-            if 'repl_remote_hostname' not in bundle.data:
-                bundle.data['repl_remote_hostname'] = bundle.obj.repl_remote.ssh_remote_hostname
-            if 'repl_remote_port' not in bundle.data:
-                bundle.data['repl_remote_port'] = bundle.obj.repl_remote.ssh_remote_port
-            if 'repl_remote_dedicateduser_enabled' not in bundle.data:
-                bundle.data['repl_remote_dedicateduser_enabled'] = bundle.obj.repl_remote.ssh_remote_dedicateduser_enabled
-            if 'repl_remote_dedicateduser' not in bundle.data:
-                bundle.data['repl_remote_dedicateduser'] = bundle.obj.repl_remote.ssh_remote_dedicateduser
-            if 'repl_remote_cipher' not in bundle.data:
-                bundle.data['repl_remote_cipher'] = bundle.obj.repl_remote.ssh_cipher
-            if 'repl_remote_hostkey' not in bundle.data:
-                bundle.data['repl_remote_hostkey'] = bundle.obj.repl_remote.ssh_remote_hostkey
-        else:
-            if 'repl_remote_mode' not in bundle.data:
-                bundle.data['repl_remote_mode'] = 'MANUAL'
+
+class LegacyReplicationResourceMixin(object):
+
+    class Meta:
+        resource_name = 'storage/replication'
+
+    def dispatch_list(self, request, **kwargs):
+        with client as c:
+            self.__tasks = {task["id"]: task for task in c.call("replication.query")}
+            self.__ssh_keypairs = {credential["id"]: credential for credential in c.call("keychaincredential.query")}
+        return super().dispatch_list(request, **kwargs)
+
+    def dehydrate(self, bundle):
+        bundle = super().dehydrate(bundle)
+
+        task = self.__tasks[bundle.data["id"]]
+
+        bundle.data = {
+            "id": bundle.data["id"],
+            "repl_begin": bundle.data["repl_schedule_begin"],
+            "repl_compression":
+                "none" if bundle.data["repl_compression"] is None else bundle.data["repl_compression"].lower(),
+            "repl_enabled": bundle.data["repl_enabled"],
+            "repl_end": bundle.data["repl_schedule_end"],
+            "repl_filesystem": bundle.data["repl_source_datasets"][0],
+            "repl_followdelete": bundle.data["repl_retention_policy"] == "SOURCE",
+            "repl_lastsnapshot": task["state"].get("last_snapshot"),
+            "repl_limit": bundle.data["repl_speed_limit"] or 0,
+            "repl_remote_cipher": task["ssh_credentials"]["attributes"]["cipher"].lower(),
+            "repl_remote_dedicateduser": (None if task["ssh_credentials"]["attributes"]["username"] == "root"
+                                          else task["ssh_credentials"]["attributes"]["username"]),
+            "repl_remote_dedicateduser_enabled": task["ssh_credentials"]["attributes"]["username"] != "root",
+            "repl_remote_hostkey": (task["ssh_credentials"]["attributes"]["host"] + " " +
+                                    self.__ssh_keypairs[task["ssh_credentials"]["attributes"]["private_key"]]
+                                        ["attributes"]["public_key"] + "" + "\n\n" +
+                                    task["ssh_credentials"]["attributes"]["host"] + " " +
+                                    task["ssh_credentials"]["attributes"]["remote_host_key"] + "\n\n"),
+            "repl_remote_hostname": task["ssh_credentials"]["attributes"]["host"],
+            "repl_remote_port": task["ssh_credentials"]["attributes"]["port"],
+            "repl_status": "Succeeded" if task["state"]["state"] == "FINISHED" else task["state"]["state"],
+            "repl_userepl": bundle.data["repl_recursive"],
+            "repl_zfs": bundle.data["repl_target_dataset"],
+        }
 
         return bundle
 
 
 class TaskResourceMixin(object):
 
+    class Meta:
+        resource_name = 'storage/task2'
+
+    def dispatch_list(self, request, **kwargs):
+        with client as c:
+            self.__tasks = {task["id"]: task for task in c.call("pool.snapshottask.query")}
+        return super().dispatch_list(request, **kwargs)
+
     def dehydrate(self, bundle):
         bundle = super(TaskResourceMixin, self).dehydrate(bundle)
         if not self.is_webclient(bundle.request):
             return bundle
-        if bundle.obj.task_repeat_unit == "daily":
-            repeat = _('everyday')
-        elif bundle.obj.task_repeat_unit == "weekly":
-            wchoices = dict(choices.WEEKDAYS_CHOICES)
-            labels = []
-            for w in eval(bundle.obj.task_byweekday + ','):
-                labels.append(str(wchoices[str(w)]))
-            days = ', '.join(labels)
-            repeat = _('on every %(days)s') % {
-                'days': days,
-            }
+
+        bundle.data['keep_for'] = f'{bundle.obj.task_lifetime_value} {bundle.obj.task_lifetime_unit.lower()}'
+
+        for k in ['legacy', 'vmware_sync']:
+            bundle.data[k] = self.__tasks[bundle.data['id']][k]
+
+        return bundle
+
+
+class LegacyTaskResourceMixin(object):
+
+    class Meta:
+        resource_name = 'storage/task'
+
+    def dehydrate(self, bundle):
+        bundle = super(LegacyTaskResourceMixin, self).dehydrate(bundle)
+
+        task_repeat_unit = "weekly"
+        if bundle.data["task_dayweek"] == "*":
+            task_byweekday = "1,2,3,4,5,6,7"
+            task_repeat_unit = "daily"
+        elif bundle.data["task_dayweek"].startswith("*/"):
+            task_byweekday = ",".join([str(i) for i in range(1, 8) if i % int(bundle.data["task_dayweek"][2:]) == 0])
+            if int(bundle.data["task_dayweek"][2:]) == 1:
+                task_repeat_unit = "daily"
         else:
-            repeat = ''
-        bundle.data['when'] = _(
-            "From %(begin)s through %(end)s, %(repeat)s") % {
-            'begin': bundle.obj.task_begin,
-            'end': bundle.obj.task_end,
-            'repeat': repeat,
+            task_byweekday = bundle.data["task_dayweek"]
+            if bundle.data["task_dayweek"] == "1,2,3,4,5,6,7":
+                task_repeat_unit = "daily"
+
+        if bundle.data["task_minute"] == "*":
+            task_interval = 1
+        elif bundle.data["task_minute"].startswith("*/"):
+            task_interval = int(bundle.data["task_minute"][2:])
+        elif bundle.data["task_hour"] == "*":
+            task_interval = 60
+        elif bundle.data["task_hour"].startswith("*/"):
+            task_interval = int(bundle.data["task_hour"][2:]) * 60
+        else:
+            if bundle.data["task_daymonth"] == "1":
+                task_interval = 40320
+            elif bundle.data["task_daymonth"] == "1,15":
+                task_interval = 20160
+            elif bundle.data["task_dayweek"] == "1":
+                task_interval = 10080
+            else:
+                task_interval = 1440
+
+        bundle.data = {
+            "id": bundle.data["id"],
+            "task_begin": bundle.data["task_begin"],
+            "task_byweekday": task_byweekday,
+            "task_enabled": bundle.data["task_enabled"],
+            "task_end": bundle.data["task_end"],
+            "task_filesystem": bundle.data["task_dataset"],
+            "task_interval": task_interval,
+            "task_recursive": bundle.data["task_recursive"],
+            "task_repeat_unit": task_repeat_unit,
+            "task_ret_count": bundle.data["task_lifetime_value"],
+            "task_ret_unit": bundle.data["task_lifetime_unit"].lower(),
         }
-        bundle.data['interv'] = "every %s" % (
-            bundle.obj.get_task_interval_display(),
-        )
-        bundle.data['keepfor'] = "%s %s" % (
-            bundle.obj.task_ret_count,
-            bundle.obj.task_ret_unit,
-        )
-        if bundle.obj.task_recursive:
-            lookup = (
-                Q(filesystem=bundle.obj.task_filesystem) |
-                Q(filesystem__startswith=bundle.obj.task_filesystem + '/')
-            )
-        else:
-            lookup = Q(filesystem=bundle.obj.task_filesystem)
-        if VMWarePlugin.objects.filter(lookup).exists():
-            bundle.data['vmwaresync'] = True
-        else:
-            bundle.data['vmwaresync'] = False
         return bundle
 
 

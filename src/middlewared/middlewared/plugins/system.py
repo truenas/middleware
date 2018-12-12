@@ -1,7 +1,8 @@
+import asyncio
 from datetime import datetime, date
 from middlewared.event import EventSource
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
-from middlewared.service import ConfigService, no_auth_required, job, private, Service, ValidationErrors
+from middlewared.service import CallError, ConfigService, no_auth_required, job, private, Service, ValidationErrors
 from middlewared.utils import Popen, start_daemon_thread, sw_buildtime, sw_version
 from middlewared.validators import Range
 
@@ -753,12 +754,45 @@ class SystemGeneralService(ConfigService):
             await self.middleware.call('service.restart', 'syslogd')
 
         if config['timezone'] != new_config['timezone']:
+            await self.middleware.call('zettarepl.update_timezone', new_config['timezone'])
             await self.middleware.call('service.reload', 'timeservices')
             await self.middleware.call('service.restart', 'cron')
 
         await self.middleware.call('service.start', 'ssl')
 
         return await self.config()
+
+    @accepts()
+    async def local_url(self):
+        config = await self.middleware.call('system.general.config')
+
+        if config['ui_certificate']:
+            protocol = 'https'
+            port = config['ui_httpsport']
+        else:
+            protocol = 'http'
+            port = config['ui_port']
+
+        if '0.0.0.0' in config['ui_address'] or '127.0.0.1' in config['ui_address']:
+            hosts = ['127.0.0.1']
+        else:
+            hosts = config['ui_address']
+
+        errors = []
+        for host in hosts:
+            try:
+                reader, writer = await asyncio.wait_for(asyncio.open_connection(
+                    host,
+                    port=port,
+                ), timeout=5)
+                writer.close()
+
+                return f'{protocol}://{host}:{port}'
+
+            except Exception as e:
+                errors.append(f'{host}: {e}')
+
+        raise CallError('Unable to connect to any of the specified UI addresses:\n' + '\n'.join(errors))
 
 
 async def _event_system_ready(middleware, event_type, args):

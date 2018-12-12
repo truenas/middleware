@@ -31,6 +31,7 @@ import os
 import re
 import subprocess
 import sys
+from types import SimpleNamespace
 
 sys.path.extend([
     '/usr/local/www',
@@ -43,12 +44,14 @@ import django
 django.setup()
 
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.storage.models import Replication, REPL_RESULTFILE
 from freenasUI.common.timesubr import isTimeBetween
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import send_mail, get_sw_name
+from freenasUI.middleware.client import client
+from freenasUI.tools.replication_adapter import query_model
 
+REPL_RESULTFILE = '/tmp/.repl-result'
 
 #
 # Parse a list of 'zfs list -H -t snapshot -p -o name,creation' output
@@ -237,8 +240,55 @@ def write_results():
 system_re = re.compile('^[^/]+/.system.*')
 
 # Traverse all replication tasks
-replication_tasks = Replication.objects.all()
+replication_tasks = query_model("storage/replication", "repl_enabled")
 for replication in replication_tasks:
+    # BEGIN REPLICATION ADAPTER
+    replication.repl_begin = datetime.time(*map(int, replication.repl_begin.split(':')))
+    replication.repl_end = datetime.time(*map(int, replication.repl_end.split(':')))
+
+    replication.repl_remote = SimpleNamespace(**dict({
+        k.replace("repl_", "ssh_"): v
+        for k, v in replication.__dict__.items()
+        if k.startswith("repl_remote_")
+    }, **{
+        k.replace("repl_remote_", "ssh_"): v
+        for k, v in replication.__dict__.items()
+        if k.startswith("repl_remote_")
+    }))
+
+    with client as c:
+        try:
+            keys = c.call(
+                "keychaincredential.query",
+                [
+                    [
+                        "id",
+                        "=",
+                        c.call("replication.query", [
+                            [
+                                "id",
+                                "=",
+                                replication.id
+                            ],
+                        ])[0]["ssh_credentials"]["attributes"]["private_key"]
+                    ],
+                ]
+            )[0]["attributes"]
+        except Exception:
+            log.warning("Unable to get private key for replication %r", replication.id, exc_info=True)
+            continue
+
+    with open("/tmp/.repl-key", "w") as f:
+        f.write(keys["private_key"] + "\n")
+    os.chmod("/tmp/.repl-key", 0o400)
+    with open("/tmp/.repl-key.pub", "w") as f:
+        f.write(keys["public_key"] + "\n")
+    os.chmod("/tmp/.repl-key.pub", 0o400)
+
+    with open("/usr/local/etc/ssh/ssh_known_hosts", "w") as f:
+        f.write(replication.repl_remote_hostkey)
+    # END REPLICATION ADAPTER
+
     if not isTimeBetween(now, replication.repl_begin, replication.repl_end):
         continue
 
@@ -264,7 +314,7 @@ for replication in replication_tasks:
     if cipher == 'fast':
         sshcmd = (
             '/usr/local/bin/ssh -c arcfour256,arcfour128,blowfish-cbc,'
-            'aes128-ctr,aes192-ctr,aes256-ctr -i /data/ssh/replication'
+            'aes128-ctr,aes192-ctr,aes256-ctr -i /tmp/.repl-key'
             ' -o BatchMode=yes -o StrictHostKeyChecking=yes'
             # There's nothing magical about ConnectTimeout, it's an average
             # of wiliam and josh's thoughts on a Wednesday morning.
@@ -272,11 +322,11 @@ for replication in replication_tasks:
             ' -o ConnectTimeout=7'
         )
     elif cipher == 'disabled':
-        sshcmd = ('/usr/local/bin/ssh -ononeenabled=yes -ononeswitch=yes -i /data/ssh/replication -o BatchMode=yes'
+        sshcmd = ('/usr/local/bin/ssh -ononeenabled=yes -ononeswitch=yes -i /tmp/.repl-key -o BatchMode=yes'
                   ' -o StrictHostKeyChecking=yes'
                   ' -o ConnectTimeout=7')
     else:
-        sshcmd = ('/usr/local/bin/ssh -i /data/ssh/replication -o BatchMode=yes'
+        sshcmd = ('/usr/local/bin/ssh -i /tmp/.repl-key -o BatchMode=yes'
                   ' -o StrictHostKeyChecking=yes'
                   ' -o ConnectTimeout=7')
 

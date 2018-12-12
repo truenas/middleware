@@ -20,7 +20,8 @@ BUILDTIME = None
 VERSION = None
 
 
-def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None, select=None):
+def django_modelobj_serialize(middleware, obj, extend=None, extend_context=None, extend_context_value=None,
+                              field_prefix=None, select=None):
     from django.db.models.fields.related import ForeignKey, ManyToManyField
     from freenasUI.contrib.IPAddressField import (
         IPAddressField, IP4AddressField, IP6AddressField
@@ -55,7 +56,10 @@ def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None, s
         else:
             data[name] = value
     if extend:
-        data = middleware.call_sync(extend, data)
+        if extend_context:
+            data = middleware.call_sync(extend, data, extend_context_value)
+        else:
+            data = middleware.call_sync(extend, data)
     return data
 
 

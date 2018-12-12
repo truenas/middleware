@@ -739,6 +739,8 @@ class Middleware(object):
         self.loop_debug = loop_debug
         self.loop_monitor = loop_monitor
         self.overlay_dirs = overlay_dirs or []
+        self.debug_level = debug_level
+        self.log_handler = log_handler
         self.app = None
         self.__loop = None
         self.__thread_id = threading.get_ident()
@@ -1112,15 +1114,19 @@ class Middleware(object):
         """
         Synchronous method call to be used from another thread.
         """
-        if threading.get_ident() == self.__thread_id:
-            raise RuntimeError('You cannot call_sync from main thread')
 
         serviceobj, methodobj = self._method_lookup(name)
         # This method is already being called from a thread so we cant use the same
         # thread pool or we may get in a deadlock situation if all threads in the default
         # pool are waiting.
         # Instead we launch a new thread just for that call (io_thread).
-        fut = asyncio.run_coroutine_threadsafe(self._call(name, serviceobj, methodobj, params, io_thread=True), self.__loop)
+        return self.run_coroutine(self._call(name, serviceobj, methodobj, params, io_thread=True))
+
+    def run_coroutine(self, coro):
+        if threading.get_ident() == self.__thread_id:
+            raise RuntimeError('You cannot call_sync or run_coroutine from main thread')
+
+        fut = asyncio.run_coroutine_threadsafe(coro, self.__loop)
         event = threading.Event()
 
         def done(_):

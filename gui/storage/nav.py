@@ -3,7 +3,7 @@ from freenasUI.freeadmin.tree import TreeNode
 from . import models
 
 NAME = _('Storage')
-BLACKLIST = ['Disk', 'ReplRemote', 'Volume']
+BLACKLIST = ['Disk', 'Volume']
 ICON = 'StorageIcon'
 ORDER = 20
 

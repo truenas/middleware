@@ -49,14 +49,14 @@ django.setup()
 
 from django.db.models import Q
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.storage.models import Task
 from datetime import datetime, time, timedelta
 
 from freenasUI.common.locks import mntlock
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.system import send_mail
 from freenasUI.common.timesubr import isTimeBetween
-from freenasUI.storage.models import Replication, VMWarePlugin
+from freenasUI.storage.models import VMWarePlugin
+from freenasUI.tools.replication_adapter import query_model
 
 from lockfile import LockFile
 
@@ -248,9 +248,12 @@ mp_to_task_map = {}
 # Grab all matching tasks into a tree.
 # Since the snapshot we make have the name 'foo@auto-%Y%m%d.%H%M-{expire time}'
 # format, we just keep one task.
-TaskObjects = Task.objects.filter(task_enabled=True)
+TaskObjects = query_model("storage/task", "task_enabled")
 taskpath = {'recursive': [], 'nonrecursive': []}
 for task in TaskObjects:
+    task.task_begin = time(*map(int, task.task_begin.split(':')))
+    task.task_end = time(*map(int, task.task_end.split(':')))
+
     vol_name = task.task_filesystem.split('/')[0]
     if isMatchingTime(task, snaptime):
         proc = pipeopen(f'/sbin/zpool list {vol_name}')
@@ -617,7 +620,7 @@ Hello,
 
 os.unlink('/var/run/autosnap.pid')
 
-if Replication.objects.exists():
+if query_model("storage/replication", "repl_enabled"):
     os.execl('/usr/local/bin/python',
              'python',
              '/usr/local/www/freenasUI/tools/autorepl.py')

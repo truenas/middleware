@@ -1,6 +1,9 @@
 import ipaddress
 import re
+from urllib.parse import urlparse
 import uuid
+
+from zettarepl.snapshot.task.naming_schema import validate_snapshot_naming_schema
 
 from datetime import time
 from django.core.exceptions import ValidationError
@@ -143,6 +146,11 @@ class MACAddr:
             raise ValueError('Please provide a valid MAC address')
 
 
+class ReplicationSnapshotNamingSchema:
+    def __call__(self, value):
+        validate_snapshot_naming_schema(value)
+
+
 class UUID:
     def __call__(self, value):
         try:
@@ -169,3 +177,25 @@ def validate_attributes(schema, data, additional_attrs=False, attr_key="attribut
         verrors.extend(e)
 
     return verrors
+
+
+class URL:
+    def __init__(self, **kwargs):
+        kwargs.setdefault("scheme", ["http", "https"])
+
+        self.scheme = kwargs["scheme"]
+
+    def __call__(self, value):
+        try:
+            result = urlparse(value)
+        except Exception as e:
+            raise ValueError(f'Invalid URL: {e}')
+
+        if not result.scheme:
+            raise ValueError('Invalid URL: no scheme specified')
+
+        if self.scheme and result.scheme not in self.scheme:
+            raise ValueError(f'Invalid URL: invalid scheme: {result.scheme}')
+
+        if not result.netloc:
+            raise ValueError('Invalid URL: no netloc specified')

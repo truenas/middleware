@@ -484,10 +484,6 @@ class notifier(metaclass=HookMetaclass):
             else:
                 zfsproc = self._pipeopen("zfs destroy '%s'" % (path))
             retval = zfsproc.communicate()[1]
-            if zfsproc.returncode == 0:
-                from freenasUI.storage.models import Task, Replication
-                Task.objects.filter(task_filesystem=path).delete()
-                Replication.objects.filter(repl_filesystem=path).delete()
         if not retval:
             try:
                 self.__rmdir_mountpoint(path)

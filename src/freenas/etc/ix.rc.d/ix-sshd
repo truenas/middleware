@@ -113,15 +113,6 @@ __EOF__
             
             echo $options >> $cfg
     done
-    
-    # Generate a passwordless key-pair for automatic replication
-    if [ ! -d /data/ssh ]; then
-        mkdir -m 755 /data/ssh
-    fi
-    if [ ! -e /data/ssh/replication ]; then
-        /usr/local/bin/ssh-keygen -qt rsa -N "" -C "Key for replication" -b 2048 -f /data/ssh/replication
-    fi
-    ${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT ssh_remote_hostkey FROM storage_replremote" > /usr/local/etc/ssh/ssh_known_hosts
 
     # extract the saved host keys from the database.
     for i in "ssh_host_key" "ssh_host_key.pub" "ssh_host_dsa_key" "ssh_host_dsa_key.pub" "ssh_host_dsa_key-cert.pub" "ssh_host_ecdsa_key" "ssh_host_ecdsa_key.pub" "ssh_host_ecdsa_key-cert.pub" "ssh_host_rsa_key" "ssh_host_rsa_key.pub" "ssh_host_rsa_key-cert.pub" "ssh_host_ed25519_key" "ssh_host_ed25519_key.pub" "ssh_host_ed25519_key-cert.pub"

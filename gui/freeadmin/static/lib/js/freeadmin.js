@@ -391,49 +391,6 @@ require([
       }
     }
 
-    repliRemoteMode = function() {
-
-      var mode = registry.byId('id_repl_remote_mode');
-
-      var rp = registry.byId('id_repl_remote_port');
-      var rhk = registry.byId('id_repl_remote_hostkey');
-      var rhp = registry.byId('id_repl_remote_http_port');
-      var rh = registry.byId('id_repl_remote_https');
-      var rt = registry.byId('id_repl_remote_token');
-
-      var rscan = registry.byId('btn_Replication_SSHKeyScan');
-
-      var tr_rp = rp.domNode.parentNode.parentNode;
-      var tr_rhk = rhk.domNode.parentNode.parentNode;
-      var tr_rhp = rhp.domNode.parentNode.parentNode;
-      var tr_rh = rh.domNode.parentNode.parentNode;
-      var tr_rt = rt.domNode.parentNode.parentNode;
-
-      var modewarn = dom.byId('repl_mode_semiautomatic_warn');
-
-      if(mode.get('value') == 'MANUAL') {
-        if(modewarn) domConstruct.destroy(modewarn);
-        domStyle.set(tr_rp, 'display', '');
-        domStyle.set(tr_rhk, 'display', '');
-        domStyle.set(rscan.domNode, 'display', '');
-        domStyle.set(tr_rhp, 'display', 'none');
-        domStyle.set(tr_rh, 'display', 'none');
-        domStyle.set(tr_rt, 'display', 'none');
-      } else {
-        if(!modewarn) {
-          modewarn = domConstruct.toDom('<p id="repl_mode_semiautomatic_warn" style="color: red;">This method only works with remote version greater or equal than 9.10.2</p>');
-          domConstruct.place(modewarn, mode.domNode.parentNode);
-        }
-        domStyle.set(tr_rp, 'display', 'none');
-        domStyle.set(tr_rhk, 'display', 'none');
-        domStyle.set(rscan.domNode, 'display', 'none');
-        domStyle.set(tr_rhp, 'display', '');
-        domStyle.set(tr_rh, 'display', '');
-        domStyle.set(tr_rt, 'display', '');
-      }
-
-    }
-
     togglePluginService = function(from, name, id) {
 
         var td = from.parentNode;
@@ -497,6 +454,44 @@ require([
     }
 
     var canceled = false;
+
+    setVisible = function(id, visible) {
+        var widget = registry.byId(id);
+        if (widget)
+        {
+            domStyle.set(widget.domNode.parentNode.parentNode, "display", visible ? "" : "none");
+            widget.set("disabled", !visible);
+        }
+        else
+        {
+            var widget = registry.byId(id + "_0");
+            if (widget)
+            {
+                domStyle.set(widget.domNode.parentNode.parentNode.parentNode.parentNode.parentNode,
+                             "display", visible ? "" : "none");
+            }
+            else
+            {
+                throw new Error("Widget " + id + " not found")
+            }
+        }
+    }
+
+    hideGeneric = function(checkboxid, farray, inverted) {
+
+        if(inverted == undefined) inverted = false;
+
+        var box = registry.byId(checkboxid);
+        if(inverted == true) {
+            toset = !box.get("value");
+        } else{
+            toset = box.get("value");
+        }
+        for(var i=0;i<farray.length;i++) {
+            setVisible(farray[i], toset);
+        }
+
+    }
 
     toggleGeneric = function(checkboxid, farray, inverted) {
 
@@ -1342,6 +1337,177 @@ require([
             domStyle.set(trpa, "display", "none");
         }
 
+    }
+
+    sshCredentialsTypeToggle = function() {
+        if (registry.byId("id_type").get("value") == "MANUAL")
+        {
+            setVisible("id_host", true);
+            setVisible("id_port", true);
+            setVisible("id_remote_host_key", true);
+            domStyle.set(registry.byId("btn_Fake").domNode, "display", "");
+
+            setVisible("id_url", false);
+            setVisible("id_token", false);
+        }
+        else
+        {
+            setVisible("id_host", false);
+            setVisible("id_port", false);
+            setVisible("id_remote_host_key", false);
+            domStyle.set(registry.byId("btn_Fake").domNode, "display", "none");
+
+            setVisible("id_url", true);
+            setVisible("id_token", true);
+        }
+    }
+
+    replicationSetup = function() {
+        var tr;
+
+        tr = registry.byId("id_repl_enable_schedule").domNode.parentNode.parentNode;
+        for (var i = 0; i < 8; i++)
+        {
+            domStyle.set(tr, "background", "#ebffd7");
+            domStyle.set(tr.children[0], "background", "#ebffd7");
+            tr = tr.nextSibling;
+        }
+
+        tr = registry.byId("id_repl_enable_restrict_schedule").domNode.parentNode.parentNode;
+        for (var i = 0; i < 8; i++)
+        {
+            domStyle.set(tr, "background", "#ebd7ff");
+            domStyle.set(tr.children[0], "background", "#ebd7ff");
+            tr = tr.nextSibling;
+        }
+    }
+
+    replicationToggle = function() {
+        if (registry.byId("id_repl_direction").get("value") == "PUSH")
+        {
+            document.querySelector('label[for="id_repl_naming_schema"]').innerHTML = "Also include naming schema";
+        }
+        else
+        {
+            document.querySelector('label[for="id_repl_naming_schema"]').innerHTML = "Naming schema";
+        }
+
+        var schedule = ["schedule_minute", "schedule_hour", "schedule_month", "schedule_daymonth", "schedule_dayweek",
+                        "schedule_begin", "schedule_end"];
+        var restrictSchedule = ["restrict_schedule_minute", "restrict_schedule_hour", "restrict_schedule_month",
+                                "restrict_schedule_daymonth", "restrict_schedule_dayweek", "restrict_schedule_begin",
+                                "restrict_schedule_end"];
+        var policies = {
+            "SOURCE": [],
+            "CUSTOM": ["lifetime_value", "lifetime_unit"],
+            "NONE": [],
+        };
+        var newFeatures = (
+            ["exclude", "periodic_snapshot_tasks", "naming_schema", "auto", "only_matching_schedule",
+             "allow_from_scratch", "hold_pending_snapshots", "retention_policy", "dedup", "large_block", "embed",
+             "compressed", "retries"].
+            concat("enable_schedule").concat(schedule).
+            concat("enable_restrict_schedule").concat(restrictSchedule).
+            concat(policies["SOURCE"]).concat(policies["CUSTOM"]).concat(policies["NONE"])
+        );
+        var transports = {
+            "SSH": newFeatures.concat(["ssh_credentials", "compression", "speed_limit"]),
+            "SSH+NETCAT": newFeatures.concat(["ssh_credentials", "netcat_active_side", "netcat_active_side_port_min",
+                                              "netcat_active_side_port_max"]),
+            "LOCAL": newFeatures,
+            "LEGACY": ["ssh_credentials"],
+        };
+
+        var visible = {};
+
+        // Hide all
+        for (var k in transports)
+        {
+            var fields = transports[k];
+            for (var i in fields)
+            {
+                var name = fields[i];
+                visible[name] = false;
+            }
+        }
+
+        // Show available for current transport
+        var fields = transports[registry.byId("id_repl_transport").get("value")];
+        for (var i in fields)
+        {
+            var name = fields[i];
+            visible[name] = true;
+        }
+
+        // Pull
+        if (registry.byId("id_repl_direction").get("value") == "PULL")
+        {
+            visible["periodic_snapshot_tasks"] = false;
+        }
+
+        // Recursive
+
+        if (!registry.byId("id_repl_recursive").get("value"))
+        {
+            visible["exclude"] = false;
+        }
+
+        // Auto
+
+        var scheduleVisible = false;
+        var direction = registry.byId("id_repl_direction").get("value");
+        if (direction == "PUSH")
+        {
+            scheduleVisible = (
+                registry.byId("id_repl_auto").get("value") &&
+                registry.byId("id_repl_periodic_snapshot_tasks").get("value").length == 0
+            );
+        }
+        if (direction == "PULL")
+        {
+            scheduleVisible = (
+                registry.byId("id_repl_auto").get("value")
+            );
+        }
+        if (!scheduleVisible)
+        {
+            visible["enable_schedule"] = false;
+        }
+        if (!visible["enable_schedule"] || !registry.byId("id_repl_enable_schedule").get("value"))
+        {
+            for (var i in schedule)
+            {
+                var name = schedule[i];
+                visible[name] = false;
+            }
+            visible["only_matching_schedule"] = false;
+        }
+        if (!visible["enable_restrict_schedule"] || !registry.byId("id_repl_enable_restrict_schedule").get("value"))
+        {
+            for (var i in restrictSchedule)
+            {
+                var name = restrictSchedule[i];
+                visible[name] = false;
+            }
+        }
+
+        // Retention policy
+
+        if (registry.byId("id_repl_retention_policy").get("value") != "CUSTOM")
+        {
+            for (var i in policies["CUSTOM"])
+            {
+                var name = policies["CUSTOM"][i];
+                visible[name] = false;
+            }
+        }
+
+        // Run
+
+        for (var name in visible)
+        {
+            setVisible("id_repl_" + name, visible[name]);
+        }
     }
 
     deviceTypeToggle = function() {

@@ -1756,17 +1756,36 @@ class PeriodicSnapForm(MiddlewareModelForm, ModelForm):
     middleware_attr_schema = 'periodic_snapshot'
     middleware_attr_prefix = 'task_'
     middleware_plugin = 'pool.snapshottask'
-    middleware_attr_map = {
-        'dow': 'task_byweekday'
-    }
     is_singletone = False
+
+    task_exclude = forms.CharField(
+        required=False,
+        label=_("Exclude"),
+        widget=forms.Textarea(),
+    )
 
     class Meta:
         fields = '__all__'
         model = models.Task
         widgets = {
-            'task_byweekday': CheckboxSelectMultiple(
-                choices=choices.WEEKDAYS_CHOICES),
+            'task_minute': CronMultiple(
+                attrs={'numChoices': 60, 'label': _("minute")}
+            ),
+            'task_hour': CronMultiple(
+                attrs={'numChoices': 24, 'label': _("hour")}
+            ),
+            'task_daymonth': CronMultiple(
+                attrs={
+                    'numChoices': 31, 'start': 1, 'label': _("day of month"),
+                }
+            ),
+            'task_dayweek': forms.CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES
+            ),
+            'task_month': forms.CheckboxSelectMultiple(
+                choices=choices.MONTHS_CHOICES
+            ),
+
             'task_begin': forms.widgets.TimeInput(attrs={
                 'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
             }),
@@ -1780,15 +1799,38 @@ class PeriodicSnapForm(MiddlewareModelForm, ModelForm):
             new = args[0].copy()
             fix_time_fields(new, ['task_begin', 'task_end'])
             args = (new,) + args[1:]
-        super(PeriodicSnapForm, self).__init__(*args, **kwargs)
-        self.fields['task_filesystem'] = forms.ChoiceField(
-            label=self.fields['task_filesystem'].label,
-        )
-        filesystem_choices = sorted(list(choices.FILESYSTEM_CHOICES()))
-        if self.instance.id and self.instance.task_filesystem not in dict(filesystem_choices):
-            filesystem_choices.append((self.instance.task_filesystem, self.instance.task_filesystem))
-        self.fields['task_filesystem'].choices = filesystem_choices
-        self.fields['task_repeat_unit'].widget = forms.HiddenInput()
+
+        if "instance" in kwargs and kwargs["instance"].id:
+            kwargs.setdefault("initial", {})
+
+            kwargs["initial"]["task_exclude"] = "\n".join(kwargs["instance"].task_exclude)
+
+        super().__init__(*args, **kwargs)
+        mchoicefield(self, 'task_month', [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+        ])
+        mchoicefield(self, 'task_dayweek', [
+            1, 2, 3, 4, 5, 6, 7
+        ])
+
+    def clean_task_exclude(self):
+        return self.cleaned_data.get('task_exclude').split()
+
+    def clean_task_month(self):
+        m = self.data.getlist('task_month')
+        if len(m) == 12:
+            return '*'
+        m = ','.join(m)
+        return m
+
+    def clean_task_dayweek(self):
+        w = self.data.getlist('task_dayweek')
+        if w == '*':
+            return w
+        if len(w) == 7:
+            return '*'
+        w = ','.join(w)
+        return w
 
     def clean_task_begin(self):
         begin = self.cleaned_data.get('task_begin')
@@ -1798,14 +1840,16 @@ class PeriodicSnapForm(MiddlewareModelForm, ModelForm):
         end = self.cleaned_data.get('task_end')
         return end.strftime('%H:%M')
 
-    def clean_task_byweekday(self):
-        bwd = self.data.getlist('task_byweekday')
-        return bwd
-
     def middleware_clean(self, data):
-        data['dow'] = [int(day) for day in data.pop('byweekday')]
-        data.pop('repeat_unit', None)
-        data['ret_unit'] = data['ret_unit'].upper()
+        data['schedule'] = {
+            'minute': data.pop('minute'),
+            'hour': data.pop('hour'),
+            'dom': data.pop('daymonth'),
+            'month': data.pop('month'),
+            'dow': data.pop('dayweek'),
+            'begin': data.pop('begin'),
+            'end': data.pop('end'),
+        }
         return data
 
 
@@ -2022,6 +2066,11 @@ class ZFSDiskReplacementForm(Form):
         return True
 
 
+def is_child(child: str, parent: str):
+    rel = os.path.relpath(child, parent)
+    return rel == "." or not rel.startswith("..")
+
+
 class ReplicationForm(MiddlewareModelForm, ModelForm):
 
     middleware_attr_prefix = "repl_"
@@ -2029,71 +2078,100 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
     middleware_plugin = "replication"
     is_singletone = False
 
-    repl_remote_mode = forms.ChoiceField(
-        label=_('Setup mode'),
-        choices=(
-            ('MANUAL', _('Manual')),
-            ('SEMIAUTOMATIC', _('Semi-automatic')),
-        ),
-        initial='MANUAL',
-    )
-    repl_remote_hostname = forms.CharField(label=_("Remote hostname"))
-    repl_remote_port = forms.IntegerField(
-        label=_("Remote port"),
-        initial=22,
+    repl_netcat_active_side_port_min = forms.CharField(
         required=False,
-        widget=forms.widgets.TextInput(),
+        label=_("Netcat Active Side Min Port"),
     )
-    repl_remote_http_port = forms.CharField(
-        label=_('Remote HTTP/HTTPS Port'),
-        max_length=200,
-        initial=80,
+    repl_netcat_active_side_port_max = forms.CharField(
         required=False,
+        label=_("Netcat Active Side Max Port"),
     )
-    repl_remote_https = forms.BooleanField(
-        label=_('Remote HTTPS'),
-        required=False,
-        initial=False,
-    )
-    repl_remote_token = forms.CharField(
-        label=_('Remote Auth Token'),
-        max_length=100,
-        required=False,
-        help_text=_(
-            "On the remote host go to Storage -> Replication Tasks, click the "
-            "Temporary Auth Token button and paste the resulting value in to "
-            "this field."
-        ),
-    )
-    repl_remote_dedicateduser_enabled = forms.BooleanField(
-        label=_("Dedicated User Enabled"),
-        help_text=_("If disabled then root will be used for replication."),
-        required=False,
-    )
-    repl_remote_dedicateduser = UserField(
-        label=_("Dedicated User"),
-        required=False,
-    )
-    repl_remote_cipher = forms.ChoiceField(
-        label=_("Encryption Cipher"),
-        initial='standard',
-        choices=choices.REPL_CIPHER,
-    )
-    repl_remote_hostkey = forms.CharField(
-        label=_("Remote hostkey"),
+    repl_source_datasets = forms.CharField(
+        label=_("Source Datasets"),
         widget=forms.Textarea(),
+    )
+    repl_exclude = forms.CharField(
         required=False,
+        label=_("Exclude child datasets"),
+        widget=forms.Textarea(),
+    )
+    repl_enable_schedule = forms.BooleanField(
+        required=False,
+        label=_("Schedule"),
+    )
+    repl_enable_restrict_schedule = forms.BooleanField(
+        required=False,
+        label=_("Restrict schedule"),
+    )
+    repl_naming_schema = forms.CharField(
+        required=False,
+        label=_("Naming schema"),
+        widget=forms.Textarea(),
+    )
+    repl_lifetime_value = forms.CharField(
+        required=False,
+        label=_("Snapshot lifetime value"),
+    )
+    repl_compression = forms.ChoiceField(
+        required=False,
+        label=_("Stream Compression"),
+        choices=((None, "disabled"),) + choices.Repl_CompressionChoices,
+    )
+    repl_speed_limit = forms.CharField(
+        required=False,
+        label=_("Limit (kbps)"),
     )
 
     class Meta:
-        fields = '__all__'
+        fields = "__all__"
         model = models.Replication
-        exclude = ('repl_lastsnapshot', 'repl_remote')
+
         widgets = {
-            'repl_begin': forms.widgets.TimeInput(attrs={
+            'repl_schedule_minute': CronMultiple(
+                attrs={'numChoices': 60, 'label': _("minute")}
+            ),
+            'repl_schedule_hour': CronMultiple(
+                attrs={'numChoices': 24, 'label': _("hour")}
+            ),
+            'repl_schedule_daymonth': CronMultiple(
+                attrs={
+                    'numChoices': 31, 'start': 1, 'label': _("day of month"),
+                }
+            ),
+            'repl_schedule_dayweek': forms.CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES
+            ),
+            'repl_schedule_month': forms.CheckboxSelectMultiple(
+                choices=choices.MONTHS_CHOICES
+            ),
+            'repl_schedule_begin': forms.widgets.TimeInput(attrs={
                 'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
             }),
-            'repl_end': forms.widgets.TimeInput(attrs={
+            'repl_schedule_end': forms.widgets.TimeInput(attrs={
+                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
+            }),
+
+            'repl_restrict_schedule_minute': CronMultiple(
+                attrs={'numChoices': 60, 'label': _("minute")}
+            ),
+            'repl_restrict_schedule_hour': CronMultiple(
+                attrs={'numChoices': 24, 'label': _("hour")}
+            ),
+            'repl_restrict_schedule_daymonth': CronMultiple(
+                attrs={
+                    'numChoices': 31, 'start': 1, 'label': _("day of month"),
+                }
+            ),
+            'repl_restrict_schedule_dayweek': forms.CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES
+            ),
+            'repl_restrict_schedule_month': forms.CheckboxSelectMultiple(
+                choices=choices.MONTHS_CHOICES
+            ),
+            'repl_restrict_schedule_begin': forms.widgets.TimeInput(attrs={
+                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
+            }),
+            'repl_restrict_schedule_end': forms.widgets.TimeInput(attrs={
                 'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
             }),
         }
@@ -2101,116 +2179,265 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
     def __init__(self, *args, **kwargs):
         if len(args) > 0 and isinstance(args[0], QueryDict):
             new = args[0].copy()
-            fix_time_fields(new, ['repl_begin', 'repl_end'])
+            fix_time_fields(new, ['repl_schedule_begin', 'repl_schedule_end',
+                                  'repl_restrict_schedule_begin', 'repl_restrict_schedule_end'])
             args = (new,) + args[1:]
-        repl = kwargs.get('instance', None)
-        super(ReplicationForm, self).__init__(*args, **kwargs)
-        self.fields['repl_filesystem'] = forms.ChoiceField(
-            label=self.fields['repl_filesystem'].label,
-            help_text=_(
-                "This field will be empty if you have not "
-                "setup a periodic snapshot task"),
-        )
-        fs = sorted(list(set([
-            (task.task_filesystem, task.task_filesystem)
-            for task in models.Task.objects.all()
-        ])))
-        self.fields['repl_filesystem'].choices = fs
 
-        if not self.instance.id:
-            self.fields['repl_remote_mode'].widget.attrs['onChange'] = (
-                'repliRemoteMode'
-            )
+        if "instance" in kwargs and kwargs["instance"].id:
+            kwargs.setdefault("initial", {})
+
+            kwargs["initial"]["repl_source_datasets"] = "\n".join(kwargs["instance"].repl_source_datasets)
+            kwargs["initial"]["repl_exclude"] = "\n".join(kwargs["instance"].repl_exclude)
+            kwargs["initial"]["repl_naming_schema"] = "\n".join(kwargs["instance"].repl_naming_schema)
+
+            if kwargs["instance"].repl_transport == "LEGACY":
+                kwargs["initial"]["repl_periodic_snapshot_tasks"] = [
+                    task
+                    for task in models.Task.objects.all()
+                    if (
+                        task.task_dataset == kwargs["instance"].repl_source_datasets[0] or
+                        (task.task_recursive and
+                            is_child(kwargs["instance"].repl_source_datasets[0], task.task_dataset)) or
+                        (kwargs["instance"].repl_recursive and
+                            is_child(task.task_dataset, kwargs["instance"].repl_source_datasets[0]))
+                    )
+                ]
+
+            if kwargs["instance"].repl_schedule_minute is not None:
+                kwargs["initial"]["repl_enable_schedule"] = True
+            if kwargs["instance"].repl_restrict_schedule_minute is not None:
+                kwargs["initial"]["repl_enable_restrict_schedule"] = True
+
+            if kwargs["instance"].repl_speed_limit:
+                kwargs["initial"]["repl_speed_limit"] = int(kwargs["instance"].repl_speed_limit / 1024)
+
+        super().__init__(*args, **kwargs)
+
+        mchoicefield(self, 'repl_schedule_month', [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+        ])
+        mchoicefield(self, 'repl_restrict_schedule_month', [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+        ])
+        mchoicefield(self, 'repl_schedule_dayweek', [
+            1, 2, 3, 4, 5, 6, 7
+        ])
+        mchoicefield(self, 'repl_restrict_schedule_dayweek', [
+            1, 2, 3, 4, 5, 6, 7
+        ])
+
+        for k in ["repl_netcat_active_side",
+
+                  "repl_schedule_minute", "repl_schedule_hour", "repl_schedule_daymonth",
+                  "repl_schedule_begin", "repl_schedule_end",
+
+                  "repl_restrict_schedule_minute", "repl_restrict_schedule_hour", "repl_restrict_schedule_daymonth",
+                  "repl_restrict_schedule_begin", "repl_restrict_schedule_end",
+
+                  "repl_lifetime_unit", "repl_retention_policy", "repl_retries"]:
+            self.fields[k].required = False
+
+        self.fields['repl_direction'].widget.attrs['onChange'] = "replicationToggle();"
+        self.fields['repl_transport'].widget.attrs['onChange'] = "replicationToggle();"
+        self.fields['repl_recursive'].widget.attrs['onChange'] = "replicationToggle();"
+        self.fields['repl_periodic_snapshot_tasks'].widget.attrs['onChange'] = "replicationToggle();"
+        self.fields['repl_auto'].widget.attrs['onChange'] = "replicationToggle();"
+        self.fields['repl_enable_schedule'].widget.attrs['onChange'] = "replicationToggle();"
+        self.fields['repl_enable_restrict_schedule'].widget.attrs['onChange'] = "replicationToggle();"
+        self.fields['repl_retention_policy'].widget.attrs['onChange'] = "replicationToggle();"
+
+    def clean_repl_netcat_active_side_port_min(self):
+        value = self.cleaned_data.get('repl_netcat_active_side_port_min')
+        if value:
+            try:
+                return int(value)
+            except ValueError:
+                raise forms.ValidationError("Not a valid integer")
         else:
-            del self.fields['repl_remote_mode']
-            del self.fields['repl_remote_http_port']
-            del self.fields['repl_remote_https']
-            del self.fields['repl_remote_token']
+            return None
 
-        self.fields['repl_remote_dedicateduser_enabled'].widget.attrs[
-            'onClick'
-        ] = (
-            'toggleGeneric("id_repl_remote_dedicateduser_enabled", '
-            '["id_repl_remote_dedicateduser"], true);')
-
-        self.fields['repl_remote_cipher'].widget.attrs['onChange'] = (
-            'remoteCipherConfirm'
-        )
-
-        if repl and repl.id:
-            self.fields['repl_remote_hostname'].initial = (
-                repl.repl_remote.ssh_remote_hostname)
-            self.fields['repl_remote_hostname'].required = False
-            self.fields['repl_remote_port'].initial = (
-                repl.repl_remote.ssh_remote_port)
-            self.fields['repl_remote_dedicateduser_enabled'].initial = (
-                repl.repl_remote.ssh_remote_dedicateduser_enabled)
-            self.fields['repl_remote_dedicateduser'].initial = (
-                repl.repl_remote.ssh_remote_dedicateduser)
-            self.fields['repl_remote_cipher'].initial = (
-                repl.repl_remote.ssh_cipher)
-            self.fields['repl_remote_hostkey'].initial = (
-                repl.repl_remote.ssh_remote_hostkey)
-            self.fields['repl_remote_hostkey'].required = False
-            if not repl.repl_remote.ssh_remote_dedicateduser_enabled:
-                self.fields['repl_remote_dedicateduser'].widget.attrs[
-                    'disabled'] = 'disabled'
+    def clean_repl_netcat_active_side_port_max(self):
+        value = self.cleaned_data.get('repl_netcat_active_side_port_min')
+        if value:
+            try:
+                return int(value)
+            except ValueError:
+                raise forms.ValidationError("Not a valid integer")
         else:
-            if not self.data.get("repl_remote_dedicateduser_enabled", False):
-                self.fields['repl_remote_dedicateduser'].widget.attrs[
-                    'disabled'] = 'disabled'
+            return None
 
-        self.fields['repl_remote_cipher'].widget.attrs['data-dojo-props'] = (
-            mark_safe("'oldvalue': '%s'" % (
-                self.fields['repl_remote_cipher'].initial,
-            ))
-        )
+    def clean_repl_source_datasets(self):
+        return self.cleaned_data.get('repl_source_datasets').split()
 
-    def clean_repl_remote_port(self):
-        port = self.cleaned_data.get('repl_remote_port')
-        if not port:
-            return 22
-        return port
+    def clean_repl_exclude(self):
+        return self.cleaned_data.get('repl_exclude').split()
 
-    def clean_repl_remote_http_port(self):
-        port = self.cleaned_data.get('repl_remote_http_port')
-        mode = self.cleaned_data.get('repl_remote_mode')
-        if mode == 'SEMIAUTOMATIC' and not port:
-            return 80
-        return port
+    def clean_repl_naming_schema(self):
+        return self.cleaned_data.get('repl_naming_schema').split()
 
-    def clean_repl_begin(self):
-        return self.cleaned_data.get('repl_begin').strftime('%H:%M')
+    def clean_repl_schedule_month(self):
+        m = self.data.getlist('repl_schedule_month')
+        if len(m) == 12:
+            return '*'
+        m = ','.join(m)
+        return m
 
-    def clean_repl_end(self):
-        return self.cleaned_data.get('repl_end').strftime('%H:%M')
+    def clean_repl_schedule_dayweek(self):
+        w = self.data.getlist('repl_schedule_dayweek')
+        if w == '*':
+            return w
+        if len(w) == 7:
+            return '*'
+        w = ','.join(w)
+        return w
+
+    def clean_repl_restrict_schedule_month(self):
+        m = self.data.getlist('repl_restrict_schedule_month')
+        if len(m) == 12:
+            return '*'
+        m = ','.join(m)
+        return m
+
+    def clean_repl_restrict_schedule_dayweek(self):
+        w = self.data.getlist('repl_restrict_schedule_dayweek')
+        if w == '*':
+            return w
+        if len(w) == 7:
+            return '*'
+        w = ','.join(w)
+        return w
+
+    def clean_repl_schedule_begin(self):
+        begin = self.cleaned_data.get('repl_schedule_begin')
+        if begin:
+            return begin.strftime('%H:%M')
+
+    def clean_repl_schedule_end(self):
+        end = self.cleaned_data.get('repl_schedule_end')
+        if end:
+            return end.strftime('%H:%M')
+
+    def clean_repl_restrict_schedule_begin(self):
+        begin = self.cleaned_data.get('repl_restrict_schedule_begin')
+        if begin:
+            return begin.strftime('%H:%M')
+
+    def clean_repl_restrict_schedule_end(self):
+        end = self.cleaned_data.get('repl_restrict_schedule_end')
+        if end:
+            return end.strftime('%H:%M')
+
+    def clean_repl_retention_policy(self):
+        return self.cleaned_data.get('repl_retention_policy') or 'NONE'
+
+    def clean_repl_lifetime_value(self):
+        value = self.cleaned_data.get('repl_lifetime_value')
+        if value:
+            try:
+                return int(value)
+            except ValueError:
+                raise forms.ValidationError("Not a valid integer")
+        else:
+            return None
+
+    def clean_repl_speed_limit(self):
+        value = self.cleaned_data.get('repl_speed_limit')
+        if value:
+            try:
+                return int(value)
+            except ValueError:
+                raise forms.ValidationError("Not a valid integer")
+        else:
+            return None
 
     def middleware_clean(self, data):
+        data["periodic_snapshot_tasks"] = [periodic_snapshot_task.id
+                                           for periodic_snapshot_task in data["periodic_snapshot_tasks"]]
 
-        data['compression'] = data['compression'].upper()
-        data['remote_cipher'] = data['remote_cipher'].upper()
-        remote_http_port = int(data.pop('remote_http_port', 80))
-        remote_port = int(data.pop('remote_port', 22))
+        if not data["compression"]:
+            data["compression"] = None
 
-        mode = data.get('remote_mode', 'MANUAL')
-        if mode == 'SEMIAUTOMATIC':
-            data['remote_port'] = remote_http_port
+        if data["transport"] == "SSH+NETCAT":
+            data["compression"] = None
+            data["speed_limit"] = None
         else:
-            data['remote_port'] = remote_port
+            data["netcat_active_side"] = None
+            data["netcat_active_side_port_min"] = None
+            data["netcat_active_side_port_max"] = None
+
+        if data["transport"] == "LOCAL":
+            data["ssh_credentials"] = None
+            data["compression"] = None
+            data["speed_limit"] = None
+
+        if data["transport"] == "LEGACY":
+            data["auto"] = True
+            data["allow_from_scratch"] = True
+
+            data["exclude"] = []
+            data["periodic_snapshot_tasks"] = []
+            data["naming_schema"] = []
+            data["also_include_naming_schema"] = []
+            data["only_matching_schedule"] = False
+            data["dedup"] = False
+            data["large_block"] = False
+            data["embed"] = False
+            data["compressed"] = False
+            data["retries"] = 1
+
+        if data["direction"] == "PUSH":
+            data["also_include_naming_schema"] = data["naming_schema"]
+            data["naming_schema"] = []
+        else:
+            data["also_include_naming_schema"] = []
+
+        data["schedule"] = {
+            'minute': data.pop('schedule_minute'),
+            'hour': data.pop('schedule_hour'),
+            'dom': data.pop('schedule_daymonth'),
+            'month': data.pop('schedule_month'),
+            'dow': data.pop('schedule_dayweek'),
+            'begin': data.pop('schedule_begin'),
+            'end': data.pop('schedule_end'),
+        }
+        if not (data.pop("enable_schedule") and data["auto"]):
+            data["schedule"] = None
+
+        data["restrict_schedule"] = {
+            'minute': data.pop('restrict_schedule_minute'),
+            'hour': data.pop('restrict_schedule_hour'),
+            'dom': data.pop('restrict_schedule_daymonth'),
+            'month': data.pop('restrict_schedule_month'),
+            'dow': data.pop('restrict_schedule_dayweek'),
+            'begin': data.pop('restrict_schedule_begin'),
+            'end': data.pop('restrict_schedule_end'),
+        }
+        if not (data.pop("enable_restrict_schedule")):
+            data["restrict_schedule"] = None
+
+        if data["direction"] == "PUSH":
+            if data["periodic_snapshot_tasks"]:
+                data["schedule"] = None
+
+        if data["transport"] == "LEGACY":
+            data["schedule"] = None
+            data["restrict_schedule"] = None
+
+        if data["schedule"] is None:
+            data["only_matching_schedule"] = False
+
+        if data["retention_policy"] != "CUSTOM":
+            data["lifetime_value"] = None
+            data["lifetime_unit"] = None
+
+        if data["speed_limit"] is not None:
+            data["speed_limit"] = data["speed_limit"] * 1024
 
         return data
 
 
-class ReplRemoteForm(ModelForm):
-
-    class Meta:
-        fields = '__all__'
-        model = models.ReplRemote
-
-    def save(self):
-        rv = super(ReplRemoteForm, self).save()
-        notifier().reload("ssh")
-        return rv
+key_order(ReplicationForm, 13, 'repl_enable_schedule')
+key_order(ReplicationForm, 21, 'repl_enable_restrict_schedule')
 
 
 class VolumeExport(Form):

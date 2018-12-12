@@ -1,413 +1,610 @@
-from middlewared.async_validators import resolve_hostname
-from middlewared.client import Client
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
-from middlewared.service import private, CallError, CRUDService, ValidationErrors
-from middlewared.utils import Popen
-from middlewared.validators import Range, Time
-
-import base64
-import errno
+from collections import defaultdict
+from datetime import datetime
 import os
 import pickle
-import re
-import subprocess
 
-from datetime import time
-
-
-REPLICATION_KEY = '/data/ssh/replication.pub'
-REPL_RESULTFILE = '/tmp/.repl-result'
+from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
+from middlewared.service import private, CallError, CRUDService, ValidationErrors
+from middlewared.utils.path import is_child
+from middlewared.validators import Port, Range, ReplicationSnapshotNamingSchema, Unique
 
 
 class ReplicationService(CRUDService):
 
     class Config:
-        datastore = 'storage.replication'
-        datastore_prefix = 'repl_'
-        datastore_extend = 'replication.replication_extend'
+        datastore = "storage.replication"
+        datastore_prefix = "repl_"
+        datastore_extend = "replication.extend"
+        datastore_extend_context = "replication.extend_context"
 
     @private
-    async def replication_extend(self, data):
+    async def extend_context(self):
+        legacy_result, legacy_result_datetime = await self.middleware.run_in_thread(self._legacy_extend_context)
 
-        remote_data = data.pop('remote')
-        data['remote'] = remote_data['id']
-        data['remote_dedicateduser_enabled'] = remote_data['ssh_remote_dedicateduser_enabled']
-        data['remote_port'] = remote_data['ssh_remote_port']
-        data['remote_cipher'] = remote_data['ssh_cipher'].upper()
-        data['remote_dedicateduser'] = remote_data['ssh_remote_dedicateduser']
-        data['remote_hostkey'] = remote_data['ssh_remote_hostkey']
-        data['remote_hostname'] = remote_data['ssh_remote_hostname']
+        return {
+            "state": await self.middleware.call("zettarepl.get_state"),
+            "legacy_result": legacy_result,
+            "legacy_result_datetime": legacy_result_datetime,
+        }
 
-        if not os.path.exists(REPL_RESULTFILE):
-            data['lastresult'] = {'msg': 'Waiting'}
-        else:
-            with open(REPL_RESULTFILE, 'rb') as f:
-                file_data = f.read()
-            try:
-                results = pickle.loads(file_data)
-                data['lastresult'] = results[data['id']]
-            except Exception:
-                data['lastresult'] = {'msg': None}
+    def _legacy_extend_context(self):
+        try:
+            with open("/tmp/.repl-result", "rb") as f:
+                data = f.read()
+                legacy_result = pickle.loads(data)
+                legacy_result_datetime = datetime.fromtimestamp(os.stat("/tmp/.repl-result").st_mtime)
+        except Exception:
+            legacy_result = defaultdict(dict)
+            legacy_result_datetime = None
 
-        progressfile = f'/tmp/.repl_progress_{data["id"]}'
-        if os.path.exists(progressfile):
-            with open(progressfile, 'r') as f:
-                pid = int(f.read())
-            title = await self.middleware.call('notifier.get_proc_title', pid)
-            if title:
-                reg = re.search(r'sending (\S+) \((\d+)%', title)
-                if reg:
-                    data['status'] = f'Sending {reg.groups()[0]}s {reg.groups()[1]}s'
+        return legacy_result, legacy_result_datetime
+
+    @private
+    async def extend(self, data, context):
+        data["periodic_snapshot_tasks"] = [
+            {k.replace("task_", ""): v for k, v in task.items()}
+            for task in data["periodic_snapshot_tasks"]
+        ]
+
+        if data["direction"] == "PUSH":
+            data["also_include_naming_schema"] = data["naming_schema"]
+            data["naming_schema"] = []
+        if data["direction"] == "PULL":
+            data["also_include_naming_schema"] = []
+
+        Cron.convert_db_format_to_schedule(data, "schedule", key_prefix="schedule_", begin_end=True)
+        Cron.convert_db_format_to_schedule(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
+
+        if data["transport"] == 'LEGACY':
+            if data["id"] in context["legacy_result"]:
+                legacy_result = context["legacy_result"][data["id"]]
+
+                msg = legacy_result.get("msg")
+                if msg == "Running":
+                    state = "RUNNING"
+                elif msg in ["Succeeded", "Up to date"]:
+                    state = "FINISHED"
                 else:
-                    data['status'] = 'Sending'
+                    state = "ERROR"
 
-        if 'status' not in data:
-            data['status'] = data['lastresult'].get('msg')
+                data["state"] = {
+                    "datetime": context["legacy_result_datetime"],
+                    "state": state,
+                    "last_snapshot": legacy_result.get("last_snapshot"),
+                }
 
-        data['begin'] = str(data['begin'])
-        data['end'] = str(data['end'])
-        data['compression'] = data['compression'].upper()
+                if state == "ERROR":
+                    data["state"]["error"] = msg
+            else:
+                data["state"] = {
+                    "state": "UNKNOWN",
+                }
+        else:
+            data["state"] = context["state"].get(f"replication_task_{data['id']}", {
+                "state": "UNKNOWN",
+            })
 
         return data
 
     @private
-    async def validate_data(self, data, schema_name):
-        verrors = ValidationErrors()
+    async def compress(self, data):
+        if data["direction"] == "PUSH":
+            data["naming_schema"] = data["also_include_naming_schema"]
+        del data["also_include_naming_schema"]
 
-        remote_hostname = data.pop('remote_hostname')
-        await resolve_hostname(
-            self.middleware, verrors, f'{schema_name}.remote_hostname', remote_hostname
-        )
+        Cron.convert_schedule_to_db_format(data, "schedule", key_prefix="schedule_", begin_end=True)
+        Cron.convert_schedule_to_db_format(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
 
-        remote_dedicated_user_enabled = data.pop('remote_dedicateduser_enabled', False)
-        remote_dedicated_user = data.pop('remote_dedicateduser', None)
-        if remote_dedicated_user_enabled and not remote_dedicated_user:
-            verrors.add(
-                f'{schema_name}.remote_dedicateduser',
-                'You must select a user when remote dedicated user is enabled'
-            )
+        del data["periodic_snapshot_tasks"]
 
-        if not await self.middleware.call(
-                'pool.snapshottask.query',
-                [('filesystem', '=', data.get('filesystem'))]
-        ):
-            verrors.add(
-                f'{schema_name}.filesystem',
-                'Invalid Filesystem'
-            )
-
-        remote_mode = data.pop('remote_mode', 'MANUAL')
-
-        remote_port = data.pop('remote_port')
-
-        repl_remote_dict = {
-            'ssh_remote_hostname': remote_hostname,
-            'ssh_remote_dedicateduser_enabled': remote_dedicated_user_enabled,
-            'ssh_remote_dedicateduser': remote_dedicated_user,
-            'ssh_cipher': data.pop('remote_cipher', 'STANDARD').lower()
-        }
-
-        if remote_mode == 'SEMIAUTOMATIC':
-            token = data.pop('remote_token', None)
-            if not token:
-                verrors.add(
-                    f'{schema_name}.remote_token',
-                    'This field is required'
-                )
-        else:
-            remote_host_key = data.pop('remote_hostkey', None)
-            if not remote_host_key:
-                verrors.add(
-                    f'{schema_name}.remote_hostkey',
-                    'This field is required'
-                )
-            else:
-                repl_remote_dict['ssh_remote_port'] = remote_port
-                repl_remote_dict['ssh_remote_hostkey'] = remote_host_key
-
-        if verrors:
-            raise verrors
-
-        data['begin'] = time(*[int(v) for v in data.pop('begin').split(':')])
-        data['end'] = time(*[int(v) for v in data.pop('end').split(':')])
-
-        data['compression'] = data['compression'].lower()
-
-        data.pop('remote_hostkey', None)
-        data.pop('remote_token', None)
-
-        return verrors, data, repl_remote_dict
+        return data
 
     @accepts(
         Dict(
-            'replication_create',
-            Bool('enabled', default=True),
-            Bool('followdelete', default=False),
-            Bool('remote_dedicateduser_enabled', default=False),
-            Bool('remote_https'),
-            Bool('userepl', default=False),
-            Int('limit', default=0, validators=[Range(min=0)]),
-            Int('remote_port', default=22, required=True),
-            Str('begin', validators=[Time()]),
-            Str('compression', enum=['OFF', 'LZ4', 'PIGZ', 'PLZIP']),
-            Str('end', validators=[Time()]),
-            Str('filesystem', required=True),
-            Str('remote_cipher', enum=['STANDARD', 'FAST', 'DISABLED']),
-            Str('remote_dedicateduser'),
-            Str('remote_hostkey'),
-            Str('remote_hostname', required=True),
-            Str('remote_mode', enum=['SEMIAUTOMATIC', 'MANUAL'], required=True),
-            Str('remote_token'),
-            Str('zfs', required=True),
-            register=True
+            "replication_create",
+            Str("direction", enum=["PUSH", "PULL"], required=True),
+            Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
+            Int("ssh_credentials", null=True, default=None),
+            Str("netcat_active_side", enum=["LOCAL", "REMOTE"], null=True, default=None),
+            Int("netcat_active_side_port_min", null=True, default=None, validators=[Port()]),
+            Int("netcat_active_side_port_max", null=True, default=None, validators=[Port()]),
+            List("source_datasets", items=[Path("dataset", empty=False)], required=True, empty=False),
+            Path("target_dataset", required=True, empty=False),
+            Bool("recursive", required=True),
+            List("exclude", items=[Path("dataset", empty=False)], default=[]),
+            List("periodic_snapshot_tasks", items=[Int("periodic_snapshot_task")], default=[],
+                 validators=[Unique()]),
+            List("naming_schema", items=[
+                Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])], default=[]),
+            List("also_include_naming_schema", items=[
+                Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])], default=[]),
+            Bool("auto", required=True),
+            Cron("schedule", begin_end=True, null=True, default=None),
+            Cron("restrict_schedule", begin_end=True, null=True, default=None),
+            Bool("only_matching_schedule", default=False),
+            Bool("allow_from_scratch", default=False),
+            Bool("hold_pending_snapshots", default=False),
+            Str("retention_policy", enum=["SOURCE", "CUSTOM", "NONE"], required=True),
+            Int("lifetime_value", null=True, default=None, validators=[Range(min=1)]),
+            Str("lifetime_unit", null=True, default=None, enum=["HOUR", "DAY", "WEEK", "MONTH", "YEAR"]),
+            Str("compression", enum=["LZ4", "PIGZ", "PLZIP"], null=True, default=None),
+            Int("speed_limit", null=True, default=None, validators=[Range(min=1)]),
+            Bool("dedup", default=True),
+            Bool("large_block", default=True),
+            Bool("embed", default=True),
+            Bool("compressed", default=True),
+            Int("retries", default=5, validators=[Range(min=1)]),
+            Bool("enabled", default=True),
+            register=True,
+            strict=True,
         )
     )
     async def do_create(self, data):
+        """
+        Create a Replication Task
 
-        remote_hostname = data.get('remote_hostname')
-        remote_dedicated_user = data.get('remote_dedicateduser')
-        remote_port = data.get('remote_port')
-        remote_https = data.pop('remote_https', False)
-        remote_token = data.get('remote_token')
-        remote_mode = data.get('remote_mode')
+        Create a Replication Task that will push or pull ZFS snapshots to or from remote host..
 
-        verrors, data, repl_remote_dict = await self.validate_data(data, 'replication_create')
+        * `direction` specifies whether task will `PUSH` or `PULL` snapshots
+        * `transport` is a method of snapshots transfer:
+          * `SSH` transfers snapshots via SSH connection. This method is supported everywhere but does not achieve
+            great performance
+            `ssh_credentials` is a required field for this transport (Keychain Credential ID of type `SSH_CREDENTIALS`)
+          * `SSH+NETCAT` uses unencrypted connection for data transfer. This can only be used in trusted networks
+            and requires a port (specified by range from `netcat_active_side_port_min` to `netcat_active_side_port_max`)
+            to be open on `netcat_active_side`
+            `ssh_credentials` is also required for control connection
+          * `LOCAL` replicates to or from localhost
+          * `LEGACY` uses legacy replication engine prior to FreeNAS 11.3
+        * `source_datasets` is a non-empty list of datasets to replicate snapshots from
+        * `target_dataset` is a dataset to put snapshots into. It must exist on target side
+        * `recursive` and `exclude` have the same meaning as for Periodic Snapshot Task
+        * `periodic_snapshot_tasks` is a list of periodic snapshot task IDs that are sources of snapshots for this
+          replication task. Only push replication tasks can be bound to periodic snapshot tasks.
+        * `naming_schema` is a list of naming schemas for pull replication
+        * `also_include_naming_schema` is a list of naming schemas for push replication
+        * `auto` allows replication to run automatically on schedule or after bound periodic snapshot task
+        * `schedule` is a schedule to run replication task. Only `auto` replication tasks without bound periodic
+          snapshot tasks can have a schedule
+        * `restrict_schedule` restricts when replication task with bound periodic snapshot tasks runs. For example,
+          you can have periodic snapshot tasks that run every 15 minutes, but only run replication task every hour.
+        * Enabling `only_matching_schedule` will only replicate snapshots that match `schedule` or
+          `restrict_schedule`
+        * `allow_from_scratch` will destroy all snapshots on target side and replicate everything from scratch if none
+          of the snapshots on target side matches source snapshots
+        * `hold_pending_snapshots` will prevent source snapshots from being deleted by retention of replication fails
+          for some reason
+        * `retention_policy` specifies how to delete old snapshots on target side:
+          * `SOURCE` deletes snapshots that are absent on source side
+          * `CUSTOM` deletes snapshots that are older than `lifetime_value` and `lifetime_unit`
+          * `NONE` does not delete any snapshots
+        * `compression` compresses SSH stream. Available only for SSH transport
+        * `speed_limit` limits speed of SSH stream. Available only for SSH transport
+        * `dedup`, `large_block`, `embed` and `compressed` are various ZFS stream flag documented in `man zfs send`
+        * `retries` specifies number of retries before considering replication failed
 
-        if remote_mode == 'SEMIAUTOMATIC':
+        .. examples(websocket)::
 
-            remote_uri = f'ws{"s" if remote_https else ""}://{remote_hostname}:{remote_port}/websocket'
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "replication.create",
+                "params": [{
+                    "direction": "PUSH",
+                    "transport": "SSH",
+                    "ssh_credentials": [12],
+                    "source_datasets", ["data/work"],
+                    "target_dataset": "repl/work",
+                    "recursive": true,
+                    "periodic_snapshot_tasks": [5],
+                    "auto": true,
+                    "restrict_schedule": {
+                        "minute": "0",
+                        "hour": "*/2",
+                        "dom": "*",
+                        "month": "*",
+                        "dow": "1,2,3,4,5",
+                        "begin": "09:00",
+                        "end": "18:00"
+                    },
+                    "only_matching_schedule": true,
+                    "retention_policy": "CUSTOM",
+                    "lifetime_value": 1,
+                    "lifetime_unit": "WEEK",
+                }]
+            }
+        """
 
-            try:
-                call_data = await self.middleware.run_in_thread(self._semiautomatic_setup, verrors, remote_uri,
-                                                                remote_token, remote_hostname, remote_dedicated_user)
-                if call_data is not None:
-                    repl_remote_dict['ssh_remote_port'] = call_data['ssh_port']
-                    repl_remote_dict['ssh_remote_hostkey'] = call_data['ssh_hostkey']
-            except Exception as e:
-                verrors.add(
-                    'replication_create.remote_token',
-                    f'Failed to connect to remote host {remote_uri} with following exception {e}'
-                )
+        verrors = ValidationErrors()
+        verrors.add_child("replication_create", await self._validate(data))
 
         if verrors:
             raise verrors
 
-        remote_pk = await self.middleware.call(
-            'datastore.insert',
-            'storage.replremote',
-            repl_remote_dict
-        )
+        periodic_snapshot_tasks = data["periodic_snapshot_tasks"]
+        await self.compress(data)
 
-        await self._service_change('ssh', 'reload')
-
-        data['remote'] = remote_pk
-
-        pk = await self.middleware.call(
-            'datastore.insert',
+        id = await self.middleware.call(
+            "datastore.insert",
             self._config.datastore,
             data,
-            {'prefix': self._config.datastore_prefix}
+            {"prefix": self._config.datastore_prefix}
         )
 
-        return await self._get_instance(pk)
+        await self._set_periodic_snapshot_tasks(id, periodic_snapshot_tasks)
 
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            'replication_create', 'replication_update',
-            ('attr', {'update': True}),
-            ('rm', {'name': 'remote_mode'}),
-            ('rm', {'name': 'remote_https'}),
-            ('rm', {'name': 'remote_token'}),
-        )
-    )
+        await self.middleware.call("service.restart", "cron")
+        await self.middleware.call("zettarepl.update_tasks")
+
+        return await self._get_instance(id)
+
+    @accepts(Int("id"), Patch(
+        "replication_create",
+        "replication_update",
+        ("attr", {"update": True}),
+    ))
     async def do_update(self, id, data):
+        """
+        Update a Replication Task with specific `id`
+
+        See the documentation for `create` method for information on payload contents
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "replication.update",
+                "params": [
+                    7,
+                    {
+                        "direction": "PUSH",
+                        "transport": "SSH",
+                        "ssh_credentials": [12],
+                        "source_datasets", ["data/work"],
+                        "target_dataset": "repl/work",
+                        "recursive": true,
+                        "periodic_snapshot_tasks": [5],
+                        "auto": true,
+                        "restrict_schedule": {
+                            "minute": "0",
+                            "hour": "*/2",
+                            "dom": "*",
+                            "month": "*",
+                            "dow": "1,2,3,4,5",
+                            "begin": "09:00",
+                            "end": "18:00"
+                        },
+                        "only_matching_schedule": true,
+                        "retention_policy": "CUSTOM",
+                        "lifetime_value": 1,
+                        "lifetime_unit": "WEEK",
+                    }
+                ]
+            }
+        """
 
         old = await self._get_instance(id)
+
         new = old.copy()
+        if new["ssh_credentials"]:
+            new["ssh_credentials"] = new["ssh_credentials"]["id"]
+        new["periodic_snapshot_tasks"] = [task["id"] for task in new["periodic_snapshot_tasks"]]
         new.update(data)
 
-        verrors, new, repl_remote_dict = await self.validate_data(new, 'replication_update')
+        verrors = ValidationErrors()
+        verrors.add_child("replication_update", await self._validate(new))
 
-        new.pop('status')
-        new.pop('lastresult')
+        if verrors:
+            raise verrors
 
-        await self.middleware.call(
-            'datastore.update',
-            'storage.replremote',
-            new['remote'],
-            repl_remote_dict
-        )
-
-        await self._service_change('ssh', 'reload')
+        periodic_snapshot_tasks = new["periodic_snapshot_tasks"]
+        await self.compress(new)
 
         await self.middleware.call(
-            'datastore.update',
+            "datastore.update",
             self._config.datastore,
             id,
             new,
             {'prefix': self._config.datastore_prefix}
         )
 
+        await self._set_periodic_snapshot_tasks(id, periodic_snapshot_tasks)
+
+        await self.middleware.call("service.restart", "cron")
+        await self.middleware.call("zettarepl.update_tasks")
+
         return await self._get_instance(id)
 
     @accepts(
-        Int('id')
+        Int("id")
     )
     async def do_delete(self, id):
+        """
+        Delete a Replication Task with specific `id`
 
-        replication = await self._get_instance(id)
+        .. examples(websocket)::
 
-        try:
-            if replication['lastsnapshot']:
-                zfsname = replication['lastsnapshot'].split('@')[0]
-                await self.middleware.call('notifier.zfs_dataset_release_snapshots', zfsname, True)
-        except Exception:
-            pass
-
-        await self.middleware.call('replication.remove_from_state_file', id)
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "replication.delete",
+                "params": [
+                    1
+                ]
+            }
+        """
 
         response = await self.middleware.call(
-            'datastore.delete',
+            "datastore.delete",
             self._config.datastore,
             id
         )
 
-        await self._service_change('ssh', 'reload')
-
         return response
 
-    @private
-    def remove_from_state_file(self, id):
-        if os.path.exists(REPL_RESULTFILE):
-            with open(REPL_RESULTFILE, 'rb') as f:
-                data = f.read()
-            try:
-                results = pickle.loads(data)
-                results.pop(id, None)
-                with open(REPL_RESULTFILE, 'wb') as f:
-                    f.write(pickle.dumps(results))
-            except Exception as e:
-                self.logger.debug('Failed to remove replication from state file %s', e)
+    async def _validate(self, data):
+        verrors = ValidationErrors()
 
-        progressfile = '/tmp/.repl_progress_%d' % id
-        try:
-            os.unlink(progressfile)
-        except Exception:
-            pass
+        # Direction
 
-    @accepts()
-    def public_key(self):
-        """
-        Get the public SSH replication key.
-        """
-        if (os.path.exists(REPLICATION_KEY) and os.path.isfile(REPLICATION_KEY)):
-            with open(REPLICATION_KEY, 'r') as f:
-                key = f.read()
-        else:
-            key = None
-        return key
+        snapshot_tasks = []
 
-    @accepts(
-        Str('host', required=True),
-        Int('port', required=True),
-    )
-    async def ssh_keyscan(self, host, port):
-        """
-        Scan the SSH key on `host`:`port`.
-        """
-        proc = await Popen([
-            "/usr/bin/ssh-keyscan",
-            "-p", str(port),
-            "-T", "2",
-            str(host),
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        key, errmsg = await proc.communicate()
-        if proc.returncode != 0 or not key:
-            if not errmsg:
-                errmsg = 'ssh key scan failed for unknown reason'
+        if data["direction"] == "PUSH":
+            e, snapshot_tasks = await self._query_periodic_snapshot_tasks(data["periodic_snapshot_tasks"])
+            verrors.add_child("periodic_snapshot_tasks", e)
+
+            if data["naming_schema"]:
+                verrors.add("naming_schema", "This field has no sense for push replication")
+
+            if data["schedule"]:
+                if data["periodic_snapshot_tasks"]:
+                    verrors.add("schedule", "Push replication can't be bound to periodic snapshot task and have "
+                                            "schedule at the same time")
             else:
-                errmsg = errmsg.decode()
-            raise CallError(errmsg)
-        return key.decode()
+                if data["auto"] and not data["periodic_snapshot_tasks"] and data["transport"] != "LEGACY":
+                    verrors.add("auto", "Push replication that runs automatically must be either "
+                                        "bound to periodic snapshot task or have schedule")
 
-    @private
-    @accepts(Dict(
-        'replication-pair-data',
-        Str('hostname', required=True),
-        Str('public-key', required=True),
-        Str('user'),
-    ))
-    async def pair(self, data):
-        """
-        Receives public key, storing it to accept SSH connection and return
-        pertinent SSH data of this machine.
-        """
-        service = await self.middleware.call('datastore.query', 'services.services', [('srv_service', '=', 'ssh')], {'get': True})
-        ssh = await self.middleware.call('datastore.query', 'services.ssh', None, {'get': True})
-        try:
-            user = await self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_username', '=', data.get('user') or 'root')], {'get': True})
-        except IndexError:
-            raise ValueError('User "{}" does not exist'.format(data.get('user')))
+        if data["direction"] == "PULL":
+            if data["schedule"]:
+                pass
+            else:
+                if data["auto"]:
+                    verrors.add("auto", "Pull replication that runs automatically must have schedule")
 
-        if user['bsdusr_home'].startswith('/nonexistent'):
-            raise CallError(f'User home directory does not exist', errno.ENOENT)
+            if data["periodic_snapshot_tasks"]:
+                verrors.add("periodic_snapshot_tasks", "Pull replication can't be bound to periodic snapshot task")
 
-        # Make sure SSH is enabled
-        if not service['srv_enable']:
-            await self.middleware.call('datastore.update', 'services.services', service['id'], {'srv_enable': True})
-            await self.middleware.call('notifier.start', 'ssh')
+            if not data["naming_schema"]:
+                verrors.add("naming_schema", "Naming schema is required for pull replication")
 
-            # This might be the first time of the service being enabled
-            # which will then result in new host keys we need to grab
-            ssh = await self.middleware.call('datastore.query', 'services.ssh', None, {'get': True})
+            if data["also_include_naming_schema"]:
+                verrors.add("also_include_naming_schema", "This field has no sense for pull replication")
 
-        if not os.path.exists(user['bsdusr_home']):
-            raise ValueError('Homedir {} does not exist'.format(user['bsdusr_home']))
+            if data["hold_pending_snapshots"]:
+                verrors.add("hold_pending_snapshots", "Pull replication tasks can't hold pending snapshots because "
+                                                      "they don't do source retention")
 
-        # If .ssh dir does not exist, create it
-        dotsshdir = os.path.join(user['bsdusr_home'], '.ssh')
-        if not os.path.exists(dotsshdir):
-            os.mkdir(dotsshdir)
-            os.chown(dotsshdir, user['bsdusr_uid'], user['bsdusr_group']['bsdgrp_gid'])
+        # Transport
 
-        # Write public key in user authorized_keys for SSH
-        authorized_keys_file = f'{dotsshdir}/authorized_keys'
-        with open(authorized_keys_file, 'a+') as f:
-            f.seek(0)
-            if data['public-key'] not in f.read():
-                f.write('\n' + data['public-key'])
+        if data["transport"] == "SSH+NETCAT":
+            if data["netcat_active_side"] is None:
+                verrors.add("netcat_active_side", "You must choose active side for SSH+netcat replication")
 
-        ssh_hostkey = '{0} {1}\n{0} {2}\n{0} {3}\n'.format(
-            data['hostname'],
-            base64.b64decode(ssh['ssh_host_rsa_key_pub'].encode()).decode(),
-            base64.b64decode(ssh['ssh_host_ecdsa_key_pub'].encode()).decode(),
-            base64.b64decode(ssh['ssh_host_ed25519_key_pub'].encode()).decode(),
-        )
+            if data["netcat_active_side_port_min"] is None:
+                verrors.add("netcat_active_side_port_min",
+                            "You must specify minimum active side port for SSH+netcat replication")
 
-        return {
-            'ssh_port': ssh['ssh_tcpport'],
-            'ssh_hostkey': ssh_hostkey,
-        }
+            if data["netcat_active_side_port_max"] is None:
+                verrors.add("netcat_active_side_port_max",
+                            "You must specify maximum active side port for SSH+netcat replication")
 
-    def _semiautomatic_setup(self, verrors, remote_uri, remote_token, remote_hostname, remote_dedicated_user):
-        with Client(remote_uri) as c:
-            if not c.call('auth.token', remote_token):
-                verrors.add(
-                    'replication_create.remote_token',
-                    'Please provide a valid token'
-                )
+            if data["netcat_active_side_port_min"] is not None and data["netcat_active_side_port_max"] is not None:
+                if data["netcat_active_side_port_min"] > data["netcat_active_side_port_max"]:
+                    verrors.add("netcat_active_side_port_max",
+                                "Please specify value greater or equal than netcat_active_side_port_min")
+
+            if data["compression"] is not None:
+                verrors.add("compression", "Compression is not supported for SSH+netcat replication")
+
+            if data["speed_limit"] is not None:
+                verrors.add("speed_limit", "Speed limit is not supported for SSH+netcat replication")
+        else:
+            if data["netcat_active_side"] is not None:
+                verrors.add("netcat_active_side", "This field only has sense for SSH+netcat replication")
+
+            if data["netcat_active_side_port_min"] is not None:
+                verrors.add("netcat_active_side_port_min", "This field only has sense for SSH+netcat replication")
+
+            if data["netcat_active_side_port_max"] is not None:
+                verrors.add("netcat_active_side_port_max", "This field only has sense for SSH+netcat replication")
+
+        if data["transport"] == "LOCAL":
+            if data["ssh_credentials"] is not None:
+                verrors.add("ssh_credentials", "Remote credentials have no sense for local replication")
+
+            if data["compression"] is not None:
+                verrors.add("compression", "Compression has no sense for local replication")
+
+            if data["speed_limit"] is not None:
+                verrors.add("speed_limit", "Speed limit has no sense for local replication")
+        else:
+            if data["ssh_credentials"] is None:
+                verrors.add("ssh_credentials", "SSH Credentials are required for non-local replication")
             else:
                 try:
-                    with open(REPLICATION_KEY, 'r') as f:
-                        publickey = f.read()
+                    await self.middleware.call("keychaincredential.get_of_type", data["ssh_credentials"],
+                                               "SSH_CREDENTIALS")
+                except CallError as e:
+                    verrors.add("ssh_credentials", str(e))
 
-                    call_data = c.call('replication.pair', {
-                        'hostname': remote_hostname,
-                        'public-key': publickey,
-                        'user': remote_dedicated_user,
-                    })
-                except Exception as e:
-                    raise CallError('Failed to set up replication ' + str(e))
-                else:
-                    return call_data
+        if data["transport"] == "LEGACY":
+            for should_be_true in ["auto", "allow_from_scratch"]:
+                if not data[should_be_true]:
+                    verrors.add(should_be_true, "Legacy replication does not support disabling this option")
+
+            for should_be_false in ["exclude", "periodic_snapshot_tasks", "naming_schema", "also_include_naming_schema",
+                                    "only_matching_schedule", "dedup", "large_block", "embed", "compressed"]:
+                if data[should_be_false]:
+                    verrors.add(should_be_false, "Legacy replication does not support this option")
+
+            if data["direction"] != "PUSH":
+                verrors.add("direction", "Only push application is allowed for Legacy transport")
+
+            if len(data["source_datasets"]) != 1:
+                verrors.add("source_datasets", "You can only have one source dataset for legacy replication")
+
+            if data["retries"] != 1:
+                verrors.add("retries", "This value should be 1 for legacy replication")
+
+        # Common for all directions and transports
+
+        for i, source_dataset in enumerate(data["source_datasets"]):
+            for snapshot_task in snapshot_tasks:
+                if is_child(source_dataset, snapshot_task["dataset"]):
+                    if data["recursive"]:
+                        for exclude in snapshot_task["exclude"]:
+                            if exclude not in data["exclude"]:
+                                verrors.add("exclude", f"You should exclude {exclude!r} as bound periodic snapshot "
+                                                       f"task dataset {snapshot_task['dataset']!r} does")
+                    else:
+                        if source_dataset in snapshot_task["exclude"]:
+                            verrors.add(f"source_datasets.{i}", f"Dataset {source_dataset!r} is excluded by bound "
+                                                                f"periodic snapshot task for dataset "
+                                                                f"{snapshot_task['dataset']!r}")
+
+        if not data["recursive"] and data["exclude"]:
+            verrors.add("exclude", "Excluding child datasets is only supported for recursive replication")
+
+        for i, v in enumerate(data["exclude"]):
+            if not any(v.startswith(ds + "/") for ds in data["source_datasets"]):
+                verrors.add(f"exclude.{i}", "This dataset is not a child of any of source datasets")
+
+        if data["schedule"]:
+            if not data["auto"]:
+                verrors.add("schedule", "You can't have schedule for replication that does not run automatically")
+        else:
+            if data["only_matching_schedule"]:
+                verrors.add("only_matching_schedule", "You can't have only-matching-schedule without schedule")
+
+        if data["retention_policy"] == "CUSTOM":
+            if data["lifetime_value"] is None:
+                verrors.add("lifetime_value", "This field is required for custom retention policy")
+            if data["lifetime_unit"] is None:
+                verrors.add("lifetime_value", "This field is required for custom retention policy")
+        else:
+            if data["lifetime_value"] is not None:
+                verrors.add("lifetime_value", "This field has no sense for specified retention policy")
+            if data["lifetime_unit"] is not None:
+                verrors.add("lifetime_unit", "This field has no sense for specified retention policy")
+
+        if data["enabled"]:
+            for i, snapshot_task in enumerate(snapshot_tasks):
+                if not snapshot_task["enabled"]:
+                    verrors.add(
+                        f"periodic_snapshot_tasks.{i}",
+                        "You can't bind disabled periodic snapshot task to enabled replication task"
+                    )
+
+        return verrors
+
+    async def _set_periodic_snapshot_tasks(self, replication_task_id, periodic_snapshot_tasks_ids):
+        await self.middleware.call("datastore.delete", "storage.replication_repl_periodic_snapshot_tasks",
+                                   [["replication_id", "=", replication_task_id]])
+        for periodic_snapshot_task_id in periodic_snapshot_tasks_ids:
+            await self.middleware.call(
+                "datastore.insert", "storage.replication_repl_periodic_snapshot_tasks",
+                {
+                    "replication_id": replication_task_id,
+                    "task_id": periodic_snapshot_task_id,
+                },
+            )
+
+    async def _query_periodic_snapshot_tasks(self, ids):
+        verrors = ValidationErrors()
+
+        query_result = await self.middleware.call("pool.snapshottask.query", [["id", "in", ids]])
+
+        snapshot_tasks = []
+        for i, task_id in enumerate(ids):
+            for task in query_result:
+                if task["id"] == task_id:
+                    snapshot_tasks.append(task)
+                    break
+            else:
+                verrors.add(str(i), "This snapshot task does not exist")
+
+        return verrors, snapshot_tasks
+
+    @accepts(Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
+             Int("ssh_credentials", null=True, default=None))
+    async def list_datasets(self, transport, ssh_credentials=None):
+        """
+        List datasets on remote side
+
+        Accepts `transport` and SSH credentials ID (for non-local transport)
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "replication.list_datasets",
+                "params": [
+                    "SSH",
+                    7
+                ]
+            }
+        """
+
+        return await self.middleware.call("zettarepl.list_datasets", transport, ssh_credentials)
+
+    @accepts(Str("dataset", required=True),
+             Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
+             Int("ssh_credentials", null=True, default=None))
+    async def create_dataset(self, dataset, transport, ssh_credentials=None):
+        """
+        Creates dataset on remote side
+
+        Accepts `dataset` name, `transport` and SSH credentials ID (for non-local transport)
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "replication.create_dataset",
+                "params": [
+                    "repl/work",
+                    "SSH",
+                    7
+                ]
+            }
+        """
+
+        return await self.middleware.call("zettarepl.create_dataset", dataset, transport, ssh_credentials)
+
+    # Legacy pair support
+    @private
+    @accepts(Dict(
+        "replication-pair-data",
+        Str("hostname", required=True),
+        Str("public-key", required=True),
+        Str("user"),
+    ))
+    async def pair(self, data):
+        result = await self.middleware.call("keychaincredential.ssh_pair", {
+            "remote_hostname": data["hostname"],
+            "username": data["user"],
+            "public_key": data["public-key"],
+        })
+        return {
+            "ssh_port": result["port"],
+            "ssh_hostkey": result["host_key"],
+        }

@@ -356,10 +356,9 @@ ZFS_CompressionChoices = (
 )
 
 Repl_CompressionChoices = (
-    ('off', _('Off')),
-    ('lz4', _('lz4 (fastest)')),
-    ('pigz', _('pigz (all rounder)')),
-    ('plzip', _('plzip (best compression)')),
+    ('LZ4', _('lz4 (fastest)')),
+    ('PIGZ', _('pigz (all rounder)')),
+    ('PLZIP', _('plzip (best compression)')),
 )
 
 
@@ -638,11 +637,11 @@ v4NetmaskBitList = (
 v6NetmaskBitList = tuple([(str(i), '/' + str(i)) for i in range(0, 132, 4)])
 
 RetentionUnit_Choices = (
-    ('hour', _('Hour(s)')),
-    ('day', _('Day(s)')),
-    ('week', _('Week(s)')),
-    ('month', _('Month(s)')),
-    ('year', _('Year(s)')),
+    ('HOUR', _('Hour(s)')),
+    ('DAY', _('Day(s)')),
+    ('WEEK', _('Week(s)')),
+    ('MONTH', _('Month(s)')),
+    ('YEAR', _('Year(s)')),
 )
 
 RepeatUnit_Choices = (

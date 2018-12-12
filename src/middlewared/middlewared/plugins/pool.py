@@ -2041,17 +2041,17 @@ class PoolService(CRUDService):
         for vm_attached in await self.middleware.call('vm.stop_by_pool', pool['name']):
             attachments['vm_devices'].append(vm_attached['device_id'])
 
-        for repl in await self.middleware.call('datastore.query', 'storage.replication'):
-            if (
-                repl['repl_filesystem'] == pool['name'] or
-                repl['repl_filesystem'].startswith(pool['name'] + '/')
+        for repl in await self.middleware.call('replication.query'):
+            if any(
+                source_dataset == pool['name'] or source_dataset.startswith(pool['name'] + '/')
+                for source_dataset in repl['source_datasets']
             ):
                 attachments['replication'].append(repl['id'])
 
         for snap in await self.middleware.call('pool.snapshottask.query'):
             if (
-                snap['filesystem'] == pool['name'] or
-                snap['filesystem'].startswith(pool['name'] + '/')
+                snap['dataset'] == pool['name'] or
+                snap['dataset'].startswith(pool['name'] + '/')
             ):
                 attachments['snaptask'].append(snap['id'])
 

@@ -6,8 +6,8 @@ from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
-    DiskResourceMixin, ReplicationResourceMixin, ScrubResourceMixin,
-    TaskResourceMixin, VolumeResourceMixin
+    DiskResourceMixin, ReplicationResourceMixin, LegacyReplicationResourceMixin, ScrubResourceMixin,
+    TaskResourceMixin, LegacyTaskResourceMixin, VolumeResourceMixin
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
@@ -606,49 +606,48 @@ class TaskFAdmin(BaseFreeAdmin):
     icon_add = "CreatePeriodicSnapIcon"
     icon_view = "ViewAllPeriodicSnapIcon"
     icon_object = "SnapIcon"
-    extra_js = "taskrepeat_checkings();"
-    composed_fields = (
-        ('Snapshot Lifetime', ('task_ret_count', 'task_ret_unit'), 'The amount of time these snapshots are retained before being automatically deleted'),
-    )
     resource_mixin = TaskResourceMixin
     exclude_fields = (
         'id',
-        'task_ret_count',
-        'task_ret_unit',
+        'task_exclude',
+        'task_lifetime_value',
+        'task_lifetime_unit',
+        'task_minute',
+        'task_hour',
+        'task_daymonth',
+        'task_month',
+        'task_dayweek',
         'task_begin',
         'task_end',
-        'task_interval',
-        'task_repeat_unit',
-        'task_byweekday',
     )
 
     def get_datagrid_columns(self):
         columns = super(TaskFAdmin, self).get_datagrid_columns()
-        columns.insert(2, {
-            'name': 'when',
-            'label': _('When'),
-            'sortable': False,
-        })
 
         columns.insert(3, {
-            'name': 'interv',
-            'label': _('Frequency'),
-            'sortable': False,
-        })
-
-        columns.insert(4, {
-            'name': 'keepfor',
+            'name': 'keep_for',
             'label': _('Keep snapshot for'),
             'sortable': False,
         })
 
+        columns.insert(4, {
+            'name': 'legacy',
+            'label': _('Legacy'),
+            'sortable': False,
+        })
+
         columns.insert(5, {
-            'name': 'vmwaresync',
+            'name': 'vmware_sync',
             'label': _('VMware Sync'),
             'sortable': False,
         })
 
         return columns
+
+
+class LegacyTaskFAdmin(BaseFreeAdmin):
+
+    resource_mixin = LegacyTaskResourceMixin
 
 
 class ReplicationFAdmin(BaseFreeAdmin):
@@ -660,23 +659,111 @@ class ReplicationFAdmin(BaseFreeAdmin):
     resource_mixin = ReplicationResourceMixin
     exclude_fields = (
         'id',
-        'repl_remote',
-        'repl_userepl',
+        'repl_netcat_active_side',
+        'repl_netcat_active_side_port_min',
+        'repl_netcat_active_side_port_max',
+        'repl_exclude',
+        'repl_periodic_snapshot_tasks',
+        'repl_naming_schema',
+        'repl_schedule_minute',
+        'repl_schedule_hour',
+        'repl_schedule_daymonth',
+        'repl_schedule_month',
+        'repl_schedule_dayweek',
+        'repl_schedule_begin',
+        'repl_schedule_end',
+        'repl_restrict_schedule_minute',
+        'repl_restrict_schedule_hour',
+        'repl_restrict_schedule_daymonth',
+        'repl_restrict_schedule_month',
+        'repl_restrict_schedule_dayweek',
+        'repl_restrict_schedule_begin',
+        'repl_restrict_schedule_end',
+        'repl_only_matching_schedule',
+        'repl_allow_from_scratch',
+        'repl_hold_pending_snapshots',
+        'repl_retention_policy',
+        'repl_lifetime_value',
+        'repl_lifetime_unit',
+        'repl_compression',
+        'repl_speed_limit',
+        'repl_dedup',
+        'repl_large_block',
+        'repl_embed',
+        'repl_compressed',
+        'repl_retries',
     )
     refresh_time = 12000
 
     def get_datagrid_columns(self):
         columns = super(ReplicationFAdmin, self).get_datagrid_columns()
-        columns.insert(2, {
-            'name': 'repl_remote_hostname',
-            'label': _('Remote Hostname'),
+        columns[5]['label'] = _('Recursive')
+        columns[6]['label'] = _('Auto')
+
+        columns.append({
+            'name': 'state',
+            'label': _('State'),
             'sortable': False,
         })
-        columns.insert(3, {
-            'name': 'repl_status',
-            'label': _('Status'),
+
+        columns.append({
+            'name': 'last_snapshot',
+            'label': _('Last snapshot'),
             'sortable': False,
         })
+
+        return columns
+
+
+class LegacyReplicationFAdmin(BaseFreeAdmin):
+
+    icon_model = "ReplIcon"
+    icon_add = "AddReplIcon"
+    icon_view = "ViewAllReplIcon"
+    icon_object = "ReplIcon"
+    resource_mixin = LegacyReplicationResourceMixin
+    exclude_fields = (
+        'id',
+        'repl_netcat_active_side',
+        'repl_netcat_active_side_port_min',
+        'repl_netcat_active_side_port_max',
+        'repl_exclude',
+        'repl_periodic_snapshot_tasks',
+        'repl_naming_schema',
+        'repl_schedule_minute',
+        'repl_schedule_hour',
+        'repl_schedule_daymonth',
+        'repl_schedule_month',
+        'repl_schedule_dayweek',
+        'repl_schedule_begin',
+        'repl_schedule_end',
+        'repl_restrict_schedule_minute',
+        'repl_restrict_schedule_hour',
+        'repl_restrict_schedule_daymonth',
+        'repl_restrict_schedule_month',
+        'repl_restrict_schedule_dayweek',
+        'repl_restrict_schedule_begin',
+        'repl_restrict_schedule_end',
+        'repl_only_matching_schedule',
+        'repl_allow_from_scratch',
+        'repl_hold_pending_snapshots',
+        'repl_retention_policy',
+        'repl_lifetime_value',
+        'repl_lifetime_unit',
+        'repl_compression',
+        'repl_speed_limit',
+        'repl_dedup',
+        'repl_large_block',
+        'repl_embed',
+        'repl_compressed',
+        'repl_retries',
+    )
+    refresh_time = 12000
+
+    def get_datagrid_columns(self):
+        columns = super(NewReplicationFAdmin, self).get_datagrid_columns()
+        columns[5]['label'] = _('Recursive')
+        columns[6]['label'] = _('Auto')
         return columns
 
 
@@ -694,7 +781,9 @@ class VMWarePluginFAdmin(BaseFreeAdmin):
 site.register(models.Disk, DiskFAdmin)
 site.register(models.Scrub, ScrubFAdmin)
 site.register(models.Task, TaskFAdmin)
+site.register(models.LegacyTask, LegacyTaskFAdmin)
 site.register(models.Volume, VolumeFAdmin)
 site.register(models.Replication, ReplicationFAdmin)
+site.register(models.LegacyReplication, LegacyReplicationFAdmin)
 site.register(models.VMWarePlugin, VMWarePluginFAdmin)
 site.register(None, VolumeStatusFAdmin)

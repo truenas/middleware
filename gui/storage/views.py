@@ -89,29 +89,6 @@ def home(request):
     })
 
 
-def tasks(request):
-    task_list = models.Task.objects.order_by("task_filesystem").all()
-    return render(request, 'storage/tasks.html', {
-        'task_list': task_list,
-    })
-
-
-def replications(request):
-    zfsrepl_list = models.Replication.objects.select_related().all()
-    return render(request, 'storage/replications.html', {
-        'zfsrepl_list': zfsrepl_list,
-        'model': models.Replication,
-    })
-
-
-def replications_public_key(request):
-    with client as c:
-        key = c.call('replication.public_key')
-    return render(request, 'storage/replications_key.html', {
-        'key': key,
-    })
-
-
 def replications_authtoken(request):
     with client as c:
         tokenid = c.call('auth.generate_token', 120)
@@ -1261,11 +1238,11 @@ def tasks_json(request, dataset=None):
                 if mp == zfs_mp or mp.startswith("/%s/" % zfs_mp):
                     if mp == zfs_mp:
                         task_list = models.Task.objects.filter(
-                            task_filesystem=zfs_ds
+                            task_dataset=zfs_ds
                         )
                     else:
                         task_list = models.Task.objects.filter(
-                            Q(task_filesystem=zfs_ds) &
+                            Q(task_dataset=zfs_ds) &
                             Q(task_recursive=True)
                         )
                     break
@@ -1273,7 +1250,7 @@ def tasks_json(request, dataset=None):
                 pass
 
     else:
-        task_list = models.Task.objects.order_by("task_filesystem").all()
+        task_list = models.Task.objects.order_by("task_dataset").all()
 
     for task in task_list:
         t = {}
@@ -1305,12 +1282,12 @@ def tasks_recursive_json(request, dataset=None):
     tasks = []
 
     if dataset:
-        task_list = models.Task.objects.order_by("task_filesystem").filter(
-            Q(task_filesystem=dataset) &
+        task_list = models.Task.objects.order_by("task_dataset").filter(
+            Q(task_dataset=dataset) &
             Q(task_recursive=True)
         )
     else:
-        task_list = models.Task.objects.order_by("task_filesystem").filter(
+        task_list = models.Task.objects.order_by("task_dataset").filter(
             task_recursive=True
         )
 

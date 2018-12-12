@@ -100,7 +100,7 @@ generate_crontab()
 		done
 
 		# For periodic snapshot.
-		snaptasks=`${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT COUNT(id) FROM storage_task WHERE task_enabled = 1;"`
+		snaptasks=`${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT COUNT(id) FROM storage_replication WHERE repl_transport = 'LEGACY' AND repl_enabled = 1;"`
 		if [ ${snaptasks} -gt 0 ]; then
 			echo "*		*	*	*	*	root	/usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1" >> /etc/crontab
 		else
