@@ -431,6 +431,7 @@ class AlertServiceService(CRUDService):
         factory = ALERT_SERVICES_FACTORIES.get(service["type"])
         if factory is None:
             verrors.add(f"{schema_name}.type", "This field has invalid value")
+            raise verrors
 
         try:
             factory.validate(service["attributes"])
