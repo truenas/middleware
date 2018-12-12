@@ -411,7 +411,7 @@ class NICChoices(object):
                 for iface in notifier().failover_internal_interfaces():
                     if iface in self._NIClist:
                         self._NIClist.remove(iface)
-        except ConnectionRefusedError:
+        except (ConnectionRefusedError, FileNotFoundError):
             pass
 
         conn = sqlite3.connect(freenasUI.settings.DATABASES['default']['NAME'])
@@ -559,7 +559,7 @@ class IPChoices(NICChoices):
             try:
                 if _n.failover_status() not in ('SINGLE', 'ERROR'):
                     carp = True
-            except (sqlite3.OperationalError, ConnectionRefusedError):
+            except (sqlite3.OperationalError, ConnectionRefusedError, FileNotFoundError):
                 pass
 
         self._IPlist = []
