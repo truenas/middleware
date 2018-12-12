@@ -13,7 +13,7 @@ generate_crontab()
 {
 	local failover_status=""
 	if ! is_freenas; then
-		failover_status="$(ulimit -n 1000; /usr/local/bin/midclt call notifier.failover_status 2> /dev/null)"
+		failover_status="$(ulimit -n 1000; /usr/local/bin/midclt call failover.status 2> /dev/null)"
 	fi
 	
 	local IFS=""

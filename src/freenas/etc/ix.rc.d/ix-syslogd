@@ -138,7 +138,7 @@ use_syslog_dataset()
 			echo "1"
 		else
 			if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
-				local failover="$(/usr/local/bin/midclt -q call notifier.failover_status 2> /dev/null)"
+				local failover="$(/usr/local/bin/midclt -q call failover.status 2> /dev/null)"
 				if [ "x${failover}" = "xBACKUP" ]; then
 					echo "1"
 				else
