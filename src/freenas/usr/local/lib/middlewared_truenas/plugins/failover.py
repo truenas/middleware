@@ -737,6 +737,7 @@ def setup(middleware):
     middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_sync_geli, sync=True)
+    middleware.register_hook('pool.post_import_pool', hook_setup_ha, sync=True)
     middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.general.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('service.pre_action', service_remote, sync=False)
