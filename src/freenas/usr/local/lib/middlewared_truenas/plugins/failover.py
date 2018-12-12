@@ -622,6 +622,16 @@ async def interface_pre_sync_hook(middleware):
     )
 
 
+async def hook_restart_devd(middleware, *args, **kwargs):
+    """
+    We need to restart devd when SSH or UI settings are updated because of pf.conf.block rules
+    might change.
+    """
+    if not await middleware.call('failover.licensed'):
+        return
+    await middleware.call('service.start', 'ix-devd')
+
+
 async def hook_setup_ha(middleware, *args, **kwargs):
 
     if not await middleware.call('failover.licensed'):
@@ -727,5 +737,7 @@ def setup(middleware):
     middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_sync_geli, sync=True)
+    middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
+    middleware.register_hook('system.general.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('service.pre_action', service_remote, sync=False)
     asyncio.ensure_future(journal_ha(middleware))
