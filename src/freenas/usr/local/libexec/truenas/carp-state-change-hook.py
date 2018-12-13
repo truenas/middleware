@@ -530,9 +530,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             run('/usr/sbin/service ix-syncdisks quietstart')
 
             log.warn('Syncing enclosure')
-            run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python '
-                '/usr/local/www/freenasUI/middleware/notifier.py '
-                'zpool_enclosure_sync')
+            run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call enclosure.sync_zpool')
 
             run('/usr/sbin/service ix-collectd quietstart')
             run('/usr/sbin/service collectd quietrestart')
