@@ -83,6 +83,7 @@ class DiskService(CRUDService):
             Int('critical', null=True),
             Int('difference', null=True),
             Int('informational', null=True),
+            Int('enclosure_slot', null=True),
             update=True
         )
     )
