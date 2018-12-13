@@ -295,12 +295,12 @@ class CertificateService(CRUDService):
             obj = crypto.load_certificate(crypto.FILETYPE_PEM, cert['certificate'])
             notBefore = obj.get_notBefore()
             t1 = dateutil.parser.parse(notBefore)
-            t2 = t1.astimezone(dateutil.tz.tzutc())
+            t2 = t1.astimezone(dateutil.tz.tzlocal())
             cert['from'] = t2.ctime()
 
             notAfter = obj.get_notAfter()
             t1 = dateutil.parser.parse(notAfter)
-            t2 = t1.astimezone(dateutil.tz.tzutc())
+            t2 = t1.astimezone(dateutil.tz.tzlocal())
             cert['until'] = t2.ctime()
 
         if obj:

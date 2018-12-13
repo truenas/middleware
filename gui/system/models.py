@@ -935,7 +935,7 @@ class CertificateBase(Model):
         try:
             before = thingy.get_notBefore()
             t1 = dtparser.parse(before)
-            t2 = t1.astimezone(dateutil.tz.tzutc())
+            t2 = t1.astimezone(dateutil.tz.tzlocal())
             before = t2.ctime()
         except Exception:
             before = None
@@ -953,7 +953,7 @@ class CertificateBase(Model):
         try:
             after = thingy.get_notAfter()
             t1 = dtparser.parse(after)
-            t2 = t1.astimezone(dateutil.tz.tzutc())
+            t2 = t1.astimezone(dateutil.tz.tzlocal())
             after = t2.ctime()
         except Exception:
             after = None
