@@ -3109,6 +3109,14 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
         self.basedn = self.get_baseDN()
         self.attributes = ['sAMAccountName']
 
+        # Redmine 63414
+        external_domain = False
+        if netbiosname:
+            joined_domain = self.basedn.split(',')[0].strip('DC=').upper()
+            group_domain = netbiosname.upper()
+            if joined_domain != group_domain:
+                external_domain = True
+
         if (
             (self.flags & FLAGS_CACHE_READ_GROUP) and
             self.__dgkey in self.__dgcache
@@ -3126,9 +3134,9 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
             )
             ad_group = self.get_group(group)
 
-        if not ad_group:
+        if not ad_group and not external_domain:
             g = group
-        elif self.use_default_domain:
+        elif self.use_default_domain and not external_domain:
             g = "{}".format(
                 ad_group[1]['sAMAccountName'][0].decode('utf8') if ad_group else group
             )
@@ -3318,6 +3326,14 @@ class FreeNAS_ActiveDirectory_User(FreeNAS_ActiveDirectory):
         self.basedn = self.get_baseDN()
         self.attributes = ['sAMAccountName']
 
+        # Redmine 63414
+        external_domain = False
+        if netbiosname:
+            joined_domain = self.basedn.split(',')[0].strip('DC=').upper()
+            group_domain = netbiosname.upper()
+            if joined_domain != group_domain:
+                external_domain = True
+
         if (
             (self.flags & FLAGS_CACHE_READ_USER) and
             self.__dukey in self.__ducache
@@ -3334,9 +3350,9 @@ class FreeNAS_ActiveDirectory_User(FreeNAS_ActiveDirectory):
             )
             ad_user = self.get_user(user)
 
-        if not ad_user:
+        if not ad_user and not external_domain:
             u = user
-        elif self.use_default_domain:
+        elif self.use_default_domain and not external_domain:
             u = "{}".format(
                 ad_user[1]['sAMAccountName'][0].decode('utf8') if ad_user else user
             )
