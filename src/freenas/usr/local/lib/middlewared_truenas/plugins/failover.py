@@ -133,12 +133,13 @@ class FailoverService(ConfigService):
         """
         hardware = self.hardware()
         if hardware == 'ECHOSTREAM':
-            proc = run('/usr/sbin/pciconf -lv | grep "card=0xa01f8086 chip=0x10d38086"')
-            if not proc.stdout:
+            stdout = subprocess.check_output('/usr/sbin/pciconf -lv | grep "card=0xa01f8086 chip=0x10d38086"',
+                                             shell=True, encoding='utf8')
+            if not stdout:
                 if not os.path.exists(INTERNAL_IFACE_NF):
                     open(INTERNAL_IFACE_NF, 'w').close()
                 return []
-            return [proc.stdout.split('@')[0]]
+            return [stdout.split('@')[0]]
         elif hardware == 'SBB':
             return ['ix0']
         elif hardware in ('ECHOWARP', 'PUMA'):
