@@ -20,7 +20,7 @@ CHECK SAS EXPANSION CABLE.
 __EOF__
 	fi
 	if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
-		checkyesno failover_enable || /usr/local/bin/midclt call notifier.zpool_enclosure_sync > /dev/null
+		checkyesno failover_enable || /usr/local/bin/midclt call enclosure.sync_zpool > /dev/null
 	fi
 }
 
