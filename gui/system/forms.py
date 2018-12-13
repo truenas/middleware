@@ -1811,6 +1811,8 @@ class InitialWizardDSForm(Form):
                     )
                 except LDAPError as e:
                     # LDAPError is dumb, it returns a list with one element for goodness knows what reason
+                    if not hasattr(e, '__iter__'):
+                        raise forms.ValidationError("{0}".format(e))
                     e = e[0]
                     error = []
                     desc = e.get('desc')
@@ -1857,6 +1859,8 @@ class InitialWizardDSForm(Form):
                     FreeNAS_LDAP.validate_credentials(hostname, binddn=binddn, bindpw=bindpw)
                 except LDAPError as e:
                     # LDAPError is dumb, it returns a list with one element for goodness knows what reason
+                    if not hasattr(e, '__iter__'):
+                        raise forms.ValidationError("{0}".format(e))
                     e = e[0]
                     error = []
                     desc = e.get('desc')
