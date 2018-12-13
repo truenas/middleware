@@ -347,6 +347,25 @@ class ZFSPoolService(CRUDService):
 
             zfs.import_pool(found, found.name, options, any_host=any_host)
 
+    @accepts(Str('pool'))
+    async def find_not_online(self, pool):
+        pool = await self.middleware.call('zfs.pool.query', [['id', '=', pool]], {'get': True})
+
+        unavails = []
+        for nodes in pool['groups'].values():
+            for node in nodes:
+                unavails.extend(self.__find_not_online(node))
+        return unavails
+
+    def __find_not_online(self, node):
+        if len(node['children']) == 0 and node['status'] not in ('ONLINE', 'AVAIL'):
+            return [node]
+
+        unavails = []
+        for child in node['children']:
+            unavails.extend(self.__find_not_online(child))
+        return unavails
+
 
 class ZFSDatasetService(CRUDService):
 

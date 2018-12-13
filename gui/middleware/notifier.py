@@ -2174,9 +2174,6 @@ class notifier(metaclass=HookMetaclass):
         r = re.compile(r'scan: (resilver|scrub) in progress')
         return r.search(res) is not None
 
-    def sync_disk_extra(self, disk, add=False):
-        return
-
     def sync_encrypted(self, volume=None):
         """
         This syncs the EncryptedDisk table with the current state

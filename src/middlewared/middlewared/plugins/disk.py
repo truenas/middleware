@@ -83,6 +83,7 @@ class DiskService(CRUDService):
             Int('critical', null=True),
             Int('difference', null=True),
             Int('informational', null=True),
+            Int('enclosure_slot', null=True),
             update=True
         )
     )
@@ -759,8 +760,8 @@ class DiskService(CRUDService):
         else:
             disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
 
-        # FIXME: use a truenas middleware plugin
-        await self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], False)
+        if not await self.middleware.call('system.is_freenas'):
+            await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
     @private
     @accepts()
@@ -832,8 +833,9 @@ class DiskService(CRUDService):
             if disk != original_disk:
                 await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
 
-            # FIXME: use a truenas middleware plugin
-            await self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], False)
+            if not await self.middleware.call('system.is_freenas'):
+                await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+
             seen_disks[name] = disk
 
         for name in sys_disks:
@@ -876,8 +878,9 @@ class DiskService(CRUDService):
                         await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                 else:
                     disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
-                # FIXME: use a truenas middleware plugin
-                await self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], True)
+
+                if not await self.middleware.call('system.is_freenas'):
+                    await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
         return "OK"
 

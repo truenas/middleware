@@ -20,7 +20,7 @@ class VolumeStatusAlertSource(AlertSource):
             if state != "HEALTHY":
                 if not (await self.middleware.call("system.is_freenas")):
                     try:
-                        await self.middleware.call("notifier.zpool_enclosure_sync", pool["name"])
+                        await self.middleware.call("enclosure.sync_zpool", pool["name"])
                     except Exception:
                         pass
 
