@@ -11,7 +11,6 @@ import textwrap
 
 from licenselib.license import ContractType
 
-from freenasUI.middleware.notifier import notifier
 from freenasUI.support.utils import get_license
 
 from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
@@ -52,9 +51,8 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
         ):
             alerts.append(Alert('System serial of standby node does not match license.',))
 
-        hardware = notifier().get_chassis_hardware()
-        hardware = hardware.replace('TRUENAS-', '')
-        hardware = hardware.split('-')
+        chassis_hardware = self.middleware.call_sync('truenas.get_chassis_hardware')
+        hardware = chassis_hardware.replace('TRUENAS-', '').split('-')
 
         if hardware[0] == 'UNKNOWN':
             alerts.append(Alert('You are not running TrueNAS on supported hardware.'))
@@ -172,7 +170,6 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
 
         for days in [0, 14, 30, 90, 180]:
             if license.contract_end <= date.today() + timedelta(days=days):
-                chassis_hardware = notifier().get_chassis_hardware()
                 serial_numbers = ", ".join(list(filter(None, [license.system_serial, license.system_serial_ha])))
                 contract_start = license.contract_start.strftime("%B %-d, %Y")
                 contract_expiration = license.contract_end.strftime("%B %-d, %Y")
@@ -208,7 +205,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                             {contract_type} support contract. As of today, it is set to expire in 2 weeks.
                         """)
                         encouraging = textwrap.dedent(f"""\
-                            We encourage you to urgently contact your authorized TrueNAS Reseller or iXsystems 
+                            We encourage you to urgently contact your authorized TrueNAS Reseller or iXsystems
                             (sales@iXsystems.com) directly to renew your contract before expiration so that you continue
                             to enjoy the peace of mind and benefits that come with our support contracts.
                         """)
