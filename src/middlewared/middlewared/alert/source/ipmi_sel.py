@@ -21,17 +21,22 @@ def has_ipmi():
 def parse_ipmitool_output(output):
     records = []
     for row in csv.reader(output.split("\n")):
-        try:
-            record = parse_ipmi_sel_record(row)
-        except Exception:
-            logger.warning("Failed to parse IPMI SEL record %r", row)
-        else:
-            records.append(record)
+        if row:
+            try:
+                record = parse_ipmi_sel_record(row)
+            except Exception:
+                logger.warning("Failed to parse IPMI SEL record %r", row)
+            else:
+                if record:
+                    records.append(record)
 
     return records
 
 
 def parse_ipmi_sel_record(row):
+    if row[1].strip() == "Pre-Init":
+        return None
+
     m, d, y = tuple(map(int, row[1].split("/")))
     h, i, s = tuple(map(int, row[2].split(":")))
     return IPMISELRecord(
