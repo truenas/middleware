@@ -14,6 +14,7 @@ from middlewared.schema import accepts, Dict, Str
 from middlewared.service import Service, private
 from middlewared.utils import run
 
+EULA_FILE = '/usr/local/share/truenas/eula.html'
 EULA_PENDING_PATH = "/data/truenas-eula-pending"
 REGISTER_URL = "https://%s/truenas/api/v1.0/register" % ADDRESS
 
@@ -108,6 +109,16 @@ class TrueNASService(Service):
 
         # Give up
         return 'TRUENAS-UNKNOWN'
+
+    @accepts()
+    def get_eula(self):
+        """
+        Returns the TrueNAS End-User License Agreement (EULA).
+        """
+        if not os.path.exists(EULA_FILE):
+            return
+        with open(EULA_FILE, 'r', encoding='utf8') as f:
+            return f.read()
 
     @accepts()
     async def is_eula_accepted(self):
