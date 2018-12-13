@@ -214,9 +214,7 @@ class GroupField(forms.ChoiceField):
             g = None
 
         if g is None:
-            raise forms.ValidationError(
-                _("The group %s is not valid.") % group
-            )
+            raise forms.ValidationError(_("The group %s is not valid.") % group)
         return group
 
 
