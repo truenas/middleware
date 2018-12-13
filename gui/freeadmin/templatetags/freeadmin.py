@@ -208,3 +208,8 @@ def do_cls_name(parser, token):
         ))
 
     return ClsName(arg)
+
+
+@register.filter(name="get_item")
+def get_item(dictionary, key):
+    return dictionary.get(key)
