@@ -389,25 +389,21 @@ class ZFSVolumeWizardForm(Form):
         disks = []
         _n = notifier()
 
-        if hasattr(_n, 'failover_status'):
-            from freenasUI.truenas import ses
-            encs = ses.Enclosures()
-        else:
-            encs = None
-
         # Grab disk list
         # Root device already ruled out
         for disk, info in list(_n.get_disks().items()):
             serial = info.get('ident', '')
-            if encs:
-                try:
-                    ele = encs.find_device_slot(info['devname'])
-                    serial = '%s/ %s' % (
-                        '%s ' if serial else '',
-                        ele.enclosure.devname,
-                    )
-                except Exception:
-                    pass
+            with client as c:
+                if not c.call("system.is_freenas"):
+                    try:
+                        enclosure = c.call("enclosure.find_disk_enclosure", info['devname'])
+                    except Exception:
+                        pass
+                    else:
+                        serial = '%s/ %s' % (
+                            '%s ' if serial else '',
+                            enclosure,
+                        )
             disks.append(Disk(
                 info['devname'],
                 info['capacity'],
