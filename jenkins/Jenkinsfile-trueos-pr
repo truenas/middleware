@@ -110,6 +110,7 @@ pipeline {
         sh 'cp /usr/obj${SRCROOT}/amd64.amd64/release/*.img ${WORKSPACE}/artifacts'
       }
     }
+  }
   post {
     success {
       script {
