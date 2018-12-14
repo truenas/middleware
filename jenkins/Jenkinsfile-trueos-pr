@@ -113,6 +113,9 @@ pipeline {
     }
   }
   post {
+    agent {
+      label 'FreeNAS-TrueOS'
+    }
     success {
       script {
         cleanWs notFailBuild: true
