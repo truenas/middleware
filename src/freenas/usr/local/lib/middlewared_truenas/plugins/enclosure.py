@@ -192,7 +192,6 @@ class EnclosureService(CRUDService):
                 enc = encs.get_by_id(slot[0])
                 element = enc.get_by_slot(slot[1])
                 if element:
-                    print("CLEAR %r %r" % (label, disk))
                     element.device_slot_set("clear")
 
         disks = []
@@ -200,8 +199,8 @@ class EnclosureService(CRUDService):
             disk = label2disk[label]
             if disk.startswith("multipath/"):
                 try:
-                    disks.append(self.middleware.call(
-                        "disk.query", [["multipath_name", "=", label.replace("multipath/", "")]],
+                    disks.append(self.middleware.call_sync(
+                        "disk.query", [["devname", "=", disk]],
                         {"get": True, "order_by": ["expiretime"]}
                     )["name"])
                 except IndexError:
@@ -233,7 +232,7 @@ class EnclosureService(CRUDService):
 
         output = {}
         encnumb = 0
-        while os.path.exists('/dev/ses%d' % (encnumb,)):
+        while os.path.exists(f'/dev/ses{encnumb}'):
             out = self.__get_enclosure_stat(encnumb)
             if out:
                 # In short, getencstat reserves the exit codes for
@@ -250,7 +249,7 @@ class EnclosureService(CRUDService):
         Call getencstat for single enclosures device
         """
 
-        cmd = "/usr/sbin/getencstat -V /dev/ses%d" % (encnumb,)
+        cmd = f"/usr/sbin/getencstat -V /dev/ses{encnumb}"
         p1 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, close_fds=True)
         # getencstat may return not valid utf8 bytes (especially on Legacy TrueNAS)
         out = p1.communicate()[0].decode('utf8', 'ignore')
@@ -267,13 +266,9 @@ class EnclosureService(CRUDService):
 
         self.logger.debug("Disk %r not found in enclosure, trying from disk cache table", disk)
 
-        if disk.startswith("multipath/"):
-            f = [["multipath_name", "=", disk.replace("multipath/", "")]]
-        else:
-            f = [["name", "=", disk]]
-
         try:
-            disk = self.middleware.call("disk.query", f, {"get": True, "order_by": ["expiretime"]})
+            disk = self.middleware.call("disk.query", [["devname", "=", disk]],
+                                        {"get": True, "order_by": ["expiretime"]})
             if disk["enclosure_slot"]:
                 return divmod(disk["enclosure_slot"], 1000)
         except IndexError:
@@ -335,7 +330,7 @@ class Enclosures(object):
             find = enc.find_device_slot(devname)
             if find is not None:
                 return find
-        raise AssertionError("Enclosure slot not found for %s" % devname)
+        raise AssertionError(f"Enclosure slot not found for {devname}")
 
     def get_by_id(self, _id):
         for e in self:
@@ -352,7 +347,7 @@ class Enclosure(object):
 
     def __init__(self, num, data, labels):
         self.num = num
-        self.devname = "ses%d" % num
+        self.devname = f"ses{num}"
         self.encname = ""
         self.encid = ""
         self.status = "OK"
@@ -398,7 +393,7 @@ class Enclosure(object):
                 newvalue |= v << (2 * (3 - i)) * 4
             slot = int(slot, 16)
             if not desc:
-                desc = "%s %d" % (name, slot)
+                desc = f"{name} {slot}"
             ele = self._enclosure_element(
                 slot,
                 name,
@@ -455,7 +450,7 @@ class Enclosure(object):
         return self.name
 
     def __repr__(self):
-        return '<Enclosure: %s>' % self.name
+        return f'<Enclosure: {self.name}>'
 
     def __iter__(self):
         for e in list(self.__elements):
@@ -508,7 +503,7 @@ class Element(object):
         self.enclosure = None
 
     def __repr__(self):
-        return '<Element: %s>' % self.name
+        return f'<Element: {self.name}>'
 
     def get_columns(self):
         return OrderedDict([
@@ -711,7 +706,7 @@ class EnclosureElm(Element):
             output.append("Warn on")
 
         if self.pctime:
-            output.append("Power cycle %d min, power off for %d min" % (self.pctime, self.potime))
+            output.append(f"Power cycle {self.pctime} min, power off for {self.potime} min")
 
         if not output:
             output.append("None")
@@ -910,8 +905,7 @@ class ArrayDevSlot(Element):
             logger.warn("multiple (10) setobjstat already running, skipping...")
             return True
 
-        cmd = """/usr/sbin/setobjstat /dev/%s 0x%x %s""" % \
-              (self.enclosure.devname, self.slot, ENCLOSURE_ACTIONS[status])
+        cmd = f"/usr/sbin/setobjstat /dev/{self.enclosure.devname} 0x{self.slot:x} {ENCLOSURE_ACTIONS[status]}"
         proc = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
