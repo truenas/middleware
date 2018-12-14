@@ -763,7 +763,7 @@ class LegacyReplicationFAdmin(BaseFreeAdmin):
     refresh_time = 12000
 
     def get_datagrid_columns(self):
-        columns = super(NewReplicationFAdmin, self).get_datagrid_columns()
+        columns = super(LegacyReplicationFAdmin, self).get_datagrid_columns()
         columns[5]['label'] = _('Recursive')
         columns[6]['label'] = _('Auto')
         return columns
