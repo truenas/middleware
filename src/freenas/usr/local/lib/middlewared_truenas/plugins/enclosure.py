@@ -281,6 +281,14 @@ class EnclosureService(Service):
             pass
 
 
+async def sync_zpool(middleware):
+    await middleware.call("enclosure.sync_zpool")
+
+
+def setup(middleware):
+    middleware.register_hook("pool.post_delete", sync_zpool)
+
+
 STATUS_DESC = [
     "Unsupported",
     "OK",
