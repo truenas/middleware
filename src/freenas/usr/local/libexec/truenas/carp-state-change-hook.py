@@ -352,7 +352,6 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             # will get left dangling.
             log.warn('Aquired failover master lock')
             log.warn('Starting fenced')
-            run('/sbin/camcontrol rescan all')
             if not user_override and not fasttrack and not forcetakeover:
                 error, output = run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python /usr/local/sbin/fenced')
             else:
