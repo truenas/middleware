@@ -80,6 +80,9 @@ pipeline {
         always {
           sh 'cp -r /usr/local/poudriere/data/logs/bulk/fn-master-base-fn-master-ports/latest/logs ${WORKSPACE}/artifacts/poudriere-logs'
           archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
+          script {
+            cleanWs notFailBuild: true
+          }
         }
         failure {
           sh 'tail -n 200 ${WORKSPACE}/artifacts/packages.log'
@@ -100,6 +103,9 @@ pipeline {
       post {
         always {
           archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
+          script {
+            cleanWs notFailBuild: true
+          }
         }
         failure {
           sh 'tail -n 200 ${WORKSPACE}/artifacts/release.log'
@@ -110,19 +116,6 @@ pipeline {
         sh 'cp /usr/obj${SRCROOT}/amd64.amd64/release/*.iso ${WORKSPACE}/artifacts'
         sh 'cp /usr/obj${SRCROOT}/amd64.amd64/release/*.img ${WORKSPACE}/artifacts'
       }
-    }
-  }
-  post {
-    agent {
-      label 'FreeNAS-TrueOS'
-    }
-    success {
-      script {
-        cleanWs notFailBuild: true
-      }
-    }
-    always {
-      archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
     }
   }
 }
