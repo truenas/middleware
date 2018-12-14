@@ -266,6 +266,20 @@ class ZettareplService(Service):
         }
         for replication_task in await self.middleware.call("replication.query", [["transport", "!=", "LEGACY"],
                                                                                  ["enabled", "=", True]]):
+            my_periodic_snapshot_tasks = [f"task_{periodic_snapshot_task['id']}"
+                                          for periodic_snapshot_task in replication_task["periodic_snapshot_tasks"]
+                                          if periodic_snapshot_task["id"] not in legacy_periodic_snapshot_tasks_ids]
+            my_schedule = replication_task["schedule"]
+
+            # All my periodic snapshot tasks are legacy
+            if (
+                    replication_task["direction"] == "PUSH" and
+                    replication_task["auto"] and
+                    replication_task["periodic_snapshot_tasks"] and
+                    not my_periodic_snapshot_tasks
+            ):
+                my_schedule = replication_task["periodic_snapshot_tasks"][0]["schedule"]
+
             definition = {
                 "direction": replication_task["direction"].lower(),
                 "transport": await self._define_transport(
@@ -281,9 +295,7 @@ class ZettareplService(Service):
                 "target-dataset": replication_task["target_dataset"],
                 "recursive": replication_task["recursive"],
                 "exclude": replication_task["exclude"],
-                "periodic-snapshot-tasks": [f"task_{periodic_snapshot_task['id']}"
-                                            for periodic_snapshot_task in replication_task["periodic_snapshot_tasks"]
-                                            if periodic_snapshot_task["id"] not in legacy_periodic_snapshot_tasks_ids],
+                "periodic-snapshot-tasks": my_periodic_snapshot_tasks,
                 "auto": replication_task["auto"],
                 "only-matching-schedule": replication_task["only_matching_schedule"],
                 "allow-from-scratch": replication_task["allow_from_scratch"],
@@ -305,8 +317,8 @@ class ZettareplService(Service):
                 if periodic_snapshot_task["id"] in legacy_periodic_snapshot_tasks_ids:
                     definition.setdefault("also-include-naming-schema", [])
                     definition["also-include-naming-schema"].append(periodic_snapshot_task["naming_schema"])
-            if replication_task["schedule"] is not None:
-                definition["schedule"] = zettarepl_schedule(replication_task["schedule"])
+            if my_schedule is not None:
+                definition["schedule"] = zettarepl_schedule(my_schedule)
             if replication_task["restrict_schedule"] is not None:
                 definition["restrict-schedule"] = zettarepl_schedule(replication_task["restrict_schedule"])
             if replication_task["lifetime_value"] is not None and replication_task["lifetime_unit"] is not None:
