@@ -6,7 +6,6 @@ freenas PR images.
 */
 
 pipeline {
-  agent { label 'FreeNAS-TrueOS' }
 
   environment {
     GH_ORG = 'trueos'
