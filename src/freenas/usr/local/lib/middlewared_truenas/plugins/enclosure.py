@@ -37,7 +37,6 @@ class EnclosureService(Service):
                     element = {
                         "slot": elem.slot,
                         "data": dict(zip(elem.get_columns().keys(), elem.get_values())),
-
                         "name": elem.name,
                         "descriptor": elem.descriptor,
                         "status": elem.status,
