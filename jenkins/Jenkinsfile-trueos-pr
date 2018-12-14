@@ -35,6 +35,9 @@ pipeline {
         sh 'umount -f ${SRCROOT} || true'
         sh 'rm -rf ${SRCROOT}'
         sh 'mkdir -p ${SRCROOT}'
+        sh 'rm /usr/local/poudriere/data/logs/bulk/${POUDRIERE_BASE}-${POUDRIERE_PORTS}/latest/logs/* || true'
+        sh 'rm /usr/obj${SRCROOT}/amd64.amd64/release/*.iso || true'
+        sh 'rm /usr/obj${SRCROOT}/amd64.amd64/release/*.img || true'
       }
     }
 
@@ -62,7 +65,7 @@ pipeline {
     stage('Packages') {
       post {
         always {
-          sh 'cp -r /usr/local/poudriere/data/logs/bulk/fn-master-base-fn-master-ports/latest/logs ${WORKSPACE}/artifacts/poudriere-logs'
+          sh 'cp -r /usr/local/poudriere/data/logs/bulk/${POUDRIERE_BASE}-${POUDRIERE_PORTS}/latest/logs ${WORKSPACE}/artifacts/poudriere-logs'
         }
         failure {
           sh 'tail -n 200 ${WORKSPACE}/artifacts/packages.log'
