@@ -8,13 +8,13 @@ import subprocess
 from bsd import geom
 
 from middlewared.schema import Bool, Dict, Int, Str, accepts
-from middlewared.service import CallError, Service, filterable, private
+from middlewared.service import CallError, CRUDService, filterable, private
 from middlewared.utils import filter_list
 
 logger = logging.getLogger(__name__)
 
 
-class EnclosureService(Service):
+class EnclosureService(CRUDService):
 
     @filterable
     def query(self, filters, options):
@@ -69,7 +69,7 @@ class EnclosureService(Service):
             update=True,
         ),
     )
-    async def update(self, id, data):
+    async def do_update(self, id, data):
         if "label" in data:
             await self.middleware.call("datastore.delete", "truenas.enclosurelabel", [["encid", "=", id]])
             await self.middleware.call("datastore.insert", "truenas.enclosurelabel", {
@@ -77,7 +77,7 @@ class EnclosureService(Service):
                 "label": data["label"]
             })
 
-        return await self.middleware.call("enclosure.query", [["id", "=", id]], {"get": True})
+        return await self._get_instance(id)
 
     @accepts(Str("disk"))
     def find_disk_enclosure(self, disk):
