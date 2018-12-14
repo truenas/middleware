@@ -275,12 +275,12 @@ class EnclosureService(CRUDService):
             pass
 
 
-async def sync_zpool(middleware):
+async def pool_post_delete(middleware, id):
     await middleware.call("enclosure.sync_zpool")
 
 
 def setup(middleware):
-    middleware.register_hook("pool.post_delete", sync_zpool)
+    middleware.register_hook("pool.post_delete", pool_post_delete)
 
 
 STATUS_DESC = [
