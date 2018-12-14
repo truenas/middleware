@@ -106,8 +106,10 @@ class ReplicationService(CRUDService):
             Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
             Int("ssh_credentials", null=True, default=None),
             Str("netcat_active_side", enum=["LOCAL", "REMOTE"], null=True, default=None),
+            Str("netcat_active_side_listen_address", null=True, default=None),
             Int("netcat_active_side_port_min", null=True, default=None, validators=[Port()]),
             Int("netcat_active_side_port_max", null=True, default=None, validators=[Port()]),
+            Str("netcat_passive_side_connect_address", null=True, default=None),
             List("source_datasets", items=[Path("dataset", empty=False)], required=True, empty=False),
             Path("target_dataset", required=True, empty=False),
             Bool("recursive", required=True),
@@ -395,14 +397,6 @@ class ReplicationService(CRUDService):
             if data["netcat_active_side"] is None:
                 verrors.add("netcat_active_side", "You must choose active side for SSH+netcat replication")
 
-            if data["netcat_active_side_port_min"] is None:
-                verrors.add("netcat_active_side_port_min",
-                            "You must specify minimum active side port for SSH+netcat replication")
-
-            if data["netcat_active_side_port_max"] is None:
-                verrors.add("netcat_active_side_port_max",
-                            "You must specify maximum active side port for SSH+netcat replication")
-
             if data["netcat_active_side_port_min"] is not None and data["netcat_active_side_port_max"] is not None:
                 if data["netcat_active_side_port_min"] > data["netcat_active_side_port_max"]:
                     verrors.add("netcat_active_side_port_max",
@@ -417,11 +411,10 @@ class ReplicationService(CRUDService):
             if data["netcat_active_side"] is not None:
                 verrors.add("netcat_active_side", "This field only has sense for SSH+netcat replication")
 
-            if data["netcat_active_side_port_min"] is not None:
-                verrors.add("netcat_active_side_port_min", "This field only has sense for SSH+netcat replication")
-
-            if data["netcat_active_side_port_max"] is not None:
-                verrors.add("netcat_active_side_port_max", "This field only has sense for SSH+netcat replication")
+            for k in ["netcat_active_side_listen_address", "netcat_active_side_port_min", "netcat_active_side_port_max",
+                      "netcat_passive_side_connect_address"]:
+                if data[k] is not None:
+                    verrors.add(k, "This field only has sense for SSH+netcat replication")
 
         if data["transport"] == "LOCAL":
             if data["ssh_credentials"] is not None:

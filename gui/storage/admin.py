@@ -660,8 +660,10 @@ class ReplicationFAdmin(BaseFreeAdmin):
     exclude_fields = (
         'id',
         'repl_netcat_active_side',
+        'repl_netcat_active_side_listen_address',
         'repl_netcat_active_side_port_min',
         'repl_netcat_active_side_port_max',
+        'repl_netcat_passive_side_connect_address',
         'repl_exclude',
         'repl_periodic_snapshot_tasks',
         'repl_naming_schema',

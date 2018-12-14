@@ -499,6 +499,12 @@ class Replication(Model):
         null=True,
         verbose_name=_("Netcat Active Side"),
     )
+    repl_netcat_active_side_listen_address = models.CharField(
+        max_length=120,
+        default=None,
+        null=True,
+        verbose_name=_("Netcat Active Side Listen Address"),
+    )
     repl_netcat_active_side_port_min = models.PositiveIntegerField(
         null=True,
         verbose_name=_("Netcat Active Side Min Port"),
@@ -506,6 +512,12 @@ class Replication(Model):
     repl_netcat_active_side_port_max = models.PositiveIntegerField(
         null=True,
         verbose_name=_("Netcat Active Side Max Port"),
+    )
+    repl_netcat_passive_side_connect_address = models.CharField(
+        max_length=120,
+        default=None,
+        null=True,
+        verbose_name=_("Netcat Passive Side Connect Address"),
     )
     repl_source_datasets = ListField(
         verbose_name=_("Source Datasets"),
