@@ -439,6 +439,9 @@ class ZettareplService(Service):
             except Exception:
                 self.logger.warning("Unhandled exceptiom in observer_queue_reader", exc_info=True)
 
+    async def terminate(self):
+        await self.middleware.run_in_thread(self.stop)
+
 
 async def setup(middleware):
     try:
