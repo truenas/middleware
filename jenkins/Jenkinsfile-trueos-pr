@@ -31,14 +31,22 @@ pipeline {
       }
     }
 
-    stage('Cleanup') {
+    stage('Clean') {
       agent {
         label 'FreeNAS-TrueOS'
       }
       steps {
-        script {
-          cleanWs notFailBuild: true
-        }
+          script {
+            cleanWs notFailBuild: true
+          }
+      }
+    }
+
+    stage('Prep') {
+      agent {
+        label 'FreeNAS-TrueOS'
+      }
+      steps {
 	// Cleanup artifacts
         sh 'rm -rf ${WORKSPACE}/artifacts'
         sh 'mkdir -p ${WORKSPACE}/artifacts/repo'
