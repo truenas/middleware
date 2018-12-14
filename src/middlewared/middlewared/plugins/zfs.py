@@ -69,15 +69,17 @@ class ZFSPoolService(CRUDService):
 
     @filterable
     def query(self, filters, options):
+        # We should not get datasets, there is zfs.dataset.query for that
+        state_kwargs = {'datasets_recursive': False}
         with libzfs.ZFS() as zfs:
             # Handle `id` filter specially to avoiding getting all pool
             if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
                 try:
-                    pools = [zfs.get(filters[0][2]).__getstate__()]
+                    pools = [zfs.get(filters[0][2]).__getstate__(**state_kwargs)]
                 except libzfs.ZFSException:
                     pools = []
             else:
-                pools = [i.__getstate__() for i in zfs.pools]
+                pools = [i.__getstate__(**state_kwargs) for i in zfs.pools]
         return filter_list(pools, filters, options)
 
     @accepts(
