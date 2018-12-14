@@ -6,7 +6,9 @@ freenas PR images.
 */
 
 pipeline {
-  agent none
+  agent {
+    label 'FreeNAS-TrueOS'
+  }
 
   environment {
     GH_ORG = 'freenas'
@@ -22,30 +24,7 @@ pipeline {
 
   stages {
 
-   stage('Queued') {
-        agent {
-        label 'FreeNAS-PR-HOLD'
-      }
-      steps {
-        echo "Build queued"
-      }
-    }
-
-    stage('Clean') {
-      agent {
-        label 'FreeNAS-TrueOS'
-      }
-      steps {
-          script {
-            cleanWs notFailBuild: true
-          }
-      }
-    }
-
     stage('Prep') {
-      agent {
-        label 'FreeNAS-TrueOS'
-      }
       steps {
 	// Cleanup artifacts
         sh 'rm -rf ${WORKSPACE}/artifacts'
@@ -60,9 +39,6 @@ pipeline {
     }
 
     stage('Checkout') {
-      agent {
-        label 'FreeNAS-TrueOS'
-      }
       steps {
         checkout scm
         echo '*** Moving local sources ***'
@@ -84,16 +60,9 @@ pipeline {
     }
 
     stage('Packages') {
-      agent {
-        label 'FreeNAS-TrueOS'
-      }
       post {
         always {
           sh 'cp -r /usr/local/poudriere/data/logs/bulk/fn-master-base-fn-master-ports/latest/logs ${WORKSPACE}/artifacts/poudriere-logs'
-          archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
-          script {
-            cleanWs notFailBuild: true
-          }
         }
         failure {
           sh 'tail -n 200 ${WORKSPACE}/artifacts/packages.log'
@@ -108,16 +77,7 @@ pipeline {
       }
     }
     stage('Release') {
-      agent {
-        label 'FreeNAS-TrueOS'
-      }
       post {
-        always {
-          archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
-          script {
-            cleanWs notFailBuild: true
-          }
-        }
         failure {
           sh 'tail -n 200 ${WORKSPACE}/artifacts/release.log'
         }
@@ -126,6 +86,14 @@ pipeline {
         sh 'cd ${SRCROOT}/release && make iso >${WORKSPACE}/artifacts/release.log 2>&1'
         sh 'cp /usr/obj${SRCROOT}/amd64.amd64/release/*.iso ${WORKSPACE}/artifacts'
         sh 'cp /usr/obj${SRCROOT}/amd64.amd64/release/*.img ${WORKSPACE}/artifacts'
+      }
+    }
+  }
+  post {
+    always {
+      archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
+      script {
+        cleanWs notFailBuild: true
       }
     }
   }
