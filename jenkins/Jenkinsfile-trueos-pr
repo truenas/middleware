@@ -9,8 +9,9 @@ pipeline {
   agent none
 
   environment {
-    GH_ORG = 'trueos'
-    GH_REPO = 'trueos'
+    GH_ORG = 'freenas'
+    GH_REPO = 'freenas'
+    BUILDBRANCH = 'freenas/12-stable'
     SRCROOT = '/usr/freenas-src'
     POUDRIERE_BASE = 'fn-master-base'
     POUDRIERE_PORTS = 'fn-master-ports'
@@ -64,7 +65,7 @@ pipeline {
         sh 'cp -r ${WORKSPACE} /usr/local_source/middlewared'
 
 	// Checkout the trueos/trueos repo for building
-	sh 'git clone --depth=1 -b freenas/12-stable https://github.com/trueos/trueos ${SRCROOT}'
+	sh 'git clone --depth=1 -b ${BUILDBRANCH} https://github.com/trueos/trueos ${SRCROOT}'
 	
 	// Roll back the ZFS dataset
 	sh '${SRCROOT}/Jenkins/scripts/snapobj.sh rollback /usr/obj${SRCROOT}'
