@@ -46,6 +46,9 @@ class ReplicationService(CRUDService):
             for task in data["periodic_snapshot_tasks"]
         ]
 
+        for task in data["periodic_snapshot_tasks"]:
+            Cron.convert_db_format_to_schedule(task, begin_end=True)
+
         if data["direction"] == "PUSH":
             data["also_include_naming_schema"] = data["naming_schema"]
             data["naming_schema"] = []
