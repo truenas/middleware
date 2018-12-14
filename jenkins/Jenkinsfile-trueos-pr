@@ -36,6 +36,9 @@ pipeline {
         label 'FreeNAS-TrueOS'
       }
       steps {
+        script {
+          cleanWs notFailBuild: true
+        }
 	// Cleanup artifacts
         sh 'rm -rf ${WORKSPACE}/artifacts'
         sh 'mkdir -p ${WORKSPACE}/artifacts/repo'
