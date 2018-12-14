@@ -1,7 +1,7 @@
 /*
 
 This is the default Jenkins Pipeline file used to create our
-freenas master images.
+freenas PR images.
 
 */
 
