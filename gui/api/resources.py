@@ -3492,6 +3492,9 @@ class CertificateResourceMixin(object):
             )
 
         try:
+            if isinstance(data['issuer'], dict):
+                data['issuer'] = data['issuer']['name']
+
             bundle.data['cert_issuer'] = data['issuer']
             bundle.data['cert_DN'] = data['DN']
             bundle.data['cert_CSR'] = bundle.obj.cert_CSR

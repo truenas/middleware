@@ -407,7 +407,7 @@ class CertificateService(CRUDService):
             'organization': obj.get_subject().O,
             'organizational_unit': obj.get_subject().OU,
             'common': obj.get_subject().CN,
-            'san': (obj.get_subject().subjectAltName or '').split(','),
+            'san': [s for s in (obj.get_subject().subjectAltName or '').split(',') if s],
             'email': obj.get_subject().emailAddress,
             'DN': '/' + '/'.join([
                 '%s=%s' % (c[0].decode(), c[1].decode())
