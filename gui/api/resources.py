@@ -3261,19 +3261,25 @@ class CertificateAuthorityResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(CertificateAuthorityResourceMixin,
                        self).dehydrate(bundle)
+        with client as c:
+            data = c.call(
+                'certificateauthority.query',
+                [['id', '=', bundle.obj.id]],
+                {'get': True}
+            )
 
         try:
-            bundle.data['cert_internal'] = bundle.obj.cert_internal
-            bundle.data['cert_issuer'] = bundle.obj.cert_issuer
-            bundle.data['cert_ncertificates'] = bundle.obj.cert_ncertificates
-            bundle.data['cert_DN'] = bundle.obj.cert_DN
-            bundle.data['cert_from'] = bundle.obj.cert_from
-            bundle.data['cert_until'] = bundle.obj.cert_until
+            bundle.data['cert_internal'] = data['internal']
+            bundle.data['cert_issuer'] = data['issuer']
+            bundle.data['cert_ncertificates'] = data['signed_certificates']
+            bundle.data['cert_DN'] = data['DN']
+            bundle.data['cert_from'] = data['from']
+            bundle.data['cert_until'] = data['until']
             bundle.data['cert_privatekey'] = bundle.obj.cert_privatekey
 
-            bundle.data['CA_type_existing'] = bundle.obj.CA_type_existing
-            bundle.data['CA_type_internal'] = bundle.obj.CA_type_internal
-            bundle.data['CA_type_intermediate'] = bundle.obj.CA_type_intermediate
+            bundle.data['CA_type_existing'] = data['CA_type_existing']
+            bundle.data['CA_type_internal'] = data['CA_type_internal']
+            bundle.data['CA_type_intermediate'] = data['CA_type_intermediate']
 
             if self.is_webclient(bundle.request):
                 bundle.data['_sign_csr_url'] = reverse(
@@ -3478,18 +3484,24 @@ class CertificateResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super(CertificateResourceMixin, self).dehydrate(bundle)
+        with client as c:
+            data = c.call(
+                'certificate.query',
+                [['id', '=', bundle.obj.id]],
+                {'get': True}
+            )
 
         try:
-            bundle.data['cert_issuer'] = bundle.obj.cert_issuer
-            bundle.data['cert_DN'] = bundle.obj.cert_DN
+            bundle.data['cert_issuer'] = data['issuer']
+            bundle.data['cert_DN'] = data['DN']
             bundle.data['cert_CSR'] = bundle.obj.cert_CSR
-            bundle.data['cert_from'] = bundle.obj.cert_from
-            bundle.data['cert_until'] = bundle.obj.cert_until
+            bundle.data['cert_from'] = data['from']
+            bundle.data['cert_until'] = data['until']
             bundle.data['cert_privatekey'] = bundle.obj.cert_privatekey
 
-            bundle.data['cert_type_existing'] = bundle.obj.cert_type_existing
-            bundle.data['cert_type_internal'] = bundle.obj.cert_type_internal
-            bundle.data['cert_type_CSR'] = bundle.obj.cert_type_CSR
+            bundle.data['cert_type_existing'] = data['cert_type_existing']
+            bundle.data['cert_type_internal'] = data['cert_type_internal']
+            bundle.data['cert_type_CSR'] = data['cert_type_CSR']
 
             if self.is_webclient(bundle.request):
                 if bundle.obj.cert_type_CSR:

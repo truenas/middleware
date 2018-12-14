@@ -45,7 +45,6 @@ from freenasUI.common.pipesubr import (
 )
 
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
-from freenasUI.common.ssl import get_certificateauthority_path
 from freenasUI.common.system import (
     get_freenas_var,
     get_freenas_var_by_file,
@@ -612,8 +611,15 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                         )
 
                 elif newkey == 'certificate_id':
-                    cert = get_certificateauthority_path(ldap.ldap_certificate)
-                    kwargs['certfile'] = cert
+                    cert = None
+                    if ldap.ldap_certificate:
+                        with client as c:
+                            cert = c.call(
+                                'certificateauthority.query',
+                                [['id', '=', ldap.ldap_certificate.id]],
+                                {'get': True}
+                            )
+                    kwargs['certfile'] = cert['certificate_path'] if cert else cert
 
                 elif newkey == 'kerberos_realm_id':
                     kr = ldap.ldap_kerberos_realm
@@ -1614,8 +1620,15 @@ class FreeNAS_ActiveDirectory_Base(object):
                     )
 
                 elif newkey == 'certificate_id':
-                    cert = get_certificateauthority_path(ad.ad_certificate)
-                    kwargs['certfile'] = cert
+                    cert = None
+                    if ad.ad_certificate:
+                        with client as c:
+                            cert = c.call(
+                                'certificateauthority.query',
+                                [['id', '=', ad.ad_certificate.id]],
+                                {'get': True}
+                            )
+                    kwargs['certfile'] = cert['certificate_path'] if cert else cert
 
                 elif newkey == 'kerberos_realm_id':
                     kr = ad.ad_kerberos_realm

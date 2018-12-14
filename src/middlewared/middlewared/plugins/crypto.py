@@ -210,7 +210,7 @@ class CertificateService(CRUDService):
         }
 
     @private
-    async def cert_extend(self, cert):
+    def cert_extend(self, cert):
         """Extend certificate with some useful attributes."""
 
         if cert.get('signedby'):
@@ -219,7 +219,7 @@ class CertificateService(CRUDService):
             # the cert_extend method
             # Datastore query is used instead of certificate.query to stop an infinite recursive loop
 
-            cert['signedby'] = await self.middleware.call(
+            cert['signedby'] = self.middleware.call_sync(
                 'datastore.query',
                 'system.certificateauthority',
                 [('id', '=', cert['signedby']['id'])],
@@ -234,11 +234,6 @@ class CertificateService(CRUDService):
         if not cert.get('acme'):
             for key in ['acme', 'acme_uri', 'domains_authenticators', 'renew_days']:
                 cert.pop(key, None)
-
-        # convert san to list
-        cert['san'] = (cert.pop('san', '') or '').split()
-        if cert['serial'] is not None:
-            cert['serial'] = int(cert['serial'])
 
         if cert['type'] in (
                 CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE
@@ -257,6 +252,16 @@ class CertificateService(CRUDService):
             root_path, f'{cert["name"]}.csr'
         )
 
+        if root_path == CERT_CA_ROOT_PATH:
+            cert['signed_certificates'] = len(
+                self.middleware.call_sync(
+                    'datastore.query',
+                    'system.certificate',
+                    [['signedby', '=', cert['id']]],
+                    {'prefix': 'cert_'}
+                )
+            )
+
         def cert_issuer(cert):
             issuer = None
             if cert['type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING):
@@ -272,7 +277,7 @@ class CertificateService(CRUDService):
         cert['issuer'] = cert_issuer(cert)
 
         cert['chain_list'] = []
-        if cert['chain']:
+        if len(RE_CERTIFICATE.findall(cert['certificate'] or '')) > 1:
             certs = RE_CERTIFICATE.findall(cert['certificate'])
         else:
             certs = [cert['certificate']]
@@ -284,59 +289,50 @@ class CertificateService(CRUDService):
                 signing_CA['issuer'] = cert_issuer(signing_CA)
                 signing_CA = signing_CA['issuer']
 
-        cert_obj = None
-        try:
-            for c in certs:
-                # XXX Why load certificate if we are going to dump it right after?
-                # Maybe just to verify its integrity?
-                # Logic copied from freenasUI
-                if c:
-                    cert_obj = crypto.load_certificate(crypto.FILETYPE_PEM, c)
-                    cert['chain_list'].append(
-                        crypto.dump_certificate(crypto.FILETYPE_PEM, cert_obj).decode()
-                    )
-        except Exception:
-            self.logger.debug(f'Failed to load certificate {cert["name"]}', exc_info=True)
+        failed_parsing = None
+        for c in certs:
+            cert_data = self.load_certificate(c)
+            if cert_data:
+                cert.update(cert_data)
+                cert['chain_list'].append(c)
+            else:
+                self.logger.debug(f'Failed to load certificate {cert["name"]}', exc_info=True)
+                failed_parsing = 'CERTIFICATE'
+                break
 
         try:
             if cert['privatekey']:
                 key_obj = crypto.load_privatekey(crypto.FILETYPE_PEM, cert['privatekey'])
                 cert['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, key_obj).decode()
-        except Exception:
+                cert['key_length'] = key_obj.bits()
+        except crypto.Error:
             self.logger.debug(f'Failed to load privatekey {cert["name"]}', exc_info=True)
+            cert['key_length'] = 'PRIVATE_KEY_MALFORMED'
 
-        try:
-            if cert['CSR']:
-                csr_obj = crypto.load_certificate_request(crypto.FILETYPE_PEM, cert['CSR'])
-                cert['CSR'] = crypto.dump_certificate_request(crypto.FILETYPE_PEM, csr_obj).decode()
-        except Exception:
-            self.logger.debug(f'Failed to load csr {cert["name"]}', exc_info=True)
+        if cert['CSR']:
+            csr_data = self.load_certificate_request(cert['CSR'])
+            if csr_data:
+                cert.update(csr_data)
+            else:
+                self.logger.debug(f'Failed to load csr {cert["name"]}', exc_info=True)
+                failed_parsing = 'CSR'
+
+        if failed_parsing:
+            # Normalizing cert/csr
+            cert.update({
+                key: f'{failed_parsing}_MALFORMED' for key in [
+                    'digest_algorithm', 'lifetime', 'country', 'state', 'city',
+                    'organization', 'organizational_unit', 'email', 'common', 'san', 'serial'
+                ]
+            })
 
         cert['internal'] = 'NO' if cert['type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING) else 'YES'
-
-        obj = None
-        # date not applicable for CSR
-        cert['from'] = None
-        cert['until'] = None
-        if cert['type'] == CERT_TYPE_CSR:
-            obj = csr_obj
-        elif cert_obj:
-            obj = crypto.load_certificate(crypto.FILETYPE_PEM, cert['certificate'])
-            notBefore = obj.get_notBefore()
-            t1 = dateutil.parser.parse(notBefore)
-            t2 = t1.astimezone(dateutil.tz.tzutc())
-            cert['from'] = t2.ctime()
-
-            notAfter = obj.get_notAfter()
-            t1 = dateutil.parser.parse(notAfter)
-            t2 = t1.astimezone(dateutil.tz.tzutc())
-            cert['until'] = t2.ctime()
-
-        if obj:
-            cert['DN'] = '/' + '/'.join([
-                '%s=%s' % (c[0].decode(), c[1].decode())
-                for c in obj.get_subject().get_components()
-            ])
+        cert['CA_type_existing'] = bool(cert['type'] & CA_TYPE_EXISTING)
+        cert['CA_type_internal'] = bool(cert['type'] & CA_TYPE_INTERNAL)
+        cert['CA_type_intermediate'] = bool(cert['type'] & CA_TYPE_INTERMEDIATE)
+        cert['cert_type_existing'] = bool(cert['type'] & CERT_TYPE_EXISTING)
+        cert['cert_type_internal'] = bool(cert['type'] & CERT_TYPE_INTERNAL)
+        cert['cert_type_CSR'] = bool(cert['type'] & CERT_TYPE_CSR)
 
         return cert
 
@@ -363,11 +359,19 @@ class CertificateService(CRUDService):
         return cert, key
 
     @private
+    def parse_cert_date_string(self, date_value):
+        t1 = dateutil.parser.parse(date_value)
+        t2 = t1.astimezone(dateutil.tz.tzlocal())
+        return t2.ctime()
+
+    @private
     @accepts(
         Str('certificate', required=True)
     )
     def load_certificate(self, certificate):
         try:
+            # digest_algorithm, lifetime, country, state, city, organization, organizational_unit,
+            # email, common, san, serial, chain
             cert = crypto.load_certificate(
                 crypto.FILETYPE_PEM,
                 certificate
@@ -376,12 +380,21 @@ class CertificateService(CRUDService):
             return {}
         else:
             cert_info = self.get_x509_subject(cert)
-            cert_info['serial'] = cert.get_serial_number()
 
             signature_algorithm = cert.get_signature_algorithm().decode()
             m = re.match('^(.+)[Ww]ith', signature_algorithm)
             if m:
                 cert_info['digest_algorithm'] = m.group(1).upper()
+
+            cert_info.update({
+                'lifetime': (
+                        dateutil.parser.parse(cert.get_notAfter()) - dateutil.parser.parse(cert.get_notBefore())
+                ).days,
+                'from': self.parse_cert_date_string(cert.get_notBefore()),
+                'until': self.parse_cert_date_string(cert.get_notAfter()),
+                'serial': cert.get_serial_number(),
+                'chain': len(RE_CERTIFICATE.findall(certificate)) > 1
+            })
 
             return cert_info
 
@@ -394,8 +407,12 @@ class CertificateService(CRUDService):
             'organization': obj.get_subject().O,
             'organizational_unit': obj.get_subject().OU,
             'common': obj.get_subject().CN,
-            'san': obj.get_subject().subjectAltName,
+            'san': (obj.get_subject().subjectAltName or '').split(','),
             'email': obj.get_subject().emailAddress,
+            'DN': '/' + '/'.join([
+                '%s=%s' % (c[0].decode(), c[1].decode())
+                for c in obj.get_subject().get_components()
+            ])
         }
 
     @private
