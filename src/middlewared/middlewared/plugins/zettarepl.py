@@ -266,22 +266,36 @@ class ZettareplService(Service):
         }
         for replication_task in await self.middleware.call("replication.query", [["transport", "!=", "LEGACY"],
                                                                                  ["enabled", "=", True]]):
+            my_periodic_snapshot_tasks = [f"task_{periodic_snapshot_task['id']}"
+                                          for periodic_snapshot_task in replication_task["periodic_snapshot_tasks"]
+                                          if periodic_snapshot_task["id"] not in legacy_periodic_snapshot_tasks_ids]
+            my_schedule = replication_task["schedule"]
+
+            # All my periodic snapshot tasks are legacy
+            if (
+                    replication_task["direction"] == "PUSH" and
+                    replication_task["auto"] and
+                    replication_task["periodic_snapshot_tasks"] and
+                    not my_periodic_snapshot_tasks
+            ):
+                my_schedule = replication_task["periodic_snapshot_tasks"][0]["schedule"]
+
             definition = {
                 "direction": replication_task["direction"].lower(),
                 "transport": await self._define_transport(
                     replication_task["transport"],
                     (replication_task["ssh_credentials"] or {}).get("id"),
                     replication_task["netcat_active_side"],
+                    replication_task["netcat_active_side_listen_address"],
                     replication_task["netcat_active_side_port_min"],
                     replication_task["netcat_active_side_port_max"],
+                    replication_task["netcat_passive_side_connect_address"],
                 ),
                 "source-dataset": replication_task["source_datasets"],
                 "target-dataset": replication_task["target_dataset"],
                 "recursive": replication_task["recursive"],
                 "exclude": replication_task["exclude"],
-                "periodic-snapshot-tasks": [f"task_{periodic_snapshot_task['id']}"
-                                            for periodic_snapshot_task in replication_task["periodic_snapshot_tasks"]
-                                            if periodic_snapshot_task["id"] not in legacy_periodic_snapshot_tasks_ids],
+                "periodic-snapshot-tasks": my_periodic_snapshot_tasks,
                 "auto": replication_task["auto"],
                 "only-matching-schedule": replication_task["only_matching_schedule"],
                 "allow-from-scratch": replication_task["allow_from_scratch"],
@@ -303,8 +317,8 @@ class ZettareplService(Service):
                 if periodic_snapshot_task["id"] in legacy_periodic_snapshot_tasks_ids:
                     definition.setdefault("also-include-naming-schema", [])
                     definition["also-include-naming-schema"].append(periodic_snapshot_task["naming_schema"])
-            if replication_task["schedule"] is not None:
-                definition["schedule"] = zettarepl_schedule(replication_task["schedule"])
+            if my_schedule is not None:
+                definition["schedule"] = zettarepl_schedule(my_schedule)
             if replication_task["restrict_schedule"] is not None:
                 definition["restrict-schedule"] = zettarepl_schedule(replication_task["restrict_schedule"])
             if replication_task["lifetime_value"] is not None and replication_task["lifetime_unit"] is not None:
@@ -334,7 +348,8 @@ class ZettareplService(Service):
         return transport.shell(transport)
 
     async def _define_transport(self, transport, ssh_credentials=None, netcat_active_side=None,
-                                netcat_active_side_port_min=None, netcat_active_side_port_max=None):
+                                netcat_active_side_listen_address=None, netcat_active_side_port_min=None,
+                                netcat_active_side_port_max=None, netcat_passive_side_connect_address=None):
 
         if transport in ["SSH", "SSH+NETCAT", "LEGACY"]:
             if ssh_credentials is None:
@@ -346,9 +361,16 @@ class ZettareplService(Service):
             transport_definition = dict(type="ssh", **await self._define_ssh_transport(ssh_credentials))
 
             if transport == "SSH+NETCAT":
-                transport_definition["netcat-active-side"] = netcat_active_side.lower()
-                transport_definition["netcat-active-side-port-min"] = netcat_active_side_port_min
-                transport_definition["netcat-active-side-port-max"] = netcat_active_side_port_max
+                transport_definition["type"] = "ssh+netcat"
+                transport_definition["active-side"] = netcat_active_side.lower()
+                if netcat_active_side_listen_address is not None:
+                    transport_definition["active-side-listen-address"] = netcat_active_side_listen_address
+                if netcat_active_side_port_min is not None:
+                    transport_definition["active-side-min-port"] = netcat_active_side_port_min
+                if netcat_active_side_port_max is not None:
+                    transport_definition["active-side-max-port"] = netcat_active_side_port_max
+                if netcat_passive_side_connect_address is not None:
+                    transport_definition["passive-side-connect-address"] = netcat_passive_side_connect_address
         else:
             transport_definition = dict(type="local")
 

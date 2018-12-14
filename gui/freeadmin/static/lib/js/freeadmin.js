@@ -1412,8 +1412,9 @@ require([
         );
         var transports = {
             "SSH": newFeatures.concat(["ssh_credentials", "compression", "speed_limit"]),
-            "SSH+NETCAT": newFeatures.concat(["ssh_credentials", "netcat_active_side", "netcat_active_side_port_min",
-                                              "netcat_active_side_port_max"]),
+            "SSH+NETCAT": newFeatures.concat(["ssh_credentials", "netcat_active_side",
+                                              "netcat_active_side_listen_address", "netcat_active_side_port_min",
+                                              "netcat_active_side_port_max", "netcat_passive_side_connect_address"]),
             "LOCAL": newFeatures,
             "LEGACY": ["ssh_credentials"],
         };
