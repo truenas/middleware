@@ -24,8 +24,10 @@ pipeline {
 
   stages {
 
-    stage('Prep') {
+    stage('Checkout') {
       steps {
+        checkout scm
+
 	// Cleanup artifacts
         sh 'rm -rf ${WORKSPACE}/artifacts'
         sh 'mkdir -p ${WORKSPACE}/artifacts/repo'
@@ -39,9 +41,8 @@ pipeline {
       }
     }
 
-    stage('Checkout') {
+    stage('Prep') {
       steps {
-        checkout scm
         echo '*** Moving local sources ***'
 
         // Setup our local sources for building
