@@ -603,19 +603,6 @@ partition_disks()
     return 0
 }
 
-make_swap()
-{
-    local _swapparts
-
-    # Skip the swap creation if installing into a BE (Swap already exists in that case)
-    if [ "${_upgrade_type}" != "inplace" ] ; then
-	_swapparts=$(for _disk in $*; do echo ${_disk}p3; done)
-	gmirror destroy -f swap || true
-	gmirror label -b prefer swap ${_swapparts}
-    fi
-    echo "/dev/mirror/swap.eli		none			swap		sw		0	0" > /tmp/data/data/fstab.swap
-}
-
 disk_is_freenas()
 {
     local _disk="$1"
@@ -1168,9 +1155,6 @@ menu_install()
     /usr/local/bin/freenas-install -P /.mount/${OS}/Packages -M /.mount/${OS}-MANIFEST /tmp/data
 
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
-    if is_swap_safe; then
-       make_swap ${_realdisks}
-    fi
     ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
     if [ "${_do_upgrade}" -ne 0 ]; then
 	if [ -f /tmp/hostid ]; then
