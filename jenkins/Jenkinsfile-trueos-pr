@@ -88,6 +88,7 @@ pipeline {
         }
       }
       steps {
+        sh 'cd ${SRCROOT}/release && make clean'
         sh 'cd ${SRCROOT}/release && make iso >${WORKSPACE}/artifacts/release.log 2>&1'
         sh 'cp /usr/obj${SRCROOT}/amd64.amd64/release/*.iso ${WORKSPACE}/artifacts'
         sh 'cp /usr/obj${SRCROOT}/amd64.amd64/release/*.img ${WORKSPACE}/artifacts'
