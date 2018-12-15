@@ -36,8 +36,6 @@ pipeline {
         sh 'rm -rf ${SRCROOT}'
         sh 'mkdir -p ${SRCROOT}'
         sh 'rm /usr/local/poudriere/data/logs/bulk/${POUDRIERE_BASE}-${POUDRIERE_PORTS}/latest/logs/* || true'
-        sh 'rm /usr/obj${SRCROOT}/amd64.amd64/release/*.iso || true'
-        sh 'rm /usr/obj${SRCROOT}/amd64.amd64/release/*.img || true'
       }
     }
 
@@ -56,9 +54,12 @@ pipeline {
 
 	// Checkout the trueos/trueos repo for building
 	sh 'git clone --depth=1 -b ${BUILDBRANCH} https://github.com/trueos/trueos ${SRCROOT}'
-	
+
 	// Roll back the ZFS dataset
 	sh '${SRCROOT}/Jenkins/scripts/snapobj.sh rollback /usr/obj${SRCROOT}'
+
+        sh 'rm /usr/obj${SRCROOT}/amd64.amd64/release/*.iso || true'
+        sh 'rm /usr/obj${SRCROOT}/amd64.amd64/release/*.img || true'
       }
     }
 
