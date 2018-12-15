@@ -840,7 +840,7 @@ def get_l2arc_summary(Kstat):
         output["spa_mismatch"] = fHits(l2_write_spa_mismatch)
 
         output["l2_arc_size"] = {}
-        output["l2_arc_size"]["adative"] = fBytes(l2_size)
+        output["l2_arc_size"]["adaptive"] = fBytes(l2_size)
         output["l2_arc_size"]["actual"] = {
             'per': fPerc(l2_asize, l2_size),
             'num': fBytes(l2_asize),
@@ -922,7 +922,7 @@ def _l2arc_summary(Kstat):
         sys.stdout.write("\tSPA Mismatch:\t\t\t\t%s\n" % arc['spa_mismatch'])
         sys.stdout.write("\n")
 
-        sys.stdout.write("L2 ARC Size: (Adaptive)\t\t\t\t%s\n" % arc["l2_arc_size"]["adative"])
+        sys.stdout.write("L2 ARC Size: (Adaptive)\t\t\t\t%s\n" % arc["l2_arc_size"]["adaptive"])
         sys.stdout.write("\tCompressed:\t\t\t%s\t%s\n" % (
             arc["l2_arc_size"]["actual"]["per"],
             arc["l2_arc_size"]["actual"]["num"],
