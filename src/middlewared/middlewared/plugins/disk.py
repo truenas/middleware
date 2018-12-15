@@ -1246,7 +1246,7 @@ class DiskService(CRUDService):
                     if name is None:
                         # Which means maximum has been reached and we can stop
                         break
-                    await run('gmirror', 'create', '-b', 'prefer', name, part_a, part_b)
+                    await run('gmirror', 'create', '-F', name, part_a, part_b)
                 except Exception:
                     self.logger.warn(f'Failed to create gmirror {name}', exc_info=True)
                     continue
