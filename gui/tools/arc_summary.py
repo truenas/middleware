@@ -841,15 +841,12 @@ def get_l2arc_summary(Kstat):
 
         output["l2_arc_size"] = {}
         output["l2_arc_size"]["adative"] = fBytes(l2_size)
-        output["l2_arc_size"]["head_size"] = {
-            'per': fPerc(l2_hdr_size, l2_size),
-            'num': fBytes(l2_hdr_size),
+        output["l2_arc_size"]["actual"] = {
+            'per': fPerc(l2_asize, l2_size),
+            'num': fBytes(l2_asize),
         }
-
-        output["l2_arc_asize"] = {}
-        output["l2_arc_asize"]["adative"] = fBytes(l2_asize)
-        output["l2_arc_asize"]["head_size"] = {
-            'per': fPerc(l2_hdr_size, l2_asize),
+        output["l2_arc_size"]["head_size"] = {
+            'per': fPerc(l2_hrd_size, l2_size),
             'num': fBytes(l2_hdr_size),
         }
 
@@ -926,16 +923,13 @@ def _l2arc_summary(Kstat):
         sys.stdout.write("\n")
 
         sys.stdout.write("L2 ARC Size: (Adaptive)\t\t\t\t%s\n" % arc["l2_arc_size"]["adative"])
+        sys.stdout.write("\tCompressed:\t\t\t%s\t%s\n" % (
+            arc["l2_arc_size"]["actual"]["per"],
+            arc["l2_arc_size"]["actual"]["num"],
+        ))
         sys.stdout.write("\tHeader Size:\t\t\t%s\t%s\n" % (
             arc["l2_arc_size"]["head_size"]["per"],
             arc["l2_arc_size"]["head_size"]["num"],
-        ))
-        sys.stdout.write("\n")
-
-        sys.stdout.write("L2 ARC Actual (Compressed) Size: (Adaptive)\t\t\t\t%s\n" % arc["l2_arc_asize"]["adative"])
-        sys.stdout.write("\tHeader Size:\t\t\t%s\t%s\n" % (
-            arc["l2_arc_asize"]["head_size"]["per"],
-            arc["l2_arc_asize"]["head_size"]["num"],
         ))
         sys.stdout.write("\n")
 
