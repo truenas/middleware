@@ -3,6 +3,7 @@ import re
 from middlewared.schema import (Bool, Dict, Int, Patch, Str, ValidationErrors,
                                 accepts)
 from middlewared.service import CRUDService, private
+from middlewared.validators import Match
 
 
 class TunableService(CRUDService):
@@ -13,7 +14,7 @@ class TunableService(CRUDService):
 
     @accepts(Dict(
         'tunable_create',
-        Str('var', required=True),
+        Str('var', validators=[Match(r'^[\w\.]+$')], required=True),
         Str('value', required=True),
         Str('type', enum=['LOADER', 'RC', 'SYSCTL'], required=True),
         Str('comment'),

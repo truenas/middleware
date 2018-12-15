@@ -68,6 +68,10 @@ class FakeMiddleware(object):
         """
         return self.client.call(method, *params, timeout=timeout, **kwargs)
 
+    async def call_hook(self, name, *args, **kwargs):
+        with Client(py_exceptions=True) as c:
+            return c.call('core.call_hook', name, args, kwargs)
+
 
 class FakeJob(object):
 

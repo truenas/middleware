@@ -537,6 +537,11 @@ class CoreService(Service):
         return data
 
     @private
+    async def call_hook(self, name, args, kwargs=None):
+        kwargs = kwargs or {}
+        await self.middleware.call_hook(name, *args, **kwargs)
+
+    @private
     async def event_send(self, name, event_type, kwargs):
         self.middleware.send_event(name, event_type, **kwargs)
 

@@ -448,10 +448,6 @@ class CloudSyncService(CRUDService):
         if not credentials:
             verrors.add(f"{name}.credentials", "Invalid credentials")
 
-        for i, (limit1, limit2) in enumerate(zip(data["bwlimit"], data["bwlimit"][1:])):
-            if limit1["time"] >= limit2["time"]:
-                verrors.add(f"{name}.bwlimit.{i + 1}.time", f"Invalid time order: {limit1['time']}, {limit2['time']}")
-
         try:
             shlex.split(data["args"])
         except ValueError as e:
@@ -483,6 +479,10 @@ class CloudSyncService(CRUDService):
     @private
     async def _validate(self, verrors, name, data):
         await self._basic_validate(verrors, name, data)
+
+        for i, (limit1, limit2) in enumerate(zip(data["bwlimit"], data["bwlimit"][1:])):
+            if limit1["time"] >= limit2["time"]:
+                verrors.add(f"{name}.bwlimit.{i + 1}.time", f"Invalid time order: {limit1['time']}, {limit2['time']}")
 
         if data["snapshot"]:
             if data["direction"] != "PUSH":
