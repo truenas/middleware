@@ -3263,9 +3263,10 @@ class CertificateAuthorityResourceMixin(object):
                        self).dehydrate(bundle)
         with client as c:
             data = c.call(
-                'certificateauthority.query',
+                'datastore.query',
+                'system.certificateauthority',
                 [['id', '=', bundle.obj.id]],
-                {'get': True}
+                {'get': True, 'prefix': 'cert_', 'extend': 'certificate.cert_extend'}
             )
 
         try:
@@ -3494,9 +3495,10 @@ class CertificateResourceMixin(object):
         bundle = super(CertificateResourceMixin, self).dehydrate(bundle)
         with client as c:
             data = c.call(
-                'certificate.query',
+                'datastore.query',
+                'system.certificate',
                 [['id', '=', bundle.obj.id]],
-                {'get': True}
+                {'get': True, 'prefix': 'cert_', 'extend': 'certificate.cert_extend'}
             )
 
         try:
