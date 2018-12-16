@@ -199,7 +199,6 @@ class CertificateService(CRUDService):
             'CERTIFICATE_CREATE_IMPORTED_CSR': self.__create_imported_csr,
             'CERTIFICATE_CREATE_CSR': self.__create_csr,
             'CERTIFICATE_CREATE_ACME': self.__create_acme_certificate,
-            'CERTIFICATE_CREATE': self.__create_certificate
         }
 
     @private
@@ -784,9 +783,6 @@ class CertificateService(CRUDService):
     # CERTIFICATE_CREATE_CSR          - __create_csr
     # CERTIFICATE_CREATE_ACME         - __create_acme_certificate
 
-    # TODO: Make the following method inaccessible publicly
-    # CERTIFICATE_CREATE              - __create_certificate ( ONLY TO BE USED INTERNALLY )
-
     @accepts(
         Dict(
             'certificate_create',
@@ -815,7 +811,7 @@ class CertificateService(CRUDService):
             Str('create_type', enum=[
                 'CERTIFICATE_CREATE_INTERNAL', 'CERTIFICATE_CREATE_IMPORTED',
                 'CERTIFICATE_CREATE_CSR', 'CERTIFICATE_CREATE_IMPORTED_CSR',
-                'CERTIFICATE_CREATE_ACME', 'CERTIFICATE_CREATE'], required=True),
+                'CERTIFICATE_CREATE_ACME'], required=True),
             Str('digest_algorithm', enum=['SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512']),
             List('san', items=[Str('san')]),
             register=True
@@ -1023,23 +1019,6 @@ class CertificateService(CRUDService):
                 data['privatekey'],
                 data['passphrase']
             )
-
-        job.set_progress(90, 'Finalizing changes')
-
-        return data
-
-    @accepts(
-        Patch(
-            'certificate_create', 'create_certificate',
-            ('edit', _set_required('certificate')),
-            ('edit', _set_required('privatekey')),
-            ('edit', _set_required('type')),
-            ('rm', {'name': 'create_type'})
-        )
-    )
-    @skip_arg(count=1)
-    def __create_certificate(self, job, data):
-        # FIXME: Remove me please
 
         job.set_progress(90, 'Finalizing changes')
 
@@ -1619,22 +1598,21 @@ class CertificateAuthorityService(CRUDService):
             'name': data['name'],
             'certificate': new_cert,
             'privatekey': csr_cert_data['privatekey'],
-            'create_type': 'CERTIFICATE_CREATE',
             'signedby': ca_data['id']
         }
 
-        # FIXME: Let's do this gracefully please
-        new_csr_job = self.middleware.call_sync(
-            'certificate.create',
-            new_csr
+        new_csr_id = self.middleware.call_sync(
+            'datastore.insert',
+            'system.certificate',
+            new_csr,
+            {'prefix': 'cert_'}
         )
 
-        new_csr_job.wait_sync()
-
-        if new_csr_job.error:
-            raise CallError(new_csr_job.exception)
-        else:
-            return new_csr_job.result
+        return self.middleware.call_sync(
+            'certificate.query',
+            [['id', '=', new_csr_id]],
+            {'get': True}
+        )
 
     @accepts(
         Patch(
