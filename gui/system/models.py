@@ -668,96 +668,12 @@ class CertificateBase(Model):
         verbose_name=_("Signing Request"),
         help_text=_("Cut and paste the contents of your CSR here"),
     )
-    cert_key_length = models.IntegerField(
-        blank=True,
-        null=True,
-        verbose_name=_("Key length"),
-        default=2048,
-    )
-    cert_digest_algorithm = models.CharField(
-        blank=True,
-        null=True,
-        max_length=120,
-        verbose_name=_("Digest Algorithm"),
-        default='SHA256',
-    )
-    cert_lifetime = models.IntegerField(
-        blank=True,
-        null=True,
-        verbose_name=_("Lifetime"),
-        default=3650,
-    )
-    cert_country = models.CharField(
-        blank=True,
-        null=True,
-        max_length=120,
-        verbose_name=_("Country"),
-        help_text=_("Country Name (2 letter code)"),
-    )
-    cert_state = models.CharField(
-        blank=True,
-        null=True,
-        max_length=120,
-        verbose_name=_("State"),
-        help_text=_("State or Province Name (full name)"),
-    )
-    cert_city = models.CharField(
-        blank=True,
-        null=True,
-        max_length=120,
-        verbose_name=_("Locality"),
-        help_text=_("Locality Name (eg, city)"),
-    )
-    cert_organization = models.CharField(
-        blank=True,
-        null=True,
-        max_length=120,
-        verbose_name=_("Organization"),
-        help_text=_("Organization Name (eg, company)"),
-    )
-    cert_organizational_unit = models.CharField(
-        blank=True,
-        null=True,
-        max_length=120,
-        verbose_name=_("Organizational Unit"),
-        help_text=_("Organizational unit of the entity"),
-    )
-    cert_email = models.CharField(
-        blank=True,
-        null=True,
-        max_length=120,
-        verbose_name=_("Email Address"),
-        help_text=_("Email Address"),
-    )
-    cert_common = models.CharField(
-        blank=True,
-        null=True,
-        max_length=120,
-        verbose_name=_("Common Name"),
-        help_text=_("Common Name (eg, FQDN of FreeNAS server or service)"),
-    )
-    cert_san = models.TextField(
-        blank=True,
-        null=True,
-        verbose_name=_("Subject Alternate Names"),
-        help_text=_("Multi-domain support. Enter additional space separated domains")
-    )
-    cert_serial = models.CharField(
-        blank=True,
-        null=True,
-        max_length=48,
-        verbose_name=_("Serial"),
-        help_text=_("Serial for next certificate"),
-    )
     cert_signedby = models.ForeignKey(
         "CertificateAuthority",
         blank=True,
         null=True,
         verbose_name=_("Signing Certificate Authority"),
         on_delete=models.CASCADE
-    )
-    cert_chain = models.BooleanField(
-        default=False,
     )
 
     def __init__(self, *args, **kwargs):

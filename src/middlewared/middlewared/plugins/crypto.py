@@ -121,7 +121,7 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
     if certificate:
         matches = RE_CERTIFICATE.findall(certificate)
 
-        if not matches or await middleware.call('certificate.load_certificate', certificate):
+        if not matches or not await middleware.call('certificate.load_certificate', certificate):
             verrors.add(
                 f'{schema_name}.certificate',
                 'Not a valid certificate'
@@ -248,6 +248,7 @@ class CertificateService(CRUDService):
         )
 
         if root_path == CERT_CA_ROOT_PATH:
+            # TODO: Should we look for intermediate ca's as well which this ca has signed ?
             cert['signed_certificates'] = len(
                 self.middleware.call_sync(
                     'datastore.query',
@@ -289,12 +290,16 @@ class CertificateService(CRUDService):
         for c in certs:
             cert_data = self.load_certificate(c)
             if cert_data:
-                cert.update(cert_data)
                 cert['chain_list'].append(c)
             else:
                 self.logger.debug(f'Failed to load certificate {cert["name"]}', exc_info=True)
                 failed_parsing = True
                 break
+
+        if certs:
+            # This indicates cert is not CSR and a cert
+            cert.update(self.load_certificate(cert['certificate']))
+
 
         try:
             if cert['privatekey']:
@@ -916,10 +921,6 @@ class CertificateService(CRUDService):
             job, data
         )
 
-        # Patch creates another copy of dns_mapping
-        data.pop('dns_mapping', None)
-        data.pop('csr_id', None)
-
         pk = await self.middleware.call(
             'datastore.insert',
             self._config.datastore,
@@ -1023,8 +1024,6 @@ class CertificateService(CRUDService):
                 data['passphrase']
             )
 
-        data.pop('passphrase', None)
-
         job.set_progress(90, 'Finalizing changes')
 
         return data
@@ -1091,8 +1090,6 @@ class CertificateService(CRUDService):
                 data['privatekey'],
                 data['passphrase']
             )
-
-        data.pop('passphrase', None)
 
         return data
 
@@ -1696,8 +1693,6 @@ class CertificateAuthorityService(CRUDService):
                 data['privatekey'],
                 data['passphrase']
             )
-
-        data.pop('passphrase', None)
 
         return data
 

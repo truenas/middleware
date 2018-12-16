@@ -3269,17 +3269,25 @@ class CertificateAuthorityResourceMixin(object):
             )
 
         try:
-            bundle.data['cert_internal'] = data['internal']
-            bundle.data['cert_issuer'] = data['issuer']
+            if isinstance(data['issuer'], dict):
+                data['issuer'] = data['issuer']['name']
+
             bundle.data['cert_ncertificates'] = data['signed_certificates']
-            bundle.data['cert_DN'] = data['DN']
-            bundle.data['cert_from'] = data['from']
-            bundle.data['cert_until'] = data['until']
             bundle.data['cert_privatekey'] = bundle.obj.cert_privatekey
 
             bundle.data['CA_type_existing'] = data['CA_type_existing']
             bundle.data['CA_type_internal'] = data['CA_type_internal']
             bundle.data['CA_type_intermediate'] = data['CA_type_intermediate']
+
+            # Keeping consistent with old api v1 fields
+            bundle.data.update({
+                f'cert_{k}': data.get(k)
+                for k in [
+                    'key_length', 'digest_algorithm', 'lifetime', 'country', 'state', 'city',
+                    'organization', 'organizational_unit', 'email', 'common', 'san', 'serial',
+                    'chain', 'until', 'from', 'DN', 'issuer', 'internal'
+            ]
+            })
 
             if self.is_webclient(bundle.request):
                 bundle.data['_sign_csr_url'] = reverse(
@@ -3495,16 +3503,22 @@ class CertificateResourceMixin(object):
             if isinstance(data['issuer'], dict):
                 data['issuer'] = data['issuer']['name']
 
-            bundle.data['cert_issuer'] = data['issuer']
-            bundle.data['cert_DN'] = data['DN']
             bundle.data['cert_CSR'] = bundle.obj.cert_CSR
-            bundle.data['cert_from'] = data['from']
-            bundle.data['cert_until'] = data['until']
             bundle.data['cert_privatekey'] = bundle.obj.cert_privatekey
 
             bundle.data['cert_type_existing'] = data['cert_type_existing']
             bundle.data['cert_type_internal'] = data['cert_type_internal']
             bundle.data['cert_type_CSR'] = data['cert_type_CSR']
+
+            # Keeping consistent with old api v1 fields
+            bundle.data.update({
+                f'cert_{k}': data.get(k)
+                for k in [
+                    'key_length', 'digest_algorithm', 'lifetime', 'country', 'state', 'city',
+                    'organization', 'organizational_unit', 'email', 'common', 'san', 'serial',
+                    'chain', 'until', 'from', 'DN', 'issuer'
+                ]
+            })
 
             if self.is_webclient(bundle.request):
                 if data['cert_type_CSR']:

@@ -1093,6 +1093,11 @@ require([
             cert_organization.set("value", certinfo.cert_organization);
         }
 
+        cert_organizational_unit = registry.byId("id_cert_organizational_unit");
+        if (certinfo.cert_organizational_unit) {
+            cert_organizational_unit.set("value", certinfo.cert_organizational_unit);
+        }
+
         cert_email = registry.byId("id_cert_email");
         if (certinfo.cert_email) {
             cert_email.set("value", certinfo.cert_email);
