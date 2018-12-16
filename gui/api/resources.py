@@ -3507,7 +3507,7 @@ class CertificateResourceMixin(object):
             bundle.data['cert_type_CSR'] = data['cert_type_CSR']
 
             if self.is_webclient(bundle.request):
-                if bundle.obj.cert_type_CSR:
+                if data['cert_type_CSR']:
                     bundle.data['_CSR_edit_url'] = reverse(
                         'CSR_edit',
                         kwargs={
@@ -3550,7 +3550,8 @@ class CertificateResourceMixin(object):
                         'id': bundle.obj.id
                     }
                 )
-        except Exception:
+        except Exception as err:
+            bundle.data['cert_DN'] = "ERROR: " + str(err)
             # There was an error parsing this Certificate object
             # Creating a sentinel file for the alertmod to pick it up
             with open('/tmp/alert_invalidcert_{0}'.format(bundle.obj.cert_name),

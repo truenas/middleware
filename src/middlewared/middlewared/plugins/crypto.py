@@ -206,6 +206,8 @@ class CertificateService(CRUDService):
     def cert_extend(self, cert):
         """Extend certificate with some useful attributes."""
 
+        # TODO: Type of certificate is important, we should perhaps look into a more readable version of type
+
         if cert.get('signedby'):
 
             # We query for signedby again to make sure it's keys do not have the "cert_" prefix and it has gone through
@@ -270,9 +272,10 @@ class CertificateService(CRUDService):
         cert['issuer'] = cert_issuer(cert)
 
         cert['chain_list'] = []
+        certs = []
         if len(RE_CERTIFICATE.findall(cert['certificate'] or '')) > 1:
             certs = RE_CERTIFICATE.findall(cert['certificate'])
-        else:
+        elif cert['type'] != CERT_TYPE_CSR:
             certs = [cert['certificate']]
             signing_CA = cert['issuer']
             # Recursively get all internal/intermediate certificates
@@ -302,10 +305,12 @@ class CertificateService(CRUDService):
             self.logger.debug(f'Failed to load privatekey {cert["name"]}', exc_info=True)
             cert['key_length'] = 'PRIVATE_KEY_MALFORMED'
 
-        if cert['CSR']:
+        if cert['type'] == CERT_TYPE_CSR:
             csr_data = self.load_certificate_request(cert['CSR'])
             if csr_data:
                 cert.update(csr_data)
+
+                cert.update({k: None for k in ('from', 'until')})  # CSR's don't have from, until - normalizing keys
             else:
                 self.logger.debug(f'Failed to load csr {cert["name"]}', exc_info=True)
                 failed_parsing = True
@@ -315,7 +320,7 @@ class CertificateService(CRUDService):
             # Should we perhaps set the value to something like "MALFORMED_CERTIFICATE" for this list off attrs ?
             cert.update({
                 key: None for key in [
-                    'digest_algorithm', 'lifetime', 'country', 'state', 'city',
+                    'digest_algorithm', 'lifetime', 'country', 'state', 'city', 'from', 'until',
                     'organization', 'organizational_unit', 'email', 'common', 'san', 'serial'
                 ]
             })
