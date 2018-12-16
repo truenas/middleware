@@ -309,9 +309,16 @@ class CertificateService(CRUDService):
                 key_obj = crypto.load_privatekey(crypto.FILETYPE_PEM, cert['privatekey'])
                 cert['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, key_obj).decode()
                 cert['key_length'] = key_obj.bits()
+                if isinstance(key_obj.to_cryptography_key(), ec.EllipticCurvePrivateKey):
+                    #TODO: Perhaps we should improve naming here
+                    cert['key_type'] = 'EC'
+                else:
+                    cert['key_type'] = 'NON-EC'
+
         except crypto.Error:
             self.logger.debug(f'Failed to load privatekey {cert["name"]}', exc_info=True)
-            cert['key_length'] = 'PRIVATE_KEY_MALFORMED'
+            cert['key_length'] = None
+            cert['key_type'] = None
 
         if cert['type'] == CERT_TYPE_CSR:
             csr_data = self.load_certificate_request(cert['CSR'])
@@ -329,7 +336,7 @@ class CertificateService(CRUDService):
             cert.update({
                 key: None for key in [
                     'digest_algorithm', 'lifetime', 'country', 'state', 'city', 'from', 'until',
-                    'organization', 'organizational_unit', 'email', 'common', 'san', 'serial'
+                    'organization', 'organizational_unit', 'email', 'common', 'san', 'serial', 'fingerprint'
                 ]
             })
 
@@ -344,6 +351,38 @@ class CertificateService(CRUDService):
         return cert
 
     # HELPER METHODS
+
+    @private
+    def certificate_nginx_health(self, id, schema_name, raise_verrors=True):
+        # Checks cert nginx health
+        cert = self.middleware.call_sync('certificate._get_instance', id)
+        verrors = ValidationErrors()
+        if cert['type'] == CERT_TYPE_CSR:
+            verrors.add(
+                schema_name,
+                'Selected certificate id is a CSR'
+            )
+        elif not cert['fingerprint']:
+            verrors.add(
+                schema_name,
+                f'{cert["name"]} certificate is malformed'
+            )
+
+        if not['key_length']:
+            verrors.add(
+                schema_name,
+                'Failed to parse certificate\'s private key'
+            )
+        elif cert['key_type'] != 'EC' and (cert['key_length'] or 0) < 1024:
+            verrors.add(
+                schema_name,
+                f'{cert["name"]}\'s private key size is less then 1024'
+            )
+
+        if raise_verrors:
+            verrors.check()
+        else:
+            return verrors
 
     @private
     def create_self_signed_cert(self):
@@ -400,7 +439,8 @@ class CertificateService(CRUDService):
                 'from': self.parse_cert_date_string(cert.get_notBefore()),
                 'until': self.parse_cert_date_string(cert.get_notAfter()),
                 'serial': cert.get_serial_number(),
-                'chain': len(RE_CERTIFICATE.findall(certificate)) > 1
+                'chain': len(RE_CERTIFICATE.findall(certificate)) > 1,
+                'fingerprint': certificate.digest('sha1').decode()
             })
 
             return cert_info
@@ -433,30 +473,6 @@ class CertificateService(CRUDService):
             return {}
         else:
             return self.get_x509_subject(csr)
-
-    @private
-    async def get_fingerprint_of_cert(self, certificate_id):
-        cert = await self._get_instance(certificate_id)
-        return await self.middleware.run_in_thread(
-            self.fingerprint,
-            cert['certificate']
-        )
-
-    @private
-    @accepts(
-        Str('cert_certificate', required=True)
-    )
-    def fingerprint(self, cert_certificate):
-        # getting fingerprint of certificate
-        try:
-            certificate = crypto.load_certificate(
-                crypto.FILETYPE_PEM,
-                cert_certificate
-            )
-        except crypto.Error:
-            return None
-        else:
-            return certificate.digest('sha1').decode()
 
     @private
     async def san_to_string(self, san_list):
