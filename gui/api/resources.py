@@ -3287,7 +3287,7 @@ class CertificateAuthorityResourceMixin(object):
                     'key_length', 'digest_algorithm', 'lifetime', 'country', 'state', 'city',
                     'organization', 'organizational_unit', 'email', 'common', 'san', 'serial',
                     'chain', 'until', 'from', 'DN', 'issuer', 'internal'
-            ]
+                ]
             })
 
             if self.is_webclient(bundle.request):

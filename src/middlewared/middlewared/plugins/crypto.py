@@ -14,6 +14,7 @@ from middlewared.validators import Email, IpAddress, Range
 
 from acme import client, errors, messages
 from OpenSSL import crypto, SSL
+from cryptography.hazmat.primitives.asymmetric import ec
 
 
 CA_TYPE_EXISTING = 0x01
@@ -130,19 +131,23 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
     private_key = data.get('privatekey')
     passphrase = data.get('passphrase')
     if private_key:
-        if not load_private_key(private_key, passphrase):
+        private_key_obj = load_private_key(private_key, passphrase)
+        if not private_key_obj:
             verrors.add(
                 f'{schema_name}.privatekey',
                 'Please provide a valid private key with matching passphrase ( if any )'
             )
-
-    key_length = data.get('key_length')
-    if key_length:
-        # TODO: Let's fix this to allow import of EC Keys
-        if key_length not in [1024, 2048, 4096]:
+        elif (
+                'create' in schema_name and private_key_obj.bits() < 1024 and not isinstance(
+                    private_key_obj.to_cryptography_key(), ec.EllipticCurvePrivateKey
+                )
+        ):
+            # When a cert/ca is being created, we disallow keys with size less then 1024
+            # Update is allowed for now for keeping compatibility with very old cert/keys
+            # We do not do this check for any EC based key
             verrors.add(
-                f'{schema_name}.key_length',
-                'Key length must be a valid value ( 1024, 2048, 4096 )'
+                f'{schema_name}.privatekey',
+                'Please provide a key with size greater than or equal to 1024'
             )
 
     signedby = data.get('signedby')
@@ -298,7 +303,6 @@ class CertificateService(CRUDService):
         if certs:
             # This indicates cert is not CSR and a cert
             cert.update(self.load_certificate(cert['certificate']))
-
 
         try:
             if cert['privatekey']:
@@ -790,7 +794,7 @@ class CertificateService(CRUDService):
             Dict('dns_mapping', additional_attrs=True),
             Int('csr_id'),
             Int('signedby'),
-            Int('key_length'),
+            Int('key_length', enum=[1024, 2048, 4096]),
             Int('renew_days'),
             Int('type'),
             Int('lifetime'),
