@@ -121,19 +121,11 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
     if certificate:
         matches = RE_CERTIFICATE.findall(certificate)
 
-        nmatches = len(matches)
-        if not nmatches:
+        if not matches or await middleware.call('certificate.load_certificate', certificate):
             verrors.add(
                 f'{schema_name}.certificate',
                 'Not a valid certificate'
             )
-        else:
-            cert_info = await middleware.call('certificate.load_certificate', certificate)
-            if not cert_info:
-                verrors.add(
-                    f'{schema_name}.certificate',
-                    'Certificate not in PEM format'
-                )
 
     private_key = data.get('privatekey')
     passphrase = data.get('passphrase')
@@ -146,6 +138,7 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
 
     key_length = data.get('key_length')
     if key_length:
+        # TODO: Let's fix this to allow import of EC Keys
         if key_length not in [1024, 2048, 4096]:
             verrors.add(
                 f'{schema_name}.key_length',
@@ -289,7 +282,7 @@ class CertificateService(CRUDService):
                 signing_CA['issuer'] = cert_issuer(signing_CA)
                 signing_CA = signing_CA['issuer']
 
-        failed_parsing = None
+        failed_parsing = False
         for c in certs:
             cert_data = self.load_certificate(c)
             if cert_data:
@@ -297,7 +290,7 @@ class CertificateService(CRUDService):
                 cert['chain_list'].append(c)
             else:
                 self.logger.debug(f'Failed to load certificate {cert["name"]}', exc_info=True)
-                failed_parsing = 'CERTIFICATE'
+                failed_parsing = True
                 break
 
         try:
@@ -315,12 +308,13 @@ class CertificateService(CRUDService):
                 cert.update(csr_data)
             else:
                 self.logger.debug(f'Failed to load csr {cert["name"]}', exc_info=True)
-                failed_parsing = 'CSR'
+                failed_parsing = True
 
         if failed_parsing:
             # Normalizing cert/csr
+            # Should we perhaps set the value to something like "MALFORMED_CERTIFICATE" for this list off attrs ?
             cert.update({
-                key: f'{failed_parsing}_MALFORMED' for key in [
+                key: None for key in [
                     'digest_algorithm', 'lifetime', 'country', 'state', 'city',
                     'organization', 'organizational_unit', 'email', 'common', 'san', 'serial'
                 ]
@@ -366,7 +360,7 @@ class CertificateService(CRUDService):
 
     @private
     @accepts(
-        Str('certificate', required=True)
+        Str('certificate', required=True, null=True)
     )
     def load_certificate(self, certificate):
         try:
@@ -446,7 +440,7 @@ class CertificateService(CRUDService):
                 crypto.FILETYPE_PEM,
                 cert_certificate
             )
-        except Exception:
+        except crypto.Error:
             return None
         else:
             return certificate.digest('sha1').decode()
@@ -751,8 +745,7 @@ class CertificateService(CRUDService):
                     cert['id'],
                     {
                         'certificate': final_order.fullchain_pem,
-                        'acme_uri': final_order.uri,
-                        'chain': True if len(RE_CERTIFICATE.findall(final_order.fullchain_pem)) > 1 else False,
+                        'acme_uri': final_order.uri
                     },
                     {'prefix': self._config.datastore_prefix}
                 )
@@ -918,8 +911,6 @@ class CertificateService(CRUDService):
             job, data
         )
 
-        data['san'] = ' '.join(data.pop('san', []) or [])
-
         # Patch creates another copy of dns_mapping
         data.pop('dns_mapping', None)
         data.pop('csr_id', None)
@@ -971,13 +962,10 @@ class CertificateService(CRUDService):
             'CSR': csr_data['CSR'],
             'privatekey': csr_data['privatekey'],
             'name': data['name'],
-            'chain': True if len(RE_CERTIFICATE.findall(final_order.fullchain_pem)) > 1 else False,
             'type': CERT_TYPE_EXISTING,
             'domains_authenticators': data['dns_mapping'],
             'renew_days': data['renew_days']
         }
-
-        cert_dict.update(self.load_certificate(final_order.fullchain_pem))
 
         return cert_dict
 
@@ -1022,8 +1010,6 @@ class CertificateService(CRUDService):
 
         data['type'] = CERT_TYPE_CSR
 
-        data.update(self.load_certificate_request(data['CSR']))
-
         job.set_progress(80)
 
         if 'passphrase' in data:
@@ -1049,8 +1035,7 @@ class CertificateService(CRUDService):
     )
     @skip_arg(count=1)
     def __create_certificate(self, job, data):
-
-        data.update(self.load_certificate(data['certificate']))
+        # FIXME: Remove me please
 
         job.set_progress(90, 'Finalizing changes')
 
@@ -1076,7 +1061,7 @@ class CertificateService(CRUDService):
                 'certificate.query',
                 [
                     ['id', '=', csr_id],
-                    ['CSR', '!=', None]
+                    ['type', '=', CERT_TYPE_CSR]
                 ],
                 {'get': True}
             )
@@ -1095,10 +1080,6 @@ class CertificateService(CRUDService):
         job.set_progress(50, 'Validation complete')
 
         data['type'] = CERT_TYPE_EXISTING
-
-        data = self.__create_certificate(job, data)
-
-        data['chain'] = True if len(RE_CERTIFICATE.findall(data['certificate'])) > 1 else False
 
         if 'passphrase' in data:
             data['privatekey'] = export_private_key(
@@ -1162,7 +1143,6 @@ class CertificateService(CRUDService):
 
         data['certificate'] = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
         data['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, public_key)
-        data['serial'] = cert_serial
 
         job.set_progress(90, 'Finalizing changes')
 
@@ -1219,8 +1199,6 @@ class CertificateService(CRUDService):
 
             if verrors:
                 raise verrors
-
-            new['san'] = ' '.join(new.pop('san', []) or [])
 
             await self.middleware.call(
                 'datastore.update',
@@ -1399,8 +1377,7 @@ class CertificateAuthorityService(CRUDService):
 
             ca_signed_certs.extend((await child_serials(ca_id)))
 
-            # There is for a case when user might have old certs in the db whose serial value
-            # isn't set in the db
+            # This is for a case where the user might have a malformed certificate and serial value returns None
             ca_signed_certs = list(filter(None, ca_signed_certs))
 
             if not ca_signed_certs:
@@ -1520,8 +1497,6 @@ class CertificateAuthorityService(CRUDService):
             self.map_create_functions[data.pop('create_type')],
             data
         )
-
-        data['san'] = ' '.join(data.pop('san', []) or [])
 
         pk = await self.middleware.call(
             'datastore.insert',
@@ -1646,6 +1621,7 @@ class CertificateAuthorityService(CRUDService):
             'signedby': ca_data['id']
         }
 
+        # FIXME: Let's do this gracefully please
         new_csr_job = self.middleware.call_sync(
             'certificate.create',
             new_csr
@@ -1693,7 +1669,6 @@ class CertificateAuthorityService(CRUDService):
         ])
 
         cert.set_serial_number(serial)
-        data['serial'] = serial
         cert.sign(signkey, data['digest_algorithm'])
 
         data['certificate'] = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
@@ -1710,9 +1685,6 @@ class CertificateAuthorityService(CRUDService):
     )
     def __create_imported_ca(self, data):
         data['type'] = CA_TYPE_EXISTING
-        data['chain'] = True if len(RE_CERTIFICATE.findall(data['certificate'])) > 1 else False
-
-        data.update(self.middleware.call_sync('certificate.load_certificate', data['certificate']))
 
         if all(k in data for k in ('passphrase', 'privatekey')):
             data['privatekey'] = export_private_key(
@@ -1748,7 +1720,6 @@ class CertificateAuthorityService(CRUDService):
         data['type'] = CA_TYPE_INTERNAL
         data['certificate'] = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
         data['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
-        data['serial'] = cert_info['serial']
 
         return data
 
@@ -1809,8 +1780,6 @@ class CertificateAuthorityService(CRUDService):
 
             if verrors:
                 raise verrors
-
-            new['san'] = ' '.join(new.pop('san', []) or [])
 
             await self.middleware.call(
                 'datastore.update',
@@ -1877,10 +1846,7 @@ async def setup(middlewared):
                     'privatekey': crypto.dump_privatekey(crypto.FILETYPE_PEM, key).decode(),
                     'name': 'freenas_default',
                     'type': CERT_TYPE_EXISTING,
-                    'chain': False,
-
                 }
-                cert_dict.update((await middlewared.call('certificate.load_certificate', cert_dict['certificate'])))
 
                 # We use datastore.insert to directly insert in db as jobs cannot be waited for at this point
                 id = await middlewared.call(
