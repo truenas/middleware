@@ -5,6 +5,7 @@ import asyncio
 import base64
 import binascii
 import copy
+import traceback
 import types
 
 from .client import ejson as json
@@ -533,6 +534,12 @@ class Resource(object):
                     'errno': errno,
                 })
             resp = web.Response(status=422)
+        except Exception as e:
+            resp = web.Response(status=500)
+            result = {
+                'message': str(e),
+                'traceback': ''.join(traceback.format_exc()),
+            }
 
         if isinstance(result, types.GeneratorType):
             result = list(result)
