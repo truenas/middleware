@@ -3258,18 +3258,23 @@ class CertificateAuthorityResourceMixin(object):
             form.save()
         return HttpResponse('Certificate Authority created.', status=201)
 
+    def dispatch_list(self, request, **kwargs):
+        with client as c:
+            self.__certs = c.call('certificateauthority.query')
+
+        return super(CertificateAuthorityResourceMixin, self).dispatch_list(request, **kwargs)
+
     def dehydrate(self, bundle):
         bundle = super(CertificateAuthorityResourceMixin,
                        self).dehydrate(bundle)
-        with client as c:
-            data = c.call(
-                'datastore.query',
-                'system.certificateauthority',
-                [['id', '=', bundle.obj.id]],
-                {'get': True, 'prefix': 'cert_', 'extend': 'certificate.cert_extend'}
-            )
+        data = {}
+        for cert in self.__certs:
+            if cert['id'] == bundle.obj.id:
+                data = cert
 
         try:
+            assert bool(data) is True, f'Failed to retrieve data for {bundle.obj.name}'
+
             if isinstance(data['issuer'], dict):
                 data['issuer'] = data['issuer']['name']
 
@@ -3491,17 +3496,22 @@ class CertificateResourceMixin(object):
             form.save()
         return HttpResponse('Certificate created.', status=201)
 
+    def dispatch_list(self, request, **kwargs):
+        with client as c:
+            self.__certs = c.call('certificate.query')
+
+        return super(CertificateResourceMixin, self).dispatch_list(request, **kwargs)
+
     def dehydrate(self, bundle):
         bundle = super(CertificateResourceMixin, self).dehydrate(bundle)
-        with client as c:
-            data = c.call(
-                'datastore.query',
-                'system.certificate',
-                [['id', '=', bundle.obj.id]],
-                {'get': True, 'prefix': 'cert_', 'extend': 'certificate.cert_extend'}
-            )
+        data = {}
+        for cert in self.__certs:
+            if cert['id'] == bundle.obj.id:
+                data = cert
 
         try:
+            assert bool(data) is True, f'Failed to retrieve data for {bundle.obj.name}'
+
             if isinstance(data['issuer'], dict):
                 data['issuer'] = data['issuer']['name']
 
