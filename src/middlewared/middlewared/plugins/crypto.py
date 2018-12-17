@@ -138,9 +138,9 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
                 'Please provide a valid private key with matching passphrase ( if any )'
             )
         elif (
-                'create' in schema_name and private_key_obj.bits() < 1024 and not isinstance(
-                    private_key_obj.to_cryptography_key(), ec.EllipticCurvePrivateKey
-                )
+            'create' in schema_name and private_key_obj.bits() < 1024 and not isinstance(
+                private_key_obj.to_cryptography_key(), ec.EllipticCurvePrivateKey
+            )
         ):
             # When a cert/ca is being created, we disallow keys with size less then 1024
             # Update is allowed for now for keeping compatibility with very old cert/keys

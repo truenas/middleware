@@ -3260,20 +3260,16 @@ class CertificateAuthorityResourceMixin(object):
 
     def dispatch_list(self, request, **kwargs):
         with client as c:
-            self.__certs = c.call('certificateauthority.query')
+            self.__certs = {cert['id']: cert for cert in c.call('certificateauthority.query')}
 
         return super(CertificateAuthorityResourceMixin, self).dispatch_list(request, **kwargs)
 
     def dehydrate(self, bundle):
         bundle = super(CertificateAuthorityResourceMixin,
                        self).dehydrate(bundle)
-        data = {}
-        for cert in self.__certs:
-            if cert['id'] == bundle.obj.id:
-                data = cert
 
         try:
-            assert bool(data) is True, f'Failed to retrieve data for {bundle.obj.name}'
+            data = self.__certs[bundle.obj.id]
 
             if isinstance(data['issuer'], dict):
                 data['issuer'] = data['issuer']['name']
@@ -3498,19 +3494,15 @@ class CertificateResourceMixin(object):
 
     def dispatch_list(self, request, **kwargs):
         with client as c:
-            self.__certs = c.call('certificate.query')
+            self.__certs = {cert['id']: cert for cert in c.call('certificate.query')}
 
         return super(CertificateResourceMixin, self).dispatch_list(request, **kwargs)
 
     def dehydrate(self, bundle):
         bundle = super(CertificateResourceMixin, self).dehydrate(bundle)
-        data = {}
-        for cert in self.__certs:
-            if cert['id'] == bundle.obj.id:
-                data = cert
 
         try:
-            assert bool(data) is True, f'Failed to retrieve data for {bundle.obj.name}'
+            data = self.__certs[bundle.obj.id]
 
             if isinstance(data['issuer'], dict):
                 data['issuer'] = data['issuer']['name']
