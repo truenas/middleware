@@ -210,8 +210,6 @@ class CertificateService(CRUDService):
     def cert_extend(self, cert):
         """Extend certificate with some useful attributes."""
 
-        # TODO: Type of certificate is important, we should perhaps look into a more readable version of type
-
         if cert.get('signedby'):
 
             # We query for signedby again to make sure it's keys do not have the "cert_" prefix and it has gone through
@@ -292,33 +290,32 @@ class CertificateService(CRUDService):
 
         failed_parsing = False
         for c in certs:
-            cert_data = self.load_certificate(c)
-            if cert_data:
+            if self.load_certificate(c):
                 cert['chain_list'].append(c)
             else:
-                self.logger.debug(f'Failed to load certificate {cert["name"]}', exc_info=True)
-                failed_parsing = True
+                self.logger.debug(f'Failed to load certificate chain of {cert["name"]}', exc_info=True)
                 break
 
         if certs:
             # This indicates cert is not CSR and a cert
-            cert.update(self.load_certificate(cert['certificate']))
+            cert_data = self.load_certificate(cert['certificate'])
+            cert.update(cert_data)
+            if not cert_data:
+                self.logger.error(f'Failed to load certificate {cert["name"]}')
+                failed_parsing = True
 
-        try:
-            if cert['privatekey']:
-                key_obj = crypto.load_privatekey(crypto.FILETYPE_PEM, cert['privatekey'])
-                cert['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, key_obj).decode()
+        if cert['privatekey']:
+            key_obj = load_private_key(cert['privatekey'])
+            if key_obj:
                 cert['key_length'] = key_obj.bits()
                 if isinstance(key_obj.to_cryptography_key(), ec.EllipticCurvePrivateKey):
-                    #TODO: Perhaps we should improve naming here
+                    # TODO: Perhaps we should improve naming here
                     cert['key_type'] = 'EC'
                 else:
                     cert['key_type'] = 'NON-EC'
-
-        except crypto.Error:
-            self.logger.debug(f'Failed to load privatekey {cert["name"]}', exc_info=True)
-            cert['key_length'] = None
-            cert['key_type'] = None
+            else:
+                self.logger.debug(f'Failed to load privatekey of {cert["name"]}', exc_info=True)
+                cert['key_length'] = cert['key_type'] = None
 
         if cert['type'] == CERT_TYPE_CSR:
             csr_data = self.load_certificate_request(cert['CSR'])
@@ -354,7 +351,8 @@ class CertificateService(CRUDService):
 
     @private
     def certificate_nginx_health(self, id, schema_name, raise_verrors=True):
-        # Checks cert nginx health
+        # Checks certificate health wrt usage with nginx
+        # Raises verrors as specified if cert found not fit for nginx
         cert = self.middleware.call_sync('certificate._get_instance', id)
         verrors = ValidationErrors()
         if cert['type'] == CERT_TYPE_CSR:
@@ -368,12 +366,12 @@ class CertificateService(CRUDService):
                 f'{cert["name"]} certificate is malformed'
             )
 
-        if not['key_length']:
+        if not cert['key_length']:
             verrors.add(
                 schema_name,
                 'Failed to parse certificate\'s private key'
             )
-        elif cert['key_type'] != 'EC' and (cert['key_length'] or 0) < 1024:
+        elif cert['key_type'] != 'EC' and cert['key_length'] < 1024:
             verrors.add(
                 schema_name,
                 f'{cert["name"]}\'s private key size is less then 1024'
@@ -417,7 +415,7 @@ class CertificateService(CRUDService):
     def load_certificate(self, certificate):
         try:
             # digest_algorithm, lifetime, country, state, city, organization, organizational_unit,
-            # email, common, san, serial, chain
+            # email, common, san, serial, chain, fingerprint
             cert = crypto.load_certificate(
                 crypto.FILETYPE_PEM,
                 certificate
@@ -440,7 +438,7 @@ class CertificateService(CRUDService):
                 'until': self.parse_cert_date_string(cert.get_notAfter()),
                 'serial': cert.get_serial_number(),
                 'chain': len(RE_CERTIFICATE.findall(certificate)) > 1,
-                'fingerprint': certificate.digest('sha1').decode()
+                'fingerprint': cert.digest('sha1').decode()
             })
 
             return cert_info

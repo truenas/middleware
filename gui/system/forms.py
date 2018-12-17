@@ -2404,13 +2404,11 @@ class CertificateAuthorityEditForm(MiddlewareModelForm, ModelForm):
     cert_certificate = forms.CharField(
         label=models.CertificateAuthority._meta.get_field('cert_certificate').verbose_name,
         widget=forms.Textarea(),
-        required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_certificate').help_text
     )
     cert_privatekey = forms.CharField(
         label=models.CertificateAuthority._meta.get_field('cert_privatekey').verbose_name,
         widget=forms.Textarea(),
-        required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_privatekey').help_text
     )
 
@@ -2930,13 +2928,11 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
     cert_CSR = forms.CharField(
         label=models.Certificate._meta.get_field('cert_CSR').verbose_name,
         widget=forms.Textarea(),
-        required=True,
         help_text=models.Certificate._meta.get_field('cert_CSR').help_text
     )
     cert_privatekey = forms.CharField(
         label=models.Certificate._meta.get_field('cert_privatekey').verbose_name,
         widget=forms.Textarea(),
-        required=True,
         help_text=models.Certificate._meta.get_field('cert_privatekey').help_text
     )
 

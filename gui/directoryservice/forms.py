@@ -839,13 +839,14 @@ class LDAPForm(ModelForm):
         ssl = cdata.get("ldap_ssl")
         if ssl in ('start_tls', 'on'):
             certificate = cdata["ldap_certificate"]
-            with client as c:
-                certificate = c.call(
-                    'certificateauthority.query',
-                    [['id', '=', certificate.id]],
-                    {'get': True}
-                )
-            certfile = certificate['certificate_path']
+            if certificate:
+                with client as c:
+                    certificate = c.call(
+                        'certificateauthority.query',
+                        [['id', '=', certificate.id]],
+                        {'get': True}
+                    )
+            certfile = certificate['certificate_path'] if certificate else None
 
         fl = FreeNAS_LDAP(
             host=hostname,
