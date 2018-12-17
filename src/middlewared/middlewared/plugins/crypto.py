@@ -312,10 +312,13 @@ class CertificateService(CRUDService):
             if key_obj:
                 cert['key_length'] = key_obj.bits()
                 if isinstance(key_obj.to_cryptography_key(), ec.EllipticCurvePrivateKey):
-                    # TODO: Perhaps we should improve naming here
                     cert['key_type'] = 'EC'
-                else:
+                elif key_obj.type() == crypto.TYPE_RSA:
                     cert['key_type'] = 'RSA'
+                elif key_obj.type() == crypto.TYPE_DSA:
+                    cert['key_type'] = 'DSA'
+                else:
+                    cert['key_type'] = 'OTHER'
             else:
                 self.logger.debug(f'Failed to load privatekey of {cert["name"]}', exc_info=True)
                 cert['key_length'] = cert['key_type'] = None
@@ -377,7 +380,7 @@ class CertificateService(CRUDService):
         elif cert['key_type'] != 'EC' and cert['key_length'] < 1024:
             verrors.add(
                 schema_name,
-                f'{cert["name"]}\'s private key size is less then 1024'
+                f'{cert["name"]}\'s private key size is less then 1024 bits'
             )
 
         if raise_verrors:
