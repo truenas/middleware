@@ -23,24 +23,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ######################################################################
-import dateutil
 import logging
 import os
-import re
 import time
-
-from dateutil import parser as dtparser
 
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from OpenSSL import crypto
-
 from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, EncryptedDictField, ListField, Model, UserField
-from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.support.utils import get_license
 from licenselib.license import ContractType

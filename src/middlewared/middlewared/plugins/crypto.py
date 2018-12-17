@@ -432,7 +432,7 @@ class CertificateService(CRUDService):
 
             cert_info.update({
                 'lifetime': (
-                        dateutil.parser.parse(cert.get_notAfter()) - dateutil.parser.parse(cert.get_notBefore())
+                    dateutil.parser.parse(cert.get_notAfter()) - dateutil.parser.parse(cert.get_notBefore())
                 ).days,
                 'from': self.parse_cert_date_string(cert.get_notBefore()),
                 'until': self.parse_cert_date_string(cert.get_notAfter()),
