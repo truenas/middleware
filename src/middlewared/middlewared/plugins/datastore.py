@@ -211,7 +211,6 @@ class DatastoreService(Service):
         options = options or {}
         prefix = options.get('prefix')
         model = self.__get_model(name)
-        model_field_names = []
         for field in chain(model._meta.fields, model._meta.many_to_many):
             if prefix:
                 name = field.name.replace(prefix, '')
@@ -219,22 +218,16 @@ class DatastoreService(Service):
                 name = field.name
             if name not in data:
                 continue
-            else:
-                model_field_names.append(field.name)
-
             if isinstance(field, ForeignKey) and data[name] is not None:
                 data[name] = field.rel.to.objects.get(pk=data[name])
             if isinstance(field, ManyToManyField):
                 many_to_many_fields_data[field.name] = data.pop(name)
             else:
+
                 # field.name is with prefix (if there's one) - we update data dict accordingly with db field names
                 data[field.name] = data.pop(name)
 
-        # Let's remove all keys from data which are not present in the model
-        obj = model(**{
-            k: v for k, v in data.items()
-            if k in model_field_names
-        })
+        obj = model(**data)
         obj.save()
 
         for k, v in list(many_to_many_fields_data.items()):
@@ -261,7 +254,6 @@ class DatastoreService(Service):
                 name = field.name
             if name not in data:
                 continue
-
             if isinstance(field, ForeignKey):
                 data[name] = field.rel.to.objects.get(pk=data[name]) if data[name] is not None else None
             if isinstance(field, ManyToManyField):
