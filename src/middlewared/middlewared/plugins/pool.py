@@ -1272,7 +1272,8 @@ class PoolService(CRUDService):
             await self.middleware.call('disk.unlabel', disk)
 
     @item_method
-    @accepts(Int('id'), Dict('options',
+    @accepts(Int('id'), Dict(
+        'options',
         Str('passphrase', password=True, required=True, null=True),
         Str('admin_password', password=True),
     ))
@@ -1338,7 +1339,8 @@ class PoolService(CRUDService):
         return verrors
 
     @item_method
-    @accepts(Int('id'), Dict('options',
+    @accepts(Int('id'), Dict(
+        'options',
         Str('admin_password', password=True, required=False),
     ))
     async def rekey(self, oid, options):
@@ -1374,7 +1376,8 @@ class PoolService(CRUDService):
         return True
 
     @item_method
-    @accepts(Int('id'), Dict('options',
+    @accepts(Int('id'), Dict(
+        'options',
         Str('admin_password', password=True, required=False),
     ))
     @job(lock=lambda x: f'pool_reckey_{x[0]}', pipes=['output'])
@@ -1397,7 +1400,8 @@ class PoolService(CRUDService):
         return True
 
     @item_method
-    @accepts(Int('id'), Dict('options',
+    @accepts(Int('id'), Dict(
+        'options',
         Str('admin_password', password=True, required=False),
     ))
     async def recoverykey_rm(self, oid, options):
@@ -1797,7 +1801,7 @@ class PoolService(CRUDService):
                             if line:
                                 try:
                                     line = line.decode("utf-8", "ignore").strip()
-                                    bits = re.split("\s+", line)
+                                    bits = re.split(r"\s+", line)
                                     if len(bits) == 6 and bits[1].endswith("%") and bits[1][:-1].isdigit():
                                         progress_buffer.set_progress(int(bits[1][:-1]))
                                     elif not line.endswith('/'):
