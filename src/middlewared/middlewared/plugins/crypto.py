@@ -935,6 +935,14 @@ class CertificateService(CRUDService):
             job, data
         )
 
+        data = {
+            k: v for k, v in data.items()
+            if k in [
+                'name', 'certificate', 'CSR', 'privatekey', 'type', 'signedby', 'acme', 'acme_uri',
+                'domains_authenticators', 'renew_days'
+            ]
+        }
+
         pk = await self.middleware.call(
             'datastore.insert',
             self._config.datastore,
@@ -1497,6 +1505,11 @@ class CertificateAuthorityService(CRUDService):
             data
         )
 
+        data = {
+            k: v for k, v in data.items()
+            if k in ['name', 'certificate', 'privatekey', 'type', 'signedby']
+        }
+
         pk = await self.middleware.call(
             'datastore.insert',
             self._config.datastore,
@@ -1760,6 +1773,9 @@ class CertificateAuthorityService(CRUDService):
                 data,
                 'certificate_authority_update'
             )
+        else:
+            for key in ['ca_id', 'csr_cert_id']:
+                data.pop(key, None)
 
         old = await self._get_instance(id)
         # signedby is changed back to integer from a dict
@@ -1771,8 +1787,9 @@ class CertificateAuthorityService(CRUDService):
         verrors = ValidationErrors()
 
         if new['name'] != old['name']:
-            await validate_cert_name(self.middleware, data['name'], self._config.datastore, verrors,
-                                     'certificate_authority_update.name')
+            await validate_cert_name(
+                self.middleware, data['name'], self._config.datastore, verrors, 'certificate_authority_update.name'
+            )
 
             if verrors:
                 raise verrors
