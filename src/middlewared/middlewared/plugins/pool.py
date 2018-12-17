@@ -879,7 +879,10 @@ class PoolDatasetService(CRUDService):
 
     @accepts(Str('pool'))
     async def recommended_zvol_blocksize(self, pool):
-        pool = await self.middleware.call('pool.query', [['name', '=', pool]], {'get': True})
+        pool = await self.middleware.call('pool.query', [['name', '=', pool]])
+        if not pool:
+            raise CallError('Pool not found.', errno.ENOENT)
+        pool = pool[0]
         numdisks = 4
         for vdev in pool['topology']['data']:
             if vdev['type'] == 'RAIDZ':
