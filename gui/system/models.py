@@ -634,7 +634,6 @@ class Update(Model):
 
 
 class CertificateBase(Model):
-    cert_root_path = "/etc/certificates"
 
     cert_type = models.IntegerField()
     cert_name = models.CharField(
@@ -669,12 +668,6 @@ class CertificateBase(Model):
         on_delete=models.CASCADE
     )
 
-    def __init__(self, *args, **kwargs):
-        super(CertificateBase, self).__init__(*args, **kwargs)
-
-        if not os.path.exists(self.cert_root_path):
-            os.mkdir(self.cert_root_path, 0o755)
-
     def __str__(self):
         return self.cert_name
 
@@ -683,13 +676,6 @@ class CertificateBase(Model):
 
 
 class CertificateAuthority(CertificateBase):
-
-    def __init__(self, *args, **kwargs):
-        super(CertificateAuthority, self).__init__(*args, **kwargs)
-
-        self.cert_root_path = "%s/CA" % self.cert_root_path
-        if not os.path.exists(self.cert_root_path):
-            os.mkdir(self.cert_root_path, 0o755)
 
     class Meta:
         verbose_name = _("CA")

@@ -147,7 +147,7 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
             # We do not do this check for any EC based key
             verrors.add(
                 f'{schema_name}.privatekey',
-                'Please provide a key with size greater than or equal to 1024'
+                'Please provide a key with size greater than or equal to 1024 bits'
             )
 
     signedby = data.get('signedby')
@@ -260,6 +260,9 @@ class CertificateService(CRUDService):
                 )
             )
 
+        if not os.path.exists(root_path):
+            os.mkdir(root_path, 0o755)
+
         def cert_issuer(cert):
             issuer = None
             if cert['type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING):
@@ -290,7 +293,7 @@ class CertificateService(CRUDService):
 
         failed_parsing = False
         for c in certs:
-            if self.load_certificate(c):
+            if bool(c) and self.load_certificate(c):
                 cert['chain_list'].append(c)
             else:
                 self.logger.debug(f'Failed to load certificate chain of {cert["name"]}', exc_info=True)
@@ -312,7 +315,7 @@ class CertificateService(CRUDService):
                     # TODO: Perhaps we should improve naming here
                     cert['key_type'] = 'EC'
                 else:
-                    cert['key_type'] = 'NON-EC'
+                    cert['key_type'] = 'RSA'
             else:
                 self.logger.debug(f'Failed to load privatekey of {cert["name"]}', exc_info=True)
                 cert['key_length'] = cert['key_type'] = None
@@ -410,7 +413,7 @@ class CertificateService(CRUDService):
 
     @private
     @accepts(
-        Str('certificate', required=True, null=True)
+        Str('certificate', required=True)
     )
     def load_certificate(self, certificate):
         try:
@@ -454,10 +457,7 @@ class CertificateService(CRUDService):
             'common': obj.get_subject().CN,
             'san': [s for s in (obj.get_subject().subjectAltName or '').split(',') if s],
             'email': obj.get_subject().emailAddress,
-            'DN': '/' + '/'.join([
-                '%s=%s' % (c[0].decode(), c[1].decode())
-                for c in obj.get_subject().get_components()
-            ])
+            'DN': f'/{"/".join([f"{c[0].decode()}={c[1].decode()}" for c in obj.get_subject().get_components()])}',
         }
 
     @private
