@@ -76,7 +76,7 @@ class RcloneConfig:
 
                 remote_path = "encrypted:/"
 
-            if self.cloud_sync["exclude"]:
+            if self.cloud_sync.get("exclude"):
                 self.tmp_file_exclude = tempfile.NamedTemporaryFile(mode="w+")
                 self.tmp_file_exclude.write("\n".join(self.cloud_sync["exclude"]))
                 self.tmp_file_exclude.flush()
