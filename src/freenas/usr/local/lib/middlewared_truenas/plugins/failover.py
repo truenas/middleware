@@ -226,6 +226,24 @@ class FailoverService(ConfigService):
                 self.logger.warn('Failed checking failover status', exc_info=True)
             return 'UNKNOWN'
 
+    @no_auth_required
+    @throttle(seconds=2, condition=throttle_condition)
+    @accepts()
+    @pass_app
+    async def get_ips(self, app):
+        """
+        Get a list of IPs which can be accessed for management via UI.
+        """
+        addresses = (await self.middleware.call('system.general.config'))['ui_address']
+        if '0.0.0.0' in addresses:
+            ips = []
+            for interface in await self.middleware.call('interface.query', [
+                ('failover_vhid', '!=', None)
+            ]):
+                ips += [i['address'] for i in interface.get('failover_virtual_aliases', [])]
+            return ips
+        return addresses
+
     @accepts()
     def force_master(self):
         """
