@@ -110,8 +110,8 @@ generate_proftp()
     " | \
     while eval read $f; do
         cert=$(/usr/local/bin/midclt call certificate.query '[["id", "=", '$ftp_ssltls_certificate_id']]' '{"get": true}')
-        certname=$(/usr/local/bin/jq -n --argjson data "$cert" '$data.name')
-        certchain=$(/usr/local/bin/jq -n --argjson data "$cert" '$data.chain')
+        certname="$(/usr/local/bin/jq -r -n --argjson data "$cert" '$data.name')"
+        certchain="$(/usr/local/bin/jq -n --argjson data "$cert" '$data.chain')"
         # Check if required directories exists.
         [ ! -d "/var/run/proftpd" ] && mkdir "/var/run/proftpd"
         [ ! -d "/var/log/proftpd" ] && mkdir "/var/log/proftpd"
