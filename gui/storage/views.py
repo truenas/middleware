@@ -438,19 +438,11 @@ def zvol_delete(request, name):
 
     if request.method == 'POST':
         form = forms.ZvolDestroyForm(request.POST, fs=name)
-        if form.is_valid():
-            with client as c:
-                try:
-                    c.call('pool.dataset.delete', name)
-                except ClientException as e:
-                    return JsonResp(
-                        request,
-                        error=True,
-                        message=e.error)
-
-            return JsonResp(
-                request,
-                message=_("ZFS Volume successfully destroyed."))
+        if not form.is_valid() or form.done() is False:
+            return JsonResp(request, form=form)
+        return JsonResp(
+            request,
+            message=_("ZFS Volume successfully destroyed."))
     else:
         form = forms.ZvolDestroyForm(fs=name)
     return render(request, 'storage/zvol_confirm_delete.html', {

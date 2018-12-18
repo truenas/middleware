@@ -2513,6 +2513,16 @@ class ZvolDestroyForm(Form):
                 initial=False,
                 label=label)
 
+    def done(self):
+        try:
+            with client as c:
+                return c.call('pool.dataset.delete', self.fs, {
+                    'recursive': self.cleaned_data.get('cascade') or False,
+                })
+        except ClientException as e:
+            self._errors['__all__'] = self.error_class([str(e)])
+            return False
+
 
 class ScrubForm(MiddlewareModelForm, ModelForm):
 

@@ -112,7 +112,8 @@ from freenasUI.storage.forms import (
     ZVol_CreateForm,
     ZVol_EditForm,
     ZFSDatasetCreateForm,
-    ZFSDatasetEditForm
+    ZFSDatasetEditForm,
+    ZvolDestroyForm,
 )
 from freenasUI.storage.models import Disk, VMWarePlugin
 from freenasUI.system.forms import (
@@ -709,13 +710,13 @@ class ZVolResource(DojoResource):
             bundle.request.body or '{}',
             format='application/json',
         )
-        retval = notifier().destroy_zfs_vol("%s/%s" % (
+        form = ZvolDestroyForm(deserialized, fs="%s/%s" % (
             kwargs.get('parent').vol_name,
             kwargs.get('pk'),
-        ), deserialized.get('cascade', False))
-        if retval:
+        ))
+        if not form.is_valid() or form.done() is False:
             raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, retval)
+                response=self.error_response(bundle.request, form.errors)
             )
         return HttpResponse(status=204)
 
