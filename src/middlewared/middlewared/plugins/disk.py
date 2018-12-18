@@ -506,7 +506,6 @@ class DiskService(CRUDService):
                     self.logger.warn('Failed to clear %s: %s', dev, e)
         return failed
 
-
     @private
     def encrypt(self, devname, keypath, passphrase=None):
         self.__geli_setmetadata(devname, keypath, passphrase)
@@ -1479,6 +1478,51 @@ class DiskService(CRUDService):
 
         # We might need to sync with reality (e.g. uuid -> devname)
         self.middleware.call_sync('disk.sync', disk)
+
+    @private
+    async def configure_power_management(self):
+        for disk in await self.middleware.call('disk.query'):
+            await self.power_management(disk['name'], disk=disk)
+
+    @private
+    async def power_management(self, dev, disk=None):
+        if not disk:
+            disk = await self.middleware.call('disk.query', [('name', '=', dev)])
+            if not disk:
+                return
+            disk = disk[0]
+
+        # Try to set APM
+        args = ['camcontrol', 'apm', dev]
+        if disk['advpowermgmt'] != 'DISABLED':
+            args += ['-l', disk['advpowermgmt']]
+        asyncio.ensure_future(run(*args, check=False))
+
+        # Try to set AAM
+        acousticlevel_map = {
+            'MINIMUM': '1',
+            'MEDIUM': '64',
+            'MAXIMUM': '127',
+        }
+        asyncio.ensure_future(run(
+            'camcontrol', 'aam', dev, '-l', acousticlevel_map.get(disk['acousticlevel'], '0'),
+            check=False,
+        ))
+
+        # Try to set idle
+        if disk['hddstandby'] != 'ALWAYS ON':
+            # database is in minutes, camcontrol uses seconds
+            idle = int(disk['hddstandby']) * 60
+        else:
+            idle = 0
+
+        # We wait a minute before applying idle because its likely happening during system boot
+        # or some activity is happening very soon.
+        async def camcontrol_idle():
+            await asyncio.sleep(60)
+            asyncio.ensure_future(run('camcontrol', 'idle', dev, '-t', str(idle), check=False))
+
+        asyncio.ensure_future(camcontrol_idle())
 
 
 def new_swap_name():
