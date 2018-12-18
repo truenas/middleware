@@ -481,17 +481,6 @@ class notifier(metaclass=HookMetaclass):
 
         return retval
 
-    def destroy_zfs_vol(self, name, recursive=False):
-        mp = self.__get_mountpath(name)
-        if self.contains_jail_root(mp):
-            self.delete_plugins()
-        zfsproc = self._pipeopen("zfs destroy %s'%s'" % (
-            '-r ' if recursive else '',
-            str(name),
-        ))
-        retval = zfsproc.communicate()[1]
-        return retval
-
     def zfs_offline_disk(self, volume, label):
         try:
             with client as c:
@@ -529,12 +518,6 @@ class notifier(metaclass=HookMetaclass):
                 c.call('pool.remove', volume.id, {'label': label})
         except Exception as e:
             raise MiddlewareError(f'Disk could not be removed: {str(e)}')
-
-    def detach_volume_swaps(self, volume):
-        """Detach all swaps associated with volume"""
-        disks = volume.get_disks()
-        with client as c:
-            c.call('disk.swaps_remove_disks', [disks])
 
     def __get_mountpath(self, name, mountpoint_root='/mnt'):
         """Determine the mountpoint for a ZFS dataset
