@@ -249,7 +249,9 @@ class CertificateService(CRUDService):
             root_path, f'{cert["name"]}.csr'
         )
 
-        if root_path == CERT_CA_ROOT_PATH:
+        cert['cert_type'] = 'CA' if root_path == CERT_CA_ROOT_PATH else 'CERTIFICATE'
+
+        if cert['cert_type'] == 'CA':
             # TODO: Should we look for intermediate ca's as well which this ca has signed ?
             cert['signed_certificates'] = len(
                 self.middleware.call_sync(
@@ -293,7 +295,7 @@ class CertificateService(CRUDService):
 
         failed_parsing = False
         for c in certs:
-            if bool(c) and self.load_certificate(c):
+            if c and self.load_certificate(c):
                 cert['chain_list'].append(c)
             else:
                 self.logger.debug(f'Failed to load certificate chain of {cert["name"]}', exc_info=True)
@@ -342,6 +344,8 @@ class CertificateService(CRUDService):
                     'organization', 'organizational_unit', 'email', 'common', 'san', 'serial', 'fingerprint'
                 ]
             })
+
+        cert['parsed'] = not failed_parsing
 
         cert['internal'] = 'NO' if cert['type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING) else 'YES'
         cert['CA_type_existing'] = bool(cert['type'] & CA_TYPE_EXISTING)
@@ -1305,11 +1309,6 @@ class CertificateService(CRUDService):
 
         self.middleware.call_sync('service.start', 'ssl')
 
-        sentinel = f'/tmp/alert_invalidcert_{certificate["name"]}'
-        if os.path.exists(sentinel):
-            os.unlink(sentinel)
-            self.middleware.call_sync('alert.process_alerts')
-
         job.set_progress(100)
         return response
 
@@ -1839,11 +1838,6 @@ class CertificateAuthorityService(CRUDService):
         )
 
         await self.middleware.call('service.start', 'ssl')
-
-        sentinel = f'/tmp/alert_invalidCA_{ca["name"]}'
-        if os.path.exists(sentinel):
-            os.unlink(sentinel)
-            await self.middleware.call('alert.process_alerts')
 
         return response
 

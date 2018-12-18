@@ -3318,13 +3318,9 @@ class CertificateAuthorityResourceMixin(object):
                 )
         except Exception as err:
             bundle.data['cert_DN'] = "ERROR: " + str(err)
-            # There was an error parsing this Certificate Authority object
-            # Creating a sentinel file for the alertmod to pick it up
-            with open('/tmp/alert_invalidCA_{0}'.format(bundle.obj.cert_name),
-                      'w') as fout:
-                fout.write('')
-
-            run_alerts()
+        else:
+            if not bundle.data.get('cert_DN'):
+                bundle.data['cert_DN'] = 'Failed to parse'
 
         return bundle
 
@@ -3570,13 +3566,9 @@ class CertificateResourceMixin(object):
                 )
         except Exception as err:
             bundle.data['cert_DN'] = "ERROR: " + str(err)
-            # There was an error parsing this Certificate object
-            # Creating a sentinel file for the alertmod to pick it up
-            with open('/tmp/alert_invalidcert_{0}'.format(bundle.obj.cert_name),
-                      'w') as fout:
-                fout.write('')
-
-            run_alerts()
+        else:
+            if not bundle.data.get('cert_DN'):
+                bundle.data['cert_DN'] = 'Failed to parse'
 
         return bundle
 
