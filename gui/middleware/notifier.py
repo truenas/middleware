@@ -299,12 +299,6 @@ class notifier(metaclass=HookMetaclass):
 
         return running
 
-    def start_ataidle(self, what=None):
-        if what is not None:
-            self._system("/usr/sbin/service ix-ataidle quietstart %s" % what)
-        else:
-            self._system("/usr/sbin/service ix-ataidle quietstart")
-
     def _open_db(self):
         """Open and return a cursor object for database access."""
         try:
