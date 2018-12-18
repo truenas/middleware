@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
-from middlewared.service import CRUDService, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, item_method, private, ValidationErrors
 from middlewared.utils.path import is_child
 from middlewared.validators import ReplicationSnapshotNamingSchema
 
@@ -244,6 +244,16 @@ class PeriodicSnapshotTaskService(CRUDService):
         await self.middleware.call('service.restart', 'cron')
 
         return response
+
+    @item_method
+    @accepts(Int("id"))
+    async def run(self, id):
+        task = await self._get_instance(id)
+
+        if not task["enabled"]:
+            raise CallError("Task is not enabled")
+
+        await self.middleware.call("zettarepl.run_periodic_snapshot_task", task["id"])
 
     async def _validate(self, data):
         verrors = ValidationErrors()

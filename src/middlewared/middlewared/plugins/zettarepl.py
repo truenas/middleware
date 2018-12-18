@@ -138,12 +138,23 @@ class ZettareplProcess:
             logger.error("Unhandled exception in ZettareplProcess._observer", exc_info=True)
 
     def _process_command_queue(self):
+        logger = logging.getLogger("middlewared.plugins.zettarepl")
+
         while self.zettarepl is not None:
             command, args = self.command_queue.get()
             if command == "timezone":
                 self.zettarepl.scheduler.tz_clock.timezone = pytz.timezone(args)
             if command == "tasks":
                 self.zettarepl.set_tasks(Definition.from_data(args).tasks)
+            if command == "run_task":
+                class_name, task_id = args
+                for task in self.zettarepl.tasks:
+                    if task.__class__.__name__ == class_name and task.id == task_id:
+                        logger.debug("Running task %r", task)
+                        self.zettarepl.scheduler.interrupt([task])
+                        break
+                else:
+                    logger.warning("Task %s(%r) not found", class_name, task_id)
 
 
 class ZettareplService(Service):
@@ -226,6 +237,12 @@ class ZettareplService(Service):
         else:
             self.middleware.call_sync("zettarepl.start")
             self.queue.put(("tasks", definition))
+
+    async def run_periodic_snapshot_task(self, id):
+        self.queue.put(("run_task", ("PeriodicSnapshotTask", f"task_{id}")))
+
+    async def run_replication_task(self, id):
+        self.queue.put(("run_task", ("ReplicationTask", f"task_{id}")))
 
     async def list_datasets(self, transport, ssh_credentials=None):
         try:

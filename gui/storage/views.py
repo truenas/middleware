@@ -1311,3 +1311,21 @@ def tasks_recursive_json(request, dataset=None):
 
 def tasks_all_recursive_json(request):
     return tasks_recursive_json(request)
+
+
+def snapshot_run(request, oid):
+    if request.method == "POST":
+        with client as c:
+            c.call("pool.snapshottask.run", oid)
+        return JsonResp(request, message=_("Periodic snapshot task has been scheduled"))
+
+    return render(request, 'storage/snapshot_run.html')
+
+
+def replication_run(request, oid):
+    if request.method == "POST":
+        with client as c:
+            c.call("replication.run", oid)
+        return JsonResp(request, message=_("Replication process has been scheduled"))
+
+    return render(request, 'storage/replication_run.html')
