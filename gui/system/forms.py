@@ -3087,6 +3087,9 @@ class CloudCredentialsForm(ModelForm):
     credentials_schemas = forms.CharField(
         widget=forms.widgets.HiddenInput,
     )
+    credentials_oauths = forms.CharField(
+        widget=forms.widgets.HiddenInput,
+    )
 
     class Meta:
         fields = [
@@ -3109,6 +3112,10 @@ class CloudCredentialsForm(ModelForm):
         self.fields["attributes"].initial = json.dumps(self.instance.attributes if self.instance else {})
         self.fields["credentials_schemas"].initial = json.dumps({
             provider["name"]: provider["credentials_schema"]
+            for provider in providers
+        })
+        self.fields["credentials_oauths"].initial = json.dumps({
+            provider["name"]: provider["credentials_oauth"]
             for provider in providers
         })
 

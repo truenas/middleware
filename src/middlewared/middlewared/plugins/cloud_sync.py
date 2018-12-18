@@ -26,6 +26,8 @@ RE_TRANSF = re.compile(r"Transferred:\s*?(.+)$", re.S)
 
 REMOTES = {}
 
+OAUTH_URL = "http://localhost:5000/oauth"
+
 RcloneConfigTuple = namedtuple("RcloneConfigTuple", ["config_path", "remote_path"])
 
 logger = logging.getLogger(__name__)
@@ -573,6 +575,7 @@ class CloudSyncService(CRUDService):
                         }
                         for field in provider.credentials_schema
                     ],
+                    "credentials_oauth": f"{OAUTH_URL}/{provider.name.lower()}" if provider.credentials_oauth else None,
                     "buckets": provider.buckets,
                     "task_schema": [
                         {
