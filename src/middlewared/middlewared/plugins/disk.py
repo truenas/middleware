@@ -1481,6 +1481,9 @@ class DiskService(CRUDService):
 
     @private
     async def configure_power_management(self):
+        # Only run power management for FreeNAS
+        if not await self.middleware.call('system.is_freenas'):
+            return
         for disk in await self.middleware.call('disk.query'):
             await self.power_management(disk['name'], disk=disk)
 
