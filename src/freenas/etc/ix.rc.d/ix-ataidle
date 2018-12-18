@@ -15,7 +15,6 @@ ataidle_start()
 }
 
 name="ix-ataidle"
-rcvar="ataidle_enable"
 start_cmd="ataidle_start"
 stop_cmd=':'
 
