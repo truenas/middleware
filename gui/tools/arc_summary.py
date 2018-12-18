@@ -846,7 +846,7 @@ def get_l2arc_summary(Kstat):
             'num': fBytes(l2_asize),
         }
         output["l2_arc_size"]["head_size"] = {
-            'per': fPerc(l2_hrd_size, l2_size),
+            'per': fPerc(l2_hdr_size, l2_size),
             'num': fBytes(l2_hdr_size),
         }
 
