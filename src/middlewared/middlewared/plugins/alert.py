@@ -417,7 +417,7 @@ class AlertService(Service):
         return sum([sum([list(vv.values()) for vv in v.values()], []) for v in self.alerts.values()], [])
 
     @private
-    @accepts(Str("source"), Any("args"))
+    @accepts(Str("source"), Any("args", null=True))
     @job(lock="process_alerts", transient=True)
     async def oneshot_create(self, job, source, args):
         try:
@@ -441,7 +441,7 @@ class AlertService(Service):
         await self.middleware.call("alert.send_alerts")
 
     @private
-    @accepts(Str("source"), Any("query"))
+    @accepts(Str("source"), Any("query", null=True))
     @job(lock="process_alerts", transient=True)
     async def oneshot_delete(self, job, source, query):
         try:
