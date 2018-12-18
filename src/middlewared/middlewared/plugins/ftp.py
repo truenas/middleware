@@ -1,7 +1,7 @@
 from middlewared.async_validators import check_path_resides_within_volume, resolve_hostname
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, Str
 from middlewared.validators import Exact, Match, Or, Range
-from middlewared.service import SystemServiceService, ValidationErrors
+from middlewared.service import private, SystemServiceService, ValidationErrors
 
 
 class FTPService(SystemServiceService):
@@ -9,6 +9,13 @@ class FTPService(SystemServiceService):
     class Config:
         service = "ftp"
         datastore_prefix = "ftp_"
+        datastore_extend = "ftp.ftp_extend"
+
+    @private
+    async def ftp_extend(self, data):
+        if data['ssltls_certificate']:
+            data['ssltls_certificate'] = data['ssltls_certificate']['id']
+        return data
 
     @accepts(Dict(
         'ftp_update',
@@ -75,7 +82,7 @@ class FTPService(SystemServiceService):
         if new["anonpath"]:
             await check_path_resides_within_volume(verrors, self.middleware, "ftp_update.anonpath", new["anonpath"])
 
-        if new["tls"] and new["ssltls_certificate"] == 0:
+        if new["tls"] and not new["ssltls_certificate"]:
             verrors.add("ftp_update.ssltls_certificate", "This field is required when TLS is enabled")
 
         if new["masqaddress"]:
