@@ -117,7 +117,7 @@ class DiskService(CRUDService):
         )
 
         if any(new[key] != old[key] for key in ['hddstandby', 'advpowermgmt', 'acousticlevel']):
-            await self.middleware.call('notifier.start_ataidle', new['name'])
+            await self.middleware.call('disk.power_management', new['name'])
 
         if any(
                 new[key] != old[key]
