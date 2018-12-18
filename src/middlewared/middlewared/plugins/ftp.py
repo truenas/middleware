@@ -82,8 +82,10 @@ class FTPService(SystemServiceService):
         if new["anonpath"]:
             await check_path_resides_within_volume(verrors, self.middleware, "ftp_update.anonpath", new["anonpath"])
 
-        if new["tls"] and not new["ssltls_certificate"]:
-            verrors.add("ftp_update.ssltls_certificate", "This field is required when TLS is enabled")
+        if new["tls"] and not (
+                await self.middleware.call("certificate.query", [["id", "=", new["ssltls_certificate"]]])
+        ):
+            verrors.add("ftp_update.ssltls_certificate", "Please provide a valid certificate id when TLS is enabled")
 
         if new["masqaddress"]:
             await resolve_hostname(self.middleware, verrors, "ftp_update.masqaddress", new["masqaddress"])
