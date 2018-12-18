@@ -1275,15 +1275,21 @@ class CertificateService(CRUDService):
                 ]
             }
         """
-        if (self.middleware.call_sync('system.general.config'))['ui_certificate']['id'] == id:
-            verrors = ValidationErrors()
+        verrors = ValidationErrors()
 
+        if (self.middleware.call_sync('system.general.config'))['ui_certificate']['id'] == id:
             verrors.add(
                 'certificate_delete.id',
                 'Selected certificate is being used by system HTTPS server, please select another one'
             )
 
-            raise verrors
+        if (self.middleware.call_sync('ftp.config'))['ssltls_certificate'] == id:
+            verrors.add(
+                'certificate_delete.id',
+                'Selected certificate is being used by FTP service, please select another one'
+            )
+
+        verrors.check()
 
         certificate = self.middleware.call_sync('certificate._get_instance', id)
 

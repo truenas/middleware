@@ -109,9 +109,6 @@ generate_proftp()
             1
     " | \
     while eval read $f; do
-        cert=$(/usr/local/bin/midclt call certificate.query '[["id", "=", '$ftp_ssltls_certificate_id']]' '{"get": true}')
-        certname="$(/usr/local/bin/jq -r -n --argjson data "$cert" '$data.name')"
-        certchain="$(/usr/local/bin/jq -n --argjson data "$cert" '$data.chain')"
         # Check if required directories exists.
         [ ! -d "/var/run/proftpd" ] && mkdir "/var/run/proftpd"
         [ ! -d "/var/log/proftpd" ] && mkdir "/var/log/proftpd"
@@ -214,6 +211,16 @@ $(bool_on ${ftp_resume} "  AllowStoreRestart on")
 EOF
 
         if [ ${ftp_tls} -gt 0 ]; then
+
+if [ -z "${ftp_ssltls_certificate_id}" ]; then
+        certname=""
+        certchain=""
+else
+        cert=$(/usr/local/bin/midclt call certificate.query '[["id", "=", '$ftp_ssltls_certificate_id']]' '{"get": true}')
+        certname="$(/usr/local/bin/jq -r -n --argjson data "$cert" '$data.name')"
+        certchain="$(/usr/local/bin/jq -n --argjson data "$cert" '$data.chain')"
+fi
+
 # This is hacky, this should be converted to use the ORM.
 # system.Certificate contains the raw certificates. The path
 # is also only available via the model, so we have to hard code
