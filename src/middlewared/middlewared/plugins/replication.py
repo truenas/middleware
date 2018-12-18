@@ -80,11 +80,11 @@ class ReplicationService(CRUDService):
                     data["state"]["error"] = msg
             else:
                 data["state"] = {
-                    "state": "UNKNOWN",
+                    "state": "PENDING",
                 }
         else:
             data["state"] = context["state"].get(f"replication_task_{data['id']}", {
-                "state": "UNKNOWN",
+                "state": "PENDING",
             })
 
         return data
