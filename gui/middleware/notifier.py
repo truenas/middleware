@@ -385,11 +385,6 @@ class notifier(metaclass=HookMetaclass):
                         providers.append((part, part))
         return providers
 
-    def get_swapsize(self):
-        from freenasUI.system.models import Advanced
-        swapsize = Advanced.objects.latest('id').adv_swapondrive
-        return swapsize
-
     def create_zfs_vol(self, name, size, props=None, sparse=False):
         """Internal procedure to create ZFS volume"""
         if sparse is True:
