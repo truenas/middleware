@@ -85,7 +85,6 @@ from freenasUI.middleware.client import client, ValidationErrors
 from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-from freenasUI.middleware.util import run_alerts
 from freenasUI.network.forms import AliasForm
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins.models import Plugins
