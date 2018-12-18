@@ -385,7 +385,7 @@ class Job(object):
                         lines += 1
 
                 if lines > 10:
-                    excerpt = "%s[%d more lines]\n%s" % ("".join(head), lines - 10, "".join(tail))
+                    excerpt = "%s... %d more lines ...\n%s" % ("".join(head), lines - 10, "".join(tail))
                 else:
                     excerpt = "".join(head + tail)
 
