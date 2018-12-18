@@ -12,10 +12,10 @@ class VMWareSnapshotCreateFailedAlertSource(OneShotAlertSource):
     level = AlertLevel.WARNING
     title = "VMWare snapshot failed"
 
-    def create(self, args):
+    async def create(self, args):
         return Alert("Creating VMWare snapshot %(snapshot)s of VM %(vm)s at %(hostname)s failed: %(error)s", args)
 
-    def delete(self, alerts, query):
+    async def delete(self, alerts, query):
         pass
 
 
@@ -23,10 +23,10 @@ class VMWareSnapshotDeleteFailedAlertSource(OneShotAlertSource):
     level = AlertLevel.WARNING
     title = "VMWare snapshot delete failed"
 
-    def create(self, args):
+    async def create(self, args):
         return Alert("Deleting VMWare snapshot %(snapshot)s of VM %(vm)s at %(hostname)s failed: %(error)s", args)
 
-    def delete(self, alerts, query):
+    async def delete(self, alerts, query):
         pass
 
 
