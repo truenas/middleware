@@ -163,8 +163,9 @@ class CloudSyncForm(ModelForm):
         return w
 
     def clean_bwlimit(self):
-        v = self.cleaned_data.get('bwlimit')
-        if "," not in v:
+        v = self.cleaned_data.get('bwlimit').strip()
+
+        if v and "," not in v:
             v = f"00:00,{v}"
 
         bwlimit = []
