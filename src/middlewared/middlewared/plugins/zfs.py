@@ -610,19 +610,30 @@ class ZFSSnapshot(CRUDService):
         Returns:
             bool: True if succeed otherwise False.
         """
+        self.logger.debug('zfs.snapshot.remove is deprecated, use zfs.snapshot.delete')
         snapshot_name = data['dataset'] + '@' + data['name']
+        try:
+            self.do_delete(snapshot_name, {'defer': data.get('defer_delete') or False})
+        except Exception:
+            return False
+        return True
 
+    @accepts(
+        Str('id'),
+        Dict('options', Bool('defer', default=False)),
+    )
+    def do_delete(self, id, options):
+        """
+        Delete snapshot of name `id`.
+
+        `options.defer` will defer the deletion of snapshot.
+        """
         try:
             with libzfs.ZFS() as zfs:
-                snap = zfs.get_snapshot(snapshot_name)
-                snap.delete(True if data.get('defer_delete') else False)
-        except libzfs.ZFSException as err:
-            self.logger.error("{0}".format(err))
-            return False
-        else:
-            self.logger.info(f"Destroyed snapshot: {snapshot_name}")
-
-        return True
+                snap = zfs.get_snapshot(id)
+                snap.delete(defer=options['defer'])
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
 
     @accepts(Dict(
         'snapshot_clone',
