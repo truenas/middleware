@@ -26,7 +26,7 @@ generate_etc()
 {
 	copy_templates
 
-	[ -s /data/dhparam.pem ] || openssl dhparam -rand - 2048 > /data/dhparam.pem
+	[ -s /data/dhparam.pem ] || openssl dhparam -rand /dev/random 2048 > /data/dhparam.pem
 
 	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate_all > /dev/null
 }
