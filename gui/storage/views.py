@@ -490,15 +490,11 @@ def dataset_delete(request, name):
         datasets = c.call("pool.dataset.query", [["name", "=", name]], {"get": True})["children"]
     if request.method == 'POST':
         form = forms.Dataset_Destroy(request.POST, fs=name, datasets=datasets)
-        if form.is_valid():
-            with client as c:
-                try:
-                    c.call("pool.dataset.delete", name, {'recursive': True})
-                    return JsonResp(
-                        request,
-                        message=_("Dataset successfully destroyed."))
-                except ClientException as e:
-                    return JsonResp(request, error=True, message=e.error)
+        if not form.is_valid() or form.done() is False:
+            return JsonResp(request, form=form)
+        return JsonResp(
+            request,
+            message=_("Dataset successfully destroyed."))
     else:
         form = forms.Dataset_Destroy(fs=name, datasets=datasets)
     return render(request, 'storage/dataset_confirm_delete.html', {
