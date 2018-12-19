@@ -544,11 +544,13 @@ def snapshot_delete_bulk(request):
 def snapshot_rollback(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
     if request.method == "POST":
-        ret = notifier().rollback_zfs_snapshot(snapshot=snapshot.__str__())
-        if ret == '':
-            return JsonResp(request, message=_("Rollback successful."))
+        try:
+            with client as c:
+                c.call('zfs.snapshot.rollback', snapshot)
+        except ClientException as e:
+            return JsonResp(request, error=True, message=str(e))
         else:
-            return JsonResp(request, error=True, message=ret)
+            return JsonResp(request, message=_("Rollback successful."))
     else:
         return render(request, 'storage/snapshot_confirm_rollback.html', {
             'snapname': snapname,

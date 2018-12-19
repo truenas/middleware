@@ -1500,14 +1500,6 @@ class notifier(metaclass=HookMetaclass):
         retval = zfsproc.communicate()[1]
         return retval
 
-    def rollback_zfs_snapshot(self, snapshot, force=False):
-        zfsproc = self._pipeopen("zfs rollback %s'%s'" % (
-            '-r ' if force else '',
-            snapshot,
-        ))
-        retval = zfsproc.communicate()[1]
-        return retval
-
     def config_restore(self):
         if os.path.exists("/data/freenas-v1.db.factory"):
             os.unlink("/data/freenas-v1.db.factory")
@@ -1664,26 +1656,6 @@ class notifier(metaclass=HookMetaclass):
         if zfsproc.returncode == 0:
             return True, None
         return False, err
-
-    def zfs_dataset_release_snapshots(self, name, recursive=False):
-        name = str(name)
-        retval = None
-        if recursive:
-            zfscmd = "/sbin/zfs list -Ht snapshot -o name -r '%s'" % (name)
-        else:
-            zfscmd = "/sbin/zfs list -Ht snapshot -o name -r -d 1 '%s'" % (name)
-        try:
-            with mntlock(blocking=False):
-                zfsproc = self._pipeopen(zfscmd)
-                output = zfsproc.communicate()[0]
-                if output != '':
-                    snapshots_list = output.splitlines()
-                for snapshot_item in [_f for _f in snapshots_list if _f]:
-                    snapshot = snapshot_item.split('\t')[0]
-                    self._system("/sbin/zfs release -r freenas:repl %s" % (snapshot))
-        except IOError:
-            retval = 'Try again later.'
-        return retval
 
     def iface_media_status(self, name):
 

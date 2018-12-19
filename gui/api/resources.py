@@ -2830,10 +2830,14 @@ class SnapshotResource(DojoResource):
             request.body,
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
-        rv = notifier().rollback_zfs_snapshot(snapshot=kwargs['pk'], force=deserialized.get('force', False))
-        if rv != '':
+        try:
+            with client as c:
+                c.call('zfs.snapshot.rollback', kwargs['pk'], {
+                    'recursive': deserialized.get('force', False)
+                })
+        except ClientException as e:
             raise ImmediateHttpResponse(
-                response=self.error_response(request, rv)
+                response=self.error_response(request, str(e))
             )
 
         return HttpResponse('Snapshot rolled back.', status=202)
