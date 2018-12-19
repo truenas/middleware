@@ -664,6 +664,41 @@ class ZFSSnapshot(CRUDService):
             self.logger.error("{0}".format(err))
             return False
 
+    @accepts(
+        Str('id'),
+        Dict(
+            'options',
+            Bool('recursive', default=False),
+            Bool('recursive_clones', default=False),
+            Bool('force', default=False),
+        ),
+    )
+    def rollback(self, id, options):
+        """
+        Rollback to a given snapshot `id`.
+
+        `options.recursive` will destroy any snapshots and bookmarks more recent than the one
+        specified.
+
+        `options.recursive_clones` is just like `recursive` but will also destroy any clones.
+
+        `otpions.force` will force unmount of any clones.
+        """
+        args = []
+        if options['force']:
+            args += ['-f']
+        if options['recursive']:
+            args += ['-r']
+        if options['recursive_clones']:
+            args += ['-R']
+
+        try:
+            subprocess.run(
+                ['zfs', 'rollback'] + args + [id], text=True, capture_output=True, check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            raise CallError(f'Failed to rollback snapshot: {e.stderr.strip()}')
+
 
 class ScanWatch(object):
 
