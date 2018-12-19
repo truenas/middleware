@@ -310,29 +310,24 @@ class ZFSDatasetService(CRUDService):
 
     def do_delete(self, id, options=None):
         options = options or {}
-        defer = options.get('defer', False)
         force = options.get('force', False)
         recursive = options.get('recursive', False)
+
+        args = []
+        if force:
+            args += ['-f']
+        if recursive:
+            args += ['-r']
+
+        # Destroying may take a long time, lets not use py-libzfs as it will block
+        # other ZFS operations.
         try:
-            with libzfs.ZFS() as zfs:
-                ds = zfs.get_dataset(id)
-
-                if ds.type == libzfs.DatasetType.FILESYSTEM:
-                    if recursive:
-                        ds.umount_recursive(force=force)
-                    else:
-                        ds.umount(force=force)
-
-                if recursive:
-                    for dependent in ds.dependents:
-                        dependent.delete(defer=defer)
-
-                ds.delete(defer=defer)
-        except libzfs.ZFSException as e:
-            if e.code == libzfs.Error.UMOUNTFAILED:
-                raise CallError('Dataset is busy', errno.EBUSY)
+            subprocess.run(
+                ['zfs', 'destroy'] + args + [id], text=True, capture_output=True, check=True,
+            )
+        except subprocess.CalledProcessError as e:
             self.logger.error('Failed to delete dataset', exc_info=True)
-            raise CallError(f'Failed to delete dataset: {e}')
+            raise CallError(f'Failed to delete dataset: {e.stderr.strip()}')
 
     def mount(self, name):
         try:
