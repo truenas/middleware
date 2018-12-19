@@ -2960,11 +2960,12 @@ class SnapshotResource(DojoResource):
         snap = snap[0][0]
 
         try:
-            notifier().destroy_zfs_dataset(path=kwargs['pk'])
-        except MiddlewareError as e:
+            with client as c:
+                c.call('zfs.snapshot.delete', kwargs['pk'])
+        except ClientException as e:
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, {
-                    'error': e.value,
+                    'error': str(e),
                 })
             )
 
