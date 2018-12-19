@@ -2481,13 +2481,29 @@ class VolumeExport(Form):
         super().done(request, events, **kwargs)
 
 
-class Dataset_Destroy(Form):
+class CommonDatasetDestroy:
+
+    def done(self):
+        super().done()
+        try:
+            with client as c:
+                return c.call('pool.dataset.delete', self.fs, {
+                    'recursive': self.cleaned_data.get('cascade') or False,
+                })
+        except ClientException as e:
+            self._errors['__all__'] = self.error_class([str(e)])
+            return False
+
+class Dataset_Destroy(CommonDatasetDestroy, Form):
     def __init__(self, *args, **kwargs):
         self.fs = kwargs.pop('fs')
         self.datasets = kwargs.pop('datasets', [])
         super(Dataset_Destroy, self).__init__(*args, **kwargs)
         with client as c:
-            snaps = c.call("zfs.snapshot.query", [["dataset", "=", self.fs]])
+            snaps = list(filter(
+                lambda x: f'{self.fs}@' in x['name'] or f'{self.fs}/' in x['name'],
+                c.call("zfs.snapshot.query", [], {"select": ["name"]}),
+            ))
         if len(snaps) > 0:
             label = ungettext(
                 "I'm aware this will destroy snapshots within this dataset",
@@ -2500,7 +2516,7 @@ class Dataset_Destroy(Form):
                 label=label)
 
 
-class ZvolDestroyForm(Form):
+class ZvolDestroyForm(Form, CommonDatasetDestroy):
     def __init__(self, *args, **kwargs):
         self.fs = kwargs.pop('fs')
         super(ZvolDestroyForm, self).__init__(*args, **kwargs)
@@ -2512,16 +2528,6 @@ class ZvolDestroyForm(Form):
             self.fields['cascade'] = forms.BooleanField(
                 initial=False,
                 label=label)
-
-    def done(self):
-        try:
-            with client as c:
-                return c.call('pool.dataset.delete', self.fs, {
-                    'recursive': self.cleaned_data.get('cascade') or False,
-                })
-        except ClientException as e:
-            self._errors['__all__'] = self.error_class([str(e)])
-            return False
 
 
 class ScrubForm(MiddlewareModelForm, ModelForm):

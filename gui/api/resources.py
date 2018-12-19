@@ -103,6 +103,7 @@ from freenasUI.storage.forms import (
     ReKeyForm,
     CreatePassphraseForm,
     ChangePassphraseForm,
+    Dataset_Destroy,
     ManualSnapshotForm,
     LockPassphraseForm,
     UnlockPassphraseForm,
@@ -583,14 +584,19 @@ class DatasetResource(DojoResource):
             raise NotFound("Dataset not found.")
 
     def obj_delete(self, bundle, **kwargs):
+        deserialized = self._meta.serializer.deserialize(
+            bundle.request.body or '{}',
+            format='application/json',
+        )
+        deserialized.setdefault('cascade', True)
         if 'parent' in kwargs:
             path = f'{kwargs["parent"].vol_name}/{kwargs["pk"]}'
         else:
             path = kwargs['pk']
-        retval = notifier().destroy_zfs_dataset(path=path, recursive=True)
-        if retval:
+        form = Dataset_Destroy(deserialized, fs=path)
+        if not form.is_valid() or form.done() is False:
             raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, retval)
+                response=self.error_response(bundle.request, form.errors)
             )
         return HttpResponse(status=204)
 
