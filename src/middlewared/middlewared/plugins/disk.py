@@ -35,7 +35,7 @@ RE_MPATH_NAME = re.compile(r'[a-z]+(\d+)')
 RE_SED_RDLOCK_EN = re.compile(r'(RLKEna = Y|ReadLockEnabled:\s*1)', re.M)
 RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
 RAWTYPE = {
-    'freebsd-zfs':  '516e7cba-6ecf-11d6-8ff8-00022d09712b',
+    'freebsd-zfs': '516e7cba-6ecf-11d6-8ff8-00022d09712b',
     'freebsd-swap': '516e7cb5-6ecf-11d6-8ff8-00022d09712b',
 }
 
@@ -1246,7 +1246,7 @@ class DiskService(CRUDService):
                     if name is None:
                         # Which means maximum has been reached and we can stop
                         break
-                    await run('gmirror', 'create', '-F', name, part_a, part_b)
+                    await run('gmirror', 'create', name, part_a, part_b)
                 except Exception:
                     self.logger.warn(f'Failed to create gmirror {name}', exc_info=True)
                     continue
