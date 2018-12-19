@@ -507,13 +507,15 @@ def dataset_delete(request, name):
 def snapshot_delete(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
     if request.method == 'POST':
-        retval = notifier().destroy_zfs_dataset(path=str(snapshot))
-        if retval == '':
+        try:
+            with client as c:
+                c.call('zfs.snapshot.delete', str(snapshot))
+        except ClientException as e:
+            return JsonResp(request, error=True, message=str(e))
+        else:
             return JsonResp(
                 request,
                 message=_("Snapshot successfully deleted."))
-        else:
-            return JsonResp(request, error=True, message=retval)
     else:
         return render(request, 'storage/snapshot_confirm_delete.html', {
             'snapname': snapname,
@@ -527,10 +529,11 @@ def snapshot_delete_bulk(request):
     delete = request.POST.get("delete", None)
     if snaps and delete == "true":
         snap_list = snaps.split('|')
-        for snapshot in snap_list:
-            retval = notifier().destroy_zfs_dataset(path=str(snapshot))
-            if retval != '':
-                return JsonResp(request, error=True, message=retval)
+        try:
+            with client as c:
+                c.call('core.bulk', 'zfs.snapshot.delete', [[i] for i in snap_list], job=True)
+        except ClientException as e:
+            return JsonResp(request, error=True, message=str(e))
         return JsonResp(request, message=_("Snapshots successfully deleted."))
 
     return render(request, 'storage/snapshot_confirm_delete_bulk.html', {
