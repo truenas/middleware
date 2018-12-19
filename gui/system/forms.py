@@ -56,7 +56,7 @@ from formtools.wizard.views import SessionWizardView
 from freenasOS import Configuration, Update
 from freenasUI import choices
 from freenasUI.account.models import bsdGroups, bsdUsers
-from freenasUI.common import humanize_number_si, humanize_size
+from freenasUI.common import humanize_number_si, humanize_size, humansize_to_bytes
 from freenasUI.common.forms import Form, ModelForm
 from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory, FreeNAS_LDAP
 from freenasUI.directoryservice.forms import (ActiveDirectoryForm, LDAPForm,
@@ -473,9 +473,18 @@ class InitialWizard(CommonWizard):
                 share_groupcreate = share.get('share_groupcreate')
                 share_mode = share.get('share_mode')
 
+                dataset_name = '%s/%s' % (volume_name, share_name)
                 if share_purpose != 'iscsitarget':
-                    dataset_name = '%s/%s' % (volume_name, share_name)
-                    errno, errmsg = _n.create_zfs_dataset(dataset_name)
+                    try:
+                        with client as c:
+                            c.call('pool.dataset.create', {
+                                'name': dataset_name,
+                                'type': 'FILESYSTEM',
+                            })
+                    except ClientException as e:
+                        raise MiddlewareError(
+                            _('Failed to create ZFS dataset: %s.') % e
+                        )
 
                     if share_purpose == 'afp':
                         _n.change_dataset_share_type(dataset_name, 'mac')
@@ -523,16 +532,18 @@ class InitialWizard(CommonWizard):
                                 model_objs.append(user)
 
                 else:
-                    errno, errmsg = _n.create_zfs_vol(
-                        '%s/%s' % (volume_name, share_name),
-                        share_iscsisize,
-                        sparse=True,
-                    )
-
-                if errno > 0:
-                    raise MiddlewareError(
-                        _('Failed to create ZFS item %s.') % errmsg
-                    )
+                    try:
+                        with client as c:
+                            c.call('pool.dataset.create', {
+                                'name': dataset_name,
+                                'type': 'VOLUME',
+                                'sparse': True,
+                                'volsize': humansize_to_bytes(share_iscsisize),
+                            })
+                    except ClientException as e:
+                        raise MiddlewareError(
+                            _('Failed to create ZFS volume: %s.') % e
+                        )
 
                 path = '/mnt/%s/%s' % (volume_name, share_name)
 
