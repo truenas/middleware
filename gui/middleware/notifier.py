@@ -458,29 +458,6 @@ class notifier(metaclass=HookMetaclass):
                 retval[line] = line
         return retval
 
-    def destroy_zfs_dataset(self, path, recursive=False):
-        retval = None
-        if retval is None:
-            mp = self.__get_mountpath(path)
-            if self.contains_jail_root(mp):
-                try:
-                    self.delete_plugins(force=True)
-                except Exception:
-                    log.warn('Failed to delete plugins', exc_info=True)
-
-            if recursive:
-                zfsproc = self._pipeopen("zfs destroy -r '%s'" % (path))
-            else:
-                zfsproc = self._pipeopen("zfs destroy '%s'" % (path))
-            retval = zfsproc.communicate()[1]
-        if not retval:
-            try:
-                self.__rmdir_mountpoint(path)
-            except MiddlewareError as me:
-                retval = str(me)
-
-        return retval
-
     def zfs_offline_disk(self, volume, label):
         try:
             with client as c:
@@ -518,36 +495,6 @@ class notifier(metaclass=HookMetaclass):
                 c.call('pool.remove', volume.id, {'label': label})
         except Exception as e:
             raise MiddlewareError(f'Disk could not be removed: {str(e)}')
-
-    def __get_mountpath(self, name, mountpoint_root='/mnt'):
-        """Determine the mountpoint for a ZFS dataset
-
-        It tries to divine the location of the dataset from the
-        relevant command, and if all else fails, falls back to a less
-        elegant method of representing the mountpoint path.
-
-        This is done to ensure that in the event that the database and
-        reality get out of synch, the user can nuke the volume/mountpoint.
-
-        XXX: this should be done more elegantly by calling getfsent from C.
-
-        Required Parameters:
-            name: textual name for the mountable vdev or volume, e.g. 'tank',
-                  'stripe', 'tank/dataset', etc.
-
-        Optional Parameters:
-            mountpoint_root: the root directory where all of the datasets and
-                             volumes shall be mounted. Defaults to '/mnt'.
-
-        Returns:
-            the absolute path for the volume on the system.
-        """
-        p1 = self._pipeopen("zfs list -H -o mountpoint '%s'" % (name, ))
-        stdout = p1.communicate()[0]
-        if not p1.returncode:
-            return stdout.strip()
-
-        return os.path.join(mountpoint_root, name)
 
     def groupmap_list(self):
         command = "/usr/local/bin/net groupmap list"
@@ -1475,39 +1422,6 @@ class notifier(metaclass=HookMetaclass):
         self.restart("system_datasets")
 
         return volume
-
-    def __rmdir_mountpoint(self, path):
-        """Remove a mountpoint directory designated by path
-
-        This only nukes mountpoints that exist in /mnt as alternate mointpoints
-        can be specified with UFS, which can take down mission critical
-        subsystems.
-
-        This purposely doesn't use shutil.rmtree to avoid removing files that
-        were potentially hidden by the mount.
-
-        Parameters:
-            path: a path suffixed with /mnt that points to a mountpoint that
-                  needs to be nuked.
-
-        XXX: rewrite to work outside of /mnt and handle unmounting of
-             non-critical filesystems.
-        XXX: remove hardcoded reference to /mnt .
-
-        Raises:
-            MiddlewareError: the volume's mountpoint couldn't be removed.
-        """
-
-        if path.startswith('/mnt'):
-            # UFS can be mounted anywhere. Don't nuke /etc, /var, etc as the
-            # underlying contents might contain something of value needed for
-            # the system to continue operating.
-            try:
-                if os.path.isdir(path):
-                    os.rmdir(path)
-            except OSError as ose:
-                raise MiddlewareError('Failed to remove mountpoint %s: %s'
-                                      % (path, str(ose), ))
 
     def zfs_snapshot_list(self, path=None, sort=None, system=False):
         from freenasUI.storage.models import Volume
