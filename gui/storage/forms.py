@@ -2494,6 +2494,7 @@ class CommonDatasetDestroy:
             self._errors['__all__'] = self.error_class([str(e)])
             return False
 
+
 class Dataset_Destroy(CommonDatasetDestroy, Form):
     def __init__(self, *args, **kwargs):
         self.fs = kwargs.pop('fs')

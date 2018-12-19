@@ -682,7 +682,7 @@ class ZFSSnapshot(CRUDService):
 
         `options.recursive_clones` is just like `recursive` but will also destroy any clones.
 
-        `otpions.force` will force unmount of any clones.
+        `options.force` will force unmount of any clones.
         """
         args = []
         if options['force']:
