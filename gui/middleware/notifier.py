@@ -92,7 +92,6 @@ from freenasUI.common.acl import (ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE,
                                   ACL_MAC_FILE)
 from freenasUI.common.freenasacl import ACL
 from freenasUI.common.jail import Jls
-from freenasUI.common.locks import mntlock
 from freenasUI.common.pipesubr import SIG_SETMASK
 from freenasUI.common.pbi import pbi_delete, pbi_info, PBI_INFO_FLAGS_VERBOSE
 from freenasUI.common.system import (
@@ -384,35 +383,6 @@ class notifier(metaclass=HookMetaclass):
                     else:
                         providers.append((part, part))
         return providers
-
-    def create_zfs_vol(self, name, size, props=None, sparse=False):
-        """Internal procedure to create ZFS volume"""
-        if sparse is True:
-            options = "-s "
-        else:
-            options = " "
-        if props:
-            assert isinstance(props, dict)
-            for k in list(props.keys()):
-                if props[k] != 'inherit':
-                    options += "-o %s=%s " % (k, props[k])
-        zfsproc = self._pipeopen("/sbin/zfs create %s -V '%s' '%s'" % (options, size, name))
-        zfs_err = zfsproc.communicate()[1]
-        zfs_error = zfsproc.wait()
-        return zfs_error, zfs_err
-
-    def create_zfs_dataset(self, path, props=None):
-        """Internal procedure to create ZFS volume"""
-        options = " "
-        if props:
-            assert isinstance(props, dict)
-            for k in list(props.keys()):
-                if props[k] != 'inherit':
-                    options += "-o %s='%s' " % (k, str(props[k]).replace("'", "'\"'\"'"))
-        zfsproc = self._pipeopen("/sbin/zfs create %s '%s'" % (options, path))
-        zfs_output, zfs_err = zfsproc.communicate()
-        zfs_error = zfsproc.wait()
-        return zfs_error, zfs_err
 
     def list_zfs_vols(self, volname, sort=None):
         """Return a dictionary that contains all ZFS volumes list"""
