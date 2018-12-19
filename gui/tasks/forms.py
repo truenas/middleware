@@ -103,7 +103,10 @@ class CloudSyncForm(ModelForm):
                 pass
 
             if len(kwargs["instance"].bwlimit) == 1 and kwargs["instance"].bwlimit[0]["time"] == "00:00":
-                kwargs["initial"]["bwlimit"] = humanize_size_rclone(kwargs["instance"].bwlimit[0]['bandwidth'])
+                if kwargs["instance"].bwlimit[0]['bandwidth'] is not None:
+                    kwargs["initial"]["bwlimit"] = humanize_size_rclone(kwargs["instance"].bwlimit[0]['bandwidth'])
+                else:
+                    kwargs["initial"]["bwlimit"] = ""
             else:
                 kwargs["initial"]["bwlimit"] = " ".join([
                     f"{limit['time']},{humanize_size_rclone(limit['bandwidth']) if limit['bandwidth'] else 'off'}"
