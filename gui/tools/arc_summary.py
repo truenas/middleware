@@ -795,6 +795,7 @@ def get_l2arc_summary(Kstat):
     l2_misses = Kstat["kstat.zfs.misc.arcstats.l2_misses"]
     l2_rw_clash = Kstat["kstat.zfs.misc.arcstats.l2_rw_clash"]
     l2_size = Kstat["kstat.zfs.misc.arcstats.l2_size"]
+    l2_asize = Kstat["kstat.zfs.misc.arcstats.l2_asize"]
     l2_write_buffer_bytes_scanned = Kstat["kstat.zfs.misc.arcstats.l2_write_buffer_bytes_scanned"]
     l2_write_buffer_iter = Kstat["kstat.zfs.misc.arcstats.l2_write_buffer_iter"]
     l2_write_buffer_list_iter = Kstat["kstat.zfs.misc.arcstats.l2_write_buffer_list_iter"]
@@ -818,6 +819,7 @@ def get_l2arc_summary(Kstat):
 
     output['l2_access_total'] = l2_access_total
     output['l2_size'] = l2_size
+    output['l2_asize'] = l2_asize
 
     if l2_size > 0 and l2_access_total > 0:
 
@@ -838,7 +840,11 @@ def get_l2arc_summary(Kstat):
         output["spa_mismatch"] = fHits(l2_write_spa_mismatch)
 
         output["l2_arc_size"] = {}
-        output["l2_arc_size"]["adative"] = fBytes(l2_size)
+        output["l2_arc_size"]["adaptive"] = fBytes(l2_size)
+        output["l2_arc_size"]["actual"] = {
+            'per': fPerc(l2_asize, l2_size),
+            'num': fBytes(l2_asize),
+        }
         output["l2_arc_size"]["head_size"] = {
             'per': fPerc(l2_hdr_size, l2_size),
             'num': fBytes(l2_hdr_size),
@@ -916,7 +922,11 @@ def _l2arc_summary(Kstat):
         sys.stdout.write("\tSPA Mismatch:\t\t\t\t%s\n" % arc['spa_mismatch'])
         sys.stdout.write("\n")
 
-        sys.stdout.write("L2 ARC Size: (Adaptive)\t\t\t\t%s\n" % arc["l2_arc_size"]["adative"])
+        sys.stdout.write("L2 ARC Size: (Adaptive)\t\t\t\t%s\n" % arc["l2_arc_size"]["adaptive"])
+        sys.stdout.write("\tCompressed:\t\t\t%s\t%s\n" % (
+            arc["l2_arc_size"]["actual"]["per"],
+            arc["l2_arc_size"]["actual"]["num"],
+        ))
         sys.stdout.write("\tHeader Size:\t\t\t%s\t%s\n" % (
             arc["l2_arc_size"]["head_size"]["per"],
             arc["l2_arc_size"]["head_size"]["num"],
