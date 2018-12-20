@@ -60,11 +60,6 @@ from freenasOS.Exceptions import UpdateManifestNotFound
 from freenasOS.Update import CheckForUpdates
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.system import get_sw_name, get_sw_version
-from freenasUI.common.ssl import (
-    export_certificate,
-    export_certificate_chain,
-    export_privatekey,
-)
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.client import client, CallTimeout, ClientException, ValidationErrors
@@ -1972,35 +1967,38 @@ def buf_generator(buf):
 
 
 def CA_export_certificate(request, id):
-    ca = models.CertificateAuthority.objects.get(pk=id)
     try:
-        if ca.cert_chain:
-            cert = export_certificate_chain(ca.cert_certificate)
-        else:
-            cert = export_certificate(ca.cert_certificate)
+        with client as c:
+            ca = c.call('certificateauthority.query', [['id', '=', int(id)]], {'get': True})
+        cert = ''.join(ca['chain_list']).strip()
     except Exception as e:
         raise MiddlewareError(e)
 
     response = StreamingHttpResponse(
-        buf_generator(cert.decode('utf-8')), content_type='application/x-pem-file'
+        buf_generator(cert), content_type='application/x-pem-file'
     )
     response['Content-Length'] = len(cert)
-    response['Content-Disposition'] = 'attachment; filename=%s.crt' % ca
+    response['Content-Disposition'] = f'attachment; filename={ca["name"]}.crt'
 
     return response
 
 
 def CA_export_privatekey(request, id):
-    ca = models.CertificateAuthority.objects.get(pk=id)
-    if not ca.cert_privatekey:
-        return HttpResponse('No private key')
+    try:
+        with client as c:
+            ca = c.call('certificateauthority.query', [['id', '=', int(id)]], {'get': True})
+    except Exception as e:
+        raise MiddlewareError(e)
 
-    key = export_privatekey(ca.cert_privatekey)
+    if not ca['privatekey'] or not ca['key_length']:
+        return HttpResponse('No private key or malformed key')
+
+    key = ca['privatekey']
     response = StreamingHttpResponse(
-        buf_generator(key.decode('utf-8')), content_type='application/x-pem-file'
+        buf_generator(key), content_type='application/x-pem-file'
     )
     response['Content-Length'] = len(key)
-    response['Content-Disposition'] = 'attachment; filename=%s.key' % ca
+    response['Content-Disposition'] = f'attachment; filename={ca["name"]}.key'
 
     return response
 
@@ -2335,96 +2333,62 @@ def CSR_edit(request, id):
 
 
 def certificate_export_certificate(request, id):
-    c = models.Certificate.objects.get(pk=id)
-    cert = export_certificate(c.cert_certificate)
+    with client as c:
+        cert = c.call('certificate.query', [['id', '=', int(id)]], {'get': True})
 
     response = StreamingHttpResponse(
-        buf_generator(cert.decode('utf-8')), content_type='application/x-pem-file'
+        buf_generator(cert['certificate']), content_type='application/x-pem-file'
     )
-    response['Content-Length'] = len(cert)
-    response['Content-Disposition'] = 'attachment; filename=%s.crt' % c
+    response['Content-Length'] = len(cert['certificate'])
+    response['Content-Disposition'] = f'attachment; filename={cert["name"]}.crt'
 
     return response
 
 
 def certificate_export_privatekey(request, id):
-    c = models.Certificate.objects.get(pk=id)
-    if not c.cert_privatekey:
-        return HttpResponse('No private key')
-    key = export_privatekey(c.cert_privatekey)
+    with client as c:
+        cert = c.call('certificate.query', [['id', '=', int(id)]], {'get': True})
+
+    if not cert['privatekey'] or not cert['key_length']:
+        return HttpResponse('No private key or malformed private key')
+
+    key = cert['privatekey']
 
     response = StreamingHttpResponse(
-        buf_generator(key.decode('utf-8')), content_type='application/x-pem-file'
+        buf_generator(key), content_type='application/x-pem-file'
     )
     response['Content-Length'] = len(key)
-    response['Content-Disposition'] = 'attachment; filename=%s.key' % c
+    response['Content-Disposition'] = f'attachment; filename={cert["name"]}.key'
 
     return response
 
 
 def certificate_export_certificate_and_privatekey(request, id):
-    c = models.Certificate.objects.get(pk=id)
+    with client as c:
+        cert_data = c.call('certificate.query', [['id', '=', int(id)]], {'get': True})
 
-    cert = export_certificate(c.cert_certificate)
-    key = export_privatekey(c.cert_privatekey)
+    cert = cert_data['certificate']
+    key = cert_data['privatekey']
     combined = key + cert
 
     response = StreamingHttpResponse(
         buf_generator(combined), content_type='application/octet-stream'
     )
     response['Content-Length'] = len(combined)
-    response['Content-Disposition'] = 'attachment; filename=%s.p12' % c
+    response['Content-Disposition'] = f'attachment; filename={cert_data["name"]}.p12'
 
     return response
 
 
 def certificate_to_json(certtype):
-    try:
-        data = {
-            'cert_root_path': certtype.cert_root_path,
-            'cert_type': certtype.cert_type,
-            'cert_certificate': certtype.cert_certificate,
-            'cert_privatekey': certtype.cert_privatekey,
-            'cert_CSR': certtype.cert_CSR,
-            'cert_key_length': certtype.cert_key_length,
-            'cert_digest_algorithm': certtype.cert_digest_algorithm,
-            'cert_lifetime': certtype.cert_lifetime,
-            'cert_country': certtype.cert_country,
-            'cert_state': certtype.cert_state,
-            'cert_city': certtype.cert_city,
-            'cert_organization': certtype.cert_organization,
-            'cert_email': certtype.cert_email,
-            'cert_serial': certtype.cert_serial,
-            'cert_internal': certtype.cert_internal,
-            'cert_certificate_path': certtype.cert_certificate_path,
-            'cert_privatekey_path': certtype.cert_privatekey_path,
-            'cert_CSR_path': certtype.cert_CSR_path,
-            'cert_ncertificates': certtype.cert_ncertificates,
-            'cert_DN': certtype.cert_DN,
-            'cert_from': certtype.cert_from,
-            'cert_until': certtype.cert_until,
-            'cert_type_existing': certtype.cert_type_existing,
-            'cert_type_internal': certtype.cert_type_internal,
-            'cert_type_CSR': certtype.cert_type_CSR,
-            'CA_type_existing': certtype.CA_type_existing,
-            'CA_type_internal': certtype.CA_type_internal,
-            'CA_type_intermediate': certtype.CA_type_intermediate,
-        }
+    # Keys of interest as used by generic_certificate_autopopulate js function
+    # country, state, city, organization, email, organizational_unit
+    with client as c:
+        data = c.call('certificateauthority.query', [['id', '=', certtype.id]], {'get': True})
 
-    except Exception as e:
-        log.debug("certificate_to_json: caught exception: '%s'", e)
-
-    try:
-        data['cert_signedby'] = "%s" % certtype.cert_signedby
-    except Exception:
-        data['cert_signedby'] = None
-
-    try:
-        data['cert_issuer'] = "%s" % certtype.cert_issuer
-    except Exception:
-        data['cert_issuer'] = None
-
-    content = json.dumps(data)
+    content = json.dumps({
+        f'cert_{k}': v for k, v in data.items()
+    })
     return HttpResponse(content, content_type='application/json')
 
 
