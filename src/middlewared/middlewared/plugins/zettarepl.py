@@ -12,7 +12,8 @@ from zettarepl.dataset.list import list_datasets
 from zettarepl.definition.definition import Definition
 from zettarepl.observer import (
     PeriodicSnapshotTaskStart, PeriodicSnapshotTaskSuccess, PeriodicSnapshotTaskError,
-    ReplicationTaskStart, ReplicationTaskSnapshotSuccess, ReplicationTaskSuccess, ReplicationTaskError
+    ReplicationTaskStart, ReplicationTaskSnapshotProgress, ReplicationTaskSnapshotSuccess, ReplicationTaskSuccess,
+    ReplicationTaskError
 )
 from zettarepl.scheduler.clock import Clock
 from zettarepl.scheduler.scheduler import Scheduler
@@ -439,6 +440,17 @@ class ZettareplService(Service):
                     self.state[f"replication_{message.task_id}"] = {
                         "state": "RUNNING",
                         "datetime": datetime.utcnow(),
+                    }
+                if isinstance(message, ReplicationTaskSnapshotProgress):
+                    self.state[f"replication_{message.task_id}"] = {
+                        "state": "RUNNING",
+                        "datetime": datetime.utcnow(),
+                        "progress": {
+                            "dataset": message.dataset,
+                            "snapshot": message.snapshot,
+                            "current": message.current,
+                            "total": message.total,
+                        }
                     }
                 if isinstance(message, ReplicationTaskSnapshotSuccess):
                     self.last_snapshot[f"replication_{message.task_id}"] = f"{message.dataset}@{message.snapshot}"
