@@ -25,6 +25,7 @@ from middlewared.validators import Range, Time
 logger = logging.getLogger(__name__)
 
 GELI_KEYPATH = '/data/geli'
+RE_DISKPART = re.compile(r'^([a-z]+\d+)(p\d+)?')
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 
 
@@ -404,6 +405,7 @@ class PoolService(CRUDService):
                 if path.startswith('/dev/'):
                     device = self.middleware.call_sync('disk.label_to_dev', path[5:], geom_scan)
                 x['device'] = device
+                x['disk'] = RE_DISKPART.sub(r'\1', device)
             for key in x:
                 if key == 'type' and isinstance(x[key], str):
                     x[key] = x[key].upper()
@@ -2138,6 +2140,69 @@ class PoolService(CRUDService):
         ):
             for aid in attachments[name]:
                 await self.middleware.call('datastore.delete', datastore, aid)
+
+    @staticmethod
+    def __get_dev_and_disk(topology):
+        rv = []
+        for values in topology.values():
+            values = values.copy()
+            while values:
+                value = values.pop()
+                if value['type'] == 'DISK':
+                    rv.append((value['path'].replace('/dev/', ''), value['disk']))
+                values += value.get('children') or []
+        return rv
+
+    @private
+    def sync_encrypted(self, pool=None):
+        """
+        This syncs the EncryptedDisk table with the current state
+        of a volume
+        """
+        if pool is not None:
+            filters = [('id', '=', pool)]
+        else:
+            filters = []
+
+        pools = self.middleware.call_sync('pool.query', filters)
+        if not pools:
+            return
+
+        # Grab all disks at once to avoid querying every iteration
+        disks = {i['devname']: i['identifier'] for i in self.middleware.call_sync('disk.query')}
+
+        for pool in pools:
+            if not pool['is_decrypted'] or pool['status'] == 'OFFLINE' or pool['encrypt'] == 0:
+                continue
+
+            provs = []
+            for dev, disk in self.__get_dev_and_disk(pool['topology']):
+                if not dev.endswith(".eli"):
+                    continue
+                prov = dev[:-4]
+                diskid = disks.get(disk)
+                ed = self.middleware.call_sync('datastore.query', 'storage.encrypteddisk', [
+                    ('encrypted_provider', '=', prov)
+                ])
+                if not ed:
+                    if not diskid:
+                        self.logger.warn('Could not find Disk entry for %s', disk)
+                    self.middleware.call_sync('datastore.insert', 'storage.encrypteddisk', {
+                        'encrypted_volume': pool['id'],
+                        'encrypted_provider': prov,
+                        'encrypted_disk': diskid,
+                    })
+                elif diskid and ed[0]['encrypted_disk'] != diskid:
+                    self.middleware.call_sync(
+                        'datastore.update', 'storage.encrypteddisk', ed[0]['id'],
+                        {'encrypted_disk': diskid},
+                    )
+                provs.append(prov)
+
+            # Delete devices no longer in pool from database
+            self.middleware.call_sync('datastore.delete', 'storage.encrypteddisk', [
+                ('encrypted_volume', '=', pool['id']), ('encrypted_provider', 'nin', provs)
+            ])
 
     """
     These methods are hacks for old UI which supports only one volume import at a time
