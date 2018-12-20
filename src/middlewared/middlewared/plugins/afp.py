@@ -1,3 +1,5 @@
+import asyncio
+
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import (accepts, Bool, Dict, Dir, Int, List, Str,
                                 Patch, IPAddr, UnixPerm)
@@ -242,3 +244,21 @@ class SharingAFPService(CRUDService):
         data['hostsdeny'] = ' '.join(data['hostsdeny'])
 
         return data
+
+
+async def pool_post_import(middleware, pool):
+    """
+    Makes sure to reload AFP if a pool is imported and there are shares configured for it.
+    """
+    path = f'/mnt/{pool["name"]}'
+    if await middleware.call('sharing.afp.query', [
+        ('OR', [
+            ('path', '=', path),
+            ('path', '^', f'{path}/'),
+        ])
+    ]):
+        asyncio.ensure_future(middleware.call('service.reload', 'afp'))
+
+
+async def setup(middleware):
+    middleware.register_hook('pool.post_import_pool', pool_post_import, sync=True)
