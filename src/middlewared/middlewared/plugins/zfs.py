@@ -520,6 +520,17 @@ class ZFSDatasetService(CRUDService):
             self.logger.error('Failed to promote dataset', exc_info=True)
             raise CallError(f'Failed to promote dataset: {e}')
 
+    def inherit(self, name, prop, recursive=False):
+        try:
+            with libzfs.ZFS() as zfs:
+                dataset = zfs.get_dataset(name)
+                zprop = dataset.properties.get(prop)
+                if not zprop:
+                    raise CallError(f'Property {prop!r} not found.', errno.ENOENT)
+                zprop.inherit(recursive=recursive)
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
+
 
 class ZFSSnapshot(CRUDService):
 
