@@ -1883,66 +1883,6 @@ class notifier(metaclass=HookMetaclass):
         r = re.compile(r'scan: (resilver|scrub) in progress')
         return r.search(res) is not None
 
-    def sync_encrypted(self, volume=None):
-        """
-        This syncs the EncryptedDisk table with the current state
-        of a volume
-        """
-        from freenasUI.storage.models import Disk, EncryptedDisk, Volume
-        if volume is not None:
-            if isinstance(volume, int):
-                volumes = [Volume.objects.get(pk=volume)]
-            else:
-                volumes = [volume]
-        else:
-            volumes = Volume.objects.filter(vol_encrypt__gt=0)
-
-        for vol in volumes:
-            """
-            Parse zpool status to get encrypted providers
-            """
-            if not vol.is_decrypted():
-                continue
-
-            try:
-                zpool = self.zpool_parse(vol.vol_name)
-            except Exception:
-                log.warn('Failed to parse encrypted pool', exc_info=True)
-                continue
-
-            provs = []
-            for dev in zpool.get_devs():
-                if not dev.name.endswith(".eli"):
-                    continue
-                prov = dev.name[:-4]
-                qs = EncryptedDisk.objects.filter(encrypted_provider=prov)
-                if not qs.exists():
-                    ed = EncryptedDisk()
-                    ed.encrypted_volume = vol
-                    ed.encrypted_provider = prov
-                    disk = Disk.objects.filter(disk_name=dev.disk, disk_expiretime=None)
-                    if disk.exists():
-                        disk = disk[0]
-                    else:
-                        log.error("Could not find Disk entry for %s", dev.disk)
-                        disk = None
-                    ed.encrypted_disk = None
-                    ed.save()
-                else:
-                    ed = qs[0]
-                    disk = Disk.objects.filter(disk_name=dev.disk, disk_expiretime=None)
-                    if disk.exists():
-                        disk = disk[0]
-                        if not ed.encrypted_disk or (
-                            ed.encrypted_disk and ed.encrypted_disk.pk != disk.pk
-                        ):
-                            ed.encrypted_disk = disk
-                            ed.save()
-                provs.append(prov)
-            for ed in EncryptedDisk.objects.filter(encrypted_volume=vol):
-                if ed.encrypted_provider not in provs:
-                    ed.delete()
-
     def multipath_all(self):
         """
         Get all available gmultipath instances
