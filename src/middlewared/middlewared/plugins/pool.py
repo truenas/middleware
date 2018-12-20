@@ -1690,7 +1690,6 @@ class PoolService(CRUDService):
         Str('guid', required=True),
         Str('name'),
         Str('passphrase', private=True),
-        List('devices', items=[Str('device')], default=[]),
     ))
     @job(lock='import_pool', pipes=['input'], check_pipes=False)
     async def import_pool(self, job, data):
@@ -1728,14 +1727,69 @@ class PoolService(CRUDService):
         if pool is None:
             raise CallError(f'Pool with guid "{data["guid"]}" not found', errno.ENOENT)
 
-        if data['devices']:
+        try:
             job.check_pipe("input")
-            args = [job.pipes.input.r, data['passphrase'], data['devices']]
+            key = job.pipes.input.r
+        except ValueError:
+            key = None
+
+        passfile = None
+        if key and data.get('passphrase'):
+            encrypt = 2
+            passfile = tempfile.mktemp(dir='/tmp/')
+            with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
+                f.write(data['passphrase'])
+        elif key:
+            encrypt = 1
         else:
-            args = []
+            encrypt = 0
 
-        await self.middleware.call('notifier.volume_import', data.get('name') or pool['name'], data['guid'], *args)
+        pool_name = data.get('name') or pool['name']
+        scrub_id = pool_id = None
+        try:
+            pool_id = await self.middleware.call('datastore.insert', 'storage.volume', {
+                'vol_name': pool_name,
+                'vol_encrypt': encrypt,
+                'vol_guid': data['guid'],
+            })
+            pool = await self.middleware.call('pool.query', [('id', '=', pool_id)], {'get': True})
+            if encrypt > 0:
+                if not os.path.exists(GELI_KEYPATH):
+                    os.mkdir(GELI_KEYPATH)
+                with open(pool['encryptkey_path'], 'wb') as f:
+                    f.write(key.read())
 
+            scrub_id = (await self.middleware.call('pool.scrub.create', {
+                'pool': pool_id,
+            }))['id']
+
+            await self.middleware.call('zfs.pool.import_pool', pool['guid'], {
+                'altroot': '/mnt',
+                'cachefile': ZPOOL_CACHE_FILE,
+            })
+
+            await self.middleware.call('zfs.dataset.update', pool_name, {
+                'properties': {
+                    'aclmode': {'value': 'passthrough'},
+                    'aclinherit': {'value': 'passthrough'},
+                },
+            })
+
+            # Reset all mountpoints
+            await self.middleware.call('zfs.dataset.inherit', pool_name, 'mountpoint', True)
+
+            await self.middleware.call('notifier.sync_encrypted', pool_id)
+        except Exception:
+            if scrub_id:
+                await self.middleware.call('pool.scrub.delete', scrub_id)
+            if pool_id:
+                await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
+            if passfile:
+                os.unlink(passfile)
+            raise
+
+        await self.middleware.call('service.reload', 'disk')
         await self.middleware.call_hook('pool.post_import_pool', pool)
 
         return True
