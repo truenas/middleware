@@ -299,19 +299,16 @@ class cache_with_autorefresh(object):
 
 
 def load_modules(directory):
-    modules = []
     for f in os.listdir(directory):
         if not f.endswith('.py'):
             continue
         f = f[:-3]
         fp, pathname, description = imp.find_module(f, [directory])
         try:
-            modules.append(imp.load_module(f, fp, pathname, description))
+            yield imp.load_module(f, fp, pathname, description)
         finally:
             if fp:
                 fp.close()
-
-    return modules
 
 
 def load_classes(module, base, blacklist):
