@@ -549,3 +549,14 @@ class SystemDatasetService(ConfigService):
                     archive.add(rrd_mount, filter=self.rename_tarinfo)
 
             os.remove(SYSRRD_SENTINEL)
+
+
+async def pool_post_import(middleware, pool):
+    """
+    On pool import we may need to reconfigure system dataset.
+    """
+    await middleware.call('systemdataset.setup')
+
+
+async def setup(middleware):
+    middleware.register_hook('pool.post_import_pool', pool_post_import, sync=True)
