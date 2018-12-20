@@ -5,6 +5,7 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
 from middlewared.utils import Popen
 
+import asyncio
 import codecs
 import os
 import re
@@ -467,3 +468,21 @@ class SharingSMBService(CRUDService):
             vfs_modules.extend(['streams_xattr'])
 
         return vfs_modules
+
+
+async def pool_post_import(middleware, pool):
+    """
+    Makes sure to reload SMB if a pool is imported and there are shares configured for it.
+    """
+    path = f'/mnt/{pool["name"]}'
+    if await middleware.call('sharing.smb.query', [
+        ('OR', [
+            ('path', '=', path),
+            ('path', '^', f'{path}/'),
+        ])
+    ]):
+        asyncio.ensure_future(middleware.call('service.reload', 'cifs'))
+
+
+async def setup(middleware):
+    middleware.register_hook('pool.post_import_pool', pool_post_import, sync=True)
