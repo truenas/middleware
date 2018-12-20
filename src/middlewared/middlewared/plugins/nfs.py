@@ -365,3 +365,18 @@ class SharingNFSService(CRUDService):
         data["hosts"] = " ".join(data["hosts"])
         data["security"] = [s.lower() for s in data["security"]]
         return data
+
+
+async def pool_post_import(middleware, pool):
+    """
+    Makes sure to reload NFS if a pool is imported and there are shares configured for it.
+    """
+    path = f'/mnt/{pool["name"]}'
+    for share in await middleware.call('sharing.nfs.query'):
+        if any(filter(lambda x: x == path or x.startswith(f'{path}/'), share['paths'])):
+            asyncio.ensure_future(middleware.call('service.reload', 'nfs'))
+            break
+
+
+async def setup(middleware):
+    middleware.register_hook('pool.post_import_pool', pool_post_import, sync=True)
