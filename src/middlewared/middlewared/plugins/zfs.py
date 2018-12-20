@@ -498,11 +498,15 @@ class ZFSDatasetService(CRUDService):
             self.logger.error('Failed to delete dataset', exc_info=True)
             raise CallError(f'Failed to delete dataset: {e.stderr.strip()}')
 
-    def mount(self, name):
+    @accepts(Str('name'), Dict('options', Bool('recursive', default=False)))
+    def mount(self, name, options):
         try:
             with libzfs.ZFS() as zfs:
                 dataset = zfs.get_dataset(name)
-                dataset.mount()
+                if options['recursive']:
+                    dataset.mount_recursive()
+                else:
+                    dataset.mount()
         except libzfs.ZFSException as e:
             self.logger.error('Failed to mount dataset', exc_info=True)
             raise CallError(f'Failed to mount dataset: {e}')
