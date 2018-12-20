@@ -534,6 +534,10 @@ class ServiceService(CRUDService):
         os.environ['TZ'] = settings['stg_timezone']
         time.tzset()
 
+    async def _start_smartd(self, **kwargs):
+        await self.middleware.call("etc.generate", "smartd")
+        await self._service("smartd-daemon", "start", **kwargs)
+
     async def _reload_smartd(self, **kwargs):
         await self.middleware.call("etc.generate", "smartd")
         await self._service("smartd-daemon", "reload", **kwargs)
