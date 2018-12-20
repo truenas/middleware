@@ -14,6 +14,7 @@ from middlewared.validators import Email, IpAddress, Range
 
 from acme import client, errors, messages
 from OpenSSL import crypto, SSL
+from cryptography.hazmat.primitives.asymmetric import ec
 
 
 CA_TYPE_EXISTING = 0x01
@@ -121,35 +122,32 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
     if certificate:
         matches = RE_CERTIFICATE.findall(certificate)
 
-        nmatches = len(matches)
-        if not nmatches:
+        if not matches or not await middleware.call('certificate.load_certificate', certificate):
             verrors.add(
                 f'{schema_name}.certificate',
                 'Not a valid certificate'
             )
-        else:
-            cert_info = await middleware.call('certificate.load_certificate', certificate)
-            if not cert_info:
-                verrors.add(
-                    f'{schema_name}.certificate',
-                    'Certificate not in PEM format'
-                )
 
     private_key = data.get('privatekey')
     passphrase = data.get('passphrase')
     if private_key:
-        if not load_private_key(private_key, passphrase):
+        private_key_obj = load_private_key(private_key, passphrase)
+        if not private_key_obj:
             verrors.add(
                 f'{schema_name}.privatekey',
                 'Please provide a valid private key with matching passphrase ( if any )'
             )
-
-    key_length = data.get('key_length')
-    if key_length:
-        if key_length not in [1024, 2048, 4096]:
+        elif (
+            'create' in schema_name and private_key_obj.bits() < 1024 and not isinstance(
+                private_key_obj.to_cryptography_key(), ec.EllipticCurvePrivateKey
+            )
+        ):
+            # When a cert/ca is being created, we disallow keys with size less then 1024
+            # Update is allowed for now for keeping compatibility with very old cert/keys
+            # We do not do this check for any EC based key
             verrors.add(
-                f'{schema_name}.key_length',
-                'Key length must be a valid value ( 1024, 2048, 4096 )'
+                f'{schema_name}.privatekey',
+                'Please provide a key with size greater than or equal to 1024 bits'
             )
 
     signedby = data.get('signedby')
@@ -206,11 +204,10 @@ class CertificateService(CRUDService):
             'CERTIFICATE_CREATE_IMPORTED_CSR': self.__create_imported_csr,
             'CERTIFICATE_CREATE_CSR': self.__create_csr,
             'CERTIFICATE_CREATE_ACME': self.__create_acme_certificate,
-            'CERTIFICATE_CREATE': self.__create_certificate
         }
 
     @private
-    async def cert_extend(self, cert):
+    def cert_extend(self, cert):
         """Extend certificate with some useful attributes."""
 
         if cert.get('signedby'):
@@ -219,7 +216,7 @@ class CertificateService(CRUDService):
             # the cert_extend method
             # Datastore query is used instead of certificate.query to stop an infinite recursive loop
 
-            cert['signedby'] = await self.middleware.call(
+            cert['signedby'] = self.middleware.call_sync(
                 'datastore.query',
                 'system.certificateauthority',
                 [('id', '=', cert['signedby']['id'])],
@@ -234,11 +231,6 @@ class CertificateService(CRUDService):
         if not cert.get('acme'):
             for key in ['acme', 'acme_uri', 'domains_authenticators', 'renew_days']:
                 cert.pop(key, None)
-
-        # convert san to list
-        cert['san'] = (cert.pop('san', '') or '').split()
-        if cert['serial'] is not None:
-            cert['serial'] = int(cert['serial'])
 
         if cert['type'] in (
                 CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE
@@ -257,6 +249,22 @@ class CertificateService(CRUDService):
             root_path, f'{cert["name"]}.csr'
         )
 
+        cert['cert_type'] = 'CA' if root_path == CERT_CA_ROOT_PATH else 'CERTIFICATE'
+
+        if cert['cert_type'] == 'CA':
+            # TODO: Should we look for intermediate ca's as well which this ca has signed ?
+            cert['signed_certificates'] = len(
+                self.middleware.call_sync(
+                    'datastore.query',
+                    'system.certificate',
+                    [['signedby', '=', cert['id']]],
+                    {'prefix': 'cert_'}
+                )
+            )
+
+        if not os.path.exists(root_path):
+            os.mkdir(root_path, 0o755)
+
         def cert_issuer(cert):
             issuer = None
             if cert['type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING):
@@ -272,9 +280,10 @@ class CertificateService(CRUDService):
         cert['issuer'] = cert_issuer(cert)
 
         cert['chain_list'] = []
-        if cert['chain']:
+        certs = []
+        if len(RE_CERTIFICATE.findall(cert['certificate'] or '')) > 1:
             certs = RE_CERTIFICATE.findall(cert['certificate'])
-        else:
+        elif cert['type'] != CERT_TYPE_CSR:
             certs = [cert['certificate']]
             signing_CA = cert['issuer']
             # Recursively get all internal/intermediate certificates
@@ -284,63 +293,104 @@ class CertificateService(CRUDService):
                 signing_CA['issuer'] = cert_issuer(signing_CA)
                 signing_CA = signing_CA['issuer']
 
-        cert_obj = None
-        try:
-            for c in certs:
-                # XXX Why load certificate if we are going to dump it right after?
-                # Maybe just to verify its integrity?
-                # Logic copied from freenasUI
-                if c:
-                    cert_obj = crypto.load_certificate(crypto.FILETYPE_PEM, c)
-                    cert['chain_list'].append(
-                        crypto.dump_certificate(crypto.FILETYPE_PEM, cert_obj).decode()
-                    )
-        except Exception:
-            self.logger.debug(f'Failed to load certificate {cert["name"]}', exc_info=True)
+        failed_parsing = False
+        for c in certs:
+            if c and self.load_certificate(c):
+                cert['chain_list'].append(c)
+            else:
+                self.logger.debug(f'Failed to load certificate chain of {cert["name"]}', exc_info=True)
+                break
 
-        try:
-            if cert['privatekey']:
-                key_obj = crypto.load_privatekey(crypto.FILETYPE_PEM, cert['privatekey'])
-                cert['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, key_obj).decode()
-        except Exception:
-            self.logger.debug(f'Failed to load privatekey {cert["name"]}', exc_info=True)
+        if certs:
+            # This indicates cert is not CSR and a cert
+            cert_data = self.load_certificate(cert['certificate'])
+            cert.update(cert_data)
+            if not cert_data:
+                self.logger.error(f'Failed to load certificate {cert["name"]}')
+                failed_parsing = True
 
-        try:
-            if cert['CSR']:
-                csr_obj = crypto.load_certificate_request(crypto.FILETYPE_PEM, cert['CSR'])
-                cert['CSR'] = crypto.dump_certificate_request(crypto.FILETYPE_PEM, csr_obj).decode()
-        except Exception:
-            self.logger.debug(f'Failed to load csr {cert["name"]}', exc_info=True)
+        if cert['privatekey']:
+            key_obj = load_private_key(cert['privatekey'])
+            if key_obj:
+                cert['key_length'] = key_obj.bits()
+                if isinstance(key_obj.to_cryptography_key(), ec.EllipticCurvePrivateKey):
+                    cert['key_type'] = 'EC'
+                elif key_obj.type() == crypto.TYPE_RSA:
+                    cert['key_type'] = 'RSA'
+                elif key_obj.type() == crypto.TYPE_DSA:
+                    cert['key_type'] = 'DSA'
+                else:
+                    cert['key_type'] = 'OTHER'
+            else:
+                self.logger.debug(f'Failed to load privatekey of {cert["name"]}', exc_info=True)
+                cert['key_length'] = cert['key_type'] = None
+
+        if cert['type'] == CERT_TYPE_CSR:
+            csr_data = self.load_certificate_request(cert['CSR'])
+            if csr_data:
+                cert.update(csr_data)
+
+                cert.update({k: None for k in ('from', 'until')})  # CSR's don't have from, until - normalizing keys
+            else:
+                self.logger.debug(f'Failed to load csr {cert["name"]}', exc_info=True)
+                failed_parsing = True
+
+        if failed_parsing:
+            # Normalizing cert/csr
+            # Should we perhaps set the value to something like "MALFORMED_CERTIFICATE" for this list off attrs ?
+            cert.update({
+                key: None for key in [
+                    'digest_algorithm', 'lifetime', 'country', 'state', 'city', 'from', 'until',
+                    'organization', 'organizational_unit', 'email', 'common', 'san', 'serial', 'fingerprint'
+                ]
+            })
+
+        cert['parsed'] = not failed_parsing
 
         cert['internal'] = 'NO' if cert['type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING) else 'YES'
-
-        obj = None
-        # date not applicable for CSR
-        cert['from'] = None
-        cert['until'] = None
-        if cert['type'] == CERT_TYPE_CSR:
-            obj = csr_obj
-        elif cert_obj:
-            obj = crypto.load_certificate(crypto.FILETYPE_PEM, cert['certificate'])
-            notBefore = obj.get_notBefore()
-            t1 = dateutil.parser.parse(notBefore)
-            t2 = t1.astimezone(dateutil.tz.tzutc())
-            cert['from'] = t2.ctime()
-
-            notAfter = obj.get_notAfter()
-            t1 = dateutil.parser.parse(notAfter)
-            t2 = t1.astimezone(dateutil.tz.tzutc())
-            cert['until'] = t2.ctime()
-
-        if obj:
-            cert['DN'] = '/' + '/'.join([
-                '%s=%s' % (c[0].decode(), c[1].decode())
-                for c in obj.get_subject().get_components()
-            ])
+        cert['CA_type_existing'] = bool(cert['type'] & CA_TYPE_EXISTING)
+        cert['CA_type_internal'] = bool(cert['type'] & CA_TYPE_INTERNAL)
+        cert['CA_type_intermediate'] = bool(cert['type'] & CA_TYPE_INTERMEDIATE)
+        cert['cert_type_existing'] = bool(cert['type'] & CERT_TYPE_EXISTING)
+        cert['cert_type_internal'] = bool(cert['type'] & CERT_TYPE_INTERNAL)
+        cert['cert_type_CSR'] = bool(cert['type'] & CERT_TYPE_CSR)
 
         return cert
 
     # HELPER METHODS
+
+    @private
+    def certificate_nginx_health(self, id, schema_name, raise_verrors=True):
+        # Checks certificate health wrt usage with nginx
+        # Raises verrors as specified if cert found not fit for nginx
+        cert = self.middleware.call_sync('certificate._get_instance', id)
+        verrors = ValidationErrors()
+        if cert['type'] == CERT_TYPE_CSR:
+            verrors.add(
+                schema_name,
+                'Selected certificate id is a CSR'
+            )
+        elif not cert['fingerprint']:
+            verrors.add(
+                schema_name,
+                f'{cert["name"]} certificate is malformed'
+            )
+
+        if not cert['key_length']:
+            verrors.add(
+                schema_name,
+                'Failed to parse certificate\'s private key'
+            )
+        elif cert['key_type'] != 'EC' and cert['key_length'] < 1024:
+            verrors.add(
+                schema_name,
+                f'{cert["name"]}\'s private key size is less then 1024 bits'
+            )
+
+        if raise_verrors:
+            verrors.check()
+        else:
+            return verrors
 
     @private
     def create_self_signed_cert(self):
@@ -363,11 +413,19 @@ class CertificateService(CRUDService):
         return cert, key
 
     @private
+    def parse_cert_date_string(self, date_value):
+        t1 = dateutil.parser.parse(date_value)
+        t2 = t1.astimezone(dateutil.tz.tzlocal())
+        return t2.ctime()
+
+    @private
     @accepts(
         Str('certificate', required=True)
     )
     def load_certificate(self, certificate):
         try:
+            # digest_algorithm, lifetime, country, state, city, organization, organizational_unit,
+            # email, common, san, serial, chain, fingerprint
             cert = crypto.load_certificate(
                 crypto.FILETYPE_PEM,
                 certificate
@@ -376,12 +434,22 @@ class CertificateService(CRUDService):
             return {}
         else:
             cert_info = self.get_x509_subject(cert)
-            cert_info['serial'] = cert.get_serial_number()
 
             signature_algorithm = cert.get_signature_algorithm().decode()
             m = re.match('^(.+)[Ww]ith', signature_algorithm)
             if m:
                 cert_info['digest_algorithm'] = m.group(1).upper()
+
+            cert_info.update({
+                'lifetime': (
+                    dateutil.parser.parse(cert.get_notAfter()) - dateutil.parser.parse(cert.get_notBefore())
+                ).days,
+                'from': self.parse_cert_date_string(cert.get_notBefore()),
+                'until': self.parse_cert_date_string(cert.get_notAfter()),
+                'serial': cert.get_serial_number(),
+                'chain': len(RE_CERTIFICATE.findall(certificate)) > 1,
+                'fingerprint': cert.digest('sha1').decode()
+            })
 
             return cert_info
 
@@ -394,8 +462,9 @@ class CertificateService(CRUDService):
             'organization': obj.get_subject().O,
             'organizational_unit': obj.get_subject().OU,
             'common': obj.get_subject().CN,
-            'san': obj.get_subject().subjectAltName,
+            'san': [s for s in (obj.get_subject().subjectAltName or '').split(',') if s],
             'email': obj.get_subject().emailAddress,
+            'DN': f'/{"/".join([f"{c[0].decode()}={c[1].decode()}" for c in obj.get_subject().get_components()])}',
         }
 
     @private
@@ -409,30 +478,6 @@ class CertificateService(CRUDService):
             return {}
         else:
             return self.get_x509_subject(csr)
-
-    @private
-    async def get_fingerprint_of_cert(self, certificate_id):
-        cert = await self._get_instance(certificate_id)
-        return await self.middleware.run_in_thread(
-            self.fingerprint,
-            cert['certificate']
-        )
-
-    @private
-    @accepts(
-        Str('cert_certificate', required=True)
-    )
-    def fingerprint(self, cert_certificate):
-        # getting fingerprint of certificate
-        try:
-            certificate = crypto.load_certificate(
-                crypto.FILETYPE_PEM,
-                cert_certificate
-            )
-        except Exception:
-            return None
-        else:
-            return certificate.digest('sha1').decode()
 
     @private
     async def san_to_string(self, san_list):
@@ -734,8 +779,7 @@ class CertificateService(CRUDService):
                     cert['id'],
                     {
                         'certificate': final_order.fullchain_pem,
-                        'acme_uri': final_order.uri,
-                        'chain': True if len(RE_CERTIFICATE.findall(final_order.fullchain_pem)) > 1 else False,
+                        'acme_uri': final_order.uri
                     },
                     {'prefix': self._config.datastore_prefix}
                 )
@@ -764,9 +808,6 @@ class CertificateService(CRUDService):
     # CERTIFICATE_CREATE_CSR          - __create_csr
     # CERTIFICATE_CREATE_ACME         - __create_acme_certificate
 
-    # TODO: Make the following method inaccessible publicly
-    # CERTIFICATE_CREATE              - __create_certificate ( ONLY TO BE USED INTERNALLY )
-
     @accepts(
         Dict(
             'certificate_create',
@@ -774,7 +815,7 @@ class CertificateService(CRUDService):
             Dict('dns_mapping', additional_attrs=True),
             Int('csr_id'),
             Int('signedby'),
-            Int('key_length'),
+            Int('key_length', enum=[1024, 2048, 4096]),
             Int('renew_days'),
             Int('type'),
             Int('lifetime'),
@@ -795,7 +836,7 @@ class CertificateService(CRUDService):
             Str('create_type', enum=[
                 'CERTIFICATE_CREATE_INTERNAL', 'CERTIFICATE_CREATE_IMPORTED',
                 'CERTIFICATE_CREATE_CSR', 'CERTIFICATE_CREATE_IMPORTED_CSR',
-                'CERTIFICATE_CREATE_ACME', 'CERTIFICATE_CREATE'], required=True),
+                'CERTIFICATE_CREATE_ACME'], required=True),
             Str('digest_algorithm', enum=['SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512']),
             List('san', items=[Str('san')]),
             register=True
@@ -901,11 +942,13 @@ class CertificateService(CRUDService):
             job, data
         )
 
-        data['san'] = ' '.join(data.pop('san', []) or [])
-
-        # Patch creates another copy of dns_mapping
-        data.pop('dns_mapping', None)
-        data.pop('csr_id', None)
+        data = {
+            k: v for k, v in data.items()
+            if k in [
+                'name', 'certificate', 'CSR', 'privatekey', 'type', 'signedby', 'acme', 'acme_uri',
+                'domains_authenticators', 'renew_days'
+            ]
+        }
 
         pk = await self.middleware.call(
             'datastore.insert',
@@ -954,13 +997,10 @@ class CertificateService(CRUDService):
             'CSR': csr_data['CSR'],
             'privatekey': csr_data['privatekey'],
             'name': data['name'],
-            'chain': True if len(RE_CERTIFICATE.findall(final_order.fullchain_pem)) > 1 else False,
             'type': CERT_TYPE_EXISTING,
             'domains_authenticators': data['dns_mapping'],
             'renew_days': data['renew_days']
         }
-
-        cert_dict.update(self.load_certificate(final_order.fullchain_pem))
 
         return cert_dict
 
@@ -1005,8 +1045,6 @@ class CertificateService(CRUDService):
 
         data['type'] = CERT_TYPE_CSR
 
-        data.update(self.load_certificate_request(data['CSR']))
-
         job.set_progress(80)
 
         if 'passphrase' in data:
@@ -1014,26 +1052,6 @@ class CertificateService(CRUDService):
                 data['privatekey'],
                 data['passphrase']
             )
-
-        data.pop('passphrase', None)
-
-        job.set_progress(90, 'Finalizing changes')
-
-        return data
-
-    @accepts(
-        Patch(
-            'certificate_create', 'create_certificate',
-            ('edit', _set_required('certificate')),
-            ('edit', _set_required('privatekey')),
-            ('edit', _set_required('type')),
-            ('rm', {'name': 'create_type'})
-        )
-    )
-    @skip_arg(count=1)
-    def __create_certificate(self, job, data):
-
-        data.update(self.load_certificate(data['certificate']))
 
         job.set_progress(90, 'Finalizing changes')
 
@@ -1059,7 +1077,7 @@ class CertificateService(CRUDService):
                 'certificate.query',
                 [
                     ['id', '=', csr_id],
-                    ['CSR', '!=', None]
+                    ['type', '=', CERT_TYPE_CSR]
                 ],
                 {'get': True}
             )
@@ -1079,17 +1097,11 @@ class CertificateService(CRUDService):
 
         data['type'] = CERT_TYPE_EXISTING
 
-        data = self.__create_certificate(job, data)
-
-        data['chain'] = True if len(RE_CERTIFICATE.findall(data['certificate'])) > 1 else False
-
         if 'passphrase' in data:
             data['privatekey'] = export_private_key(
                 data['privatekey'],
                 data['passphrase']
             )
-
-        data.pop('passphrase', None)
 
         return data
 
@@ -1145,7 +1157,6 @@ class CertificateService(CRUDService):
 
         data['certificate'] = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
         data['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, public_key)
-        data['serial'] = cert_serial
 
         job.set_progress(90, 'Finalizing changes')
 
@@ -1202,8 +1213,6 @@ class CertificateService(CRUDService):
 
             if verrors:
                 raise verrors
-
-            new['san'] = ' '.join(new.pop('san', []) or [])
 
             await self.middleware.call(
                 'datastore.update',
@@ -1266,15 +1275,21 @@ class CertificateService(CRUDService):
                 ]
             }
         """
-        if (self.middleware.call_sync('system.general.config'))['ui_certificate']['id'] == id:
-            verrors = ValidationErrors()
+        verrors = ValidationErrors()
 
+        if (self.middleware.call_sync('system.general.config'))['ui_certificate']['id'] == id:
             verrors.add(
                 'certificate_delete.id',
                 'Selected certificate is being used by system HTTPS server, please select another one'
             )
 
-            raise verrors
+        if (self.middleware.call_sync('ftp.config'))['ssltls_certificate'] == id:
+            verrors.add(
+                'certificate_delete.id',
+                'Selected certificate is being used by FTP service, please select another one'
+            )
+
+        verrors.check()
 
         certificate = self.middleware.call_sync('certificate._get_instance', id)
 
@@ -1299,11 +1314,6 @@ class CertificateService(CRUDService):
         )
 
         self.middleware.call_sync('service.start', 'ssl')
-
-        sentinel = f'/tmp/alert_invalidcert_{certificate["name"]}'
-        if os.path.exists(sentinel):
-            os.unlink(sentinel)
-            self.middleware.call_sync('alert.process_alerts')
 
         job.set_progress(100)
         return response
@@ -1382,8 +1392,7 @@ class CertificateAuthorityService(CRUDService):
 
             ca_signed_certs.extend((await child_serials(ca_id)))
 
-            # There is for a case when user might have old certs in the db whose serial value
-            # isn't set in the db
+            # This is for a case where the user might have a malformed certificate and serial value returns None
             ca_signed_certs = list(filter(None, ca_signed_certs))
 
             if not ca_signed_certs:
@@ -1504,7 +1513,10 @@ class CertificateAuthorityService(CRUDService):
             data
         )
 
-        data['san'] = ' '.join(data.pop('san', []) or [])
+        data = {
+            k: v for k, v in data.items()
+            if k in ['name', 'certificate', 'privatekey', 'type', 'signedby']
+        }
 
         pk = await self.middleware.call(
             'datastore.insert',
@@ -1625,21 +1637,21 @@ class CertificateAuthorityService(CRUDService):
             'name': data['name'],
             'certificate': new_cert,
             'privatekey': csr_cert_data['privatekey'],
-            'create_type': 'CERTIFICATE_CREATE',
             'signedby': ca_data['id']
         }
 
-        new_csr_job = self.middleware.call_sync(
-            'certificate.create',
-            new_csr
+        new_csr_id = self.middleware.call_sync(
+            'datastore.insert',
+            'system.certificate',
+            new_csr,
+            {'prefix': 'cert_'}
         )
 
-        new_csr_job.wait_sync()
-
-        if new_csr_job.error:
-            raise CallError(new_csr_job.exception)
-        else:
-            return new_csr_job.result
+        return self.middleware.call_sync(
+            'certificate.query',
+            [['id', '=', new_csr_id]],
+            {'get': True}
+        )
 
     @accepts(
         Patch(
@@ -1676,7 +1688,6 @@ class CertificateAuthorityService(CRUDService):
         ])
 
         cert.set_serial_number(serial)
-        data['serial'] = serial
         cert.sign(signkey, data['digest_algorithm'])
 
         data['certificate'] = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
@@ -1693,17 +1704,12 @@ class CertificateAuthorityService(CRUDService):
     )
     def __create_imported_ca(self, data):
         data['type'] = CA_TYPE_EXISTING
-        data['chain'] = True if len(RE_CERTIFICATE.findall(data['certificate'])) > 1 else False
-
-        data.update(self.middleware.call_sync('certificate.load_certificate', data['certificate']))
 
         if all(k in data for k in ('passphrase', 'privatekey')):
             data['privatekey'] = export_private_key(
                 data['privatekey'],
                 data['passphrase']
             )
-
-        data.pop('passphrase', None)
 
         return data
 
@@ -1731,7 +1737,6 @@ class CertificateAuthorityService(CRUDService):
         data['type'] = CA_TYPE_INTERNAL
         data['certificate'] = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
         data['privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
-        data['serial'] = cert_info['serial']
 
         return data
 
@@ -1776,6 +1781,9 @@ class CertificateAuthorityService(CRUDService):
                 data,
                 'certificate_authority_update'
             )
+        else:
+            for key in ['ca_id', 'csr_cert_id']:
+                data.pop(key, None)
 
         old = await self._get_instance(id)
         # signedby is changed back to integer from a dict
@@ -1787,13 +1795,12 @@ class CertificateAuthorityService(CRUDService):
         verrors = ValidationErrors()
 
         if new['name'] != old['name']:
-            await validate_cert_name(self.middleware, data['name'], self._config.datastore, verrors,
-                                     'certificate_authority_update.name')
+            await validate_cert_name(
+                self.middleware, data['name'], self._config.datastore, verrors, 'certificate_authority_update.name'
+            )
 
             if verrors:
                 raise verrors
-
-            new['san'] = ' '.join(new.pop('san', []) or [])
 
             await self.middleware.call(
                 'datastore.update',
@@ -1838,11 +1845,6 @@ class CertificateAuthorityService(CRUDService):
 
         await self.middleware.call('service.start', 'ssl')
 
-        sentinel = f'/tmp/alert_invalidCA_{ca["name"]}'
-        if os.path.exists(sentinel):
-            os.unlink(sentinel)
-            await self.middleware.call('alert.process_alerts')
-
         return response
 
 
@@ -1860,10 +1862,7 @@ async def setup(middlewared):
                     'privatekey': crypto.dump_privatekey(crypto.FILETYPE_PEM, key).decode(),
                     'name': 'freenas_default',
                     'type': CERT_TYPE_EXISTING,
-                    'chain': False,
-
                 }
-                cert_dict.update((await middlewared.call('certificate.load_certificate', cert_dict['certificate'])))
 
                 # We use datastore.insert to directly insert in db as jobs cannot be waited for at this point
                 id = await middlewared.call(

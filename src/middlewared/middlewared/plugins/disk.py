@@ -26,7 +26,10 @@ GELI_KEY_SLOT = 0
 GELI_RECOVERY_SLOT = 1
 GELI_REKEY_FAILED = '/tmp/.rekey_failed'
 MIRROR_MAX = 5
+RE_CAMCONTROL_AAM = re.compile(r'^automatic acoustic management\s+yes', re.M)
+RE_CAMCONTROL_APM = re.compile(r'^advanced power management\s+yes', re.M)
 RE_CAMCONTROL_DRIVE_LOCKED = re.compile(r'^drive locked\s+yes$', re.M)
+RE_CAMCONTROL_POWER = re.compile(r'^power management\s+yes', re.M)
 RE_DA = re.compile('^da[0-9]+$')
 RE_DD = re.compile(r'^(\d+) bytes transferred .*\((\d+) bytes')
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
@@ -117,7 +120,7 @@ class DiskService(CRUDService):
         )
 
         if any(new[key] != old[key] for key in ['hddstandby', 'advpowermgmt', 'acousticlevel']):
-            await self.middleware.call('notifier.start_ataidle', new['name'])
+            await self.middleware.call('disk.power_management', new['name'])
 
         if any(
                 new[key] != old[key]
@@ -505,7 +508,6 @@ class DiskService(CRUDService):
                 except Exception as e:
                     self.logger.warn('Failed to clear %s: %s', dev, e)
         return failed
-
 
     @private
     def encrypt(self, devname, keypath, passphrase=None):
@@ -1479,6 +1481,70 @@ class DiskService(CRUDService):
 
         # We might need to sync with reality (e.g. uuid -> devname)
         self.middleware.call_sync('disk.sync', disk)
+
+    @private
+    async def configure_power_management(self):
+        """
+        This runs on boot to properly configure all power management options
+        (Advanced Power Management, Automatic Acoustic Management and IDLE) for all disks.
+        """
+        # Only run power management for FreeNAS
+        if not await self.middleware.call('system.is_freenas'):
+            return
+        for disk in await self.middleware.call('disk.query'):
+            await self.power_management(disk['name'], disk=disk)
+
+    @private
+    async def power_management(self, dev, disk=None):
+        """
+        Actually sets power management for `dev`.
+        `disk` is the disk.query entry and optional so this can be called only with disk name.
+        """
+        if not disk:
+            disk = await self.middleware.call('disk.query', [('name', '=', dev)])
+            if not disk:
+                return
+            disk = disk[0]
+
+        try:
+            identify = (await run('camcontrol', 'identify', dev)).stdout.decode()
+        except subprocess.CalledProcessError:
+            return
+
+        # Try to set APM
+        if RE_CAMCONTROL_APM.search(identify):
+            args = ['camcontrol', 'apm', dev]
+            if disk['advpowermgmt'] != 'DISABLED':
+                args += ['-l', disk['advpowermgmt']]
+            asyncio.ensure_future(run(*args, check=False))
+
+        # Try to set AAM
+        if RE_CAMCONTROL_AAM.search(identify):
+            acousticlevel_map = {
+                'MINIMUM': '1',
+                'MEDIUM': '64',
+                'MAXIMUM': '127',
+            }
+            asyncio.ensure_future(run(
+                'camcontrol', 'aam', dev, '-l', acousticlevel_map.get(disk['acousticlevel'], '0'),
+                check=False,
+            ))
+
+        # Try to set idle
+        if RE_CAMCONTROL_POWER.search(identify):
+            if disk['hddstandby'] != 'ALWAYS ON':
+                # database is in minutes, camcontrol uses seconds
+                idle = int(disk['hddstandby']) * 60
+            else:
+                idle = 0
+
+            # We wait a minute before applying idle because its likely happening during system boot
+            # or some activity is happening very soon.
+            async def camcontrol_idle():
+                await asyncio.sleep(60)
+                asyncio.ensure_future(run('camcontrol', 'idle', dev, '-t', str(idle), check=False))
+
+            asyncio.ensure_future(camcontrol_idle())
 
 
 def new_swap_name():

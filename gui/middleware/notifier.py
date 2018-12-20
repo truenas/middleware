@@ -92,7 +92,6 @@ from freenasUI.common.acl import (ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE,
                                   ACL_MAC_FILE)
 from freenasUI.common.freenasacl import ACL
 from freenasUI.common.jail import Jls
-from freenasUI.common.locks import mntlock
 from freenasUI.common.pipesubr import SIG_SETMASK
 from freenasUI.common.pbi import pbi_delete, pbi_info, PBI_INFO_FLAGS_VERBOSE
 from freenasUI.common.system import (
@@ -299,12 +298,6 @@ class notifier(metaclass=HookMetaclass):
 
         return running
 
-    def start_ataidle(self, what=None):
-        if what is not None:
-            self._system("/usr/sbin/service ix-ataidle quietstart %s" % what)
-        else:
-            self._system("/usr/sbin/service ix-ataidle quietstart")
-
     def _open_db(self):
         """Open and return a cursor object for database access."""
         try:
@@ -391,40 +384,6 @@ class notifier(metaclass=HookMetaclass):
                         providers.append((part, part))
         return providers
 
-    def get_swapsize(self):
-        from freenasUI.system.models import Advanced
-        swapsize = Advanced.objects.latest('id').adv_swapondrive
-        return swapsize
-
-    def create_zfs_vol(self, name, size, props=None, sparse=False):
-        """Internal procedure to create ZFS volume"""
-        if sparse is True:
-            options = "-s "
-        else:
-            options = " "
-        if props:
-            assert isinstance(props, dict)
-            for k in list(props.keys()):
-                if props[k] != 'inherit':
-                    options += "-o %s=%s " % (k, props[k])
-        zfsproc = self._pipeopen("/sbin/zfs create %s -V '%s' '%s'" % (options, size, name))
-        zfs_err = zfsproc.communicate()[1]
-        zfs_error = zfsproc.wait()
-        return zfs_error, zfs_err
-
-    def create_zfs_dataset(self, path, props=None):
-        """Internal procedure to create ZFS volume"""
-        options = " "
-        if props:
-            assert isinstance(props, dict)
-            for k in list(props.keys()):
-                if props[k] != 'inherit':
-                    options += "-o %s='%s' " % (k, str(props[k]).replace("'", "'\"'\"'"))
-        zfsproc = self._pipeopen("/sbin/zfs create %s '%s'" % (options, path))
-        zfs_output, zfs_err = zfsproc.communicate()
-        zfs_error = zfsproc.wait()
-        return zfs_error, zfs_err
-
     def list_zfs_vols(self, volname, sort=None):
         """Return a dictionary that contains all ZFS volumes list"""
 
@@ -469,40 +428,6 @@ class notifier(metaclass=HookMetaclass):
                 retval[line] = line
         return retval
 
-    def destroy_zfs_dataset(self, path, recursive=False):
-        retval = None
-        if retval is None:
-            mp = self.__get_mountpath(path)
-            if self.contains_jail_root(mp):
-                try:
-                    self.delete_plugins(force=True)
-                except Exception:
-                    log.warn('Failed to delete plugins', exc_info=True)
-
-            if recursive:
-                zfsproc = self._pipeopen("zfs destroy -r '%s'" % (path))
-            else:
-                zfsproc = self._pipeopen("zfs destroy '%s'" % (path))
-            retval = zfsproc.communicate()[1]
-        if not retval:
-            try:
-                self.__rmdir_mountpoint(path)
-            except MiddlewareError as me:
-                retval = str(me)
-
-        return retval
-
-    def destroy_zfs_vol(self, name, recursive=False):
-        mp = self.__get_mountpath(name)
-        if self.contains_jail_root(mp):
-            self.delete_plugins()
-        zfsproc = self._pipeopen("zfs destroy %s'%s'" % (
-            '-r ' if recursive else '',
-            str(name),
-        ))
-        retval = zfsproc.communicate()[1]
-        return retval
-
     def zfs_offline_disk(self, volume, label):
         try:
             with client as c:
@@ -540,42 +465,6 @@ class notifier(metaclass=HookMetaclass):
                 c.call('pool.remove', volume.id, {'label': label})
         except Exception as e:
             raise MiddlewareError(f'Disk could not be removed: {str(e)}')
-
-    def detach_volume_swaps(self, volume):
-        """Detach all swaps associated with volume"""
-        disks = volume.get_disks()
-        with client as c:
-            c.call('disk.swaps_remove_disks', [disks])
-
-    def __get_mountpath(self, name, mountpoint_root='/mnt'):
-        """Determine the mountpoint for a ZFS dataset
-
-        It tries to divine the location of the dataset from the
-        relevant command, and if all else fails, falls back to a less
-        elegant method of representing the mountpoint path.
-
-        This is done to ensure that in the event that the database and
-        reality get out of synch, the user can nuke the volume/mountpoint.
-
-        XXX: this should be done more elegantly by calling getfsent from C.
-
-        Required Parameters:
-            name: textual name for the mountable vdev or volume, e.g. 'tank',
-                  'stripe', 'tank/dataset', etc.
-
-        Optional Parameters:
-            mountpoint_root: the root directory where all of the datasets and
-                             volumes shall be mounted. Defaults to '/mnt'.
-
-        Returns:
-            the absolute path for the volume on the system.
-        """
-        p1 = self._pipeopen("zfs list -H -o mountpoint '%s'" % (name, ))
-        stdout = p1.communicate()[0]
-        if not p1.returncode:
-            return stdout.strip()
-
-        return os.path.join(mountpoint_root, name)
 
     def groupmap_list(self):
         command = "/usr/local/bin/net groupmap list"
@@ -1504,39 +1393,6 @@ class notifier(metaclass=HookMetaclass):
 
         return volume
 
-    def __rmdir_mountpoint(self, path):
-        """Remove a mountpoint directory designated by path
-
-        This only nukes mountpoints that exist in /mnt as alternate mointpoints
-        can be specified with UFS, which can take down mission critical
-        subsystems.
-
-        This purposely doesn't use shutil.rmtree to avoid removing files that
-        were potentially hidden by the mount.
-
-        Parameters:
-            path: a path suffixed with /mnt that points to a mountpoint that
-                  needs to be nuked.
-
-        XXX: rewrite to work outside of /mnt and handle unmounting of
-             non-critical filesystems.
-        XXX: remove hardcoded reference to /mnt .
-
-        Raises:
-            MiddlewareError: the volume's mountpoint couldn't be removed.
-        """
-
-        if path.startswith('/mnt'):
-            # UFS can be mounted anywhere. Don't nuke /etc, /var, etc as the
-            # underlying contents might contain something of value needed for
-            # the system to continue operating.
-            try:
-                if os.path.isdir(path):
-                    os.rmdir(path)
-            except OSError as ose:
-                raise MiddlewareError('Failed to remove mountpoint %s: %s'
-                                      % (path, str(ose), ))
-
     def zfs_snapshot_list(self, path=None, sort=None, system=False):
         from freenasUI.storage.models import Volume
         fsinfo = dict()
@@ -1611,14 +1467,6 @@ class notifier(metaclass=HookMetaclass):
 
     def zfs_clonesnap(self, snapshot, dataset):
         zfsproc = self._pipeopen("zfs clone '%s' '%s'" % (snapshot, dataset))
-        retval = zfsproc.communicate()[1]
-        return retval
-
-    def rollback_zfs_snapshot(self, snapshot, force=False):
-        zfsproc = self._pipeopen("zfs rollback %s'%s'" % (
-            '-r ' if force else '',
-            snapshot,
-        ))
         retval = zfsproc.communicate()[1]
         return retval
 
@@ -1778,26 +1626,6 @@ class notifier(metaclass=HookMetaclass):
         if zfsproc.returncode == 0:
             return True, None
         return False, err
-
-    def zfs_dataset_release_snapshots(self, name, recursive=False):
-        name = str(name)
-        retval = None
-        if recursive:
-            zfscmd = "/sbin/zfs list -Ht snapshot -o name -r '%s'" % (name)
-        else:
-            zfscmd = "/sbin/zfs list -Ht snapshot -o name -r -d 1 '%s'" % (name)
-        try:
-            with mntlock(blocking=False):
-                zfsproc = self._pipeopen(zfscmd)
-                output = zfsproc.communicate()[0]
-                if output != '':
-                    snapshots_list = output.splitlines()
-                for snapshot_item in [_f for _f in snapshots_list if _f]:
-                    snapshot = snapshot_item.split('\t')[0]
-                    self._system("/sbin/zfs release -r freenas:repl %s" % (snapshot))
-        except IOError:
-            retval = 'Try again later.'
-        return retval
 
     def iface_media_status(self, name):
 

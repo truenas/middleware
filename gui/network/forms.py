@@ -376,6 +376,9 @@ class InterfacesForm(ModelForm):
                 self._errors['int_ipv4address'] = self.error_class([
                     _("This field is required for failover")
                 ])
+        else:
+            cdata['int_ipv4address'] = ''
+            cdata['int_v4netmaskbit'] = ''
 
         # API backward compatibility
         options = cdata.get('int_options')

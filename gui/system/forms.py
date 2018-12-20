@@ -56,7 +56,7 @@ from formtools.wizard.views import SessionWizardView
 from freenasOS import Configuration, Update
 from freenasUI import choices
 from freenasUI.account.models import bsdGroups, bsdUsers
-from freenasUI.common import humanize_number_si, humanize_size
+from freenasUI.common import humanize_number_si, humanize_size, humansize_to_bytes
 from freenasUI.common.forms import Form, ModelForm
 from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory, FreeNAS_LDAP
 from freenasUI.directoryservice.forms import (ActiveDirectoryForm, LDAPForm,
@@ -473,9 +473,18 @@ class InitialWizard(CommonWizard):
                 share_groupcreate = share.get('share_groupcreate')
                 share_mode = share.get('share_mode')
 
+                dataset_name = '%s/%s' % (volume_name, share_name)
                 if share_purpose != 'iscsitarget':
-                    dataset_name = '%s/%s' % (volume_name, share_name)
-                    errno, errmsg = _n.create_zfs_dataset(dataset_name)
+                    try:
+                        with client as c:
+                            c.call('pool.dataset.create', {
+                                'name': dataset_name,
+                                'type': 'FILESYSTEM',
+                            })
+                    except ClientException as e:
+                        raise MiddlewareError(
+                            _('Failed to create ZFS dataset: %s.') % e
+                        )
 
                     if share_purpose == 'afp':
                         _n.change_dataset_share_type(dataset_name, 'mac')
@@ -523,16 +532,18 @@ class InitialWizard(CommonWizard):
                                 model_objs.append(user)
 
                 else:
-                    errno, errmsg = _n.create_zfs_vol(
-                        '%s/%s' % (volume_name, share_name),
-                        share_iscsisize,
-                        sparse=True,
-                    )
-
-                if errno > 0:
-                    raise MiddlewareError(
-                        _('Failed to create ZFS item %s.') % errmsg
-                    )
+                    try:
+                        with client as c:
+                            c.call('pool.dataset.create', {
+                                'name': dataset_name,
+                                'type': 'VOLUME',
+                                'sparse': True,
+                                'volsize': humansize_to_bytes(share_iscsisize),
+                            })
+                    except ClientException as e:
+                        raise MiddlewareError(
+                            _('Failed to create ZFS volume: %s.') % e
+                        )
 
                 path = '/mnt/%s/%s' % (volume_name, share_name)
 
@@ -2404,8 +2415,12 @@ class CertificateAuthorityEditForm(MiddlewareModelForm, ModelForm):
     cert_certificate = forms.CharField(
         label=models.CertificateAuthority._meta.get_field('cert_certificate').verbose_name,
         widget=forms.Textarea(),
-        required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_certificate').help_text
+    )
+    cert_privatekey = forms.CharField(
+        label=models.CertificateAuthority._meta.get_field('cert_privatekey').verbose_name,
+        widget=forms.Textarea(),
+        help_text=models.CertificateAuthority._meta.get_field('cert_privatekey').help_text
     )
 
     def __init__(self, *args, **kwargs):
@@ -2421,7 +2436,7 @@ class CertificateAuthorityEditForm(MiddlewareModelForm, ModelForm):
         fields = [
             'cert_name',
             'cert_certificate',
-            'cert_privatekey',
+            'cert_privatekey'
         ]
         model = models.CertificateAuthority
 
@@ -2496,64 +2511,64 @@ class CertificateAuthorityCreateInternalForm(MiddlewareModelForm, ModelForm):
         help_text=models.CertificateAuthority._meta.get_field('cert_name').help_text
     )
     cert_key_length = forms.ChoiceField(
-        label=models.CertificateAuthority._meta.get_field('cert_key_length').verbose_name,
+        label=_('Key Length'),
         required=True,
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
     cert_digest_algorithm = forms.ChoiceField(
-        label=models.CertificateAuthority._meta.get_field('cert_digest_algorithm').verbose_name,
+        label=_('Digest Algorithm'),
         required=True,
         choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
     cert_lifetime = forms.IntegerField(
-        label=models.CertificateAuthority._meta.get_field('cert_lifetime').verbose_name,
+        label=_('Lifetime'),
         required=True,
         initial=3650
     )
     cert_country = forms.ChoiceField(
-        label=models.CertificateAuthority._meta.get_field('cert_country').verbose_name,
+        label=_('Country'),
         required=True,
         choices=choices.COUNTRY_CHOICES(),
         initial='US',
-        help_text=models.CertificateAuthority._meta.get_field('cert_country').help_text
+        help_text=_('Country Name (2 letter code)')
     )
     cert_state = forms.CharField(
-        label=models.CertificateAuthority._meta.get_field('cert_state').verbose_name,
+        label=_('State'),
         required=True,
-        help_text=models.CertificateAuthority._meta.get_field('cert_state').help_text
+        help_text=_('State or Province Name (full name)')
     )
     cert_city = forms.CharField(
-        label=models.CertificateAuthority._meta.get_field('cert_city').verbose_name,
+        label=_('Locality'),
         required=True,
-        help_text=models.CertificateAuthority._meta.get_field('cert_city').help_text
+        help_text=_('Locality Name (eg, city)'),
     )
     cert_organization = forms.CharField(
-        label=models.CertificateAuthority._meta.get_field('cert_organization').verbose_name,
+        label=_('Organization'),
         required=True,
-        help_text=models.CertificateAuthority._meta.get_field('cert_organization').help_text
+        help_text=_('Organization Name (eg, company)')
     )
     cert_organizational_unit = forms.CharField(
-        label=models.CertificateAuthority._meta.get_field('cert_organizational_unit').verbose_name,
+        label=_('Organizational Unit'),
         required=False,
-        help_text=models.CertificateAuthority._meta.get_field('cert_organizational_unit').help_text
+        help_text=_('Organizational unit of the entity')
     )
     cert_email = forms.CharField(
-        label=models.CertificateAuthority._meta.get_field('cert_email').verbose_name,
+        label=_('Email Address'),
         required=True,
-        help_text=models.CertificateAuthority._meta.get_field('cert_email').help_text,
+        help_text=_('Email Address'),
     )
     cert_common = forms.CharField(
-        label=models.CertificateAuthority._meta.get_field('cert_common').verbose_name,
+        label=_('Common Name'),
         required=True,
-        help_text=models.CertificateAuthority._meta.get_field('cert_common').help_text
+        help_text=_('Common Name (eg, FQDN of FreeNAS server or service)')
     )
     cert_san = forms.CharField(
         widget=forms.Textarea,
-        label=models.CertificateAuthority._meta.get_field('cert_san').verbose_name,
+        label=_('Subject Alternate Names'),
         required=False,
-        help_text=models.CertificateAuthority._meta.get_field('cert_san').help_text
+        help_text=_('Multi-domain support. Enter additional space separated domains')
     )
 
     def middleware_clean(self, data):
@@ -2592,64 +2607,64 @@ class CertificateAuthorityCreateIntermediateForm(MiddlewareModelForm, ModelForm)
         help_text=models.CertificateAuthority._meta.get_field('cert_name').help_text
     )
     cert_key_length = forms.ChoiceField(
-        label=models.CertificateAuthority._meta.get_field('cert_key_length').verbose_name,
+        label=_('Key Length'),
         required=True,
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
     cert_digest_algorithm = forms.ChoiceField(
-        label=models.CertificateAuthority._meta.get_field('cert_digest_algorithm').verbose_name,
+        label=_('Digest Algorithm'),
         required=True,
         choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
     cert_lifetime = forms.IntegerField(
-        label=models.CertificateAuthority._meta.get_field('cert_lifetime').verbose_name,
+        label=_('Lifetime'),
         required=True,
         initial=3650
     )
     cert_country = forms.ChoiceField(
-        label=models.CertificateAuthority._meta.get_field('cert_country').verbose_name,
+        label=_('Country'),
         required=True,
         choices=choices.COUNTRY_CHOICES(),
         initial='US',
-        help_text=models.CertificateAuthority._meta.get_field('cert_country').help_text
+        help_text=_('Country Name (2 letter code)')
     )
     cert_state = forms.CharField(
-        label=models.CertificateAuthority._meta.get_field('cert_state').verbose_name,
+        label=_('State'),
         required=True,
-        help_text=models.CertificateAuthority._meta.get_field('cert_state').help_text,
+        help_text=_('State or Province Name (full name)')
     )
     cert_city = forms.CharField(
-        label=models.CertificateAuthority._meta.get_field('cert_city').verbose_name,
+        label=_('Locality'),
         required=True,
-        help_text=models.CertificateAuthority._meta.get_field('cert_city').help_text
+        help_text=_('Locality Name (eg, city)'),
     )
     cert_organization = forms.CharField(
-        label=models.CertificateAuthority._meta.get_field('cert_organization').verbose_name,
+        label=_('Organization'),
         required=True,
-        help_text=models.CertificateAuthority._meta.get_field('cert_organization').help_text
+        help_text=_('Organization Name (eg, company)')
     )
     cert_organizational_unit = forms.CharField(
-        label=models.CertificateAuthority._meta.get_field('cert_organizational_unit').verbose_name,
+        label=_('Organizational Unit'),
         required=False,
-        help_text=models.CertificateAuthority._meta.get_field('cert_organizational_unit').help_text
+        help_text=_('Organizational unit of the entity')
     )
     cert_email = forms.CharField(
-        label=models.CertificateAuthority._meta.get_field('cert_email').verbose_name,
+        label=_('Email Address'),
         required=True,
-        help_text=models.CertificateAuthority._meta.get_field('cert_email').help_text
+        help_text=_('Email Address'),
     )
     cert_common = forms.CharField(
-        label=models.CertificateAuthority._meta.get_field('cert_common').verbose_name,
+        label=_('Common Name'),
         required=True,
-        help_text=models.CertificateAuthority._meta.get_field('cert_common').help_text
+        help_text=_('Common Name (eg, FQDN of FreeNAS server or service)')
     )
     cert_san = forms.CharField(
         widget=forms.Textarea,
-        label=models.CertificateAuthority._meta.get_field('cert_san').verbose_name,
+        label=_('Subject Alternate Names'),
         required=False,
-        help_text=models.CertificateAuthority._meta.get_field('cert_san').help_text
+        help_text=_('Multi-domain support. Enter additional space separated domains')
     )
 
     def __init__(self, *args, **kwargs):
@@ -2820,7 +2835,10 @@ class CertificateACMEForm(MiddlewareModelForm, ModelForm):
 
     class Meta:
         fields = [
-            'cert_name'
+            'cert_name',
+            'cert_tos',
+            'cert_renew_days',
+            'cert_acme_directory_uri'
         ]
         model = models.Certificate
 
@@ -2878,8 +2896,12 @@ class CertificateEditForm(MiddlewareModelForm, ModelForm):
     cert_certificate = forms.CharField(
         label=models.Certificate._meta.get_field('cert_certificate').verbose_name,
         widget=forms.Textarea(),
-        required=True,
         help_text=models.Certificate._meta.get_field('cert_certificate').help_text
+    )
+    cert_privatekey = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_privatekey').verbose_name,
+        widget=forms.Textarea(),
+        help_text=models.Certificate._meta.get_field('cert_privatekey').help_text
     )
 
     def __init__(self, *args, **kwargs):
@@ -2917,8 +2939,12 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
     cert_CSR = forms.CharField(
         label=models.Certificate._meta.get_field('cert_CSR').verbose_name,
         widget=forms.Textarea(),
-        required=True,
         help_text=models.Certificate._meta.get_field('cert_CSR').help_text
+    )
+    cert_privatekey = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_privatekey').verbose_name,
+        widget=forms.Textarea(),
+        help_text=models.Certificate._meta.get_field('cert_privatekey').help_text
     )
 
     def __init__(self, *args, **kwargs):
@@ -2927,6 +2953,7 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
 
         self.fields['cert_name'].widget.attrs['readonly'] = False
         self.fields['cert_CSR'].widget.attrs['readonly'] = True
+        self.fields['cert_privatekey'].widget.attrs['readonly'] = True
 
     def middleware_clean(self, data):
         data.pop('CSR', None)
@@ -2936,6 +2963,7 @@ class CertificateCSREditForm(MiddlewareModelForm, ModelForm):
         fields = [
             'cert_name',
             'cert_CSR',
+            'cert_privatekey'
         ]
         model = models.Certificate
 
@@ -2953,7 +2981,8 @@ class CertificateCSRImportForm(MiddlewareModelForm, ModelForm):
             'cert_name',
             'cert_csr',
             'cert_privatekey',
-            'cert_passphrase'
+            'cert_passphrase',
+            'cert_passphrase2'
         ]
         model = models.Certificate
 
@@ -3025,7 +3054,8 @@ class CertificateImportForm(MiddlewareModelForm, ModelForm):
             'cert_csr_id',
             'cert_certificate',
             'cert_privatekey',
-            'cert_passphrase'
+            'cert_passphrase',
+            'cert_passphrase2'
         ]
         model = models.Certificate
 
@@ -3124,64 +3154,64 @@ class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
         help_text=models.Certificate._meta.get_field('cert_name').help_text
     )
     cert_key_length = forms.ChoiceField(
-        label=models.Certificate._meta.get_field('cert_key_length').verbose_name,
+        label=_('Key Length'),
         required=True,
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
     cert_digest_algorithm = forms.ChoiceField(
-        label=models.Certificate._meta.get_field('cert_digest_algorithm').verbose_name,
+        label=_('Digest Algorithm'),
         required=True,
         choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
     cert_lifetime = forms.IntegerField(
-        label=models.Certificate._meta.get_field('cert_lifetime').verbose_name,
+        label=_('Lifetime'),
         required=True,
         initial=3650
     )
     cert_country = forms.ChoiceField(
-        label=models.Certificate._meta.get_field('cert_country').verbose_name,
+        label=_('Country'),
         required=True,
         choices=choices.COUNTRY_CHOICES(),
         initial='US',
-        help_text=models.Certificate._meta.get_field('cert_country').help_text
+        help_text=_('Country Name (2 letter code)')
     )
     cert_state = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_state').verbose_name,
+        label=_('State'),
         required=True,
-        help_text=models.Certificate._meta.get_field('cert_state').help_text
+        help_text=_('State or Province Name (full name)')
     )
     cert_city = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_city').verbose_name,
+        label=_('Locality'),
         required=True,
-        help_text=models.Certificate._meta.get_field('cert_city').help_text
+        help_text=_('Locality Name (eg, city)'),
     )
     cert_organization = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_organization').verbose_name,
+        label=_('Organization'),
         required=True,
-        help_text=models.Certificate._meta.get_field('cert_organization').help_text
+        help_text=_('Organization Name (eg, company)')
     )
     cert_organizational_unit = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_organizational_unit').verbose_name,
+        label=_('Organizational Unit'),
         required=False,
-        help_text=models.Certificate._meta.get_field('cert_organizational_unit').help_text
+        help_text=_('Organizational unit of the entity')
     )
     cert_email = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_email').verbose_name,
+        label=_('Email Address'),
         required=True,
-        help_text=models.Certificate._meta.get_field('cert_email').help_text
+        help_text=_('Email Address'),
     )
     cert_common = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_common').verbose_name,
+        label=_('Common Name'),
         required=True,
-        help_text=models.Certificate._meta.get_field('cert_common').help_text
+        help_text=_('Common Name (eg, FQDN of FreeNAS server or service)')
     )
     cert_san = forms.CharField(
         widget=forms.Textarea,
-        label=models.Certificate._meta.get_field('cert_san').verbose_name,
+        label=_('Subject Alternate Names'),
         required=False,
-        help_text=models.Certificate._meta.get_field('cert_san').help_text
+        help_text=_('Multi-domain support. Enter additional space separated domains')
     )
 
     def __init__(self, *args, **kwargs):
@@ -3219,9 +3249,10 @@ class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
             'cert_state',
             'cert_city',
             'cert_organization',
+            'cert_organizational_unit',
             'cert_email',
             'cert_common',
-            'cert_san',
+            'cert_san'
         ]
         model = models.Certificate
 
@@ -3240,59 +3271,59 @@ class CertificateCreateCSRForm(MiddlewareModelForm, ModelForm):
         help_text=models.Certificate._meta.get_field('cert_name').help_text
     )
     cert_key_length = forms.ChoiceField(
-        label=models.Certificate._meta.get_field('cert_key_length').verbose_name,
+        label=_('Key Length'),
         required=True,
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
     cert_digest_algorithm = forms.ChoiceField(
-        label=models.Certificate._meta.get_field('cert_digest_algorithm').verbose_name,
+        label=_('Digest Algorithm'),
         required=True,
         choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
     cert_country = forms.ChoiceField(
-        label=models.Certificate._meta.get_field('cert_country').verbose_name,
+        label=_('Country'),
         required=True,
         choices=choices.COUNTRY_CHOICES(),
         initial='US',
-        help_text=models.Certificate._meta.get_field('cert_country').help_text
+        help_text=_('Country Name (2 letter code)')
     )
     cert_state = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_state').verbose_name,
+        label=_('State'),
         required=True,
-        help_text=models.Certificate._meta.get_field('cert_state').help_text
+        help_text=_('State or Province Name (full name)')
     )
     cert_city = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_city').verbose_name,
+        label=_('Locality'),
         required=True,
-        help_text=models.Certificate._meta.get_field('cert_city').help_text,
+        help_text=_('Locality Name (eg, city)'),
     )
     cert_organization = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_organization').verbose_name,
+        label=_('Organization'),
         required=True,
-        help_text=models.Certificate._meta.get_field('cert_organization').help_text
+        help_text=_('Organization Name (eg, company)')
     )
     cert_organizational_unit = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_organizational_unit').verbose_name,
+        label=_('Organizational Unit'),
         required=False,
-        help_text=models.Certificate._meta.get_field('cert_organizational_unit').help_text
+        help_text=_('Organizational unit of the entity')
     )
     cert_email = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_email').verbose_name,
+        label=_('Email Address'),
         required=True,
-        help_text=models.Certificate._meta.get_field('cert_email').help_text
+        help_text=_('Email Address'),
     )
     cert_common = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_common').verbose_name,
+        label=_('Common Name'),
         required=True,
-        help_text=models.Certificate._meta.get_field('cert_common').help_text
+        help_text=_('Common Name (eg, FQDN of FreeNAS server or service)')
     )
     cert_san = forms.CharField(
         widget=forms.Textarea,
-        label=models.Certificate._meta.get_field('cert_san').verbose_name,
+        label=_('Subject Alternate Names'),
         required=False,
-        help_text=models.Certificate._meta.get_field('cert_san').help_text
+        help_text=_('Multi-domain support. Enter additional space separated domains')
     )
 
     def __init__(self, *args, **kwargs):
@@ -3314,9 +3345,10 @@ class CertificateCreateCSRForm(MiddlewareModelForm, ModelForm):
             'cert_state',
             'cert_city',
             'cert_organization',
+            'cert_organizational_unit',
             'cert_email',
             'cert_common',
-            'cert_san',
+            'cert_san'
         ]
         model = models.Certificate
 

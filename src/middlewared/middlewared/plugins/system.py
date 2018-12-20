@@ -665,41 +665,27 @@ class SystemGeneralService(ConfigService):
                     )
 
         certificate_id = data.get('ui_certificate')
-        if not certificate_id:
+        cert = await self.middleware.call(
+            'certificate.query',
+            [["id", "=", certificate_id]]
+        )
+        if not cert:
             verrors.add(
                 f'{schema}.ui_certificate',
-                'Certificate is required'
+                'Please specify a valid certificate which exists in the system'
             )
         else:
-            cert = await self.middleware.call(
-                'certificate.query',
-                [
-                    ["id", "=", certificate_id],
-                    ["CSR", "=", None]
-                ]
+            cert = cert[0]
+            verrors.extend(
+                await self.middleware.call(
+                    'certificate.certificate_nginx_health', certificate_id, f'{schema}.ui_certificate', False
+                )
             )
-            if not cert:
-                verrors.add(
-                    f'{schema}.ui_certificate',
-                    'Please specify a valid certificate which exists on the FreeNAS system'
-                )
-            else:
-                # getting fingerprint for certificate
-                fingerprint = await self.middleware.call(
-                    'certificate.get_fingerprint_of_cert',
-                    certificate_id
-                )
-                if fingerprint:
-                    syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
-                    syslog.syslog(syslog.LOG_ERR, 'Fingerprint of the certificate used in UI : ' + fingerprint)
-                    syslog.closelog()
-                else:
-                    # One reason value is None - error while parsing the certificate for fingerprint
-                    verrors.add(
-                        f'{schema}.ui_certificate',
-                        'Please check if the certificate has been added to the system and it is a '
-                        'valid certificate'
-                    )
+
+            if cert['fingerprint']:
+                syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
+                syslog.syslog(syslog.LOG_ERR, 'Fingerprint of the certificate used in UI : ' + cert['fingerprint'])
+                syslog.closelog()
 
         return verrors
 

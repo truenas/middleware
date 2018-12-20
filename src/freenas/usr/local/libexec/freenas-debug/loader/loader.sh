@@ -36,6 +36,10 @@ loader_func()
 	sc /boot/loader.conf
 	section_footer
 
+	section_header "/boot/loader.conf.local"
+	sc /boot/loader.conf.local
+	section_footer
+
 	section_header "kenv"
 	kenv
 	section_footer

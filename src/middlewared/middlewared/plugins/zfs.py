@@ -479,29 +479,24 @@ class ZFSDatasetService(CRUDService):
 
     def do_delete(self, id, options=None):
         options = options or {}
-        defer = options.get('defer', False)
         force = options.get('force', False)
         recursive = options.get('recursive', False)
+
+        args = []
+        if force:
+            args += ['-f']
+        if recursive:
+            args += ['-r']
+
+        # Destroying may take a long time, lets not use py-libzfs as it will block
+        # other ZFS operations.
         try:
-            with libzfs.ZFS() as zfs:
-                ds = zfs.get_dataset(id)
-
-                if ds.type == libzfs.DatasetType.FILESYSTEM:
-                    if recursive:
-                        ds.umount_recursive(force=force)
-                    else:
-                        ds.umount(force=force)
-
-                if recursive:
-                    for dependent in ds.dependents:
-                        dependent.delete(defer=defer)
-
-                ds.delete(defer=defer)
-        except libzfs.ZFSException as e:
-            if e.code == libzfs.Error.UMOUNTFAILED:
-                raise CallError('Dataset is busy', errno.EBUSY)
+            subprocess.run(
+                ['zfs', 'destroy'] + args + [id], text=True, capture_output=True, check=True,
+            )
+        except subprocess.CalledProcessError as e:
             self.logger.error('Failed to delete dataset', exc_info=True)
-            raise CallError(f'Failed to delete dataset: {e}')
+            raise CallError(f'Failed to delete dataset: {e.stderr.strip()}')
 
     def mount(self, name):
         try:
@@ -615,19 +610,30 @@ class ZFSSnapshot(CRUDService):
         Returns:
             bool: True if succeed otherwise False.
         """
+        self.logger.debug('zfs.snapshot.remove is deprecated, use zfs.snapshot.delete')
         snapshot_name = data['dataset'] + '@' + data['name']
+        try:
+            self.do_delete(snapshot_name, {'defer': data.get('defer_delete') or False})
+        except Exception:
+            return False
+        return True
 
+    @accepts(
+        Str('id'),
+        Dict('options', Bool('defer', default=False)),
+    )
+    def do_delete(self, id, options):
+        """
+        Delete snapshot of name `id`.
+
+        `options.defer` will defer the deletion of snapshot.
+        """
         try:
             with libzfs.ZFS() as zfs:
-                snap = zfs.get_snapshot(snapshot_name)
-                snap.delete(True if data.get('defer_delete') else False)
-        except libzfs.ZFSException as err:
-            self.logger.error("{0}".format(err))
-            return False
-        else:
-            self.logger.info(f"Destroyed snapshot: {snapshot_name}")
-
-        return True
+                snap = zfs.get_snapshot(id)
+                snap.delete(defer=options['defer'])
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
 
     @accepts(Dict(
         'snapshot_clone',
@@ -657,6 +663,41 @@ class ZFSSnapshot(CRUDService):
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
             return False
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'options',
+            Bool('recursive', default=False),
+            Bool('recursive_clones', default=False),
+            Bool('force', default=False),
+        ),
+    )
+    def rollback(self, id, options):
+        """
+        Rollback to a given snapshot `id`.
+
+        `options.recursive` will destroy any snapshots and bookmarks more recent than the one
+        specified.
+
+        `options.recursive_clones` is just like `recursive` but will also destroy any clones.
+
+        `options.force` will force unmount of any clones.
+        """
+        args = []
+        if options['force']:
+            args += ['-f']
+        if options['recursive']:
+            args += ['-r']
+        if options['recursive_clones']:
+            args += ['-R']
+
+        try:
+            subprocess.run(
+                ['zfs', 'rollback'] + args + [id], text=True, capture_output=True, check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            raise CallError(f'Failed to rollback snapshot: {e.stderr.strip()}')
 
 
 class ScanWatch(object):

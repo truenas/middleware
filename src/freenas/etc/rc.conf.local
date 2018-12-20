@@ -786,7 +786,6 @@ _gen_conf()
 	done
 
 	if is_freenas; then
-		echo "ataidle_enable=\"YES\""
 		# Bug #7337 -- blacklist AMD systems for now
 		if /sbin/sysctl hw.model | grep -q AMD; then
 			echo "watchdogd_enable=\"NO\""
@@ -794,7 +793,6 @@ _gen_conf()
 			_watchdogd_config
 		fi
 	else
-		echo "ataidle_enable=\"NO\""
 		echo "watchdogd_enable=\"NO\""
 	fi
 

@@ -85,7 +85,6 @@ from freenasUI.middleware.client import client, ValidationErrors
 from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-from freenasUI.middleware.util import run_alerts
 from freenasUI.network.forms import AliasForm
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins.models import Plugins
@@ -103,6 +102,7 @@ from freenasUI.storage.forms import (
     ReKeyForm,
     CreatePassphraseForm,
     ChangePassphraseForm,
+    Dataset_Destroy,
     ManualSnapshotForm,
     LockPassphraseForm,
     UnlockPassphraseForm,
@@ -112,7 +112,8 @@ from freenasUI.storage.forms import (
     ZVol_CreateForm,
     ZVol_EditForm,
     ZFSDatasetCreateForm,
-    ZFSDatasetEditForm
+    ZFSDatasetEditForm,
+    ZvolDestroyForm,
 )
 from freenasUI.storage.models import Disk, VMWarePlugin
 from freenasUI.system.forms import (
@@ -582,14 +583,19 @@ class DatasetResource(DojoResource):
             raise NotFound("Dataset not found.")
 
     def obj_delete(self, bundle, **kwargs):
+        deserialized = self._meta.serializer.deserialize(
+            bundle.request.body or '{}',
+            format='application/json',
+        )
+        deserialized.setdefault('cascade', True)
         if 'parent' in kwargs:
             path = f'{kwargs["parent"].vol_name}/{kwargs["pk"]}'
         else:
             path = kwargs['pk']
-        retval = notifier().destroy_zfs_dataset(path=path, recursive=True)
-        if retval:
+        form = Dataset_Destroy(deserialized, fs=path)
+        if not form.is_valid() or form.done() is False:
             raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, retval)
+                response=self.error_response(bundle.request, form.errors)
             )
         return HttpResponse(status=204)
 
@@ -709,13 +715,13 @@ class ZVolResource(DojoResource):
             bundle.request.body or '{}',
             format='application/json',
         )
-        retval = notifier().destroy_zfs_vol("%s/%s" % (
+        form = ZvolDestroyForm(deserialized, fs="%s/%s" % (
             kwargs.get('parent').vol_name,
             kwargs.get('pk'),
-        ), deserialized.get('cascade', False))
-        if retval:
+        ))
+        if not form.is_valid() or form.done() is False:
             raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, retval)
+                response=self.error_response(bundle.request, form.errors)
             )
         return HttpResponse(status=204)
 
@@ -2833,10 +2839,14 @@ class SnapshotResource(DojoResource):
             request.body,
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
-        rv = notifier().rollback_zfs_snapshot(snapshot=kwargs['pk'], force=deserialized.get('force', False))
-        if rv != '':
+        try:
+            with client as c:
+                c.call('zfs.snapshot.rollback', kwargs['pk'], {
+                    'recursive': deserialized.get('force', False)
+                })
+        except ClientException as e:
             raise ImmediateHttpResponse(
-                response=self.error_response(request, rv)
+                response=self.error_response(request, str(e))
             )
 
         return HttpResponse('Snapshot rolled back.', status=202)
@@ -2963,11 +2973,12 @@ class SnapshotResource(DojoResource):
         snap = snap[0][0]
 
         try:
-            notifier().destroy_zfs_dataset(path=kwargs['pk'])
-        except MiddlewareError as e:
+            with client as c:
+                c.call('zfs.snapshot.delete', kwargs['pk'])
+        except ClientException as e:
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, {
-                    'error': e.value,
+                    'error': str(e),
                 })
             )
 
@@ -3268,22 +3279,38 @@ class CertificateAuthorityResourceMixin(object):
             form.save()
         return HttpResponse('Certificate Authority created.', status=201)
 
+    def dispatch_list(self, request, **kwargs):
+        with client as c:
+            self.__certs = {cert['id']: cert for cert in c.call('certificateauthority.query')}
+
+        return super(CertificateAuthorityResourceMixin, self).dispatch_list(request, **kwargs)
+
     def dehydrate(self, bundle):
         bundle = super(CertificateAuthorityResourceMixin,
                        self).dehydrate(bundle)
 
         try:
-            bundle.data['cert_internal'] = bundle.obj.cert_internal
-            bundle.data['cert_issuer'] = bundle.obj.cert_issuer
-            bundle.data['cert_ncertificates'] = bundle.obj.cert_ncertificates
-            bundle.data['cert_DN'] = bundle.obj.cert_DN
-            bundle.data['cert_from'] = bundle.obj.cert_from
-            bundle.data['cert_until'] = bundle.obj.cert_until
+            data = self.__certs[bundle.obj.id]
+
+            if isinstance(data['issuer'], dict):
+                data['issuer'] = data['issuer']['name']
+
+            bundle.data['cert_ncertificates'] = data['signed_certificates']
             bundle.data['cert_privatekey'] = bundle.obj.cert_privatekey
 
-            bundle.data['CA_type_existing'] = bundle.obj.CA_type_existing
-            bundle.data['CA_type_internal'] = bundle.obj.CA_type_internal
-            bundle.data['CA_type_intermediate'] = bundle.obj.CA_type_intermediate
+            bundle.data['CA_type_existing'] = data['CA_type_existing']
+            bundle.data['CA_type_internal'] = data['CA_type_internal']
+            bundle.data['CA_type_intermediate'] = data['CA_type_intermediate']
+
+            # Keeping consistent with old api v1 fields
+            bundle.data.update({
+                f'cert_{k}': data.get(k)
+                for k in [
+                    'key_length', 'digest_algorithm', 'lifetime', 'country', 'state', 'city',
+                    'organization', 'organizational_unit', 'email', 'common', 'san', 'serial',
+                    'chain', 'until', 'from', 'DN', 'issuer', 'internal'
+                ]
+            })
 
             if self.is_webclient(bundle.request):
                 bundle.data['_sign_csr_url'] = reverse(
@@ -3312,13 +3339,9 @@ class CertificateAuthorityResourceMixin(object):
                 )
         except Exception as err:
             bundle.data['cert_DN'] = "ERROR: " + str(err)
-            # There was an error parsing this Certificate Authority object
-            # Creating a sentinel file for the alertmod to pick it up
-            with open('/tmp/alert_invalidCA_{0}'.format(bundle.obj.cert_name),
-                      'w') as fout:
-                fout.write('')
-
-            run_alerts()
+        else:
+            if not bundle.data.get('cert_DN'):
+                bundle.data['cert_DN'] = 'Failed to parse'
 
         return bundle
 
@@ -3486,23 +3509,40 @@ class CertificateResourceMixin(object):
             form.save()
         return HttpResponse('Certificate created.', status=201)
 
+    def dispatch_list(self, request, **kwargs):
+        with client as c:
+            self.__certs = {cert['id']: cert for cert in c.call('certificate.query')}
+
+        return super(CertificateResourceMixin, self).dispatch_list(request, **kwargs)
+
     def dehydrate(self, bundle):
         bundle = super(CertificateResourceMixin, self).dehydrate(bundle)
 
         try:
-            bundle.data['cert_issuer'] = bundle.obj.cert_issuer
-            bundle.data['cert_DN'] = bundle.obj.cert_DN
+            data = self.__certs[bundle.obj.id]
+
+            if isinstance(data['issuer'], dict):
+                data['issuer'] = data['issuer']['name']
+
             bundle.data['cert_CSR'] = bundle.obj.cert_CSR
-            bundle.data['cert_from'] = bundle.obj.cert_from
-            bundle.data['cert_until'] = bundle.obj.cert_until
             bundle.data['cert_privatekey'] = bundle.obj.cert_privatekey
 
-            bundle.data['cert_type_existing'] = bundle.obj.cert_type_existing
-            bundle.data['cert_type_internal'] = bundle.obj.cert_type_internal
-            bundle.data['cert_type_CSR'] = bundle.obj.cert_type_CSR
+            bundle.data['cert_type_existing'] = data['cert_type_existing']
+            bundle.data['cert_type_internal'] = data['cert_type_internal']
+            bundle.data['cert_type_CSR'] = data['cert_type_CSR']
+
+            # Keeping consistent with old api v1 fields
+            bundle.data.update({
+                f'cert_{k}': data.get(k)
+                for k in [
+                    'key_length', 'digest_algorithm', 'lifetime', 'country', 'state', 'city',
+                    'organization', 'organizational_unit', 'email', 'common', 'san', 'serial',
+                    'chain', 'until', 'from', 'DN', 'issuer'
+                ]
+            })
 
             if self.is_webclient(bundle.request):
-                if bundle.obj.cert_type_CSR:
+                if data['cert_type_CSR']:
                     bundle.data['_CSR_edit_url'] = reverse(
                         'CSR_edit',
                         kwargs={
@@ -3545,14 +3585,11 @@ class CertificateResourceMixin(object):
                         'id': bundle.obj.id
                     }
                 )
-        except Exception:
-            # There was an error parsing this Certificate object
-            # Creating a sentinel file for the alertmod to pick it up
-            with open('/tmp/alert_invalidcert_{0}'.format(bundle.obj.cert_name),
-                      'w') as fout:
-                fout.write('')
-
-            run_alerts()
+        except Exception as err:
+            bundle.data['cert_DN'] = "ERROR: " + str(err)
+        else:
+            if not bundle.data.get('cert_DN'):
+                bundle.data['cert_DN'] = 'Failed to parse'
 
         return bundle
 

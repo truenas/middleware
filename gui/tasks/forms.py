@@ -103,7 +103,10 @@ class CloudSyncForm(ModelForm):
                 pass
 
             if len(kwargs["instance"].bwlimit) == 1 and kwargs["instance"].bwlimit[0]["time"] == "00:00":
-                kwargs["initial"]["bwlimit"] = humanize_size_rclone(kwargs["instance"].bwlimit[0]['bandwidth'])
+                if kwargs["instance"].bwlimit[0]['bandwidth'] is not None:
+                    kwargs["initial"]["bwlimit"] = humanize_size_rclone(kwargs["instance"].bwlimit[0]['bandwidth'])
+                else:
+                    kwargs["initial"]["bwlimit"] = ""
             else:
                 kwargs["initial"]["bwlimit"] = " ".join([
                     f"{limit['time']},{humanize_size_rclone(limit['bandwidth']) if limit['bandwidth'] else 'off'}"
@@ -163,8 +166,9 @@ class CloudSyncForm(ModelForm):
         return w
 
     def clean_bwlimit(self):
-        v = self.cleaned_data.get('bwlimit')
-        if "," not in v:
+        v = self.cleaned_data.get('bwlimit').strip()
+
+        if v and "," not in v:
             v = f"00:00,{v}"
 
         bwlimit = []
