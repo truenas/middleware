@@ -1115,7 +1115,7 @@ class PoolService(CRUDService):
 
         await self.middleware.call('zfs.pool.detach', pool['name'], found[1]['guid'])
 
-        await self.middleware.call('notifier.sync_encrypted', oid)
+        await self.middleware.call('pool.sync_encrypted', oid)
 
         if disk:
             await self.middleware.call('disk.unlabel', disk)
@@ -1260,7 +1260,7 @@ class PoolService(CRUDService):
 
         await self.middleware.call('zfs.pool.remove', pool['name'], found[1]['guid'])
 
-        await self.middleware.call('notifier.sync_encrypted', oid)
+        await self.middleware.call('pool.sync_encrypted', oid)
 
         if found[1]['path'].endswith('.eli'):
             devname = found[1]['path'].replace('/dev/', '')[:-4]
@@ -1544,7 +1544,7 @@ class PoolService(CRUDService):
                     raise CallError(f'Pool could not be imported ({detach_failed} devices left decrypted): {str(e)}')
                 raise e
 
-        await self.middleware.call('notifier.sync_encrypted', oid)
+        await self.middleware.call('pool.sync_encrypted', oid)
 
         await self.middleware.call('core.bulk', 'service.restart', [
             [i] for i in options['services_restart'] + ['system_datasets', 'disk']
@@ -1781,7 +1781,7 @@ class PoolService(CRUDService):
             # Reset all mountpoints
             await self.middleware.call('zfs.dataset.inherit', pool_name, 'mountpoint', True)
 
-            await self.middleware.call('notifier.sync_encrypted', pool_id)
+            await self.middleware.call('pool.sync_encrypted', pool_id)
         except Exception:
             if scrub_id:
                 await self.middleware.call('pool.scrub.delete', scrub_id)
@@ -2885,5 +2885,20 @@ class PoolScrubService(CRUDService):
         return response
 
 
+async def _event_zfs(middleware, event_type, args):
+    data = args['data']
+    if data.get('subsystem') != 'ZFS':
+        return
+
+    if data.get('type') in (
+        'ATTACH',
+        'DETACH',
+        'resource.fs.zfs.removed',
+        'misc.fs.zfs.config_sync',
+    ):
+        asyncio.ensure_future(middleware.call('pool.sync_encrypted'))
+
+
 def setup(middleware):
+    middleware.event_subscribe('devd.zfs', _event_zfs)
     asyncio.ensure_future(middleware.call('pool.configure_resilver_priority'))

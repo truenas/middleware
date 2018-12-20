@@ -979,7 +979,6 @@ def volume_unlock(request, object_id):
                 id=volume.vol_guid
             )
             if zimport and volume.is_decrypted:
-                notifier().sync_encrypted(volume=volume)
                 return JsonResp(
                     request,
                     message=_("Volume unlocked"))
