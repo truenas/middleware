@@ -731,7 +731,7 @@ class Middleware(object):
 
     def __init__(
         self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None,
-        log_handler=None,
+        log_handler=None, startup_seq_path=None,
     ):
         self.logger = logger.Logger('middlewared', debug_level).getLogger()
         self.crash_reporting = logger.CrashReporting()
@@ -741,6 +741,8 @@ class Middleware(object):
         self.overlay_dirs = overlay_dirs or []
         self.debug_level = debug_level
         self.log_handler = log_handler
+        self.startup_seq = 0
+        self.startup_seq_path = startup_seq_path
         self.app = None
         self.__loop = None
         self.__thread_id = threading.get_ident()
@@ -790,6 +792,9 @@ class Middleware(object):
                 raise ValueError(f'plugins dir not found: {plugins_dir}')
 
             for mod in load_modules(plugins_dir):
+                self._console_write(f'loaded plugin {mod.__name__}')
+                self.__incr_startup_seq()
+
                 for cls in load_classes(mod, Service, (ConfigService, CRUDService, SystemServiceService)):
                     self.add_service(cls(self))
 
@@ -812,6 +817,7 @@ class Middleware(object):
         for i, setup_func in enumerate(setup_funcs):
             name, f = setup_func
             self._console_write(f'setting up plugins ({name}) [{i + 1}/{setup_total}]')
+            self.__incr_startup_seq()
             call = f(self)
             # Allow setup to be a coroutine
             if asyncio.iscoroutinefunction(f):
@@ -867,6 +873,7 @@ class Middleware(object):
         giving user at least some basic feedback is fundamental.
         """
         # False means we are running in a terminal, no console needed
+        self.logger.trace('_console_write %r', text)
         if self.__console_io is False:
             return
         elif self.__console_io is None:
@@ -910,6 +917,17 @@ class Middleware(object):
             self.logger.debug('Failed to write to console', exc_info=True)
         except Exception:
             pass
+
+    def __incr_startup_seq(self):
+        if self.startup_seq_path is None:
+            return
+
+        with open(self.startup_seq_path + ".tmp", "w") as f:
+            f.write(f"{self.startup_seq}")
+
+        os.rename(self.startup_seq_path + ".tmp", self.startup_seq_path)
+
+        self.startup_seq += 1
 
     def plugin_route_add(self, plugin_name, route, method):
         self.app.router.add_route('*', f'/_plugins/{plugin_name}/{route}', method)
@@ -1326,6 +1344,7 @@ def main():
     args = parser.parse_args()
 
     pidpath = '/var/run/middlewared.pid'
+    startup_seq_path = '/var/run/middlewared_startup.seq'
 
     if args.restart:
         if os.path.exists(pidpath):
@@ -1353,6 +1372,7 @@ def main():
         overlay_dirs=args.overlay_dirs,
         debug_level=args.debug_level,
         log_handler=args.log_handler,
+        startup_seq_path=startup_seq_path,
     ).run()
 
 

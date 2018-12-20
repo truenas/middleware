@@ -31,10 +31,9 @@ middlewared_start() {
 		env PATH=$PATH:/usr/local/sbin:/usr/local/bin LC_ALL=en_US.UTF-8 ${command} -f -P ${pidfile} -r /usr/local/bin/middlewared ${overlay_dirs_arg} --log-handler=file
 	fi
 	if ! LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt -t 240 waitready; then
-		echo "#################"
-		echo "MIDDLEWARED FAILED TO START WITHIN 4 MINUTES, SYSTEM WILL NOT BEHAVE" \
-		     "CORRECTLY!!"
-		echo "#################"
+		echo "##############################################################"
+		echo "MIDDLEWARED FAILED TO START, SYSTEM WILL NOT BEHAVE CORRECTLY!"
+		echo "##############################################################"
 	fi
 }
 
