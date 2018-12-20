@@ -34,7 +34,6 @@ command line utility, this helper class can also be used to do these
 actions.
 """
 
-from collections import OrderedDict
 from decimal import Decimal
 import base64
 from Crypto.Cipher import AES
@@ -44,7 +43,6 @@ import grp
 import libzfs
 import logging
 import os
-import platform
 import pwd
 import re
 import shutil
@@ -90,9 +88,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.common.acl import (ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE,
                                   ACL_MAC_FILE)
 from freenasUI.common.freenasacl import ACL
-from freenasUI.common.jail import Jls
 from freenasUI.common.pipesubr import SIG_SETMASK
-from freenasUI.common.pbi import pbi_delete, pbi_info, PBI_INFO_FLAGS_VERBOSE
 from freenasUI.common.system import (
     FREENAS_DATABASE,
     exclude_path,
@@ -105,7 +101,7 @@ from freenasUI.common.warden import (Warden, WardenJail,
                                      WARDEN_STATUS_RUNNING)
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
-from freenasUI.middleware.client import client, ClientException
+from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.multipath import Multipath
 import sysctl
@@ -372,50 +368,6 @@ class notifier(metaclass=HookMetaclass):
                         providers.append((part, part))
         return providers
 
-    def list_zfs_vols(self, volname, sort=None):
-        """Return a dictionary that contains all ZFS volumes list"""
-
-        if sort is None:
-            sort = ''
-        else:
-            sort = '-s %s' % sort
-
-        zfsproc = self._pipeopen("/sbin/zfs list -p -H -o name,volsize,used,avail,refer,compression,compressratio %s -t volume -r '%s'" % (sort, str(volname),))
-        zfs_output, zfs_err = zfsproc.communicate()
-        zfs_output = zfs_output.split('\n')
-        retval = {}
-        for line in zfs_output:
-            if line == "":
-                continue
-            data = line.split('\t')
-            retval[data[0]] = {
-                'volsize': int(data[1]),
-                'used': int(data[2]),
-                'avail': int(data[3]),
-                'refer': int(data[4]),
-                'compression': data[5],
-                'compressratio': data[6],
-            }
-        return retval
-
-    def list_zfs_fsvols(self, system=False):
-        proc = self._pipeopen("/sbin/zfs list -H -o name -t volume,filesystem")
-        out, err = proc.communicate()
-        out = out.split('\n')
-        retval = OrderedDict()
-        if system is False:
-            with client as c:
-                basename = c.call('systemdataset.config')['basename']
-        if proc.returncode == 0:
-            for line in out:
-                if not line:
-                    continue
-                if system is False and basename:
-                    if line == basename or line.startswith(basename + '/'):
-                        continue
-                retval[line] = line
-        return retval
-
     def zfs_offline_disk(self, volume, label):
         try:
             with client as c:
@@ -515,16 +467,6 @@ class notifier(metaclass=HookMetaclass):
             share = None
 
         return share
-
-    def smb_share_to_path(self, share):
-        from freenasUI.sharing.models import CIFS_Share
-
-        try:
-            path = CIFS_Share.objects.get(cifs_name=share)
-        except Exception:
-            path = None
-
-        return path
 
     def owner_to_SID(self, owner):
         if not owner:
@@ -967,55 +909,6 @@ class notifier(metaclass=HookMetaclass):
                         mounted['fs_file'],
                     ))
 
-    def delete_pbi(self, plugin):
-        ret = False
-
-        if not plugin.id:
-            log.debug("delete_pbi: plugins plugin not in database")
-            return False
-
-        jail_name = plugin.plugin_jail
-
-        jail = None
-        for j in Jls():
-            if j.hostname == jail_name:
-                jail = j
-                break
-
-        if jail is None:
-            return ret
-
-        jail_path = j.path
-
-        info = pbi_info(flags=PBI_INFO_FLAGS_VERBOSE)
-        res = info.run(jail=True, jid=jail.jid)
-        plugins = re.findall(r'^Name: (?P<name>\w+)$', res[1], re.M)
-
-        # Plugin is not installed in the jail at all
-        if res[0] == 0 and plugin.plugin_name not in plugins:
-            return True
-
-        pbi_path = os.path.join(
-            jail_path,
-            jail_name,
-            "usr/pbi",
-            "%s-%s" % (plugin.plugin_name, platform.machine()),
-        )
-        self.umount_filesystems_within(pbi_path)
-
-        p = pbi_delete(pbi=plugin.plugin_pbiname)
-        res = p.run(jail=True, jid=jail.jid)
-        if res and res[0] == 0:
-            try:
-                plugin.delete()
-                ret = True
-
-            except Exception as err:
-                log.debug("delete_pbi: unable to delete pbi %s from database (%s)", plugin, err)
-                ret = False
-
-        return ret
-
     def contains_jail_root(self, path):
         try:
             rpath = os.path.realpath(path)
@@ -1204,43 +1097,6 @@ class notifier(metaclass=HookMetaclass):
         if p1.returncode == 0:
             return True, ''
         return False, err
-
-    def detect_volumes(self, extra=None):
-        """
-        Responsible to detect existing volumes by running zpool commands
-
-        Used by: Automatic Volume Import
-        """
-
-        volumes = []
-        doc = self._geom_confxml()
-
-        pool_name = re.compile(r'pool: (?P<name>%s).*?id: (?P<id>\d+)' % (zfs.ZPOOL_NAME_RE, ), re.I | re.M | re.S)
-        p1 = self._pipeopen("zpool import")
-        res = p1.communicate()[0]
-
-        for pool, zid in pool_name.findall(res):
-            # get status part of the pool
-            status = res.split('id: %s\n' % zid)[1].split('pool:')[0]
-            try:
-                roots = zfs.parse_status(pool, doc, 'id: %s\n%s' % (zid, status))
-            except Exception as e:
-                log.warn("Error parsing %s: %s", pool, e)
-                continue
-
-            if roots['data'].status != 'UNAVAIL':
-                volumes.append({
-                    'label': pool,
-                    'type': 'zfs',
-                    'id': roots.id,
-                    'group_type': 'none',
-                    'cache': roots['cache'].dump() if roots['cache'] else None,
-                    'log': roots['logs'].dump() if roots['logs'] else None,
-                    'spare': roots['spares'].dump() if roots['spares'] else None,
-                    'disks': roots['data'].dump(),
-                })
-
-        return volumes
 
     def zfs_import(self, name, id=None, first_time=True):
         if id is not None:
@@ -1700,70 +1556,6 @@ class notifier(metaclass=HookMetaclass):
 
         return None
 
-    def get_parent_interface(self, iface):
-        from freenasUI import choices
-        from freenasUI.common.sipcalc import sipcalc_type
-
-        if not iface:
-            return None
-
-        child_iinfo = self.get_interface_info(iface)
-        if not child_iinfo:
-            return None
-
-        child_ipv4_info = child_iinfo['ipv4']
-        child_ipv6_info = child_iinfo['ipv6']
-        if not child_ipv4_info and not child_ipv6_info:
-            return None
-
-        interfaces = choices.NICChoices(exclude_configured=False, include_vlan_parent=True)
-        for iface in interfaces:
-            iface = iface[0]
-
-            iinfo = self.get_interface_info(iface)
-            if not iinfo:
-                continue
-
-            ipv4_info = iinfo['ipv4']
-            ipv6_info = iinfo['ipv6']
-
-            if not ipv4_info and not ipv6_info:
-                continue
-
-            if ipv4_info:
-                for i in ipv4_info:
-                    if not i or 'inet' not in i or not i['inet']:
-                        continue
-
-                    st_ipv4 = sipcalc_type(i['inet'], i['netmask'])
-                    if not st_ipv4:
-                        continue
-
-                    for ci in child_ipv4_info:
-                        if not ci or 'inet' not in ci or not ci['inet']:
-                            continue
-
-                        if st_ipv4.in_network(ci['inet']):
-                            return (iface, st_ipv4.host_address, st_ipv4.network_mask_bits)
-
-            if ipv6_info:
-                for i in ipv6_info:
-                    if not i or 'inet6 ' not in i or not i['inet6']:
-                        continue
-
-                    st_ipv6 = sipcalc_type("%s/%s" % (i['inet'], i['prefixlen']))
-                    if not st_ipv6:
-                        continue
-
-                    for ci in child_ipv6_info:
-                        if not ci or 'inet6' not in ci or not ci['inet6']:
-                            continue
-
-                        if st_ipv6.in_network(ci['inet6']):
-                            return (iface, st_ipv6.compressed_address, st_ipv6.prefix_length)
-
-        return None
-
     def __init__(self):
         self.__confxml = None
 
@@ -1856,19 +1648,6 @@ class notifier(metaclass=HookMetaclass):
             return None
         else:
             raise NotImplementedError
-
-    def part_type_from_device(self, name, device):
-        """
-        Given a partition a type and a disk name (adaX)
-        get the first partition that matches the type
-        """
-        doc = self._geom_confxml()
-        # TODO get from MBR as well?
-        search = doc.xpath("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-%s']/../name" % (device, name))
-        if len(search) > 0:
-            return search[0].text
-        else:
-            return ''
 
     def zpool_parse(self, name):
         doc = self._geom_confxml()
