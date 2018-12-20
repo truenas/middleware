@@ -85,7 +85,6 @@ from django.apps import apps
 if not apps.app_configs:
     django.setup()
 
-from django.db.models import Q
 from django.utils.translation import ugettext as _
 
 from freenasUI.common.acl import (ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE,
@@ -309,17 +308,6 @@ class notifier(metaclass=HookMetaclass):
         conn = sqlite3.connect(dbname)
         c = conn.cursor()
         return c, conn
-
-    def geli_setkey(self, dev, key, slot=GELI_KEY_SLOT, passphrase=None, oldkey=None):
-        command = ("geli setkey -n %s %s -K %s %s %s"
-                   % (slot,
-                      "-J %s" % passphrase if passphrase else "-P",
-                      key,
-                      "-k %s" % oldkey if oldkey else "",
-                      dev))
-        err = self._pipeerr(command)
-        if err:
-            raise MiddlewareError("Unable to set passphrase on %s: %s" % (dev, err))
 
     def geli_recoverykey_add(self, volume, passphrase=None):
         from freenasUI.middleware.util import download_job
@@ -1285,113 +1273,6 @@ class notifier(metaclass=HookMetaclass):
         else:
             log.error("Importing %s [%s] failed with: %s", name, id, stderr)
         return False
-
-    def volume_import(self, volume_name, volume_id, key=None, passphrase=None, enc_disks=None):
-        from freenasUI.storage.models import Disk, EncryptedDisk, Scrub, Volume
-        from freenasUI.sharing.models import AFP_Share, CIFS_Share, NFS_Share_Path, WebDAV_Share
-
-        if enc_disks is None:
-            enc_disks = []
-
-        passfile = None
-        if key and passphrase:
-            encrypt = 2
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
-                f.write(passphrase)
-        elif key:
-            encrypt = 1
-        else:
-            encrypt = 0
-
-        model_objs = []
-        try:
-            volume = Volume(vol_name=volume_name, vol_encrypt=encrypt)
-            volume.save()
-            model_objs.append(volume)
-            if encrypt > 0:
-                if not os.path.exists(GELI_KEYPATH):
-                    os.mkdir(GELI_KEYPATH)
-                try:
-                    key.seek(0)
-                except OSError:
-                    pass
-                keydata = key.read()
-                with open(volume.get_geli_keyfile(), 'wb') as f:
-                    f.write(keydata)
-            self.volume = volume
-
-            volume.vol_guid = volume_id
-            volume.save()
-            model_objs.append(Scrub.objects.create(scrub_volume=volume))
-
-            if not self.zfs_import(volume_name, volume_id):
-                raise MiddlewareError(_(
-                    'The volume "%s" failed to import, '
-                    'for futher details check pool status') % volume_name)
-            for disk in enc_disks:
-                self.geli_setkey(
-                    "/dev/%s" % disk,
-                    volume.get_geli_keyfile(),
-                    passphrase=passfile
-                )
-                if disk.startswith("gptid/"):
-                    diskname = self.identifier_to_device(
-                        "{uuid}%s" % disk.replace("gptid/", "")
-                    )
-                elif disk.startswith("gpt/"):
-                    diskname = self.label_to_disk(disk)
-                else:
-                    diskname = disk
-                ed = EncryptedDisk.objects.filter(encrypted_provider=disk)
-                if ed.exists():
-                    ed = ed[0]
-                else:
-                    ed = EncryptedDisk()
-                ed.encrypted_volume = volume
-                diskobj = Disk.objects.filter(
-                    disk_name=diskname,
-                    disk_expiretime=None,
-                )
-                if diskobj.exists():
-                    ed.encrypted_disk = diskobj[0]
-                ed.encrypted_provider = disk
-                ed.save()
-                model_objs.append(ed)
-        except Exception:
-            for obj in reversed(model_objs):
-                if isinstance(obj, Volume):
-                    obj.delete(destroy=False, cascade=False)
-                else:
-                    obj.delete()
-            if passfile:
-                os.unlink(passfile)
-            raise
-
-        # In case volume was exported at some point and shares
-        # were not deleted we need to restart/reload shares
-        path = f'/mnt/{volume_name}'
-        if AFP_Share.objects.filter(Q(afp_path=path) | Q(afp_path__startswith=f'{path}/')).exists():
-            self.reload('afp')
-
-        if CIFS_Share.objects.filter(Q(cifs_path=path) | Q(cifs_path__startswith=f'{path}/')).exists():
-            self.reload('cifs')
-
-        if NFS_Share_Path.objects.filter(Q(path=path) | Q(path__startswith=f'{path}/')).exists():
-            self.restart('nfs')
-
-        if WebDAV_Share.objects.filter(Q(webdav_path=path) | Q(webdav_path__startswith=f'{path}/')).exists():
-            self.reload('webdav')
-
-        self.reload("disk")
-        self.start("ix-system")
-        self.start("ix-syslogd")
-        self.start("ix-warden")
-        # FIXME: do not restart collectd again
-        self.restart("system_datasets")
-
-        return volume
 
     def zfs_snapshot_list(self, path=None, sort=None, system=False):
         from freenasUI.storage.models import Volume
