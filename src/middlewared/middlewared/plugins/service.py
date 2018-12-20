@@ -982,8 +982,6 @@ class ServiceService(CRUDService):
 
     async def _reload_disk(self, **kwargs):
         await self._service("ix-fstab", "start", quiet=True, **kwargs)
-        await self._service("ix-swap", "start", quiet=True, **kwargs)
-        await self._service("swap", "start", quiet=True, **kwargs)
         await self._service("mountlate", "start", quiet=True, **kwargs)
         # Restarting collectd may take a long time and there is no
         # benefit in waiting for it since even if it fails it wont
