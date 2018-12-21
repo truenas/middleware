@@ -2448,8 +2448,8 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
         return data
 
 
-key_order(ReplicationForm, 13, 'repl_enable_schedule')
-key_order(ReplicationForm, 21, 'repl_enable_restrict_schedule')
+key_order(ReplicationForm, 15, 'repl_enable_schedule')
+key_order(ReplicationForm, 23, 'repl_enable_restrict_schedule')
 
 
 class VolumeExport(Form):
