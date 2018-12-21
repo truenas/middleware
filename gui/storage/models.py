@@ -434,12 +434,6 @@ class Disk(Model):
         editable=False
     )
 
-    def identifier_to_device(self):
-        """
-        Get the corresponding device name from disk_identifier field
-        """
-        return notifier().identifier_to_device(self.disk_identifier)
-
     @property
     def devname(self):
         if self.disk_multipath_name:

@@ -1561,63 +1561,6 @@ class notifier(metaclass=HookMetaclass):
             return self.label_to_disk(disk.replace(".eli", ""))
         return disk
 
-    def identifier_to_device(self, ident):
-
-        if not ident:
-            return None
-
-        doc = self._geom_confxml()
-
-        search = re.search(r'\{(?P<type>.+?)\}(?P<value>.+)', ident)
-        if not search:
-            return None
-
-        tp = search.group("type")
-        # We need to escape single quotes to html entity
-        value = search.group("value").replace("'", "%27")
-
-        if tp == 'uuid':
-            search = doc.xpath("//class[name = 'PART']/geom//config[rawuuid = '%s']/../../name" % value)
-            if len(search) > 0:
-                for entry in search:
-                    if not entry.text.startswith('label'):
-                        return entry.text
-            return None
-
-        elif tp == 'label':
-            search = doc.xpath("//class[name = 'LABEL']/geom//provider[name = '%s']/../name" % value)
-            if len(search) > 0:
-                return search[0].text
-            return None
-
-        elif tp == 'serial':
-            search = doc.xpath("//class[name = 'DISK']/geom/provider/config[ident = '%s']/../../name" % value)
-            if len(search) > 0:
-                return search[0].text
-            search = doc.xpath("//class[name = 'DISK']/geom/provider/config[normalize-space(ident) = normalize-space('%s')]/../../name" % value)
-            if len(search) > 0:
-                return search[0].text
-            with client as c:
-                for devname in self.__get_disks():
-                    serial = c.call('disk.serial_from_device', devname)
-                    if serial == value:
-                        return devname
-            return None
-
-        elif tp == 'serial_lunid':
-            search = doc.xpath("//class[name = 'DISK']/geom/provider/config[concat(ident,'_',lunid) = '%s']/../../name" % value)
-            if len(search) > 0:
-                return search[0].text
-            return None
-
-        elif tp == 'devicename':
-            search = doc.xpath("//class[name = 'DEV']/geom[name = '%s']" % value)
-            if len(search) > 0:
-                return value
-            return None
-        else:
-            raise NotImplementedError
-
     def zpool_parse(self, name):
         doc = self._geom_confxml()
         p1 = self._pipeopen("zpool status %s" % name)
