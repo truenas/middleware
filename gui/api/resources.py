@@ -1622,6 +1622,11 @@ class ReplicationResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super().dehydrate(bundle)
 
+        if self.is_webclient(bundle.request):
+            bundle.data['_run_url'] = reverse('replication_run', kwargs={
+                'oid': bundle.obj.id
+            })
+
         bundle.data['repl_ssh_credentials'] = \
             (self.__tasks[bundle.data['id']]['ssh_credentials'] or {}).get('name', '-')
 
@@ -1698,6 +1703,11 @@ class TaskResourceMixin(object):
         bundle = super(TaskResourceMixin, self).dehydrate(bundle)
         if not self.is_webclient(bundle.request):
             return bundle
+
+        if self.is_webclient(bundle.request):
+            bundle.data['_run_url'] = reverse('snapshot_run', kwargs={
+                'oid': bundle.obj.id
+            })
 
         bundle.data['keep_for'] = f'{bundle.obj.task_lifetime_value} {bundle.obj.task_lifetime_unit.lower()}'
 

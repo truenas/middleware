@@ -11,10 +11,10 @@ class VMWareLoginFailedAlertSource(OneShotAlertSource):
     level = AlertLevel.WARNING
     title = "VMWare login failed"
 
-    def create(self, args):
+    async def create(self, args):
         return Alert("VMWare login to %(hostname)s failed: %(error)s", args)
 
-    def delete(self, alerts, query):
+    async def delete(self, alerts, query):
         hostname = query
 
         return list(filter(
