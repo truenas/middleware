@@ -1678,18 +1678,6 @@ class notifier(metaclass=HookMetaclass):
 
         return [x for x in disks if not device_blacklist_re.match(x) and x not in blacklist_devs]
 
-    def retaste_disks(self):
-        """
-        Retaste disks for GEOM metadata
-
-        This will not work if the device is already open
-
-        It is useful in multipath situations, for example.
-        """
-        disks = self.__get_disks()
-        for disk in disks:
-            open("/dev/%s" % disk, 'w').close()
-
     def sysctl(self, name):
         """
         Tiny wrapper for sysctl module for compatibility
@@ -1777,18 +1765,6 @@ class notifier(metaclass=HookMetaclass):
         if path and os.path.exists(path):
             os.unlink(path)
 
-    def get_proc_title(self, pid):
-        proc = self._pipeopen("/bin/ps -a -x -w -w -o pid,command | /usr/bin/grep '^ *%s' " % pid)
-        data = proc.communicate()[0]
-        if proc.returncode != 0:
-            return None
-        data = data.strip('\n')
-        title = data.split(' ', 1)
-        if len(title) > 1:
-            return title[1]
-        else:
-            return False
-
     def rsync_command(self, obj_or_id):
         """
         Helper method used in ix-crontab to generate the rsync command
@@ -1799,28 +1775,6 @@ class notifier(metaclass=HookMetaclass):
         oid = int(obj_or_id)
         rsync = Rsync.objects.get(id=oid)
         return rsync.commandline()
-
-    def get_dataset_aclmode(self, dataset):
-        aclmode = None
-        if not dataset:
-            return aclmode
-
-        proc = self._pipeopen('/sbin/zfs get -H -o value aclmode "%s"' % dataset)
-        stdout, stderr = proc.communicate()
-        if proc.returncode == 0:
-            aclmode = stdout.strip()
-
-        return aclmode
-
-    def set_dataset_aclmode(self, dataset, aclmode):
-        if not dataset or not aclmode:
-            return False
-
-        proc = self._pipeopen('/sbin/zfs set aclmode="%s" "%s"' % (aclmode, dataset))
-        if proc.returncode != 0:
-            return False
-
-        return True
 
     def zpool_status(self, pool_name):
         """
