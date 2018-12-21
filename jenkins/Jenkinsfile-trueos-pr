@@ -1,16 +1,19 @@
 /*
 
 This is the default Jenkins Pipeline file used to create our
-freenas master images.
+freenas PR images.
 
 */
 
 pipeline {
-  agent { label 'FreeNAS-TrueOS' }
+  agent {
+    label 'FreeNAS-FreeNAS-PR'
+  }
 
   environment {
-    GH_ORG = 'trueos'
-    GH_REPO = 'trueos'
+    GH_ORG = 'freenas'
+    GH_REPO = 'freenas'
+    BUILDBRANCH = 'freenas/12-stable'
     SRCROOT = '/usr/freenas-src'
     POUDRIERE_BASE = 'fn-master-base'
     POUDRIERE_PORTS = 'fn-master-ports'
@@ -21,20 +24,10 @@ pipeline {
 
   stages {
 
-   stage('Queued') {
-        agent {
-        label 'FreeNAS-PR-HOLD'
-      }
+    stage('Checkout') {
       steps {
-        echo "Build queued"
-      }
-    }
+        checkout scm
 
-    stage('Cleanup') {
-      agent {
-        label 'FreeNAS-TrueOS'
-      }
-      steps {
 	// Cleanup artifacts
         sh 'rm -rf ${WORKSPACE}/artifacts'
         sh 'mkdir -p ${WORKSPACE}/artifacts/repo'
@@ -44,15 +37,12 @@ pipeline {
         sh 'umount -f ${SRCROOT} || true'
         sh 'rm -rf ${SRCROOT}'
         sh 'mkdir -p ${SRCROOT}'
+        sh 'rm /usr/local/poudriere/data/logs/bulk/${POUDRIERE_BASE}-${POUDRIERE_PORTS}/latest/logs/* || true'
       }
     }
 
-    stage('Checkout') {
-      agent {
-        label 'FreeNAS-TrueOS'
-      }
+    stage('Prep') {
       steps {
-        checkout scm
         echo '*** Moving local sources ***'
 
         // Setup our local sources for building
@@ -64,21 +54,20 @@ pipeline {
         sh 'cp -r ${WORKSPACE} /usr/local_source/middlewared'
 
 	// Checkout the trueos/trueos repo for building
-	sh 'git clone --depth=1 -b freenas/12-stable https://github.com/trueos/trueos ${SRCROOT}'
-	
+	sh 'git clone --depth=1 -b ${BUILDBRANCH} https://github.com/trueos/trueos ${SRCROOT}'
+
 	// Roll back the ZFS dataset
 	sh '${SRCROOT}/Jenkins/scripts/snapobj.sh rollback /usr/obj${SRCROOT}'
+
+        sh 'rm /usr/obj${SRCROOT}/amd64.amd64/release/*.iso || true'
+        sh 'rm /usr/obj${SRCROOT}/amd64.amd64/release/*.img || true'
       }
     }
 
     stage('Packages') {
-      agent {
-        label 'FreeNAS-TrueOS'
-      }
       post {
         always {
-          sh 'cp -r /usr/local/poudriere/data/logs/bulk/fn-master-base-fn-master-ports/latest/logs ${WORKSPACE}/artifacts/poudriere-logs'
-          archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
+          sh 'cp -r /usr/local/poudriere/data/logs/bulk/${POUDRIERE_BASE}-${POUDRIERE_PORTS}/latest/logs ${WORKSPACE}/artifacts/poudriere-logs'
         }
         failure {
           sh 'tail -n 200 ${WORKSPACE}/artifacts/packages.log'
@@ -93,31 +82,25 @@ pipeline {
       }
     }
     stage('Release') {
-      agent {
-        label 'FreeNAS-TrueOS'
-      }
       post {
-        always {
-          archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
-        }
         failure {
           sh 'tail -n 200 ${WORKSPACE}/artifacts/release.log'
         }
       }
       steps {
+        sh 'cd ${SRCROOT}/release && make clean'
         sh 'cd ${SRCROOT}/release && make iso >${WORKSPACE}/artifacts/release.log 2>&1'
         sh 'cp /usr/obj${SRCROOT}/amd64.amd64/release/*.iso ${WORKSPACE}/artifacts'
         sh 'cp /usr/obj${SRCROOT}/amd64.amd64/release/*.img ${WORKSPACE}/artifacts'
       }
     }
+  }
   post {
-    success {
+    always {
+      archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
       script {
         cleanWs notFailBuild: true
       }
-    }
-    always {
-      archiveArtifacts artifacts: 'artifacts/**', fingerprint: true
     }
   }
 }
