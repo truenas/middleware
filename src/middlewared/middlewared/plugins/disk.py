@@ -10,8 +10,10 @@ import signal
 import subprocess
 import sysctl
 import tempfile
+from xml.etree import ElementTree
 
 from bsd import geom, getswapinfo
+from lxml import etree
 
 from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import get_smartctl_args
@@ -33,6 +35,7 @@ RE_CAMCONTROL_POWER = re.compile(r'^power management\s+yes', re.M)
 RE_DA = re.compile('^da[0-9]+$')
 RE_DD = re.compile(r'^(\d+) bytes transferred .*\((\d+) bytes')
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
+RE_IDENTIFIER = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd|pmem)[0-9]+$')
 RE_MPATH_NAME = re.compile(r'[a-z]+(\d+)')
 RE_SED_RDLOCK_EN = re.compile(r'(RLKEna = Y|ReadLockEnabled:\s*1)', re.M)
@@ -681,6 +684,71 @@ class DiskService(CRUDService):
             return f'{{devicename}}{name}'
 
         return ''
+
+    @private
+    @accepts(Str('identifier'))
+    def identifier_to_device(self, ident):
+
+        if not ident:
+            return None
+
+        search = RE_IDENTIFIER.search(ident)
+        if not search:
+            return None
+
+        geom.scan()
+
+        tp = search.group('type')
+        # We need to escape single quotes to html entity
+        value = search.group('value').replace("'", '%27')
+
+        if tp == 'uuid':
+            search = geom.class_by_name('PART').xml.find(
+                f'.//config[rawuuid = "{value}"]/../../name'
+            )
+            if search is not None and not search.text.startswith('label'):
+                return search.text
+
+        elif tp == 'label':
+            search = geom.class_by_name('LABEL').xml.find(
+                f'.//provider[name = "{value}"]/../name'
+            )
+            if search is not None:
+                return search.text
+
+        elif tp == 'serial':
+            search = geom.class_by_name('DISK').xml.find(
+                f'.//provider/config[ident = "{value}"]/../../name'
+            )
+            if search is not None:
+                return search.text
+            # Builtin xml xpath do not understand normalize-space
+            search = etree.fromstring(ElementTree.tostring(geom.class_by_name('DISK').xml))
+            search = search.xpath(
+                './/provider/config['
+                f'normalize-space(ident) = normalize-space("{value}")'
+                ']/../../name'
+            )
+            if len(search) > 0:
+                return search[0].text
+            disks = self.middleware.call_sync('disk.query', [('serial', '=', value)])
+            if disks:
+                return disks[0]['name']
+
+        elif tp == 'serial_lunid':
+            # Builtin xml xpath do not understand concat
+            search = etree.fromstring(ElementTree.tostring(geom.class_by_name('DISK').xml))
+            search = search.xpath(
+                f'.//provider/config[concat(ident,"_",lunid) = "{value}"]/../../name'
+            )
+            if len(search) > 0:
+                return search[0].text
+
+        elif tp == 'devicename':
+            if os.path.exists(f'/dev/{value}'):
+                return value
+        else:
+            raise NotImplementedError(f'Unknown type {tp!r}')
 
     @private
     def label_to_dev(self, label, geom_scan=True):
