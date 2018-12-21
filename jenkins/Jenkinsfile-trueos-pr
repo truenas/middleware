@@ -7,7 +7,7 @@ freenas PR images.
 
 pipeline {
   agent {
-    label 'FreeNAS-TrueOS'
+    label 'FreeNAS-FreeNAS-PR'
   }
 
   environment {
