@@ -249,7 +249,7 @@ def main():
             if disk.disk_multipath_name:
                 path = "/dev/multipath/%s" % disk.disk_multipath_name
             else:
-                path = "/dev/%s" % client.call('notifier.identifier_to_device', disk.disk_identifier)
+                path = "/dev/%s" % client.call('disk.identifier_to_device', disk.disk_identifier)
         else:
             if not path.startswith("/mnt"):
                 poolname = path.split('/', 2)[1]

@@ -44,8 +44,8 @@ from freenasUI.freeadmin.models import (
     Model, UserField, GroupField, PathField, DictField, ListField
 )
 from freenasUI.freeadmin.models.fields import MultiSelectField
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
-from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Disk
 from freenasUI.system.models import Certificate
 
@@ -656,9 +656,10 @@ class iSCSITargetExtent(Model):
                 if disk.disk_multipath_name:
                     return "/dev/%s" % disk.devname
                 else:
-                    return "/dev/%s" % (
-                        notifier().identifier_to_device(disk.disk_identifier),
-                    )
+                    with client as c:
+                        return "/dev/%s" % (
+                            c.call('disk.identifier_to_device', disk.disk_identifier),
+                        )
             except Exception:
                 return self.iscsi_target_extent_path
 
