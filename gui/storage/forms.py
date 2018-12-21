@@ -2074,6 +2074,10 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
     middleware_plugin = "replication"
     is_singletone = False
 
+    repl_netcat_active_side_listen_address = forms.CharField(
+        required=False,
+        label=_("Netcat Active Side Listen Address"),
+    )
     repl_netcat_active_side_port_min = forms.CharField(
         required=False,
         label=_("Netcat Active Side Min Port"),
@@ -2081,6 +2085,10 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
     repl_netcat_active_side_port_max = forms.CharField(
         required=False,
         label=_("Netcat Active Side Max Port"),
+    )
+    repl_netcat_passive_side_connect_address = forms.CharField(
+        required=False,
+        label=_("Netcat Passive Side Connect Address"),
     )
     repl_source_datasets = forms.CharField(
         label=_("Source Datasets"),
@@ -2242,6 +2250,9 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
         self.fields['repl_enable_restrict_schedule'].widget.attrs['onChange'] = "replicationToggle();"
         self.fields['repl_retention_policy'].widget.attrs['onChange'] = "replicationToggle();"
 
+    def clean_repl_netcat_active_side_listen_address(self):
+        return self.cleaned_data.get('repl_netcat_active_side_listen_address').strip() or None
+
     def clean_repl_netcat_active_side_port_min(self):
         value = self.cleaned_data.get('repl_netcat_active_side_port_min')
         if value:
@@ -2253,7 +2264,7 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
             return None
 
     def clean_repl_netcat_active_side_port_max(self):
-        value = self.cleaned_data.get('repl_netcat_active_side_port_min')
+        value = self.cleaned_data.get('repl_netcat_active_side_port_max')
         if value:
             try:
                 return int(value)
@@ -2261,6 +2272,9 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
                 raise forms.ValidationError("Not a valid integer")
         else:
             return None
+
+    def clean_repl_netcat_passive_side_connect_address(self):
+        return self.cleaned_data.get('repl_netcat_passive_side_connect_address').strip() or None
 
     def clean_repl_source_datasets(self):
         return self.cleaned_data.get('repl_source_datasets').split()
@@ -2358,8 +2372,10 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
             data["speed_limit"] = None
         else:
             data["netcat_active_side"] = None
+            data["netcat_active_side_listen_address"] = None
             data["netcat_active_side_port_min"] = None
             data["netcat_active_side_port_max"] = None
+            data["netcat_passive_side_connect_address"] = None
 
         if data["transport"] == "LOCAL":
             data["ssh_credentials"] = None

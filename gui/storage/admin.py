@@ -660,8 +660,10 @@ class ReplicationFAdmin(BaseFreeAdmin):
     exclude_fields = (
         'id',
         'repl_netcat_active_side',
+        'repl_netcat_active_side_listen_address',
         'repl_netcat_active_side_port_min',
         'repl_netcat_active_side_port_max',
+        'repl_netcat_passive_side_connect_address',
         'repl_exclude',
         'repl_periodic_snapshot_tasks',
         'repl_naming_schema',
@@ -761,7 +763,7 @@ class LegacyReplicationFAdmin(BaseFreeAdmin):
     refresh_time = 12000
 
     def get_datagrid_columns(self):
-        columns = super(NewReplicationFAdmin, self).get_datagrid_columns()
+        columns = super(LegacyReplicationFAdmin, self).get_datagrid_columns()
         columns[5]['label'] = _('Recursive')
         columns[6]['label'] = _('Auto')
         return columns
