@@ -1157,20 +1157,6 @@ class notifier(metaclass=HookMetaclass):
                 fsinfo[fs] = snaplist
         return fsinfo
 
-    def zfs_mksnap(self, dataset, name, recursive=False, vmsnaps_count=0):
-        if vmsnaps_count > 0:
-            vmflag = '-o freenas:vmsynced=Y '
-        else:
-            vmflag = ''
-        if recursive:
-            p1 = self._pipeopen("/sbin/zfs snapshot -r %s '%s'@'%s'" % (vmflag, dataset, name))
-        else:
-            p1 = self._pipeopen("/sbin/zfs snapshot %s '%s'@'%s'" % (vmflag, dataset, name))
-        if p1.wait() != 0:
-            err = p1.communicate()[1]
-            raise MiddlewareError("Snapshot could not be taken: %s" % err)
-        return True
-
     def zfs_clonesnap(self, snapshot, dataset):
         zfsproc = self._pipeopen("zfs clone '%s' '%s'" % (snapshot, dataset))
         retval = zfsproc.communicate()[1]

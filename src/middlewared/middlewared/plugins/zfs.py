@@ -7,7 +7,7 @@ from collections import defaultdict
 from bsd import geom
 import libzfs
 
-from middlewared.schema import Dict, List, Str, Bool, Int, accepts
+from middlewared.schema import Dict, List, Str, Bool, accepts
 from middlewared.service import (
     CallError, CRUDService, ValidationError, ValidationErrors, filterable, job,
 )
@@ -578,7 +578,7 @@ class ZFSSnapshot(CRUDService):
         Str('dataset'),
         Str('name'),
         Bool('recursive'),
-        Int('vmsnaps_count'),
+        Bool('vmware_sync', default=False),
         Dict('properties', additional_attrs=True)
     ))
     def do_create(self, data):
@@ -592,18 +592,21 @@ class ZFSSnapshot(CRUDService):
         dataset = data.get('dataset', '')
         name = data.get('name', '')
         recursive = data.get('recursive', False)
-        vmsnaps_count = data.get('vmsnaps_count', 0)
         properties = data.get('properties', None)
 
         if not dataset or not name:
             return False
+
+        vmware_context = None
+        if data['vmware_sync']:
+            vmware_context = self.middleware.call_sync('vmware.snapshot_begin', dataset, recursive)
 
         try:
             with libzfs.ZFS() as zfs:
                 ds = zfs.get_dataset(dataset)
                 ds.snapshot(f'{dataset}@{name}', recursive=recursive, fsopts=properties)
 
-                if vmsnaps_count > 0:
+                if vmware_context and vmware_context['vmsynced']:
                     ds.properties['freenas:vmsynced'] = libzfs.ZFSUserProperty('Y')
 
             self.logger.info(f"Snapshot taken: {dataset}@{name}")
@@ -611,6 +614,9 @@ class ZFSSnapshot(CRUDService):
         except libzfs.ZFSException as err:
             self.logger.error(f"{err}")
             return False
+        finally:
+            if vmware_context:
+                self.middleware.call_sync('vmware.snapshot_end', vmware_context)
 
     @accepts(Dict(
         'snapshot_remove',

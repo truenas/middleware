@@ -30,9 +30,7 @@ import base64
 import logging
 import os
 import re
-import ssl
 import tempfile
-import uuid
 
 from formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
@@ -65,8 +63,6 @@ from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import dedup_enabled
-from pyVim import connect, task as VimTask
-from pyVmomi import vim
 
 
 attrs_dict = {'class': 'required', 'maxHeight': 200}
@@ -1867,8 +1863,9 @@ class ManualSnapshotForm(Form):
         super(ManualSnapshotForm, self).__init__(*args, **kwargs)
         self.fields['ms_name'].initial = datetime.today().strftime(
             'manual-%Y%m%d')
-        if not models.VMWarePlugin.objects.filter(filesystem=self._fs).exists():
-            self.fields.pop('vmwaresync')
+        with client as c:
+            if not c.call("vmware.dataset_has_vms", self._fs, True):
+                self.fields.pop('vmwaresync')
 
     def clean_ms_name(self):
         regex = re.compile('^[-a-zA-Z0-9_. ]+$')
@@ -1877,56 +1874,22 @@ class ManualSnapshotForm(Form):
             raise forms.ValidationError(
                 _("Only [-a-zA-Z0-9_. ] permitted as snapshot name")
             )
-        snaps = notifier().zfs_snapshot_list(path=f'{self._fs}@{name}')
-        if snaps:
-            raise forms.ValidationError(
-                _('Snapshot with this name already exists')
-            )
+        with client as c:
+            snaps = c.call('zfs.snapshot.query', [['name', '=', f'{self._fs}@{name}']], {'select': ['name']})
+            if snaps:
+                raise forms.ValidationError(
+                    _('Snapshot with this name already exists')
+                )
         return name
 
     def commit(self, fs):
-        vmsnapname = str(uuid.uuid4())
-        vmsnapdescription = str(datetime.now()).split('.')[0] + " FreeNAS Created Snapshot"
-        snapvms = []
-        if self.cleaned_data.get('vmwaresync'):
-            for obj in models.VMWarePlugin.objects.filter(filesystem=self._fs):
-                try:
-                    ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-                    ssl_context.verify_mode = ssl.CERT_NONE
-
-                    si = connect.SmartConnect(host=obj.hostname, user=obj.username, pwd=obj.get_password(), sslContext=ssl_context)
-                except Exception:
-                    continue
-                content = si.RetrieveContent()
-                vm_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
-                for vm in vm_view.view:
-                    if vm.summary.runtime.powerState != 'poweredOn':
-                        continue
-                    for i in vm.datastore:
-                        if i.info.name == obj.datastore:
-                            VimTask.WaitForTask(vm.CreateSnapshot_Task(
-                                name=vmsnapname,
-                                description=vmsnapdescription,
-                                memory=False, quiesce=False,
-                            ))
-                            snapvms.append(vm)
-                            break
-        try:
-            notifier().zfs_mksnap(
-                fs,
-                str(self.cleaned_data['ms_name']),
-                self.cleaned_data['ms_recursively'],
-                len(snapvms))
-        finally:
-            for vm in snapvms:
-                tree = vm.snapshot.rootSnapshotList
-                while tree[0].childSnapshotList is not None:
-                    snap = tree[0]
-                    if snap.name == vmsnapname:
-                        VimTask.WaitForTask(snap.snapshot.RemoveSnapshot_Task(True))
-                    if len(tree[0].childSnapshotList) < 1:
-                        break
-                    tree = tree[0].childSnapshotList
+        with client as c:
+            c.call("zfs.snapshot.create", {
+                "dataset": fs,
+                "name": str(self.cleaned_data['ms_name']),
+                "recursive": self.cleaned_data['ms_recursively'],
+                "vmware_sync": self.cleaned_data.get('vmwaresync', False),
+            })
 
 
 class CloneSnapshotForm(Form):
