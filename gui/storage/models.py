@@ -114,9 +114,6 @@ class Volume(Model):
             hierarchical=hierarchical,
             include_root=include_root)
 
-    def get_zvols(self):
-        return notifier().list_zfs_vols(self.vol_name)
-
     def _get_status(self):
         try:
             # Make sure do not compute it twice
