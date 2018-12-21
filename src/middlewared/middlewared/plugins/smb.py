@@ -379,8 +379,9 @@ class SharingSMBService(CRUDService):
     async def apply_default_perms(self, default_perms, path, is_home):
         if default_perms:
             try:
-                (owner, group) = await self.middleware.call(
-                    'notifier.mp_get_owner', path)
+                stat = await self.middleware.call('filesystem.stat', path)
+                owner = stat['user'] or 'root'
+                group = stat['group'] or 'wheel'
             except Exception:
                 (owner, group) = ('root', 'wheel')
 

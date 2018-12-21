@@ -73,7 +73,7 @@ class S3Service(SystemServiceService):
 
         await self._update_service(old, new)
 
-        if await self.middleware.call('notifier.mp_get_owner', new['disks']) != 'minio':
+        if (await self.middleware.call('filesystem.stat', new['disks']))['user'] != 'minio':
             await self.middleware.call('notifier.winacl_reset', new['disks'], 'minio', 'minio')
 
         return await self.config()

@@ -39,11 +39,9 @@ import base64
 from Crypto.Cipher import AES
 import ctypes
 import glob
-import grp
 import libzfs
 import logging
 import os
-import pwd
 import re
 import shutil
 import signal
@@ -686,35 +684,6 @@ class notifier(metaclass=HookMetaclass):
         share = self.path_to_smb_share(path)
         if share:
             self.sharesec_reset(share, user, group)
-
-    def mp_get_owner(self, path):
-        """Gets the owner/group for a given mountpoint.
-
-        Defaults to root:wheel if the owner of the mountpoint cannot be found.
-
-        XXX: defaulting to root:wheel is wrong if the users/groups are out of
-             synch with the remote hosts. These cases should really raise
-             Exceptions and be handled differently in the GUI.
-
-        Raises:
-            OSError - the path provided isn't a directory.
-        """
-        if os.path.isdir(path):
-            stat_info = os.stat(path)
-            uid = stat_info.st_uid
-            gid = stat_info.st_gid
-            try:
-                pw = pwd.getpwuid(uid)
-                user = pw.pw_name
-            except KeyError:
-                user = 'root'
-            try:
-                gr = grp.getgrgid(gid)
-                group = gr.gr_name
-            except KeyError:
-                group = 'wheel'
-            return (user, group, )
-        raise OSError('Invalid mountpoint %s' % (path, ))
 
     def change_upload_location(self, path):
         vardir = "/var/tmp/firmware"
