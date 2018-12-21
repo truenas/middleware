@@ -30,6 +30,8 @@ import sys
 import sysctl
 import traceback
 
+from middlewared.client import Client
+
 # One cannot simply import collectd in a python interpreter (for various reasons)
 # thus adding this workaround for standalone testing and doctest
 if __name__ == '__main__' or hasattr(sys.modules['__main__'], '_SpoofOut'):
@@ -126,6 +128,8 @@ class DiskTemp(object):
 
     def init(self):
         collectd.info('Initializing "disktemp" plugin')
+        with Client() as c:
+            self.powermode = c.call('smart.config')['powermode'].lower()
 
     def dispatch_value(self, name, instance, value, data_type=None):
         val = collectd.Values()
@@ -159,7 +163,7 @@ class DiskTemp(object):
                     collectd.info(traceback.format_exc())
 
     def get_temperature(self, disk):
-        cp = subprocess.run(['/usr/local/sbin/smartctl', '-a', '-n', 'standby', f'/dev/{disk}'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cp = subprocess.run(['/usr/local/sbin/smartctl', '-a', '-n', self.powermode, f'/dev/{disk}'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if cp.returncode != 0:
             collectd.info(f'Failed to run smartctl for {disk}: {cp.stdout.decode("utf8", "ignore")}')
             return None
