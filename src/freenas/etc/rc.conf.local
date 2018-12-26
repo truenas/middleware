@@ -409,7 +409,9 @@ _s3_config()
 		LEFT OUTER JOIN
 			services_services
 		ON
-			(srv_service = 's3' AND srv_enable = '1')
+			srv_service = 's3'
+		WHERE
+			srv_enable = '1'
 		ORDER BY
 			-services_s3.id
 		LIMIT 1
