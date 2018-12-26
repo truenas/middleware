@@ -81,9 +81,6 @@ if not apps.app_configs:
 
 from django.utils.translation import ugettext as _
 
-from freenasUI.common.acl import (ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE,
-                                  ACL_MAC_FILE)
-from freenasUI.common.freenasacl import ACL
 from freenasUI.common.pipesubr import SIG_SETMASK
 from freenasUI.common.system import (
     FREENAS_DATABASE,
@@ -102,6 +99,8 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.multipath import Multipath
 import sysctl
 
+ACL_WINDOWS_FILE = ".windows"
+ACL_MAC_FILE = ".mac"
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 log = logging.getLogger('middleware.notifier')
 
@@ -572,8 +571,7 @@ class notifier(metaclass=HookMetaclass):
             path = path.decode('utf-8')
 
         aclfile = os.path.join(path, ACL_WINDOWS_FILE)
-        winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
-        if not winexists:
+        if not os.path.exists(aclfile):
             open(aclfile, 'a').close()
 
         share = self.path_to_smb_share(path)
@@ -616,7 +614,7 @@ class notifier(metaclass=HookMetaclass):
 
         winacl = os.path.join(path, ACL_WINDOWS_FILE)
         macacl = os.path.join(path, ACL_MAC_FILE)
-        winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
+        winexists = os.path.exists(winacl)
         with libzfs.ZFS() as zfs:
             zfs_dataset_name = zfs.get_dataset_by_path(path).name
 
