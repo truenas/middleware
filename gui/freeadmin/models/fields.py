@@ -95,10 +95,10 @@ class EncryptedDictField(models.Field):
         return "TextField"
 
     def get_db_prep_value(self, value, connection, prepared=False):
+        if FREENAS_INSTALL:
+            return ''
         if not value:
             value = {}
-        if FREENAS_INSTALL:
-            return value
         return notifier().pwenc_encrypt(json.dumps(value))
 
     def from_db_value(self, value, expression, connection, context):
