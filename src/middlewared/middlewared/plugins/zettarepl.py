@@ -133,7 +133,7 @@ class ZettareplProcess:
                     context = self.vmware_contexts.pop(task_id, None)
                     if context:
                         with Client(py_exceptions=True) as c:
-                            c.call("vmware.periodic_snapshot_task_end", task_id, context)
+                            c.call("vmware.periodic_snapshot_task_end", context)
 
         except Exception:
             logger.error("Unhandled exception in ZettareplProcess._observer", exc_info=True)
