@@ -77,34 +77,6 @@ class NotifierService(Service):
         rv = getattr(subsystem, method)(*params)
         return rv
 
-    def pwenc_decrypt(self, encrypted=None):
-        """
-        Wrapper method to avoid traceback.
-        This is simply to keep old behavior in notifier.
-        """
-        try:
-            return notifier().pwenc_decrypt(encrypted)
-        except Exception as e:
-            logger.debug(
-                'notifier.pwenc_decrypt: Failed to decrypt the pass for {0}'.format(encrypted),
-                exc_info=True
-            )
-            return ''
-
-    def pwenc_encrypt(self, decrypted=None):
-        """
-        Wrapper method to avoid traceback.
-        This is simply to keep old behavior in notifier.
-        """
-        try:
-            return notifier().pwenc_encrypt(decrypted)
-        except Exception as e:
-            logger.debug(
-                'notifier.pwenc_encrypt: Failed to encrypt the pass for {0}'.format(decrypted),
-                exc_info=True
-            )
-            return ''
-
     def warden(self, method, params=None, kwargs=None):
         if params is None:
             params = []

@@ -57,10 +57,7 @@ class DiskService(CRUDService):
     @private
     async def disk_extend(self, disk):
         disk.pop('enabled', None)
-        disk['passwd'] = await self.middleware.call(
-            'notifier.pwenc_decrypt',
-            disk['passwd']
-        )
+        disk['passwd'] = await self.middleware.call('pwenc.decrypt', disk['passwd'])
         for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
             disk[key] = disk[key].upper()
         try:
