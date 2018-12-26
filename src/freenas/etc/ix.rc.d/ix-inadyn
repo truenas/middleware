@@ -52,7 +52,7 @@ generate_inadyn_real()
                 echo "    username = ${ddns_username}"
             fi
 
-            ddns_password=$(/usr/local/bin/midclt call notifier.pwenc_decrypt "${ddns_password}" | sed "s/'/\\'/g")
+            ddns_password=$(/usr/local/bin/midclt call pwenc.decrypt "${ddns_password}" | sed "s/'/\\'/g")
             if [ -n "${ddns_password}" ]; then
                 echo "    password = '${ddns_password}'"
             fi

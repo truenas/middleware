@@ -409,9 +409,11 @@ class CloudSyncService(CRUDService):
         cloud_sync["credentials"] = cloud_sync.pop("credential")
 
         cloud_sync["encryption_password"] = await self.middleware.call(
-            "notifier.pwenc_decrypt", cloud_sync["encryption_password"])
+            "pwenc.decrypt", cloud_sync["encryption_password"]
+        )
         cloud_sync["encryption_salt"] = await self.middleware.call(
-            "notifier.pwenc_decrypt", cloud_sync["encryption_salt"])
+            "pwenc.decrypt", cloud_sync["encryption_salt"]
+        )
 
         Cron.convert_db_format_to_schedule(cloud_sync)
 
@@ -422,9 +424,11 @@ class CloudSyncService(CRUDService):
         cloud_sync["credential"] = cloud_sync.pop("credentials")
 
         cloud_sync["encryption_password"] = await self.middleware.call(
-            "notifier.pwenc_encrypt", cloud_sync["encryption_password"])
+            "pwenc.encrypt", cloud_sync["encryption_password"]
+        )
         cloud_sync["encryption_salt"] = await self.middleware.call(
-            "notifier.pwenc_encrypt", cloud_sync["encryption_salt"])
+            "pwenc.encrypt", cloud_sync["encryption_salt"]
+        )
 
         Cron.convert_schedule_to_db_format(cloud_sync)
 

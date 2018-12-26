@@ -123,9 +123,6 @@ db_update()
 	if [ -f /data/uploaded.db ]; then
 		echo "Moving uploaded config to ${FREENAS_CONFIG}"
 		mv /data/uploaded.db ${FREENAS_CONFIG}
-		if [ "$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py pwenc_check 2> /dev/null)" != "True" ]; then
-			/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py pwenc_generate_secret > /dev/null
-		fi
 	fi
 
 	set +e

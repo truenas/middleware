@@ -66,14 +66,19 @@ class PWEncService(Service):
         encoded = base64.b64encode(nonce + cipher.encrypt(pad(data)))
         return encoded.decode()
 
-    def decrypt(self, encrypted):
+    def decrypt(self, encrypted, _raise=False):
         if not encrypted:
-            return ""
-        encrypted = base64.b64decode(encrypted)
-        nonce = encrypted[:8]
-        encrypted = encrypted[8:]
-        cipher = AES.new(self.__get_secret(), AES.MODE_CTR, counter=Counter.new(64, prefix=nonce))
-        return cipher.decrypt(encrypted).rstrip(PWENC_PADDING).decode('utf8')
+            return ''
+        try:
+            encrypted = base64.b64decode(encrypted)
+            nonce = encrypted[:8]
+            encrypted = encrypted[8:]
+            cipher = AES.new(self.__get_secret(), AES.MODE_CTR, counter=Counter.new(64, prefix=nonce))
+            return cipher.decrypt(encrypted).rstrip(PWENC_PADDING).decode('utf8')
+        except Exception:
+            if _raise:
+                raise
+            return ''
 
 
 async def setup(middleware):

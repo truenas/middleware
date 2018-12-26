@@ -35,8 +35,6 @@ actions.
 """
 
 from decimal import Decimal
-import base64
-from Crypto.Cipher import AES
 import ctypes
 import glob
 import libzfs
@@ -1755,88 +1753,17 @@ class notifier(metaclass=HookMetaclass):
             #    action = re.sub(r'\s+', ' ', msg)
         return (state, status)
 
-    def pwenc_reset_model_passwd(self, model, field):
-        for obj in model.objects.all():
-            setattr(obj, field, '')
-            obj.save()
-
-    def pwenc_generate_secret(self, reset_passwords=True, _settings=None):
-        from Crypto import Random
-        if _settings is None:
-            from freenasUI.system.models import Settings
-            _settings = Settings
-
-        try:
-            settings = _settings.objects.order_by('-id')[0]
-        except IndexError:
-            settings = _settings.objects.create()
-
-        secret = Random.new().read(PWENC_BLOCK_SIZE)
-        with open(PWENC_FILE_SECRET, 'wb') as f:
-            os.chmod(PWENC_FILE_SECRET, 0o600)
-            f.write(secret)
-
-        settings.stg_pwenc_check = self.pwenc_encrypt(PWENC_CHECK)
-        settings.save()
-
-        if reset_passwords:
-            from freenasUI.directoryservice.models import ActiveDirectory, LDAP
-            from freenasUI.services.models import DynamicDNS, WebDAV, UPS
-            from freenasUI.system.models import Email
-            self.pwenc_reset_model_passwd(ActiveDirectory, 'ad_bindpw')
-            self.pwenc_reset_model_passwd(LDAP, 'ldap_bindpw')
-            self.pwenc_reset_model_passwd(DynamicDNS, 'ddns_password')
-            self.pwenc_reset_model_passwd(WebDAV, 'webdav_password')
-            self.pwenc_reset_model_passwd(UPS, 'ups_monpwd')
-            self.pwenc_reset_model_passwd(Email, 'em_pass')
-
-    def pwenc_check(self):
-        from freenasUI.system.models import Settings
-        try:
-            settings = Settings.objects.order_by('-id')[0]
-        except IndexError:
-            settings = Settings.objects.create()
-        try:
-            return self.pwenc_decrypt(settings.stg_pwenc_check) == PWENC_CHECK
-        except (IOError, ValueError):
-            return False
-
-    def pwenc_get_secret(self):
-        with open(PWENC_FILE_SECRET, 'rb') as f:
-            secret = f.read()
-        return secret
-
     def pwenc_encrypt(self, text):
-        if not isinstance(text, bytes):
-            text = text.encode('utf8')
-        from Crypto.Random import get_random_bytes
-        from Crypto.Util import Counter
-
-        def pad(x):
-            return x + (PWENC_BLOCK_SIZE - len(x) % PWENC_BLOCK_SIZE) * PWENC_PADDING
-
-        nonce = get_random_bytes(8)
-        cipher = AES.new(
-            self.pwenc_get_secret(),
-            AES.MODE_CTR,
-            counter=Counter.new(64, prefix=nonce),
-        )
-        encoded = base64.b64encode(nonce + cipher.encrypt(pad(text)))
-        return encoded.decode()
+        if isinstance(text, bytes):
+            text = text.decode('utf8')
+        with client as c:
+            return c.call('pwenc.encrypt', text)
 
     def pwenc_decrypt(self, encrypted=None):
         if not encrypted:
             return ""
-        from Crypto.Util import Counter
-        encrypted = base64.b64decode(encrypted)
-        nonce = encrypted[:8]
-        encrypted = encrypted[8:]
-        cipher = AES.new(
-            self.pwenc_get_secret(),
-            AES.MODE_CTR,
-            counter=Counter.new(64, prefix=nonce),
-        )
-        return cipher.decrypt(encrypted).rstrip(PWENC_PADDING).decode('utf8')
+        with client as c:
+            return c.call('pwenc.decrypt', encrypted)
 
     def iscsi_connected_targets(self):
         '''

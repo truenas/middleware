@@ -20,10 +20,7 @@ class VMWareService(CRUDService):
 
     @private
     async def item_extend(self, item):
-        try:
-            item['password'] = await self.middleware.call('notifier.pwenc_decrypt', item['password'])
-        except Exception:
-            self.logger.warn('Failed to decrypt password', exc_info=True)
+        item['password'] = await self.middleware.call('pwenc.decrypt', item['password'])
         return item
 
     @private
@@ -80,10 +77,7 @@ class VMWareService(CRUDService):
     async def do_create(self, data):
         await self.validate_data(data, 'vmware_create')
 
-        data['password'] = await self.middleware.call(
-            'notifier.pwenc_encrypt',
-            data['password']
-        )
+        data['password'] = await self.middleware.call('pwenc.encrypt', data['password'])
 
         data['id'] = await self.middleware.call(
             'datastore.insert',
@@ -105,10 +99,7 @@ class VMWareService(CRUDService):
 
         await self.validate_data(new, 'vmware_update')
 
-        new['password'] = await self.middleware.call(
-            'notifier.pwenc_encrypt',
-            new['password']
-        )
+        new['password'] = await self.middleware.call('pwenc.encrypt', new['password'])
 
         await self.middleware.call(
             'datastore.update',
