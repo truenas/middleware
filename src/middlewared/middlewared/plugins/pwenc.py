@@ -74,3 +74,8 @@ class PWEncService(Service):
         encrypted = encrypted[8:]
         cipher = AES.new(self.__get_secret(), AES.MODE_CTR, counter=Counter.new(64, prefix=nonce))
         return cipher.decrypt(encrypted).rstrip(PWENC_PADDING).decode('utf8')
+
+
+async def setup(middleware):
+    if not await middleware.call('pwenc.check'):
+        await middleware.call('pwenc.generate_secret')
