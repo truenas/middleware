@@ -1677,13 +1677,12 @@ class MountPointAccessForm(Form):
         if self.cleaned_data.get('mp_group_en'):
             kwargs['group'] = self.cleaned_data['mp_group']
 
-        if self.cleaned_data.get('mp_mode_en'):
-            kwargs['mode'] = str(self.cleaned_data['mp_mode'])
-
         if self.cleaned_data.get('mp_user_en'):
             kwargs['user'] = self.cleaned_data['mp_user']
 
         kwargs['acl'] = self.cleaned_data['mp_acl'].upper()
+        if kwargs['acl'] != 'WINDOWS' and self.cleaned_data.get('mp_mode_en'):
+            kwargs['mode'] = str(self.cleaned_data['mp_mode'])
 
         kwargs['recursive'] = self.cleaned_data['mp_recursive']
 
