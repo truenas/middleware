@@ -200,6 +200,9 @@ class SmartService(SystemServiceService):
 
         await self._update_service(old, new)
 
+        if new["powermode"] != old["powermode"]:
+            await self.middleware.call("service.restart", "collectd", {"onetime": False})
+
         await self.smart_extend(new)
 
         return new
