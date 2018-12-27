@@ -18,6 +18,9 @@ class PWEncService(Service):
     class Config:
         private = True
 
+    def file_secret_path(self):
+        return PWENC_FILE_SECRET
+
     def generate_secret(self, reset_passwords=True):
         secret = os.urandom(PWENC_BLOCK_SIZE)
         with open(PWENC_FILE_SECRET, 'wb') as f:
