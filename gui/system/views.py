@@ -66,7 +66,7 @@ from freenasUI.middleware.client import client, CallTimeout, ClientException, Va
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.notifier import notifier
-from freenasUI.middleware.util import get_validation_errors
+from freenasUI.middleware.util import get_validation_errors, upload_job_and_wait
 from freenasUI.middleware.zfs import zpool_list
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.storage.models import Volume
@@ -610,14 +610,10 @@ def config_upload(request):
         }
 
         if form.is_valid():
-            config_file_name = tempfile.mktemp(dir='/var/tmp/firmware')
-            with open(config_file_name, 'wb') as config_file_fd:
-                for chunk in request.FILES['config'].chunks():
-                    config_file_fd.write(chunk)
-            success, errmsg = notifier().config_upload(config_file_name)
-            if not success:
-                form._errors['__all__'] = \
-                    form.error_class([errmsg])
+            try:
+                upload_job_and_wait(request.FILES['config'], 'config.upload')
+            except Exception as e:
+                form._errors['__all__'] = form.error_class([str(e)])
                 return JsonResp(request, form=form)
             else:
                 request.session['allow_reboot'] = True

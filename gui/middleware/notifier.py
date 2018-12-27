@@ -41,7 +41,6 @@ import libzfs
 import logging
 import os
 import re
-import shutil
 import signal
 import socket
 import sqlite3
@@ -49,7 +48,6 @@ from subprocess import Popen, PIPE
 import subprocess
 import sys
 import syslog
-import tarfile
 import tempfile
 import time
 
@@ -77,7 +75,6 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.common.pipesubr import SIG_SETMASK
 from freenasUI.common.system import (
-    FREENAS_DATABASE,
     exclude_path,
     get_mounted_filesystems,
     umount,
@@ -1141,59 +1138,6 @@ class notifier(metaclass=HookMetaclass):
             raise MiddlewareError("Factory reset has failed, check /var/log/messages")
         self._system("mv /data/freenas-v1.db.factory /data/freenas-v1.db")
         os.chdir(save_path)
-
-    def config_upload(self, config_file_name):
-        try:
-            """
-            First we try to open the file as a tar file.
-            We expect the tar file to contain at least the freenas-v1.db.
-            It can also contain the pwenc_secret file.
-            If we cannot open it as a tar, we try to proceed as it was the
-            raw database file.
-            """
-            try:
-                with tarfile.open(config_file_name) as tar:
-                    bundle = True
-                    tmpdir = tempfile.mkdtemp(dir='/var/tmp/firmware')
-                    tar.extractall(path=tmpdir)
-                    config_file_name = os.path.join(tmpdir, 'freenas-v1.db')
-            except tarfile.ReadError:
-                bundle = False
-            conn = sqlite3.connect(config_file_name)
-            try:
-                cur = conn.cursor()
-                cur.execute("SELECT COUNT(*) FROM south_migrationhistory WHERE app_name != 'freeadmin'")
-                new_num = cur.fetchone()[0]
-                cur.close()
-            finally:
-                conn.close()
-            conn = sqlite3.connect(FREENAS_DATABASE)
-            try:
-                cur = conn.cursor()
-                cur.execute("SELECT COUNT(*) FROM south_migrationhistory WHERE app_name != 'freeadmin'")
-                num = cur.fetchone()[0]
-                cur.close()
-            finally:
-                conn.close()
-                if new_num > num:
-                    return False, _(
-                        "Failed to upload config, version newer than the "
-                        "current installed."
-                    )
-        except Exception:
-            os.unlink(config_file_name)
-            return False, _('The uploaded file is not valid.')
-
-        shutil.move(config_file_name, '/data/uploaded.db')
-        if bundle:
-            secret = os.path.join(tmpdir, 'pwenc_secret')
-            if os.path.exists(secret):
-                shutil.move(secret, PWENC_FILE_SECRET)
-
-        # Now we must run the migrate operation in the case the db is older
-        open(NEED_UPDATE_SENTINEL, 'w+').close()
-
-        return True, None
 
     def zfs_get_options(self, name=None, recursive=False, props=None, zfstype=None):
         noinherit_fields = ['quota', 'refquota', 'reservation', 'refreservation']
