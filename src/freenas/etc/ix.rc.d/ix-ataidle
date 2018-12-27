@@ -19,4 +19,4 @@ start_cmd="ataidle_start"
 stop_cmd=':'
 
 load_rc_config $name
-run_rc_command "${cmd}"
+run_rc_command "$1"
