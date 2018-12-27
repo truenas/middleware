@@ -1034,29 +1034,6 @@ class notifier(metaclass=HookMetaclass):
 
         return False
 
-    def label_disk(self, label, dev, fstype=None):
-        """
-        Label the disk being manually imported
-        Currently UFS, NTFS, MSDOSFS and EXT2FS are supported
-        """
-
-        if fstype == 'UFS':
-            p1 = Popen(["/sbin/tunefs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
-        elif fstype == 'NTFS':
-            p1 = Popen(["/usr/local/sbin/ntfslabel", dev, label], stdin=PIPE, stdout=PIPE)
-        elif fstype == 'MSDOSFS':
-            p1 = Popen(["/usr/local/bin/mlabel", "-i", dev, "::%s" % label], stdin=PIPE, stdout=PIPE)
-        elif fstype == 'EXT2FS':
-            p1 = Popen(["/usr/local/sbin/tune2fs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
-        elif fstype is None:
-            p1 = Popen(["/sbin/geom", "label", "label", label, dev], stdin=PIPE, stdout=PIPE)
-        else:
-            return False, 'Unknown fstype %r' % fstype
-        err = p1.communicate()[1]
-        if p1.returncode == 0:
-            return True, ''
-        return False, err
-
     def zfs_import(self, name, id=None, first_time=True):
         if id is not None:
             imp = self._pipeopen('zpool import -f -R /mnt %s' % id)
