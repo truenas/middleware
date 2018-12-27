@@ -4,6 +4,8 @@ import re
 def generate_webdav_config(middleware):
     webdav_config = middleware.call_sync('webdav.config')
     if webdav_config['protocol'] in ('HTTPS', 'HTTPHTTPS'):
+        middleware.call_sync('certificate.certificate_webdav_health', webdav_config['certssl'], 'webdav.certssl')
+
         with open('/usr/local/etc/apache24/Includes/webdav.conf', 'r') as f:
             data = f.read()
 
