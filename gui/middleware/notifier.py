@@ -57,13 +57,7 @@ WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
 NEED_UPDATE_SENTINEL = '/data/need-update'
 GELI_KEYPATH = '/data/geli'
-GELI_KEY_SLOT = 0
-GELI_RECOVERY_SLOT = 1
-GELI_REKEY_FAILED = '/tmp/.rekey_failed'
-PWENC_BLOCK_SIZE = 32
 PWENC_FILE_SECRET = '/data/pwenc_secret'
-PWENC_PADDING = b'{'
-PWENC_CHECK = 'Donuts!'
 
 if WWW_PATH not in sys.path:
     sys.path.append(WWW_PATH)
@@ -306,7 +300,7 @@ class notifier(metaclass=HookMetaclass):
         download_job(reckey.name, 'recovery.key', 'pool.recoverykey_add', volume.id, {})
         return reckey.name
 
-    def geli_delkey(self, volume, slot=GELI_RECOVERY_SLOT, force=True):
+    def geli_delkey(self, volume):
         try:
             with client as c:
                 c.call('pool.recoverykey_rm', volume.id)
