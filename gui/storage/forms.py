@@ -1941,10 +1941,15 @@ class CloneSnapshotForm(Form):
 
     def commit(self):
         snapshot = self.cleaned_data['cs_snapshot'].__str__()
-        retval = notifier().zfs_clonesnap(
-            snapshot,
-            str(self.cleaned_data['cs_name']))
-        return retval
+        with client as c:
+            try:
+                c.call('zfs.snapshot.clone', {
+                    'snapshot': snapshot,
+                    'dataset_dst': str(self.cleaned_data['cs_name']),
+                })
+            except Exception as e:
+                return str(e)
+        return ''
 
 
 class ZFSDiskReplacementForm(Form):
