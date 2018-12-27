@@ -47,7 +47,7 @@ generate_crontab()
 			echo
 		done >> /etc/crontab
 
-		local f="id rsync_path rsync_mode rsync_minute rsync_hour rsync_daymonth rsync_month rsync_dayweek rsync_user rsync_remotehost rsync_remoteport rsync_remotemodule rsync_remotepath rsync_direction rsync_recursive rsync_times rsync_compress rsync_archive rsync_delete rsync_quiet rsync_preserveperm rsync_preserveattr rsync_extra"
+		local f="id rsync_minute rsync_hour rsync_daymonth rsync_month rsync_dayweek"
 		eval local $f
 		local sf=$(var_to_sf $f)
 		local rsync_command
@@ -55,10 +55,7 @@ generate_crontab()
 		${FREENAS_SQLITE_CMD} -separator "" ${RO_FREENAS_CONFIG} \
 		"SELECT $sf FROM tasks_rsync WHERE rsync_enabled = 1 ORDER BY id" | \
 		while eval read -r $f; do
-			rsync_command=$(/usr/local/bin/midclt call notifier.rsync_command ${id})
-			# Note that echo -e will do the wrong thing with certain characters. Read the commit
-			# history for more details.
-			echo "${rsync_minute}	${rsync_hour}	${rsync_daymonth}	${rsync_month}	${rsync_dayweek}	${rsync_user}	PATH=\"$cron_PATH\" ${rsync_command} 2>&1 |/usr/bin/logger -t rsync" >> /etc/crontab
+			echo "${rsync_minute}	${rsync_hour}	${rsync_daymonth}	${rsync_month}	${rsync_dayweek}	root	PATH=\"$cron_PATH\" /usr/local/bin/midclt call rsynctask.run ${id} 2>&1 > /dev/null" >> /etc/crontab
 		done
 
 		local f="id minute hour daymonth month dayweek"
