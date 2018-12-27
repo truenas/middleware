@@ -773,9 +773,7 @@ class iSCSITargetExtentService(CRUDService):
 
             if disk.startswith('multipath'):
                 await self.middleware.call('disk.unlabel', disk)
-                await self.middleware.call(
-                    'notifier.label_disk', f'extent_{disk}', disk
-                )
+                await self.middleware.call('disk.label', disk, f'extent_{disk}')
             elif not disk.startswith('hast') and not disk.startswith('zvol'):
                 disk_filters = [('name', '=', disk), ('expiretime', '=', None)]
                 try:
@@ -784,16 +782,16 @@ class iSCSITargetExtentService(CRUDService):
                     disk_identifier = disk_object.get('identifier', None)
                     data['path'] = disk_identifier
 
-                    if disk_identifier.startswith(
-                        '{devicename}'or disk_identifier.startswith('{uuid}')
+                    if disk_identifier.startswith('{devicename}') or disk_identifier.startswith(
+                        '{uuid}'
                     ):
-                        success, msg = await self.middleware.call(
-                            'notifier.label_disk', f'extent_{disk}', disk)
-                        if not success:
+                        try:
+                            await self.middleware.call('disk.label', disk, f'extent_{disk}')
+                        except Exception as e:
                             verrors.add(
                                 f'{schema_name}.disk',
-                                f'Serial not found and glabel failed for {disk}:'
-                                f' {msg}')
+                                f'Serial not found and glabel failed for {disk}: {str(e)}'
+                            )
 
                             if verrors:
                                 raise verrors
