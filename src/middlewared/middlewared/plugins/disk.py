@@ -1526,6 +1526,12 @@ class DiskService(CRUDService):
         return f'gptid/{uuid.text}'
 
     @private
+    async def label(self, dev, label):
+        cp = await run('geom', 'label', 'label', label, dev, check=False)
+        if cp.returncode != 0:
+            raise CallError(f'Failed to label {dev}: {cp.stderr.decode()}')
+
+    @private
     def unlabel(self, disk):
         self.middleware.call_sync('disk.swaps_remove_disks', [disk])
 
