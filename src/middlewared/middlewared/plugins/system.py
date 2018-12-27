@@ -348,7 +348,7 @@ class SystemService(Service):
 
         delay = options.get('delay')
         if delay:
-            time.sleep(delay)
+            await asyncio.sleep(delay)
 
         await Popen(["/sbin/reboot"])
 
@@ -369,7 +369,7 @@ class SystemService(Service):
 
         delay = options.get('delay')
         if delay:
-            time.sleep(delay)
+            await asyncio.sleep(delay)
 
         await Popen(["/sbin/poweroff"])
 
