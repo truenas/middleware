@@ -322,7 +322,7 @@ class cache_with_autorefresh(object):
 
 
 def load_modules(directory):
-    for f in os.listdir(directory):
+    for f in sorted(os.listdir(directory)):
         if not f.endswith('.py'):
             continue
         f = f[:-3]
