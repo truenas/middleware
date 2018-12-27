@@ -14,6 +14,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import (
     no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
 )
+from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.utils import run
 
 # FIXME: temporary imports while license methods are still in django
@@ -30,6 +31,10 @@ from freenasUI.support.utils import get_license
 
 INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
 SYNC_FILE = '/var/tmp/sync_failed'
+
+
+class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
+    pass
 
 
 def throttle_condition(middleware, app, *args, **kwargs):
@@ -497,7 +502,7 @@ async def ha_permission(middleware, app):
         '169.254.10.20',
         '169.254.10.80',
     ):
-        app.authenticated = True
+        AuthService.session_manager.login(app, TruenasNodeSessionManagerCredentials())
 
 
 async def hook_geli_passphrase(middleware, pool, passphrase):
