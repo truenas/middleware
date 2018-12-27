@@ -173,11 +173,10 @@ class WebDAVService(SystemServiceService):
                     f"{schema_name}.certssl",
                     'WebDAV SSL protocol specified without choosing a certificate'
                 )
-            elif not (await self.middleware.call('certificate.query', [['id', '=', cert_ssl]])):
-                verrors.add(
-                    f"{schema_name}.certssl",
-                    'Please provide a valid certificate id'
-                )
+            else:
+                verrors.extend((await self.middleware.call(
+                    'certificate.cert_services_validation', cert_ssl, f'{schema_name}.certssl', False
+                )))
 
         if verrors:
             raise verrors

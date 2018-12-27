@@ -18,6 +18,8 @@ class S3Service(SystemServiceService):
     async def config_extend(self, s3):
         s3['storage_path'] = s3.pop('disks', None)
         s3.pop('mode', None)
+        if s3.get('certificate'):
+            s3['certificate'] = s3['certificate']['id']
         return s3
 
     @accepts(Dict(
@@ -65,6 +67,11 @@ class S3Service(SystemServiceService):
             # If the storage_path does not exist, let's create it
             if not os.path.exists(new['storage_path']):
                 os.makedirs(new['storage_path'])
+
+        if new['certificate']:
+            verrors.extend((await self.middleware.call(
+                'certificate.cert_services_validation', new['certificate'], 's3_update.certificate', False
+            )))
 
         if verrors:
             raise verrors

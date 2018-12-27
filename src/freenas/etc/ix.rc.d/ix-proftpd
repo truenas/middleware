@@ -212,7 +212,10 @@ EOF
 
         if [ ${ftp_tls} -gt 0 ]; then
 
-if [ -z "${ftp_ssltls_certificate_id}" ]; then
+/usr/local/bin/midclt call certificate.cert_services_validation "$ftp_ssltls_certificate_id" 'ftp.ftp_ssltls_certificate_id' > /dev/null 2>&1
+certerror=$?
+
+if [ ${certerror} -gt 0 ]; then
         certname=""
         certchain=""
 else

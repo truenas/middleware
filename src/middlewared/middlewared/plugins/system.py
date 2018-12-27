@@ -678,7 +678,7 @@ class SystemGeneralService(ConfigService):
             cert = cert[0]
             verrors.extend(
                 await self.middleware.call(
-                    'certificate.certificate_nginx_health', certificate_id, f'{schema}.ui_certificate', False
+                    'certificate.cert_services_validation', certificate_id, f'{schema}.ui_certificate', False
                 )
             )
 
