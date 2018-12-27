@@ -91,11 +91,20 @@ class ConfigService(Service):
                     config_file_name = os.path.join(tmpdir, 'freenas-v1.db')
             except tarfile.ReadError:
                 bundle = False
+            # Currently we compare only the number of migrations for south and django
+            # of new and current installed database.
+            # This is not bullet proof as we can eventually have more migrations in a stable
+            # release compared to a older nightly and still be considered a downgrade, however
+            # this is simple enough and works in most cases.
             conn = sqlite3.connect(config_file_name)
             try:
                 cur = conn.cursor()
                 cur.execute(
                     "SELECT COUNT(*) FROM south_migrationhistory WHERE app_name != 'freeadmin'"
+                )
+                new_numsouth = cur.fetchone()[0]
+                cur.execute(
+                    "SELECT COUNT(*) FROM django_migrations WHERE app != 'freeadmin'"
                 )
                 new_num = cur.fetchone()[0]
                 cur.close()
@@ -104,12 +113,18 @@ class ConfigService(Service):
             conn = sqlite3.connect(FREENAS_DATABASE)
             try:
                 cur = conn.cursor()
-                cur.execute("SELECT COUNT(*) FROM south_migrationhistory WHERE app_name != 'freeadmin'")
+                cur.execute(
+                    "SELECT COUNT(*) FROM south_migrationhistory WHERE app_name != 'freeadmin'"
+                )
+                numsouth = cur.fetchone()[0]
+                cur.execute(
+                    "SELECT COUNT(*) FROM django_migrations WHERE app != 'freeadmin'"
+                )
                 num = cur.fetchone()[0]
                 cur.close()
             finally:
                 conn.close()
-                if new_num > num:
+                if new_numsouth > numsouth or new_num > num:
                     raise CallError(
                         'Failed to upload config, version newer than the '
                         'current installed.'
