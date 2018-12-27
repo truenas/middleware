@@ -24,17 +24,18 @@
 #
 #####################################################################
 
+import asyncio
+import asyncssh
+import errno
+import glob
 import os
 import re
-import errno
+import pipes
 import pwd
-import tempfile
-import subprocess
-import threading
 import shutil
-import asyncssh
-import glob
-import asyncio
+import subprocess
+import tempfile
+import threading
 
 from collections import defaultdict
 from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch
@@ -42,10 +43,7 @@ from middlewared.validators import Range, Match
 from middlewared.service import (
     Service, job, CallError, CRUDService, private, SystemServiceService, ValidationErrors
 )
-from middlewared.logger import Logger
 
-
-logger = Logger('rsync').getLogger()
 RSYNC_PATH = '/usr/local/bin/rsync'
 
 
@@ -112,7 +110,7 @@ class RsyncService(Service):
                     # to be None or not and DTRT
                     if hasattr(err, 'errno') and err.errno == 9:
                         break
-                    logger.debug('Error whilst parsing rsync progress', exc_info=True)
+                    self.logger.debug('Error whilst parsing rsync progress', exc_info=True)
 
         except BaseException as e:
             raise CallError(f'Rsync copy job id: {job.id} failed due to: {e}', errno.EIO)
@@ -246,7 +244,7 @@ class RsyncService(Service):
                 else:
                     line += f' {remote_address}:\\""{remote_path}"\\" "{path}"'
 
-        logger.debug(f'Executing rsync job id: {job.id} with the following command {line}')
+        self.logger.debug(f'Executing rsync job id: {job.id} with the following command {line}')
         try:
             t = threading.Thread(target=self.__rsync_worker, args=(line, user, job), daemon=True)
             t.start()
@@ -591,3 +589,57 @@ class RsyncTaskService(CRUDService):
         res = await self.middleware.call('datastore.delete', self._config.datastore, id)
         await self.middleware.call('service.restart', 'cron')
         return res
+
+    @private
+    async def commandline(self, id):
+        """
+        Helper method to generate the rsync command avoiding code duplication.
+        """
+        rsync = await self._get_instance(id)
+        line = [
+            '/usr/bin/lockf', '-s', '-t', '0', '-k', f'"{rsync["path"]}"', '/usr/local/bin/rsync'
+        ]
+        for name, flag in (
+            ('archive', '-a'),
+            ('compress', '-z'),
+            ('delayupdates', '--delay-updates'),
+            ('delete', '--delete-delay'),
+            ('preserveattr', '-X'),
+            ('preserveperm', '-p'),
+            ('recursive', '-r'),
+            ('times', '-t'),
+        ):
+            if rsync[name]:
+                line.append(flag)
+        if rsync['extra']:
+            line.append(' '.join(rsync['extra']))
+
+        # Do not use username if one is specified in host field
+        # See #5096 for more details
+        if '@' in rsync['remotehost']:
+            remote = rsync['remotehost']
+        else:
+            remote = f'"{rsync["user"]}"@{rsync["remotehost"]}'
+
+        if rsync['mode'] == 'module':
+            module_args = [f'"{rsync["path"]}"', f'{remote}::"{rsync["remotemodule"]}"']
+            if rsync['direction'] != 'push':
+                module_args.reverse()
+            line += module_args
+        else:
+            line += [
+                '-e',
+                f'"ssh -p {rsync["remoteport"]} -o BatchMode=yes -o StrictHostKeyChecking=yes"'
+            ]
+            if pipes.quote(rsync['remotepath']) == rsync['remotepath']:
+                rsync_remotepath = rsync['remotepath']
+            else:
+                rsync_remotepath = f'\\""{rsync["remotepath"]}"\\"'
+            path_args = [f'"{rsync["path"]}"', f'{remote}:{rsync_remotepath}']
+            if rsync['direction'] != 'push':
+                path_args.reverse()
+            line += path_args
+
+        if rsync['quiet']:
+            line += ['>', '/dev/null', '2>&1']
+        return ' '.join(line)
