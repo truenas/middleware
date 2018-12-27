@@ -70,7 +70,7 @@ class S3Service(SystemServiceService):
 
         if new['certificate']:
             verrors.extend((await self.middleware.call(
-                'certificate.certificate_s3_health', new['certificate'], 's3_update.certificate', False
+                'certificate.cert_services_validation', new['certificate'], 's3_update.certificate', False
             )))
 
         if verrors:

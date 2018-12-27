@@ -90,7 +90,7 @@ class FTPService(SystemServiceService):
                 )
             else:
                 verrors.extend((await self.middleware.call(
-                    "certificate.certificate_ftp_health", new["ssltls_certificate"],
+                    "certificate.cert_services_validation", new["ssltls_certificate"],
                     "ftp_update.ssltls_certificate", False
                 )))
 

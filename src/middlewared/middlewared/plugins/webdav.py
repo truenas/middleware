@@ -175,7 +175,7 @@ class WebDAVService(SystemServiceService):
                 )
             else:
                 verrors.extend((await self.middleware.call(
-                    'certificate.certificate_webdav_health', cert_ssl, f'{schema_name}.certssl', False
+                    'certificate.cert_services_validation', cert_ssl, f'{schema_name}.certssl', False
                 )))
 
         if verrors:

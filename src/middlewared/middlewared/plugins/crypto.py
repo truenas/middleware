@@ -360,7 +360,8 @@ class CertificateService(CRUDService):
     # HELPER METHODS
 
     @private
-    async def common_cert_services_validation(self, id, schema_name, raise_verrors=True):
+    async def cert_services_validation(self, id, schema_name, raise_verrors=True):
+        # General method to check certificate health wrt usage in services
         cert = await self.middleware.call('certificate.query', [['id', '=', id]])
         verrors = ValidationErrors()
         if cert:
@@ -396,24 +397,6 @@ class CertificateService(CRUDService):
             verrors.check()
         else:
             return verrors
-
-    @private
-    async def certificate_nginx_health(self, id, schema_name, raise_verrors=True):
-        # Checks certificate health wrt usage with nginx
-        # Raises verrors as specified if cert found not fit for nginx
-        return await self.common_cert_services_validation(id, schema_name, raise_verrors)
-
-    @private
-    async def certificate_ftp_health(self, id, schema_name, raise_verrors=True):
-        return await self.common_cert_services_validation(id, schema_name, raise_verrors)
-
-    @private
-    async def certificate_s3_health(self, id, schema_name, raise_verrors=True):
-        return await self.common_cert_services_validation(id, schema_name, raise_verrors)
-
-    @private
-    async def certificate_webdav_health(self, id, schema_name, raise_verrors=True):
-        return await self.common_cert_services_validation(id, schema_name, raise_verrors)
 
     @private
     def create_self_signed_cert(self):
@@ -1302,7 +1285,7 @@ class CertificateService(CRUDService):
 
         # Let's make sure we don't delete a certificate which is being used by any service in the system
         for service_cert_id, text in [
-            ((self.middleware.call_sync('system.general.config'))['ui_certificate']['id'], 'Nginx'),
+            ((self.middleware.call_sync('system.general.config'))['ui_certificate']['id'], 'WebUI'),
             ((self.middleware.call_sync('ftp.config'))['ssltls_certificate'], 'FTP'),
             ((self.middleware.call_sync('s3.config'))['certificate'], 'S3'),
             ((self.middleware.call_sync('webdav.config'))['certssl'], 'Webdav')

@@ -10,7 +10,7 @@ async def render(service, middleware):
     if not cert:
         return
     else:
-        await middleware.call('certificate.certificate_s3_health', cert, 's3.certificate')
+        await middleware.call('certificate.cert_services_validation', cert, 's3.certificate')
 
         cert = await middleware.call('certificate._get_instance', cert)
 
