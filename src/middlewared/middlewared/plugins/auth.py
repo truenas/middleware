@@ -74,7 +74,7 @@ class SessionManager:
         app.register_callback("on_message", self._app_on_message)
         app.register_callback("on_close", self._app_on_close)
 
-        if not is_local(session):
+        if not is_internal_session(session):
             self.middleware.send_event("auth.sessions", "ADDED", fields=dict(id=app.session_id, **session.dump()))
 
             self.sessions_last_sent_last_active[app.session_id] = session.last_active
@@ -85,7 +85,7 @@ class SessionManager:
         if session is not None:
             session.credentials.logout()
 
-            if not is_local(session):
+            if not is_internal_session(session):
                 self.middleware.send_event("auth.sessions", "REMOVED", fields=dict(id=app.session_id))
 
         app.authenticated = False
@@ -98,14 +98,17 @@ class SessionManager:
             return "UNIX_SOCKET"
 
         remote_addr, remote_port = app.request.transport.get_extra_info("peername")
-        if remote_addr.startswith("127.") or remote_addr == "::1":
+        if remote_addr in ["127.0.0.1", "::1"]:
             try:
                 remote_addr, remote_port = (app.request.headers["X-Real-Remote-Addr"],
                                             int(app.request.headers["X-Real-Remote-Port"]))
             except (KeyError, ValueError):
                 pass
 
-        return f"{remote_addr}:{remote_port}"
+        if ":" in remote_addr:
+            return f"[{remote_addr}]:{remote_port}"
+        else:
+            return f"{remote_addr}:{remote_port}"
 
     def _app_on_message(self, app, message):
         session = self.sessions.get(app.session_id)
@@ -121,7 +124,7 @@ class SessionManager:
 
         session.credentials.notify_used()
 
-        if not is_local(session):
+        if not is_internal_session(session):
             if session.last_active - self.sessions_last_sent_last_active[app.session_id] > 10:
                 self.middleware.send_event("auth.sessions", "CHANGED", fields=dict(id=app.session_id, **session.dump()))
 
@@ -191,8 +194,21 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         self.token_manager.destroy(self.token)
 
 
-def is_local(session):
-    return session.origin == "UNIX_SOCKET" or session.origin.startswith("127.") or session.origin == "::1"
+def is_internal_session(session):
+    if session.origin == "UNIX_SOCKET":
+        return True
+
+    host, port = session.origin.split(":", 1)
+    host = host.strip("[]")
+    port = int(port)
+
+    if host in ["127.0.0.1", "::1"]:
+        return True
+
+    if host in ["169.254.10.1", "169.254.10.2", "169.254.10.20", "169.254.10.80"] and port <= 1024:
+        return True
+
+    return False
 
 
 class AuthService(Service):
@@ -216,19 +232,28 @@ class AuthService(Service):
                 "id": "NyhB1J5vjPjIV82yZ6caU12HLA1boDJcZNWuVQM4hQWuiyUWMGZTz2ElDp7Yk87d",
                 "origin": "192.168.0.3:40392",
                 "credentials": "TOKEN",
+                "internal": False,
                 "created_at": {"$date": 1545842426070},
                 "last_active": {"$date": 1545842487816}
             }
         ]
 
-        `credentials` can be `LOGIN_PASSWORD` or `TOKEN` depending on what authentication method was used
+        `credentials` can be `UNIX_SOCKET`, `ROOT_TCP_SOCKET`, `TRUENAS_NODE`, `LOGIN_PASSWORD` or `TOKEN`,
+        depending on what authentication method was used.
+
+        If you want to exclude all internal connections from the list, call this method with following arguments:
+
+        [
+            [
+                ["internal", "=", True]
+            ]
+        ]
         """
         return filter_list(
             [
-                dict(id=session_id, **session.dump())
+                dict(id=session_id, internal=is_internal_session(session), **session.dump())
                 for session_id, session in sorted(self.session_manager.sessions.items(),
                                                   key=lambda t: t[1].created_at)
-                if not is_local(session)
             ],
             filters,
             options,
