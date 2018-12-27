@@ -1124,11 +1124,6 @@ class notifier(metaclass=HookMetaclass):
                 fsinfo[fs] = snaplist
         return fsinfo
 
-    def zfs_clonesnap(self, snapshot, dataset):
-        zfsproc = self._pipeopen("zfs clone '%s' '%s'" % (snapshot, dataset))
-        retval = zfsproc.communicate()[1]
-        return retval
-
     def config_restore(self):
         if os.path.exists("/data/freenas-v1.db.factory"):
             os.unlink("/data/freenas-v1.db.factory")
