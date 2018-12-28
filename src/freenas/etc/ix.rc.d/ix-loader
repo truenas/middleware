@@ -132,7 +132,7 @@ loader_ha()
 {
 	local node
 
-	if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.alua_enabled)" = "True" ]; then
+	if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call iscsi.global.alua_enabled)" = "True" ]; then
 		node=$(ha_node)
 		if [ "${node}" = "A" ]; then
 			echo "kern.cam.ctl.ha_id=1"

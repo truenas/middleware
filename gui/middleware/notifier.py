@@ -1659,18 +1659,6 @@ class notifier(metaclass=HookMetaclass):
             return ""
         decrypt(encrypted)
 
-    def alua_enabled(self):
-        if self.is_freenas() or not self.failover_licensed():
-            return False
-        from freenasUI.support.utils import fc_enabled
-        if fc_enabled():
-            return True
-        from freenasUI.services.models import iSCSITargetGlobalConfiguration
-        qs = iSCSITargetGlobalConfiguration.objects.all()
-        if qs:
-            return qs[0].iscsi_alua
-        return False
-
 
 def usage():
     usage_str = """usage: %s action command
