@@ -1,7 +1,10 @@
 import asyncio
+import ctypes
+import ctypes.util
 import imp
 import inspect
 import os
+import pwd
 import re
 import sys
 import subprocess
@@ -89,6 +92,33 @@ async def run(*args, **kwargs):
     if check:
         cp.check_returncode()
     return cp
+
+
+def setusercontext(user):
+    libc = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
+    libutil = ctypes.cdll.LoadLibrary(ctypes.util.find_library('util'))
+    libc.getpwnam.restype = ctypes.POINTER(ctypes.c_void_p)
+    pwnam = libc.getpwnam(user)
+    passwd = pwd.getpwnam(user)
+
+    libutil.login_getpwclass.restype = ctypes.POINTER(ctypes.c_void_p)
+    lc = libutil.login_getpwclass(pwnam)
+    os.setgid(passwd.pw_gid)
+    if lc and lc[0]:
+        libutil.setusercontext(
+            lc, pwnam, passwd.pw_uid, ctypes.c_uint(0x07ff)  # 0x07ff LOGIN_SETALL
+        )
+        libutil.login_close(lc)
+    else:
+        os.setgid(passwd.pw_gid)
+        libc.setlogin(user)
+        libc.initgroups(user, passwd.pw_gid)
+        os.setuid(passwd.pw_uid)
+
+    try:
+        os.chdir(passwd.pw_dir)
+    except Exception:
+        os.chdir('/')
 
 
 def partition(s):
