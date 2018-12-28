@@ -29,6 +29,7 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.client import client
 from freenasUI.tasks import models
 
 
@@ -71,7 +72,8 @@ def cron_run(request, oid):
 def rsync_run(request, oid):
     rsync = models.Rsync.objects.get(pk=oid)
     if request.method == "POST":
-        rsync.run()
+        with client as c:
+            c.call('rsynctask.run', rsync.id)
         return JsonResp(request, message=_("The rsync process has started"))
 
     return render(request, 'tasks/rsync_run.html', {
