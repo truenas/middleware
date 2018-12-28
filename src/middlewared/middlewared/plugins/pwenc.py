@@ -54,36 +54,45 @@ class PWEncService(Service):
         except (IOError, ValueError):
             return False
 
-    def __get_secret(self):
+    @staticmethod
+    def get_secret():
         with open(PWENC_FILE_SECRET, 'rb') as f:
             return f.read()
 
     def encrypt(self, data):
-        data = data.encode('utf8')
-
-        def pad(x):
-            return x + (PWENC_BLOCK_SIZE - len(x) % PWENC_BLOCK_SIZE) * PWENC_PADDING
-
-        nonce = os.urandom(8)
-        cipher = AES.new(self.__get_secret(), AES.MODE_CTR, counter=Counter.new(64, prefix=nonce))
-        encoded = base64.b64encode(nonce + cipher.encrypt(pad(data)))
-        return encoded.decode()
+        return encrypt(data)
 
     def decrypt(self, encrypted, _raise=False):
-        if not encrypted:
-            return ''
-        try:
-            encrypted = base64.b64decode(encrypted)
-            nonce = encrypted[:8]
-            encrypted = encrypted[8:]
-            cipher = AES.new(self.__get_secret(), AES.MODE_CTR, counter=Counter.new(64, prefix=nonce))
-            return cipher.decrypt(encrypted).rstrip(PWENC_PADDING).decode('utf8')
-        except Exception:
-            if _raise:
-                raise
-            return ''
+        return decrypt(encrypted, _raise)
 
 
 async def setup(middleware):
     if not await middleware.call('pwenc.check'):
         await middleware.call('pwenc.generate_secret')
+
+
+def encrypt(data):
+    data = data.encode('utf8')
+
+    def pad(x):
+        return x + (PWENC_BLOCK_SIZE - len(x) % PWENC_BLOCK_SIZE) * PWENC_PADDING
+
+    nonce = os.urandom(8)
+    cipher = AES.new(PWEncService.get_secret(), AES.MODE_CTR, counter=Counter.new(64, prefix=nonce))
+    encoded = base64.b64encode(nonce + cipher.encrypt(pad(data)))
+    return encoded.decode()
+
+
+def decrypt(encrypted, _raise=False):
+    if not encrypted:
+        return ''
+    try:
+        encrypted = base64.b64decode(encrypted)
+        nonce = encrypted[:8]
+        encrypted = encrypted[8:]
+        cipher = AES.new(PWEncService.get_secret(), AES.MODE_CTR, counter=Counter.new(64, prefix=nonce))
+        return cipher.decrypt(encrypted).rstrip(PWENC_PADDING).decode('utf8')
+    except Exception:
+        if _raise:
+            raise
+        return ''
