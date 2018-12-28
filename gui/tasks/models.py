@@ -25,7 +25,6 @@
 #
 #####################################################################
 import logging
-import pipes
 import subprocess
 
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -35,7 +34,6 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, ListField, Model, UserField, PathField
 from freenasUI.middleware.client import client
-from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Disk
 
 log = logging.getLogger('tasks.models')
@@ -515,87 +513,6 @@ class Rsync(Model):
             return self.rsync_remotemodule
         else:
             return self.rsync_remotepath
-
-    def commandline(self):
-        line = '/usr/bin/lockf -s -t 0 -k "%s" /usr/local/bin/rsync' % (
-            self.rsync_path
-        )
-        if self.rsync_recursive:
-            line += ' -r'
-        if self.rsync_times:
-            line += ' -t'
-        if self.rsync_compress:
-            line += ' -z'
-        if self.rsync_archive:
-            line += ' -a'
-        if self.rsync_preserveperm:
-            line += ' -p'
-        if self.rsync_preserveattr:
-            line += ' -X'
-        if self.rsync_delete:
-            line += ' --delete-delay'
-        if self.rsync_delayupdates:
-            line += ' --delay-updates'
-        if self.rsync_extra:
-            line += ' %s' % self.rsync_extra
-
-        # Do not use username if one is specified in host field
-        # See #5096 for more details
-        if '@' in self.rsync_remotehost:
-            remote = self.rsync_remotehost
-        else:
-            remote = '"%s"@%s' % (
-                self.rsync_user,
-                self.rsync_remotehost,
-            )
-
-        if self.rsync_mode == 'module':
-            if self.rsync_direction == 'push':
-                line += ' "%s" %s::"%s"' % (
-                    self.rsync_path,
-                    remote,
-                    self.rsync_remotemodule,
-                )
-            else:
-                line += ' %s::"%s" "%s"' % (
-                    remote,
-                    self.rsync_remotemodule,
-                    self.rsync_path,
-                )
-        else:
-            line += (
-                ' -e "ssh -p %d -o BatchMode=yes '
-                '-o StrictHostKeyChecking=yes"'
-            ) % (
-                self.rsync_remoteport
-            )
-            if pipes.quote(self.rsync_remotepath) == self.rsync_remotepath:
-                rsync_remotepath = self.rsync_remotepath
-            else:
-                rsync_remotepath = '\\""%s"\\"' % self.rsync_remotepath
-            if self.rsync_direction == 'push':
-                line += ' "%s" %s:%s' % (
-                    self.rsync_path,
-                    remote,
-                    rsync_remotepath,
-                )
-            else:
-                line += ' %s:%s "%s"' % (
-                    remote,
-                    rsync_remotepath,
-                    self.rsync_path,
-                )
-        if self.rsync_quiet:
-            line += ' > /dev/null 2>&1'
-        return line
-
-    def run(self):
-        proc = subprocess.Popen([
-            "/usr/local/www/freenasUI/tools/runnow.py",
-            "-t", "rsync",
-            "-i", str(self.id),
-        ])
-        proc.communicate()
 
 
 class SMARTTest(Model):

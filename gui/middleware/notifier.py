@@ -1656,17 +1656,6 @@ class notifier(metaclass=HookMetaclass):
         if path and os.path.exists(path):
             os.unlink(path)
 
-    def rsync_command(self, obj_or_id):
-        """
-        Helper method used in ix-crontab to generate the rsync command
-        avoiding code duplication.
-        This should be removed once ix-crontab is rewritten in python.
-        """
-        from freenasUI.tasks.models import Rsync
-        oid = int(obj_or_id)
-        rsync = Rsync.objects.get(id=oid)
-        return rsync.commandline()
-
     def zpool_status(self, pool_name):
         """
         Function to find out the status of the zpool
