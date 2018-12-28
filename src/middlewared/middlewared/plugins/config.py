@@ -1,16 +1,21 @@
 import asyncio
 import contextlib
+import glob
 import os
+import re
 import shutil
 import sqlite3
 import tarfile
 import tempfile
 
+from datetime import datetime
+
 from middlewared.schema import Bool, Dict, accepts
-from middlewared.service import CallError, Service, job
+from middlewared.service import CallError, Service, job, private
 
 FREENAS_DATABASE = '/data/freenas-v1.db'
 NEED_UPDATE_SENTINEL = '/data/need-update'
+RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
 
 
 class ConfigService(Service):
@@ -141,3 +146,33 @@ class ConfigService(Service):
 
         # Now we must run the migrate operation in the case the db is older
         open(NEED_UPDATE_SENTINEL, 'w+').close()
+
+    @private
+    def backup(self):
+        systemdataset = self.middleware.call_sync('systemdataset.config')
+        if not systemdataset or not systemdataset['path']:
+            return
+
+        # Legacy format
+        for f in glob.glob(f'{systemdataset["path"]}/*.db'):
+            if not RE_CONFIG_BACKUP.match(f):
+                continue
+            try:
+                os.unlink(f)
+            except OSError:
+                pass
+
+        today = datetime.now().strftime("%Y%m%d")
+
+        newfile = os.path.join(
+            systemdataset["path"],
+            f'configs-{systemdataset["uuid"]}',
+            self.middleware.call_sync('system.version'),
+            f'{today}.db',
+        )
+
+        dirname = os.path.dirname(newfile)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+
+        shutil.copy(FREENAS_DATABASE, newfile)
