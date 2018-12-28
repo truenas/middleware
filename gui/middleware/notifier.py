@@ -1683,10 +1683,6 @@ class notifier(metaclass=HookMetaclass):
         connections = xml.xpath('//connection')
         return len(connections)
 
-    def backup_db(self):
-        from freenasUI.common.system import backup_database
-        backup_database()
-
     def alua_enabled(self):
         if self.is_freenas() or not self.failover_licensed():
             return False
