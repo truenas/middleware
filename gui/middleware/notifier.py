@@ -88,6 +88,8 @@ from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.multipath import Multipath
+from middlewared.plugins.pwenc import encrypt, decrypt
+
 import sysctl
 
 ACL_WINDOWS_FILE = ".windows"
@@ -1650,14 +1652,12 @@ class notifier(metaclass=HookMetaclass):
     def pwenc_encrypt(self, text):
         if isinstance(text, bytes):
             text = text.decode('utf8')
-        with client as c:
-            return c.call('pwenc.encrypt', text)
+        encrypt(text)
 
     def pwenc_decrypt(self, encrypted=None):
         if not encrypted:
             return ""
-        with client as c:
-            return c.call('pwenc.decrypt', encrypted)
+        decrypt(encrypted)
 
     def alua_enabled(self):
         if self.is_freenas() or not self.failover_licensed():
