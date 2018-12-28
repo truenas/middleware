@@ -1659,22 +1659,6 @@ class notifier(metaclass=HookMetaclass):
         with client as c:
             return c.call('pwenc.decrypt', encrypted)
 
-    def iscsi_connected_targets(self):
-        '''
-        Returns the list of connected iscsi targets
-        '''
-        from lxml import etree
-        proc = self._pipeopen('ctladm islist -x')
-        xml = proc.communicate()[0]
-        connections = etree.fromstring(xml)
-        connected_targets = []
-        for connection in connections.xpath("//connection"):
-            # Get full target name (Base name:target name) for each connection
-            target = connection.xpath("./target")[0].text
-            if target not in connected_targets:
-                connected_targets.append(target)
-        return connected_targets
-
     def alua_enabled(self):
         if self.is_freenas() or not self.failover_licensed():
             return False
