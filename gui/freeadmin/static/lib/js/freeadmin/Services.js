@@ -154,7 +154,7 @@ define([
         var me = this;
         if(me.name == 'iscsitarget') {
           me.startLoading();
-          Middleware.call('notifier.iscsi_active_connections', [], function(result) {
+          Middleware.call('iscsi.global.sessions', [[], {"count": true}], function(result) {
             me.stopLoading();
             if(result > 0) {
 
