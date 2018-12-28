@@ -1675,14 +1675,6 @@ class notifier(metaclass=HookMetaclass):
                 connected_targets.append(target)
         return connected_targets
 
-    def iscsi_active_connections(self):
-        from lxml import etree
-        proc = self._pipeopen('ctladm islist -x')
-        xml = proc.communicate()[0]
-        xml = etree.fromstring(xml)
-        connections = xml.xpath('//connection')
-        return len(connections)
-
     def alua_enabled(self):
         if self.is_freenas() or not self.failover_licensed():
             return False
