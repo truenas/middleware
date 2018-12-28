@@ -1,9 +1,12 @@
+from lxml import etree
+
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
                                 Str)
-from middlewared.service import (CallError, CRUDService, SystemServiceService,
-                                 ValidationErrors, private)
-from middlewared.utils import run
+from middlewared.service import (
+    CallError, CRUDService, SystemServiceService, ValidationErrors, filterable, private
+)
+from middlewared.utils import filter_list, run
 from middlewared.validators import IpAddress, Range
 
 import bidict
@@ -11,6 +14,7 @@ import errno
 import hashlib
 import re
 import os
+import subprocess
 import sysctl
 import uuid
 
@@ -82,6 +86,33 @@ class ISCSIGlobalService(SystemServiceService):
             await self.middleware.call('service.start', 'ix-loader')
 
         return await self.config()
+
+    @filterable
+    def sessions(self, filters, options):
+        """
+        Get a list of currently running iSCSI sessions. This includes initiator and target names
+        and the unique connection IDs.
+        """
+        def transform(tag, text):
+            if tag in (
+                'target_portal_group_tag', 'max_data_segment_length', 'max_burst_length',
+                'first_burst_length',
+            ) and text.isdigit():
+                return int(text)
+            if tag in ('immediate_data', 'iser'):
+                return bool(int(text))
+            if tag in ('header_digest', 'data_digest', 'offload') and text == 'None':
+                return None
+            return text
+
+        cp = subprocess.run(['ctladm', 'islist', '-x'], capture_output=True, text=True)
+        connections = etree.fromstring(cp.stdout)
+        sessions = []
+        for connection in connections.xpath("//connection"):
+            sessions.append({
+                i.tag: transform(i.tag, i.text) for i in connection.iterchildren()
+            })
+        return filter_list(sessions, filters, options)
 
 
 class ISCSIPortalService(CRUDService):
