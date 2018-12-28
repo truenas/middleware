@@ -29,20 +29,26 @@ import asyncssh
 import errno
 import glob
 import os
-import re
 import pipes
 import pwd
+import queue
+import re
 import shutil
 import subprocess
+import syslog
 import tempfile
 import threading
 
 from collections import defaultdict
+from multiprocessing import Process, Queue, Value
+
 from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch
 from middlewared.validators import Range, Match
 from middlewared.service import (
-    Service, job, CallError, CRUDService, private, SystemServiceService, ValidationErrors
+    Service, job, CallError, CRUDService, private, SystemServiceService, ValidationErrors,
+    item_method,
 )
+from middlewared.utils import setusercontext
 
 RSYNC_PATH = '/usr/local/bin/rsync'
 
@@ -349,6 +355,33 @@ class RsyncModService(CRUDService):
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
 
 
+def _run_command(user, commandline, q, rv):
+    setusercontext(user)
+
+    os.environ['PATH'] = (
+        '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin'
+    )
+    proc = subprocess.Popen(
+        commandline, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    )
+
+    # logger(1) does not honor original exit value so we use syslog module instead
+    syslog.openlog(ident='rsync')
+    while True:
+        line = proc.stdout.readline()
+        if line == b'':
+            break
+        try:
+            q.put(line, False)
+        except queue.Full:
+            pass
+        syslog.syslog(syslog.LOG_NOTICE, line.decode())
+    syslog.closelog()
+    proc.communicate()
+    rv.value = proc.returncode
+    q.put(None)
+
+
 class RsyncTaskService(CRUDService):
 
     class Config:
@@ -643,3 +676,32 @@ class RsyncTaskService(CRUDService):
         if rsync['quiet']:
             line += ['>', '/dev/null', '2>&1']
         return ' '.join(line)
+
+    @item_method
+    @accepts(Int('id'))
+    @job(lock=lambda args: args[-1], logs=True)
+    def run(self, job, id):
+        """
+        Job to run rsync task of `id`.
+
+        Output is saved to job log excerpt as well as syslog.
+        """
+        rsync = self.middleware.call_sync('rsynctask._get_instance', id)
+        commandline = self.middleware.call_sync('rsynctask.commandline', id)
+        q = Queue()
+        rv = Value('i')
+        p = Process(target=_run_command, args=(rsync['user'], commandline, q, rv), daemon=True)
+        p.start()
+        while p.is_alive() or not q.empty():
+            try:
+                get = q.get(True, 2)
+                if get is None:
+                    break
+                job.logs_fd.write(get)
+            except queue.Empty:
+                pass
+        p.join()
+        if rv.value != 0:
+            raise CallError(
+                f'rsync command returned {rv.value}. Check logs for further information.'
+            )
