@@ -13,7 +13,7 @@
 generate_ctl()
 {
 	/usr/local/libexec/nas/generate_ctl_conf.py
-	if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.alua_enabled)" = "True" ]; then
+	if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call iscsi.global.alua_enabled)" = "True" ]; then
 		if [ "$(ha_mode)" = "MANUAL" ]; then
 			# TODO: get from database if we are not echostream
 		else
