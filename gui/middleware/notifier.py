@@ -1524,20 +1524,6 @@ class notifier(metaclass=HookMetaclass):
             return sysc[0].value
         raise ValueError(name)
 
-    def staticroute_delete(self, sr):
-        """
-        Delete a static route from the route table
-
-        Raises:
-            MiddlewareError in case the operation failed
-        """
-        import ipaddr
-        netmask = ipaddr.IPNetwork(sr.sr_destination)
-        masked = netmask.masked().compressed
-        p1 = self._pipeopen("/sbin/route delete %s" % masked)
-        if p1.wait() != 0:
-            raise MiddlewareError("Failed to remove the route %s" % sr.sr_destination)
-
     def dataset_init_unix(self, dataset):
         """path = "/mnt/%s" % dataset"""
         pass
