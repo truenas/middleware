@@ -24,13 +24,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import glob
 import json
 import logging
 import os
 import re
 import requests
-import shutil
 import sqlite3
 import subprocess
 import time
@@ -502,40 +500,6 @@ def exclude_path(path, exclude):
         return apply_paths
     else:
         return [path]
-
-
-def backup_database():
-    from freenasUI.middleware.client import client
-
-    with client as c:
-        systemdataset = c.call('systemdataset.config')
-    if not systemdataset or not systemdataset['path']:
-        return
-
-    # Legacy format
-    files = glob.glob(f'{systemdataset["path"]}/*.db')
-    reg = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
-    files = [y for y in files if reg.match(y)]
-    for f in files:
-        try:
-            os.unlink(f)
-        except OSError:
-            pass
-
-    today = datetime.now().strftime("%Y%m%d")
-
-    newfile = os.path.join(
-        systemdataset["path"],
-        f'configs-{systemdataset["uuid"]}',
-        get_sw_version(),
-        f'{today}.db',
-    )
-
-    dirname = os.path.dirname(newfile)
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-
-    shutil.copy('/data/freenas-v1.db', newfile)
 
 
 def get_dc_hostname():
