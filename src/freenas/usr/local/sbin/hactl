@@ -39,7 +39,7 @@ def main(command, quiet):
             print("Node status: Passive (Master node unreachable)")
 
         if fo_exists:
-            ret = client.call('notifier.failover_disabled_reasons')
+            ret = client.call('failover.disabled_reasons')
             if 'NO_FAILOVER' in ret:
                 print("Failover status: Administratively Disabled")
             elif 'NO_PONG' in ret:
