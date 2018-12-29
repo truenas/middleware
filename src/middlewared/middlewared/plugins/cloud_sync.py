@@ -116,6 +116,9 @@ async def rclone(middleware, job, cloud_sync):
         if cloud_sync["attributes"].get("fast_list"):
             args.append("--fast-list")
 
+        if cloud_sync["follow_symlinks"]:
+            args.extend(["-L"])
+
         if cloud_sync["transfers"]:
             args.extend(["--transfers", str(cloud_sync["transfers"])])
 
@@ -533,6 +536,7 @@ class CloudSyncService(CRUDService):
         Str("encryption_password", default=""),
         Str("encryption_salt", default=""),
         Cron("schedule", required=True),
+        Bool("follow_symlinks", default=False),
         Int("transfers", null=True, default=None, validators=[Range(min=1)]),
         List("bwlimit", default=[], items=[Dict("cloud_sync_bwlimit",
                                                 Str("time", validators=[Time()]),

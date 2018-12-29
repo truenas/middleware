@@ -166,6 +166,12 @@ class CloudSync(Model):
         default="*",
         verbose_name=_("Day of week"),
     )
+    follow_symlinks = models.BooleanField(
+        verbose_name=_("Follow symlinks"),
+        help_text=_(
+            "Follow symlinks and copy the pointed to item.",
+        ),
+    )
     transfers = models.IntegerField(
         null=True,
     )
