@@ -55,7 +55,6 @@ class Token:
 class SessionManager:
     def __init__(self):
         self.sessions = {}
-        self.sessions_last_sent_last_active = {}
 
         self.middleware = None
 
@@ -77,8 +76,6 @@ class SessionManager:
         if not is_internal_session(session):
             self.middleware.send_event("auth.sessions", "ADDED", fields=dict(id=app.session_id, **session.dump()))
 
-            self.sessions_last_sent_last_active[app.session_id] = session.last_active
-
     def logout(self, app):
         session = self.sessions.pop(app.session_id, None)
 
@@ -89,8 +86,6 @@ class SessionManager:
                 self.middleware.send_event("auth.sessions", "REMOVED", fields=dict(id=app.session_id))
 
         app.authenticated = False
-
-        self.sessions_last_sent_last_active.pop(app.session_id, None)
 
     def _get_origin(self, app):
         sock = app.request.transport.get_extra_info("socket")
@@ -120,15 +115,7 @@ class SessionManager:
             self.logout(app)
             return
 
-        session.notify_used()
-
         session.credentials.notify_used()
-
-        if not is_internal_session(session):
-            if session.last_active - self.sessions_last_sent_last_active[app.session_id] > 10:
-                self.middleware.send_event("auth.sessions", "CHANGED", fields=dict(id=app.session_id, **session.dump()))
-
-                self.sessions_last_sent_last_active[app.session_id] = session.last_active
 
     def _app_on_close(self, app):
         self.logout(app)
@@ -141,10 +128,6 @@ class Session:
         self.credentials = credentials
 
         self.created_at = time.monotonic()
-        self.last_active = time.monotonic()
-
-    def notify_used(self):
-        self.last_active = time.monotonic()
 
     def dump(self):
         return {
@@ -155,7 +138,6 @@ class Session:
                 self.credentials.__class__.__name__.replace("SessionManagerCredentials", "")
             ).lstrip("_").upper(),
             "created_at": datetime.utcnow() - timedelta(seconds=time.monotonic() - self.created_at),
-            "last_active": datetime.utcnow() - timedelta(seconds=time.monotonic() - self.last_active),
         }
 
 
