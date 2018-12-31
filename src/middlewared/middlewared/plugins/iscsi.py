@@ -973,7 +973,10 @@ class iSCSITargetService(CRUDService):
     async def __validate(self, verrors, data, schema_name, old=None):
 
         if not RE_TARGET_NAME.search(data['name']):
-            verrors.add(f'{schema_name}.name', 'Use alphanumeric characters, ".", "-" and ":".')
+            verrors.add(
+                f'{schema_name}.name',
+                'Alphanumeric with lowercase characters or these characters ".", "-" and ":" are allowed.'
+            )
         else:
             filters = [('name', '=', data['name'])]
             if old:
