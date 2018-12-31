@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 import sqlite3
+import subprocess
 import tarfile
 import tempfile
 
@@ -146,6 +147,43 @@ class ConfigService(Service):
 
         # Now we must run the migrate operation in the case the db is older
         open(NEED_UPDATE_SENTINEL, 'w+').close()
+
+    @accepts(Dict('options', Bool('reboot', default=True)))
+    @job(lock='config_reset', logs=True)
+    def reset(self, job, options):
+        """
+        Reset database to configuration defaults.
+
+        If `reboot` is true this job will reboot the system after its completed with a delay of 10
+        seconds.
+        """
+        factorydb = f'{FREENAS_DATABASE}.factory'
+        if os.path.exists(factorydb):
+            os.unlink(factorydb)
+        cp = subprocess.run(
+            ['migrate93', '-f', factorydb],
+            capture_output=True,
+        )
+        if cp.returncode != 0:
+            job.logs_fd.write(cp.stderr)
+            raise CallError('Factory reset has failed.')
+        cp = subprocess.run(
+            [
+                'env', 'FREENAS_FACTORY=1', 'python', '/usr/local/www/freenasUI/manage.py',
+                'migrate', '--noinput', '--fake-initial',
+            ],
+            capture_output=True,
+        )
+        if cp.returncode != 0:
+            job.logs_fd.write(cp.stderr)
+            raise CallError('Factory reset has failed.')
+
+        subprocess.run(['mv', factorydb, FREENAS_DATABASE], check=True, capture_output=True)
+
+        if options['reboot']:
+            self.middleware.run_coroutine(
+                self.middleware.call('system.reboot', {'delay': 10}), wait=False,
+            )
 
     @private
     def backup(self):
