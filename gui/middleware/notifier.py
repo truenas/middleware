@@ -1638,12 +1638,12 @@ class notifier(metaclass=HookMetaclass):
     def pwenc_encrypt(self, text):
         if isinstance(text, bytes):
             text = text.decode('utf8')
-        encrypt(text)
+        return encrypt(text)
 
     def pwenc_decrypt(self, encrypted=None):
         if not encrypted:
             return ""
-        decrypt(encrypted)
+        return decrypt(encrypted)
 
 
 def usage():
