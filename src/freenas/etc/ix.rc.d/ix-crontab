@@ -68,7 +68,7 @@ generate_crontab()
 		${FREENAS_SQLITE_CMD} -separator "" ${RO_FREENAS_CONFIG} \
 		"SELECT $sf FROM tasks_cloudsync WHERE enabled = 1 ORDER BY id" | \
 		while eval read -r $f; do
-			echo "${minute}	${hour}	${daymonth}	${month}	${dayweek}	root	/usr/local/bin/midclt call cloudsync.sync ${id} > /dev/null"
+			echo "${minute}	${hour}	${daymonth}	${month}	${dayweek}	root	/usr/local/bin/midclt call backup.sync ${id} > /dev/null"
 		done >> /etc/crontab
 
 
