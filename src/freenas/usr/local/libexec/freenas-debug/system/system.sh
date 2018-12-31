@@ -96,8 +96,8 @@ system_func()
 	beadm list
 	section_footer
 
-	section_header "Alert System - 'alertcli.py'"
-	/usr/local/bin/alertcli.py
+	section_header "Alert System"
+	midclt call alert.list | jq .
 	section_footer
 
 	section_header "Middleware Jobs - 'midclt call core.get_jobs'"
