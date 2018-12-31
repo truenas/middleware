@@ -555,7 +555,7 @@ class ZFSSnapshot(CRUDService):
             )
             if cp.returncode != 0:
                 raise CallError(f'Failed to retrieve snapshots: {cp.stderr}')
-            snaps = [{'name': i} for i in cp.stdout.strip().split()]
+            snaps = [{'name': i} for i in cp.stdout.strip().split('\n')]
             if filters:
                 return filter_list(snaps, filters, options)
             return snaps
