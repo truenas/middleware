@@ -169,10 +169,11 @@ class ConfigService(Service):
             raise CallError('Factory reset has failed.')
         cp = subprocess.run(
             [
-                'env', 'FREENAS_FACTORY=1', 'python', '/usr/local/www/freenasUI/manage.py',
-                'migrate', '--noinput', '--fake-initial',
+                'python', '/usr/local/www/freenasUI/manage.py', 'migrate', '--noinput',
+                '--fake-initial',
             ],
             capture_output=True,
+            env={'FREENAS_FACTORY': '1'},
         )
         if cp.returncode != 0:
             job.logs_fd.write(cp.stderr)
