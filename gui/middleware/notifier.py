@@ -1123,24 +1123,6 @@ class notifier(metaclass=HookMetaclass):
                 fsinfo[fs] = snaplist
         return fsinfo
 
-    def config_restore(self):
-        if os.path.exists("/data/freenas-v1.db.factory"):
-            os.unlink("/data/freenas-v1.db.factory")
-        save_path = os.getcwd()
-        os.chdir(FREENAS_PATH)
-        proc = self._pipeopen("/usr/local/sbin/migrate93 -f /data/freenas-v1.db.factory")
-        error = proc.communicate()[1]
-        if proc.returncode != 0:
-            log.warn('Failed to create factory database: %s', error)
-            raise MiddlewareError("Factory reset has failed, check /var/log/messages")
-        proc = self._pipeopen("/usr/bin/env FREENAS_FACTORY=1 /usr/local/bin/python manage.py migrate --noinput --fake-initial")
-        error = proc.communicate()[1]
-        if proc.returncode != 0:
-            log.warn('Failed to create factory database: %s', error)
-            raise MiddlewareError("Factory reset has failed, check /var/log/messages")
-        self._system("mv /data/freenas-v1.db.factory /data/freenas-v1.db")
-        os.chdir(save_path)
-
     def zfs_get_options(self, name=None, recursive=False, props=None, zfstype=None):
         noinherit_fields = ['quota', 'refquota', 'reservation', 'refreservation']
 
