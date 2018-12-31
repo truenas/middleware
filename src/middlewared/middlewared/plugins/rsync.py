@@ -29,10 +29,10 @@ import asyncssh
 import errno
 import glob
 import os
-import pipes
 import pwd
 import queue
 import re
+import shlex
 import shutil
 import subprocess
 import syslog
@@ -630,7 +630,7 @@ class RsyncTaskService(CRUDService):
         """
         rsync = await self._get_instance(id)
         line = [
-            '/usr/bin/lockf', '-s', '-t', '0', '-k', f'"{rsync["path"]}"', '/usr/local/bin/rsync'
+            '/usr/bin/lockf', '-s', '-t', '0', '-k', rsync["path"], '/usr/local/bin/rsync'
         ]
         for name, flag in (
             ('archive', '-a'),
@@ -655,27 +655,23 @@ class RsyncTaskService(CRUDService):
             remote = f'"{rsync["user"]}"@{rsync["remotehost"]}'
 
         if rsync['mode'] == 'module':
-            module_args = [f'"{rsync["path"]}"', f'{remote}::"{rsync["remotemodule"]}"']
+            module_args = [rsync["path"], f'{remote}::"{rsync["remotemodule"]}"']
             if rsync['direction'] != 'push':
                 module_args.reverse()
             line += module_args
         else:
             line += [
                 '-e',
-                f'"ssh -p {rsync["remoteport"]} -o BatchMode=yes -o StrictHostKeyChecking=yes"'
+                f'ssh -p {rsync["remoteport"]} -o BatchMode=yes -o StrictHostKeyChecking=yes'
             ]
-            if pipes.quote(rsync['remotepath']) == rsync['remotepath']:
-                rsync_remotepath = rsync['remotepath']
-            else:
-                rsync_remotepath = f'\\""{rsync["remotepath"]}"\\"'
-            path_args = [f'"{rsync["path"]}"', f'{remote}:{rsync_remotepath}']
+            path_args = [rsync["path"], f'{remote}:{rsync["remotepath"]}']
             if rsync['direction'] != 'push':
                 path_args.reverse()
             line += path_args
 
         if rsync['quiet']:
             line += ['>', '/dev/null', '2>&1']
-        return ' '.join(line)
+        return ' '.join([shlex.quote(arg) for arg in line])
 
     @item_method
     @accepts(Int('id'))
