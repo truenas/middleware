@@ -1647,6 +1647,7 @@ class LegacyReplicationResourceMixin(object):
 
     class Meta:
         resource_name = 'storage/replication'
+        allowed_methods = ['get']
 
     def dispatch_list(self, request, **kwargs):
         with client as c:
@@ -1721,6 +1722,7 @@ class LegacyTaskResourceMixin(object):
 
     class Meta:
         resource_name = 'storage/task'
+        allowed_methods = ['get']
 
     def dehydrate(self, bundle):
         bundle = super(LegacyTaskResourceMixin, self).dehydrate(bundle)
