@@ -51,7 +51,7 @@ class Application(object):
         self.authenticated = False
         self.handshake = False
         self.logger = logger.Logger('application').getLogger()
-        self.sessionid = str(uuid.uuid4())
+        self.session_id = str(uuid.uuid4())
 
         self._py_exceptions = False
 
@@ -311,7 +311,7 @@ class Application(object):
                 await asyncio.shield(self.middleware.call_hook('core.on_connect', app=self))
                 self._send({
                     'msg': 'connected',
-                    'session': self.sessionid,
+                    'session': self.session_id,
                 })
                 self.handshake = True
             return
@@ -635,7 +635,7 @@ class ShellApplication(object):
 
         try:
             await self.run(ws, request, conndata)
-        except Exception as e:
+        except Exception:
             if conndata.t_worker:
                 await self.worker_kill(conndata.t_worker)
         finally:
@@ -933,10 +933,10 @@ class Middleware(object):
         self.app.router.add_route('*', f'/_plugins/{plugin_name}/{route}', method)
 
     def register_wsclient(self, client):
-        self.__wsclients[client.sessionid] = client
+        self.__wsclients[client.session_id] = client
 
     def unregister_wsclient(self, client):
-        self.__wsclients.pop(client.sessionid)
+        self.__wsclients.pop(client.session_id)
 
     def register_hook(self, name, method, sync=True):
         """
@@ -1167,13 +1167,13 @@ class Middleware(object):
     def send_event(self, name, event_type, **kwargs):
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
 
-        self.logger.trace(f'Sending event "{event_type}":{kwargs}')
+        self.logger.trace(f'Sending event {name!r}:{event_type!r}:{kwargs!r}')
 
-        for sessionid, wsclient in list(self.__wsclients.items()):
+        for session_id, wsclient in list(self.__wsclients.items()):
             try:
                 wsclient.send_event(name, event_type, **kwargs)
             except Exception:
-                self.logger.warn('Failed to send event {} to {}'.format(name, sessionid), exc_info=True)
+                self.logger.warn('Failed to send event {} to {}'.format(name, session_id), exc_info=True)
 
         # Send event also for internally subscribed plugins
         for handler in self.__event_subs.get(name, []):
@@ -1306,7 +1306,7 @@ class Middleware(object):
             if hasattr(service, "terminate"):
                 try:
                     await service.terminate()
-                except Exception as e:
+                except Exception:
                     self.logger.error('Failed to terminate %s', service_name, exc_info=True)
 
         for task in asyncio.all_tasks(loop=self.__loop):
