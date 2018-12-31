@@ -1140,11 +1140,14 @@ class Middleware(object):
         # Instead we launch a new thread just for that call (io_thread).
         return self.run_coroutine(self._call(name, serviceobj, methodobj, params, io_thread=True))
 
-    def run_coroutine(self, coro):
+    def run_coroutine(self, coro, wait=True):
         if threading.get_ident() == self.__thread_id:
             raise RuntimeError('You cannot call_sync or run_coroutine from main thread')
 
         fut = asyncio.run_coroutine_threadsafe(coro, self.__loop)
+        if not wait:
+            return fut
+
         event = threading.Event()
 
         def done(_):
