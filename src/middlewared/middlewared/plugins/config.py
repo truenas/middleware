@@ -179,7 +179,7 @@ class ConfigService(Service):
             job.logs_fd.write(cp.stderr)
             raise CallError('Factory reset has failed.')
 
-        subprocess.run(['mv', factorydb, FREENAS_DATABASE], check=True, capture_output=True)
+        shutil.move(factorydb, FREENAS_DATABASE)
 
         if options['reboot']:
             self.middleware.run_coroutine(
