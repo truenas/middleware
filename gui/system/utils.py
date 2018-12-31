@@ -420,9 +420,9 @@ def debug_generate():
 
 def factory_restore(request):
     from freenasUI.account.models import bsdUsers
-    from freenasUI.middleware.notifier import notifier
     request.session['allow_reboot'] = True
-    notifier().config_restore()
+    with client as c:
+        c.call('config.reset', {'reboot': False}, job=True)
     user = bsdUsers.objects.filter(bsdusr_uid=0)[0]
     backend = get_backends()[0]
     user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)

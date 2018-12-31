@@ -614,7 +614,8 @@ def reset_factory_defaults(*args):
                   + '(yes/no): ')
     if a.lower().startswith('y'):
         try:
-            notifier().config_restore()
+            with client as c:
+                c.call('config.reset', {'reboot': False}, job=True)
             os.system("/sbin/shutdown -r now")
         except Exception as e:
             print("Failed to reset configuration: {}".format(str(e)))
