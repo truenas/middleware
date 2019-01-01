@@ -381,7 +381,7 @@ class FileApplication(object):
             if not token:
                 denied = True
             else:
-                if (token['attributes'] or {}).get('job') != job_id:
+                if token['attributes'].get('job') != job_id:
                     denied = True
                 else:
                     filename = token['attributes'].get('filename')
