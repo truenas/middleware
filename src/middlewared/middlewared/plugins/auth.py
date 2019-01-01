@@ -17,6 +17,8 @@ class TokenManager:
         self.tokens = {}
 
     def create(self, ttl, attributes=None):
+        attributes = attributes or {}
+
         token = "".join(random.choice(string.ascii_letters + string.digits) for _ in range(64))
         self.tokens[token] = Token(self, token, ttl, attributes)
         return self.tokens[token]
@@ -278,7 +280,7 @@ class AuthService(Service):
     def get_token(self, token_id):
         try:
             return {
-                'attributes': self.token_manager.tokens[token_id]
+                'attributes': self.token_manager.tokens[token_id].attributes,
             }
         except KeyError:
             return None
