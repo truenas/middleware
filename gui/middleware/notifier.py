@@ -225,74 +225,6 @@ class notifier(metaclass=HookMetaclass):
         with client as c:
             return c.call('service._clear_activedirectory_config')
 
-    """
-    The following plugins methods violate the service layer
-    and are staying here now for compatibility.
-    """
-    def _start_plugins(self, jail=None, plugin=None):
-        if jail and plugin:
-            self._system("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, plugin))
-        else:
-            self._system("/usr/sbin/service ix-plugins forcestart")
-
-    def _stop_plugins(self, jail=None, plugin=None):
-        if jail and plugin:
-            self._system("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, plugin))
-        else:
-            self._system("/usr/sbin/service ix-plugins forcestop")
-
-    def _restart_plugins(self, jail=None, plugin=None):
-        self._stop_plugins(jail=jail, plugin=plugin)
-        self._start_plugins(jail=jail, plugin=plugin)
-
-    def _started_plugins(self, jail=None, plugin=None):
-        res = False
-        if jail and plugin:
-            if self._system("/usr/sbin/service ix-plugins status %s:%s" % (jail, plugin)) == 0:
-                res = True
-        else:
-            if self._system("/usr/sbin/service ix-plugins status") == 0:
-                res = True
-        return res
-
-    def pluginjail_running(self, pjail=None):
-        running = False
-
-        try:
-            wlist = Warden().cached_list()
-            for wj in wlist:
-                wj = WardenJail(**wj)
-                if pjail and wj.host == pjail:
-                    if (
-                        wj.type == WARDEN_TYPE_PLUGINJAIL and
-                        wj.status == WARDEN_STATUS_RUNNING
-                    ):
-                        running = True
-                        break
-
-                elif (
-                    not pjail and wj.type == WARDEN_TYPE_PLUGINJAIL and
-                    wj.status == WARDEN_STATUS_RUNNING
-                ):
-                    running = True
-                    break
-        except Exception:
-            pass
-
-        return running
-
-    def _open_db(self):
-        """Open and return a cursor object for database access."""
-        try:
-            from freenasUI.settings import DATABASES
-            dbname = DATABASES['default']['NAME']
-        except Exception:
-            dbname = '/data/freenas-v1.db'
-
-        conn = sqlite3.connect(dbname)
-        c = conn.cursor()
-        return c, conn
-
     def geli_recoverykey_add(self, volume, passphrase=None):
         from freenasUI.middleware.util import download_job
         reckey = tempfile.NamedTemporaryFile(dir='/tmp/', delete=False)
@@ -853,69 +785,6 @@ class notifier(metaclass=HookMetaclass):
                 pass
         open(NEED_UPDATE_SENTINEL, 'w').close()
 
-    def umount_filesystems_within(self, path):
-        """
-        Try to umount filesystems within a certain path
-
-        Raises:
-            MiddlewareError - Could not umount
-        """
-        for mounted in get_mounted_filesystems():
-            if mounted['fs_file'].startswith(path):
-                if not umount(mounted['fs_file']):
-                    raise MiddlewareError('Unable to umount %s' % (
-                        mounted['fs_file'],
-                    ))
-
-    def contains_jail_root(self, path):
-        try:
-            rpath = os.path.realpath(path)
-        except Exception as e:
-            log.debug("realpath %s: %s", path, e)
-            return False
-
-        rpath = os.path.normpath(rpath)
-
-        try:
-            os.stat(rpath)
-        except Exception as e:
-            log.debug("stat %s: %s", rpath, e)
-            return False
-
-        (c, conn) = self._open_db()
-        try:
-            c.execute("SELECT jc_path FROM jails_jailsconfiguration LIMIT 1")
-            row = c.fetchone()
-        finally:
-            conn.close()
-        if not row:
-            log.debug("contains_jail_root: jails not configured")
-            return False
-
-        try:
-            jail_root = os.path.realpath(row[0])
-        except Exception as e:
-            log.debug("realpath %s: %s", jail_root, e)
-            return False
-
-        jail_root = os.path.normpath(jail_root)
-
-        try:
-            os.stat(jail_root)
-        except Exception as e:
-            log.debug("stat %s: %s", jail_root, e)
-            return False
-
-        if jail_root.startswith(rpath):
-            return True
-
-        return False
-
-    def delete_plugins(self, force=False):
-        from freenasUI.plugins.models import Plugins
-        for p in Plugins.objects.all():
-            p.delete(force=force)
-
     def get_volume_status(self, name):
         status = 'UNKNOWN'
         p1 = self._pipeopen('zpool list -H -o health %s' % str(name), logger=None)
@@ -1221,42 +1090,6 @@ class notifier(metaclass=HookMetaclass):
 
         return statusmap.get(status, status)
 
-    def get_default_ipv4_interface(self):
-        p1 = self._pipeopen("route -nv show default|grep 'interface:'|awk '{ print $2 }'")
-        iface = p1.communicate()
-        if p1.returncode != 0:
-            iface = None
-        try:
-            iface = iface[0].strip()
-
-        except Exception:
-            pass
-
-        return iface if iface else None
-
-    def get_default_ipv6_interface(self):
-        p1 = self._pipeopen("route -nv show -inet6 default|grep 'interface:'|awk '{ print $2 }'")
-        iface = p1.communicate()
-        if p1.returncode != 0:
-            iface = None
-        try:
-            iface = iface[0].strip()
-
-        except Exception:
-            pass
-
-        return iface if iface else None
-
-    def get_default_interface(self, ip_protocol='ipv4'):
-        iface = None
-
-        if ip_protocol == 'ipv4':
-            iface = self.get_default_ipv4_interface()
-        elif ip_protocol == 'ipv6':
-            iface = self.get_default_ipv6_interface()
-
-        return iface
-
     def get_interface_info(self, iface):
         if not iface:
             return None
@@ -1311,65 +1144,6 @@ class notifier(metaclass=HookMetaclass):
             iface_info['status'] = m.group(1)
 
         return iface_info
-
-    def interface_is_ipv4(self, addr):
-        res = False
-
-        try:
-            socket.inet_aton(addr)
-            res = True
-
-        except Exception:
-            res = False
-
-        return res
-
-    def interface_is_ipv6(self, addr):
-        res = False
-
-        try:
-            socket.inet_pton(socket.AF_INET6, addr)
-            res = True
-
-        except Exception:
-            res = False
-
-        return res
-
-    def get_interface(self, addr):
-        from freenasUI import choices
-
-        if not addr:
-            return None
-
-        nic_choices = choices.NICChoices(exclude_configured=False)
-        for nic in nic_choices:
-            iface = str(nic[0])
-            iinfo = self.get_interface_info(iface)
-            if not iinfo:
-                return None
-
-            if self.interface_is_ipv4(addr):
-                ipv4_info = iinfo['ipv4']
-                if ipv4_info:
-                    for i in ipv4_info:
-                        if 'inet' not in i:
-                            continue
-                        ipv4_addr = i['inet']
-                        if ipv4_addr == addr:
-                            return nic[0]
-
-            elif self.interface_is_ipv6(addr):
-                ipv6_info = iinfo['ipv6']
-                if ipv6_info:
-                    for i in ipv6_info:
-                        if 'inet6' not in i:
-                            continue
-                        ipv6_addr = i['inet6']
-                        if ipv6_addr == addr:
-                            return nic[0]
-
-        return None
 
     def __init__(self):
         self.__confxml = None
