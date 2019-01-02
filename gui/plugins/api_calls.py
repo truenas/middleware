@@ -36,7 +36,6 @@ from importlib import import_module
 from freenasUI.api.utils import FreeBasicAuthentication
 from freenasUI.storage.models import Volume
 from freenasUI.plugins.models import Plugins, Kmod
-from freenasUI.jails.models import Jails, JailsConfiguration
 
 from jsonrpc import jsonrpc_method
 

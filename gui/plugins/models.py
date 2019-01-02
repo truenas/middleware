@@ -23,20 +23,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import os
 import logging
-import platform
 import requests
 
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 
-from freenasUI.common.pbi import pbi_delete
-from freenasUI.common.warden import Warden
 from freenasUI.freeadmin.models import Model
-from freenasUI.jails.models import Jails, JailsConfiguration
-from freenasUI.middleware.exceptions import MiddlewareError
-from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('plugins.models')
 
@@ -148,51 +141,8 @@ class Plugins(Model):
     def service_stop(self, request):
         return self._service_control(request, 'stop')
 
-    def _do_delete(self, force=False):
-        jc = JailsConfiguration.objects.order_by('-id')[0]
-        pbi_path = os.path.join(
-            jc.jc_path,
-            self.plugin_jail,
-            "usr/pbi",
-            "%s-%s" % (self.plugin_name, platform.machine()),
-        )
-        jail = None
-        for j in Warden().getjails():
-            if j.host == self.plugin_jail:
-                jail = j
-                break
-        if jail is None and not force:
-            raise MiddlewareError(_("jail not found"))
-
-        notifier().umount_filesystems_within(pbi_path)
-        p = pbi_delete(pbi=self.plugin_pbiname)
-        res = p.run_in_chroot(os.path.join(jc.jc_path, jail.host))
-        if not res or res[0] != 0:
-            log.warn("unable to delete %s", self.plugin_pbiname)
-
     def delete(self, *args, **kwargs):
-        qs = Plugins.objects.filter(plugin_jail=self.plugin_jail).exclude(
-            id__exact=self.id
-        )
         with transaction.atomic():
-            jc = JailsConfiguration.objects.order_by('-id')[0]
-            jaildir = "%s/%s" % (jc.jc_path, self.plugin_jail)
-
-            notifier()._stop_plugins(
-                jail=self.plugin_jail,
-                plugin=self.plugin_name,
-            )
-            force = kwargs.pop('force', False)
-            if qs.count() > 0:
-                self._do_delete(force=force)
-            else:
-                self._do_delete(force=force)
-                if os.path.exists("%s/.plugins/PLUGIN" % jaildir):
-                    try:
-                        jail = Jails.objects.get(jail_host=self.plugin_jail)
-                        jail.delete(force=True)
-                    except Jails.DoesNotExist:
-                        log.debug('Could not delete jail %s', self.plugin_jail, exc_info=True)
             super(Plugins, self).delete(*args, **kwargs)
             self.plugin_secret.delete()
 
