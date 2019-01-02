@@ -59,7 +59,6 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.util import JobAborted, JobFailed, upload_job_and_wait
-from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import dedup_enabled
@@ -383,16 +382,13 @@ class ZFSVolumeWizardForm(Form):
     def _populate_disk_choices(self):
 
         disks = []
-        _n = notifier()
-
-        # Grab disk list
-        # Root device already ruled out
-        for disk, info in list(_n.get_disks().items()):
-            serial = info.get('ident', '')
-            with client as c:
-                if not c.call("system.is_freenas"):
+        with client as c:
+            unused = c.call('disk.get_unused')
+            for d in unused:
+                serial = d.get('serial', '')
+                if not c.call('system.is_freenas'):
                     try:
-                        enclosure = c.call("enclosure.find_disk_enclosure", info['devname'])
+                        enclosure = c.call('enclosure.find_disk_enclosure', d['devname'])
                     except Exception:
                         pass
                     else:
@@ -400,22 +396,11 @@ class ZFSVolumeWizardForm(Form):
                             '%s ' if serial else '',
                             enclosure,
                         )
-            disks.append(Disk(
-                info['devname'],
-                info['capacity'],
-                serial=serial,
-            ))
-
-        # Exclude what's already added
-        used_disks = []
-        for v in models.Volume.objects.all():
-            used_disks.extend(v.get_disks())
-
-        qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
-        used_disks.extend([i.get_device()[5:] for i in qs])
-        for d in list(disks):
-            if d.dev in used_disks:
-                disks.remove(d)
+                disks.append(Disk(
+                    d['devname'],
+                    d['size'],
+                    serial=serial,
+                ))
 
         choices = sorted(disks)
         choices = [tuple(d) for d in choices]
@@ -586,28 +571,11 @@ class VolumeImportForm(Form):
             ]
 
     def _populate_disk_choices(self):
-
-        used_disks = []
-        for v in models.Volume.objects.all():
-            used_disks.extend(v.get_disks())
-
-        qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
-        diskids = [i[0] for i in qs.values_list('iscsi_target_extent_path')]
-        used_disks.extend([d.disk_name for d in models.Disk.objects.filter(
-            disk_identifier__in=diskids)])
-
-        n = notifier()
-        # Grab partition list
-        # NOTE: This approach may fail if device nodes are not accessible.
-        _parts = n.get_partitions()
-        for name, part in list(_parts.items()):
-            for i in used_disks:
-                if re.search(r'^%s([ps]|$)' % i, part['devname']) is not None:
-                    _parts.pop(name, None)
-
         parts = []
-        for name, part in list(_parts.items()):
-            parts.append(Disk(part['devname'], part['capacity']))
+        with client as c:
+            for disk in c.call('disk.get_unused', True):
+                for part in disk['partitions']:
+                    parts.append(Disk(part['path'].replace('/dev/', ''), part['capacity']))
 
         choices = sorted(parts)
         choices = [tuple(p) for p in choices]
