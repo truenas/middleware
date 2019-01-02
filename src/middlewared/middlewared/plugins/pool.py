@@ -2010,12 +2010,6 @@ class PoolService(CRUDService):
             pass
         elif options['destroy']:
             job.set_progress(60, 'Destroying pool')
-            try:
-                # TODO: Remove me when legacy UI is gone
-                if await self.middleware.call('notifier.contains_jail_root', pool['path']):
-                    await self.middleware.call('notifier.delete_plugins')
-            except Exception:
-                pass
             await self.middleware.call('zfs.pool.delete', pool['name'])
 
             job.set_progress(80, 'Cleaning disks')
