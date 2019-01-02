@@ -179,42 +179,6 @@ def get_fstype(path):
     return (out[1].upper())
 
 
-def get_mounted_filesystems():
-    """Return a list of dict with info of mounted file systems
-
-    Each dict is composed of:
-        - fs_spec (src)
-        - fs_file (dest)
-        - fs_vfstype
-    """
-    mounted = []
-
-    lines = subprocess.check_output(['/sbin/mount'], encoding='utf8').splitlines()
-
-    for line in lines:
-        reg = RE_MOUNT.search(line)
-        if not reg:
-            continue
-        mounted.append(reg.groupdict())
-
-    return mounted
-
-
-def is_mounted(**kwargs):
-
-    mounted = get_mounted_filesystems()
-    for mountpt in mounted:
-        ret = False
-        if 'device' in kwargs:
-            ret = True if mountpt['fs_spec'] == kwargs['device'] else False
-        if 'path' in kwargs:
-            ret = True if mountpt['fs_file'] == kwargs['path'] else False
-        if ret:
-            break
-
-    return ret
-
-
 def mount(dev, path, mntopts=None, fstype=None):
     mount_cmd = ['/sbin/mount']
 
