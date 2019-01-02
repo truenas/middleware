@@ -1,7 +1,0 @@
-[Desktop Entry] 
-Encoding=UTF-8
-TryExec=windowlab
-Exec=windowlab
-Icon=/usr/local/share/pixmaps/windowlab.png
-Name=WindowLab
-Comment=A small window manager for X11

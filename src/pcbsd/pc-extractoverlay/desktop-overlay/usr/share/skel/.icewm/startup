@@ -1,4 +1,0 @@
-#!/bin/sh
-
-# Startup idesk
-idesk >/dev/null &
