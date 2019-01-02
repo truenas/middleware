@@ -975,7 +975,7 @@ class iSCSITargetService(CRUDService):
         if not RE_TARGET_NAME.search(data['name']):
             verrors.add(
                 f'{schema_name}.name',
-                'Alphanumeric with lowercase characters or these characters ".", "-" and ":" are allowed.'
+                'Lowercase alphanumeric characters plus dot (.), dash (-), and colon (:) are allowed.'
             )
         else:
             filters = [('name', '=', data['name'])]
