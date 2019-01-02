@@ -74,12 +74,7 @@ from freenasUI.common.system import (
     get_sw_name,
     get_sw_version,
 )
-from freenasUI.common.warden import Warden
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
-from freenasUI.jails.forms import (
-    JailsEditForm, JailTemplateCreateForm, JailTemplateEditForm
-)
-from freenasUI.jails.models import JailTemplate
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client, ValidationErrors
 from freenasUI.middleware.form import handle_middleware_validation
@@ -87,7 +82,6 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.forms import AliasForm
 from freenasUI.network.models import Alias, Interfaces
-from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url, get_plugin_status
 from freenasUI.services.forms import iSCSITargetPortalIPForm
 from freenasUI.services.models import (
@@ -115,7 +109,7 @@ from freenasUI.storage.forms import (
     ZFSDatasetEditForm,
     ZvolDestroyForm,
 )
-from freenasUI.storage.models import Disk, VMWarePlugin
+from freenasUI.storage.models import Disk
 from freenasUI.system.forms import (
     BootEnvAddForm,
     BootEnvRenameForm,
@@ -135,7 +129,7 @@ from freenasUI.system.models import Update as mUpdate
 from freenasUI.system.utils import BootEnv, debug_generate, factory_restore
 from freenasUI.system.views import restart_httpd, restart_httpd_all
 from middlewared.client import ClientException
-from tastypie import fields, http
+from tastypie import fields
 from tastypie.http import (
     HttpAccepted, HttpCreated, HttpMethodNotAllowed, HttpMultipleChoices,
     HttpNotFound, HttpNoContent,
@@ -2519,192 +2513,6 @@ class BsdGroupResourceMixin(object):
             bundle.data['_members_url'] = reverse(
                 'account_bsdgroup_members',
                 kwargs={'object_id': bundle.obj.id})
-        return bundle
-
-
-class JailMountPointResourceMixin(object):
-
-    def dehydrate(self, bundle):
-        bundle = super(JailMountPointResourceMixin, self).dehydrate(bundle)
-        bundle.data['mounted'] = bundle.obj.mounted
-        return bundle
-
-
-class JailsResourceMixin(NestedMixin):
-
-    class Meta:
-        validation = FormValidation(form_class=JailsEditForm)
-        put_validation = FormValidation(form_class=JailsEditForm)
-
-    def prepend_urls(self):
-        return [
-            url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/restart%s$" % (
-                    self._meta.resource_name, trailing_slash()
-                ),
-                self.wrap_view('jail_restart'),
-                name="api_jails_jails_restart"
-            ),
-            url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/start%s$" % (
-                    self._meta.resource_name, trailing_slash()
-                ),
-                self.wrap_view('jail_start'),
-                name="api_jails_jails_start"
-            ),
-            url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/stop%s$" % (
-                    self._meta.resource_name, trailing_slash()
-                ),
-                self.wrap_view('jail_stop'),
-                name="api_jails_jails_stop"
-            ),
-        ]
-
-    def jail_restart(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-
-        bundle, obj = self._get_parent(request, kwargs)
-
-        notifier().reload("http")
-        try:
-            Warden().stop(jail=obj.jail_host)
-            Warden().start(jail=obj.jail_host)
-        except Exception as e:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e,
-                })
-            )
-
-        return HttpResponse('Jail restarted.', status=202)
-
-    def jail_start(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-
-        bundle, obj = self._get_parent(request, kwargs)
-
-        # TODO: Duplicated code - jails.views.jail_start
-        notifier().reload("http")
-        try:
-            Warden().start(jail=obj.jail_host)
-        except Exception as e:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e,
-                })
-            )
-
-        return HttpResponse('Jail started.', status=202)
-
-    def jail_stop(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-
-        bundle, obj = self._get_parent(request, kwargs)
-
-        # TODO: Duplicated code - jails.views.jail_stop
-        notifier().reload("http")
-        try:
-            Warden().stop(jail=obj.jail_host)
-        except Exception as e:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e,
-                })
-            )
-
-        return HttpResponse('Jail stopped.', status=202)
-
-    def dispatch_list(self, request, **kwargs):
-        proc = subprocess.Popen(
-            ["/usr/sbin/jls"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8'
-        )
-        self.__jls = proc.communicate()[0]
-        return super(JailsResourceMixin, self).dispatch_list(request, **kwargs)
-
-    def post_list(self, request, **kwargs):
-        raise ImmediateHttpResponse(
-            response=self.error_response(request, {
-                'error': 'No longer possible to create jails using API 1.0',
-            })
-        )
-
-    def post_form_save_hook(self, bundle, form):
-        if form.errors:
-            raise ImmediateHttpResponse(response=self.error_response(
-                bundle.request,
-                form.errors,
-                response_class=http.HttpConflict,
-            ))
-
-    def dehydrate(self, bundle):
-        bundle = super(JailsResourceMixin, self).dehydrate(bundle)
-
-        if self.is_webclient(bundle.request):
-            try:
-                reg = re.search(
-                    r'\s*?(\d+).*?\b%s\b' % bundle.obj.jail_host,
-                    self.__jls,
-                )
-                bundle.data['jail_jid'] = int(reg.groups()[0])
-            except Exception:
-                bundle.data['jail_jid'] = None
-
-            bundle.data['jail_os'] = 'FreeBSD'
-            if bundle.obj.is_linux_jail():
-                bundle.data['jail_os'] = 'Linux'
-
-            bundle.data['jail_isplugin'] = False
-            plugin = Plugins.objects.filter(plugin_jail=bundle.obj.jail_host)
-            if plugin:
-                bundle.data['jail_isplugin'] = True
-
-        if self.is_webclient(bundle.request):
-            bundle.data['_edit_url'] = reverse('jail_edit', kwargs={
-                'id': bundle.obj.id
-            })
-            bundle.data['_jail_storage_add_url'] = reverse(
-                'jail_storage_add', kwargs={'jail_id': bundle.obj.id}
-            )
-            bundle.data['_jail_start_url'] = reverse('jail_start', kwargs={
-                'id': bundle.obj.id
-            })
-            bundle.data['_jail_stop_url'] = reverse('jail_stop', kwargs={
-                'id': bundle.obj.id
-            })
-            bundle.data['_jail_restart_url'] = reverse('jail_restart', kwargs={
-                'id': bundle.obj.id
-            })
-            bundle.data['_jail_delete_url'] = reverse('jail_delete', kwargs={
-                'id': bundle.obj.id
-            })
-            if bundle.obj.jail_ipv4:
-                bundle.data['jail_ipv4'] = bundle.obj.jail_ipv4.split('/')[0]
-
-        return bundle
-
-
-class JailTemplateResourceMixin(object):
-
-    class Meta:
-        queryset = JailTemplate.objects.exclude(jt_system=True)
-        post_validation = FormValidation(form_class=JailTemplateCreateForm)
-        put_validation = FormValidation(form_class=JailTemplateEditForm)
-
-    def dehydrate(self, bundle):
-        bundle = super(JailTemplateResourceMixin, self).dehydrate(bundle)
-        bundle.data['jt_instances'] = bundle.obj.jt_instances
-
-        if self.is_webclient(bundle.request):
-            bundle.data['_edit_url'] = reverse(
-                'jail_template_edit',
-                kwargs={'id': bundle.obj.id},
-            )
-            bundle.data['_delete_url'] = reverse(
-                'jail_template_delete',
-                kwargs={'id': bundle.obj.id},
-            )
-
         return bundle
 
 

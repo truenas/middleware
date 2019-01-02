@@ -41,10 +41,6 @@ from freenasUI.common.warden import (
     WARDEN_STATUS_STOPPED,
 )
 from freenasUI.freeadmin.middleware import public
-from freenasUI.jails.models import (
-    Jails,
-    JailsConfiguration
-)
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.plugins import models
@@ -73,12 +69,6 @@ def home(request):
 
 def plugins(request):
     jc_path = None
-    try:
-        jc = JailsConfiguration.objects.order_by("-id")[0]
-        jc_path = jc.jc_path
-
-    except:
-        jc_path = None
 
     Service = namedtuple('Service', [
         'name',
