@@ -29,10 +29,6 @@ from freenasUI.support.utils import jails_enabled
 
 NAME = _('Plugins')
 ICON = 'PluginIcon'
-BLACKLIST = [
-    'Plugins',
-    'Configuration',
-]
 TYPE = 'openplugins'
 ORDER = 60
 
