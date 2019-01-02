@@ -1,7 +1,0 @@
-[Desktop Entry] 
-Encoding=UTF-8
-TryExec=evilwm
-Exec=evilwm
-Icon=/usr/local/share/pixmaps/evilwm.png
-Name=EvilWM
-Comment=Minimalist window manager based on 9wm

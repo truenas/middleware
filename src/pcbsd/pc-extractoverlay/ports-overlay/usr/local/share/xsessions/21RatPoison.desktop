@@ -1,7 +1,0 @@
-[Desktop Entry] 
-Encoding=UTF-8
-TryExec=ratpoison
-Exec=ratpoison
-Icon=/usr/local/share/pixmaps/ratpoison.png
-Name=Ratpoison
-Comment=Say good-bye to the rodent

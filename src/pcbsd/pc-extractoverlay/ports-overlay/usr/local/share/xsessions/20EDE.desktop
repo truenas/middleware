@@ -1,7 +1,0 @@
-[Desktop Entry] 
-Encoding=UTF-8
-TryExec=startede
-Exec=startede
-Icon=/usr/local/share/pixmaps/ede.png
-Name=EDE
-Comment=Minimalist window manager based on 9wm

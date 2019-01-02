@@ -1,7 +1,0 @@
-[Desktop Entry] 
-Encoding=UTF-8
-TryExec=i3
-Exec=i3
-Icon=/usr/local/share/pixmaps/i3.png
-Name=I3
-Comment=An improved dynamic tiling window manager

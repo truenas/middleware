@@ -1,9 +1,0 @@
-[$Version]
-update_info=kuriikwsfilter.upd:post-kde3.1/cvs
-
-[General]
-DefaultSearchEngine=blkk
-EnableWebShortcuts=true
-FavoriteSearchEngines=,youtube,yahoo,google,blkk,wikipedia,wikit
-KeywordDelimiter=:
-UseSelectedProvidersOnly=false
