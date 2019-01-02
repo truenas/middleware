@@ -469,28 +469,6 @@ class ServiceService(CRUDService):
         await self.middleware.call('interface.sync')
         await self.middleware.call('route.sync')
 
-    async def _stop_jails(self, **kwargs):
-        for jail in await self.middleware.call('datastore.query', 'jails.jails'):
-            try:
-                await self.middleware.call('notifier.warden', 'stop', [], {'jail': jail['jail_host']})
-            except Exception as e:
-                self.logger.debug(f'Failed to stop jail {jail["jail_host"]}', exc_info=True)
-
-    async def _start_jails(self, **kwargs):
-        await self._service("ix-warden", "start", **kwargs)
-        for jail in await self.middleware.call('datastore.query', 'jails.jails'):
-            if jail['jail_autostart']:
-                try:
-                    await self.middleware.call('notifier.warden', 'start', [], {'jail': jail['jail_host']})
-                except Exception as e:
-                    self.logger.debug(f'Failed to start jail {jail["jail_host"]}', exc_info=True)
-        await self._service("ix-plugins", "start", **kwargs)
-        await self.reload("http", kwargs)
-
-    async def _restart_jails(self, **kwargs):
-        await self._stop_jails()
-        await self._start_jails()
-
     async def _stop_pbid(self, **kwargs):
         await self._service("pbid", "stop", **kwargs)
 
@@ -856,35 +834,6 @@ class ServiceService(CRUDService):
         await self._service("nfsd", "start", quiet=True, **kwargs)
         await self._service("statd", "start", quiet=True, **kwargs)
         await self._service("lockd", "start", quiet=True, **kwargs)
-
-    async def _force_stop_jail(self, **kwargs):
-        await self._service("jail", "stop", force=True, **kwargs)
-
-    async def _start_plugins(self, jail=None, plugin=None, **kwargs):
-        if jail and plugin:
-            await self._system("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, plugin))
-        else:
-            await self._service("ix-plugins", "start", force=True, **kwargs)
-
-    async def _stop_plugins(self, jail=None, plugin=None, **kwargs):
-        if jail and plugin:
-            await self._system("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, plugin))
-        else:
-            await self._service("ix-plugins", "stop", force=True, **kwargs)
-
-    async def _restart_plugins(self, jail=None, plugin=None):
-        await self._stop_plugins(jail=jail, plugin=plugin)
-        await self._start_plugins(jail=jail, plugin=plugin)
-
-    async def _started_plugins(self, jail=None, plugin=None, **kwargs):
-        res = False
-        if jail and plugin:
-            if self._system("/usr/sbin/service ix-plugins status %s:%s" % (jail, plugin)) == 0:
-                res = True
-        else:
-            if await self._service("ix-plugins", "status", **kwargs) == 0:
-                res = True
-        return res, []
 
     async def _start_dynamicdns(self, **kwargs):
         await self._service("ix-inadyn", "start", quiet=True, **kwargs)
