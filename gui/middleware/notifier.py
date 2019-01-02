@@ -42,8 +42,6 @@ import logging
 import os
 import re
 import signal
-import socket
-import sqlite3
 from subprocess import Popen, PIPE
 import subprocess
 import sys
@@ -76,13 +74,8 @@ from django.utils.translation import ugettext as _
 from freenasUI.common.pipesubr import SIG_SETMASK
 from freenasUI.common.system import (
     exclude_path,
-    get_mounted_filesystems,
-    umount,
     get_sw_name,
 )
-from freenasUI.common.warden import (Warden, WardenJail,
-                                     WARDEN_TYPE_PLUGINJAIL,
-                                     WARDEN_STATUS_RUNNING)
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
