@@ -26,17 +26,8 @@
 
 from django.conf.urls import url
 
-from jsonrpc import jsonrpc_site
-import freenasUI.plugins.views
-
-from .views import (
-    home, plugins, plugin_fcgi_client, plugin_installed_icon,
-)
+from .views import home
 
 urlpatterns = [
     url(r'^plugin/home/$', home, name="plugins_home"),
-    url(r'^plugin/plugins/$', plugins, name="plugins_plugins"),
-    url(r'^plugin/installed/icon/(?P<plugin_name>[^/]+)/(?P<oid>[0-9a-f]{1,64})/$', plugin_installed_icon, name="plugin_installed_icon"),
-    url(r'^json-rpc/v1/', jsonrpc_site.dispatch, name="plugins_jsonrpc_v1"),
-    url(r'^(?P<name>[^/]+)/(?P<oid>\d+)/(?P<path>.+)$', plugin_fcgi_client, name="plugin_fcgi_client"),
 ]

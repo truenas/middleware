@@ -1,10 +1,10 @@
 <div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="nested:true, doLayout:true" id="tab_pluginssettings">
 
-<div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Installed"|escapejs %}'
-    {% if focus == "plugins.Installed" %}, selected: true{% endif %},
-    doLayout: true,
-    href: '{% url "plugins_plugins" %}',
-    refreshOnShow: true" class="objrefresh" tab="plugins.Installed" id="tab_Installed">
-</div>
+  <div>
+    <p>&nbsp;</p>
+    <span style="color:red;font-weight:bold;padding:10px;margin-top: 20px;">
+        {% trans "Plugins can only be managed through new UI." %}
+    </span>
+  </div>
 
 </div>
