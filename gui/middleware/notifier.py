@@ -940,50 +940,20 @@ class notifier(metaclass=HookMetaclass):
             Dict of disks
         """
         disksd = {}
-
-        disks = self.__get_disks()
-
-        """
-        Replace devnames by its multipath equivalent
-        """
-        for mp in self.multipath_all():
-            for dev in mp.devices:
-                if dev in disks:
-                    disks.remove(dev)
-            disks.append(mp.devname)
+        with client as c:
+            if unused:
+                disks = c.call('disk.get_unused')
+            else:
+                disks = c.call('disk.query')
 
         for disk in disks:
-            info = self._pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
-            if len(info) > 3:
-                disksd.update({
-                    disk: {
-                        'devname': info[0],
-                        'capacity': info[2],
-                    },
-                })
-
-        for mp in self.multipath_all():
-            for consumer in mp.consumers:
-                if consumer.lunid and mp.devname in disksd:
-                    disksd[mp.devname]['ident'] = consumer.lunid
-                    break
-
-        if unused:
-            """
-            Remove disks that are in use by volumes or disk extent
-            """
-            from freenasUI.storage.models import Volume
-            from freenasUI.services.models import iSCSITargetExtent
-
-            for v in Volume.objects.all():
-                for d in v.get_disks():
-                    if d in disksd:
-                        del disksd[d]
-
-            for e in iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk'):
-                d = e.get_device()[5:]
-                if d in disksd:
-                    del disksd[d]
+            disksd.update({
+                disk['devname']: {
+                    'devname': disk['devname'],
+                    'capacity': str(disk['size']),
+                    'ident': disk['serial'],
+                },
+            })
 
         return disksd
 
@@ -1462,40 +1432,6 @@ class notifier(metaclass=HookMetaclass):
             Multipath(doc=doc, xmlnode=geom)
             for geom in doc.xpath("//class[name = 'MULTIPATH']/geom")
         ]
-
-    def _find_root_devs(self):
-        """Find the root device.
-
-        Returns:
-             The root device name in string format
-
-        """
-
-        try:
-            zpool = self.zpool_parse('freenas-boot')
-            return zpool.get_disks()
-        except Exception:
-            log.warn("Root device not found!")
-            return []
-
-    def __get_disks(self):
-        """Return a list of available storage disks.
-
-        The list excludes all devices that cannot be reserved for storage,
-        e.g. the root device, CD drives, etc.
-
-        Returns:
-            A list of available devices (ada0, da0, etc), or an empty list if
-            no devices could be divined from the system.
-        """
-
-        disks = self.sysctl('kern.disks').split()
-        disks.reverse()
-
-        blacklist_devs = self._find_root_devs()
-        device_blacklist_re = re.compile('a?cd[0-9]+')
-
-        return [x for x in disks if not device_blacklist_re.match(x) and x not in blacklist_devs]
 
     def sysctl(self, name):
         """
