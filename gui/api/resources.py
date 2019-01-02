@@ -82,7 +82,6 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.forms import AliasForm
 from freenasUI.network.models import Alias, Interfaces
-from freenasUI.plugins.utils import get_base_url, get_plugin_status
 from freenasUI.services.forms import iSCSITargetPortalIPForm
 from freenasUI.services.models import (
     iSCSITargetGlobalConfiguration,
@@ -2513,69 +2512,6 @@ class BsdGroupResourceMixin(object):
             bundle.data['_members_url'] = reverse(
                 'account_bsdgroup_members',
                 kwargs={'object_id': bundle.obj.id})
-        return bundle
-
-
-class PluginsResourceMixin(NestedMixin):
-
-    def prepend_urls(self):
-        return [
-            url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/start%s$" % (
-                    self._meta.resource_name, trailing_slash()
-                ),
-                self.wrap_view('plugin_start'),
-                name="api_plugins_plugins_start"
-            ),
-            url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/stop%s$" % (
-                    self._meta.resource_name, trailing_slash()
-                ),
-                self.wrap_view('plugin_stop'),
-                name="api_plugin_plugins_stop"
-            ),
-        ]
-
-    def plugin_start(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-
-        bundle, obj = self._get_parent(request, kwargs)
-
-        try:
-            success, errmsg = obj.service_start(request)
-            if success is not True:
-                raise ValueError(errmsg)
-        except Exception as e:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e,
-                })
-            )
-
-        return HttpResponse('Plugin started.', status=202)
-
-    def plugin_stop(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-
-        bundle, obj = self._get_parent(request, kwargs)
-
-        try:
-            success, errmsg = obj.service_stop(request)
-            if success is not True:
-                raise ValueError(errmsg)
-        except Exception as e:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e,
-                })
-            )
-
-        return HttpResponse('Plugin stopped.', status=202)
-
-    def dehydrate(self, bundle):
-        host = get_base_url(bundle.request)
-        plugin, status, jstatus = get_plugin_status((bundle.obj, host, bundle.request))
-        bundle.data['plugin_status'] = status['status'] if status and 'status' in status else 'UNKNOWN'
         return bundle
 
 
