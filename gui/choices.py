@@ -870,25 +870,6 @@ ZFS_VOLBLOCKSIZE = (
     ('128K', '128K'),
 )
 
-JAIL_TEMPLATE_OS_CHOICES = (
-    ('FreeBSD', 'FreeBSD'),
-    ('Linux', 'Linux')
-)
-
-JAIL_TEMPLATE_ARCH_CHOICES = (
-    ('x64', 'x64'),
-    ('x86', 'x86')
-)
-
-
-class JAIL_TEMPLATE_CHOICES(object):
-    def __iter__(self):
-        from freenasUI.jails.models import JailTemplate
-        yield ('', '-----')
-        for jt in JailTemplate.objects.exclude(jt_system=True):
-            yield (jt.jt_name, jt.jt_name)
-
-
 REPL_CIPHER = (
     ('standard', _('Standard')),
     ('fast', _('Fast')),
