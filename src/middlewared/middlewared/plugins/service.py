@@ -469,15 +469,6 @@ class ServiceService(CRUDService):
         await self.middleware.call('interface.sync')
         await self.middleware.call('route.sync')
 
-    async def _stop_pbid(self, **kwargs):
-        await self._service("pbid", "stop", **kwargs)
-
-    async def _start_pbid(self, **kwargs):
-        await self._service("pbid", "start", **kwargs)
-
-    async def _restart_pbid(self, **kwargs):
-        await self._service("pbid", "restart", **kwargs)
-
     async def _reload_named(self, **kwargs):
         await self._service("named", "reload", **kwargs)
 
