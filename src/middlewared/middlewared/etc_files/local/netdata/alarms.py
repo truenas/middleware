@@ -1,13 +1,15 @@
 import os
 import re
 
+from collections import defaultdict
+
 
 async def render(service, middleware):
     def update_alarms(alarms):
         for path, alarm_dict in alarms.items():
             if os.path.exists(path):
                 with open(path, 'r') as f:
-                    content = f.read()
+                    original_content = content = f.read()
 
                 alarm = None
                 for key, alarm in alarm_dict.items():
@@ -16,10 +18,16 @@ async def render(service, middleware):
                         fr'\1{"silent" if not alarm["enabled"] else "sysadmin"}',
                         content
                     )
-                # Better safe then sorry
+                # Better safe than sorry
                 if alarm:
-                    with open(alarm['write_path'], 'w') as f:
-                        f.write(content)
+                    if original_content != content:
+                        with open(alarm['write_path'], 'w') as f:
+                            f.write(content)
+                    elif os.path.exists(alarm['write_path']):
+                        middleware.logger.debug(
+                            f'Removing {alarm["write_path"]} as original content has not changed'
+                        )
+                        os.remove(alarm['write_path'])
 
             else:
                 middleware.logger.debug(
@@ -27,12 +35,9 @@ async def render(service, middleware):
                 )
 
     listed_alarms = await middleware.call('netdata.list_alarms')
-    alarms = {}
+    alarms = defaultdict(dict)
     # Let's not unnecessarily open a single file again and again for reading/writing
     for key, alarm in listed_alarms.items():
-        if not alarms.get(alarm.get('read_path')):
-            alarms[alarm.get('read_path')] = {}
-
         alarms[alarm.get('read_path')].update({key: alarm})
 
     await middleware.run_in_thread(update_alarms, alarms)
