@@ -287,18 +287,7 @@ define([
                 if(c[i].tab == 'jails'){
                     p.selectChild(c[i]);
                     opened = true;
-                    if(tab) {
-                        var tabnet = registry.byId("tab_jails");
-                        if(tabnet) {
-                            var c2 = tabnet.getChildren();
-                            for(var j=0; j<c2.length; j++){
-                                if(c2[j].domNode.getAttribute("tab") == tab)
-                                    tabnet.selectChild(c2[j]);
-                            }
-                        }
-                    } else {
-                        c[i].refresh();
-                    }
+                    c[i].refresh();
                 } else {
                   p.removeChild(c[i]);
                   c[i].destroy();
@@ -306,9 +295,6 @@ define([
             }
             if(opened != true) {
                 openurl = this.urlJails;
-                if(tab) {
-                    openurl += '?tab='+tab;
-                }
                 var pane = new ContentPane({
                     title: gettext('Jails'),
                     closable: false,
@@ -331,18 +317,7 @@ define([
                 if(c[i].tab == 'plugins'){
                     p.selectChild(c[i]);
                     opened = true;
-                    if(tab) {
-                        var tabnet = registry.byId("tab_jails");
-                        if(tabnet) {
-                            var c2 = tabnet.getChildren();
-                            for(var j=0; j<c2.length; j++){
-                                if(c2[j].domNode.getAttribute("tab") == tab)
-                                    tabnet.selectChild(c2[j]);
-                            }
-                        }
-                    } else {
-                        c[i].refresh();
-                    }
+                    c[i].refresh();
                 } else {
                   p.removeChild(c[i]);
                   c[i].destroy();
@@ -350,9 +325,6 @@ define([
             }
             if(opened != true) {
                 openurl = this.urlPlugins;
-                if(tab) {
-                    openurl += '?tab='+tab;
-                }
                 var pane = new ContentPane({
                     title: gettext('Plugins'),
                     closable: false,
