@@ -9,7 +9,7 @@ import codecs
 import os
 import re
 import subprocess
-
+import uuid
 
 LOGLEVEL_MAP = {
     '0': 'NONE',
@@ -193,6 +193,8 @@ class SharingSMBService(CRUDService):
         Str('comment'),
         Bool('ro', default=False),
         Bool('browsable', default=True),
+        Bool('timemachine', default=False),
+        Str('vuid'),
         Bool('recyclebin', default=False),
         Bool('showhiddenfiles', default=False),
         Bool('guestok', default=False),
@@ -226,6 +228,7 @@ class SharingSMBService(CRUDService):
 
         await self.compress(data)
         await self.set_storage_tasks(data)
+        data['vuid'] = await self.generate_vuid(data['timemachine'], data['vuid'])
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
@@ -248,6 +251,7 @@ class SharingSMBService(CRUDService):
         verrors = ValidationErrors()
         path = data.get('path')
         default_perms = data.pop('default_permissions', False)
+        data['vuid'] = await self.generate_vuid(data['timemachine'], data['vuid'])
 
         old = await self.middleware.call(
             'datastore.query', self._config.datastore, [('id', '=', id)],
@@ -384,6 +388,22 @@ class SharingSMBService(CRUDService):
             await self.middleware.call(
                 'notifier.winacl_reset', path, owner, group, None, not is_home
             )
+
+    @private
+    async def generate_vuid(self, timemachine, vuid):
+        self.logger.debug(f"tm: ({timemachine}), vuid: ({vuid})")
+
+        try:
+            if timemachine:
+                uuid.UUID(vuid, version=4)
+        except ValueError:
+            self.logger.debug(f"Time machine VUID string ({vuid}) is invalid. Regenerating.")
+            vuid = ""
+
+        if timemachine and not vuid:
+            vuid = str(uuid.uuid4())
+
+        return vuid
 
     @accepts(Str('path', required=True))
     async def get_storage_tasks(self, path):
