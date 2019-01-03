@@ -379,6 +379,7 @@ class JailService(CRUDService):
         """Fetches a release or plugin."""
         fetch_output = {'error': False, 'install_notes': []}
         release = options.get('release', None)
+        post_install = False
 
         verrors = ValidationErrors()
 
@@ -391,10 +392,7 @@ class JailService(CRUDService):
             level = content['level']
             msg = content['message'].strip('\r\n')
             rel_up = f'* Updating {release} to the latest patch level... '
-
-            if job.progress['percent'] == 90 and options['name'] is not None:
-                for split_msg in msg.split('\n'):
-                    fetch_output['install_notes'].append(split_msg)
+            nonlocal post_install
 
             if level == 'EXCEPTION':
                 fetch_output['error'] = True
@@ -428,8 +426,14 @@ class JailService(CRUDService):
                     job.set_progress(75, msg)
                 elif 'Command output:' in msg:
                     job.set_progress(90, msg)
+                    # Sets each message going forward as important to the user
+                    post_install = True
                 else:
                     job.set_progress(None, msg)
+
+                if post_install:
+                    for split_msg in msg.split('\n'):
+                        fetch_output['install_notes'].append(split_msg)
 
         self.check_dataset_existence()  # Make sure our datasets exist.
         start_msg = f'{release} being fetched'
@@ -446,11 +450,6 @@ class JailService(CRUDService):
 
         job.set_progress(0, start_msg)
         iocage.fetch(**options)
-
-        if options['name'] is not None:
-            # This is to get the admin URL and such
-            fetch_output['install_notes'] += job.progress['description'].split(
-                '\n')
 
         job.set_progress(100, final_msg)
 
