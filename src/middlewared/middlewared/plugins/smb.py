@@ -391,8 +391,6 @@ class SharingSMBService(CRUDService):
 
     @private
     async def generate_vuid(self, timemachine, vuid):
-        self.logger.debug(f"tm: ({timemachine}), vuid: ({vuid})")
-
         try:
             if timemachine:
                 uuid.UUID(vuid, version=4)
