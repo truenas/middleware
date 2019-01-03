@@ -1,26 +1,43 @@
+import os
 import re
+
+from collections import defaultdict
 
 
 async def render(service, middleware):
     def update_alarms(alarms):
-        for key, alarm in alarms.items():
+        for path, alarm_dict in alarms.items():
+            if os.path.exists(path):
+                with open(path, 'r') as f:
+                    original_content = content = f.read()
 
-            # These are valid alarms and their respective config files exist as well
-            if alarm.get('path'):
-                with open(alarm['path'], 'r+') as f:
-                    content = f.read()
-                    f.seek(0)
-                    f.write(
-                        re.sub(
-                            fr'(alarm: {key}[\s\S]*?to: )(.*)',
-                            fr'\1{"silent" if not alarm["enabled"] else "sysadmin"}',
-                            content
-                        )
+                alarm = None
+                for key, alarm in alarm_dict.items():
+                    content = re.sub(
+                        fr'(alarm: {key}[\s\S]*?to: )(.*)',
+                        fr'\1{"silent" if not alarm["enabled"] else "sysadmin"}',
+                        content
                     )
-                    f.truncate()
-            else:
-                middleware.logger.debug(f'Could not find config file for {key} alarm')
+                # Better safe than sorry
+                if alarm:
+                    if original_content != content:
+                        with open(alarm['write_path'], 'w') as f:
+                            f.write(content)
+                    elif os.path.exists(alarm['write_path']):
+                        middleware.logger.debug(
+                            f'Removing {alarm["write_path"]} as original content has not changed'
+                        )
+                        os.remove(alarm['write_path'])
 
-    alarms = await middleware.call('netdata.list_alarms')
+            else:
+                middleware.logger.debug(
+                    f'Could not find config file {path} for {",".join(list(alarm_dict))} alarm(s)'
+                )
+
+    listed_alarms = await middleware.call('netdata.list_alarms')
+    alarms = defaultdict(dict)
+    # Let's not unnecessarily open a single file again and again for reading/writing
+    for key, alarm in listed_alarms.items():
+        alarms[alarm.get('read_path')].update({key: alarm})
 
     await middleware.run_in_thread(update_alarms, alarms)
