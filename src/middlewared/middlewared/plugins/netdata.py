@@ -174,7 +174,7 @@ class NetDataService(SystemServiceService):
                     else:
                         if ':' in dest:
                             try:
-                                port(dest.split(':')[1])
+                                port(int(dest.split(':')[1]))
                             except ValueError as e:
                                 verrors.add(
                                     'netdata_update.destination',
