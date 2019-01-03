@@ -1216,7 +1216,7 @@ def generate_smb4_shares(client, smb4_shares):
            the filesystem with ad files.
         """
         if fruit_enabled:
-            if not "fruit" in share.cifs_vfsobjects:
+            if "fruit" not in share.cifs_vfsobjects:
                 vfs_objects.append('fruit')
             confset1(smb4_shares, "fruit:metadata = stream")
             confset1(smb4_shares, "fruit:resource = stream")
