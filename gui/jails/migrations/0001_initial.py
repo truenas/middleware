@@ -4,7 +4,6 @@
 
 from django.db import migrations, models
 import freenasUI.freeadmin.models.fields
-from freenasUI import choices
 
 
 class Migration(migrations.Migration):
@@ -54,8 +53,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('jt_name', models.CharField(max_length=120, unique=True, verbose_name='Name')),
-                ('jt_os', models.CharField(choices=choices.JAIL_TEMPLATE_OS_CHOICES, max_length=120, verbose_name='OS')),
-                ('jt_arch', models.CharField(choices=choices.JAIL_TEMPLATE_ARCH_CHOICES, max_length=120, verbose_name='Architecture')),
+                ('jt_os', models.CharField(choices=[], max_length=120, verbose_name='OS')),
+                ('jt_arch', models.CharField(choices=[], max_length=120, verbose_name='Architecture')),
                 ('jt_url', models.CharField(max_length=255, verbose_name='URL')),
                 ('jt_mtree', models.CharField(blank=True, help_text='The mtree file for the template', max_length=255, verbose_name='mtree')),
                 ('jt_system', models.BooleanField(default=False, help_text='If this is a system template, it will not be visible in the UI and will only be used internally.', verbose_name='System')),
