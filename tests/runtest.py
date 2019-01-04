@@ -139,7 +139,7 @@ def get_tests():
     skip_tests = []
 
     if api == '1.0':
-        skip_tests = ['bootenv', 'jails', 'alerts', 'smarttest']
+        skip_tests = ['bootenv', 'alerts', 'smarttest']
         apidir = 'api1/'
         rv = ['network', 'ssh', 'storage']
     elif api == '2.0':

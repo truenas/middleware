@@ -81,14 +81,14 @@ def test_07_check_get_storage_volume_results_(data):
     assert results.json()[data] == pool_data[data], results.text
 
 
-@pytest.mark.parametrize('dataset', ['share', 'jails'])
+@pytest.mark.parametrize('dataset', ['share'])
 def test_08_creating_dataset_(dataset):
     payload = {"name": dataset}
     results = POST(f"/storage/volume/{pool_name}/datasets/", payload)
     assert results.status_code == 201, results.text
 
 
-@pytest.mark.parametrize('dataset', ['share', 'jails'])
+@pytest.mark.parametrize('dataset', ['share'])
 def test_09_changing_permissions_on_(dataset):
     payload = {
         "mp_path": f"/mnt/{pool_name}/{dataset}",
@@ -102,7 +102,7 @@ def test_09_changing_permissions_on_(dataset):
 
 
 # Check to verify snapshot was rolled back
-@pytest.mark.parametrize('dataset', ['share', 'jails'])
+@pytest.mark.parametrize('dataset', ['share'])
 def test_10_verify_the_existence_of_dataset_(dataset):
     results = GET(f"/storage/volume/{pool_name}/datasets/{dataset}/")
     assert results.status_code == 200, results.text
