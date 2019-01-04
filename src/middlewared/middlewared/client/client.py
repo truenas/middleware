@@ -548,42 +548,46 @@ def main():
                 yield i
 
     if args.name == 'call':
-        with Client(uri=args.uri) as c:
-            try:
-                if args.username and args.password:
-                    if not c.call('auth.login', args.username, args.password):
-                        raise ValueError('Invalid username or password')
-            except Exception as e:
-                print("Failed to login: ", e)
-                sys.exit(0)
-            try:
-                kwargs = {}
-                if args.timeout:
-                    kwargs['timeout'] = args.timeout
-                if args.job:
-                    # display the job progress and status message while we wait
-                    with ProgressBar() as progress_bar:
-                        kwargs.update({
-                            'job': True,
-                            'callback': lambda job: progress_bar.update(
-                                job['progress']['percent'], job['progress']['description']
-                            )
-                        })
+        try:
+            with Client(uri=args.uri) as c:
+                try:
+                    if args.username and args.password:
+                        if not c.call('auth.login', args.username, args.password):
+                            raise ValueError('Invalid username or password')
+                except Exception as e:
+                    print("Failed to login: ", e)
+                    sys.exit(0)
+                try:
+                    kwargs = {}
+                    if args.timeout:
+                        kwargs['timeout'] = args.timeout
+                    if args.job:
+                        # display the job progress and status message while we wait
+                        with ProgressBar() as progress_bar:
+                            kwargs.update({
+                                'job': True,
+                                'callback': lambda job: progress_bar.update(
+                                    job['progress']['percent'], job['progress']['description']
+                                )
+                            })
+                            rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
+                            progress_bar.finish()
+                    else:
                         rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
-                        progress_bar.finish()
-                else:
-                    rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
-                if isinstance(rv, (int, str)):
-                    print(rv)
-                else:
-                    print(json.dumps(rv))
-            except ClientException as e:
-                if not args.quiet:
-                    if e.error:
-                        print(e.error, file=sys.stderr)
-                    if e.trace:
-                        print(e.trace['formatted'], file=sys.stderr)
-                sys.exit(1)
+                    if isinstance(rv, (int, str)):
+                        print(rv)
+                    else:
+                        print(json.dumps(rv))
+                except ClientException as e:
+                    if not args.quiet:
+                        if e.error:
+                            print(e.error, file=sys.stderr)
+                        if e.trace:
+                            print(e.trace['formatted'], file=sys.stderr)
+                    sys.exit(1)
+        except FileNotFoundError:
+            print('Failed to run middleware call. Daemon not running?', file=sys.stderr)
+            sys.exit(1)
     elif args.name == 'ping':
         with Client(uri=args.uri) as c:
             if not c.ping():
