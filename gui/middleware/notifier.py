@@ -1273,42 +1273,6 @@ class notifier(metaclass=HookMetaclass):
         if path and os.path.exists(path):
             os.unlink(path)
 
-    def zpool_status(self, pool_name):
-        """
-        Function to find out the status of the zpool
-        It takes the name of the zpool (as a string) as the
-        argument. It returns with a tuple of (state, status)
-        """
-        status = ''
-        state = ''
-        p1 = self._pipeopen("/sbin/zpool status -x %s" % pool_name, logger=None)
-        zpool_result = p1.communicate()[0]
-        if zpool_result.find("pool '%s' is healthy" % pool_name) != -1:
-            state = 'HEALTHY'
-        else:
-            reg1 = re.search('^\s*state: (\w+)', zpool_result, re.M)
-            if reg1:
-                state = reg1.group(1)
-            else:
-                # The default case doesn't print out anything helpful,
-                # but instead coredumps ;).
-                state = 'UNKNOWN'
-            reg1 = re.search(r'^\s*status: (.+)\n\s*action+:',
-                             zpool_result, re.S | re.M)
-            if reg1:
-                msg = reg1.group(1)
-                status = re.sub(r'\s+', ' ', msg)
-            # Ignoring the action for now.
-            # Deal with it when we can parse it, interpret it and
-            # come up a gui link to carry out that specific repair.
-            # action = ""
-            # reg2 = re.search(r'^\s*action: ([^:]+)\n\s*\w+:',
-            #                  zpool_result, re.S | re.M)
-            # if reg2:
-            #    msg = reg2.group(1)
-            #    action = re.sub(r'\s+', ' ', msg)
-        return (state, status)
-
     def pwenc_encrypt(self, text):
         if isinstance(text, bytes):
             text = text.decode('utf8')
