@@ -175,7 +175,8 @@ def system_info(request):
 
 
 def bootenv_datagrid(request):
-    bootzvolstats = notifier().zpool_status('freenas-boot')
+    with client as c:
+        pool = c.call('zfs.pool.query', [['id', '=', 'freenas-boot']])[0]
     bootme = notifier().zpool_parse('freenas-boot')
     zlist = zpool_list(name='freenas-boot')
     try:
@@ -191,7 +192,7 @@ def bootenv_datagrid(request):
         }),
         'structure_url': reverse('system_bootenv_datagrid_structure'),
         'bootme': bootme,
-        'stats': bootzvolstats,
+        'pool': pool,
         'advanced': advanced,
         'zlist': zlist,
     })
