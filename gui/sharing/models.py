@@ -142,6 +142,7 @@ class CIFS_Share(Model):
             'This value will be automatically generated when the share '
             'is configured for time machine.'
         ),
+        editable=False,
     )
     cifs_auxsmbconf = models.TextField(
         verbose_name=_("Auxiliary Parameters"),
