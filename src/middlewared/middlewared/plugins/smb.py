@@ -226,7 +226,6 @@ class SharingSMBService(CRUDService):
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
-        self.logger.debug("We got past datastore insert")
         await self.extend(data)  # We should do this in the insert call ?
 
         await self._service_change('cifs', 'reload')
@@ -397,7 +396,7 @@ class SharingSMBService(CRUDService):
     @private
     async def generate_vuid(self, timemachine, vuid=""):
         try:
-            if timemachine:
+            if timemachine and vuid:
                 uuid.UUID(vuid, version=4)
         except ValueError:
             self.logger.debug(f"Time machine VUID string ({vuid}) is invalid. Regenerating.")
