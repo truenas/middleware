@@ -936,10 +936,16 @@ def generate_smb4_tdb(client, smb4_tdb):
         return
 
 
-def generate_smb4_conf(client, smb4_conf, role):
+def generate_smb4_conf(client, smb4_conf, role, shares):
     global is_truenas_ha
 
     cifs = Struct(client.call('smb.config'))
+
+    guest_enabled = False
+
+    for share in shares:
+        if share['cifs_guestok']:
+            guest_enabled = True
 
     if not cifs.guest:
         cifs.guest = 'ftp'
@@ -1039,7 +1045,9 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset1(smb4_conf, "disable spoolss = yes")
     confset1(smb4_conf, "getwd cache = yes")
     confset2(smb4_conf, "guest account = %s", cifs.guest)
-    confset1(smb4_conf, "map to guest = Bad User")
+    if guest_enabled:
+        confset1(smb4_conf, "map to guest = Bad User")
+
     confset2(smb4_conf, "obey pam restrictions = %s",
              "yes" if cifs.obey_pam_restrictions else "no")
     confset2(smb4_conf, "ntlm auth = %s",
@@ -1134,9 +1142,7 @@ def generate_smb4_conf(client, smb4_conf, role):
         confset1(smb4_conf, line)
 
 
-def generate_smb4_shares(client, smb4_shares):
-    shares = client.call('datastore.query', 'sharing.CIFS_Share')
-
+def generate_smb4_shares(client, smb4_shares, shares):
     if len(shares) == 0:
         return
 
@@ -1726,11 +1732,13 @@ def main():
 
     role = get_server_role(client)
 
+    shares = client.call('datastore.query', 'sharing.CIFS_Share')
+
     generate_smbusers(client)
     generate_smb4_tdb(client, smb4_tdb)
-    generate_smb4_conf(client, smb4_conf, role)
+    generate_smb4_conf(client, smb4_conf, role, shares)
     generate_smb4_system_shares(client, smb4_shares)
-    generate_smb4_shares(client, smb4_shares)
+    generate_smb4_shares(client, smb4_shares, shares)
 
     if role == 'dc' and not client.call('notifier.samba4', 'domain_provisioned'):
         provision_smb4(client)
