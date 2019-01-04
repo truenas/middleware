@@ -8,12 +8,15 @@ class BootVolumeStatusAlertSource(AlertSource):
     hardware = True
 
     async def check(self):
-        state, status = await self.middleware.call("notifier.zpool_status", "freenas-boot")
-        if state != "HEALTHY":
+        pool = await self.middleware.call("zfs.pool.query", [["id", "=", "freenas-boot"]])
+        if not pool:
+            return
+        pool = pool[0]
+        if not pool["healthy"]:
             return Alert(
                 "The boot volume state is %(state)s: %(status)s",
                 {
-                    "state": state,
-                    "status": status,
+                    "state": pool["status"],
+                    "status": pool["status_detail"],
                 },
             )
