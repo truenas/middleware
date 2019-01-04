@@ -430,14 +430,20 @@ class PoolService(CRUDService):
             zpool = None
 
         if zpool:
-            pool['status'] = zpool['status']
-            pool['scan'] = zpool['scan']
-            pool['topology'] = self._topology(zpool['groups'])
+            pool.update({
+                'status': zpool['status'],
+                'scan': zpool['scan'],
+                'topology': self._topology(zpool['groups']),
+                'healthy': zpool['healthy'],
+                'status_detail': zpool['status_detail'],
+            })
         else:
             pool.update({
                 'status': 'OFFLINE',
                 'scan': None,
                 'topology': None,
+                'healthy': False,
+                'status_detail': None,
             })
 
         if pool['encrypt'] > 0:
