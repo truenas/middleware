@@ -1039,11 +1039,11 @@ def generate_smb4_conf(client, smb4_conf, role, shares):
     if truenas_params['is_truenas_ha']:
         confset1(smb4_conf, "winbind netbios alias spn = false")
 
-        if truenas_params['failover_status'] ==  'BACKUP':
+        if truenas_params['failover_status'] == 'BACKUP':
             confset1(smb4_conf, "truenas passive controller = true")
         else:
             gc = client.call('network.configuration.config')
-            confset2(smb4_conf, "zeroconf name = %s", gc.hostname_virtual)
+            confset2(smb4_conf, "zeroconf name = %s", gc['hostname_virtual'])
 
     confset1(smb4_conf, "load printers = no")
     confset1(smb4_conf, "printing = bsd")
