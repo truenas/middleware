@@ -1140,6 +1140,11 @@ def generate_smb4_shares(client, smb4_shares):
     if len(shares) == 0:
         return
 
+    fruit_enabled = False
+    for share in shares:
+        if "fruit" in share['cifs_vfsobjects'] or share['cifs_timemachine']:
+            fruit_enabled = True
+
     for share in shares:
         share = Struct(share)
         if (not share.cifs_home and
@@ -1198,6 +1203,28 @@ def generate_smb4_shares(client, smb4_shares):
         vfs_objects = []
         if task:
             vfs_objects.append('shadow_copy2')
+
+        """
+           vfs_fruit must be enabled on _all_ shares if it is enabled on any of
+           them. This is because support for aapl SMB extensions is negotiated/
+           discovered on the first SMB tree connect.
+
+           We also take this opportunity to set parameters to store AFP Resource
+           and AFP Info alternate data streams as xattrs. Default behavior in fruit
+           is to store as apple double files due in part to size limits for xattrs
+           in Linux. FreeBSD doesn't have this limitation, and so we can avoid littering
+           the filesystem with ad files.
+        """
+        if fruit_enabled:
+            if "fruit" not in share.cifs_vfsobjects:
+                vfs_objects.append('fruit')
+            confset1(smb4_shares, "fruit:metadata = stream")
+            confset1(smb4_shares, "fruit:resource = stream")
+
+        if share.cifs_timemachine:
+            confset1(smb4_shares, "fruit:time machine = yes")
+            confset2(smb4_shares, "fruit:volume_uuid = %s", share.cifs_vuid)
+
         extend_vfs_objects_for_zfs(share.cifs_path, vfs_objects)
         vfs_objects.extend(share.cifs_vfsobjects)
 
