@@ -24,7 +24,7 @@
     </div>
     {% if bootme %}
       <div class="gridAdd left" style="padding-left: 10px">
-        <strong>{% trans "Boot Volume Condition" %}: {{ stats.0 }} {{ stats.1 }}</strong><br />
+	 <strong>{% trans "Boot Volume Condition" %}: {{ pool.status }}{% if pool.status_code != "FEAT_DISABLED" %} {{ pool.status_detail }}{% endif %}</strong><br />
           {% if bootme.scrub.status == "IN_PROGRESS" or bootme.scrub.status == "PAUSED" %}
             <p style="padding: 3px;">{% trans "Scrub Status" %}: {{ bootme.scrub.status_verbose }}</p>
             <!-- comment this till one can find a auto refresh method
