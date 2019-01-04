@@ -2,6 +2,23 @@
 Release Notes
 =============
 
+Release notes for the FreeNAS 11.3 API.
+
+Resources
+---------
+
+* Resources removed
+
+ - Jails: /api/v1.0/jails/jails/
+ - Jails Configuration: /api/v1.0/jails/configuration/
+ - Jails Mountpoints: /api/v1.0/jails/mountpoints/
+ - Jails Templates: /api/v1.0/jails/templates/
+
+* Resources changed
+
+  - Replication: /api/v1.0/storage/replication/ is now read-only. For managing replications use v2.0.
+
+
 Release notes for the FreeNAS 9.10 API.
 
 Resources
