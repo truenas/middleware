@@ -50,7 +50,10 @@ from freenasUI.common.freenassysctl import freenas_sysctl as fs
 
 log = logging.getLogger('generate_smb4_conf')
 
-is_truenas_ha = False
+truenas_params= {
+    'is_truenas_ha': False,
+    'failover_status': "DEFAULT",
+}
 
 
 def qw(w):
@@ -937,8 +940,6 @@ def generate_smb4_tdb(client, smb4_tdb):
 
 
 def generate_smb4_conf(client, smb4_conf, role, shares):
-    global is_truenas_ha
-
     cifs = Struct(client.call('smb.config'))
 
     guest_enabled = False
@@ -1017,7 +1018,7 @@ def generate_smb4_conf(client, smb4_conf, role, shares):
     confset1(smb4_conf, "deadtime = 15")
     confset1(smb4_conf, "max log size = 51200")
 
-    if is_truenas_ha:
+    if truenas_params['is_truenas_ha']:
         confset1(smb4_conf, "private dir = /root/samba/private")
 
     confset2(smb4_conf, "max open files = %d",
@@ -1035,8 +1036,14 @@ def generate_smb4_conf(client, smb4_conf, role, shares):
     else:
         confset1(smb4_conf, "logging = file")
 
-    if is_truenas_ha:
+    if truenas_params['is_truenas_ha']:
         confset1(smb4_conf, "winbind netbios alias spn = false")
+
+        if truenas_params['failover_status'] ==  'BACKUP':
+            confset1(smb4_conf, "truenas passive controller = true")
+        else:
+            gc = client.call('network.configuration.config')
+            confset2(smb4_conf, "zeroconf name = %s", gc.hostname_virtual)
 
     confset1(smb4_conf, "load printers = no")
     confset1(smb4_conf, "printing = bsd")
@@ -1358,11 +1365,10 @@ def smb4_unlink(dir):
 
 
 def smb4_setup(client):
-    global is_truenas_ha
     statedir = "/var/db/samba4"
     privatedir = "/var/db/samba4/private"
 
-    if is_truenas_ha:
+    if truenas_params['is_truenas_ha']:
         privatedir = "/root/samba/private"
 
     if not os.access(privatedir, os.F_OK):
@@ -1379,6 +1385,7 @@ def smb4_setup(client):
     smb4_unlink("/usr/local/etc/smb4.conf")
 
     if not client.call('notifier.is_freenas') and client.call('notifier.failover_status') == 'BACKUP':
+        truenas_params['failover_status'] = 'BACKUP'
         return
 
     systemdataset = client.call('systemdataset.config')
@@ -1706,8 +1713,6 @@ def smb4_do_migrations(client):
 
 
 def main():
-    global is_truenas_ha
-
     smb4_tdb = []
     smb4_conf = []
     smb4_shares = []
@@ -1717,10 +1722,10 @@ def main():
     client = Client()
 
     if not client.call('notifier.is_freenas') and client.call('notifier.failover_licensed'):
-        is_truenas_ha = True
+        truenas_params['is_truenas_ha'] = True
 
     privatedir = "/var/db/samba4/private"
-    if is_truenas_ha:
+    if truenas_params['is_truenas_ha']:
         privatedir = "/root/samba/private"
 
     smb4_setup(client)
