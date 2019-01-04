@@ -130,7 +130,7 @@ class MailService(ConfigService):
         Bool('attachments', default=False),
         Bool('queue', default=True),
         Dict('extra_headers', additional_attrs=True),
-    ), Dict('mailconfig', additional_attrs=True))
+    ), Dict('mailconfig', Str('pass', password=True), additional_attrs=True))
     @job(pipes=['input'], check_pipes=False)
     def send(self, job, message, config=None):
         """
@@ -274,11 +274,12 @@ class MailService(ConfigService):
             syslog.syslog(f"sending mail to {', '.join(to)}\n{headers}")
             server.sendmail(config['fromemail'], to, msg.as_string())
             server.quit()
-        except ValueError as ve:
+        except Exception as e:
             # Don't spam syslog with these messages. They should only end up in the
             # test-email pane.
-            raise CallError(str(ve))
-        except Exception as e:
+            # We are only interested in ValueError, not subclasses.
+            if e.__class__ is ValueError:
+                raise CallError(str(e))
             syslog.syslog(f'Failed to send email to {", ".join(to)}: {str(e)}')
             if isinstance(e, smtplib.SMTPAuthenticationError):
                 raise CallError(f'Authentication error ({e.smtp_code}): {e.smtp_error}', errno.EAUTH)
