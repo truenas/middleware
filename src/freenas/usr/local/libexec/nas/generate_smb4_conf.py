@@ -943,9 +943,8 @@ def generate_smb4_conf(client, smb4_conf, role, shares):
 
     guest_enabled = False
 
-    for share in shares:
-        if share['cifs_guestok']:
-            guest_enabled = True
+    if any(filter(lambda x: x['cifs_guestok'], shares)):
+        guest_enabled = True
 
     if not cifs.guest:
         cifs.guest = 'ftp'
@@ -1150,6 +1149,7 @@ def generate_smb4_shares(client, smb4_shares, shares):
     for share in shares:
         if "fruit" in share['cifs_vfsobjects'] or share['cifs_timemachine']:
             fruit_enabled = True
+            break
 
     for share in shares:
         share = Struct(share)
