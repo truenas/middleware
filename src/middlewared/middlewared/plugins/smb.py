@@ -194,7 +194,6 @@ class SharingSMBService(CRUDService):
         Bool('ro', default=False),
         Bool('browsable', default=True),
         Bool('timemachine', default=False),
-        Str('vuid'),
         Bool('recyclebin', default=False),
         Bool('showhiddenfiles', default=False),
         Bool('guestok', default=False),
@@ -228,10 +227,12 @@ class SharingSMBService(CRUDService):
 
         await self.compress(data)
         await self.set_storage_tasks(data)
-        data['vuid'] = await self.generate_vuid(data['timemachine'], data['vuid'])
+        vuid = await self.generate_vuid(data['timemachine'])
+        data.update({'vuid': vuid})
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
+        self.logger.debug("We got past datastore insert")
         await self.extend(data)  # We should do this in the insert call ?
 
         await self.middleware.call('service.reload', 'cifs')
@@ -251,7 +252,6 @@ class SharingSMBService(CRUDService):
         verrors = ValidationErrors()
         path = data.get('path')
         default_perms = data.pop('default_permissions', False)
-        data['vuid'] = await self.generate_vuid(data['timemachine'], data['vuid'])
 
         old = await self.middleware.call(
             'datastore.query', self._config.datastore, [('id', '=', id)],
@@ -262,6 +262,7 @@ class SharingSMBService(CRUDService):
         new = old.copy()
         new.update(data)
 
+        new['vuid'] = await self.generate_vuid(new['timemachine'], new['vuid'])
         await self.clean(new, 'sharingsmb_update', verrors, id=id)
         await self.validate(new, 'sharingsmb_update', verrors, old=old)
 
@@ -390,7 +391,7 @@ class SharingSMBService(CRUDService):
             )
 
     @private
-    async def generate_vuid(self, timemachine, vuid):
+    async def generate_vuid(self, timemachine, vuid=""):
         try:
             if timemachine:
                 uuid.UUID(vuid, version=4)
