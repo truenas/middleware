@@ -87,21 +87,21 @@ if ('ip' not in locals() and
 # else:
 disk = 'disk0 = "ada0"\ndisk1 = "ada1"\ndisk2 = "ada2"'
 
-cfg_content = """#!/usr/bin/env python3.6
+cfg_content = f"""#!/usr/bin/env python3.6
 
 user = "root"
-password = "%s"
-ip = "%s"
-default_api_url = 'http://' + ip + '/api/v%s'
+password = "{passwd}"
+ip = "{ip}"
+default_api_url = 'http://' + ip + '/api/v{api}'
 api1_url = 'http://' + ip + '/api/v1.0'
 api2_url = 'http://' + ip + '/api/v2.0'
-interface = "%s"
+interface = "{interface}"
 ntpServer = "10.20.20.122"
-localHome = "%s"
-%s
-keyPath = "%s"
-results_xml = "%s"
-""" % (passwd, ip, api, interface, localHome, disk, keyPath, results_xml)
+localHome = "{localHome}"
+{disk}
+keyPath = "{keyPath}"
+pool_name = "tank"
+"""
 
 cfg_file = open("auto_config.py", 'w')
 cfg_file.writelines(cfg_content)
