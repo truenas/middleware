@@ -164,7 +164,7 @@ class NotifierService(Service):
                 data[i] = getattr(ds, i)
         return data
 
-    async def get_user_object(self, username):
+    def get_user_object(self, username):
         user = False
         try:
             user = FreeNAS_User(username)
@@ -172,7 +172,7 @@ class NotifierService(Service):
             pass
         return user
 
-    async def get_group_object(self, groupname):
+    def get_group_object(self, groupname):
         group = False
         try:
             group = FreeNAS_Group(groupname)
