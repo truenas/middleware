@@ -23,7 +23,7 @@ from freenasUI.common.freenasldap import (
     FreeNAS_LDAP,
     FLAGS_DBINIT,
 )
-from freenasUI.common.freenasusers import FreeNAS_User
+from freenasUI.common.freenasusers import FreeNAS_User, FreeNAS_Group
 from freenasUI.common.samba import Samba4
 from freenasUI.common.warden import Warden
 from freenasUI.middleware import zfs
@@ -171,6 +171,14 @@ class NotifierService(Service):
         except Exception:
             pass
         return user
+
+    async def get_group_object(self, groupname):
+        group = False
+        try:
+            group = FreeNAS_Group(groupname)
+        except Exception:
+            pass
+        return group
 
     def ldap_status(self):
         ret = False
