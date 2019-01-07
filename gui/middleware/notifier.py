@@ -1247,45 +1247,6 @@ class notifier(metaclass=HookMetaclass):
 
         return ret
 
-    def owner_to_SID(self, owner):
-        if not owner:
-            return None
-
-        proc = self._pipeopen("/usr/local/bin/wbinfo -n '%s'" % owner)
-
-        info, err = proc.communicate()
-        if proc.returncode != 0:
-            log.debug("owner_to_SID: error %s", err)
-            return None
-
-        try:
-            SID = info.split(' ')[0].strip()
-        except:
-            SID = None
-
-        log.debug("owner_to_SID: %s -> %s", owner, SID)
-        return SID
-
-    def group_to_SID(self, group):
-        if not group:
-            return None
-
-        proc = self._pipeopen("/usr/local/bin/wbinfo -n '%s'" % group)
-
-        info, err = proc.communicate()
-        if proc.returncode != 0:
-            log.debug("group_to_SID: error %s", err)
-            return None
-
-        try:
-            SID = info.split(' ')[0].strip()
-        except:
-            SID = None
-
-        log.debug("group_to_SID: %s -> %s", group, SID)
-        return SID
-
-
     def sharesec_delete(self, share):
         if not share:
             return False
