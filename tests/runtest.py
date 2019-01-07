@@ -13,7 +13,8 @@ import re
 apifolder = getcwd()
 sys.path.append(apifolder)
 
-results_xml = getcwd() + '/results/'
+workdir = getcwd()
+results_xml = f'{workdir}/results/'
 localHome = path.expanduser('~')
 dotsshPath = localHome + '/.ssh'
 keyPath = localHome + '/.ssh/test_id_rsa'
@@ -79,12 +80,12 @@ if ('ip' not in locals() and
     print(error_msg)
     exit()
 
-if interface == "vtnet0":
-    disk = 'disk0 = "vtbd0"\ndisk1 = "vtbd1"\ndisk2 = "vtbd2"'
-elif api == "1.0":
-    disk = 'disk0 = "da0"\ndisk1 = "da1"\ndisk2 = "da2"'
-else:
-    disk = 'disk0 = "ada0"\ndisk1 = "ada1"\ndisk2 = "ada2"'
+# if interface == "vtnet0":
+#     disk = 'disk0 = "vtbd0"\ndisk1 = "vtbd1"\ndisk2 = "vtbd2"'
+# elif api == "1.0":
+#     disk = 'disk0 = "da0"\ndisk1 = "da1"\ndisk2 = "da2"'
+# else:
+disk = 'disk0 = "ada0"\ndisk1 = "ada1"\ndisk2 = "ada2"'
 
 cfg_content = """#!/usr/bin/env python3.6
 
