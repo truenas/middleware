@@ -34,11 +34,10 @@ def test_03_Wait_a_minute():
     sleep(60)
 
 
-# Update tests
 # Ensure test file does exist
-# def test_04_Verify_cronjob_has_created_the_test_file():
-#     results = SSH_TEST('test -f "%s"' % TESTFILE, user, password, ip)
-#     assert results['result'] is True, results['output']
+def test_04_Verify_cronjob_has_created_the_test_file():
+    results = SSH_TEST('test -f "%s"' % TESTFILE, user, password, ip)
+    assert results['result'] is True, results['output']
 
 
 # Update cronjob to disabled with new cron_command
