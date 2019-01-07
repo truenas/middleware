@@ -1247,26 +1247,6 @@ class notifier(metaclass=HookMetaclass):
 
         return ret
 
-    def path_to_smb_share(self, path):
-        from freenasUI.sharing.models import CIFS_Share
-
-        try:
-            share = CIFS_Share.objects.get(cifs_path=path)
-        except:
-            share = None
-
-        return share
-
-    def smb_share_to_path(self, share):
-        from freenasUI.sharing.models import CIFS_Share
-
-        try:
-            path = CIFS_Share.objects.get(cifs_name=share)
-        except:
-            path = None
-
-        return path
-
     def owner_to_SID(self, owner):
         if not owner:
             return None
@@ -1305,34 +1285,6 @@ class notifier(metaclass=HookMetaclass):
         log.debug("group_to_SID: %s -> %s", group, SID)
         return SID
 
-    def sharesec_add(self, share, owner, group):
-        if not share:
-            return False
-
-        log.debug("sharesec_add: adding '%s:%s' ACL on %s", owner, group, share)
-
-        add_args = ""
-        sharesec = "/usr/local/bin/sharesec"
-
-        owner_SID = self.owner_to_SID(owner)
-        group_SID = self.group_to_SID(group)
-
-        if owner and owner_SID:
-            add_args += ",%s:ALLOWED/0/FULL" % owner_SID
-        if group and group_SID:
-            add_args += ",%s:ALLOWED/0/FULL" % group_SID
-        add_args = add_args.lstrip(',')
-
-        ret = True
-        if add_args:
-            add_cmd = "%s %s -a '%s'" % (sharesec, share, add_args)
-            try:
-                self._pipeopen(add_cmd).communicate()
-            except:
-                log.debug("sharesec_add: %s failed", add_cmd)
-                ret = False
-
-        return ret
 
     def sharesec_delete(self, share):
         if not share:
@@ -1352,15 +1304,6 @@ class notifier(metaclass=HookMetaclass):
 
         return ret
 
-    def sharesec_reset(self, share, owner=None, group=None):
-        if not share:
-            return False
-
-        log.debug("sharesec_reset: resetting %s to '%s:%s'", share, owner, group)
-
-        self.sharesec_delete(share)
-        return self.sharesec_add(share, owner, group)
-
     def winacl_reset(self, path, owner=None, group=None, exclude=None, recursive=True):
         if exclude is None:
             exclude = []
@@ -1378,9 +1321,6 @@ class notifier(metaclass=HookMetaclass):
         winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
         if not winexists:
             open(aclfile, 'a').close()
-
-        share = self.path_to_smb_share(path)
-        self.sharesec_reset(share, owner, group)
 
         winacl = "/usr/local/bin/winacl"
         args = "-a reset"
@@ -1481,10 +1421,6 @@ class notifier(metaclass=HookMetaclass):
                     self._system("/usr/sbin/chown %s :'%s' '%s'" % (flags, group, apath))
                 if mode is not None:
                     self._system("/bin/chmod %s %s '%s'" % (flags, mode, apath))
-
-        share = self.path_to_smb_share(path)
-        if share:
-            self.sharesec_reset(share, user, group)
 
     def mp_get_permission(self, path):
         if os.path.isdir(path):
