@@ -265,6 +265,11 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
+        'ws4py': {
+            'handlers': ['syslog'],
+            'level': 'WARN',
+            'propagate': True,
+        },
         '': {
             'handlers': ['syslog'],
             'level': 'DEBUG',
