@@ -100,7 +100,7 @@ class MailService(ConfigService):
         Str('security', enum=['PLAIN', 'SSL', 'TLS']),
         Bool('smtp'),
         Str('user'),
-        Str('pass'),
+        Str('pass', password=True),
         update=True
     ))
     async def do_update(self, data):
@@ -113,13 +113,35 @@ class MailService(ConfigService):
         verrors = ValidationErrors()
 
         if new['smtp'] and new['user'] == '':
-            verrors.add('mail_update.user', 'This field is required when SMTP authentication is enabled')
+            verrors.add(
+                'mail_update.user',
+                'This field is required when SMTP authentication is enabled',
+            )
+
+        self.__password_verify(new['pass'], 'mail_update.pass', verrors)
 
         if verrors:
             raise verrors
 
         await self.middleware.call('datastore.update', 'system.email', config['id'], new, {'prefix': 'em_'})
-        return config
+        return await self.config()
+
+    def __password_verify(self, password, schema, verrors=None):
+        if not password:
+            return
+        if verrors is None:
+            verrors = ValidationErrors()
+        # FIXME: smtplib does not support non-ascii password yet
+        # https://github.com/python/cpython/pull/8938
+        try:
+            password.encode('ascii')
+        except UnicodeEncodeError:
+            verrors.add(
+                schema,
+                'Only plain text characters (8-bit ASCII) are allowed in passwords. '
+                'UTF or composed characters are not allowed.'
+            )
+        return verrors
 
     @accepts(Dict(
         'mail-message',
@@ -225,6 +247,9 @@ class MailService(ConfigService):
 
         if not config:
             config = self.middleware.call_sync('mail.config')
+        verrors = self.__password_verify(config['pass'], 'mail-config.pass')
+        if verrors:
+            raise verrors
         to = message.get('to')
         if not to:
             to = [
