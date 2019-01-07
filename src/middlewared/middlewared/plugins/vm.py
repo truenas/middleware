@@ -1224,6 +1224,8 @@ class VMService(CRUDService):
                     'Make sure there is a pool available.'
                 )
 
+        self.vmutils.do_dirtree_container(sharefs)
+
         await self.middleware.run_in_thread(
             self.__fetch_and_decompress, container_image, sharefs, dest, str(size), job,
         )
