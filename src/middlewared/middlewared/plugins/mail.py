@@ -98,7 +98,7 @@ class MailService(ConfigService):
         Str('security', enum=['PLAIN', 'SSL', 'TLS']),
         Bool('smtp', default=False),
         Str('user'),
-        Str('pass'),
+        Str('pass', password=True),
     ))
     async def do_update(self, data):
         config = await self.config()
@@ -110,13 +110,35 @@ class MailService(ConfigService):
         verrors = ValidationErrors()
 
         if new['smtp'] and new['user'] == '':
-            verrors.add('mail_update.user', 'This field is required when SMTP authentication is enabled')
+            verrors.add(
+                'mail_update.user',
+                'This field is required when SMTP authentication is enabled',
+            )
+
+        self.__password_verify(new['pass'], 'mail_update.pass', verrors)
 
         if verrors:
             raise verrors
 
         await self.middleware.call('datastore.update', 'system.email', config['id'], new, {'prefix': 'em_'})
-        return config
+        return await self.config()
+
+    def __password_verify(self, password, schema, verrors=None):
+        if not password:
+            return
+        if verrors is None:
+            verrors = ValidationErrors()
+        # FIXME: smtplib does not support non-ascii password yet
+        # https://github.com/python/cpython/pull/8938
+        try:
+            password.encode('ascii')
+        except UnicodeEncodeError:
+            verrors.add(
+                schema,
+                'Only plain text characters (8-bit ASCII) are allowed in passwords. '
+                'UTF or composed characters are not allowed.'
+            )
+        return verrors
 
     @accepts(Dict(
         'mail-message',
@@ -130,7 +152,7 @@ class MailService(ConfigService):
         Bool('attachments', default=False),
         Bool('queue', default=True),
         Dict('extra_headers', additional_attrs=True),
-    ), Dict('mailconfig', additional_attrs=True))
+    ), Dict('mailconfig', Str('pass', password=True), additional_attrs=True))
     @job(pipes=['input'], check_pipes=False)
     def send(self, job, message, config=None):
         """
@@ -193,6 +215,9 @@ class MailService(ConfigService):
 
         if not config:
             config = self.middleware.call_sync('mail.config')
+        verrors = self.__password_verify(config['pass'], 'mail-config.pass')
+        if verrors:
+            raise verrors
         to = message.get('to')
         if not to:
             to = [
@@ -274,11 +299,12 @@ class MailService(ConfigService):
             syslog.syslog(f"sending mail to {', '.join(to)}\n{headers}")
             server.sendmail(config['fromemail'], to, msg.as_string())
             server.quit()
-        except ValueError as ve:
+        except Exception as e:
             # Don't spam syslog with these messages. They should only end up in the
             # test-email pane.
-            raise CallError(str(ve))
-        except Exception as e:
+            # We are only interested in ValueError, not subclasses.
+            if e.__class__ is ValueError:
+                raise CallError(str(e))
             syslog.syslog(f'Failed to send email to {", ".join(to)}: {str(e)}')
             if isinstance(e, smtplib.SMTPAuthenticationError):
                 raise CallError(f'Authentication error ({e.smtp_code}): {e.smtp_error}', errno.EAUTH)
