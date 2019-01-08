@@ -180,6 +180,7 @@ class VMSupervisor(object):
 
                 tapname = netif.create_interface('tap')
                 tap = netif.get_interface(tapname)
+                tap.description = f'Attached to {self.vm["name"]}'
                 tap.up()
                 self.taps.append(tapname)
                 await self.bridge_setup(tapname, tap, attach_iface)
