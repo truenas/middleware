@@ -726,30 +726,6 @@ class notifier(metaclass=HookMetaclass):
 
         return disksd
 
-    def get_partitions(self, try_disks=True):
-        disks = list(self.get_disks().keys())
-        partitions = {}
-        for disk in disks:
-
-            listing = glob.glob('/dev/%s[a-fps]*' % disk)
-            if try_disks is True and len(listing) == 0:
-                listing = [disk]
-            for part in list(listing):
-                toremove = len([i for i in listing if i.startswith(part) and i != part]) > 0
-                if toremove:
-                    listing.remove(part)
-
-            for part in listing:
-                p1 = Popen(["/usr/sbin/diskinfo", part], stdin=PIPE, stdout=PIPE, encoding='utf8')
-                info = p1.communicate()[0].split('\t')
-                partitions.update({
-                    part: {
-                        'devname': info[0].replace("/dev/", ""),
-                        'capacity': info[2]
-                    },
-                })
-        return partitions
-
     def precheck_partition(self, dev, fstype):
 
         if fstype == 'UFS':
