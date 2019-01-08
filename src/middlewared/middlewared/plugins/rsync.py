@@ -251,7 +251,7 @@ class RsyncTaskService(CRUDService):
                 remote_port
             ):
                 if '@' in remote_host:
-                    remote_username, remote_host = remote_host.split('@')
+                    remote_username, remote_host = remote_host.split('@', 1)
                 else:
                     remote_username = username
 
