@@ -11,7 +11,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST
-from auto_config import ip
+from auto_config import ip, pool_name
 from config import *
 
 if "BRIDGEHOST" in locals():
@@ -19,7 +19,7 @@ if "BRIDGEHOST" in locals():
 
 DATASET = "smb-osx"
 SMB_NAME = "TestShare"
-SMB_PATH = "/mnt/tank/" + DATASET
+SMB_PATH = f"/mnt/{pool_name}/{DATASET}"
 VOL_GROUP = "wheel"
 
 Reason = "BRIDGEHOST is missing in ixautomation.conf"
@@ -37,7 +37,7 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 
 # Create tests
 def test_01_Creating_SMB_dataset():
-    results = POST("/storage/volume/tank/datasets/", {"name": DATASET})
+    results = POST(f"/storage/volume/{pool_name}/datasets/", {"name": DATASET})
     assert results.status_code == 201, results.text
 
 
@@ -223,5 +223,5 @@ def test_22_Removing_SMB_share_on_SMB_PATH():
 
 # Check destroying a SMB dataset
 def test_23_Destroying_SMB_dataset():
-    results = DELETE("/storage/volume/1/datasets/%s/" % DATASET)
+    results = DELETE(f"/storage/volume/{pool_name}/datasets/{DATASET}/")
     assert results.status_code == 204, results.text
