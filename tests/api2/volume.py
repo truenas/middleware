@@ -8,7 +8,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET
-from auto_config import disk1, disk2
+from auto_config import disk1, disk2, pool_name
 
 
 # Create tests
@@ -23,7 +23,7 @@ def test_02_Check_getting_disks():
 
 
 def test_03_creating_a_zpool():
-    payload = {"volume_name": "tank",
+    payload = {"volume_name": pool_name,
                "layout": [{"vdevtype": "stripe", "disks": [disk1, disk2]}]}
     results = POST("/storage/volume/", payload, api="1")
     assert results.status_code == 201, results.text
