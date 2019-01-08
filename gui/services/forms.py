@@ -177,6 +177,7 @@ class CIFSForm(MiddlewareModelForm, ModelForm):
             del self.fields['cifs_srv_netbiosname_b']
 
     def middleware_clean(self, data):
+        data['netbiosalias'] = data['netbiosalias'].split()
         if 'loglevel' in data:
             data['loglevel'] = LOGLEVEL_MAP.get(data['loglevel'])
         return data
