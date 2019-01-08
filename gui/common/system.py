@@ -166,83 +166,6 @@ def send_mail(
     return False, ''
 
 
-def get_fstype(path):
-    assert path
-
-    if not os.access(path, os.F_OK):
-        return None
-
-    lines = subprocess.check_output(['/bin/df', '-T', path], encoding='utf8').splitlines()
-
-    out = (lines[len(lines) - 1]).split()
-
-    return (out[1].upper())
-
-
-def mount(dev, path, mntopts=None, fstype=None):
-    mount_cmd = ['/sbin/mount']
-
-    if isinstance(dev, str):
-        dev = dev.encode('utf-8')
-
-    if isinstance(path, str):
-        path = path.encode('utf-8')
-
-    if mntopts:
-        opts = ['-o', mntopts]
-    else:
-        opts = []
-
-    if fstype == 'ntfs':
-        mount_cmd = ['/usr/local/bin/ntfs-3g']
-        fstype = []
-    else:
-        fstype = ['-t', fstype] if fstype else []
-
-    proc = subprocess.Popen(
-        mount_cmd + opts + fstype + [dev, path],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        encoding='utf8',
-    )
-    output = proc.communicate()
-
-    if proc.returncode != 0:
-        log.debug("Mount failed (%s): %s", proc.returncode, output)
-        raise ValueError(_("Mount failed {0} -> {1}, {2}" .format(
-            proc.returncode,
-            output[0],
-            output[1]
-        )))
-    else:
-        return True
-
-
-def umount(path, force=False):
-
-    if force:
-        cmdlst = ['/sbin/umount', '-f', path]
-    else:
-        cmdlst = ['/sbin/umount', path]
-    proc = subprocess.Popen(
-        cmdlst,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        encoding='utf8',
-    )
-    output = proc.communicate()
-
-    if proc.returncode != 0:
-        log.debug("Umount failed (%s): %s", proc.returncode, output)
-        raise ValueError(_("Unmount Failed {0} -> {1} {2}".format(
-            proc.returncode,
-            output[0],
-            output[1]
-        )))
-    else:
-        return True
-
-
 def service_enabled(name):
     h = sqlite3.connect(FREENAS_DATABASE)
     c = h.cursor()
@@ -380,25 +303,6 @@ def domaincontroller_enabled():
     return service_enabled('domaincontroller')
 
 
-def domaincontroller_objects():
-    h = sqlite3.connect(FREENAS_DATABASE)
-    h.row_factory = sqlite3.Row
-    c = h.cursor()
-
-    results = c.execute("SELECT * FROM services_domaincontroller ORDER BY -id")
-
-    objects = []
-    for row in results:
-        obj = {}
-        for key in list(row.keys()):
-            obj[key] = row[key]
-        objects.append(obj)
-
-    c.close()
-    h.close()
-    return objects
-
-
 def nis_enabled():
     from freenasUI.directoryservice.models import NIS
 
@@ -417,18 +321,6 @@ def nis_objects():
     from freenasUI.directoryservice.models import NIS
 
     return NIS.objects.all()
-
-
-def kerberosrealm_objects():
-    from freenasUI.directoryservice.models import KerberosRealm
-
-    return KerberosRealm.objects.all()
-
-
-def kerberoskeytab_objects():
-    from freenasUI.directoryservice.models import KerberosKeytab
-
-    return KerberosKeytab.objects.all()
 
 
 def exclude_path(path, exclude):
@@ -464,32 +356,6 @@ def exclude_path(path, exclude):
         return apply_paths
     else:
         return [path]
-
-
-def get_dc_hostname():
-    from freenasUI.network.models import GlobalConfiguration
-    from freenasUI.common.pipesubr import pipeopen
-
-    gc_hostname = gc_domain = hostname = None
-    try:
-        gc = GlobalConfiguration.objects.all()[0]
-        gc_hostname = gc.get_hostname()
-        gc_domain = gc.gc_domain
-
-    except Exception:
-        pass
-
-    if gc_hostname and gc_domain:
-        hostname = "%s.%s" % (gc_hostname, gc_domain)
-    elif gc_hostname:
-        hostname = gc_hostname
-    else:
-        p = pipeopen("/bin/hostname", allowfork=True)
-        out = p.communicate()
-        if p.returncode == 0:
-            hostname = out[0].strip()
-
-    return hostname
 
 
 def get_hostname():
