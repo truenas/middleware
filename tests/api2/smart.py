@@ -8,12 +8,13 @@ import sys
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, POST, PUT, GET
-from auto_config import disk1
+from auto_config import disk1, interface
 
 disk0 = disk1[:-1] + '0'
 Reason = f"{disk0} is not real ATA disk"
 
-not_real_disk = pytest.mark.skipif(disk0 == "vtbd0", reason=Reason)
+interface_exist = (interface == "vtnet0" or interface == "em0")
+not_real_disk = pytest.mark.skipif(interface_exist, reason=Reason)
 
 
 @pytest.fixture(scope='module')
