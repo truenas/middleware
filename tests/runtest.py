@@ -134,7 +134,7 @@ def get_tests():
         apidir = 'api1/'
         rv = ['network', 'ssh', 'storage']
     elif api == '2.0':
-        skip_tests = ['pool_import_disk']
+        skip_tests = []
         apidir = 'api2/'
         rv = ['interfaces', 'network', 'ssh', 'volume']
 
