@@ -90,10 +90,14 @@ class InitShutdownScriptService(CRUDService):
         if data['type'] == 'COMMAND':
             if not data.get('command'):
                 verrors.add(f'{schema_name}.command', 'This field is required')
+            else:
+                data['script'] = ''
 
         if data['type'] == 'SCRIPT':
             if not data.get('script'):
                 verrors.add(f'{schema_name}.script', 'This field is required')
+            else:
+                data['command'] = ''
 
         if verrors:
             raise verrors
