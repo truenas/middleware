@@ -13,8 +13,8 @@ class InitShutdownScriptService(CRUDService):
     @accepts(Dict(
         'init_shutdown_script_create',
         Str('type', enum=['COMMAND', 'SCRIPT'], required=True),
-        Str('command'),
-        File('script'),
+        Str('command', null=True),
+        File('script', null=True),
         Str('when', enum=['PREINIT', 'POSTINIT', 'SHUTDOWN'], required=True),
         Bool('enabled', default=True),
         register=True,
