@@ -53,7 +53,7 @@ class InitShutdownScriptService(CRUDService):
             'datastore.update',
             self._config.datastore,
             id,
-            data,
+            new,
             {'prefix': self._config.datastore_prefix}
         )
 
