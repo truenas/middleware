@@ -9,6 +9,8 @@ from os import path, getcwd, makedirs, listdir
 import getopt
 import sys
 import re
+import random
+import string
 
 apifolder = getcwd()
 sys.path.append(apifolder)
@@ -87,11 +89,18 @@ if ('ip' not in locals() and
 # else:
 disk = 'disk0 = "ada0"\ndisk1 = "ada1"\ndisk2 = "ada2"'
 
+# create random hostname and random fake domain
+digit = ''.join(random.choices(string.digits, k=2))
+hostname = f'test{digit}'
+domain = f'test{digit}.nb.ixsystems.com'
+
 cfg_content = f"""#!/usr/bin/env python3.6
 
 user = "root"
 password = "{passwd}"
 ip = "{ip}"
+hostname = "{hostname}"
+domain = "{domain}"
 default_api_url = 'http://' + ip + '/api/v{api}'
 api1_url = 'http://' + ip + '/api/v1.0'
 api2_url = 'http://' + ip + '/api/v2.0'
