@@ -7,8 +7,8 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, POST, PUT
-from auto_config import ip
+from functions import GET, POST, PUT, DELETE
+from auto_config import ip, pool_name
 
 
 ENDPOINT = ip + ':9000'
@@ -16,28 +16,38 @@ ACCESS_KEY = 'ixsystems'
 SECRET_KEY = 'ixsystems'
 
 
-def test_01_update_s3_service():
-    volumes = GET("/storage/volume/", api="1")
-    if volumes:
-        result = PUT('/s3/', {
-            'bindip': '0.0.0.0',
-            'bindport': 9000,
-            'access_key': ACCESS_KEY,
-            'secret_key': SECRET_KEY,
-            'browser': True,
-            'storage_path': volumes.json()[0]['mountpoint']
-        })
-
-        assert result.status_code == 200, result.text
+dataset = f"{pool_name}/s3"
+dataset_url = dataset.replace('/', '%2F')
+dataset_path = "/mnt/" + dataset
 
 
-def test_02_enable_s3_service():
-    payload = {"enable": True}
+def test_01_creating_dataset_for_s3():
+    results = POST("/pool/dataset/", {"name": dataset})
+    assert results.status_code == 200, results.text
+
+
+def test_02_update_s3_service():
+    payload = {
+        'bindip': '0.0.0.0',
+        'bindport': 9000,
+        'access_key': ACCESS_KEY,
+        'secret_key': SECRET_KEY,
+        'browser': True,
+        'storage_path': dataset_path
+    }
+    result = PUT('/s3/', payload)
+    assert result.status_code == 200, result.text
+
+
+def test_03_enable_s3_service():
+    payload = {
+        "enable": True
+    }
     results = PUT("/service/id/s3/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_03_start_s3_service():
+def test_04_start_s3_service():
     result = POST(
         '/service/start/', {
             'service': 's3',
@@ -50,12 +60,12 @@ def test_03_start_s3_service():
     assert result.status_code == 200, result.text
 
 
-def test_04_verify_s3_is_running():
+def test_05_verify_s3_is_running():
     results = GET("/service/?service=s3")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-def test_05_stop_iSCSI_service():
+def test_06_stop_iSCSI_service():
     result = POST(
         '/service/stop', {
             'service': 's3',
@@ -68,6 +78,11 @@ def test_05_stop_iSCSI_service():
     assert result.status_code == 200, result.text
 
 
-def test_06_verify_s3_is_not_running():
+def test_07_verify_s3_is_not_running():
     results = GET("/service/?service=s3")
     assert results.json()[0]["state"] == "STOPPED", results.text
+
+
+def test_08_destroying_s3_dataset():
+    results = DELETE(f"/pool/dataset/id/{dataset_url}/")
+    assert results.status_code == 200, results.text
