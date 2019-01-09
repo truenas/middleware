@@ -40,8 +40,7 @@ class SMBService(SystemServiceService):
         for i in ('aio_enable', 'aio_rs', 'aio_ws'):
             smb.pop(i, None)
 
-        if smb['netbiosalias']:
-            smb['netbiosalias'] = smb['netbiosalias'].split()
+        smb['netbiosalias'] = smb['netbiosalias'].split()
 
         smb['loglevel'] = LOGLEVEL_MAP.get(smb['loglevel'])
 
@@ -143,18 +142,17 @@ class SMBService(SystemServiceService):
                 'Please provide a valid value for unixcharset'
             )
 
-        for i in ('workgroup', 'netbiosname', 'netbiosname_b', 'netbiosalias'):
-            if i not in data or not data[i]:
-                continue
-            if type(data[i]) == list:
-                for item in data[i]:
-                    self.logger.debug(f"Preparing to validate {item}")
-                    if not await self.__validate_netbios_name(item):
-                        verrors.add(f'smb_update.{i}', 'Invalid NetBIOS name')
-            else:
-                self.logger.debug(f"Preparing to validate new item {data[i]}")
-                if not await self.__validate_netbios_name(data[i]):
-                    verrors.add(f'smb_update.{i}', 'Invalid NetBIOS name')
+        netbios_names = [
+            data['workgroup'],
+            data['netbiosname'],
+            data['netbiosname_b'] if 'netbiosname_b' in data else ''
+        ]
+
+        netbios_names.extend(data['netbiosalias'])
+
+        for i in netbios_names:
+            if i and not await self.__validate_netbios_name(i):
+                verrors.add(f'smb_update.{i}', f'Invalid NetBIOS name: {i}')
 
         if new['netbiosname'] and new['netbiosname'].lower() == new['workgroup'].lower():
             verrors.add('smb_update.netbiosname', 'NetBIOS and Workgroup must be unique')
@@ -182,11 +180,6 @@ class SMBService(SystemServiceService):
         await self._update_service(old, new)
 
         return await self.config()
-    @private
-    async def extend(self, data):
-        data['netbiosalias'] = data['netbiosalias'].split()
-
-        return data
 
     @private
     async def compress(self, data):
