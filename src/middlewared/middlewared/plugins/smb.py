@@ -142,17 +142,16 @@ class SMBService(SystemServiceService):
                 'Please provide a valid value for unixcharset'
             )
 
-        netbios_names = [
-            data['workgroup'],
-            data['netbiosname'],
-            data['netbiosname_b'] if 'netbiosname_b' in data else ''
-        ]
-
-        netbios_names.extend(data['netbiosalias'])
-
-        for i in netbios_names:
-            if i and not await self.__validate_netbios_name(i):
-                verrors.add(f'smb_update.{i}', f'Invalid NetBIOS name: {i}')
+        for i in ('workgroup', 'netbiosname', 'netbiosname_b', 'netbiosalias'):
+            if i not in data or not data[i]:
+                continue
+            if i == 'netbiosalias':
+                for idx, item in enumerate(data[i]):
+                    if not await self.__validate_netbios_name(item):
+                        verrors.add(f'smb_update.{i}.{idx}', f'Invalid NetBIOS name: {item}')
+            else:
+                if not await self.__validate_netbios_name(data[i]):
+                   verrors.add(f'smb_update.{i}', f'Invalid NetBIOS name: {data[i]}')
 
         if new['netbiosname'] and new['netbiosname'].lower() == new['workgroup'].lower():
             verrors.add('smb_update.netbiosname', 'NetBIOS and Workgroup must be unique')
