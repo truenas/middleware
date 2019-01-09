@@ -137,11 +137,6 @@ class CIFS_Share(Model):
         max_length=36,
         verbose_name=_('vuid for Time Machine'),
         blank=True,
-        help_text=_(
-            'Volume UUID that will be advertized for time machine. '
-            'This value will be automatically generated when the share '
-            'is configured for time machine.'
-        ),
         editable=False,
     )
     cifs_auxsmbconf = models.TextField(
