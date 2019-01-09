@@ -196,7 +196,7 @@ class SharingSMBService(CRUDService):
         List('hostsallow', default=[]),
         List('hostsdeny', default=[]),
         List('vfsobjects', default=['zfs_space', 'zfsacl', 'streams_xattr']),
-        Int('storage_task'),
+        Int('storage_task', null=True),
         Str('auxsmbconf'),
         Bool('default_permissions'),
         register=True
