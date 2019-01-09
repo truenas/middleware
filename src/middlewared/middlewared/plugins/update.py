@@ -199,7 +199,7 @@ class UpdateService(Service):
             if not selected and data['upd_train'] == train.Name():
                 selected = data['upd_train']
             trains[train.Name()] = {
-                'description': train.Description(),
+                'description': descr,
                 'sequence': train.LastSequence(),
             }
         if not data['upd_train'] or not selected:

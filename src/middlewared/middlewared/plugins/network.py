@@ -1013,6 +1013,8 @@ class NetworkGeneralService(Service):
             for alias in iface['aliases']:
                 if alias['type'] == 'INET':
                     ips[iface['name']]['IPV4'].append(f'{alias["address"]}/{alias["netmask"]}')
+                elif alias['type'] == 'INET6':
+                    ips[iface['name']]['IPV6'].append(f'{alias["address"]}/{alias["netmask"]}')
 
         default_routes = []
         for route in await self.middleware.call('routes.system_routes', [('netmask', 'in', ['0.0.0.0', '::'])]):

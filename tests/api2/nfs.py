@@ -276,7 +276,8 @@ def test_32_checking_nfs_disable_at_boot():
     assert results.json()[0]['enable'] is False, results.text
 
 
-# Check destroying a SMB dataset
-def test_33_destroying_smb_dataset():
+
+# Check destroying a nfs dataset
+def test_33_destroying_nfs_dataset():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text

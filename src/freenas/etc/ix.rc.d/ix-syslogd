@@ -242,27 +242,25 @@ ix_syslogd_start()
 	if [ -d "${mp}/log" ]
 	then
 
-		#
-		#	Pick up any new directories and sync them
-		#
 		if [ ! -L /var/log ]; then
+
+			#
+			#	Pick up any new directories and sync them
+			#
 			for dir in $(find /var/log/ -type d)
 			do
 				local dst="${mp}/log/${dir#/var/log/}"
 				if [ ! -d "${dst}" ]
 				then
-					/usr/local/bin/rsync -avz ${dir}/* ${dst}/ >/dev/null 2>&1
+					/usr/local/bin/rsync -avz ${dir} "${mp}/log/" >/dev/null 2>&1
 				fi
 			done
 
-		fi
-
-		#
-		#	Find all files that are not a directory and see if
-		#	they exist. If the file exists already, append to
-		#	it, otherwise, copy it over.
-		#
-		if [ ! -L /var/log ]; then
+			#
+			#	Find all files that are not a directory and see if
+			#	they exist. If the file exists already, append to
+			#	it, otherwise, copy it over.
+			#
 			for file in $(find /var/log/ ! -type d)
 			do
 				local dst="${mp}/log/${file#/var/log/}"
@@ -273,6 +271,7 @@ ix_syslogd_start()
 					cat ${file} >> ${dst}
 				fi
 			done
+
 		fi
 
 	#
@@ -293,6 +292,12 @@ ix_syslogd_start()
 		mv "/var/log" "/var/log.${datestr}"
 		ln -s "${mp}/log" "/var/log"
 	fi
+
+	#
+	#	Let's make sure that the permissions for directories/files in /var/log
+	#	reflect that of /conf/base/var/log
+	#
+	cd /var/log && mtree -c -p /conf/base/var/log | mtree -eu >/dev/null 2>&1
 
 	/usr/local/bin/midclt call core.reconfigure_logging > /dev/null
 
