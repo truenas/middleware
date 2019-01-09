@@ -8,9 +8,11 @@ import pytest
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE
+from auto_config import pool_name
 
-DATASET = 'tank/webdav-bsd-share'
-DATASET_PATH = f'/mnt/{DATASET}'
+dataset = f'{pool_name}/webdav-bsd-share'
+dataset_url = dataset.replace('/', '%2F')
+dataset_path = f'/mnt/{dataset}'
 TMP_FILE = '/tmp/testfile.txt'
 SHARE_NAME = 'webdavshare'
 
@@ -26,25 +28,25 @@ def pool_dict():
 
 
 def test_01_Creating_dataset_for_WebDAV_use(pool_dict):
-    results = POST("/pool/dataset/", {"name": DATASET})
+    results = POST("/pool/dataset/", {"name": dataset})
     assert results.status_code == 200, results.text
     pool_dict.update(results.json())
     assert isinstance(pool_dict['id'], str) is True
 
 
-def test_02_Creating_WebDAV_share_on_DATASET_PATH(webdav_dict):
+def test_02_Creating_WebDAV_share_on_dataset_path(webdav_dict):
     results = POST('/sharing/webdav/', {
         'name': SHARE_NAME,
         'comment': 'Auto-created by API tests',
-        'path': DATASET_PATH
+        'path': dataset_path
     })
     assert results.status_code == 200, results.text
     webdav_dict.update(results.json())
     assert isinstance(webdav_dict['id'], int) is True
 
 
-def test_03_Changing_permissions_on_DATASET():
-    results = POST('/pool/dataset/id/tank%2Fwebdav-bsd-share/permission/', {
+def test_03_Changing_permissions_on_dataset():
+    results = POST(f'/pool/dataset/id/{dataset_url}/permission/', {
         'acl': 'UNIX',
         'mode': '777',
         'user': 'root',

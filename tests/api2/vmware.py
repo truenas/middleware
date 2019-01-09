@@ -10,9 +10,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST
 
-dataset = "tank/vmware"
-url_dataset = "tank%2Fvmware"
-
 vmw_credentials = pytest.mark.skipif(all(['VMWARE_HOST' in os.environ,
                                           'VMWARE_USERNAME' in os.environ,
                                           'VMWARE_PASSWORD' in os.environ]

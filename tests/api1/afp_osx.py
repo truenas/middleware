@@ -10,14 +10,14 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE
-from auto_config import ip
+from auto_config import ip, pool_name
 from config import *
 
 if "BRIDGEHOST" in locals():
     MOUNTPOINT = "/tmp/afp-osx" + BRIDGEHOST
 DATASET = "afp-osx"
 AFP_NAME = "MyAFPShare"
-AFP_PATH = "/mnt/tank/" + DATASET
+AFP_PATH = f"/mnt/{pool_name}/{DATASET}"
 VOL_GROUP = "wheel"
 Reason = "BRIDGEHOST is missing in ixautomation.conf"
 OSXReason = 'OSX host configuration is missing in ixautomation.conf'
@@ -34,7 +34,7 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 
 # Create tests
 def test_01_Creating_AFP_dataset():
-    results = POST("/storage/volume/tank/datasets/", {"name": DATASET})
+    results = POST(f"/storage/volume/{pool_name}/datasets/", {"name": DATASET})
     assert results.status_code == 201, results.text
 
 
@@ -212,5 +212,5 @@ def test_24_Verify_delete_afp_name_and_afp_path():
 
 # Test delete AFP dataset
 def test_25_Verify_AFP_dataset_can_be_destroyed():
-    results = DELETE("/storage/volume/1/datasets/%s/" % DATASET)
+    results = DELETE(f"/storage/volume/{pool_name}/datasets/{DATASET}/")
     assert results.status_code == 204, results.text

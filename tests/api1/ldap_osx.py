@@ -11,14 +11,14 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST
-from auto_config import ip
+from auto_config import ip, pool_name
 from config import *
 
 if "BRIDGEHOST" in locals():
     MOUNTPOINT = "/tmp/ldap-osx" + BRIDGEHOST
 DATASET = "ldap-osx"
 SMB_NAME = "TestShare"
-SMB_PATH = "/mnt/tank/" + DATASET
+SMB_PATH = f"/mnt/{pool_name}/{DATASET}"
 VOL_GROUP = "qa"
 Reason = "BRIDGEHOST, LDAPBASEDN and LDAPHOSTNAME are not in ixautomation.conf"
 OSXReason = 'OSX host configuration is missing in ixautomation.conf'
@@ -48,29 +48,8 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 # Create tests
 # Set auxilary parameters to allow mount_smbfs to work with ldap
 def test_01_Creating_SMB_dataset():
-    results = POST("/storage/volume/tank/datasets/", {"name": DATASET})
+    results = POST(f"/storage/volume/{pool_name}/datasets/", {"name": DATASET})
     assert results.status_code == 201, results.text
-
-
-# Enable LDAP
-@ldap_test_cfg
-def test_02_Enabling_LDAPd():
-    payload = {"ldap_basedn": LDAPBASEDN,
-               "ldap_binddn": LDAPBINDDN,
-               "ldap_bindpw": LDAPBINDPASSWORD,
-               "ldap_netbiosname_a": BRIDGEHOST,
-               "ldap_hostname": LDAPHOSTNAME,
-               "ldap_has_samba_schema": True,
-               "ldap_enable": True}
-    results = PUT("/directoryservice/ldap/1/", payload)
-    assert results.status_code == 200, results.text
-
-
-# Check LDAP
-@ldap_test_cfg
-def test_03_Checking_LDAP():
-    results = GET("/directoryservice/ldap/")
-    assert results.json()["ldap_enable"] is True, results.text
 
 
 def test_04_Enabling_SMB_service():
