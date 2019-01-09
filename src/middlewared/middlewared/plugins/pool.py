@@ -1044,8 +1044,14 @@ class PoolService(CRUDService):
             )
             # If we are replacing a faulted disk, kick it right after replace
             # is initiated.
-            if options['label'].isdigit():
-                await self.middleware.call('zfs.pool.detach', pool['name'], options['label'])
+            try:
+                vdev = await self.middleware.call(
+                    'zfs.pool.get_vdev', pool['name'], options['label'],
+                )
+                if vdev['status'] not in ('ONLINE', 'DEGRADED'):
+                    await self.middleware.call('zfs.pool.detach', pool['name'], options['label'])
+            except Exception:
+                self.logger.warn('Failed to detach device', exc_info=True)
         except Exception as e:
             try:
                 # If replace has failed lets detach geli to not keep disk busy

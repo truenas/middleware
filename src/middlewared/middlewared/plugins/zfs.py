@@ -368,6 +368,15 @@ class ZFSPoolService(CRUDService):
             unavails.extend(self.__find_not_online(child))
         return unavails
 
+    def get_vdev(self, name, vname):
+        try:
+            with libzfs.ZFS() as zfs:
+                pool = zfs.get(name)
+                vdev = find_vdev(pool, vname)
+                return vdev.__getstate__()
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
+
 
 class ZFSDatasetService(CRUDService):
 
