@@ -1,27 +1,20 @@
 #!/usr/bin/env python3.6
 
+import pytest
 import sys
 import os
+import time
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE
+from functions import POST, GET, DELETE, SSH_TEST, send_file
+from auto_config import ip, user, password, pool_name
 
-import shutil
-import subprocess
-import time
-import urllib.parse
 
-DATASET = "tank/import"
-DATASET_PATH = os.path.join("/mnt", DATASET)
+dataset = f"{pool_name}/test_pool"
+dataset_url = dataset.replace('/', '%2F')
+dataset_path = os.path.join("/mnt", dataset)
 
 IMAGES = {}
-
-
-def teardown_function():
-    for md in IMAGES.values():
-        subprocess.check_call(["mdconfig", "-d", "-u", md])
-
-    DELETE(f"/pool/dataset/id/{urllib.parse.quote(DATASET, '')}/")
 
 
 def expect_state(job_id, state):
@@ -40,80 +33,125 @@ def expect_state(job_id, state):
     assert False, job
 
 
-def test_01_setup_function():
-    DELETE(f"/pool/dataset/id/{urllib.parse.quote(DATASET, '')}/")
-
-    result = POST("/pool/dataseti/", {"name": DATASET})
+def test_01_create_dataset():
+    result = POST("/pool/dataset/", {"name": dataset})
     assert result.status_code == 200, result.text
 
-    for image in ["msdosfs", "msdosfs-nonascii", "ntfs"]:
-        shutil.copy(os.path.join(os.path.dirname(__file__), "fixtures", f"{image}.gz"), f"/tmp/{image}.gz")
-        subprocess.check_call(["gunzip", "-f", f"/tmp/{image}.gz"])
 
-        IMAGES[image] = subprocess.check_output(
-            ["mdconfig", "-a", "-t", "vnode", "-f", f"/tmp/{image}"], encoding="utf8").strip()
+@pytest.mark.parametrize('image', ["msdosfs", "msdosfs-nonascii", "ntfs"])
+def test_02_setup_function(image):
+    zf = os.path.join(os.path.dirname(__file__), "fixtures", f"{image}.gz")
+    destination = f"/tmp/{image}.gz"
+    send_results = send_file(zf, destination, user, None, ip)
+    assert send_results['result'] is True, send_results['output']
+
+    cmd = f"gunzip -f /tmp/{image}.gz"
+    gunzip_results = SSH_TEST(cmd, user, password, ip)
+    assert gunzip_results['result'] is True, gunzip_results['output']
+
+    cmd = f"mdconfig -a -t vnode -f /tmp/{image}"
+    mdconfig_results = SSH_TEST(cmd, user, password, ip)
+    assert mdconfig_results['result'] is True, mdconfig_results['output']
+    IMAGES[image] = mdconfig_results['output'].strip()
 
 
-def test_02_import_msdosfs():
-    result = POST("/pool/import_disk/", {
+def test_03_import_msdosfs():
+    payload = {
         "volume": f"/dev/{IMAGES['msdosfs']}s1",
         "fs_type": "msdosfs",
         "fs_options": {},
-        "dst_path": DATASET_PATH,
-    })
-    assert result.status_code == 200, result.text
-
-    job_id = result.json()
-
+        "dst_path": dataset_path,
+    }
+    results = POST("/pool/import_disk/", payload)
+    assert results.status_code == 200, results.text
+    job_id = results.json()
     expect_state(job_id, "SUCCESS")
 
-    assert os.path.exists(os.path.join(DATASET_PATH, "Directory/File"))
+
+def test_04_look_if_Directory_slash_File():
+    cmd = f'test -f {dataset_path}/Directory/File'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
 
 
-def test_03_import_nonascii_msdosfs_fails():
-    result = POST("/pool/import_disk/", {
+def test_05_import_nonascii_msdosfs_fails():
+    payload = {
         "volume": f"/dev/{IMAGES['msdosfs-nonascii']}s1",
         "fs_type": "msdosfs",
         "fs_options": {},
-        "dst_path": DATASET_PATH,
-    })
-    assert result.status_code == 200, result.text
+        "dst_path": dataset_path,
+    }
+    results = POST("/pool/import_disk/", payload)
+    assert results.status_code == 200, results.text
 
-    job_id = result.json()
+    job_id = results.json()
 
     job = expect_state(job_id, "FAILED")
 
     assert job["error"] == "rsync failed with exit code 23", job
-    assert os.path.exists(os.path.join(DATASET_PATH, "Directory/File"))
 
 
-def test_04_import_nonascii_msdosfs():
-    result = POST("/pool/import_disk/", {
+def test_06_look_if_Directory_slash_File():
+    cmd = f'test -f {dataset_path}/Directory/File'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+def test_07_import_nonascii_msdosfs():
+    payload = {
         "volume": f"/dev/{IMAGES['msdosfs-nonascii']}s1",
         "fs_type": "msdosfs",
         "fs_options": {"locale": "ru_RU.UTF-8"},
-        "dst_path": DATASET_PATH,
-    })
-    assert result.status_code == 200, result.text
-
-    job_id = result.json()
-
+        "dst_path": dataset_path,
+    }
+    results = POST("/pool/import_disk/", payload)
+    assert results.status_code == 200, results.text
+    job_id = results.json()
     expect_state(job_id, "SUCCESS")
 
-    assert os.path.exists(os.path.join(DATASET_PATH, "Каталог/Файл"))
+
+def test_08_look_if_Каталог_slash_Файл():
+    cmd = f'test -f {dataset_path}/Каталог/Файл'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
 
 
-def test_05_import_ntfs():
-    result = POST("/pool/import_disk/", {
+def test_09_import_ntfs():
+    payload = {
         "volume": f"/dev/{IMAGES['ntfs']}s1",
         "fs_type": "ntfs",
         "fs_options": {},
-        "dst_path": DATASET_PATH,
-    })
-    assert result.status_code == 200, result.text
+        "dst_path": dataset_path,
+    }
+    results = POST("/pool/import_disk/", payload)
+    assert results.status_code == 200, results.text
 
-    job_id = result.json()
+    job_id = results.json()
 
     expect_state(job_id, "SUCCESS")
 
-    assert os.path.exists(os.path.join(DATASET_PATH, "Каталог/Файл"))
+
+def test_10_look_if_Каталог_slash_Файл():
+    cmd = f'test -f {dataset_path}/Каталог/Файл'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+@pytest.mark.parametrize('image', ["msdosfs", "msdosfs-nonascii", "ntfs"])
+def test_11_stop_image_with_mdconfig(image):
+    cmd = f"mdconfig -d -u {IMAGES[image]}"
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+    cmd = f"rm -fv /tmp/{image}.gz"
+    gunzip_results = SSH_TEST(cmd, user, password, ip)
+    assert gunzip_results['result'] is True, gunzip_results['output']
+
+    cmd = f"rm -rfv /tmp/{image}"
+    rm_results = SSH_TEST(cmd, user, password, ip)
+    assert rm_results['result'] is True, rm_results['output']
+
+
+def test_12_delete_dataset():
+    results = DELETE(f"/pool/dataset/id/{dataset_url}/")
+    assert results.status_code == 200, results.text
