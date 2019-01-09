@@ -11,7 +11,7 @@ sys.path.append(apifolder)
 from functions import GET, POST, PUT
 
 
-services = ['afp', 'cifs', 'nfs', 'snmp', 'tftp', 'webdav', 'lldp']
+services = ['afp', 'cifs', 'snmp', 'tftp', 'webdav', 'lldp']
 all_service = GET('/service/').json()
 
 
