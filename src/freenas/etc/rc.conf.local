@@ -452,16 +452,16 @@ _s3_config()
 			services_services
 		ON
 			srv_service = 's3'
-		WHERE
-			srv_enable = '1'
 		ORDER BY
-			-services_s3.id
+			services_s3.id
 		LIMIT 1
 	" |\
 	while read s3_enable s3_bindip s3_bindport s3_access_key \
 		s3_secret_key s3_browser s3_mode s3_disks; do
+		if [ "${s3_enable}" = "1" ]; then
+			echo minio_enable="YES"
+		fi
 		cat <<-__MINIO__
-			minio_enable="YES"
 			minio_disks="${s3_disks}"
 			minio_address="${s3_bindip}:${s3_bindport}"
 			minio_env="\\
