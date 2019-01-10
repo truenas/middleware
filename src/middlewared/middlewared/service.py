@@ -21,6 +21,7 @@ from middlewared.pipe import Pipes
 
 
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
+get_or_insert_lock = asyncio.Lock()
 
 
 def item_method(fn):
@@ -266,8 +267,12 @@ class ConfigService(ServiceChangeMixin, Service):
         try:
             return await self.middleware.call('datastore.config', datastore, options)
         except IndexError:
-            await self.middleware.call('datastore.insert', datastore, {})
-            return await self.middleware.call('datastore.config', datastore, options)
+            async with get_or_insert_lock:
+                try:
+                    return await self.middleware.call('datastore.config', datastore, options)
+                except IndexError:
+                    await self.middleware.call('datastore.insert', datastore, {})
+                    return await self.middleware.call('datastore.config', datastore, options)
 
 
 class SystemServiceService(ConfigService):
