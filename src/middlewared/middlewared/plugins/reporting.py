@@ -11,7 +11,12 @@ from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import CallError, Service, filterable
 from middlewared.utils import filter_list
 
-
+RE_COLON = re.compile('(.+):(.+)$')
+RE_DISK = re.compile(r'^[a-z]+[0-9]+$')
+RE_NAME = re.compile(r'(%name_(\d+)%)')
+RE_NAME_NUMBER = re.compile(r'(.+?)(\d+)$')
+RE_RRDPLUGIN = re.compile(r'^(?P<name>.+)Plugin$')
+RE_SPACES = re.compile(r'\s{2,}')
 RRD_BASE_PATH = '/var/db/collectd/rrd/localhost'
 RRD_PLUGINS = {}
 
@@ -20,7 +25,7 @@ class RRDMeta(type):
 
     def __new__(cls, name, bases, dct):
         klass = type.__new__(cls, name, bases, dct)
-        reg = re.search(r'^(?P<name>.+)Plugin$', name)
+        reg = RE_RRDPLUGIN.search(name)
         if reg and not hasattr(klass, 'plugin'):
             klass.plugin = reg.group('name').lower()
         elif name != 'RRDBase' and not hasattr(klass, 'plugin'):
@@ -76,21 +81,21 @@ class RRDBase(object, metaclass=RRDMeta):
             pref = '0'
             body = entry
         else:
-            reg = re.search('(.+):(.+)$', entry)
+            reg = RE_COLON.search(entry)
             if reg:
                 pref = reg.group(1)
                 body = reg.group(2)
             else:
                 pref = ''
                 body = entry
-        reg = re.search(r'(.+?)(\d+)$', body)
+        reg = RE_NAME_NUMBER.search(body)
         if not reg:
             return (pref, body, -1)
         return (pref, reg.group(1), int(reg.group(2)))
 
     @staticmethod
     def _sort_disks(entry):
-        reg = re.search(r'(.+?)(\d+)$', entry)
+        reg = RE_NAME_NUMBER.search(entry)
         if not reg:
             return (entry, )
         if reg:
@@ -132,7 +137,7 @@ class RRDBase(object, metaclass=RRDMeta):
                 transform = attrs['transform']
                 if '%name%' in transform:
                     transform = transform.replace('%name%', attrs['name'])
-                for orig, number in re.findall(r'(%name_(\d+)%)', transform):
+                for orig, number in RE_NAME.findall(transform):
                     transform = transform.replace(orig, defs[int(number)]['name'])
                 args += [
                     f'CDEF:c{attrs["name"]}={transform}',
@@ -143,7 +148,7 @@ class RRDBase(object, metaclass=RRDMeta):
 
         if self.rrd_data_extra:
             extra = textwrap.dedent(self.rrd_data_extra)
-            for orig, number in re.findall(r'(%name_(\d+)%)', extra):
+            for orig, number in RE_NAME.findall(extra):
                 def_ = defs[int(number)]
                 name = def_['name']
                 if def_['transform']:
@@ -415,7 +420,7 @@ class DFPlugin(RRDBase):
         ids = []
         cp = subprocess.run(['df', '-t', 'zfs'], capture_output=True, text=True)
         for line in cp.stdout.strip().split('\n'):
-            entry = re.split(r'\s{2,}', line)[-1]
+            entry = RE_SPACES.split(line)[-1]
             if entry != '/' and not entry.startswith('/mnt'):
                 continue
             path = os.path.join(self._base_path, 'df-' + self.encode(entry), 'df_complex-free.rrd')
@@ -492,7 +497,7 @@ class GeomStatBase(object):
         ids = []
         for entry in glob.glob(f'{self._base_path}/geom_stat/{self.geom_stat_name}-*'):
             ident = entry.split('-', 1)[-1].replace('.rrd', '')
-            if not re.match(r'^[a-z]+[0-9]+$', ident):
+            if not RE_DISK.match(ident):
                 continue
             if not os.path.exists(f'/dev/{ident}'):
                 continue
