@@ -24,9 +24,6 @@
 #
 #####################################################################
 import logging
-import psutil
-import re
-import subprocess
 
 from collections import OrderedDict
 from django.core.exceptions import SuspiciousOperation
@@ -34,8 +31,6 @@ from django.db.models import CASCADE
 from django.db.models.fields.related import OneToOneRel
 from django.utils import translation
 from django.utils.datastructures import MultiValueDict
-
-from freenasUI.common.pipesubr import pipeopen
 
 from raven.contrib.django.utils import get_host
 from raven.utils.wsgi import get_headers, get_environ
@@ -122,23 +117,6 @@ def key_order(form, index, name, instance=False):
         form.base_fields = new_d
 
 
-def log_db_locked():
-    """
-    Log the processes with the database file open for write.
-    """
-    proc = pipeopen('fuser /data/freenas-v1.db', stderr=subprocess.STDOUT, quiet=True)
-    output = proc.communicate()[0]
-    log.debug('Processes with database file open:')
-    for pid, flags in re.findall(r'\b(\d+)([a-z]+)\b', output):
-        if 'w' not in flags:
-            continue
-        try:
-            proc = psutil.Process(int(pid))
-            log.debug(f'PID {pid}: {" ".join(proc.cmdline())}')
-        except Exception as e:
-            pass
-
-
 def request2crashreporting(request):
     """
     Transform django/wsgi request object to a dict the crash reporting
@@ -176,7 +154,6 @@ def request2crashreporting(request):
                         rdata = dict(
                             (k, v[0] if len(v) == 1 else v)
                             for k, v in iter(rdata.lists()))
-
 
     data['request'] = {
         'method': request.method,
