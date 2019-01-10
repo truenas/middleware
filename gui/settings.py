@@ -58,6 +58,9 @@ DATABASES = {
         'ENGINE': 'freenasUI.freeadmin.sqlite3_ha',
         'NAME': DATABASE_PATH,
         'TEST_NAME': ':memory:',
+        'OPTIONS': {
+            'timeout': 60,
+        }
     },
 }
 
