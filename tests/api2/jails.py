@@ -77,7 +77,7 @@ def test_06_create_jail():
                 'bpf=yes',
                 'dhcp=on',
                 'vnet=on',
-                'vnet_default_interface=auto'
+                'vnet_default_interface=none'
             ]
         }
     )
