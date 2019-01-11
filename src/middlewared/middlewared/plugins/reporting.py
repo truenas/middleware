@@ -1,13 +1,17 @@
+from collections import defaultdict
 import errno
 import glob
 import json
 import os
+import queue
 import re
 import socketserver
 import subprocess
 import sysctl
 import textwrap
+import threading
 
+from middlewared.event import EventSource
 from middlewared.schema import Dict, Int, Ref, Str, accepts
 from middlewared.service import CallError, Service, filterable, private
 from middlewared.utils import filter_list, start_daemon_thread
@@ -20,6 +24,8 @@ RE_RRDPLUGIN = re.compile(r'^(?P<name>.+)Plugin$')
 RE_SPACES = re.compile(r'\s{2,}')
 RRD_BASE_PATH = '/var/db/collectd/rrd/localhost'
 RRD_PLUGINS = {}
+RRD_TYPE_QUEUES_EVENT = defaultdict(lambda: defaultdict(set))
+RRD_TYPE_QUEUES_EVENT_LOCK = threading.Lock()
 
 
 class RRDMeta(type):
@@ -681,6 +687,14 @@ class ReportingService(Service):
                 rv.append(rrd.export(ident, query['unit'], query['page']))
         return rv
 
+    @private
+    def get_plugin_and_rrd_types(self, name_idents):
+        rv = []
+        for name, identifier in name_idents:
+            rrd = self.__rrds[name]
+            rv.append(((name, identifier), rrd.plugin, rrd.get_rrd_types(identifier)))
+        return rv
+
 
 class GraphiteServer(socketserver.TCPServer):
     allow_reuse_address = True
@@ -699,8 +713,16 @@ class GraphiteHandler(socketserver.BaseRequestHandler):
             lines = (last + data).split(b'\r\n')
             if lines[-1] != b'':
                 last = lines[-1]
+            nameident_queues = defaultdict(set)
             for line in lines[:-1]:
-                pass
+                line = line.split(b' ')[0]
+                name = line.split(b'.', 1)[1].decode()
+                with RRD_TYPE_QUEUES_EVENT_LOCK:
+                    if name in RRD_TYPE_QUEUES_EVENT:
+                        nameident_queues.update(RRD_TYPE_QUEUES_EVENT[name])
+            for nameident, queues in nameident_queues.items():
+                for q in queues:
+                    q.put(nameident)
 
 
 def collectd_graphite(middleware):
@@ -709,5 +731,49 @@ def collectd_graphite(middleware):
         server.serve_forever()
 
 
+class ReportingEventSource(EventSource):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.queue = queue.Queue()
+        self.queue_reverse = []
+
+    def run(self):
+        try:
+            arg = json.loads(self.arg)
+        except Exception:
+            return
+
+        plugin_rrd_types = self.middleware.call_sync(
+            'reporting.get_plugin_and_rrd_types', [(i['name'], i['identifier']) for i in arg]
+        )
+
+        for name_ident, plugin, rrd_types in plugin_rrd_types:
+            for rrd_type in rrd_types:
+                name = f'{plugin}.{rrd_type[0]}.{rrd_type[1]}'
+                with RRD_TYPE_QUEUES_EVENT_LOCK:
+                    queues = RRD_TYPE_QUEUES_EVENT[name][name_ident]
+                    queues.add(self.queue)
+                    self.queue_reverse.append(queues)
+
+        while not self._cancel.is_set():
+            name, ident = self.queue.get()
+            try:
+                data = self.middleware.call_sync('reporting.get_data', name, ident)
+                self.send_event('ADDED', fields={'name': name, 'identifier': ident, 'data': data})
+            except Exception:
+                self.middleware.logger.debug(
+                    'Failed to send reporting event for {name!r}:{ident!r}', exc_info=True,
+                )
+
+    def on_finish(self):
+        """
+        We need to remove queue from RRD_TYPE_QUEUES_EVENT
+        """
+        for q in self.queue_reverse:
+            q.remove(self.queue)
+
+
 def setup(middleware):
     start_daemon_thread(target=collectd_graphite, args=[middleware])
+    middleware.register_event_source('reporting.get_data', ReportingEventSource)
