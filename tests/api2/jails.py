@@ -42,7 +42,7 @@ def test_04_fetch_bsd_release():
         'remote': True
     }).json()
 
-    RELEASE = '11.0-RELEASE' if '11.0-RELEASE' in releases else releases[0]
+    RELEASE = '11.1-RELEASE' if '11.1-RELEASE' in releases else releases[0]
     results = POST(
         '/jail/fetch/', {
             'release': RELEASE
@@ -76,7 +76,8 @@ def test_06_create_jail():
             'props': [
                 'bpf=yes',
                 'dhcp=on',
-                'vnet=on'
+                'vnet=on',
+                'vnet_default_interface=auto'
             ]
         }
     )
@@ -99,12 +100,11 @@ def test_07_verify_creation_of_jail():
 
 
 def test_08_verify_iocage_list_with_ssh():
-    cmd1 = f'iocage list | grep {JAIL_NAME} | grep -q 11.0-RELEASE'
+    cmd1 = f'iocage list | grep {JAIL_NAME} | grep -q 11.1-RELEASE'
     results = SSH_TEST(cmd1, user, password, ip)
     cmd2 = 'iocage list'
     results2 = SSH_TEST(cmd2, user, password, ip)
     assert results['result'] is True, results2['output']
-
 
 
 def test_09_update_jail_description():
@@ -152,7 +152,7 @@ def test_14_upgrade_jail():
     results = POST(
         '/jail/upgrade/', {
             'jail': JAIL_NAME,
-            'release': '11.1-RELEASE'
+            'release': '11.2-RELEASE'
         }
     )
     assert results.status_code == 200, results.text
@@ -175,7 +175,7 @@ def test_15_verify_bsd_release():
 
 
 def test_16_verify_iocage_list_with_ssh():
-    cmd1 = f'iocage list | grep "{JAIL_NAME}" | grep -q "11.1-RELEASE"'
+    cmd1 = f'iocage list | grep "{JAIL_NAME}" | grep -q "11.2-RELEASE"'
     results = SSH_TEST(cmd1, user, password, ip)
     cmd2 = 'iocage list'
     results2 = SSH_TEST(cmd2, user, password, ip)
