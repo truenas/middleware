@@ -628,6 +628,7 @@ class ARCResultPlugin(RRDBase):
 
 class NFSStatPlugin(RRDBase):
 
+    plugin = 'nfsstat-client'
     title = 'NFS Stats'
     vertical_label = 'Bytes'
     rrd_types = (
