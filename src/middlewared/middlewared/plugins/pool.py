@@ -944,7 +944,7 @@ class PoolService(CRUDService):
         Str('label', required=True),
         Str('disk', required=True),
         Bool('force', default=False),
-        Str('passphrase', password=True),
+        Str('passphrase', private=True),
     ))
     @job(lock='pool_replace')
     async def replace(self, job, oid, options):
@@ -1288,8 +1288,8 @@ class PoolService(CRUDService):
     @item_method
     @accepts(Int('id'), Dict(
         'options',
-        Str('passphrase', password=True, required=True, null=True),
-        Str('admin_password', password=True),
+        Str('passphrase', private=True, required=True, null=True),
+        Str('admin_password', private=True),
     ))
     async def passphrase(self, oid, options):
         """
@@ -1355,7 +1355,7 @@ class PoolService(CRUDService):
     @item_method
     @accepts(Int('id'), Dict(
         'options',
-        Str('admin_password', password=True, required=False),
+        Str('admin_password', private=True, required=False),
     ))
     async def rekey(self, oid, options):
         """
@@ -1392,7 +1392,7 @@ class PoolService(CRUDService):
     @item_method
     @accepts(Int('id'), Dict(
         'options',
-        Str('admin_password', password=True, required=False),
+        Str('admin_password', private=True, required=False),
     ))
     @job(lock=lambda x: f'pool_reckey_{x[0]}', pipes=['output'])
     async def recoverykey_add(self, job, oid, options):
@@ -1416,7 +1416,7 @@ class PoolService(CRUDService):
     @item_method
     @accepts(Int('id'), Dict(
         'options',
-        Str('admin_password', password=True, required=False),
+        Str('admin_password', private=True, required=False),
     ))
     async def recoverykey_rm(self, oid, options):
         """
@@ -1464,7 +1464,7 @@ class PoolService(CRUDService):
     @item_method
     @accepts(Int('id'), Dict(
         'options',
-        Str('passphrase', password=True, required=False),
+        Str('passphrase', private=True, required=False),
         Bool('recoverykey', default=False),
         List('services_restart', default=[]),
     ))
@@ -1569,7 +1569,7 @@ class PoolService(CRUDService):
         return True
 
     @item_method
-    @accepts(Int('id'), Str('passphrase', password=True))
+    @accepts(Int('id'), Str('passphrase', private=True))
     @job(lock='lock_pool')
     async def lock(self, job, oid, passphrase):
         """

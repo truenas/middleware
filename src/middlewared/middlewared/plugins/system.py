@@ -131,7 +131,7 @@ class SytemAdvancedService(ConfigService):
             Bool('uploadcrash'),
             Bool('anonstats'),
             Str('sed_user', enum=['USER', 'MASTER']),
-            Str('sed_passwd', password=True),
+            Str('sed_passwd', private=True),
             update=True
         )
     )

@@ -67,7 +67,7 @@ class IPMIService(CRUDService):
         IPAddr('ipaddress'),
         Str('netmask'),
         IPAddr('gateway'),
-        Str('password', password=True),
+        Str('password', private=True),
         Bool('dhcp'),
         Int('vlan'),
     ))
