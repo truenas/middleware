@@ -169,6 +169,7 @@ class RRDBase(object, metaclass=RRDMeta):
         args = [
             'rrdtool',
             'xport',
+            '--daemon', 'unix:/var/run/rrdcached.sock',
             '--json',
             '--end', endtime,
             '--start', f'end-{starttime}',
