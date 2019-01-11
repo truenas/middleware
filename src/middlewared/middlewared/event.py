@@ -17,6 +17,7 @@ class EventSource(object):
 
     def process(self):
         self.run()
+        self.on_finish()
         asyncio.run_coroutine_threadsafe(self.app.unsubscribe(self.ident), self.app.loop)
 
     def run(self):
@@ -24,3 +25,6 @@ class EventSource(object):
 
     def cancel(self):
         self._cancel.set()
+
+    def on_finish(self):
+        pass
