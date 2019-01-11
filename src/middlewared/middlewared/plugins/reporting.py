@@ -7,8 +7,8 @@ import subprocess
 import sysctl
 import textwrap
 
-from middlewared.schema import Dict, Int, Str, accepts
-from middlewared.service import CallError, Service, filterable
+from middlewared.schema import Dict, Int, Ref, Str, accepts
+from middlewared.service import CallError, Service, filterable, private
 from middlewared.utils import filter_list
 
 RE_COLON = re.compile('(.+):(.+)$')
@@ -494,7 +494,6 @@ class GeomStatBase(object):
     geom_stat_name = None
 
     def get_identifiers(self):
-        print("hm")
         ids = []
         for entry in glob.glob(f'{self._base_path}/geom_stat/{self.geom_stat_name}-*'):
             ident = entry.split('-', 1)[-1].replace('.rrd', '')
@@ -653,11 +652,12 @@ class ReportingService(Service):
         Str('name'),
         Str('identifier', null=True),
         Dict(
-            'query',
+            'reporting_query',
             Str('unit', enum=[
                 'HOURLY', 'DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'
             ], default='HOURLY'),
             Int('page', default=0),
+            register=True,
         )
     )
     def get_data(self, name, ident, query):
@@ -666,3 +666,15 @@ class ReportingService(Service):
         except KeyError:
             raise CallError(f'Graph {name!r} not found.', errno.ENOENT)
         return rrd.export(ident, query['unit'], query['page'])
+
+    @private
+    @accepts(Ref('reporting_query'))
+    def get_all(self, query):
+        rv = []
+        for rrd in self.__rrds.values():
+            idents = rrd.get_identifiers()
+            if idents is None:
+                idents = [None]
+            for ident in idents:
+                rv.append(rrd.export(ident, query['unit'], query['page']))
+        return rv
