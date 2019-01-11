@@ -1224,7 +1224,7 @@ class CertificateService(CRUDService):
                 'datastore.update',
                 self._config.datastore,
                 id,
-                new,
+                {'name': new['name']},
                 {'prefix': self._config.datastore_prefix}
             )
 
@@ -1813,7 +1813,7 @@ class CertificateAuthorityService(CRUDService):
                 'datastore.update',
                 self._config.datastore,
                 id,
-                new,
+                {'name': new['name']},
                 {'prefix': self._config.datastore_prefix}
             )
 
