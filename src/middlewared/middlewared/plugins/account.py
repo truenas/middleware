@@ -383,10 +383,16 @@ class UserService(CRUDService):
         e.g. Setting key="foo" value="var" will result in {"attributes": {"foo": "bar"}}
         """
         user = await self._get_instance(pk)
-        user.pop('group')
 
         user['attributes'][key] = value
-        await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
+
+        await self.middleware.call(
+            'datastore.update',
+            'account.bsdusers',
+            pk,
+            {'attributes': user['attributes']},
+            {'prefix': 'bsdusr_'}
+        )
 
         return True
 
@@ -400,11 +406,17 @@ class UserService(CRUDService):
         Remove user general purpose `attributes` dictionary `key`.
         """
         user = await self._get_instance(pk)
-        user.pop('group')
 
         if key in user['attributes']:
             user['attributes'].pop(key)
-            await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
+
+            await self.middleware.call(
+                'datastore.update',
+                'account.bsdusers',
+                pk,
+                {'attributes': user['attributes']},
+                {'prefix': 'bsdusr_'}
+            )
             return True
         else:
             return False
@@ -659,6 +671,8 @@ class GroupService(CRUDService):
         if 'name' in data and data['name'] != group['group']:
             delete_groupmap = group['group']
             group['group'] = group.pop('name')
+        else:
+            group.pop('name', None)
 
         await self.middleware.call('datastore.update', 'account.bsdgroups', pk, group, {'prefix': 'bsdgrp_'})
 
