@@ -435,6 +435,8 @@ class CloudSyncService(CRUDService):
 
         Cron.convert_schedule_to_db_format(cloud_sync)
 
+        cloud_sync.pop('job', None)
+
         return cloud_sync
 
     @private
