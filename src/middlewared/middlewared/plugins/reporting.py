@@ -3,13 +3,14 @@ import glob
 import json
 import os
 import re
+import socketserver
 import subprocess
 import sysctl
 import textwrap
 
 from middlewared.schema import Dict, Int, Ref, Str, accepts
 from middlewared.service import CallError, Service, filterable, private
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, start_daemon_thread
 
 RE_COLON = re.compile('(.+):(.+)$')
 RE_DISK = re.compile(r'^[a-z]+[0-9]+$')
@@ -679,3 +680,34 @@ class ReportingService(Service):
             for ident in idents:
                 rv.append(rrd.export(ident, query['unit'], query['page']))
         return rv
+
+
+class GraphiteServer(socketserver.TCPServer):
+    allow_reuse_address = True
+
+
+class GraphiteHandler(socketserver.BaseRequestHandler):
+    def handle(self):
+        last = b''
+        while True:
+            data = self.request.recv(1428)
+            if data == b'':
+                break
+            if last:
+                data = last + data
+                last = b''
+            lines = (last + data).split(b'\r\n')
+            if lines[-1] != b'':
+                last = lines[-1]
+            for line in lines[:-1]:
+                pass
+
+
+def collectd_graphite(middleware):
+    with GraphiteServer(('127.0.0.1', 2003), GraphiteHandler) as server:
+        server.middleware = middleware
+        server.serve_forever()
+
+
+def setup(middleware):
+    start_daemon_thread(target=collectd_graphite, args=[middleware])
