@@ -70,7 +70,7 @@ class VMWareService(CRUDService):
             Str('datastore', required=True),
             Str('filesystem', required=True),
             Str('hostname', required=True),
-            Str('password', password=True, required=True),
+            Str('password', private=True, required=True),
             Str('username', required=True),
             register=True
         )

@@ -98,7 +98,7 @@ class MailService(ConfigService):
         Str('security', enum=['PLAIN', 'SSL', 'TLS']),
         Bool('smtp', default=False),
         Str('user'),
-        Str('pass', password=True),
+        Str('pass', private=True),
     ))
     async def do_update(self, data):
         config = await self.config()
@@ -152,7 +152,7 @@ class MailService(ConfigService):
         Bool('attachments', default=False),
         Bool('queue', default=True),
         Dict('extra_headers', additional_attrs=True),
-    ), Dict('mailconfig', Str('pass', password=True), additional_attrs=True))
+    ), Dict('mailconfig', Str('pass', private=True), additional_attrs=True))
     @job(pipes=['input'], check_pipes=False)
     def send(self, job, message, config=None):
         """

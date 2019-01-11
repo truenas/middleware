@@ -86,7 +86,7 @@ class DiskService(CRUDService):
             Str('hddstandby', enum=[
                 'ALWAYS ON', '5', '10', '20', '30', '60', '120', '180', '240', '300', '330'
             ]),
-            Str('passwd', password=True),
+            Str('passwd', private=True),
             Str('smartoptions'),
             register=True
         )
