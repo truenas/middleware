@@ -1173,7 +1173,7 @@ class VMService(CRUDService):
         Str('description'),
         Int('vcpus', default=1),
         Int('memory', required=True),
-        Str('root_password', password=True, required=True),
+        Str('root_password', private=True, required=True),
         Bool('autostart', default=True),
         List('devices', items=[Ref('vmdevice_create')], required=True),
     ))
@@ -1476,7 +1476,7 @@ class VMDeviceService(CRUDService):
             Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
             Bool('exists', default=True),
             Bool('boot', default=False),
-            Str('rootpwd', password=True),
+            Str('rootpwd', private=True),
             Int('size', default=0),
             Int('sectorsize', enum=[0, 512, 4096], default=0),
         ),
@@ -1504,7 +1504,7 @@ class VMDeviceService(CRUDService):
             Int('vnc_port', default=None, null=True),
             Str('vnc_bind'),
             Bool('wait', default=False),
-            Str('vnc_password', default=None, null=True, password=True),
+            Str('vnc_password', default=None, null=True, private=True),
             Bool('vnc_web', default=False),
         ),
     }

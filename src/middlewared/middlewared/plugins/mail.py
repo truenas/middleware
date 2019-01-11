@@ -100,7 +100,7 @@ class MailService(ConfigService):
         Str('security', enum=['PLAIN', 'SSL', 'TLS']),
         Bool('smtp'),
         Str('user'),
-        Str('pass', password=True),
+        Str('pass', private=True),
         update=True
     ))
     async def do_update(self, data):
@@ -159,7 +159,7 @@ class MailService(ConfigService):
         register=True
     ), Dict(
         'mail-config',
-        Str('pass', password=True),
+        Str('pass', private=True),
         additional_attrs=True,
         null=True,
         register=True
