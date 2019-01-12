@@ -43,6 +43,9 @@ class NFSService(SystemServiceService):
         Bool('statd_lockd_log'),
     ))
     async def do_update(self, data):
+        if data.get("v4") is False:
+            data["v4_v3owner"].setdefault(False)
+
         old = await self.config()
 
         new = old.copy()
