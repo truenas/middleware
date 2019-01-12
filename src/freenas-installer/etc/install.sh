@@ -12,6 +12,13 @@ export TERM
 
 . /etc/avatar.conf
 
+
+# Constants for base 10 and base 2 units
+: ${kB:=$((1000))}      ${kiB:=$((1024))};       readonly kB kiB
+: ${MB:=$((1000 * kB))} ${MiB:=$((1024 * kiB))}; readonly MB MiB
+: ${GB:=$((1000 * MB))} ${GiB:=$((1024 * MiB))}; readonly GB GiB
+: ${TB:=$((1000 * GB))} ${TiB:=$((1024 * GiB))}; readonly TB TiB
+
 is_truenas()
 {
 
@@ -112,6 +119,7 @@ bootManager=bsd
 commitDiskPart
 EOF
 }
+
 build_config()
 {
     # build_config ${_disk} ${_image} ${_config_file}
@@ -473,7 +481,7 @@ get_minimum_size() {
     echo ${_min}k
 }
 
-partition_disk() {
+partition_disks() {
 	local _disks _disksparts
 	local _mirror
 	local _minsize
@@ -1058,7 +1066,7 @@ menu_install()
       # We repartition on fresh install, or old upgrade_style
       # This destroys all of the pool data, and
       # ensures a clean filesystems.
-      partition_disk ${_realdisks}
+      partition_disks ${_realdisks}
       mount_disk /tmp/data
     fi
 
@@ -1163,30 +1171,12 @@ menu_install()
     if is_truenas && [ "${_do_upgrade}" -eq 0 ]; then
         : > /tmp/data/${TRUENAS_EULA_PENDING_SENTINEL}
     fi
-    # Finally, before we unmount, start a srub.
+    # Finally, before we unmount, start a scrub.
     # zpool scrub freenas-boot || true
 
     umount /tmp/data/dev
     umount /tmp/data/var
     umount /tmp/data/
-
-    # We created a 16m swap partition earlier, for TrueNAS
-    # And created /data/fstab.swap as well.
-    if is_truenas ; then
-#        # Put a swap partition on newly created installation image
-#        if [ -e /dev/${_disk}s3 ]; then
-#            gpart delete -i 3 ${_disk}
-#            gpart add -t freebsd ${_disk}
-#            echo "/dev/${_disk}s3.eli		none			swap		sw		0	0" > /tmp/fstab.swap
-#        fi
-#
-#        mkdir -p /tmp/data
-#        mount /dev/${_disk}s4 /tmp/data
-#        ls /tmp/data > /dev/null
-#        mv /tmp/fstab.swap /tmp/data/
-#        umount /tmp/data
-#        rmdir /tmp/data
-    fi
 
     # End critical section.
     set +e
