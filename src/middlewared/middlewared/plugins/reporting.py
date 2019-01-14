@@ -10,6 +10,7 @@ import subprocess
 import sysctl
 import textwrap
 import threading
+import time
 
 from middlewared.event import EventSource
 from middlewared.schema import Dict, Int, List, Ref, Str, accepts
@@ -792,9 +793,13 @@ class ReportingEventSource(EventSource):
                     self.queue_reverse.append(queues)
 
         while not self._cancel.is_set():
+            starttime = round(int(time.time()), -1)
             name, ident = self.queue.get()
             try:
-                data = self.middleware.call_sync('reporting.get_data', name, ident)
+                data = self.middleware.call_sync('reporting.get_data', [{
+                    'name': name,
+                    'identifier': ident,
+                }], {'start': starttime - 20})
                 self.send_event('ADDED', fields={'name': name, 'identifier': ident, 'data': data})
             except Exception:
                 self.middleware.logger.debug(
