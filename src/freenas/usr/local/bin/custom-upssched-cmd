@@ -23,19 +23,14 @@ ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 while eval read $f; do
 
 case $1 in
-	"ONBATT")
-		if [ "${ups_shutdown}" = "batt" -a "$1" = "ONBATT" ]; then
-			logger -t upssched-cmd "issuing shutdown"
-			/usr/local/sbin/upsmon -c fsd
-		fi
+	"SHUTDOWN")
+		logger -t upssched-cmd "issuing shutdown"
+		/usr/local/sbin/upsmon -c fsd
 		;;
 	"EMAIL"|"COMMBAD"|"COMMOK")
 		if [ "${ups_emailnotify}" -eq 1 ]; then
 			echo "$NOTIFYTYPE - $UPSNAME" | mail -s "$(echo "${ups_subject}"|sed "s/%d/$(date)/"|sed "s/%h/$(hostname)/")" "${ups_toemail}"
 		fi
-		;;
-	"ONLINE")
-		#Missed timer, but already emailed.
 		;;
 	*)
 		logger -t upssched-cmd "Unrecognized command: $1"
