@@ -89,8 +89,9 @@ def get_smartd_schedule_piece(value, min, max, enum=None):
             return "." * width
         values = [v for v in range(min, max + 1) if v % d == 0]
     else:
-        values = list(filter(None, map(lambda s: enum.get(s.lower(), int(s) if re.match("([0-9]+)$", s) else None),
-                                       value.split(","))))
+        values = list(filter(lambda v: v is not None,
+                             map(lambda s: enum.get(s.lower(), int(s) if re.match("([0-9]+)$", s) else None),
+                                 value.split(","))))
         if values == list(range(min, max + 1)):
             return "." * width
 
