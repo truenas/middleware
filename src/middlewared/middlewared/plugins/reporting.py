@@ -13,7 +13,7 @@ import threading
 
 from middlewared.event import EventSource
 from middlewared.schema import Dict, Int, List, Ref, Str, accepts
-from middlewared.service import CallError, Service, filterable, private
+from middlewared.service import CallError, Service, ValidationErrors, filterable, private
 from middlewared.utils import filter_list, start_daemon_thread
 
 RE_COLON = re.compile('(.+):(.+)$')
@@ -165,21 +165,14 @@ class RRDBase(object, metaclass=RRDMeta):
 
         return args
 
-    def export(self, identifier, unit, page):
-        unit = unit[0].lower()
-        starttime = f'1{unit}'
-        if not page:
-            endtime = 'now'
-        else:
-            endtime = f'now-{page}{unit}'
-
+    def export(self, identifier, starttime, endtime):
         args = [
             'rrdtool',
             'xport',
             '--daemon', 'unix:/var/run/rrdcached.sock',
             '--json',
             '--end', endtime,
-            '--start', f'end-{starttime}',
+            '--start', starttime,
         ]
         args.extend(self.get_defs(identifier))
         cp = subprocess.run(args, capture_output=True)
@@ -670,19 +663,48 @@ class ReportingService(Service):
             'reporting_query',
             Str('unit', enum=[
                 'HOURLY', 'DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'
-            ], default='HOURLY'),
+            ]),
             Int('page', default=0),
+            Str('start', empty=False),
+            Str('end', empty=False),
             register=True,
         )
     )
     def get_data(self, graphs, query):
+
+        unit = query.get('unit')
+        if unit:
+            verrors = ValidationErrors()
+            for i in ('start', 'end'):
+                if i in query:
+                    verrors.add(
+                        f'reporting_query.{i}',
+                        f'{i!r} should only be used if "unit" attribute is not provided.',
+                    )
+            verrors.check()
+        else:
+            if 'start' not in query:
+                unit = 'HOURLY'
+            else:
+                starttime = query['start']
+                endtime = query.get('end') or 'now'
+
+        if unit:
+            unit = unit[0].lower()
+            page = query['page']
+            starttime = f'end-1{unit}'
+            if not page:
+                endtime = 'now'
+            else:
+                endtime = f'now-{page}{unit}'
+
         rv = []
         for i in graphs:
             try:
                 rrd = self.__rrds[i['name']]
             except KeyError:
                 raise CallError(f'Graph {i["name"]!r} not found.', errno.ENOENT)
-            return rrd.export(i['identifier'], query['unit'], query['page'])
+            return rrd.export(i['identifier'], starttime, endtime)
         return rv
 
     @private
