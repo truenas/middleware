@@ -724,11 +724,13 @@ _gen_conf()
 		fi
 		if [ "${failover_status}" != "BACKUP" ]; then
 			echo "collectd_enable=\"YES\""
+			echo "rrdcached_enable=\"YES\""
 		fi
 
 		echo "middlewared_overlay_dirs=\"/usr/local/lib/middlewared_truenas\""
 	else
 		echo "collectd_enable=\"YES\""
+		echo "rrdcached_enable=\"YES\""
 		echo "failover_enable=\"NO\""
 	fi
 
