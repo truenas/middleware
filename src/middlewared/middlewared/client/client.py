@@ -645,14 +645,32 @@ def main():
                     time.sleep(0.2)
                     continue
 
-        thread = Thread(target=waitready, args=[args])
-        thread.daemon = True
-        thread.start()
-        thread.join(args.timeout)
-        if thread.is_alive():
-            sys.exit(1)
-        else:
-            sys.exit(0)
+        seq = -1
+        state_time = time.monotonic()
+        while True:
+            if args.timeout is not None and time.monotonic() - state_time > args.timeout:
+                print(f'Middleware startup is idle for more than {args.timeout} seconds')
+                sys.exit(1)
+
+            thread = Thread(target=waitready, args=[args])
+            thread.daemon = True
+            thread.start()
+            thread.join(args.timeout)
+            if not thread.is_alive():
+                sys.exit(0)
+
+            try:
+                with open('/var/run/middlewared_startup.seq') as f:
+                    new_seq = int(f.read())
+                    if new_seq < seq:
+                        print('Middleware has restarted')
+                        sys.exit(1)
+
+                    if new_seq != seq:
+                        seq = new_seq
+                        state_time = time.monotonic()
+            except IOError:
+                pass
 
 
 if __name__ == '__main__':
