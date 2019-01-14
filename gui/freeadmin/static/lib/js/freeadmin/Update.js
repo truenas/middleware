@@ -299,6 +299,15 @@ define([
             return "MAJOR_UPGRADE";
           }
         }
+        var branch1 = v1[v1.length-1].toLowerCase().replace("-sdk", "");
+        var branch2 = v2[v2.length-1].toLowerCase().replace("-sdk", "");;
+        if(branch1 != branch2) {
+          if(branch2 == "nightlies") {
+            return "NIGHTLY_UPGRADE";
+          } else if(branch1 == "nightlies") {
+            return "NIGHTLY_DOWNGRADE";
+          }
+        }
         if(
           (!Number.isInteger(v1[1]) && Number.isInteger(v2[1])) // [11, "STABLE"] -> [11, 1, "STABLE"]
           ||
@@ -308,15 +317,6 @@ define([
         }
         if(Number.isInteger(v1[1]) && (Number.isInteger(v2[1]) && v1[1] > v2[1]) || (!Number.isInteger(v2[1]) && v1[1] > 0)) {
           return "MINOR_DOWNGRADE";
-        }
-        var branch1 = v1[v1.length-1].toLowerCase();
-        var branch2 = v2[v2.length-1].toLowerCase();
-        if(branch1 != branch2) {
-          if(branch2 == "nightlies") {
-            return "NIGHTLY_UPGRADE";
-          } else if(branch1 == "nightlies") {
-            return "NIGHTLY_DOWNGRADE";
-          }
         }
       } catch (e) {
         console.error("Failed to compare trains", e);
