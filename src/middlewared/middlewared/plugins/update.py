@@ -1,11 +1,13 @@
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, CallError, Service
 
+import enum
 import errno
 import os
 import re
 import shutil
 import sys
+import textwrap
 
 if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
@@ -20,6 +22,56 @@ from freenasOS.Exceptions import (
 from freenasOS.Update import (
     ApplyUpdate, CheckForUpdates, GetServiceDescription, ExtractFrozenUpdate,
 )
+
+
+def parse_train_name(name):
+    split = name.split('-')
+    version = split[1].split('.')
+    branch = split[2]
+
+    return [int(v) if v.isdigit() else v for v in version] + [branch]
+
+
+class CompareTrainsResult(enum.Enum):
+    MAJOR_DOWNGRADE = "MAJOR_DOWNGRADE"
+    MAJOR_UPGRADE = "MAJOR_UPGRADE"
+    MINOR_DOWNGRADE = "MINOR_DOWNGRADE"
+    MINOR_UPGRADE = "MINOR_UPGRADE"
+    NIGHTLY_DOWNGRADE = "NIGHTLY_DOWNGRADE"
+    NIGHTLY_UPGRADE = "NIGHTLY_UPGRADE"
+
+
+def compare_trains(t1, t2):
+    v1 = parse_train_name(t1)
+    v2 = parse_train_name(t2)
+
+    if v1[0] != v2[0]:
+        if v1[0] > v2[0]:
+            return CompareTrainsResult.MAJOR_DOWNGRADE
+        else:
+            return CompareTrainsResult.MAJOR_UPGRADE
+
+    branch1 = v1[-1].lower().replace("-sdk", "")
+    branch2 = v2[-1].lower().replace("-sdk", "")
+    if branch1 != branch2:
+        if branch2 == "nightlies":
+            return CompareTrainsResult.NIGHTLY_UPGRADE
+        elif branch1 == "nightlies":
+            return CompareTrainsResult.NIGHTLY_DOWNGRADE
+
+    if (
+        # [11, "STABLE"] -> [11, 1, "STABLE"]
+        not isinstance(v1[1], int) and isinstance(v2[1], int) or
+        # [11, 1, "STABLE"] -> [11, 2, "STABLE"]
+        isinstance(v1[1], int) and isinstance(v2[1], int) and v1[1] < v2[1]
+    ):
+        return CompareTrainsResult.MINOR_UPGRADE
+
+    if (
+        isinstance(v1[1], int) and isinstance(v2[1], int) and v1[1] > v2[1] or
+        not isinstance(v2[1], int) and v1[1] > 0
+    ):
+        return CompareTrainsResult.MINOR_DOWNGRADE
 
 
 class CheckUpdateHandler(object):
@@ -340,7 +392,34 @@ class UpdateService(Service):
         Downloads (if not already in cache) and apply an update.
         """
         attrs = attrs or {}
-        train = attrs.get('train') or (await self.middleware.call('update.get_trains'))['selected']
+
+        trains = await self.middleware.call('update.get_trains')
+        train = attrs.get('train') or trains['selected']
+        try:
+            result = compare_trains(trains['current'], train)
+        except Exception:
+            self.logger.warning("Failed to compare trains %r and %r", trains['current'], train, exc_info=True)
+        else:
+            errors = {
+                CompareTrainsResult.NIGHTLY_DOWNGRADE: textwrap.dedent("""\
+                    You're not allowed to change away from the nightly train, it is considered a downgrade.
+                    If you have an existing boot environment that uses that train, boot into it in order to upgrade
+                    that train.
+                """),
+                CompareTrainsResult.MINOR_DOWNGRADE: textwrap.dedent("""\
+                    Changing minor version is considered a downgrade, thus not a supported operation.
+                    If you have an existing boot environment that uses that train, boot into it in order to upgrade
+                    that train.
+                """),
+                CompareTrainsResult.MAJOR_DOWNGRADE: textwrap.dedent("""\
+                    Changing major version is considered a downgrade, thus not a supported operation.
+                    If you have an existing boot environment that uses that train, boot into it in order to upgrade
+                    that train.
+                """),
+            }
+            if result in errors:
+                raise CallError(errors[result])
+
         location = await self.middleware.call('notifier.get_update_location')
 
         job.set_progress(0, 'Retrieving update manifest')
