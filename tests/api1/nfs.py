@@ -144,3 +144,14 @@ def test_13_Updating_the_NFS_service():
 def test_14_Checking_to_see_if_NFS_service_is_enabled():
     results = GET("/services/services/nfs/")
     assert results.json()["srv_state"] == "RUNNING", results.text
+
+
+# Now stop the service
+def test_15_Stop_NFS_service():
+    results = PUT("/services/services/nfs/", {"srv_enable": False})
+    assert results.status_code == 200, results.text
+
+
+def test_16_Checking_to_see_if_NFS_service_is_stopped():
+    results = GET("/services/services/nfs/")
+    assert results.json()["srv_state"] == "STOPPED", results.text
