@@ -1663,6 +1663,11 @@ class TFTP(Model):
         verbose_name=_("Allow New Files"),
         default=False,
     )
+    tftp_host = models.CharField(
+        verbose_name=_("Host"),
+        max_length=120,
+        default="0.0.0.0",
+    )
     tftp_port = models.PositiveIntegerField(
         verbose_name=_("Port"),
         validators=[MinValueValidator(1), MaxValueValidator(65535)],

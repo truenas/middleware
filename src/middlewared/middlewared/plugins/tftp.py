@@ -1,6 +1,6 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, Str
-from middlewared.validators import Range
+from middlewared.validators import IpAddress, Range
 from middlewared.service import SystemServiceService, ValidationErrors
 
 
@@ -14,6 +14,7 @@ class TFTPService(SystemServiceService):
         'tftp_update',
         Dir('directory'),
         Bool('newfiles'),
+        Str('host', validators=[IpAddress()]),
         Int('port', validators=[Range(min=1, max=65535)]),
         Str('username'),
         Str('umask'),
