@@ -742,6 +742,9 @@ class ReportingEventSource(EventSource):
         try:
             arg = json.loads(self.arg)
         except Exception:
+            self.middleware.logger.debug(
+                'Failed to subscribe to reporting.get_data', exc_info=True,
+            )
             return
 
         plugin_rrd_types = self.middleware.call_sync(
