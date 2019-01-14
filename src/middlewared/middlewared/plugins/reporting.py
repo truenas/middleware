@@ -12,7 +12,7 @@ import textwrap
 import threading
 
 from middlewared.event import EventSource
-from middlewared.schema import Dict, Int, Ref, Str, accepts
+from middlewared.schema import Dict, Int, List, Ref, Str, accepts
 from middlewared.service import CallError, Service, filterable, private
 from middlewared.utils import filter_list, start_daemon_thread
 
@@ -188,6 +188,8 @@ class RRDBase(object, metaclass=RRDMeta):
 
         data = json.loads(cp.stdout)
         data = dict(
+            name=self.name,
+            identifier=identifier,
             data=data['data'],
             **data['meta'],
         )
@@ -657,8 +659,13 @@ class ReportingService(Service):
         return filter_list([i.__getstate__() for i in self.__rrds.values()], filters, options)
 
     @accepts(
-        Str('name'),
-        Str('identifier', null=True),
+        List('graphs', items=[
+            Dict(
+                'graph',
+                Str('name', required=True),
+                Str('identifier', default=None, null=True),
+            ),
+        ], empty=False),
         Dict(
             'reporting_query',
             Str('unit', enum=[
@@ -668,12 +675,15 @@ class ReportingService(Service):
             register=True,
         )
     )
-    def get_data(self, name, ident, query):
-        try:
-            rrd = self.__rrds[name]
-        except KeyError:
-            raise CallError(f'Graph {name!r} not found.', errno.ENOENT)
-        return rrd.export(ident, query['unit'], query['page'])
+    def get_data(self, graphs, query):
+        rv = []
+        for i in graphs:
+            try:
+                rrd = self.__rrds[i['name']]
+            except KeyError:
+                raise CallError(f'Graph {i["name"]!r} not found.', errno.ENOENT)
+            return rrd.export(i['identifier'], query['unit'], query['page'])
+        return rv
 
     @private
     @accepts(Ref('reporting_query'))
