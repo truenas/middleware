@@ -170,7 +170,7 @@ def test_15_verify_bsd_release():
             assert results.status_code == 200, results.text
             assert len(results.json()) > 0, job_status
             release = results.json()[0]['release']
-            assert '11.1-release' in release.lower(), job_status
+            assert '11.2-release' in release.lower(), job_status
             break
 
 
