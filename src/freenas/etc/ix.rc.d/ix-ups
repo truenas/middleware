@@ -65,12 +65,6 @@ generate_upsmon()
 		else
 			powerdown="/etc/nokillpower"
 		fi
-		if [ "$ups_shutdown" = "batt" ]; then
-		
-		cat <<EOF
-FINALDELAY ${ups_shutdowntimer}
-EOF
-		fi
 		cat <<EOF
 MONITOR ${ident} 1 ${user} ${passwd} ${ups_mode}
 NOTIFYCMD "/usr/local/sbin/upssched"
@@ -137,7 +131,7 @@ generate_upssched()
 {
 
     local IFS="|"
-    local f="ups_shutdowntimer"
+    local f="ups_shutdown ups_shutdowntimer"
     eval local $f
     local sf
     sf=$(var_to_sf $f)
@@ -155,13 +149,22 @@ AT COMMBAD  * START-TIMER COMMBAD 10
 AT COMMOK   * CANCEL-TIMER COMMBAD COMMOK
 AT FSD      * EXECUTE EMAIL
 AT LOWBATT  * EXECUTE EMAIL
-AT ONBATT   * START-TIMER ONBATT ${ups_shutdowntimer}
 AT ONBATT   * EXECUTE EMAIL
-AT ONLINE   * CANCEL-TIMER ONBATT ONLINE
 AT ONLINE   * EXECUTE EMAIL
 AT REPLBATT * EXECUTE EMAIL
 AT SHUTDOWN * EXECUTE EMAIL
 __EOF__
+
+    if [ "$ups_shutdown" = "batt" ]; then
+        cat << __EOF__
+AT ONBATT   * START-TIMER SHUTDOWN ${ups_shutdowntimer}
+AT ONLINE   * CANCEL-TIMER SHUTDOWN
+__EOF__
+    elif [ "$ups_shutdown" = "lowbatt" ]; then
+        cat << __EOF__
+AT LOWBATT  * EXECUTE SHUTDOWN
+__EOF__
+    fi
 
     done
 
