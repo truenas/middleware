@@ -203,7 +203,7 @@ LoadPlugin memory
 LoadPlugin network
 LoadPlugin processes
 LoadPlugin python
-LoadPlugin rrdtool
+LoadPlugin rrdcached
 LoadPlugin swap
 LoadPlugin uptime
 LoadPlugin syslog
@@ -256,18 +256,10 @@ LoadPlugin zfs_arc_v2
     IgnoreSelected true
 </Plugin>
 
-<Plugin "rrdtool">
+<Plugin "rrdcached">
+    DaemonAddress "unix:/var/run/rrdcached.sock"
     DataDir "${datadir}"
-EOF
-
-if use_rrd_dataset; then
-    cat << EOF >> $cfg
-    CacheTimeout 120
-    CacheFlush 900
-EOF
-fi
-
-cat << EOF >> $cfg
+    CreateFiles true
 </Plugin>
 
 <Plugin "threshold">
