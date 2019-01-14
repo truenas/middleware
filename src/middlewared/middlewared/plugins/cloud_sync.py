@@ -60,7 +60,7 @@ class RcloneConfig:
             config.update(dict(self.cloud_sync["attributes"], **self.provider.get_task_extra(self.cloud_sync)))
 
             remote_path = "remote:" + "/".join([self.cloud_sync["attributes"].get("bucket", ""),
-                                                self.cloud_sync["attributes"].get("folder", "")]).strip("/")
+                                                self.cloud_sync["attributes"].get("folder", "")]).rstrip("/")
 
             if self.cloud_sync["encryption"]:
                 self.tmp_file.write("[encrypted]\n")
@@ -498,11 +498,12 @@ class CloudSyncService(CRUDService):
     @private
     async def _validate_folder(self, verrors, name, data):
         if data["direction"] == "PULL":
-            if data["attributes"]["folder"].strip("/"):
-                folder_parent = os.path.normpath(os.path.join(data["attributes"]["folder"].strip("/"), ".."))
+            folder = data["attributes"]["folder"].rstrip("/")
+            if folder:
+                folder_parent = os.path.normpath(os.path.join(folder, ".."))
                 if folder_parent == ".":
                     folder_parent = ""
-                folder_basename = os.path.basename(data["attributes"]["folder"].strip("/"))
+                folder_basename = os.path.basename(folder)
                 ls = await self.list_directory(dict(
                     credentials=data["credentials"],
                     encryption=data["encryption"],
