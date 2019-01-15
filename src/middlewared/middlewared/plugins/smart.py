@@ -1,8 +1,98 @@
+import functools
 from itertools import chain
 
+from middlewared.common.camcontrol import camcontrol_list
+from middlewared.common.smart.smartctl import get_smartctl_args
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.validators import Email, Range, Unique
-from middlewared.service import CRUDService, private, SystemServiceService, ValidationErrors
+from middlewared.service import CRUDService, filterable, filter_list, private, SystemServiceService, ValidationErrors
+from middlewared.utils import run
+from middlewared.utils.asyncio_ import asyncio_map
+
+
+async def annotate_disk_smart_tests(devices, disk):
+    if disk["disk"] is None or disk["disk"].startswith("nvd"):
+        return None
+
+    device = devices.get(disk["disk"])
+    if device:
+        args = await get_smartctl_args(disk["disk"], device)
+        p = await run(["smartctl", "-l", "selftest"] + args, check=False, encoding="utf8")
+        tests = parse_smart_selftest_results(p.stdout)
+        if tests is not None:
+            return dict(tests=tests, **disk)
+
+
+def parse_smart_selftest_results(stdout):
+    tests = []
+
+    # ataprint.cpp
+    if "LBA_of_first_error" in stdout:
+        for line in stdout.split("\n"):
+            if not line.startswith("#"):
+                continue
+
+            test = {
+                "num": int(line[1:3].strip()),
+                "description": line[5:24].strip(),
+                "status_verbose": line[25:54].strip(),
+                "remaining": int(line[55:57]) / 100,
+                "lifetime": int(line[60:68].strip()),
+                "lba_of_first_error": line[77:].strip(),
+            }
+
+            if test["status_verbose"] == "Completed without error":
+                test["status"] = "SUCCESS"
+            elif test["status_verbose"] == "Self-test routine in progress":
+                test["status"] = "RUNNING"
+            else:
+                test["status"] = "FAILED"
+
+            if test["lba_of_first_error"] == "-":
+                test["lba_of_first_error"] = None
+
+            tests.append(test)
+
+        return tests
+
+    # scsiprint.cpp
+    if "LBA_first_err" in stdout:
+        for line in stdout.split("\n"):
+            if not line.startswith("#"):
+                continue
+
+            test = {
+                "num": int(line[1:3].strip()),
+                "description": line[5:20].strip(),
+                "status_verbose": line[23:48].strip(),
+                "segment_number": line[49:52].strip(),
+                "lifetime": line[55:60].strip(),
+                "lba_of_first_error": line[60:78].strip(),
+            }
+
+            if test["status_verbose"] == "Completed":
+                test["status"] = "SUCCESS"
+            elif test["status_verbose"] == "Self test in progress ...":
+                test["status"] = "RUNNING"
+            else:
+                test["status"] = "FAILED"
+
+            if test["segment_number"] == "-":
+                test["segment_number"] = None
+            else:
+                test["segment_number"] = int(test["segment_number"])
+
+            if test["lifetime"] == "NOW":
+                test["lifetime"] = None
+            else:
+                test["lifetime"] = int(test["lifetime"])
+
+            if test["lba_of_first_error"] == "-":
+                test["lba_of_first_error"] = None
+
+            tests.append(test)
+
+        return tests
 
 
 class SMARTTestService(CRUDService):
@@ -163,6 +253,108 @@ class SMARTTestService(CRUDService):
         await self._service_change('smartd', 'restart')
 
         return response
+
+    @filterable
+    async def results(self, filters, options):
+        """
+        Get disk(s) S.M.A.R.T. test(s) results.
+
+        .. examples(websocket)::
+
+          Get all disks tests results
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "smart.test.results",
+                "params": []
+            }
+
+            returns
+
+            :::javascript
+
+            [
+              # ATA disk
+              {
+                "disk": "ada0",
+                "tests": [
+                  {
+                    "num": 1,
+                    "description": "Short offline",
+                    "status": "SUCCESS",
+                    "status_verbose": "Completed without error",
+                    "remaining": 0.0,
+                    "lifetime": 16590,
+                    "lba_of_first_error": None,
+                  }
+                ]
+              },
+              # SCSI disk
+              {
+                "disk": "ada1",
+                "tests": [
+                  {
+                    "num": 1,
+                    "description": "Background long",
+                    "status": "FAILED",
+                    "status_verbose": "Completed, segment failed",
+                    "segment_number": None,
+                    "lifetime": 3943,
+                    "lba_of_first_error": None,
+                  }
+                ]
+              },
+            ]
+
+          Get specific disk test results
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "smart.test.results",
+                "params": [
+                  [["disk", "=", "ada0"]],
+                  {"get": true}
+                ]
+            }
+
+            returns
+
+            :::javascript
+
+            {
+              "disk": "ada0",
+              "tests": [
+                {
+                  "num": 1,
+                  "description": "Short offline",
+                  "status": "SUCCESS",
+                  "status_verbose": "Completed without error",
+                  "remaining": 0.0,
+                  "lifetime": 16590,
+                  "lba_of_first_error": None,
+                }
+              ]
+            }
+        """
+
+        get = (options or {}).pop("get", False)
+
+        disks = filter_list(
+            [{"disk": disk["name"]} for disk in await self.middleware.call("disk.query")],
+            filters,
+            options,
+        )
+
+        devices = await camcontrol_list()
+        return filter_list(
+            list(filter(None, await asyncio_map(functools.partial(annotate_disk_smart_tests, devices), disks, 16))),
+            [],
+            {"get": get},
+        )
 
 
 class SmartService(SystemServiceService):
