@@ -2,6 +2,7 @@ from collections import defaultdict
 import errno
 import glob
 import json
+import math
 import os
 import queue
 import re
@@ -747,15 +748,20 @@ class GraphiteHandler(socketserver.BaseRequestHandler):
             if lines[-1] != b'':
                 last = lines[-1]
             nameident_queues = defaultdict(set)
+            nameident_timestamps = defaultdict(set)
             for line in lines[:-1]:
-                line = line.split(b' ')[0]
+                line, value, timestamp = line.split(b' ')
+                timestamp = int(timestamp)
                 name = line.split(b'.', 1)[1].decode()
                 with RRD_TYPE_QUEUES_EVENT_LOCK:
                     if name in RRD_TYPE_QUEUES_EVENT:
-                        nameident_queues.update(RRD_TYPE_QUEUES_EVENT[name])
+                        queues = RRD_TYPE_QUEUES_EVENT[name]
+                        nameident_queues.update(queues)
+                        for nameident in queues.keys():
+                            nameident_timestamps[nameident].add(timestamp)
             for nameident, queues in nameident_queues.items():
                 for q in queues:
-                    q.put(nameident)
+                    q.put((nameident, nameident_timestamps.get(nameident)))
 
 
 def collectd_graphite(middleware):
@@ -793,13 +799,27 @@ class ReportingEventSource(EventSource):
                     self.queue_reverse.append(queues)
 
         while not self._cancel.is_set():
-            starttime = round(int(time.time()), -1)
-            name, ident = self.queue.get()
+            nameident, timestamps = self.queue.get()
+            if not timestamps:
+                self.middleware.logger.debug('Timetamps not found for %r', nameident)
+                timestamps = [int(time.time())]
+            name, ident = nameident
+            # 10 is subtracted because rrdtool needs the full 10 seconds step to return
+            # not null data for the period. That means we are actually returning the previous
+            # step (read delaying stats by at least 10 seconds)
+            start = math.floor(min(timestamps) / 10) * 10 - 10
+            end = math.ceil(max(timestamps) / 10) * 10 - 10
+            if start == end:
+                start -= 10
             try:
-                data = self.middleware.call_sync('reporting.get_data', [{
-                    'name': name,
-                    'identifier': ident,
-                }], {'start': starttime - 20})
+                data = self.middleware.call_sync(
+                    'reporting.get_data',
+                    [{
+                        'name': name,
+                        'identifier': ident,
+                    }],
+                    {'start': start, 'end': end},
+                )
                 self.send_event('ADDED', fields={'name': name, 'identifier': ident, 'data': data})
             except Exception:
                 self.middleware.logger.debug(
