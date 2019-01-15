@@ -388,6 +388,18 @@ class UserService(CRUDService):
 
         return pk
 
+    @accepts()
+    def shell_choices(self):
+        """
+        Return the available shell choices to be used in `user.create` and `user.update`.
+        """
+        with open('/etc/shells', 'r') as f:
+            shells = [x.rstrip() for x in f.readlines() if x.startswith('/')]
+        return {
+            shell: os.path.basename(shell)
+            for shell in shells + ['/usr/sbin/nologin']
+        }
+
     @item_method
     @accepts(
         Int('id'),
