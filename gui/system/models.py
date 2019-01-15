@@ -308,20 +308,6 @@ class Advanced(Model):
                     "the alert emails are set to (root) set an email address for a user and "
                     "select that user in the dropdown.")
     )
-    adv_cpu_in_percentage = models.BooleanField(
-        default=False,
-        verbose_name=_("Report CPU usage in percentage"),
-        help_text=_("collectd will report CPU usage in percentage instead of \"jiffies\" "
-                    "if this is checked."),
-    )
-    adv_graphite = models.CharField(
-        max_length=120,
-        default="",
-        blank=True,
-        verbose_name=_("Remote Graphite Server Hostname"),
-        help_text=_("A hostname or IP here will be used as the destination to send collectd "
-                    "data to using the graphite plugin to collectd.")
-    )
     adv_fqdn_syslog = models.BooleanField(
         verbose_name=_("Use FQDN for logging"),
         default=False,
@@ -570,14 +556,6 @@ class SystemDataset(Model):
     sys_syslog_usedataset = models.BooleanField(
         default=False,
         verbose_name=_("Syslog")
-    )
-    sys_rrd_usedataset = models.BooleanField(
-        default=True,
-        verbose_name=_("Reporting Database"),
-        help_text=_(
-            'Save the Round-Robin Database (RRD) used by system statistics '
-            'collection daemon into the system dataset'
-        )
     )
     sys_uuid = models.CharField(
         editable=False,
@@ -1002,3 +980,63 @@ class SSHCredentialsKeychainCredential(KeychainCredential):
             "type",
             "attributes",
         )
+
+
+class Reporting(Model):
+    class Meta:
+        verbose_name = _("Reporting")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = "SystemDatasetIcon"
+        icon_object = "SystemDatasetIcon"
+        icon_view = "SystemDatasetIcon"
+        icon_add = "SystemDatasetIcon"
+
+    rrd_usedataset = models.BooleanField(
+        default=True,
+        verbose_name=_("Store reporting database in system dataset"),
+        help_text=_(
+            "Store reporting database in system dataset instead of RAMDisk. Checking this will decrease RAM usage and "
+            "increase IO on system dataset pool."
+        )
+    )
+    rrd_size_alert_threshold = models.IntegerField(
+        null=True,
+        default=None,
+        verbose_name=_("Reporting database size alert threshold"),
+        help_text=_(
+            "Store reporting database in system dataset instead of RAMDisk. Checking this will decrease RAM usage and "
+            "increase IO on system dataset pool."
+        )
+    )
+    cpu_in_percentage = models.BooleanField(
+        default=False,
+        verbose_name=_("Report CPU usage in percentage"),
+        help_text=_("collectd will report CPU usage in percentage instead of \"jiffies\" "
+                    "if this is checked."),
+    )
+    graphite = models.CharField(
+        max_length=120,
+        default="",
+        blank=True,
+        verbose_name=_("Graphite server"),
+        help_text=_("A hostname or IP here will be used as the destination to send collectd "
+                    "data to using the graphite plugin to collectd.")
+    )
+    rrd_ramdisk_size = models.IntegerField(
+        default=1073741824,
+        verbose_name=_("Reporting database RAMDisk size"),
+    )
+    graph_timespans = ListField(
+        default=[3600, 86400, 604800, 2678400, 31622400],
+        verbose_name=_("Graph time spans"),
+        help_text=_("Time periods for which aggregated historical data will be stored. See collect RRARows option "
+                    "documentation for more details"),
+    )
+    graph_rows = models.IntegerField(
+        default=1200,
+        verbose_name=_("Graph points count"),
+        help_text=_("Number of points for each time period. See collect RRATimespan option documentation for more "
+                    "details"),
+    )

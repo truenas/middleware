@@ -1710,16 +1710,29 @@ class SystemDatasetForm(MiddlewareModelForm, ModelForm):
                 pool_choices.append((v.vol_name, v.vol_name))
 
         self.fields['sys_pool'].choices = pool_choices
-        self.instance._original_sys_pool = self.instance.sys_pool
-        self.instance._original_sys_syslog_usedataset = self.instance.sys_syslog_usedataset
-        self.instance._original_sys_rrd_usedataset = self.instance.sys_rrd_usedataset
         self.fields['sys_pool'].widget.attrs['onChange'] = (
             "systemDatasetMigration();"
         )
 
     def middleware_clean(self, update):
         update['syslog'] = update.pop('syslog_usedataset')
-        update['rrd'] = update.pop('rrd_usedataset')
+        return update
+
+
+class ReportingForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_schema = "reporting_update"
+    middleware_plugin = "reporting"
+    is_singletone = True
+
+    class Meta:
+        fields = '__all__'
+        model = models.Reporting
+
+    def __init__(self, *args, **kwargs):
+        super(ReportingForm, self).__init__(*args, **kwargs)
+
+    def middleware_clean(self, update):
         return update
 
 

@@ -75,6 +75,17 @@ class SystemDataset(TreeNode):
     append_to = 'system'
 
 
+class Reporting(TreeNode):
+
+    gname = 'Reporting'
+    name = _('Reporting')
+    icon = 'ReportingIcon'
+    type = 'opensystem'
+    order = -79
+    replace_only = True
+    append_to = 'system'
+
+
 class TunableView(TreeNode):
 
     gname = 'View'

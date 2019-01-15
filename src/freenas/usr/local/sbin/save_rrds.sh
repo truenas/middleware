@@ -1,9 +1,9 @@
 #!/bin/sh
 
-# This script manages the two way sync of rrds to persistant storage.
+# This script manages the two way sync of rrds to persistent storage.
 # If the rrd directory doesn't exist in /var it will search for a
-# tarball to unpack from persistant storage and populate /var from that
-# If the rrd directory does exist it will archive it to persistant
+# tarball to unpack from persistent storage and populate /var from that
+# If the rrd directory does exist it will archive it to persistent
 # storage.
 
 . /etc/rc.freenas
@@ -40,9 +40,9 @@ use_rrd_dataset()
 
 	use="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		sys_rrd_usedataset
+		rrd_usedataset
 	FROM
-		system_systemdataset
+		system_reporting
 	ORDER BY
 		-id
 	LIMIT 1
