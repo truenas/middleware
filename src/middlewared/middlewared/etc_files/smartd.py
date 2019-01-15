@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 async def annotate_disk_for_smart(devices, disk):
-    if disk["disk_name"] is None or re.match(r"/dev/nvd", disk["disk_name"]):
+    if disk["disk_name"] is None or disk["disk_name"].startswith("nvd"):
         return
 
     device = devices.get(disk["disk_name"])
