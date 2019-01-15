@@ -5,7 +5,7 @@ import freenasUI.freeadmin.models.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('services', '0024_merge_20181206_0849'),
+        ('services', '0025_merge_20190114_1159'),
     ]
 
     operations = [
