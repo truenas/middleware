@@ -453,9 +453,12 @@ class ActiveDirectoryForm(ModelForm):
         if not netbiosname:
             return netbiosname
         if netbiosname_a and netbiosname_a == netbiosname:
-            raise forms.ValidationError(_(
-                'NetBIOS cannot be the same as the first.'
-            ))
+            with client as c:
+                system_dataset = c.call('systemdataset.config')
+            if system_dataset['path'] == "freenas-boot":
+                raise forms.ValidationError(_(
+                    'NetBIOS names cannot be identical when the system dataset is located on the boot device.'
+                ))
         try:
             validate_netbios_name(netbiosname)
         except Exception as e:
