@@ -34,7 +34,7 @@ def pw_checkname(verrors, attribute, name):
             attribute,
             'The character $ is only allowed as the final character.'
         )
-    invalid_chars = ' ,\t:+&#%\^()!@~\*?<>=|\\/"'
+    invalid_chars = ' ,\t:+&#%^()!@~*?<>=|\\/"'
     invalids = []
     for char in name:
         # invalid_chars nor 8-bit characters are allowed
