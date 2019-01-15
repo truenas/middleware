@@ -6,6 +6,7 @@ import math
 import os
 import queue
 import re
+import select
 import socketserver
 import subprocess
 import sysctl
@@ -738,7 +739,12 @@ class GraphiteHandler(socketserver.BaseRequestHandler):
     def handle(self):
         last = b''
         while True:
-            data = self.request.recv(1428)
+            data = b''
+            # Try to read a batch of updates at once, instead of breaking per message size
+            while True:
+                if not select.select([self.request.fileno()], [], [], 0.1)[0]:
+                    break
+                data += self.request.recv(1428)
             if data == b'':
                 break
             if last:
