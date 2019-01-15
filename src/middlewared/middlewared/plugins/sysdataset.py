@@ -98,7 +98,18 @@ class SystemDatasetService(ConfigService):
 
         new['syslog_usedataset'] = new['syslog']
         new['rrd_usedataset'] = new['rrd']
-        await self.middleware.call('datastore.update', 'system.systemdataset', config['id'], new, {'prefix': 'sys_'})
+
+        update_dict = new.copy()
+        for key in ('is_decrypted', 'basename', 'uuid_a', 'syslog', 'rrd', 'path'):
+            update_dict.pop(key, None)
+
+        await self.middleware.call(
+            'datastore.update',
+            'system.systemdataset',
+            config['id'],
+            update_dict,
+            {'prefix': 'sys_'}
+        )
 
         if config['pool'] != new['pool']:
             await self.migrate(config['pool'], new['pool'])

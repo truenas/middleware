@@ -1147,7 +1147,7 @@ class iSCSITargetService(CRUDService):
             raise verrors
 
         await self.compress(new)
-        groups = data.pop('groups')
+        groups = new.pop('groups')
 
         oldgroups = old.copy()
         await self.compress(oldgroups)

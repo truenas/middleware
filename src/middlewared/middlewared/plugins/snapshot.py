@@ -202,6 +202,9 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         Cron.convert_schedule_to_db_format(new, begin_end=True)
 
+        for key in ('legacy', 'vmware_sync', 'state'):
+            new.pop(key, None)
+
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
