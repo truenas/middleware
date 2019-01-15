@@ -976,20 +976,13 @@ class COUNTRY_CHOICES(object):
 
 class SHELL_CHOICES(object):
 
-    SHELSS = '/etc/shells'
-
-    def __init__(self):
-        with open('/etc/shells', 'r') as f:
-            shells = list(map(
-                str.rstrip,
-                [x for x in f.readlines() if x.startswith('/')]
-            ))
-        self._dict = {}
-        for shell in shells + ['/usr/sbin/nologin']:
-            self._dict[shell] = os.path.basename(shell)
-
     def __iter__(self):
-        return iter(sorted(list(self._dict.items())))
+        try:
+            with client as c:
+                for k, v in c.call('user.shell_choices').items():
+                    yield (k, v)
+        except Exception:
+            yield ('/bin/sh', 'sh')
 
 
 NSS_INFO_CHOICES = (
