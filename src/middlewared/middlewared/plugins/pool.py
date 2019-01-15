@@ -1542,7 +1542,7 @@ class PoolService(CRUDService):
             })
         except Exception as e:
             # mounting filesystems may fail if we have readonly datasets as parent
-            if isinstance(e, ZFSException) and e.code.name != 'MOUNTFAILED':
+            if not isinstance(e, ZFSException) or e.code.name != 'MOUNTFAILED':
                 detach_failed = await self.middleware.call('disk.geli_detach', pool)
                 if failed > 0:
                     msg = f'Pool could not be imported: {failed} devices failed to decrypt.'
