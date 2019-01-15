@@ -53,20 +53,21 @@ class S3Service(SystemServiceService):
 
         if not new['storage_path']:
             verrors.add('s3_update.storage_path', 'Storage path is required')
-
-        await check_path_resides_within_volume(
-            verrors, self.middleware, 's3_update.storage_path', new['storage_path']
-        )
-
-        if not verrors and new['storage_path'].rstrip('/').count('/') < 3:
-            verrors.add(
-                's3_update.storage_path',
-                'Top level datasets are not allowed. i.e /mnt/tank/dataset is allowed'
-            )
         else:
-            # If the storage_path does not exist, let's create it
-            if not os.path.exists(new['storage_path']):
-                os.makedirs(new['storage_path'])
+            await check_path_resides_within_volume(
+                verrors, self.middleware, 's3_update.storage_path', new['storage_path']
+            )
+
+            if not verrors:
+                if new['storage_path'].rstrip('/').count('/') < 3:
+                    verrors.add(
+                        's3_update.storage_path',
+                        'Top level datasets are not allowed. i.e /mnt/tank/dataset is allowed'
+                    )
+                else:
+                    # If the storage_path does not exist, let's create it
+                    if not os.path.exists(new['storage_path']):
+                        os.makedirs(new['storage_path'])
 
         if new['certificate']:
             verrors.extend((await self.middleware.call(
