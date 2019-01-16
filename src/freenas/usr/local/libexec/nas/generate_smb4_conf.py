@@ -1034,6 +1034,7 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset1(smb4_conf, "printcap name = /dev/null")
     confset1(smb4_conf, "disable spoolss = yes")
     confset1(smb4_conf, "getwd cache = yes")
+    confset1(smb4_conf, "cache directory = /var/lock")
     confset2(smb4_conf, "guest account = %s", cifs.guest)
     confset1(smb4_conf, "map to guest = Bad User")
     confset2(smb4_conf, "obey pam restrictions = %s",
