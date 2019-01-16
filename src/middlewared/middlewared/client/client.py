@@ -621,8 +621,10 @@ def main():
             number = 0
 
             def cb(mtype, **message):
+                nonlocal number
                 print(json.dumps(message))
-                if args.number and args.number >= number:
+                number += 1
+                if args.number and number >= args.number:
                     event.set()
 
             c.subscribe(args.event, cb)
