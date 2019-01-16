@@ -1,9 +1,11 @@
 from collections import defaultdict
 import errno
 import glob
+import itertools
 import json
 import math
 import os
+import psutil
 import queue
 import re
 import select
@@ -776,6 +778,68 @@ def collectd_graphite(middleware):
         server.serve_forever()
 
 
+class RealtimeEventSource(EventSource):
+
+    @staticmethod
+    def get_cpu_usages(cp_diff):
+        cp_total = sum(cp_diff)
+        cpu_user = cp_diff[0] / cp_total * 100
+        cpu_nice = cp_diff[1] / cp_total * 100
+        cpu_system = cp_diff[2] / cp_total * 100
+        cpu_interrupt = cp_diff[3] / cp_total * 100
+        cpu_idle = cp_diff[4] / cp_total * 100
+        # Usage is the sum of user, nice, system and interrupt over total (including idle)
+        cpu_usage = (sum(cp_diff[:4]) / cp_total) * 100
+        return {
+            'usage': cpu_usage,
+            'user': cpu_user,
+            'nice': cpu_nice,
+            'system': cpu_system,
+            'interrupt': cpu_interrupt,
+            'idle': cpu_idle,
+        }
+
+    def run(self):
+
+        cp_time_last = None
+        cp_times_last = None
+
+        while not self._cancel.is_set():
+            data = {}
+            # Virtual memory use
+            data['virtual_memory'] = psutil.virtual_memory()._asdict()
+
+            data['cpu'] = {}
+            # Get CPU usage %
+            # cp_times has values for all cores
+            cp_times = sysctl.filter('kern.cp_times')[0].value
+            # cp_time is the sum of all cores
+            cp_time = sysctl.filter('kern.cp_time')[0].value
+            if cp_times_last:
+                # Get the difference of times between the last check and the current one
+                # cp_time has a list with user, nice, system, interrupt and idle
+                cp_diff = list(map(lambda x: x[0] - x[1], zip(cp_times, cp_times_last)))
+                cp_nums = int(len(cp_times) / 5)
+                for i in range(cp_nums):
+                    data['cpu'][i] = self.get_cpu_usages(cp_diff[i * 5:i * 5 + 5])
+
+                cp_diff = list(map(lambda x: x[0] - x[1], zip(cp_time, cp_time_last)))
+                data['cpu']['average'] = self.get_cpu_usages(cp_diff)
+            cp_time_last = cp_time
+            cp_times_last = cp_times
+
+            # CPU temperature
+            data['cpu']['temperature'] = {}
+            for i in itertools.count():
+                v = sysctl.filter(f'dev.cpu.{i}.temperature')
+                if not v:
+                    break
+                data['cpu']['temperature'][i] = v[0].value
+
+            self.send_event('ADDED', fields=data)
+            time.sleep(2)
+
+
 class ReportingEventSource(EventSource):
 
     def __init__(self, *args, **kwargs):
@@ -843,3 +907,4 @@ class ReportingEventSource(EventSource):
 def setup(middleware):
     start_daemon_thread(target=collectd_graphite, args=[middleware])
     middleware.register_event_source('reporting.get_data', ReportingEventSource)
+    middleware.register_event_source('reporting.realtime', RealtimeEventSource)
