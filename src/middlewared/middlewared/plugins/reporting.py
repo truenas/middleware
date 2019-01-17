@@ -5,6 +5,7 @@ import itertools
 import json
 import math
 import os
+import pandas
 import psutil
 import queue
 import re
@@ -55,6 +56,7 @@ class RRDMeta(type):
 
 class RRDBase(object, metaclass=RRDMeta):
 
+    aggregations = ('min', 'mean', 'max')
     base_path = None
     title = None
     vertical_label = None
@@ -190,7 +192,16 @@ class RRDBase(object, metaclass=RRDMeta):
             identifier=identifier,
             data=data['data'],
             **data['meta'],
+            aggregations=dict(),
         )
+
+        if self.aggregations:
+            df = pandas.DataFrame(data['data'])
+            for agg in self.aggregations:
+                if agg in ('max', 'mean', 'min'):
+                    data['aggregations'][agg] = list(getattr(df, agg)())
+                else:
+                    raise RuntimeError(f'Aggregation {agg!r} is invalid.')
 
         return data
 
