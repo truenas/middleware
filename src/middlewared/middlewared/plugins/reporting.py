@@ -656,27 +656,7 @@ class ReportingService(Service):
     def graphs(self, filters, options):
         return filter_list([i.__getstate__() for i in self.__rrds.values()], filters, options)
 
-    @accepts(
-        List('graphs', items=[
-            Dict(
-                'graph',
-                Str('name', required=True),
-                Str('identifier', default=None, null=True),
-            ),
-        ], empty=False),
-        Dict(
-            'reporting_query',
-            Str('unit', enum=[
-                'HOURLY', 'DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'
-            ]),
-            Int('page', default=0),
-            Str('start', empty=False),
-            Str('end', empty=False),
-            register=True,
-        )
-    )
-    def get_data(self, graphs, query):
-
+    def __rquery_to_start_end(self, query):
         unit = query.get('unit')
         if unit:
             verrors = ValidationErrors()
@@ -697,12 +677,34 @@ class ReportingService(Service):
         if unit:
             unit = unit[0].lower()
             page = query['page']
-            starttime = f'end-1{unit}'
+            starttime = f'end-{page + 1}{unit}'
             if not page:
                 endtime = 'now'
             else:
                 endtime = f'now-{page}{unit}'
+        return starttime, endtime
 
+    @accepts(
+        List('graphs', items=[
+            Dict(
+                'graph',
+                Str('name', required=True),
+                Str('identifier', default=None, null=True),
+            ),
+        ], empty=False),
+        Dict(
+            'reporting_query',
+            Str('unit', enum=[
+                'HOURLY', 'DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'
+            ]),
+            Int('page', default=0),
+            Str('start', empty=False),
+            Str('end', empty=False),
+            register=True,
+        )
+    )
+    def get_data(self, graphs, query):
+        starttime, endtime = self.__rquery_to_start_end(query)
         rv = []
         for i in graphs:
             try:
@@ -715,13 +717,14 @@ class ReportingService(Service):
     @private
     @accepts(Ref('reporting_query'))
     def get_all(self, query):
+        starttime, endtime = self.__rquery_to_start_end(query)
         rv = []
         for rrd in self.__rrds.values():
             idents = rrd.get_identifiers()
             if idents is None:
                 idents = [None]
             for ident in idents:
-                rv.append(rrd.export(ident, query['unit'], query['page']))
+                rv.append(rrd.export(ident, starttime, endtime))
         return rv
 
     @private
