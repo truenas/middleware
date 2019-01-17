@@ -7,6 +7,7 @@ from .restful import RESTfulAPI
 from .schema import Error as SchemaError, Schemas
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from .utils import start_daemon_thread, load_modules, load_classes
+from .utils.debug import get_threads_stacks
 from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from aiohttp import web
@@ -1186,6 +1187,10 @@ class Middleware(object):
         import pdb
         pdb.set_trace()
 
+    def log_threads_stacks(self):
+        for thread_id, stack in get_threads_stacks().items():
+            self.logger.debug('Thread %d stack:\n%s', thread_id, ''.join(stack))
+
     async def ws_handler(self, request):
         ws = web.WebSocketResponse()
         await ws.prepare(request)
@@ -1258,6 +1263,7 @@ class Middleware(object):
         self.__loop.add_signal_handler(signal.SIGINT, self.terminate)
         self.__loop.add_signal_handler(signal.SIGTERM, self.terminate)
         self.__loop.add_signal_handler(signal.SIGUSR1, self.pdb)
+        self.__loop.add_signal_handler(signal.SIGUSR2, self.log_threads_stacks)
 
         app.router.add_route('GET', '/websocket', self.ws_handler)
 
