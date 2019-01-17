@@ -8,6 +8,7 @@ from .schema import Error as SchemaError, Schemas
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from .utils import start_daemon_thread, load_modules, load_classes
 from .utils.debug import get_threads_stacks
+from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from aiohttp import web
@@ -54,6 +55,8 @@ class Application(object):
         self.logger = logger.Logger('application').getLogger()
         self.session_id = str(uuid.uuid4())
 
+        # Allow at most 10 concurrent calls and only queue up until 20
+        self._softhardsemaphore = SoftHardSemaphore(10, 20)
         self._py_exceptions = False
 
         """
@@ -160,7 +163,8 @@ class Application(object):
     async def call_method(self, message):
 
         try:
-            result = await self.middleware.call_method(self, message)
+            async with self._softhardsemaphore:
+                result = await self.middleware.call_method(self, message)
             if isinstance(result, Job):
                 result = result.id
             elif isinstance(result, types.GeneratorType):
@@ -172,6 +176,12 @@ class Application(object):
                 'msg': 'result',
                 'result': result,
             })
+        except SoftHardSemaphoreLimit as e:
+            self.send_error(
+                message,
+                errno.ETOOMANYREFS,
+                f'Maximum number of concurrent calls ({e.args[0]}) has exceeded.',
+            )
         except ValidationError as e:
             self.send_error(message, e.errno, str(e), sys.exc_info(), etype='VALIDATION', extra=[
                 (e.attribute, e.errmsg, e.errno),
