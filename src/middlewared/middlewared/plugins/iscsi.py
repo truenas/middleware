@@ -1012,11 +1012,7 @@ class iSCSITargetService(CRUDService):
             map(
                 lambda v: v['id'],
                 await self.middleware.call('datastore.query', 'services.iSCSITargetPortal', [
-                    [
-                        'OR', [
-                            ('id', '=', portal_id) for portal_id in map(lambda v: v['portal'], data['groups'])
-                        ]
-                    ]
+                    ['id', 'in', list(map(lambda v: v['portal'], data['groups']))]
                 ])
             )
         )
@@ -1025,11 +1021,7 @@ class iSCSITargetService(CRUDService):
             map(
                 lambda v: v['id'],
                 await self.middleware.call('datastore.query', 'services.iSCSITargetAuthorizedInitiator', [
-                    [
-                        'OR', [
-                            ('id', '=', portal_id) for portal_id in map(lambda v: v['initiator'], data['groups'])
-                        ]
-                    ]
+                    ['id', 'in', list(map(lambda v: v['initiator'], data['groups']))]
                 ])
             )
         )
@@ -1042,7 +1034,7 @@ class iSCSITargetService(CRUDService):
             elif group['portal'] not in db_portals:
                 verrors.add(
                     f'{schema_name}.groups.{i}.portal',
-                    f'{group["portal"]} Portal does not exist in database'
+                    f'{group["portal"]} Portal not found in database'
                 )
             else:
                 portals.append(group['portal'])
@@ -1050,7 +1042,7 @@ class iSCSITargetService(CRUDService):
             if group['initiator'] and group['initiator'] not in db_initiators:
                 verrors.add(
                     f'{schema_name}.groups.{i}.initiator',
-                    f'{group["initiator"]} Initiator does not exist in database'
+                    f'{group["initiator"]} Initiator not found in database'
                 )
 
             if not group['auth'] and group['authmethod'] in ('CHAP', 'CHAP_MUTUAL'):
