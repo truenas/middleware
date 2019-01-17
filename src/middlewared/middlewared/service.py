@@ -15,6 +15,7 @@ import time
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
 from middlewared.utils import filter_list
+from middlewared.utils.debug import get_threads_stacks
 from middlewared.logger import Logger
 from middlewared.job import Job
 from middlewared.pipe import Pipes
@@ -667,6 +668,10 @@ class CoreService(Service):
             import pydevd
             pydevd.stoptrace()
             pydevd.settrace(host=options['host'])
+
+    @private
+    def threads_stacks(self):
+        return get_threads_stacks()
 
     @accepts(Str("method"), List("params", default=[]))
     @job(lock=lambda args: f"bulk:{args[0]}")
