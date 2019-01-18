@@ -9,6 +9,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST
+from auto_config import vm_name
 from time import sleep, time
 
 
@@ -88,9 +89,13 @@ def test_07_install_update():
     elif download_hang is True:
         pytest.skip(f'Downloading {selected_trains} failed')
     else:
+        if vm_name is None:
+            reboot = False
+        else:
+            reboot = True
         payload = {
             "train": selected_trains,
-            "reboot": False
+            "reboot": reboot
         }
         results = POST('/update/update/', payload)
         global JOB_ID
