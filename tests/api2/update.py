@@ -8,8 +8,8 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, POST
-from auto_config import vm_name
+from functions import GET, POST, vm_state, vm_start, ping_host
+from auto_config import vm_name, interface, ip
 from time import sleep, time
 
 
@@ -89,7 +89,7 @@ def test_07_install_update():
     elif download_hang is True:
         pytest.skip(f'Downloading {selected_trains} failed')
     else:
-        if vm_name is None:
+        if vm_name is None and interface == 'vtnet0':
             reboot = False
         else:
             reboot = True
@@ -130,3 +130,29 @@ def test_09_verify_system_is_ready_to_reboot():
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict) is True, results.text
         assert results.json()['status'] == 'REBOOT_REQUIRED', results.text
+
+
+def test_10_wait_for_first_reboot_with_bhyve():
+    if vm_name is None:
+        pytest.skip('skip no vm_name')
+    while vm_state(vm_name) != 'stopped':
+        print(vm_state(vm_name))
+        sleep(5)
+    assert vm_start(vm_name) is True
+    sleep(1)
+
+
+def test_10_wait_for_second_reboot_with_bhyve():
+    if vm_name is None:
+        pytest.skip('skip no vm_name')
+    while vm_state(vm_name) != 'stopped':
+        sleep(5)
+    assert vm_start(vm_name) is True
+    sleep(1)
+
+
+def test_10_wait_for_FreeNAS_to_be_online():
+    while ping_host(ip) is not True:
+        sleep(5)
+    assert ping_host is True
+    sleep(10)
