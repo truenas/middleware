@@ -262,17 +262,20 @@ def volumemanager_zfs(request):
                 (zpoolfields.search(i).group(1), i, request.POST.get(i))
                 for i in list(request.POST.keys()) if zpoolfields.match(i)
             ]
+            zfsextradisks = [v[0] for v in zfsextra if v[2] != 'none']
 
     else:
         form = forms.ZFSVolumeWizardForm()
         disks = []
         zfsextra = None
+        zfsextradisks = []
     # dedup = forms._dedup_enabled()
     dedup = True
     return render(request, 'storage/zfswizard.html', {
         'form': form,
         'disks': disks,
         'zfsextra': zfsextra,
+        'zfsextradisks': zfsextradisks,
         'dedup': dedup,
     })
 
