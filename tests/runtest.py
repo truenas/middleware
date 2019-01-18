@@ -47,7 +47,7 @@ if len(argv) == 1:
     print(error_msg)
     exit()
 
-option_list = ["api=", "ip=", "password=", "interface=", 'test=', "--vm-name="]
+option_list = ["api=", "ip=", "password=", "interface=", 'test=', "vm-name="]
 
 # look if all the argument are there.
 try:
