@@ -20,6 +20,7 @@ import argparse
 import asyncio
 import binascii
 import concurrent.futures
+import concurrent.futures.process
 import errno
 import functools
 import inspect
@@ -755,10 +756,8 @@ class Middleware(object):
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
         multiprocessing.set_start_method('spawn')
-        self.__procpool = ProcessPoolExecutor(
-            max_workers=2, debug_level=debug_level, log_handler=log_handler
-        )
         self.__threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
+        self.__init_procpool()
         self.jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
@@ -1032,8 +1031,20 @@ class Middleware(object):
         """
         return await self.run_in_executor(self.__threadpool, method, *args, **kwargs)
 
+    def __init_procpool(self):
+        self.__procpool = ProcessPoolExecutor(
+            max_workers=2, debug_level=debug_level, log_handler=log_handler
+        )
+
     async def run_in_proc(self, method, *args, **kwargs):
-        return await self.run_in_executor(self.__procpool, method, *args, **kwargs)
+        retries = 2
+        for i in range(retries):
+            try:
+                return await self.run_in_executor(self.__procpool, method, *args, **kwargs)
+            except concurrent.futures.process.BrokenProcessPool:
+                if i == retries - 1:
+                    raise
+                self.__init_procpool()
 
     async def run_in_thread(self, method, *args, **kwargs):
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
