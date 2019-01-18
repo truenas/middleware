@@ -720,7 +720,7 @@ class mDNSAdvertiseService(Service):
         self.start()
 
 
-async def dns_post_sync(middleware):
+async def dns_post_sync():
     mDNSDaemonMonitor.instance.dns_sync.set()
 
 
