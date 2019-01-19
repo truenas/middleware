@@ -835,7 +835,8 @@ class JailService(CRUDService):
         Str("jail"),
         Dict("options",
              Str("release", required=False),
-             Bool("plugin", default=False))
+             Bool("plugin", default=False),
+             Bool('interactive', default=False))
     )
     @job(lock=lambda args: f"jail_upgrade:{args[-1]}")
     def upgrade(self, job, jail, options):
@@ -894,7 +895,7 @@ class JailService(CRUDService):
             jail,
             callback=progress_callback
         )
-        iocage.upgrade(release=release)
+        iocage.upgrade(release=release, interactive=options['interactive'])
 
         return True
 
