@@ -1108,13 +1108,42 @@ class iSCSITargetService(CRUDService):
         # if not data['groups']:
         #    verrors.add(f'{schema_name}.groups', 'At least one group is required')
 
+        db_portals = list(
+            map(
+                lambda v: v['id'],
+                await self.middleware.call('datastore.query', 'services.iSCSITargetPortal', [
+                    ['id', 'in', list(map(lambda v: v['portal'], data['groups']))]
+                ])
+            )
+        )
+
+        db_initiators = list(
+            map(
+                lambda v: v['id'],
+                await self.middleware.call('datastore.query', 'services.iSCSITargetAuthorizedInitiator', [
+                    ['id', 'in', list(map(lambda v: v['initiator'], data['groups']))]
+                ])
+            )
+        )
+
         portals = []
         for i, group in enumerate(data['groups']):
             if group['portal'] in portals:
                 verrors.add(f'{schema_name}.groups.{i}.portal', f'Portal {group["portal"]} cannot be '
                                                                 'duplicated on a target')
+            elif group['portal'] not in db_portals:
+                verrors.add(
+                    f'{schema_name}.groups.{i}.portal',
+                    f'{group["portal"]} Portal not found in database'
+                )
             else:
                 portals.append(group['portal'])
+
+            if group['initiator'] and group['initiator'] not in db_initiators:
+                verrors.add(
+                    f'{schema_name}.groups.{i}.initiator',
+                    f'{group["initiator"]} Initiator not found in database'
+                )
 
             if not group['auth'] and group['authmethod'] in ('CHAP', 'CHAP_MUTUAL'):
                 verrors.add(f'{schema_name}.groups.{i}.auth', 'Authentication group is required for '
