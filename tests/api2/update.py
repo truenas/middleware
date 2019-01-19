@@ -136,7 +136,6 @@ def test_10_wait_for_first_reboot_with_bhyve():
     if vm_name is None:
         pytest.skip('skip no vm_name')
     while vm_state(vm_name) != 'stopped':
-        print(vm_state(vm_name))
         sleep(5)
     assert vm_start(vm_name) is True
     sleep(1)
@@ -154,5 +153,5 @@ def test_10_wait_for_second_reboot_with_bhyve():
 def test_10_wait_for_FreeNAS_to_be_online():
     while ping_host(ip) is not True:
         sleep(5)
-    assert ping_host is True
+    assert ping_host(ip) is True
     sleep(10)
