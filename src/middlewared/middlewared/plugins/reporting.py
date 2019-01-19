@@ -81,6 +81,60 @@ class ReportingService(ConfigService):
         )
     )
     async def do_update(self, data):
+        """
+        Configure Reporting Database settings.
+
+        `rrd_usedataset` is a flag that determines whether reporting database is located in system dataset or on
+        RAMDisk.
+
+        `rrd_size_alert_threshold` is a size (in bytes) of reporting database that will trigger an alert. It can be
+        set to null, then an auto-calculated default is used, suitable for most use cases. This value is present in
+        `reporting.config` result as `rrd_size_alert_threshold_suggestion`.
+
+        If `cpu_in_percentage` is `true`, collectd will report CPU usage in percentage instead of "jiffies".
+
+        `graphite` specifies a hostname or IP address that will be used as the destination to send collectd data
+        using the graphite plugin.
+
+        `rrd_ramdisk_size` specifies size (in bytes) for RAMDisk if `rrd_usedataset` is unchecked.
+
+        `graph_timespans` and `graph_rows` correspond to collectd `RRARows` and `RRATimespan` options. Changing these
+        will require destroying your current reporting database so when these fields are changed, an additional
+        `confirm_rrd_destroy: true` flag must be present
+
+        .. examples(websocket)::
+
+          Update reporting settings
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "reporting.update",
+                "params": [{
+                    "rrd_usedataset": true,
+                    "rrd_size_alert_threshold": null,
+                    "cpu_in_percentage": false,
+                    "graphite": "",
+                    "rrd_ramdisk_size": 1073741824,
+                }]
+            }
+
+          Recreate reporting database with new settings
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "reporting.update",
+                "params": [{
+                    "graph_timespans": [3600, 86400, 604800, 2678400, 31622400],
+                    "graph_rows": 1200,
+                    "confirm_rrd_destroy": true,
+                }]
+            }
+        """
+
         confirm_rrd_destroy = data.pop('confirm_rrd_destroy', False)
 
         old = await self.config()
@@ -115,8 +169,8 @@ class ReportingService(ConfigService):
                 if not confirm_rrd_destroy:
                     verrors.add(
                         f'reporting_update.{k}',
-                        f'Changing this option requires destroying of reporting database so you\'ll have to confirm this '
-                        f'action by setting corresponding flag',
+                        f'Changing this option requires destroying of reporting database so you\'ll have to confirm '
+                        f'this action by setting corresponding flag',
                     )
 
         if verrors:

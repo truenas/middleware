@@ -1031,12 +1031,12 @@ class Reporting(Model):
     graph_timespans = ListField(
         default=[3600, 86400, 604800, 2678400, 31622400],
         verbose_name=_("Graph time spans"),
-        help_text=_("Time periods for which aggregated historical data will be stored. See collect RRARows option "
-                    "documentation for more details"),
+        help_text=_("Time periods (in seconds) for which aggregated historical data will be stored. See collectd "
+                    "RRARows option documentation for more details"),
     )
     graph_rows = models.IntegerField(
         default=1200,
         verbose_name=_("Graph points count"),
-        help_text=_("Number of points for each time period. See collect RRATimespan option documentation for more "
-                    "details"),
+        help_text=_("Number of points for each time period. In short, set this to no smaller than the width of your "
+                    "graphs in pixels. See collect RRATimespan option documentation for more details"),
     )
