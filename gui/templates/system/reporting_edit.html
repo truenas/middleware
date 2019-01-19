@@ -1,0 +1,10 @@
+{% extends "freeadmin/generic_model_edit.html" %}
+
+{% block post_form %}
+{{ block.super }}
+<script type="dojo/method">
+addToStack(function() {
+    confirmRrdDestroyHide();
+});
+</script>
+{% endblock %}

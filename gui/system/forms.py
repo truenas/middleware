@@ -62,6 +62,7 @@ from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory, FreeNAS_LDAP
 from freenasUI.directoryservice.forms import (ActiveDirectoryForm, LDAPForm,
                                               NISForm)
 from freenasUI.directoryservice.models import LDAP, NIS, ActiveDirectory
+from freenasUI.freeadmin.forms import SizeField
 from freenasUI.freeadmin.utils import key_order
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.client import (ClientException, ValidationErrors,
@@ -1721,19 +1722,59 @@ class SystemDatasetForm(MiddlewareModelForm, ModelForm):
 
 class ReportingForm(MiddlewareModelForm, ModelForm):
 
-    middleware_attr_schema = "reporting_update"
+    middleware_attr_prefix = ""
+    middleware_attr_schema = "reporting"
     middleware_plugin = "reporting"
     is_singletone = True
+
+    rrd_size_alert_threshold = SizeField(
+        required=False,
+        label=_("Reporting database size alert threshold"),
+        help_text=_(
+            "Store reporting database in system dataset instead of RAMDisk. Checking this will decrease RAM usage and "
+            "increase IO on system dataset pool."
+        ),
+    )
+    rrd_ramdisk_size = SizeField(
+        label=_("Reporting database RAMDisk size"),
+    )
+    graph_timespans = forms.CharField(
+        label=_("Graph time spans"),
+        help_text=_("Time periods for which aggregated historical data will be stored. See collect RRARows option "
+                    "documentation for more details"),
+    )
+    confirm_rrd_destroy = forms.BooleanField(
+        label=("Confirm destroying of reported database"),
+        required=False,
+    )
 
     class Meta:
         fields = '__all__'
         model = models.Reporting
 
     def __init__(self, *args, **kwargs):
+        if "instance" in kwargs and kwargs["instance"].id:
+            kwargs.setdefault("initial", {})
+            kwargs["initial"]["graph_timespans"] = " ".join([str(v) for v in kwargs["instance"].graph_timespans])
+
         super(ReportingForm, self).__init__(*args, **kwargs)
 
-    def middleware_clean(self, update):
-        return update
+        with client as c:
+            data = c.call("reporting.config")
+
+        self.fields["rrd_size_alert_threshold"].widget.attrs.update({
+            'placeholder': self.fields["rrd_size_alert_threshold"].widget.format_value(
+                data["rrd_size_alert_threshold_suggestion"])
+        })
+
+        self.fields["graph_timespans"].widget.attrs['onchange'] = "confirmRrdDestroyShow();"
+        self.fields["graph_rows"].widget.attrs['onchange'] = "confirmRrdDestroyShow();"
+
+    def clean_rrd_size_alert_threshold(self):
+        return self.cleaned_data["rrd_size_alert_threshold"] or None
+
+    def clean_graph_timespans(self):
+        return list(map(lambda s: int(s.strip()), self.cleaned_data["graph_timespans"].split()))
 
 
 class InitialWizardDSForm(Form):

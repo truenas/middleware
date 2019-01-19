@@ -1,14 +1,18 @@
 import copy
 import os
-import psutil
 import shutil
 import subprocess
 import tarfile
 import time
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
+import humanfriendly
+import psutil
+import sysctl
+
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str, ValidationErrors
 from middlewared.service import ConfigService, private
 from middlewared.utils import run
+from middlewared.validators import Range
 
 SYSRRD_SENTINEL = '/data/sentinels/sysdataset-rrd-disable'
 
@@ -44,6 +48,22 @@ class ReportingService(ConfigService):
 
     @private
     async def extend(self, data):
+        size = 0
+
+        # Each disk consumes about 1.7MB (geom_stat) + 1.1MB(disk) of space
+        # so we need bigger tmpfs on systems with lots of disks.
+        no_disks = len(sysctl.filter('kern.disks')[0].value.split())
+        size += no_disks * 2.8
+
+        # Each CPU takes about 1MB
+        no_cpus = sysctl.filter('kern.smp.cpus')[0].value
+        size += no_cpus * 1
+
+        # This all was true for RRARows 1200 and five RRATimespan
+        size /= (1200 / data['graph_rows'])
+        size /= (5 / len(data['graph_timespans']))
+
+        data['rrd_size_alert_threshold_suggestion'] = (300 + int(size)) * 1024 * 1024
         return data
 
     @accepts(
@@ -53,18 +73,54 @@ class ReportingService(ConfigService):
             Int('rrd_size_alert_threshold', null=True),
             Bool('cpu_in_percentage'),
             Str('graphite'),
-            Int('rrd_ramdisk_size'),
-            List('graph_timespans', items=[Int('timespan')]),
-            Int('graph_rows'),
+            Int('rrd_ramdisk_size', validators=[Range(min=1)]),
+            List('graph_timespans', items=[Int('timespan', validators=[Range(min=1)])], empty=False, unique=True),
+            Int('graph_rows', validators=[Range(min=1)]),
             Bool('confirm_rrd_destroy'),
             update=True
         )
     )
     async def do_update(self, data):
+        confirm_rrd_destroy = data.pop('confirm_rrd_destroy', False)
+
         old = await self.config()
+        old.pop('rrd_size_alert_threshold_suggestion')
 
         new = copy.deepcopy(old)
         new.update(data)
+
+        verrors = ValidationErrors()
+
+        data_dir = '/var/db/collectd/rrd'
+        update_ramdisk = False
+        if old['rrd_ramdisk_size'] != new['rrd_ramdisk_size']:
+            disk_parts = psutil.disk_partitions()
+            data_dir_is_ramdisk = len([d for d in disk_parts if d.mountpoint == data_dir and d.device == 'tmpfs']) > 0
+            if data_dir_is_ramdisk:
+                update_ramdisk = True
+
+                used = psutil.disk_usage(data_dir).used
+                if new['rrd_ramdisk_size'] < used:
+                    verrors.add(
+                        'reporting_update.rrd_ramdisk_size',
+                        f'Your current RAMDisk usage is {humanfriendly.format_size(used)} ({used} bytes), you can\'t '
+                        f'set RAMDisk size below this value'
+                    )
+
+        destroy_database = False
+        for k in ['graph_timespans', 'graph_rows']:
+            if old[k] != new[k]:
+                destroy_database = True
+
+                if not confirm_rrd_destroy:
+                    verrors.add(
+                        f'reporting_update.{k}',
+                        f'Changing this option requires destroying of reporting database so you\'ll have to confirm this '
+                        f'action by setting corresponding flag',
+                    )
+
+        if verrors:
+            raise verrors
 
         await self.middleware.call(
             'datastore.update',
@@ -75,10 +131,18 @@ class ReportingService(ConfigService):
         )
 
         if old['rrd_usedataset'] != new['rrd_usedataset']:
-            # Stop collectd to flush data
             await self.middleware.call('service.stop', 'collectd')
-
             await self._rrd_toggle()
+
+        if update_ramdisk:
+            await self.middleware.call('service.stop', 'collectd')
+            await run('/usr/local/sbin/save_rrds.sh', check=False)
+            await run('umount', data_dir, check=False)
+
+        if destroy_database:
+            await self.middleware.call('service.stop', 'collectd')
+            await run('sh', '-c', 'rm /data/rrd_dir.tar.bz2', check=False)
+            await run('sh', '-c', 'rm -rf /var/db/collectd/rrd/*', check=False)
 
         await self.middleware.call('service.restart', 'collectd')
 
@@ -109,7 +173,7 @@ class ReportingService(ConfigService):
                     os.unlink(rrd_path)
             else:
                 os.makedirs(rrd_path)
-            cp = await run('rsync', '-a', f'{rrd_syspath}/', f'{rrd_path}/')
+            cp = await run('rsync', '-a', f'{rrd_syspath}/', f'{rrd_path}/', check=False)
             return cp.returncode == 0
         return False
 
@@ -134,6 +198,7 @@ class ReportingService(ConfigService):
 
     @private
     def update_collectd_dataset(self):
+        config = self.middleware.call_sync('reporting.config')
         systemdatasetconfig = self.middleware.call_sync('systemdataset.config')
         is_freenas = self.middleware.call_sync('system.is_freenas')
         rrd_mount = ''
@@ -194,7 +259,7 @@ class ReportingService(ConfigService):
             # Create RAMdisk (if not already exists) for RRD files so they don't fill up root partition
             if not data_dir_is_ramdisk:
                 subprocess.Popen(
-                    ['mount', '-t', 'tmpfs', '-o', 'size=1g', 'tmpfs', data_dir],
+                    ['mount', '-t', 'tmpfs', '-o', f'size={config["rrd_ramdisk_size"]}', 'tmpfs', data_dir],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE
                 ).communicate()
 
