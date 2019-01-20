@@ -308,6 +308,8 @@ class ReplicationService(CRUDService):
         periodic_snapshot_tasks = new["periodic_snapshot_tasks"]
         await self.compress(new)
 
+        new.pop('state', None)
+
         await self.middleware.call(
             "datastore.update",
             self._config.datastore,

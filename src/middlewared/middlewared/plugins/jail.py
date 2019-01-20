@@ -354,11 +354,16 @@ class JailService(CRUDService):
     def get_activated_pool(self):
         """Returns the activated pool if there is one, or None"""
         try:
-            pool = ioc.IOCage(skip_jails=True).get("", pool=True)
+            pool = ioc.IOCage(skip_jails=True).get('', pool=True)
         except RuntimeError as e:
             raise CallError(f'Error occurred getting activated pool: {e}')
-        except ioc_exceptions.PoolNotActivated:
-            pool = None
+        except (ioc_exceptions.PoolNotActivated, FileNotFoundError):
+            self.check_dataset_existence()
+
+            try:
+                pool = ioc.IOCage(skip_jails=True).get('', pool=True)
+            except ioc_exceptions.PoolNotActivated:
+                pool = None
 
         return pool
 

@@ -34,7 +34,7 @@ def pw_checkname(verrors, attribute, name):
             attribute,
             'The character $ is only allowed as the final character.'
         )
-    invalid_chars = ' ,\t:+&#%\^()!@~\*?<>=|\\/"'
+    invalid_chars = ' ,\t:+&#%^()!@~*?<>=|\\/"'
     invalids = []
     for char in name:
         # invalid_chars nor 8-bit characters are allowed
@@ -109,7 +109,19 @@ class UserService(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
+        """
+        Create a new user.
 
+        If `uid` is not provided it is automatically filled with the next one available.
+
+        `group` is required if `group_create` is false.
+
+        `password` is required if `password_disabled` is false.
+
+        Available choices for `shell` can be retrieved with `user.shell_choices`.
+
+        `attributes` is a general-purpose object for storing arbitrary user information.
+        """
         verrors = ValidationErrors()
 
         if (
@@ -338,6 +350,12 @@ class UserService(CRUDService):
 
     @accepts(Int('id'), Dict('options', Bool('delete_group', default=True)))
     async def do_delete(self, pk, options=None):
+        """
+        Delete user `id`.
+
+        The `delete_group` option deletes the user primary group if it is not being used by
+        any other user.
+        """
 
         user = await self._get_instance(pk)
 
@@ -370,6 +388,18 @@ class UserService(CRUDService):
 
         return pk
 
+    @accepts()
+    def shell_choices(self):
+        """
+        Return the available shell choices to be used in `user.create` and `user.update`.
+        """
+        with open('/etc/shells', 'r') as f:
+            shells = [x.rstrip() for x in f.readlines() if x.startswith('/')]
+        return {
+            shell: os.path.basename(shell)
+            for shell in shells + ['/usr/sbin/nologin']
+        }
+
     @item_method
     @accepts(
         Int('id'),
@@ -383,10 +413,16 @@ class UserService(CRUDService):
         e.g. Setting key="foo" value="var" will result in {"attributes": {"foo": "bar"}}
         """
         user = await self._get_instance(pk)
-        user.pop('group')
 
         user['attributes'][key] = value
-        await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
+
+        await self.middleware.call(
+            'datastore.update',
+            'account.bsdusers',
+            pk,
+            {'attributes': user['attributes']},
+            {'prefix': 'bsdusr_'}
+        )
 
         return True
 
@@ -400,11 +436,17 @@ class UserService(CRUDService):
         Remove user general purpose `attributes` dictionary `key`.
         """
         user = await self._get_instance(pk)
-        user.pop('group')
 
         if key in user['attributes']:
             user['attributes'].pop(key)
-            await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
+
+            await self.middleware.call(
+                'datastore.update',
+                'account.bsdusers',
+                pk,
+                {'attributes': user['attributes']},
+                {'prefix': 'bsdusr_'}
+            )
             return True
         else:
             return False
@@ -426,6 +468,12 @@ class UserService(CRUDService):
     @no_auth_required
     @accepts()
     async def has_root_password(self):
+        """
+        Return whether the root user has a valid password set.
+
+        This is used when the system is installed without a password and must be set on
+        first use/login.
+        """
         return (await self.middleware.call(
             'datastore.query', 'account.bsdusers', [('bsdusr_username', '=', 'root')], {'get': True}
         ))['bsdusr_unixhash'] != '*'
@@ -434,8 +482,11 @@ class UserService(CRUDService):
     @accepts(Str('password'))
     @pass_app
     async def set_root_password(self, app, password):
+        """
+        Set password for root user if it is not already set.
+        """
         if not app.authenticated and await self.middleware.call('user.has_root_password'):
-            raise CallError('You can\'t call this method anonymously if root already has a password', errno.EACCES)
+            raise CallError('You cannot call this method anonymously if root already has a password', errno.EACCES)
 
         root = await self.middleware.call('user.query', [('username', '=', 'root')], {'get': True})
         await self.middleware.call('user.update', root['id'], {'password': password})
@@ -610,6 +661,15 @@ class GroupService(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
+        """
+        Create a new group.
+
+        If `gid` is not provided it is automatically filled with the next one available.
+
+        `allow_duplicate_gid` allows distinct group names to share the same gid.
+
+        `users` is a list of user ids (`id` attribute from `user.query`).
+        """
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, data)
@@ -659,6 +719,8 @@ class GroupService(CRUDService):
         if 'name' in data and data['name'] != group['group']:
             delete_groupmap = group['group']
             group['group'] = group.pop('name')
+        else:
+            group.pop('name', None)
 
         await self.middleware.call('datastore.update', 'account.bsdgroups', pk, group, {'prefix': 'bsdgrp_'})
 
@@ -683,6 +745,11 @@ class GroupService(CRUDService):
 
     @accepts(Int('id'), Dict('options', Bool('delete_users', default=False)))
     async def do_delete(self, pk, options=None):
+        """
+        Delete group `id`.
+
+        The `delete_users` option deletes all users that have this group as their primary group.
+        """
 
         group = await self._get_instance(pk)
 
