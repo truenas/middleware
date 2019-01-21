@@ -749,7 +749,9 @@ class ReportingService(Service):
                 rrd = self.__rrds[i['name']]
             except KeyError:
                 raise CallError(f'Graph {i["name"]!r} not found.', errno.ENOENT)
-            return rrd.export(i['identifier'], starttime, endtime, aggregate=query['aggregate'])
+            rv.append(
+                rrd.export(i['identifier'], starttime, endtime, aggregate=query['aggregate'])
+            )
         return rv
 
     @private
@@ -931,7 +933,7 @@ class ReportingEventSource(EventSource):
                     }],
                     {'start': start, 'end': end, 'aggregate': False},
                 )
-                self.send_event('ADDED', fields={'name': name, 'identifier': ident, 'data': data})
+                self.send_event('ADDED', fields=data[0])
             except Exception:
                 self.middleware.logger.debug(
                     'Failed to send reporting event for {name!r}:{ident!r}', exc_info=True,
