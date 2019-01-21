@@ -220,6 +220,11 @@ class AFPForm(MiddlewareModelForm, ModelForm):
         else:
             self.fields['afp_srv_bindip'].initial = ('')
 
+    def middleware_clean(self, data):
+        for i in ('map_acls', 'chmod_request'):
+            data[i] = data[i].upper()
+        return data
+
 
 class NFSForm(MiddlewareModelForm, ModelForm):
 
