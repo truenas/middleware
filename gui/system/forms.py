@@ -1736,7 +1736,7 @@ class ReportingForm(MiddlewareModelForm, ModelForm):
                     "documentation for more details"),
     )
     confirm_rrd_destroy = forms.BooleanField(
-        label=("Confirm destroying of reported database"),
+        label=_("Confirm destroying of reporting database"),
         required=False,
     )
 

@@ -91,6 +91,9 @@ class SystemHook(AppHook):
                 'focus': focus,
                 'verbose_name': verbose_name,
                 'url': url,
+                'onload': {
+                    models.Reporting: 'confirmRrdDestroyHide();',
+                }.get(model, ''),
             })
 
         tabs.insert(2, {
