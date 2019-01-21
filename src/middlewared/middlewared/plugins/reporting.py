@@ -716,6 +716,32 @@ class ReportingService(Service):
         )
     )
     def get_data(self, graphs, query):
+        """
+        Get reporting data for given graphs.
+
+        List of possible graphs can be retrieved using `reporting.graphs` call.
+
+        For the time period of the graph either `unit` and `page` OR `start` and `end` should be
+        used, not both.
+
+        `aggregate` will return aggregate available data for each graph (e.g. min, max, mean).
+
+        .. examples(websocket)::
+
+          Get graph data of "nfsstat" from the last hour.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "reporting.get_data",
+                "params": [
+                    [{"name": "nfsstat"}],
+                    {"unit": "HOURLY"},
+                ]
+            }
+
+        """
         starttime, endtime = self.__rquery_to_start_end(query)
         rv = []
         for i in graphs:
