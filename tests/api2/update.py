@@ -13,7 +13,15 @@ from auto_config import vm_name, interface, ip
 from time import sleep, time
 
 
-def test_01_get_update_trains():
+def test_01_get_initial_FreeNAS_version():
+    results = GET("/system/info/")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict) is True, results.text
+    global initial_version
+    initial_version = results.json()['version']
+
+
+def test_02_get_update_trains():
     results = GET('/update/get_trains/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict) is True, results.text
@@ -21,7 +29,7 @@ def test_01_get_update_trains():
     selected_trains = results.json()['selected']
 
 
-def test_02_check_available_update():
+def test_03_check_available_update():
     global upgrade
     results = POST('/update/check_available/')
     assert results.status_code == 200, results.text
@@ -32,14 +40,14 @@ def test_02_check_available_update():
         upgrade = True
 
 
-def test_03_update_get_pending():
+def test_04_update_get_pending():
     results = POST('/update/get_pending/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list) is True, results.text
     assert results.json() == [], results.text
 
 
-def test_04_get_download_update():
+def test_05_get_download_update():
     if upgrade is False:
         pytest.skip('No update found')
     else:
@@ -50,7 +58,7 @@ def test_04_get_download_update():
         JOB_ID = results.json()
 
 
-def test_05_verify_the_update_download_is_successful():
+def test_06_verify_the_update_download_is_successful():
     if upgrade is False:
         pytest.skip('No update found')
     else:
@@ -71,7 +79,7 @@ def test_05_verify_the_update_download_is_successful():
                 break
 
 
-def test_06_get_pending_update():
+def test_07_get_pending_update():
     if upgrade is False:
         pytest.skip('No update found')
     elif download_hang is True:
@@ -83,7 +91,7 @@ def test_06_get_pending_update():
         assert results.json() != [], results.text
 
 
-def test_07_install_update():
+def test_08_install_update():
     if upgrade is False:
         pytest.skip('No update found')
     elif download_hang is True:
@@ -104,7 +112,7 @@ def test_07_install_update():
         JOB_ID = results.json()
 
 
-def test_08_verify_the_update_is_successful():
+def test_09_verify_the_update_is_successful():
     if upgrade is False:
         pytest.skip('No update found')
     elif download_hang is True:
@@ -120,7 +128,7 @@ def test_08_verify_the_update_is_successful():
                 break
 
 
-def test_09_verify_system_is_ready_to_reboot():
+def test_10_verify_system_is_ready_to_reboot():
     if upgrade is False:
         pytest.skip('No update found')
     elif download_hang is True:
@@ -132,26 +140,49 @@ def test_09_verify_system_is_ready_to_reboot():
         assert results.json()['status'] == 'REBOOT_REQUIRED', results.text
 
 
-def test_10_wait_for_first_reboot_with_bhyve():
-    if vm_name is None:
-        pytest.skip('skip no vm_name')
-    while vm_state(vm_name) != 'stopped':
-        sleep(5)
-    assert vm_start(vm_name) is True
+def test_11_wait_for_first_reboot_with_bhyve():
+    if upgrade is False:
+        pytest.skip('No update found')
+    else:
+        if vm_name is None:
+            pytest.skip('skip no vm_name')
+        else:
+            while vm_state(vm_name) != 'stopped':
+                sleep(5)
+            assert vm_start(vm_name) is True
     sleep(1)
 
 
-def test_10_wait_for_second_reboot_with_bhyve():
-    if vm_name is None:
-        pytest.skip('skip no vm_name')
-    while vm_state(vm_name) != 'stopped':
-        sleep(5)
-    assert vm_start(vm_name) is True
+def test_12_wait_for_second_reboot_with_bhyve():
+    if upgrade is False:
+        pytest.skip('No update found')
+    else:
+        if vm_name is None:
+            pytest.skip('skip no vm_name')
+        else:
+            while vm_state(vm_name) != 'stopped':
+                sleep(5)
+            assert vm_start(vm_name) is True
     sleep(1)
 
 
-def test_10_wait_for_FreeNAS_to_be_online():
-    while ping_host(ip) is not True:
-        sleep(5)
-    assert ping_host(ip) is True
+def test_13_wait_for_FreeNAS_to_be_online():
+    if upgrade is False:
+        pytest.skip('No update found')
+    else:
+        while ping_host(ip) is not True:
+            sleep(5)
+        assert ping_host(ip) is True
     sleep(10)
+
+
+def test_14_verify_initial_version_is_not_current_FreeNAS_version():
+    if upgrade is False:
+        pytest.skip('No update found')
+    else:
+        results = GET("/system/info/")
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict) is True, results.text
+        global current_version
+        current_version = results.json()
+        assert initial_version != current_version, results.json()
