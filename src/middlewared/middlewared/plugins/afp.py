@@ -13,8 +13,8 @@ import os
 class AFPService(SystemServiceService):
 
     class Config:
-        service = "afp"
-        datastore_prefix = "afp_srv_"
+        service = 'afp'
+        datastore_prefix = 'afp_srv_'
 
     @accepts(Dict(
         'afp_update',
@@ -24,8 +24,8 @@ class AFPService(SystemServiceService):
         Int('connections_limit', validators=[Range(min=1, max=65535)]),
         Dir('dbpath'),
         Str('global_aux'),
-        Str('map_acls', enum=["rights", "mode", "none"]),
-        Str('chmod_request', enum=["preserve", "simple", "ignore"]),
+        Str('map_acls', enum=['rights', 'mode', 'none']),
+        Str('chmod_request', enum=['preserve', 'simple', 'ignore']),
         update=True
     ))
     async def do_update(self, data):
@@ -36,8 +36,8 @@ class AFPService(SystemServiceService):
 
         verrors = ValidationErrors()
 
-        if new["dbpath"]:
-            await check_path_resides_within_volume(verrors, self.middleware, "afp_update.dbpath", new["dbpath"])
+        if new['dbpath']:
+            await check_path_resides_within_volume(verrors, self.middleware, 'afp_update.dbpath', new['dbpath'])
 
         if verrors:
             raise verrors
@@ -85,7 +85,7 @@ class SharingAFPService(CRUDService):
         await self.validate(data, 'sharingafp_create', verrors)
 
         await check_path_resides_within_volume(
-            verrors, self.middleware, "sharingafp_create.path", path)
+            verrors, self.middleware, 'sharingafp_create.path', path)
 
         if verrors:
             raise verrors
@@ -131,7 +131,7 @@ class SharingAFPService(CRUDService):
 
         if path:
             await check_path_resides_within_volume(
-                verrors, self.middleware, "sharingafp_create.path", path)
+                verrors, self.middleware, 'sharingafp_create.path', path)
 
         if verrors:
             raise verrors
