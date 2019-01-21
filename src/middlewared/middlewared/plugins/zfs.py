@@ -323,7 +323,8 @@ class ZFSDatasetService(CRUDService):
         # other ZFS operations.
         try:
             subprocess.run(
-                ['zfs', 'destroy'] + args + [id], text=True, capture_output=True, check=True,
+                ['zfs', 'destroy'] + args + [id],
+                universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True,
             )
         except subprocess.CalledProcessError as e:
             self.logger.error('Failed to delete dataset', exc_info=True)
