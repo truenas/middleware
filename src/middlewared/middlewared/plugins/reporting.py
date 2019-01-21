@@ -705,9 +705,7 @@ class ReportingService(Service):
         ], empty=False),
         Dict(
             'reporting_query',
-            Str('unit', enum=[
-                'HOURLY', 'DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'
-            ]),
+            Str('unit', enum=['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR']),
             Int('page', default=0),
             Str('start', empty=False),
             Str('end', empty=False),
