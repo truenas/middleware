@@ -141,6 +141,7 @@ class RRDBase(object, metaclass=RRDMeta):
             "/usr/local/bin/rrdtool",
             "graph",
             path,
+            '--daemon', 'unix:/var/run/rrdcached.sock',
             '--imgformat', self.imgformat,
             '--vertical-label', str(self.get_vertical_label()),
             '--title', str(self.get_title()),
