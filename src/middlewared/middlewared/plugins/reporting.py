@@ -16,17 +16,20 @@ import shutil
 import socketserver
 import subprocess
 import sysctl
+import syslog
 import tarfile
+import tempfile
 import textwrap
 import threading
 import time
 
 from middlewared.event import EventSource
-from middlewared.schema import Bool, Dict, Int, List, Ref, Str, ValidationErrors, accepts
+from middlewared.schema import Bool, Dict, Int, List, Ref, Str, accepts
 from middlewared.service import CallError, ConfigService, ValidationErrors, filterable, private
 from middlewared.utils import filter_list, run, start_daemon_thread
 from middlewared.validators import Range
 
+PERSIST_FILE = '/data/rrd_dir.tar.bz2'
 RE_COLON = re.compile('(.+):(.+)$')
 RE_DISK = re.compile(r'^[a-z]+[0-9]+$')
 RE_NAME = re.compile(r'(%name_(\d+)%)')
@@ -812,12 +815,12 @@ class ReportingService(ConfigService):
 
         if update_ramdisk:
             await self.middleware.call('service.stop', 'collectd')
-            await run('/usr/local/sbin/save_rrds.sh', check=False)
+            await self.middleware.call('reporting.persist_ramdisk')
             await run('umount', data_dir, check=False)
 
         if destroy_database:
             await self.middleware.call('service.stop', 'collectd')
-            await run('sh', '-c', 'rm /data/rrd_dir.tar.bz2', check=False)
+            await self.middleware.run_in_thread(os.unlink, PERSIST_FILE)
             await run('sh', '-c', 'rm -rf /var/db/collectd/rrd/*', check=False)
 
         await self.middleware.call('service.restart', 'collectd')
@@ -895,7 +898,6 @@ class ReportingService(ConfigService):
         if not hostname:
             hostname = self.middleware.call_sync('network.configuration.config')['hostname']
 
-        rrd_file = '/data/rrd_dir.tar.bz2'
         data_dir = '/var/db/collectd/rrd'
         disk_parts = psutil.disk_partitions()
         data_dir_is_ramdisk = len([d for d in disk_parts if d.mountpoint == data_dir and d.device == 'tmpfs']) > 0
@@ -944,13 +946,13 @@ class ReportingService(ConfigService):
             self.middleware.logger.error(f'{pwd} does not exist')
             return None
 
-        if os.path.isfile(rrd_file):
-            with tarfile.open(rrd_file) as tar:
+        if os.path.isfile(PERSIST_FILE):
+            with tarfile.open(PERSIST_FILE) as tar:
                 if 'collectd/rrd' in tar.getnames():
                     tar.extractall(pwd, get_members(tar, 'collectd/rrd/'))
 
             if use_rrd_dataset:
-                remove(rrd_file)
+                remove(PERSIST_FILE)
 
         # Migrate from old version, where "${hostname}" was a real directory
         # and "localhost" was a symlink.
@@ -1008,10 +1010,31 @@ class ReportingService(ConfigService):
             rrd_mount = f'{systemdataset_config["path"]}/rrd-{systemdataset_config["uuid"]}'
             if os.path.isdir(rrd_mount):
                 # Let's create tar from system dataset rrd which collectd.conf understands
-                with tarfile.open('/data/rrd_dir.tar.bz2', mode='w:bz2') as archive:
+                with tarfile.open(PERSIST_FILE, mode='w:bz2') as archive:
                     archive.add(rrd_mount, filter=rename_tarinfo)
 
             os.remove(SYSRRD_SENTINEL)
+
+    @private
+    def persist_ramdisk(self):
+        if self.middleware.call_sync('reporting.use_rrd_dataset'):
+            return
+
+        with tempfile.NamedTemporaryFile(dir=os.path.dirname(PERSIST_FILE), suffix='.tar.bz2', delete=False) as f:
+            try:
+                subprocess.run(['tar', '-C', '/var/db', '-cjf', f.name, 'collectd'], check=True)
+
+                free = psutil.disk_usage(os.path.dirname(PERSIST_FILE)).free
+                if os.path.exists(PERSIST_FILE):
+                    free += os.path.getsize(PERSIST_FILE)
+                if free < 20 * 1024 * 1024:
+                    syslog.syslog('Not enough space on /data to save collectd data')
+                    return
+
+                shutil.move(f.name, PERSIST_FILE)
+            finally:
+                if os.path.exists(f.name):
+                    os.unlink(f.name)
 
     @filterable
     def graphs(self, filters, options):
