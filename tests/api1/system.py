@@ -13,6 +13,14 @@ sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, vm_state, vm_start, ping_host
 from auto_config import user, password, ip, vm_name
 
+tun_list = [
+    "tun_var",
+    "tun_comment",
+    "tun_enabled",
+    "tun_value",
+    "tun_type",
+]
+
 
 def test_01_Checking_system_version():
     results = GET("/system/version/")
@@ -37,7 +45,7 @@ def test_04_Creating_system_tunable_dummynet():
     global payload, results, tunable_id
     payload = {
         "tun_var": "dummynet_load",
-        "tun_comment": "",
+        "tun_comment": "tunable dummynet test",
         "tun_enabled": True,
         "tun_value": "YES",
         "tun_type": "loader"
@@ -47,17 +55,23 @@ def test_04_Creating_system_tunable_dummynet():
     tunable_id = results.json()['id']
 
 
+@pytest.mark.parametrize('data', tun_list)
+def test_05_verify_created_tunable_dummynet_result_of_(data):
+    assert payload[data] == results.json()[data], results.text
+
+
 # Check loader tunable
 # def test_04_Checking_system_tunable_dummynet():
 #     assert GET("/system/tunable/", "tun_var") == "dummynet_load"
 
 
 # Reboot system to enable tunable
-def test_05_Reboot_system_to_enable_tunable():
-    assert POST("/system/reboot") == 202
+def test_08_Reboot_system_to_enable_tunable():
+    results = POST("/system/reboot/")
+    assert results.status_code == 202, results.text
 
 
-def test_12_wait_for_reboot_with_bhyve():
+def test_09_wait_for_reboot_with_bhyve():
     if vm_name is None:
         pytest.skip('skip no vm_name')
     else:
