@@ -1001,15 +1001,6 @@ class Reporting(Model):
             "increase IO on system dataset pool."
         )
     )
-    rrd_size_alert_threshold = models.IntegerField(
-        null=True,
-        default=None,
-        verbose_name=_("Reporting database size alert threshold"),
-        help_text=_(
-            "Store reporting database in system dataset instead of RAMDisk. Checking this will decrease RAM usage and "
-            "increase IO on system dataset pool."
-        )
-    )
     cpu_in_percentage = models.BooleanField(
         default=False,
         verbose_name=_("Report CPU usage in percentage"),

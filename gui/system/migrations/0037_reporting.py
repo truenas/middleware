@@ -29,7 +29,6 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('rrd_usedataset', models.BooleanField(default=True, help_text='Store reporting database in system dataset instead of RAMDisk. Checking this will decrease RAM usage and increase IO on system dataset pool.', verbose_name='Store reporting database in system dataset')),
-                ('rrd_size_alert_threshold', models.IntegerField(default=None, help_text='Store reporting database in system dataset instead of RAMDisk. Checking this will decrease RAM usage and increase IO on system dataset pool.', null=True, verbose_name='Reporting database size alert threshold')),
                 ('cpu_in_percentage', models.BooleanField(default=False, help_text='collectd will report CPU usage in percentage instead of "jiffies" if this is checked.', verbose_name='Report CPU usage in percentage')),
                 ('graphite', models.CharField(blank=True, default='', help_text='A hostname or IP here will be used as the destination to send collectd data to using the graphite plugin to collectd.', max_length=120, verbose_name='Graphite server')),
                 ('rrd_ramdisk_size', models.IntegerField(default=1073741824, verbose_name='Reporting database RAMDisk size')),

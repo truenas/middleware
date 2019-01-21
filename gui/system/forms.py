@@ -1727,14 +1727,6 @@ class ReportingForm(MiddlewareModelForm, ModelForm):
     middleware_plugin = "reporting"
     is_singletone = True
 
-    rrd_size_alert_threshold = SizeField(
-        required=False,
-        label=_("Reporting database size alert threshold"),
-        help_text=_(
-            "Store reporting database in system dataset instead of RAMDisk. Checking this will decrease RAM usage and "
-            "increase IO on system dataset pool."
-        ),
-    )
     rrd_ramdisk_size = SizeField(
         label=_("Reporting database RAMDisk size"),
     )
@@ -1762,16 +1754,8 @@ class ReportingForm(MiddlewareModelForm, ModelForm):
         with client as c:
             data = c.call("reporting.config")
 
-        self.fields["rrd_size_alert_threshold"].widget.attrs.update({
-            'placeholder': self.fields["rrd_size_alert_threshold"].widget.format_value(
-                data["rrd_size_alert_threshold_suggestion"])
-        })
-
         self.fields["graph_timespans"].widget.attrs['onchange'] = "confirmRrdDestroyShow();"
         self.fields["graph_rows"].widget.attrs['onchange'] = "confirmRrdDestroyShow();"
-
-    def clean_rrd_size_alert_threshold(self):
-        return self.cleaned_data["rrd_size_alert_threshold"] or None
 
     def clean_graph_timespans(self):
         return list(map(lambda s: int(s.strip()), self.cleaned_data["graph_timespans"].split()))

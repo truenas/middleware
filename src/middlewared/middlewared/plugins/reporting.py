@@ -688,7 +688,6 @@ class ReportingService(ConfigService):
 
     class Config:
         datastore = 'system.reporting'
-        datastore_extend = 'reporting.extend'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -696,31 +695,10 @@ class ReportingService(ConfigService):
         for name, klass in RRD_PLUGINS.items():
             self.__rrds[name] = klass(self.middleware)
 
-    @private
-    async def extend(self, data):
-        size = 0
-
-        # Each disk consumes about 1.7MB (geom_stat) + 1.1MB(disk) of space
-        # so we need bigger tmpfs on systems with lots of disks.
-        no_disks = len(sysctl.filter('kern.disks')[0].value.split())
-        size += no_disks * 2.8
-
-        # Each CPU takes about 1MB
-        no_cpus = sysctl.filter('kern.smp.cpus')[0].value
-        size += no_cpus * 1
-
-        # This all was true for RRARows 1200 and five RRATimespan
-        size /= (1200 / data['graph_rows'])
-        size /= (5 / len(data['graph_timespans']))
-
-        data['rrd_size_alert_threshold_suggestion'] = (300 + int(size)) * 1024 * 1024
-        return data
-
     @accepts(
         Dict(
             'reporting_update',
             Bool('rrd_usedataset'),
-            Int('rrd_size_alert_threshold', null=True),
             Bool('cpu_in_percentage'),
             Str('graphite'),
             Int('rrd_ramdisk_size', validators=[Range(min=1)]),
@@ -736,10 +714,6 @@ class ReportingService(ConfigService):
 
         `rrd_usedataset` is a flag that determines whether reporting database is located in system dataset or on
         RAMDisk.
-
-        `rrd_size_alert_threshold` is a size (in bytes) of reporting database that will trigger an alert. It can be
-        set to null, then an auto-calculated default is used, suitable for most use cases. This value is present in
-        `reporting.config` result as `rrd_size_alert_threshold_suggestion`.
 
         If `cpu_in_percentage` is `true`, collectd will report CPU usage in percentage instead of "jiffies".
 
@@ -763,7 +737,6 @@ class ReportingService(ConfigService):
                 "method": "reporting.update",
                 "params": [{
                     "rrd_usedataset": true,
-                    "rrd_size_alert_threshold": null,
                     "cpu_in_percentage": false,
                     "graphite": "",
                     "rrd_ramdisk_size": 1073741824,
@@ -788,7 +761,6 @@ class ReportingService(ConfigService):
         confirm_rrd_destroy = data.pop('confirm_rrd_destroy', False)
 
         old = await self.config()
-        old.pop('rrd_size_alert_threshold_suggestion')
 
         new = copy.deepcopy(old)
         new.update(data)
