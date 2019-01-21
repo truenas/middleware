@@ -18,7 +18,7 @@ import threading
 import time
 
 from middlewared.event import EventSource
-from middlewared.schema import Dict, Int, List, Ref, Str, accepts
+from middlewared.schema import Bool, Dict, Int, List, Ref, Str, accepts
 from middlewared.service import CallError, Service, ValidationErrors, filterable, private
 from middlewared.utils import filter_list, start_daemon_thread
 
@@ -172,7 +172,7 @@ class RRDBase(object, metaclass=RRDMeta):
 
         return args
 
-    def export(self, identifier, starttime, endtime):
+    def export(self, identifier, starttime, endtime, aggregate=True):
         args = [
             'rrdtool',
             'xport',
@@ -195,7 +195,7 @@ class RRDBase(object, metaclass=RRDMeta):
             aggregations=dict(),
         )
 
-        if self.aggregations:
+        if self.aggregations and aggregate:
             df = pandas.DataFrame(data['data'])
             for agg in self.aggregations:
                 if agg in ('max', 'mean', 'min'):
@@ -711,6 +711,7 @@ class ReportingService(Service):
             Int('page', default=0),
             Str('start', empty=False),
             Str('end', empty=False),
+            Bool('aggregate', default=True),
             register=True,
         )
     )
@@ -722,7 +723,7 @@ class ReportingService(Service):
                 rrd = self.__rrds[i['name']]
             except KeyError:
                 raise CallError(f'Graph {i["name"]!r} not found.', errno.ENOENT)
-            return rrd.export(i['identifier'], starttime, endtime)
+            return rrd.export(i['identifier'], starttime, endtime, aggregate=query['aggregate'])
         return rv
 
     @private
@@ -735,7 +736,7 @@ class ReportingService(Service):
             if idents is None:
                 idents = [None]
             for ident in idents:
-                rv.append(rrd.export(ident, starttime, endtime))
+                rv.append(rrd.export(ident, starttime, endtime, aggregate=query['aggregate']))
         return rv
 
     @private
@@ -902,7 +903,7 @@ class ReportingEventSource(EventSource):
                         'name': name,
                         'identifier': ident,
                     }],
-                    {'start': start, 'end': end},
+                    {'start': start, 'end': end, 'aggregate': False},
                 )
                 self.send_event('ADDED', fields={'name': name, 'identifier': ident, 'data': data})
             except Exception:
