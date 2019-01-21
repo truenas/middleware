@@ -44,6 +44,22 @@ class AFPService(SystemServiceService):
         update=True
     ))
     async def do_update(self, data):
+        """
+        Update AFP service settings.
+
+        `bindip` is a list of IPs to bind AFP to. Leave blank (empty list) to bind to all
+        available IPs.
+
+        `map_acls` defines how to map the effective permissions of authenticated users.
+        RIGHTS - Unix-style permissions
+        MODE - ACLs
+        NONE - Do not map
+
+        `chmod_request` defines advanced permission control that deals with ACLs.
+        PRESERVE - Preserve ZFS ACEs for named users and groups or POSIX ACL group mask
+        SIMPLE - Change permission as requested without any extra steps
+        IGNORE - Permission change requests are ignored
+        """
         old = await self.config()
 
         new = old.copy()
@@ -94,6 +110,14 @@ class SharingAFPService(CRUDService):
         register=True
     ))
     async def do_create(self, data):
+        """
+        Create AFP share.
+
+        `allow`, `deny`, `ro`, and `rw` are lists of users and groups. Groups are designated by
+        an @ prefix.
+
+        `hostsallow` and `hostsdeny` are lists of hosts and/or networks.
+        """
         verrors = ValidationErrors()
         path = data['path']
 
@@ -131,6 +155,9 @@ class SharingAFPService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update AFP share `id`.
+        """
         verrors = ValidationErrors()
         old = await self.middleware.call(
             'datastore.query', self._config.datastore, [('id', '=', id)],
@@ -170,6 +197,9 @@ class SharingAFPService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        """
+        Delete AFP share `id`.
+        """
         result = await self.middleware.call('datastore.delete', self._config.datastore, id)
         await self._service_change('afp', 'reload')
         return result
