@@ -11,6 +11,7 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, vm_state, vm_start, ping_host
+from functions import DELETE
 from auto_config import user, password, ip, vm_name
 
 tun_list = [
@@ -22,7 +23,7 @@ tun_list = [
 ]
 
 
-def test_01_Checking_system_version():
+def test_01_checking_system_version():
     results = GET("/system/version/")
     assert results.status_code == 200, results.text
 
@@ -41,7 +42,7 @@ def test_03_verify_timezon_has_change():
 
 
 # Create loader tunable
-def test_04_Creating_system_tunable_dummynet():
+def test_04_create_system_tunable_dummynet():
     global payload, results, tunable_id
     payload = {
         "tun_var": "dummynet_load",
@@ -60,13 +61,20 @@ def test_05_verify_created_tunable_dummynet_result_of_(data):
     assert payload[data] == results.json()[data], results.text
 
 
-# Check loader tunable
-# def test_04_Checking_system_tunable_dummynet():
-#     assert GET("/system/tunable/", "tun_var") == "dummynet_load"
+# Get loader tunable
+def test_06_get_system_tunable_dummynet():
+    global results
+    results = GET(f"/system/tunable/{tunable_id}")
+    assert results.status_code == 200, results.text
+
+
+@pytest.mark.parametrize('data', tun_list)
+def test_07_verify_get_system_tunable_result_of_(data):
+    assert payload[data] == results.json()[data], results.text
 
 
 # Reboot system to enable tunable
-def test_08_Reboot_system_to_enable_tunable():
+def test_08_reboot_system_to_enable_tunable():
     results = POST("/system/reboot/")
     assert results.status_code == 202, results.text
 
@@ -84,7 +92,13 @@ def test_09_wait_for_reboot_with_bhyve():
     assert ping_host(ip) is True
     sleep(10)
 
+
 # Verify loader tunable
-# def test_06_Verify_system_tunable_dummynet_load():
-#     results = SSH_TEST('kldstat -m dummynet', user, password, ip)
-#     assert results['result'] is True, results['output']
+def test_10_verify_system_tunable_dummynet_load():
+    results = SSH_TEST('kldstat -m dummynet', user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+def test_11_delete_tunable():
+    results = DELETE(f"/system/tunable/{tunable_id}/", api='1')
+    assert results.status_code == 204, results.text
