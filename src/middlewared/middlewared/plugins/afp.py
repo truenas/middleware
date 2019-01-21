@@ -14,7 +14,22 @@ class AFPService(SystemServiceService):
 
     class Config:
         service = 'afp'
+        datastore_extend = 'afp.extend'
         datastore_prefix = 'afp_srv_'
+
+    @private
+    async def extend(self, afp):
+        for i in ('map_acls', 'chmod_request'):
+            afp[i] = afp[i].upper()
+        return afp
+
+    @private
+    async def compress(self, afp):
+        for i in ('map_acls', 'chmod_request'):
+            value = afp.get(i)
+            if value:
+                afp[i] = value.lower()
+        return afp
 
     @accepts(Dict(
         'afp_update',
@@ -24,8 +39,8 @@ class AFPService(SystemServiceService):
         Int('connections_limit', validators=[Range(min=1, max=65535)]),
         Dir('dbpath'),
         Str('global_aux'),
-        Str('map_acls', enum=['rights', 'mode', 'none']),
-        Str('chmod_request', enum=['preserve', 'simple', 'ignore']),
+        Str('map_acls', enum=['RIGHTS', 'MODE', 'NONE']),
+        Str('chmod_request', enum=['PRESERVE', 'SIMPLE', 'IGNORE']),
         update=True
     ))
     async def do_update(self, data):
@@ -42,9 +57,10 @@ class AFPService(SystemServiceService):
         if verrors:
             raise verrors
 
+        new = await self.compress(new)
         await self._update_service(old, new)
 
-        return new
+        return await self.config()
 
 
 class SharingAFPService(CRUDService):
