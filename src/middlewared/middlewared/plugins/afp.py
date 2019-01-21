@@ -68,10 +68,11 @@ class AFPService(SystemServiceService):
         verrors = ValidationErrors()
 
         if new['dbpath']:
-            await check_path_resides_within_volume(verrors, self.middleware, 'afp_update.dbpath', new['dbpath'])
+            await check_path_resides_within_volume(
+                verrors, self.middleware, 'afp_update.dbpath', new['dbpath'],
+            )
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         new = await self.compress(new)
         await self._update_service(old, new)
@@ -88,7 +89,7 @@ class SharingAFPService(CRUDService):
 
     @accepts(Dict(
         'sharingafp_create',
-        Str('path'),
+        Str('path', required=True),
         Bool('home', default=False),
         Str('name'),
         Str('comment'),
@@ -127,8 +128,7 @@ class SharingAFPService(CRUDService):
         await check_path_resides_within_volume(
             verrors, self.middleware, 'sharingafp_create.path', path)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         if path and not os.path.exists(path):
             try:
