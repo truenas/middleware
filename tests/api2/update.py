@@ -30,14 +30,14 @@ def test_02_get_update_trains():
 
 
 def test_03_check_available_update():
-    global upgrade
+    global update_version
     results = POST('/update/check_available/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict) is True, results.text
-    if results.json() == {}:
-        upgrade = False
+    if results.json()['status'] == 'AVAILABLE':
+        update_version = results.json()['version']
     else:
-        upgrade = True
+        update_version = None
 
 
 def test_04_update_get_pending():
@@ -48,7 +48,7 @@ def test_04_update_get_pending():
 
 
 def test_05_get_download_update():
-    if upgrade is False:
+    if update_version is None:
         pytest.skip('No update found')
     else:
         results = GET('/update/download/')
@@ -59,7 +59,7 @@ def test_05_get_download_update():
 
 
 def test_06_verify_the_update_download_is_successful():
-    if upgrade is False:
+    if update_version is None:
         pytest.skip('No update found')
     else:
         global download_hang
@@ -80,7 +80,7 @@ def test_06_verify_the_update_download_is_successful():
 
 
 def test_07_get_pending_update():
-    if upgrade is False:
+    if update_version is None:
         pytest.skip('No update found')
     elif download_hang is True:
         pytest.skip(f'Downloading {selected_trains} failed')
@@ -92,7 +92,7 @@ def test_07_get_pending_update():
 
 
 def test_08_install_update():
-    if upgrade is False:
+    if update_version is None:
         pytest.skip('No update found')
     elif download_hang is True:
         pytest.skip(f'Downloading {selected_trains} failed')
@@ -113,7 +113,7 @@ def test_08_install_update():
 
 
 def test_09_verify_the_update_is_successful():
-    if upgrade is False:
+    if update_version is None:
         pytest.skip('No update found')
     elif download_hang is True:
         pytest.skip(f'Downloading {selected_trains} failed')
@@ -129,7 +129,7 @@ def test_09_verify_the_update_is_successful():
 
 
 def test_10_verify_system_is_ready_to_reboot():
-    if upgrade is False:
+    if update_version is None:
         pytest.skip('No update found')
     elif download_hang is True:
         pytest.skip(f'Downloading {selected_trains} failed')
@@ -141,7 +141,7 @@ def test_10_verify_system_is_ready_to_reboot():
 
 
 def test_11_wait_for_first_reboot_with_bhyve():
-    if upgrade is False:
+    if update_version is None:
         pytest.skip('No update found')
     else:
         if vm_name is None:
@@ -154,7 +154,7 @@ def test_11_wait_for_first_reboot_with_bhyve():
 
 
 def test_12_wait_for_second_reboot_with_bhyve():
-    if upgrade is False:
+    if update_version is None:
         pytest.skip('No update found')
     else:
         if vm_name is None:
@@ -167,7 +167,7 @@ def test_12_wait_for_second_reboot_with_bhyve():
 
 
 def test_13_wait_for_FreeNAS_to_be_online():
-    if upgrade is False:
+    if update_version is None:
         pytest.skip('No update found')
     else:
         while ping_host(ip) is not True:
@@ -177,12 +177,19 @@ def test_13_wait_for_FreeNAS_to_be_online():
 
 
 def test_14_verify_initial_version_is_not_current_FreeNAS_version():
-    if upgrade is False:
+    if update_version is None:
         pytest.skip('No update found')
     else:
+        global results, current_version
         results = GET("/system/info/")
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict) is True, results.text
-        global current_version
-        current_version = results.json()
-        assert initial_version != current_version, results.json()
+        current_version = results.json()['version']
+        assert initial_version != current_version, results.text
+
+
+def test_15_verify_update_version_is_current_version():
+    if update_version is None:
+        pytest.skip('No update found')
+    else:
+        assert update_version == current_version, results.text
