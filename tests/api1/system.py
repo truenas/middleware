@@ -12,7 +12,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, vm_state, vm_start, ping_host
 from functions import DELETE
-from auto_config import user, password, ip, vm_name
+from auto_config import user, password, ip, vm_name, interface
 
 tun_list = [
     "tun_var",
@@ -79,10 +79,8 @@ def test_08_reboot_system_to_enable_tunable():
     assert results.status_code == 202, results.text
 
 
-def test_09_wait_for_reboot_with_bhyve():
-    if vm_name is None:
-        pytest.skip('skip no vm_name')
-    else:
+def test_09_wait_for_reboot():
+    if vm_name is not None:
         while vm_state(vm_name) != 'stopped':
             sleep(5)
         assert vm_start(vm_name) is True
@@ -100,5 +98,41 @@ def test_10_verify_system_tunable_dummynet_load():
 
 
 def test_11_delete_tunable():
-    results = DELETE(f"/system/tunable/{tunable_id}/", api='1')
+    results = DELETE(f"/system/tunable/{tunable_id}/")
     assert results.status_code == 204, results.text
+
+
+def test_12_tunable_id_has_been_deleted():
+    results = GET(f"/system/tunable/{tunable_id}/")
+    assert results.status_code == 404, results.text
+
+
+def test_13_shutdow_system():
+    results = POST("/system/shutdown/")
+    assert results.status_code == 202, results.text
+
+
+def test_14_wait_for_system_to_shutdown_with_bhyve():
+    if vm_name is not None and interface == 'vtnet0':
+        while vm_state(vm_name) != 'stopped':
+            sleep(5)
+        vm_state(vm_name) == 'stopped'
+    else:
+        pytest.skip('skip no vm_name')
+
+
+def test_15_start_vm_bhyve_and_wait_for_freenas_to_be_online():
+    if vm_name is not None and interface == 'vtnet0':
+        assert vm_start(vm_name) is True
+        sleep(1)
+        while ping_host(ip) is not True:
+            sleep(5)
+        assert ping_host(ip) is True
+        sleep(10)
+    else:
+        pytest.skip('skip no vm_name')
+
+
+def test_16_verify_system_tunable_dummynet_not_loaded():
+    results = SSH_TEST('kldstat -m dummynet', user, password, ip)
+    assert results['result'] is False, results['output']
