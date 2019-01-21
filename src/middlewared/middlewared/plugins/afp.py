@@ -2,7 +2,7 @@ import asyncio
 
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import (accepts, Bool, Dict, Dir, Int, List, Str,
-                                Patch, IPAddr, UnixPerm)
+                                Patch, UnixPerm)
 from middlewared.validators import IpAddress, Range
 from middlewared.service import (SystemServiceService, ValidationErrors,
                                  CRUDService, private)
@@ -105,8 +105,8 @@ class SharingAFPService(CRUDService):
         UnixPerm('fperm', default='644'),
         UnixPerm('dperm', default='755'),
         UnixPerm('umask', default='000'),
-        List('hostsallow', items=[IPAddr('ip', network=True)], default=[]),
-        List('hostsdeny', items=[IPAddr('ip', network=True)], default=[]),
+        List('hostsallow', items=[], default=[]),
+        List('hostsdeny', items=[], default=[]),
         Str('auxparams'),
         register=True
     ))
