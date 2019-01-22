@@ -108,6 +108,9 @@ class SystemDatasetService(ConfigService):
 
         await self.setup()
 
+        if config['pool'] in ('', 'freenas-boot') and new['pool'] not in ('', 'freenas-boot'):
+            await self.middleware.call('reporting.update', {'rrd_usedataset': True})
+
         if config['syslog'] != new['syslog']:
             await self.middleware.call('service.restart', 'syslogd')
 
