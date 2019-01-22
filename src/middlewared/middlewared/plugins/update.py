@@ -521,7 +521,7 @@ Changelog:
             raise CallError('Invalid update file', errno.EINVAL)
         await self.middleware.call('notifier.apply_update', path, timeout=None)
         try:
-            await self.middleware.call('notifier.destroy_upload_location')
+            await self.middleware.call('update.destroy_upload_location')
         except Exception:
             self.logger.warn('Failed to destroy upload location', exc_info=True)
 
@@ -541,7 +541,7 @@ Changelog:
 
         if not dest:
             try:
-                await self.middleware.call('notifier.create_upload_location')
+                await self.middleware.call('update.create_upload_location')
                 dest = '/var/tmp/firmware'
             except Exception as e:
                 raise CallError(str(e))
@@ -582,7 +582,7 @@ Changelog:
                 shutil.rmtree(dest_extracted, ignore_errors=True)
 
         if dest == '/var/tmp/firmware':
-            await self.middleware.call('notifier.destroy_upload_location')
+            await self.middleware.call('update.destroy_upload_location')
 
         job.set_progress(100, 'Update completed')
 
