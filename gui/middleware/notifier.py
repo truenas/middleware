@@ -36,7 +36,6 @@ actions.
 
 from decimal import Decimal
 import ctypes
-import glob
 import libzfs
 import logging
 import os
@@ -74,7 +73,6 @@ from django.utils.translation import ugettext as _
 from freenasUI.common.pipesubr import SIG_SETMASK
 from freenasUI.common.system import (
     exclude_path,
-    get_sw_name,
 )
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
@@ -550,10 +548,7 @@ class notifier(metaclass=HookMetaclass):
 
     def get_update_location(self):
         with client as c:
-            syspath = c.call('systemdataset.config')['path']
-        if syspath:
-            return '%s/update' % syspath
-        return '/var/tmp/update'
+            return c.call('update.get_update_location')
 
     def validate_update(self, path):
 
