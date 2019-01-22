@@ -927,6 +927,7 @@ class ServiceService(CRUDService):
         # benefit in waiting for it since even if it fails it wont
         # tell the user anything useful.
         asyncio.ensure_future(self.restart("rrdcached", kwargs))
+        asyncio.ensure_future(self.start("collectd", kwargs))
 
     async def _reload_user(self, **kwargs):
         await self.middleware.call("etc.generate", "user")
@@ -946,6 +947,7 @@ class ServiceService(CRUDService):
         # benefit in waiting for it since even if it fails it wont
         # tell the user anything useful.
         asyncio.ensure_future(self.restart("rrdcached", kwargs))
+        asyncio.ensure_future(self.start("collectd", kwargs))
 
     async def _start_netdata(self, **kwargs):
         await self.middleware.call('etc.generate', 'netdata')
