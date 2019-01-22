@@ -682,8 +682,8 @@ class ReportingService(ConfigService):
             'reporting_update',
             Bool('cpu_in_percentage'),
             Str('graphite'),
-            List('graph_timespans', items=[Int('timespan', validators=[Range(min=1)])], empty=False, unique=True),
-            Int('graph_rows', validators=[Range(min=1)]),
+            Int('graph_age', validators=[Range(min=1)]),
+            Int('graph_points', validators=[Range(min=1)]),
             Bool('confirm_rrd_destroy'),
             update=True
         )
@@ -697,9 +697,9 @@ class ReportingService(ConfigService):
         `graphite` specifies a hostname or IP address that will be used as the destination to send collectd data
         using the graphite plugin.
 
-        `graph_timespans` and `graph_rows` correspond to collectd `RRARows` and `RRATimespan` options. Changing these
-        will require destroying your current reporting database so when these fields are changed, an additional
-        `confirm_rrd_destroy: true` flag must be present
+        `graph_age` specified maximum age of graph (in months) to store. `graph_points` is a number of points for
+        each (hourly, daily, weekly, etc.) graph. Changing these will require destroying your current reporting
+        database so when these fields are changed, an additional `confirm_rrd_destroy: true` flag must be present.
 
         .. examples(websocket)::
 
@@ -724,8 +724,8 @@ class ReportingService(ConfigService):
                 "msg": "method",
                 "method": "reporting.update",
                 "params": [{
-                    "graph_timespans": [3600, 86400, 604800, 2678400, 31622400],
-                    "graph_rows": 1200,
+                    "graph_age": 12,
+                    "graph_points": 1200,
                     "confirm_rrd_destroy": true,
                 }]
             }
@@ -741,7 +741,7 @@ class ReportingService(ConfigService):
         verrors = ValidationErrors()
 
         destroy_database = False
-        for k in ['graph_timespans', 'graph_rows']:
+        for k in ['graph_age', 'graph_points']:
             if old[k] != new[k]:
                 destroy_database = True
 

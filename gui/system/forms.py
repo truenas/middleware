@@ -1727,11 +1727,6 @@ class ReportingForm(MiddlewareModelForm, ModelForm):
     middleware_plugin = "reporting"
     is_singletone = True
 
-    graph_timespans = forms.CharField(
-        label=_("Graph time spans"),
-        help_text=_("Time periods for which aggregated historical data will be stored. See collect RRARows option "
-                    "documentation for more details"),
-    )
     confirm_rrd_destroy = forms.BooleanField(
         label=_("Confirm destroying of reporting database"),
         required=False,
@@ -1742,20 +1737,13 @@ class ReportingForm(MiddlewareModelForm, ModelForm):
         model = models.Reporting
 
     def __init__(self, *args, **kwargs):
-        if "instance" in kwargs and kwargs["instance"].id:
-            kwargs.setdefault("initial", {})
-            kwargs["initial"]["graph_timespans"] = " ".join([str(v) for v in kwargs["instance"].graph_timespans])
-
         super(ReportingForm, self).__init__(*args, **kwargs)
 
         with client as c:
             data = c.call("reporting.config")
 
-        self.fields["graph_timespans"].widget.attrs['onchange'] = "confirmRrdDestroyShow();"
-        self.fields["graph_rows"].widget.attrs['onchange'] = "confirmRrdDestroyShow();"
-
-    def clean_graph_timespans(self):
-        return list(map(lambda s: int(s.strip()), self.cleaned_data["graph_timespans"].split()))
+        self.fields["graph_age"].widget.attrs['onchange'] = "confirmRrdDestroyShow();"
+        self.fields["graph_points"].widget.attrs['onchange'] = "confirmRrdDestroyShow();"
 
 
 class InitialWizardDSForm(Form):

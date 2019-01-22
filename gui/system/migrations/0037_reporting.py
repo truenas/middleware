@@ -38,8 +38,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('cpu_in_percentage', models.BooleanField(default=False, help_text='collectd will report CPU usage in percentage instead of "jiffies" if this is checked.', verbose_name='Report CPU usage in percentage')),
                 ('graphite', models.CharField(blank=True, default='', help_text='A hostname or IP here will be used as the destination to send collectd data to using the graphite plugin to collectd.', max_length=120, verbose_name='Graphite server')),
-                ('graph_timespans', freenasUI.freeadmin.models.fields.ListField(default=[3600, 86400, 604800, 2678400, 31622400], help_text='Time periods for which aggregated historical data will be stored. See collect RRARows option documentation for more details', verbose_name='Graph time spans')),
-                ('graph_rows', models.IntegerField(default=1200, help_text='Number of points for each time period. See collect RRATimespan option documentation for more details', verbose_name='Graph points count')),
+                ('graph_age', models.IntegerField(default=12, help_text='Maximum age of graph (in months) to store.', verbose_name='Graph age')),
+                ('graph_points', models.IntegerField(default=1200, help_text='Number of points for each (hourly, daily, weekly, monthly, yearly) graph. In short, set this to no smaller than the width of your graphs in pixels.', verbose_name='Graph points count')),
             ],
             options={
                 'abstract': False,
