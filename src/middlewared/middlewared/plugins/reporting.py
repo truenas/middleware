@@ -224,7 +224,7 @@ class CPUPlugin(RRDBase):
     vertical_label = '%CPU'
 
     def get_defs(self, identifier):
-        if self.middleware.call_sync('system.advanced.config')['cpu_in_percentage']:
+        if self.middleware.call_sync('reporting.config')['cpu_in_percentage']:
             cpu_idle = os.path.join(self.base_path, 'percent-idle.rrd')
             cpu_nice = os.path.join(self.base_path, 'percent-nice.rrd')
             cpu_user = os.path.join(self.base_path, 'percent-user.rrd')
