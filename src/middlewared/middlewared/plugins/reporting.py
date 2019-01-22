@@ -764,6 +764,7 @@ class ReportingService(ConfigService):
         )
 
         if destroy_database:
+            await self.middleware.call('service.stop', 'collectd')
             await self.middleware.call('service.stop', 'rrdcached')
             await run('sh', '-c', 'rm -rf /var/db/collectd/rrd/*', check=False)
             await self.middleware.call('reporting.setup')
