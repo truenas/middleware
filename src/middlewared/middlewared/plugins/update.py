@@ -345,7 +345,7 @@ class UpdateService(Service):
           }
         """
         if path is None:
-            path = await self.middleware.call('notifier.get_update_location')
+            path = await self.middleware.call('update.get_update_location')
         data = []
         try:
             changes = await self.middleware.run_in_thread(Update.PendingUpdatesChanges, path)
@@ -425,7 +425,7 @@ class UpdateService(Service):
             if result in errors:
                 raise CallError(errors[result])
 
-        location = await self.middleware.call('notifier.get_update_location')
+        location = await self.middleware.call('update.get_update_location')
 
         job.set_progress(0, 'Retrieving update manifest')
 
@@ -457,7 +457,7 @@ class UpdateService(Service):
     @job(lock='updatedownload')
     def download(self, job):
         train = self.middleware.call_sync('update.get_trains')['selected']
-        location = self.middleware.call_sync('notifier.get_update_location')
+        location = self.middleware.call_sync('update.get_update_location')
 
         job.set_progress(0, 'Retrieving update manifest')
 
@@ -585,6 +585,13 @@ Changelog:
             await self.middleware.call('update.destroy_upload_location')
 
         job.set_progress(100, 'Update completed')
+
+    @private
+    async def get_update_location(self):
+        syspath = await self.middleware.call('systemdataset.config')['path']
+        if syspath:
+            return f'{syspath}/update'
+        return '/var/tmp/update'
 
     @private
     def create_upload_location(self):
