@@ -121,7 +121,7 @@ def test_12_change_tunable_comment():
         "tun_comment": "New tunable dummynet tests",
     }
     results = PUT(f"/system/tunable/{tunable_id}/", payload)
-    assert results.status_code == 201, results.text
+    assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict) is True, results.text
 
 
