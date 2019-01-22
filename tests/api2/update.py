@@ -143,6 +143,8 @@ def test_10_verify_system_is_ready_to_reboot():
 def test_11_wait_for_first_reboot_with_bhyve():
     if update_version is None:
         pytest.skip('No update found')
+    elif download_hang is True:
+        pytest.skip(f'Downloading {selected_trains} failed')
     else:
         if vm_name is None:
             pytest.skip('skip no vm_name')
@@ -156,6 +158,8 @@ def test_11_wait_for_first_reboot_with_bhyve():
 def test_12_wait_for_second_reboot_with_bhyve():
     if update_version is None:
         pytest.skip('No update found')
+    elif download_hang is True:
+        pytest.skip(f'Downloading {selected_trains} failed')
     else:
         if vm_name is None:
             pytest.skip('skip no vm_name')
@@ -169,6 +173,8 @@ def test_12_wait_for_second_reboot_with_bhyve():
 def test_13_wait_for_FreeNAS_to_be_online():
     if update_version is None:
         pytest.skip('No update found')
+    elif download_hang is True:
+        pytest.skip(f'Downloading {selected_trains} failed')
     else:
         while ping_host(ip) is not True:
             sleep(5)
@@ -179,6 +185,10 @@ def test_13_wait_for_FreeNAS_to_be_online():
 def test_14_verify_initial_version_is_not_current_FreeNAS_version():
     if update_version is None:
         pytest.skip('No update found')
+    elif download_hang is True:
+        pytest.skip(f'Downloading {selected_trains} failed')
+    elif vm_name is None and interface == 'vtnet0':
+        pytest.skip('VM was not rebooted')
     else:
         global results, current_version
         results = GET("/system/info/")
@@ -191,5 +201,9 @@ def test_14_verify_initial_version_is_not_current_FreeNAS_version():
 def test_15_verify_update_version_is_current_version():
     if update_version is None:
         pytest.skip('No update found')
+    elif download_hang is True:
+        pytest.skip(f'Downloading {selected_trains} failed')
+    elif vm_name is None and interface == 'vtnet0':
+        pytest.skip('VM was not rebooted')
     else:
         assert update_version == current_version, results.text
