@@ -1,11 +1,13 @@
+from bsd import geom
 from middlewared.schema import accepts, Bool, Dict, Str
-from middlewared.service import job, CallError, Service
+from middlewared.service import job, private, CallError, Service
 
 import enum
 import errno
 import os
 import re
 import shutil
+import subprocess
 import sys
 import textwrap
 
@@ -22,6 +24,9 @@ from freenasOS.Exceptions import (
 from freenasOS.Update import (
     ApplyUpdate, CheckForUpdates, GetServiceDescription, ExtractFrozenUpdate,
 )
+
+UPLOAD_LOCATION = '/var/tmp/firmware'
+UPLOAD_LABEL = 'updatemdu'
 
 
 def parse_train_name(name):
@@ -580,3 +585,41 @@ Changelog:
             await self.middleware.call('notifier.destroy_upload_location')
 
         job.set_progress(100, 'Update completed')
+
+    @private
+    def create_upload_location(self):
+        geom.scan()
+        klass_label = geom.class_by_name('LABEL')
+        prov = klass_label.xml.find(
+            f'.//provider[name = "label/{UPLOAD_LABEL}"]/../consumer/provider'
+        )
+        if prov is None:
+            cp = subprocess.run(
+                ['mdconfig', '-a', '-t', 'swap', '-s', '2800m'],
+                text=True, capture_output=True, check=False,
+            )
+            if cp.returncode != 0:
+                raise CallError(f'Could not create memory device: {cp.stderr}')
+            mddev = cp.stdout.strip()
+
+            subprocess.run(['glabel', 'create', UPLOAD_LABEL, mddev], capture_output=True, check=False)
+
+            cp = subprocess.run(
+                ['newfs', f'/dev/label/{UPLOAD_LABEL}'],
+                text=True, capture_output=True, check=False,
+            )
+            if cp.returncode != 0:
+                raise CallError(f'Could not create temporary filesystem: {cp.stderr}')
+
+            shutil.rmtree(UPLOAD_LOCATION, ignore_errors=True)
+            os.makedirs(UPLOAD_LOCATION)
+
+            cp = subprocess.run(
+                ['mount', f'/dev/label/{UPLOAD_LABEL}', UPLOAD_LOCATION],
+                text=True, capture_output=True, check=False,
+            )
+            if cp.returncode != 0:
+                raise CallError(f'Could not mount temporary filesystem: {cp.stderr}')
+
+        shutil.chown(UPLOAD_LOCATION, 'www', 'www')
+        os.chmod(UPLOAD_LOCATION, 0o755)
