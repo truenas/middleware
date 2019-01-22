@@ -609,6 +609,19 @@ require([
         }
     }
 
+    Cert_EC_key = function() {
+        var key_type = registry.byId("id_cert_key_type").get("value");
+        cert_ec_curve = registry.byId("id_cert_ec_curve");
+        cert_key_length =registry.byId("id_cert_key_length");
+        if (key_type == "EC"){
+            cert_key_length.set("disabled", true);
+            cert_ec_curve.set("disabled", false);
+        } else {
+          cert_key_length.set("disabled", false);
+          cert_ec_curve.set("disabled", true);
+        }
+    }
+
     CA_autopopulate = function() {
         var signedby_id = registry.byId("id_cert_signedby").get("value");
         generic_certificate_autopopulate(
