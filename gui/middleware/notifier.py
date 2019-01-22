@@ -523,37 +523,11 @@ class notifier(metaclass=HookMetaclass):
         Raises:
             MiddlewareError
         """
-
-        sw_name = get_sw_name()
-        label = "%smdu" % (sw_name, )
-        doc = self._geom_confxml()
-
-        pref = doc.xpath(
-            "//class[name = 'LABEL']/geom/"
-            "provider[name = 'label/%s']/../consumer/provider/@ref" % (label, )
-        )
-        if not pref:
-            proc = self._pipeopen("/sbin/mdconfig -a -t swap -s 2800m")
-            mddev, err = proc.communicate()
-            if proc.returncode != 0:
-                raise MiddlewareError("Could not create memory device: %s" % err)
-
-            self._system("/sbin/glabel create %s %s" % (label, mddev))
-
-            proc = self._pipeopen("newfs /dev/label/%s" % (label, ))
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                raise MiddlewareError("Could not create temporary filesystem: %s" % err)
-
-            self._system("/bin/rm -rf /var/tmp/firmware")
-            self._system("/bin/mkdir -p /var/tmp/firmware")
-            proc = self._pipeopen("mount /dev/label/%s /var/tmp/firmware" % (label, ))
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                raise MiddlewareError("Could not mount temporary filesystem: %s" % err)
-
-        self._system("/usr/sbin/chown www:www /var/tmp/firmware")
-        self._system("/bin/chmod 755 /var/tmp/firmware")
+        try:
+            with client as c:
+                c.call('update.create_upload_location')
+        except Exception as e:
+            raise MiddlewareError(str(e))
 
     def destroy_upload_location(self):
         """
@@ -567,28 +541,11 @@ class notifier(metaclass=HookMetaclass):
             bool
         """
 
-        sw_name = get_sw_name()
-        label = "%smdu" % (sw_name, )
-        doc = self._geom_confxml()
-
-        pref = doc.xpath(
-            "//class[name = 'LABEL']/geom/"
-            "provider[name = 'label/%s']/../consumer/provider/@ref" % (label, )
-        )
-        if not pref:
-            return False
-        prov = doc.xpath("//class[name = 'MD']//provider[@id = '%s']/name" % pref[0])
-        if not prov:
-            return False
-
-        mddev = prov[0].text
-
-        self._system("umount /dev/label/%s" % (label, ))
-        proc = self._pipeopen("mdconfig -d -u %s" % (mddev, ))
-        err = proc.communicate()[1]
-        if proc.returncode != 0:
-            raise MiddlewareError("Could not destroy memory device: %s" % err)
-
+        try:
+            with client as c:
+                c.call('update.destroy_upload_location')
+        except Exception as e:
+            raise MiddlewareError(str(e))
         return True
 
     def get_update_location(self):
