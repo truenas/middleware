@@ -92,7 +92,7 @@ class SystemDatasetService(ConfigService):
         new['syslog_usedataset'] = new['syslog']
 
         update_dict = new.copy()
-        for key in ('is_decrypted', 'basename', 'uuid_a', 'syslog', 'rrd', 'path'):
+        for key in ('is_decrypted', 'basename', 'uuid_a', 'syslog', 'path', 'pool_exclude'):
             update_dict.pop(key, None)
 
         await self.middleware.call(

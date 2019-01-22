@@ -941,7 +941,9 @@ class ServiceService(CRUDService):
         if systemdataset['syslog']:
             await self.restart("syslogd", kwargs)
         await self.restart("cifs", kwargs)
-        if systemdataset['rrd']:
+
+        reporting = await self.middleware.call('reporting.config')
+        if reporting['rrd_usedataset']:
             # Restarting collectd may take a long time and there is no
             # benefit in waiting for it since even if it fails it wont
             # tell the user anything useful.
