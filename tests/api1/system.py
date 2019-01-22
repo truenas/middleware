@@ -22,10 +22,17 @@ tun_list = [
     "tun_type",
 ]
 
+adv_list = [
+    "adv_motd",
+    "adv_powerdaemon",
+    "adv_advancedmode"
+]
+
 
 def test_01_checking_system_version():
     results = GET("/system/version/")
     assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict) is True, results.text
 
 
 # Set the timezone
@@ -33,16 +40,25 @@ def test_02_Setting_timezone():
     payload = {"stg_timezone": "America/New_York"}
     results = PUT("/system/settings/", payload)
     assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict) is True, results.text
 
 
 def test_03_verify_timezon_has_change():
     results = GET("/system/settings/")
     assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict) is True, results.text
     assert results.json()['stg_timezone'] == "America/New_York", results.text
 
 
+# Get loader tunable
+def test_04_get_system_tunable_dummynet():
+    results = GET(f"/system/tunable/")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), list) is True, results.text
+
+
 # Create loader tunable
-def test_04_create_system_tunable_dummynet():
+def test_05_create_system_tunable_dummynet():
     global payload, results, tunable_id
     payload = {
         "tun_var": "dummynet_load",
@@ -53,33 +69,35 @@ def test_04_create_system_tunable_dummynet():
     }
     results = POST("/system/tunable/", payload)
     assert results.status_code == 201, results.text
+    assert isinstance(results.json(), dict) is True, results.text
     tunable_id = results.json()['id']
 
 
 @pytest.mark.parametrize('data', tun_list)
-def test_05_verify_created_tunable_dummynet_result_of_(data):
+def test_06_verify_created_tunable_dummynet_result_of_(data):
     assert payload[data] == results.json()[data], results.text
 
 
 # Get loader tunable
-def test_06_get_system_tunable_dummynet():
+def test_07_get_system_tunable_dummynet_from_id():
     global results
-    results = GET(f"/system/tunable/{tunable_id}")
+    results = GET(f"/system/tunable/{tunable_id}/")
+    assert isinstance(results.json(), dict) is True, results.text
     assert results.status_code == 200, results.text
 
 
 @pytest.mark.parametrize('data', tun_list)
-def test_07_verify_get_system_tunable_result_of_(data):
+def test_08_verify_get_system_tunable_result_of_(data):
     assert payload[data] == results.json()[data], results.text
 
 
 # Reboot system to enable tunable
-def test_08_reboot_system_to_enable_tunable():
+def test_09_reboot_system_to_enable_tunable():
     results = POST("/system/reboot/")
     assert results.status_code == 202, results.text
 
 
-def test_09_wait_for_reboot():
+def test_10_wait_for_reboot():
     if vm_name is not None:
         while vm_state(vm_name) != 'stopped':
             sleep(5)
@@ -92,27 +110,27 @@ def test_09_wait_for_reboot():
 
 
 # Verify loader tunable
-def test_10_verify_system_tunable_dummynet_load():
+def test_11_verify_system_tunable_dummynet_load():
     results = SSH_TEST('kldstat -m dummynet', user, password, ip)
     assert results['result'] is True, results['output']
 
 
-def test_11_delete_tunable():
+def test_12_delete_tunable():
     results = DELETE(f"/system/tunable/{tunable_id}/")
     assert results.status_code == 204, results.text
 
 
-def test_12_tunable_id_has_been_deleted():
+def test_13_tunable_id_has_been_deleted():
     results = GET(f"/system/tunable/{tunable_id}/")
     assert results.status_code == 404, results.text
 
 
-def test_13_shutdow_system():
+def test_14_shutdow_system():
     results = POST("/system/shutdown/")
     assert results.status_code == 202, results.text
 
 
-def test_14_wait_for_system_to_shutdown_with_bhyve():
+def test_15_wait_for_system_to_shutdown_with_bhyve():
     if vm_name is not None and interface == 'vtnet0':
         while vm_state(vm_name) != 'stopped':
             sleep(5)
@@ -121,7 +139,7 @@ def test_14_wait_for_system_to_shutdown_with_bhyve():
         pytest.skip('skip no vm_name')
 
 
-def test_15_start_vm_bhyve_and_wait_for_freenas_to_be_online():
+def test_16_start_vm_bhyve_and_wait_for_freenas_to_be_online():
     if vm_name is not None and interface == 'vtnet0':
         assert vm_start(vm_name) is True
         sleep(1)
@@ -133,6 +151,41 @@ def test_15_start_vm_bhyve_and_wait_for_freenas_to_be_online():
         pytest.skip('skip no vm_name')
 
 
-def test_16_verify_system_tunable_dummynet_not_loaded():
+def test_17_verify_system_tunable_dummynet_not_loaded():
     results = SSH_TEST('kldstat -m dummynet', user, password, ip)
     assert results['result'] is False, results['output']
+
+
+def test_18_get_system_advanced():
+    results = GET("/system/advanced/")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict) is True, results.text
+
+
+def test_19_change_system_advanced_parameter():
+    global payload, results
+    payload = {
+        "adv_motd": "Welcome to iXsystems",
+        "adv_powerdaemon": True,
+        "adv_advancedmode": True
+    }
+    results = PUT("/system/advanced/", payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict) is True, results.text
+
+
+@pytest.mark.parametrize('data', adv_list)
+def test_20_verify_the_change_system_advanced_parameter_(data):
+    assert results.json()[data] == payload[data], results.text
+
+
+def test_21_get_system_advanced():
+    global results
+    results = GET("/system/advanced/")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict) is True, results.text
+
+
+@pytest.mark.parametrize('data', adv_list)
+def test_22_verify_get_system_advanced_parameter_(data):
+    assert results.json()[data] == payload[data], results.text
