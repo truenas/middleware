@@ -75,7 +75,7 @@ for output, arg in myopts:
     elif output == '-k':
         testexpr = arg
     elif output in ('--vm-name'):
-        vm_name = arg
+        vm_name = f"'{arg}'"
 
 if ('ip' not in locals() and
         'password' not in locals() and
@@ -105,7 +105,7 @@ cfg_content = f"""#!/usr/bin/env python3.6
 user = "root"
 password = "{passwd}"
 ip = "{ip}"
-vm_name = '{vm_name}'
+vm_name = {vm_name}
 hostname = "{hostname}"
 domain = "{domain}"
 default_api_url = 'http://' + ip + '/api/v{api}'
