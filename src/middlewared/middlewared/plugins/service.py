@@ -923,10 +923,10 @@ class ServiceService(CRUDService):
     async def _reload_disk(self, **kwargs):
         await self._service("ix-fstab", "start", quiet=True, **kwargs)
         await self._service("mountlate", "start", quiet=True, **kwargs)
-        # Restarting collectd may take a long time and there is no
+        # Restarting rrdcached may take a long time and there is no
         # benefit in waiting for it since even if it fails it wont
         # tell the user anything useful.
-        asyncio.ensure_future(self.restart("collectd", kwargs))
+        asyncio.ensure_future(self.restart("rrdcached", kwargs))
 
     async def _reload_user(self, **kwargs):
         await self.middleware.call("etc.generate", "user")
@@ -942,12 +942,10 @@ class ServiceService(CRUDService):
             await self.restart("syslogd", kwargs)
         await self.restart("cifs", kwargs)
 
-        reporting = await self.middleware.call('reporting.config')
-        if reporting['rrd_usedataset']:
-            # Restarting collectd may take a long time and there is no
-            # benefit in waiting for it since even if it fails it wont
-            # tell the user anything useful.
-            asyncio.ensure_future(self.restart("collectd", kwargs))
+        # Restarting rrdcached may take a long time and there is no
+        # benefit in waiting for it since even if it fails it wont
+        # tell the user anything useful.
+        asyncio.ensure_future(self.restart("rrdcached", kwargs))
 
     async def _start_netdata(self, **kwargs):
         await self.middleware.call('etc.generate', 'netdata')

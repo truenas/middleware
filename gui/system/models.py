@@ -993,14 +993,6 @@ class Reporting(Model):
         icon_view = "SystemDatasetIcon"
         icon_add = "SystemDatasetIcon"
 
-    rrd_usedataset = models.BooleanField(
-        default=True,
-        verbose_name=_("Store reporting database in system dataset"),
-        help_text=_(
-            "Store reporting database in system dataset instead of RAMDisk. Checking this will decrease RAM usage and "
-            "increase IO on system dataset pool."
-        )
-    )
     cpu_in_percentage = models.BooleanField(
         default=False,
         verbose_name=_("Report CPU usage in percentage"),
@@ -1014,10 +1006,6 @@ class Reporting(Model):
         verbose_name=_("Graphite server"),
         help_text=_("A hostname or IP here will be used as the destination to send collectd "
                     "data to using the graphite plugin to collectd.")
-    )
-    rrd_ramdisk_size = models.IntegerField(
-        default=1073741824,
-        verbose_name=_("Reporting database RAMDisk size"),
     )
     graph_timespans = ListField(
         default=[3600, 86400, 604800, 2678400, 31622400],

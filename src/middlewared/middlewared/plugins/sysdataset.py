@@ -108,9 +108,6 @@ class SystemDatasetService(ConfigService):
 
         await self.setup()
 
-        if config['pool'] in ('', 'freenas-boot') and new['pool'] not in ('', 'freenas-boot'):
-            await self.middleware.call('reporting.update', {'rrd_usedataset': True})
-
         if config['syslog'] != new['syslog']:
             await self.middleware.call('service.restart', 'syslogd')
 
@@ -174,7 +171,7 @@ class SystemDatasetService(ConfigService):
 
         if await self.__setup_datasets(config['pool'], config['uuid']):
             # There is no need to wait this to finish
-            asyncio.ensure_future(self.middleware.call('service.restart', 'collectd'))
+            asyncio.ensure_future(self.middleware.call('service.restart', 'rrdcached'))
 
         if not os.path.isdir(SYSDATASET_PATH):
             if os.path.exists(SYSDATASET_PATH):
@@ -314,7 +311,7 @@ class SystemDatasetService(ConfigService):
             path = SYSDATASET_PATH
         await self.__mount(_to, config['uuid'], path=path)
 
-        restart = ['syslogd', 'collectd']
+        restart = ['syslogd', 'rrdcached']
 
         if await self.middleware.call('service.started', 'cifs'):
             restart.append('cifs')

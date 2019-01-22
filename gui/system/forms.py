@@ -1727,9 +1727,6 @@ class ReportingForm(MiddlewareModelForm, ModelForm):
     middleware_plugin = "reporting"
     is_singletone = True
 
-    rrd_ramdisk_size = SizeField(
-        label=_("Reporting database RAMDisk size"),
-    )
     graph_timespans = forms.CharField(
         label=_("Graph time spans"),
         help_text=_("Time periods for which aggregated historical data will be stored. See collect RRARows option "
