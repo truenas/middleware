@@ -501,8 +501,11 @@ class ZFSVolumeWizardForm(Form):
                 if gtype == 'none':
                     continue
                 disk = zpoolfields.search(i).group(1)
-                # if this is a log vdev we need to mirror it for safety
-                if gtype in topology:
+
+                if gtype == 'spare':
+                    topology['spares'].append(disk)
+                elif gtype in topology:
+                    # if this is a log vdev we need to mirror it for safety
                     if gtype == 'log':
                         topology[gtype][0]['type'] = 'MIRROR'
                     topology[gtype][0]['disks'].append(disk)
