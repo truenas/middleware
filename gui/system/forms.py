@@ -1352,10 +1352,10 @@ SYSCTL_TUNABLE_VARNAME_FORMAT = """Sysctl variable names must:<br />
 4. Can contain a combination of alphanumeric characters, numbers and/or underscores.
 """
 SYSCTL_VARNAME_FORMAT_RE = \
-    re.compile('[a-z][a-z0-9_]+\.([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
+    re.compile(r'[a-z][a-z0-9_]+\.([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
 
 LOADER_VARNAME_FORMAT_RE = \
-    re.compile('[a-z][a-z0-9_]+\.*([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
+    re.compile(r'[a-z][a-z0-9_]+\.*([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
 
 
 class TunableForm(MiddlewareModelForm, ModelForm):
@@ -1747,9 +1747,6 @@ class ReportingForm(MiddlewareModelForm, ModelForm):
             kwargs["initial"]["graph_timespans"] = " ".join([str(v) for v in kwargs["instance"].graph_timespans])
 
         super(ReportingForm, self).__init__(*args, **kwargs)
-
-        with client as c:
-            data = c.call("reporting.config")
 
         self.fields["graph_timespans"].widget.attrs['onchange'] = "confirmRrdDestroyShow();"
         self.fields["graph_rows"].widget.attrs['onchange'] = "confirmRrdDestroyShow();"

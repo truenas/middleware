@@ -415,7 +415,7 @@ class Email(Model):
         if self.em_pass:
             try:
                 self.em_pass = notifier().pwenc_decrypt(self.em_pass)
-            except:
+            except Exception:
                 log.debug('Failed to decrypt email password', exc_info=True)
                 self.em_pass = ''
         self._em_pass_encrypted = False
