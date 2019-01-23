@@ -642,7 +642,7 @@ class SystemGeneralService(ConfigService):
 
         syslog_server = data.get('syslogserver')
         if syslog_server:
-            match = re.match("^[\w\.\-]+(\:\d+)?$", syslog_server)
+            match = re.match(r"^[\w\.\-]+(\:\d+)?$", syslog_server)
             if not match:
                 verrors.add(
                     f'{schema}.syslogserver',
