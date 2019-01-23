@@ -143,8 +143,7 @@ def volumemanager(request):
     _n = notifier()
     disks = []
     # Grab disk list
-    # Root device already ruled out
-    for disk, info in list(_n.get_disks().items()):
+    for disk, info in list(_n.get_disks(unused=True).items()):
         disks.append(forms.Disk(
             info['devname'],
             info['capacity'],
@@ -152,18 +151,8 @@ def volumemanager(request):
         ))
     disks = sorted(disks, key=cmp_to_key(_diskcmp))
 
-    # Exclude what's already added
-    used_disks = []
-    for v in models.Volume.objects.all():
-        used_disks.extend(v.get_disks())
-
-    qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
-    used_disks.extend([i.get_device()[5:] for i in qs])
-
     bysize = dict()
     for d in list(disks):
-        if d.dev in used_disks:
-            continue
         hsize = forms.humanize_number_si(d.size)
         if hsize not in bysize:
             bysize[hsize] = []

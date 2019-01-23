@@ -207,17 +207,12 @@ class BootEnvPoolAttachForm(Form):
     def _populate_disk_choices(self):
 
         diskchoices = dict()
-        used_disks = []
-        for v in Volume.objects.all():
-            used_disks.extend(v.get_disks())
 
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
-        disks = notifier().get_disks()
+        disks = notifier().get_disks(unused=True)
 
         for disk in disks:
-            if disk in used_disks:
-                continue
             devname, capacity = disks[disk]['devname'], disks[disk]['capacity']
             capacity = humanize_number_si(int(capacity))
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
@@ -260,17 +255,12 @@ class BootEnvPoolReplaceForm(Form):
     def _populate_disk_choices(self):
 
         diskchoices = dict()
-        used_disks = []
-        for v in Volume.objects.all():
-            used_disks.extend(v.get_disks())
 
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
-        disks = notifier().get_disks()
+        disks = notifier().get_disks(unused=True)
 
         for disk in disks:
-            if disk in used_disks:
-                continue
             devname, capacity = disks[disk]['devname'], disks[disk]['capacity']
             capacity = humanize_number_si(int(capacity))
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
@@ -2073,12 +2063,7 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
 
     @staticmethod
     def _get_unused_disks():
-        _n = notifier()
-        disks = _n.get_disks()
-        for volume in Volume.objects.all():
-            for disk in volume.get_disks():
-                disks.pop(disk, None)
-        return disks
+        return notifier().get_disks(unused=True)
 
     @classmethod
     def _get_unused_disks_by_size(cls):
