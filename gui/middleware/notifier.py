@@ -34,19 +34,15 @@ command line utility, this helper class can also be used to do these
 actions.
 """
 
-from decimal import Decimal
 import ctypes
 import libzfs
 import logging
 import os
 import re
-import signal
 from subprocess import Popen, PIPE
-import subprocess
 import sys
 import syslog
 import tempfile
-import time
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
@@ -549,93 +545,6 @@ class notifier(metaclass=HookMetaclass):
     def get_update_location(self):
         with client as c:
             return c.call('update.get_update_location')
-
-    def validate_update(self, path):
-
-        os.chdir(os.path.dirname(path))
-
-        # XXX: ugly
-        self._system("rm -rf */")
-
-        percent = 0
-        with open('/tmp/.extract_progress', 'w') as fp:
-            fp.write("2|%d\n" % percent)
-            fp.flush()
-            with open('/tmp/.upgrade_extract', 'w') as f:
-                size = os.stat(path).st_size
-                proc = subprocess.Popen([
-                    "/usr/bin/tar",
-                    "-xSJpf",  # -S for sparse
-                    path,
-                ], stderr=f, encoding='utf8')
-                RE_TAR = re.compile(r"^In: (\d+)", re.M | re.S)
-                while True:
-                    if proc.poll() is not None:
-                        break
-                    try:
-                        os.kill(proc.pid, signal.SIGINFO)
-                    except Exception:
-                        break
-                    time.sleep(1)
-                    # TODO: We don't need to read the whole file
-                    with open('/tmp/.upgrade_extract', 'r') as f2:
-                        line = f2.read()
-                    reg = RE_TAR.findall(line)
-                    if reg:
-                        current = Decimal(reg[-1])
-                        percent = int((current / size) * 100)
-                        fp.write("2|%d\n" % percent)
-                        fp.flush()
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                os.chdir('/')
-                raise MiddlewareError(
-                    'The firmware image is invalid, make sure to use .txz file: %s' % err
-                )
-            fp.write("3|\n")
-            fp.flush()
-        os.unlink('/tmp/.extract_progress')
-        os.chdir('/')
-        return True
-
-    def apply_update(self, path):
-        from freenasUI.system.views import INSTALLFILE
-        import freenasOS.Configuration as Configuration
-        dirpath = os.path.dirname(path)
-        try:
-            os.chmod(dirpath, 0o755)
-        except OSError as e:
-            raise MiddlewareError("Unable to set permissions on update cache directory %s: %s" % (dirpath, str(e)))
-        open(INSTALLFILE, 'w').close()
-        try:
-            subprocess.check_output(
-                '/usr/local/bin/manifest_util sequence 2> /dev/null > {}/SEQUENCE'.format(dirpath),
-                shell=True,
-            )
-            conf = Configuration.Configuration()
-            with open('{}/SERVER'.format(dirpath), 'w') as f:
-                f.write('%s' % conf.UpdateServerName())
-            subprocess.check_output(
-                [
-                    '/usr/local/bin/freenas-update',
-                    '-C', dirpath,
-                    'update',
-                ],
-                stderr=subprocess.PIPE,
-            )
-        except subprocess.CalledProcessError as cpe:
-            raise MiddlewareError('Failed to apply update %s: %s' % (str(cpe), cpe.output))
-        finally:
-            os.chdir('/')
-            try:
-                os.unlink(path)
-            except OSError:
-                pass
-            try:
-                os.unlink(INSTALLFILE)
-            except OSError:
-                pass
-        open(NEED_UPDATE_SENTINEL, 'w').close()
 
     def get_volume_status(self, name):
         status = 'UNKNOWN'
