@@ -588,7 +588,7 @@ Changelog:
 
     @private
     async def get_update_location(self):
-        syspath = await self.middleware.call('systemdataset.config')['path']
+        syspath = (await self.middleware.call('systemdataset.config'))['path']
         if syspath:
             return f'{syspath}/update'
         return '/var/tmp/update'
