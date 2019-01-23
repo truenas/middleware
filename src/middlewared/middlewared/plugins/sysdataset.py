@@ -100,7 +100,7 @@ class SystemDatasetService(ConfigService):
         new['rrd_usedataset'] = new['rrd']
 
         update_dict = new.copy()
-        for key in ('is_decrypted', 'basename', 'uuid_a', 'syslog', 'rrd', 'path'):
+        for key in ('is_decrypted', 'basename', 'uuid_a', 'syslog', 'rrd', 'path', 'pool_exclude'):
             update_dict.pop(key, None)
 
         await self.middleware.call(
