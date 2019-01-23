@@ -43,4 +43,4 @@ class DynDNSService(SystemServiceService):
 
         await self.dyndns_extend(new)
 
-        return new
+        return await self.config()
