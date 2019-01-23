@@ -710,7 +710,12 @@ class PoolService(CRUDService):
         enc_disks = await self.__format_disks(job, disks, enc_keypath)
 
         job.set_progress(90, 'Extending ZFS Pool')
-        await (await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)).wait()
+
+        extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)
+        await extend_job.wait()
+
+        if extend_job.error:
+            raise CallError(extend_job.error)
 
         await self.__save_encrypteddisks(id, enc_disks, disks_cache)
 
@@ -793,7 +798,7 @@ class PoolService(CRUDService):
         # 2. Keep track of the vdev each disk is supposed to be located
         #    along with a flag whether we should use swap partition in said vdev
         # This is required so we can format all disks in one pass, allowing it
-        # to be performed in parellel if we wish to do so.
+        # to be performed in parallel if we wish to do so.
         disks = {}
         vdevs = []
         for i in ('data', 'cache', 'log'):
