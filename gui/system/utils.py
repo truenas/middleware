@@ -334,28 +334,6 @@ def run_updated(train, location, download=True, apply=False):
         return returncode, uuid
 
 
-def manual_update(path):
-    from freenasUI.middleware.notifier import notifier
-    from freenasUI.middleware.exceptions import MiddlewareError
-
-    # Validate that the image would pass all pre-install
-    # requirements.
-    #
-    # IMPORTANT: pre-install step have scripts or executables
-    # from the upload, so the integrity has to be verified
-    # before we proceed with this step.
-    retval = notifier().validate_update(path)
-
-    if not retval:
-        raise MiddlewareError("Invalid update file")
-
-    notifier().apply_update(path)
-    try:
-        notifier().destroy_upload_location()
-    except Exception as e:
-        log.warn("Failed to destroy upload location: %s", e.value)
-
-
 def debug_get_settings():
     from freenasUI.middleware.client import client
     direc = "/var/tmp/ixdiagnose"
