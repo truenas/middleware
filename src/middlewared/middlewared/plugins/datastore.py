@@ -205,7 +205,7 @@ class DatastoreService(Service):
         verrors = ValidationErrors()
         fields = list(
             map(
-                lambda f: f.name.replace(prefix or '', ''),
+                lambda f: f.name.replace(prefix or '', '', 1),
                 chain(model._meta.fields, model._meta.many_to_many)
             )
         )
@@ -237,7 +237,7 @@ class DatastoreService(Service):
 
         for field in chain(model._meta.fields, model._meta.many_to_many):
             if prefix:
-                name = field.name.replace(prefix, '')
+                name = field.name.replace(prefix, '', 1)
             else:
                 name = field.name
             if name not in data:
@@ -275,7 +275,7 @@ class DatastoreService(Service):
         obj = model.objects.get(pk=id)
         for field in chain(model._meta.fields, model._meta.many_to_many):
             if prefix:
-                name = field.name.replace(prefix, '')
+                name = field.name.replace(prefix, '', 1)
             else:
                 name = field.name
             if name not in data:
