@@ -512,18 +512,31 @@ Changelog:
 
     @accepts(Str('path'))
     @job(lock='updatemanual', process=True)
-    async def manual(self, job, path):
+    def manual(self, job, path):
         """
         Apply manual update of file `path`.
         """
-        rv = await self.middleware.call('notifier.validate_update', path)
-        if not rv:
-            raise CallError('Invalid update file', errno.EINVAL)
-        await self.middleware.call('notifier.apply_update', path, timeout=None)
+        dest_extracted = os.path.join(os.path.dirname(path), '.update')
         try:
-            await self.middleware.call('update.destroy_upload_location')
-        except Exception:
-            self.logger.warn('Failed to destroy upload location', exc_info=True)
+            try:
+                job.set_progress(30, 'Extracting file')
+                ExtractFrozenUpdate(path, dest_extracted, verbose=True)
+                job.set_progress(50, 'Applying update')
+                ApplyUpdate(dest_extracted)
+            except Exception as e:
+                self.logger.debug('Applying manual update failed', exc_info=True)
+                raise CallError(str(e), errno.EFAULT)
+
+            job.set_progress(95, 'Cleaning up')
+        finally:
+            if os.path.exists(path):
+                os.unlink(path)
+
+            if os.path.exists(dest_extracted):
+                shutil.rmtree(dest_extracted, ignore_errors=True)
+
+        if path.startswith(UPLOAD_LOCATION):
+            self.middleware.call_sync('update.destroy_upload_location')
 
     @accepts(Dict(
         'updatefile',
