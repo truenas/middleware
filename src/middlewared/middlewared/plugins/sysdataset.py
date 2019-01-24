@@ -82,12 +82,27 @@ class SystemDatasetService(ConfigService):
         new.update(data)
 
         verrors = ValidationErrors()
-        if new['pool'] and not await self.middleware.call(
-            'zfs.pool.query', [('name', '=', new['pool'])]
-        ):
-            verrors.add('sysdataset_update.pool', f'Pool "{new["pool"]}" not found', errno.ENOENT)
+        if new['pool'] and new['pool'] != 'freenas-boot':
+            pool = await self.middleware.call('pool.query', [['name', '=', new['pool']]])
+            if not pool:
+                verrors.add(
+                    'sysdataset_update.pool',
+                    f'Pool "{new["pool"]}" not found',
+                    errno.ENOENT
+                )
+            elif pool[0]['encrypt'] == 2:
+                # This will cover two cases - passphrase being set for a pool and that it might be locked as well
+                verrors.add(
+                    'sysdataset_update.pool',
+                    f'Pool "{new["pool"]}" has an encryption passphrase set. '
+                    'The system dataset cannot be placed on this pool.'
+                )
         elif not new['pool']:
-            for pool in await self.middleware.call('pool.query'):
+            for pool in await self.middleware.call(
+                'pool.query', [
+                    ['encrypt', '!=', 2]
+                ]
+            ):
                 if data.get('pool_exclude') == pool['name']:
                     continue
                 new['pool'] = pool['name']
