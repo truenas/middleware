@@ -7,9 +7,11 @@ from middlewared.utils import Popen, start_daemon_thread, sw_buildtime, sw_versi
 from middlewared.validators import Range
 
 import csv
+import io
 import os
 import psutil
 import re
+import requests
 import shutil
 import socket
 import struct
@@ -17,6 +19,7 @@ import subprocess
 import sys
 import sysctl
 import syslog
+import tarfile
 import time
 
 from licenselib.license import ContractType, Features
@@ -392,6 +395,80 @@ class SystemService(Service):
             raise CallError(f'Failed to generate debug file: {cp.stderr}')
 
         return dump
+
+    @accepts()
+    @job(lock='systemdebugdownload', pipes=['output'])
+    def debug_download(self, job):
+        """
+        Job to stream debug file.
+
+        This method is meant to be used in conjuntion with `core.download` to get the debug
+        downloaded via HTTP.
+        """
+        debug_job = self.middleware.call_sync('system.debug')
+
+        standby_debug = None
+        is_freenas = self.middleware.call_sync('system.is_freenas')
+        if not is_freenas and self.middleware.call_sync('failover.licensed'):
+            try:
+                standby_debug = self.middleware.call_sync(
+                    'failover.call_remote', 'system.debug', [], {'job': True}
+                )
+            except Exception:
+                self.logger.warn('Failed to get debug from standby node', exc_info=True)
+            else:
+                remote_ip = self.middleware.call_sync('failover.remote_ip')
+                url = self.middleware.call_sync(
+                    'failover.call_remote', 'core.download', ['filesystem.get', [standby_debug], 'debug.txz'],
+                )[1]
+
+                url = f'http://{remote_ip}:6000{url}'
+                standby_debug = io.BytesIO()
+                with requests.get(url, stream=True) as r:
+                    for i in r.iter_content(chunk_size=1048576):
+                        if standby_debug.tell() > 20971520:
+                            raise CallError(f'Standby debug file is bigger than 20MiB.')
+                        standby_debug.write(i)
+
+        debug_job.wait_sync()
+        if debug_job.error:
+            raise CallError(debug_job.error)
+
+        if standby_debug:
+            # Debug file cannot be big on HA because we put both debugs in memory
+            # so they can be downloaded at once.
+            try:
+                if os.stat(debug_job.result).st_size > 20971520:
+                    raise CallError(f'Debug file is bigger than 20MiB.')
+            except FileNotFoundError:
+                raise CallError('Debug file was not found, try again.')
+
+            network = self.middleware.call_sync('network.configuration.config')
+            node = self.middleware.call_sync('failover.node')
+
+            tario = io.BytesIO()
+            with tarfile.open(fileobj=tario, mode='w') as tar:
+
+                if node == 'A':
+                    my_hostname = network['hostname']
+                    remote_hostname = network['hostname_b']
+                else:
+                    my_hostname = network['hostname_b']
+                    remote_hostname = network['hostname']
+
+                tar.add(debug_job.result, f'{my_hostname}.txz')
+
+                tarinfo = tarfile.TarInfo(f'{remote_hostname}.txz')
+                tarinfo.size = standby_debug.tell()
+                standby_debug.seek(0)
+                tar.addfile(tarinfo, fileobj=standby_debug)
+
+            tario.seek(0)
+            shutil.copyfileobj(tario, job.pipes.output.w)
+        else:
+            with open(debug_job.result, 'rb') as f:
+                shutil.copyfileobj(f, job.pipes.output.w)
+        job.pipes.output.w.close()
 
 
 class SystemGeneralService(ConfigService):
