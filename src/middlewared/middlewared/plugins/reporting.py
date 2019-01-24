@@ -983,9 +983,12 @@ class GraphiteHandler(socketserver.BaseRequestHandler):
             data = b''
             # Try to read a batch of updates at once, instead of breaking per message size
             while True:
-                if not select.select([self.request.fileno()], [], [], 0.1)[0]:
+                if not select.select([self.request.fileno()], [], [], 0.1)[0] and data != b'':
                     break
-                data += self.request.recv(1428)
+                msg = self.request.recv(1428)
+                if msg == b'':
+                    break
+                data += msg
             if data == b'':
                 break
             if last:

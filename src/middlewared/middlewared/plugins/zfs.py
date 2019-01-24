@@ -177,7 +177,7 @@ class ZFSPoolService(CRUDService):
                 Str('type', enum=['DISK']),
                 Str('path'),
             ),
-        ]),
+        ], null=True, default=None),
     )
     @job()
     def extend(self, job, name, new=None, existing=None):

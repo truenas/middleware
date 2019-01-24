@@ -45,7 +45,7 @@ class NFSService(SystemServiceService):
     ))
     async def do_update(self, data):
         if data.get("v4") is False:
-            data["v4_v3owner"].setdefault(False)
+            data.setdefault("v4_v3owner", False)
 
         old = await self.config()
 

@@ -1,11 +1,13 @@
+from bsd import geom
 from middlewared.schema import accepts, Bool, Dict, Str
-from middlewared.service import job, CallError, Service
+from middlewared.service import job, private, CallError, Service
 
 import enum
 import errno
 import os
 import re
 import shutil
+import subprocess
 import sys
 import textwrap
 
@@ -22,6 +24,9 @@ from freenasOS.Exceptions import (
 from freenasOS.Update import (
     ApplyUpdate, CheckForUpdates, GetServiceDescription, ExtractFrozenUpdate,
 )
+
+UPLOAD_LOCATION = '/var/tmp/firmware'
+UPLOAD_LABEL = 'updatemdu'
 
 
 def parse_train_name(name):
@@ -340,7 +345,7 @@ class UpdateService(Service):
           }
         """
         if path is None:
-            path = await self.middleware.call('notifier.get_update_location')
+            path = await self.middleware.call('update.get_update_location')
         data = []
         try:
             changes = await self.middleware.run_in_thread(Update.PendingUpdatesChanges, path)
@@ -420,7 +425,7 @@ class UpdateService(Service):
             if result in errors:
                 raise CallError(errors[result])
 
-        location = await self.middleware.call('notifier.get_update_location')
+        location = await self.middleware.call('update.get_update_location')
 
         job.set_progress(0, 'Retrieving update manifest')
 
@@ -452,7 +457,7 @@ class UpdateService(Service):
     @job(lock='updatedownload')
     def download(self, job):
         train = self.middleware.call_sync('update.get_trains')['selected']
-        location = self.middleware.call_sync('notifier.get_update_location')
+        location = self.middleware.call_sync('update.get_update_location')
 
         job.set_progress(0, 'Retrieving update manifest')
 
@@ -507,18 +512,31 @@ Changelog:
 
     @accepts(Str('path'))
     @job(lock='updatemanual', process=True)
-    async def manual(self, job, path):
+    def manual(self, job, path):
         """
         Apply manual update of file `path`.
         """
-        rv = await self.middleware.call('notifier.validate_update', path)
-        if not rv:
-            raise CallError('Invalid update file', errno.EINVAL)
-        await self.middleware.call('notifier.apply_update', path, timeout=None)
+        dest_extracted = os.path.join(os.path.dirname(path), '.update')
         try:
-            await self.middleware.call('notifier.destroy_upload_location')
-        except Exception:
-            self.logger.warn('Failed to destroy upload location', exc_info=True)
+            try:
+                job.set_progress(30, 'Extracting file')
+                ExtractFrozenUpdate(path, dest_extracted, verbose=True)
+                job.set_progress(50, 'Applying update')
+                ApplyUpdate(dest_extracted)
+            except Exception as e:
+                self.logger.debug('Applying manual update failed', exc_info=True)
+                raise CallError(str(e), errno.EFAULT)
+
+            job.set_progress(95, 'Cleaning up')
+        finally:
+            if os.path.exists(path):
+                os.unlink(path)
+
+            if os.path.exists(dest_extracted):
+                shutil.rmtree(dest_extracted, ignore_errors=True)
+
+        if path.startswith(UPLOAD_LOCATION):
+            self.middleware.call_sync('update.destroy_upload_location')
 
     @accepts(Dict(
         'updatefile',
@@ -536,7 +554,7 @@ Changelog:
 
         if not dest:
             try:
-                await self.middleware.call('notifier.create_upload_location')
+                await self.middleware.call('update.create_upload_location')
                 dest = '/var/tmp/firmware'
             except Exception as e:
                 raise CallError(str(e))
@@ -577,6 +595,77 @@ Changelog:
                 shutil.rmtree(dest_extracted, ignore_errors=True)
 
         if dest == '/var/tmp/firmware':
-            await self.middleware.call('notifier.destroy_upload_location')
+            await self.middleware.call('update.destroy_upload_location')
 
         job.set_progress(100, 'Update completed')
+
+    @private
+    async def get_update_location(self):
+        syspath = (await self.middleware.call('systemdataset.config'))['path']
+        if syspath:
+            return f'{syspath}/update'
+        return '/var/tmp/update'
+
+    @private
+    def create_upload_location(self):
+        geom.scan()
+        klass_label = geom.class_by_name('LABEL')
+        prov = klass_label.xml.find(
+            f'.//provider[name = "label/{UPLOAD_LABEL}"]/../consumer/provider'
+        )
+        if prov is None:
+            cp = subprocess.run(
+                ['mdconfig', '-a', '-t', 'swap', '-s', '2800m'],
+                text=True, capture_output=True, check=False,
+            )
+            if cp.returncode != 0:
+                raise CallError(f'Could not create memory device: {cp.stderr}')
+            mddev = cp.stdout.strip()
+
+            subprocess.run(['glabel', 'create', UPLOAD_LABEL, mddev], capture_output=True, check=False)
+
+            cp = subprocess.run(
+                ['newfs', f'/dev/label/{UPLOAD_LABEL}'],
+                text=True, capture_output=True, check=False,
+            )
+            if cp.returncode != 0:
+                raise CallError(f'Could not create temporary filesystem: {cp.stderr}')
+
+            shutil.rmtree(UPLOAD_LOCATION, ignore_errors=True)
+            os.makedirs(UPLOAD_LOCATION)
+
+            cp = subprocess.run(
+                ['mount', f'/dev/label/{UPLOAD_LABEL}', UPLOAD_LOCATION],
+                text=True, capture_output=True, check=False,
+            )
+            if cp.returncode != 0:
+                raise CallError(f'Could not mount temporary filesystem: {cp.stderr}')
+
+        shutil.chown(UPLOAD_LOCATION, 'www', 'www')
+        os.chmod(UPLOAD_LOCATION, 0o755)
+
+    @private
+    def destroy_upload_location(self):
+        geom.scan()
+        klass_label = geom.class_by_name('LABEL')
+        prov = klass_label.xml.find(
+            f'.//provider[name = "label/{UPLOAD_LABEL}"]/../consumer/provider'
+        )
+        if prov is None:
+            return
+        klass_md = geom.class_by_name('MD')
+        prov = klass_md.xml.find(f'.//provider[@id = "{prov.attrib["ref"]}"]/name')
+        if prov is None:
+            return
+
+        mddev = prov.text
+
+        subprocess.run(
+            ['umount', f'/dev/label/{UPLOAD_LABEL}'], capture_output=True, check=False,
+        )
+        cp = subprocess.run(
+            ['mdconfig', '-d', '-u', mddev],
+            text=True, capture_output=True, check=False,
+        )
+        if cp.returncode != 0:
+            raise CallError(f'Could not destroy memory device: {cp.stderr}')

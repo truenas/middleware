@@ -208,17 +208,12 @@ class BootEnvPoolAttachForm(Form):
     def _populate_disk_choices(self):
 
         diskchoices = dict()
-        used_disks = []
-        for v in Volume.objects.all():
-            used_disks.extend(v.get_disks())
 
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
-        disks = notifier().get_disks()
+        disks = notifier().get_disks(unused=True)
 
         for disk in disks:
-            if disk in used_disks:
-                continue
             devname, capacity = disks[disk]['devname'], disks[disk]['capacity']
             capacity = humanize_number_si(int(capacity))
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
@@ -261,17 +256,12 @@ class BootEnvPoolReplaceForm(Form):
     def _populate_disk_choices(self):
 
         diskchoices = dict()
-        used_disks = []
-        for v in Volume.objects.all():
-            used_disks.extend(v.get_disks())
 
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
-        disks = notifier().get_disks()
+        disks = notifier().get_disks(unused=True)
 
         for disk in disks:
-            if disk in used_disks:
-                continue
             devname, capacity = disks[disk]['devname'], disks[disk]['capacity']
             capacity = humanize_number_si(int(capacity))
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
@@ -2093,12 +2083,7 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
 
     @staticmethod
     def _get_unused_disks():
-        _n = notifier()
-        disks = _n.get_disks()
-        for volume in Volume.objects.all():
-            for disk in volume.get_disks():
-                disks.pop(disk, None)
-        return disks
+        return notifier().get_disks(unused=True)
 
     @classmethod
     def _get_unused_disks_by_size(cls):
@@ -2530,9 +2515,28 @@ class CertificateAuthorityCreateInternalForm(MiddlewareModelForm, ModelForm):
         required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_name').help_text
     )
+    cert_key_type = forms.ChoiceField(
+        label=_('Key Type'),
+        help_text=_(
+            'See https://crypto.stackexchange.com/questions/1190/why-is-elliptic-curve-cryptography-not-'
+            'widely-used-compared-to-rsa for more information about key types.'
+        ),
+        required=True,
+        choices=()
+    )
+    cert_ec_curve = forms.ChoiceField(
+        label=_('EC Key Curve'),
+        help_text=_(
+            'Brainpool* curves can be more secure, while secp* curves can be faster. See https://tls.mbed.org/'
+            'kb/cryptography/elliptic-curve-performance-nist-vs-brainpool for more information.'
+        ),
+        required=False,
+        widget=forms.Select({'disabled': True}),
+        choices=()
+    )
     cert_key_length = forms.ChoiceField(
         label=_('Key Length'),
-        required=True,
+        required=False,
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
@@ -2591,15 +2595,33 @@ class CertificateAuthorityCreateInternalForm(MiddlewareModelForm, ModelForm):
         help_text=_('Multi-domain support. Enter additional space separated domains')
     )
 
+    def __init__(self, *args, **kwargs):
+        super(CertificateAuthorityCreateInternalForm, self).__init__(*args, **kwargs)
+        with client as c:
+            self.fields['cert_key_type'].choices = list(map(lambda v: (v, v), c.call('certificate.key_type_choices')))
+            self.fields['cert_ec_curve'].choices = list(map(lambda v: (v, v), c.call('certificate.ec_curve_choices')))
+
+        self.fields['cert_key_type'].widget.attrs['onChange'] = (
+            'javascript:Cert_EC_key();'
+        )
+
     def middleware_clean(self, data):
-        data['key_length'] = int(data['key_length'])
         data['san'] = data['san'].split()
         data['create_type'] = 'CA_CREATE_INTERNAL'
+
+        if data['key_type'] != 'EC':
+            data.pop('ec_curve')
+            data['key_length'] = int(data['key_length'])
+        else:
+            data.pop('key_length')
+
         return data
 
     class Meta:
         fields = [
             'cert_name',
+            'cert_key_type',
+            'cert_ec_curve',
             'cert_key_length',
             'cert_digest_algorithm',
             'cert_lifetime',
@@ -2626,9 +2648,28 @@ class CertificateAuthorityCreateIntermediateForm(MiddlewareModelForm, ModelForm)
         required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_name').help_text
     )
+    cert_key_type = forms.ChoiceField(
+        label=_('Key Type'),
+        help_text=_(
+            'See https://crypto.stackexchange.com/questions/1190/why-is-elliptic-curve-cryptography-not-'
+            'widely-used-compared-to-rsa for more information about key types.'
+        ),
+        required=True,
+        choices=()
+    )
+    cert_ec_curve = forms.ChoiceField(
+        label=_('EC Key Curve'),
+        help_text=_(
+            'Brainpool* curves can be more secure, while secp* curves can be faster. See https://tls.mbed.org/'
+            'kb/cryptography/elliptic-curve-performance-nist-vs-brainpool for more information.'
+        ),
+        required=False,
+        widget=forms.Select({'disabled': True}),
+        choices=()
+    )
     cert_key_length = forms.ChoiceField(
         label=_('Key Length'),
-        required=True,
+        required=False,
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
@@ -2690,6 +2731,10 @@ class CertificateAuthorityCreateIntermediateForm(MiddlewareModelForm, ModelForm)
     def __init__(self, *args, **kwargs):
         super(CertificateAuthorityCreateIntermediateForm, self).__init__(*args, **kwargs)
 
+        with client as c:
+            self.fields['cert_key_type'].choices = list(map(lambda v: (v, v), c.call('certificate.key_type_choices')))
+            self.fields['cert_ec_curve'].choices = list(map(lambda v: (v, v), c.call('certificate.ec_curve_choices')))
+
         self.fields['cert_signedby'].required = True
         self.fields['cert_signedby'].queryset = (
             models.CertificateAuthority.objects.exclude(
@@ -2702,17 +2747,28 @@ class CertificateAuthorityCreateIntermediateForm(MiddlewareModelForm, ModelForm)
         self.fields['cert_signedby'].widget.attrs["onChange"] = (
             "javascript:CA_autopopulate();"
         )
+        self.fields['cert_key_type'].widget.attrs['onChange'] = (
+            'javascript:Cert_EC_key();'
+        )
 
     def middleware_clean(self, data):
-        data['key_length'] = int(data['key_length'])
         data['san'] = data['san'].split()
         data['create_type'] = 'CA_CREATE_INTERMEDIATE'
+
+        if data['key_type'] != 'EC':
+            data.pop('ec_curve')
+            data['key_length'] = int(data['key_length'])
+        else:
+            data.pop('key_length')
+
         return data
 
     class Meta:
         fields = [
             'cert_signedby',
             'cert_name',
+            'cert_key_type',
+            'cert_ec_curve',
             'cert_key_length',
             'cert_digest_algorithm',
             'cert_lifetime',
@@ -3173,9 +3229,28 @@ class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_name').help_text
     )
+    cert_key_type = forms.ChoiceField(
+        label=_('Key Type'),
+        help_text=_(
+            'See https://crypto.stackexchange.com/questions/1190/why-is-elliptic-curve-cryptography-not-'
+            'widely-used-compared-to-rsa for more information about key types.'
+        ),
+        required=True,
+        choices=()
+    )
+    cert_ec_curve = forms.ChoiceField(
+        label=_('EC Key Curve'),
+        help_text=_(
+            'Brainpool* curves can be more secure, while secp* curves can be faster. See https://tls.mbed.org/'
+            'kb/cryptography/elliptic-curve-performance-nist-vs-brainpool for more information.'
+        ),
+        required=False,
+        widget=forms.Select({'disabled': True}),
+        choices=()
+    )
     cert_key_length = forms.ChoiceField(
         label=_('Key Length'),
-        required=True,
+        required=False,
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
@@ -3238,6 +3313,10 @@ class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
         self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
         super(CertificateCreateInternalForm, self).__init__(*args, **kwargs)
 
+        with client as c:
+            self.fields['cert_key_type'].choices = list(map(lambda v: (v, v), c.call('certificate.key_type_choices')))
+            self.fields['cert_ec_curve'].choices = list(map(lambda v: (v, v), c.call('certificate.ec_curve_choices')))
+
         self.fields['cert_signedby'].required = True
         self.fields['cert_signedby'].queryset = (
             models.CertificateAuthority.objects.exclude(
@@ -3250,18 +3329,29 @@ class CertificateCreateInternalForm(MiddlewareModelForm, ModelForm):
         self.fields['cert_signedby'].widget.attrs["onChange"] = (
             "javascript:CA_autopopulate();"
         )
+        self.fields['cert_key_type'].widget.attrs['onChange'] = (
+            'javascript:Cert_EC_key();'
+        )
 
     def middleware_clean(self, data):
-        data['key_length'] = int(data['key_length'])
         data['san'] = data['san'].split()
         data['create_type'] = 'CERTIFICATE_CREATE_INTERNAL'
         data['signedby'] = self.instance.cert_signedby.pk
+
+        if data['key_type'] != 'EC':
+            data.pop('ec_curve')
+            data['key_length'] = int(data['key_length'])
+        else:
+            data.pop('key_length')
+
         return data
 
     class Meta:
         fields = [
             'cert_signedby',
             'cert_name',
+            'cert_key_type',
+            'cert_ec_curve',
             'cert_key_length',
             'cert_digest_algorithm',
             'cert_lifetime',
@@ -3290,9 +3380,28 @@ class CertificateCreateCSRForm(MiddlewareModelForm, ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_name').help_text
     )
+    cert_key_type = forms.ChoiceField(
+        label=_('Key Type'),
+        help_text=_(
+            'See https://crypto.stackexchange.com/questions/1190/why-is-elliptic-curve-cryptography-not-'
+            'widely-used-compared-to-rsa for more information about key types.'
+        ),
+        required=True,
+        choices=()
+    )
+    cert_ec_curve = forms.ChoiceField(
+        label=_('EC Key Curve'),
+        help_text=_(
+            'Brainpool* curves can be more secure, while secp* curves can be faster. See https://tls.mbed.org/'
+            'kb/cryptography/elliptic-curve-performance-nist-vs-brainpool for more information.'
+        ),
+        required=False,
+        widget=forms.Select({'disabled': True}),
+        choices=()
+    )
     cert_key_length = forms.ChoiceField(
         label=_('Key Length'),
-        required=True,
+        required=False,
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
@@ -3350,15 +3459,31 @@ class CertificateCreateCSRForm(MiddlewareModelForm, ModelForm):
         self.middleware_job_wait = kwargs.pop('middleware_job_wait', False)
         super(CertificateCreateCSRForm, self).__init__(*args, **kwargs)
 
+        with client as c:
+            self.fields['cert_key_type'].choices = list(map(lambda v: (v, v), c.call('certificate.key_type_choices')))
+            self.fields['cert_ec_curve'].choices = list(map(lambda v: (v, v), c.call('certificate.ec_curve_choices')))
+
+        self.fields['cert_key_type'].widget.attrs['onChange'] = (
+            'javascript:Cert_EC_key();'
+        )
+
     def middleware_clean(self, data):
-        data['key_length'] = int(data['key_length'])
         data['san'] = data['san'].split()
         data['create_type'] = 'CERTIFICATE_CREATE_CSR'
+
+        if data['key_type'] != 'EC':
+            data.pop('ec_curve')
+            data['key_length'] = int(data['key_length'])
+        else:
+            data.pop('key_length')
+
         return data
 
     class Meta:
         fields = [
             'cert_name',
+            'cert_key_type',
+            'cert_ec_curve',
             'cert_key_length',
             'cert_digest_algorithm',
             'cert_country',
