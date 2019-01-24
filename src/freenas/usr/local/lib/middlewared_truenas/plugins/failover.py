@@ -382,6 +382,17 @@ class FailoverService(ConfigService):
         # This is to communicate with legacy TrueNAS, pre middlewared for upgrading.
         return notifier().failover_rpc().ping()
 
+    @private
+    def remote_ip(self):
+        node = self.node()
+        if node == 'A':
+            remote = '169.254.10.2'
+        elif node == 'B':
+            remote = '169.254.10.1'
+        else:
+            raise CallError(f'Node {node} invalid for call_remote', errno.EBADRPC)
+        return remote
+
     @accepts(
         Str('method'),
         List('args', default=[]),
@@ -393,14 +404,7 @@ class FailoverService(ConfigService):
     )
     def call_remote(self, method, args, options=None):
         options = options or {}
-
-        node = self.node()
-        if node == 'A':
-            remote = '169.254.10.2'
-        elif node == 'B':
-            remote = '169.254.10.1'
-        else:
-            raise CallError(f'Node {node} invalid for call_remote', errno.EBADRPC)
+        remote = self.remote_ip()
         try:
             # 860 is the iSCSI port and blocked by the failover script
             with Client(f'ws://{remote}:6000/websocket', reserved_ports=True, reserved_ports_blacklist=[860]) as c:
