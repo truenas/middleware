@@ -32,6 +32,7 @@ import logging
 import os
 import pytz
 import re
+import requests
 import shutil
 import socket
 import subprocess
@@ -40,7 +41,6 @@ import tempfile
 import time
 import urllib.parse
 import xmlrpc.client
-import threading
 import traceback
 import sys
 
@@ -74,15 +74,13 @@ from freenasUI.system import forms, models
 from freenasUI.system.utils import (
     UpdateHandler,
     VerifyHandler,
-    debug_get_settings,
-    debug_generate,
     factory_restore,
     run_updated,
     is_update_applied
 )
 from middlewared.plugins.update import CheckUpdateHandler, get_changelog, parse_changelog
 
-DEBUG_THREAD = None
+DEBUG_JOB = None
 VERSION_FILE = '/etc/version'
 PGFILE = '/tmp/.extract_progress'
 INSTALLFILE = '/tmp/.upgrade_install'
@@ -1105,11 +1103,11 @@ def reload_httpd(request):
 
 
 def debug(request):
-    global DEBUG_THREAD
+    global DEBUG_JOB
 
     _n = notifier()
     if request.method == 'GET':
-        DEBUG_THREAD = None
+        DEBUG_JOB = None
         if not _n.is_freenas() and _n.failover_licensed():
             try:
                 with client as c:
@@ -1119,43 +1117,28 @@ def debug(request):
 
         return render(request, 'system/debug.html')
 
-    if not DEBUG_THREAD:
+    if not DEBUG_JOB:
         # XXX: Dont do this, temporary workaround for legacy UI
-        DEBUG_THREAD = threading.Thread(target=debug_generate, daemon=True)
-        DEBUG_THREAD.start()
+        with client as c:
+            DEBUG_JOB = c.call('core.download', 'system.debug_download', [], 'debug.tar')
         return HttpResponse('1', status=202)
-    if DEBUG_THREAD.isAlive():
+    with client as c:
+        job = c.call('core.get_jobs', [('id', '=', DEBUG_JOB[0])])
+    if job and (
+        job[0]['state'] not in ('SUCCESS', 'FAILED') and (job[0]['progress']['percent'] or 0) < 90
+    ):
         return HttpResponse('1', status=202)
-    DEBUG_THREAD = None
     return render(request, 'system/debug_download.html')
 
 
 def debug_download(request):
-    mntpt, direc, dump = debug_get_settings()
-    gc = GlobalConfiguration.objects.all().order_by('-id')[0]
-
-    _n = notifier()
-    dual_node_debug_file = debug_file = '{}/debug.tar'.format(direc)
-
-    if not _n.is_freenas() and _n.failover_licensed() and os.path.exists(dual_node_debug_file):
-        debug_file = dual_node_debug_file
-        extension = 'tar'
-        hostname = ''
-    else:
-        debug_file = dump
-        extension = 'tgz'
-        hostname = '-%s' % gc.gc_hostname
-
+    global DEBUG_JOB
+    r = requests.get(f'http://127.0.0.1:6000{DEBUG_JOB[1]}', stream=True)
     response = StreamingHttpResponse(
-        FileWrapper(open(debug_file, 'rb')),
+        r.iter_content(chunk_size=1024 * 1024),
         content_type='application/octet-stream',
     )
-    response['Content-Length'] = os.path.getsize(debug_file)
-    response['Content-Disposition'] = \
-        'attachment; filename=debug%s-%s.%s' % (
-            hostname,
-            time.strftime('%Y%m%d%H%M%S'),
-            extension)
+    response['Content-Disposition'] = 'attachment; filename=debug.tar'
     return response
 
 
