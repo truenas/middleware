@@ -149,10 +149,10 @@ class JailService(CRUDService):
             job.set_progress(20, 'Initial validation complete')
 
         if not any('resolver' in p for p in options['props']):
-            dc = self.middleware.call(
+            dc = self.middleware.call_sync(
                 'service.query', [('service', '=', 'domaincontroller')]
             )
-            dc_config = self.middleware.call('domaincontroller.config')
+            dc_config = self.middleware.call_sync('domaincontroller.config')
 
             if dc['enable'] and (
                 dc_config['dns_forwarder'] and
