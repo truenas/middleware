@@ -1322,11 +1322,24 @@ class PoolService(CRUDService):
 
         verrors = await self.__common_encopt_validation(pool, options)
 
+        if (
+            pool['name'] == (await self.middleware.call('systemdataset.config'))['pool'] and (
+                pool['encrypt'] == 1 or (pool['encrypt'] == 2 and options['passphrase'])
+            )
+        ):
+            # Only allow removing passphrase for pools being used by system dataset service
+            verrors.add(
+                'id',
+                'A passphrase on a pool containing the system dataset can only be removed. '
+                'It cannot be set or changed.'
+            )
+
         # For historical reasons (API v1.0 compatibility) we only require
         # admin_password when changing/removing passphrase
         if pool['encrypt'] == 2 and not options.get('admin_password'):
             verrors.add('options.admin_password', 'This attribute is required.')
-            raise verrors
+
+        verrors.check()
 
         await self.middleware.call('disk.geli_passphrase', pool, options['passphrase'], True)
 
@@ -1590,11 +1603,19 @@ class PoolService(CRUDService):
             verrors.add('id', 'Pool already locked.')
 
         if not verrors:
-            if not await self.middleware.call('disk.geli_testkey', pool, passphrase):
+            # Make sure that this pool is not being used by system dataset service
+            if pool['name'] == (await self.middleware.call('systemdataset.config'))['pool']:
                 verrors.add(
-                    'passphrase',
-                    'Please provide a valid passphrase to lock the pool'
+                    'id',
+                    'Pool contains the system dataset and cannot be locked. Please select a different pool or '
+                    'configure the system dataset to be on a different pool.'
                 )
+            else:
+                if not await self.middleware.call('disk.geli_testkey', pool, passphrase):
+                    verrors.add(
+                        'passphrase',
+                        'The entered passphrase was not valid. Please enter the correct passphrase to lock the pool.'
+                    )
 
         if verrors:
             raise verrors
