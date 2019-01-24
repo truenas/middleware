@@ -1341,10 +1341,10 @@ SYSCTL_TUNABLE_VARNAME_FORMAT = """Sysctl variable names must:<br />
 4. Can contain a combination of alphanumeric characters, numbers and/or underscores.
 """
 SYSCTL_VARNAME_FORMAT_RE = \
-    re.compile('[a-z][a-z0-9_]+\.([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
+    re.compile(r'[a-z][a-z0-9_]+\.([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
 
 LOADER_VARNAME_FORMAT_RE = \
-    re.compile('[a-z][a-z0-9_]+\.*([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
+    re.compile(r'[a-z][a-z0-9_]+\.*([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
 
 
 class TunableForm(MiddlewareModelForm, ModelForm):

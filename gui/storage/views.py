@@ -51,7 +51,6 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.util import JobAborted, JobFailed, wait_job
 from freenasUI.system.models import Advanced
 from freenasUI.services.exceptions import ServiceFailed
-from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
 
 DISK_WIPE_JOB_ID = None
