@@ -10,6 +10,7 @@ import csv
 import os
 import psutil
 import re
+import shutil
 import socket
 import struct
 import subprocess
@@ -20,11 +21,10 @@ import time
 
 from licenselib.license import ContractType, Features
 
-# FIXME: Temporary imports until debug lives in middlewared
+# FIXME: Temporary imports until license lives in middlewared
 if '/usr/local/www' not in sys.path:
     sys.path.append('/usr/local/www')
 from freenasUI.support.utils import get_license
-from freenasUI.system.utils import debug_get_settings, debug_run
 
 # Flag telling whether the system completed boot and is ready to use
 SYSTEM_READY = False
@@ -368,9 +368,29 @@ class SystemService(Service):
     @accepts()
     @job(lock='systemdebug')
     def debug(self, job):
-        # FIXME: move the implementation from freenasUI
-        mntpt, direc, dump = debug_get_settings()
-        debug_run(direc)
+        """
+        Generate system debug file.
+
+        Result value will be the absolute path of the file.
+        """
+        system_dataset_path = self.middleware.call_sync('systemdataset.config')['path']
+        if system_dataset_path is not None:
+            direc = os.path.join(system_dataset_path, 'ixdiagnose')
+        else:
+            direc = '/var/tmp/ixdiagnose'
+        dump = os.path.join(direc, 'ixdiagnose.tgz')
+
+        # Be extra safe in case we have left over from previous run
+        if os.path.exists(direc):
+            shutil.rmtree(direc)
+
+        cp = subprocess.run(
+            ['ixdiagnose', '-d', direc, '-s', '-F'],
+            text=True, capture_output=True, check=False,
+        )
+        if cp.returncode != 0:
+            raise CallError(f'Failed to generate debug file: {cp.stderr}')
+
         return dump
 
 
