@@ -1,4 +1,5 @@
 from collections import defaultdict
+import copy
 import errno
 import glob
 import itertools
@@ -10,17 +11,20 @@ import psutil
 import queue
 import re
 import select
+import shutil
 import socketserver
 import subprocess
 import sysctl
+import tarfile
 import textwrap
 import threading
 import time
 
 from middlewared.event import EventSource
 from middlewared.schema import Bool, Dict, Int, List, Ref, Str, accepts
-from middlewared.service import CallError, Service, ValidationErrors, filterable, private
-from middlewared.utils import filter_list, start_daemon_thread
+from middlewared.service import CallError, ConfigService, ValidationErrors, filterable, private
+from middlewared.utils import filter_list, run, start_daemon_thread
+from middlewared.validators import Range
 
 RE_COLON = re.compile('(.+):(.+)$')
 RE_DISK = re.compile(r'^[a-z]+[0-9]+$')
@@ -32,6 +36,13 @@ RRD_BASE_PATH = '/var/db/collectd/rrd/localhost'
 RRD_PLUGINS = {}
 RRD_TYPE_QUEUES_EVENT = defaultdict(lambda: defaultdict(set))
 RRD_TYPE_QUEUES_EVENT_LOCK = threading.Lock()
+
+
+def get_members(tar, prefix):
+    for tarinfo in tar.getmembers():
+        if tarinfo.name.startswith(prefix):
+            tarinfo.name = tarinfo.name[len(prefix):]
+            yield tarinfo
 
 
 class RRDMeta(type):
@@ -213,7 +224,7 @@ class CPUPlugin(RRDBase):
     vertical_label = '%CPU'
 
     def get_defs(self, identifier):
-        if self.middleware.call_sync('system.advanced.config')['cpu_in_percentage']:
+        if self.middleware.call_sync('reporting.config')['cpu_in_percentage']:
             cpu_idle = os.path.join(self.base_path, 'percent-idle.rrd')
             cpu_nice = os.path.join(self.base_path, 'percent-nice.rrd')
             cpu_user = os.path.join(self.base_path, 'percent-user.rrd')
@@ -655,13 +666,200 @@ class NFSStatPlugin(RRDBase):
     )
 
 
-class ReportingService(Service):
+class ReportingService(ConfigService):
+
+    class Config:
+        datastore = 'system.reporting'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__rrds = {}
         for name, klass in RRD_PLUGINS.items():
             self.__rrds[name] = klass(self.middleware)
+
+    @accepts(
+        Dict(
+            'reporting_update',
+            Bool('cpu_in_percentage'),
+            Str('graphite'),
+            Int('graph_age', validators=[Range(min=1)]),
+            Int('graph_points', validators=[Range(min=1)]),
+            Bool('confirm_rrd_destroy'),
+            update=True
+        )
+    )
+    async def do_update(self, data):
+        """
+        Configure Reporting Database settings.
+
+        If `cpu_in_percentage` is `true`, collectd will report CPU usage in percentage instead of "jiffies".
+
+        `graphite` specifies a hostname or IP address that will be used as the destination to send collectd data
+        using the graphite plugin.
+
+        `graph_age` specified maximum age of graph (in months) to store. `graph_points` is a number of points for
+        each (hourly, daily, weekly, etc.) graph. Changing these will require destroying your current reporting
+        database so when these fields are changed, an additional `confirm_rrd_destroy: true` flag must be present.
+
+        .. examples(websocket)::
+
+          Update reporting settings
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "reporting.update",
+                "params": [{
+                    "cpu_in_percentage": false,
+                    "graphite": "",
+                }]
+            }
+
+          Recreate reporting database with new settings
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "reporting.update",
+                "params": [{
+                    "graph_age": 12,
+                    "graph_points": 1200,
+                    "confirm_rrd_destroy": true,
+                }]
+            }
+        """
+
+        confirm_rrd_destroy = data.pop('confirm_rrd_destroy', False)
+
+        old = await self.config()
+
+        new = copy.deepcopy(old)
+        new.update(data)
+
+        verrors = ValidationErrors()
+
+        destroy_database = False
+        for k in ['graph_age', 'graph_points']:
+            if old[k] != new[k]:
+                destroy_database = True
+
+                if not confirm_rrd_destroy:
+                    verrors.add(
+                        f'reporting_update.{k}',
+                        f'Changing this option requires destroying of reporting database so you\'ll have to confirm '
+                        f'this action by setting corresponding flag',
+                    )
+
+        if verrors:
+            raise verrors
+
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            old['id'],
+            new,
+            {'prefix': self._config.datastore_prefix}
+        )
+
+        if destroy_database:
+            await self.middleware.call('service.stop', 'collectd')
+            await self.middleware.call('service.stop', 'rrdcached')
+            await run('sh', '-c', 'rm -rf /var/db/collectd/rrd/*', check=False)
+            await self.middleware.call('reporting.setup')
+            await self.middleware.call('service.start', 'rrdcached')
+
+        await self.middleware.call('service.restart', 'collectd')
+
+        return await self.config()
+
+    @private
+    def setup(self):
+        is_freenas = self.middleware.call_sync('system.is_freenas')
+        # If not is_freenas remove the rc.conf cache rc.conf.local will
+        # run again using the correct collectd_enable. See #5019
+        if not is_freenas:
+            try:
+                os.remove('/var/tmp/freenas_config.md5')
+            except FileNotFoundError:
+                pass
+
+        systemdatasetconfig = self.middleware.call_sync('systemdataset.config')
+        if not systemdatasetconfig['path']:
+            self.middleware.logger.error(f'System dataset is not mounted')
+            return False
+
+        rrd_mount = f'{systemdatasetconfig["path"]}/rrd-{systemdatasetconfig["uuid"]}'
+        if not os.path.exists(rrd_mount):
+            self.middleware.logger.error(f'{rrd_mount} does not exist or is not a directory')
+            return False
+
+        # Ensure that collectd working path is a symlink to system dataset
+        pwd = '/var/db/collectd/rrd'
+        if os.path.exists(pwd) and (not os.path.isdir(pwd) or not os.path.islink(pwd)):
+            shutil.move(pwd, f'{pwd}.{time.strftime("%Y%m%d%H%M%S")}')
+        if not os.path.exists(pwd):
+            os.symlink(rrd_mount, pwd)
+
+        # Migrate legacy RAMDisk
+        persist_file = '/data/rrd_dir.tar.bz2'
+        if os.path.isfile(persist_file):
+            with tarfile.open(persist_file) as tar:
+                if 'collectd/rrd' in tar.getnames():
+                    tar.extractall(pwd, get_members(tar, 'collectd/rrd/'))
+
+            os.unlink('/data/rrd_dir.tar.bz2')
+
+        hostname = self.middleware.call_sync('system.info')['hostname']
+        if not hostname:
+            hostname = self.middleware.call_sync('network.configuration.config')['hostname']
+
+        # Migrate from old version, where `hostname` was a real directory and `localhost` was a symlink.
+        # Skip the case where `hostname` is "localhost", so symlink was not (and is not) needed.
+        if (
+            hostname != 'localhost' and
+            os.path.isdir(os.path.join(pwd, hostname)) and
+            not os.path.islink(os.path.join(pwd, hostname))
+        ):
+            if os.path.exists(os.path.join(pwd, 'localhost')):
+                if os.path.islink(os.path.join(pwd, 'localhost')):
+                    os.unlink(os.path.join(pwd, 'localhost'))
+                else:
+                    # This should not happen, but just in case
+                    shutil.move(
+                        os.path.join(pwd, 'localhost'),
+                        os.path.join(pwd, f'localhost.bak.{time.strftime("%Y%m%d%H%M%S")}')
+                    )
+            shutil.move(os.path.join(pwd, hostname), os.path.join(pwd, 'localhost'))
+
+        # Remove all directories except "localhost" and it's backups (that may be erroneously created by
+        # running collectd before this script)
+        to_remove_dirs = [
+            os.path.join(pwd, d) for d in os.listdir(pwd)
+            if not d.startswith('localhost') and os.path.isdir(os.path.join(pwd, d))
+        ]
+        for r_dir in to_remove_dirs:
+            subprocess.run(['rm', '-rf', r_dir])
+
+        # Remove all symlinks (that are stale if hostname was changed).
+        to_remove_symlinks = [
+            os.path.join(pwd, l) for l in os.listdir(pwd)
+            if os.path.islink(os.path.join(pwd, l))
+        ]
+        for r_symlink in to_remove_symlinks:
+            os.unlink(r_symlink)
+
+        # Create "localhost" directory if it does not exist
+        if not os.path.exists(os.path.join(pwd, 'localhost')):
+            os.makedirs(os.path.join(pwd, 'localhost'))
+
+        # Create "${hostname}" -> "localhost" symlink if necessary
+        if hostname != 'localhost':
+            os.symlink(os.path.join(pwd, 'localhost'), os.path.join(pwd, hostname))
+
+        # Let's return a positive value to indicate that necessary collectd operations were performed successfully
+        return True
 
     @filterable
     def graphs(self, filters, options):

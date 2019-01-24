@@ -2493,6 +2493,14 @@ require([
         }
     }
 
+    confirmRrdDestroyHide = function() {
+        domStyle.set(registry.byId("id_confirm_rrd_destroy").domNode.parentNode.parentNode, "display", "none");
+    }
+
+    confirmRrdDestroyShow = function() {
+        domStyle.set(registry.byId("id_confirm_rrd_destroy").domNode.parentNode.parentNode, "display", "");
+    }
+
     disclosureToggle = function(element) {
         child = document.querySelector(".disclosure-content");
         if ( element.className === "disclosure-title" ) {

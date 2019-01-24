@@ -32,7 +32,7 @@ import subprocess
 
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.middleware.client import client
-from freenasUI.system.models import Advanced
+from freenasUI.system.models import Reporting
 from middlewared.utils import cache_with_autorefresh, filter_list
 
 
@@ -172,7 +172,7 @@ class CPUPlugin(RRDBase):
     vertical_label = "%CPU"
 
     def graph(self):
-        if Advanced.objects.latest('id').adv_cpu_in_percentage:
+        if Reporting.objects.latest('id').cpu_in_percentage:
             cpu_idle = os.path.join(self.base_path, "percent-idle.rrd")
             cpu_nice = os.path.join(self.base_path, "percent-nice.rrd")
             cpu_user = os.path.join(self.base_path, "percent-user.rrd")

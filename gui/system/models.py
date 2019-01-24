@@ -308,20 +308,6 @@ class Advanced(Model):
                     "the alert emails are set to (root) set an email address for a user and "
                     "select that user in the dropdown.")
     )
-    adv_cpu_in_percentage = models.BooleanField(
-        default=False,
-        verbose_name=_("Report CPU usage in percentage"),
-        help_text=_("collectd will report CPU usage in percentage instead of \"jiffies\" "
-                    "if this is checked."),
-    )
-    adv_graphite = models.CharField(
-        max_length=120,
-        default="",
-        blank=True,
-        verbose_name=_("Remote Graphite Server Hostname"),
-        help_text=_("A hostname or IP here will be used as the destination to send collectd "
-                    "data to using the graphite plugin to collectd.")
-    )
     adv_fqdn_syslog = models.BooleanField(
         verbose_name=_("Use FQDN for logging"),
         default=False,
@@ -429,7 +415,7 @@ class Email(Model):
         if self.em_pass:
             try:
                 self.em_pass = notifier().pwenc_decrypt(self.em_pass)
-            except:
+            except Exception:
                 log.debug('Failed to decrypt email password', exc_info=True)
                 self.em_pass = ''
         self._em_pass_encrypted = False
@@ -570,14 +556,6 @@ class SystemDataset(Model):
     sys_syslog_usedataset = models.BooleanField(
         default=False,
         verbose_name=_("Syslog")
-    )
-    sys_rrd_usedataset = models.BooleanField(
-        default=True,
-        verbose_name=_("Reporting Database"),
-        help_text=_(
-            'Save the Round-Robin Database (RRD) used by system statistics '
-            'collection daemon into the system dataset'
-        )
     )
     sys_uuid = models.CharField(
         editable=False,
@@ -1002,3 +980,41 @@ class SSHCredentialsKeychainCredential(KeychainCredential):
             "type",
             "attributes",
         )
+
+
+class Reporting(Model):
+    class Meta:
+        verbose_name = _("Reporting")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = "SystemDatasetIcon"
+        icon_object = "SystemDatasetIcon"
+        icon_view = "SystemDatasetIcon"
+        icon_add = "SystemDatasetIcon"
+
+    cpu_in_percentage = models.BooleanField(
+        default=False,
+        verbose_name=_("Report CPU usage in percentage"),
+        help_text=_("collectd will report CPU usage in percentage instead of \"jiffies\" "
+                    "if this is checked."),
+    )
+    graphite = models.CharField(
+        max_length=120,
+        default="",
+        blank=True,
+        verbose_name=_("Graphite server"),
+        help_text=_("A hostname or IP here will be used as the destination to send collectd "
+                    "data to using the graphite plugin to collectd.")
+    )
+    graph_age = models.IntegerField(
+        default=12,
+        verbose_name=_("Graph age"),
+        help_text=_("Maximum age of graph (in months) to store."),
+    )
+    graph_points = models.IntegerField(
+        default=1200,
+        verbose_name=_("Graph points count"),
+        help_text=_("Number of points for each (hourly, daily, weekly, monthly, yearly) graph. In short, set this to "
+                    "no smaller than the width of your graphs in pixels."),
+    )

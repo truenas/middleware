@@ -941,11 +941,12 @@ class ServiceService(CRUDService):
         if systemdataset['syslog']:
             await self.restart("syslogd", kwargs)
         await self.restart("cifs", kwargs)
-        if systemdataset['rrd']:
-            # Restarting collectd may take a long time and there is no
-            # benefit in waiting for it since even if it fails it wont
-            # tell the user anything useful.
-            asyncio.ensure_future(self.restart("collectd", kwargs))
+
+        # Restarting rrdcached may take a long time and there is no
+        # benefit in waiting for it since even if it fails it wont
+        # tell the user anything useful.
+        asyncio.ensure_future(self.restart("rrdcached", kwargs))
+        asyncio.ensure_future(self.start("collectd", kwargs))
 
     async def _start_netdata(self, **kwargs):
         await self.middleware.call('etc.generate', 'netdata')

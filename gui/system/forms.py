@@ -62,6 +62,7 @@ from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory, FreeNAS_LDAP
 from freenasUI.directoryservice.forms import (ActiveDirectoryForm, LDAPForm,
                                               NISForm)
 from freenasUI.directoryservice.models import LDAP, NIS, ActiveDirectory
+from freenasUI.freeadmin.forms import SizeField
 from freenasUI.freeadmin.utils import key_order
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.client import (ClientException, ValidationErrors,
@@ -1700,17 +1701,36 @@ class SystemDatasetForm(MiddlewareModelForm, ModelForm):
                 pool_choices.append((v.vol_name, v.vol_name))
 
         self.fields['sys_pool'].choices = pool_choices
-        self.instance._original_sys_pool = self.instance.sys_pool
-        self.instance._original_sys_syslog_usedataset = self.instance.sys_syslog_usedataset
-        self.instance._original_sys_rrd_usedataset = self.instance.sys_rrd_usedataset
         self.fields['sys_pool'].widget.attrs['onChange'] = (
             "systemDatasetMigration();"
         )
 
     def middleware_clean(self, update):
         update['syslog'] = update.pop('syslog_usedataset')
-        update['rrd'] = update.pop('rrd_usedataset')
         return update
+
+
+class ReportingForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = ""
+    middleware_attr_schema = "reporting"
+    middleware_plugin = "reporting"
+    is_singletone = True
+
+    confirm_rrd_destroy = forms.BooleanField(
+        label=_("Confirm destroying of reporting database"),
+        required=False,
+    )
+
+    class Meta:
+        fields = '__all__'
+        model = models.Reporting
+
+    def __init__(self, *args, **kwargs):
+        super(ReportingForm, self).__init__(*args, **kwargs)
+
+        self.fields["graph_age"].widget.attrs['onchange'] = "confirmRrdDestroyShow();"
+        self.fields["graph_points"].widget.attrs['onchange'] = "confirmRrdDestroyShow();"
 
 
 class InitialWizardDSForm(Form):

@@ -116,10 +116,8 @@ class SytemAdvancedService(ConfigService):
             Int('boot_scrub', validators=[Range(min=1)]),
             Bool('consolemenu'),
             Bool('consolemsg'),
-            Bool('cpu_in_percentage'),
             Bool('debugkernel'),
             Bool('fqdn_syslog'),
-            Str('graphite'),
             Str('motd'),
             Str('periodic_notifyuser'),
             Bool('powerdaemon'),
@@ -201,12 +199,6 @@ class SytemAdvancedService(ConfigService):
 
             if original_data['periodic_notifyuser'] != config_data['periodic_notifyuser']:
                 await self.middleware.call('service.start', 'ix-periodic', {'onetime': False})
-
-            if (
-                original_data['cpu_in_percentage'] != config_data['cpu_in_percentage'] or
-                original_data['graphite'] != config_data['graphite']
-            ):
-                await self.middleware.call('service.restart', 'collectd', {'onetime': False})
 
             if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
                 await self.middleware.call('service.restart', 'syslogd', {'onetime': False})
@@ -650,7 +642,7 @@ class SystemGeneralService(ConfigService):
 
         syslog_server = data.get('syslogserver')
         if syslog_server:
-            match = re.match("^[\w\.\-]+(\:\d+)?$", syslog_server)
+            match = re.match(r"^[\w\.\-]+(\:\d+)?$", syslog_server)
             if not match:
                 verrors.add(
                     f'{schema}.syslogserver',
