@@ -13,8 +13,8 @@ def create_reporting(apps, schema_editor):
     advanced = apps.get_model('system', 'Advanced').objects.latest('id')
     systemdataset = apps.get_model('system', 'SystemDataset').objects.latest('id')
 
-    if not systemdataset.sys_rrd_usedataset:
-        # Unlink this file if we were not using it so `reporting.setup` won't overwrite system dataset's data with
+    if systemdataset.sys_rrd_usedataset:
+        # Unlink this file if we were not using RAMDisk so `reporting.setup` won't overwrite system dataset's data with
         # stale RAMDisk data
         with contextlib.suppress(Exception):
             os.unlink('/data/rrd_dir.tar.bz2')
