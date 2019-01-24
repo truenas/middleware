@@ -1,5 +1,4 @@
 /usr/local/bin/midclt call core.event_send system ADDED '{"id": "shutdown"}' > /dev/null
-/usr/local/bin/midclt call reporting.persist_ramdisk
 if [ -f /etc/killpower ]; then
 	/usr/local/sbin/upsdrvctl shutdown
 fi
