@@ -972,9 +972,8 @@ class ReportingService(ConfigService):
         return rv
 
 
-class GraphiteServer(socketserver.ThreadingTCPServer):
+class GraphiteServer(socketserver.TCPServer):
     allow_reuse_address = True
-    daemon_threads = True
 
 
 class GraphiteHandler(socketserver.BaseRequestHandler):
@@ -982,29 +981,19 @@ class GraphiteHandler(socketserver.BaseRequestHandler):
         last = b''
         while True:
             data = b''
-
-            recv = self.request.recv(1428)
-            if not recv:
-                return
-            data += recv
-
             # Try to read a batch of updates at once, instead of breaking per message size
             while True:
                 if not select.select([self.request.fileno()], [], [], 0.1)[0]:
                     break
-
-                recv = self.request.recv(1428)
-                if not recv:
-                    return
-                data += recv
-
+                data += self.request.recv(1428)
+            if data == b'':
+                break
             if last:
                 data = last + data
                 last = b''
             lines = (last + data).split(b'\r\n')
             if lines[-1] != b'':
                 last = lines[-1]
-
             nameident_queues = defaultdict(set)
             nameident_timestamps = defaultdict(set)
             for line in lines[:-1]:
