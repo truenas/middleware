@@ -25,6 +25,7 @@
 #####################################################################
 from collections import OrderedDict, namedtuple
 from datetime import date
+import base64
 import pickle as pickle
 import errno
 import json
@@ -1133,7 +1134,12 @@ def debug(request):
 
 def debug_download(request):
     global DEBUG_JOB
-    r = requests.get(f'http://127.0.0.1:6000{DEBUG_JOB[1]}', stream=True)
+    url = request.GET.get('url')
+    if url:
+        url = base64.b64decode(url.encode()).decode()
+    else:
+        url = DEBUG_JOB[1]
+    r = requests.get(f'http://127.0.0.1:6000{url}', stream=True)
     response = StreamingHttpResponse(
         r.iter_content(chunk_size=1024 * 1024),
         content_type='application/octet-stream',

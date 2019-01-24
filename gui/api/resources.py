@@ -125,7 +125,7 @@ from freenasUI.system.forms import (
     ManualUpdateWizard,
 )
 from freenasUI.system.models import Update as mUpdate
-from freenasUI.system.utils import BootEnv, debug_generate, factory_restore
+from freenasUI.system.utils import BootEnv, factory_restore
 from freenasUI.system.views import restart_httpd, restart_httpd_all
 from middlewared.client import ClientException
 from tastypie import fields
@@ -2877,9 +2877,11 @@ class DebugResource(DojoResource):
         resource_name = 'system/debug'
 
     def post_list(self, request, **kwargs):
-        debug_generate()
+        with client as c:
+            url = c.call('core.download', 'system.debug_download', [], 'debug.tar')[1]
+            url = base64.b64encode(url.encode()).decode()
         data = {
-            'url': reverse('system_debug_download'),
+            'url': reverse('system_debug_download') + f'?url=url',
         }
         return self.create_response(request, data)
 
