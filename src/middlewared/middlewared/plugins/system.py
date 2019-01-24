@@ -405,6 +405,7 @@ class SystemService(Service):
         This method is meant to be used in conjuntion with `core.download` to get the debug
         downloaded via HTTP.
         """
+        job.set_progress(0, 'Generating debug file')
         debug_job = self.middleware.call_sync('system.debug')
 
         standby_debug = None
@@ -433,6 +434,8 @@ class SystemService(Service):
         debug_job.wait_sync()
         if debug_job.error:
             raise CallError(debug_job.error)
+
+        job.set_progress(90, 'Preparing debug file for streaming')
 
         if standby_debug:
             # Debug file cannot be big on HA because we put both debugs in memory
