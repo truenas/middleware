@@ -26,7 +26,6 @@
 import json
 import logging
 import os
-import tarfile
 
 from uuid import uuid4
 
@@ -36,7 +35,6 @@ from lockfile import LockFile
 
 from freenasOS import Update
 from freenasUI.common import humanize_size
-from freenasUI.common.pipesubr import pipeopen
 from freenasUI.middleware.client import client
 from freenasUI.middleware.util import run_alerts
 
@@ -332,68 +330,6 @@ def run_updated(train, location, download=True, apply=False):
         if uuid:
             uuid = uuid.decode().strip('\n')
         return returncode, uuid
-
-
-def debug_get_settings():
-    from freenasUI.middleware.client import client
-    direc = "/var/tmp/ixdiagnose"
-    mntpt = '/var/tmp'
-    with client as c:
-        system_dataset_path = c.call('systemdataset.config')['path']
-    if system_dataset_path is not None:
-        direc = os.path.join(system_dataset_path, 'ixdiagnose')
-        mntpt = system_dataset_path
-    dump = os.path.join(direc, 'ixdiagnose.tgz')
-
-    return (mntpt, direc, dump)
-
-
-def debug_run(direc):
-    # Be extra safe in case we have left over from previous run
-    if os.path.exists(direc):
-        opts = ["/bin/rm", "-r", "-f", direc]
-        p1 = pipeopen(' '.join(opts), allowfork=True)
-        p1.wait()
-
-    opts = ["/usr/local/bin/ixdiagnose", "-d", direc, "-s", "-F"]
-    p1 = pipeopen(' '.join(opts), allowfork=True)
-    p1.communicate()
-
-
-def debug_generate():
-    from freenasUI.common.locks import mntlock
-    from freenasUI.middleware.notifier import notifier
-    from freenasUI.network.models import GlobalConfiguration
-    _n = notifier()
-    gc = GlobalConfiguration.objects.all().order_by('-id')[0]
-    mntpt, direc, dump = debug_get_settings()
-
-    standby_debug = None
-    if not _n.is_freenas() and _n.failover_licensed():
-        try:
-            with client as c:
-                standby_debug = c.call('failover.call_remote', 'system.debug', [], {'job': True}, timeout=300)
-        except:
-            log.error('Failed to get debug from standby node', exc_info=True)
-
-    with mntlock(mntpt=mntpt):
-
-        debug_run(direc)
-
-        if standby_debug:
-            debug_file = '%s/debug.tar' % direc
-            with client as c:
-                _n.sync_file_recv(c, standby_debug, '%s/standby.txz' % direc)
-            # provide correct hostnames
-            if _n.failover_node() == 'A':
-                my_hostname = gc.gc_hostname
-                remote_hostname = gc.gc_hostname_b
-            else:
-                my_hostname = gc.gc_hostname_b
-                remote_hostname = gc.gc_hostname
-            with tarfile.open(debug_file, 'w') as tar:
-                tar.add('%s/standby.txz' % direc, '%s.txz' % remote_hostname)
-                tar.add(dump, '%s.txz' % my_hostname)
 
 
 def factory_restore(request):
