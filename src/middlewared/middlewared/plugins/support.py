@@ -24,7 +24,6 @@ from django.apps import apps
 if not apps.ready:
     django.setup()
 
-from freenasUI.system.utils import debug_get_settings, debug_generate
 from freenasUI.support.utils import get_license
 
 ADDRESS = 'support-proxy.ixsystems.com'
@@ -153,30 +152,24 @@ class SupportService(Service):
         job.set_progress(50, f'Ticket created: {ticket}', extra={'ticket': ticket})
 
         if debug:
-            # FIXME: generate debug from middleware
-            mntpt, direc, dump = await self.middleware.run_in_thread(debug_get_settings)
-
             job.set_progress(60, 'Generating debug file')
-            await self.middleware.run_in_thread(debug_generate)
+
+            debug_job = await self.middleware.call(
+                'system.debug_download', pipes=Pipes(output=self.middleware.pipe()),
+            )
 
             not_freenas = not (await self.middleware.call('system.is_freenas'))
             if not_freenas:
                 not_freenas &= await self.middleware.call('failover.licensed')
             if not_freenas:
-                debug_file = f'{direc}/debug.tar'
                 debug_name = 'debug-{}.tar'.format(time.strftime('%Y%m%d%H%M%S'))
             else:
-                debug_file = dump
                 debug_name = 'debug-{}-{}.txz'.format(
                     socket.gethostname().split('.')[0],
                     time.strftime('%Y%m%d%H%M%S'),
                 )
 
             job.set_progress(80, 'Attaching debug file')
-
-            # 20M filesize limit
-            if os.path.getsize(debug_file) > 20971520:
-                raise CallError('Debug too large to attach', errno.EFBIG)
 
             t = {
                 'ticket': ticket,
@@ -188,10 +181,13 @@ class SupportService(Service):
                 t['password'] = data['password']
             tjob = await self.middleware.call('support.attach_ticket', t, pipes=Pipes(input=self.middleware.pipe()))
 
-            with open(debug_file, 'rb') as f:
-                await self.middleware.run_in_thread(shutil.copyfileobj, f, tjob.pipes.input.w)
-                await self.middleware.run_in_thread(tjob.pipes.input.w.close)
+            # TODO: limit size to 20MiB
+            await self.middleware.run_in_thread(
+                shutil.copyfileobj, debug_job.pipes.output.r, tjob.pipes.input.w,
+            )
+            await self.middleware.run_in_thread(tjob.pipes.input.w.close)
 
+            await debug_job.wait()
             await tjob.wait()
         else:
             job.set_progress(100)
