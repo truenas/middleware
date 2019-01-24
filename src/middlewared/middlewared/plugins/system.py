@@ -49,14 +49,17 @@ class SytemAdvancedService(ConfigService):
             not await self.middleware.call('system.is_freenas') and
             await self.middleware.call('failover.hardware') == 'ECHOSTREAM'
         ):
-            ports = ['0x3f8']
+            ports = {'0x3f8': '0x3f8'}
         else:
             pipe = await Popen("/usr/sbin/devinfo -u | grep -A 99999 '^I/O ports:' | "
                                "sed -En 's/ *([0-9a-fA-Fx]+).*\(uart[0-9]+\)/\\1/p'", stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, shell=True)
-            ports = [y for y in (await pipe.communicate())[0].decode().strip().strip('\n').split('\n') if y]
-            if not ports:
-                ports = ['0x2f8']
+            ports = {y: y for y in (await pipe.communicate())[0].decode().strip().strip('\n').split('\n') if y}
+
+        if not ports or (await self.config())['serialport'] == '0x2f8':
+            # We should always add 0x2f8 if ports is false or current value is the default one in db
+            # i.e 0x2f8
+            ports['0x2f8'] = '0x2f8'
 
         return ports
 

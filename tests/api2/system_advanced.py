@@ -28,8 +28,8 @@ def test_02_system_advanced_serial_port_choices(sysadv_dict):
     results = GET('/system/advanced/serial_port_choices/')
     assert results.status_code == 200, results.text
     data = results.json()
-    sysadv_dict['serial_choices'] = data
-    assert isinstance(data, list), data
+    sysadv_dict['serial_choices'] = [k for k in data]
+    assert isinstance(data, dict), data
     assert len(data) > 0, data
 
 

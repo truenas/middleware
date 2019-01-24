@@ -918,11 +918,12 @@ CASE_SENSITIVITY_CHOICES = (
 class SERIAL_CHOICES(object):
 
     def __iter__(self):
+        ports = {}
         try:
             with client as c:
                 ports = c.call('system.advanced.serial_port_choices')
         except Exception:
-            ports = ['0x2f8']
+            ports['0x2f8'] = '0x2f8'
         for p in ports:
             yield (p, p)
 
