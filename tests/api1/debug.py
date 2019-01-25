@@ -10,7 +10,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST
 
-url_path = "/legacy/system/debug/download/"
+url_path = "/legacy/system/debug/download/?url=url"
 
 
 def test_01_Creating_diagnostic_file():
