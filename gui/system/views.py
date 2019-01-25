@@ -1139,12 +1139,21 @@ def debug_download(request):
         url = base64.b64decode(url.encode()).decode()
     else:
         url = DEBUG_JOB[1]
+
+    _n = notifier()
+    ftime = time.strftime('%Y%m%d%H%M%S')
+    if not _n.is_freenas() and _n.failover_licensed():
+        filename = f'debug-{ftime}.tar'
+    else:
+        gconf = GlobalConfiguration.objects.all().order_by('-id')[0]
+        filename = f'debug-{gconf.gc_hostname}-{ftime}.txz'
+
     r = requests.get(f'http://127.0.0.1:6000{url}', stream=True)
     response = StreamingHttpResponse(
         r.iter_content(chunk_size=1024 * 1024),
         content_type='application/octet-stream',
     )
-    response['Content-Disposition'] = 'attachment; filename=debug.tar'
+    response['Content-Disposition'] = f'attachment; filename={filename}'
     return response
 
 
