@@ -2,7 +2,6 @@ import errno
 import json
 import os
 import requests
-import shutil
 import simplejson
 import socket
 import subprocess
@@ -179,13 +178,25 @@ class SupportService(Service):
                 t['username'] = data['user']
             if 'password' in data:
                 t['password'] = data['password']
-            tjob = await self.middleware.call('support.attach_ticket', t, pipes=Pipes(input=self.middleware.pipe()))
-
-            # TODO: limit size to 20MiB
-            await self.middleware.run_in_thread(
-                shutil.copyfileobj, debug_job.pipes.output.r, tjob.pipes.input.w,
+            tjob = await self.middleware.call(
+                'support.attach_ticket', t, pipes=Pipes(input=self.middleware.pipe()),
             )
-            await self.middleware.run_in_thread(tjob.pipes.input.w.close)
+
+            def copy():
+                try:
+                    rbytes = 0
+                    while True:
+                        r = debug_job.pipes.output.r.read(1048576)
+                        if r == b'':
+                            break
+                        rbytes += len(r)
+                        if rbytes > 20971520:
+                            raise CallError('Debug too large to attach', errno.EFBIG)
+                        tjob.pipes.input.w.write(r)
+                finally:
+                    tjob.pipes.input.w.close()
+
+            await self.middleware.run_in_thread(copy)
 
             await debug_job.wait()
             await tjob.wait()
@@ -221,7 +232,7 @@ class SupportService(Service):
             r = await self.middleware.run_in_thread(lambda: requests.post(
                 f'https://{ADDRESS}/{sw_name}/api/v1.0/ticket/attachment',
                 data=data,
-                timeout=10,
+                timeout=300,
                 files={'file': (filename, job.pipes.input.r)},
             ))
             data = r.json()
