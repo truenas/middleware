@@ -405,7 +405,7 @@ class PoolService(CRUDService):
                 if path.startswith('/dev/'):
                     device = self.middleware.call_sync('disk.label_to_dev', path[5:], geom_scan)
                 x['device'] = device
-                x['disk'] = RE_DISKPART.sub(r'\1', device)
+                x['disk'] = RE_DISKPART.sub(r'\1', str(device))
             for key in x:
                 if key == 'type' and isinstance(x[key], str):
                     x[key] = x[key].upper()
