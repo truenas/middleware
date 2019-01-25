@@ -28,6 +28,9 @@ FAILED_FILE = '/tmp/.failover_failed'
 FAILOVER_STATE = '/tmp/.failover_state'
 FAILOVER_ASSUMED_MASTER = '/tmp/.failover_master'
 
+# GUI alert file
+AD_ALERT_FILE = '/tmp/.adalert'
+
 # Config file, externally generated
 FAILOVER_JSON = '/tmp/failover.json'
 
@@ -491,6 +494,8 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                 # XXX: Tha would enforce re-importing all Samba users
                 try:
                     os.unlink(SAMBA_USER_IMPORT_FILE)
+                    # Redmine 72415
+                    os.unlink(AD_ALERT_FILE)
                 except:
                     pass
                 run('/usr/local/libexec/nas/generate_smb4_conf.py')
