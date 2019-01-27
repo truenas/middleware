@@ -666,6 +666,26 @@ class NFSStatPlugin(RRDBase):
     )
 
 
+class UPSBatteryChargePlugin(RRDBase):
+
+    plugin = 'nut-ups'
+    title = 'UPS Battery Statistics'
+    vertical_label = 'Percent'
+    rrd_types = (
+        ('percent-charge', 'value', None),
+    )
+
+
+class UPSRemainingBatteryPlugin(RRDBase):
+
+    plugin = 'nut-ups'
+    title = 'UPS Battery Time Remaining Statistics'
+    vertical_label = 'Seconds'
+    rrd_types = (
+        ('timeleft-battery', 'value', None),
+    )
+
+
 class ReportingService(ConfigService):
 
     class Config:

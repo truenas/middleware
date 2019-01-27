@@ -459,6 +459,12 @@ class ServiceService(CRUDService):
         await self._service("collectd", "stop", **kwargs)
         await self._start_collectd(**kwargs)
 
+    async def _started_collectd(self, **kwargs):
+        if await self._service('collectd', 'status', quiet=True, **kwargs):
+            return False, []
+        else:
+            return True, []
+
     async def _start_sysctl(self, **kwargs):
         await self._service("ix-sysctl", "start", quiet=True, **kwargs)
 
@@ -740,15 +746,15 @@ class ServiceService(CRUDService):
         await self._service("nut", "start", **kwargs)
         await self._service("nut_upsmon", "start", **kwargs)
         await self._service("nut_upslog", "start", **kwargs)
-        # FIXME: Is it ideal restarting collectd like this ? If the system dataset is not configured
-        # this will fail
-        asyncio.ensure_future(self.restart('collectd'))
+        if await self.started('collectd'):
+            asyncio.ensure_future(self.restart('collectd'))
 
     async def _stop_ups(self, **kwargs):
         await self._service("nut_upslog", "stop", force=True, **kwargs)
         await self._service("nut_upsmon", "stop", force=True, **kwargs)
         await self._service("nut", "stop", force=True, **kwargs)
-        asyncio.ensure_future(self.restart('collectd'))
+        if await self.started('collectd'):
+            asyncio.ensure_future(self.restart('collectd'))
 
     async def _restart_ups(self, **kwargs):
         await self._service("ix-ups", "start", quiet=True, **kwargs)
@@ -758,7 +764,8 @@ class ServiceService(CRUDService):
         await self._service("nut", "restart", **kwargs)
         await self._service("nut_upsmon", "restart", **kwargs)
         await self._service("nut_upslog", "restart", **kwargs)
-        asyncio.ensure_future(self.restart('collectd'))
+        if await self.started('collectd'):
+            asyncio.ensure_future(self.restart('collectd'))
 
     async def _started_ups(self, **kwargs):
         mode = (await self.middleware.call('datastore.query', 'services.ups', [], {'order_by': ['-id'], 'get': True}))['ups_mode']
