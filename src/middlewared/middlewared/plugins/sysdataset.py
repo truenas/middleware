@@ -327,10 +327,10 @@ class SystemDatasetService(ConfigService):
             path = SYSDATASET_PATH
         await self.__mount(_to, config['uuid'], path=path)
 
-        restart = ['syslogd', 'rrdcached']
+        restart = ['collectd', 'rrdcached', 'syslogd']
 
         if await self.middleware.call('service.started', 'cifs'):
-            restart.append('cifs')
+            restart.insert(0, 'cifs')
 
         try:
             for i in restart:
@@ -347,10 +347,10 @@ class SystemDatasetService(ConfigService):
 
                 os.rmdir('/tmp/system.new')
         finally:
+
+            restart.reverse()
             for i in restart:
                 await self.middleware.call('service.start', i)
-
-            await self.middleware.call('service.start', 'collectd')
 
         await self.__nfsv4link(config)
 
