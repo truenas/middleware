@@ -36,10 +36,10 @@ class Migration(migrations.Migration):
             name='Reporting',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('cpu_in_percentage', models.BooleanField(default=False, help_text='collectd will report CPU usage in percentage instead of "jiffies" if this is checked.', verbose_name='Report CPU usage in percentage')),
-                ('graphite', models.CharField(blank=True, default='', help_text='A hostname or IP here will be used as the destination to send collectd data to using the graphite plugin to collectd.', max_length=120, verbose_name='Graphite server')),
-                ('graph_age', models.IntegerField(default=12, help_text='Maximum age of graph (in months) to store.', verbose_name='Graph age')),
-                ('graph_points', models.IntegerField(default=1200, help_text='Number of points for each (hourly, daily, weekly, monthly, yearly) graph. In short, set this to no smaller than the width of your graphs in pixels.', verbose_name='Graph points count')),
+                ('cpu_in_percentage', models.BooleanField(default=False, help_text='When set, report CPU usage in percent instead of jiffies.', verbose_name='Report CPU usage in percent')),
+                ('graphite', models.CharField(blank=True, default='', help_text='Destination hostname or IP for collectd data sent by the Graphite plugin.', max_length=120, verbose_name='Graphite Server')),
+                ('graph_age', models.IntegerField(default=12, help_text='Maximum age of graph stored, in months.', verbose_name='Graph Age')),
+                ('graph_points', models.IntegerField(default=1200, help_text='Number of points for each hourly, daily, weekly, monthly, yearly graph. Set this to no less than the width of your graphs in pixels.', verbose_name='Graph Points Count')),
             ],
             options={
                 'abstract': False,

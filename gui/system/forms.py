@@ -1720,7 +1720,7 @@ class ReportingForm(MiddlewareModelForm, ModelForm):
     is_singletone = True
 
     confirm_rrd_destroy = forms.BooleanField(
-        label=_("Confirm destroying of reporting database"),
+        label=_("Confirm reporting database will be destroyed"),
         required=False,
     )
 

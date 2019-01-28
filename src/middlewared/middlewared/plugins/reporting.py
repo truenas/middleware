@@ -692,14 +692,13 @@ class ReportingService(ConfigService):
         """
         Configure Reporting Database settings.
 
-        If `cpu_in_percentage` is `true`, collectd will report CPU usage in percentage instead of "jiffies".
+        If `cpu_in_percentage` is `true`, collectd reports CPU usage in percentage instead of "jiffies".
 
-        `graphite` specifies a hostname or IP address that will be used as the destination to send collectd data
-        using the graphite plugin.
+        `graphite` specifies a destination hostname or IP for collectd data sent by the Graphite plugin..
 
-        `graph_age` specified maximum age of graph (in months) to store. `graph_points` is a number of points for
-        each (hourly, daily, weekly, etc.) graph. Changing these will require destroying your current reporting
-        database so when these fields are changed, an additional `confirm_rrd_destroy: true` flag must be present.
+        `graph_age` specifies the maximum age of stored graphs in months. `graph_points` is the number of points for
+        each hourly, daily, weekly, etc. graph. Changing these requires destroying the current reporting database,
+        so when these fields are changed, an additional `confirm_rrd_destroy: true` flag must be present.
 
         .. examples(websocket)::
 
@@ -748,8 +747,8 @@ class ReportingService(ConfigService):
                 if not confirm_rrd_destroy:
                     verrors.add(
                         f'reporting_update.{k}',
-                        f'Changing this option requires destroying of reporting database so you\'ll have to confirm '
-                        f'this action by setting corresponding flag',
+                        f'Changing this option requires destroying the reporting database. This action must be '
+                        f'confirmed by setting confirm_rrd_destroy flag',
                     )
 
         if verrors:
@@ -777,8 +776,8 @@ class ReportingService(ConfigService):
     @private
     def setup(self):
         is_freenas = self.middleware.call_sync('system.is_freenas')
-        # If not is_freenas remove the rc.conf cache rc.conf.local will
-        # run again using the correct collectd_enable. See #5019
+        # If not is_freenas, remove the rc.conf cache. rc.conf.local runs again with the correct collectd_enable.
+        # See issue #5019
         if not is_freenas:
             try:
                 os.remove('/var/tmp/freenas_config.md5')
@@ -833,7 +832,7 @@ class ReportingService(ConfigService):
                     )
             shutil.move(os.path.join(pwd, hostname), os.path.join(pwd, 'localhost'))
 
-        # Remove all directories except "localhost" and it's backups (that may be erroneously created by
+        # Remove all directories except "localhost" and its backups (that may be erroneously created by
         # running collectd before this script)
         to_remove_dirs = [
             os.path.join(pwd, d) for d in os.listdir(pwd)

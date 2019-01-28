@@ -923,8 +923,8 @@ class ServiceService(CRUDService):
     async def _reload_disk(self, **kwargs):
         await self._service("ix-fstab", "start", quiet=True, **kwargs)
         await self._service("mountlate", "start", quiet=True, **kwargs)
-        # Restarting collectd may take a long time and there is no
-        # benefit in waiting for it since even if it fails it wont
+        # Restarting rrdcached can take a long time. There is no
+        # benefit in waiting for it, since even if it fails it will not
         # tell the user anything useful.
         asyncio.ensure_future(self.restart("collectd", kwargs))
 
@@ -942,8 +942,8 @@ class ServiceService(CRUDService):
             await self.restart("syslogd", kwargs)
         await self.restart("cifs", kwargs)
 
-        # Restarting rrdcached may take a long time and there is no
-        # benefit in waiting for it since even if it fails it wont
+        # Restarting rrdcached can take a long time. There is no
+        # benefit in waiting for it, since even if it fails it will not
         # tell the user anything useful.
         asyncio.ensure_future(self.restart("rrdcached", kwargs))
         asyncio.ensure_future(self.start("collectd", kwargs))
