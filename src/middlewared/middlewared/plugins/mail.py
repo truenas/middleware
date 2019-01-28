@@ -135,7 +135,7 @@ class MailService(ConfigService):
         except UnicodeEncodeError:
             verrors.add(
                 schema,
-                'Only plain text characters (8-bit ASCII) are allowed in passwords. '
+                'Only plain text characters (7-bit ASCII) are allowed in passwords. '
                 'UTF or composed characters are not allowed.'
             )
         return verrors
