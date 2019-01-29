@@ -6,3 +6,4 @@ FreeBSD ?.?.?  (UNKNOWN)
 
 	For more information, documentation, help or support, go here:
 	http://freenas.org
+${middleware.call_sync('system.advanced.config')['motd']}
