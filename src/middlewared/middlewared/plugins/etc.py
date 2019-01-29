@@ -146,6 +146,9 @@ class EtcService(Service):
         'snmpd': [
             {'type': 'mako', 'path': 'local/snmpd.conf'},
         ],
+        'hostname': [
+            {'type': 'mako', 'path': 'hosts'}
+        ]
     }
 
     SKIP_LIST = ['system_dataset', 'collectd']
