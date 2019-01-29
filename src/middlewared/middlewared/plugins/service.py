@@ -879,7 +879,7 @@ class ServiceService(CRUDService):
             return True, []
 
     async def _start_snmp(self, **kwargs):
-        await self._service("ix-snmpd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "snmpd")
         await self._service("snmpd", "start", quiet=True, **kwargs)
         await self._service("snmp-agent", "start", quiet=True, **kwargs)
 
@@ -890,14 +890,14 @@ class ServiceService(CRUDService):
     async def _restart_snmp(self, **kwargs):
         await self._service("snmp-agent", "stop", quiet=True, **kwargs)
         await self._service("snmpd", "stop", force=True, **kwargs)
-        await self._service("ix-snmpd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "snmpd")
         await self._service("snmpd", "start", quiet=True, **kwargs)
         await self._service("snmp-agent", "start", quiet=True, **kwargs)
 
     async def _reload_snmp(self, **kwargs):
         await self._service("snmp-agent", "stop", quiet=True, **kwargs)
         await self._service("snmpd", "stop", force=True, **kwargs)
-        await self._service("ix-snmpd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "snmpd")
         await self._service("snmpd", "start", quiet=True, **kwargs)
         await self._service("snmp-agent", "start", quiet=True, **kwargs)
 
