@@ -1,11 +1,15 @@
 import csv
+import datetime
+import dateutil.tz
 import glob
 import io
 import os
 import re
+import syslog
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
+from middlewared.utils import run
 from middlewared.validators import Email, Range
 
 
@@ -161,3 +165,84 @@ class UPSService(SystemServiceService):
             await self._update_service(old_config, config)
 
         return await self.config()
+
+    @private
+    @accepts(
+        Str('notify_type')
+    )
+    async def upssched_event(self, notify_type):
+        if notify_type.lower() == 'shutdown':
+            syslog.syslog(syslog.LOG_INFO, 'upssched-cmd "issuing shutdown"')
+            await run('/usr/local/sbin/upsmon', '-c', 'fsd', check=False)
+        elif notify_type.lower() in ('email', 'commbad', 'commok'):
+            config = await self.config()
+            if config['emailnotify']:
+                # Email user with the notification event and details
+                # We send the email in the following format ( inclusive line breaks )
+
+                # NOTIFICATION: 'EMAIL'
+                # UPS: 'ups'
+                #
+                # Statistics recovered:
+                #
+                # 1) Battery charge (percent)
+                # battery.charge: 5
+                #
+                # 2) Remaining battery level when UPS switches to LB (percent)
+                # battery.charge.low: 10
+                #
+                # 3) Battery runtime (seconds)
+                # battery.runtime: 1860
+                #
+                # 4) Remaining battery runtime when UPS switches to LB (seconds)
+                # battery.runtime.low: 900
+
+                ups_name = config['identifier']
+                hostname = (await self.middleware.call('system.info'))['hostname']
+                current_time = datetime.datetime.now(tz=dateutil.tz.tzlocal()).strftime('%a %b %d %H:%M:%S %Z %Y')
+                ups_subject = config['subject'].replace('%d', current_time).replace('%h', hostname)
+                body = f'NOTIFICATION: {notify_type!r}<br>UPS: {ups_name!r}<br><br>'
+
+                # Let's gather following stats
+                data_points = {
+                    'battery.charge': 'Battery charge (percent)',
+                    'battery.charge.low': 'Battery level remaining (percent) when UPS switches to Low Battery (LB)',
+                    'battery.charge.status': 'Battery charge status',
+                    'battery.runtime': 'Battery runtime (seconds)',
+                    'battery.runtime.low': 'Battery runtime remaining (seconds) when UPS switches to Low Battery (LB)',
+                    'battery.runtime.restart': 'Minimum battery runtime (seconds) to allow UPS restart after power-off',
+                }
+
+                stats_output = (
+                    await run('/usr/local/bin/upsc', f'{ups_name}@localhost:{config["remoteport"]}', check=False)
+                ).stdout
+                recovered_stats = re.findall(
+                    fr'({"|".join(data_points)}): (.*)',
+                    '' if not stats_output else stats_output.decode()
+                )
+
+                if recovered_stats:
+                    body += 'Statistics recovered:<br><br>'
+                    # recovered_stats is expected to be a list in this format
+                    # [('battery.charge', '5'), ('battery.charge.low', '10'), ('battery.runtime', '1860')]
+                    for index, stat in enumerate(recovered_stats):
+                        body += f'{index + 1}) {data_points[stat[0]]}<br>  {stat[0]}: {stat[1]}<br><br>'
+
+                else:
+                    body += 'Statistics could not be recovered<br>'
+
+                # Subject and body defined, send email
+                job = await self.middleware.call(
+                    'mail.send', {
+                        'subject': ups_subject,
+                        'text': body,
+                        'to': config['toemail']
+                    }
+                )
+
+                await job.wait()
+                if job.error:
+                    self.middleware.logger.debug(f'Failed to send UPS status email: {job.error}')
+
+        else:
+            self.middleware.logger.debug(f'Unrecognized UPS notification event: {notify_type}')

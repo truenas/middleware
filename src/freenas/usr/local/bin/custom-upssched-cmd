@@ -10,31 +10,4 @@
 # The first argument passed to your CMDSCRIPT is the name of the timer
 # from your AT lines.
 
-. /etc/rc.freenas
-
-PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
-
-IFS=\|
-
-f="ups_emailnotify ups_toemail ups_subject ups_shutdown"
-sf=$(echo $f | sed -e 's/ /, /g')
-${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-"SELECT $sf FROM services_ups ORDER BY -id LIMIT 1" | \
-while eval read $f; do
-
-case $1 in
-	"SHUTDOWN")
-		logger -t upssched-cmd "issuing shutdown"
-		/usr/local/sbin/upsmon -c fsd
-		;;
-	"EMAIL"|"COMMBAD"|"COMMOK")
-		if [ "${ups_emailnotify}" -eq 1 ]; then
-			echo "$NOTIFYTYPE - $UPSNAME" | mail -s "$(echo "${ups_subject}"|sed "s/%d/$(date)/"|sed "s/%h/$(hostname)/")" "${ups_toemail}"
-		fi
-		;;
-	*)
-		logger -t upssched-cmd "Unrecognized command: $1"
-		;;
-esac
-
-done
+/usr/local/bin/midclt call ups.upssched_event ${1}

@@ -143,7 +143,7 @@ generate_upssched()
 	while eval read $f; do
 
         cat << __EOF__
-CMDSCRIPT   /usr/local/bin/custom-upssched-cmd
+CMDSCRIPT   "/usr/local/bin/sudo /usr/local/bin/custom-upssched-cmd" 
 PIPEFN      /var/db/nut/upssched.pipe
 LOCKFN      /var/db/nut/upssched.lock
 
