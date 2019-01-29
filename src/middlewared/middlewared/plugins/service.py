@@ -720,7 +720,7 @@ class ServiceService(CRUDService):
         await self._service("ix-crontab", "start", quiet=True, **kwargs)
 
     async def _start_motd(self, **kwargs):
-        await self._service("ix-motd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'motd')
         await self._service("motd", "start", quiet=True, **kwargs)
 
     async def _start_ttys(self, **kwargs):
