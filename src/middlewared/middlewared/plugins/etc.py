@@ -131,9 +131,12 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/smbusername.map'},
             {'type': 'py', 'path': 'smb_configure'},
         ],
+        'syslogd': [
+            {'type': 'py', 'path': 'syslogd'},
+        ],
     }
 
-    SKIP_LIST = ['system_dataset', 'collectd']
+    SKIP_LIST = ['system_dataset', 'collectd', 'syslogd']
 
     class Config:
         private = True

@@ -842,7 +842,6 @@ class InitialWizard(CommonWizard):
             f.write(pickle.dumps(progress))
 
         _n.start("ix-system")
-        _n.start("ix-syslogd")
         _n.restart("system_datasets")  # FIXME: may reload collectd again
         _n.reload("timeservices")
 
