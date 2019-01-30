@@ -121,6 +121,9 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/netdata/stream.conf'},
             {'type': 'py', 'path': 'local/netdata/alarms'}
         ],
+        'inetd': [
+            {'type': 'py', 'path': 'inetd_conf'}
+        ],
         'motd': [
             {'type': 'mako', 'path': 'motd'}
         ],
