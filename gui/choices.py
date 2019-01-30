@@ -751,8 +751,8 @@ class FILESYSTEM_CHOICES(object):
 
 LDAP_SSL_CHOICES = (
     ('off', _('Off')),
-    ('on', _('SSL')),
-    ('start_tls', _('TLS')),
+    ('on', _('SSL (LDAPS, port 636)')),
+    ('start_tls', _('TLS (LDAP, port 389)')),
 )
 
 RSYNC_MODE_CHOICES = (
