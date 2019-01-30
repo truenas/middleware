@@ -154,6 +154,10 @@ class EtcService(Service):
         ],
         'hostname': [
             {'type': 'mako', 'path': 'hosts'}
+        ],
+        'ssh': [
+            {'type': 'mako', 'path': 'local/ssh/sshd_config'},
+            {'type': 'py', 'path': 'local/ssh/config'}
         ]
     }
 
