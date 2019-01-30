@@ -124,6 +124,15 @@ class EtcService(Service):
         'motd': [
             {'type': 'mako', 'path': 'motd'}
         ],
+        'ups': [
+            {'type': 'py', 'path': 'local/nut/ups_config'},
+            {'type': 'mako', 'path': 'local/nut/ups.conf'},
+            {'type': 'mako', 'path': 'local/nut/upsd.conf'},
+            {'type': 'mako', 'path': 'local/nut/upsd.users'},
+            {'type': 'mako', 'path': 'local/nut/upsmon.conf'},
+            {'type': 'mako', 'path': 'local/nut/upssched.conf'},
+            {'type': 'py', 'path': 'local/nut/ups_perms'}
+        ],
         'smb': [
             {'type': 'mako', 'path': 'local/smb4.conf'},
         ],
