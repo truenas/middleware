@@ -495,7 +495,7 @@ class ServiceService(CRUDService):
 
     async def _reload_timeservices(self, **kwargs):
         await self._service("ix-localtime", "start", quiet=True, **kwargs)
-        await self._service("ix-ntpd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'ntpd')
         await self._service("ntpd", "restart", **kwargs)
         settings = await self.middleware.call(
             'datastore.query',
@@ -505,6 +505,10 @@ class ServiceService(CRUDService):
         )
         os.environ['TZ'] = settings['stg_timezone']
         time.tzset()
+
+    async def _restart_ntpd(self, **kwargs):
+        await self.middleware.call('etc.generate', 'ntpd')
+        await self._service('ntpd', 'restart', **kwargs)
 
     async def _start_smartd(self, **kwargs):
         await self.middleware.call("etc.generate", "smartd")
