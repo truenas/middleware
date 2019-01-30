@@ -136,6 +136,9 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/nut/upssched.conf'},
             {'type': 'py', 'path': 'local/nut/ups_perms'}
         ],
+        'rsync': [
+            {'type': 'mako', 'path': 'local/rsyncd.conf'}
+        ],
         'smb': [
             {'type': 'mako', 'path': 'local/smb4.conf'},
         ],
