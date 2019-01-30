@@ -554,7 +554,7 @@ class ServiceService(CRUDService):
         await self._service("minio", "restart", quiet=True, stdout=None, stderr=None, **kwargs)
 
     async def _reload_rsync(self, **kwargs):
-        await self._service("ix-rsyncd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'rsync')
         await self._service("rsyncd", "restart", **kwargs)
 
     async def _restart_rsync(self, **kwargs):
@@ -562,7 +562,7 @@ class ServiceService(CRUDService):
         await self._start_rsync()
 
     async def _start_rsync(self, **kwargs):
-        await self._service("ix-rsyncd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'rsync')
         await self._service("rsyncd", "start", **kwargs)
 
     async def _stop_rsync(self, **kwargs):
