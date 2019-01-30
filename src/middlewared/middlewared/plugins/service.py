@@ -520,13 +520,13 @@ class ServiceService(CRUDService):
         await self._service("smartd-daemon", "restart", **kwargs)
 
     async def _reload_ssh(self, **kwargs):
-        await self._service("ix-sshd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'ssh')
         await self._service("ix_register", "reload", **kwargs)
         await self._service("openssh", "reload", **kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
     async def _start_ssh(self, **kwargs):
-        await self._service("ix-sshd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'ssh')
         await self._service("ix_register", "reload", **kwargs)
         await self._service("openssh", "start", **kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
@@ -536,7 +536,7 @@ class ServiceService(CRUDService):
         await self._service("ix_register", "reload", **kwargs)
 
     async def _restart_ssh(self, **kwargs):
-        await self._service("ix-sshd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'ssh')
         await self._service("openssh", "stop", force=True, **kwargs)
         await self._service("ix_register", "reload", **kwargs)
         await self._service("openssh", "restart", **kwargs)
