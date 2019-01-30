@@ -703,16 +703,16 @@ class ServiceService(CRUDService):
         await self._system("/etc/local/rc.d/syslog-ng reload")
 
     async def _start_tftp(self, **kwargs):
-        await self._service("ix-inetd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'inetd')
         await self._service("inetd", "start", **kwargs)
 
     async def _reload_tftp(self, **kwargs):
-        await self._service("ix-inetd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'inetd')
         await self._service("inetd", "stop", force=True, **kwargs)
         await self._service("inetd", "restart", **kwargs)
 
     async def _restart_tftp(self, **kwargs):
-        await self._service("ix-inetd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'inetd')
         await self._service("inetd", "stop", force=True, **kwargs)
         await self._service("inetd", "restart", **kwargs)
 
