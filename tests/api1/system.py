@@ -150,8 +150,11 @@ def test_16_tunable_id_has_been_deleted():
 
 
 def test_17_shutdow_system():
-    results = POST("/system/shutdown/")
-    assert results.status_code == 202, results.text
+    if vm_name is None and interface == 'vtnet0':
+        pytest.skip('skip no vm_name for bhyve')
+    else:
+        results = POST("/system/shutdown/")
+        assert results.status_code == 202, results.text
 
 
 def test_18_wait_for_system_to_shutdown_with_bhyve():
