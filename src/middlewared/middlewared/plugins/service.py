@@ -480,7 +480,7 @@ class ServiceService(CRUDService):
 
     async def _reload_hostname(self, **kwargs):
         await self._system('/bin/hostname ""')
-        await self._service("ix-hostname", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'hostname')
         await self._service("hostname", "start", quiet=True, **kwargs)
         await self._service("mdnsd", "restart", quiet=True, **kwargs)
         await self._restart_collectd(**kwargs)

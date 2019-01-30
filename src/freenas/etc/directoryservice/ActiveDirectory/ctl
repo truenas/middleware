@@ -111,7 +111,7 @@ adctl_start()
 
 	echo ${cifs_started} > "${cifs_file}"
 
-	adctl_cmd ${service} ix-hostname quietstart
+	adctl_cmd ${python} ${notifier} call etc.generate hostname
 	adctl_cmd ${service} ix-kerberos quietstart default "$(AD_get ad_krb_realm)"
 	adctl_cmd ${service} ix-nsswitch quietstart
 	adctl_cmd ${service} ix-ldap quietstart
@@ -219,7 +219,7 @@ adctl_stop()
 	activedirectory_set 0
 	rm -f "${status_file}"
 
-	adctl_cmd ${service} ix-hostname quietstart
+	adctl_cmd ${python} ${notifier} call etc.generate hostname
 	adctl_cmd ${service} ix-kerberos restart
 	adctl_cmd ${service} ix-nsswitch quietstop
 	adctl_cmd ${service} ix-pam quietstop
