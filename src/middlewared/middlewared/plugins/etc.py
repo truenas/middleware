@@ -143,6 +143,9 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/smbusername.map'},
             {'type': 'py', 'path': 'smb_configure'},
         ],
+        'snmpd': [
+            {'type': 'mako', 'path': 'local/snmpd.conf'},
+        ],
     }
 
     SKIP_LIST = ['system_dataset', 'collectd']
