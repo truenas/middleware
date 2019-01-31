@@ -151,7 +151,7 @@ class SMBService(SystemServiceService):
                         verrors.add(f'smb_update.{i}.{idx}', f'Invalid NetBIOS name: {item}')
             else:
                 if not await self.__validate_netbios_name(data[i]):
-                   verrors.add(f'smb_update.{i}', f'Invalid NetBIOS name: {data[i]}')
+                    verrors.add(f'smb_update.{i}', f'Invalid NetBIOS name: {data[i]}')
 
         if new['netbiosname'] and new['netbiosname'].lower() == new['workgroup'].lower():
             verrors.add('smb_update.netbiosname', 'NetBIOS and Workgroup must be unique')
@@ -185,6 +185,7 @@ class SMBService(SystemServiceService):
         data['netbiosalias'] = ' '.join(data['netbiosalias'])
 
         return data
+
 
 class SharingSMBService(CRUDService):
     class Config:
