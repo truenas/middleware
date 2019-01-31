@@ -937,7 +937,7 @@ class ServiceService(CRUDService):
         await self._reload_disk(**kwargs)
 
     async def _reload_disk(self, **kwargs):
-        await self._service("ix-fstab", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'fstab')
         await self._service("mountlate", "start", quiet=True, **kwargs)
         # Restarting rrdcached can take a long time. There is no
         # benefit in waiting for it, since even if it fails it will not

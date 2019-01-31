@@ -113,6 +113,10 @@ class EtcService(Service):
         'nginx': [
             {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
         ],
+        'fstab': [
+            {'type': 'mako', 'path': 'fstab'},
+            {'type': 'py', 'path': 'fstab_configure'}
+        ],
         'collectd': [
             {'type': 'mako', 'path': 'local/collectd.conf'}
         ],
