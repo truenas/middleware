@@ -167,6 +167,9 @@ class EtcService(Service):
         ],
         'localtime': [
             {'type': 'py', 'path': 'localtime_config'}
+        ],
+        'inadyn': [
+            {'type': 'mako', 'path': 'local/inadyn.conf'}
         ]
     }
 
