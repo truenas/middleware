@@ -12,7 +12,7 @@ class DynDNSService(SystemServiceService):
     @private
     async def dyndns_extend(self, dyndns):
         dyndns["password"] = await self.middleware.call("notifier.pwenc_decrypt", dyndns["password"])
-        dyndns["domain"] = dyndns["domain"].split()
+        dyndns["domain"] = dyndns["domain"].replace(',', ' ').replace(';', ' ').split()
         return dyndns
 
     @accepts(Dict(
