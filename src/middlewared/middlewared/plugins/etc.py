@@ -180,7 +180,7 @@ class EtcService(Service):
         ]
     }
 
-    SKIP_LIST = ['system_dataset', 'collectd']
+    SKIP_LIST = ['system_dataset', 'collectd', 'fstab']
 
     class Config:
         private = True
