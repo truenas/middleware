@@ -466,10 +466,10 @@ class ServiceService(CRUDService):
             return True, []
 
     async def _start_sysctl(self, **kwargs):
-        await self._service("ix-sysctl", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'sysctl', 'start')
 
     async def _reload_sysctl(self, **kwargs):
-        await self._service("ix-sysctl", "reload", **kwargs)
+        await self.middleware.call('etc.generate', 'sysctl', 'reload')
 
     async def _start_network(self, **kwargs):
         await self.middleware.call('interface.sync')
