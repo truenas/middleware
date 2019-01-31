@@ -582,12 +582,12 @@ class JailService(CRUDService):
 
         return True
 
-    @accepts(Str("jail"))
-    def stop(self, jail):
+    @accepts(Str("jail"), Bool('force'))
+    def stop(self, jail, force):
         """Takes a jail and stops it."""
         _, _, iocage = self.check_jail_existence(jail)
 
-        iocage.stop()
+        iocage.stop(force=force)
 
         return True
 
