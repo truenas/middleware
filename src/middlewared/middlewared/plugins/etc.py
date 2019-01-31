@@ -159,6 +159,9 @@ class EtcService(Service):
         'snmpd': [
             {'type': 'mako', 'path': 'local/snmpd.conf'},
         ],
+        'sudoers': [
+            {'type': 'mako', 'path': 'local/sudoers'}
+        ],
         'hostname': [
             {'type': 'mako', 'path': 'hosts'}
         ],
