@@ -843,16 +843,16 @@ class ServiceService(CRUDService):
         await self._service("lockd", "start", quiet=True, **kwargs)
 
     async def _start_dynamicdns(self, **kwargs):
-        await self._service("ix-inadyn", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'inadyn')
         await self._service("inadyn", "start", **kwargs)
 
     async def _restart_dynamicdns(self, **kwargs):
-        await self._service("ix-inadyn", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'inadyn')
         await self._service("inadyn", "stop", force=True, **kwargs)
         await self._service("inadyn", "restart", **kwargs)
 
     async def _reload_dynamicdns(self, **kwargs):
-        await self._service("ix-inadyn", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'inadyn')
         await self._service("inadyn", "stop", force=True, **kwargs)
         await self._service("inadyn", "restart", **kwargs)
 
