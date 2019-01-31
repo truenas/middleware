@@ -1,0 +1,18 @@
+<%
+	import os
+
+	# That file is not supposed to exist anymore but lets keep backward compatibility for now
+	base_path = '/conf/base/etc/fstab'
+	if os.path.isfile(base_path):
+		with open(base_path, 'r') as f:
+			base = f.read()
+	else:
+		base = ''
+%>\
+% if base:
+${base}
+% endif
+fdescfs	/dev/fd	fdescfs rw	0 0
+% for devname in middleware.call_sync('disk.swaps_configure'):
+/dev/${devname}.eli	none	swap	sw	0	0
+% endfor
