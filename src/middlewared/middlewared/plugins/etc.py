@@ -164,6 +164,9 @@ class EtcService(Service):
         ],
         'ntpd': [
             {'type': 'mako', 'path': 'ntp.conf'}
+        ],
+        'localtime': [
+            {'type': 'py', 'path': 'localtime_config'}
         ]
     }
 
