@@ -494,7 +494,7 @@ class ServiceService(CRUDService):
         await self._service("routing", "restart", **kwargs)
 
     async def _reload_timeservices(self, **kwargs):
-        await self._service("ix-localtime", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'localtime')
         await self.middleware.call('etc.generate', 'ntpd')
         await self._service("ntpd", "restart", **kwargs)
         settings = await self.middleware.call(
