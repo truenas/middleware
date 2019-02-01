@@ -731,7 +731,7 @@ class ServiceService(CRUDService):
         await self._service("ix-ttys", "start", quiet=True, **kwargs)
 
     async def _reload_ftp(self, **kwargs):
-        await self._service("ix-proftpd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "ftp")
         await self._service("proftpd", "restart", **kwargs)
 
     async def _restart_ftp(self, **kwargs):
@@ -739,7 +739,7 @@ class ServiceService(CRUDService):
         await self._start_ftp()
 
     async def _start_ftp(self, **kwargs):
-        await self._service("ix-proftpd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "ftp")
         await self._service("proftpd", "start", **kwargs)
 
     async def _stop_ftp(self, **kwargs):
