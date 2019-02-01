@@ -188,8 +188,11 @@ def test_13_exec_call():
 def test_14_stop_jail():
     if freeze is True:
         pytest.skip(freeze_msg)
-
-    results = POST('/jail/stop/', JAIL_NAME)
+    payload = {
+        'jail': JAIL_NAME,
+        'force': True
+    }
+    results = POST('/jail/stop/', payload)
     assert results.status_code == 200, results.text
 
 
