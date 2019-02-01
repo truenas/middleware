@@ -1286,7 +1286,11 @@ require([
                 var property = credentialsSchemas[provider][credentialsSchemas[provider].length - 1 - i];
 
                 var id = "id_attributes_" + property.property;
-                attributes[property.property] = document.getElementById(id).value;
+                if (property.schema.type.indexOf("boolean") != -1) {
+                    attributes[property.property] = document.getElementById(id).checked;
+                } else {
+                    attributes[property.property] = document.getElementById(id).value;
+                }
             }
 
             attributesInput.value = JSON.stringify(attributes);
@@ -1307,15 +1311,23 @@ require([
             var property = credentialsSchemas[provider][credentialsSchemas[provider].length - 1 - i];
 
             var id = "id_attributes_" + property.property;
-            var input = "<input type='text' id='" + id + "'>";
-            if (property.schema.enum)
+            var input;
+            if (property.schema.type.indexOf("boolean") != -1)
             {
-                input = "<select id='" + id + "'>";
-                for (var j = 0; j < property.schema.enum.length; j++)
+                input = '<input type="checkbox" id="' + id + '" value="1">';
+            }
+            else
+            {
+                input = "<input type='text' id='" + id + "'>";
+                if (property.schema.enum)
                 {
-                    input += '<option>' + property.schema.enum[j] + '</option>';
+                    input = "<select id='" + id + "'>";
+                    for (var j = 0; j < property.schema.enum.length; j++)
+                    {
+                        input += '<option>' + property.schema.enum[j] + '</option>';
+                    }
+                    input += '</select>';
                 }
-                input += '</select>';
             }
             if (property.property == "service_account_credentials")
             {
@@ -1330,7 +1342,14 @@ require([
 
             if (attributes[property.property])
             {
-                document.getElementById(id).value = attributes[property.property];
+                if (property.schema.type.indexOf("boolean") != -1)
+                {
+                    document.getElementById(id).checked = attributes[property.property];
+                }
+                else
+                {
+                    document.getElementById(id).value = attributes[property.property];
+                }
             }
 
             if (property.property == "service_account_credentials")
