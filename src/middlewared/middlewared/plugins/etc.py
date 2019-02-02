@@ -177,6 +177,9 @@ class EtcService(Service):
         ],
         'inadyn': [
             {'type': 'mako', 'path': 'local/inadyn.conf'}
+        ],
+        'aliases': [
+            {'type': 'mako', 'path': 'aliases'}
         ]
     }
 

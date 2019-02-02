@@ -946,7 +946,7 @@ class ServiceService(CRUDService):
 
     async def _reload_user(self, **kwargs):
         await self.middleware.call("etc.generate", "user")
-        await self._service("ix-aliases", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'aliases')
         await self.middleware.call('etc.generate', 'sudoers')
         await self.reload("cifs", kwargs)
 
