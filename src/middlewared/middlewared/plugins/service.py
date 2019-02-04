@@ -452,6 +452,10 @@ class ServiceService(CRUDService):
         await self._service("ctld", "reload", **kwargs)
 
     async def _start_collectd(self, **kwargs):
+        if not await self.started('rrdcached'):
+            # Let's ensure that before we start collectd, rrdcached is always running
+            await self.start('rrdcached')
+
         await self.middleware.call('etc.generate', 'collectd')
         await self._service("collectd", "restart", **kwargs)
 
@@ -464,6 +468,21 @@ class ServiceService(CRUDService):
             return False, []
         else:
             return True, []
+
+    async def _started_rrdcached(self, **kwargs):
+        if await self._service('rrdcached', 'status', quiet=True, **kwargs):
+            return False, []
+        else:
+            return True, []
+
+    async def _stop_rrdcached(self, **kwargs):
+        await self._service("collectd", "stop", **kwargs)
+        await self._service('rrdcached', 'stop', **kwargs)
+
+    async def _restart_rrdcached(self, **kwargs):
+        await self._stop_rrdcached(**kwargs)
+        await self.start('rrdcached')
+        await self.start('collectd')
 
     async def _start_sysctl(self, **kwargs):
         await self.middleware.call('etc.generate', 'sysctl', 'start')
@@ -961,8 +980,8 @@ class ServiceService(CRUDService):
         # Restarting rrdcached can take a long time. There is no
         # benefit in waiting for it, since even if it fails it will not
         # tell the user anything useful.
+        # Restarting rrdcached will make sure that we start/restart collectd as well
         asyncio.ensure_future(self.restart("rrdcached", kwargs))
-        asyncio.ensure_future(self.start("collectd", kwargs))
 
     async def _start_netdata(self, **kwargs):
         await self.middleware.call('etc.generate', 'netdata')
