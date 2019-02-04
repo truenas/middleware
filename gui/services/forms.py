@@ -481,7 +481,7 @@ class DynamicDNSForm(MiddlewareModelForm, ModelForm):
         return cdata
 
     def middleware_clean(self, update):
-        update["domain"] = update["domain"].split()
+        update["domain"] = update["domain"].replace(',', ' ').replace(';', ' ').split()
         return update
 
 
