@@ -93,6 +93,10 @@ class EtcService(Service):
                 )
             )
         ],
+        'ftp': [
+            {'type': 'mako', 'path': 'local/proftpd.conf'},
+            {'type': 'py', 'path': 'local/proftpd'},
+        ],
         'sysctl': [
             {'type': 'py', 'path': 'sysctl_config'}
         ],
