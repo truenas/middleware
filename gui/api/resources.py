@@ -1708,6 +1708,8 @@ class NFSResourceMixin(object):
 
     def hydrate(self, bundle):
         bundle = super(NFSResourceMixin, self).hydrate(bundle)
+        if bundle.data.get("nfs_srv_v4") is False:
+            bundle.data.setdefault("nfs_srv_v4_v3owner", False)
         if 'nfs_srv_bindip' not in bundle.data and bundle.obj.id:
             bundle.data['nfs_srv_bindip'] = (
                 bundle.obj.nfs_srv_bindip
