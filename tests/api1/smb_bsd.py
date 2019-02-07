@@ -7,7 +7,7 @@
 import pytest
 import sys
 import os
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST
@@ -48,6 +48,7 @@ def test_02_Creating_SMB_dataset():
 def test_03_Starting_SMB_service():
     results = PUT("/services/services/cifs/", {"srv_enable": True})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_04_Checking_to_see_if_SMB_service_is_running():
@@ -212,6 +213,7 @@ def test_22_Removing_SMB_mountpoint():
 def test_23_Stopping_SMB_service():
     results = PUT("/services/services/cifs/", {"srv_enable": False})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_24_Verify_SMB_service_is_disabled():

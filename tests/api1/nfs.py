@@ -7,7 +7,7 @@
 import pytest
 import sys
 import os
-
+from time  import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST
@@ -60,6 +60,7 @@ def test_02_Creating_a_NFS_share_on_NFS_PATH():
 def test_03_Starting_NFS_service():
     results = PUT("/services/services/nfs/", {"srv_enable": True})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_04_Checking_to_see_if_NFS_service_is_enabled():
@@ -150,6 +151,7 @@ def test_14_Checking_to_see_if_NFS_service_is_enabled():
 def test_15_Stop_NFS_service():
     results = PUT("/services/services/nfs/", {"srv_enable": False})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_16_Checking_to_see_if_NFS_service_is_stopped():

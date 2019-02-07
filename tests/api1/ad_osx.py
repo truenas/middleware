@@ -58,6 +58,7 @@ def test_02_Enabling_Active_Directory():
 def test_03_Checking_Active_Directory():
     results = GET("/directoryservice/activedirectory/")
     assert results.json()["ad_enable"] is True, results.text
+    sleep(1)
 
 
 @ad_test_cfg
@@ -249,6 +250,7 @@ def test_25_Disabling_Active_Directory():
 def test_26_Verify_Active_Directory_is_disabled():
     results = GET("/directoryservice/activedirectory/")
     assert results.json()["ad_enable"] is False, results.text
+    sleep(1)
 
 
 @ad_test_cfg
