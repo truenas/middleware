@@ -167,6 +167,10 @@ DEF_KNOBS = {
 }
 
 
+def guess_vm_kmem_size():
+    return int(1.25 * HW_PHYSMEM)
+
+
 def guess_vfs_zfs_dirty_data_max_max():
     if TRUENAS and hardware[0].startswith("M"):
         return 12 * GB
@@ -196,30 +200,6 @@ def guess_kern_ipc_maxsockbuf():
         return 2 * MB
 
 
-# kern.ipc.maxsockets
-
-# kern.ipc.somaxconn
-
-
-def guess_kern_maxfiles():
-    """Maximum number of files that can be opened on a system
-
-    - Samba sets this to 16k by default to meet a Windows minimum value.
-    """
-    # XXX: should be dynamically tuned based on the platform profile.
-    # Currently not used, and 10.x default value is way higher than this
-    return 65536
-
-
-def guess_kern_maxfilesperproc():
-    """Maximum number of files that can be opened per process
-
-    - FreeBSD defined ratio is 9:10, but that's with lower limits.
-    """
-    # Currently not used
-    return int(0.8 * guess_kern_maxfiles())
-
-
 def guess_kern_ipc_nmbclusters():
     # You can't make this smaller
     return max(sysctl_int('kern.ipc.nmbclusters'), 2 * MB)
@@ -246,10 +226,6 @@ def guess_net_inet_tcp_sendbuf_max():
     See guess_kern_ipc_maxsockbuf().
     """
     return 16 * MB
-
-
-def guess_vm_kmem_size():
-    return int(1.25 * HW_PHYSMEM)
 
 
 def guess_vfs_zfs_arc_max():
