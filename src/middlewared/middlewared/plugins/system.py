@@ -955,7 +955,15 @@ class SystemHealthEventSource(EventSource):
             })
 
 
-def setup(middleware):
+async def setup(middleware):
+    settings = await middleware.call(
+        'system.general.config',
+    )
+    os.environ['TZ'] = settings['timezone']
+    time.tzset()
+
+    middleware.logger.debug(f'Timezone set to {settings["timezone"]}')
+
     global SYSTEM_READY
     if os.path.exists("/tmp/.bootready"):
         SYSTEM_READY = True
