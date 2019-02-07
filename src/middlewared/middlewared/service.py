@@ -408,6 +408,20 @@ class CoreService(Service):
                 extra=progress.get('extra'),
             )
 
+    @private
+    def notify_postinit(self):
+        # Sentinel file to tell we have gone far enough in the boot process.
+        # See #17508
+        open('/tmp/.bootready', 'w').close()
+
+        # Send event to middlewared saying we are late enough in the process to call it ready
+        self.middleware.call_sync(
+            'core.event_send',
+            'system',
+            'ADDED',
+            {'id': 'ready'}
+        )
+
     @accepts(Int('id'))
     def job_abort(self, id):
         job = self.middleware.jobs.all()[id]

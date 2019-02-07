@@ -109,13 +109,13 @@ class InitShutdownScriptService(CRUDService):
         Str('when')
     )
     def execute_init_tasks(self, when):
-        preinit_tasks = self.middleware.call_sync(
+        tasks = self.middleware.call_sync(
             'initshutdownscript.query', [
                 ['enabled', '=', True],
                 ['when', '=', when]
             ])
 
-        for task in preinit_tasks:
+        for task in tasks:
             task_type = task['type']
             ret = None
 
