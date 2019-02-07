@@ -4,7 +4,7 @@
 
 import sys
 import os
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT
@@ -57,6 +57,7 @@ def test_04_start_s3_service():
     )
 
     assert result.status_code == 200, result.text
+    sleep(1)
 
 
 def test_05_verify_s3_is_running():
@@ -75,6 +76,7 @@ def test_06_stop_iSCSI_service():
     )
 
     assert result.status_code == 200, result.text
+    sleep(1)
 
 
 def test_07_verify_s3_is_not_running():

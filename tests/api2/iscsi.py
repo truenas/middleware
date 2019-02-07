@@ -5,10 +5,7 @@
 import pytest
 import sys
 import os
-
-
 from time import sleep
-
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
@@ -108,6 +105,7 @@ def test_07_start_iSCSI_service():
         }
     )
     assert result.status_code == 200, result.text
+    sleep(1)
 
 
 def test_08_Verify_the_iSCSI_service_is_enabled():
@@ -252,6 +250,7 @@ def test_23_stop_iSCSI_service():
         }
     )
     assert result.status_code == 200, result.text
+    sleep(1)
 
 
 def test_24_Verify_the_iSCSI_service_is_disabled():
