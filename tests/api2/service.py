@@ -6,6 +6,7 @@
 import pytest
 import sys
 import os
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT
@@ -39,6 +40,7 @@ def test_04_start_service(svc):
     results = POST('/service/start/', {'service': svc})
     assert results.status_code == 200, results.text
     assert results.json() is True
+    sleep(1)
 
 
 @pytest.mark.parametrize('svc', services)
@@ -53,6 +55,7 @@ def test_06_service_stop(svc):
     results = POST('/service/stop/', {'service': svc})
     assert results.status_code == 200, results.text
     assert results.json() is False
+    sleep(1)
 
 
 @pytest.mark.parametrize('svc', services)

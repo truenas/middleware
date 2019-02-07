@@ -7,7 +7,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, POST
-
+from time import sleep
 COMMUNITY = 'public'
 TRAPS = False
 CONTACT = 'root@localhost'
@@ -39,6 +39,7 @@ def test_04_starting_snmp_service():
     payload = {"service": "snmp", "service-control": {"onetime": True}}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_05_checking_to_see_if_snmp_service_is_running():

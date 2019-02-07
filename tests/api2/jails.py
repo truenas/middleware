@@ -123,6 +123,7 @@ def test_09_update_jail_description():
 def test_10_start_jail():
     results = POST('/jail/start/', JAIL_NAME)
     assert results.status_code == 200, results.text
+    time.sleep(1)
 
 
 def test_11_verify_jail_started():
@@ -185,6 +186,7 @@ def test_16_verify_iocage_list_with_ssh():
 def test_17_stop_jail():
     results = POST('/jail/stop/', JAIL_NAME)
     assert results.status_code == 200, results.text
+    time.sleep(1)
 
 
 def test_18_verify_jail_stopped():

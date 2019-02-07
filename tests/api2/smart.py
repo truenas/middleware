@@ -4,7 +4,7 @@
 import os
 import pytest
 import sys
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, POST, PUT, GET
@@ -84,6 +84,7 @@ def test_07_starting_smartd_service():
     payload = {"service": "smartd", "service-control": {"onetime": True}}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 @not_real_disk
