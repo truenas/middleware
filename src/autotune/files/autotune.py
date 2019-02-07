@@ -134,7 +134,6 @@ HW_PHYSMEM_GB = HW_PHYSMEM / GB
 # as a valid choice to the -c option.
 DEF_KNOBS = {
     'loader': {
-        'vm.kmem_size',
         'vfs.zfs.dirty_data_max_max',
     },
     'sysctl': {
@@ -165,10 +164,6 @@ DEF_KNOBS = {
         'vfs.zfs.zfetch.max_distance',
     },
 }
-
-
-def guess_vm_kmem_size():
-    return int(1.25 * HW_PHYSMEM)
 
 
 def guess_vfs_zfs_dirty_data_max_max():
