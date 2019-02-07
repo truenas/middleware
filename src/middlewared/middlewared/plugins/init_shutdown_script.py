@@ -1,6 +1,8 @@
-from middlewared.schema import (Bool, Dict, File, Int, Patch, Str,
-                                ValidationErrors, accepts)
+from middlewared.schema import Bool, Dict, File, Int, Patch, Str, ValidationErrors, accepts
 from middlewared.service import CRUDService, private
+
+import os
+import subprocess
 
 
 class InitShutdownScriptService(CRUDService):
@@ -101,3 +103,34 @@ class InitShutdownScriptService(CRUDService):
 
         if verrors:
             raise verrors
+
+    @private
+    @accepts(
+        Str('when')
+    )
+    def execute_init_tasks(self, when):
+        preinit_tasks = self.middleware.call_sync(
+            'initshutdownscript.query', [
+                ['enabled', '=', True],
+                ['when', '=', when]
+            ])
+
+        for task in preinit_tasks:
+            task_type = task['type']
+            ret = None
+
+            if task_type == 'COMMAND':
+                ret = subprocess.run(
+                    task['command'],
+                    shell=True
+                )
+            elif os.path.exists(task['script']) and os.access(task['script'], os.X_OK):
+                ret = subprocess.run(
+                    f'exec {task["script"]}',
+                    shell=True
+                )
+
+            if ret and ret.returncode:
+                self.middleware.logger.debug(
+                    f'Execution failed for {task_type} {task["command"] if task_type == "COMMAND" else task["script"]}'
+                )
