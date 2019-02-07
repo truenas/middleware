@@ -5,7 +5,7 @@
 
 import sys
 import os
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, is_agent_setup, if_key_listed
@@ -22,6 +22,7 @@ def test_02_Enabling_ssh_service():
     payload = {"srv_enable": 'true'}
     results = PUT("/services/services/ssh/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_03_Checking_ssh_enabled():

@@ -15,6 +15,7 @@ from functions import PUT
 def test_01_Enabling_UPS_Service():
     results = PUT("/services/services/ups/", {"srv_enable": True})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_02_Enabling_Remote_Monitor():
@@ -60,6 +61,7 @@ def test_09_Setting_UPS_shutdown_mode_Low_Battery():
 def test_10_Disabling_UPS_Service():
     results = PUT("/services/services/ups/", {"srv_enable": False})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_11_Setting_Identifier():
