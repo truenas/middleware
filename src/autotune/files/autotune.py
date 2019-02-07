@@ -135,6 +135,7 @@ HW_PHYSMEM_GB = HW_PHYSMEM / GB
 DEF_KNOBS = {
     'loader': {
         'vm.kmem_size',
+        'vfs.zfs.dirty_data_max_max',
     },
     'sysctl': {
         'kern.ipc.maxsockbuf',
@@ -164,6 +165,13 @@ DEF_KNOBS = {
         'vfs.zfs.zfetch.max_distance',
     },
 }
+
+
+def guess_vfs_zfs_dirty_data_max_max():
+    if TRUENAS and hardware[0].startswith("M"):
+        return 12 * GB
+    else:
+        return None
 
 
 def guess_kern_ipc_maxsockbuf():
