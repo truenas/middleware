@@ -808,7 +808,14 @@ class Middleware(object):
                     self.add_service(cls(self))
 
                 if hasattr(mod, 'setup'):
-                    setup_funcs.append((mod.__name__.rsplit('.', 1)[-1], mod.setup))
+                    setup_plugin = mod.__name__.rsplit('.', 1)[-1]
+                    # TODO: Let's please remove this conditional when we have order defined for setup functions
+                    # We need to run system plugin setup's function first because when system boots, the right
+                    # timezone is not configured. See #72131
+                    if setup_plugin == 'system':
+                        setup_funcs.insert(0, (setup_plugin, mod.setup))
+                    else:
+                        setup_funcs.append((setup_plugin, mod.setup))
 
         self._console_write(f'resolving plugins schemas')
         # Now that all plugins have been loaded we can resolve all method params
