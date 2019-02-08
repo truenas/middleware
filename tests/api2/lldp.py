@@ -4,7 +4,7 @@
 
 import sys
 import os
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, PUT, GET
@@ -51,6 +51,7 @@ def test_05_starting_LLDP_service():
     payload = {"service": "lldp", "service-control": {"onetime": True}}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_05_Checking_to_see_if_LLDP_service_is_running():

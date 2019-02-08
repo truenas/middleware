@@ -6,7 +6,7 @@
 
 import sys
 import os
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, POST, DELETE
@@ -43,6 +43,7 @@ def test_03_Configuring_TFTP_service():
 def test_04_Starting_TFTP_service():
     results = PUT("/services/services/tftp/", {"srv_enable": True})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_05_Checking_to_see_if_TFTP_service_is_enabled():
