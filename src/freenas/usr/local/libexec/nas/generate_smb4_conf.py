@@ -1700,8 +1700,8 @@ def main():
             if truenas_params['failover_status'] != "MASTER":
                 """
                    In this case we only need a stub of an smb4.conf file.
-                   at some point in the future we can transition to not running samba on the passive,
-                   but the stub configuration is useful in case the service gets accidentally started.
+                   At some point in the future we can transition to not running samba on the passive,
+                   but the stub configuration is useful in case the service is started accidentally.
                 """
                 generate_global_stub(cifs)
                 return
