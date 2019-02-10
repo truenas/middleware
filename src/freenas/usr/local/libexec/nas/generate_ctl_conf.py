@@ -95,7 +95,7 @@ def auth_group_config(auth_tag=None, auth_list=None, auth_type=None, initiator=N
         return False
 
     # There are some real paremeters, so write the auth group.
-    addline('auth-group %s {\n' % auth_tag)
+    addline('auth-group "%s" {\n' % auth_tag)
     for name in inames:
         addline('\tinitiator-name "%s"\n' % name.lstrip())
     for name in inets:
@@ -106,20 +106,20 @@ def auth_group_config(auth_tag=None, auth_list=None, auth_type=None, initiator=N
     for auth in auth_list:
         if auth.iscsi_target_auth_peeruser and auth_type != 'CHAP':
             auth_type = 'Mutual'
-            addline('\tchap-mutual %s "%s" %s "%s"\n' % (
+            addline('\tchap-mutual "%s" "%s" "%s" "%s"\n' % (
                 auth.iscsi_target_auth_user,
                 auth.iscsi_target_auth_secret,
                 auth.iscsi_target_auth_peeruser,
                 auth.iscsi_target_auth_peersecret,
             ), plaintextonly=True)
-            addline('\tchap-mutual REDACTED REDACTED REDACTED REDACTED\n', shadowonly=True)
+            addline('\tchap-mutual "REDACTED" "REDACTED" "REDACTED" "REDACTED"\n', shadowonly=True)
         elif auth_type != 'Mutual':
             auth_type = 'CHAP'
-            addline('\tchap %s "%s"\n' % (
+            addline('\tchap "%s" "%s"\n' % (
                 auth.iscsi_target_auth_user,
                 auth.iscsi_target_auth_secret,
             ), plaintextonly=True)
-            addline('\tchap REDACTED REDACTED\n', shadowonly=True)
+            addline('\tchap "REDACTED" "REDACTED"\n', shadowonly=True)
     if not auth_list and (auth_type == 'None' or auth_type == 'auto'):
         addline('\tauth-type "none"\n')
     addline('}\n\n')
@@ -139,10 +139,10 @@ def main():
 
     if gconf.iscsi_isns_servers:
         for server in gconf.iscsi_isns_servers.split(' '):
-            addline('isns-server %s\n\n' % server)
+            addline('isns-server "%s"\n\n' % server)
 
     # Generate the portal-group section
-    addline('portal-group default {\n}\n\n')
+    addline('portal-group "default" {\n}\n\n')
     for pg in client.call('datastore.query', 'services.iSCSITargetPortal'):
         pg = Struct(pg)
         # Prepare auth group for the portal group
@@ -198,33 +198,33 @@ def main():
 
         if gconf.iscsi_alua:
             # Two portal groups for ALUA HA case.
-            addline('portal-group pg%dA {\n' % pg.iscsi_target_portal_tag)
-            addline('\ttag 0x%04x\n' % pg.iscsi_target_portal_tag)
-            addline('\tdiscovery-filter portal-name\n')
-            addline('\tdiscovery-auth-group %s\n' % agname)
+            addline('portal-group "pg%dA" {\n' % pg.iscsi_target_portal_tag)
+            addline('\ttag "0x%04x"\n' % pg.iscsi_target_portal_tag)
+            addline('\tdiscovery-filter "portal-name"\n')
+            addline('\tdiscovery-auth-group "%s"\n' % agname)
             for i in listenA:
-                addline('\tlisten %s\n' % i)
+                addline('\tlisten "%s"\n' % i)
             if node != 'A':
                 addline('\tforeign\n')
             addline('}\n')
-            addline('portal-group pg%dB {\n' % pg.iscsi_target_portal_tag)
-            addline('\ttag 0x%04x\n' % (pg.iscsi_target_portal_tag + 0x8000))
-            addline('\tdiscovery-filter portal-name\n')
-            addline('\tdiscovery-auth-group %s\n' % agname)
+            addline('portal-group "pg%dB" {\n' % pg.iscsi_target_portal_tag)
+            addline('\ttag "0x%04x"\n' % (pg.iscsi_target_portal_tag + 0x8000))
+            addline('\tdiscovery-filter "portal-name"\n')
+            addline('\tdiscovery-auth-group "%s"\n' % agname)
             for i in listenB:
-                addline('\tlisten %s\n' % i)
+                addline('\tlisten "%s"\n' % i)
             if node != 'B':
                 addline('\tforeign\n')
             addline('}\n\n')
         else:
             # One portal group for non-HA and CARP HA cases.
-            addline('portal-group pg%d {\n' % pg.iscsi_target_portal_tag)
-            addline('\ttag 0x%04x\n' % pg.iscsi_target_portal_tag)
-            addline('\tdiscovery-filter portal-name\n')
-            addline('\tdiscovery-auth-group %s\n' % agname)
+            addline('portal-group "pg%d" {\n' % pg.iscsi_target_portal_tag)
+            addline('\ttag "0x%04x"\n' % pg.iscsi_target_portal_tag)
+            addline('\tdiscovery-filter "portal-name"\n')
+            addline('\tdiscovery-auth-group "%s"\n' % agname)
             for i in listen:
-                addline('\tlisten %s\n' % i)
-            addline('\toption ha_shared on\n')
+                addline('\tlisten "%s"\n' % i)
+            addline('\toption "ha_shared" "on"\n')
             addline('}\n\n')
 
     # Cache zpool threshold
@@ -276,12 +276,12 @@ def main():
                     except OSError:
                         pass
         addline('lun "%s" {\n' % extent.iscsi_target_extent_name)
-        addline('\tctl-lun %d\n' % (extent.id - 1))
+        addline('\tctl-lun "%d"\n' % (extent.id - 1))
         size = extent.iscsi_target_extent_filesize
         addline('\tpath "%s"\n' % path)
-        addline('\tblocksize %s\n' % extent.iscsi_target_extent_blocksize)
+        addline('\tblocksize "%s"\n' % extent.iscsi_target_extent_blocksize)
         if extent.iscsi_target_extent_pblocksize:
-            addline('\toption pblocksize 0\n')
+            addline('\toption "pblocksize" "0"\n')
         addline('\tserial "%s"\n' % (extent.iscsi_target_extent_serial, ))
         padded_serial = extent.iscsi_target_extent_serial
         if not extent.iscsi_target_extent_xen:
@@ -291,36 +291,36 @@ def main():
         if size != '0':
             if size.endswith('B'):
                 size = size.strip('B')
-            addline('\t\tsize %s\n' % size)
+            addline('\t\tsize "%s"\n' % size)
 
         # We can't change the vendor name of existing
         # LUNs without angering VMWare, but we can
         # use the right names going forward.
         if extent.iscsi_target_extent_legacy is True:
-            addline('\toption vendor "FreeBSD"\n')
+            addline('\toption "vendor" "FreeBSD"\n')
         else:
             if client.call('notifier.is_freenas'):
-                addline('\toption vendor "FreeNAS"\n')
+                addline('\toption "vendor" "FreeNAS"\n')
             else:
-                addline('\toption vendor "TrueNAS"\n')
+                addline('\toption "vendor" "TrueNAS"\n')
 
-        addline('\toption product "iSCSI Disk"\n')
-        addline('\toption revision "0123"\n')
-        addline('\toption naa %s\n' % extent.iscsi_target_extent_naa)
+        addline('\toption "product" "iSCSI Disk"\n')
+        addline('\toption "revision" "0123"\n')
+        addline('\toption "naa" "%s"\n' % extent.iscsi_target_extent_naa)
         if extent.iscsi_target_extent_insecure_tpc:
-            addline('\toption insecure_tpc on\n')
+            addline('\toption "insecure_tpc" "on"\n')
             if lunthreshold:
-                addline('\toption avail-threshold %s\n' % lunthreshold)
+                addline('\toption "avail-threshold" "%s"\n' % lunthreshold)
         if poolname is not None and poolname in poolthreshold:
-            addline('\toption pool-avail-threshold %s\n' % poolthreshold[poolname])
+            addline('\toption "pool-avail-threshold" "%s"\n' % poolthreshold[poolname])
         if extent.iscsi_target_extent_rpm == 'Unknown':
-            addline('\toption rpm 0\n')
+            addline('\toption "rpm" "0"\n')
         elif extent.iscsi_target_extent_rpm == 'SSD':
-            addline('\toption rpm 1\n')
+            addline('\toption "rpm" "1"\n')
         else:
-            addline('\toption rpm %s\n' % extent.iscsi_target_extent_rpm)
+            addline('\toption "rpm" "%s"\n' % extent.iscsi_target_extent_rpm)
         if extent.iscsi_target_extent_ro:
-            addline('\toption readonly on\n')
+            addline('\toption "readonly" "on"\n')
         addline('}\n')
         addline('\n')
 
@@ -348,9 +348,9 @@ def main():
         if (target.iscsi_target_name.startswith('iqn.') or
                 target.iscsi_target_name.startswith('eui.') or
                 target.iscsi_target_name.startswith('naa.')):
-            addline('target %s {\n' % target.iscsi_target_name)
+            addline('target "%s" {\n' % target.iscsi_target_name)
         else:
-            addline('target %s:%s {\n' % (target_basename, target.iscsi_target_name))
+            addline('target "%s:%s" {\n' % (target_basename, target.iscsi_target_name))
         if target.iscsi_target_alias:
             addline('\talias "%s"\n' % target.iscsi_target_alias)
         elif target.iscsi_target_name:
@@ -358,16 +358,16 @@ def main():
 
         for fctt in client.call('datastore.query', 'services.fibrechanneltotarget', [('fc_target', '=', target.id)]):
             fctt = Struct(fctt)
-            addline('\tport %s\n' % fctt.fc_port)
+            addline('\tport "%s"\n' % fctt.fc_port)
 
         for grp in client.call('datastore.query', 'services.iscsitargetgroups', [('iscsi_target', '=', target.id)]):
             grp = Struct(grp)
             agname = authgroups.get(grp.id) or 'no-authentication'
             if gconf.iscsi_alua:
-                addline('\tportal-group pg%dA %s\n' % (grp.iscsi_target_portalgroup.iscsi_target_portal_tag, agname))
-                addline('\tportal-group pg%dB %s\n' % (grp.iscsi_target_portalgroup.iscsi_target_portal_tag, agname))
+                addline('\tportal-group "pg%dA" "%s"\n' % (grp.iscsi_target_portalgroup.iscsi_target_portal_tag, agname))
+                addline('\tportal-group "pg%dB" "%s"\n' % (grp.iscsi_target_portalgroup.iscsi_target_portal_tag, agname))
             else:
-                addline('\tportal-group pg%d %s\n' % (grp.iscsi_target_portalgroup.iscsi_target_portal_tag, agname))
+                addline('\tportal-group "pg%d" "%s"\n' % (grp.iscsi_target_portalgroup.iscsi_target_portal_tag, agname))
         addline('\n')
         used_lunids = [
             o['iscsi_lunid']
@@ -380,11 +380,11 @@ def main():
             if t2e.iscsi_lunid is None:
                 while cur_lunid in used_lunids:
                     cur_lunid += 1
-                addline('\tlun %s "%s"\n' % (cur_lunid,
+                addline('\tlun "%s" "%s"\n' % (cur_lunid,
                                                t2e.iscsi_extent.iscsi_target_extent_name))
                 cur_lunid += 1
             else:
-                addline('\tlun %s "%s"\n' % (t2e.iscsi_lunid,
+                addline('\tlun "%s" "%s"\n' % (t2e.iscsi_lunid,
                                                t2e.iscsi_extent.iscsi_target_extent_name))
         addline('}\n\n')
 
