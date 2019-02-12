@@ -27,7 +27,7 @@
 
 __DC_tc()
 {
-	local timeout=$1
+	local timeout=${1:-0}
 	shift
 	local args="$*"
 

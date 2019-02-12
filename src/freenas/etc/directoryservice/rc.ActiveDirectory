@@ -130,7 +130,7 @@ __AD_get_SRV_host()
 
 __AD_tc()
 {
-	local timeout=$1
+	local timeout=${1:-0}
 	shift
 	local args="$*"
 
