@@ -97,25 +97,6 @@ def popen(cmd):
     return p.communicate()[0]
 
 
-def get_interfaces(include_fake=False):
-
-    interfaces = popen('ifconfig -l')
-
-    fake_interfaces = (
-                       'ipfw',
-                       'lo',
-                       'pflog',
-                       'pfsync',
-                      )
-
-    interfaces = interfaces.split()
-
-    if include_fake:
-        return interfaces
-    return filter(lambda i: not re.match('^(%s)\d+$'
-                  % ('|'.join(fake_interfaces), ), i), interfaces)
-
-
 def sysctl(oid):
     """Quick and dirty means of doing sysctl -n"""
     return popen('sysctl -n %s' % (oid, ))
@@ -134,7 +115,6 @@ HW_PHYSMEM_GB = HW_PHYSMEM / GB
 # as a valid choice to the -c option.
 DEF_KNOBS = {
     'loader': {
-        'vm.kmem_size',
         'vfs.zfs.dirty_data_max_max',
     },
     'sysctl': {
@@ -165,10 +145,6 @@ DEF_KNOBS = {
         'vfs.zfs.zfetch.max_distance',
     },
 }
-
-
-def guess_vm_kmem_size():
-    return int(1.25 * HW_PHYSMEM)
 
 
 def guess_vfs_zfs_dirty_data_max_max():
@@ -352,7 +328,7 @@ def guess_vfs_zfs_metaslab_lba_weighting_enabled():
 
 
 def guess_vfs_zfs_zfetch_max_distance():
-    return 33554432
+    return 32 * MB
 
 
 def main(argv):
