@@ -4,7 +4,7 @@
 import sys
 import os
 import pytest
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, RC_TEST, DELETE, POST
@@ -53,6 +53,7 @@ def test_07_Starting_rsyncd_service():
                    {'service': 'rsyncd', 'service-control': {'onetime': True}}
                    )
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_08_Checking_to_see_if_rsyncd_service_is_running():

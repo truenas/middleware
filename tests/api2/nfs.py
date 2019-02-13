@@ -7,7 +7,7 @@
 import pytest
 import sys
 import os
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE
@@ -87,6 +87,7 @@ def test_07_starting_nfs_service():
     payload = {"service": "nfs", "service-control": {"onetime": True}}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_08_checking_to_see_if_nfs_service_is_running():
@@ -258,6 +259,7 @@ def test_29_stoping_nfs_service():
     payload = {"service": "nfs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_30_checking_to_see_if_nfs_service_is_stop():
@@ -274,7 +276,6 @@ def test_31_disable_nfs_service_at_boot():
 def test_32_checking_nfs_disable_at_boot():
     results = GET("/service?service=nfs")
     assert results.json()[0]['enable'] is False, results.text
-
 
 
 # Check destroying a nfs dataset

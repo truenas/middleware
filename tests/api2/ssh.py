@@ -5,7 +5,7 @@
 
 import sys
 import os
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, is_agent_setup, if_key_listed, SSH_TEST
@@ -33,6 +33,7 @@ def test_04_Start_ssh_service():
     payload = {"service": "ssh", "service-control": {"onetime": True}}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_05_Checking_if_ssh_is_running():
