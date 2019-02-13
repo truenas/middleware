@@ -96,8 +96,8 @@ network_func()
 	netstat -nrW
 	section_footer
 
-	section_header "ARP entries (arp -a)"
-	arp -a
+	section_header "ARP entries (arp -an)"
+	arp -an
 	section_footer
 
 	section_header "mbuf statistics (netstat -m)"
