@@ -8,7 +8,7 @@ def delete_vm_kmem_size(apps, schemaeditor):
     kmem_size_tunable.delete()
 
 
-class Migration(migration.Migration):
+class Migration(migrations.Migration):
 
     dependencies = [
         ('services', '0026_s3_fields'),
