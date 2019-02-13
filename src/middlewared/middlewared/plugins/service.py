@@ -799,7 +799,7 @@ class ServiceService(CRUDService):
         return await self._started(svc)
 
     async def _start_afp(self, **kwargs):
-        await self._service("ix-afpd", "start", **kwargs)
+        await self.middleware.call("etc.generate", "afpd")
         await self._service("netatalk", "start", **kwargs)
 
     async def _stop_afp(self, **kwargs):
@@ -815,7 +815,7 @@ class ServiceService(CRUDService):
         await self._start_afp()
 
     async def _reload_afp(self, **kwargs):
-        await self._service("ix-afpd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "afpd")
         await self._system("killall -1 netatalk")
 
     async def _reload_nfs(self, **kwargs):
