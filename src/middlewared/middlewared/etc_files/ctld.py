@@ -1,35 +1,16 @@
 #!/usr/local/bin/python
-from middlewared.client import Client
 from middlewared.client.utils import Struct
+import contextlib
 import logging
-import logging.config
+import logging.handlers
 import os
+import sysctl
 
+handler = logging.handlers.SysLogHandler()
+handler.setLevel(logging.DEBUG)
+handler.setFormatter(logging.Formatter('[%(name)s:%(lineno)s] %(message)s'))
 log = logging.getLogger('clt.conf.py')
-
-logging.config.dictConfig({
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'simple': {
-            'format': '[%(name)s:%(lineno)s] %(message)s'
-        },
-    },
-    'handlers': {
-        'syslog': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.SysLogHandler',
-            'formatter': 'simple',
-        }
-    },
-    'loggers': {
-        '': {
-            'handlers': ['syslog'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-    }
-})
+log.addHandler(handler)
 
 
 # NOTE
@@ -126,16 +107,18 @@ def auth_group_config(auth_tag=None, auth_list=None, auth_type=None, initiator=N
     return True
 
 
-def main():
-    """Use the middleware client to generate a config file. We'll build the
+def main(middleware):
+    """Use the middleware to generate a config file. We'll build the
     config file as a series of lines, and once that is done write it
     out in one go"""
 
-    client = Client()
+    cf_contents.clear()
+    cf_contents_shadow.clear()
 
-    gconf = Struct(client.call('datastore.query', 'services.iSCSITargetGlobalConfiguration', None, {'get': True}))
+    gconf = Struct(middleware.call_sync('datastore.query', 'services.iSCSITargetGlobalConfiguration',
+                                        None, {'get': True}))
     if gconf.iscsi_alua:
-        node = client.call('failover.node')
+        node = middleware.call_sync('failover.node')
 
     if gconf.iscsi_isns_servers:
         for server in gconf.iscsi_isns_servers.split(' '):
@@ -143,13 +126,15 @@ def main():
 
     # Generate the portal-group section
     addline('portal-group "default" {\n}\n\n')
-    for pg in client.call('datastore.query', 'services.iSCSITargetPortal'):
+    for pg in middleware.call_sync('datastore.query', 'services.iSCSITargetPortal'):
         pg = Struct(pg)
         # Prepare auth group for the portal group
         if pg.iscsi_target_portal_discoveryauthgroup:
             auth_list = [
                 Struct(i)
-                for i in client.call('datastore.query', 'services.iSCSITargetAuthCredential', [('iscsi_target_auth_tag', '=', pg.iscsi_target_portal_discoveryauthgroup)])
+                for i in middleware.call_sync('datastore.query', 'services.iSCSITargetAuthCredential',
+                                              [('iscsi_target_auth_tag', '=',
+                                                pg.iscsi_target_portal_discoveryauthgroup)])
             ]
         else:
             auth_list = []
@@ -162,7 +147,8 @@ def main():
         # Prepare IPs to listen on for all portal groups.
         portals = [
             Struct(i)
-            for i in client.call('datastore.query', 'services.iSCSITargetPortalIP', [('iscsi_target_portalip_portal', '=', pg.id)])
+            for i in middleware.call_sync('datastore.query', 'services.iSCSITargetPortalIP',
+                                          [('iscsi_target_portalip_portal', '=', pg.id)])
         ]
         listen = []
         listenA = []
@@ -180,14 +166,14 @@ def main():
                     found = True
                     break
                 if not found:
-                    for net in client.call('datastore.query', 'network.Interfaces'):
+                    for net in middleware.call_sync('datastore.query', 'network.Interfaces'):
                         if net['int_vip'] == address and net['int_ipv4address'] and net['int_ipv4address_b']:
                             listenA.append('%s:%s' % (net['int_ipv4address'], portal.iscsi_target_portalip_port))
                             listenB.append('%s:%s' % (net['int_ipv4address_b'], portal.iscsi_target_portalip_port))
                             found = True
                             break
                 if not found:
-                    for alias in client.call('datastore.query', 'network.Alias'):
+                    for alias in middleware.call_sync('datastore.query', 'network.Alias'):
                         if alias['alias_vip'] == address and alias['alias_v4address'] and alias['alias_v4address_b']:
                             listenA.append('%s:%s' % (alias['alias_v4address'], portal.iscsi_target_portalip_port))
                             listenB.append('%s:%s' % (alias['alias_v4address_b'], portal.iscsi_target_portalip_port))
@@ -229,10 +215,10 @@ def main():
 
     # Cache zpool threshold
     poolthreshold = {}
-    zpoollist = client.call('notifier.zpool_list')
+    zpoollist = middleware.call_sync('notifier.zpool_list')
 
     # Generate the LUN section
-    for extent in client.call('datastore.query', 'services.iSCSITargetExtent'):
+    for extent in middleware.call_sync('datastore.query', 'services.iSCSITargetExtent'):
         extent = Struct(extent)
         path = extent.iscsi_target_extent_path
         if not path:
@@ -242,14 +228,16 @@ def main():
         poolname = None
         lunthreshold = None
         if extent.iscsi_target_extent_type == 'Disk':
-            disk = client.call('datastore.query', 'storage.Disk', [('disk_identifier', '=', path)], {'order_by': ['disk_expiretime']})
+            disk = middleware.call_sync('datastore.query', 'storage.Disk',
+                                        [('disk_identifier', '=', path)],
+                                        {'order_by': ['disk_expiretime']})
             if not disk:
                 continue
             disk = Struct(disk[0])
             if disk.disk_multipath_name:
                 path = '/dev/multipath/%s' % disk.disk_multipath_name
             else:
-                path = '/dev/%s' % client.call('disk.identifier_to_device', disk.disk_identifier)
+                path = '/dev/%s' % middleware.call_sync('disk.identifier_to_device', disk.disk_identifier)
         else:
             if not path.startswith('/mnt'):
                 poolname = path.split('/', 2)[1]
@@ -262,7 +250,7 @@ def main():
                         )
                 if extent.iscsi_target_extent_avail_threshold:
                     zvolname = path.split('/', 1)[1]
-                    zfslist = client.call('notifier.zfs_list', zvolname, False, False, False, ['volume'])
+                    zfslist = middleware.call_sync('notifier.zfs_list', zvolname, False, False, False, ['volume'])
                     if zfslist:
                         lunthreshold = int(zfslist[zvolname]['volsize'] *
                                            (extent.iscsi_target_extent_avail_threshold / 100.0))
@@ -299,7 +287,7 @@ def main():
         if extent.iscsi_target_extent_legacy is True:
             addline('\toption "vendor" "FreeBSD"\n')
         else:
-            if client.call('notifier.is_freenas'):
+            if middleware.call_sync('notifier.is_freenas'):
                 addline('\toption "vendor" "FreeNAS"\n')
             else:
                 addline('\toption "vendor" "TrueNAS"\n')
@@ -326,16 +314,18 @@ def main():
 
     # Generate the target section
     target_basename = gconf.iscsi_basename
-    for target in client.call('datastore.query', 'services.iSCSITarget'):
+    for target in middleware.call_sync('datastore.query', 'services.iSCSITarget'):
         target = Struct(target)
 
         authgroups = {}
-        for grp in client.call('datastore.query', 'services.iscsitargetgroups', [('iscsi_target', '=', target.id)]):
+        for grp in middleware.call_sync('datastore.query', 'services.iscsitargetgroups',
+                                        [('iscsi_target', '=', target.id)]):
             grp = Struct(grp)
             if grp.iscsi_target_authgroup:
                 auth_list = [
                     Struct(i)
-                    for i in client.call('datastore.query', 'services.iSCSITargetAuthCredential', [('iscsi_target_auth_tag', '=', grp.iscsi_target_authgroup)])
+                    for i in middleware.call_sync('datastore.query', 'services.iSCSITargetAuthCredential',
+                                                  [('iscsi_target_auth_tag', '=', grp.iscsi_target_authgroup)])
                 ]
             else:
                 auth_list = []
@@ -356,25 +346,35 @@ def main():
         elif target.iscsi_target_name:
             addline('\talias "%s"\n' % target.iscsi_target_name)
 
-        for fctt in client.call('datastore.query', 'services.fibrechanneltotarget', [('fc_target', '=', target.id)]):
+        for fctt in middleware.call_sync('datastore.query', 'services.fibrechanneltotarget',
+                                         [('fc_target', '=', target.id)]):
             fctt = Struct(fctt)
             addline('\tport "%s"\n' % fctt.fc_port)
 
-        for grp in client.call('datastore.query', 'services.iscsitargetgroups', [('iscsi_target', '=', target.id)]):
+        for grp in middleware.call_sync('datastore.query', 'services.iscsitargetgroups',
+                                        [('iscsi_target', '=', target.id)]):
             grp = Struct(grp)
             agname = authgroups.get(grp.id) or 'no-authentication'
             if gconf.iscsi_alua:
-                addline('\tportal-group "pg%dA" "%s"\n' % (grp.iscsi_target_portalgroup.iscsi_target_portal_tag, agname))
-                addline('\tportal-group "pg%dB" "%s"\n' % (grp.iscsi_target_portalgroup.iscsi_target_portal_tag, agname))
+                addline('\tportal-group "pg%dA" "%s"\n' % (grp.iscsi_target_portalgroup.iscsi_target_portal_tag,
+                                                           agname))
+                addline('\tportal-group "pg%dB" "%s"\n' % (grp.iscsi_target_portalgroup.iscsi_target_portal_tag,
+                                                           agname))
             else:
-                addline('\tportal-group "pg%d" "%s"\n' % (grp.iscsi_target_portalgroup.iscsi_target_portal_tag, agname))
+                addline('\tportal-group "pg%d" "%s"\n' % (grp.iscsi_target_portalgroup.iscsi_target_portal_tag,
+                                                          agname))
         addline('\n')
         used_lunids = [
             o['iscsi_lunid']
-            for o in client.call('datastore.query', 'services.iscsitargettoextent', [('iscsi_target', '=', target.id), ('iscsi_lunid', '!=', None)])
+            for o in middleware.call_sync('datastore.query', 'services.iscsitargettoextent',
+                                          [('iscsi_target', '=', target.id),
+                                           ('iscsi_lunid', '!=', None)])
         ]
         cur_lunid = 0
-        for t2e in client.call('datastore.query', 'services.iscsitargettoextent', [('iscsi_target', '=', target.id)], {'extra': {'select': {'null_first': 'iscsi_lunid IS NULL'}}, 'order_by': ['null_first', 'iscsi_lunid']}):
+        for t2e in middleware.call_sync('datastore.query', 'services.iscsitargettoextent',
+                                        [('iscsi_target', '=', target.id)],
+                                        {'extra': {'select': {'null_first': 'iscsi_lunid IS NULL'}},
+                                         'order_by': ['null_first', 'iscsi_lunid']}):
             t2e = Struct(t2e)
 
             if t2e.iscsi_lunid is None:
@@ -401,5 +401,19 @@ def main():
         fh.write(line)
     fh.close()
 
-if __name__ == '__main__':
-    main()
+
+def set_ctl_ha_peer(middleware):
+    with contextlib.suppress(IndexError):
+        if middleware.call_sync("iscsi.global.alua_enabled"):
+            node = middleware.call_sync("failover.node")
+            if node == "A":
+                sysctl.filter("kern.cam.ctl.ha_peer")[0].value = "listen 169.254.10.1"
+            if node == "B":
+                sysctl.filter("kern.cam.ctl.ha_peer")[0].value = "connect 169.254.10.1"
+        else:
+            sysctl.filter("kern.cam.ctl.ha_peer")[0].value = ""
+
+
+async def render(service, middleware):
+    await middleware.run_in_thread(main, middleware)
+    await middleware.run_in_thread(set_ctl_ha_peer, middleware)

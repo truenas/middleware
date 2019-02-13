@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import errno
 import inspect
 import os
@@ -434,21 +435,23 @@ class ServiceService(CRUDService):
         await self._system("ulimit -n 1024 && /usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
     async def _restart_iscsitarget(self, **kwargs):
-        await self._service("ix-ctld", "start", force=True, **kwargs)
+        await self.middleware.call("etc.generate", "ctld")
         await self._service("ctld", "stop", force=True, **kwargs)
-        await self._service("ix-ctld", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "ctld")
         await self._service("ctld", "restart", **kwargs)
 
     async def _start_iscsitarget(self, **kwargs):
-        await self._service("ix-ctld", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "ctld")
         await self._service("ctld", "start", **kwargs)
 
     async def _stop_iscsitarget(self, **kwargs):
-        await self._service("ix-ctld", "stop", force=True, **kwargs)
+        with contextlib.suppress(IndexError):
+            sysctl.filter("kern.cam.ctl.ha_peer")[0].value = ""
+
         await self._service("ctld", "stop", force=True, **kwargs)
 
     async def _reload_iscsitarget(self, **kwargs):
-        await self._service("ix-ctld", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "ctld")
         await self._service("ctld", "reload", **kwargs)
 
     async def _start_collectd(self, **kwargs):
