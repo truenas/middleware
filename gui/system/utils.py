@@ -395,7 +395,7 @@ def debug_generate():
     if not _n.is_freenas() and _n.failover_licensed():
         try:
             with client as c:
-                standby_debug = c.call('failover.call_remote', 'system.debug', [], {'job': True}, timeout=300)
+                standby_debug = c.call('failover.call_remote', 'system.debug', [], {'job': True}, timeout=600)
         except:
             log.error('Failed to get debug from standby node', exc_info=True)
 
