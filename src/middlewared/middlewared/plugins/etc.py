@@ -71,6 +71,9 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'libmap.conf'},
             {'type': 'mako', 'path': 'local/pam.d/dssystem'},
         ],
+        'ctld': [
+            {'type': 'py', 'path': 'ctld'},
+        ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
         ],
