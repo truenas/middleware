@@ -240,6 +240,17 @@ define([
                     document.getElementById(id).value = this.initial[property.property];
                 }
             }
+            else if (property.schema.default !== undefined)
+            {
+                if (property.schema.type.indexOf("boolean") != -1)
+                {
+                    document.getElementById(id).checked = property.schema.default;
+                }
+                else
+                {
+                    document.getElementById(id).value = property.schema.default;
+                }
+            }
         }
       },
       _getValueAttr: function() {
