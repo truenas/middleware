@@ -144,6 +144,8 @@ class Any(Attribute):
         }
         if self.description:
             schema['description'] = self.description
+        if self.has_default:
+            schema['default'] = self.default
         if not parent:
             schema['_required_'] = self.required
         return schema
@@ -169,6 +171,8 @@ class Str(EnumMixin, Attribute):
             schema['title'] = self.title
             if self.description:
                 schema['description'] = self.description
+            if self.has_default:
+                schema['default'] = self.default
             schema['_required_'] = self.required
         if not self.required:
             schema['type'] = ['string', 'null']
@@ -356,6 +360,8 @@ class Bool(Attribute):
             schema['title'] = self.title
             if self.description:
                 schema['description'] = self.description
+            if self.has_default:
+                schema['default'] = self.default
             schema['_required_'] = self.required
         return schema
 
@@ -380,6 +386,8 @@ class Int(EnumMixin, Attribute):
             schema['title'] = self.title
             if self.description:
                 schema['description'] = self.description
+            if self.has_default:
+                schema['default'] = self.default
             schema['_required_'] = self.required
         return schema
 
@@ -474,6 +482,8 @@ class List(EnumMixin, Attribute):
             schema['title'] = self.title
             if self.description:
                 schema['description'] = self.description
+            if self.has_default:
+                schema['default'] = self.default
             schema['_required_'] = self.required
         if self.required:
             schema['type'] = ['array', 'null']
@@ -612,6 +622,8 @@ class Dict(Attribute):
             schema['title'] = self.title
             if self.description:
                 schema['description'] = self.description
+            if self.has_default:
+                schema['default'] = self.default
             schema['_required_'] = self.required
         for name, attr in list(self.attrs.items()):
             schema['properties'][name] = attr.to_json_schema(parent=self)
