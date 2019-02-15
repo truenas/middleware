@@ -194,7 +194,6 @@ class Path(Str):
         return os.path.normpath(value.strip().strip("/").strip())
 
 
-
 class Dir(Str):
 
     def validate(self, value):
@@ -546,7 +545,6 @@ class Dict(Attribute):
                     if not attr.has_default:
                         raise ValueError(f"Attribute {attr.name} is not required and does not have default value, "
                                          f"this is forbidden in strict mode")
-
 
     def clean(self, data):
         data = super().clean(data)

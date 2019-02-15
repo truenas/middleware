@@ -27,7 +27,7 @@ class B2RcloneRemote(BaseRcloneRemote):
         Int("b2-chunk-size", title="Upload chunk size (in megabytes)", description=textwrap.dedent("""\
             Upload chunk size. Must fit in memory. Note that these chunks are buffered in memory and there might be a
             maximum of «--transfers» chunks in progress at once. Also, your largest file must be split in no more
-            than 10 000 chunks. 
+            than 10 000 chunks.
         """), default=96, validators=[Range(min=5)]),
     ]
 
