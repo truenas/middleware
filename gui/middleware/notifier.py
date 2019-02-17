@@ -1061,7 +1061,8 @@ class notifier(metaclass=HookMetaclass):
             ).delete()
 
     def zfs_online_disk(self, volume, label):
-        assert volume.vol_encrypt == 0
+        if volume.vol_encrypt != 0:
+            raise MiddlewareError('Disk cannot be set to online in encrypted pool.')
 
         p1 = self._pipeopen('/sbin/zpool online %s %s' % (volume.vol_name, label))
         stderr = p1.communicate()[1]
