@@ -768,33 +768,26 @@ def multipath_status(request):
 
 
 def multipath_status_json(request):
+    with client as c:
+        multipaths = c.call('multipath.query')
 
-    multipaths = notifier().multipath_all()
     _id = 1
     items = []
     for mp in multipaths:
         children = []
-        for cn in mp.consumers:
-            actions = {}
-            items.append({
-                'id': str(_id),
-                'name': cn.devname,
-                'status': cn.status,
-                'lunid': cn.lunid,
-                'type': 'consumer',
-                'actions': json.dumps(actions),
-            })
+        for cn in mp['children']:
+            cn['id'] = str(_id)
+            cn['lunid'] = cn.pop('lun_id')
+            cn['actions'] = '{}'
+            items.append(cn)
             children.append({'_reference': str(_id)})
             _id += 1
-        data = {
-            'id': str(_id),
-            'name': mp.devname,
-            'status': mp.status,
-            'type': 'root',
-            'children': children,
-        }
-        items.append(data)
+
+        mp['id'] = str(_id)
+        mp['children'] = children
+        items.append(mp)
         _id += 1
+
     return HttpResponse(json.dumps({
         'identifier': 'id',
         'label': 'name',

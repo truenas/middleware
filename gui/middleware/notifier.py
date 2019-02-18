@@ -74,7 +74,6 @@ from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
-from freenasUI.middleware.multipath import Multipath
 from middlewared.plugins.pwenc import encrypt, decrypt
 
 import sysctl
@@ -930,19 +929,6 @@ class notifier(metaclass=HookMetaclass):
         res = p1.communicate()[0]
         r = re.compile(r'scan: (resilver|scrub) in progress')
         return r.search(res) is not None
-
-    def multipath_all(self):
-        """
-        Get all available gmultipath instances
-
-        Returns:
-            A list of Multipath objects
-        """
-        doc = self._geom_confxml()
-        return [
-            Multipath(doc=doc, xmlnode=geom)
-            for geom in doc.xpath("//class[name = 'MULTIPATH']/geom")
-        ]
 
     def sysctl(self, name):
         """

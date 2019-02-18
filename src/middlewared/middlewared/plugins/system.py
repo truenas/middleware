@@ -955,7 +955,15 @@ class SystemHealthEventSource(EventSource):
             })
 
 
-def setup(middleware):
+async def setup(middleware):
+    settings = await middleware.call(
+        'system.general.config',
+    )
+    os.environ['TZ'] = settings['timezone']
+    time.tzset()
+
+    middleware.logger.debug(f'Timezone set to {settings["timezone"]}')
+
     global SYSTEM_READY
     if os.path.exists("/tmp/.bootready"):
         SYSTEM_READY = True
@@ -963,3 +971,31 @@ def setup(middleware):
     middleware.event_subscribe('system', _event_system_ready)
     middleware.event_subscribe('devd.zfs', _event_zfs_status)
     middleware.register_event_source('system.health', SystemHealthEventSource)
+
+    # watchdog 38 = ~256 seconds or ~4 minutes, see sys/watchdog.h for explanation
+    for command in [
+        'ddb script "kdb.enter.break=watchdog 38; capture on"',
+        'ddb script "kdb.enter.sysctl=watchdog 38; capture on"',
+        'ddb script "kdb.enter.default=write cn_mute 1; watchdog 38; capture on; bt; '
+        'show allpcpu; ps; alltrace; write cn_mute 0; textdump dump; reset"',
+        'sysctl debug.ddb.textdump.pending=1',
+        'sysctl debug.debugger_on_panic=1',
+        'sysctl debug.ddb.capture.bufsize=4194304'
+    ]:
+        ret = await Popen(
+            command,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+
+        await ret.communicate()
+
+        if ret.returncode:
+            middleware.logger.debug(f'Failed to execute: {command}')
+        else:
+            middleware.logger.debug(f'Executed: {command}')
+
+    CRASH_DIR = '/data/crash'
+    os.makedirs(CRASH_DIR, exist_ok=True)
+    os.chmod(CRASH_DIR, 0o775)

@@ -334,13 +334,19 @@ class VMSupervisor(object):
         vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
         guest_memory = vm[0].get('memory', 0) * 1024 * 1024
         arc_max = sysctl.filter('vfs.zfs.arc_max')[0].value
+        arc_min = sysctl.filter('vfs.zfs.arc_min')[0].value
         new_arc_max = min(
             await self.middleware.call('vm.get_initial_arc_max'),
             arc_max + guest_memory
         )
         if arc_max != new_arc_max:
-            self.logger.debug(f'===> Give back guest memory to ARC: {new_arc_max - arc_max}')
-            sysctl.filter('vfs.zfs.arc_max')[0].value = new_arc_max
+            if new_arc_max > arc_min:
+                self.logger.debug(f'===> Give back guest memory to ARC: {new_arc_max}')
+                sysctl.filter('vfs.zfs.arc_max')[0].value = new_arc_max
+            else:
+                self.logger.warn(
+                    f'===> Not giving back memory to ARC because new arc_max ({new_arc_max}) <= arc_min ({arc_min})'
+                )
 
     def destroy_tap(self):
         while self.taps:

@@ -1,10 +1,8 @@
-#!/usr/local/bin/python
 import os
 import textwrap
 
 import netif
 
-from middlewared.client import Client
 from middlewared.client.utils import Struct
 
 
@@ -20,7 +18,7 @@ def get_interface(ipaddress):
     return ifaces
 
 
-def main():
+def render_sync(middleware):
     """Use the django ORM to generate a config file.  We'll build the
     config file as a series of lines, and once that is done write it
     out in one go"""
@@ -28,9 +26,8 @@ def main():
     map_acls_mode = False
     afp_config = "/usr/local/etc/afp.conf"
     cf_contents = []
-    client = Client()
 
-    afp = Struct(client.call('datastore.query', 'services.afp', None, {'get': True}))
+    afp = Struct(middleware.call_sync('datastore.query', 'services.afp', None, {'get': True}))
 
     cf_contents.append("[Global]\n")
     uam_list = ['uams_dhx.so', 'uams_dhx2.so']
@@ -38,7 +35,7 @@ def main():
         uam_list.append('uams_guest.so')
         cf_contents.append('\tguest account = %s\n' % afp.afp_srv_guest_user)
     # uams_gss.so bails out with an error if kerberos isn't configured
-    if client.call('datastore.query', 'directoryservice.kerberoskeytab', None, {'count': True}) > 0:
+    if middleware.call_sync('datastore.query', 'directoryservice.kerberoskeytab', None, {'count': True}) > 0:
         uam_list.append('uams_gss.so')
     cf_contents.append('\tuam list = %s\n' % (" ").join(uam_list))
 
@@ -63,11 +60,11 @@ def main():
     if afp.afp_srv_chmod_request:
         cf_contents.append("\tchmod request = %s\n" % afp.afp_srv_chmod_request)
 
-    if afp.afp_srv_map_acls == 'mode' and client.call('notifier.common', 'system', 'activedirectory_enabled'):
+    if afp.afp_srv_map_acls == 'mode' and middleware.call_sync('notifier.common', 'system', 'activedirectory_enabled'):
         map_acls_mode = True
 
     if map_acls_mode:
-        ad = Struct(client.call('notifier.directoryservice', 'AD'))
+        ad = Struct(middleware.call_sync('notifier.directoryservice', 'AD'))
 
         cf_contents.append("\tldap auth method = %s\n" % "simple")
         cf_contents.append("\tldap auth dn = %s\n" % ad.binddn)
@@ -97,7 +94,7 @@ def main():
     cf_contents.append("\tlog level = %s\n" % "default:info")
     cf_contents.append("\n")
 
-    for share in client.call('datastore.query', 'sharing.afp_share'):
+    for share in middleware.call_sync('datastore.query', 'sharing.afp_share'):
         share = Struct(share)
         if share.afp_home:
             cf_contents.append("[Homes]\n")
@@ -147,7 +144,8 @@ def main():
         # Update TimeMachine special files
         timemachine_supported_path = os.path.join(share.afp_path, ".com.apple.timemachine.supported")
         timemachine_quota_plist_path = os.path.join(share.afp_path, ".com.apple.TimeMachine.quota.plist")
-        timemachine_quota_plist_managed_flag = os.path.join(share.afp_path, ".com.apple.TimeMachine.quota.plist.FreeNAS-managed")
+        timemachine_quota_plist_managed_flag = os.path.join(share.afp_path,
+                                                            ".com.apple.TimeMachine.quota.plist.FreeNAS-managed")
         if share.afp_timemachine and share.afp_timemachine_quota:
             try:
                 with open(timemachine_supported_path, "w"):
@@ -202,5 +200,5 @@ def main():
             fh.write(line)
 
 
-if __name__ == "__main__":
-    main()
+async def render(service, middleware):
+    await middleware.run_in_thread(render_sync, middleware)

@@ -35,12 +35,12 @@ nisctl_start()
 	nis_set 1
 
 	nisctl_cmd ${midclt} call etc.generate user
-        nisctl_cmd ${service} ix-hostname start
+	nisctl_cmd ${midclt} call etc.generate hostname
 
 	if ! nisctl_cmd ${service} ix-nsswitch start
 	then
 		nisctl_cmd ${midclt} call etc.generate user
-        	nisctl_cmd ${service} ix-hostname start
+		nisctl_cmd ${midclt} call etc.generate hostname
 		nis_set 0
 		return 1
 	fi
@@ -48,7 +48,7 @@ nisctl_start()
 	if ! nisctl_cmd ${service} nisdomain start
 	then
 		nisctl_cmd ${midclt} call etc.generate user
-        	nisctl_cmd ${service} ix-hostname start
+		nisctl_cmd ${midclt} call etc.generate hostname
 		nis_set 0
 		return 1
 	fi
@@ -56,7 +56,7 @@ nisctl_start()
 	if ! nisctl_cmd ${service} ypbind start
 	then
 		nisctl_cmd ${midclt} call etc.generate user
-        	nisctl_cmd ${service} ix-hostname start
+		nisctl_cmd ${midclt} call etc.generate hostname
 		nis_set 0
 		return 1
 	fi
@@ -73,7 +73,7 @@ nisctl_stop()
 	nisctl_cmd ${service} ypbind stop
 	nisctl_cmd ${service} nisdomain stop
 	nisctl_cmd ${service} ix-nsswitch stop
-	nisctl_cmd ${service} ix-hostname start
+	nisctl_cmd ${midclt} call etc.generate hostname
 	nisctl_cmd ${midclt} call etc.generate user
 
 	nis_set 0

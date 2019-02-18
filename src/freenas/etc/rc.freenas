@@ -51,13 +51,6 @@
 : ${FIRST_INSTALL_SENTINEL="/data/first-boot"}
 
 #
-#	OPENSSL settings
-#
-: ${OPENSSL:="/usr/local/bin/openssl"}
-: ${SSLDIR:="/etc/certificates"}
-: ${SSLCADIR:="${SSLDIR}/CA"}
-
-#
 #	Misc settings
 #
 : ${FREENAS_CACHEDIR:="/var/tmp/.cache"}

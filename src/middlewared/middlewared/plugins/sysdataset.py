@@ -186,8 +186,8 @@ class SystemDatasetService(ConfigService):
 
         if await self.__setup_datasets(config['pool'], config['uuid']):
             # There is no need to wait this to finish
+            # Restarting rrdcached will ensure that we start/restart collectd as well
             asyncio.ensure_future(self.middleware.call('service.restart', 'rrdcached'))
-            asyncio.ensure_future(self.middleware.call('service.start', 'collectd'))
 
         if not os.path.isdir(SYSDATASET_PATH):
             if os.path.exists(SYSDATASET_PATH):
@@ -327,10 +327,10 @@ class SystemDatasetService(ConfigService):
             path = SYSDATASET_PATH
         await self.__mount(_to, config['uuid'], path=path)
 
-        restart = ['syslogd', 'rrdcached']
+        restart = ['collectd', 'rrdcached', 'syslogd']
 
         if await self.middleware.call('service.started', 'cifs'):
-            restart.append('cifs')
+            restart.insert(0, 'cifs')
 
         try:
             for i in restart:
@@ -347,10 +347,10 @@ class SystemDatasetService(ConfigService):
 
                 os.rmdir('/tmp/system.new')
         finally:
+
+            restart.reverse()
             for i in restart:
                 await self.middleware.call('service.start', i)
-
-            await self.middleware.call('service.start', 'collectd')
 
         await self.__nfsv4link(config)
 

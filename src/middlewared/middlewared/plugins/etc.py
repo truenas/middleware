@@ -63,10 +63,16 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'krb5.conf'},
             {'type': 'py', 'path': 'krb5.keytab'},
         ],
+        'afpd': [
+            {'type': 'py', 'path': 'afpd'},
+        ],
         'asigra': [
             {'type': 'mako', 'path': 'dssys.cfg'},
             {'type': 'mako', 'path': 'libmap.conf'},
             {'type': 'mako', 'path': 'local/pam.d/dssystem'},
+        ],
+        'ctld': [
+            {'type': 'py', 'path': 'ctld'},
         ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
@@ -93,6 +99,13 @@ class EtcService(Service):
                 )
             )
         ],
+        'ftp': [
+            {'type': 'mako', 'path': 'local/proftpd.conf'},
+            {'type': 'py', 'path': 'local/proftpd'},
+        ],
+        'sysctl': [
+            {'type': 'py', 'path': 'sysctl_config'}
+        ],
         's3': [
             {'type': 'py', 'path': 'local/minio/certificates'},
         ],
@@ -110,6 +123,10 @@ class EtcService(Service):
         'nginx': [
             {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
         ],
+        'fstab': [
+            {'type': 'mako', 'path': 'fstab'},
+            {'type': 'py', 'path': 'fstab_configure'}
+        ],
         'collectd': [
             {'type': 'mako', 'path': 'local/collectd.conf'}
         ],
@@ -121,6 +138,24 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/netdata/stream.conf'},
             {'type': 'py', 'path': 'local/netdata/alarms'}
         ],
+        'inetd': [
+            {'type': 'py', 'path': 'inetd_conf'}
+        ],
+        'motd': [
+            {'type': 'mako', 'path': 'motd'}
+        ],
+        'ups': [
+            {'type': 'py', 'path': 'local/nut/ups_config'},
+            {'type': 'mako', 'path': 'local/nut/ups.conf'},
+            {'type': 'mako', 'path': 'local/nut/upsd.conf'},
+            {'type': 'mako', 'path': 'local/nut/upsd.users'},
+            {'type': 'mako', 'path': 'local/nut/upsmon.conf'},
+            {'type': 'mako', 'path': 'local/nut/upssched.conf'},
+            {'type': 'py', 'path': 'local/nut/ups_perms'}
+        ],
+        'rsync': [
+            {'type': 'mako', 'path': 'local/rsyncd.conf'}
+        ],
         'smb': [
             {'type': 'mako', 'path': 'local/smb4.conf'},
         ],
@@ -131,12 +166,37 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/smbusername.map'},
             {'type': 'py', 'path': 'smb_configure'},
         ],
+        'snmpd': [
+            {'type': 'mako', 'path': 'local/snmpd.conf'},
+        ],
+        'sudoers': [
+            {'type': 'mako', 'path': 'local/sudoers'}
+        ],
         'syslogd': [
             {'type': 'py', 'path': 'syslogd'},
         ],
+        'hostname': [
+            {'type': 'mako', 'path': 'hosts'}
+        ],
+        'ssh': [
+            {'type': 'mako', 'path': 'local/ssh/sshd_config'},
+            {'type': 'py', 'path': 'local/ssh/config'}
+        ],
+        'ntpd': [
+            {'type': 'mako', 'path': 'ntp.conf'}
+        ],
+        'localtime': [
+            {'type': 'py', 'path': 'localtime_config'}
+        ],
+        'inadyn': [
+            {'type': 'mako', 'path': 'local/inadyn.conf'}
+        ],
+        'aliases': [
+            {'type': 'mako', 'path': 'aliases'}
+        ]
     }
 
-    SKIP_LIST = ['system_dataset', 'collectd', 'syslogd']
+    SKIP_LIST = ['system_dataset', 'collectd', 'syslogd', 'fstab']
 
     class Config:
         private = True
@@ -150,8 +210,12 @@ class EtcService(Service):
             'mako': MakoRenderer(self),
             'py': PyRenderer(self),
         }
+        self.args = tuple()
 
-    async def generate(self, name):
+    def get_args(self):
+        return self.args
+
+    async def generate(self, name, *args):
         group = self.GROUPS.get(name)
         if group is None:
             raise ValueError('{0} group not found'.format(name))
@@ -162,12 +226,15 @@ class EtcService(Service):
             if renderer is None:
                 raise ValueError(f'Unknown type: {entry["type"]}')
 
+            self.args = args
             path = os.path.join(self.files_dir, entry['path'])
             try:
                 rendered = await renderer.render(path)
             except Exception:
                 self.logger.error(f'Failed to render {entry["type"]}:{entry["path"]}', exc_info=True)
                 continue
+            finally:
+                self.args = tuple()
 
             if rendered is None:
                 continue

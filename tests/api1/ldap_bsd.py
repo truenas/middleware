@@ -7,7 +7,7 @@
 import pytest
 import sys
 import os
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE
@@ -79,6 +79,7 @@ def test_03_Enabling_LDAPd():
 def test_04_Checking_LDAP():
     results = GET("/directoryservice/ldap/")
     assert results.json()["ldap_enable"] is True, results.text
+    sleep(1)
 
 
 @ldap_test_cfg
@@ -95,6 +96,7 @@ def test_05_Enabling_SMB_service():
 def test_06_Starting_SMB_service():
     results = PUT("/services/services/cifs/", {"srv_enable": True})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 @ldap_test_cfg
@@ -342,6 +344,7 @@ def test_34_Disabling_LDAPd():
 def test_35_Stopping_SMB_service():
     results = PUT("/services/services/cifs/", {"srv_enable": False})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 # Check LDAP
@@ -349,6 +352,7 @@ def test_35_Stopping_SMB_service():
 def test_36_Verify_LDAP_is_disabled():
     results = GET("/directoryservice/ldap/")
     assert results.json()["ldap_enable"] is False, results.text
+    sleep(1)
 
 
 @ldap_test_cfg

@@ -994,26 +994,24 @@ class Reporting(Model):
 
     cpu_in_percentage = models.BooleanField(
         default=False,
-        verbose_name=_("Report CPU usage in percentage"),
-        help_text=_("collectd will report CPU usage in percentage instead of \"jiffies\" "
-                    "if this is checked."),
+        verbose_name=_("Report CPU usage in percent"),
+        help_text=_("When set, report CPU usage in percent instead of jiffies."),
     )
     graphite = models.CharField(
         max_length=120,
         default="",
         blank=True,
-        verbose_name=_("Graphite server"),
-        help_text=_("A hostname or IP here will be used as the destination to send collectd "
-                    "data to using the graphite plugin to collectd.")
+        verbose_name=_("Graphite Server"),
+        help_text=_("Destination hostname or IP for collectd data sent by the Graphite plugin.")
     )
     graph_age = models.IntegerField(
         default=12,
-        verbose_name=_("Graph age"),
-        help_text=_("Maximum age of graph (in months) to store."),
+        verbose_name=_("Graph Age"),
+        help_text=_("Maximum age of graph stored, in months."),
     )
     graph_points = models.IntegerField(
         default=1200,
-        verbose_name=_("Graph points count"),
-        help_text=_("Number of points for each (hourly, daily, weekly, monthly, yearly) graph. In short, set this to "
-                    "no smaller than the width of your graphs in pixels."),
+        verbose_name=_("Graph Points Count"),
+        help_text=_("Number of points for each hourly, daily, weekly, monthly, yearly graph. Set this to no less than "
+                    "the width of your graphs in pixels."),
     )

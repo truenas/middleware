@@ -603,14 +603,14 @@ class JailService(CRUDService):
 
         return True
 
-    @accepts(Str("jail"))
-    def stop(self, jail):
+    @accepts(Str("jail"), Bool('force', default=False))
+    def stop(self, jail, force):
         """Takes a jail and stops it."""
         uuid, _, iocage = self.check_jail_existence(jail)
         status, _ = IOCList.list_get_jid(uuid)
 
         if status:
-            iocage.stop()
+            iocage.stop(force=force)
 
         return True
 

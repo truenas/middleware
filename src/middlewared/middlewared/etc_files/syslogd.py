@@ -14,7 +14,7 @@ def generate_syslog_conf(middleware):
     # (see commit 704f1eb60f438171690d79bfdf17e95044cc6bb2)
     if os.path.isdir("/conf/base/usr__local__etc"):
         shutil.copy("/conf/base/usr__local__etc/syslog-ng.conf.freenas",
-                    "/usr/local/etc/syslog-ng.conf")
+                    "/etc/local/syslog-ng.conf")
     else:
         shutil.copy("/conf/base/etc/local/syslog-ng.conf.freenas",
                     "/etc/local/syslog-ng.conf")

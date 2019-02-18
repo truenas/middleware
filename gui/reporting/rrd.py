@@ -1386,3 +1386,55 @@ class NFSStatPlugin(RRDBase):
         ]
 
         return args
+
+
+class UPSBatteryChargePlugin(RRDBase, DiskBase):
+
+    title = 'UPS Battery Charge'
+    vertical_label = 'Percent'
+
+    def graph(self):
+
+        path = os.path.join(self._base_path, 'nut-ups/percent-charge.rrd')
+
+        args = [
+            f'DEF:min_rd={path}:value:MIN',
+            f'DEF:avg_rd={path}:value:AVERAGE',
+            f'DEF:max_rd={path}:value:MAX',
+            'VDEF:tot_rd=avg_rd,TOTAL',
+            'AREA:avg_rd#bfbfff',
+            'LINE1:avg_rd#0000ff:Value ',
+            'GPRINT:min_rd:MIN:%5.1lf%s Min\\g',
+            'GPRINT:avg_rd:AVERAGE: %5.1lf%s Avg\\g',
+            'GPRINT:max_rd:MAX: %5.1lf%s Max\\g',
+            'GPRINT:avg_rd:LAST: %5.1lf%s Last\\g',
+            'GPRINT:tot_rd: %3.0lf%s Total\\l',
+        ]
+
+        return args
+
+
+class UPSRemainingBatteryPlugin(RRDBase, DiskBase):
+
+    title = 'UPS Remaining Battery Statistics'
+    vertical_label = 'Seconds'
+
+    def graph(self):
+
+        path = os.path.join(self._base_path, 'nut-ups/timeleft-battery.rrd')
+
+        args = [
+            f'DEF:min_rd={path}:value:MIN',
+            f'DEF:avg_rd={path}:value:AVERAGE',
+            f'DEF:max_rd={path}:value:MAX',
+            'VDEF:tot_rd=avg_rd,TOTAL',
+            'AREA:avg_rd#bfbfff',
+            'LINE1:avg_rd#0000ff:Value ',
+            'GPRINT:min_rd:MIN:%5.1lf%s Min\\g',
+            'GPRINT:avg_rd:AVERAGE: %5.1lf%s Avg\\g',
+            'GPRINT:max_rd:MAX: %5.1lf%s Max\\g',
+            'GPRINT:avg_rd:LAST: %5.1lf%s Last\\g',
+            'GPRINT:tot_rd: %3.0lf%s Total\\l',
+        ]
+
+        return args

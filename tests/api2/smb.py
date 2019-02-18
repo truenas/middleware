@@ -7,7 +7,7 @@
 import pytest
 import sys
 import os
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST
@@ -78,6 +78,7 @@ def test_06_starting_cifs_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_07_checking_to_see_if_nfs_service_is_running():
@@ -232,6 +233,7 @@ def test_25_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_26_checking_if_cifs_is_stop():
@@ -256,6 +258,7 @@ def test_29_starting_cifs_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_30_checking_to_see_if_nfs_service_is_running():
@@ -406,6 +409,7 @@ def test_48_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_49_checking_if_cifs_is_stop():

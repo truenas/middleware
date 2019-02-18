@@ -6,7 +6,7 @@
 
 import sys
 import os
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET
@@ -32,6 +32,7 @@ def test_01_Configure_SNMP():
 def test_02_Enable_SNMP_service():
     results = PUT("/services/services/snmp/", {"srv_enable": True})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_03_Validate_that_SNMP_service_is_running():
