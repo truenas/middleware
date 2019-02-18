@@ -714,18 +714,18 @@ class ServiceService(CRUDService):
         return res
 
     async def _restart_syslogd(self, **kwargs):
-        await self._service("ix-syslogd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "syslogd")
         await self._system("/etc/local/rc.d/syslog-ng restart")
 
     async def _start_syslogd(self, **kwargs):
-        await self._service("ix-syslogd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "syslogd")
         await self._system("/etc/local/rc.d/syslog-ng start")
 
     async def _stop_syslogd(self, **kwargs):
         await self._system("/etc/local/rc.d/syslog-ng stop")
 
     async def _reload_syslogd(self, **kwargs):
-        await self._service("ix-syslogd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "syslogd")
         await self._system("/etc/local/rc.d/syslog-ng reload")
 
     async def _start_tftp(self, **kwargs):

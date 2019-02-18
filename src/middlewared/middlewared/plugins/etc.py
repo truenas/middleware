@@ -175,6 +175,9 @@ class EtcService(Service):
         'sudoers': [
             {'type': 'mako', 'path': 'local/sudoers'}
         ],
+        'syslogd': [
+            {'type': 'py', 'path': 'syslogd'},
+        ],
         'hostname': [
             {'type': 'mako', 'path': 'hosts'}
         ],
@@ -196,7 +199,7 @@ class EtcService(Service):
         ]
     }
 
-    SKIP_LIST = ['system_dataset', 'collectd', 'fstab', 'loader']
+    SKIP_LIST = ['system_dataset', 'collectd', 'syslogd', 'fstab', 'loader']
 
     class Config:
         private = True
