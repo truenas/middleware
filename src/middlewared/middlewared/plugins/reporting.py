@@ -21,6 +21,7 @@ import threading
 import time
 
 from middlewared.event import EventSource
+from middlewared.i18n import _
 from middlewared.schema import Bool, Dict, Int, List, Ref, Str, accepts
 from middlewared.service import CallError, ConfigService, ValidationErrors, filterable, private
 from middlewared.utils import filter_list, run, start_daemon_thread
@@ -767,8 +768,8 @@ class ReportingService(ConfigService):
                 if not confirm_rrd_destroy:
                     verrors.add(
                         f'reporting_update.{k}',
-                        f'Changing this option requires destroying the reporting database. This action must be '
-                        f'confirmed by setting confirm_rrd_destroy flag',
+                        _('Changing this option requires destroying the reporting database. This action must be '
+                          'confirmed by setting confirm_rrd_destroy flag'),
                     )
 
         if verrors:

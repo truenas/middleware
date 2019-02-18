@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime, date
 from middlewared.event import EventSource
+from middlewared.i18n import set_language
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
 from middlewared.service import CallError, ConfigService, no_auth_required, job, private, Service, ValidationErrors
 from middlewared.utils import Popen, start_daemon_thread, sw_buildtime, sw_version
@@ -839,6 +840,9 @@ class SystemGeneralService(ConfigService):
             await self.middleware.call('service.reload', 'timeservices')
             await self.middleware.call('service.restart', 'cron')
 
+        if config['language'] != new_config['language']:
+            await self.middleware.call('system.general.set_language')
+
         await self.middleware.call('service.start', 'ssl')
 
         return await self.config()
@@ -874,6 +878,11 @@ class SystemGeneralService(ConfigService):
                 errors.append(f'{host}: {e}')
 
         raise CallError('Unable to connect to any of the specified UI addresses:\n' + '\n'.join(errors))
+
+    @private
+    def set_language(self):
+        language = self.middleware.call_sync('system.general.config')['language']
+        set_language(language)
 
 
 async def _event_system_ready(middleware, event_type, args):
@@ -963,6 +972,8 @@ async def setup(middleware):
     time.tzset()
 
     middleware.logger.debug(f'Timezone set to {settings["timezone"]}')
+
+    await middleware.call('system.general.set_language')
 
     global SYSTEM_READY
     if os.path.exists("/tmp/.bootready"):
