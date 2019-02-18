@@ -78,9 +78,9 @@ async def run(*args, **kwargs):
     stdout, stderr = await proc.communicate()
     if "encoding" in kwargs:
         if stdout is not None:
-            stdout = stdout.decode(kwargs["encoding"])
+            stdout = stdout.decode(kwargs["encoding"], kwargs.get("errors") or "strict")
         if stderr is not None:
-            stderr = stderr.decode(kwargs["encoding"])
+            stderr = stderr.decode(kwargs["encoding"], kwargs.get("errors") or "strict")
     cp = subprocess.CompletedProcess(args, proc.returncode, stdout=stdout, stderr=stderr)
     if check:
         cp.check_returncode()
