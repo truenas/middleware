@@ -741,7 +741,7 @@ class CertificateService(CRUDService):
             ))
 
         if not os.path.exists(root_path):
-            os.mkdir(root_path, 0o755)
+            os.makedirs(root_path, 0o755, exist_ok=True)
 
         def cert_issuer(cert):
             issuer = None
