@@ -83,7 +83,7 @@ class ISCSIGlobalService(SystemServiceService):
         await self._update_service(old, new)
 
         if old['alua'] != new['alua']:
-            await self.middleware.call('service.start', 'ix-loader')
+            await self.middleware.call('etc.generate', 'loader')
 
         return await self.config()
 

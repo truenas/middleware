@@ -950,10 +950,10 @@ class ServiceService(CRUDService):
         await self._service("nginx", "reload", **kwargs)
 
     async def _reload_loader(self, **kwargs):
-        await self._service("ix-loader", "reload", **kwargs)
+        await self.middleware.call("etc.generate", "loader", False)
 
     async def _start_loader(self, **kwargs):
-        await self._service("ix-loader", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "loader")
 
     async def _restart_disk(self, **kwargs):
         await self._reload_disk(**kwargs)

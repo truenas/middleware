@@ -135,7 +135,7 @@ db_update()
 	# remove ${FIRST_INSTALL_SENTINEL} from this loader call
 	rm -f ${FIRST_INSTALL_SENTINEL}
 	# NOTE: this must be run via the rc.d script, not service(8).
-	env AUTOTUNE_REBOOT=false /etc/ix.rc.d/ix-loader start
+	midclt call etc.generate loader false
 	# we need it for the ix-loader service call later on
 	touch ${FIRST_INSTALL_SENTINEL}
 

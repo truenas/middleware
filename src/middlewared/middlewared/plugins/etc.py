@@ -77,6 +77,9 @@ class EtcService(Service):
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
         ],
+        'loader': [
+            {'type': 'py', 'path': 'loader'},
+        ],
         'network': [
             {'type': 'mako', 'path': 'dhclient.conf'},
         ],
@@ -196,7 +199,7 @@ class EtcService(Service):
         ]
     }
 
-    SKIP_LIST = ['system_dataset', 'collectd', 'syslogd', 'fstab']
+    SKIP_LIST = ['system_dataset', 'collectd', 'syslogd', 'fstab', 'loader']
 
     class Config:
         private = True
