@@ -144,6 +144,8 @@ class Any(Attribute):
         }
         if self.description:
             schema['description'] = self.description
+        if self.has_default:
+            schema['default'] = self.default
         if not parent:
             schema['_required_'] = self.required
         return schema
@@ -169,6 +171,8 @@ class Str(EnumMixin, Attribute):
             schema['title'] = self.title
             if self.description:
                 schema['description'] = self.description
+            if self.has_default:
+                schema['default'] = self.default
             schema['_required_'] = self.required
         if not self.required:
             schema['type'] = ['string', 'null']
@@ -188,7 +192,6 @@ class Path(Str):
             return value
 
         return os.path.normpath(value.strip().strip("/").strip())
-
 
 
 class Dir(Str):
@@ -356,6 +359,8 @@ class Bool(Attribute):
             schema['title'] = self.title
             if self.description:
                 schema['description'] = self.description
+            if self.has_default:
+                schema['default'] = self.default
             schema['_required_'] = self.required
         return schema
 
@@ -380,6 +385,8 @@ class Int(EnumMixin, Attribute):
             schema['title'] = self.title
             if self.description:
                 schema['description'] = self.description
+            if self.has_default:
+                schema['default'] = self.default
             schema['_required_'] = self.required
         return schema
 
@@ -474,6 +481,8 @@ class List(EnumMixin, Attribute):
             schema['title'] = self.title
             if self.description:
                 schema['description'] = self.description
+            if self.has_default:
+                schema['default'] = self.default
             schema['_required_'] = self.required
         if self.required:
             schema['type'] = ['array', 'null']
@@ -536,7 +545,6 @@ class Dict(Attribute):
                     if not attr.has_default:
                         raise ValueError(f"Attribute {attr.name} is not required and does not have default value, "
                                          f"this is forbidden in strict mode")
-
 
     def clean(self, data):
         data = super().clean(data)
@@ -612,6 +620,8 @@ class Dict(Attribute):
             schema['title'] = self.title
             if self.description:
                 schema['description'] = self.description
+            if self.has_default:
+                schema['default'] = self.default
             schema['_required_'] = self.required
         for name, attr in list(self.attrs.items()):
             schema['properties'][name] = attr.to_json_schema(parent=self)
