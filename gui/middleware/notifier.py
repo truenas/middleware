@@ -1042,7 +1042,7 @@ class notifier(metaclass=HookMetaclass):
         from freenasUI.storage.models import EncryptedDisk
 
         # TODO: Test on real hardware to see if ashift would persist across replace
-        disk = self.label_to_disk(label)
+        disk = self.label_to_disk(label.replace("/dev/", ""))
 
         with client as c:
             c.call('disk.swaps_remove_disks', [disk])
@@ -1054,14 +1054,15 @@ class notifier(metaclass=HookMetaclass):
             error = ", ".join(stderr.split('\n'))
             raise MiddlewareError('Disk offline failed: "%s"' % error)
         if label.endswith(".eli"):
-            self._system("/sbin/geli detach /dev/%s" % label)
+            self._system("/sbin/geli detach /dev/%s" % label.replace("/dev/", ""))
             EncryptedDisk.objects.filter(
                 encrypted_volume=volume,
-                encrypted_provider=label[:-4]
+                encrypted_provider=label.replace("/dev/", "")[:-4]
             ).delete()
 
     def zfs_online_disk(self, volume, label):
-        assert volume.vol_encrypt == 0
+        if volume.vol_encrypt != 0:
+            raise MiddlewareError('Disk cannot be set to online in encrypted pool.')
 
         p1 = self._pipeopen('/sbin/zpool online %s %s' % (volume.vol_name, label))
         stderr = p1.communicate()[1]
