@@ -2,15 +2,10 @@
 from middlewared.client.utils import Struct
 import contextlib
 import logging
-import logging.handlers
 import os
 import sysctl
 
-handler = logging.handlers.SysLogHandler()
-handler.setLevel(logging.DEBUG)
-handler.setFormatter(logging.Formatter('[%(name)s:%(lineno)s] %(message)s'))
-log = logging.getLogger('clt.conf.py')
-log.addHandler(handler)
+logger = logging.getLogger(__name__)
 
 
 # NOTE
@@ -222,7 +217,7 @@ def main(middleware):
         extent = Struct(extent)
         path = extent.iscsi_target_extent_path
         if not path:
-            log.warn('Path for extent id %d is null, skipping', extent.id)
+            logger.warning('Path for extent id %d is null, skipping', extent.id)
             continue
 
         poolname = None
