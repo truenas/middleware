@@ -112,7 +112,7 @@ from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.encryption import random_wipe
 from freenasUI.middleware.exceptions import MiddlewareError
-from freenasUI.middleware.multipath import Multipath
+
 import sysctl
 
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
@@ -2878,19 +2878,6 @@ class notifier(metaclass=HookMetaclass):
             for ed in EncryptedDisk.objects.filter(encrypted_volume=vol):
                 if ed.encrypted_provider not in provs:
                     ed.delete()
-
-    def multipath_all(self):
-        """
-        Get all available gmultipath instances
-
-        Returns:
-            A list of Multipath objects
-        """
-        doc = self._geom_confxml()
-        return [
-            Multipath(doc=doc, xmlnode=geom)
-            for geom in doc.xpath("//class[name = 'MULTIPATH']/geom")
-        ]
 
     def _find_root_devs(self):
         """Find the root device.
