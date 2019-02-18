@@ -993,8 +993,6 @@ async def setup(middleware):
 
         if ret.returncode:
             middleware.logger.debug(f'Failed to execute: {command}')
-        else:
-            middleware.logger.debug(f'Executed: {command}')
 
     CRASH_DIR = '/data/crash'
     os.makedirs(CRASH_DIR, exist_ok=True)
