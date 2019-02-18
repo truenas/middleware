@@ -1,13 +1,9 @@
-import logging
+import sysctl
 
 from lxml import etree
 
-import sysctl
-
 from middlewared.service import CRUDService, filterable
 from middlewared.utils import filter_list
-
-logger = logging.getLogger(__name__)
 
 
 class MultipathService(CRUDService):
@@ -108,20 +104,20 @@ class Multipath(object):
 
     def __init__(self, doc, xmlnode):
         self.name = xmlnode.xpath("./name")[0].text
-        self.devname = "multipath/%s" % self.name
+        self.devname = f"multipath/{self.name}"
         self._status = xmlnode.xpath("./config/State")[0].text
         self.consumers = []
         for consumer in xmlnode.xpath("./consumer"):
             status = consumer.xpath("./config/State")[0].text
             provref = consumer.xpath("./provider/@ref")[0]
-            prov = doc.xpath("//provider[@id = '%s']" % provref)[0]
+            prov = doc.xpath(f"//provider[@id = '{provref}']")[0]
             self.consumers.append(Consumer(status, prov))
 
         self.__xml = xmlnode
         self.__doc = doc
 
     def __repr__(self):
-        return "<Multipath:%s [%s]>" % (self.name, ",".join(self.devices))
+        return f"<Multipath:{self.name} [{','.join(self.devices)}]>"
 
 
 class Consumer(object):
