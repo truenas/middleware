@@ -25,7 +25,7 @@ async def annotate_disk_for_smart(devices, disk):
 
 
 async def ensure_smart_enabled(args):
-    p = await run(["smartctl", "-i"] + args, stderr=subprocess.STDOUT, check=False, encoding="utf8")
+    p = await run(["smartctl", "-i"] + args, stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
     if not re.search("SMART.*abled", p.stdout):
         logger.debug("SMART is not supported on %r", args)
         return False
@@ -33,7 +33,7 @@ async def ensure_smart_enabled(args):
     if re.search("SMART.*Enabled", p.stdout):
         return True
 
-    p = await run(["smartctl", "-s", "on"] + args, stderr=subprocess.STDOUT, check=False, encoding="utf8")
+    p = await run(["smartctl", "-s", "on"] + args, stderr=subprocess.STDOUT, check=False)
     if p.returncode == 0:
         return True
     else:
