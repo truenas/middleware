@@ -1,16 +1,6 @@
 <%
-	import os
-
 	users = middleware.call_sync('user.query', [["sudo", "=", True]])
 	groups = middleware.call_sync('group.query', [["sudo", "=", True]])
-
-	if os.path.isdir('/conf/base/usr__local__etc'):
-		base_file = '/conf/base/usr__local__etc/sudoers'
-	else:
-		base_file = '/conf/base/etc/local/sudoers'
-
-	with open(base_file, 'r') as f:
-		base_data = f.read()
 
 %>\
 % for user in users:
@@ -19,4 +9,10 @@ ${user['username']} ALL=(ALL) ALL
 % for group in groups:
 ${f'%{group["group"]}'} ALL=(ALL) ALL
 % endfor
-${base_data}
+Defaults syslog_goodpri = debug
+Defaults secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
+# Let find_alias_for_smtplib.py runs as root (it needs database access)
+ALL ALL=(ALL) NOPASSWD: /etc/find_alias_for_smtplib.py
+ALL ALL=(ALL) NOPASSWD: /etc/find_alias_for_smtplib.sh
+uucp ALL=(root) NOPASSWD: /usr/local/bin/custom-upssched-cmd
