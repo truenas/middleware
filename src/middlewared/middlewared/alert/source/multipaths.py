@@ -9,7 +9,7 @@ class MultipathsAlertSource(AlertSource):
 
     async def check(self):
         return [
-            Alert(title=f"Multipath {mp['name']} is not optimal",
+            Alert(title="Multipath %s is not optimal",
                   args=[mp['name']])
             for mp in await self.middleware.call("multipath.query")
             if mp['status'] != "OPTIMAL"
