@@ -4,6 +4,7 @@ import tempfile
 from middlewared.schema import Bool, Dict, Int, Str, accepts
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run
+from middlewared.validators import Range
 
 from bsd import geom
 
@@ -56,7 +57,7 @@ class BootService(Service):
     @private
     async def format(self, dev, options):
         """
-        Format a given disk `dev` using the appropiate partition layout
+        Format a given disk `dev` using the appropriate partition layout
         """
 
         job = await self.middleware.call('disk.wipe', dev, 'QUICK')
@@ -203,3 +204,25 @@ class BootService(Service):
         """
         subjob = await self.middleware.call('zfs.pool.scrub', 'freenas-boot')
         return await job.wrap(subjob)
+
+    @accepts(
+        Int('interval', validators=[Range(min=1)])
+    )
+    async def set_scrub_interval(self, interval):
+        """
+        Set Automatic Scrub Interval value in days.
+        """
+        await self.middleware.call(
+            'datastore.update',
+            'system.advanced',
+            (await self.middleware.call('system.advanced.config'))['id'],
+            {'adv_boot_scrub': interval},
+        )
+        return interval
+
+    @accepts()
+    async def get_scrub_interval(self):
+        """
+        Get Automatic Scrub Interval value in days.
+        """
+        return (await self.middleware.call('system.advanced.config'))['boot_scrub']
