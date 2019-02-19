@@ -474,14 +474,10 @@ class DynamicDNSForm(MiddlewareModelForm, ModelForm):
             )
         return password2
 
-    def clean(self):
-        cdata = self.cleaned_data
-        if not cdata.get("ddns_password"):
-            cdata['ddns_password'] = self.instance.ddns_password
-        return cdata
-
     def middleware_clean(self, update):
         update["domain"] = update["domain"].replace(',', ' ').replace(';', ' ').split()
+        if not update.get('password'):
+            update.pop('password', None)
         return update
 
 
