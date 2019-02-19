@@ -308,18 +308,27 @@ class ZFSDatasetService(CRUDService):
             self.logger.error('Failed to update dataset', exc_info=True)
             raise CallError(f'Failed to update dataset: {e}')
 
-    def do_delete(self, id):
+    def do_delete(self, id, options=None):
+        options = options or {}
+        force = options.get('force', False)
+        recursive = options.get('recursive', False)
+
+        args = []
+        if force:
+            args += ['-f']
+        if recursive:
+            args += ['-r']
+
+        # Destroying may take a long time, lets not use py-libzfs as it will block
+        # other ZFS operations.
         try:
-            with libzfs.ZFS() as zfs:
-                ds = zfs.get_dataset(id)
-
-                if ds.type == libzfs.DatasetType.FILESYSTEM:
-                    ds.umount()
-
-                ds.delete()
-        except libzfs.ZFSException as e:
+            subprocess.run(
+                ['zfs', 'destroy'] + args + [id],
+                universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True,
+            )
+        except subprocess.CalledProcessError as e:
             self.logger.error('Failed to delete dataset', exc_info=True)
-            raise CallError(f'Failed to delete dataset: {e}')
+            raise CallError(f'Failed to delete dataset: {e.stderr.strip()}')
 
     def mount(self, name):
         try:
