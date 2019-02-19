@@ -265,7 +265,7 @@ def config_share_for_zfs(share):
 # for fruit, and if catia and fruit are used, catia comes before fruit
 #
 def order_vfs_objects(vfs_objects):
-    vfs_objects_special = ('catia', 'zfs_space', 'zfsacl', 'fruit', 'streams_xattr', 'recycle', 'aio_pthread')
+    vfs_objects_special = ('catia', 'zfs_space', 'zfsacl', 'fruit', 'streams_xattr', 'recycle', 'crossrename', 'aio_pthread')
     vfs_objects_ordered = []
 
     if 'fruit' in vfs_objects:
@@ -1242,7 +1242,7 @@ def generate_smb4_shares(client, smb4_shares, shares):
         vfs_objects.extend(share.cifs_vfsobjects)
 
         if share.cifs_recyclebin:
-            vfs_objects.append('recycle')
+            vfs_objects.extend(["recycle", "crossrename"])
             confset1(smb4_shares, "recycle:repository = .recycle/%U")
             confset1(smb4_shares, "recycle:keeptree = yes")
             confset1(smb4_shares, "recycle:versions = yes")
