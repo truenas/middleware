@@ -1248,6 +1248,7 @@ class DiskService(CRUDService):
 
         used_partitions = set()
         swap_devices = []
+        disks = [i async for i in await self.middleware.call('pool.get_disks')]
         klass = geom.class_by_name('MIRROR')
         if klass:
             for g in klass.geoms:
@@ -1255,10 +1256,12 @@ class DiskService(CRUDService):
                 if not g.name.startswith('swap') or g.name.endswith('.sync'):
                     continue
                 consumers = list(g.consumers)
-                # If the mirror is degraded lets remove it and make a new pair
-                if len(consumers) == 1:
-                    c = consumers[0]
-                    await self.swaps_remove_disks([c.provider.geom.name])
+                # If the mirror is degraded or disk is not in a pool lets remove it
+                if len(consumers) == 1 or any(filter(
+                    lambda c: c.provider.geom.name not in disks, consumers
+                )):
+                    for c in consumers:
+                        await self.swaps_remove_disks([c.provider.geom.name])
                 else:
                     mirror_name = f'mirror/{g.name}'
                     swap_devices.append(mirror_name)
@@ -1291,7 +1294,8 @@ class DiskService(CRUDService):
                         # Only try savecore if the partition is not already in use
                         # to avoid errors in the console (#27516)
                         await run('savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{p.name}', check=False)
-                        swap_partitions_by_size[p.mediasize].append(p.name)
+                        if g.name in disks:
+                            swap_partitions_by_size[p.mediasize].append(p.name)
 
         dumpdev = False
         unused_partitions = []
@@ -1694,6 +1698,18 @@ async def _event_devfs(middleware, event_type, args):
             await middleware.call('disk.swaps_configure')
 
 
+async def _event_zfs(middleware, event_type, args):
+    data = args['data']
+    if data.get('type') in (
+        'misc.fs.zfs.pool_create',
+        'misc.fs.zfs.pool_destroy',
+        'misc.fs.zfs.pool_import',
+    ):
+        asyncio.ensure_future(middleware.call('disk.swaps_configure'))
+
+
 def setup(middleware):
     # Listen to DEVFS events so we can sync on disk attach/detach
     middleware.event_subscribe('devd.devfs', _event_devfs)
+    # Listen to ZFS events to reconfigure swap on pool create/export/import
+    middleware.event_subscribe('devd.zfs', _event_zfs)
