@@ -69,6 +69,10 @@ class DiskService(CRUDService):
         )
         for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
             disk[key] = disk[key].upper()
+        if disk['multipath_name']:
+            disk['devname'] = f'multipath/{disk["multipath_name"]}'
+        else:
+            disk['devname'] = disk['name']
         return disk
 
     @accepts(
