@@ -1260,8 +1260,7 @@ class DiskService(CRUDService):
                 if len(consumers) == 1 or any(filter(
                     lambda c: c.provider.geom.name not in disks, consumers
                 )):
-                    for c in consumers:
-                        await self.swaps_remove_disks([c.provider.geom.name])
+                    await self.swaps_remove_disks([c.provider.geom.name for c in consumers])
                 else:
                     mirror_name = f'mirror/{g.name}'
                     swap_devices.append(mirror_name)
