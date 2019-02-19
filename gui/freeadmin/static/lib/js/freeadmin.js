@@ -2472,6 +2472,16 @@ require([
 
     }
 
+    checked_zfs_extra_option = function(disk, radio_type) {
+        // Returns whether the radio button is checked
+        let radio_input = query("input[name=zpool_" + disk + "]:input[value=" + radio_type + "]");
+        if (radio_input.length > 0) {
+            return [radio_input[0].checked, true];
+        } else {
+            return [false, false];
+        }
+    }
+
     zfswizardcheckings = function(vol_change, first_load) {
 
         if(!registry.byId("wizarddisks")) return;
@@ -2508,7 +2518,6 @@ require([
             if(unselected.length > 0) {
 
                 var tab = dom.byId("disks_unselected");
-                query("#disks_unselected tbody tr").orphan();
                 var txt = "";
                 var toappend = [];
                 for(var i=0;i<unselected.length;i++) {
@@ -2516,32 +2525,48 @@ require([
                     var td = domConstruct.create("td", {innerHTML: unselected[i]});
                     tr.appendChild(td);
 
+                    let radio_name = "zpool_" + unselected[i];
+                    let checked = checked_zfs_extra_option(unselected[i], "none");
+
+                    if (checked[1] == false) {
+                        // if none does not exist, we would like to make sure that checked is true for none
+                        checked[0] = true;
+                    }
                     var td = domConstruct.create("td");
-                    var rad = new RadioButton({ checked: true, value: "none", name: "zpool_"+unselected[i]});
+                    var rad = new RadioButton({ checked: checked[0], value: "none", name: radio_name});
+                    on(rad, 'click', function() {checkNumLog(unselected);});
+                    on(rad, 'change', function() {zfsextrawizardcheckings(this);});
+                    td.appendChild(rad.domNode);
+                    tr.appendChild(td);
+
+                    checked = checked_zfs_extra_option(unselected[i], "log");
+
+                    var td = domConstruct.create("td");
+                    var rad = new RadioButton({ checked: checked[0], value: "log", name: radio_name});
                     on(rad, 'click', function() {checkNumLog(unselected);});
                     td.appendChild(rad.domNode);
                     tr.appendChild(td);
 
+                    checked = checked_zfs_extra_option(unselected[i], "cache");
+
                     var td = domConstruct.create("td");
-                    var rad = new RadioButton({ value: "log", name: "zpool_"+unselected[i]});
+                    var rad = new RadioButton({ checked: checked[0], value: "cache", name: radio_name});
                     on(rad, 'click', function() {checkNumLog(unselected);});
                     td.appendChild(rad.domNode);
                     tr.appendChild(td);
 
-                    var td = domConstruct.create("td");
-                    var rad = new RadioButton({ value: "cache", name: "zpool_"+unselected[i]});
-                    on(rad, 'click', function() {checkNumLog(unselected);});
-                    td.appendChild(rad.domNode);
-                    tr.appendChild(td);
+                    checked = checked_zfs_extra_option(unselected[i], "spare");
 
                     var td = domConstruct.create("td");
-                    var rad = new RadioButton({ value: "spare", name: "zpool_"+unselected[i]});
+                    var rad = new RadioButton({ checked: checked[0], value: "spare", name: radio_name});
                     on(rad, 'click', function() {checkNumLog(unselected);});
                     td.appendChild(rad.domNode);
                     tr.appendChild(td);
 
                     toappend.push(tr);
                 }
+
+                query("#disks_unselected tbody tr").orphan();
 
                 for(var i=0;i<toappend.length;i++) {
                     dojo.place(toappend[i], query("#disks_unselected tbody")[0]);
@@ -2589,6 +2614,23 @@ require([
             domStyle.set("grpraidz3", "display", "none");
         }
 
+    }
+
+    zfsextrawizardcheckings = function(selected_radio_disk) {
+        let name = selected_radio_disk.name.replace("zpool_", "");
+        let disk_option = query("option[value=" + name + "]");
+
+        if (disk_option.length > 0) {
+            disk_option = disk_option[0];
+            if(selected_radio_disk.checked) {
+                // add this option to disks
+                domStyle.set(disk_option, "display", "");
+
+            } else {
+                // remove this option from disks
+                domStyle.set(disk_option, "display", "none");
+            }
+        }
     }
 
     wizardcheckings = function(vol_change, first_load) {
