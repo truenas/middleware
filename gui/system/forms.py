@@ -1113,6 +1113,8 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
         self.fields['adv_motd'].strip = False
         self.original_instance = self.instance.__dict__
 
+        self.fields['adv_serialport'].choices = list(choices.SERIAL_CHOICES())
+
         self.fields['adv_reset_sed_password'].widget.attrs['onChange'] = (
             'toggleGeneric("id_adv_reset_sed_password", ["id_adv_sed_passwd"], false);'
         )
