@@ -105,7 +105,9 @@ def get_aliases():
             else:
                 doround = False
             for key, val in aliases.items():
-                if val in aliases:
+                if key == val:
+                    syslog.syslog(syslog.LOG_ERR, f'Found a recursive dependency for {key}')
+                elif val in aliases:
                     aliases[key] = aliases[val]
                     doround = True
         return aliases
