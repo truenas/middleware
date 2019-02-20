@@ -2026,7 +2026,7 @@ class PoolService(CRUDService):
 
         job.set_progress(30, 'Stopping jails using this pool (if any)')
         activated_pool = await self.middleware.call('jail.get_activated_pool')
-        if activated_pool == pool.name:
+        if activated_pool == pool['name']:
             for jail_host in attachments['jails']:
                 await self.middleware.call('jail.stop', jail_host)
 
