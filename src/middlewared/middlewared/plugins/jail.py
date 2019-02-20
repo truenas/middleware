@@ -149,6 +149,20 @@ class JailService(CRUDService):
 
             job.set_progress(20, 'Initial validation complete')
 
+        if not any('resolver' in p for p in options['props']):
+            dc = self.middleware.call_sync(
+                'service.query', [('service', '=', 'domaincontroller')]
+            )
+            dc_config = self.middleware.call_sync('domaincontroller.config')
+
+            if dc['enable'] and (
+                dc_config['dns_forwarder'] and
+                dc_config['dns_backend'] == 'SAMBA_INTERNAL'
+            ):
+                options['props'].append(
+                    f'resolver=nameserver {dc_config["dns_forwarder"]}'
+                )
+
         iocage = ioc.IOCage(skip_jails=True)
 
         release = options["release"]
