@@ -1,6 +1,6 @@
 import boto3
 
-from middlewared.alert.base import ThreadedAlertService, format_alerts
+from middlewared.alert.base import ThreadedAlertService
 from middlewared.schema import Dict, Str
 
 
@@ -26,5 +26,5 @@ class AWSSNSAlertService(ThreadedAlertService):
         client.publish(
             TopicArn=self.attributes["topic_arn"],
             Subject="Alerts",
-            Message=format_alerts(alerts, gone_alerts, new_alerts),
+            Message=self._format_alerts(alerts, gone_alerts, new_alerts),
         )

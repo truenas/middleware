@@ -197,11 +197,13 @@ class MailService(ConfigService):
         ]
         """
 
+        product_name = self.middleware.call_sync('system.product_name')
+
         gc = self.middleware.call_sync('datastore.config', 'network.globalconfiguration')
 
         hostname = f'{gc["gc_hostname"]}.{gc["gc_domain"]}'
 
-        message['subject'] = f'{hostname}: {message["subject"]}'
+        message['subject'] = f'{product_name} {hostname}: {message["subject"]}'
 
         if 'html' not in message:
             lookup = TemplateLookup(
