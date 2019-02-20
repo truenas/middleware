@@ -566,6 +566,7 @@ class ShellWorkerThread(threading.Thread):
                 cmd = [
                     '/usr/local/bin/iocage',
                     'console',
+                    '-f',
                     self.jail
                 ]
             os.execve(cmd[0], cmd, {

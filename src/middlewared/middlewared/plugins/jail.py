@@ -786,7 +786,7 @@ class JailService(CRUDService):
 
     @accepts(
         Str("jail"),
-        List("command", default=[]),
+        List("command", required=True),
         Dict("options", Str("host_user", default="root"), Str("jail_user")))
     def exec(self, jail, command, options):
         """Issues a command inside a jail."""
@@ -806,7 +806,9 @@ class JailService(CRUDService):
 
         host_user = "" if jail_user and host_user == "root" else host_user
         try:
-            msg = iocage.exec(command, host_user, jail_user, msg_return=True)
+            msg = iocage.exec(
+                command, host_user, jail_user, start_jail=True, msg_return=True
+            )
         except RuntimeError as e:
             raise CallError(str(e))
 
