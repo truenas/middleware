@@ -12,7 +12,7 @@ if [ ! -e "${tmpdir}" ]; then tmpdir="/var/tmp"; fi
 
 mydir=`dirname $0`
 
-# get the textdump file. On some systems this is a gzipped 
+# get the textdump file. On some systems this is a gzipped
 # tarball, so we we check for that here.
 get_textdump ()
 {
@@ -85,16 +85,19 @@ test -e /etc/rc.conf && . /etc/rc.conf
 
 has_ticket_info=false
 dont_delete=false
+print=false
 limit=10000
 textdump=$(get_textdump)
 
-while getopts "Fd:sl:" opt ; do
+while getopts "Fd:psl:" opt ; do
 	case "${opt}" in
 	d)	topdir=$OPTARG
 		;;
 	s)	dont_delete=true
 		;;
 	l)	limit=$OPTARG
+		;;
+	p)	print=true
 		;;
 	\?)	exit 2
 		;;
@@ -129,7 +132,12 @@ if [ $? -gt 0 ] ; then
 	exit 1
 fi
 
-$mydir/freenas-debug -A > /tmp/ixdiagnose.diagnose
+if ! $print ; then
+	$mydir/freenas-debug -A > /tmp/ixdiagnose.diagnose
+else
+	$mydir/freenas-debug -A
+fi
+
 tar -cHf - -C /var log | tar -C $dir -xf -
 tar -cHf - -C /var/tmp fndebug | tar -C $dir -xf -
 if [ "${limit}" != "-1" ] ; then
