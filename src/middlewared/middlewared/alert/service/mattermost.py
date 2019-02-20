@@ -1,7 +1,7 @@
 import json
 import requests
 
-from middlewared.alert.base import ThreadedAlertService, format_alerts
+from middlewared.alert.base import ThreadedAlertService
 from middlewared.schema import Dict, Str
 
 
@@ -25,7 +25,7 @@ class MattermostAlertService(ThreadedAlertService):
             data=json.dumps({
                 "channel": self.attributes["channel"],
                 "username": self.attributes["username"],
-                "text": format_alerts(alerts, gone_alerts, new_alerts),
+                "text": self._format_alerts(alerts, gone_alerts, new_alerts),
             }),
             timeout=15,
         )
