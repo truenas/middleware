@@ -595,7 +595,7 @@ def reset_root_pw(*args):
         try:
             with client as c:
                 c.call("user.update", user.id, {"password": p1})
-        except ConnectionRefusedError:
+        except (FileNotFoundError, ConnectionRefusedError):
             from middlewared.plugins.account import crypted_password
             user.bsdusr_unixhash = crypted_password(p1)
             user.save()
