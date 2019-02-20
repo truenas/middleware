@@ -213,12 +213,8 @@ class EtcService(Service):
             'mako': MakoRenderer(self),
             'py': PyRenderer(self),
         }
-        self.args = tuple()
 
-    def get_args(self):
-        return self.args
-
-    async def generate(self, name, *args):
+    async def generate(self, name):
         group = self.GROUPS.get(name)
         if group is None:
             raise ValueError('{0} group not found'.format(name))
@@ -229,15 +225,12 @@ class EtcService(Service):
             if renderer is None:
                 raise ValueError(f'Unknown type: {entry["type"]}')
 
-            self.args = args
             path = os.path.join(self.files_dir, entry['path'])
             try:
                 rendered = await renderer.render(path)
             except Exception:
                 self.logger.error(f'Failed to render {entry["type"]}:{entry["path"]}', exc_info=True)
                 continue
-            finally:
-                self.args = tuple()
 
             if rendered is None:
                 continue
