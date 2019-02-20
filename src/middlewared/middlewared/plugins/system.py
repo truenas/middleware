@@ -391,12 +391,27 @@ class SystemService(Service):
         if os.path.exists(direc):
             shutil.rmtree(direc)
 
-        cp = subprocess.run(
-            ['ixdiagnose', '-d', direc, '-s', '-F'],
-            text=True, capture_output=True, check=False,
+        cp = subprocess.Popen(
+            ['ixdiagnose', '-d', direc, '-s', '-F', '-p'],
+            text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            bufsize=1
         )
+
+        for line in iter(cp.stdout.readline, ''):
+            line = line.rstrip()
+
+            if line.startswith('**'):
+                percent, help = line.split(':')
+                job.set_progress(
+                    int(percent.split()[-1].strip('%')),
+                    help.lstrip()
+                )
+        cp.communicate()
+
         if cp.returncode != 0:
             raise CallError(f'Failed to generate debug file: {cp.stderr}')
+
+        job.set_progress(100, 'Debug generation finished')
 
         return dump
 
