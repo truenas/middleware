@@ -149,11 +149,11 @@ class EtcService(Service):
         ],
         'ups': [
             {'type': 'py', 'path': 'local/nut/ups_config'},
-            {'type': 'mako', 'path': 'local/nut/ups.conf'},
-            {'type': 'mako', 'path': 'local/nut/upsd.conf'},
-            {'type': 'mako', 'path': 'local/nut/upsd.users'},
-            {'type': 'mako', 'path': 'local/nut/upsmon.conf'},
-            {'type': 'mako', 'path': 'local/nut/upssched.conf'},
+            {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': 'root', 'group': 'uucp', 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsd.conf', 'owner': 'root', 'group': 'uucp', 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsd.users', 'owner': 'root', 'group': 'uucp', 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': 'root', 'group': 'uucp', 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': 'root', 'group': 'uucp', 'mode': 0o440},
             {'type': 'py', 'path': 'local/nut/ups_perms'}
         ],
         'rsync': [
