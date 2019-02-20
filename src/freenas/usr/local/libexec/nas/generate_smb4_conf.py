@@ -860,7 +860,12 @@ def add_domaincontroller_conf(client, smb4_conf):
     # server_services = get_server_services()
     # dcerpc_endpoint_servers = get_dcerpc_endpoint_servers()
 
-    confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
+    if truenas_params['smb_ha_mode'] == 'UNIFIED':
+        gc = client.call('network.configuration.config')
+        confset2(smb4_conf, "netbios name = %s", gc['hostname_virtual'].upper())
+    else:
+        confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
+
     if cifs.netbiosalias:
         confset2(smb4_conf, "netbios aliases = %s", cifs.netbiosalias.upper())
     confset2(smb4_conf, "workgroup = %s", dc.dc_domain.upper())
@@ -1737,7 +1742,7 @@ def main():
         truenas_params['failover_status'] = client.call('notifier.failover_status')
         systemdataset = client.call('systemdataset.config')
         cifs = client.call('smb.config')
-        if systemdataset['pool'] is not 'freenas-boot' and cifs['netbiosname'] == cifs['netbiosname_b']:
+        if systemdataset['pool'] is not 'freenas-boot':
             truenas_params['smb_ha_mode'] = 'UNIFIED'
             if truenas_params['failover_status'] != "MASTER":
                 """
