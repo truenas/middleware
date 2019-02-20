@@ -17,7 +17,7 @@ def setup(middleware):
         if ftp["banner"]:
             f.write(ftp["banner"] + "\n")
         else:
-            product_name = "FreeNAS" if middleware.call_sync("system.is_freenas") else "TrueNAS"
+            product_name = middleware.call_sync("system.product_name")
             f.write(f"Welcome to {product_name} FTP Server\n")
 
 
