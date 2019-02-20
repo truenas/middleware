@@ -300,8 +300,11 @@ class Volume(Model):
 
         if attachments['jails_ng']:
             with client as c:
-                for ioc_j in attachments['jails_ng']:
-                    c.call('jail.stop', ioc_j)
+                active_pool = c.call('jail.get_activated_pool')
+
+                if active_pool == self.vol_name:
+                    for ioc_j in attachments['jails_ng']:
+                        c.call('jail.stop', ioc_j)
 
         return (reload_cifs, reload_afp, reload_nfs, reload_iscsi,
                 reload_jails, reload_collectd)
