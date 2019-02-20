@@ -44,16 +44,17 @@ logging.config.dictConfig({
     }
 })
 
+truenas_params = {
+    'is_truenas_ha': False,
+    'failover_status': 'DEFAULT',
+    'smb_ha_mode': 'LEGACY',
+}
+
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.log import log_traceback
 from freenasUI.common.freenassysctl import freenas_sysctl as fs
 
 log = logging.getLogger('generate_smb4_conf')
-
-truenas_params = {
-    'is_truenas_ha': False,
-    'failover_status': "DEFAULT",
-}
 
 
 def qw(w):
@@ -859,7 +860,12 @@ def add_domaincontroller_conf(client, smb4_conf):
     # server_services = get_server_services()
     # dcerpc_endpoint_servers = get_dcerpc_endpoint_servers()
 
-    confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
+    if truenas_params['smb_ha_mode'] == 'UNIFIED':
+        gc = client.call('network.configuration.config')
+        confset2(smb4_conf, "netbios name = %s", gc['hostname_virtual'].upper())
+    else:
+        confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
+
     if cifs.netbiosalias:
         confset2(smb4_conf, "netbios aliases = %s", cifs.netbiosalias.upper())
     confset2(smb4_conf, "workgroup = %s", dc.dc_domain.upper())
@@ -1018,8 +1024,10 @@ def generate_smb4_conf(client, smb4_conf, role, shares):
     confset1(smb4_conf, "deadtime = 15")
     confset1(smb4_conf, "max log size = 51200")
 
-    if truenas_params['is_truenas_ha']:
+    if truenas_params['is_truenas_ha'] and truenas_params['smb_ha_mode'] == 'LEGACY':
         confset1(smb4_conf, "private dir = /root/samba/private")
+    else:
+        confset1(smb4_conf, "private dir = /var/db/samba4/private")
 
     confset2(smb4_conf, "max open files = %d",
              int(get_sysctl('kern.maxfilesperproc')) - 25)
@@ -1036,7 +1044,7 @@ def generate_smb4_conf(client, smb4_conf, role, shares):
     else:
         confset1(smb4_conf, "logging = file")
 
-    if truenas_params['is_truenas_ha']:
+    if truenas_params['is_truenas_ha'] and truenas_params['smb_ha_mode'] == 'LEGACY':
         confset1(smb4_conf, "winbind netbios alias spn = false")
 
         if truenas_params['failover_status'] == 'BACKUP':
@@ -1366,7 +1374,7 @@ def smb4_setup(client):
     statedir = "/var/db/samba4"
     privatedir = "/var/db/samba4/private"
 
-    if truenas_params['is_truenas_ha']:
+    if truenas_params['is_truenas_ha'] and truenas_params['smb_ha_mode'] == "LEGACY":
         privatedir = "/root/samba/private"
 
     if not os.access(privatedir, os.F_OK):
@@ -1382,8 +1390,7 @@ def smb4_setup(client):
     smb4_unlink("/usr/local/etc/smb.conf")
     smb4_unlink("/usr/local/etc/smb4.conf")
 
-    if not client.call('notifier.is_freenas') and client.call('notifier.failover_status') == 'BACKUP':
-        truenas_params['failover_status'] = 'BACKUP'
+    if truenas_params['failover_status'] == 'BACKUP':
         return
 
     systemdataset = client.call('systemdataset.config')
@@ -1710,6 +1717,15 @@ def smb4_do_migrations(client):
     migrate_11_1_U3_to_11_1_U4(client)
 
 
+def generate_global_stub(cifs, failover_status):
+    if failover_status != "MASTER":
+        with open("/usr/local/etc/smb4.conf", "w") as f:
+            f.write("[global]\n")
+            f.write(f"netbios name = {cifs['netbiosname']}_PASSIVE\n")
+            f.write("multicast dns register = False\n")
+            f.write("logging = file\n")
+
+
 def main():
     smb4_tdb = []
     smb4_conf = []
@@ -1721,9 +1737,22 @@ def main():
 
     if not client.call('notifier.is_freenas') and client.call('notifier.failover_licensed'):
         truenas_params['is_truenas_ha'] = True
+        truenas_params['failover_status'] = client.call('notifier.failover_status')
+        systemdataset = client.call('systemdataset.config')
+        cifs = client.call('smb.config')
+        if systemdataset['pool'] is not 'freenas-boot':
+            truenas_params['smb_ha_mode'] = 'UNIFIED'
+            if truenas_params['failover_status'] != "MASTER":
+                """
+                   In this case we only need a stub of an smb4.conf file.
+                   At some point in the future we can transition to not running samba on the passive,
+                   but the stub configuration is useful in case the service is started accidentally.
+                """
+                generate_global_stub(cifs)
+                return
 
     privatedir = "/var/db/samba4/private"
-    if truenas_params['is_truenas_ha']:
+    if truenas_params['is_truenas_ha'] and truenas_params['smb_ha_mode'] == 'LEGACY':
         privatedir = "/root/samba/private"
 
     smb4_setup(client)
