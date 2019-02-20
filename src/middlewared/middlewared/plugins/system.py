@@ -34,6 +34,7 @@ from freenasUI.support.utils import get_license
 SYSTEM_READY = False
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
+FIRST_INSTALL_SENTINEL = '/data/first-boot'
 
 
 class SytemAdvancedService(ConfigService):
