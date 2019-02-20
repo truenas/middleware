@@ -199,7 +199,7 @@ class EtcService(Service):
         ]
     }
 
-    SKIP_LIST = ['system_dataset', 'collectd', 'syslogd', 'fstab', 'loader']
+    SKIP_LIST = ['system_dataset', 'collectd', 'syslogd', 'fstab']
 
     class Config:
         private = True
