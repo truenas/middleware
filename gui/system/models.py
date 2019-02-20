@@ -917,9 +917,24 @@ class CertificateBase(Model):
     def cert_DN(self):
         self.__load_thingy()
 
+        obj = self.__get_thingy()
         parts = []
-        for c in self.__get_thingy().get_subject().get_components():
+        for c in obj.get_subject().get_components():
+            if 'subjectAltName' == c[0].decode():
+                continue
+
             parts.append("%s=%s" % (c[0].decode(), c[1].decode('utf8')))
+
+        for ext in (
+            map(
+                lambda i: obj.get_extension(i),
+                range(obj.get_extension_count())
+            ) if isinstance(obj, crypto.X509) else obj.get_extensions()
+        ):
+            # We should always trust the extension instead of the subject for SAN
+            if 'subjectAltName' == ext.get_short_name().decode():
+                parts.append(f'subjectAltName={ext}')
+
         DN = "/%s" % '/'.join(parts)
         return DN
 

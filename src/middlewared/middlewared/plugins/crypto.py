@@ -313,7 +313,17 @@ class CertificateService(CRUDService):
             cert['DN'] = '/' + '/'.join([
                 '%s=%s' % (c[0].decode(), c[1].decode())
                 for c in obj.get_subject().get_components()
+                if c[0].decode() != 'subjectAltName'
             ])
+
+            for ext in (
+                map(
+                    lambda i: obj.get_extension(i),
+                    range(obj.get_extension_count())
+                ) if isinstance(obj, crypto.X509) else obj.get_extensions()
+            ):
+                if 'subjectAltName' == ext.get_short_name().decode():
+                    cert['DN'] += f'/subjectAltName={ext}'
 
         return cert
 
@@ -428,7 +438,6 @@ class CertificateService(CRUDService):
             cert.add_extensions([crypto.X509Extension(
                 b"subjectAltName", False, cert_info['san'].encode()
             )])
-            cert.get_subject().subjectAltName = cert_info['san']
         cert.get_subject().emailAddress = cert_info['email']
 
         serial = cert_info.get('serial')
@@ -471,7 +480,6 @@ class CertificateService(CRUDService):
         if cert_info['san']:
             req.add_extensions(
                 [crypto.X509Extension(b"subjectAltName", False, cert_info['san'].encode())])
-            req.get_subject().subjectAltName = cert_info['san']
         req.get_subject().emailAddress = cert_info['email']
 
         req.set_pubkey(key)
