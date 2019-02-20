@@ -313,7 +313,7 @@ for replication in replication_tasks:
 
     if cipher == 'fast':
         sshcmd = (
-            '/usr/local/bin/ssh -c arcfour256,arcfour128,blowfish-cbc,'
+            '/usr/local/bin/ssh -c '
             'aes128-ctr,aes192-ctr,aes256-ctr -i /tmp/.repl-key'
             ' -o BatchMode=yes -o StrictHostKeyChecking=yes'
             # There's nothing magical about ConnectTimeout, it's an average
