@@ -947,9 +947,6 @@ class ServiceService(CRUDService):
         await self._service("nginx", "reload", **kwargs)
 
     async def _reload_loader(self, **kwargs):
-        await self.middleware.call("etc.generate", "loader", False)
-
-    async def _start_loader(self, **kwargs):
         await self.middleware.call("etc.generate", "loader")
 
     async def _restart_disk(self, **kwargs):

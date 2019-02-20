@@ -4,7 +4,7 @@ from middlewared.event import EventSource
 from middlewared.i18n import set_language
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
 from middlewared.service import CallError, ConfigService, no_auth_required, job, private, Service, ValidationErrors
-from middlewared.utils import Popen, start_daemon_thread, sw_buildtime, sw_version
+from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version
 from middlewared.validators import Range
 
 import csv
@@ -195,7 +195,8 @@ class SytemAdvancedService(ConfigService):
                 if not loader_reloaded:
                     await self.middleware.call('service.reload', 'loader', {'onetime': False})
                     loader_reloaded = True
-                await self.middleware.call('system.advanced.autotune_sysctl')
+                await self.middleware.call('system.advanced.autotune', 'loader')
+                await self.middleware.call('system.advanced.autotune', 'sysctl')
 
             if (
                 original_data['debugkernel'] != config_data['debugkernel'] and
@@ -212,8 +213,8 @@ class SytemAdvancedService(ConfigService):
         return await self.config()
 
     @private
-    def autotune_sysctl(middleware):
-        if middleware.call_sync('system.is_freenas'):
+    def autotune(self, conf='loader'):
+        if self.middleware.call_sync('system.is_freenas'):
             kernel_reserved = 1073741824
             userland_reserved = 2417483648
         else:
@@ -222,11 +223,10 @@ class SytemAdvancedService(ConfigService):
         cp = subprocess.run(
             [
                 'autotune', '-o', f'--kernel-reserved={kernel_reserved}',
-                f'--userland-reserved={userland_reserved}', '--conf', 'sysctl'
+                f'--userland-reserved={userland_reserved}', '--conf', conf
             ], capture_output=True
         )
-        if cp.returncode:
-            middleware.logger.debug('Failed to set autotune sysctl values: %s', cp.stderr.decode())
+        return cp.returncode
 
 
 class SystemService(Service):
@@ -998,7 +998,34 @@ class SystemHealthEventSource(EventSource):
             })
 
 
+async def firstboot(middleware):
+    if os.path.exists(FIRST_INSTALL_SENTINEL):
+        # Delete sentinel file before making clone as we
+        # we do not want the clone to have the file in it.
+        os.unlink(FIRST_INSTALL_SENTINEL)
+
+        # Creating pristine boot environment from the "default"
+        middleware.logger.info("Creating 'Initial-Install' boot environment...")
+        cp = await run('beadm', 'create', '-e', 'default', 'Initial-Install', check=False)
+        if cp.returncode != 0:
+            middleware.logger.error(
+                'Failed to create initial boot environment: %s', cp.stderr.decode()
+            )
+
+
 async def setup(middleware):
+    global SYSTEM_READY
+
+    if os.path.exists("/tmp/.bootready"):
+        SYSTEM_READY = True
+    else:
+        autotune_rv = await middleware.call('system.advanced.autotune', 'loader')
+
+        await firstboot(middleware)
+
+        if autotune_rv == 2:
+            await run('shutdown', '-r', 'now', check=False)
+
     settings = await middleware.call(
         'system.general.config',
     )
@@ -1009,11 +1036,7 @@ async def setup(middleware):
 
     await middleware.call('system.general.set_language')
 
-    asyncio.ensure_future(middleware.call('system.advanced.autotune_sysctl'))
-
-    global SYSTEM_READY
-    if os.path.exists("/tmp/.bootready"):
-        SYSTEM_READY = True
+    asyncio.ensure_future(middleware.call('system.advanced.autotune', 'sysctl'))
 
     middleware.event_subscribe('system', _event_system_ready)
     middleware.event_subscribe('devd.zfs', _event_zfs_status)
