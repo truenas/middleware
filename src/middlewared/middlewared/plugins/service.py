@@ -487,11 +487,8 @@ class ServiceService(CRUDService):
         await self.start('rrdcached')
         await self.start('collectd')
 
-    async def _start_sysctl(self, **kwargs):
-        await self.middleware.call('etc.generate', 'sysctl', 'start')
-
     async def _reload_sysctl(self, **kwargs):
-        await self.middleware.call('etc.generate', 'sysctl', 'reload')
+        await self.middleware.call('etc.generate', 'sysctl')
 
     async def _start_network(self, **kwargs):
         await self.middleware.call('interface.sync')
