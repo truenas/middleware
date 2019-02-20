@@ -1171,7 +1171,7 @@ def generate_smb4_shares(client, smb4_shares, shares):
 
             if client.call('notifier.common', 'system', 'activedirectory_enabled'):
                 valid_users_path = "%D/%U"
-                valid_users = "%D\%U"
+                valid_users = "%U"
 
                 try:
                     ad = Struct(client.call('notifier.directoryservice', 'AD'))
