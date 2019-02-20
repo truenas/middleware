@@ -1,7 +1,7 @@
 import json
 import requests
 
-from middlewared.alert.base import ThreadedAlertService, format_alerts
+from middlewared.alert.base import ThreadedAlertService
 from middlewared.schema import Dict, Str
 
 
@@ -26,7 +26,7 @@ class HtpChatAlertService(ThreadedAlertService):
             data=json.dumps({
                 "from": self.attributes["hfrom"],
                 "message_format": "text",
-                "message": format_alerts(alerts, gone_alerts, new_alerts),
+                "message": self._format_alerts(alerts, gone_alerts, new_alerts),
             }),
             timeout=15,
         )
