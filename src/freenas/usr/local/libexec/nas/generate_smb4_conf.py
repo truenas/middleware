@@ -1061,8 +1061,6 @@ def generate_smb4_conf(client, smb4_conf, role, shares):
     confset1(smb4_conf, "directory name cache size = 0")
     confset1(smb4_conf, "kernel change notify = no")
 
-    confset1(smb4_conf,
-             "panic action = /usr/local/libexec/samba/samba-backtrace")
     confset1(smb4_conf, "nsupdate command = /usr/local/bin/samba-nsupdate -g")
 
     confset2(smb4_conf, "server string = %s", cifs.description)
