@@ -4,8 +4,6 @@ import sysctl
 
 logger = logging.getLogger(__name__)
 
-FIRST_INSTALL_SENTINEL = "/data/first-boot"
-
 
 def loader_config(middleware):
     config = generate_loader_config(middleware)
