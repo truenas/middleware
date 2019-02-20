@@ -191,12 +191,11 @@ class SytemAdvancedService(ConfigService):
                     await self.middleware.call('service.reload', 'loader', {'onetime': False})
                     loader_reloaded = True
 
-            if (
-                original_data['autotune'] != config_data['autotune'] and
-                not loader_reloaded
-            ):
-                await self.middleware.call('service.reload', 'loader', {'onetime': False})
-                loader_reloaded = True
+            if original_data['autotune'] != config_data['autotune']:
+                if not loader_reloaded:
+                    await self.middleware.call('service.reload', 'loader', {'onetime': False})
+                    loader_reloaded = True
+                await self.middleware.call('system.advanced.autotune_sysctl')
 
             if (
                 original_data['debugkernel'] != config_data['debugkernel'] and
@@ -211,6 +210,23 @@ class SytemAdvancedService(ConfigService):
                 await self.middleware.call('service.restart', 'syslogd', {'onetime': False})
 
         return await self.config()
+
+    @private
+    def autotune_sysctl(middleware):
+        if middleware.call_sync('system.is_freenas'):
+            kernel_reserved = 1073741824
+            userland_reserved = 2417483648
+        else:
+            kernel_reserved = 6442450944
+            userland_reserved = 4831838208
+        cp = subprocess.run(
+            [
+                'autotune', '-o', f'--kernel-reserved={kernel_reserved}',
+                f'--userland-reserved={userland_reserved}', '--conf', 'sysctl'
+            ], capture_output=True
+        )
+        if cp.returncode:
+            middleware.logger.debug('Failed to set autotune sysctl values: %s', cp.stderr.decode())
 
 
 class SystemService(Service):
@@ -992,6 +1008,8 @@ async def setup(middleware):
     middleware.logger.debug(f'Timezone set to {settings["timezone"]}')
 
     await middleware.call('system.general.set_language')
+
+    asyncio.ensure_future(middleware.call('system.advanced.autotune_sysctl'))
 
     global SYSTEM_READY
     if os.path.exists("/tmp/.bootready"):
