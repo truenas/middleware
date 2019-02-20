@@ -1,5 +1,4 @@
 import logging
-import os
 import subprocess
 import sysctl
 
@@ -8,43 +7,16 @@ logger = logging.getLogger(__name__)
 FIRST_INSTALL_SENTINEL = "/data/first-boot"
 
 
-def loader_config(middleware, allow_reboot=True):
-    reboot = autotune(middleware)
-
+def loader_config(middleware):
     config = generate_loader_config(middleware)
 
-    # Using the ix-loader script to also do post-first-install stuff
-    # We should create a seperate ix-firstinstall script
-    # if we add more things later.
-    if os.path.exists(FIRST_INSTALL_SENTINEL):
-        # Delete sentinel file before making clone as we
-        # we do not want the clone to have the file in it.
-        os.unlink(FIRST_INSTALL_SENTINEL)
-
-        # Creating pristine boot environment from the "default"
-        logger.info("Creating 'Initial-Install' boot environment...")
-        subprocess.run(["/usr/local/sbin/beadm", "create", "-e", "default", "Initial-Install"])
-
-    with open("/boot/loader.conf.local", "w") as f:
-        f.write("\n".join(config) + "\n")
-
-    if allow_reboot:
-        if reboot:
-            subprocess.run(["shutdown", "-r", "now"])
-
-
-def autotune(middleware):
-    if middleware.call_sync("system.is_freenas"):
-        args = ["--kernel-reserved=1073741824", "--userland-reserved=2417483648"]
-    else:
-        args = ["--kernel-reserved=6442450944", "--userland-reserved=4831838208"]
-
-    p = subprocess.run(["/usr/local/bin/autotune", "-o"] + args)
-    if p.returncode == 2:
-        # Values changed based on recommendations. Reboot [eventually].
-        return True
-    else:
-        return False
+    with open("/boot/loader.conf.local", "r+") as f:
+        data = f.read()
+        new = "\n".join(config) + "\n"
+        if data != new:
+            f.seek(0)
+            f.write(new)
+            f.truncate()
 
 
 def generate_loader_config(middleware):
@@ -81,7 +53,7 @@ def generate_serial_loader_config(middleware):
 
 def generate_user_loader_config(middleware):
     return [
-        f'{tunable["var"]}=\"{tunable["value"]}\"' + (f' # {tunable["comment"]}' if tunable["comment"] else '000')
+        f'{tunable["var"]}=\"{tunable["value"]}\"' + (f' # {tunable["comment"]}' if tunable["comment"] else '')
         for tunable in middleware.call_sync("tunable.query", [["type", "=", "LOADER"]])
     ]
 
@@ -115,11 +87,11 @@ def generate_ha_loader_config(middleware):
 
 def generate_xen_loader_config(middleware):
     proc = subprocess.run(["/usr/local/sbin/dmidecode", "-s", "system-product-name"], stdout=subprocess.PIPE)
-    if proc.returncode == 0 and proc.stdout.strip() == "HVM domU":
+    if proc.returncode == 0 and proc.stdout.strip() == b"HVM domU":
         return ['hint.hpet.0.clock="0"']
 
     return []
 
 
 async def render(service, middleware):
-    await middleware.run_in_thread(loader_config, middleware, service.args[0] if service.args else True)
+    await middleware.run_in_thread(loader_config, middleware)
