@@ -104,8 +104,8 @@ network_func()
 	netstat -m
 	section_footer
 
-	section_header "Interface statistics (netstat -i)"
-	netstat -i
+	section_header "Interface statistics (netstat -in)"
+	netstat -in
 	section_footer
 
 	section_header "protocols - 'netstat -p protocol -s'"
