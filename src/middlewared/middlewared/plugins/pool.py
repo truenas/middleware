@@ -2025,8 +2025,10 @@ class PoolService(CRUDService):
         await self.middleware.call('vm.stop_by_pool', pool['name'], True)
 
         job.set_progress(30, 'Stopping jails using this pool (if any)')
-        for jail_host in attachments['jails']:
-            await self.middleware.call('jail.stop', jail_host)
+        activated_pool = await self.middleware.call('jail.get_activated_pool')
+        if activated_pool == pool['name']:
+            for jail_host in attachments['jails']:
+                await self.middleware.call('jail.stop', jail_host)
 
         job.set_progress(30, 'Removing pool disks from swap')
         disks = [i async for i in await self.middleware.call('pool.get_disks')]
