@@ -231,7 +231,7 @@ class CryptoKeyService(Service):
         except crypto.Error:
             return {}
         else:
-            cert_info = self.get_x509_subject(cert, certificate)
+            cert_info = self.get_x509_subject(cert)
 
             valid_algos = ('SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512')
             signature_algorithm = cert.get_signature_algorithm().decode()
@@ -263,7 +263,7 @@ class CryptoKeyService(Service):
 
             return cert_info
 
-    def get_x509_subject(self, obj, data_str, csr=False):
+    def get_x509_subject(self, obj):
         cert_info = {
             'country': obj.get_subject().C,
             'state': obj.get_subject().ST,
@@ -271,47 +271,32 @@ class CryptoKeyService(Service):
             'organization': obj.get_subject().O,
             'organizational_unit': obj.get_subject().OU,
             'common': obj.get_subject().CN,
-            'san': [s for s in (obj.get_subject().subjectAltName or '').split(',') if s],
+            'san': [],
             'email': obj.get_subject().emailAddress,
-            'DN': f'/{"/".join([f"{c[0].decode()}={c[1].decode()}" for c in obj.get_subject().get_components()])}',
+            'DN': '',
         }
 
-        if not cert_info['san'] and (
-            any(
-                'subjectAltName' == obj.get_extension(i).get_short_name().decode()
-                for i in range(obj.get_extension_count())
-            ) if isinstance(obj, crypto.X509) else any(
-                'subjectAltName' == extension.get_short_name().decode()
-                for extension in obj.get_extensions()
-            )
+        for ext in (
+            map(
+                lambda i: obj.get_extension(i),
+                range(obj.get_extension_count())
+            ) if isinstance(obj, crypto.X509) else obj.get_extensions()
         ):
-            # This will happen when certs are created with cryptography module
-            crypto_class = x509.load_pem_x509_certificate if not csr else x509.load_pem_x509_csr
-            crypto_cert = crypto_class(
-                data_str.encode(), default_backend()
-            )
-            cert_info['san'] = list(
-                filter(
-                    bool,
-                    map(
-                        lambda san: [
-                            f'DNS: {v.value}' if isinstance(v, x509.DNSName) else f'IP: {v.value}'
-                            for v in san.value
-                        ],
-                        filter(
-                            lambda e: isinstance(e.value, x509.SubjectAlternativeName),
-                            crypto_cert.extensions
-                        )
-                    )
-                )
-            )
+            if 'subjectAltName' == ext.get_short_name().decode():
+                cert_info['san'] = [s.strip() for s in ext.__str__().split(',') if s]
 
-            if cert_info['san']:
-                # For old certs which might have malformed san extension with no values
-                cert_info['san'] = cert_info['san'][0]
+        dn = []
+        for k, v in obj.get_subject().get_components():
+            if k.decode() == 'subjectAltName':
+                continue
 
-                # We need to adjust DN now to reflect san value
-                cert_info['DN'] += f'/subjectAltName={", ".join(cert_info["san"])}'
+            dn.append(f'{k.decode()}={v.decode()}')
+
+        cert_info['DN'] = f'/{"/".join(dn)}'
+
+        if cert_info['san']:
+            # We should always trust the extension instead of the subject for SAN
+            cert_info['DN'] += f'/subjectAltName={", ".join(cert_info["san"])}'
 
         return cert_info
 
@@ -324,7 +309,7 @@ class CryptoKeyService(Service):
         except crypto.Error:
             return {}
         else:
-            return self.get_x509_subject(csr_obj, csr, True)
+            return self.get_x509_subject(csr_obj)
 
     def generate_self_signed_certificate(self):
         cert = self.generate_builder({
