@@ -89,7 +89,7 @@ class replication(TestObject):
 
             if cipher == 'fast':
                 sshcmd = (
-                    '/usr/bin/ssh -c arcfour256,arcfour128,blowfish-cbc,'
+                    '/usr/local/bin/ssh -c '
                     'aes128-ctr,aes192-ctr,aes256-ctr -i /data/ssh/replication'
                     ' -o BatchMode=yes -o StrictHostKeyChecking=yes'
                     # There's nothing magical about ConnectTimeout, it's an average
