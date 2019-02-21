@@ -2060,3 +2060,11 @@ async def setup(middleware):
 
     # Listen to IFNET events so we can sync on interface attach
     middleware.event_subscribe('devd.ifnet', _event_ifnet)
+
+    # Only run DNS sync in the first run. This avoids calling the routine again
+    # on middlewared restart.
+    if not await middleware.call('system.ready'):
+        try:
+            await middleware.call('dns.sync')
+        except Exception:
+            middleware.logger.error('Failed to setup DNS', exc_info=True)
