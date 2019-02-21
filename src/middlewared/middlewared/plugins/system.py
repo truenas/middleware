@@ -354,7 +354,7 @@ class SystemService(Service):
         if delay:
             time.sleep(delay)
 
-        await Popen(["/sbin/reboot"])
+        await Popen(['/sbin/shutdown', '-r', 'now'])
 
     @accepts(Dict('system-shutdown', Int('delay', required=False), required=False))
     @job()
@@ -375,7 +375,7 @@ class SystemService(Service):
         if delay:
             time.sleep(delay)
 
-        await Popen(["/sbin/poweroff"])
+        await Popen(['/sbin/poweroff'])
 
     @accepts()
     @job(lock='systemdebug')
