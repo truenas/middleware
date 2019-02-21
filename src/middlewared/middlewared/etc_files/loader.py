@@ -8,7 +8,8 @@ logger = logging.getLogger(__name__)
 def loader_config(middleware):
     config = generate_loader_config(middleware)
 
-    with open("/boot/loader.conf.local", "r+") as f:
+    with open("/boot/loader.conf.local", "a+") as f:
+        f.seek(0)
         data = f.read()
         new = "\n".join(config) + "\n"
         if data != new:
