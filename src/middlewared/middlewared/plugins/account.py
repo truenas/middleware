@@ -98,7 +98,7 @@ class UserService(CRUDService):
         Str('home_mode', default='755'),
         Str('shell', default='/bin/csh'),
         Str('full_name', required=True),
-        Str('email', validators=[Email()]),
+        Str('email', validators=[Email()], null=True, default=None),
         Str('password', private=True),
         Bool('password_disabled', default=False),
         Bool('locked', default=False),
