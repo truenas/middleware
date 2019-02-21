@@ -1164,12 +1164,15 @@ class EmailForm(MiddlewareModelForm, ModelForm):
     em_pass1 = forms.CharField(
         label=_("Password"),
         widget=forms.PasswordInput,
-        required=False)
+        required=False,
+        help_text=_('Enter the password for the SMTP server. Only ASCII valid characters are accepted.')
+    )
     em_pass2 = forms.CharField(
         label=_("Password confirmation"),
         widget=forms.PasswordInput,
-        help_text=_("Enter the same password as above, for verification."),
-        required=False)
+        help_text=_('Verify the SMTP server password.'),
+        required=False
+    )
 
     class Meta:
         model = models.Email
