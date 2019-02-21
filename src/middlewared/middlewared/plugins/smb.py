@@ -341,7 +341,6 @@ class SharingSMBService(CRUDService):
 
         if id is not None:
             name_filters.append(('id', '!=', id))
-            path_filters.append(('id', '!=', id))
 
         name_result = await self.middleware.call(
             'datastore.query', self._config.datastore,
