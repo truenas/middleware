@@ -11,7 +11,7 @@
 
 do_preinit()
 {
-	/usr/local/bin/midclt call initshutdownscript.execute_init_tasks PREINIT > /dev/null
+	/usr/local/bin/midclt call -job initshutdownscript.execute_init_tasks PREINIT > /dev/null 2>&1
 }
 
 name="ix-preinit"

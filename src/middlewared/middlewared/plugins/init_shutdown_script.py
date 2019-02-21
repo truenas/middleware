@@ -1,6 +1,8 @@
 from middlewared.schema import Bool, Dict, File, Int, Patch, Str, ValidationErrors, accepts
-from middlewared.service import CRUDService, private
+from middlewared.service import CRUDService, job, private
+from middlewared.utils import Popen
 
+import asyncio
 import os
 import subprocess
 
@@ -19,6 +21,7 @@ class InitShutdownScriptService(CRUDService):
         File('script', null=True),
         Str('when', enum=['PREINIT', 'POSTINIT', 'SHUTDOWN'], required=True),
         Bool('enabled', default=True),
+        Int('timeout', default=10),
         register=True,
     ))
     async def do_create(self, data):
@@ -32,8 +35,6 @@ class InitShutdownScriptService(CRUDService):
             data,
             {'prefix': self._config.datastore_prefix}
         )
-
-        await self.init_shutdown_script_extend(data)
 
         return await self._get_instance(data['id'])
 
@@ -58,8 +59,6 @@ class InitShutdownScriptService(CRUDService):
             new,
             {'prefix': self._config.datastore_prefix}
         )
-
-        await self.init_shutdown_script_extend(new)
 
         return await self._get_instance(new['id'])
 
@@ -105,32 +104,52 @@ class InitShutdownScriptService(CRUDService):
             raise verrors
 
     @private
+    async def execute_task(self, task):
+        task_type = task['type']
+        cmd = None
+
+        if task_type == 'COMMAND':
+            cmd = task['command']
+        elif os.path.exists(task['script'] or '') and os.access(task['script'], os.X_OK):
+            cmd = f'exec {task["script"]}'
+
+        if cmd:
+            proc = await Popen(
+                cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                shell=True,
+                close_fds=True
+            )
+            stdout, stderr = await proc.communicate()
+
+            if proc.returncode:
+                self.middleware.logger.debug(
+                    'Execution failed for '
+                    f'{task_type} {task["command"] if task_type == "COMMAND" else task["script"]}: {stderr.decode()}'
+                )
+
+    @private
     @accepts(
         Str('when')
     )
-    def execute_init_tasks(self, when):
-        tasks = self.middleware.call_sync(
+    @job()
+    async def execute_init_tasks(self, job, when):
+
+        tasks = await self.middleware.call(
             'initshutdownscript.query', [
                 ['enabled', '=', True],
                 ['when', '=', when]
             ])
 
-        for task in tasks:
-            task_type = task['type']
-            ret = None
-
-            if task_type == 'COMMAND':
-                ret = subprocess.run(
-                    task['command'],
-                    shell=True
-                )
-            elif os.path.exists(task['script']) and os.access(task['script'], os.X_OK):
-                ret = subprocess.run(
-                    f'exec {task["script"]}',
-                    shell=True
-                )
-
-            if ret and ret.returncode:
+        for i, task in enumerate(tasks):
+            try:
+                await asyncio.wait_for(self.execute_task(task), timeout=task['timeout'])
+            except asyncio.TimeoutError:
                 self.middleware.logger.debug(
-                    f'Execution failed for {task_type} {task["command"] if task_type == "COMMAND" else task["script"]}'
+                    f'{task["type"]} {task["command"] if task["type"] == "COMMAND" else task["script"]} timed out'
                 )
+            finally:
+                job.set_progress((100 / len(tasks)) * (i + 1))
+
+        job.set_progress(100, f'Completed tasks for {when}')
