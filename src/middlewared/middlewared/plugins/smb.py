@@ -333,11 +333,11 @@ class SharingSMBService(CRUDService):
     async def name_exists(self, data, schema_name, verrors, id=None):
         name = data['name']
         path = data['path']
-        name_filters = [('name', '=', name)]
-        path_filters = [('path', '=', path)]
 
         if path and not name:
             name = path.rsplit('/', 1)[-1]
+
+        name_filters = [('name', '=', name)]
 
         if id is not None:
             name_filters.append(('id', '!=', id))
@@ -347,18 +347,10 @@ class SharingSMBService(CRUDService):
             'datastore.query', self._config.datastore,
             name_filters,
             {'prefix': self._config.datastore_prefix})
-        path_result = await self.middleware.call(
-            'datastore.query', self._config.datastore,
-            path_filters,
-            {'prefix': self._config.datastore_prefix})
 
         if name_result:
             verrors.add(f'{schema_name}.name',
                         'A share with this name already exists.')
-
-        if path_result:
-            verrors.add(f'{schema_name}.path',
-                        'A share with this path already exists.')
 
         return name
 
