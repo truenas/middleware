@@ -327,6 +327,11 @@ class InitShutdown(Model):
         default=True,
         verbose_name=_("Enabled"),
     )
+    ini_timeout = models.IntegerField(
+        default=10,
+        verbose_name='Timeout',
+        help_text='Automatically stop the script or command after the specified seconds.'
+    )
 
     def __str__(self):
         if self.ini_type == 'command':
