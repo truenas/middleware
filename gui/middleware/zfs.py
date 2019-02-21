@@ -605,7 +605,7 @@ class ZFSVol(object):
 
     def _get_used_pct(self):
         try:
-            return int((float(self.used) / float(self.avail + self.used)) * 100.0)
+            return int((float(self.used) / float(self.avail + (self.used - self.usedrefreserv))) * 100.0)
         except:
             return _("Error")
 
