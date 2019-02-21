@@ -136,6 +136,7 @@ class DiskService(CRUDService):
             else:
                 await self.toggle_smart_off(new['name'])
 
+            await self.middleware.call('service.restart', 'collectd')
             await self._service_change('smartd', 'restart')
 
         updated_data = await self.query(
