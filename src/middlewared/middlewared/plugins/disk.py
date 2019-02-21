@@ -831,6 +831,10 @@ class DiskService(CRUDService):
         else:
             disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
 
+        if await self.middleware.call('service.started', 'collectd'):
+            await self.middleware.call('service.restart', 'collectd')
+        await self._service_change('smartd', 'restart')
+
         if not await self.middleware.call('system.is_freenas'):
             await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
@@ -853,6 +857,7 @@ class DiskService(CRUDService):
 
         seen_disks = {}
         serials = []
+        changed = False
         await self.middleware.run_in_thread(geom.scan)
         for disk in (await self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})):
 
@@ -866,12 +871,14 @@ class DiskService(CRUDService):
                 if not disk['disk_expiretime']:
                     disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=DISK_EXPIRECACHE_DAYS)
                     await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                    changed = True
                 elif disk['disk_expiretime'] < datetime.utcnow():
                     # Disk expire time has surpassed, go ahead and remove it
                     for extent in await self.middleware.call(
                             'iscsi.extent.query', [['type', '=', 'DISK'], ['path', '=', disk['disk_identifier']]]):
                         await self.middleware.call('iscsi.extent.delete', extent['id'])
                     await self.middleware.call('datastore.delete', 'storage.disk', disk['disk_identifier'])
+                    changed = True
                 continue
             else:
                 disk['disk_expiretime'] = None
@@ -903,6 +910,7 @@ class DiskService(CRUDService):
             # when lots of drives are present
             if disk != original_disk:
                 await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                changed = True
 
             if not await self.middleware.call('system.is_freenas'):
                 await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
@@ -947,11 +955,18 @@ class DiskService(CRUDService):
                     # when lots of drives are present
                     if disk != original_disk:
                         await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                        changed = True
                 else:
                     disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
+                    changed = True
 
                 if not await self.middleware.call('system.is_freenas'):
                     await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+
+        if changed:
+            if await self.middleware.call('service.started', 'collectd'):
+                await self.middleware.call('service.restart', 'collectd')
+            await self._service_change('smartd', 'restart')
 
         return "OK"
 
