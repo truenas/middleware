@@ -1014,6 +1014,37 @@ async def firstboot(middleware):
             )
 
 
+async def update_timeout_value(middleware, *args):
+    if not await middleware.call(
+        'tunable.query', [
+            ['var', '=', 'kern.init_shutdown_timeout'],
+            ['type', '=', 'SYSCTL'],
+            ['enabled', '=', True]
+        ]
+    ):
+        # Default 120 seconds is being added to scripts timeout to ensure other
+        # system related scripts can execute safely within the default timeout
+        timeout_value = 120 + sum(
+            list(
+                map(
+                    lambda i: i['timeout'],
+                    await middleware.call(
+                        'initshutdownscript.query', [
+                            ['enabled', '=', True],
+                            ['when', '=', 'SHUTDOWN']
+                        ]
+                    )
+                )
+            )
+        )
+
+        await middleware.run_in_thread(
+            lambda: setattr(
+                sysctl.filter('kern.init_shutdown_timeout')[0], 'value', timeout_value
+            )
+        )
+
+
 async def setup(middleware):
     global SYSTEM_READY
 
@@ -1038,6 +1069,15 @@ async def setup(middleware):
     await middleware.call('system.general.set_language')
 
     asyncio.ensure_future(middleware.call('system.advanced.autotune', 'sysctl'))
+
+    await update_timeout_value(middleware)
+
+    for srv in ['initshutdownscript', 'tunable']:
+        for event in ('create', 'update', 'delete'):
+            middleware.register_hook(
+                f'{srv}.post_{event}',
+                update_timeout_value
+            )
 
     middleware.event_subscribe('system', _event_system_ready)
     middleware.event_subscribe('devd.zfs', _event_zfs_status)
