@@ -876,10 +876,10 @@ class ServiceService(CRUDService):
         await self._service("inadyn", "restart", **kwargs)
 
     async def _restart_system(self, **kwargs):
-        asyncio.ensure_future(self._system("/bin/sleep 3 && /sbin/shutdown -r now"))
+        asyncio.ensure_future(self.middleware.call('system.reboot', {'delay': 3}))
 
     async def _stop_system(self, **kwargs):
-        asyncio.ensure_future(self._system("/bin/sleep 3 && /sbin/shutdown -p now"))
+        asyncio.ensure_future(self.middleware.call('system.shutdown', {'delay': 3}))
 
     async def _reload_cifs(self, **kwargs):
         await self.middleware.call("etc.generate", "smb_share")
