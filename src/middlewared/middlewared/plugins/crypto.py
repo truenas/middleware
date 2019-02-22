@@ -325,6 +325,14 @@ class CertificateService(CRUDService):
                 if 'subjectAltName' == ext.get_short_name().decode():
                     cert['DN'] += f'/subjectAltName={ext}'
 
+        cert['internal'] = 'NO' if cert['type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING) else 'YES'
+        cert['CA_type_existing'] = bool(cert['type'] & CA_TYPE_EXISTING)
+        cert['CA_type_internal'] = bool(cert['type'] & CA_TYPE_INTERNAL)
+        cert['CA_type_intermediate'] = bool(cert['type'] & CA_TYPE_INTERMEDIATE)
+        cert['cert_type_existing'] = bool(cert['type'] & CERT_TYPE_EXISTING)
+        cert['cert_type_internal'] = bool(cert['type'] & CERT_TYPE_INTERNAL)
+        cert['cert_type_CSR'] = bool(cert['type'] & CERT_TYPE_CSR)
+
         return cert
 
     # HELPER METHODS
