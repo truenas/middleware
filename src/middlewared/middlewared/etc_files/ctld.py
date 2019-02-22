@@ -383,18 +383,15 @@ def main(middleware):
                                                t2e.iscsi_extent.iscsi_target_extent_name))
         addline('}\n\n')
 
-    os.umask(0o77)
     # Write out the CTL config file
-    fh = open(ctl_config, 'w')
-    for line in cf_contents:
-        fh.write(line)
-    fh.close()
+    with open(os.open(ctl_config, os.O_CREAT | os.O_WRONLY, 0o600), 'w') as fh:
+        for line in cf_contents:
+            fh.write(line)
 
     # Write out the CTL config file with redacted CHAP passwords
-    fh = open(ctl_config_shadow, 'w')
-    for line in cf_contents_shadow:
-        fh.write(line)
-    fh.close()
+    with open(os.open(ctl_config_shadow, os.O_CREAT | os.O_WRONLY, 0o600), 'w') as fh:
+        for line in cf_contents_shadow:
+            fh.write(line)
 
 
 def set_ctl_ha_peer(middleware):
