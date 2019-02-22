@@ -684,6 +684,18 @@ class SystemGeneralService(ConfigService):
                         )
         return verrors
 
+    @accepts()
+    async def ui_certificate_choices(self):
+        """
+        Return choices of `ui_certificate` attribute for `system.general.update`.
+        """
+        return {
+            i['id']: i['name']
+            for i in await self.middleware.call('certificate.query', [
+                ('cert_type_CSR', '=', False)
+            ])
+        }
+
     @accepts(
         Dict(
             'general_settings',
