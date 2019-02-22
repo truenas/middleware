@@ -2343,6 +2343,27 @@ class PoolService(CRUDService):
             proc.kill()
             proc.wait()
 
+        with contextlib.suppress(OSError):
+            os.unlink(ZPOOL_KILLCACHE)
+
+        if os.path.exists(ZPOOL_CACHE_FILE):
+            shutil.copy(ZPOOL_CACHE_FILE, f'{ZPOOL_CACHE_FILE}.saved')
+
+        cp = subprocess.run(
+            'zfs list -t filesystem -H -o name,aclmode,mountpoint | '
+            'awk \'$2 != "restricted" {print $0}\'',
+            shell=True, capture_output=True, text=True, check=False,
+        )
+        for line in cp.stdout.strip().split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+            dataset, aclmode, mountpoint = line.split('\t')
+            if os.path.exists(f'{mountpoint}/.windows'):
+                self.middleware.call_sync('zfs.dataset.update', dataset, {'properties': {
+                    'aclmode': {'value': 'restricted'},
+                }})
+
         job.set_progress(100, 'Pool imports completed')
 
     """
