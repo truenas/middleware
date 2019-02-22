@@ -1774,10 +1774,6 @@ class CIFSResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super().dehydrate(bundle)
-        if bundle.obj.cifs_storage_task:
-            bundle.data['cifs_storage_task'] = bundle.obj.cifs_storage_task.id
-        else:
-            bundle.data['cifs_storage_task'] = None
         return bundle
 
 
