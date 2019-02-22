@@ -1387,8 +1387,8 @@ class VMService(CRUDService):
         return clone_dst
 
     @item_method
-    @accepts(Int('id'))
-    async def clone(self, id):
+    @accepts(Int('id'), Str('name', default=None))
+    async def clone(self, id, name):
         vm = await self._get_instance(id)
 
         origin_name = vm['name']
@@ -1396,6 +1396,9 @@ class VMService(CRUDService):
         del vm['status']
 
         vm['name'] = await self.__next_clone_name(vm['name'])
+
+        if name is not None:
+            vm['name'] = name
 
         # In case we need to rollback
         created_snaps = []

@@ -368,7 +368,7 @@ class CRUDService(ServiceChangeMixin, Service):
 
     async def _get_instance(self, id):
         """
-        Helpher method to get an instance from a collection given the `id`.
+        Helper method to get an instance from a collection given the `id`.
         """
         instance = await self.middleware.call(f'{self._config.namespace}.query', [('id', '=', id)])
         if not instance:
