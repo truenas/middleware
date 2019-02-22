@@ -73,6 +73,130 @@ class SMBService(SystemServiceService):
         }
 
     @private
+    async def validate_admin_groups(self, sid):
+        """
+           Check if group mapping already exists. Remove any entries that
+           shouldn't be present. The only default entry here in will have
+           a RID value of "512" (Domain Admins).
+        """
+        ret = {
+            'status': False,
+            'message': None,
+        }
+        proc = await Popen(
+            ['/usr/local/bin/net', 'groupmap', 'listmem', 'S-1-5-32-544'],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        member_list = (await proc.communicate())[0].decode()
+        if not member_list:
+            return {'status': True, 'message': None}
+
+        for group in member_list.splitlines():
+            group = group.rstrip()
+            if group == sid:
+                return {'status': True, 'message': 'SID_IS_PRESENT'}
+            if group.rsplit('-', 1)[-1] != "512" and group != sid:
+                self.logger.debug(f"Removing {group} from local admins group.")
+                rem = await Popen(
+                    ['/usr/local/bin/net', 'groupmap', 'delmem', 'S-1-5-32-544', group],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                )
+                remout = (await rem.communicate())[1].decode()
+                if remout:
+                    ret['message'] = f"failed to remove {group} from local admins group"
+                    return ret
+
+        return {'status': True, 'message': None}
+
+    @private
+    async def wbinfo_gidtosid(self, gid):
+        ret = {
+            'status': False,
+            'message': None,
+        }
+        if not gid:
+            return ret
+        proc = await Popen(
+            ['/usr/local/bin/wbinfo', '--gid-to-sid', f"{gid}"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        output = (await proc.communicate())
+        if output[1]:
+            ret['message'] = output[1].decode()
+        else:
+            ret['status'] = True
+            ret['message'] = output[0].decode().rstrip()
+
+        return ret
+
+    """
+        Add a local or directory service group to BUILTIN\\Administrators (S-1-5-32-544)
+        Members of this group have elevated privileges to the samba server (ability to
+        take ownership of Files, override ACLs, view and modify user quotas, and administer
+        the server via the Computer Management MMC Snap-In. Unfortuantely, group membership
+        must be managed via "net groupmap listmem|addmem|delmem", which requires that
+        winbind be running when the commands are executed. In this situation net command
+        will fail with WBC_ERR_WINBIND_NOT_AVAILABLE. If this error message is returned, then
+        flag for a deferred command retry when service starts.
+
+        @param-in (admin_group): This is the group to add to BUILTIN\\Administrators. If unset, then
+            look up the value in the config db.
+        @param-in (check_deferred): If this is True, then only perform the group mapping if this has
+            been flagged as in need of deferred setup (i.e. samba wasn't running when it was initially
+            called). This is to avoid unecessarily calling during service start.
+
+        @param-out dict 'status'- True or False, 'message'- error messages in case of failure.
+    """
+    @accepts(
+        Str('admin_group'),
+        Bool('check_deferred'),
+    )
+    async def add_admin_group(self, admin_group=None, check_deferred=False):
+        ret = {
+            'status': False,
+            'message': None,
+        }
+        if check_deferred:
+            if not os.path.exists('/tmp/.set_smb_admin'):
+                return {'status': True, 'message': 'No delayed action detected. Exiting.'}
+            else:
+                os.remove('/tmp/.set_smb_admin')
+
+        if not admin_group:
+            smb = await self.middleware.call('smb.config')
+            admin_group = smb['admin_group']
+
+        # We must use GIDs because wbinfo --name-to-sid expects a domain prefix "FREENAS\user"
+        group = await self.middleware.call("notifier.get_group_object", admin_group)
+        if not group:
+            return {'status': False, 'message': f"Failed to look up group {admin_group}"}
+
+        sid = await self.wbinfo_gidtosid(group[2])
+        if not sid['status']:
+            self.logger.debug(f"Failed to convert {admin_group} to SID: ({sid['message']})")
+            if "WBC_ERR_WINBIND_NOT_AVAILABLE" in sid['message']:
+                self.logger.debug("Delaying admin group add until winbind starts")
+                with open('/tmp/.set_smb_admin', 'a') as f:
+                    f.close()
+
+                return {'status': True, 'message': 'Delaying action until winbind starts'}
+
+            return sid
+        ret = await self.validate_admin_groups(sid['message'])
+        if not ret['status'] or ret['message'] == 'SID_IS_PRESENT':
+            return ret
+
+        proc = await Popen(
+            ['/usr/local/bin/net', 'groupmap', 'addmem', 'S-1-5-32-544', sid['message']],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        output = (await proc.communicate())
+        if output[1]:
+            return{'status': False, 'message': f"{output[1].decode()}"}
+
+        return{'status': True, 'message': f"Successfully added {admin_group} to BUILTIN\\Administrators"}
+
+    @private
     async def common_charset_choices(self):
 
         def check_codec(encoding):
@@ -118,6 +242,7 @@ class SMBService(SystemServiceService):
         Bool('domain_logons'),
         Bool('timeserver'),
         Str('guest'),
+        Str('admin_group'),
         Str('filemask'),
         Str('dirmask'),
         Bool('nullpw'),
@@ -163,6 +288,11 @@ class SMBService(SystemServiceService):
                     raise ValueError('Not an octet')
             except (ValueError, TypeError):
                 verrors.add(f'smb_update.{i}', 'Not a valid mask')
+
+        if new['admin_group']:
+            ret = await self.add_admin_group(f"{new['admin_group']}")
+            if not ret['status']:
+                verrors.add('smb_update.admin_group', f"Failed to add SMB admin group: {ret['message']}")
 
         if verrors:
             raise verrors
