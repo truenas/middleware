@@ -1,10 +1,12 @@
 import asyncio
 import base64
+import contextlib
 import errno
 import logging
 from datetime import datetime, time
 import os
 import re
+import shutil
 import subprocess
 import sysctl
 import tempfile
@@ -27,6 +29,7 @@ logger = logging.getLogger(__name__)
 GELI_KEYPATH = '/data/geli'
 RE_DISKPART = re.compile(r'^([a-z]+\d+)(p\d+)?')
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
+ZPOOL_KILLCACHE = '/data/zfs/killcache'
 
 
 class Inheritable(EnumMixin, Attribute):
@@ -2236,6 +2239,101 @@ class PoolService(CRUDService):
             self.middleware.call_sync('datastore.delete', 'storage.encrypteddisk', [
                 ('encrypted_volume', '=', pool['id']), ('encrypted_provider', 'nin', provs)
             ])
+
+    @private
+    @job()
+    def import_on_boot(self, job):
+        cachedir = os.path.dirname(ZPOOL_CACHE_FILE)
+        if not os.path.exists(cachedir):
+            os.mkdir(cachedir)
+
+        if (
+            not self.middleware.call_sync('system.is_freenas') and
+            self.middleware.call('failover.licensed')
+        ):
+            return
+
+        if os.path.exists(ZPOOL_KILLCACHE):
+            with contextlib.suppress(Exception):
+                os.unlink(ZPOOL_CACHE_FILE)
+            with contextlib.suppress(Exception):
+                os.unlink(f'{ZPOOL_CACHE_FILE}.saved')
+        else:
+            with open(ZPOOL_KILLCACHE, 'w') as f:
+                os.fsync(f)
+
+        try:
+            stat = os.stat(ZPOOL_CACHE_FILE)
+            if stat.st_size > 0:
+                copy = False
+                if not os.path.exists(f'{ZPOOL_CACHE_FILE}.saved'):
+                    copy = True
+                else:
+                    statsaved = os.stat(f'{ZPOOL_CACHE_FILE}.saved')
+                    if stat.st_mtime > statsaved.st_mtime:
+                        copy = True
+                if copy:
+                    shutil.copy(ZPOOL_CACHE_FILE, f'{ZPOOL_CACHE_FILE}.saved')
+        except FileNotFoundError:
+            pass
+
+        job.set_progress(0, 'Beginning pool imports')
+
+        try:
+            proc = subprocess.Popen(
+                ['dtrace', '-qn', 'zfs-dbgmsg{printf("\r\r%s", stringof(arg0))}'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+
+            pools = self.middleware.call_sync('pool.query', [
+                ('encrypt', '<', 2),
+                ('status', '=', 'OFFLINE')
+            ])
+            for i, pool in enumerate(pools):
+                job.set_progress(int(len(pools) / (i + 1) * 100), f'Importing {pool["name"]}')
+                imported = False
+                if pool['guid']:
+                    try:
+                        self.middleware.call_sync('zfs.pool.import_pool', pool['guid'], {
+                            'altroot': '/mnt',
+                            'cachefile': 'none',
+                        }, True, ZPOOL_CACHE_FILE if os.path.exists(ZPOOL_CACHE_FILE) else None)
+                    except Exception as e:
+                        # If the pool exists but failed to import skip this one
+                        if not isinstance(e, CallError) or e.errno != errno.ENOENT:
+                            self.logger.error('Failed to import %s', pool['name'], exc_info=True)
+                            continue
+                    else:
+                        imported = True
+                if not imported:
+                    try:
+                        self.middleware.call_sync('zfs.pool.import_pool', pool['name'], {
+                            'altroot': '/mnt',
+                            'cachefile': 'none',
+                        })
+                    except Exception:
+                        self.logger.error('Failed to import %s', pool['name'], exc_info=True)
+                        continue
+
+                with contextlib.suppress(Exception):
+                    self.middleware.call_sync(
+                        'zfs.pool.update', pool['name'], {'properties': {
+                            'cachefile': {'value': ZPOOL_CACHE_FILE},
+                        }}
+                    )
+
+                with contextlib.suppress(Exception):
+                    # Reset all mountpoints
+                    self.middleware.call_sync(
+                        'zfs.dataset.inherit', pool['name'], 'mountpoint', True
+                    )
+
+        finally:
+            proc.kill()
+            proc.wait()
+
+        job.set_progress(100, 'Pool imports completed')
 
     """
     These methods are hacks for old UI which supports only one volume import at a time
