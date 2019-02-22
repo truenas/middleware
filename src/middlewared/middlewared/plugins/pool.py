@@ -21,7 +21,7 @@ from middlewared.schema import (accepts, Attribute, Bool, Cron, Dict, EnumMixin,
 from middlewared.service import (
     ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
 )
-from middlewared.utils import Popen, filter_list, run
+from middlewared.utils import Popen, filter_list, run, start_daemon_thread
 from middlewared.validators import Range, Time
 
 logger = logging.getLogger(__name__)
@@ -2240,6 +2240,14 @@ class PoolService(CRUDService):
                 ('encrypted_volume', '=', pool['id']), ('encrypted_provider', 'nin', provs)
             ])
 
+    def __dtrace_read(self, job, proc):
+        while True:
+            read = proc.stdout.readline()
+            if read == b'':
+                break
+            read = read.decode(errors='ignore').strip()
+            job.set_progress(None, read)
+
     @private
     @job()
     def import_on_boot(self, job):
@@ -2281,10 +2289,12 @@ class PoolService(CRUDService):
 
         try:
             proc = subprocess.Popen(
-                ['dtrace', '-qn', 'zfs-dbgmsg{printf("\r\r%s", stringof(arg0))}'],
+                ['dtrace', '-qn', 'zfs-dbgmsg{printf("%s\\n", stringof(arg0))}'],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             )
+
+            start_daemon_thread(target=self.__dtrace_read, args=[job, proc])
 
             pools = self.middleware.call_sync('pool.query', [
                 ('encrypt', '<', 2),
