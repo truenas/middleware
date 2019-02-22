@@ -582,6 +582,8 @@ class VMService(CRUDService):
     def flags(self):
         """Returns a dictionary with CPU flags for bhyve."""
         data = {}
+        intel = True if 'Intel' in sysctl.filter('hw.model')[0].value else \
+            False
 
         vmx = sysctl.filter('hw.vmm.vmx.initialized')
         data['intel_vmx'] = True if vmx and vmx[0].value else False
@@ -590,7 +592,8 @@ class VMService(CRUDService):
         data['unrestricted_guest'] = True if ug and ug[0].value else False
 
         rvi = sysctl.filter('hw.vmm.svm.features')
-        data['amd_rvi'] = True if rvi and rvi[0].value != 0 else False
+        data['amd_rvi'] = True if rvi and rvi[0].value != 0 and not intel \
+            else False
 
         asids = sysctl.filter('hw.vmm.svm.num_asids')
         data['amd_asids'] = True if asids and asids[0].value != 0 else False
@@ -1038,6 +1041,10 @@ class VMService(CRUDService):
                         f'{schema_name}.vcpus',
                         'Only one Virtual CPU is allowed in this system.',
                     )
+            elif not flags['intel_vmx'] and not flags['amd_rvi']:
+                raise CallError(
+                    'Virtualization is not supported by this system!'
+                )
 
         memory = data.get('memory')
         if memory and memory < 1024 and data.get('type') == 'Container Provider':
