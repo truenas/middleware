@@ -1043,7 +1043,7 @@ class VMService(CRUDService):
         if memory and memory < 1024 and data.get('type') == 'Container Provider':
             verrors.add(f'{schema_name}.memory', 'Minimum container memory is 2048MiB.')
 
-        if 'name' in data:
+        if 'name' in data and schema_name != 'vm_start':
             filters = [('name', '=', data['name'])]
             if old:
                 filters.append(('id', '!=', old['id']))
@@ -1125,13 +1125,18 @@ class VMService(CRUDService):
     @item_method
     @accepts(Int('id'), Dict('options', Bool('overcommit')))
     async def start(self, id, options):
-        """Start a VM.
-
+        """
+        Start a VM.
         options.overcommit defaults to false, which means VM will not be allowed to
         start if there is not enough available memory to hold all VMs configured memory.
-        If true VM will start even if there is not enough memory for all VMs configured memory."""
-
+        If true VM will start even if there is not enough memory for all VMs configured memory.
+        """
         vm = await self._get_instance(id)
+
+        verrors = ValidationErrors()
+        await self.__common_validation(verrors, 'vm_start', vm)
+        if verrors:
+            raise verrors
 
         overcommit = options.get('options')
         if overcommit is None:
