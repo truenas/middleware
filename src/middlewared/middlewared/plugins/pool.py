@@ -2334,10 +2334,11 @@ class PoolService(CRUDService):
                     )
 
                 with contextlib.suppress(Exception):
-                    # Reset all mountpoints
-                    self.middleware.call_sync(
-                        'zfs.dataset.inherit', pool['name'], 'mountpoint', True
-                    )
+                    if os.path.isdir('/mnt/mnt'):
+                        # Reset all mountpoints
+                        self.middleware.call_sync(
+                            'zfs.dataset.inherit', pool['name'], 'mountpoint', True
+                        )
 
         finally:
             proc.kill()
