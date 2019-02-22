@@ -9,20 +9,17 @@
 
 . /etc/rc.subr
 
-do_shutdown()
+execute_task()
 {
-	local IFS="|"
-	local f="ini_type ini_command ini_script ini_when"
+	local stype=$1
+	local f="ini_$stype"
 	eval local $f
 	local sf=$(var_to_sf $f)
 
-	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
-	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
-
-	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
-	"SELECT $sf FROM tasks_initshutdown WHERE ini_when = 'shutdown' AND ini_enabled = 1 ORDER BY id" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT $sf FROM tasks_initshutdown WHERE ini_when = 'shutdown' AND ini_enabled = 1 AND ini_type = '$stype' ORDER BY id" | \
 	while eval read -r $f; do
-		if [ "${ini_type}" = "command" ]; then
+		if [ "${stype}" = "command" ]; then
 			eval ${ini_command}
 		else
 			if [ -e "${ini_script}" ]; then
@@ -30,6 +27,15 @@ do_shutdown()
 			fi
 		fi
 	done
+}
+
+do_shutdown()
+{
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
+
+	execute_task "command"
+	execute_task "script"
 }
 
 name="ix-shutdown"
