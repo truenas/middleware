@@ -3153,17 +3153,17 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
         """
            "use default domain = False":
            Local               Domain               External Domain
-           GROUP               DOMAIN\GROUP         TRUSTED\GROUP
+           GROUP               DOMAIN\\GROUP        TRUSTED\\GROUP
 
            "use default domain = True":
-           GROUP               GROUP                TRUSTED\GROUP
+           GROUP               GROUP                TRUSTED\\GROUP
 
            @param(in) GROUP: <GROUP>
            @param(in) netbiosname: <DOMAIN>
 
            If the domain is a trusted domain, the sAMAccountName for
            the group cannot be obtained through an LDAP query. Reconstruct
-           the groupname as originally received (<DOMAIN>\<GROUP>) prior to
+           the groupname as originally received (DOMAIN\\GROUP) prior to
            grp.getgrnam(). Determine whether this is trusted domain
            by comparing with the value of "workgroup" in cifs_srv_workgroup.
            This value (workgroup) is automatically detected and set when the
