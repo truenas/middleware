@@ -107,6 +107,23 @@ class ZFSPoolService(CRUDService):
 
     @accepts(Str('pool'), Dict(
         'options',
+        Dict('properties', additional_attrs=True),
+    ))
+    def do_update(self, name, options):
+        try:
+            with libzfs.ZFS() as zfs:
+                pool = zfs.get(name)
+                for k, v in options['properties'].items():
+                    prop = pool.properties[k]
+                    if 'value' in v:
+                        prop.value = v['value']
+                    elif 'parsed' in v:
+                        prop.parsed = v['parsed']
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
+
+    @accepts(Str('pool'), Dict(
+        'options',
         Bool('force', default=False),
     ))
     def do_delete(self, name, options):
