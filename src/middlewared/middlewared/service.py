@@ -219,9 +219,6 @@ class Service(object, metaclass=ServiceBase):
         self.logger = Logger(type(self).__name__).getLogger()
         self.middleware = middleware
 
-        # We want debug for jails starting/stopping
-        os.environ['IOCAGE_DEBUG'] = 'TRUE'
-
 
 class ServiceChangeMixin:
     async def _service_change(self, service, verb):

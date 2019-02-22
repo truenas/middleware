@@ -36,6 +36,12 @@ class JailService(CRUDService):
     class Config:
         process_pool = True
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # We want debug for jails starting/stopping
+        os.environ['IOCAGE_DEBUG'] = 'TRUE'
+
     # FIXME: foreign schemas cannot be referenced when
     # using `process_pool`
     # @filterable
