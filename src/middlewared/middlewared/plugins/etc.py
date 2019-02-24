@@ -196,6 +196,10 @@ class EtcService(Service):
         ],
         'aliases': [
             {'type': 'mako', 'path': 'aliases'}
+        ],
+        'ttys': [
+            {'type': 'mako', 'path': 'ttys'},
+            {'type': 'py', 'path': 'ttys_config'}
         ]
     }
 
