@@ -749,6 +749,20 @@ class Replication(Model):
         default=5,
         verbose_name=_("Number of retries for failed replications"),
     )
+    repl_logging_level = models.CharField(
+        null=True,
+        blank=True,
+        max_length=120,
+        choices=[
+            ("", "Default"),
+            ("DEBUG", "Debug"),
+            ("INFO", "Info"),
+            ("WARNING", "Warning"),
+            ("ERROR", "Error"),
+        ],
+        default=None,
+        verbose_name=_("Logging Level"),
+    )
     repl_enabled = models.BooleanField(
         default=True,
         verbose_name=_("Enabled"),
