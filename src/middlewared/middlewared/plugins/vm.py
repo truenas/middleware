@@ -1039,7 +1039,7 @@ class VMService(CRUDService):
                 if vcpus > 1 and flags['amd_asids'] is False:
                     verrors.add(
                         f'{schema_name}.vcpus',
-                         'Only one virtual CPU is allowed in this system.',
+                        'Only one virtual CPU is allowed in this system.',
                     )
             elif not flags['intel_vmx'] and not flags['amd_rvi']:
                 verrors.add(
@@ -1135,8 +1135,8 @@ class VMService(CRUDService):
     async def start(self, id, options):
         """
         Start a VM.
-         options.overcommit defaults to false, meaning VMs are not allowed to
-         start if there is not enough available memory to hold all configured VMs.
+        options.overcommit defaults to false, meaning VMs are not allowed to
+        start if there is not enough available memory to hold all configured VMs.
         If true, VM starts even if there is not enough memory for all configured VMs.
         """
         vm = await self._get_instance(id)
