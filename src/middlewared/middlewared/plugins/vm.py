@@ -1144,7 +1144,7 @@ class VMService(CRUDService):
 
         if not flags['intel_vmx'] and not flags['amd_rvi']:
             raise CallError(
-                'Virtualization is not supported by this system!'
+                'This system does not support virtualization.'
             )
 
         overcommit = options.get('options')
