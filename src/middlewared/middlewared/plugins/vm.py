@@ -645,6 +645,7 @@ class VMService(CRUDService):
         """
         vnc_ports_in_use = []
         vms = self.middleware.call_sync('datastore.query', 'vm.vm', [], {'order_by': ['id']})
+
         if vms:
             latest_vm_id = vms.pop().get('id', None)
             vnc_port = 5900 + latest_vm_id + 1
@@ -1411,7 +1412,9 @@ class VMService(CRUDService):
                         del item['attributes']['mac']
                 if item['dtype'] == 'VNC':
                     if 'vnc_port' in item['attributes']:
-                        del item['attributes']['vnc_port']
+                        vnc_dict = await self.middleware.call(
+                            'vm.vnc_port_wizard')
+                        item['attributes']['vnc_port'] = vnc_dict['vnc_port']
                 if item['dtype'] == 'DISK':
                     zvol = item['attributes']['path'].replace('/dev/zvol/', '')
                     clone_dst = await self.__clone_zvol(
