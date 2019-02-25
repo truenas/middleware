@@ -357,6 +357,8 @@ for replication in replication_tasks:
         snaplist = output.split('\n')
         snaplist = [x for x in snaplist if not system_re.match(x)]
         map_source = mapfromdata(snaplist)
+    else:
+        map_source = {}
 
     rzfscmd = '"zfs list -H -o name,readonly -t filesystem,volume -r %s"' % (remotefs_final.split('/')[0])
     sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
