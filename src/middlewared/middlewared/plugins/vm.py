@@ -13,6 +13,7 @@ import middlewared.logger
 import asyncio
 import contextlib
 import errno
+import ipaddress
 import math
 import netif
 import os
@@ -1456,6 +1457,12 @@ class VMService(CRUDService):
         vnc_web = []
 
         host = host or await self.middleware.call('interface.websocket_local_ip', app=app)
+        try:
+            ipaddress.IPv6Address(host)
+        except ipaddress.AddressValueError:
+            pass
+        else:
+            host = f'[{host}]'
 
         for vnc_device in await self.get_vnc(id):
             if vnc_device.get('vnc_web', None) is True:
