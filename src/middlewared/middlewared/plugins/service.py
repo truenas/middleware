@@ -747,7 +747,7 @@ class ServiceService(CRUDService):
         await self._service("motd", "start", quiet=True, **kwargs)
 
     async def _start_ttys(self, **kwargs):
-        await self._service("ix-ttys", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'ttys')
 
     async def _reload_ftp(self, **kwargs):
         await self.middleware.call("etc.generate", "ftp")

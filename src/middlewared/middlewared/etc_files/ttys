@@ -1,3 +1,23 @@
+<%
+	advanced = middleware.call_sync('system.advanced.config')
+	serial_speed = f'.{advanced["serialspeed"]}' if advanced['serialconsole'] else ''
+	ttyv = 'freenas' if advanced['consolemenu'] else 'freenas.115200'
+	ttyu = f'freenas{serial_speed}' if advanced['consolemenu'] else f'3wire{serial_speed}'
+
+	# Forcefully enable TTY on configured UART port in case it
+	# is different from console port.  It may happen since we
+	# can not enable/change serial console port without reboot.
+	serdev = ''
+	if advanced['serialconsole']:
+		dev_serial = list(
+			filter(
+				lambda i: i['name'].startswith('uart') and int(i['start'], 16) <= int(advanced['serialport'], 16) < int(i['start'], 16) + i['size'],
+				middleware.call_sync('device.get_info', 'SERIAL')
+			)
+		)
+		if dev_serial:
+			serdev = dev_serial[0]['name'].replace('uart', 'ttyu')
+%>\
 #
 # $FreeBSD: src/etc/etc.amd64/ttys,v 1.18.2.1 2009/08/03 08:13:06 kensmith Exp $
 #	@(#)ttys	5.1 (Berkeley) 4/17/89
@@ -29,7 +49,7 @@
 # when going to single-user mode.
 console	none				unknown	off secure
 #
-ttyv0	"/usr/libexec/getty freenas"	xterm	onifexists  secure
+ttyv0	"/usr/libexec/getty ${ttyv}"	xterm	onifexists  secure
 # Virtual terminals
 ttyv1	"/usr/libexec/getty Pc"		xterm	onifexists  secure
 ttyv2	"/usr/libexec/getty Pc"		xterm	onifexists  secure
@@ -41,10 +61,9 @@ ttyv7	"/usr/libexec/getty Pc"		xterm	onifexists  secure
 ttyv8	"/usr/local/bin/xdm -nodaemon"	xterm	off secure
 # Serial terminals
 # The 'dialup' keyword identifies dialin lines to login, fingerd etc.
-ttyu0	"/usr/libexec/getty 3wire"	vt100	onifconsole secure
-ttyu1	"/usr/libexec/getty 3wire"	vt100	onifconsole secure
-ttyu2	"/usr/libexec/getty 3wire"	vt100	onifconsole secure
-ttyu3	"/usr/libexec/getty 3wire"	vt100	onifconsole secure
+% for i in range(4):
+ttyu${i}	"/usr/libexec/getty ${ttyu}"	vt100	${'onifconsole' if f'ttyu{i}' != serdev else 'on'} secure
+% endfor
 # Dumb console
 dcons	"/usr/libexec/getty std.9600"	vt100	off secure
 
