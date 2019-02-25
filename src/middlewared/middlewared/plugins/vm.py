@@ -1044,7 +1044,7 @@ class VMService(CRUDService):
             elif not flags['intel_vmx'] and not flags['amd_rvi']:
                 verrors.add(
                     schema_name,
-                    'Virtualization is not supported by this system!'
+                    'This system does not support virtualization.'
                 )
 
         memory = data.get('memory')
