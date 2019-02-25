@@ -1137,7 +1137,7 @@ class VMService(CRUDService):
         Start a VM.
         options.overcommit defaults to false, which means VM will not be allowed to
         start if there is not enough available memory to hold all VMs configured memory.
-        If true VM will start even if there is not enough memory for all VMs configured memory.
+        If true, VM starts even if there is not enough memory for all configured VMs.
         """
         vm = await self._get_instance(id)
         flags = await self.middleware.call('vm.flags')
