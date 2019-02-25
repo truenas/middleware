@@ -544,24 +544,24 @@ class ServiceService(CRUDService):
 
     async def _reload_ssh(self, **kwargs):
         await self.middleware.call('etc.generate', 'ssh')
-        await self._service("ix_register", "reload", **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
         await self._service("openssh", "reload", **kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
     async def _start_ssh(self, **kwargs):
         await self.middleware.call('etc.generate', 'ssh')
-        await self._service("ix_register", "reload", **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
         await self._service("openssh", "start", **kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
     async def _stop_ssh(self, **kwargs):
         await self._service("openssh", "stop", force=True, **kwargs)
-        await self._service("ix_register", "reload", **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
 
     async def _restart_ssh(self, **kwargs):
         await self.middleware.call('etc.generate', 'ssh')
         await self._service("openssh", "stop", force=True, **kwargs)
-        await self._service("ix_register", "reload", **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
         await self._service("openssh", "restart", **kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
@@ -938,12 +938,12 @@ class ServiceService(CRUDService):
 
     async def _restart_http(self, **kwargs):
         await self.middleware.call("etc.generate", "nginx")
-        await self._service("ix_register", "reload", **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
         await self._service("nginx", "restart", **kwargs)
 
     async def _reload_http(self, **kwargs):
         await self.middleware.call("etc.generate", "nginx")
-        await self._service("ix_register", "reload", **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
         await self._service("nginx", "reload", **kwargs)
 
     async def _reload_loader(self, **kwargs):
