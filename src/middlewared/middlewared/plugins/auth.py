@@ -174,6 +174,12 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         self.token_manager = token_manager
         self.token = token
 
+    def is_valid(self):
+        return self.token.is_valid()
+
+    def notify_used(self):
+        self.token.notify_used()
+
     def logout(self):
         self.token_manager.destroy(self.token)
 
@@ -217,8 +223,7 @@ class AuthService(Service):
                 "origin": "192.168.0.3:40392",
                 "credentials": "TOKEN",
                 "internal": False,
-                "created_at": {"$date": 1545842426070},
-                "last_active": {"$date": 1545842487816}
+                "created_at": {"$date": 1545842426070}
             }
         ]
 
