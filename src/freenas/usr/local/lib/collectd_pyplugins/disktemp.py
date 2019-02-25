@@ -27,8 +27,9 @@ import concurrent.futures
 import re
 import subprocess
 import sys
-import sysctl
 import traceback
+
+from middlewared.client import Client
 
 # One cannot simply import collectd in a python interpreter (for various reasons)
 # thus adding this workaround for standalone testing and doctest
@@ -126,6 +127,8 @@ class DiskTemp(object):
 
     def init(self):
         collectd.info('Initializing "disktemp" plugin')
+        with Client() as c:
+            self.disks = [disk['devname'] for disk in c.call('disk.query', [['togglesmart', '=', True]])]
 
     def dispatch_value(self, name, instance, value, data_type=None):
         val = collectd.Values()
@@ -138,12 +141,9 @@ class DiskTemp(object):
         val.dispatch(interval=READ_INTERVAL)
 
     def read(self):
-        disks = sysctl.filter('kern.disks')[0].value.split()
         futures = {}
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            for disk in disks:
-                if disk.startswith('cd'):
-                    continue
+            for disk in self.disks:
                 futures[executor.submit(self.get_temperature, disk)] = disk
 
             for fut in concurrent.futures.as_completed(futures.keys()):
