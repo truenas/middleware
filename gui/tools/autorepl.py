@@ -303,10 +303,12 @@ for replication in replication_tasks:
             error,
         ))
         continue
-    if output != '':
+    if output.strip() != '':
         snaplist = output.split('\n')
         snaplist = [x for x in snaplist if not system_re.match(x)]
         map_source = mapfromdata(snaplist)
+    else:
+        map_source = {}
 
     rzfscmd = '"zfs list -H -o name,readonly -t filesystem,volume -r %s"' % (remotefs_final.split('/')[0])
     sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
@@ -358,11 +360,11 @@ for replication in replication_tasks:
         error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
         if sshproc.returncode:
             # Be conservative: only consider it's Okay when we see the expected result.
-            if error != '':
+            if error.strip() != '':
                 if error.split('\n')[0] == ("cannot open '%s': dataset does not exist" % (remotefs_final)):
                     may_proceed = True
         else:
-            if output != '':
+            if output.strip() != '':
                 if output.find('off') == -1:
                     may_proceed = True
         if not may_proceed:
@@ -404,7 +406,7 @@ Hello,
         rzfscmd = '"mount | grep ^%s/.system"' % (remotefs_final)
         sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd), debug)
         output = sshproc.communicate()[0].strip()
-        if output != '':
+        if output.strip() != '':
             results[replication.id]['msg'] = 'Please move system dataset of remote side to another pool'
             continue
 
@@ -416,14 +418,14 @@ Hello,
     sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd), debug)
     output, error = sshproc.communicate()
     error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
-    if output != '':
+    if output.strip() != '':
         snaplist = output.split('\n')
         snaplist = [x for x in snaplist if not system_re.match(x) and x != '']
         # Process snaplist so that it matches the desired form of source side
         l = len(remotefs_final)
         snaplist = [localfs + x[l:] for x in snaplist]
         map_target = mapfromdata(snaplist)
-    elif error != '':
+    elif error.strip() != '':
         results[replication.id]['msg'] = 'Failed: %s' % (error)
         continue
     else:
