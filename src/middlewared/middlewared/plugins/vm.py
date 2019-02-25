@@ -1042,7 +1042,8 @@ class VMService(CRUDService):
                         'Only one Virtual CPU is allowed in this system.',
                     )
             elif not flags['intel_vmx'] and not flags['amd_rvi']:
-                raise CallError(
+                verrors.add(
+                    schema_name,
                     'Virtualization is not supported by this system!'
                 )
 
@@ -1050,7 +1051,7 @@ class VMService(CRUDService):
         if memory and memory < 1024 and data.get('type') == 'Container Provider':
             verrors.add(f'{schema_name}.memory', 'Minimum container memory is 2048MiB.')
 
-        if 'name' in data and schema_name != 'vm_start':
+        if 'name' in data:
             filters = [('name', '=', data['name'])]
             if old:
                 filters.append(('id', '!=', old['id']))
@@ -1139,11 +1140,12 @@ class VMService(CRUDService):
         If true VM will start even if there is not enough memory for all VMs configured memory.
         """
         vm = await self._get_instance(id)
+        flags = await self.middleware.call('vm.flags')
 
-        verrors = ValidationErrors()
-        await self.__common_validation(verrors, 'vm_start', vm)
-        if verrors:
-            raise verrors
+        if not flags['intel_vmx'] and not flags['amd_rvi']:
+            raise CallError(
+                'Virtualization is not supported by this system!'
+            )
 
         overcommit = options.get('options')
         if overcommit is None:
