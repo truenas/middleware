@@ -1135,7 +1135,7 @@ class VMService(CRUDService):
     async def start(self, id, options):
         """
         Start a VM.
-        options.overcommit defaults to false, which means VM will not be allowed to
+         options.overcommit defaults to false, meaning VMs are not allowed to
          start if there is not enough available memory to hold all configured VMs.
         If true, VM starts even if there is not enough memory for all configured VMs.
         """
