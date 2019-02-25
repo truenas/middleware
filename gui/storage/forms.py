@@ -2382,6 +2382,8 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
         if data["speed_limit"] is not None:
             data["speed_limit"] = data["speed_limit"] * 1024
 
+        data["logging_level"] = data["logging_level"] or None
+
         return data
 
 

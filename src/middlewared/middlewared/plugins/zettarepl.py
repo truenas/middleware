@@ -20,6 +20,7 @@ from zettarepl.scheduler.scheduler import Scheduler
 from zettarepl.scheduler.tz_clock import TzClock
 from zettarepl.transport.create import create_transport
 from zettarepl.transport.local import LocalShell
+from zettarepl.utils.logging import LongStringsFilter
 from zettarepl.zettarepl import Zettarepl
 
 from middlewared.client import Client
@@ -85,7 +86,9 @@ class ZettareplProcess:
             debug_level = "INFO"
         else:
             debug_level = self.debug_level
-        setup_logging("zettarepl", debug_level, self.log_handler)
+        setup_logging("", debug_level, self.log_handler)
+        for handler in logging.getLogger().handlers:
+            handler.addFilter(LongStringsFilter())
 
         definition = Definition.from_data(self.definition)
 
@@ -324,6 +327,7 @@ class ZettareplService(Service):
                 "embed": replication_task["embed"],
                 "compressed": replication_task["compressed"],
                 "retries": replication_task["retries"],
+                "logging-level": (replication_task["logging_level"] or "NOTSET").lower(),
             }
 
             if replication_task["naming_schema"]:
