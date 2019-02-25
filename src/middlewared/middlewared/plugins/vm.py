@@ -1039,7 +1039,7 @@ class VMService(CRUDService):
                 if vcpus > 1 and flags['amd_asids'] is False:
                     verrors.add(
                         f'{schema_name}.vcpus',
-                        'Only one Virtual CPU is allowed in this system.',
+                         'Only one virtual CPU is allowed in this system.',
                     )
             elif not flags['intel_vmx'] and not flags['amd_rvi']:
                 verrors.add(
