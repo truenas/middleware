@@ -42,6 +42,7 @@ import ctypes
 from functools import cmp_to_key
 import glob
 import grp
+import itertools
 import libzfs
 import logging
 import os
@@ -1738,11 +1739,14 @@ class notifier(metaclass=HookMetaclass):
         """
         Replace devnames by its multipath equivalent
         """
-        for mp in self.multipath_all():
-            for dev in mp.devices:
-                if dev in disks:
-                    disks.remove(dev)
-            disks.append(mp.devname)
+        with client as c:
+            multi_paths = c.call('multipath.query')
+
+        for mp in multi_paths:
+            for child in itertools.chain(*list(map(lambda i: i['children'], multi_paths))):
+                if child['name'] in disks:
+                    disks.remove(child['name'])
+            disks.append(mp['name'])
 
         for disk in disks:
             info = self._pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
@@ -1754,10 +1758,10 @@ class notifier(metaclass=HookMetaclass):
                     },
                 })
 
-        for mp in self.multipath_all():
-            for consumer in mp.consumers:
-                if consumer.lunid and mp.devname in disksd:
-                    disksd[mp.devname]['ident'] = consumer.lunid
+        for mp in multi_paths:
+            for consumer in itertools.chain(*list(map(lambda i: i['children'], multi_paths))):
+                if consumer['lun_id'] and mp['name'] in disksd:
+                    disksd[mp['name']]['ident'] = consumer['lun_id']
                     break
 
         if unused:
