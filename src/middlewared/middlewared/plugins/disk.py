@@ -1723,8 +1723,18 @@ async def _event_zfs(middleware, event_type, args):
         asyncio.ensure_future(middleware.call('disk.swaps_configure'))
 
 
+async def _event_system_ready(middleware, event_type, args):
+    if args['id'] != 'ready':
+        return
+
+    # Configure disks power management
+    asyncio.ensure_future(middleware.call('disk.configure_power_management'))
+
+
 def setup(middleware):
     # Listen to DEVFS events so we can sync on disk attach/detach
     middleware.event_subscribe('devd.devfs', _event_devfs)
     # Listen to ZFS events to reconfigure swap on pool create/export/import
     middleware.event_subscribe('devd.zfs', _event_zfs)
+    # Run disk tasks once system is ready (e.g. power management)
+    middleware.event_subscribe('system', _event_system_ready)
