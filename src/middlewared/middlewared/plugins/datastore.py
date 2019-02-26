@@ -2,6 +2,7 @@ from middlewared.service import CallError, Service, ValidationErrors
 from middlewared.schema import accepts, Any, Bool, Dict, List, Ref, Str
 from sqlite3 import OperationalError
 
+import concurrent.futures
 import os
 import sys
 from itertools import chain
@@ -32,6 +33,7 @@ class DatastoreService(Service):
 
     class Config:
         private = True
+        thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=5)
 
     def _filters_to_queryset(self, filters, field_prefix=None):
         opmap = {
