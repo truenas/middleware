@@ -464,14 +464,22 @@ class JailService(CRUDService):
         start_msg = f'{release} being fetched'
         final_msg = f'{release} fetched'
 
+        iocage = ioc.IOCage(callback=progress_callback, silent=False)
+
         if options["name"] is not None:
+            # WORKAROUND until rewritten for #39653
+            # We want the plugins to not prompt interactively
+            try:
+                iocage.fetch(plugin_file=True, _list=True, **options)
+            except Exception:
+                # Expected, this is to avoid it later
+                pass
+
             options["plugin_file"] = True
             start_msg = 'Starting plugin install'
             final_msg = f"Plugin: {options['name']} installed"
 
         options["accept"] = True
-
-        iocage = ioc.IOCage(callback=progress_callback, silent=False)
 
         job.set_progress(0, start_msg)
         iocage.fetch(**options)
