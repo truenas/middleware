@@ -1,4 +1,5 @@
 import logging
+import os
 import subprocess
 import sysctl
 
@@ -8,7 +9,7 @@ logger = logging.getLogger(__name__)
 def loader_config(middleware):
     config = generate_loader_config(middleware)
 
-    with open("/boot/loader.conf.local", "a+") as f:
+    with open(os.open("/boot/loader.conf.local", os.O_CREAT | os.O_RDWR), "w+") as f:
         f.seek(0)
         data = f.read()
         new = "\n".join(config) + "\n"
