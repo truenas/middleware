@@ -994,7 +994,10 @@ class SystemHealthEventSource(EventSource):
             cp_diff = list(map(lambda x: x[0] - x[1], zip(cp_time, cp_old)))
             cp_old = cp_time
 
-            cpu_percent = round((sum(cp_diff[:3]) / sum(cp_diff)) * 100, 2)
+            try:
+                cpu_percent = round((sum(cp_diff[:3]) / sum(cp_diff)) * 100, 2)
+            except ZeroDivisionError:
+                cpu_percent = 0
 
             pools = self.middleware.call_sync(
                 'cache.get_or_put',
