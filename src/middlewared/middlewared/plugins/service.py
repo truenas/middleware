@@ -791,12 +791,7 @@ class ServiceService(CRUDService):
             asyncio.ensure_future(self.restart('collectd'))
 
     async def _started_ups(self, **kwargs):
-        mode = (await self.middleware.call('datastore.query', 'services.ups', [], {'order_by': ['-id'], 'get': True}))['ups_mode']
-        if mode == "master":
-            svc = "ups"
-        else:
-            svc = "upsmon"
-        return await self._started(svc)
+        return await self._started('upsmon')
 
     async def _start_afp(self, **kwargs):
         await self.middleware.call("etc.generate", "afpd")
