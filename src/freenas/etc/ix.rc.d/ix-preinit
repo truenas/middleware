@@ -20,10 +20,10 @@ execute_task()
 	"SELECT $sf FROM tasks_initshutdown WHERE ini_when = 'preinit' AND ini_enabled = 1 AND ini_type = '$stype' ORDER BY id" | \
 	while eval read -r $f; do
 		if [ "${stype}" = "command" ]; then
-			eval ${ini_command}
+			sh -c "${ini_command}" < /dev/null
 		else
 			if [ -e "${ini_script}" ]; then
-				sh -c "exec ${ini_script}"
+				sh -c "exec ${ini_script}" < /dev/null
 			fi
 		fi
 	done
