@@ -2302,7 +2302,9 @@ class PoolService(CRUDService):
                 ('status', '=', 'OFFLINE')
             ])
             for i, pool in enumerate(pools):
-                job.set_progress(int(len(pools) / (i + 1) * 100), f'Importing {pool["name"]}')
+                # Importing pools is currently 80% of the job because we may still need
+                # to set ACL mode for windows
+                job.set_progress(int((i + 1) / len(pools) * 80), f'Importing {pool["name"]}')
                 imported = False
                 if pool['guid']:
                     try:
@@ -2359,6 +2361,9 @@ class PoolService(CRUDService):
         if os.path.exists(ZPOOL_CACHE_FILE):
             shutil.copy(ZPOOL_CACHE_FILE, zpool_cache_saved)
 
+        job.set_progress(90, 'Ensuring correct ACL mode of datasets')
+
+        # Use subprocess instead of zfs plugin for speed reasons
         cp = subprocess.run(
             'zfs list -t filesystem -H -o name,aclmode,mountpoint | '
             'awk \'$2 != "restricted" {print $0}\'',
