@@ -172,7 +172,7 @@ def configure_syslog(middleware):
     middleware.call_sync("core.reconfigure_logging")
 
 
-async def render(service, middleware):
-    await middleware.run_in_thread(generate_syslog_conf, middleware)
-    await middleware.run_in_thread(generate_ha_syslog, middleware)
-    await middleware.run_in_thread(configure_syslog, middleware)
+def render(service, middleware):
+    generate_syslog_conf(middleware)
+    generate_ha_syslog(middleware)
+    configure_syslog(middleware)

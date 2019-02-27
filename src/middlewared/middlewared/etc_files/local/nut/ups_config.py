@@ -17,5 +17,5 @@ def generate_ups_config(middleware):
     os.chmod(UPS_VARPATH, 0o770)
 
 
-async def render(service, middleware):
-    await middleware.run_in_thread(generate_ups_config, middleware)
+def render(service, middleware):
+    generate_ups_config(middleware)

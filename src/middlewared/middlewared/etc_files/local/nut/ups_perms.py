@@ -18,5 +18,5 @@ def ups_config_perms(middleware):
             os.remove(file)
 
 
-async def render(service, middleware):
-    await middleware.run_in_thread(ups_config_perms, middleware)
+def render(service, middleware):
+    ups_config_perms(middleware)

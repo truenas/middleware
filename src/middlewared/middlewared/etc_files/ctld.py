@@ -406,6 +406,6 @@ def set_ctl_ha_peer(middleware):
             sysctl.filter("kern.cam.ctl.ha_peer")[0].value = ""
 
 
-async def render(service, middleware):
-    await middleware.run_in_thread(main, middleware)
-    await middleware.run_in_thread(set_ctl_ha_peer, middleware)
+def render(service, middleware):
+    main(middleware)
+    set_ctl_ha_peer(middleware)

@@ -40,5 +40,5 @@ def generate_webdav_config(middleware):
                 pass
 
 
-async def render(service, middleware):
-    await middleware.run_in_thread(generate_webdav_config, middleware)
+def render(service, middleware):
+    generate_webdav_config(middleware)

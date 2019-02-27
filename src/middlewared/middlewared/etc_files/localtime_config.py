@@ -16,5 +16,5 @@ def localtime_configuration(middleware):
         f.write(f'{system_config["timezone"]}\n')
 
 
-async def render(service, middleware):
-    await middleware.run_in_thread(localtime_configuration, middleware)
+def render(service, middleware):
+    localtime_configuration(middleware)

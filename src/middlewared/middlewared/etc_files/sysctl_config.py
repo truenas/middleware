@@ -17,5 +17,5 @@ def sysctl_configuration(middleware):
             )
 
 
-async def render(service, middleware):
-    await middleware.run_in_thread(sysctl_configuration, middleware)
+def render(service, middleware):
+    sysctl_configuration(middleware)
