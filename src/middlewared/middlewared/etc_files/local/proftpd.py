@@ -21,5 +21,5 @@ def setup(middleware):
             f.write(f"Welcome to {product_name} FTP Server\n")
 
 
-async def render(service, middleware):
-    await middleware.run_in_thread(setup, middleware)
+def render(service, middleware):
+    setup(middleware)

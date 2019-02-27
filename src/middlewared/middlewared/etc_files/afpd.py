@@ -18,7 +18,7 @@ def get_interface(ipaddress):
     return ifaces
 
 
-def render_sync(middleware):
+def render(service, middleware):
     """Use the django ORM to generate a config file.  We'll build the
     config file as a series of lines, and once that is done write it
     out in one go"""
@@ -198,7 +198,3 @@ def render_sync(middleware):
     with open(afp_config, "w") as fh:
         for line in cf_contents:
             fh.write(line)
-
-
-async def render(service, middleware):
-    await middleware.run_in_thread(render_sync, middleware)

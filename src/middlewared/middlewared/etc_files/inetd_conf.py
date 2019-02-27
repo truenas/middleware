@@ -33,5 +33,5 @@ def inetd_config(middleware):
     os.chmod('/etc/inetd.conf', 0o644)
 
 
-async def render(service, middleware):
-    await middleware.run_in_thread(inetd_config, middleware)
+def render(service, middleware):
+    inetd_config(middleware)

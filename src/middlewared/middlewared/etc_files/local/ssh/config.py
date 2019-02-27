@@ -25,5 +25,5 @@ def generate_ssh_config(middleware):
             os.chmod(os.path.join(SSH_CONFIG_PATH, f), 0o600)
 
 
-async def render(service, middleware):
-    await middleware.run_in_thread(generate_ssh_config, middleware)
+def render(service, middleware):
+    generate_ssh_config(middleware)

@@ -10,5 +10,5 @@ def fstab_configuration(middleware):
         middleware.logger.debug(f'Failed to execute "mount -uw": {ret.stderr.decode()}')
 
 
-async def render(service, middleware):
-    await middleware.run_in_thread(fstab_configuration, middleware)
+def render(service, middleware):
+    fstab_configuration(middleware)

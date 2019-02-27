@@ -93,5 +93,5 @@ def generate_xen_loader_config(middleware):
     return []
 
 
-async def render(service, middleware):
-    await middleware.run_in_thread(loader_config, middleware)
+def render(service, middleware):
+    loader_config(middleware)
