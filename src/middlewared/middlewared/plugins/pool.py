@@ -2327,19 +2327,27 @@ class PoolService(CRUDService):
                         self.logger.error('Failed to import %s', pool['name'], exc_info=True)
                         continue
 
-                with contextlib.suppress(Exception):
+                try:
                     self.middleware.call_sync(
                         'zfs.pool.update', pool['name'], {'properties': {
                             'cachefile': {'value': ZPOOL_CACHE_FILE},
                         }}
                     )
+                except Exception:
+                    self.logger.warn(
+                        'Failed to set cache file for %s', pool['name'], exc_info=True,
+                    )
 
-                with contextlib.suppress(Exception):
+                try:
                     if os.path.isdir('/mnt/mnt'):
                         # Reset all mountpoints
                         self.middleware.call_sync(
                             'zfs.dataset.inherit', pool['name'], 'mountpoint', True
                         )
+                except Exception:
+                    self.logger.warn(
+                        'Failed to inherit mountpoints for %s', pool['name'], exc_info=True,
+                    )
 
         finally:
             proc.kill()
