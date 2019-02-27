@@ -253,7 +253,9 @@ class SystemDatasetService(ConfigService):
                     os.unlink(rrd_path)
             else:
                 os.makedirs(rrd_path)
-            cp = await run('rsync', '-a', f'{rrd_syspath}/', f'{rrd_path}/')
+
+            await run('sh', '-c', f'rm -rf {rrd_path}/*.bak', check=False)
+            cp = await run('rsync', '-a', '--exclude', '*.bak', f'{rrd_syspath}/', f'{rrd_path}/', check=False)
             return cp.returncode == 0
         return False
 
