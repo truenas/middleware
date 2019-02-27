@@ -2,6 +2,7 @@ from mako import exceptions
 from mako.lookup import TemplateLookup
 from middlewared.service import Service
 
+import asyncio
 import grp
 import hashlib
 import imp
@@ -48,7 +49,12 @@ class PyRenderer(object):
         name = os.path.basename(path)
         find = imp.find_module(name, [os.path.dirname(path)])
         mod = imp.load_module(name, *find)
-        return await mod.render(self.service, self.service.middleware)
+        if asyncio.iscoroutinefunction(mod.render):
+            return await mod.render(self.service, self.service.middleware)
+        else:
+            return await self.service.middleware.run_in_thread(
+                mod.render, self.service, self.service.middleware,
+            )
 
 
 class EtcService(Service):
