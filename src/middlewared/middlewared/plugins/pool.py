@@ -2286,7 +2286,7 @@ class PoolService(CRUDService):
         except FileNotFoundError:
             pass
 
-        job.set_progress(0, 'Beginning pool imports')
+        job.set_progress(0, 'Beginning pools import')
 
         try:
             proc = subprocess.Popen(
@@ -2379,7 +2379,7 @@ class PoolService(CRUDService):
                     'aclmode': {'value': 'restricted'},
                 }})
 
-        job.set_progress(100, 'Pool imports completed')
+        job.set_progress(100, 'Pools import completed')
 
     """
     These methods are hacks for old UI which supports only one volume import at a time
