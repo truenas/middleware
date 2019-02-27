@@ -2261,11 +2261,12 @@ class PoolService(CRUDService):
         ):
             return
 
+        zpool_cache_saved = f'{ZPOOL_CACHE_FILE}.saved'
         if os.path.exists(ZPOOL_KILLCACHE):
             with contextlib.suppress(Exception):
                 os.unlink(ZPOOL_CACHE_FILE)
             with contextlib.suppress(Exception):
-                os.unlink(f'{ZPOOL_CACHE_FILE}.saved')
+                os.unlink(zpool_cache_saved)
         else:
             with open(ZPOOL_KILLCACHE, 'w') as f:
                 os.fsync(f)
@@ -2274,14 +2275,14 @@ class PoolService(CRUDService):
             stat = os.stat(ZPOOL_CACHE_FILE)
             if stat.st_size > 0:
                 copy = False
-                if not os.path.exists(f'{ZPOOL_CACHE_FILE}.saved'):
+                if not os.path.exists(zpool_cache_saved):
                     copy = True
                 else:
-                    statsaved = os.stat(f'{ZPOOL_CACHE_FILE}.saved')
+                    statsaved = os.stat(zpool_cache_saved)
                     if stat.st_mtime > statsaved.st_mtime:
                         copy = True
                 if copy:
-                    shutil.copy(ZPOOL_CACHE_FILE, f'{ZPOOL_CACHE_FILE}.saved')
+                    shutil.copy(ZPOOL_CACHE_FILE, zpool_cache_saved)
         except FileNotFoundError:
             pass
 
@@ -2308,7 +2309,7 @@ class PoolService(CRUDService):
                         self.middleware.call_sync('zfs.pool.import_pool', pool['guid'], {
                             'altroot': '/mnt',
                             'cachefile': 'none',
-                        }, True, ZPOOL_CACHE_FILE if os.path.exists(ZPOOL_CACHE_FILE) else None)
+                        }, True, zpool_cache_saved if os.path.exists(zpool_cache_saved) else None)
                     except Exception as e:
                         # If the pool exists but failed to import skip this one
                         if not isinstance(e, CallError) or e.errno != errno.ENOENT:
@@ -2348,7 +2349,7 @@ class PoolService(CRUDService):
             os.unlink(ZPOOL_KILLCACHE)
 
         if os.path.exists(ZPOOL_CACHE_FILE):
-            shutil.copy(ZPOOL_CACHE_FILE, f'{ZPOOL_CACHE_FILE}.saved')
+            shutil.copy(ZPOOL_CACHE_FILE, zpool_cache_saved)
 
         cp = subprocess.run(
             'zfs list -t filesystem -H -o name,aclmode,mountpoint | '
