@@ -96,15 +96,13 @@ def test_07_get_pending_update():
 
 
 def test_08_install_update():
+    global reboot
+    reboot = False
     if update_version is None:
         pytest.skip('No update found')
     elif download_failed is True:
         pytest.skip(f'Downloading {selected_trains} failed')
     else:
-        if vm_name is None and interface == 'vtnet0':
-            reboot = False
-        else:
-            reboot = True
         payload = {
             "train": selected_trains,
             "reboot": reboot
@@ -149,6 +147,8 @@ def test_11_wait_for_first_reboot_with_bhyve():
         pytest.skip('No update found')
     elif download_failed is True:
         pytest.skip(f'Downloading {selected_trains} failed')
+    elif reboot is False:
+        pytest.skip(f'Reboot is False skip')
     else:
         if vm_name is None:
             pytest.skip('skip no vm_name')
@@ -164,6 +164,8 @@ def test_12_wait_for_second_reboot_with_bhyve():
         pytest.skip('No update found')
     elif download_failed is True:
         pytest.skip(f'Downloading {selected_trains} failed')
+    elif reboot is False:
+        pytest.skip(f'Reboot is False skip')
     else:
         if vm_name is None:
             pytest.skip('skip no vm_name')
@@ -179,6 +181,8 @@ def test_13_wait_for_FreeNAS_to_be_online():
         pytest.skip('No update found')
     elif download_failed is True:
         pytest.skip(f'Downloading {selected_trains} failed')
+    elif reboot is False:
+        pytest.skip(f'Reboot is False skip')
     else:
         while ping_host(ip) is not True:
             sleep(5)
@@ -191,8 +195,8 @@ def test_14_verify_initial_version_is_not_current_FreeNAS_version():
         pytest.skip('No update found')
     elif download_failed is True:
         pytest.skip(f'Downloading {selected_trains} failed')
-    elif vm_name is None and interface == 'vtnet0':
-        pytest.skip('VM was not rebooted')
+    elif reboot is False:
+        pytest.skip(f'Reboot is False skip')
     else:
         global results, current_version
         results = GET("/system/info/")
@@ -207,7 +211,7 @@ def test_15_verify_update_version_is_current_version():
         pytest.skip('No update found')
     elif download_failed is True:
         pytest.skip(f'Downloading {selected_trains} failed')
-    elif vm_name is None and interface == 'vtnet0':
-        pytest.skip('VM was not rebooted')
+    elif reboot is False:
+        pytest.skip(f'Reboot is False skip')
     else:
         assert update_version == current_version, results.text
