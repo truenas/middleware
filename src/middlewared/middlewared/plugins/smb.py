@@ -75,14 +75,19 @@ class SMBService(SystemServiceService):
     @private
     async def validate_admin_groups(self, sid):
         """
-           Check if group mapping already exists. Remove any entries that
-           shouldn't be present. The only default entry here in will have
-           a RID value of "512" (Domain Admins).
+        Check if group mapping already exists. Remove any entries that
+        shouldn't be present. The only default entry here in will have
+        a RID value of "512" (Domain Admins).
+        In LDAP environments, we can't safely remove members of S-1-5-32-544
+        because this alias actually exists on the remote LDAP server.
         """
         ret = {
             'status': False,
             'message': None,
         }
+        ldap = await self.middleware.call('datastore.config', 'directoryservice.ldap')
+        if ldap['ldap_enable']:
+            return {'status': True, 'message': None}
         proc = await Popen(
             ['/usr/local/bin/net', 'groupmap', 'listmem', 'S-1-5-32-544'],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -120,7 +125,7 @@ class SMBService(SystemServiceService):
             ['/usr/local/bin/wbinfo', '--gid-to-sid', f"{gid}"],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        output = (await proc.communicate())
+        output = await proc.communicate()
         if output[1]:
             ret['message'] = output[1].decode()
         else:
@@ -129,11 +134,13 @@ class SMBService(SystemServiceService):
 
         return ret
 
-    """
+    @private
+    async def add_admin_group(self, admin_group=None, check_deferred=False):
+        """
         Add a local or directory service group to BUILTIN\\Administrators (S-1-5-32-544)
         Members of this group have elevated privileges to the samba server (ability to
         take ownership of Files, override ACLs, view and modify user quotas, and administer
-        the server via the Computer Management MMC Snap-In. Unfortuantely, group membership
+        the server via the Computer Management MMC Snap-In. Unfortuntely, group membership
         must be managed via "net groupmap listmem|addmem|delmem", which requires that
         winbind be running when the commands are executed. In this situation net command
         will fail with WBC_ERR_WINBIND_NOT_AVAILABLE. If this error message is returned, then
@@ -144,23 +151,17 @@ class SMBService(SystemServiceService):
         @param-in (check_deferred): If this is True, then only perform the group mapping if this has
             been flagged as in need of deferred setup (i.e. samba wasn't running when it was initially
             called). This is to avoid unecessarily calling during service start.
-
-        @param-out dict 'status'- True or False, 'message'- error messages in case of failure.
-    """
-    @accepts(
-        Str('admin_group'),
-        Bool('check_deferred'),
-    )
-    async def add_admin_group(self, admin_group=None, check_deferred=False):
+        """
         ret = {
             'status': False,
             'message': None,
         }
         if check_deferred:
-            if not os.path.exists('/tmp/.set_smb_admin'):
+            is_deferred = await self.middleware.call('cache.has_key', 'SMB_SET_ADMIN')
+            if not is_deferred:
                 return {'status': True, 'message': 'No delayed action detected. Exiting.'}
             else:
-                os.remove('/tmp/.set_smb_admin')
+                await self.middleware.call('cache.pop', 'SMB_SET_ADMIN')
 
         if not admin_group:
             smb = await self.middleware.call('smb.config')
@@ -176,8 +177,7 @@ class SMBService(SystemServiceService):
             self.logger.debug(f"Failed to convert {admin_group} to SID: ({sid['message']})")
             if "WBC_ERR_WINBIND_NOT_AVAILABLE" in sid['message']:
                 self.logger.debug("Delaying admin group add until winbind starts")
-                with open('/tmp/.set_smb_admin', 'a') as f:
-                    f.close()
+                await self.middleware.call('cache.put', 'SMB_SET_ADMIN', True)
 
                 return {'status': True, 'message': 'Delaying action until winbind starts'}
 
@@ -192,9 +192,9 @@ class SMBService(SystemServiceService):
         )
         output = (await proc.communicate())
         if output[1]:
-            return{'status': False, 'message': f"{output[1].decode()}"}
+            return {'status': False, 'message': {output[1].decode()}}
 
-        return{'status': True, 'message': f"Successfully added {admin_group} to BUILTIN\\Administrators"}
+        return {'status': True, 'message': f"Successfully added {admin_group} to BUILTIN\\Administrators"}
 
     @private
     async def common_charset_choices(self):
@@ -289,7 +289,7 @@ class SMBService(SystemServiceService):
             except (ValueError, TypeError):
                 verrors.add(f'smb_update.{i}', 'Not a valid mask')
 
-        if new['admin_group']:
+        if new['admin_group'] is not old['admin_group']:
             ret = await self.add_admin_group(f"{new['admin_group']}")
             if not ret['status']:
                 verrors.add('smb_update.admin_group', f"Failed to add SMB admin group: {ret['message']}")
