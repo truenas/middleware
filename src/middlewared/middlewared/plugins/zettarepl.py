@@ -3,6 +3,7 @@ import logging
 import multiprocessing
 import os
 import pytz
+import setproctitle
 import signal
 import threading
 import time
@@ -27,6 +28,7 @@ from middlewared.client import Client
 from middlewared.logger import setup_logging
 from middlewared.service import CallError, Service
 from middlewared.utils import start_daemon_thread
+from middlewared.worker import watch_parent
 
 SCAN_THREADS = {}
 
@@ -78,6 +80,8 @@ class ZettareplProcess:
         self.vmware_contexts = {}
 
     def __call__(self):
+        setproctitle.setproctitle('middlewared (zettarepl)')
+        start_daemon_thread(target=watch_parent)
         if logging.getLevelName(self.debug_level) == logging.TRACE:
             # If we want TRACE then we want all debug from zettarepl
             debug_level = "DEBUG"
