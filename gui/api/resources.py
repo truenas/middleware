@@ -738,14 +738,14 @@ class VolumeResourceMixin(NestedMixin):
     def prepend_urls(self):
         return [
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/datasets%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/datasets%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('datasets_list'),
                 name="api_volume_datasets"
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/datasets/"
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/datasets/"
                 "(?P<pk2>[a-zA-Z][\w/_\-\.]*)%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
@@ -753,14 +753,14 @@ class VolumeResourceMixin(NestedMixin):
                 name="api_volume_datasets_detail"
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/zvols%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/zvols%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('zvols_list'),
                 name="api_volume_zvols"
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/zvols/"
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/zvols/"
                 "(?P<pk2>[a-zA-Z][\w/_\-\.]*)%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
@@ -768,79 +768,79 @@ class VolumeResourceMixin(NestedMixin):
                 name="api_volume_zvols_detail"
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/replace%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/replace%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('replace_disk')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/offline%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/offline%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('offline_disk')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/online%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/online%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('online_disk')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/detach%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/detach%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('detach_disk')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/remove%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/remove%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('remove_disk')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/scrub%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/scrub%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('scrub')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/status%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/status%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('status')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/unlock%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/unlock%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('unlock')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/lock%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/lock%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('lock')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/upgrade%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/upgrade%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('upgrade')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/recoverykey%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/recoverykey%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('recoverykey')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/rekey%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/rekey%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('rekey')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z][\w/_\-\.]*)/keypassphrase%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/keypassphrase%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('keypassphrase')
