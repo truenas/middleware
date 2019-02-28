@@ -1737,7 +1737,11 @@ async def _event_devfs(middleware, event_type, args):
 
 async def _event_zfs(middleware, event_type, args):
     data = args['data']
+    # Swap must be configured only on disks being used by some pool,
+    # for this reason we must react to certain types of ZFS events to keep
+    # it in sync every time there is a change.
     if data.get('type') in (
+        'misc.fs.zfs.config_sync',
         'misc.fs.zfs.pool_create',
         'misc.fs.zfs.pool_destroy',
         'misc.fs.zfs.pool_import',
