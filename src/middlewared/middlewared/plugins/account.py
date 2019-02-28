@@ -171,30 +171,34 @@ class UserService(CRUDService):
         home_mode = data.pop('home_mode')
         if data['home'] and data['home'] != '/nonexistent':
             try:
-                os.makedirs(data['home'], mode=int(home_mode, 8))
-                os.chown(data['home'], data['uid'], group['gid'])
-            except FileExistsError:
-                if not os.path.isdir(data['home']):
-                    raise CallError(
-                        'Path for home directory already '
-                        'exists and is not a directory',
-                        errno.EEXIST
-                    )
+                try:
+                    os.makedirs(data['home'], mode=int(home_mode, 8))
+                    new_homedir = True
+                    os.chown(data['home'], data['uid'], group['gid'])
+                except FileExistsError:
+                    if not os.path.isdir(data['home']):
+                        raise CallError(
+                            'Path for home directory already '
+                            'exists and is not a directory',
+                            errno.EEXIST
+                        )
 
-                # If it exists, ensure the user is owner
-                os.chown(data['home'], data['uid'], group['gid'])
-            except OSError as oe:
-                raise CallError(
-                    'Failed to create the home directory '
-                    f'({data["home"]}) for user: {oe}'
-                )
-            else:
-                new_homedir = True
-            if os.stat(data['home']).st_dev == os.stat('/mnt').st_dev:
-                raise CallError(
-                    f'The path for the home directory "({data["home"]})" '
-                    'must include a volume or dataset.'
-                )
+                    # If it exists, ensure the user is owner
+                    os.chown(data['home'], data['uid'], group['gid'])
+                except OSError as oe:
+                    raise CallError(
+                        'Failed to create the home directory '
+                        f'({data["home"]}) for user: {oe}'
+                    )
+                if os.stat(data['home']).st_dev == os.stat('/mnt').st_dev:
+                    raise CallError(
+                        f'The path for the home directory "({data["home"]})" '
+                        'must include a volume or dataset.'
+                    )
+            except Exception:
+                if new_homedir:
+                    shutil.rmtree(data['home'])
+                raise
 
         if not data.get('uid'):
             data['uid'] = await self.get_next_uid()
