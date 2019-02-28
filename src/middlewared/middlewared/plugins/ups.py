@@ -58,14 +58,21 @@ class UPSService(SystemServiceService):
                     last = -3
                 else:
                     last = -1
-                driver = row[last].split()[0]
-                if driver not in self.DRIVERS_AVAILABLE:
-                    continue
-                if row[last].find(' (experimental)') != -1:
-                    row[last] = row[last].replace(' (experimental)', '').strip()
-                for i, field in enumerate(list(row)):
-                    row[i] = field
-                ups_choices['$'.join([row[last], row[3]])] = '%s (%s)' % (' '.join(row[0:last]), row[last])
+                driver_str = row[last]
+                driver_annotation = ''
+                m = re.match(r'(.+) \((.+)\)', driver_str)  # "blazer_usb (USB ID 0665:5161)"
+                if m:
+                    driver_str, driver_annotation = m.group(1), m.group(2)
+                for driver in driver_str.split(' or '):  # can be "blazer_ser or blazer_usb"
+                    driver = driver.strip()
+                    if driver not in self.DRIVERS_AVAILABLE:
+                        continue
+                    for i, field in enumerate(list(row)):
+                        row[i] = field
+                    ups_choices['$'.join([driver, row[3]])] = '%s (%s)' % (
+                        ' '.join(filter(None, row[0:last])),
+                        ', '.join(filter(None, [driver, driver_annotation]))
+                    )
         return ups_choices
 
     @private
