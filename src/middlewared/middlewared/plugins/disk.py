@@ -1282,7 +1282,7 @@ class DiskService(CRUDService):
                     swap_devices.append(mirror_name)
                     for c in consumers:
                         # Add all partitions used in swap, removing .eli
-                        used_partitions.add(c.provider.name.strip('.eli'))
+                        used_partitions.add(c.provider.name.replace('.eli', ''))
 
                     # If mirror has been configured automatically (not by middlewared)
                     # and there is no geli attached yet we should look for core in it.
@@ -1301,7 +1301,7 @@ class DiskService(CRUDService):
         # Add non-mirror swap devices
         # e.g. when there is a single disk
         swap_devices += [
-            i.devname.strip('.eli')
+            i.devname.replace('.eli', '')
             for i in getswapinfo() if not i.devname.startswith('mirror/')
         ]
 
