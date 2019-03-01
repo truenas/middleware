@@ -16,7 +16,6 @@ from middlewared.client import Client
 def main(command, quiet):
     client = Client()
     failover = client.call('datastore.query', 'failover.failover')
-    remote_licensed = client.call('failover.call_remote', 'failover.licensed')
     fo_exists = len(failover) > 0
     if fo_exists:
         failover = failover[0]
@@ -41,8 +40,8 @@ def main(command, quiet):
 
         if fo_exists:
             ret = client.call('failover.disabled_reasons')
-            if remote_licensed == False:
-                print("Failover status: Passive controller has no license")
+            if 'NO_LICENSE' in ret:
+                print("Failover status: Unavailable (passive controller has no license)")
             elif 'NO_FAILOVER' in ret:
                 print("Failover status: Administratively Disabled")
             elif 'NO_PONG' in ret:
