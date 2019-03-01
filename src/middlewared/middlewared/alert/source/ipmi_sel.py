@@ -105,6 +105,7 @@ class IPMISELAlertSource(AlertSource, DismissableAlertSource):
                 alerts.append(Alert(
                     title=title,
                     args=args,
+                    key=[title, args, record.datetime.isoformat()],
                     datetime=record.datetime,
                 ))
 
