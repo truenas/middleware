@@ -71,10 +71,15 @@ class IPMISELAlertSource(AlertSource, DismissableAlertSource):
         return await self._produce_alerts_for_ipmitool_output(
             (await run(["ipmitool", "-c", "sel", "elist"], encoding="utf8")).stdout)
 
-    async def dismiss(self, alerts):
-        await self.middleware.call("keyvalue.set", self.dismissed_datetime_kv_key, max(alert.datetime
-                                                                                       for alert in alerts))
-        return []
+    async def dismiss(self, alerts, key):
+        datetimes = [alert.datetime for alert in alerts.values() if alert.datetime <= alerts[key].datetime]
+        if await self.middleware.call("keyvalue.has_key", self.dismissed_datetime_kv_key):
+            datetimes.append(
+                (await self.middleware.call("keyvalue.get", self.dismissed_datetime_kv_key)).replace(tzinfo=None)
+            )
+
+        await self.middleware.call("keyvalue.set", self.dismissed_datetime_kv_key, max(datetimes))
+        return [alert for alert in alerts.values() if alert.datetime > alerts[key].datetime]
 
     async def _produce_alerts_for_ipmitool_output(self, output):
         alerts = []
@@ -84,7 +89,8 @@ class IPMISELAlertSource(AlertSource, DismissableAlertSource):
         if records:
             if await self.middleware.call("keyvalue.has_key", self.dismissed_datetime_kv_key):
                 dismissed_datetime = (
-                    await self.middleware.call("keyvalue.get", self.dismissed_datetime_kv_key)).replace(tzinfo=None)
+                    (await self.middleware.call("keyvalue.get", self.dismissed_datetime_kv_key)).replace(tzinfo=None)
+                )
             else:
                 # Prevent notifying about existing alerts on first install/upgrade
                 dismissed_datetime = max(record.datetime for record in records)
@@ -105,6 +111,7 @@ class IPMISELAlertSource(AlertSource, DismissableAlertSource):
                 alerts.append(Alert(
                     title=title,
                     args=args,
+                    key=[title, args, record.datetime.isoformat()],
                     datetime=record.datetime,
                 ))
 
