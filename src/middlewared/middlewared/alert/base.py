@@ -103,7 +103,7 @@ class ThreadedAlertSource(AlertSource):
 
 
 class DismissableAlertSource:
-    async def dismiss(self, alerts):
+    async def dismiss(self, alerts, key):
         raise NotImplementedError
 
 
