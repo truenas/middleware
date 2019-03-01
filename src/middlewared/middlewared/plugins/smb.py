@@ -40,6 +40,8 @@ class SMBService(SystemServiceService):
         for i in ('aio_enable', 'aio_rs', 'aio_ws'):
             smb.pop(i, None)
 
+        smb['netbiosalias'] = smb['netbiosalias'].split()
+
         smb['loglevel'] = LOGLEVEL_MAP.get(smb['loglevel'])
 
         return smb
@@ -102,7 +104,7 @@ class SMBService(SystemServiceService):
         'smb_update',
         Str('netbiosname'),
         Str('netbiosname_b'),
-        Str('netbiosalias'),
+        List('netbiosalias', default=[]),
         Str('workgroup'),
         Str('description'),
         Bool('enable_smb1'),
@@ -143,8 +145,13 @@ class SMBService(SystemServiceService):
         for i in ('workgroup', 'netbiosname', 'netbiosname_b', 'netbiosalias'):
             if i not in data or not data[i]:
                 continue
-            if not await self.__validate_netbios_name(data[i]):
-                verrors.add(f'smb_update.{i}', 'Invalid NetBIOS name')
+            if i == 'netbiosalias':
+                for idx, item in enumerate(data[i]):
+                    if not await self.__validate_netbios_name(item):
+                        verrors.add(f'smb_update.{i}.{idx}', f'Invalid NetBIOS name: {item}')
+            else:
+                if not await self.__validate_netbios_name(data[i]):
+                    verrors.add(f'smb_update.{i}', f'Invalid NetBIOS name: {data[i]}')
 
         if new['netbiosname'] and new['netbiosname'].lower() == new['workgroup'].lower():
             verrors.add('smb_update.netbiosname', 'NetBIOS and Workgroup must be unique')
@@ -167,9 +174,17 @@ class SMBService(SystemServiceService):
                 new['loglevel'] = k
                 break
 
+        await self.compress(new)
+
         await self._update_service(old, new)
 
         return await self.config()
+
+    @private
+    async def compress(self, data):
+        data['netbiosalias'] = ' '.join(data['netbiosalias'])
+
+        return data
 
 
 class SharingSMBService(CRUDService):
