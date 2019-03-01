@@ -738,7 +738,7 @@ def add_ldap_section(client, sc):
 
 def add_activedirectory_section(client, sc):
     activedirectory = Struct(client.call('datastore.query', 'directoryservice.activedirectory', None, {'get': True}))
-    ad = client.call('notifier.directoryservice', 'AD')
+    ad = Struct(client.call('notifier.directoryservice', 'AD'))
     use_ad_provider = False
 
     ad_cookie = ad.netbiosname
