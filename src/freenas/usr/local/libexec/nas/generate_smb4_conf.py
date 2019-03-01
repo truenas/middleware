@@ -507,17 +507,17 @@ def configure_idmap_ldap(smb4_conf, idmap, domain):
         idmap.idmap_ldap_range_high
     ))
     if idmap.idmap_ldap_ldap_base_dn:
-        confset1(smb4_conf, "idmap config %s: ldap base dn = %s" % (
+        confset1(smb4_conf, "idmap config %s: ldap_base_dn = %s" % (
             domain,
             idmap.idmap_ldap_ldap_base_dn
         ))
     if idmap.idmap_ldap_ldap_user_dn:
-        confset1(smb4_conf, "idmap config %s: ldap user dn = %s" % (
+        confset1(smb4_conf, "idmap config %s: ldap_user_dn = %s" % (
             domain,
             idmap.idmap_ldap_ldap_user_dn
         ))
     if idmap.idmap_ldap_ldap_url:
-        confset1(smb4_conf, "idmap config %s: ldap url = %s" % (
+        confset1(smb4_conf, "idmap config %s: ldap_url = %s" % (
             domain,
             idmap.idmap_ldap_ldap_url
         ))
