@@ -423,6 +423,13 @@ class UpdateService(Service):
 
         location = await self.middleware.call('notifier.get_update_location')
 
+        if attrs.get('train'):
+            data = await self.middleware.call('datastore.config', 'system.update')
+            if data['upd_train'] != attrs['train']:
+                await self.middleware.call('datastore.update', 'system.update', data['id'], {
+                    'upd_train': attrs['train']
+                })
+
         job.set_progress(0, 'Retrieving update manifest')
 
         handler = UpdateHandler(self, job)
