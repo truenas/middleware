@@ -6,7 +6,7 @@
 
 import sys
 import os
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, RC_TEST  # , DELETE, POST
@@ -21,6 +21,7 @@ def test_01_Configuring_rsyncd_service():
 def test_02_Starting_rsyncd_service():
     results = PUT("/services/services/rsync/", {"srv_enable": True})
     assert results.status_code == 200
+    sleep(1)
 
 
 def test_03_Checking_to_see_if_rsync_service_is_enabled():

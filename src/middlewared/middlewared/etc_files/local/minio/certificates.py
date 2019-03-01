@@ -3,16 +3,16 @@ import os
 import pwd
 
 
-async def render(service, middleware):
-    s3 = await middleware.call('s3.config')
+def render(service, middleware):
+    s3 = middleware.call_sync('s3.config')
 
     cert = s3.get('certificate')
     if not cert:
         return
     else:
-        await middleware.call('certificate.cert_services_validation', cert, 's3.certificate')
+        middleware.call_sync('certificate.cert_services_validation', cert, 's3.certificate')
 
-        cert = await middleware.call('certificate._get_instance', cert)
+        cert = middleware.call_sync('certificate._get_instance', cert)
 
         minio_path = "/usr/local/etc/minio"
 

@@ -107,6 +107,23 @@ class ZFSPoolService(CRUDService):
 
     @accepts(Str('pool'), Dict(
         'options',
+        Dict('properties', additional_attrs=True),
+    ))
+    def do_update(self, name, options):
+        try:
+            with libzfs.ZFS() as zfs:
+                pool = zfs.get(name)
+                for k, v in options['properties'].items():
+                    prop = pool.properties[k]
+                    if 'value' in v:
+                        prop.value = v['value']
+                    elif 'parsed' in v:
+                        prop.parsed = v['parsed']
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
+
+    @accepts(Str('pool'), Dict(
+        'options',
         Bool('force', default=False),
     ))
     def do_delete(self, name, options):
@@ -177,7 +194,7 @@ class ZFSPoolService(CRUDService):
                 Str('type', enum=['DISK']),
                 Str('path'),
             ),
-        ]),
+        ], null=True, default=None),
     )
     @job()
     def extend(self, job, name, new=None, existing=None):
@@ -335,17 +352,18 @@ class ZFSPoolService(CRUDService):
         Str('name_or_guid'),
         Dict('options', additional_attrs=True),
         Bool('any_host', default=True),
+        Str('cachefile', null=True, default=None),
     )
-    def import_pool(self, name_or_guid, options, any_host):
+    def import_pool(self, name_or_guid, options, any_host, cachefile):
         found = False
         with libzfs.ZFS() as zfs:
-            for pool in zfs.find_import():
+            for pool in zfs.find_import(cachefile=cachefile):
                 if pool.name == name_or_guid or str(pool.guid) == name_or_guid:
                     found = pool
                     break
 
             if not found:
-                raise CallError(f'Pool {name_or_guid} not found.')
+                raise CallError(f'Pool {name_or_guid} not found.', errno.ENOENT)
 
             zfs.import_pool(found, found.name, options, any_host=any_host)
 
@@ -367,6 +385,15 @@ class ZFSPoolService(CRUDService):
         for child in node['children']:
             unavails.extend(self.__find_not_online(child))
         return unavails
+
+    def get_vdev(self, name, vname):
+        try:
+            with libzfs.ZFS() as zfs:
+                pool = zfs.get(name)
+                vdev = find_vdev(pool, vname)
+                return vdev.__getstate__()
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
 
 
 class ZFSDatasetService(CRUDService):

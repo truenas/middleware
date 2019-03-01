@@ -221,6 +221,11 @@ class AFPForm(MiddlewareModelForm, ModelForm):
         else:
             self.fields['afp_srv_bindip'].initial = ('')
 
+    def middleware_clean(self, data):
+        for i in ('map_acls', 'chmod_request'):
+            data[i] = data[i].upper()
+        return data
+
 
 class NFSForm(MiddlewareModelForm, ModelForm):
 
@@ -468,14 +473,10 @@ class DynamicDNSForm(MiddlewareModelForm, ModelForm):
             )
         return password2
 
-    def clean(self):
-        cdata = self.cleaned_data
-        if not cdata.get("ddns_password"):
-            cdata['ddns_password'] = self.instance.ddns_password
-        return cdata
-
     def middleware_clean(self, update):
-        update["domain"] = update["domain"].split()
+        update["domain"] = update["domain"].replace(',', ' ').replace(';', ' ').split()
+        if not update.get('password'):
+            update.pop('password', None)
         return update
 
 

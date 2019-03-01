@@ -12,6 +12,6 @@ class SFTPRcloneRemote(BaseRcloneRemote):
         Str("host", title="Host", required=True),
         Int("port", title="Port"),
         Str("user", title="Username", required=True),
-        Str("pass", title="Password", required=True),
-        Str("key_file", title="PEM-encoded private key file path", required=True),
+        Str("pass", title="Password"),
+        Str("key_file", title="PEM-encoded private key file path"),
     ]

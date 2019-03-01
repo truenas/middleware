@@ -1568,6 +1568,11 @@ class TFTP(Model):
         verbose_name=_("Allow New Files"),
         default=False,
     )
+    tftp_host = models.CharField(
+        verbose_name=_("Host"),
+        max_length=120,
+        default="0.0.0.0",
+    )
     tftp_port = models.PositiveIntegerField(
         verbose_name=_("Port"),
         validators=[MinValueValidator(1), MaxValueValidator(65535)],
@@ -2152,14 +2157,14 @@ class S3(Model):
         verbose_name=_("Access key of 5 to 20 characters in length"),
         max_length=128,
         blank=True,
-        null=True,
+        default='',
         help_text=_("S3 username")
     )
     s3_secret_key = models.CharField(
         verbose_name=_("Secret key of 8 to 40 characters in length"),
         max_length=128,
         blank=True,
-        null=True,
+        default='',
         help_text=_("S3 password")
     )
     s3_browser = models.BooleanField(
@@ -2178,7 +2183,7 @@ class S3(Model):
         verbose_name=_("Disks"),
         max_length=8192,
         blank=False,
-        null=True,
+        default='',
         help_text=_("S3 filesystem directory")
     )
     s3_certificate = models.ForeignKey(

@@ -132,7 +132,8 @@ class bsdUsers(Model):
     )
     bsdusr_email = models.EmailField(
         verbose_name=_("E-mail"),
-        blank=True
+        blank=True,
+        null=True,
     )
     bsdusr_password_disabled = models.BooleanField(
         verbose_name=_("Disable password login"),

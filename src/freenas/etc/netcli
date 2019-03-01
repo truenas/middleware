@@ -568,7 +568,6 @@ Acceptable formats are 255.255.255.0,
 
 def reset_root_pw(*args):
     from freenasUI.account.models import bsdUsers
-    from middlewared.plugins.account import crypted_password
     qs = bsdUsers.objects.filter(bsdusr_uid=0)
     if not qs.exists():
         return None
@@ -593,8 +592,13 @@ def reset_root_pw(*args):
         waituser = False
 
     if p1:
-        user.bsdusr_unixhash = crypted_password(p1)
-        user.save()
+        try:
+            with client as c:
+                c.call("user.update", user.id, {"password": p1})
+        except (FileNotFoundError, ConnectionRefusedError):
+            from middlewared.plugins.account import crypted_password
+            user.bsdusr_unixhash = crypted_password(p1)
+            user.save()
         print()
         print(_('Password successfully changed.'))
         print()

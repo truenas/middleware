@@ -34,20 +34,15 @@ command line utility, this helper class can also be used to do these
 actions.
 """
 
-from decimal import Decimal
 import ctypes
-import glob
 import libzfs
 import logging
 import os
 import re
-import signal
 from subprocess import Popen, PIPE
-import subprocess
 import sys
 import syslog
 import tempfile
-import time
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
@@ -74,13 +69,11 @@ from django.utils.translation import ugettext as _
 from freenasUI.common.pipesubr import SIG_SETMASK
 from freenasUI.common.system import (
     exclude_path,
-    get_sw_name,
 )
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
-from freenasUI.middleware.multipath import Multipath
 from middlewared.plugins.pwenc import encrypt, decrypt
 
 import sysctl
@@ -523,37 +516,11 @@ class notifier(metaclass=HookMetaclass):
         Raises:
             MiddlewareError
         """
-
-        sw_name = get_sw_name()
-        label = "%smdu" % (sw_name, )
-        doc = self._geom_confxml()
-
-        pref = doc.xpath(
-            "//class[name = 'LABEL']/geom/"
-            "provider[name = 'label/%s']/../consumer/provider/@ref" % (label, )
-        )
-        if not pref:
-            proc = self._pipeopen("/sbin/mdconfig -a -t swap -s 2800m")
-            mddev, err = proc.communicate()
-            if proc.returncode != 0:
-                raise MiddlewareError("Could not create memory device: %s" % err)
-
-            self._system("/sbin/glabel create %s %s" % (label, mddev))
-
-            proc = self._pipeopen("newfs /dev/label/%s" % (label, ))
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                raise MiddlewareError("Could not create temporary filesystem: %s" % err)
-
-            self._system("/bin/rm -rf /var/tmp/firmware")
-            self._system("/bin/mkdir -p /var/tmp/firmware")
-            proc = self._pipeopen("mount /dev/label/%s /var/tmp/firmware" % (label, ))
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                raise MiddlewareError("Could not mount temporary filesystem: %s" % err)
-
-        self._system("/usr/sbin/chown www:www /var/tmp/firmware")
-        self._system("/bin/chmod 755 /var/tmp/firmware")
+        try:
+            with client as c:
+                c.call('update.create_upload_location')
+        except Exception as e:
+            raise MiddlewareError(str(e))
 
     def destroy_upload_location(self):
         """
@@ -567,123 +534,16 @@ class notifier(metaclass=HookMetaclass):
             bool
         """
 
-        sw_name = get_sw_name()
-        label = "%smdu" % (sw_name, )
-        doc = self._geom_confxml()
-
-        pref = doc.xpath(
-            "//class[name = 'LABEL']/geom/"
-            "provider[name = 'label/%s']/../consumer/provider/@ref" % (label, )
-        )
-        if not pref:
-            return False
-        prov = doc.xpath("//class[name = 'MD']//provider[@id = '%s']/name" % pref[0])
-        if not prov:
-            return False
-
-        mddev = prov[0].text
-
-        self._system("umount /dev/label/%s" % (label, ))
-        proc = self._pipeopen("mdconfig -d -u %s" % (mddev, ))
-        err = proc.communicate()[1]
-        if proc.returncode != 0:
-            raise MiddlewareError("Could not destroy memory device: %s" % err)
-
+        try:
+            with client as c:
+                c.call('update.destroy_upload_location')
+        except Exception as e:
+            raise MiddlewareError(str(e))
         return True
 
     def get_update_location(self):
         with client as c:
-            syspath = c.call('systemdataset.config')['path']
-        if syspath:
-            return '%s/update' % syspath
-        return '/var/tmp/update'
-
-    def validate_update(self, path):
-
-        os.chdir(os.path.dirname(path))
-
-        # XXX: ugly
-        self._system("rm -rf */")
-
-        percent = 0
-        with open('/tmp/.extract_progress', 'w') as fp:
-            fp.write("2|%d\n" % percent)
-            fp.flush()
-            with open('/tmp/.upgrade_extract', 'w') as f:
-                size = os.stat(path).st_size
-                proc = subprocess.Popen([
-                    "/usr/bin/tar",
-                    "-xSJpf",  # -S for sparse
-                    path,
-                ], stderr=f, encoding='utf8')
-                RE_TAR = re.compile(r"^In: (\d+)", re.M | re.S)
-                while True:
-                    if proc.poll() is not None:
-                        break
-                    try:
-                        os.kill(proc.pid, signal.SIGINFO)
-                    except Exception:
-                        break
-                    time.sleep(1)
-                    # TODO: We don't need to read the whole file
-                    with open('/tmp/.upgrade_extract', 'r') as f2:
-                        line = f2.read()
-                    reg = RE_TAR.findall(line)
-                    if reg:
-                        current = Decimal(reg[-1])
-                        percent = int((current / size) * 100)
-                        fp.write("2|%d\n" % percent)
-                        fp.flush()
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                os.chdir('/')
-                raise MiddlewareError(
-                    'The firmware image is invalid, make sure to use .txz file: %s' % err
-                )
-            fp.write("3|\n")
-            fp.flush()
-        os.unlink('/tmp/.extract_progress')
-        os.chdir('/')
-        return True
-
-    def apply_update(self, path):
-        from freenasUI.system.views import INSTALLFILE
-        import freenasOS.Configuration as Configuration
-        dirpath = os.path.dirname(path)
-        try:
-            os.chmod(dirpath, 0o755)
-        except OSError as e:
-            raise MiddlewareError("Unable to set permissions on update cache directory %s: %s" % (dirpath, str(e)))
-        open(INSTALLFILE, 'w').close()
-        try:
-            subprocess.check_output(
-                '/usr/local/bin/manifest_util sequence 2> /dev/null > {}/SEQUENCE'.format(dirpath),
-                shell=True,
-            )
-            conf = Configuration.Configuration()
-            with open('{}/SERVER'.format(dirpath), 'w') as f:
-                f.write('%s' % conf.UpdateServerName())
-            subprocess.check_output(
-                [
-                    '/usr/local/bin/freenas-update',
-                    '-C', dirpath,
-                    'update',
-                ],
-                stderr=subprocess.PIPE,
-            )
-        except subprocess.CalledProcessError as cpe:
-            raise MiddlewareError('Failed to apply update %s: %s' % (str(cpe), cpe.output))
-        finally:
-            os.chdir('/')
-            try:
-                os.unlink(path)
-            except OSError:
-                pass
-            try:
-                os.unlink(INSTALLFILE)
-            except OSError:
-                pass
-        open(NEED_UPDATE_SENTINEL, 'w').close()
+            return c.call('update.get_update_location')
 
     def get_volume_status(self, name):
         status = 'UNKNOWN'
@@ -1069,19 +929,6 @@ class notifier(metaclass=HookMetaclass):
         res = p1.communicate()[0]
         r = re.compile(r'scan: (resilver|scrub) in progress')
         return r.search(res) is not None
-
-    def multipath_all(self):
-        """
-        Get all available gmultipath instances
-
-        Returns:
-            A list of Multipath objects
-        """
-        doc = self._geom_confxml()
-        return [
-            Multipath(doc=doc, xmlnode=geom)
-            for geom in doc.xpath("//class[name = 'MULTIPATH']/geom")
-        ]
 
     def sysctl(self, name):
         """

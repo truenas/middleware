@@ -15,12 +15,14 @@ import time
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
 from middlewared.utils import filter_list
+from middlewared.utils.debug import get_threads_stacks
 from middlewared.logger import Logger
 from middlewared.job import Job
 from middlewared.pipe import Pipes
 
 
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
+get_or_insert_lock = asyncio.Lock()
 
 
 def item_method(fn):
@@ -266,8 +268,12 @@ class ConfigService(ServiceChangeMixin, Service):
         try:
             return await self.middleware.call('datastore.config', datastore, options)
         except IndexError:
-            await self.middleware.call('datastore.insert', datastore, {})
-            return await self.middleware.call('datastore.config', datastore, options)
+            async with get_or_insert_lock:
+                try:
+                    return await self.middleware.call('datastore.config', datastore, options)
+                except IndexError:
+                    await self.middleware.call('datastore.insert', datastore, {})
+                    return await self.middleware.call('datastore.config', datastore, options)
 
 
 class SystemServiceService(ConfigService):
@@ -362,7 +368,7 @@ class CRUDService(ServiceChangeMixin, Service):
 
     async def _get_instance(self, id):
         """
-        Helpher method to get an instance from a collection given the `id`.
+        Helper method to get an instance from a collection given the `id`.
         """
         instance = await self.middleware.call(f'{self._config.namespace}.query', [('id', '=', id)])
         if not instance:
@@ -401,6 +407,20 @@ class CoreService(Service):
                 description=progress.get('description'),
                 extra=progress.get('extra'),
             )
+
+    @private
+    def notify_postinit(self):
+        # Sentinel file to tell we have gone far enough in the boot process.
+        # See #17508
+        open('/tmp/.bootready', 'w').close()
+
+        # Send event to middlewared saying we are late enough in the process to call it ready
+        self.middleware.call_sync(
+            'core.event_send',
+            'system',
+            'ADDED',
+            {'id': 'ready'}
+        )
 
     @accepts(Int('id'))
     def job_abort(self, id):
@@ -662,6 +682,10 @@ class CoreService(Service):
             import pydevd
             pydevd.stoptrace()
             pydevd.settrace(host=options['host'])
+
+    @private
+    def threads_stacks(self):
+        return get_threads_stacks()
 
     @accepts(Str("method"), List("params", default=[]))
     @job(lock=lambda args: f"bulk:{args[0]}")

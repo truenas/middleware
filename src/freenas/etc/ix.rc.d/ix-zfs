@@ -9,74 +9,9 @@
 
 . /etc/rc.subr
 
-#
-# Generate fstab right before mountlate.
-#
 import_zpools()
 {
-	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
-	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
-	kldload dtraceall
-	dtrace -qn 'zfs-dbgmsg{printf("\r                                                                     \r%s", stringof(arg0))}' &
-	echo "Beginning ZFS volume imports"
-	echo
-	local IFS="|"
-	local f="vol_name vol_guid"
-	local sf=$(var_to_sf $f)
-	local rc=1
-	if [ ! -d "/data/zfs" ]; then
-		mkdir /data/zfs || true
-	fi
-	if checkyesno failover_enable; then
-		# Failover system will decide whether to import the pools.
-		exit
-	fi
-	if [ -e /data/zfs/killcache ]; then
-		rm -f /data/zfs/zpool.cache /data/zfs/zpool.cache.saved
-	else
-		touch /data/zfs/killcache
-		fsync /data/zfs/killcache
-	fi
-	if [ -s /data/zfs/zpool.cache ]; then
-		if ([ ! -e /data/zfs/zpool.cache.saved ] || [ /data/zfs/zpool.cache -nt /data/zfs/zpool.cache.saved ]); then
-			cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved
-		fi
-	fi
-	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT $sf FROM storage_volume WHERE vol_encrypt < 2" | \
-	while eval read -r $f; do
-		if [ -n "${vol_guid}" ]; then
-			echo "	Importing ${vol_guid}"
-			echo
-			[ -e /data/zfs/zpool.cache.saved ] && /sbin/zpool import -c /data/zfs/zpool.cache.saved -o cachefile=none -R /mnt -f ${vol_guid} || /sbin/zpool import -o cachefile=none -R /mnt -f ${vol_guid}
-			rc=$?
-		fi
-		if [ ${rc} -ne 0 ]; then
-			echo "	Importing ${vol_name}"
-			echo
-			/sbin/zpool import -o cachefile=none -R /mnt -f ${vol_name}
-		fi
-		/sbin/zpool set cachefile=/data/zfs/zpool.cache ${vol_name}
-		# Fixup mountpoints
-		[ -d /mnt/mnt ] && /sbin/zfs inherit -r mountpoint ${vol_name}
-	done
-	rm -f /data/zfs/killcache
-	cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved 2> /dev/null
-
-	IFS=$'\n'
-	for mp in $(/sbin/zfs list -H|/usr/bin/awk '{ print $5 }'); do
-		if [ -f "${mp}/.windows" ] ; then
-			local dataset aclmode
-
-			dataset="${mp##/mnt/}"
-			aclmode="$(/sbin/zfs get -H aclmode "${dataset}"|awk '{ print $3 }')"
-			if [ "${aclmode}" != "restricted" ] ; then
-				/sbin/zfs set aclmode=restricted "${dataset}"
-			fi
-		fi
-	done
-	pkill -9 dtrace
-	echo
-	echo "ZFS volume imports complete"
+	/usr/local/bin/midclt call -job --job-print description pool.import_on_boot > /dev/null
 }
 
 name="ix-zfs"

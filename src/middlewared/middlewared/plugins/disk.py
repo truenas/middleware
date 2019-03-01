@@ -85,7 +85,7 @@ class DiskService(CRUDService):
             Str('hddstandby', enum=[
                 'ALWAYS ON', '5', '10', '20', '30', '60', '120', '180', '240', '300', '330'
             ]),
-            Str('passwd', password=True),
+            Str('passwd', private=True),
             Str('smartoptions'),
             Int('critical', null=True),
             Int('difference', null=True),
@@ -136,6 +136,7 @@ class DiskService(CRUDService):
             else:
                 await self.toggle_smart_off(new['name'])
 
+            await self.middleware.call('service.restart', 'collectd')
             await self._service_change('smartd', 'restart')
 
         updated_data = await self.query(
@@ -830,6 +831,10 @@ class DiskService(CRUDService):
         else:
             disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
 
+        if await self.middleware.call('service.started', 'collectd'):
+            await self.middleware.call('service.restart', 'collectd')
+        await self._service_change('smartd', 'restart')
+
         if not await self.middleware.call('system.is_freenas'):
             await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
@@ -852,6 +857,7 @@ class DiskService(CRUDService):
 
         seen_disks = {}
         serials = []
+        changed = False
         await self.middleware.run_in_thread(geom.scan)
         for disk in (await self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})):
 
@@ -865,12 +871,14 @@ class DiskService(CRUDService):
                 if not disk['disk_expiretime']:
                     disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=DISK_EXPIRECACHE_DAYS)
                     await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                    changed = True
                 elif disk['disk_expiretime'] < datetime.utcnow():
                     # Disk expire time has surpassed, go ahead and remove it
                     for extent in await self.middleware.call(
                             'iscsi.extent.query', [['type', '=', 'DISK'], ['path', '=', disk['disk_identifier']]]):
                         await self.middleware.call('iscsi.extent.delete', extent['id'])
                     await self.middleware.call('datastore.delete', 'storage.disk', disk['disk_identifier'])
+                    changed = True
                 continue
             else:
                 disk['disk_expiretime'] = None
@@ -902,6 +910,7 @@ class DiskService(CRUDService):
             # when lots of drives are present
             if disk != original_disk:
                 await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                changed = True
 
             if not await self.middleware.call('system.is_freenas'):
                 await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
@@ -946,11 +955,18 @@ class DiskService(CRUDService):
                     # when lots of drives are present
                     if disk != original_disk:
                         await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                        changed = True
                 else:
                     disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
+                    changed = True
 
                 if not await self.middleware.call('system.is_freenas'):
                     await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+
+        if changed:
+            if await self.middleware.call('service.started', 'collectd'):
+                await self.middleware.call('service.restart', 'collectd')
+            await self._service_change('smartd', 'restart')
 
         return "OK"
 
@@ -1248,6 +1264,7 @@ class DiskService(CRUDService):
 
         used_partitions = set()
         swap_devices = []
+        disks = [i async for i in await self.middleware.call('pool.get_disks')]
         klass = geom.class_by_name('MIRROR')
         if klass:
             for g in klass.geoms:
@@ -1255,16 +1272,17 @@ class DiskService(CRUDService):
                 if not g.name.startswith('swap') or g.name.endswith('.sync'):
                     continue
                 consumers = list(g.consumers)
-                # If the mirror is degraded lets remove it and make a new pair
-                if len(consumers) == 1:
-                    c = consumers[0]
-                    await self.swaps_remove_disks([c.provider.geom.name])
+                # If the mirror is degraded or disk is not in a pool lets remove it
+                if len(consumers) == 1 or any(filter(
+                    lambda c: c.provider.geom.name not in disks, consumers
+                )):
+                    await self.swaps_remove_disks([c.provider.geom.name for c in consumers])
                 else:
                     mirror_name = f'mirror/{g.name}'
                     swap_devices.append(mirror_name)
                     for c in consumers:
                         # Add all partitions used in swap, removing .eli
-                        used_partitions.add(c.provider.name.strip('.eli'))
+                        used_partitions.add(c.provider.name.replace('.eli', ''))
 
                     # If mirror has been configured automatically (not by middlewared)
                     # and there is no geli attached yet we should look for core in it.
@@ -1280,6 +1298,13 @@ class DiskService(CRUDService):
         if not klass:
             return
 
+        # Add non-mirror swap devices
+        # e.g. when there is a single disk
+        swap_devices += [
+            i.devname.replace('.eli', '')
+            for i in getswapinfo() if not i.devname.startswith('mirror/')
+        ]
+
         # Get all partitions of swap type, indexed by size
         swap_partitions_by_size = defaultdict(list)
         for g in klass.geoms:
@@ -1291,7 +1316,8 @@ class DiskService(CRUDService):
                         # Only try savecore if the partition is not already in use
                         # to avoid errors in the console (#27516)
                         await run('savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{p.name}', check=False)
-                        swap_partitions_by_size[p.mediasize].append(p.name)
+                        if g.name in disks:
+                            swap_partitions_by_size[p.mediasize].append(p.name)
 
         dumpdev = False
         unused_partitions = []
@@ -1304,8 +1330,23 @@ class DiskService(CRUDService):
             for i in range(int(len(partitions) / 2)):
                 if len(swap_devices) > MIRROR_MAX:
                     break
-                part_a, part_b = partitions[0:2]
+                part_ab = partitions[0:2]
                 partitions = partitions[2:]
+
+                # We could have a single disk being used as swap, without mirror.
+                # If thats the case the swap must be removed for said disk to allow the
+                # new gmirror to be created
+                try:
+                    for i in part_ab:
+                        if i in list(swap_devices):
+                            await self.swaps_remove_disks([i.split('p')[0]])
+                            swap_devices.remove(i)
+                except Exception:
+                    self.logger.warn('Failed to remove disk from swap', exc_info=True)
+                    # If something failed here there is no point in trying to create the mirror
+                    continue
+                part_a, part_b = part_ab
+
                 if not dumpdev:
                     dumpdev = await dempdev_configure(part_a)
                 try:
@@ -1314,8 +1355,8 @@ class DiskService(CRUDService):
                         # Which means maximum has been reached and we can stop
                         break
                     await run('gmirror', 'create', name, part_a, part_b)
-                except Exception:
-                    self.logger.warn(f'Failed to create gmirror {name}', exc_info=True)
+                except subprocess.CalledProcessError as e:
+                    self.logger.warn('Failed to create gmirror %s: %s', name, e.stderr.decode())
                     continue
                 swap_devices.append(f'mirror/{name}')
                 # Add remaining partitions to unused list
@@ -1415,6 +1456,22 @@ class DiskService(CRUDService):
           - FULL_RANDOM: write whole disk with random bytes
         """
         await self.swaps_remove_disks([dev])
+
+        # Its possible a disk was previously used by graid so we need to make sure to
+        # remove the disk from it (#40560)
+        gdisk = geom.class_by_name('DISK')
+        graid = geom.class_by_name('RAID')
+        if gdisk and graid:
+            prov = gdisk.xml.find(f'.//provider[name = "{dev}"]')
+            if prov is not None:
+                provid = prov.attrib.get('id')
+                graid = graid.xml.find(f'.//consumer/provider[@ref = "{provid}"]/../../name')
+                if graid is not None:
+                    cp = await run('graid', 'remove', graid.text, dev, check=False)
+                    if cp.returncode != 0:
+                        self.logger.debug(
+                            'Failed to remove %s from %s: %s', dev, graid.text, cp.stderr.decode()
+                        )
 
         # First do a quick wipe of every partition to clean things like zfs labels
         if mode == 'QUICK':
@@ -1678,6 +1735,32 @@ async def _event_devfs(middleware, event_type, args):
             await middleware.call('disk.swaps_configure')
 
 
+async def _event_zfs(middleware, event_type, args):
+    data = args['data']
+    # Swap must be configured only on disks being used by some pool,
+    # for this reason we must react to certain types of ZFS events to keep
+    # it in sync every time there is a change.
+    if data.get('type') in (
+        'misc.fs.zfs.config_sync',
+        'misc.fs.zfs.pool_create',
+        'misc.fs.zfs.pool_destroy',
+        'misc.fs.zfs.pool_import',
+    ):
+        asyncio.ensure_future(middleware.call('disk.swaps_configure'))
+
+
+async def _event_system_ready(middleware, event_type, args):
+    if args['id'] != 'ready':
+        return
+
+    # Configure disks power management
+    asyncio.ensure_future(middleware.call('disk.configure_power_management'))
+
+
 def setup(middleware):
     # Listen to DEVFS events so we can sync on disk attach/detach
     middleware.event_subscribe('devd.devfs', _event_devfs)
+    # Listen to ZFS events to reconfigure swap on pool create/export/import
+    middleware.event_subscribe('devd.zfs', _event_zfs)
+    # Run disk tasks once system is ready (e.g. power management)
+    middleware.event_subscribe('system', _event_system_ready)

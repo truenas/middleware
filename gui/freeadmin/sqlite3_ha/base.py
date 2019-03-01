@@ -2,8 +2,6 @@
 import logging
 import os
 import threading
-import time
-from sqlite3 import OperationalError
 
 from django.db.backends.sqlite3 import base as sqlite3base
 from lockfile import LockFile, LockTimeout
@@ -375,41 +373,12 @@ class HASQLiteCursorWrapper(Database.Cursor):
             if execute_sync:
                 rsr.join()
 
-    def locked_retry(self, method, *args, **kwargs):
-        """
-        There are multiple processes accessing the sqlite3 database
-        which in turn denies concurrent accesses.
-        To try to mitigate the issue we retry the query a few times
-        before bailing out.
-        See #19733
-        """
-        retries = 0
-        while True:
-            try:
-                rv = method(self, *args, **kwargs)
-            except OperationalError as e:
-                if 'locked' not in str(e):
-                    raise
-                if retries < 5:
-                    time.sleep(0.3)
-                    retries += 1
-                    continue
-                else:
-                    try:
-                        from freenasUI.freeadmin.utils import log_db_locked
-                        log_db_locked()
-                    except Exception:
-                        pass
-                    raise e
-            break
-        return rv
-
     def execute(self, query, params=None):
 
         if params is None:
-            return self.locked_retry(Database.Cursor.execute, query)
+            return super().execute(query)
         query = self.convert_query(query)
-        execute = self.locked_retry(Database.Cursor.execute, query, params)
+        execute = super().execute(query, params)
 
         # Allow sync to be bypassed just to be extra safe on things like
         # database migration.
@@ -429,13 +398,13 @@ class HASQLiteCursorWrapper(Database.Cursor):
 
     def executelocal(self, query, params=None):
         if params is None:
-            return self.locked_retry(Database.Cursor.execute, query)
+            return super().execute(query)
         query = self.convert_query(query)
-        return self.locked_retry(Database.Cursor.execute, query, params)
+        return super().execute(query, params)
 
     def executemany(self, query, param_list):
         query = self.convert_query(query)
-        return self.locked_retry(Database.Cursor.executemany, query, param_list)
+        return super().executemany(query, param_list)
 
     def convert_query(self, query):
         return sqlite3base.FORMAT_QMARK_REGEX.sub('?', query).replace(

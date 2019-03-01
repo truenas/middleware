@@ -525,7 +525,13 @@ def main():
     subparsers = parser.add_subparsers(help='sub-command help', dest='name')
     iparser = subparsers.add_parser('call', help='Call method')
     iparser.add_argument(
-        '-j', '--job', help='Call a long running job with progress bars', type=bool, default=False
+        '-j', '--job', help='Call a long running job', type=bool, default=False
+    )
+    iparser.add_argument(
+        '-jp', '--job-print',
+        help='Method to print job progress', type=str, choices=(
+            'progressbar', 'description',
+        ), default='progressbar',
     )
     iparser.add_argument('method', nargs='+')
 
@@ -564,16 +570,32 @@ def main():
                     if args.timeout:
                         kwargs['timeout'] = args.timeout
                     if args.job:
-                        # display the job progress and status message while we wait
-                        with ProgressBar() as progress_bar:
+                        if args.job_print == 'progressbar':
+                            # display the job progress and status message while we wait
+                            with ProgressBar() as progress_bar:
+                                kwargs.update({
+                                    'job': True,
+                                    'callback': lambda job: progress_bar.update(
+                                        job['progress']['percent'], job['progress']['description']
+                                    )
+                                })
+                                rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
+                                progress_bar.finish()
+                        else:
+                            lastdesc = ''
+
+                            def callback(job):
+                                nonlocal lastdesc
+                                desc = job['progress']['description']
+                                if desc != lastdesc:
+                                    print(desc, file=sys.stderr)
+                                lastdesc = desc
+
                             kwargs.update({
                                 'job': True,
-                                'callback': lambda job: progress_bar.update(
-                                    job['progress']['percent'], job['progress']['description']
-                                )
+                                'callback': callback,
                             })
                             rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
-                            progress_bar.finish()
                     else:
                         rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
                     if isinstance(rv, (int, str)):
@@ -621,8 +643,10 @@ def main():
             number = 0
 
             def cb(mtype, **message):
+                nonlocal number
                 print(json.dumps(message))
-                if args.number and args.number >= number:
+                number += 1
+                if args.number and number >= args.number:
                     event.set()
 
             c.subscribe(args.event, cb)

@@ -7,6 +7,8 @@ from .restful import RESTfulAPI
 from .schema import Error as SchemaError, Schemas
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from .utils import start_daemon_thread, load_modules, load_classes
+from .utils.debug import get_threads_stacks
+from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from aiohttp import web
@@ -20,6 +22,7 @@ import argparse
 import asyncio
 import binascii
 import concurrent.futures
+import concurrent.futures.process
 import errno
 import functools
 import inspect
@@ -53,6 +56,8 @@ class Application(object):
         self.logger = logger.Logger('application').getLogger()
         self.session_id = str(uuid.uuid4())
 
+        # Allow at most 10 concurrent calls and only queue up until 20
+        self._softhardsemaphore = SoftHardSemaphore(10, 20)
         self._py_exceptions = False
 
         """
@@ -159,7 +164,8 @@ class Application(object):
     async def call_method(self, message):
 
         try:
-            result = await self.middleware.call_method(self, message)
+            async with self._softhardsemaphore:
+                result = await self.middleware.call_method(self, message)
             if isinstance(result, Job):
                 result = result.id
             elif isinstance(result, types.GeneratorType):
@@ -171,6 +177,12 @@ class Application(object):
                 'msg': 'result',
                 'result': result,
             })
+        except SoftHardSemaphoreLimit as e:
+            self.send_error(
+                message,
+                errno.ETOOMANYREFS,
+                f'Maximum number of concurrent calls ({e.args[0]}) has exceeded.',
+            )
         except ValidationError as e:
             self.send_error(message, e.errno, str(e), sys.exc_info(), etype='VALIDATION', extra=[
                 (e.attribute, e.errmsg, e.errno),
@@ -554,6 +566,7 @@ class ShellWorkerThread(threading.Thread):
                 cmd = [
                     '/usr/local/bin/iocage',
                     'console',
+                    '-f',
                     self.jail
                 ]
             os.execve(cmd[0], cmd, {
@@ -748,14 +761,11 @@ class Middleware(object):
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
         multiprocessing.set_start_method('spawn')
-        self.__procpool = concurrent.futures.ProcessPoolExecutor(
-            max_workers=2,
-            initializer=functools.partial(worker_init, debug_level, log_handler),
-        )
         self.__threadpool = concurrent.futures.ThreadPoolExecutor(
             initializer=lambda: set_thread_name('threadpool_ws'),
             max_workers=10,
         )
+        self.__init_procpool()
         self.jobs = JobsQueue(self)
         self.__schemas = Schemas()
         self.__services = {}
@@ -799,7 +809,14 @@ class Middleware(object):
                     self.add_service(cls(self))
 
                 if hasattr(mod, 'setup'):
-                    setup_funcs.append((mod.__name__.rsplit('.', 1)[-1], mod.setup))
+                    setup_plugin = mod.__name__.rsplit('.', 1)[-1]
+                    # TODO: Let's please remove this conditional when we have order defined for setup functions
+                    # We need to run system plugin setup's function first because when system boots, the right
+                    # timezone is not configured. See #72131
+                    if setup_plugin == 'system':
+                        setup_funcs.insert(0, (setup_plugin, mod.setup))
+                    else:
+                        setup_funcs.append((setup_plugin, mod.setup))
 
         self._console_write(f'resolving plugins schemas')
         # Now that all plugins have been loaded we can resolve all method params
@@ -1014,8 +1031,21 @@ class Middleware(object):
         """
         return await self.run_in_executor(self.__threadpool, method, *args, **kwargs)
 
+    def __init_procpool(self):
+        self.__procpool = concurrent.futures.ProcessPoolExecutor(
+            max_workers=2,
+            initializer=functools.partial(worker_init, self.debug_level, self.log_handler),
+        )
+
     async def run_in_proc(self, method, *args, **kwargs):
-        return await self.run_in_executor(self.__procpool, method, *args, **kwargs)
+        retries = 2
+        for i in range(retries):
+            try:
+                return await self.run_in_executor(self.__procpool, method, *args, **kwargs)
+            except concurrent.futures.process.BrokenProcessPool:
+                if i == retries - 1:
+                    raise
+                self.__init_procpool()
 
     async def run_in_thread(self, method, *args, **kwargs):
         executor = concurrent.futures.ThreadPoolExecutor(
@@ -1186,6 +1216,10 @@ class Middleware(object):
         import pdb
         pdb.set_trace()
 
+    def log_threads_stacks(self):
+        for thread_id, stack in get_threads_stacks().items():
+            self.logger.debug('Thread %d stack:\n%s', thread_id, ''.join(stack))
+
     async def ws_handler(self, request):
         ws = web.WebSocketResponse()
         await ws.prepare(request)
@@ -1258,6 +1292,7 @@ class Middleware(object):
         self.__loop.add_signal_handler(signal.SIGINT, self.terminate)
         self.__loop.add_signal_handler(signal.SIGTERM, self.terminate)
         self.__loop.add_signal_handler(signal.SIGUSR1, self.pdb)
+        self.__loop.add_signal_handler(signal.SIGUSR2, self.log_threads_stacks)
 
         app.router.add_route('GET', '/websocket', self.ws_handler)
 

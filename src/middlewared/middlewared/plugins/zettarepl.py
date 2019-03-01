@@ -3,6 +3,7 @@ import logging
 import multiprocessing
 import os
 import pytz
+import setproctitle
 import signal
 import threading
 import time
@@ -20,12 +21,14 @@ from zettarepl.scheduler.scheduler import Scheduler
 from zettarepl.scheduler.tz_clock import TzClock
 from zettarepl.transport.create import create_transport
 from zettarepl.transport.local import LocalShell
+from zettarepl.utils.logging import LongStringsFilter
 from zettarepl.zettarepl import Zettarepl
 
 from middlewared.client import Client
 from middlewared.logger import setup_logging
 from middlewared.service import CallError, Service
 from middlewared.utils import start_daemon_thread
+from middlewared.worker import watch_parent
 
 SCAN_THREADS = {}
 
@@ -77,6 +80,8 @@ class ZettareplProcess:
         self.vmware_contexts = {}
 
     def __call__(self):
+        setproctitle.setproctitle('middlewared (zettarepl)')
+        start_daemon_thread(target=watch_parent)
         if logging.getLevelName(self.debug_level) == logging.TRACE:
             # If we want TRACE then we want all debug from zettarepl
             debug_level = "DEBUG"
@@ -85,7 +90,9 @@ class ZettareplProcess:
             debug_level = "INFO"
         else:
             debug_level = self.debug_level
-        setup_logging("zettarepl", debug_level, self.log_handler)
+        setup_logging("", debug_level, self.log_handler)
+        for handler in logging.getLogger().handlers:
+            handler.addFilter(LongStringsFilter())
 
         definition = Definition.from_data(self.definition)
 
@@ -324,6 +331,7 @@ class ZettareplService(Service):
                 "embed": replication_task["embed"],
                 "compressed": replication_task["compressed"],
                 "retries": replication_task["retries"],
+                "logging-level": (replication_task["logging_level"] or "NOTSET").lower(),
             }
 
             if replication_task["naming_schema"]:

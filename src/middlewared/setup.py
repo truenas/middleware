@@ -5,6 +5,9 @@ except ImportError:
     import sys
     print("fastentrypoints module not found. entry points will be slower.", file=sys.stderr)
 from setuptools import find_packages, setup
+from setuptools.command.install import install
+
+from babel.messages import frontend as babel
 
 
 install_requires = [
@@ -30,6 +33,16 @@ def get_assets(name):
     for root, dirs, files in os.walk(os.path.join(base_path, name)):
         result.append(f'{os.path.relpath(root, base_path)}/*')
     return result
+
+
+class InstallWithBabel(install):
+    def run(self):
+        compiler = babel.compile_catalog(self.distribution)
+        option_dict = self.distribution.get_option_dict('compile_catalog')
+        compiler.domain = [option_dict['domain'][1]]
+        compiler.directory = option_dict['directory'][1]
+        compiler.run()
+        super().run()
 
 
 setup(
@@ -61,5 +74,13 @@ setup(
             'midgdb = middlewared.scripts.gdb:main',
             'sedhelper = middlewared.scripts.sedhelper:main',
         ],
+    },
+    cmdclass={
+        'install': InstallWithBabel,
+
+        'compile_catalog': babel.compile_catalog,
+        'extract_messages': babel.extract_messages,
+        'init_catalog': babel.init_catalog,
+        'update_catalog': babel.update_catalog,
     },
 )

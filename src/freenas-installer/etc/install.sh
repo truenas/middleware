@@ -266,11 +266,10 @@ get_media_description()
     local _cap
 
     _media=$1
-    VAL=""
     if [ -n "${_media}" ]; then
 	_description=`geom disk list ${_media} 2>/dev/null \
 	    | sed -ne 's/^   descr: *//p'`
-	if [ -z "$_description" ] ; then
+	if [ -z "${_description}" ]; then
 	    _description="Unknown Device"
 	fi
 	_cap=`diskinfo ${_media} | awk \
@@ -278,7 +277,7 @@ get_media_description()
 	    -v GiB=${GiB}.0 \
 	    -v MiB=${MiB}.0 \
 	'{
-	    capacity = $3;
+	    capacity = int($3);
 	    if (capacity >= TiB) {
 	        printf("%.1f TiB", capacity / TiB);
 	    } else if (capacity >= GiB) {
@@ -289,9 +288,8 @@ get_media_description()
 	        printf("%d Bytes", capacity);
 	    }
 	}'`
-	VAL="${_description} -- ${_cap}"
+	echo "${_description} -- ${_cap}"
     fi
-    export VAL
 }
 
 disk_is_mounted()
@@ -904,8 +902,7 @@ menu_install()
 	    _list=""
 	    _items=0
 	    for _disk in ${_disklist}; do
-		get_media_description "${_disk}"
-		_desc="${VAL}"
+		_desc=$(get_media_description "${_disk}" | sed "s/'/'\\\''/g")
 		_list="${_list} ${_disk} '${_desc}' off"
 		_items=$((${_items} + 1))
 	    done

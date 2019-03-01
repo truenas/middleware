@@ -51,7 +51,6 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.util import JobAborted, JobFailed, wait_job
 from freenasUI.system.models import Advanced
 from freenasUI.services.exceptions import ServiceFailed
-from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
 
 DISK_WIPE_JOB_ID = None
@@ -143,8 +142,7 @@ def volumemanager(request):
     _n = notifier()
     disks = []
     # Grab disk list
-    # Root device already ruled out
-    for disk, info in list(_n.get_disks().items()):
+    for disk, info in list(_n.get_disks(unused=True).items()):
         disks.append(forms.Disk(
             info['devname'],
             info['capacity'],
@@ -152,18 +150,8 @@ def volumemanager(request):
         ))
     disks = sorted(disks, key=cmp_to_key(_diskcmp))
 
-    # Exclude what's already added
-    used_disks = []
-    for v in models.Volume.objects.all():
-        used_disks.extend(v.get_disks())
-
-    qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
-    used_disks.extend([i.get_device()[5:] for i in qs])
-
     bysize = dict()
     for d in list(disks):
-        if d.dev in used_disks:
-            continue
         hsize = forms.humanize_number_si(d.size)
         if hsize not in bysize:
             bysize[hsize] = []
@@ -262,17 +250,20 @@ def volumemanager_zfs(request):
                 (zpoolfields.search(i).group(1), i, request.POST.get(i))
                 for i in list(request.POST.keys()) if zpoolfields.match(i)
             ]
+            zfsextradisks = [v[0] for v in zfsextra if v[2] != 'none']
 
     else:
         form = forms.ZFSVolumeWizardForm()
         disks = []
         zfsextra = None
+        zfsextradisks = []
     # dedup = forms._dedup_enabled()
     dedup = True
     return render(request, 'storage/zfswizard.html', {
         'form': form,
         'disks': disks,
         'zfsextra': zfsextra,
+        'zfsextradisks': zfsextradisks,
         'dedup': dedup,
     })
 
@@ -777,33 +768,26 @@ def multipath_status(request):
 
 
 def multipath_status_json(request):
+    with client as c:
+        multipaths = c.call('multipath.query')
 
-    multipaths = notifier().multipath_all()
     _id = 1
     items = []
     for mp in multipaths:
         children = []
-        for cn in mp.consumers:
-            actions = {}
-            items.append({
-                'id': str(_id),
-                'name': cn.devname,
-                'status': cn.status,
-                'lunid': cn.lunid,
-                'type': 'consumer',
-                'actions': json.dumps(actions),
-            })
+        for cn in mp['children']:
+            cn['id'] = str(_id)
+            cn['lunid'] = cn.pop('lun_id')
+            cn['actions'] = '{}'
+            items.append(cn)
             children.append({'_reference': str(_id)})
             _id += 1
-        data = {
-            'id': str(_id),
-            'name': mp.devname,
-            'status': mp.status,
-            'type': 'root',
-            'children': children,
-        }
-        items.append(data)
+
+        mp['id'] = str(_id)
+        mp['children'] = children
+        items.append(mp)
         _id += 1
+
     return HttpResponse(json.dumps({
         'identifier': 'id',
         'label': 'name',

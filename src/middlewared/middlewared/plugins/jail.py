@@ -36,6 +36,12 @@ class JailService(CRUDService):
     class Config:
         process_pool = True
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # We want debug for jails starting/stopping
+        os.environ['IOCAGE_DEBUG'] = 'TRUE'
+
     # FIXME: foreign schemas cannot be referenced when
     # using `process_pool`
     # @filterable
@@ -147,6 +153,20 @@ class JailService(CRUDService):
                 raise verrors
 
             job.set_progress(20, 'Initial validation complete')
+
+        if not any('resolver' in p for p in options['props']):
+            dc = self.middleware.call_sync(
+                'service.query', [('service', '=', 'domaincontroller')]
+            )[0]
+            dc_config = self.middleware.call_sync('domaincontroller.config')
+
+            if dc['enable'] and (
+                dc_config['dns_forwarder'] and
+                dc_config['dns_backend'] == 'SAMBA_INTERNAL'
+            ):
+                options['props'].append(
+                    f'resolver=nameserver {dc_config["dns_forwarder"]}'
+                )
 
         iocage = ioc.IOCage(skip_jails=True)
 
@@ -354,11 +374,16 @@ class JailService(CRUDService):
     def get_activated_pool(self):
         """Returns the activated pool if there is one, or None"""
         try:
-            pool = ioc.IOCage(skip_jails=True).get("", pool=True)
+            pool = ioc.IOCage(skip_jails=True).get('', pool=True)
         except RuntimeError as e:
             raise CallError(f'Error occurred getting activated pool: {e}')
-        except ioc_exceptions.PoolNotActivated:
-            pool = None
+        except (ioc_exceptions.PoolNotActivated, FileNotFoundError):
+            self.check_dataset_existence()
+
+            try:
+                pool = ioc.IOCage(skip_jails=True).get('', pool=True)
+            except ioc_exceptions.PoolNotActivated:
+                pool = None
 
         return pool
 
@@ -439,14 +464,22 @@ class JailService(CRUDService):
         start_msg = f'{release} being fetched'
         final_msg = f'{release} fetched'
 
+        iocage = ioc.IOCage(callback=progress_callback, silent=False)
+
         if options["name"] is not None:
+            # WORKAROUND until rewritten for #39653
+            # We want the plugins to not prompt interactively
+            try:
+                iocage.fetch(plugin_file=True, _list=True, **options)
+            except Exception:
+                # Expected, this is to avoid it later
+                pass
+
             options["plugin_file"] = True
             start_msg = 'Starting plugin install'
             final_msg = f"Plugin: {options['name']} installed"
 
         options["accept"] = True
-
-        iocage = ioc.IOCage(callback=progress_callback, silent=False)
 
         job.set_progress(0, start_msg)
         iocage.fetch(**options)
@@ -584,14 +617,14 @@ class JailService(CRUDService):
 
         return True
 
-    @accepts(Str("jail"))
-    def stop(self, jail):
+    @accepts(Str("jail"), Bool('force', default=False))
+    def stop(self, jail, force):
         """Takes a jail and stops it."""
         uuid, _, iocage = self.check_jail_existence(jail)
         status, _ = IOCList.list_get_jid(uuid)
 
         if status:
-            iocage.stop()
+            iocage.stop(force=force)
 
         return True
 
@@ -767,7 +800,7 @@ class JailService(CRUDService):
 
     @accepts(
         Str("jail"),
-        List("command", default=[]),
+        List("command", required=True),
         Dict("options", Str("host_user", default="root"), Str("jail_user")))
     def exec(self, jail, command, options):
         """Issues a command inside a jail."""
@@ -787,7 +820,9 @@ class JailService(CRUDService):
 
         host_user = "" if jail_user and host_user == "root" else host_user
         try:
-            msg = iocage.exec(command, host_user, jail_user, msg_return=True)
+            msg = iocage.exec(
+                command, host_user, jail_user, start_jail=True, msg_return=True
+            )
         except RuntimeError as e:
             raise CallError(str(e))
 

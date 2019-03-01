@@ -261,7 +261,8 @@ List resource
                 "id": 1
                 "ini_type": "command",
                 "ini_command": "rm /mnt/tank/temp*",
-                "ini_when": "postinit"
+                "ini_when": "postinit",
+                "ini_timeout": 10
         }
       ]
 
@@ -288,7 +289,8 @@ Create resource
         {
                 "ini_type": "command",
                 "ini_command": "rm /mnt/tank/temp*",
-                "ini_when": "postinit"
+                "ini_when": "postinit",
+                "ini_timeout": 10
         }
 
    **Example response**:
@@ -304,13 +306,15 @@ Create resource
                 "ini_command": "rm /mnt/tank/temp*",
                 "ini_script": null,
                 "ini_type": "command",
-                "ini_when": "postinit"
+                "ini_when": "postinit",
+                "ini_timeout": 10
         }
 
    :json string ini_command: command to execute
    :json string ini_script: path to script to execute
    :json string ini_type: run a command ("command") or a script ("script")
    :json string ini_when: preinit, postinit, shutdown
+   :json integer ini_timeout: number of seconds to wait for script or command execution before triggering a timeout
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
@@ -347,13 +351,15 @@ Update resource
                 "ini_command": "rm /mnt/tank/temp*",
                 "ini_script": null,
                 "ini_type": "command",
-                "ini_when": "preinit"
+                "ini_when": "preinit",
+                "ini_timeout": 10
         }
 
    :json string ini_command: command to execute
    :json string ini_script: path to script to execute
    :json string ini_type: run a command ("command") or a script ("script")
    :json string ini_when: preinit, postinit, shutdown
+   :json integer ini_timeout: number of seconds to wait for script or command execution before triggering a timeout
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error

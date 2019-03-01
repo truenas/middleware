@@ -384,6 +384,8 @@ class bsdUsersForm(ModelForm):
 
         data.pop('password2', None)
         data['home_mode'] = data.pop('mode')
+        if not data.get('email'):
+            data['email'] = None
         if not data.get('home_mode'):
             data.pop('home_mode')
         if data['group']:

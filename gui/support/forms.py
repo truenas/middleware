@@ -110,4 +110,5 @@ class LicenseUpdateForm(Form):
         super(LicenseUpdateForm, self).done(*args, **kwargs)
         _n = notifier()
         if not _n.is_freenas() and _n.failover_licensed() and utils.fc_enabled():
-            _n.start('ix-loader')
+            with client as c:
+                c.call('etc.generate', 'loader')

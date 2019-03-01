@@ -13,6 +13,7 @@ import middlewared.logger
 import asyncio
 import contextlib
 import errno
+import ipaddress
 import math
 import netif
 import os
@@ -334,13 +335,19 @@ class VMSupervisor(object):
         vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
         guest_memory = vm[0].get('memory', 0) * 1024 * 1024
         arc_max = sysctl.filter('vfs.zfs.arc_max')[0].value
+        arc_min = sysctl.filter('vfs.zfs.arc_min')[0].value
         new_arc_max = min(
             await self.middleware.call('vm.get_initial_arc_max'),
             arc_max + guest_memory
         )
         if arc_max != new_arc_max:
-            self.logger.debug(f'===> Give back guest memory to ARC: {new_arc_max - arc_max}')
-            sysctl.filter('vfs.zfs.arc_max')[0].value = new_arc_max
+            if new_arc_max > arc_min:
+                self.logger.debug(f'===> Give back guest memory to ARC: {new_arc_max}')
+                sysctl.filter('vfs.zfs.arc_max')[0].value = new_arc_max
+            else:
+                self.logger.warn(
+                    f'===> Not giving back memory to ARC because new arc_max ({new_arc_max}) <= arc_min ({arc_min})'
+                )
 
     def destroy_tap(self):
         while self.taps:
@@ -576,6 +583,8 @@ class VMService(CRUDService):
     def flags(self):
         """Returns a dictionary with CPU flags for bhyve."""
         data = {}
+        intel = True if 'Intel' in sysctl.filter('hw.model')[0].value else \
+            False
 
         vmx = sysctl.filter('hw.vmm.vmx.initialized')
         data['intel_vmx'] = True if vmx and vmx[0].value else False
@@ -584,7 +593,8 @@ class VMService(CRUDService):
         data['unrestricted_guest'] = True if ug and ug[0].value else False
 
         rvi = sysctl.filter('hw.vmm.svm.features')
-        data['amd_rvi'] = True if rvi and rvi[0].value != 0 else False
+        data['amd_rvi'] = True if rvi and rvi[0].value != 0 and not intel \
+            else False
 
         asids = sysctl.filter('hw.vmm.svm.num_asids')
         data['amd_asids'] = True if asids and asids[0].value != 0 else False
@@ -639,6 +649,7 @@ class VMService(CRUDService):
         """
         vnc_ports_in_use = []
         vms = self.middleware.call_sync('datastore.query', 'vm.vm', [], {'order_by': ['id']})
+
         if vms:
             latest_vm_id = vms.pop().get('id', None)
             vnc_port = 5900 + latest_vm_id + 1
@@ -1030,8 +1041,13 @@ class VMService(CRUDService):
                 if vcpus > 1 and flags['amd_asids'] is False:
                     verrors.add(
                         f'{schema_name}.vcpus',
-                        'Only one Virtual CPU is allowed in this system.',
+                        'Only one virtual CPU is allowed in this system.',
                     )
+            elif not flags['intel_vmx'] and not flags['amd_rvi']:
+                verrors.add(
+                    schema_name,
+                    'This system does not support virtualization.'
+                )
 
         memory = data.get('memory')
         if memory and memory < 1024 and data.get('type') == 'Container Provider':
@@ -1119,13 +1135,19 @@ class VMService(CRUDService):
     @item_method
     @accepts(Int('id'), Dict('options', Bool('overcommit')))
     async def start(self, id, options):
-        """Start a VM.
-
-        options.overcommit defaults to false, which means VM will not be allowed to
-        start if there is not enough available memory to hold all VMs configured memory.
-        If true VM will start even if there is not enough memory for all VMs configured memory."""
-
+        """
+        Start a VM.
+        options.overcommit defaults to false, meaning VMs are not allowed to
+        start if there is not enough available memory to hold all configured VMs.
+        If true, VM starts even if there is not enough memory for all configured VMs.
+        """
         vm = await self._get_instance(id)
+        flags = await self.middleware.call('vm.flags')
+
+        if not flags['intel_vmx'] and not flags['amd_rvi']:
+            raise CallError(
+                'This system does not support virtualization.'
+            )
 
         overcommit = options.get('options')
         if overcommit is None:
@@ -1173,7 +1195,7 @@ class VMService(CRUDService):
         Str('description'),
         Int('vcpus', default=1),
         Int('memory', required=True),
-        Str('root_password', password=True, required=True),
+        Str('root_password', private=True, required=True),
         Bool('autostart', default=True),
         List('devices', items=[Ref('vmdevice_create')], required=True),
     ))
@@ -1381,8 +1403,8 @@ class VMService(CRUDService):
         return clone_dst
 
     @item_method
-    @accepts(Int('id'))
-    async def clone(self, id):
+    @accepts(Int('id'), Str('name', default=None))
+    async def clone(self, id, name):
         vm = await self._get_instance(id)
 
         origin_name = vm['name']
@@ -1390,6 +1412,9 @@ class VMService(CRUDService):
         del vm['status']
 
         vm['name'] = await self.__next_clone_name(vm['name'])
+
+        if name is not None:
+            vm['name'] = name
 
         # In case we need to rollback
         created_snaps = []
@@ -1402,7 +1427,9 @@ class VMService(CRUDService):
                         del item['attributes']['mac']
                 if item['dtype'] == 'VNC':
                     if 'vnc_port' in item['attributes']:
-                        del item['attributes']['vnc_port']
+                        vnc_dict = await self.middleware.call(
+                            'vm.vnc_port_wizard')
+                        item['attributes']['vnc_port'] = vnc_dict['vnc_port']
                 if item['dtype'] == 'DISK':
                     zvol = item['attributes']['path'].replace('/dev/zvol/', '')
                     clone_dst = await self.__clone_zvol(
@@ -1447,6 +1474,12 @@ class VMService(CRUDService):
         vnc_web = []
 
         host = host or await self.middleware.call('interface.websocket_local_ip', app=app)
+        try:
+            ipaddress.IPv6Address(host)
+        except ipaddress.AddressValueError:
+            pass
+        else:
+            host = f'[{host}]'
 
         for vnc_device in await self.get_vnc(id):
             if vnc_device.get('vnc_web', None) is True:
@@ -1476,7 +1509,7 @@ class VMDeviceService(CRUDService):
             Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
             Bool('exists', default=True),
             Bool('boot', default=False),
-            Str('rootpwd', password=True),
+            Str('rootpwd', private=True),
             Int('size', default=0),
             Int('sectorsize', enum=[0, 512, 4096], default=0),
         ),
@@ -1504,7 +1537,7 @@ class VMDeviceService(CRUDService):
             Int('vnc_port', default=None, null=True),
             Str('vnc_bind'),
             Bool('wait', default=False),
-            Str('vnc_password', default=None, null=True, password=True),
+            Str('vnc_password', default=None, null=True, private=True),
             Bool('vnc_web', default=False),
         ),
     }

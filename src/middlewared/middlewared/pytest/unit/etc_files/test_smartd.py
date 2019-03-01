@@ -153,6 +153,10 @@ def test__get_smartd_schedule_piece__every_specific_month():
     assert get_smartd_schedule_piece("1,5,11", 1, 12) == "(01|05|11)"
 
 
+def test__get_smartd_schedule_piece__at_midnight():
+    assert get_smartd_schedule_piece("0", 1, 23) == "(00)"
+
+
 def test__get_smartd_config():
     assert get_smartd_config({
         "smartctl_args": ["/dev/ada0", "-d", "sat"],

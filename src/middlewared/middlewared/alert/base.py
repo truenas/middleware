@@ -143,6 +143,11 @@ class AlertService:
     def _alert_id(self, alert):
         return hashlib.sha256(json.dumps([alert.source, alert.key]).encode("utf-8")).hexdigest()
 
+    async def _format_alerts(self, alerts, gone_alerts, new_alerts):
+        product_name = await self.middleware.call("system.product_name")
+        hostname = (await self.middleware.call("system.info"))["hostname"]
+        return format_alerts(product_name, hostname, alerts, gone_alerts, new_alerts)
+
 
 class ThreadedAlertService(AlertService):
     async def send(self, alerts, gone_alerts, new_alerts):
@@ -150,6 +155,11 @@ class ThreadedAlertService(AlertService):
 
     def send_sync(self, alerts, gone_alerts, new_alerts):
         raise NotImplementedError
+
+    def _format_alerts(self, alerts, gone_alerts, new_alerts):
+        product_name = self.middleware.call_sync("system.product_name")
+        hostname = self.middleware.call_sync("system.info")["hostname"]
+        return format_alerts(product_name, hostname, alerts, gone_alerts, new_alerts)
 
 
 class ProThreadedAlertService(ThreadedAlertService):
@@ -180,8 +190,8 @@ class ProThreadedAlertService(ThreadedAlertService):
         raise NotImplementedError
 
 
-def format_alerts(alerts, gone_alerts, new_alerts):
-    text = ""
+def format_alerts(product_name, hostname, alerts, gone_alerts, new_alerts):
+    text = f"{product_name} @ {hostname}\n\n"
 
     if new_alerts:
         text += "New alerts:\n" + "".join(["* %s\n" % format_alert(alert) for alert in new_alerts]) + "\n"
@@ -190,7 +200,7 @@ def format_alerts(alerts, gone_alerts, new_alerts):
         text += "Gone alerts:\n" + "".join(["* %s\n" % format_alert(alert) for alert in gone_alerts]) + "\n"
 
     if alerts:
-        text += "Alerts:\n" + "".join(["* %s\n" % format_alert(alert) for alert in alerts]) + "\n"
+        text += "Current alerts:\n" + "".join(["* %s\n" % format_alert(alert) for alert in alerts]) + "\n"
 
     return text
 

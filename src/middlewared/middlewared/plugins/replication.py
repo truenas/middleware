@@ -139,6 +139,7 @@ class ReplicationService(CRUDService):
             Bool("embed", default=True),
             Bool("compressed", default=True),
             Int("retries", default=5, validators=[Range(min=1)]),
+            Str("logging_level", enum=["DEBUG", "INFO", "WARNING", "ERROR"], null=True, default=None),
             Bool("enabled", default=True),
             register=True,
             strict=True,
@@ -307,6 +308,8 @@ class ReplicationService(CRUDService):
 
         periodic_snapshot_tasks = new["periodic_snapshot_tasks"]
         await self.compress(new)
+
+        new.pop('state', None)
 
         await self.middleware.call(
             "datastore.update",

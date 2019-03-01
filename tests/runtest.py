@@ -39,6 +39,7 @@ Mandatory option
 Optional option
     --test <test name>         - Test name (Network, ALL)
     --api <version number>     - API version number (1.0, 2.0)
+    --vm-name <VM_NAME>        - Name the the Bhyve VM
     """ % argv[0]
 
 # if have no argument stop
@@ -46,7 +47,7 @@ if len(argv) == 1:
     print(error_msg)
     exit()
 
-option_list = ["api=", "ip=", "password=", "interface=", 'test=']
+option_list = ["api=", "ip=", "password=", "interface=", 'test=', "vm-name="]
 
 # look if all the argument are there.
 try:
@@ -73,6 +74,8 @@ for output, arg in myopts:
         api = arg
     elif output == '-k':
         testexpr = arg
+    elif output in ('--vm-name'):
+        vm_name = f"'{arg}'"
 
 if ('ip' not in locals() and
         'password' not in locals() and
@@ -80,6 +83,10 @@ if ('ip' not in locals() and
     print("Mandatory option missing!\n")
     print(error_msg)
     exit()
+
+if 'vm_name' not in locals():
+    vm_name = None
+
 
 # if interface == "vtnet0":
 #     disk = 'disk0 = "vtbd0"\ndisk1 = "vtbd1"\ndisk2 = "vtbd2"'
@@ -98,6 +105,7 @@ cfg_content = f"""#!/usr/bin/env python3.6
 user = "root"
 password = "{passwd}"
 ip = "{ip}"
+vm_name = {vm_name}
 hostname = "{hostname}"
 domain = "{domain}"
 default_api_url = 'http://' + ip + '/api/v{api}'
@@ -146,7 +154,7 @@ def get_tests():
         skip_tests = ['volume']
         apidir = 'api2/'
         rv = ['interfaces', 'network', 'ssh', 'pool']
-        ev = ['delete_interfaces']
+        ev = ['update', 'delete_interfaces']
     for filename in listdir(apidir):
         if filename.endswith('.py') and \
                 not filename.startswith('__init__'):

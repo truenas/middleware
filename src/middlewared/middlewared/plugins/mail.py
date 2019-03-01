@@ -100,7 +100,7 @@ class MailService(ConfigService):
         Str('security', enum=['PLAIN', 'SSL', 'TLS']),
         Bool('smtp'),
         Str('user'),
-        Str('pass', password=True),
+        Str('pass', private=True),
         update=True
     ))
     async def do_update(self, data):
@@ -138,7 +138,7 @@ class MailService(ConfigService):
         except UnicodeEncodeError:
             verrors.add(
                 schema,
-                'Only plain text characters (8-bit ASCII) are allowed in passwords. '
+                'Only plain text characters (7-bit ASCII) are allowed in passwords. '
                 'UTF or composed characters are not allowed.'
             )
         return verrors
@@ -150,8 +150,8 @@ class MailService(ConfigService):
         Str('html'),
         List('to', items=[Str('email')]),
         List('cc', items=[Str('email')]),
-        Int('interval'),
-        Str('channel'),
+        Int('interval', null=True),
+        Str('channel', null=True),
         Int('timeout', default=300),
         Bool('attachments', default=False),
         Bool('queue', default=True),
@@ -159,7 +159,7 @@ class MailService(ConfigService):
         register=True
     ), Dict(
         'mail-config',
-        Str('pass', password=True),
+        Str('pass', private=True),
         additional_attrs=True,
         null=True,
         register=True
@@ -197,11 +197,13 @@ class MailService(ConfigService):
         ]
         """
 
+        product_name = self.middleware.call_sync('system.product_name')
+
         gc = self.middleware.call_sync('datastore.config', 'network.globalconfiguration')
 
         hostname = f'{gc["gc_hostname"]}.{gc["gc_domain"]}'
 
-        message['subject'] = f'{hostname}: {message["subject"]}'
+        message['subject'] = f'{product_name} {hostname}: {message["subject"]}'
 
         if 'html' not in message:
             lookup = TemplateLookup(

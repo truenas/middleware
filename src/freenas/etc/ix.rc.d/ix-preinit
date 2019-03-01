@@ -11,25 +11,7 @@
 
 do_preinit()
 {
-	local IFS="|"
-	local f="ini_type ini_command ini_script ini_when"
-	eval local $f
-	local sf=$(var_to_sf $f)
-
-	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
-	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
-
-	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
-	"SELECT $sf FROM tasks_initshutdown WHERE ini_when = 'preinit' AND ini_enabled = 1 ORDER BY id" | \
-	while eval read -r $f; do
-		if [ "${ini_type}" = "command" ]; then
-			eval ${ini_command}
-		else
-			if [ -e "${ini_script}" ]; then
-				sh -c "exec ${ini_script}"
-			fi
-		fi
-	done
+	/usr/local/bin/midclt call -job initshutdownscript.execute_init_tasks PREINIT > /dev/null 2>&1
 }
 
 name="ix-preinit"

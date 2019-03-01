@@ -751,8 +751,8 @@ class FILESYSTEM_CHOICES(object):
 
 LDAP_SSL_CHOICES = (
     ('off', _('Off')),
-    ('on', _('SSL')),
-    ('start_tls', _('TLS')),
+    ('on', _('SSL (LDAPS, port 636)')),
+    ('start_tls', _('TLS (LDAP, port 389)')),
 )
 
 RSYNC_MODE_CHOICES = (
@@ -918,11 +918,12 @@ CASE_SENSITIVITY_CHOICES = (
 class SERIAL_CHOICES(object):
 
     def __iter__(self):
+        ports = {}
         try:
             with client as c:
                 ports = c.call('system.advanced.serial_port_choices')
         except Exception:
-            ports = ['0x2f8']
+            ports['0x2f8'] = '0x2f8'
         for p in ports:
             yield (p, p)
 
@@ -976,20 +977,13 @@ class COUNTRY_CHOICES(object):
 
 class SHELL_CHOICES(object):
 
-    SHELSS = '/etc/shells'
-
-    def __init__(self):
-        with open('/etc/shells', 'r') as f:
-            shells = list(map(
-                str.rstrip,
-                [x for x in f.readlines() if x.startswith('/')]
-            ))
-        self._dict = {}
-        for shell in shells + ['/usr/sbin/nologin']:
-            self._dict[shell] = os.path.basename(shell)
-
     def __iter__(self):
-        return iter(sorted(list(self._dict.items())))
+        try:
+            with client as c:
+                for k, v in c.call('user.shell_choices').items():
+                    yield (k, v)
+        except Exception:
+            yield ('/bin/sh', 'sh')
 
 
 NSS_INFO_CHOICES = (
