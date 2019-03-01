@@ -741,7 +741,7 @@ def add_activedirectory_section(client, sc):
     ad = client.call('notifier.directoryservice', 'AD')
     use_ad_provider = False
 
-    ad_cookie = ad.netbiosname
+    ad_cookie = ad['netbiosname']
     ad_domain = 'domain/%s' % ad_cookie
 
     ad_section = None
@@ -779,7 +779,7 @@ def add_activedirectory_section(client, sc):
 
     __, hostname, __ = os.uname()[0:3]
 
-    if ad.keytab_file and ad.keytab_principal:
+    if ad['keytab_file'] and ad['keytab_principal']:
         use_ad_provider = True
 
     if use_ad_provider:
@@ -791,7 +791,7 @@ def add_activedirectory_section(client, sc):
                 d[key] = 'ad'
 
         ad_section.ad_hostname = hostname
-        ad_section.ad_domain = ad.domainname
+        ad_section.ad_domain = ad['domainname']
         ad_section.ldap_id_mapping = False
 
     for d in ad_defaults:
@@ -827,12 +827,12 @@ def add_activedirectory_section(client, sc):
 #        ad_section.krb5_canonicalize = 'false'
 
     else:
-        ad_section.ldap_uri = "ldap://%s" % ad.dchost
-        ad_section.ldap_search_base = ad.basedn
+        ad_section.ldap_uri = "ldap://%s" % ad['dchost']
+        ad_section.ldap_search_base = ad['basedn']
 
-        ad_section.ldap_default_bind_dn = ad.binddn
+        ad_section.ldap_default_bind_dn = ad['binddn']
         ad_section.ldap_default_authtok_type = 'password'
-        ad_section.ldap_default_authtok = ad.bindpw
+        ad_section.ldap_default_authtok = ad['bindpw']
 
     sc[ad_domain] = ad_section
     sc['sssd'].add_domain(ad_cookie)
