@@ -490,7 +490,7 @@ class ActiveDirectoryForm(ModelForm):
         if certificate:
             with client as c:
                 certificate = c.call(
-                    'certificateauthority.query',
+                    'certificate.query',
                     [['id', '=', certificate.id]],
                     {'get': True}
                 )
@@ -845,7 +845,7 @@ class LDAPForm(ModelForm):
             if certificate:
                 with client as c:
                     certificate = c.call(
-                        'certificateauthority.query',
+                        'certificate.query',
                         [['id', '=', certificate.id]],
                         {'get': True}
                     )
@@ -917,7 +917,7 @@ class LDAPForm(ModelForm):
             else:
                 with client as c:
                     certificate = c.call(
-                        'certificateauthority.query',
+                        'certificate.query',
                         [['id', '=', certificate.id]],
                         {'get': True}
                     )
