@@ -355,7 +355,7 @@ class AlertService(Service):
 
         alert.source = alert_source.name
         if existing_alert is None:
-            alert.datetime = datetime.utcnow()
+            alert.datetime = alert.datetime or datetime.utcnow()
         else:
             alert.datetime = existing_alert.datetime
         alert.level = alert.level or alert_source.level
