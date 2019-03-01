@@ -337,6 +337,7 @@ class FailoverService(ConfigService):
         NO_SYSTEM_READY - Other controller has not finished booting.
         NO_PONG - Other controller is not communicable.
         NO_FAILOVER - Failover is administratively disabled.
+        NO_LICENSE - Other controller has no license.
         """
         reasons = []
         if not self.middleware.call_sync('pool.query'):
@@ -363,6 +364,8 @@ class FailoverService(ConfigService):
             reasons.append('NO_PONG')
         if self.middleware.call_sync('failover.config')['disabled']:
             reasons.append('NO_FAILOVER')
+        if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
+            reasons.append('NO_LICENSE')
         return reasons
 
     @accepts(Dict(
