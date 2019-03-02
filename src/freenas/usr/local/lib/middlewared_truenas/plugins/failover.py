@@ -334,7 +334,7 @@ class FailoverService(ConfigService):
 
         NO_VOLUME - There are no pools configured.
         NO_VIP - There are no interfaces configured with Virtual IP.
-        NO_SYSTEM_READY - Other controller has not finished booting.
+        NO_SYSTEM_READY - Other storage controller has not finished booting.
         NO_PONG - Other storage controller is not communicable.
         NO_FAILOVER - Failover is administratively disabled.
         NO_LICENSE - Other storage controller has no license.
