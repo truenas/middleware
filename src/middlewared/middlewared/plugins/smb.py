@@ -40,7 +40,7 @@ class SMBService(SystemServiceService):
         for i in ('aio_enable', 'aio_rs', 'aio_ws'):
             smb.pop(i, None)
 
-        smb['netbiosalias'] = smb['netbiosalias'].split()
+        smb['netbiosalias'] = (smb['netbiosalias'] or '').split()
 
         smb['loglevel'] = LOGLEVEL_MAP.get(smb['loglevel'])
 
