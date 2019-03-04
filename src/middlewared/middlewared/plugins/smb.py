@@ -105,8 +105,7 @@ class SMBService(SystemServiceService):
         password are stored in private/secrets.tdb file.
         """
         ldap = await self.middleware.call('datastore.config', 'directoryservice.ldap')
-        password_stored = await self.middleware.call('cache.has_key', 'SMB_LDAP_BINDPW_SET')
-        if not ldap['ldap_enable'] or password_stored:
+        if not ldap['ldap_enable']:
             return True
 
         set_pass = await run(['usr/local/bin/smbpasswd', '-w', ldap['ldap_bindpw']], check=False)
@@ -114,7 +113,6 @@ class SMBService(SystemServiceService):
             self.logger.debug(f"Failed to set set ldap bindpw in secrets.tdb: {set_pass.stdout.decode()}")
             return False
 
-        await self.middleware.call('cache.put', 'SMB_LDAP_BINDPW_SET', True)
         return True
 
     @accepts(Dict(

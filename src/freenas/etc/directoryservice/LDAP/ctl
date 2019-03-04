@@ -7,7 +7,6 @@ status_file="/var/run/directoryservice.ldap"
 service=/usr/sbin/service
 python=/usr/local/bin/python
 notifier=/usr/local/bin/midclt
-smbpasswd=/usr/local/bin/smbpasswd
 
 ldapctl_cmd()
 {
