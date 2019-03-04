@@ -118,8 +118,6 @@ class SMBService(SystemServiceService):
     @private
     async def wbinfo_gidtosid(self, gid):
         verrors = ValidationErrors()
-        if not gid:
-            return ret
         proc = await Popen(
             ['/usr/local/bin/wbinfo', '--gid-to-sid', f"{gid}"],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE
