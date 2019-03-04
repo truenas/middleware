@@ -161,7 +161,6 @@ class CIFS(Model):
         max_length=120,
         default="",
         blank=True,
-        null=True,
         verbose_name=_("Administrators Group"),
         help_text=_(
             'Members of this group are local admins and automatically '
