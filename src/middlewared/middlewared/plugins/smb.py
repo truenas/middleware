@@ -73,50 +73,49 @@ class SMBService(SystemServiceService):
     @private
     async def validate_admin_groups(self, sid):
         """
-        Check if group mapping already exists. Remove any entries that
-        shouldn't be present. The only default entry here in will have
-        a RID value of "512" (Domain Admins).
-        In LDAP environments, we can't safely remove members of S-1-5-32-544
-        because this alias actually exists on the remote LDAP server.
+        Check if group mapping already exists because 'net groupmap addmem' will fail
+        if the mapping exists. Remove any entries that should not be present. Extra
+        entries here can pose a significant security risk. The only default entry will
+        have a RID value of "512" (Domain Admins).
+        In LDAP environments, members of S-1-5-32-544 cannot be removed without impacting
+        entire LDAP environment because this alias exists on the remote LDAP server.
         """
-        ret = {
-            'status': False,
-            'message': None,
-        }
+        sid_is_present = False
         ldap = await self.middleware.call('datastore.config', 'directoryservice.ldap')
         if ldap['ldap_enable']:
-            return {'status': True, 'message': None}
+            self.logger.debug("LDAP is enabled. Not removing extra alias entries.")
+            return True
         proc = await Popen(
             ['/usr/local/bin/net', 'groupmap', 'listmem', 'S-1-5-32-544'],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         member_list = (await proc.communicate())[0].decode()
         if not member_list:
-            return {'status': True, 'message': None}
+            return True
 
         for group in member_list.splitlines():
-            group = group.rstrip()
+            group = group.strip()
             if group == sid:
-                return {'status': True, 'message': 'SID_IS_PRESENT'}
+                self.logger.debug(f"SID [{sid}] is already a member of BUILTIN\\administrators")
+                sid_is_present = True
             if group.rsplit('-', 1)[-1] != "512" and group != sid:
                 self.logger.debug(f"Removing {group} from local admins group.")
                 rem = await Popen(
                     ['/usr/local/bin/net', 'groupmap', 'delmem', 'S-1-5-32-544', group],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE
                 )
-                remout = (await rem.communicate())[1].decode()
-                if remout:
-                    ret['message'] = f"failed to remove {group} from local admins group"
-                    return ret
+                remout = await rem.communicate()
+                if rem.returncode != 0:
+                    raise CallError(f'Failed to remove sid [{sid}] from S-1-5-32-544: {remout[1].decode()}')
 
-        return {'status': True, 'message': None}
+        if sid_is_present:
+            return False
+        else:
+            return True
 
     @private
     async def wbinfo_gidtosid(self, gid):
-        ret = {
-            'status': False,
-            'message': None,
-        }
+        verrors = ValidationErrors()
         if not gid:
             return ret
         proc = await Popen(
@@ -124,13 +123,14 @@ class SMBService(SystemServiceService):
             stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         output = await proc.communicate()
-        if output[1]:
-            ret['message'] = output[1].decode()
-        else:
-            ret['status'] = True
-            ret['message'] = output[0].decode().rstrip()
+        if proc.returncode != 0:
+            if "WBC_ERR_WINBIND_NOT_AVAILABLE" in output[1].decode():
+                return "WBC_ERR_WINBIND_NOT_AVAILABLE"
+            else:
+                verrors.add('smb_update.admin_group', f"Failed to identify Windows SID for group: {output[1].decode()}")
+                raise verrors
 
-        return ret
+        return output[0].decode().strip()
 
     @private
     async def add_admin_group(self, admin_group=None, check_deferred=False):
@@ -150,14 +150,13 @@ class SMBService(SystemServiceService):
             been flagged as in need of deferred setup (i.e. samba wasn't running when it was initially
             called). This is to avoid unecessarily calling during service start.
         """
-        ret = {
-            'status': False,
-            'message': None,
-        }
+
+        verrors = ValidationErrors()
         if check_deferred:
             is_deferred = await self.middleware.call('cache.has_key', 'SMB_SET_ADMIN')
             if not is_deferred:
-                return {'status': True, 'message': 'No delayed action detected. Exiting.'}
+                self.logger.debug("No delayed action to add admin_group detected.")
+                return True
             else:
                 await self.middleware.call('cache.pop', 'SMB_SET_ADMIN')
 
@@ -168,31 +167,29 @@ class SMBService(SystemServiceService):
         # We must use GIDs because wbinfo --name-to-sid expects a domain prefix "FREENAS\user"
         group = await self.middleware.call("notifier.get_group_object", admin_group)
         if not group:
-            return {'status': False, 'message': f"Failed to look up group {admin_group}"}
+            verrors.add('smb_update.admin_group', f"Failed to validate group: {admin_group}")
+            raise verrors
 
         sid = await self.wbinfo_gidtosid(group[2])
-        if not sid['status']:
-            self.logger.debug(f"Failed to convert {admin_group} to SID: ({sid['message']})")
-            if "WBC_ERR_WINBIND_NOT_AVAILABLE" in sid['message']:
-                self.logger.debug("Delaying admin group add until winbind starts")
-                await self.middleware.call('cache.put', 'SMB_SET_ADMIN', True)
+        if sid == "WBC_ERR_WINBIND_NOT_AVAILABLE":
+            self.logger.debug("Delaying admin group add until winbind starts")
+            await self.middleware.call('cache.put', 'SMB_SET_ADMIN', True)
+            return True
 
-                return {'status': True, 'message': 'Delaying action until winbind starts'}
-
-            return sid
-        ret = await self.validate_admin_groups(sid['message'])
-        if not ret['status'] or ret['message'] == 'SID_IS_PRESENT':
-            return ret
+        must_add_sid = await self.validate_admin_groups(sid)
+        if not must_add_sid:
+            return True
 
         proc = await Popen(
-            ['/usr/local/bin/net', 'groupmap', 'addmem', 'S-1-5-32-544', sid['message']],
+            ['/usr/local/bin/net', 'groupmap', 'addmem', 'S-1-5-32-544', sid],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        output = (await proc.communicate())
-        if output[1]:
-            return {'status': False, 'message': {output[1].decode()}}
+        output = await proc.communicate()
+        if proc.returncode != 0:
+            raise CallError(f'net groupmap addmem failed: {output[1].decode()}')
 
-        return {'status': True, 'message': f"Successfully added {admin_group} to BUILTIN\\Administrators"}
+        self.logger.debug(f"Successfully added {admin_group} to BUILTIN\\Administrators")
+        return True
 
     @private
     async def common_charset_choices(self):
@@ -329,10 +326,8 @@ class SMBService(SystemServiceService):
             except (ValueError, TypeError):
                 verrors.add(f'smb_update.{i}', 'Not a valid mask')
 
-        if new['admin_group'] is not old['admin_group']:
-            ret = await self.add_admin_group(f"{new['admin_group']}")
-            if not ret['status']:
-                verrors.add('smb_update.admin_group', f"Failed to add SMB admin group: {ret['message']}")
+        if new['admin_group'] and new['admin_group'] != old['admin_group']:
+            await self.add_admin_group(new['admin_group'])
 
         if verrors:
             raise verrors
