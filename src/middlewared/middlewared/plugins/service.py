@@ -506,7 +506,7 @@ class ServiceService(CRUDService):
 
     async def _reload_resolvconf(self, **kwargs):
         await self._reload_hostname()
-        await self._service("ix-resolv", "start", quiet=True, **kwargs)
+        await self.middleware.call('dns.sync')
 
     async def _reload_networkgeneral(self, **kwargs):
         await self._reload_resolvconf()
