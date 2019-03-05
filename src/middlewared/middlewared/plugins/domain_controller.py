@@ -3,6 +3,7 @@ import libzfs
 
 from middlewared.schema import accepts, Dict, Int, Str
 from middlewared.service import private, SystemServiceService
+from middlewared.service_exception import CallError
 from middlewared.utils import run
 
 
@@ -59,7 +60,7 @@ class DomainControllerService(SystemServiceService):
         is_already_provisioned = await self.is_provisioned()
         if is_already_provisioned and not force:
             self.logger.debug("Domain is already provisioned and command does not have 'force' flag. Bypassing.")
-            return False 
+            return False
 
         dc = await self.middleware.call('domaincontroller.config')
         prov = await run([
