@@ -615,7 +615,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                     if ldap.ldap_certificate:
                         with client as c:
                             cert = c.call(
-                                'certificateauthority.query',
+                                'certificate.query',
                                 [['id', '=', ldap.ldap_certificate.id]],
                                 {'get': True}
                             )
@@ -1624,7 +1624,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                     if ad.ad_certificate:
                         with client as c:
                             cert = c.call(
-                                'certificateauthority.query',
+                                'certificate.query',
                                 [['id', '=', ad.ad_certificate.id]],
                                 {'get': True}
                             )

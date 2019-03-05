@@ -32,7 +32,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from freenasUI import choices
 from freenasUI.freeadmin.models import Model, PathField
 from freenasUI.middleware.notifier import notifier
-from freenasUI.system.models import CertificateAuthority
+from freenasUI.system.models import Certificate
 
 log = logging.getLogger("directoryservice.models")
 
@@ -416,11 +416,12 @@ class idmap_ldap(idmap_base):
         default='off'
     )
     idmap_ldap_certificate = models.ForeignKey(
-        CertificateAuthority,
+        Certificate,
         verbose_name=_("Certificate"),
         on_delete=models.SET_NULL,
         blank=True,
-        null=True
+        null=True,
+        limit_choices_to={'cert_certificate__isnull': False, 'cert_privatekey__isnull': False}
     )
 
     def __init__(self, *args, **kwargs):
@@ -586,11 +587,12 @@ class idmap_rfc2307(idmap_base):
         default='off'
     )
     idmap_rfc2307_certificate = models.ForeignKey(
-        CertificateAuthority,
+        Certificate,
         verbose_name=_("Certificate"),
         on_delete=models.SET_NULL,
         blank=True,
-        null=True
+        null=True,
+        limit_choices_to={'cert_certificate__isnull': False, 'cert_privatekey__isnull': False}
     )
 
     def __init__(self, *args, **kwargs):
@@ -912,11 +914,12 @@ class ActiveDirectory(DirectoryServiceBase):
         default='off'
     )
     ad_certificate = models.ForeignKey(
-        CertificateAuthority,
+        Certificate,
         verbose_name=_("Certificate"),
         on_delete=models.SET_NULL,
         blank=True,
-        null=True
+        null=True,
+        limit_choices_to={'cert_certificate__isnull': False, 'cert_privatekey__isnull': False}
     )
     ad_verbose_logging = models.BooleanField(
         verbose_name=_("Verbose logging"),
@@ -1245,11 +1248,12 @@ class LDAP(DirectoryServiceBase):
         default='off'
     )
     ldap_certificate = models.ForeignKey(
-        CertificateAuthority,
+        Certificate,
         verbose_name=_("Certificate"),
         on_delete=models.SET_NULL,
         blank=True,
-        null=True
+        null=True,
+        limit_choices_to={'cert_certificate__isnull': False, 'cert_privatekey__isnull': False}
     )
     ldap_timeout = models.IntegerField(
         verbose_name=_("LDAP timeout"),
