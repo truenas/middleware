@@ -32,7 +32,6 @@ class DomainControllerService(SystemServiceService):
         ret = False
         with libzfs.ZFS() as zfs:
             ds = zfs.get_dataset_by_path(sysvol_path)
-            self.logger.debug(ds.properties[provisioned].value)
             if provisioned in ds.properties and ds.properties[provisioned].value == 'yes':
                 ret = True
             else:
@@ -80,7 +79,7 @@ class DomainControllerService(SystemServiceService):
             raise CallError(f"Failed to provision domain: {prov.stderr.decode()}")
         else:
             self.logger.debug(f"Successfully provisioned domain [{dc['domain']}]")
-            await self.middleware.call('domaincontroller.set_provisioned', 'yes')
+            await self.middleware.call('domaincontroller.set_provisioned', True)
             return True
 
     @accepts(Dict(
@@ -125,7 +124,7 @@ class DomainControllerService(SystemServiceService):
                                                                    new_realm)
 
         if any(new[k] != old[k] for k in ["realm", "domain"]):
-            await self.middleware.call('domaincontroller.set_provisioned', 'no')
+            await self.middleware.call('domaincontroller.set_provisioned', False)
 
         await self.domaincontroller_compress(new)
 

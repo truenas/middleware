@@ -1757,7 +1757,7 @@ def main():
         min password requirements. Provisioning raises an exception in case of failure.
         """
         if client.call('notifier.samba4', 'domain_provisioned'):
-            client.call('domaincontroller.set_provisioned', 'yes')
+            client.call('domaincontroller.set_provisioned', True)
             client.call('notifier.samba4', 'domain_sentinel_file_remove')
 
         if client.call('domaincontroller.provision'):
