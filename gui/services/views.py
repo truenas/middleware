@@ -98,11 +98,6 @@ def core(request):
         cifs = models.CIFS.objects.create()
 
     try:
-        domaincontroller = models.DomainController.objects.order_by("-id")[0]
-    except IndexError:
-        domaincontroller = models.DomainController.objects.create()
-
-    try:
         dynamicdns = models.DynamicDNS.objects.order_by("-id")[0]
     except IndexError:
         dynamicdns = models.DynamicDNS.objects.create()
@@ -178,7 +173,6 @@ def core(request):
             'ssh': ssh.get_edit_url(),
             'smartd': smart.get_edit_url(),
             'webdav': webdav.get_edit_url(),
-            'domaincontroller': domaincontroller.get_edit_url(),
             'netdata': reverse('services_netdata'),
         }, **extra_services)),
         'disabled': json.dumps(disabled),

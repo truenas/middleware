@@ -591,11 +591,9 @@ _gen_conf()
 	fi
 
 	_bool_svcconfig samba_server_enable cifs
-	if ! dirsrv_enabled domaincontroller ; then
-		_bool_svcconfig smbd_enable cifs
-		_bool_svcconfig nmbd_enable cifs
-		_bool_svcconfig winbindd_enable cifs
-	fi
+	_bool_svcconfig smbd_enable cifs
+	_bool_svcconfig nmbd_enable cifs
+	_bool_svcconfig winbindd_enable cifs
 
 	if dirsrv_enabled nis; then
 		_nis_config

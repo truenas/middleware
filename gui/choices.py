@@ -808,7 +808,6 @@ SFTP_LOG_FACILITY = (
 
 DIRECTORY_SERVICE_CHOICES = (
     ('activedirectory', _('Active Directory')),
-    ('domaincontroller', _('Domain Controller')),
     ('ldap', _('LDAP')),
     ('nis', _('NIS')),
 )
@@ -880,7 +879,6 @@ SAMBA4_ROLE_CHOICES = (
     # ('auto', 'auto'),
     # ('classic', 'classic primary domain controller'),
     # ('netbios', 'netbios backup domain controller'),
-    ('dc', 'active directory domain controller'),
     # ('sdc', 'active directory secondary domain controller'),
     # ('member', 'member server'),
     # ('standalone', 'standalone')

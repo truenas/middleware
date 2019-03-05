@@ -29,7 +29,6 @@ import pwd
 
 from freenasUI.common.system import (
     activedirectory_enabled,
-    domaincontroller_enabled,
     ldap_enabled,
     nis_enabled
 )
@@ -52,13 +51,6 @@ from freenasUI.common.freenasnis import (
     FreeNAS_NIS_Users
 )
 
-from freenasUI.common.freenasdc import (
-    FreeNAS_DomainController_Group,
-    FreeNAS_DomainController_User,
-    FreeNAS_DomainController_Groups,
-    FreeNAS_DomainController_Users
-)
-
 log = logging.getLogger("common.freenasusers")
 
 
@@ -77,8 +69,6 @@ def _get_dflags():
         dflags |= U_NIS_ENABLED
     elif ldap_enabled():
         dflags |= U_LDAP_ENABLED
-    elif domaincontroller_enabled():
-        dflags |= U_DC_ENABLED
 
     return dflags
 

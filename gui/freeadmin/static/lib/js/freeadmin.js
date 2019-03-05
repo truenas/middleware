@@ -712,23 +712,6 @@ require([
         }
     }
 
-    domaincontroller_mutex_toggle = function() {
-        var node = query("#domaincontroller_table");
-        xhr.get('/legacy/directoryservice/status/', {
-            sync: true
-        }).then(function(data) {
-            s = JSON.parse(data);
-            set = get_directoryservice_set('dc_enable');
-            for (index in set) {
-                key = set[index];
-                if (s[key] == true) {
-                    node.onclick = null;
-                    break;
-                }
-            }
-        });
-    }
-
     ldap_mutex_toggle = function() {
         ldap = registry.byId("id_ldap_enable");
         directoryservice_mutex_toggle('ldap_enable', ldap);

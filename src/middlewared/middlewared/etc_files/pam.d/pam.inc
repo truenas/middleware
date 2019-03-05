@@ -134,17 +134,6 @@
             return self.safe_call('notifier.common', 'system', 'nis_enabled')
 
 
-    class DCPam(ActiveDirectoryPam):
-        def __init__(self, **kwargs):
-            super(DCPam, self).__init__(**kwargs)
-
-        def name(self):
-            return 'DC'
-
-        def enabled(self):
-            return self.safe_call('notifier.common', 'system', 'domaincontroller_enabled')
-
-
     class DirectoryServicePam(DirectoryServicePamBase):
         def __new__(cls, **kwargs):
             obj = None
@@ -156,8 +145,6 @@
                     obj = LDAPPam(**kwargs)
                 elif NISPam(**kwargs).enabled():
                     obj = NISPam(**kwargs)
-                elif DCPam(**kwargs).enabled():
-                    obj = DCPam(**kwargs) 
             except Exception as e:
                 obj = None
 
