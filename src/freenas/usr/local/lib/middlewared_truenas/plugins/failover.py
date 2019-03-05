@@ -338,6 +338,7 @@ class FailoverService(ConfigService):
         NO_PONG - Other storage controller is not communicable.
         NO_FAILOVER - Failover is administratively disabled.
         NO_LICENSE - Other storage controller has no license.
+        MISMATCH_DISKS - The count of disks between the storage controllers do not match.
         """
         reasons = []
         if not self.middleware.call_sync('pool.query'):
@@ -366,6 +367,12 @@ class FailoverService(ConfigService):
             reasons.append('NO_FAILOVER')
         if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
             reasons.append('NO_LICENSE')
+
+        local_disks = set((await self.middleware.call("device.get_info", "DISK")).keys())
+        remote_disks = set((await self.middleware.call("failover.call_remote", "device.get_info", ["DISK"])).keys())
+        if local_disks - remote_disks or remote_disks - local_disks:
+            reasons.append('MISMATCH_DISKS')
+
         return reasons
 
     @accepts(Dict(
