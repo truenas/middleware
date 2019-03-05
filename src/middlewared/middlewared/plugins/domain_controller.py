@@ -25,29 +25,30 @@ class DomainControllerService(SystemServiceService):
         return domaincontroller
 
     @private
-    async def is_provisioned(self):
-        systemdataset = await self.middleware.call('systemdataset.config')
+    def is_provisioned(self):
+        systemdataset = self.middleware.call_sync('systemdataset.config')
         sysvol_path = f"{systemdataset['path']}/samba4"
         provisioned = "org.ix.activedirectory:provisioned"
         ret = False
         with libzfs.ZFS() as zfs:
             ds = zfs.get_dataset_by_path(sysvol_path)
-            if provisioned in ds.properties.keys() and ds.properties[provisioned].value == 'yes':
+            self.logger.debug(ds.properties[provisioned].value)
+            if provisioned in ds.properties and ds.properties[provisioned].value == 'yes':
                 ret = True
             else:
-                ds.properties[provisioned] = libzfs.ZFSUserProperty("no")
+                ds.properties[provisioned] = libzfs.ZFSUserProperty('no')
                 ret = False
 
         return ret
 
     @private
-    async def set_provisioned(self, value="yes"):
-        systemdataset = await self.middleware.call('systemdataset.config')
+    def set_provisioned(self, value=True):
+        systemdataset = self.middleware.call_sync('systemdataset.config')
         sysvol_path = f"{systemdataset['path']}/samba4"
         provisioned = "org.ix.activedirectory:provisioned"
         with libzfs.ZFS() as zfs:
             ds = zfs.get_dataset_by_path(sysvol_path)
-            ds.properties[provisioned] = libzfs.ZFSUserProperty(value)
+            ds.properties[provisioned] = libzfs.ZFSUserProperty('yes' if value else 'no')
 
         return True
 
@@ -57,7 +58,7 @@ class DomainControllerService(SystemServiceService):
         Determine provisioning status based on custom ZFS User Property.
         Re-provisioning on top of an existing domain can have catastrophic results.
         """
-        is_already_provisioned = await self.is_provisioned()
+        is_already_provisioned = await self.middleware.call('domaincontroller.is_provisioned')
         if is_already_provisioned and not force:
             self.logger.debug("Domain is already provisioned and command does not have 'force' flag. Bypassing.")
             return False
@@ -79,7 +80,7 @@ class DomainControllerService(SystemServiceService):
             raise CallError(f"Failed to provision domain: {prov.stderr.decode()}")
         else:
             self.logger.debug(f"Successfully provisioned domain [{dc['domain']}]")
-            await self.set_provisioned('yes')
+            await self.middleware.call('domaincontroller.set_provisioned', 'yes')
             return True
 
     @accepts(Dict(
@@ -124,7 +125,7 @@ class DomainControllerService(SystemServiceService):
                                                                    new_realm)
 
         if any(new[k] != old[k] for k in ["realm", "domain"]):
-            await self.set_provisioned('no')
+            await self.middleware.call('domaincontroller.set_provisioned', 'no')
 
         await self.domaincontroller_compress(new)
 
