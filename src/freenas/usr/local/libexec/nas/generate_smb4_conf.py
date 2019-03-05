@@ -1333,29 +1333,6 @@ def generate_smbusers(client):
     os.chmod("/usr/local/etc/smbusers", 0o644)
 
 
-def provision_smb4(client):
-    if not client.call('notifier.samba4', 'domain_provision', timeout=300):
-        print("Failed to provision domain", file=sys.stderr)
-        return False
-
-    if not client.call('notifier.samba4', 'disable_password_complexity'):
-        print("Failed to disable password complexity", file=sys.stderr)
-        return False
-
-    if not client.call('notifier.samba4', 'set_min_pwd_length'):
-        print("Failed to set minimum password length", file=sys.stderr)
-        return False
-
-    if not client.call('notifier.samba4', 'set_administrator_password'):
-        print("Failed to set administrator password", file=sys.stderr)
-        return False
-
-    if not client.call('notifier.samba4', 'domain_sentinel_file_create'):
-        return False
-
-    return True
-
-
 def smb4_mkdir(dir):
     try:
         os.makedirs(dir)
@@ -1772,8 +1749,21 @@ def main():
     generate_smb4_system_shares(client, smb4_shares)
     generate_smb4_shares(client, smb4_shares, shares)
 
-    if role == 'dc' and not client.call('notifier.samba4', 'domain_provisioned'):
-        provision_smb4(client)
+    if role == 'dc':
+        """
+        Migrate from legacy sentinel file to ZFS User Property.
+        If the domain has already been provisioned, domaincontroller.provision
+        will return false. In this case we don't need to set a new password or adjust
+        min password requirements. Provisioning raises an exception in case of failure.
+        """
+        if client.call('notifier.samba4', 'domain_provisioned'):
+            client.call('domaincontroller.set_provisioned', 'yes')
+            client.call('notifier.samba4', 'domain_sentinel_file_remove')
+
+        if client.call('domaincontroller.provision'):
+            client.call('notifier.samba4', 'disable_password_complexity')
+            client.call('notifier.samba4', 'set_min_pwd_length')
+            client.call('notifier.samba4', 'set_administrator_password')
 
     with open(smb_conf_path, "w") as f:
         for line in smb4_conf:

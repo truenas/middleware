@@ -1,7 +1,9 @@
 import socket
+import libzfs
 
 from middlewared.schema import accepts, Dict, Int, Str
 from middlewared.service import private, SystemServiceService
+from middlewared.utils import run
 
 
 class DomainControllerService(SystemServiceService):
@@ -20,6 +22,64 @@ class DomainControllerService(SystemServiceService):
     async def domaincontroller_compress(self, domaincontroller):
         domaincontroller['role'] = domaincontroller['role'].lower()
         return domaincontroller
+
+    @private
+    async def is_provisioned(self):
+        systemdataset = await self.middleware.call('systemdataset.config')
+        sysvol_path = f"{systemdataset['path']}/samba4"
+        provisioned = "org.ix.activedirectory:provisioned"
+        ret = False
+        with libzfs.ZFS() as zfs:
+            ds = zfs.get_dataset_by_path(sysvol_path)
+            if provisioned in ds.properties.keys() and ds.properties[provisioned].value == 'yes':
+                ret = True
+            else:
+                ds.properties[provisioned] = libzfs.ZFSUserProperty("no")
+                ret = False
+
+        return ret
+
+    @private
+    async def set_provisioned(self, value="yes"):
+        systemdataset = await self.middleware.call('systemdataset.config')
+        sysvol_path = f"{systemdataset['path']}/samba4"
+        provisioned = "org.ix.activedirectory:provisioned"
+        with libzfs.ZFS() as zfs:
+            ds = zfs.get_dataset_by_path(sysvol_path)
+            ds.properties[provisioned] = libzfs.ZFSUserProperty(value)
+
+        return True
+
+    @private
+    async def provision(self, force=False):
+        """
+        Determine provisioning status based on custom ZFS User Property.
+        Re-provisioning on top of an existing domain can have catastrophic results.
+        """
+        is_already_provisioned = await self.is_provisioned()
+        if is_already_provisioned and not force:
+            self.logger.debug("Domain is already provisioned and command does not have 'force' flag. Bypassing.")
+            return False 
+
+        dc = await self.middleware.call('domaincontroller.config')
+        prov = await run([
+            "/usr/local/bin/samba-tool",
+            'domain', 'provision',
+            "--realm", dc['realm'],
+            "--domain", dc['domain'],
+            "--dns-backend", dc['dns_backend'],
+            "--server-role", dc['role'].lower(),
+            "--function-level", dc['forest_level'],
+            "--option", "vfs objects=dfs_samba4 zfsacl",
+            "--use-rfc2307"],
+            check=False
+        )
+        if prov.returncode != 0:
+            raise CallError(f"Failed to provision domain: {prov.stderr.decode()}")
+        else:
+            self.logger.debug(f"Successfully provisioned domain [{dc['domain']}]")
+            await self.set_provisioned('yes')
+            return True
 
     @accepts(Dict(
         'domaincontroller_update',
@@ -63,7 +123,7 @@ class DomainControllerService(SystemServiceService):
                                                                    new_realm)
 
         if any(new[k] != old[k] for k in ["realm", "domain"]):
-            await self.middleware.call("notifier.samba4", "domain_sentinel_file_remove")
+            await self.set_provisioned('no')
 
         await self.domaincontroller_compress(new)
 
