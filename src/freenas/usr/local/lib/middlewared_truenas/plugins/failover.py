@@ -338,7 +338,7 @@ class FailoverService(ConfigService):
         NO_PONG - Other storage controller is not communicable.
         NO_FAILOVER - Failover is administratively disabled.
         NO_LICENSE - Other storage controller has no license.
-        MISMATCH_DISKS - The count of disks between the storage controllers do not match.
+        MISMATCH_DISKS - The storeage controllers do not have the same quantity of disks.
         """
         reasons = []
         if not self.middleware.call_sync('pool.query'):
