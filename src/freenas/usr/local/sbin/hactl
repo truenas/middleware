@@ -40,7 +40,9 @@ def main(command, quiet):
 
         if fo_exists:
             ret = client.call('failover.disabled_reasons')
-            if 'NO_LICENSE' in ret:
+            if 'MISMATCH_DISKS' in ret:
+                print("Failover status: Unavailable (the storage controllers do not have the same quantity of disks)")
+            elif 'NO_LICENSE' in ret:
                 print("Failover status: Unavailable (passive storage controller has no license)")
             elif 'NO_FAILOVER' in ret:
                 print("Failover status: Administratively Disabled")
