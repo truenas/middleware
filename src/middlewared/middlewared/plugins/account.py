@@ -3,7 +3,6 @@ from middlewared.service import (
     CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private
 )
 from middlewared.utils import run, Popen
-from middlewared.validators import Email
 
 import asyncio
 import binascii
@@ -98,7 +97,7 @@ class UserService(CRUDService):
         Str('home_mode', default='755'),
         Str('shell', default='/bin/csh'),
         Str('full_name', required=True),
-        Str('email', validators=[Email()]),
+        Str('email'),
         Str('password', private=True),
         Bool('password_disabled', default=False),
         Bool('locked', default=False),
