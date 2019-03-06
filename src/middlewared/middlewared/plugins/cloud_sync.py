@@ -52,8 +52,10 @@ class RcloneConfig:
         if "attributes" in self.cloud_sync:
             config.update(dict(self.cloud_sync["attributes"], **self.provider.get_task_extra(self.cloud_sync)))
 
-            remote_path = "remote:" + "/".join([self.cloud_sync["attributes"].get("bucket", ""),
-                                                self.cloud_sync["attributes"].get("folder", "")]).rstrip("/")
+            remote_path = self.cloud_sync["attributes"]["folder"].rstrip()
+            if self.provider.buckets:
+                remote_path = f"{self.cloud_sync['attributes']['bucket']}/{remote_path}"
+            remote_path = f"remote:{remote_path}"
 
             if self.cloud_sync.get("encryption"):
                 self.tmp_file.write("[encrypted]\n")
@@ -105,6 +107,7 @@ async def rclone(job, cloud_sync):
         else:
             args.extend([config.remote_path, cloud_sync["path"]])
 
+        job.middleware.logger.debug("Running %r", args)
         proc = await Popen(
             args,
             stdout=subprocess.PIPE,
