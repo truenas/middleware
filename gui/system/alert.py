@@ -465,7 +465,6 @@ class AlertPlugins(metaclass=HookMetaclass):
                 if len(obj) > 0:
                     return obj
                 else:
-                    log.debug('The alert state file has no data', exc_info=True)
                     return []
         except Exception:
             log.debug('Failed to load alert state file', exc_info=True)
