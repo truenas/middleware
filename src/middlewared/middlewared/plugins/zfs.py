@@ -706,6 +706,9 @@ class ZFSSnapshot(CRUDService):
             with libzfs.ZFS() as zfs:
                 snp = zfs.get_snapshot(snapshot)
                 snp.clone(dataset_dst)
+                dataset = zfs.get_dataset(dataset_dst)
+                if dataset.type.name == 'FILESYSTEM':
+                    dataset.mount_recursive()
             self.logger.info("Cloned snapshot {0} to dataset {1}".format(snapshot, dataset_dst))
             return True
         except libzfs.ZFSException as err:
