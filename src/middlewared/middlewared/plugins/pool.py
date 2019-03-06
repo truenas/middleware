@@ -2379,6 +2379,10 @@ class PoolService(CRUDService):
                     'aclmode': {'value': 'restricted'},
                 }})
 
+        # Configure swaps after importing pools. devd events are not yet ready at this
+        # stage of the boot process.
+        self.middleware.run_coroutine(self.middleware.call('disk.swaps_configure'), wait=False)
+
         job.set_progress(100, 'Pools import completed')
 
     """
