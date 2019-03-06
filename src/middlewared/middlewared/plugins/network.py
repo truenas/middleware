@@ -38,6 +38,15 @@ class NetworkConfigurationService(ConfigService):
 
     @private
     def network_config_extend(self, data):
+        if self.middleware.call_sync('system.is_freenas'):
+            data.pop('hostname_b')
+            data.pop('hostname_virtual')
+        else:
+            node = self.middleware.call_sync('failover.node')
+            data['hostname_a'] = data['hostname']
+            if node == 'B':
+                data['hostname_a'] = data['hostname']
+                data['hostname'] = data['hostname_b']
         data['domains'] = data['domains'].split()
         data['netwait_ip'] = data['netwait_ip'].split()
         return data
