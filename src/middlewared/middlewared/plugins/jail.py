@@ -152,7 +152,7 @@ class JailService(CRUDService):
         if not any('resolver' in p for p in options['props']):
             dc = self.middleware.call_sync(
                 'service.query', [('service', '=', 'domaincontroller')]
-            )
+            )[0]
             dc_config = self.middleware.call_sync('domaincontroller.config')
 
             if dc['enable'] and (
