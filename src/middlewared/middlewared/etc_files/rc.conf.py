@@ -1,5 +1,9 @@
+import contextlib
+import itertools
 import os
 import sysctl
+
+NFS_BINDIP_NOTFOUND = '/tmp/.nfsbindip_notfound'
 
 
 def get_context(middleware):
@@ -100,6 +104,62 @@ def services_config(middleware, context):
 
 
 def nfs_config(middleware, context):
+    nfs = middleware.call_sync('nfs.config')
+
+    mountd_flags = ['-rS']
+    if nfs['mountd_log']:
+        mountd_flags.append('-l')
+    if nfs['allow_nonroot']:
+        mountd_flags.append('-n')
+    if nfs['mountd_port']:
+        mountd_flags += ['-p', str(nfs['mountd_port'])]
+
+    statd_flags = []
+    lockd_flags = []
+    if nfs['statd_lockd_log']:
+        statd_flags.append('-d')
+        lockd_flags += ['-d', '10']
+    if nfs['rpcstatd_port']:
+        statd_flags += ['-p', str(nfs['rpcstatd_port'])]
+    if nfs['rpclockd_port']:
+        lockd_flags += ['-p', str(nfs['rpclockd_port'])]
+
+    nfs_server_flags = ['-t', '-n', str(nfs['servers'])]
+    if nfs['udp']:
+        nfs_server_flags.append('-u')
+
+    # Make sure IPs bind to NFS are in the interfaces (exist!) #16044
+    if nfs['bindip']:
+        found = False
+        for iface in middleware.call_sync('interface.query'):
+            for alias in iface['state']['aliases']:
+                if alias['address'] in nfs['bindip']:
+                    print("found", alias['address'])
+                    found = True
+                    break
+            if found:
+                break
+
+        if found:
+            found = True
+            # FIXME: stop using sentinel file
+            with contextlib.suppress(Exception):
+                os.unlink(NFS_BINDIP_NOTFOUND)
+
+            ips = list(itertools.chain(*[['-h', i] for i in nfs['bindip']]))
+            mountd_flags += ips
+            nfs_server_flags += ips
+            statd_flags += ips
+            yield f'rpcbind_flags="{" ".join(ips)}"'
+        else:
+            with open(NFS_BINDIP_NOTFOUND, 'w'):
+                pass
+
+    yield f'nfs_server_flags="{" ".join(nfs_server_flags)}"'
+    yield f'rpc_statd_flags="{" ".join(statd_flags)}"'
+    yield f'rpc_lockd_flags="{" ".join(lockd_flags)}"'
+    yield f'mountd_flags="{" ".join(mountd_flags)}"'
+
     enabled = middleware.call_sync(
         'datastore.query', 'services.services', [
             ('srv_service', '=', 'nfs'), ('srv_enable', '=', True),
@@ -108,7 +168,6 @@ def nfs_config(middleware, context):
     if not enabled:
         return []
 
-    nfs = middleware.call_sync('nfs.config')
     if nfs['v4']:
         yield 'nfsv4_server_enable="YES"'
         if nfs['v4_v3owner']:
