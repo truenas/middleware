@@ -272,22 +272,6 @@ _count_config()
 	echo $1=\"${value}\"
 }
 
-# _bool_svcconfig /variable/ /service_name/
-_bool_svcconfig()
-{
-	local IFS=\|
-	local boolvalue value
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable FROM services_services WHERE srv_service='$2' ORDER BY id DESC LIMIT 1" | \
-	while read boolvalue; do
-		if [ "${boolvalue}" = "1" ]; then
-			value="YES"
-		else
-			value="NO"
-		fi
-		echo $1=\"${value}\"
-	done
-}
-
 # Grab static route configuration
 _staticroute_config()
 {
@@ -457,11 +441,6 @@ _watchdogd_config()
 
 _asigra_config()
 {
-	local failover_licensed=$1
-	if [ ${failover_licensed} -eq 0 ]; then
-		_bool_svcconfig postgresql_enable asigra
-		_bool_svcconfig dssystem_enable asigra
-	fi
 	echo "dssystem_env=\"PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin\""
 
 	local postgresql_path=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
@@ -500,39 +479,6 @@ _gen_conf()
 		echo "netif_enable=\"NO\""
 	fi
 	_staticroute_config
-
-	## Daemons
-	_bool_svcconfig netatalk_enable afp
-	_bool_svcconfig proftpd_enable ftp
-	_bool_svcconfig nfs_server_enable nfs
-	_bool_svcconfig rpc_lockd_enable nfs
-	_bool_svcconfig rpc_statd_enable nfs
-	_bool_svcconfig mountd_enable nfs
-	_bool_svcconfig nfsd_enable nfs
-	_bool_svcconfig rpcbind_enable nfs
-	_bool_svcconfig rsyncd_enable rsync
-	_bool_svcconfig snmpd_enable snmp
-	_bool_svcconfig snmp_agent_enable snmp
-	_bool_svcconfig openssh_enable ssh
-	_bool_svcconfig inetd_enable tftp
-	_bool_svcconfig inadyn_enable dynamicdns
-	_bool_svcconfig ladvd_enable lldp
-	_bool_svcconfig ctld_enable iscsitarget
-	_bool_svcconfig apache24_enable webdav
-	_bool_svcconfig netdata_enable netdata
-
-	# Let TrueNAS HA code manage smartd service
-	# Redmine 76242
-	if [ ${failover_licensed} -ne 1 ]; then
-		_bool_svcconfig smartd_daemon_enable smartd
-	fi
-
-	_bool_svcconfig samba_server_enable cifs
-	if ! dirsrv_enabled domaincontroller ; then
-		_bool_svcconfig smbd_enable cifs
-		_bool_svcconfig nmbd_enable cifs
-		_bool_svcconfig winbindd_enable cifs
-	fi
 
 	if dirsrv_enabled nis; then
 		_nis_config
