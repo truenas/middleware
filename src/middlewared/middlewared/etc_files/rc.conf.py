@@ -238,6 +238,11 @@ def powerd_config(middleware, context):
     yield f'powerd_enable="{value}"'
 
 
+def smart_config(middleware, context):
+    smart = middleware.call_sync('smart.config')
+    yield f'smart_daemon_flags="-i {smart["interval"] * 60}"'
+
+
 def snmp_config(middleware, context):
     yield 'snmpd_conffile="/etc/local/snmpd.conf"'
     loglevel = middleware.call_sync('snmp.config')['loglevel']
@@ -276,6 +281,7 @@ def render(service, middleware):
         nis_config,
         nut_config,
         powerd_config,
+        smart_config,
         snmp_config,
         tftp_config,
         truenas_config,

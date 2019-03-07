@@ -382,13 +382,6 @@ _gen_conf()
 		echo "middlewared_overlay_dirs=\"/usr/local/lib/middlewared_truenas\""
 	fi
 
-	local smartdint
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT smart_interval FROM services_smart ORDER BY id DESC LIMIT 1" | \
-	while read smartdint; do
-		inter=$(echo "${smartdint}*60"|/usr/bin/bc)
-		echo "smartd_daemon_flags=\"-i ${inter}\""
-	done
-
 	_s3_config
 
 	local kbdmap
