@@ -130,13 +130,6 @@ class JailService(CRUDService):
     @private
     @job(lock=lambda args: f'jail_create:{args[-1]["uuid"]}')
     def create_job(self, job, options):
-        print('*'*50)
-        print('*'*50)
-        print('*'*50)
-        print(job, options)
-        print('*'*50)
-        print('*'*50)
-        print('*'*50)
         verrors = ValidationErrors()
         uuid = options["uuid"]
 
