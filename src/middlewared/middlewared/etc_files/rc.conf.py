@@ -65,6 +65,26 @@ def services_config(middleware, context):
             yield f'{rc_enable}_enable="{value}"'
 
 
+def nis_config(middleware, context):
+    nis = middleware.call_sync('datastore.config', 'directoryservice.nis', {'prefix': 'nis_'})
+    if not nis['enable'] or not nis['domain']:
+        return []
+
+    domain = nis['domain']
+    if nis['servers']:
+        domain += ',' + nis['servers']
+
+    yield f'nisdomainname="{nis["domain"]}"'
+    yield 'nis_client_enable="YES"'
+
+    flags = ['-S', domain]
+    if nis['secure_mode']:
+        flags.append('-s')
+    if nis['manycast']:
+        flags.append('-m')
+    yield f'nis_client_flags="{" ".join(flags)}"'
+
+
 def powerd_config(middleware, context):
     value = 'YES' if middleware.call_sync('system.advanced.config')['powerdaemon'] else 'NO'
     yield f'powerd_enable="{value}"'
@@ -78,6 +98,7 @@ def render(service, middleware):
     for i in (
         services_config,
         host_config,
+        nis_config,
         powerd_config,
     ):
         rcs += list(i(middleware, context))
