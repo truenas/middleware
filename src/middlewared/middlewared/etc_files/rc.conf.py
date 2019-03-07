@@ -109,6 +109,12 @@ def powerd_config(middleware, context):
     yield f'powerd_enable="{value}"'
 
 
+def snmp_config(middleware, context):
+    yield 'snmpd_conffile="/etc/local/snmpd.conf"'
+    loglevel = middleware.call_sync('snmp.config')['loglevel']
+    yield f'snmpd_flags="-LS{loglevel}d"'
+
+
 def render(service, middleware):
 
     context = get_context(middleware)
@@ -120,6 +126,7 @@ def render(service, middleware):
         host_config,
         nis_config,
         powerd_config,
+        snmp_config,
     ):
         rcs += list(i(middleware, context))
 
