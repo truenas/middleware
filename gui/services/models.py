@@ -2169,7 +2169,7 @@ class S3(Model):
     )
     s3_browser = models.BooleanField(
         verbose_name=_("Enable Browser"),
-        default=False,
+        default=True,
         help_text=_("Enable the web user interface for the S3 service")
     )
     s3_mode = models.CharField(
