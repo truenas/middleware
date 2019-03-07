@@ -171,6 +171,11 @@ def snmp_config(middleware, context):
     yield f'snmpd_flags="-LS{loglevel}d"'
 
 
+def zfs_config(middleware, context):
+    if middleware.call_sync('datastore.query', 'storage.volume'):
+        yield 'zfs_enable="YES"'
+
+
 def render(service, middleware):
 
     context = get_context(middleware)
@@ -185,6 +190,7 @@ def render(service, middleware):
         nut_config,
         powerd_config,
         snmp_config,
+        zfs_config,
     ):
         rcs += list(i(middleware, context))
 
