@@ -377,15 +377,9 @@ _gen_conf()
 	_ldap_config
 
 	if ! is_freenas; then
-		if [ ${failover_licensed} -eq 1 ]; then
-			echo "failover_enable=\"YES\""
-			echo "pf_enable=\"YES\""
-		else
-			echo "failover_enable=\"NO\""
-		fi
+		# This cannot be in middleware etc plugin because it needs to be set
+		# before middlewared starts.
 		echo "middlewared_overlay_dirs=\"/usr/local/lib/middlewared_truenas\""
-	else
-		echo "failover_enable=\"NO\""
 	fi
 
         local nonroot mountdflags statdflags lockdflags ip nfsips mountdport statdport lockdport

@@ -185,6 +185,14 @@ def snmp_config(middleware, context):
     yield f'snmpd_flags="-LS{loglevel}d"'
 
 
+def truenas_config(middleware, context):
+    if context['is_freenas'] or not context['failover_licensed']:
+        yield 'failover_enable="NO"'
+    else:
+        yield 'failover_enable="YES"'
+        yield 'pf_enable="YES"'
+
+
 def zfs_config(middleware, context):
     if middleware.call_sync('datastore.query', 'storage.volume'):
         yield 'zfs_enable="YES"'
@@ -205,6 +213,7 @@ def render(service, middleware):
         nut_config,
         powerd_config,
         snmp_config,
+        truenas_config,
         zfs_config,
     ):
         rcs += list(i(middleware, context))
