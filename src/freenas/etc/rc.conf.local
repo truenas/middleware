@@ -376,16 +376,6 @@ _gen_conf()
 
 	_ldap_config
 
-	# Workaround: we don't enable ZFS by default but still want /etc/zfs/exports
-	# be exist for mountd(8)
-	if [ ! -r /etc/zfs/exports ]; then
-		touch /etc/zfs/exports
-	fi
-
-	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT() FROM storage_volume")" != 0 ]; then
-		echo "zfs_enable=\"YES\""
-	fi
-
 	sys_pool=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT sys_pool FROM system_systemdataset ORDER BY -id LIMIT 1")
 	rrdcached_flags="-s www -l /var/run/rrdcached.sock -p /var/run/rrdcached.pid"
 	if [ "$sys_pool" == "" ] || [ "$sys_pool" == "freenas-boot" ];
