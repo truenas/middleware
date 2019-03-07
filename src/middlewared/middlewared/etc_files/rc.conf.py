@@ -48,6 +48,22 @@ def collectd_config(middleware, context):
         return []
 
 
+def geli_config(middleware, context):
+    if context['failover_licensed']:
+        return []
+    providers = []
+    for ed in middleware.call_sync(
+        'datastore.query',
+        'storage.encrypteddisk',
+        [('encrypted_volume__vol_encrypt', '=', 1)],
+    ):
+        providers.append(ed['encrypted_provider'])
+        provider = ed['encrypted_provider'].replace('/', '_').replace('-', '_')
+        key = f'/data/geli/{ed.get("encrypted_volume", {}).get("vol_encryptkey")}.key'
+        yield f'geli_{provider}_flags="-p -k {key}"'
+    yield f'geli_devices="{" ".join(providers)}"'
+
+
 def host_config(middleware, context):
     config = middleware.call_sync('network.configuration.config')
     yield f'hostname="{config["hostname"]}.{config["domain"]}"'
@@ -299,6 +315,7 @@ def render(service, middleware):
         services_config,
         asigra_config,
         collectd_config,
+        geli_config,
         host_config,
         kbdmap_config,
         nfs_config,
