@@ -1,3 +1,6 @@
+import os
+
+
 def get_context(middleware):
     context = {
         'is_freenas': middleware.call_sync('system.is_freenas'),
@@ -8,6 +11,22 @@ def get_context(middleware):
         context['failover_licensed'] = middleware.call_sync('failover.licensed')
 
     return context
+
+
+def asigra_config(middleware, context):
+    if context['is_freenas']:
+        return []
+
+    yield (
+        'dssystem_env="PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:'
+        '/root/bin"'
+    )
+    yield 'postgresql_user="pgsql"'
+
+    pgsql_path = middleware.call_sync('asigra.config')['filesystem']
+    if not os.path.exists(pgsql_path):
+        pgsql_path = '/usr/local/pgsql/data'
+    yield f'postgresql_data="{pgsql_path}"'
 
 
 def host_config(middleware, context):
@@ -97,6 +116,7 @@ def render(service, middleware):
     rcs = []
     for i in (
         services_config,
+        asigra_config,
         host_config,
         nis_config,
         powerd_config,

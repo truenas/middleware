@@ -381,27 +381,6 @@ _watchdogd_config()
 	fi
 }
 
-_asigra_config()
-{
-	echo "dssystem_env=\"PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin\""
-
-	local postgresql_path=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-		SELECT
-			'/mnt/' || filesystem || '/database'
-		FROM
-			services_asigra
-		ORDER BY
-			-id
-		LIMIT 1
-	")
-	if [ -z "${postgresql_path}" ]
-	then
-		postgresql_path="/usr/local/pgsql/data"
-	fi
-
-	echo "postgresql_data=\"${postgresql_path}\""
-	echo "postgresql_user=\"pgsql\""
-}
 
 _gen_conf()
 {
@@ -422,7 +401,6 @@ _gen_conf()
 	fi
 	_staticroute_config
 
-	_asigra_config ${failover_licensed}
 	_snmp_config
 
 	_ldap_config
