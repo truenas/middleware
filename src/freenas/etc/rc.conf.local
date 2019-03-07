@@ -339,14 +339,6 @@ _gen_conf()
 		echo "middlewared_overlay_dirs=\"/usr/local/lib/middlewared_truenas\""
 	fi
 
-	local kbdmap
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_kbdmap FROM system_settings ORDER BY -id LIMIT 1" | \
-	while read -r kbdmap; do
-		if [ -n "${kbdmap}" ]; then
-			echo "keymap=\"${kbdmap}\""
-		fi
-	done
-
 	if [ ${failover_licensed} -ne 1 ]
 	then
 		echo "geli_devices=\"`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT encrypted_provider FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
