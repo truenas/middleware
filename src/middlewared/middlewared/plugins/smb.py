@@ -226,7 +226,6 @@ class SharingSMBService(CRUDService):
                 raise CallError(f'Failed to create {path}: {e}')
 
         await self.compress(data)
-        await self.set_storage_tasks(data)
         vuid = await self.generate_vuid(data['timemachine'])
         data.update({'vuid': vuid})
         data['id'] = await self.middleware.call(
@@ -275,7 +274,6 @@ class SharingSMBService(CRUDService):
                 raise CallError(f'Failed to create {path}: {e}')
 
         await self.compress(new)
-        await self.set_storage_tasks(new)
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
@@ -431,19 +429,6 @@ class SharingSMBService(CRUDService):
             task_dict[task_id] = msg
 
         return task_dict
-
-    @private
-    async def set_storage_tasks(self, data):
-        task = data.get('storage_task', None)
-        task_list = []
-
-        if not task:
-            return data
-
-        if task_list:
-            data['storage_task'] = list(task_list.keys())[0]
-
-        return data
 
     @accepts()
     def vfsobjects_choices(self):
