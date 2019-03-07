@@ -30,6 +30,20 @@ def asigra_config(middleware, context):
     yield f'postgresql_data="{pgsql_path}"'
 
 
+def collectd_config(middleware, context):
+    if context['is_freenas'] or context['failover_status'] != 'BACKUP':
+        yield 'collectd_enable="YES"'
+        yield 'rrdcached_enable="YES"'
+
+        rrdcached_flags = '-s www -l /var/run/rrdcached.sock -p /var/run/rrdcached.pid'
+        sysds = middleware.call_sync('systemdataset.config')
+        if sysds['pool'] in ('', 'freenas-boot'):
+            rrdcached_flags += ' -w 3600 -f 7200'
+        yield f'rrdcached_flags="{rrdcached_flags}'
+    else:
+        return []
+
+
 def host_config(middleware, context):
     config = middleware.call_sync('network.configuration.config')
     yield f'hostname="{config["hostname"]}.{config["domain"]}"'
@@ -184,6 +198,7 @@ def render(service, middleware):
     for i in (
         services_config,
         asigra_config,
+        collectd_config,
         host_config,
         nfs_config,
         nis_config,
