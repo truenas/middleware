@@ -238,40 +238,6 @@ _interface_config()
 	done
 }
 
-# _bool_config /variable/ /table/ /field/
-_bool_config()
-{
-	local IFS=\|
-	local boolvalue value key
-	if [ -n "$4" ]; then
-		key="$4"
-	else
-		key="id"
-	fi
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $3 FROM $2 ORDER BY ${key} DESC LIMIT 1" | \
-	while read boolvalue; do
-		if [ "${boolvalue}" = "1" ]; then
-			value="YES"
-		else
-			value="NO"
-		fi
-		echo $1=\"${value}\"
-	done
-}
-
-# _count_config /variable/ /table/ /field/ /where/
-_count_config()
-{
-	local count value
-	count=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT($3) FROM $2 WHERE $3$4"`
-	if [ "${count}" -gt "0" ]; then
-		value="YES"
-	else
-		value="NO"
-	fi
-	echo $1=\"${value}\"
-}
-
 # Grab static route configuration
 _staticroute_config()
 {
