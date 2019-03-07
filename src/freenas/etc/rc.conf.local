@@ -326,13 +326,6 @@ __MINIO__
 	done
 }
 
-_snmp_config()
-{
-	echo "snmpd_conffile=\"/etc/local/snmpd.conf\""
-
-	local snmpd_loglevel=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_loglevel FROM services_snmp ORDER BY -id LIMIT 1")
-	echo "snmpd_flags=\"-LS${snmpd_loglevel}d\""
-}
 
 _ldap_config()
 {
@@ -400,8 +393,6 @@ _gen_conf()
 		echo "netif_enable=\"NO\""
 	fi
 	_staticroute_config
-
-	_snmp_config
 
 	_ldap_config
 	_nut_config
