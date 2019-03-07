@@ -382,12 +382,6 @@ _gen_conf()
 		echo "middlewared_overlay_dirs=\"/usr/local/lib/middlewared_truenas\""
 	fi
 
-	local tftp_host
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT tftp_host FROM services_tftp WHERE tftp_host != '0.0.0.0' ORDER BY -id LIMIT 1" | \
-	while read -r tftp_host; do
-		echo "inetd_flags=\"-wW -C 60 -a ${tftp_host}\""
-	done
-
 	local smartdint
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT smart_interval FROM services_smart ORDER BY id DESC LIMIT 1" | \
 	while read smartdint; do

@@ -244,6 +244,11 @@ def snmp_config(middleware, context):
     yield f'snmpd_flags="-LS{loglevel}d"'
 
 
+def tftp_config(middleware, context):
+    tftp = middleware.call_sync('tftp.config')
+    yield f'inetd_flags="-wW -C 60 -a {tftp["host"]}"'
+
+
 def truenas_config(middleware, context):
     if context['is_freenas'] or not context['failover_licensed']:
         yield 'failover_enable="NO"'
@@ -272,6 +277,7 @@ def render(service, middleware):
         nut_config,
         powerd_config,
         snmp_config,
+        tftp_config,
         truenas_config,
         zfs_config,
     ):
