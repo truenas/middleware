@@ -65,6 +65,11 @@ def services_config(middleware, context):
             yield f'{rc_enable}_enable="{value}"'
 
 
+def powerd_config(middleware, context):
+    value = 'YES' if middleware.call_sync('system.advanced.config')['powerdaemon'] else 'NO'
+    yield f'powerd_enable="{value}"'
+
+
 def render(service, middleware):
 
     context = get_context(middleware)
@@ -73,6 +78,7 @@ def render(service, middleware):
     for i in (
         services_config,
         host_config,
+        powerd_config,
     ):
         rcs += list(i(middleware, context))
 
