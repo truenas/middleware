@@ -264,49 +264,6 @@ _staticroute_config()
 }
 
 
-_s3_config()
-{
-	local IFS=\|
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-		SELECT
-			srv_enable as s3_enable,
-			s3_bindip,
-			s3_bindport,
-			s3_access_key,
-			s3_secret_key,
-			s3_browser,
-			s3_mode,
-			s3_disks
-		FROM
-			services_s3
-		LEFT OUTER JOIN
-			services_services
-		ON
-			srv_service = 's3'
-		ORDER BY
-			services_s3.id
-		LIMIT 1
-	" |\
-	while read s3_enable s3_bindip s3_bindport s3_access_key \
-		s3_secret_key s3_browser s3_mode s3_disks; do
-		if [ "${s3_enable}" = "1" ]; then
-			echo minio_enable="YES"
-		fi
-		cat <<-__MINIO__
-			minio_disks="${s3_disks}"
-			minio_address="${s3_bindip}:${s3_bindport}"
-			minio_env="\\
-			MINIO_ACCESS_KEY=${s3_access_key} \\
-			MINIO_SECRET_KEY=${s3_secret_key} \\
-			"
-__MINIO__
-		if [ "${s3_browser}" = "0" ]; then
-			echo MINIO_BROWSER=off
-		fi
-	done
-}
-
-
 _ldap_config()
 {
 
@@ -381,8 +338,6 @@ _gen_conf()
 		# before middlewared starts.
 		echo "middlewared_overlay_dirs=\"/usr/local/lib/middlewared_truenas\""
 	fi
-
-	_s3_config
 
 	local kbdmap
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_kbdmap FROM system_settings ORDER BY -id LIMIT 1" | \

@@ -77,6 +77,7 @@ def services_config(middleware, context):
         'ftp': ['proftpd'],
         'iscsitarget': ['ctld'],
         'lldp': ['ladvd'],
+        's3': ['minio'],
         'netdata': ['netdata'],
         'nfs': ['nfs_server', 'rpc_lockd', 'rpc_statd', 'mountd', 'nfsd', 'rpcbind'],
         'rsync': ['rsyncd'],
@@ -238,6 +239,20 @@ def powerd_config(middleware, context):
     yield f'powerd_enable="{value}"'
 
 
+def s3_config(middleware, context):
+    s3 = middleware.call_sync('s3.config')
+    yield f'minio_disks="{s3["storage_path"]}"'
+    yield f'minio_address="{s3["bindip"]}:{s3["bindport"]}"'
+    browser = 'MINIO_BROWSER=off \\\n' if not s3['browser'] else ''
+    yield (
+        'minio_env="\\\n'
+        f'MINIO_ACCESS_KEY={s3["access_key"]} \\\n'
+        f'MINIO_SECRET_KEY={s3["secret_key"]} \\\n'
+        f'{browser}'
+        '"'
+    )
+
+
 def smart_config(middleware, context):
     smart = middleware.call_sync('smart.config')
     yield f'smart_daemon_flags="-i {smart["interval"] * 60}"'
@@ -281,6 +296,7 @@ def render(service, middleware):
         nis_config,
         nut_config,
         powerd_config,
+        s3_config,
         smart_config,
         snmp_config,
         tftp_config,
