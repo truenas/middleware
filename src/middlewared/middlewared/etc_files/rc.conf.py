@@ -68,6 +68,14 @@ def host_config(middleware, context):
         yield f'netwait_ip="{config["netwait_ip"]}"'
 
 
+def kbdmap_config(middleware, context):
+    general = middleware.call_sync('system.general.config')
+    if general['kbdmap']:
+        yield f'keymap="{general["kbdmap"]}"'
+    else:
+        return []
+
+
 def services_config(middleware, context):
     services = middleware.call_sync('datastore.query', 'services.services', [], {'prefix': 'srv_'})
     mapping = {
@@ -292,6 +300,7 @@ def render(service, middleware):
         asigra_config,
         collectd_config,
         host_config,
+        kbdmap_config,
         nfs_config,
         nis_config,
         nut_config,
