@@ -92,6 +92,18 @@ def kbdmap_config(middleware, context):
         return []
 
 
+def lldp_config(middleware, context):
+    lldp = middleware.call_sync('lldp.config')
+    ladvd_flags = ['-a']
+    if lldp['intdesc']:
+        ladvd_flags.append('-z')
+    if lldp['country']:
+        ladvd_flags += ['-c', lldp['country']]
+    if lldp['location']:
+        ladvd_flags += ['-l', rf'\"{lldp["location"]}\"']
+    yield f'ladvd_flags="{" ".join(ladvd_flags)}"'
+
+
 def services_config(middleware, context):
     services = middleware.call_sync('datastore.query', 'services.services', [], {'prefix': 'srv_'})
     mapping = {
@@ -318,6 +330,7 @@ def render(service, middleware):
         geli_config,
         host_config,
         kbdmap_config,
+        lldp_config,
         nfs_config,
         nis_config,
         nut_config,
