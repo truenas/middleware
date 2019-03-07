@@ -435,15 +435,10 @@ class SharingSMBService(CRUDService):
     @private
     async def set_storage_tasks(self, data):
         task = data.get('storage_task', None)
-        home = data['home']
-        path = data['path']
         task_list = []
 
         if not task:
-            if path:
-                task_list = await self.get_storage_tasks(path=path)
-            elif home:
-                task_list = await self.get_storage_tasks(home=home)
+            return data
 
         if task_list:
             data['storage_task'] = list(task_list.keys())[0]
