@@ -104,6 +104,27 @@ def nis_config(middleware, context):
     yield f'nis_client_flags="{" ".join(flags)}"'
 
 
+def nut_config(middleware, context):
+    enabled = middleware.call_sync(
+        'datastore.query', 'services.services', [
+            ('srv_service', '=', 'ups'), ('srv_enable', '=', True),
+        ]
+    )
+    # FIXME: UPS will only work if "Start on boot" is enabled
+    if not enabled:
+        return []
+
+    ups = middleware.call_sync('ups.config')
+    if ups['mode'] == 'MASTER':
+        yield 'nut_enable="YES"'
+        yield 'nut_upsshut="NO"'
+        yield f'nut_upslog_ups="{ups["identifier"]}"'
+    else:
+        yield f'nut_upslog_ups="{ups["identifier"]}@{ups["remotehost"]}:{ups["remoteport"]}"'
+    yield 'nut_upslog_enable="YES"'
+    yield 'nut_upsmon_enable="YES"'
+
+
 def powerd_config(middleware, context):
     value = 'YES' if middleware.call_sync('system.advanced.config')['powerdaemon'] else 'NO'
     yield f'powerd_enable="{value}"'
@@ -125,6 +146,7 @@ def render(service, middleware):
         asigra_config,
         host_config,
         nis_config,
+        nut_config,
         powerd_config,
         snmp_config,
     ):
