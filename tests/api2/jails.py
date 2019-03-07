@@ -184,7 +184,11 @@ def test_16_verify_iocage_list_with_ssh():
 
 
 def test_17_stop_jail():
-    results = POST('/jail/stop/', JAIL_NAME)
+    payload = {
+        'jail': JAIL_NAME,
+        'force': True
+    }
+    results = POST('/jail/stop/', payload)
     assert results.status_code == 200, results.text
     time.sleep(1)
 
