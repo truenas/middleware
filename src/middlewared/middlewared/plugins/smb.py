@@ -3,7 +3,7 @@ from middlewared.service import (SystemServiceService, ValidationErrors,
                                  accepts, private, CRUDService)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
-from middlewared.utils import Popen
+from middlewared.utils import Popen, run
 
 import asyncio
 import codecs
@@ -99,6 +99,23 @@ class SMBService(SystemServiceService):
                 encodings.add(cp)
 
         return encodings
+
+    @private
+    async def store_ldap_admin_password(self):
+        """
+        This is required if the LDAP directory service is enabled. The ldap admin dn and
+        password are stored in private/secrets.tdb file.
+        """
+        ldap = await self.middleware.call('datastore.config', 'directoryservice.ldap')
+        if not ldap['ldap_enable']:
+            return True
+
+        set_pass = await run(['usr/local/bin/smbpasswd', '-w', ldap['ldap_bindpw']], check=False)
+        if set_pass.returncode != 0:
+            self.logger.debug(f"Failed to set set ldap bindpw in secrets.tdb: {set_pass.stdout.decode()}")
+            return False
+
+        return True
 
     @accepts(Dict(
         'smb_update',
