@@ -1,10 +1,12 @@
 import contextlib
 import itertools
 import os
+import re
 import subprocess
 import sysctl
 
 NFS_BINDIP_NOTFOUND = '/tmp/.nfsbindip_notfound'
+RE_FIRMWARE_VERSION = re.compile(r'Firmware Revision\s*:\s*(\S+)', re.M)
 
 
 def get_context(middleware):
@@ -339,6 +341,47 @@ def vmware_config(middleware, context):
         yield 'vmware_guestd_enable="YES"'
 
 
+def _bmc_watchdog_is_broken():
+    cp = subprocess.run(['ipmitool', 'mc', 'info'], capture_output=True, errors='ignore')
+    reg = RE_FIRMWARE_VERSION.search(cp.stdout)
+    if not reg:
+        return False
+
+    version = reg.group(1).split('.')
+    if len(version) > 2:
+        return False
+
+    try:
+        return [int(i) for i in version[:2]] < [0, 30]
+    except ValueError:
+        return False
+
+
+def watchdog_config(middleware, context):
+    if context['is_freenas']:
+        # Bug #7337 -- blacklist AMD systems for now
+        model = sysctl.filter('hw.model')
+        if not model or 'AMD' not in model[0].value:
+            product = subprocess.run(
+                ['dmidecode', '-s', 'baseboard-product-name'],
+                capture_output=True,
+                errors='ignore',
+            ).stdout.split('\n')[0].strip()
+
+            if product in ('C2750D4I', 'C2550D4I') and _bmc_watchdog_is_broken():
+                return [
+                    'watchdogd_enable="YES"',
+                    'watchdogd_flags="-t 30 --softtimeout --softtimeout-action log,printf '
+                    '--pretimeout 15 --pretimeout-action log,printf -e \'sleep 1\' -w -T 3"',
+                ]
+            elif product not in ('X9DR3-F', 'X9DR3-LN4F+'):
+                return [
+                    'watchdogd_enable="YES"',
+                    'watchdogd_flags="--pretimeout 5 --pretimeout-action log,printf"',
+                ]
+    return ['watchdogd_enable="NO"']
+
+
 def zfs_config(middleware, context):
     if middleware.call_sync('datastore.query', 'storage.volume'):
         yield 'zfs_enable="YES"'
@@ -368,6 +411,7 @@ def render(service, middleware):
         truenas_config,
         tunable_config,
         vmware_config,
+        watchdog_config,
         zfs_config,
     ):
         rcs += list(i(middleware, context))
