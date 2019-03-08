@@ -356,11 +356,6 @@ _gen_conf()
 		echo "${tun_var}=\"${tun_value}\""
 	done
 
-	if $(/usr/local/bin/vmware-checkvm > /dev/null); then
-		echo "vmware_guestd_enable=\"YES\""
-	else
-		echo "vmware_guestd_enable=\"NO\""
-	fi
 }
 
 # Regenerate stale caches of rc.conf data.  We run multiple time

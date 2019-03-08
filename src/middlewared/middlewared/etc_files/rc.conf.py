@@ -1,6 +1,7 @@
 import contextlib
 import itertools
 import os
+import subprocess
 import sysctl
 
 NFS_BINDIP_NOTFOUND = '/tmp/.nfsbindip_notfound'
@@ -313,6 +314,23 @@ def truenas_config(middleware, context):
         yield 'pf_enable="YES"'
 
 
+def vmware_config(middleware, context):
+    try:
+        subprocess.run(
+            ['vmware-checkvm'],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True,
+        )
+    except subprocess.CalledProcessError:
+        yield 'vmware_guestd_enable="NO"'
+    except Exception:
+        middleware.logger.warn('Failed to run vmware-checkvm', exc_info=True)
+        return []
+    else:
+        yield 'vmware_guestd_enable="YES"'
+
+
 def zfs_config(middleware, context):
     if middleware.call_sync('datastore.query', 'storage.volume'):
         yield 'zfs_enable="YES"'
@@ -340,6 +358,7 @@ def render(service, middleware):
         snmp_config,
         tftp_config,
         truenas_config,
+        vmware_config,
         zfs_config,
     ):
         rcs += list(i(middleware, context))
