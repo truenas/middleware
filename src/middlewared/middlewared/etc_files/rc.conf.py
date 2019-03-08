@@ -314,6 +314,14 @@ def truenas_config(middleware, context):
         yield 'pf_enable="YES"'
 
 
+def tunable_config(middleware, context):
+    for tun in middleware.call_sync('tunable.query', [
+        ('type', '=', 'RC'), ('enabled', '=', True)
+    ]):
+        yield f'{tun["var"]}="{tun["value"]}"'
+    return []
+
+
 def vmware_config(middleware, context):
     try:
         subprocess.run(
@@ -358,6 +366,7 @@ def render(service, middleware):
         snmp_config,
         tftp_config,
         truenas_config,
+        tunable_config,
         vmware_config,
         zfs_config,
     ):
