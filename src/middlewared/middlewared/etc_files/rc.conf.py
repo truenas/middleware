@@ -63,7 +63,7 @@ def geli_config(middleware, context):
     ):
         providers.append(ed['encrypted_provider'])
         provider = ed['encrypted_provider'].replace('/', '_').replace('-', '_')
-        key = f'/data/geli/{ed.get("encrypted_volume", {}).get("vol_encryptkey")}.key'
+        key = f'/data/geli/{ed["encrypted_volume"]["vol_encryptkey"]}.key'
         yield f'geli_{provider}_flags="-p -k {key}"'
     yield f'geli_devices="{" ".join(providers)}"'
 
@@ -180,7 +180,6 @@ def nfs_config(middleware, context):
         for iface in middleware.call_sync('interface.query'):
             for alias in iface['state']['aliases']:
                 if alias['address'] in nfs['bindip']:
-                    print("found", alias['address'])
                     found = True
                     break
             if found:
@@ -440,7 +439,10 @@ def render(service, middleware):
         watchdog_config,
         zfs_config,
     ):
-        rcs += list(i(middleware, context))
+        try:
+            rcs += list(i(middleware, context))
+        except Exception:
+            middleware.logger.error('Failed to generate %s', i.__name__, exc_info=True)
 
     with open(os.open('/etc/rc.conf.freenas', os.O_CREAT | os.O_RDWR), 'w+') as f:
         f.seek(0)
