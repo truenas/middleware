@@ -239,19 +239,6 @@ _interface_config()
 }
 
 
-_ldap_config()
-{
-
-	# Should we ditch sssd now that we have nslcd in? Yes 
-	nslcd_enable="NO"
-
-	if dirsrv_enabled ldap ; then
-		nslcd_enable="YES"
-	fi
-
-	echo "nslcd_enable=\"${nslcd_enable}\""
-}
-
 _gen_conf()
 {
 	local failover_status="" failover_licensed=0
@@ -269,8 +256,6 @@ _gen_conf()
 	else
 		echo "netif_enable=\"NO\""
 	fi
-
-	_ldap_config
 
 	if ! is_freenas; then
 		# This cannot be in middleware etc plugin because it needs to be set

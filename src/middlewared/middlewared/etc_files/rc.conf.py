@@ -95,6 +95,11 @@ def kbdmap_config(middleware, context):
         return []
 
 
+def ldap_config(middleware, context):
+    ldap = middleware.call_sync('datastore.config', 'directoryservice.ldap', {'prefix': 'ldap_'})
+    yield f'nslcd_enable="{"YES" if ldap["enable"] else "NO"}"'
+
+
 def lldp_config(middleware, context):
     lldp = middleware.call_sync('lldp.config')
     ladvd_flags = ['-a']
@@ -417,6 +422,7 @@ def render(service, middleware):
         geli_config,
         host_config,
         kbdmap_config,
+        ldap_config,
         lldp_config,
         nfs_config,
         nis_config,
