@@ -657,8 +657,6 @@ class JailService(CRUDService):
                     'Provided path for source does not exist'
                 )
 
-            source = source.replace(' ', r'\040')  # fstab hates spaces ;)
-
         destination = options.get('destination')
         if destination:
             destination = f'/{destination}' if destination[0] != '/' else destination
@@ -679,9 +677,6 @@ class JailService(CRUDService):
                     )
             else:
                 os.makedirs(destination)
-
-            # fstab hates spaces ;)
-            destination = destination.replace(' ', r'\040')
 
         if action != 'list':
             for f in options:
@@ -734,7 +729,7 @@ class JailService(CRUDService):
             )
 
             for i in _list:
-                fstab_entry = i[1].split()
+                fstab_entry = i[1].split('\t')
                 _fstab_type = 'SYSTEM' if fstab_entry[0].endswith(
                     system_mounts) else 'USER'
 
