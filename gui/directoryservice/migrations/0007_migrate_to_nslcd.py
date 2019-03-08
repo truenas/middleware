@@ -12,7 +12,7 @@ def remove_sssd_aux_params(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('directoryservice', '0005_idmap_ad'),
+        ('directoryservice', '0006_certificate_model'),
     ]
 
     operations = [
