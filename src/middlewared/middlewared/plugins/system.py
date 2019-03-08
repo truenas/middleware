@@ -882,6 +882,9 @@ class SystemGeneralService(ConfigService):
         ):
             await self.middleware.call('service.restart', 'syslogd')
 
+        if config['kbdmap'] != new_config['kbdmap']:
+            await self.middleware.call('service.restart', 'syscons')
+
         if config['timezone'] != new_config['timezone']:
             await self.middleware.call('zettarepl.update_timezone', new_config['timezone'])
             await self.middleware.call('service.reload', 'timeservices')
