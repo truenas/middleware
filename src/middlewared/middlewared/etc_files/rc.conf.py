@@ -303,6 +303,24 @@ def snmp_config(middleware, context):
     yield f'snmpd_flags="-LS{loglevel}d"'
 
 
+def staticroute_config(middleware, context):
+    ipv4_routes = []
+    ipv6_routes = []
+    for sr in middleware.call_sync('staticroute.query'):
+        route = f'freenas{sr["id"]}'
+        if ':' in sr['destination']:
+            ipv6_routes.append(route)
+            rcprefix = 'ipv6_'
+        else:
+            ipv4_routes.append(route)
+            rcprefix = ''
+        yield f'{rcprefix}route_{route}="-net {sr["destination"]} {sr["gateway"]}"'
+    if ipv4_routes:
+        yield f'static_routes="{" ".join(ipv4_routes)}"'
+    if ipv6_routes:
+        yield f'ipv6_static_routes="{" ".join(ipv6_routes)}"'
+
+
 def tftp_config(middleware, context):
     tftp = middleware.call_sync('tftp.config')
     yield f'inetd_flags="-wW -C 60 -a {tftp["host"]}"'
@@ -407,6 +425,7 @@ def render(service, middleware):
         s3_config,
         smart_config,
         snmp_config,
+        staticroute_config,
         tftp_config,
         truenas_config,
         tunable_config,
