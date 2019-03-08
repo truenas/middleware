@@ -616,18 +616,21 @@ class ServiceService(CRUDService):
         return res, []
 
     async def _start_nis(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
         res = False
         if not await self._system("/etc/directoryservice/NIS/ctl start"):
             res = True
         return res
 
     async def _restart_nis(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
         res = False
         if not await self._system("/etc/directoryservice/NIS/ctl restart"):
             res = True
         return res
 
     async def _stop_nis(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
         res = False
         if not await self._system("/etc/directoryservice/NIS/ctl stop"):
             res = True
