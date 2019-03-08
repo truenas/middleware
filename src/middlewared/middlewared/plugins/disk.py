@@ -1282,7 +1282,7 @@ class DiskService(CRUDService):
                     swap_devices.append(mirror_name)
                     for c in consumers:
                         # Add all partitions used in swap, removing .eli
-                        used_partitions.add(c.provider.name.strip('.eli'))
+                        used_partitions.add(c.provider.name.replace('.eli', ''))
 
                     # If mirror has been configured automatically (not by middlewared)
                     # and there is no geli attached yet we should look for core in it.
@@ -1297,6 +1297,13 @@ class DiskService(CRUDService):
         klass = geom.class_by_name('PART')
         if not klass:
             return
+
+        # Add non-mirror swap devices
+        # e.g. when there is a single disk
+        swap_devices += [
+            i.devname.replace('.eli', '')
+            for i in getswapinfo() if not i.devname.startswith('mirror/')
+        ]
 
         # Get all partitions of swap type, indexed by size
         swap_partitions_by_size = defaultdict(list)
@@ -1323,8 +1330,23 @@ class DiskService(CRUDService):
             for i in range(int(len(partitions) / 2)):
                 if len(swap_devices) > MIRROR_MAX:
                     break
-                part_a, part_b = partitions[0:2]
+                part_ab = partitions[0:2]
                 partitions = partitions[2:]
+
+                # We could have a single disk being used as swap, without mirror.
+                # If thats the case the swap must be removed for said disk to allow the
+                # new gmirror to be created
+                try:
+                    for i in part_ab:
+                        if i in list(swap_devices):
+                            await self.swaps_remove_disks([i.split('p')[0]])
+                            swap_devices.remove(i)
+                except Exception:
+                    self.logger.warn('Failed to remove disk from swap', exc_info=True)
+                    # If something failed here there is no point in trying to create the mirror
+                    continue
+                part_a, part_b = part_ab
+
                 if not dumpdev:
                     dumpdev = await dempdev_configure(part_a)
                 try:
@@ -1333,8 +1355,8 @@ class DiskService(CRUDService):
                         # Which means maximum has been reached and we can stop
                         break
                     await run('gmirror', 'create', name, part_a, part_b)
-                except Exception:
-                    self.logger.warn(f'Failed to create gmirror {name}', exc_info=True)
+                except subprocess.CalledProcessError as e:
+                    self.logger.warn('Failed to create gmirror %s: %s', name, e.stderr.decode())
                     continue
                 swap_devices.append(f'mirror/{name}')
                 # Add remaining partitions to unused list
@@ -1715,7 +1737,11 @@ async def _event_devfs(middleware, event_type, args):
 
 async def _event_zfs(middleware, event_type, args):
     data = args['data']
+    # Swap must be configured only on disks being used by some pool,
+    # for this reason we must react to certain types of ZFS events to keep
+    # it in sync every time there is a change.
     if data.get('type') in (
+        'misc.fs.zfs.config_sync',
         'misc.fs.zfs.pool_create',
         'misc.fs.zfs.pool_destroy',
         'misc.fs.zfs.pool_import',

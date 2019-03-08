@@ -153,7 +153,10 @@ class AlertService(Service):
 
         alert_source = ALERT_SOURCES.get(source)
         if alert_source and isinstance(alert_source, DismissableAlertSource):
-            self.alerts[node][source] = await alert_source.dismiss(self.alerts[node][source])
+            self.alerts[node][source] = {
+                alert.key: alert
+                for alert in await alert_source.dismiss(self.alerts[node][source], key)
+            }
         elif alert_source and isinstance(alert_source, OneShotAlertSource):
             self.alerts[node][source].pop(key, None)
         else:
@@ -355,7 +358,7 @@ class AlertService(Service):
 
         alert.source = alert_source.name
         if existing_alert is None:
-            alert.datetime = datetime.utcnow()
+            alert.datetime = alert.datetime or datetime.utcnow()
         else:
             alert.datetime = existing_alert.datetime
         alert.level = alert.level or alert_source.level

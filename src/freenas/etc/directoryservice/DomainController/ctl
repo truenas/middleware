@@ -127,7 +127,7 @@ dcctl_start()
 	echo ${cifs_started} > "${cifs_file}"
 
 	dcctl_cmd ${service} ix-kerberos quietstart
-	dcctl_cmd ${service} ix-resolv quietstart
+	dcctl_cmd ${python} ${notifier} call dns.sync
 	dcctl_cmd ${service} ix-nsswitch quietstart
 	dcctl_cmd ${service} ix-pam quietstart
 
@@ -192,7 +192,7 @@ dcctl_stop()
 	fi
 
 	domaincontroller_set 0
-	dcctl_cmd ${service} ix-resolv quietstart
+	dcctl_cmd ${python} ${notifier} call dns.sync
 
 	return 0
 }
