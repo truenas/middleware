@@ -2,6 +2,7 @@ import contextlib
 import itertools
 import os
 import re
+import signal
 import subprocess
 import sysctl
 
@@ -441,5 +442,16 @@ def render(service, middleware):
     ):
         rcs += list(i(middleware, context))
 
-    with open('/etc/rc.conf.freenas', 'w') as f:
-        f.write('\n'.join(rcs) + '\n')
+    with open(os.open('/etc/rc.conf.freenas', os.O_CREAT | os.O_RDWR), 'w+') as f:
+        f.seek(0)
+        current = f.read()
+        new = '\n'.join(rcs) + '\n'
+        if current != new:
+            f.seek(0)
+            f.write('\n'.join(rcs) + '\n')
+            f.truncate()
+        os.fsync(f)
+
+    # Signal init later to make sure the file is synced to filesystem
+    if current != new:
+        os.kill(1, signal.SIGALRM)
