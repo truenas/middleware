@@ -7,7 +7,7 @@
 # REQUIRE: LOGIN
 # BEFORE: cron
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 generate_crontab()
 {
