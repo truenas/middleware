@@ -62,6 +62,11 @@ class servicesForm(ModelForm):
 
     def save(self, *args, **kwargs):
         obj = super(servicesForm, self).save(*args, **kwargs)
+
+        # Fix for API 1.0, rc.conf is no longer generated automatically
+        with client as c:
+            c.call('etc.generate', 'rc')
+
         _notifier = notifier()
 
         if obj.srv_service == 'cifs' and _notifier.started('domaincontroller'):
