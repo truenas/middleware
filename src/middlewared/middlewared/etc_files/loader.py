@@ -1,22 +1,15 @@
 import logging
-import os
 import subprocess
 import sysctl
+
+from middlewared.utils.io import write_if_changed
 
 logger = logging.getLogger(__name__)
 
 
 def loader_config(middleware):
     config = generate_loader_config(middleware)
-
-    with open(os.open("/boot/loader.conf.local", os.O_CREAT | os.O_RDWR), "w+") as f:
-        f.seek(0)
-        data = f.read()
-        new = "\n".join(config) + "\n"
-        if data != new:
-            f.seek(0)
-            f.write(new)
-            f.truncate()
+    write_if_changed("/boot/loader.conf.local", "\n".join(config) + "\n")
 
 
 def generate_loader_config(middleware):

@@ -6,6 +6,8 @@ import signal
 import subprocess
 import sysctl
 
+from middlewared.utils.io import write_if_changed
+
 NFS_BINDIP_NOTFOUND = '/tmp/.nfsbindip_notfound'
 RE_FIRMWARE_VERSION = re.compile(r'Firmware Revision\s*:\s*(\S+)', re.M)
 
@@ -444,16 +446,5 @@ def render(service, middleware):
         except Exception:
             middleware.logger.error('Failed to generate %s', i.__name__, exc_info=True)
 
-    with open(os.open('/etc/rc.conf.freenas', os.O_CREAT | os.O_RDWR), 'w+') as f:
-        f.seek(0)
-        current = f.read()
-        new = '\n'.join(rcs) + '\n'
-        if current != new:
-            f.seek(0)
-            f.write('\n'.join(rcs) + '\n')
-            f.truncate()
-        os.fsync(f)
-
-    # Signal init later to make sure the file is synced to filesystem
-    if current != new:
+    if write_if_changed('/etc/rc.conf.freenas', '\n'.join(rcs) + '\n'):
         os.kill(1, signal.SIGALRM)
