@@ -1159,6 +1159,18 @@ menu_install()
         fi
     done
 
+    chroot /tmp/data /usr/sbin/sysrc -f /boot/loader.conf rc_system=rc
+    chroot /tmp/data /usr/bin/touch /etc/dynamicdiskless
+    chroot /tmp/data /bin/mkdir -p /conf/base/etc
+    chroot /tmp/data /bin/echo 65535 > /conf/base/etc/md_size
+    chroot /tmp/data /bin/mkdir -p /conf/base/var
+    chroot /tmp/data /bin/mkdir -p /conf/base/mnt
+    chroot /tmp/data /bin/echo 8192 > /conf/base/mnt/md_size
+    chroot /tmp/data /bin/mkdir -p /conf/base/usr__local__etc
+    chroot /tmp/data /bin/echo 65535 > /conf/base/usr__local__etc/md_size
+    chroot /tmp/data /bin/ln -s /usr/local/etc /etc/local
+    chroot /tmp/data /bin/ln -fs /var/tmp/.rnd /.rnd
+
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
     ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
     if [ "${_do_upgrade}" -ne 0 ]; then
@@ -1240,6 +1252,10 @@ menu_install()
     if is_truenas && [ "${_do_upgrade}" -eq 0 ]; then
         : > /tmp/data/${TRUENAS_EULA_PENDING_SENTINEL}
     fi
+
+    chroot /tmp/data /bin/rm -rf /tmp
+    chroot /tmp/data /bin/ln -fs /var/tmp /tmp
+
     # Finally, before we unmount, start a scrub.
     # zpool scrub freenas-boot || true
 
