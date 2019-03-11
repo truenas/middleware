@@ -10,8 +10,20 @@ export HOME
 TERM=${TERM:-xterm}
 export TERM
 
-. /etc/avatar.conf
+PROJECT="FreeNAS"
+VERSION="12-STABLE"
 
+if [ -e "/var/db/trueos-manifest.json" ] ; then
+  _tmp=`jq -r '."os_name"' "/var/db/trueos-manifest.json"`
+  if [ -n "${_tmp}" -a "${_tmp}" != "null" ] ; then
+    PROJECT="${_tmp}"
+  fi
+  #FIXME: let's avoid duplication please
+  _tmp=`jq -r '."os_version"' "/var/db/trueos-manifest.json"`
+  if [ -n "${_tmp}" -a "${_tmp}" != "null" ] ; then
+    VERSION="${_tmp}"
+  fi
+fi
 
 # Constants for base 10 and base 2 units
 : ${kB:=$((1000))}      ${kiB:=$((1024))};       readonly kB kiB
@@ -22,7 +34,7 @@ export TERM
 is_truenas()
 {
 
-    test "$AVATAR_PROJECT" = "TrueNAS"
+    test "${PROJECT}" = "TrueNAS"
     return $?
 }
 
@@ -63,7 +75,7 @@ check_is_swap_safe()
 	[Yy][Ee][Ss])
 	    # Confirm swap setup with FreeNAS users.
 	    if ! is_truenas &&
-		! dialog --clear --title "${AVATAR_PROJECT}" \
+		! dialog --clear --title "${PROJECT}" \
 		    --yes-label "Create swap" --no-label "No swap" --yesno  \
 		    "Create 16GB swap partition on boot devices?" \
 		    7 74 ; then
@@ -108,7 +120,7 @@ get_product_path()
 
 get_image_name()
 {
-    find $(get_product_path) -name "$AVATAR_PROJECT-$AVATAR_ARCH.img.xz" -type f
+    find $(get_product_path) -name "${PROJECT}-${VERSION}.img.xz" -type f
 }
 
 # The old pre-install checks did several things
@@ -124,41 +136,10 @@ pre_install_check()
     local memsize=$(sysctl -n hw.physmem)
 
     if [ ${memsize} -lt ${minmem} ]; then
-	dialog --clear --title "${AVATAR_PROJECT}" --defaultno \
+	dialog --clear --title "${PROJECT}" --defaultno \
 	--yesno "This computer has less than the recommended 8 GB of RAM.\n\nOperation without enough RAM is not recommended.  Continue anyway?" 7 74 || return 1
     fi
     return 0
-}
-
-# Convert /etc/version* to /etc/avatar.conf
-#
-# 1 - old /etc/version* file
-# 2 - dist version of avatar.conf
-# 3 - destination avatar.conf
-upgrade_version_to_avatar_conf()
-{
-    local destconf srcconf srcversion
-    local project version revision arch
-
-    srcversion=$1
-    srcconf=$2
-    destconf=$3
-
-    set -- $(sed -E -e 's/-amd64/-x64/' -e 's/-i386/-x86/' -e 's/(.*)-([^-]+) \((.*)\)/\1-\3-\2/' -e 's/-/ /' -e 's/-([^-]+)$/ \1/' -e 's/-([^-]+)$/ \1/' < $srcversion)
-
-    project=$1
-    version=$2
-    revision=$3
-    arch=$4
-
-    sed \
-        -e "s,^AVATAR_ARCH=\".*\",AVATAR_ARCH=\"$arch\",g" \
-        -e "s,^AVATAR_BUILD_NUMBER=\".*\"\$,AVATAR_BUILD_NUMBER=\"$revision\",g" \
-        -e "s,^AVATAR_PROJECT=\".*\"\$,AVATAR_PROJECT=\"$project\",g" \
-        -e "s,^AVATAR_VERSION=\".*\"\$,AVATAR_VERSION=\"$version\",g" \
-        < $srcconf > $destconf.$$
-
-    mv $destconf.$$ $destconf
 }
 
 build_config_old()
@@ -337,7 +318,7 @@ Proceed with the ${_type}?
 EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
-    dialog --clear --title "$AVATAR_PROJECT ${_type}" --yesno "${_msg}" 13 74
+    dialog --clear --title "${PROJECT} ${_type}" --yesno "${_msg}" 13 74
     [ $? -eq 0 ] || exit 1
 }
 
@@ -352,7 +333,7 @@ Do you wish to perform an upgrade or a fresh installation on ${_disk}?
 EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
-    dialog --title "Upgrade this $AVATAR_PROJECT installation" --no-label "Fresh Install" --yes-label "Upgrade Install" --yesno "${_msg}" 8 74
+    dialog --title "Upgrade this ${PROJECT} installation" --no-label "Fresh Install" --yes-label "Upgrade Install" --yesno "${_msg}" 8 74
     return $?
 }
 
@@ -379,14 +360,14 @@ ask_boot_method()
 
     local _tmpfile="/tmp/msg"
     cat << EOD > "${_tmpfile}"
-$AVATAR_PROJECT can be booted in either BIOS or UEFI mode.
+${PROJECT} can be booted in either BIOS or UEFI mode.
 
 BIOS mode is recommended for legacy and enterprise hardware,
 whereas UEFI may be required for newer consumer motherboards.
 EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
-    dialog ${dlgflags} --title "$AVATAR_PROJECT Boot Mode" --no-label "Boot via BIOS" --yes-label "Boot via UEFI" --yesno "${_msg}" 8 74
+    dialog ${dlgflags} --title "${PROJECT} Boot Mode" --no-label "Boot via BIOS" --yes-label "Boot via UEFI" --yesno "${_msg}" 8 74
     return $?
 }
 
@@ -572,7 +553,7 @@ partition_disks()
     _minsize=$(get_minimum_size ${_disks})
 
     if [ ${_minsize} -lt ${MIN_ZFS_PARTITION_SIZE} ]; then
-	echo "Disk is too small to install ${AVATAR_PROJECT}" 1>&2
+	echo "Disk is too small to install ${PROJECT}" 1>&2
 	return 1
     fi
 
@@ -922,7 +903,7 @@ menu_install()
 	    fi
 
 	    eval "dialog --title 'Choose destination media' \
-	      --checklist 'Select one or more drives where $AVATAR_PROJECT should be installed (use arrow keys to navigate to the drive(s) for installation; select a drive with the spacebar).' \
+	      --checklist 'Select one or more drives where ${PROJECT} should be installed (use arrow keys to navigate to the drive(s) for installation; select a drive with the spacebar).' \
 	      ${_menuheight} 60 ${_items} ${_list}" 2>${_tmpfile}
 	    [ $? -eq 0 ] || exit 1
 	fi
@@ -1026,10 +1007,10 @@ menu_install()
     fi
     # Start critical section.
     if ${INTERACTIVE}; then
-	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on ${_realdisks} has failed. Press enter to continue.. \" junk" EXIT
+	trap "set +x; read -p \"The ${PROJECT} $_action on ${_realdisks} has failed. Press enter to continue.. \" junk" EXIT
     else
-#	trap "echo \"The ${AVATAR_PROJECT} ${_action} on ${_realdisks} has failed.\" ; sleep 15" EXIT
-	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on ${_realdisks} has failed. Press enter to continue.. \" junk" EXIT
+#	trap "echo \"The ${PROJECT} ${_action} on ${_realdisks} has failed.\" ; sleep 15" EXIT
+	trap "set +x; read -p \"The ${PROJECT} $_action on ${_realdisks} has failed. Press enter to continue.. \" junk" EXIT
     fi
     set -e
 #    set -x
@@ -1221,7 +1202,7 @@ menu_install()
 	: > /tmp/data/${CD_UPGRADE_SENTINEL}
 	: > /tmp/data/${NEED_UPDATE_SENTINEL}
 	${INTERACTIVE} && dialog --msgbox "The installer has preserved your database file.
-#$AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
+#${PROJECT} will migrate this file, if necessary, to the current format." 6 74
     elif [ "${_do_upgrade}" -eq 0 ]; then
 	if [ -n "${_password}" ]; then
 		# Set the root password
@@ -1244,7 +1225,7 @@ menu_install()
 
     trap - EXIT
 
-    _msg="The $AVATAR_PROJECT $_action on ${_realdisks} succeeded!\n"
+    _msg="The ${PROJECT} $_action on ${_realdisks} succeeded!\n"
     _dlv=`/sbin/sysctl -n vfs.nfs.diskless_valid 2> /dev/null`
     if [ ${_dlv:=0} -ne 0 ]; then
         _msg="${_msg}Please reboot, and change BIOS boot order to *not* boot over network."
@@ -1355,7 +1336,7 @@ main()
 
     while :; do
 
-        dialog --clear --title "$AVATAR_PROJECT $AVATAR_VERSION Console Setup" --menu "" 12 73 6 \
+        dialog --clear --title "${PROJECT} ${VERSION} Console Setup" --menu "" 12 73 6 \
             "1" "Install/Upgrade" \
             "2" "Shell" \
             "3" "Reboot System" \
