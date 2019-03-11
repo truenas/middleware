@@ -158,6 +158,33 @@ class ISCSIPortalService(CRUDService):
         data['discovery_authgroup'] = data.pop('discoveryauthgroup')
         return data
 
+    @accepts()
+    async def listen_ip_choices(self):
+        """
+        Returns possible choices for `listen.ip` attribute of portal create and update.
+        """
+        choices = {'0.0.0.0': '0.0.0.0'}
+        alua = (await self.middleware.call('iscsi.global.config'))['alua']
+        if alua:
+            # If ALUA is enabled we actually want to show the user the IPs of each node
+            # instead of the VIP so its clear its not going to bind to the VIP even though
+            # thats the value used under the hoods.
+            for i in await self.middleware.call('datastore.query', 'network.Interfaces', [
+                ('int_vip', 'nin', [None, '']),
+            ]):
+                choices[i['int_vip']] = f'{i["int_ipv4address"]}/{i["int_ipv4address_b"]}'
+
+            for i in await self.middleware.call('datastore.query', 'network.Alias', [
+                ('alias_vip', 'nin', [None, '']),
+            ]):
+                choices[i['alias_vip']] = f'{i["alias_v4address"]}/{i["alias_v4address_b"]}'
+
+        else:
+            for i in await self.middleware.call('interface.query'):
+                for alias in i['aliases']:
+                    choices[alias['address']] = alias['address']
+        return choices
+
     async def __validate(self, verrors, data, schema, old=None):
         if not data['listen']:
             verrors.add(f'{schema}.listen', 'At least one listen entry is required.')
