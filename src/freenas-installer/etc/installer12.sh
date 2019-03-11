@@ -1150,8 +1150,14 @@ menu_install()
         OS=TrueNAS
     fi
 
-    # Tell it to look in /.mount for the packages.
-    /usr/local/bin/freenas-install -P /.mount/${OS}/Packages -M /.mount/${OS}-MANIFEST /tmp/data
+    for i in $(jq -r '."iso"."'auto-install-packages'"."'default'" | join(" ")' /var/db/trueos-manifest.json)
+    do
+        echo "Installing package: ${i}"
+        pkg -c /tmp/data install -y ${i}
+        if [ $? -ne 0 ] ; then
+            echo "Failed installing: ${i}"
+        fi
+    done
 
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
     ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
