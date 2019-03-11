@@ -1064,8 +1064,6 @@ menu_install()
 
     # Hack #1
     export ROOTIMAGE=1
-    # Hack #2
-    ls $(get_product_path) > /dev/null
 
     if [ ${_do_upgrade} -eq 1 -a ${upgrade_style} = "new" -a "${_upgrade_type}" = "inplace" ]
     then
