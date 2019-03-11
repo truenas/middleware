@@ -229,7 +229,6 @@ class FilesystemService(Service):
             'avail_bytes': statfs.avail_blocks * statfs.blocksize,
         }
 
-
     @accepts(
         Str('path'),
         Bool('simplified', default=True),
@@ -349,14 +348,14 @@ class FilesystemService(Service):
                 cleaned_acl.append(ace)
             if not lockace_is_present:
                 locking_ace = {
-                    'tag': 'EVERYONE', 
-                    'id': None, 
-                    'type': 'ALLOW', 
+                    'tag': 'EVERYONE',
+                    'id': None,
+                    'type': 'ALLOW',
                     'perms': acltools.convert_to_adv_permset('NOPERMS'),
                     'flags': acltools.convert_to_adv_flagset('INHERIT')
                 }
                 cleaned_acl.append(locking_ace)
-                
+
             a = acl.ACL()
             a.__setstate__(cleaned_acl)
             a.apply(path)
@@ -369,8 +368,7 @@ class FilesystemService(Service):
             '/usr/local/bin/winacl',
             '-a', 'clone',
             f"{'-rx' if options['traverse'] else '-r'}",
-            '-p', path
-            ], check=False
+            '-p', path], check=False
         )
         if winacl.returncode != 0:
             raise CallError(f"Failed to recursively apply ACL: {winacl.stderr.decode()}")
