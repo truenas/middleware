@@ -1140,6 +1140,11 @@ menu_install()
     chroot /tmp/data pkg set -y -A 00 os/userland
     chroot /tmp/data pkg set -y -A 00 os/kernel
 
+    # Setup pkg appropriately
+    mkdir /tmp/data/dist
+    mount_nullfs /dist /tmp/data/dist
+    mount_nullfs /etc/pkg /tmp/data/etc/pkg
+
     local OS=FreeNAS
     if is_truenas; then
         OS=TrueNAS
