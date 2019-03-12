@@ -1164,12 +1164,12 @@ menu_install()
     chroot /tmp/data /usr/sbin/sysrc -f /boot/loader.conf rc_system=rc
     chroot /tmp/data /usr/bin/touch /etc/dynamicdiskless
     chroot /tmp/data /bin/mkdir -p /conf/base/etc
-    chroot /tmp/data /bin/echo 65535 > /conf/base/etc/md_size
+    chroot /tmp/data /bin/sh -c '/bin/echo 65535 > /conf/base/etc/md_size'
     chroot /tmp/data /bin/mkdir -p /conf/base/var
     chroot /tmp/data /bin/mkdir -p /conf/base/mnt
-    chroot /tmp/data /bin/echo 8192 > /conf/base/mnt/md_size
+    chroot /tmp/data /bin/sh -c '/bin/echo 8192 > /conf/base/mnt/md_size'
     chroot /tmp/data /bin/mkdir -p /conf/base/usr__local__etc
-    chroot /tmp/data /bin/echo 65535 > /conf/base/usr__local__etc/md_size
+    chroot /tmp/data /bin/sh -c '/bin/echo 65535 > /conf/base/usr__local__etc/md_size'
     chroot /tmp/data /bin/ln -s /usr/local/etc /etc/local
     chroot /tmp/data /bin/ln -fs /var/tmp/.rnd /.rnd
 
