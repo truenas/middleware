@@ -172,14 +172,14 @@ class ZFSPoolService(CRUDService):
             dev = dev.replace('.eli', '')
             find = labelclass.xml.findall(f".//provider[name='{dev}']/../consumer/provider")
             name = None
-            if find:
+            if find is not None:
                 name = geom.provider_by_id(find[0].get('ref')).geom.name
             else:
                 g = geom.geom_by_name('DEV', dev)
                 if g:
                     name = g.consumer.provider.geom.name
 
-            if name and geom.geom_by_name('DISK', name):
+            if name and (name.startswith('multipath/') or geom.geom_by_name('DISK', name)):
                 yield name
             else:
                 self.logger.debug(f'Could not find disk for {dev}')
