@@ -1136,6 +1136,10 @@ menu_install()
 
     unset PKG_DBDIR
 
+    # Set automatic flag for base packages explicitly
+    chroot /tmp/data pkg set -y -A 00 os/userland
+    chroot /tmp/data pkg set -y -A 00 os/kernel
+
     local OS=FreeNAS
     if is_truenas; then
         OS=TrueNAS
