@@ -48,17 +48,7 @@ class DiskService(CRUDService):
         datastore = 'storage.disk'
         datastore_prefix = 'disk_'
         datastore_extend = 'disk.disk_extend'
-
-    @filterable
-    async def query(self, filters=None, options=None):
-        if filters is None:
-            filters = []
-        if options is None:
-            options = {}
-        options['prefix'] = 'disk_'
-        filters.append(('expiretime', '=', None))
-        options['extend'] = 'disk.disk_extend'
-        return await self.middleware.call('datastore.query', 'storage.disk', filters, options)
+        datastore_filters = [('expiretime', '=', None)]
 
     @private
     async def disk_extend(self, disk):
