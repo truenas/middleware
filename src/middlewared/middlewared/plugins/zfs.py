@@ -281,6 +281,9 @@ class ZFSPoolService(CRUDService):
 
                 newvdev = libzfs.ZFSVdev(zfs, 'disk')
                 newvdev.path = f'/dev/{dev}'
+                # FIXME: Replace using old path is not working for some reason
+                # Lets use guid for now.
+                target.path = str(target.guid)
                 target.replace(newvdev)
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
