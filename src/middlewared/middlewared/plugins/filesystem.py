@@ -12,7 +12,7 @@ import subprocess
 from middlewared.main import EventSource
 from middlewared.schema import Bool, Dict, Int, Ref, List, Str, accepts
 from middlewared.service import private, CallError, Service, job
-from middlewared.utils import filter_list, acltools
+from middlewared.utils import filter_list
 
 
 class FilesystemService(Service):
@@ -229,6 +229,79 @@ class FilesystemService(Service):
             'avail_bytes': statfs.avail_blocks * statfs.blocksize,
         }
 
+    def __convert_to_basic_permset(self, permset):
+        """
+        Convert "advanced" ACL permset format to basic format using
+        bitwise operation and constants defined in py-bsd/bsd/acl.pyx,
+        py-bsd/defs.pxd and acl.h.
+
+        If the advanced ACL can't be converted without losing
+        information, we return 'OTHER'.
+
+        Reverse process converts the constant's value to a dictionary
+        using a bitwise operation.
+        """
+        perm = 0
+        for k, v, in permset.items():
+            if v:
+                perm |= acl.NFS4Perm[k]
+
+        try:
+            SimplePerm = (acl.NFS4BasicPermset(perm)).name
+        except Exception:
+            SimplePerm = 'OTHER'
+
+        return SimplePerm
+
+    def __convert_to_basic_flagset(self, flagset):
+        flags = 0
+        for k, v, in flagset.items():
+            if k == "INHERITED":
+                continue
+            if v:
+                flags |= acl.NFS4Flag[k]
+
+        try:
+            SimpleFlag = (acl.NFS4BasicFlagset(flags)).name
+        except Exception:
+            SimpleFlag = 'OTHER'
+
+        return SimpleFlag
+
+    def __convert_to_adv_permset(self, basic_perm):
+        permset = {}
+        perm_mask = acl.NFS4BasicPermset[basic_perm].value
+        for name, member in acl.NFS4Perm.__members__.items():
+            if perm_mask & member.value:
+                permset.update({name: True})
+            else:
+                permset.update({name: False})
+
+        return permset
+
+    def __convert_to_adv_flagset(self, basic_flag):
+        flagset = {}
+        flag_mask = acl.NFS4BasicFlagset[basic_flag].value
+        for name, member in acl.NFS4Flag.__members__.items():
+            if flag_mask & member.value:
+                flagset.update({name: True})
+            else:
+                flagset.update({name: False})
+
+        return flagset
+
+    @accepts(Str('path'))
+    def acl_is_trivial(self, path):
+        """
+        ACL is trivial if it can be fully expressed as a file mode without losing
+        any access rules. This is intended to be used as a check before allowing
+        users to chmod() through the webui
+        """
+        if not os.path.exists(path):
+            raise CallError('Path not found.', errno.ENOENT)
+        a = acl.ACL(file=path)
+        return a.is_trivial
+
     @accepts(
         Str('path'),
         Bool('simplified', default=True),
@@ -241,7 +314,7 @@ class FilesystemService(Service):
         - READ = sufficient rights to traverse a directory, and read file contents.
         - MODIFIY = sufficient rights to traverse, read, write, and modify a file. Equivalent to modify_set.
         - FULL_CONTROL = all permissions.
-        - SPECIAL = does not fit into any of the above categories.
+        - OTHER = does not fit into any of the above categories without losing information.
 
         In all cases we replace USER_OBJ, GROUP_OBJ, and EVERYONE with owner@, group@, everyone@ for
         consistency with getfacl and setfacl. If one of aforementioned special tags is used, 'id' must
@@ -260,15 +333,15 @@ class FilesystemService(Service):
         if not simplified:
             advanced_acl = []
             for entry in fs_acl:
-                aclwho = acltools.ACLWho[entry['tag']]
                 ace = {
-                    'tag': aclwho.value,
+                    'tag': (acl.ACLWho[entry['tag']]).value,
                     'id': entry['id'],
                     'type': entry['type'],
                     'perms': entry['perms'],
                     'flags': entry['flags'],
                 }
-                if ace['tag'] == 'everyone@' and acltools.convert_to_basic_permset(ace['perms']) == 'NOPERMS':
+                if ace['tag'] == 'everyone@' and self.__convert_to_basic_permset(ace['perms']) == 'NOPERMS':
+                    self.logger.debug('detected hidden ace')
                     continue
                 advanced_acl.append(ace)
             return advanced_acl
@@ -276,15 +349,14 @@ class FilesystemService(Service):
         if simplified:
             simple_acl = []
             for entry in fs_acl:
-                aclwho = acltools.ACLWho[entry['tag']]
                 ace = {
-                    'tag': aclwho.value,
+                    'tag': (acl.ACLWho[entry['tag']]).value,
                     'id': entry['id'],
                     'type': entry['type'],
-                    'perms': acltools.convert_to_basic_permset(entry['perms']),
-                    'flags': acltools.convert_to_basic_flagset(entry['flags']),
+                    'perms': {'BASIC': self.__convert_to_basic_permset(entry['perms'])},
+                    'flags': {'BASIC': self.__convert_to_basic_flagset(entry['flags'])},
                 }
-                if ace['tag'] == 'everyone@' and ace['perms'] == 'NOPERMS':
+                if ace['tag'] == 'everyone@' and ace['perms']['BASIC'] == 'NOPERMS':
                     continue
                 simple_acl.append(ace)
 
@@ -292,7 +364,45 @@ class FilesystemService(Service):
 
     @accepts(
         Str('path'),
-        List('dacl', default=[]),
+        List(
+            'dacl',
+            items=[
+                Dict(
+                    'aclentry',
+                    Str('tag', enum=['owner@', 'group@', 'everyone@', 'USER', 'GROUP']),
+                    Int('id', null=True),
+                    Str('type', enum=['ALLOW', 'DENY']),
+                    Dict(
+                        'perms',
+                        Bool('READ_DATA'),
+                        Bool('WRITE_DATA'),
+                        Bool('APPEND_DATA'),
+                        Bool('READ_NAMED_ATTRS'),
+                        Bool('WRITE_NAMED_ATTRS'),
+                        Bool('EXECUTE'),
+                        Bool('DELETE_CHILD'),
+                        Bool('READ_ATTRIBUTES'),
+                        Bool('WRITE_ATTRIBUTES'),
+                        Bool('DELETE'),
+                        Bool('READ_ACL'),
+                        Bool('WRITE_ACL'),
+                        Bool('WRITE_OWNER'),
+                        Bool('SYNCHRONIZE'),
+                        Str('BASIC', enum=['FULL_CONTROL', 'MODIFY', 'READ', 'OTHER']),
+                    ),
+                    Dict(
+                        'flags',
+                        Bool('FILE_INHERIT'),
+                        Bool('DIRECTORY_INHERIT'),
+                        Bool('NO_PROPAGATE_INHERIT'),
+                        Bool('INHERIT_ONLY'),
+                        Bool('INHERITED'),
+                        Str('BASIC', enum=['INHERIT', 'NOINHERIT', 'OTHER']),
+                    ),
+                )
+            ],
+            default=[]
+        ),
         Dict(
             'options',
             Bool('stripacl', default=False),
@@ -334,16 +444,16 @@ class FilesystemService(Service):
             cleaned_acl = []
             lockace_is_present = False
             for entry in dacl:
-                if 'OTHER' in (entry['perms'], entry['flags']):
+                if entry['perms'].get('BASIC') == 'OTHER' or entry['flags'].get('BASIC') == 'OTHER':
                     raise CallError('Unable to apply simplified ACL due to OTHER entry. Use full ACL.', errno.EINVAL)
                 ace = {
-                    'tag': (acltools.ACLWho(entry['tag'])).name,
+                    'tag': (acl.ACLWho(entry['tag'])).name,
                     'id': entry['id'],
                     'type': entry['type'],
-                    'perms': acltools.convert_to_adv_permset(entry['perms']) if type(entry['perms']) == str else entry['perms'],
-                    'flags': acltools.convert_to_adv_flagset(entry['flags']) if type(entry['perms']) == str else entry['flags'],
+                    'perms': self.__convert_to_adv_permset(entry['perms']['BASIC']) if 'BASIC' in entry['perms'] else entry['perms'],
+                    'flags': self.__convert_to_adv_flagset(entry['flags']['BASIC']) if 'BASIC' in entry['perms'] else entry['flags'],
                 }
-                if ace['tag'] == 'EVERYONE' and acltools.convert_to_basic_permset(ace['perms']) == 'NOPERMS':
+                if ace['tag'] == 'EVERYONE' and self.__convert_to_basic_permset(ace['perms']) == 'NOPERMS':
                     lockace_is_present = True
                 cleaned_acl.append(ace)
             if not lockace_is_present:
@@ -351,8 +461,8 @@ class FilesystemService(Service):
                     'tag': 'EVERYONE',
                     'id': None,
                     'type': 'ALLOW',
-                    'perms': acltools.convert_to_adv_permset('NOPERMS'),
-                    'flags': acltools.convert_to_adv_flagset('INHERIT')
+                    'perms': self.__convert_to_adv_permset('NOPERMS'),
+                    'flags': self.__convert_to_adv_flagset('INHERIT')
                 }
                 cleaned_acl.append(locking_ace)
 
