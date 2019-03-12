@@ -1258,6 +1258,9 @@ menu_install()
     # Finally, before we unmount, start a scrub.
     # zpool scrub freenas-boot || true
 
+    umount -f /tmp/data/dist
+    umount -f /tmp/data/etc/pkg
+
     umount /tmp/data/dev
     umount /tmp/data/var
     umount /tmp/data/
