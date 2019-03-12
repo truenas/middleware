@@ -1122,6 +1122,20 @@ menu_install()
 	chown -R www:www /tmp/data/data
     fi
 
+    # First install the base packages
+    mkdir -p /tmp/data/var/db/pkg
+    export PKG_DBDIR="/tmp/data/var/db/pkg"
+
+    for inspkg in os/userland os/kernel ports-mgmt/pkg
+    do
+        env ASSUME_ALWAYS_YES=YES pkg -r /tmp/data install -yf $inspkg
+        if [ $? -ne 0 ] ; then
+            echo "Failed installing ${inspkg}"
+        fi
+    done
+
+    unset PKG_DBDIR
+
     local OS=FreeNAS
     if is_truenas; then
         OS=TrueNAS
