@@ -158,7 +158,7 @@ class DiskService(CRUDService):
         Helper method to get all disks that are not in use, either by the boot
         pool or the user pools.
         """
-        disks = await self.query([('name', 'nin', await self.get_reserved())])
+        disks = await self.query([('devname', 'nin', await self.get_reserved())])
 
         if join_partitions:
             for disk in disks:
