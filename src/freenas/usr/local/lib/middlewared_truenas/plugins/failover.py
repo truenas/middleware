@@ -744,6 +744,10 @@ async def hook_sync_geli(middleware, pool=None):
     await middleware.call('notifier.failover_sync_peer', 'to')
 
 
+async def hook_pool_export(middleware, pool=None, *args, **kwargs):
+    await middleware.call('enclosure.sync_zpool', pool)
+
+
 async def hook_pool_lock(middleware, pool=None):
     await middleware.call('failover.encryption_clearkey')
     try:
@@ -791,6 +795,7 @@ def setup(middleware):
     middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_sync_geli, sync=True)
+    middleware.register_hook('pool.post_export', hook_pool_export, sync=True)
     middleware.register_hook('pool.post_import_pool', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_lock', hook_pool_lock, sync=True)
     middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
