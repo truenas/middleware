@@ -1147,11 +1147,6 @@ menu_install()
     mount_nullfs /dist /tmp/data/dist
     mount_nullfs /etc/pkg /tmp/data/etc/pkg
 
-    local OS=FreeNAS
-    if is_truenas; then
-        OS=TrueNAS
-    fi
-
     PACKAGE_BUILDING=yes
     export PACKAGE_BUILDING
 
