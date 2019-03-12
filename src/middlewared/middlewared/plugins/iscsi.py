@@ -768,14 +768,8 @@ class iSCSITargetExtentService(CRUDService):
         allowing the user to keep the same item on update
         """
         diskchoices = {}
-        disk_query = await self.query([('type', '=', 'Disk')])
-
-        diskids = [i['path'] for i in disk_query]
-        used_disks = [d['name'] for d in await self.middleware.call(
-            'disk.query', [('identifier', 'in', diskids)])]
 
         zvol_query_filters = [('type', '=', 'ZVOL')]
-
         for e in exclude:
             if e:
                 zvol_query_filters.append(('path', '!=', e))
@@ -783,9 +777,6 @@ class iSCSITargetExtentService(CRUDService):
         zvol_query = await self.query(zvol_query_filters)
 
         used_zvols = [i['path'] for i in zvol_query]
-
-        async for pdisk in await self.middleware.call('pool.get_disks'):
-            used_disks.append(pdisk)
 
         zfs_snaps = await self.middleware.call(
             'zfs.snapshot.query', [], {'select': ['name'], 'order_by': ['name']}
@@ -809,13 +800,9 @@ class iSCSITargetExtentService(CRUDService):
             if ds_name in zvol_list:
                 diskchoices[f'zvol/{snap["name"]}'] = f'{snap["name"]} [ro]'
 
-        notifier_disks = await self.middleware.call('notifier.get_disks')
-        for name, disk in notifier_disks.items():
-            if name in used_disks:
-                continue
-            size = await self.middleware.call('notifier.humanize_size',
-                                              disk['capacity'])
-            diskchoices[name] = f'{name} ({size})'
+        for disk in await self.middleware.call('disk.get_unused'):
+            size = await self.middleware.call('notifier.humanize_size', disk['size'])
+            diskchoices[disk['name']] = f'{disk["name"]} ({size})'
 
         return diskchoices
 
