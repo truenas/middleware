@@ -1152,6 +1152,9 @@ menu_install()
         OS=TrueNAS
     fi
 
+    PACKAGE_BUILDING=yes
+    export PACKAGE_BUILDING
+
     for i in $(jq -r '."iso"."'auto-install-packages'"."'default'" | join(" ")' /var/db/trueos-manifest.json)
     do
         echo "Installing package: ${i}"
