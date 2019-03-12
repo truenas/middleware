@@ -441,6 +441,7 @@ main(int argc, char **argv)
 	struct 	windows_acl_info *w;
 	acl_t	source_acl;
 	char *p = argv[0];
+	ch = ret = 0;
 
 	if (argc < 2)
 		usage(argv[0]);
