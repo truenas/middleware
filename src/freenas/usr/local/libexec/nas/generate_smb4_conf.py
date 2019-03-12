@@ -1672,13 +1672,12 @@ def smb4_do_migrations(client):
     migrate_11_1_U3_to_11_1_U4(client)
 
 
-def generate_global_stub(cifs, failover_status):
-    if failover_status != "MASTER":
-        with open("/usr/local/etc/smb4.conf", "w") as f:
-            f.write("[global]\n")
-            f.write(f"netbios name = {cifs['netbiosname']}_PASSIVE\n")
-            f.write("multicast dns register = False\n")
-            f.write("logging = file\n")
+def generate_global_stub(cifs):
+    with open("/usr/local/etc/smb4.conf", "w") as f:
+        f.write("[global]\n")
+        f.write(f"netbios name = {cifs['netbiosname']}_PASSIVE\n")
+        f.write("multicast dns register = False\n")
+        f.write("logging = file\n")
 
 
 def main():
