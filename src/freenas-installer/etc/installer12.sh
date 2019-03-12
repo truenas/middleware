@@ -1139,6 +1139,9 @@ menu_install()
     chroot /tmp/data pkg set -y -A 00 os/userland
     chroot /tmp/data pkg set -y -A 00 os/kernel
 
+    # beadm will need a devfs and we need to mount it before we install packages as well
+    mount -t devfs devfs /tmp/data/dev
+
     # Setup pkg appropriately
     mkdir /tmp/data/dist
     mount_nullfs /dist /tmp/data/dist
@@ -1213,9 +1216,7 @@ menu_install()
     
     # XXX: Fixup
     # tar cf - -C /tmp/data/conf/base etc | tar xf - -C /tmp/data/
-    
-    # beadm will need a devfs
-    mount -t devfs devfs /tmp/data/dev
+
     # Create a temporary /var
     mount -t tmpfs tmpfs /tmp/data/var
     chroot /tmp/data /usr/sbin/mtree -deUf /etc/mtree/BSD.var.dist -p /var
