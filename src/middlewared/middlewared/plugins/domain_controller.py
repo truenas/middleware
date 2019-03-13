@@ -26,29 +26,28 @@ class DomainControllerService(SystemServiceService):
 
     @private
     def is_provisioned(self):
+        """
+        Presumption that the domain is provisioned is to fail safe.
+        Provisioning on top of an existing domain is a destructive process that
+        must be avoided.
+        """
+        provisioned = 'org.ix.activedirectory:provisioned'
         systemdataset = self.middleware.call_sync('systemdataset.config')
-        sysvol_path = f"{systemdataset['path']}/samba4"
-        provisioned = "org.ix.activedirectory:provisioned"
-        ret = False
-        with libzfs.ZFS() as zfs:
-            ds = zfs.get_dataset_by_path(sysvol_path)
-            if provisioned in ds.properties and ds.properties[provisioned].value == 'yes':
-                ret = True
-            else:
-                ds.properties[provisioned] = libzfs.ZFSUserProperty('no')
-                ret = False
+        sysvol_path = f"{systemdataset['basename']}/samba4"
+        zfs = self.middleware.call_sync('zfs.dataset.query', [('id', '=', sysvol_path)])
+        if provisioned not in zfs[0]['properties']:
+            return False
 
-        return ret
+        provision_status = zfs[0]['properties']['org.ix.activedirectory:provisioned']
+
+        return False if provision_status['value'] == 'no' else True
 
     @private
     def set_provisioned(self, value=True):
         systemdataset = self.middleware.call_sync('systemdataset.config')
-        sysvol_path = f"{systemdataset['path']}/samba4"
-        provisioned = "org.ix.activedirectory:provisioned"
-        with libzfs.ZFS() as zfs:
-            ds = zfs.get_dataset_by_path(sysvol_path)
-            ds.properties[provisioned] = libzfs.ZFSUserProperty('yes' if value else 'no')
-
+        sysvol_path = f"{systemdataset['basename']}/samba4"
+        ds = {'properties': {'org.ix.activedirectory:provisioned': {'value': 'yes' if value else 'no'}}}
+        self.middleware.call_sync('zfs.dataset.do_update', sysvol_path, ds)
         return True
 
     @private
