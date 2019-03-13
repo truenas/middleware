@@ -2,7 +2,6 @@ import contextlib
 import itertools
 import os
 import re
-import signal
 import subprocess
 import sysctl
 
@@ -446,5 +445,4 @@ def render(service, middleware):
         except Exception:
             middleware.logger.error('Failed to generate %s', i.__name__, exc_info=True)
 
-    if write_if_changed('/etc/rc.conf.freenas', '\n'.join(rcs) + '\n'):
-        os.kill(1, signal.SIGALRM)
+    write_if_changed('/etc/rc.conf.freenas', '\n'.join(rcs) + '\n')
