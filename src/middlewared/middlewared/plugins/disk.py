@@ -16,7 +16,7 @@ from bsd import geom, getswapinfo
 from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import get_smartctl_args
 from middlewared.schema import accepts, Bool, Dict, List, Str
-from middlewared.service import filterable, job, private, CallError, CRUDService
+from middlewared.service import job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
 
