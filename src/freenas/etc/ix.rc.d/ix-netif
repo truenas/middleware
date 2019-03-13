@@ -230,7 +230,7 @@ netif_start()
 	# we need to fallback to configuring interfaces using rc.d/netif for debugging.
 	if ! /usr/local/bin/midclt -t 120 call interfaces.sync true > /dev/null 2>&1; then
 		_interface_config > /etc/rc.conf.network
-		kill -ALRM 1
+		killall -ALRM sh
 	fi
 
 }
