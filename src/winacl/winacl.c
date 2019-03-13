@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/acl.h>
 #include <sys/extattr.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include <err.h>
 #include <fts.h>
@@ -281,7 +282,6 @@ set_windows_acl(struct windows_acl_info *w, FTSENT *fts_entry)
         }
 
 	/* write out the acl to the file */
-
 	if (acl_set_file(path, ACL_TYPE_NFS4, acl_new) < 0) {
 		warn("%s: acl_set_file() failed", path);
 		return (-1);
@@ -434,7 +434,7 @@ make_acls(struct windows_acl_info *w)
 	acl_free(acl);
 }
 
-static void
+static int
 clone_acls(struct windows_acl_info *w)
 {
 	acl_t tmp_acl;
@@ -442,29 +442,35 @@ clone_acls(struct windows_acl_info *w)
 	acl_permset_t permset;
 	acl_flagset_t flagset, file_flag, dir_flag;
 	int entry_id, f_entry_id, d_entry_id, must_set_facl, must_set_dacl;
+	int ret = 0;
 	entry_id = f_entry_id = d_entry_id = ACL_FIRST_ENTRY;
 	must_set_facl = must_set_dacl = true;
 
 	/* initialize separate directory and file ACLs */
 	if ((w->dacl = acl_init(ACL_MAX_ENTRIES)) == NULL) {
+		return -1;
 		err(EX_OSERR, "failed to initialize directory ACL");
 	}
 	if ((w->facl = acl_init(ACL_MAX_ENTRIES)) == NULL) {
+		return -1;
 		err(EX_OSERR, "failed to initialize file ACL");
 	}
 
 	tmp_acl = acl_dup(w->source_acl);
 
 	if (tmp_acl == NULL) {
+		return -1;
 		err(EX_OSERR, "acl_dup() failed");
 	}
 
 	while (acl_get_entry(tmp_acl, entry_id, &entry) == 1) {
 		entry_id = ACL_NEXT_ENTRY;
 		if (acl_get_permset(entry, &permset)) {
+			return -1;
 			err(EX_OSERR, "acl_get_permset() failed");
 		}
 		if (acl_get_flagset_np(entry, &flagset)) {
+			return -1;
 			err(EX_OSERR, "acl_get_flagset_np() failed");
 		}
 
@@ -494,6 +500,10 @@ clone_acls(struct windows_acl_info *w)
 
 		*flagset |= ACL_ENTRY_INHERITED;
 		*flagset &= ~ACL_ENTRY_INHERIT_ONLY;
+
+		if ((*flagset & ACL_ENTRY_FILE_INHERIT) == 0) {
+			must_set_facl = false;
+		}
 
 		/*
 		 * Add the entries to the file ACL and directory ACL. Since files and directories
@@ -532,9 +542,16 @@ clone_acls(struct windows_acl_info *w)
 			}
 			d_entry_id ++;
 		}
+		must_set_dacl = must_set_facl = true;
 
 	}
 	acl_free(tmp_acl);
+	if ( d_entry_id == 0 || f_entry_id == 0 ) {
+		errno = EINVAL;
+		warn("%s: acl_set_file() failed. Calculated invalid ACL with no inherited entries.", w->source);
+		ret = -1;
+	}
+	return (ret);
 }
 
 int
@@ -635,6 +652,11 @@ main(int argc, char **argv)
 		w->source = w->path;
 	}
 
+	if (access(w->source, F_OK) < 0) {
+		warn("%s: access() failed.", w->source);
+		free_windows_acl_info(w);
+		return (1);
+	}
 	if (pathconf(w->source, _PC_ACL_NFS4) < 0) {
 		warn("%s: pathconf(..., _PC_ACL_NFS4) failed. Path does not support NFS4 ACL.", w->source);
 		free_windows_acl_info(w);
@@ -652,7 +674,10 @@ main(int argc, char **argv)
 
 		w->source_acl = acl_dup(source_acl);
 		acl_free(source_acl);
-		clone_acls(w);
+		if (clone_acls(w) != 0) {
+			free_windows_acl_info(w);
+			return (1);
+		}
 	} else {
 		make_acls(w);
 	}
