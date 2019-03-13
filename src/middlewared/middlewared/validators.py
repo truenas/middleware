@@ -12,6 +12,8 @@ from django.core.validators import validate_email
 
 class Email:
     def __call__(self, value):
+        if value is None:
+            return
         try:
             validate_email(value)
         except ValidationError:

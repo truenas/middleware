@@ -7,7 +7,7 @@ from collections import defaultdict
 from bsd import geom
 import libzfs
 
-from middlewared.schema import Dict, List, Str, Bool, Int, accepts
+from middlewared.schema import Dict, List, Str, Bool, accepts
 from middlewared.service import (
     CallError, CRUDService, ValidationError, ValidationErrors, filterable, job,
 )
@@ -107,6 +107,23 @@ class ZFSPoolService(CRUDService):
 
     @accepts(Str('pool'), Dict(
         'options',
+        Dict('properties', additional_attrs=True),
+    ))
+    def do_update(self, name, options):
+        try:
+            with libzfs.ZFS() as zfs:
+                pool = zfs.get(name)
+                for k, v in options['properties'].items():
+                    prop = pool.properties[k]
+                    if 'value' in v:
+                        prop.value = v['value']
+                    elif 'parsed' in v:
+                        prop.parsed = v['parsed']
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
+
+    @accepts(Str('pool'), Dict(
+        'options',
         Bool('force', default=False),
     ))
     def do_delete(self, name, options):
@@ -177,7 +194,7 @@ class ZFSPoolService(CRUDService):
                 Str('type', enum=['DISK']),
                 Str('path'),
             ),
-        ]),
+        ], null=True, default=None),
     )
     @job()
     def extend(self, job, name, new=None, existing=None):
@@ -335,17 +352,18 @@ class ZFSPoolService(CRUDService):
         Str('name_or_guid'),
         Dict('options', additional_attrs=True),
         Bool('any_host', default=True),
+        Str('cachefile', null=True, default=None),
     )
-    def import_pool(self, name_or_guid, options, any_host):
+    def import_pool(self, name_or_guid, options, any_host, cachefile):
         found = False
         with libzfs.ZFS() as zfs:
-            for pool in zfs.find_import():
+            for pool in zfs.find_import(cachefile=cachefile):
                 if pool.name == name_or_guid or str(pool.guid) == name_or_guid:
                     found = pool
                     break
 
             if not found:
-                raise CallError(f'Pool {name_or_guid} not found.')
+                raise CallError(f'Pool {name_or_guid} not found.', errno.ENOENT)
 
             zfs.import_pool(found, found.name, options, any_host=any_host)
 
@@ -367,6 +385,15 @@ class ZFSPoolService(CRUDService):
         for child in node['children']:
             unavails.extend(self.__find_not_online(child))
         return unavails
+
+    def get_vdev(self, name, vname):
+        try:
+            with libzfs.ZFS() as zfs:
+                pool = zfs.get(name)
+                vdev = find_vdev(pool, vname)
+                return vdev.__getstate__()
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
 
 
 class ZFSDatasetService(CRUDService):
@@ -479,35 +506,34 @@ class ZFSDatasetService(CRUDService):
 
     def do_delete(self, id, options=None):
         options = options or {}
-        defer = options.get('defer', False)
         force = options.get('force', False)
         recursive = options.get('recursive', False)
+
+        args = []
+        if force:
+            args += ['-f']
+        if recursive:
+            args += ['-r']
+
+        # Destroying may take a long time, lets not use py-libzfs as it will block
+        # other ZFS operations.
         try:
-            with libzfs.ZFS() as zfs:
-                ds = zfs.get_dataset(id)
-
-                if ds.type == libzfs.DatasetType.FILESYSTEM:
-                    if recursive:
-                        ds.umount_recursive(force=force)
-                    else:
-                        ds.umount(force=force)
-
-                if recursive:
-                    for dependent in ds.dependents:
-                        dependent.delete(defer=defer)
-
-                ds.delete(defer=defer)
-        except libzfs.ZFSException as e:
-            if e.code == libzfs.Error.UMOUNTFAILED:
-                raise CallError('Dataset is busy', errno.EBUSY)
+            subprocess.run(
+                ['zfs', 'destroy'] + args + [id], text=True, capture_output=True, check=True,
+            )
+        except subprocess.CalledProcessError as e:
             self.logger.error('Failed to delete dataset', exc_info=True)
-            raise CallError(f'Failed to delete dataset: {e}')
+            raise CallError(f'Failed to delete dataset: {e.stderr.strip()}')
 
-    def mount(self, name):
+    @accepts(Str('name'), Dict('options', Bool('recursive', default=False)))
+    def mount(self, name, options):
         try:
             with libzfs.ZFS() as zfs:
                 dataset = zfs.get_dataset(name)
-                dataset.mount()
+                if options['recursive']:
+                    dataset.mount_recursive()
+                else:
+                    dataset.mount()
         except libzfs.ZFSException as e:
             self.logger.error('Failed to mount dataset', exc_info=True)
             raise CallError(f'Failed to mount dataset: {e}')
@@ -520,6 +546,17 @@ class ZFSDatasetService(CRUDService):
         except libzfs.ZFSException as e:
             self.logger.error('Failed to promote dataset', exc_info=True)
             raise CallError(f'Failed to promote dataset: {e}')
+
+    def inherit(self, name, prop, recursive=False):
+        try:
+            with libzfs.ZFS() as zfs:
+                dataset = zfs.get_dataset(name)
+                zprop = dataset.properties.get(prop)
+                if not zprop:
+                    raise CallError(f'Property {prop!r} not found.', errno.ENOENT)
+                zprop.inherit(recursive=recursive)
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
 
 
 class ZFSSnapshot(CRUDService):
@@ -545,7 +582,7 @@ class ZFSSnapshot(CRUDService):
             )
             if cp.returncode != 0:
                 raise CallError(f'Failed to retrieve snapshots: {cp.stderr}')
-            snaps = [{'name': i} for i in cp.stdout.strip().split()]
+            snaps = [{'name': i} for i in cp.stdout.strip().split('\n')]
             if filters:
                 return filter_list(snaps, filters, options)
             return snaps
@@ -568,7 +605,7 @@ class ZFSSnapshot(CRUDService):
         Str('dataset'),
         Str('name'),
         Bool('recursive'),
-        Int('vmsnaps_count'),
+        Bool('vmware_sync', default=False),
         Dict('properties', additional_attrs=True)
     ))
     def do_create(self, data):
@@ -582,18 +619,21 @@ class ZFSSnapshot(CRUDService):
         dataset = data.get('dataset', '')
         name = data.get('name', '')
         recursive = data.get('recursive', False)
-        vmsnaps_count = data.get('vmsnaps_count', 0)
         properties = data.get('properties', None)
 
         if not dataset or not name:
             return False
+
+        vmware_context = None
+        if data['vmware_sync']:
+            vmware_context = self.middleware.call_sync('vmware.snapshot_begin', dataset, recursive)
 
         try:
             with libzfs.ZFS() as zfs:
                 ds = zfs.get_dataset(dataset)
                 ds.snapshot(f'{dataset}@{name}', recursive=recursive, fsopts=properties)
 
-                if vmsnaps_count > 0:
+                if vmware_context and vmware_context['vmsynced']:
                     ds.properties['freenas:vmsynced'] = libzfs.ZFSUserProperty('Y')
 
             self.logger.info(f"Snapshot taken: {dataset}@{name}")
@@ -601,6 +641,9 @@ class ZFSSnapshot(CRUDService):
         except libzfs.ZFSException as err:
             self.logger.error(f"{err}")
             return False
+        finally:
+            if vmware_context:
+                self.middleware.call_sync('vmware.snapshot_end', vmware_context)
 
     @accepts(Dict(
         'snapshot_remove',
@@ -615,19 +658,30 @@ class ZFSSnapshot(CRUDService):
         Returns:
             bool: True if succeed otherwise False.
         """
+        self.logger.debug('zfs.snapshot.remove is deprecated, use zfs.snapshot.delete')
         snapshot_name = data['dataset'] + '@' + data['name']
+        try:
+            self.do_delete(snapshot_name, {'defer': data.get('defer_delete') or False})
+        except Exception:
+            return False
+        return True
 
+    @accepts(
+        Str('id'),
+        Dict('options', Bool('defer', default=False)),
+    )
+    def do_delete(self, id, options):
+        """
+        Delete snapshot of name `id`.
+
+        `options.defer` will defer the deletion of snapshot.
+        """
         try:
             with libzfs.ZFS() as zfs:
-                snap = zfs.get_snapshot(snapshot_name)
-                snap.delete(True if data.get('defer_delete') else False)
-        except libzfs.ZFSException as err:
-            self.logger.error("{0}".format(err))
-            return False
-        else:
-            self.logger.info(f"Destroyed snapshot: {snapshot_name}")
-
-        return True
+                snap = zfs.get_snapshot(id)
+                snap.delete(defer=options['defer'])
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
 
     @accepts(Dict(
         'snapshot_clone',
@@ -657,6 +711,41 @@ class ZFSSnapshot(CRUDService):
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
             return False
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'options',
+            Bool('recursive', default=False),
+            Bool('recursive_clones', default=False),
+            Bool('force', default=False),
+        ),
+    )
+    def rollback(self, id, options):
+        """
+        Rollback to a given snapshot `id`.
+
+        `options.recursive` will destroy any snapshots and bookmarks more recent than the one
+        specified.
+
+        `options.recursive_clones` is just like `recursive` but will also destroy any clones.
+
+        `options.force` will force unmount of any clones.
+        """
+        args = []
+        if options['force']:
+            args += ['-f']
+        if options['recursive']:
+            args += ['-r']
+        if options['recursive_clones']:
+            args += ['-R']
+
+        try:
+            subprocess.run(
+                ['zfs', 'rollback'] + args + [id], text=True, capture_output=True, check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            raise CallError(f'Failed to rollback snapshot: {e.stderr.strip()}')
 
 
 class ScanWatch(object):

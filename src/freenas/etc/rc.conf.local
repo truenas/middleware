@@ -409,15 +409,17 @@ _s3_config()
 		LEFT OUTER JOIN
 			services_services
 		ON
-			(srv_service = 's3' AND srv_enable = '1')
+			srv_service = 's3'
 		ORDER BY
-			-services_s3.id
+			services_s3.id
 		LIMIT 1
 	" |\
 	while read s3_enable s3_bindip s3_bindport s3_access_key \
 		s3_secret_key s3_browser s3_mode s3_disks; do
+		if [ "${s3_enable}" = "1" ]; then
+			echo minio_enable="YES"
+		fi
 		cat <<-__MINIO__
-			minio_enable="YES"
 			minio_disks="${s3_disks}"
 			minio_address="${s3_bindip}:${s3_bindport}"
 			minio_env="\\
@@ -577,11 +579,16 @@ _gen_conf()
 	_bool_svcconfig openssh_enable ssh
 	_bool_svcconfig inetd_enable tftp
 	_bool_svcconfig inadyn_enable dynamicdns
-	_bool_svcconfig smartd_daemon_enable smartd
 	_bool_svcconfig ladvd_enable lldp
 	_bool_svcconfig ctld_enable iscsitarget
 	_bool_svcconfig apache24_enable webdav
 	_bool_svcconfig netdata_enable netdata
+
+	# Let TrueNAS HA code manage smartd service
+	# Redmine 76242
+	if [ ${failover_licensed} -ne 1 ]; then
+		_bool_svcconfig smartd_daemon_enable smartd
+	fi
 
 	_bool_svcconfig samba_server_enable cifs
 	if ! dirsrv_enabled domaincontroller ; then
@@ -658,6 +665,13 @@ _gen_conf()
 	fi
 
 	_count_config powerd_enable system_advanced adv_powerdaemon =1
+
+	sys_pool=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT sys_pool FROM system_systemdataset ORDER BY -id LIMIT 1")
+	rrdcached_flags="-s www -l /var/run/rrdcached.sock -p /var/run/rrdcached.pid"
+	if [ "$sys_pool" == "" ] || [ "$sys_pool" == "freenas-boot" ];
+	then
+		rrdcached_flags="$rrdcached_flags -w 3600 -f 7200"
+	fi
 	if ! is_freenas; then
 		if [ ${failover_licensed} -eq 1 ]; then
 			echo "failover_enable=\"YES\""
@@ -667,11 +681,15 @@ _gen_conf()
 		fi
 		if [ "${failover_status}" != "BACKUP" ]; then
 			echo "collectd_enable=\"YES\""
+			echo "rrdcached_enable=\"YES\""
+			echo "rrdcached_flags=\"$rrdcached_flags\""
 		fi
 
 		echo "middlewared_overlay_dirs=\"/usr/local/lib/middlewared_truenas\""
 	else
 		echo "collectd_enable=\"YES\""
+		echo "rrdcached_enable=\"YES\""
+		echo "rrdcached_flags=\"$rrdcached_flags\""
 		echo "failover_enable=\"NO\""
 	fi
 
@@ -748,6 +766,12 @@ _gen_conf()
 		echo "mountd_flags=\"${mountdflags}\""
 	done
 
+	local tftp_host
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT tftp_host FROM services_tftp WHERE tftp_host != '0.0.0.0' ORDER BY -id LIMIT 1" | \
+	while read -r tftp_host; do
+		echo "inetd_flags=\"-wW -C 60 -a ${tftp_host}\""
+	done
+
 	local smartdint
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT smart_interval FROM services_smart ORDER BY id DESC LIMIT 1" | \
 	while read smartdint; do
@@ -786,7 +810,6 @@ _gen_conf()
 	done
 
 	if is_freenas; then
-		echo "ataidle_enable=\"YES\""
 		# Bug #7337 -- blacklist AMD systems for now
 		if /sbin/sysctl hw.model | grep -q AMD; then
 			echo "watchdogd_enable=\"NO\""
@@ -794,7 +817,6 @@ _gen_conf()
 			_watchdogd_config
 		fi
 	else
-		echo "ataidle_enable=\"NO\""
 		echo "watchdogd_enable=\"NO\""
 	fi
 

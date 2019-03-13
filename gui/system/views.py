@@ -25,6 +25,7 @@
 #####################################################################
 from collections import OrderedDict, namedtuple
 from datetime import date
+import base64
 import pickle as pickle
 import errno
 import json
@@ -32,6 +33,7 @@ import logging
 import os
 import pytz
 import re
+import requests
 import shutil
 import socket
 import subprocess
@@ -40,7 +42,6 @@ import tempfile
 import time
 import urllib.parse
 import xmlrpc.client
-import threading
 import traceback
 import sys
 
@@ -60,18 +61,13 @@ from freenasOS.Exceptions import UpdateManifestNotFound
 from freenasOS.Update import CheckForUpdates
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.system import get_sw_name, get_sw_version
-from freenasUI.common.ssl import (
-    export_certificate,
-    export_certificate_chain,
-    export_privatekey,
-)
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.client import client, CallTimeout, ClientException, ValidationErrors
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.notifier import notifier
-from freenasUI.middleware.util import get_validation_errors
+from freenasUI.middleware.util import get_validation_errors, upload_job_and_wait
 from freenasUI.middleware.zfs import zpool_list
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.storage.models import Volume
@@ -79,15 +75,13 @@ from freenasUI.system import forms, models
 from freenasUI.system.utils import (
     UpdateHandler,
     VerifyHandler,
-    debug_get_settings,
-    debug_generate,
     factory_restore,
     run_updated,
     is_update_applied
 )
 from middlewared.plugins.update import CheckUpdateHandler, get_changelog, parse_changelog
 
-DEBUG_THREAD = None
+DEBUG_JOB = None
 VERSION_FILE = '/etc/version'
 PGFILE = '/tmp/.extract_progress'
 INSTALLFILE = '/tmp/.upgrade_install'
@@ -180,7 +174,8 @@ def system_info(request):
 
 
 def bootenv_datagrid(request):
-    bootzvolstats = notifier().zpool_status('freenas-boot')
+    with client as c:
+        pool = c.call('zfs.pool.query', [['id', '=', 'freenas-boot']])[0]
     bootme = notifier().zpool_parse('freenas-boot')
     zlist = zpool_list(name='freenas-boot')
     try:
@@ -196,7 +191,7 @@ def bootenv_datagrid(request):
         }),
         'structure_url': reverse('system_bootenv_datagrid_structure'),
         'bootme': bootme,
-        'stats': bootzvolstats,
+        'pool': pool,
         'advanced': advanced,
         'zlist': zlist,
     })
@@ -615,14 +610,10 @@ def config_upload(request):
         }
 
         if form.is_valid():
-            config_file_name = tempfile.mktemp(dir='/var/tmp/firmware')
-            with open(config_file_name, 'wb') as config_file_fd:
-                for chunk in request.FILES['config'].chunks():
-                    config_file_fd.write(chunk)
-            success, errmsg = notifier().config_upload(config_file_name)
-            if not success:
-                form._errors['__all__'] = \
-                    form.error_class([errmsg])
+            try:
+                upload_job_and_wait(request.FILES['config'], 'config.upload')
+            except Exception as e:
+                form._errors['__all__'] = form.error_class([str(e)])
                 return JsonResp(request, form=form)
             else:
                 request.session['allow_reboot'] = True
@@ -1113,11 +1104,11 @@ def reload_httpd(request):
 
 
 def debug(request):
-    global DEBUG_THREAD
+    global DEBUG_JOB
 
     _n = notifier()
     if request.method == 'GET':
-        DEBUG_THREAD = None
+        DEBUG_JOB = None
         if not _n.is_freenas() and _n.failover_licensed():
             try:
                 with client as c:
@@ -1127,43 +1118,42 @@ def debug(request):
 
         return render(request, 'system/debug.html')
 
-    if not DEBUG_THREAD:
+    if not DEBUG_JOB:
         # XXX: Dont do this, temporary workaround for legacy UI
-        DEBUG_THREAD = threading.Thread(target=debug_generate, daemon=True)
-        DEBUG_THREAD.start()
+        with client as c:
+            DEBUG_JOB = c.call('core.download', 'system.debug_download', [], 'debug.tar')
         return HttpResponse('1', status=202)
-    if DEBUG_THREAD.isAlive():
+    with client as c:
+        job = c.call('core.get_jobs', [('id', '=', DEBUG_JOB[0])])
+    if job and (
+        job[0]['state'] not in ('SUCCESS', 'FAILED') and (job[0]['progress']['percent'] or 0) < 90
+    ):
         return HttpResponse('1', status=202)
-    DEBUG_THREAD = None
     return render(request, 'system/debug_download.html')
 
 
 def debug_download(request):
-    mntpt, direc, dump = debug_get_settings()
-    gc = GlobalConfiguration.objects.all().order_by('-id')[0]
+    global DEBUG_JOB
+    url = request.GET.get('url')
+    if url:
+        url = base64.b64decode(url.encode()).decode()
+    else:
+        url = DEBUG_JOB[1]
 
     _n = notifier()
-    dual_node_debug_file = debug_file = '{}/debug.tar'.format(direc)
-
-    if not _n.is_freenas() and _n.failover_licensed() and os.path.exists(dual_node_debug_file):
-        debug_file = dual_node_debug_file
-        extension = 'tar'
-        hostname = ''
+    ftime = time.strftime('%Y%m%d%H%M%S')
+    if not _n.is_freenas() and _n.failover_licensed():
+        filename = f'debug-{ftime}.tar'
     else:
-        debug_file = dump
-        extension = 'tgz'
-        hostname = '-%s' % gc.gc_hostname
+        gconf = GlobalConfiguration.objects.all().order_by('-id')[0]
+        filename = f'debug-{gconf.gc_hostname}-{ftime}.txz'
 
+    r = requests.get(f'http://127.0.0.1:6000{url}', stream=True)
     response = StreamingHttpResponse(
-        FileWrapper(open(debug_file, 'rb')),
+        r.iter_content(chunk_size=1024 * 1024),
         content_type='application/octet-stream',
     )
-    response['Content-Length'] = os.path.getsize(debug_file)
-    response['Content-Disposition'] = \
-        'attachment; filename=debug%s-%s.%s' % (
-            hostname,
-            time.strftime('%Y%m%d%H%M%S'),
-            extension)
+    response['Content-Disposition'] = f'attachment; filename={filename}'
     return response
 
 
@@ -1972,35 +1962,38 @@ def buf_generator(buf):
 
 
 def CA_export_certificate(request, id):
-    ca = models.CertificateAuthority.objects.get(pk=id)
     try:
-        if ca.cert_chain:
-            cert = export_certificate_chain(ca.cert_certificate)
-        else:
-            cert = export_certificate(ca.cert_certificate)
+        with client as c:
+            ca = c.call('certificateauthority.query', [['id', '=', int(id)]], {'get': True})
+        cert = ''.join(ca['chain_list']).strip()
     except Exception as e:
         raise MiddlewareError(e)
 
     response = StreamingHttpResponse(
-        buf_generator(cert.decode('utf-8')), content_type='application/x-pem-file'
+        buf_generator(cert), content_type='application/x-pem-file'
     )
     response['Content-Length'] = len(cert)
-    response['Content-Disposition'] = 'attachment; filename=%s.crt' % ca
+    response['Content-Disposition'] = f'attachment; filename={ca["name"]}.crt'
 
     return response
 
 
 def CA_export_privatekey(request, id):
-    ca = models.CertificateAuthority.objects.get(pk=id)
-    if not ca.cert_privatekey:
-        return HttpResponse('No private key')
+    try:
+        with client as c:
+            ca = c.call('certificateauthority.query', [['id', '=', int(id)]], {'get': True})
+    except Exception as e:
+        raise MiddlewareError(e)
 
-    key = export_privatekey(ca.cert_privatekey)
+    if not ca['privatekey'] or not ca['key_length']:
+        return HttpResponse('No private key or malformed key')
+
+    key = ca['privatekey']
     response = StreamingHttpResponse(
-        buf_generator(key.decode('utf-8')), content_type='application/x-pem-file'
+        buf_generator(key), content_type='application/x-pem-file'
     )
     response['Content-Length'] = len(key)
-    response['Content-Disposition'] = 'attachment; filename=%s.key' % ca
+    response['Content-Disposition'] = f'attachment; filename={ca["name"]}.key'
 
     return response
 
@@ -2335,96 +2328,62 @@ def CSR_edit(request, id):
 
 
 def certificate_export_certificate(request, id):
-    c = models.Certificate.objects.get(pk=id)
-    cert = export_certificate(c.cert_certificate)
+    with client as c:
+        cert = c.call('certificate.query', [['id', '=', int(id)]], {'get': True})
 
     response = StreamingHttpResponse(
-        buf_generator(cert.decode('utf-8')), content_type='application/x-pem-file'
+        buf_generator(cert['certificate']), content_type='application/x-pem-file'
     )
-    response['Content-Length'] = len(cert)
-    response['Content-Disposition'] = 'attachment; filename=%s.crt' % c
+    response['Content-Length'] = len(cert['certificate'])
+    response['Content-Disposition'] = f'attachment; filename={cert["name"]}.crt'
 
     return response
 
 
 def certificate_export_privatekey(request, id):
-    c = models.Certificate.objects.get(pk=id)
-    if not c.cert_privatekey:
-        return HttpResponse('No private key')
-    key = export_privatekey(c.cert_privatekey)
+    with client as c:
+        cert = c.call('certificate.query', [['id', '=', int(id)]], {'get': True})
+
+    if not cert['privatekey'] or not cert['key_length']:
+        return HttpResponse('No private key or malformed private key')
+
+    key = cert['privatekey']
 
     response = StreamingHttpResponse(
-        buf_generator(key.decode('utf-8')), content_type='application/x-pem-file'
+        buf_generator(key), content_type='application/x-pem-file'
     )
     response['Content-Length'] = len(key)
-    response['Content-Disposition'] = 'attachment; filename=%s.key' % c
+    response['Content-Disposition'] = f'attachment; filename={cert["name"]}.key'
 
     return response
 
 
 def certificate_export_certificate_and_privatekey(request, id):
-    c = models.Certificate.objects.get(pk=id)
+    with client as c:
+        cert_data = c.call('certificate.query', [['id', '=', int(id)]], {'get': True})
 
-    cert = export_certificate(c.cert_certificate)
-    key = export_privatekey(c.cert_privatekey)
+    cert = cert_data['certificate']
+    key = cert_data['privatekey']
     combined = key + cert
 
     response = StreamingHttpResponse(
         buf_generator(combined), content_type='application/octet-stream'
     )
     response['Content-Length'] = len(combined)
-    response['Content-Disposition'] = 'attachment; filename=%s.p12' % c
+    response['Content-Disposition'] = f'attachment; filename={cert_data["name"]}.p12'
 
     return response
 
 
 def certificate_to_json(certtype):
-    try:
-        data = {
-            'cert_root_path': certtype.cert_root_path,
-            'cert_type': certtype.cert_type,
-            'cert_certificate': certtype.cert_certificate,
-            'cert_privatekey': certtype.cert_privatekey,
-            'cert_CSR': certtype.cert_CSR,
-            'cert_key_length': certtype.cert_key_length,
-            'cert_digest_algorithm': certtype.cert_digest_algorithm,
-            'cert_lifetime': certtype.cert_lifetime,
-            'cert_country': certtype.cert_country,
-            'cert_state': certtype.cert_state,
-            'cert_city': certtype.cert_city,
-            'cert_organization': certtype.cert_organization,
-            'cert_email': certtype.cert_email,
-            'cert_serial': certtype.cert_serial,
-            'cert_internal': certtype.cert_internal,
-            'cert_certificate_path': certtype.cert_certificate_path,
-            'cert_privatekey_path': certtype.cert_privatekey_path,
-            'cert_CSR_path': certtype.cert_CSR_path,
-            'cert_ncertificates': certtype.cert_ncertificates,
-            'cert_DN': certtype.cert_DN,
-            'cert_from': certtype.cert_from,
-            'cert_until': certtype.cert_until,
-            'cert_type_existing': certtype.cert_type_existing,
-            'cert_type_internal': certtype.cert_type_internal,
-            'cert_type_CSR': certtype.cert_type_CSR,
-            'CA_type_existing': certtype.CA_type_existing,
-            'CA_type_internal': certtype.CA_type_internal,
-            'CA_type_intermediate': certtype.CA_type_intermediate,
-        }
+    # Keys of interest as used by generic_certificate_autopopulate js function
+    # country, state, city, organization, email, organizational_unit
+    with client as c:
+        data = c.call('certificateauthority.query', [['id', '=', certtype.id]], {'get': True})
 
-    except Exception as e:
-        log.debug("certificate_to_json: caught exception: '%s'", e)
-
-    try:
-        data['cert_signedby'] = "%s" % certtype.cert_signedby
-    except Exception:
-        data['cert_signedby'] = None
-
-    try:
-        data['cert_issuer'] = "%s" % certtype.cert_issuer
-    except Exception:
-        data['cert_issuer'] = None
-
-    content = json.dumps(data)
+    content = json.dumps({
+        f'cert_{k}': v for k, v in data.items()
+    })
     return HttpResponse(content, content_type='application/json')
 
 

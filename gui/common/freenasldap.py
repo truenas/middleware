@@ -45,7 +45,6 @@ from freenasUI.common.pipesubr import (
 )
 
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
-from freenasUI.common.ssl import get_certificateauthority_path
 from freenasUI.common.system import (
     get_freenas_var,
     get_freenas_var_by_file,
@@ -612,8 +611,15 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                         )
 
                 elif newkey == 'certificate_id':
-                    cert = get_certificateauthority_path(ldap.ldap_certificate)
-                    kwargs['certfile'] = cert
+                    cert = None
+                    if ldap.ldap_certificate:
+                        with client as c:
+                            cert = c.call(
+                                'certificate.query',
+                                [['id', '=', ldap.ldap_certificate.id]],
+                                {'get': True}
+                            )
+                    kwargs['certfile'] = cert['certificate_path'] if cert else cert
 
                 elif newkey == 'kerberos_realm_id':
                     kr = ldap.ldap_kerberos_realm
@@ -1614,8 +1620,15 @@ class FreeNAS_ActiveDirectory_Base(object):
                     )
 
                 elif newkey == 'certificate_id':
-                    cert = get_certificateauthority_path(ad.ad_certificate)
-                    kwargs['certfile'] = cert
+                    cert = None
+                    if ad.ad_certificate:
+                        with client as c:
+                            cert = c.call(
+                                'certificate.query',
+                                [['id', '=', ad.ad_certificate.id]],
+                                {'get': True}
+                            )
+                    kwargs['certfile'] = cert['certificate_path'] if cert else cert
 
                 elif newkey == 'kerberos_realm_id':
                     kr = ad.ad_kerberos_realm
@@ -3136,10 +3149,32 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
         self.basedn = self.get_baseDN()
         self.attributes = ['sAMAccountName']
 
-        # Redmine 63414
+        # Redmine 63414 and 76000
+        """
+           "use default domain = False":
+           Local               Domain               External Domain
+           GROUP               DOMAIN\\GROUP        TRUSTED\\GROUP
+
+           "use default domain = True":
+           GROUP               GROUP                TRUSTED\\GROUP
+
+           @param(in) GROUP: <GROUP>
+           @param(in) netbiosname: <DOMAIN>
+
+           If the domain is a trusted domain, the sAMAccountName for
+           the group cannot be obtained through an LDAP query. Reconstruct
+           the groupname as originally received (DOMAIN\\GROUP) prior to
+           grp.getgrnam(). Determine whether this is trusted domain
+           by comparing with the value of "workgroup" in cifs_srv_workgroup.
+           This value (workgroup) is automatically detected and set when the
+           server initially joins an AD domain.
+        """
+
         external_domain = False
         if netbiosname:
-            joined_domain = self.basedn.split(',')[0].strip('DC=').upper()
+            with client as c:
+                smb = c.call('smb.config')
+            joined_domain = smb['workgroup'].upper()
             group_domain = netbiosname.upper()
             if joined_domain != group_domain:
                 external_domain = True
@@ -3353,10 +3388,12 @@ class FreeNAS_ActiveDirectory_User(FreeNAS_ActiveDirectory):
         self.basedn = self.get_baseDN()
         self.attributes = ['sAMAccountName']
 
-        # Redmine 63414
+        # Redmine 63414 and 76000
         external_domain = False
         if netbiosname:
-            joined_domain = self.basedn.split(',')[0].strip('DC=').upper()
+            with client as c:
+                smb = c.call('smb.config')
+            joined_domain = smb['workgroup'].upper()
             group_domain = netbiosname.upper()
             if joined_domain != group_domain:
                 external_domain = True

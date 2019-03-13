@@ -4,7 +4,7 @@
 import sys
 import os
 import pytest
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE
@@ -71,6 +71,7 @@ def test_06_Starting_WebDAV_service():
         'service-control': {'onetime': True}
     })
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_07_Checking_to_see_if_WebDAV_service_is_running():
@@ -89,6 +90,7 @@ def test_09_Stopping_WebDAV_service():
         'service-control': {'onetime': True}
     })
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_10_Verifying_that_the_WebDAV_service_has_stopped():

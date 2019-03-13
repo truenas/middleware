@@ -16,8 +16,7 @@ class VolumeStatusAlertSource(AlertSource):
             if not pool["is_decrypted"]:
                 continue
 
-            state, status = await self.middleware.call("notifier.zpool_status", pool["name"])
-            if state != "HEALTHY":
+            if not pool['healthy']:
                 if not (await self.middleware.call("system.is_freenas")):
                     try:
                         await self.middleware.call("enclosure.sync_zpool", pool["name"])
@@ -28,8 +27,8 @@ class VolumeStatusAlertSource(AlertSource):
                     "The volume %(volume)s state is %(state)s: %(status)s",
                     {
                         "volume": pool["name"],
-                        "state": state,
-                        "status": status,
+                        "state": pool["status"],
+                        "status": pool["status_detail"],
                     }
                 ))
 

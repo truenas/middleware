@@ -266,11 +266,10 @@ get_media_description()
     local _cap
 
     _media=$1
-    VAL=""
     if [ -n "${_media}" ]; then
 	_description=`geom disk list ${_media} 2>/dev/null \
 	    | sed -ne 's/^   descr: *//p'`
-	if [ -z "$_description" ] ; then
+	if [ -z "${_description}" ]; then
 	    _description="Unknown Device"
 	fi
 	_cap=`diskinfo ${_media} | awk \
@@ -278,7 +277,7 @@ get_media_description()
 	    -v GiB=${GiB}.0 \
 	    -v MiB=${MiB}.0 \
 	'{
-	    capacity = $3;
+	    capacity = int($3);
 	    if (capacity >= TiB) {
 	        printf("%.1f TiB", capacity / TiB);
 	    } else if (capacity >= GiB) {
@@ -289,9 +288,8 @@ get_media_description()
 	        printf("%d Bytes", capacity);
 	    }
 	}'`
-	VAL="${_description} -- ${_cap}"
+	echo "${_description} -- ${_cap}"
     fi
-    export VAL
 }
 
 disk_is_mounted()
@@ -603,19 +601,6 @@ partition_disks()
     return 0
 }
 
-make_swap()
-{
-    local _swapparts
-
-    # Skip the swap creation if installing into a BE (Swap already exists in that case)
-    if [ "${_upgrade_type}" != "inplace" ] ; then
-	_swapparts=$(for _disk in $*; do echo ${_disk}p3; done)
-	gmirror destroy -f swap || true
-	gmirror label -b prefer swap ${_swapparts}
-    fi
-    echo "/dev/mirror/swap.eli		none			swap		sw		0	0" > /tmp/data/data/fstab.swap
-}
-
 disk_is_freenas()
 {
     local _disk="$1"
@@ -644,7 +629,7 @@ disk_is_freenas()
 	# This code is very clumsy.  There
 	# should be a way to structure it such that
 	# all of the cleanup happens as we want it to.
-	zdb -l ${os_part} | fgrep -q "name: 'freenas-boot'" || return 1
+	zdb -l ${os_part} | grep -qF "name: 'freenas-boot'" || return 1
 	zpool import -N -f freenas-boot || return 1
 
 	# Now we want to figure out which dataset to use.
@@ -917,8 +902,7 @@ menu_install()
 	    _list=""
 	    _items=0
 	    for _disk in ${_disklist}; do
-		get_media_description "${_disk}"
-		_desc="${VAL}"
+		_desc=$(get_media_description "${_disk}" | sed "s/'/'\\\''/g")
 		_list="${_list} ${_disk} '${_desc}' off"
 		_items=$((${_items} + 1))
 	    done
@@ -1168,9 +1152,6 @@ menu_install()
     /usr/local/bin/freenas-install -P /.mount/${OS}/Packages -M /.mount/${OS}-MANIFEST /tmp/data
 
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
-    if is_swap_safe; then
-       make_swap ${_realdisks}
-    fi
     ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
     if [ "${_do_upgrade}" -ne 0 ]; then
 	if [ -f /tmp/hostid ]; then

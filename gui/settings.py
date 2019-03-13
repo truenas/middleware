@@ -58,6 +58,9 @@ DATABASES = {
         'ENGINE': 'freenasUI.freeadmin.sqlite3_ha',
         'NAME': DATABASE_PATH,
         'TEST_NAME': ':memory:',
+        'OPTIONS': {
+            'timeout': 60,
+        }
     },
 }
 
@@ -264,6 +267,11 @@ LOGGING = {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': False,
+        },
+        'ws4py': {
+            'handlers': ['syslog'],
+            'level': 'WARN',
+            'propagate': True,
         },
         '': {
             'handlers': ['syslog'],

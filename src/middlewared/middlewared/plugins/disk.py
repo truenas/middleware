@@ -10,8 +10,10 @@ import signal
 import subprocess
 import sysctl
 import tempfile
+from xml.etree import ElementTree
 
 from bsd import geom, getswapinfo
+from lxml import etree
 
 from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import get_smartctl_args
@@ -26,14 +28,22 @@ GELI_KEY_SLOT = 0
 GELI_RECOVERY_SLOT = 1
 GELI_REKEY_FAILED = '/tmp/.rekey_failed'
 MIRROR_MAX = 5
+RE_CAMCONTROL_AAM = re.compile(r'^automatic acoustic management\s+yes', re.M)
+RE_CAMCONTROL_APM = re.compile(r'^advanced power management\s+yes', re.M)
 RE_CAMCONTROL_DRIVE_LOCKED = re.compile(r'^drive locked\s+yes$', re.M)
+RE_CAMCONTROL_POWER = re.compile(r'^power management\s+yes', re.M)
 RE_DA = re.compile('^da[0-9]+$')
 RE_DD = re.compile(r'^(\d+) bytes transferred .*\((\d+) bytes')
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
+RE_IDENTIFIER = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd|pmem)[0-9]+$')
 RE_MPATH_NAME = re.compile(r'[a-z]+(\d+)')
 RE_SED_RDLOCK_EN = re.compile(r'(RLKEna = Y|ReadLockEnabled:\s*1)', re.M)
 RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
+RAWTYPE = {
+    'freebsd-zfs': '516e7cba-6ecf-11d6-8ff8-00022d09712b',
+    'freebsd-swap': '516e7cb5-6ecf-11d6-8ff8-00022d09712b',
+}
 
 
 class DiskService(CRUDService):
@@ -47,10 +57,7 @@ class DiskService(CRUDService):
     @private
     async def disk_extend(self, disk):
         disk.pop('enabled', None)
-        disk['passwd'] = await self.middleware.call(
-            'notifier.pwenc_decrypt',
-            disk['passwd']
-        )
+        disk['passwd'] = await self.middleware.call('pwenc.decrypt', disk['passwd'])
         for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
             disk[key] = disk[key].upper()
         try:
@@ -78,7 +85,7 @@ class DiskService(CRUDService):
             Str('hddstandby', enum=[
                 'ALWAYS ON', '5', '10', '20', '30', '60', '120', '180', '240', '300', '330'
             ]),
-            Str('passwd', password=True),
+            Str('passwd', private=True),
             Str('smartoptions'),
             Int('critical', null=True),
             Int('difference', null=True),
@@ -117,7 +124,7 @@ class DiskService(CRUDService):
         )
 
         if any(new[key] != old[key] for key in ['hddstandby', 'advpowermgmt', 'acousticlevel']):
-            await self.middleware.call('notifier.start_ataidle', new['name'])
+            await self.middleware.call('disk.power_management', new['name'])
 
         if any(
                 new[key] != old[key]
@@ -129,6 +136,7 @@ class DiskService(CRUDService):
             else:
                 await self.toggle_smart_off(new['name'])
 
+            await self.middleware.call('service.restart', 'collectd')
             await self._service_change('smartd', 'restart')
 
         updated_data = await self.query(
@@ -506,7 +514,6 @@ class DiskService(CRUDService):
                     self.logger.warn('Failed to clear %s: %s', dev, e)
         return failed
 
-
     @private
     def encrypt(self, devname, keypath, passphrase=None):
         self.__geli_setmetadata(devname, keypath, passphrase)
@@ -663,8 +670,7 @@ class DiskService(CRUDService):
             for g in klass.geoms:
                 for p in g.providers:
                     if p.name == name:
-                        # freebsd-zfs partition
-                        if p.config['rawtype'] == '516e7cba-6ecf-11d6-8ff8-00022d09712b':
+                        if p.config['rawtype'] == RAWTYPE['freebsd-zfs']:
                             return f'{{uuid}}{p.config["rawuuid"]}'
 
         g = geom.geom_by_name('LABEL', name)
@@ -676,6 +682,71 @@ class DiskService(CRUDService):
             return f'{{devicename}}{name}'
 
         return ''
+
+    @private
+    @accepts(Str('identifier'))
+    def identifier_to_device(self, ident):
+
+        if not ident:
+            return None
+
+        search = RE_IDENTIFIER.search(ident)
+        if not search:
+            return None
+
+        geom.scan()
+
+        tp = search.group('type')
+        # We need to escape single quotes to html entity
+        value = search.group('value').replace("'", '%27')
+
+        if tp == 'uuid':
+            search = geom.class_by_name('PART').xml.find(
+                f'.//config[rawuuid = "{value}"]/../../name'
+            )
+            if search is not None and not search.text.startswith('label'):
+                return search.text
+
+        elif tp == 'label':
+            search = geom.class_by_name('LABEL').xml.find(
+                f'.//provider[name = "{value}"]/../name'
+            )
+            if search is not None:
+                return search.text
+
+        elif tp == 'serial':
+            search = geom.class_by_name('DISK').xml.find(
+                f'.//provider/config[ident = "{value}"]/../../name'
+            )
+            if search is not None:
+                return search.text
+            # Builtin xml xpath do not understand normalize-space
+            search = etree.fromstring(ElementTree.tostring(geom.class_by_name('DISK').xml))
+            search = search.xpath(
+                './/provider/config['
+                f'normalize-space(ident) = normalize-space("{value}")'
+                ']/../../name'
+            )
+            if len(search) > 0:
+                return search[0].text
+            disks = self.middleware.call_sync('disk.query', [('serial', '=', value)])
+            if disks:
+                return disks[0]['name']
+
+        elif tp == 'serial_lunid':
+            # Builtin xml xpath do not understand concat
+            search = etree.fromstring(ElementTree.tostring(geom.class_by_name('DISK').xml))
+            search = search.xpath(
+                f'.//provider/config[concat(ident,"_",lunid) = "{value}"]/../../name'
+            )
+            if len(search) > 0:
+                return search[0].text
+
+        elif tp == 'devicename':
+            if os.path.exists(f'/dev/{value}'):
+                return value
+        else:
+            raise NotImplementedError(f'Unknown type {tp!r}')
 
     @private
     def label_to_dev(self, label, geom_scan=True):
@@ -760,6 +831,10 @@ class DiskService(CRUDService):
         else:
             disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
 
+        if await self.middleware.call('service.started', 'collectd'):
+            await self.middleware.call('service.restart', 'collectd')
+        await self._service_change('smartd', 'restart')
+
         if not await self.middleware.call('system.is_freenas'):
             await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
@@ -782,12 +857,13 @@ class DiskService(CRUDService):
 
         seen_disks = {}
         serials = []
+        changed = False
         await self.middleware.run_in_thread(geom.scan)
         for disk in (await self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})):
 
             original_disk = disk.copy()
 
-            name = await self.middleware.call('notifier.identifier_to_device', disk['disk_identifier'])
+            name = await self.middleware.call('disk.identifier_to_device', disk['disk_identifier'])
             if not name or name in seen_disks:
                 # If we cant translate the identifier to a device, give up
                 # If name has already been seen once then we are probably
@@ -795,12 +871,14 @@ class DiskService(CRUDService):
                 if not disk['disk_expiretime']:
                     disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=DISK_EXPIRECACHE_DAYS)
                     await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                    changed = True
                 elif disk['disk_expiretime'] < datetime.utcnow():
                     # Disk expire time has surpassed, go ahead and remove it
                     for extent in await self.middleware.call(
                             'iscsi.extent.query', [['type', '=', 'DISK'], ['path', '=', disk['disk_identifier']]]):
                         await self.middleware.call('iscsi.extent.delete', extent['id'])
                     await self.middleware.call('datastore.delete', 'storage.disk', disk['disk_identifier'])
+                    changed = True
                 continue
             else:
                 disk['disk_expiretime'] = None
@@ -832,6 +910,7 @@ class DiskService(CRUDService):
             # when lots of drives are present
             if disk != original_disk:
                 await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                changed = True
 
             if not await self.middleware.call('system.is_freenas'):
                 await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
@@ -876,11 +955,18 @@ class DiskService(CRUDService):
                     # when lots of drives are present
                     if disk != original_disk:
                         await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                        changed = True
                 else:
                     disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
+                    changed = True
 
                 if not await self.middleware.call('system.is_freenas'):
                     await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+
+        if changed:
+            if await self.middleware.call('service.started', 'collectd'):
+                await self.middleware.call('service.restart', 'collectd')
+            await self._service_change('smartd', 'restart')
 
         return "OK"
 
@@ -1178,6 +1264,7 @@ class DiskService(CRUDService):
 
         used_partitions = set()
         swap_devices = []
+        disks = [i async for i in await self.middleware.call('pool.get_disks')]
         klass = geom.class_by_name('MIRROR')
         if klass:
             for g in klass.geoms:
@@ -1185,16 +1272,17 @@ class DiskService(CRUDService):
                 if not g.name.startswith('swap') or g.name.endswith('.sync'):
                     continue
                 consumers = list(g.consumers)
-                # If the mirror is degraded lets remove it and make a new pair
-                if len(consumers) == 1:
-                    c = consumers[0]
-                    await self.swaps_remove_disks([c.provider.geom.name])
+                # If the mirror is degraded or disk is not in a pool lets remove it
+                if len(consumers) == 1 or any(filter(
+                    lambda c: c.provider.geom.name not in disks, consumers
+                )):
+                    await self.swaps_remove_disks([c.provider.geom.name for c in consumers])
                 else:
                     mirror_name = f'mirror/{g.name}'
                     swap_devices.append(mirror_name)
                     for c in consumers:
                         # Add all partitions used in swap, removing .eli
-                        used_partitions.add(c.provider.name.strip('.eli'))
+                        used_partitions.add(c.provider.name.replace('.eli', ''))
 
                     # If mirror has been configured automatically (not by middlewared)
                     # and there is no geli attached yet we should look for core in it.
@@ -1210,18 +1298,26 @@ class DiskService(CRUDService):
         if not klass:
             return
 
+        # Add non-mirror swap devices
+        # e.g. when there is a single disk
+        swap_devices += [
+            i.devname.replace('.eli', '')
+            for i in getswapinfo() if not i.devname.startswith('mirror/')
+        ]
+
         # Get all partitions of swap type, indexed by size
         swap_partitions_by_size = defaultdict(list)
         for g in klass.geoms:
             for p in g.providers:
                 # if swap partition
-                if p.config['rawtype'] == '516e7cb5-6ecf-11d6-8ff8-00022d09712b':
+                if p.config['rawtype'] == RAWTYPE['freebsd-swap']:
                     if p.name not in used_partitions:
                         # Try to save a core dump from that.
                         # Only try savecore if the partition is not already in use
                         # to avoid errors in the console (#27516)
                         await run('savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{p.name}', check=False)
-                        swap_partitions_by_size[p.mediasize].append(p.name)
+                        if g.name in disks:
+                            swap_partitions_by_size[p.mediasize].append(p.name)
 
         dumpdev = False
         unused_partitions = []
@@ -1234,8 +1330,23 @@ class DiskService(CRUDService):
             for i in range(int(len(partitions) / 2)):
                 if len(swap_devices) > MIRROR_MAX:
                     break
-                part_a, part_b = partitions[0:2]
+                part_ab = partitions[0:2]
                 partitions = partitions[2:]
+
+                # We could have a single disk being used as swap, without mirror.
+                # If thats the case the swap must be removed for said disk to allow the
+                # new gmirror to be created
+                try:
+                    for i in part_ab:
+                        if i in list(swap_devices):
+                            await self.swaps_remove_disks([i.split('p')[0]])
+                            swap_devices.remove(i)
+                except Exception:
+                    self.logger.warn('Failed to remove disk from swap', exc_info=True)
+                    # If something failed here there is no point in trying to create the mirror
+                    continue
+                part_a, part_b = part_ab
+
                 if not dumpdev:
                     dumpdev = await dempdev_configure(part_a)
                 try:
@@ -1243,9 +1354,9 @@ class DiskService(CRUDService):
                     if name is None:
                         # Which means maximum has been reached and we can stop
                         break
-                    await run('gmirror', 'create', '-b', 'prefer', name, part_a, part_b)
-                except Exception:
-                    self.logger.warn(f'Failed to create gmirror {name}', exc_info=True)
+                    await run('gmirror', 'create', name, part_a, part_b)
+                except subprocess.CalledProcessError as e:
+                    self.logger.warn('Failed to create gmirror %s: %s', name, e.stderr.decode())
                     continue
                 swap_devices.append(f'mirror/{name}')
                 # Add remaining partitions to unused list
@@ -1279,7 +1390,7 @@ class DiskService(CRUDService):
             if not partgeom:
                 continue
             for p in partgeom.providers:
-                if p.config['rawtype'] == '516e7cb5-6ecf-11d6-8ff8-00022d09712b':
+                if p.config['rawtype'] == RAWTYPE['freebsd-swap']:
                     providers[p.id] = p
                     break
 
@@ -1345,6 +1456,22 @@ class DiskService(CRUDService):
           - FULL_RANDOM: write whole disk with random bytes
         """
         await self.swaps_remove_disks([dev])
+
+        # Its possible a disk was previously used by graid so we need to make sure to
+        # remove the disk from it (#40560)
+        gdisk = geom.class_by_name('DISK')
+        graid = geom.class_by_name('RAID')
+        if gdisk and graid:
+            prov = gdisk.xml.find(f'.//provider[name = "{dev}"]')
+            if prov is not None:
+                provid = prov.attrib.get('id')
+                graid = graid.xml.find(f'.//consumer/provider[@ref = "{provid}"]/../../name')
+                if graid is not None:
+                    cp = await run('graid', 'remove', graid.text, dev, check=False)
+                    if cp.returncode != 0:
+                        self.logger.debug(
+                            'Failed to remove %s from %s: %s', dev, graid.text, cp.stderr.decode()
+                        )
 
         # First do a quick wipe of every partition to clean things like zfs labels
         if mode == 'QUICK':
@@ -1456,6 +1583,12 @@ class DiskService(CRUDService):
         return f'gptid/{uuid.text}'
 
     @private
+    async def label(self, dev, label):
+        cp = await run('geom', 'label', 'label', label, dev, check=False)
+        if cp.returncode != 0:
+            raise CallError(f'Failed to label {dev}: {cp.stderr.decode()}')
+
+    @private
     def unlabel(self, disk):
         self.middleware.call_sync('disk.swaps_remove_disks', [disk])
 
@@ -1479,6 +1612,70 @@ class DiskService(CRUDService):
 
         # We might need to sync with reality (e.g. uuid -> devname)
         self.middleware.call_sync('disk.sync', disk)
+
+    @private
+    async def configure_power_management(self):
+        """
+        This runs on boot to properly configure all power management options
+        (Advanced Power Management, Automatic Acoustic Management and IDLE) for all disks.
+        """
+        # Only run power management for FreeNAS
+        if not await self.middleware.call('system.is_freenas'):
+            return
+        for disk in await self.middleware.call('disk.query'):
+            await self.power_management(disk['name'], disk=disk)
+
+    @private
+    async def power_management(self, dev, disk=None):
+        """
+        Actually sets power management for `dev`.
+        `disk` is the disk.query entry and optional so this can be called only with disk name.
+        """
+        if not disk:
+            disk = await self.middleware.call('disk.query', [('name', '=', dev)])
+            if not disk:
+                return
+            disk = disk[0]
+
+        try:
+            identify = (await run('camcontrol', 'identify', dev)).stdout.decode()
+        except subprocess.CalledProcessError:
+            return
+
+        # Try to set APM
+        if RE_CAMCONTROL_APM.search(identify):
+            args = ['camcontrol', 'apm', dev]
+            if disk['advpowermgmt'] != 'DISABLED':
+                args += ['-l', disk['advpowermgmt']]
+            asyncio.ensure_future(run(*args, check=False))
+
+        # Try to set AAM
+        if RE_CAMCONTROL_AAM.search(identify):
+            acousticlevel_map = {
+                'MINIMUM': '1',
+                'MEDIUM': '64',
+                'MAXIMUM': '127',
+            }
+            asyncio.ensure_future(run(
+                'camcontrol', 'aam', dev, '-l', acousticlevel_map.get(disk['acousticlevel'], '0'),
+                check=False,
+            ))
+
+        # Try to set idle
+        if RE_CAMCONTROL_POWER.search(identify):
+            if disk['hddstandby'] != 'ALWAYS ON':
+                # database is in minutes, camcontrol uses seconds
+                idle = int(disk['hddstandby']) * 60
+            else:
+                idle = 0
+
+            # We wait a minute before applying idle because its likely happening during system boot
+            # or some activity is happening very soon.
+            async def camcontrol_idle():
+                await asyncio.sleep(60)
+                asyncio.ensure_future(run('camcontrol', 'idle', dev, '-t', str(idle), check=False))
+
+            asyncio.ensure_future(camcontrol_idle())
 
 
 def new_swap_name():
@@ -1538,6 +1735,32 @@ async def _event_devfs(middleware, event_type, args):
             await middleware.call('disk.swaps_configure')
 
 
+async def _event_zfs(middleware, event_type, args):
+    data = args['data']
+    # Swap must be configured only on disks being used by some pool,
+    # for this reason we must react to certain types of ZFS events to keep
+    # it in sync every time there is a change.
+    if data.get('type') in (
+        'misc.fs.zfs.config_sync',
+        'misc.fs.zfs.pool_create',
+        'misc.fs.zfs.pool_destroy',
+        'misc.fs.zfs.pool_import',
+    ):
+        asyncio.ensure_future(middleware.call('disk.swaps_configure'))
+
+
+async def _event_system_ready(middleware, event_type, args):
+    if args['id'] != 'ready':
+        return
+
+    # Configure disks power management
+    asyncio.ensure_future(middleware.call('disk.configure_power_management'))
+
+
 def setup(middleware):
     # Listen to DEVFS events so we can sync on disk attach/detach
     middleware.event_subscribe('devd.devfs', _event_devfs)
+    # Listen to ZFS events to reconfigure swap on pool create/export/import
+    middleware.event_subscribe('devd.zfs', _event_zfs)
+    # Run disk tasks once system is ready (e.g. power management)
+    middleware.event_subscribe('system', _event_system_ready)

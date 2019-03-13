@@ -23,7 +23,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import os
 import random
 import string
 import logging
@@ -36,7 +35,6 @@ from freenasUI.contrib.IPAddressField import (
     IPAddressField, IP4AddressField, IP6AddressField
 )
 from freenasUI.freeadmin.models import ListField, Model
-from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import CIFS
 
@@ -635,14 +633,3 @@ class StaticRoute(Model):
 
     def __str__(self):
         return self.sr_destination
-
-    def save(self, *args, **kwargs):
-        super(StaticRoute, self).save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        super(StaticRoute, self).delete(*args, **kwargs)
-        try:
-            # TODO: async user notification
-            notifier().staticroute_delete(self)
-        except MiddlewareError:
-            pass

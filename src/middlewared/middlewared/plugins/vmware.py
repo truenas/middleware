@@ -5,7 +5,7 @@ import ssl
 import uuid
 
 from middlewared.async_validators import resolve_hostname
-from middlewared.schema import accepts, Dict, Int, Str, Patch
+from middlewared.schema import accepts, Bool, Dict, Int, Str, Patch
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
 
 from pyVim import connect, task as VimTask
@@ -20,10 +20,7 @@ class VMWareService(CRUDService):
 
     @private
     async def item_extend(self, item):
-        try:
-            item['password'] = await self.middleware.call('notifier.pwenc_decrypt', item['password'])
-        except Exception:
-            self.logger.warn('Failed to decrypt password', exc_info=True)
+        item['password'] = await self.middleware.call('pwenc.decrypt', item['password'])
         return item
 
     @private
@@ -72,7 +69,7 @@ class VMWareService(CRUDService):
             Str('datastore', required=True),
             Str('filesystem', required=True),
             Str('hostname', required=True),
-            Str('password', password=True, required=True),
+            Str('password', private=True, required=True),
             Str('username', required=True),
             register=True
         )
@@ -80,10 +77,7 @@ class VMWareService(CRUDService):
     async def do_create(self, data):
         await self.validate_data(data, 'vmware_create')
 
-        data['password'] = await self.middleware.call(
-            'notifier.pwenc_encrypt',
-            data['password']
-        )
+        data['password'] = await self.middleware.call('pwenc.encrypt', data['password'])
 
         data['id'] = await self.middleware.call(
             'datastore.insert',
@@ -105,10 +99,7 @@ class VMWareService(CRUDService):
 
         await self.validate_data(new, 'vmware_update')
 
-        new['password'] = await self.middleware.call(
-            'notifier.pwenc_encrypt',
-            new['password']
-        )
+        new['password'] = await self.middleware.call('pwenc.encrypt', new['password'])
 
         await self.middleware.call(
             'datastore.update',
@@ -234,27 +225,30 @@ class VMWareService(CRUDService):
             vms[vm.config.uuid] = data
         return vms
 
-    @private
-    def periodic_snapshot_task_begin(self, task_id):
-        task = self.middleware.call_sync("pool.snapshottask.query",
-                                         [["id", "=", task_id]],
-                                         {"get": True})
+    @accepts(Str('dataset'), Bool('recursive'))
+    def dataset_has_vms(self, dataset, recursive):
+        return len(self._dataset_get_vms(dataset, recursive)) > 0
 
+    def _dataset_get_vms(self, dataset, recursive):
+        f = ["filesystem", "=", dataset]
+        if recursive:
+            f = [
+                "OR", [
+                    f,
+                    ["filesystem", "^", dataset + "/"],
+                ],
+            ]
+        return self.middleware.call_sync("vmware.query", f)
+
+    @private
+    def snapshot_begin(self, dataset, recursive):
         # If there's a VMWare Plugin object for this filesystem
         # snapshot the VMs before taking the ZFS snapshot.
         # Once we've taken the ZFS snapshot we're going to log back in
         # to VMWare and destroy all the VMWare snapshots we created.
         # We do this because having VMWare snapshots in existence impacts
         # the performance of your VMs.
-        f = ["filesystem", "=", task["dataset"]]
-        if task["recursive"]:
-            f = [
-                "OR", [
-                    f,
-                    ["filesystem", "^", task["dataset"] + "/"],
-                ],
-            ]
-        qs = self.middleware.call_sync("vmware.query", f)
+        qs = self._dataset_get_vms(dataset, recursive)
 
         # Generate a unique snapshot name that (hopefully) won't collide with anything
         # that exists on the VMWare side.
@@ -320,7 +314,7 @@ class VMWareService(CRUDService):
                             self.logger.info("Can't snapshot VM %s that depends on "
                                              "datastore %s and filesystem %s. "
                                              "Possibly using PT devices. Skipping.",
-                                             vm.name, vmsnapobj.datastore, task["dataset"])
+                                             vm.name, vmsnapobj.datastore, dataset)
                             snapvmskips.append(vm.config.uuid)
                     except Exception as e:
                         self.logger.warning("Snapshot of VM %s failed", vm.name, exc_info=True)
@@ -356,7 +350,7 @@ class VMWareService(CRUDService):
         }
 
     @private
-    async def periodic_snapshot_task_end(self, task_id, context):
+    async def snapshot_end(self, context):
         vmsnapname = context["vmsnapname"]
 
         for elem in context["vmsnapobjs"]:
@@ -396,6 +390,18 @@ class VMWareService(CRUDService):
                         })
 
             connect.Disconnect(si)
+
+    @private
+    def periodic_snapshot_task_begin(self, task_id):
+        task = self.middleware.call_sync("pool.snapshottask.query",
+                                         [["id", "=", task_id]],
+                                         {"get": True})
+
+        return self.snapshot_begin(task["dataset"], task["recursive"])
+
+    @private
+    async def periodic_snapshot_task_end(self, context):
+        return self.snapshot_end(context)
 
     # Check if a VM is using a certain datastore
     def _doesVMDependOnDataStore(self, vm, dataStore):

@@ -24,238 +24,25 @@
 #
 #####################################################################
 
-import os
-import re
-import errno
-import pwd
-import tempfile
-import subprocess
-import threading
-import shutil
+import asyncio
 import asyncssh
 import glob
-import asyncio
+import os
+import queue
+import re
+import shlex
+import subprocess
+import syslog
 
-from collections import defaultdict
+from multiprocessing import Process, Queue, Value
+
 from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch
 from middlewared.validators import Range, Match
 from middlewared.service import (
-    Service, job, CallError, CRUDService, private, SystemServiceService, ValidationErrors
+    CallError, CRUDService, SystemServiceService, ValidationErrors,
+    job, item_method, private,
 )
-from middlewared.logger import Logger
-
-
-logger = Logger('rsync').getLogger()
-RSYNC_PATH = '/usr/local/bin/rsync'
-
-
-def demote(user):
-    """
-    Helper function to call the subprocess as the specific user.
-    Taken from: https://gist.github.com/sweenzor/1685717
-    Pass the function 'set_ids' to preexec_fn, rather than just calling
-    setuid and setgid. This will change the ids for that subprocess only"""
-
-    def set_ids():
-        if user:
-            user_info = pwd.getpwnam(user)
-            os.setgid(user_info.pw_gid)
-            os.setuid(user_info.pw_uid)
-
-    return set_ids
-
-
-class RsyncService(Service):
-
-    def __rsync_worker(self, line, user, job):
-        proc_stdout = tempfile.TemporaryFile(mode='w+b', buffering=0)
-        try:
-            rsync_proc = subprocess.Popen(
-                line,
-                shell=True,
-                stdout=proc_stdout.fileno(),
-                stderr=subprocess.PIPE,
-                bufsize=0,
-                preexec_fn=demote(user)
-            )
-            seek = 0
-            old_seek = 0
-            progress = 0
-            message = 'Starting rsync copy job...'
-            while rsync_proc.poll() is None:
-                job.set_progress(progress, message)
-                proc_op = ''
-                proc_stdout.seek(seek)
-                try:
-                    while True:
-                        op_byte = proc_stdout.read(1).decode('utf8')
-                        if op_byte == '':
-                            # In this case break before incrementing `seek`
-                            break
-                        seek += 1
-                        if op_byte == '\r':
-                            break
-                        proc_op += op_byte
-                        seek += 1
-                    if old_seek != seek:
-                        old_seek = seek
-                        message = proc_op.strip()
-                        try:
-                            progress = int([x for x in message.split(' ') if '%' in x][0][:-1])
-                        except (IndexError, ValueError):
-                            pass
-                except BaseException as err:
-                    # Catch IOERROR Errno 9 which usually arises because
-                    # of already closed fileobject being used here therby
-                    # raising Bad File Descriptor error. In this case break
-                    # and the outer while loop will check for rsync_proc.poll()
-                    # to be None or not and DTRT
-                    if hasattr(err, 'errno') and err.errno == 9:
-                        break
-                    logger.debug('Error whilst parsing rsync progress', exc_info=True)
-
-        except BaseException as e:
-            raise CallError(f'Rsync copy job id: {job.id} failed due to: {e}', errno.EIO)
-
-        if rsync_proc.returncode != 0:
-            job.set_progress(None, 'Rsync copy job failed')
-            raise CallError(
-                f'Rsync copy job id: {job.id} returned non-zero exit code. Command used was: {line}. Error: {rsync_proc.stderr.read()}'
-            )
-
-    @accepts(Dict(
-        'rsync-copy',
-        Str('user', required=True),
-        Str('path', required=True),
-        Str('remote_user'),
-        Str('remote_host', required=True),
-        Str('remote_path'),
-        Int('remote_ssh_port'),
-        Str('remote_module'),
-        Str('direction', enum=['PUSH', 'PULL'], required=True),
-        Str('mode', enum=['MODULE', 'SSH'], required=True),
-        Str('remote_password'),
-        Dict(
-            'properties',
-            Bool('recursive'),
-            Bool('compress'),
-            Bool('times'),
-            Bool('archive'),
-            Bool('delete'),
-            Bool('preserve_permissions'),
-            Bool('preserve_attributes'),
-            Bool('delay_updates')
-        ),
-        required=True
-    ))
-    @job()
-    def copy(self, job, rcopy):
-        """
-        Starts an rsync copy task between current freenas machine
-        and specified remote host (or local copy too). It reports
-        the progress of the copy task.
-        """
-
-        # Assigning variables and such
-        user = rcopy.get('user')
-        path = rcopy.get('path')
-        mode = rcopy.get('mode')
-        remote_path = rcopy.get('remote_path')
-        remote_host = rcopy.get('remote_host')
-        remote_module = rcopy.get('remote_module')
-        remote_user = rcopy.get('remote_user', rcopy.get('user'))
-        remote_address = remote_host if '@' in remote_host else f'"{remote_user}"@{remote_host}'
-        remote_password = rcopy.get('remote_password', None)
-        password_file = None
-        properties = rcopy.get('properties', defaultdict(bool))
-
-        # Let's do a brief check of all the user provided parameters
-        if not path:
-            raise ValueError('The path is required')
-        elif not os.path.exists(path):
-            raise CallError(f'The specified path: {path} does not exist', errno.ENOENT)
-
-        if not remote_host:
-            raise ValueError('The remote host is required')
-
-        if mode == 'SSH' and not remote_path:
-            raise ValueError('The remote path is required')
-        elif mode == 'MODULE' and not remote_module:
-            raise ValueError('The remote module is required')
-
-        try:
-            pwd.getpwnam(user)
-        except KeyError:
-            raise CallError(f'User: {user} does not exist', errno.ENOENT)
-        if (
-            mode == 'SSH' and
-            rcopy.get('remote_host') in ['127.0.0.1', 'localhost'] and
-            not os.path.exists(remote_path)
-        ):
-            raise CallError(f'The specified path: {remote_path} does not exist', errno.ENOENT)
-
-        # Phew! with that out of the let's begin the transfer
-
-        line = f'{RSYNC_PATH} --info=progress2 -h'
-        if properties:
-            if properties.get('recursive'):
-                line += ' -r'
-            if properties.get('times'):
-                line += ' -t'
-            if properties.get('compress'):
-                line += ' -z'
-            if properties.get('archive'):
-                line += ' -a'
-            if properties.get('preserve_permissions'):
-                line += ' -p'
-            if properties.get('preserve_attributes'):
-                line += ' -X'
-            if properties.get('delete'):
-                line += ' --delete-delay'
-            if properties.get('delay_updates'):
-                line += ' --delay-updates'
-
-        if mode == 'MODULE':
-            if rcopy.get('direction') == 'PUSH':
-                line += f' "{path}" {remote_address}::"{remote_module}"'
-            else:
-                line += f' {remote_address}::"{remote_module}" "{path}"'
-            if remote_password:
-                password_file = tempfile.NamedTemporaryFile(mode='w')
-
-                password_file.write(remote_password)
-                password_file.flush()
-                shutil.chown(password_file.name, user=user)
-                os.chmod(password_file.name, 0o600)
-                line += f' --password-file={password_file.name}'
-        else:
-            # there seems to be some code duplication here but hey its simple
-            # if you find a way (THAT DOES NOT BREAK localhost based rsync copies)
-            # then please go for it
-            if rcopy.get('remote_host') in ['127.0.0.1', 'localhost']:
-                if rcopy['direction'] == 'PUSH':
-                    line += f' "{path}" "{remote_path}"'
-                else:
-                    line += f' "{remote_path}" "{path}"'
-            else:
-                line += ' -e "ssh -p {0} -o BatchMode=yes -o StrictHostKeyChecking=yes"'.format(
-                    rcopy.get('remote_ssh_port', 22)
-                )
-                if rcopy['direction'] == 'PUSH':
-                    line += f' "{path}" {remote_address}:\\""{remote_path}"\\"'
-                else:
-                    line += f' {remote_address}:\\""{remote_path}"\\" "{path}"'
-
-        logger.debug(f'Executing rsync job id: {job.id} with the following command {line}')
-        try:
-            t = threading.Thread(target=self.__rsync_worker, args=(line, user, job), daemon=True)
-            t.start()
-            t.join()
-        finally:
-            if password_file:
-                password_file.close()
-
-        job.set_progress(100, 'Rsync copy job successfully completed')
+from middlewared.utils import setusercontext
 
 
 class RsyncdService(SystemServiceService):
@@ -351,6 +138,33 @@ class RsyncModService(CRUDService):
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
 
 
+def _run_command(user, commandline, q, rv):
+    setusercontext(user)
+
+    os.environ['PATH'] = (
+        '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin'
+    )
+    proc = subprocess.Popen(
+        commandline, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    )
+
+    # logger(1) does not honor original exit value so we use syslog module instead
+    syslog.openlog(ident='rsync')
+    while True:
+        line = proc.stdout.readline()
+        if line == b'':
+            break
+        try:
+            q.put(line, False)
+        except queue.Full:
+            pass
+        syslog.syslog(syslog.LOG_NOTICE, line.decode())
+    syslog.closelog()
+    proc.communicate()
+    rv.value = proc.returncode
+    q.put(None)
+
+
 class RsyncTaskService(CRUDService):
 
     class Config:
@@ -437,7 +251,7 @@ class RsyncTaskService(CRUDService):
                 remote_port
             ):
                 if '@' in remote_host:
-                    remote_username, remote_host = remote_host.split('@')
+                    remote_username, remote_host = remote_host.rsplit('@', 1)
                 else:
                     remote_username = username
 
@@ -591,3 +405,82 @@ class RsyncTaskService(CRUDService):
         res = await self.middleware.call('datastore.delete', self._config.datastore, id)
         await self.middleware.call('service.restart', 'cron')
         return res
+
+    @private
+    async def commandline(self, id):
+        """
+        Helper method to generate the rsync command avoiding code duplication.
+        """
+        rsync = await self._get_instance(id)
+        line = [
+            '/usr/bin/lockf', '-s', '-t', '0', '-k', rsync["path"], '/usr/local/bin/rsync'
+        ]
+        for name, flag in (
+            ('archive', '-a'),
+            ('compress', '-z'),
+            ('delayupdates', '--delay-updates'),
+            ('delete', '--delete-delay'),
+            ('preserveattr', '-X'),
+            ('preserveperm', '-p'),
+            ('recursive', '-r'),
+            ('times', '-t'),
+        ):
+            if rsync[name]:
+                line.append(flag)
+        if rsync['extra']:
+            line.append(' '.join(rsync['extra']))
+
+        # Do not use username if one is specified in host field
+        # See #5096 for more details
+        if '@' in rsync['remotehost']:
+            remote = rsync['remotehost']
+        else:
+            remote = f'"{rsync["user"]}"@{rsync["remotehost"]}'
+
+        if rsync['mode'] == 'module':
+            module_args = [rsync["path"], f'{remote}::"{rsync["remotemodule"]}"']
+            if rsync['direction'] != 'push':
+                module_args.reverse()
+            line += module_args
+        else:
+            line += [
+                '-e',
+                f'ssh -p {rsync["remoteport"]} -o BatchMode=yes -o StrictHostKeyChecking=yes'
+            ]
+            path_args = [rsync["path"], f'{remote}:{rsync["remotepath"]}']
+            if rsync['direction'] != 'push':
+                path_args.reverse()
+            line += path_args
+
+        if rsync['quiet']:
+            line += ['>', '/dev/null', '2>&1']
+        return ' '.join([shlex.quote(arg) for arg in line])
+
+    @item_method
+    @accepts(Int('id'))
+    @job(lock=lambda args: args[-1], logs=True)
+    def run(self, job, id):
+        """
+        Job to run rsync task of `id`.
+
+        Output is saved to job log excerpt as well as syslog.
+        """
+        rsync = self.middleware.call_sync('rsynctask._get_instance', id)
+        commandline = self.middleware.call_sync('rsynctask.commandline', id)
+        q = Queue()
+        rv = Value('i')
+        p = Process(target=_run_command, args=(rsync['user'], commandline, q, rv), daemon=True)
+        p.start()
+        while p.is_alive() or not q.empty():
+            try:
+                get = q.get(True, 2)
+                if get is None:
+                    break
+                job.logs_fd.write(get)
+            except queue.Empty:
+                pass
+        p.join()
+        if rv.value != 0:
+            raise CallError(
+                f'rsync command returned {rv.value}. Check logs for further information.'
+            )

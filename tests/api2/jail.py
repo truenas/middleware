@@ -152,6 +152,7 @@ def test_10_start_jail():
 
     results = POST('/jail/start/', JAIL_NAME)
     assert results.status_code == 200, results.text
+    time.sleep(1)
 
 
 def test_11_verify_jail_started():
@@ -185,71 +186,19 @@ def test_13_exec_call():
     assert 'exec successful' in results.json().lower(), results.text
 
 
-def test_14_upgrade_jail():
+def test_14_stop_jail():
     if freeze is True:
         pytest.skip(freeze_msg)
-
-    global JOB_ID
     payload = {
         'jail': JAIL_NAME,
-        "options": {
-            "release": '11.2-RELEASE',
-            "plugin": True
-        }
+        'force': True
     }
-    results = POST('/jail/upgrade/', payload)
+    results = POST('/jail/stop/', payload)
     assert results.status_code == 200, results.text
-    JOB_ID = results.json()
+    time.sleep(1)
 
 
-def test_15_verify_bsd_release():
-    global freeze
-    global freeze_msg
-    if freeze is True:
-        pytest.skip(freeze_msg)
-
-    freeze = False
-    stop_time = time.time() + 900
-    while True:
-        get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
-        job_status = get_job.json()[0]
-        if job_status['state'] in ('RUNNING', 'WAITING'):
-            if stop_time <= time.time():
-                freeze = True
-                freeze_msg = f"Failed to update jail to {RELEASE}"
-                assert False, get_job.text
-                break
-            time.sleep(3)
-        else:
-            time.sleep(3)
-            results = GET('/jail/')
-            assert results.status_code == 200, results.text
-            assert len(results.json()) > 0, get_job.text
-            release = results.json()[0]['release']
-            assert '11.2-release' in release.lower(), get_job.text
-            break
-
-
-def test_16_verify_iocage_list_with_ssh():
-    if freeze is True:
-        pytest.skip(freeze_msg)
-
-    cmd1 = f'iocage list | grep "{JAIL_NAME}" | grep -q "11.2-RELEASE"'
-    results = SSH_TEST(cmd1, user, password, ip)
-    cmd2 = 'iocage list'
-    results2 = SSH_TEST(cmd2, user, password, ip)
-    assert results['result'] is True, results2['output']
-
-
-def test_17_stop_jail():
-    if freeze is True:
-        pytest.skip(freeze_msg)
-
-    results = POST('/jail/stop/', JAIL_NAME)
-    assert results.status_code == 200, results.text
-
-
-def test_18_verify_jail_stopped():
+def test_15_verify_jail_stopped():
     if freeze is True:
         pytest.skip(freeze_msg)
 
@@ -258,12 +207,12 @@ def test_18_verify_jail_stopped():
     assert results.json()[0]['state'].lower() == 'down', results.text
 
 
-def test_19_rc_action():
+def test_16_rc_action():
     results = POST('/jail/rc_action/', 'STOP')
     assert results.status_code == 200, results.text
 
 
-def test_20_verify_clean_call():
+def test_17_verify_clean_call():
     results = POST('/jail/clean/', 'ALL')
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text

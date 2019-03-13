@@ -2,6 +2,7 @@ from mako import exceptions
 from mako.lookup import TemplateLookup
 from middlewared.service import Service
 
+import asyncio
 import grp
 import hashlib
 import imp
@@ -48,7 +49,12 @@ class PyRenderer(object):
         name = os.path.basename(path)
         find = imp.find_module(name, [os.path.dirname(path)])
         mod = imp.load_module(name, *find)
-        return await mod.render(self.service, self.service.middleware)
+        if asyncio.iscoroutinefunction(mod.render):
+            return await mod.render(self.service, self.service.middleware)
+        else:
+            return await self.service.middleware.run_in_thread(
+                mod.render, self.service, self.service.middleware,
+            )
 
 
 class EtcService(Service):
@@ -63,13 +69,22 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'krb5.conf'},
             {'type': 'py', 'path': 'krb5.keytab'},
         ],
+        'afpd': [
+            {'type': 'py', 'path': 'afpd'},
+        ],
         'asigra': [
             {'type': 'mako', 'path': 'dssys.cfg'},
             {'type': 'mako', 'path': 'libmap.conf'},
             {'type': 'mako', 'path': 'local/pam.d/dssystem'},
         ],
+        'ctld': [
+            {'type': 'py', 'path': 'ctld'},
+        ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
+        ],
+        'loader': [
+            {'type': 'py', 'path': 'loader'},
         ],
         'network': [
             {'type': 'mako', 'path': 'dhclient.conf'},
@@ -93,6 +108,13 @@ class EtcService(Service):
                 )
             )
         ],
+        'ftp': [
+            {'type': 'mako', 'path': 'local/proftpd.conf'},
+            {'type': 'py', 'path': 'local/proftpd'},
+        ],
+        'sysctl': [
+            {'type': 'py', 'path': 'sysctl_config'}
+        ],
         's3': [
             {'type': 'py', 'path': 'local/minio/certificates'},
         ],
@@ -110,6 +132,10 @@ class EtcService(Service):
         'nginx': [
             {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
         ],
+        'fstab': [
+            {'type': 'mako', 'path': 'fstab'},
+            {'type': 'py', 'path': 'fstab_configure'}
+        ],
         'collectd': [
             {'type': 'mako', 'path': 'local/collectd.conf'}
         ],
@@ -121,6 +147,24 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/netdata/stream.conf'},
             {'type': 'py', 'path': 'local/netdata/alarms'}
         ],
+        'inetd': [
+            {'type': 'py', 'path': 'inetd_conf'}
+        ],
+        'motd': [
+            {'type': 'mako', 'path': 'motd'}
+        ],
+        'ups': [
+            {'type': 'py', 'path': 'local/nut/ups_config'},
+            {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': 'root', 'group': 'uucp', 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsd.conf', 'owner': 'root', 'group': 'uucp', 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsd.users', 'owner': 'root', 'group': 'uucp', 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': 'root', 'group': 'uucp', 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': 'root', 'group': 'uucp', 'mode': 0o440},
+            {'type': 'py', 'path': 'local/nut/ups_perms'}
+        ],
+        'rsync': [
+            {'type': 'mako', 'path': 'local/rsyncd.conf'}
+        ],
         'smb': [
             {'type': 'mako', 'path': 'local/smb4.conf'},
         ],
@@ -131,9 +175,41 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/smbusername.map'},
             {'type': 'py', 'path': 'smb_configure'},
         ],
+        'snmpd': [
+            {'type': 'mako', 'path': 'local/snmpd.conf'},
+        ],
+        'sudoers': [
+            {'type': 'mako', 'path': 'local/sudoers'}
+        ],
+        'syslogd': [
+            {'type': 'py', 'path': 'syslogd'},
+        ],
+        'hostname': [
+            {'type': 'mako', 'path': 'hosts'}
+        ],
+        'ssh': [
+            {'type': 'mako', 'path': 'local/ssh/sshd_config'},
+            {'type': 'py', 'path': 'local/ssh/config'}
+        ],
+        'ntpd': [
+            {'type': 'mako', 'path': 'ntp.conf'}
+        ],
+        'localtime': [
+            {'type': 'py', 'path': 'localtime_config'}
+        ],
+        'inadyn': [
+            {'type': 'mako', 'path': 'local/inadyn.conf'}
+        ],
+        'aliases': [
+            {'type': 'mako', 'path': 'aliases'}
+        ],
+        'ttys': [
+            {'type': 'mako', 'path': 'ttys'},
+            {'type': 'py', 'path': 'ttys_config'}
+        ]
     }
 
-    SKIP_LIST = ['system_dataset', 'collectd']
+    SKIP_LIST = ['system_dataset', 'collectd', 'syslogd', 'fstab']
 
     class Config:
         private = True

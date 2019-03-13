@@ -1,4 +1,4 @@
-from middlewared.alert.base import AlertService, format_alerts
+from middlewared.alert.base import AlertService
 from middlewared.schema import Dict, Str
 
 
@@ -20,6 +20,6 @@ class MailAlertService(AlertService):
 
         await self.middleware.call("mail.send", {
             "subject": "Alerts",
-            "text": format_alerts(alerts, gone_alerts, new_alerts),
+            "text": await self._format_alerts(alerts, gone_alerts, new_alerts),
             "to": [email],
         })

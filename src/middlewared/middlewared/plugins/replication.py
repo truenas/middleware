@@ -4,7 +4,7 @@ import os
 import pickle
 
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
-from middlewared.service import private, CallError, CRUDService, ValidationErrors
+from middlewared.service import item_method, private, CallError, CRUDService, ValidationErrors
 from middlewared.utils.path import is_child
 from middlewared.validators import Port, Range, ReplicationSnapshotNamingSchema, Unique
 
@@ -80,11 +80,11 @@ class ReplicationService(CRUDService):
                     data["state"]["error"] = msg
             else:
                 data["state"] = {
-                    "state": "UNKNOWN",
+                    "state": "PENDING",
                 }
         else:
             data["state"] = context["state"].get(f"replication_task_{data['id']}", {
-                "state": "UNKNOWN",
+                "state": "PENDING",
             })
 
         return data
@@ -139,6 +139,7 @@ class ReplicationService(CRUDService):
             Bool("embed", default=True),
             Bool("compressed", default=True),
             Int("retries", default=5, validators=[Range(min=1)]),
+            Str("logging_level", enum=["DEBUG", "INFO", "WARNING", "ERROR"], null=True, default=None),
             Bool("enabled", default=True),
             register=True,
             strict=True,
@@ -308,6 +309,8 @@ class ReplicationService(CRUDService):
         periodic_snapshot_tasks = new["periodic_snapshot_tasks"]
         await self.compress(new)
 
+        new.pop('state', None)
+
         await self.middleware.call(
             "datastore.update",
             self._config.datastore,
@@ -350,6 +353,16 @@ class ReplicationService(CRUDService):
         )
 
         return response
+
+    @item_method
+    @accepts(Int("id"))
+    async def run(self, id):
+        task = await self._get_instance(id)
+
+        if not task["enabled"]:
+            raise CallError("Task is not enabled")
+
+        await self.middleware.call("zettarepl.run_replication_task", task["id"])
 
     async def _validate(self, data):
         verrors = ValidationErrors()

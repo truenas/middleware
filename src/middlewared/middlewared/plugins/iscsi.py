@@ -1,9 +1,12 @@
+from lxml import etree
+
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
                                 Str)
-from middlewared.service import (CallError, CRUDService, SystemServiceService,
-                                 ValidationErrors, private)
-from middlewared.utils import run
+from middlewared.service import (
+    CallError, CRUDService, SystemServiceService, ValidationErrors, filterable, private
+)
+from middlewared.utils import filter_list, run
 from middlewared.validators import IpAddress, Range
 
 import bidict
@@ -11,6 +14,7 @@ import errno
 import hashlib
 import re
 import os
+import subprocess
 import sysctl
 import uuid
 
@@ -79,9 +83,52 @@ class ISCSIGlobalService(SystemServiceService):
         await self._update_service(old, new)
 
         if old['alua'] != new['alua']:
-            await self.middleware.call('service.start', 'ix-loader')
+            await self.middleware.call('etc.generate', 'loader')
 
         return await self.config()
+
+    @filterable
+    def sessions(self, filters, options):
+        """
+        Get a list of currently running iSCSI sessions. This includes initiator and target names
+        and the unique connection IDs.
+        """
+        def transform(tag, text):
+            if tag in (
+                'target_portal_group_tag', 'max_data_segment_length', 'max_burst_length',
+                'first_burst_length',
+            ) and text.isdigit():
+                return int(text)
+            if tag in ('immediate_data', 'iser'):
+                return bool(int(text))
+            if tag in ('header_digest', 'data_digest', 'offload') and text == 'None':
+                return None
+            return text
+
+        cp = subprocess.run(['ctladm', 'islist', '-x'], capture_output=True, text=True)
+        connections = etree.fromstring(cp.stdout)
+        sessions = []
+        for connection in connections.xpath("//connection"):
+            sessions.append({
+                i.tag: transform(i.tag, i.text) for i in connection.iterchildren()
+            })
+        return filter_list(sessions, filters, options)
+
+    @private
+    async def alua_enabled(self):
+        """
+        Returns whether iSCSI ALUA is enabled or not.
+        """
+        if await self.middleware.call('system.is_freenas'):
+            return False
+        if not await self.middleware.call('failover.licensed'):
+            return False
+
+        license = (await self.middleware.call('system.info'))['license']
+        if license and 'FIBRECHANNEL' in license['features']:
+            return True
+
+        return (await self.middleware.call('iscsi.global.config'))['alua']
 
 
 class ISCSIPortalService(CRUDService):
@@ -773,9 +820,7 @@ class iSCSITargetExtentService(CRUDService):
 
             if disk.startswith('multipath'):
                 await self.middleware.call('disk.unlabel', disk)
-                await self.middleware.call(
-                    'notifier.label_disk', f'extent_{disk}', disk
-                )
+                await self.middleware.call('disk.label', disk, f'extent_{disk}')
             elif not disk.startswith('hast') and not disk.startswith('zvol'):
                 disk_filters = [('name', '=', disk), ('expiretime', '=', None)]
                 try:
@@ -784,16 +829,16 @@ class iSCSITargetExtentService(CRUDService):
                     disk_identifier = disk_object.get('identifier', None)
                     data['path'] = disk_identifier
 
-                    if disk_identifier.startswith(
-                        '{devicename}'or disk_identifier.startswith('{uuid}')
+                    if disk_identifier.startswith('{devicename}') or disk_identifier.startswith(
+                        '{uuid}'
                     ):
-                        success, msg = await self.middleware.call(
-                            'notifier.label_disk', f'extent_{disk}', disk)
-                        if not success:
+                        try:
+                            await self.middleware.call('disk.label', disk, f'extent_{disk}')
+                        except Exception as e:
                             verrors.add(
                                 f'{schema_name}.disk',
-                                f'Serial not found and glabel failed for {disk}:'
-                                f' {msg}')
+                                f'Serial not found and glabel failed for {disk}: {str(e)}'
+                            )
 
                             if verrors:
                                 raise verrors
@@ -1028,7 +1073,10 @@ class iSCSITargetService(CRUDService):
     async def __validate(self, verrors, data, schema_name, old=None):
 
         if not RE_TARGET_NAME.search(data['name']):
-            verrors.add(f'{schema_name}.name', 'Use alphanumeric characters, ".", "-" and ":".')
+            verrors.add(
+                f'{schema_name}.name',
+                'Lowercase alphanumeric characters plus dot (.), dash (-), and colon (:) are allowed.'
+            )
         else:
             filters = [('name', '=', data['name'])]
             if old:
@@ -1060,13 +1108,42 @@ class iSCSITargetService(CRUDService):
         # if not data['groups']:
         #    verrors.add(f'{schema_name}.groups', 'At least one group is required')
 
+        db_portals = list(
+            map(
+                lambda v: v['id'],
+                await self.middleware.call('datastore.query', 'services.iSCSITargetPortal', [
+                    ['id', 'in', list(map(lambda v: v['portal'], data['groups']))]
+                ])
+            )
+        )
+
+        db_initiators = list(
+            map(
+                lambda v: v['id'],
+                await self.middleware.call('datastore.query', 'services.iSCSITargetAuthorizedInitiator', [
+                    ['id', 'in', list(map(lambda v: v['initiator'], data['groups']))]
+                ])
+            )
+        )
+
         portals = []
         for i, group in enumerate(data['groups']):
             if group['portal'] in portals:
                 verrors.add(f'{schema_name}.groups.{i}.portal', f'Portal {group["portal"]} cannot be '
                                                                 'duplicated on a target')
+            elif group['portal'] not in db_portals:
+                verrors.add(
+                    f'{schema_name}.groups.{i}.portal',
+                    f'{group["portal"]} Portal not found in database'
+                )
             else:
                 portals.append(group['portal'])
+
+            if group['initiator'] and group['initiator'] not in db_initiators:
+                verrors.add(
+                    f'{schema_name}.groups.{i}.initiator',
+                    f'{group["initiator"]} Initiator not found in database'
+                )
 
             if not group['auth'] and group['authmethod'] in ('CHAP', 'CHAP_MUTUAL'):
                 verrors.add(f'{schema_name}.groups.{i}.auth', 'Authentication group is required for '
@@ -1099,7 +1176,7 @@ class iSCSITargetService(CRUDService):
             raise verrors
 
         await self.compress(new)
-        groups = data.pop('groups')
+        groups = new.pop('groups')
 
         oldgroups = old.copy()
         await self.compress(oldgroups)

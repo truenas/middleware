@@ -6,7 +6,7 @@
 
 import sys
 import os
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE
@@ -46,6 +46,7 @@ def test_03_Creating_WebDAV_share_on_DATASET_PATH():
 def test_04_Starting_WebDAV_service():
     results = PUT("/services/services/webdav/", {"srv_enable": True})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_05_Verifying_that_the_WebDAV_service_has_started():
@@ -56,6 +57,7 @@ def test_05_Verifying_that_the_WebDAV_service_has_started():
 def test_06_Stopping_WebDAV_service():
     results = PUT("/services/services/webdav/", {"srv_enable": False})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_07_Verifying_that_the_WebDAV_service_has_stopped():
@@ -85,6 +87,7 @@ def test_09_Creating_WebDAV_share_on_DATASET_PATH():
 def test_10_Starting_WebDAV_service():
     results = PUT("/services/services/webdav/", {"srv_enable": True})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_11_Changing_password_for_webdev():
@@ -96,6 +99,7 @@ def test_11_Changing_password_for_webdev():
 def test_12_Stopping_WebDAV_service():
     results = PUT("/services/services/webdav/", {"srv_enable": False})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_13_Verifying_that_the_WebDAV_service_has_stopped():

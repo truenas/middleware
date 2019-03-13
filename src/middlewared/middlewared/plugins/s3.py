@@ -18,6 +18,8 @@ class S3Service(SystemServiceService):
     async def config_extend(self, s3):
         s3['storage_path'] = s3.pop('disks', None)
         s3.pop('mode', None)
+        if s3.get('certificate'):
+            s3['certificate'] = s3['certificate']['id']
         return s3
 
     @accepts(Dict(
@@ -51,20 +53,26 @@ class S3Service(SystemServiceService):
 
         if not new['storage_path']:
             verrors.add('s3_update.storage_path', 'Storage path is required')
-
-        await check_path_resides_within_volume(
-            verrors, self.middleware, 's3_update.storage_path', new['storage_path']
-        )
-
-        if not verrors and new['storage_path'].rstrip('/').count('/') < 3:
-            verrors.add(
-                's3_update.storage_path',
-                'Top level datasets are not allowed. i.e /mnt/tank/dataset is allowed'
-            )
         else:
-            # If the storage_path does not exist, let's create it
-            if not os.path.exists(new['storage_path']):
-                os.makedirs(new['storage_path'])
+            await check_path_resides_within_volume(
+                verrors, self.middleware, 's3_update.storage_path', new['storage_path']
+            )
+
+            if not verrors:
+                if new['storage_path'].rstrip('/').count('/') < 3:
+                    verrors.add(
+                        's3_update.storage_path',
+                        'Top level datasets are not allowed. i.e /mnt/tank/dataset is allowed'
+                    )
+                else:
+                    # If the storage_path does not exist, let's create it
+                    if not os.path.exists(new['storage_path']):
+                        os.makedirs(new['storage_path'])
+
+        if new['certificate']:
+            verrors.extend((await self.middleware.call(
+                'certificate.cert_services_validation', new['certificate'], 's3_update.certificate', False
+            )))
 
         if verrors:
             raise verrors
@@ -73,7 +81,7 @@ class S3Service(SystemServiceService):
 
         await self._update_service(old, new)
 
-        if await self.middleware.call('notifier.mp_get_owner', new['disks']) != 'minio':
+        if (await self.middleware.call('filesystem.stat', new['disks']))['user'] != 'minio':
             await self.middleware.call('notifier.winacl_reset', new['disks'], 'minio', 'minio')
 
         return await self.config()

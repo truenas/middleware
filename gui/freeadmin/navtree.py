@@ -23,10 +23,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import json
 import logging
 import re
-import urllib.request
 
 from django.conf import settings
 from django.core.urlresolvers import NoReverseMatch, resolve, reverse
@@ -35,21 +33,14 @@ from django.forms import ModelForm
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.common.log import log_traceback
-from freenasUI.common.warden import (
-    WARDEN_STATUS_RUNNING, WARDEN_TYPE_PLUGINJAIL
-)
 from freenasUI.common.system import get_sw_name
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.tree import (
-    tree_roots, TreeRoot, TreeNode, unserialize_tree
+    tree_roots, TreeRoot, TreeNode
 )
 from freenasUI.freeadmin.sqlite3_ha.base import NO_SYNC_MAP
-from freenasUI.jails.models import Jails
 from freenasUI.middleware.notifier import notifier
-from freenasUI.plugins.models import Plugins
-from freenasUI.plugins.utils import get_base_url
 
-from multiprocessing.pool import ThreadPool
 
 import ssl
 # Monkey patch ssl checking to get back to Python 2.7.8 behavior
@@ -333,16 +324,6 @@ class NavTree(object):
 
         self.replace_navs(tree_roots)
 
-        jails = []
-        # FIXME: use .filter
-        for j in Jails.objects.all():
-            if (
-                j.jail_type == WARDEN_TYPE_PLUGINJAIL and
-                j.jail_status == WARDEN_STATUS_RUNNING
-            ):
-                jails.append(j)
-        self._get_plugins_nodes(request, jails)
-
     def _generate_app(self, app, request, tree_roots, childs_of, fstatus):
 
         # Thats the root node for the app tree menu
@@ -536,89 +517,6 @@ class NavTree(object):
                     subopt.order = 501
                     subopt.type = 'viewmodel'
                     self.register_option(subopt, navopt)
-
-    def _plugin_fetch(self, args):
-        plugin, host, request, timeout = args
-
-        data = None
-        url = "%s/plugins/%s/%d/_s/treemenu" % (host, plugin.plugin_name, plugin.id)
-        try:
-            opener = urllib.request.build_opener()
-            opener.addheaders = [(
-                'Cookie', 'sessionid=%s' % (
-                    request.COOKIES.get("sessionid", ''),
-                )
-            )]
-            # TODO: Increase timeout based on number of plugins
-            # Have done above ^ but still sucky, try to use caching if possible
-            response = opener.open(url, None, timeout)
-            data = response.read()
-            if not data:
-                log.warn(_("Empty data returned from %s") % (url,))
-        except Exception as e:
-            log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
-                'url': url,
-                'error': e,
-            })
-        return plugin, url, data
-
-    def _get_plugins_nodes(self, request, jails):
-
-        host = get_base_url(request)
-        plugs = Plugins.objects.filter(plugin_enabled=True, plugin_jail__in=[jail.jail_host for jail in jails])
-        if len(plugs) > 1:
-            timeout = len(plugs) * 5
-        else:
-            timeout = 6
-        args = [(y, host, request, timeout) for y in plugs]
-
-        with ThreadPool(10) as pool:
-            for plugin, url, data in pool.imap(self._plugin_fetch, args):
-
-                if not data:
-                    continue
-
-                try:
-                    data = json.loads(data)
-
-                    nodes = unserialize_tree(data)
-                    for node in nodes:
-                        # We have our TreeNode's, find out where to place them
-
-                        found = False
-                        if node.append_to:
-                            log.debug(
-                                "Plugin %s requested to be appended to %s",
-                                plugin.plugin_name, node.append_to)
-                            places = node.append_to.split('.')
-                            places.reverse()
-                            for root in tree_roots:
-                                find = root.find_place(list(places))
-                                if find is not None:
-                                    find.append_child(node)
-                                    found = True
-                                    break
-                        else:
-                            log.debug(
-                                "Plugin %s didn't request to be appended "
-                                "anywhere specific",
-                                plugin.plugin_name)
-
-                        if not found:
-                            tree_roots.register(node)
-
-                except Exception as e:
-                    log.warn(_(
-                        "An error occurred while unserializing from "
-                        "%(url)s: %(error)s") % {'url': url, 'error': e})
-                    log.debug(_(
-                        "Error unserializing %(url)s (%(error)s), data "
-                        "retrieved:"
-                    ) % {
-                        'url': url,
-                        'error': e,
-                    })
-                    continue
 
     def _build_nav(self, user):
         navs = []

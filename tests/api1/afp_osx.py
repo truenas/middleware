@@ -7,6 +7,7 @@
 import pytest
 import sys
 import os
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE
@@ -48,6 +49,7 @@ def test_02_Enabling_AFP_service():
 def test_03_Starting_AFP_service():
     results = PUT("/services/services/afp/", {"srv_enable": "true"})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_04_Checking_to_see_if_AFP_service_is_enabled():

@@ -5,15 +5,10 @@ from middlewared.utils import Popen, run
 import asyncio
 import errno
 import os
-import psutil
 import shutil
-import subprocess
-import tarfile
-import time
 import uuid
 
 SYSDATASET_PATH = '/var/db/system'
-SYSRRD_SENTINEL = '/data/sentinels/sysdataset-rrd-disable'
 
 
 class SystemDatasetService(ConfigService):
@@ -57,7 +52,6 @@ class SystemDatasetService(ConfigService):
             await self.middleware.call('datastore.update', 'system.systemdataset', config['id'], {f'sys_{attr}': config['uuid']})
 
         config['syslog'] = config.pop('syslog_usedataset')
-        config['rrd'] = config.pop('rrd_usedataset')
 
         if not os.path.exists(SYSDATASET_PATH) or not os.path.ismount(SYSDATASET_PATH):
             config['path'] = None
@@ -71,7 +65,6 @@ class SystemDatasetService(ConfigService):
         Str('pool', null=True),
         Str('pool_exclude', null=True),
         Bool('syslog'),
-        Bool('rrd'),
         update=True
     ))
     @job(lock='sysdataset_update')
@@ -82,12 +75,27 @@ class SystemDatasetService(ConfigService):
         new.update(data)
 
         verrors = ValidationErrors()
-        if new['pool'] and not await self.middleware.call(
-            'zfs.pool.query', [('name', '=', new['pool'])]
-        ):
-            verrors.add('sysdataset_update.pool', f'Pool "{new["pool"]}" not found', errno.ENOENT)
+        if new['pool'] and new['pool'] != 'freenas-boot':
+            pool = await self.middleware.call('pool.query', [['name', '=', new['pool']]])
+            if not pool:
+                verrors.add(
+                    'sysdataset_update.pool',
+                    f'Pool "{new["pool"]}" not found',
+                    errno.ENOENT
+                )
+            elif pool[0]['encrypt'] == 2:
+                # This will cover two cases - passphrase being set for a pool and that it might be locked as well
+                verrors.add(
+                    'sysdataset_update.pool',
+                    f'Pool "{new["pool"]}" has an encryption passphrase set. '
+                    'The system dataset cannot be placed on this pool.'
+                )
         elif not new['pool']:
-            for pool in await self.middleware.call('pool.query'):
+            for pool in await self.middleware.call(
+                'pool.query', [
+                    ['encrypt', '!=', 2]
+                ]
+            ):
                 if data.get('pool_exclude') == pool['name']:
                     continue
                 new['pool'] = pool['name']
@@ -97,24 +105,27 @@ class SystemDatasetService(ConfigService):
         verrors.check()
 
         new['syslog_usedataset'] = new['syslog']
-        new['rrd_usedataset'] = new['rrd']
-        await self.middleware.call('datastore.update', 'system.systemdataset', config['id'], new, {'prefix': 'sys_'})
+
+        update_dict = new.copy()
+        for key in ('is_decrypted', 'basename', 'uuid_a', 'syslog', 'path', 'pool_exclude'):
+            update_dict.pop(key, None)
+
+        await self.middleware.call(
+            'datastore.update',
+            'system.systemdataset',
+            config['id'],
+            update_dict,
+            {'prefix': 'sys_'}
+        )
 
         if config['pool'] != new['pool']:
             await self.migrate(config['pool'], new['pool'])
-
-        if config['rrd'] != new['rrd']:
-            # Stop collectd to flush data
-            await self.middleware.call('service.stop', 'collectd')
 
         await self.setup()
 
         if config['syslog'] != new['syslog']:
             await self.middleware.call('service.restart', 'syslogd')
 
-        if config['rrd'] != new['rrd']:
-            await self.rrd_toggle()
-            await self.middleware.call('service.restart', 'collectd')
         return await self.config()
 
     @accepts(Bool('mount', default=True), Str('exclude_pool', default=None, null=True))
@@ -175,7 +186,8 @@ class SystemDatasetService(ConfigService):
 
         if await self.__setup_datasets(config['pool'], config['uuid']):
             # There is no need to wait this to finish
-            asyncio.ensure_future(self.middleware.call('service.restart', 'collectd'))
+            # Restarting rrdcached will ensure that we start/restart collectd as well
+            asyncio.ensure_future(self.middleware.call('service.restart', 'rrdcached'))
 
         if not os.path.isdir(SYSDATASET_PATH):
             if os.path.exists(SYSDATASET_PATH):
@@ -251,35 +263,6 @@ class SystemDatasetService(ConfigService):
             ]
         ]
 
-    @private
-    async def rrd_toggle(self):
-        config = await self.config()
-
-        # Path where collectd stores files
-        rrd_path = '/var/db/collectd/rrd'
-        # Path where rrd fies are stored in system dataset
-        rrd_syspath = f'/var/db/system/rrd-{config["uuid"]}'
-
-        if config['rrd']:
-            # Move from tmpfs to system dataset
-            if os.path.exists(rrd_path):
-                if os.path.islink(rrd_path):
-                    # rrd path is already a link
-                    # so there is nothing we can do about it
-                    return False
-                cp = await run('rsync', '-a', f'{rrd_path}/', f'{rrd_syspath}/', check=False)
-                return cp.returncode == 0
-        else:
-            # Move from system dataset to tmpfs
-            if os.path.exists(rrd_path):
-                if os.path.islink(rrd_path):
-                    os.unlink(rrd_path)
-            else:
-                os.makedirs(rrd_path)
-            cp = await run('rsync', '-a', f'{rrd_syspath}/', f'{rrd_path}/')
-            return cp.returncode == 0
-        return False
-
     async def __nfsv4link(self, config):
         syspath = config['path']
         if not syspath:
@@ -344,10 +327,10 @@ class SystemDatasetService(ConfigService):
             path = SYSDATASET_PATH
         await self.__mount(_to, config['uuid'], path=path)
 
-        restart = ['syslogd', 'collectd']
+        restart = ['collectd', 'rrdcached', 'syslogd']
 
         if await self.middleware.call('service.started', 'cifs'):
-            restart.append('cifs')
+            restart.insert(0, 'cifs')
 
         try:
             for i in restart:
@@ -364,188 +347,20 @@ class SystemDatasetService(ConfigService):
 
                 os.rmdir('/tmp/system.new')
         finally:
+
+            restart.reverse()
             for i in restart:
                 await self.middleware.call('service.start', i)
 
         await self.__nfsv4link(config)
 
-    @private
-    def remove(self, path, link_only=False):
-        if os.path.exists(path):
-            if os.path.islink(path):
-                os.unlink(path)
-            elif os.path.isdir(path) and not link_only:
-                shutil.rmtree(path)
-            elif not link_only:
-                os.remove(path)
 
-    @private
-    def get_members(self, tar, prefix):
-        for tarinfo in tar.getmembers():
-            if tarinfo.name.startswith(prefix):
-                tarinfo.name = tarinfo.name[len(prefix):]
-                yield tarinfo
+async def pool_post_import(middleware, pool):
+    """
+    On pool import we may need to reconfigure system dataset.
+    """
+    await middleware.call('systemdataset.setup')
 
-    @private
-    def use_rrd_dataset(self):
-        config = self.middleware.call_sync('systemdataset.config')
-        is_freenas = self.middleware.call_sync('system.is_freenas')
-        rrd_mount = ''
-        if config['path']:
-            rrd_mount = f'{config["path"]}/rrd-{config["uuid"]}'
 
-        use_rrd_dataset = False
-        if (
-            rrd_mount and config['rrd'] and (
-                is_freenas or (not is_freenas and self.middleware.call_sync('failover.status') != 'BACKUP')
-            )
-        ):
-            use_rrd_dataset = True
-
-        return use_rrd_dataset
-
-    @private
-    def update_collectd_dataset(self):
-        config = self.middleware.call_sync('systemdataset.config')
-        is_freenas = self.middleware.call_sync('system.is_freenas')
-        rrd_mount = ''
-        if config['path']:
-            rrd_mount = f'{config["path"]}/rrd-{config["uuid"]}'
-
-        use_rrd_dataset = self.use_rrd_dataset()
-
-        # If not is_freenas remove the rc.conf cache rc.conf.local will
-        # run again using the correct collectd_enable. See #5019
-        if not is_freenas:
-            try:
-                os.remove('/var/tmp/freenas_config.md5')
-            except FileNotFoundError:
-                pass
-
-        hostname = self.middleware.call_sync('system.info')['hostname']
-        if not hostname:
-            hostname = self.middleware.call_sync('network.configuration.config')['hostname']
-
-        rrd_file = '/data/rrd_dir.tar.bz2'
-        data_dir = '/var/db/collectd/rrd'
-        disk_parts = psutil.disk_partitions()
-        data_dir_is_ramdisk = len([d for d in disk_parts if d.mountpoint == data_dir and d.device == 'tmpfs']) > 0
-
-        if use_rrd_dataset:
-            if os.path.isdir(rrd_mount):
-                if os.path.isdir(data_dir) and not os.path.islink(data_dir):
-                    if data_dir_is_ramdisk:
-                        # copy-umount-remove
-                        subprocess.Popen(
-                            ['cp', '-a', data_dir, f'{data_dir}.{time.strftime("%Y%m%d%H%M%S")}'],
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE
-                        ).communicate()
-
-                        # Should we raise an exception if umount fails ?
-                        subprocess.Popen(
-                            ['umount', data_dir],
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE
-                        ).communicate()
-
-                        self.remove(data_dir)
-                    else:
-                        shutil.move(data_dir, f'{data_dir}.{time.strftime("%Y%m%d%H%M%S")}')
-
-                if os.path.realpath(data_dir) != rrd_mount:
-                    self.remove(data_dir)
-                    os.symlink(rrd_mount, data_dir)
-            else:
-                self.middleware.logger.error(f'{rrd_mount} does not exist or is not a directory')
-                return None
-        else:
-            self.remove(data_dir, link_only=True)
-
-            if not os.path.isdir(data_dir):
-                os.makedirs(data_dir)
-
-            # Create RAMdisk (if not already exists) for RRD files so they don't fill up root partition
-            if not data_dir_is_ramdisk:
-                subprocess.Popen(
-                    ['mount', '-t', 'tmpfs', '-o', 'size=1g', 'tmpfs', data_dir],
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE
-                ).communicate()
-
-        pwd = rrd_mount if use_rrd_dataset else data_dir
-        if not os.path.exists(pwd):
-            self.middleware.logger.error(f'{pwd} does not exist')
-            return None
-
-        if os.path.isfile(rrd_file):
-            with tarfile.open(rrd_file) as tar:
-                if 'collectd/rrd' in tar.getnames():
-                    tar.extractall(pwd, self.get_members(tar, 'collectd/rrd/'))
-
-            if use_rrd_dataset:
-                self.remove(rrd_file)
-
-        # Migrate from old version, where "${hostname}" was a real directory
-        # and "localhost" was a symlink.
-        # Skip the case where "${hostname}" is "localhost", so symlink was not
-        # (and is not) needed.
-        if (
-            hostname != 'localhost' and os.path.isdir(os.path.join(pwd, hostname)) and not os.path.islink(
-                os.path.join(pwd, hostname)
-            )
-        ):
-            if os.path.exists(os.path.join(pwd, 'localhost')):
-                if os.path.islink(os.path.join(pwd, 'localhost')):
-                    self.remove(os.path.join(pwd, 'localhost'))
-                else:
-                    # This should not happen, but just in case
-                    shutil.move(
-                        os.path.join(pwd, 'localhost'),
-                        os.path.join(pwd, f'localhost.bak.{time.strftime("%Y%m%d%H%M%S")}')
-                    )
-            shutil.move(os.path.join(pwd, hostname), os.path.join(pwd, 'localhost'))
-
-        # Remove all directories except "localhost" and it's backups (that may be erroneously created by
-        # running collectd before this script)
-        to_remove_dirs = [
-            os.path.join(pwd, d) for d in os.listdir(pwd)
-            if not d.startswith('localhost') and os.path.isdir(os.path.join(pwd, d))
-        ]
-        for r_dir in to_remove_dirs:
-            self.remove(r_dir)
-
-        # Remove all symlinks (that are stale if hostname was changed).
-        to_remove_symlinks = [
-            os.path.join(pwd, l) for l in os.listdir(pwd)
-            if os.path.islink(os.path.join(pwd, l))
-        ]
-        for r_symlink in to_remove_symlinks:
-            self.remove(r_symlink)
-
-        # Create "localhost" directory if it does not exist
-        if not os.path.exists(os.path.join(pwd, 'localhost')):
-            os.makedirs(os.path.join(pwd, 'localhost'))
-
-        # Create "${hostname}" -> "localhost" symlink if necessary
-        if hostname != 'localhost':
-            os.symlink(os.path.join(pwd, 'localhost'), os.path.join(pwd, hostname))
-
-        # Let's return a positive value to indicate that necessary collectd operations were performed successfully
-        return True
-
-    @private
-    def rename_tarinfo(self, tarinfo):
-        name = tarinfo.name.split('/', maxsplit=4)
-        tarinfo.name = f'collectd/rrd/{"" if len(name) < 5 else name[-1]}'
-        return tarinfo
-
-    @private
-    def sysrrd_disable(self):
-        # skip if no sentinel is found
-        if os.path.exists(SYSRRD_SENTINEL):
-            systemdataset_config = self.middleware.call_sync('systemdataset.config')
-            rrd_mount = f'{systemdataset_config["path"]}/rrd-{systemdataset_config["uuid"]}'
-            if os.path.isdir(rrd_mount):
-                # Let's create tar from system dataset rrd which collectd.conf understands
-                with tarfile.open('/data/rrd_dir.tar.bz2', mode='w:bz2') as archive:
-                    archive.add(rrd_mount, filter=self.rename_tarinfo)
-
-            os.remove(SYSRRD_SENTINEL)
+async def setup(middleware):
+    middleware.register_hook('pool.post_import_pool', pool_post_import, sync=True)

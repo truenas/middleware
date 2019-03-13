@@ -1,7 +1,0 @@
-use_default_menu=true
-menu_file=
-icon_file=/usr/local/share/icons/oxygen/22x22/apps/pcbsd.png
-show_menu_icons=true
-button_title=Xfce Menu
-show_button_title=false
-

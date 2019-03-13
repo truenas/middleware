@@ -177,6 +177,7 @@ class CIFSForm(MiddlewareModelForm, ModelForm):
             del self.fields['cifs_srv_netbiosname_b']
 
     def middleware_clean(self, data):
+        data['netbiosalias'] = data['netbiosalias'].split()
         if 'loglevel' in data:
             data['loglevel'] = LOGLEVEL_MAP.get(data['loglevel'])
         return data
@@ -219,6 +220,11 @@ class AFPForm(MiddlewareModelForm, ModelForm):
             self.fields['afp_srv_bindip'].initial = (bindips)
         else:
             self.fields['afp_srv_bindip'].initial = ('')
+
+    def middleware_clean(self, data):
+        for i in ('map_acls', 'chmod_request'):
+            data[i] = data[i].upper()
+        return data
 
 
 class NFSForm(MiddlewareModelForm, ModelForm):
@@ -467,14 +473,10 @@ class DynamicDNSForm(MiddlewareModelForm, ModelForm):
             )
         return password2
 
-    def clean(self):
-        cdata = self.cleaned_data
-        if not cdata.get("ddns_password"):
-            cdata['ddns_password'] = self.instance.ddns_password
-        return cdata
-
     def middleware_clean(self, update):
-        update["domain"] = update["domain"].split()
+        update["domain"] = update["domain"].replace(',', ' ').replace(';', ' ').split()
+        if not update.get('password'):
+            update.pop('password', None)
         return update
 
 
@@ -1126,7 +1128,6 @@ class TargetExtentDelete(Form):
         self.instance = kwargs.pop('instance', None)
         super(TargetExtentDelete, self).__init__(*args, **kwargs)
         if not self.data:
-            connected_targets = notifier().iscsi_connected_targets()
             target_to_be_deleted = None
             if isinstance(self.instance, models.iSCSITarget):
                 target_to_be_deleted = self.instance.iscsi_target_name
@@ -1137,9 +1138,12 @@ class TargetExtentDelete(Form):
                 basename = models.iSCSITargetGlobalConfiguration.objects.order_by('-id')[0].iscsi_basename
                 target_to_be_deleted = basename + ':' + target_to_be_deleted
 
-            if target_to_be_deleted in connected_targets:
-                self.errors['__all__'] = self.error_class(
-                    ["Warning: Target is in use"])
+            if not target_to_be_deleted:
+                return
+
+            with client as c:
+                if c.call('iscsi.global.sessions', [['target', '=', target_to_be_deleted]]):
+                    self.errors['__all__'] = self.error_class(["Warning: Target is in use"])
 
 
 class ExtentDelete(Form):
@@ -1155,22 +1159,24 @@ class ExtentDelete(Form):
         if self.instance.iscsi_target_extent_type != 'File':
             self.fields.pop('delete')
         if not self.data:
-            targets_in_use = notifier().iscsi_connected_targets()
-            is_extent_active = False
             target_to_extent_list = models.iSCSITargetToExtent.objects.filter(
                 iscsi_extent__iscsi_target_extent_name=self.instance.iscsi_target_extent_name)
             basename = models.iSCSITargetGlobalConfiguration.objects.order_by('-id')[0].iscsi_basename
+            targets = []
             for target_to_extent in target_to_extent_list:
                 target = target_to_extent.iscsi_target.iscsi_target_name
                 if not target.startswith(('iqn.', 'naa.', 'eui.')):
                     target = basename + ':' + target
-                if target in targets_in_use:
-                    is_extent_active = True
-                    # Extent is active. No need to check other targets.
-                    break
-            if is_extent_active:
-                self.errors['__all__'] = self.error_class(
-                    ["Warning: Associated Target is in use"])
+                targets.append(target)
+
+            if not targets:
+                return
+
+            with client as c:
+                if c.call('iscsi.global.sessions', [['target', 'in', targets]]):
+                    self.errors['__all__'] = self.error_class([
+                        "Warning: Associated Target is in use"
+                    ])
 
     def done(self, *args, **kwargs):
         if (

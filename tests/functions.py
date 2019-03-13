@@ -281,3 +281,27 @@ def add_ssh_key(keyPath):
         return False
     else:
         return True
+
+
+def vm_state(vm_name):
+    cmd = f'vm info {vm_name} | grep state:'
+    process = run(cmd, shell=True, stdout=PIPE, universal_newlines=True)
+    output = process.stdout
+    return output.partition(':')[2].strip()
+
+
+def vm_start(vm_name):
+    cmd = ['vm', 'start', vm_name]
+    process = run(cmd)
+    if process.returncode != 0:
+        return False
+    else:
+        return True
+
+
+def ping_host(host):
+    process = run(['ping', '-c', '1', host])
+    if process.returncode != 0:
+        return False
+    else:
+        return True

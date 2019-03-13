@@ -1,7 +1,0 @@
-table Icon
- Caption: AppCafe
- Command: appcafe
- Icon: /usr/local/share/pcbsd/pc-controlpanel/icons/appcafe64x64.png
- X: 16
- Y: 182
-end

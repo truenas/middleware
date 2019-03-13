@@ -525,7 +525,13 @@ def main():
     subparsers = parser.add_subparsers(help='sub-command help', dest='name')
     iparser = subparsers.add_parser('call', help='Call method')
     iparser.add_argument(
-        '-j', '--job', help='Call a long running job with progress bars', type=bool, default=False
+        '-j', '--job', help='Call a long running job', type=bool, default=False
+    )
+    iparser.add_argument(
+        '-jp', '--job-print',
+        help='Method to print job progress', type=str, choices=(
+            'progressbar', 'description',
+        ), default='progressbar',
     )
     iparser.add_argument('method', nargs='+')
 
@@ -550,42 +556,62 @@ def main():
                 yield i
 
     if args.name == 'call':
-        with Client(uri=args.uri) as c:
-            try:
-                if args.username and args.password:
-                    if not c.call('auth.login', args.username, args.password):
-                        raise ValueError('Invalid username or password')
-            except Exception as e:
-                print("Failed to login: ", e)
-                sys.exit(0)
-            try:
-                kwargs = {}
-                if args.timeout:
-                    kwargs['timeout'] = args.timeout
-                if args.job:
-                    # display the job progress and status message while we wait
-                    with ProgressBar() as progress_bar:
-                        kwargs.update({
-                            'job': True,
-                            'callback': lambda job: progress_bar.update(
-                                job['progress']['percent'], job['progress']['description']
-                            )
-                        })
+        try:
+            with Client(uri=args.uri) as c:
+                try:
+                    if args.username and args.password:
+                        if not c.call('auth.login', args.username, args.password):
+                            raise ValueError('Invalid username or password')
+                except Exception as e:
+                    print("Failed to login: ", e)
+                    sys.exit(0)
+                try:
+                    kwargs = {}
+                    if args.timeout:
+                        kwargs['timeout'] = args.timeout
+                    if args.job:
+                        if args.job_print == 'progressbar':
+                            # display the job progress and status message while we wait
+                            with ProgressBar() as progress_bar:
+                                kwargs.update({
+                                    'job': True,
+                                    'callback': lambda job: progress_bar.update(
+                                        job['progress']['percent'], job['progress']['description']
+                                    )
+                                })
+                                rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
+                                progress_bar.finish()
+                        else:
+                            lastdesc = ''
+
+                            def callback(job):
+                                nonlocal lastdesc
+                                desc = job['progress']['description']
+                                if desc != lastdesc:
+                                    print(desc, file=sys.stderr)
+                                lastdesc = desc
+
+                            kwargs.update({
+                                'job': True,
+                                'callback': callback,
+                            })
+                            rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
+                    else:
                         rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
-                        progress_bar.finish()
-                else:
-                    rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
-                if isinstance(rv, (int, str)):
-                    print(rv)
-                else:
-                    print(json.dumps(rv))
-            except ClientException as e:
-                if not args.quiet:
-                    if e.error:
-                        print(e.error, file=sys.stderr)
-                    if e.trace:
-                        print(e.trace['formatted'], file=sys.stderr)
-                sys.exit(1)
+                    if isinstance(rv, (int, str)):
+                        print(rv)
+                    else:
+                        print(json.dumps(rv))
+                except ClientException as e:
+                    if not args.quiet:
+                        if e.error:
+                            print(e.error, file=sys.stderr)
+                        if e.trace:
+                            print(e.trace['formatted'], file=sys.stderr)
+                    sys.exit(1)
+        except (FileNotFoundError, ConnectionRefusedError):
+            print('Failed to run middleware call. Daemon not running?', file=sys.stderr)
+            sys.exit(1)
     elif args.name == 'ping':
         with Client(uri=args.uri) as c:
             if not c.ping():
@@ -617,8 +643,10 @@ def main():
             number = 0
 
             def cb(mtype, **message):
+                nonlocal number
                 print(json.dumps(message))
-                if args.number and args.number >= number:
+                number += 1
+                if args.number and number >= args.number:
                     event.set()
 
             c.subscribe(args.event, cb)
@@ -643,14 +671,32 @@ def main():
                     time.sleep(0.2)
                     continue
 
-        thread = Thread(target=waitready, args=[args])
-        thread.daemon = True
-        thread.start()
-        thread.join(args.timeout)
-        if thread.is_alive():
-            sys.exit(1)
-        else:
-            sys.exit(0)
+        seq = -1
+        state_time = time.monotonic()
+        while True:
+            if args.timeout is not None and time.monotonic() - state_time > args.timeout:
+                print(f'Middleware startup is idle for more than {args.timeout} seconds')
+                sys.exit(1)
+
+            thread = Thread(target=waitready, args=[args])
+            thread.daemon = True
+            thread.start()
+            thread.join(args.timeout)
+            if not thread.is_alive():
+                sys.exit(0)
+
+            try:
+                with open('/var/run/middlewared_startup.seq') as f:
+                    new_seq = int(f.read())
+                    if new_seq < seq:
+                        print('Middleware has restarted')
+                        sys.exit(1)
+
+                    if new_seq != seq:
+                        seq = new_seq
+                        state_time = time.monotonic()
+            except IOError:
+                pass
 
 
 if __name__ == '__main__':

@@ -5,11 +5,12 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
 from middlewared.utils import Popen
 
+import asyncio
 import codecs
 import os
 import re
 import subprocess
-
+import uuid
 
 LOGLEVEL_MAP = {
     '0': 'NONE',
@@ -38,6 +39,8 @@ class SMBService(SystemServiceService):
 
         for i in ('aio_enable', 'aio_rs', 'aio_ws'):
             smb.pop(i, None)
+
+        smb['netbiosalias'] = (smb['netbiosalias'] or '').split()
 
         smb['loglevel'] = LOGLEVEL_MAP.get(smb['loglevel'])
 
@@ -101,7 +104,7 @@ class SMBService(SystemServiceService):
         'smb_update',
         Str('netbiosname'),
         Str('netbiosname_b'),
-        Str('netbiosalias'),
+        List('netbiosalias', default=[]),
         Str('workgroup'),
         Str('description'),
         Bool('enable_smb1'),
@@ -142,8 +145,13 @@ class SMBService(SystemServiceService):
         for i in ('workgroup', 'netbiosname', 'netbiosname_b', 'netbiosalias'):
             if i not in data or not data[i]:
                 continue
-            if not await self.__validate_netbios_name(data[i]):
-                verrors.add(f'smb_update.{i}', 'Invalid NetBIOS name')
+            if i == 'netbiosalias':
+                for idx, item in enumerate(data[i]):
+                    if not await self.__validate_netbios_name(item):
+                        verrors.add(f'smb_update.{i}.{idx}', f'Invalid NetBIOS name: {item}')
+            else:
+                if not await self.__validate_netbios_name(data[i]):
+                    verrors.add(f'smb_update.{i}', f'Invalid NetBIOS name: {data[i]}')
 
         if new['netbiosname'] and new['netbiosname'].lower() == new['workgroup'].lower():
             verrors.add('smb_update.netbiosname', 'NetBIOS and Workgroup must be unique')
@@ -166,9 +174,17 @@ class SMBService(SystemServiceService):
                 new['loglevel'] = k
                 break
 
+        await self.compress(new)
+
         await self._update_service(old, new)
 
         return await self.config()
+
+    @private
+    async def compress(self, data):
+        data['netbiosalias'] = ' '.join(data['netbiosalias'])
+
+        return data
 
 
 class SharingSMBService(CRUDService):
@@ -186,6 +202,7 @@ class SharingSMBService(CRUDService):
         Str('comment'),
         Bool('ro', default=False),
         Bool('browsable', default=True),
+        Bool('timemachine', default=False),
         Bool('recyclebin', default=False),
         Bool('showhiddenfiles', default=False),
         Bool('guestok', default=False),
@@ -194,7 +211,7 @@ class SharingSMBService(CRUDService):
         List('hostsallow', default=[]),
         List('hostsdeny', default=[]),
         List('vfsobjects', default=['zfs_space', 'zfsacl', 'streams_xattr']),
-        Int('storage_task'),
+        Int('storage_task', null=True),
         Str('auxsmbconf'),
         Bool('default_permissions'),
         register=True
@@ -219,6 +236,8 @@ class SharingSMBService(CRUDService):
 
         await self.compress(data)
         await self.set_storage_tasks(data)
+        vuid = await self.generate_vuid(data['timemachine'])
+        data.update({'vuid': vuid})
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
@@ -251,6 +270,7 @@ class SharingSMBService(CRUDService):
         new = old.copy()
         new.update(data)
 
+        new['vuid'] = await self.generate_vuid(new['timemachine'], new['vuid'])
         await self.clean(new, 'sharingsmb_update', verrors, id=id)
         await self.validate(new, 'sharingsmb_update', verrors, old=old)
 
@@ -331,32 +351,23 @@ class SharingSMBService(CRUDService):
     async def name_exists(self, data, schema_name, verrors, id=None):
         name = data['name']
         path = data['path']
-        name_filters = [('name', '=', name)]
-        path_filters = [('path', '=', path)]
 
         if path and not name:
             name = path.rsplit('/', 1)[-1]
 
+        name_filters = [('name', '=', name)]
+
         if id is not None:
             name_filters.append(('id', '!=', id))
-            path_filters.append(('id', '!=', id))
 
         name_result = await self.middleware.call(
             'datastore.query', self._config.datastore,
             name_filters,
             {'prefix': self._config.datastore_prefix})
-        path_result = await self.middleware.call(
-            'datastore.query', self._config.datastore,
-            path_filters,
-            {'prefix': self._config.datastore_prefix})
 
         if name_result:
             verrors.add(f'{schema_name}.name',
                         'A share with this name already exists.')
-
-        if path_result:
-            verrors.add(f'{schema_name}.path',
-                        'A share with this path already exists.')
 
         return name
 
@@ -378,14 +389,29 @@ class SharingSMBService(CRUDService):
     async def apply_default_perms(self, default_perms, path, is_home):
         if default_perms:
             try:
-                (owner, group) = await self.middleware.call(
-                    'notifier.mp_get_owner', path)
+                stat = await self.middleware.call('filesystem.stat', path)
+                owner = stat['user'] or 'root'
+                group = stat['group'] or 'wheel'
             except Exception:
                 (owner, group) = ('root', 'wheel')
 
             await self.middleware.call(
                 'notifier.winacl_reset', path, owner, group, None, not is_home
             )
+
+    @private
+    async def generate_vuid(self, timemachine, vuid=""):
+        try:
+            if timemachine and vuid:
+                uuid.UUID(vuid, version=4)
+        except ValueError:
+            self.logger.debug(f"Time machine VUID string ({vuid}) is invalid. Regenerating.")
+            vuid = ""
+
+        if timemachine and not vuid:
+            vuid = str(uuid.uuid4())
+
+        return vuid
 
     @accepts(Str('path', required=True))
     async def get_storage_tasks(self, path):
@@ -467,3 +493,21 @@ class SharingSMBService(CRUDService):
             vfs_modules.extend(['streams_xattr'])
 
         return vfs_modules
+
+
+async def pool_post_import(middleware, pool):
+    """
+    Makes sure to reload SMB if a pool is imported and there are shares configured for it.
+    """
+    path = f'/mnt/{pool["name"]}'
+    if await middleware.call('sharing.smb.query', [
+        ('OR', [
+            ('path', '=', path),
+            ('path', '^', f'{path}/'),
+        ])
+    ]):
+        asyncio.ensure_future(middleware.call('service.reload', 'cifs'))
+
+
+async def setup(middleware):
+    middleware.register_hook('pool.post_import_pool', pool_post_import, sync=True)

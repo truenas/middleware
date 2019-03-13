@@ -6,7 +6,7 @@
 
 import sys
 import os
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, RC_TEST
@@ -24,6 +24,7 @@ def test_02_Starting_ftp_service():
     payload = {"srv_enable": "true"}
     results = PUT("/services/services/ftp/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_03_Checking_to_see_if_FTP_service_is_enabled():
@@ -40,6 +41,7 @@ def test_04_Fetching_file_via_FTP():
 def test_05_Stopping_ftp_service():
     results = PUT("/services/services/ftp/", {"srv_enable": False})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_06_Updating_ftp_service():
@@ -50,6 +52,7 @@ def test_06_Updating_ftp_service():
 def test_07_Starting_ftp_service():
     results = PUT("/services/services/ftp/", {"srv_enable": True})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_08_Checking_to_see_if_FTP_service_is_enabled():

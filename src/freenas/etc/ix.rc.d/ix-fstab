@@ -12,36 +12,9 @@
 #
 # Generate fstab right before mountlate.
 #
-generate_fstab_real()
-{
-	echo "fdescfs	/dev/fd	fdescfs rw	0 0"
-}
-
-generate_fstab_swap()
-{
-	local devname
-	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call disk.swaps_configure | LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/jq .[] | while read -r devname; do
-		devname=$(eval echo $devname)
-		echo "/dev/${devname}.eli	none	swap	sw	0	0"
-	done;
-}
-
 generate_fstab()
 {
-	freenas=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call system.is_freenas)
-	local _doumount=0
-	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
-	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
-
-	# That file is not supposed to exist anymore but lets keep backward compatibility for now
-	if [ -f /conf/base/etc/fstab ]; then
-		cp /conf/base/etc/fstab /etc/fstab
-	else
-		rm -f /etc/fstab
-	fi
-	generate_fstab_real >> /etc/fstab
-	generate_fstab_swap >> /etc/fstab
-	mount -uw /
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate 'fstab'
 }
 
 name="ix-fstab"

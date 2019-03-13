@@ -1,6 +1,8 @@
+import asyncio
+
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import (accepts, Bool, Dict, Dir, Int, List, Str,
-                                Patch, IPAddr, UnixPerm)
+                                Patch, UnixPerm)
 from middlewared.validators import IpAddress, Range
 from middlewared.service import (SystemServiceService, ValidationErrors,
                                  CRUDService, private)
@@ -11,8 +13,23 @@ import os
 class AFPService(SystemServiceService):
 
     class Config:
-        service = "afp"
-        datastore_prefix = "afp_srv_"
+        service = 'afp'
+        datastore_extend = 'afp.extend'
+        datastore_prefix = 'afp_srv_'
+
+    @private
+    async def extend(self, afp):
+        for i in ('map_acls', 'chmod_request'):
+            afp[i] = afp[i].upper()
+        return afp
+
+    @private
+    async def compress(self, afp):
+        for i in ('map_acls', 'chmod_request'):
+            value = afp.get(i)
+            if value:
+                afp[i] = value.lower()
+        return afp
 
     @accepts(Dict(
         'afp_update',
@@ -22,11 +39,27 @@ class AFPService(SystemServiceService):
         Int('connections_limit', validators=[Range(min=1, max=65535)]),
         Dir('dbpath'),
         Str('global_aux'),
-        Str('map_acls', enum=["rights", "mode", "none"]),
-        Str('chmod_request', enum=["preserve", "simple", "ignore"]),
+        Str('map_acls', enum=['RIGHTS', 'MODE', 'NONE']),
+        Str('chmod_request', enum=['PRESERVE', 'SIMPLE', 'IGNORE']),
         update=True
     ))
     async def do_update(self, data):
+        """
+        Update AFP service settings.
+
+        `bindip` is a list of IPs to bind AFP to. Leave blank (empty list) to bind to all
+        available IPs.
+
+        `map_acls` defines how to map the effective permissions of authenticated users.
+        RIGHTS - Unix-style permissions
+        MODE - ACLs
+        NONE - Do not map
+
+        `chmod_request` defines advanced permission control that deals with ACLs.
+        PRESERVE - Preserve ZFS ACEs for named users and groups or POSIX ACL group mask
+        SIMPLE - Change permission as requested without any extra steps
+        IGNORE - Permission change requests are ignored
+        """
         old = await self.config()
 
         new = old.copy()
@@ -34,15 +67,17 @@ class AFPService(SystemServiceService):
 
         verrors = ValidationErrors()
 
-        if new["dbpath"]:
-            await check_path_resides_within_volume(verrors, self.middleware, "afp_update.dbpath", new["dbpath"])
+        if new['dbpath']:
+            await check_path_resides_within_volume(
+                verrors, self.middleware, 'afp_update.dbpath', new['dbpath'],
+            )
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
+        new = await self.compress(new)
         await self._update_service(old, new)
 
-        return new
+        return await self.config()
 
 
 class SharingAFPService(CRUDService):
@@ -54,7 +89,7 @@ class SharingAFPService(CRUDService):
 
     @accepts(Dict(
         'sharingafp_create',
-        Str('path'),
+        Str('path', required=True),
         Bool('home', default=False),
         Str('name'),
         Str('comment'),
@@ -70,12 +105,20 @@ class SharingAFPService(CRUDService):
         UnixPerm('fperm', default='644'),
         UnixPerm('dperm', default='755'),
         UnixPerm('umask', default='000'),
-        List('hostsallow', items=[IPAddr('ip', network=True)], default=[]),
-        List('hostsdeny', items=[IPAddr('ip', network=True)], default=[]),
+        List('hostsallow', items=[], default=[]),
+        List('hostsdeny', items=[], default=[]),
         Str('auxparams'),
         register=True
     ))
     async def do_create(self, data):
+        """
+        Create AFP share.
+
+        `allow`, `deny`, `ro`, and `rw` are lists of users and groups. Groups are designated by
+        an @ prefix.
+
+        `hostsallow` and `hostsdeny` are lists of hosts and/or networks.
+        """
         verrors = ValidationErrors()
         path = data['path']
 
@@ -83,10 +126,9 @@ class SharingAFPService(CRUDService):
         await self.validate(data, 'sharingafp_create', verrors)
 
         await check_path_resides_within_volume(
-            verrors, self.middleware, "sharingafp_create.path", path)
+            verrors, self.middleware, 'sharingafp_create.path', path)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         if path and not os.path.exists(path):
             try:
@@ -113,6 +155,9 @@ class SharingAFPService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update AFP share `id`.
+        """
         verrors = ValidationErrors()
         old = await self.middleware.call(
             'datastore.query', self._config.datastore, [('id', '=', id)],
@@ -129,7 +174,7 @@ class SharingAFPService(CRUDService):
 
         if path:
             await check_path_resides_within_volume(
-                verrors, self.middleware, "sharingafp_create.path", path)
+                verrors, self.middleware, 'sharingafp_create.path', path)
 
         if verrors:
             raise verrors
@@ -152,6 +197,9 @@ class SharingAFPService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        """
+        Delete AFP share `id`.
+        """
         result = await self.middleware.call('datastore.delete', self._config.datastore, id)
         await self._service_change('afp', 'reload')
         return result
@@ -242,3 +290,21 @@ class SharingAFPService(CRUDService):
         data['hostsdeny'] = ' '.join(data['hostsdeny'])
 
         return data
+
+
+async def pool_post_import(middleware, pool):
+    """
+    Makes sure to reload AFP if a pool is imported and there are shares configured for it.
+    """
+    path = f'/mnt/{pool["name"]}'
+    if await middleware.call('sharing.afp.query', [
+        ('OR', [
+            ('path', '=', path),
+            ('path', '^', f'{path}/'),
+        ])
+    ]):
+        asyncio.ensure_future(middleware.call('service.reload', 'afp'))
+
+
+async def setup(middleware):
+    middleware.register_hook('pool.post_import_pool', pool_post_import, sync=True)

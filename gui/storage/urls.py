@@ -43,7 +43,7 @@ from .views import (
     volume_recoverykey_download, volume_recoverykey_remove, zpool_disk_replace,
     disk_detach, disk_offline, disk_online, zpool_disk_remove, multipath_status,
     multipath_status_json, vmwareplugin_datastores, tasks_dataset_json,
-    tasks_all_json, tasks_recursive_json,
+    tasks_all_json, tasks_recursive_json, snapshot_run, replication_run,
 )
 
 
@@ -99,4 +99,6 @@ urlpatterns = [
     url(r'^tasks/json/(?P<dataset>.+)/$', tasks_dataset_json, name="tasks_dataset_json"),
     url(r'^tasks/json/$', tasks_all_json, name="tasks_all_json"),
     url(r'^tasks/recursive/json/$', tasks_recursive_json, name="tasks_recursive_json"),
+    url(r'^tasks/(?P<oid>\d+)/run/$', snapshot_run, name="snapshot_run"),
+    url(r'^replication/(?P<oid>\d+)/run/$', replication_run, name="replication_run"),
 ]

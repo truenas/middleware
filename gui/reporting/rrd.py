@@ -32,7 +32,7 @@ import subprocess
 
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.middleware.client import client
-from freenasUI.system.models import Advanced
+from freenasUI.system.models import Reporting
 from middlewared.utils import cache_with_autorefresh, filter_list
 
 
@@ -141,6 +141,7 @@ class RRDBase(object, metaclass=RRDMeta):
             "/usr/local/bin/rrdtool",
             "graph",
             path,
+            '--daemon', 'unix:/var/run/rrdcached.sock',
             '--imgformat', self.imgformat,
             '--vertical-label', str(self.get_vertical_label()),
             '--title', str(self.get_title()),
@@ -171,7 +172,7 @@ class CPUPlugin(RRDBase):
     vertical_label = "%CPU"
 
     def graph(self):
-        if Advanced.objects.latest('id').adv_cpu_in_percentage:
+        if Reporting.objects.latest('id').cpu_in_percentage:
             cpu_idle = os.path.join(self.base_path, "percent-idle.rrd")
             cpu_nice = os.path.join(self.base_path, "percent-nice.rrd")
             cpu_user = os.path.join(self.base_path, "percent-user.rrd")
@@ -1382,6 +1383,58 @@ class NFSStatPlugin(RRDBase):
             r'GPRINT:max_write:MAX: %5.1lf%s Max\g',
             r'GPRINT:avg_write:LAST: %5.1lf%s Last\g',
             r'GPRINT:total_write: %3.0lf%s Total\l',
+        ]
+
+        return args
+
+
+class UPSBatteryChargePlugin(RRDBase, DiskBase):
+
+    title = 'UPS Battery Charge'
+    vertical_label = 'Percent'
+
+    def graph(self):
+
+        path = os.path.join(self._base_path, 'nut-ups/percent-charge.rrd')
+
+        args = [
+            f'DEF:min_rd={path}:value:MIN',
+            f'DEF:avg_rd={path}:value:AVERAGE',
+            f'DEF:max_rd={path}:value:MAX',
+            'VDEF:tot_rd=avg_rd,TOTAL',
+            'AREA:avg_rd#bfbfff',
+            'LINE1:avg_rd#0000ff:Value ',
+            'GPRINT:min_rd:MIN:%5.1lf%s Min\\g',
+            'GPRINT:avg_rd:AVERAGE: %5.1lf%s Avg\\g',
+            'GPRINT:max_rd:MAX: %5.1lf%s Max\\g',
+            'GPRINT:avg_rd:LAST: %5.1lf%s Last\\g',
+            'GPRINT:tot_rd: %3.0lf%s Total\\l',
+        ]
+
+        return args
+
+
+class UPSRemainingBatteryPlugin(RRDBase, DiskBase):
+
+    title = 'UPS Remaining Battery Statistics'
+    vertical_label = 'Seconds'
+
+    def graph(self):
+
+        path = os.path.join(self._base_path, 'nut-ups/timeleft-battery.rrd')
+
+        args = [
+            f'DEF:min_rd={path}:value:MIN',
+            f'DEF:avg_rd={path}:value:AVERAGE',
+            f'DEF:max_rd={path}:value:MAX',
+            'VDEF:tot_rd=avg_rd,TOTAL',
+            'AREA:avg_rd#bfbfff',
+            'LINE1:avg_rd#0000ff:Value ',
+            'GPRINT:min_rd:MIN:%5.1lf%s Min\\g',
+            'GPRINT:avg_rd:AVERAGE: %5.1lf%s Avg\\g',
+            'GPRINT:max_rd:MAX: %5.1lf%s Max\\g',
+            'GPRINT:avg_rd:LAST: %5.1lf%s Last\\g',
+            'GPRINT:tot_rd: %3.0lf%s Total\\l',
         ]
 
         return args

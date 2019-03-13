@@ -6,7 +6,7 @@
 import pytest
 import sys
 import os
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE
@@ -60,6 +60,7 @@ def test_02_enabling_active_directory():
 def test_03_checking_active_directory():
     results = GET("/directoryservice/activedirectory/")
     assert results.json()["ad_enable"] is True, results.text
+    sleep(1)
 
 
 def test_04_enabling_smb_service():
@@ -75,6 +76,7 @@ def test_04_enabling_smb_service():
 def test_05_Starting_SMB_service():
     results = PUT("/services/services/cifs/", {"srv_enable": True})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 @ad_test_cfg
@@ -262,6 +264,7 @@ def test_27_Disabling_Active_Directory():
 def test_28_Verify_Active_Directory_is_disabled():
     results = GET("/directoryservice/activedirectory/")
     assert results.json()["ad_enable"] is False, results.text
+    sleep(1)
 
 
 @ad_test_cfg

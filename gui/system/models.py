@@ -23,24 +23,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ######################################################################
-import dateutil
 import logging
 import os
-import re
 import time
-
-from dateutil import parser as dtparser
 
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from OpenSSL import crypto
-
 from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, EncryptedDictField, ListField, Model, UserField
-from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.support.utils import get_license
 from licenselib.license import ContractType
@@ -232,8 +225,7 @@ class Advanced(Model):
         help_text=_(
             "Set this to match your serial port address (0x3f8, 0x2f8, etc.)"
         ),
-        verbose_name=_("Serial Port Address"),
-        choices=choices.SERIAL_CHOICES(),
+        verbose_name=_("Serial Port Address")
     )
     adv_serialspeed = models.CharField(
         max_length=120,
@@ -314,20 +306,6 @@ class Advanced(Model):
         help_text=_("If you wish periodic emails to be sent to a different email address than "
                     "the alert emails are set to (root) set an email address for a user and "
                     "select that user in the dropdown.")
-    )
-    adv_cpu_in_percentage = models.BooleanField(
-        default=False,
-        verbose_name=_("Report CPU usage in percentage"),
-        help_text=_("collectd will report CPU usage in percentage instead of \"jiffies\" "
-                    "if this is checked."),
-    )
-    adv_graphite = models.CharField(
-        max_length=120,
-        default="",
-        blank=True,
-        verbose_name=_("Remote Graphite Server Hostname"),
-        help_text=_("A hostname or IP here will be used as the destination to send collectd "
-                    "data to using the graphite plugin to collectd.")
     )
     adv_fqdn_syslog = models.BooleanField(
         verbose_name=_("Use FQDN for logging"),
@@ -436,7 +414,7 @@ class Email(Model):
         if self.em_pass:
             try:
                 self.em_pass = notifier().pwenc_decrypt(self.em_pass)
-            except:
+            except Exception:
                 log.debug('Failed to decrypt email password', exc_info=True)
                 self.em_pass = ''
         self._em_pass_encrypted = False
@@ -578,14 +556,6 @@ class SystemDataset(Model):
         default=False,
         verbose_name=_("Syslog")
     )
-    sys_rrd_usedataset = models.BooleanField(
-        default=True,
-        verbose_name=_("Reporting Database"),
-        help_text=_(
-            'Save the Round-Robin Database (RRD) used by system statistics '
-            'collection daemon into the system dataset'
-        )
-    )
     sys_uuid = models.CharField(
         editable=False,
         max_length=32,
@@ -641,7 +611,6 @@ class Update(Model):
 
 
 class CertificateBase(Model):
-    cert_root_path = "/etc/certificates"
 
     cert_type = models.IntegerField()
     cert_name = models.CharField(
@@ -668,87 +637,6 @@ class CertificateBase(Model):
         verbose_name=_("Signing Request"),
         help_text=_("Cut and paste the contents of your CSR here"),
     )
-    cert_key_length = models.IntegerField(
-        blank=True,
-        null=True,
-        verbose_name=_("Key length"),
-        default=2048,
-    )
-    cert_digest_algorithm = models.CharField(
-        blank=True,
-        null=True,
-        max_length=120,
-        verbose_name=_("Digest Algorithm"),
-        default='SHA256',
-    )
-    cert_lifetime = models.IntegerField(
-        blank=True,
-        null=True,
-        verbose_name=_("Lifetime"),
-        default=3650,
-    )
-    cert_country = models.CharField(
-        blank=True,
-        null=True,
-        max_length=120,
-        verbose_name=_("Country"),
-        help_text=_("Country Name (2 letter code)"),
-    )
-    cert_state = models.CharField(
-        blank=True,
-        null=True,
-        max_length=120,
-        verbose_name=_("State"),
-        help_text=_("State or Province Name (full name)"),
-    )
-    cert_city = models.CharField(
-        blank=True,
-        null=True,
-        max_length=120,
-        verbose_name=_("Locality"),
-        help_text=_("Locality Name (eg, city)"),
-    )
-    cert_organization = models.CharField(
-        blank=True,
-        null=True,
-        max_length=120,
-        verbose_name=_("Organization"),
-        help_text=_("Organization Name (eg, company)"),
-    )
-    cert_organizational_unit = models.CharField(
-        blank=True,
-        null=True,
-        max_length=120,
-        verbose_name=_("Organizational Unit"),
-        help_text=_("Organizational unit of the entity"),
-    )
-    cert_email = models.CharField(
-        blank=True,
-        null=True,
-        max_length=120,
-        verbose_name=_("Email Address"),
-        help_text=_("Email Address"),
-    )
-    cert_common = models.CharField(
-        blank=True,
-        null=True,
-        max_length=120,
-        verbose_name=_("Common Name"),
-        help_text=_("Common Name (eg, FQDN of FreeNAS server or service)"),
-    )
-    cert_san = models.TextField(
-        blank=True,
-        null=True,
-        verbose_name=_("Subject Alternate Names"),
-        help_text=_("Multi-domain support. Enter additional space separated domains")
-    )
-    cert_serial = models.CharField(
-        blank=True,
-        null=True,
-        max_length=48,
-        verbose_name=_("Serial"),
-        help_text=_("Serial for next certificate"),
-    )
     cert_signedby = models.ForeignKey(
         "CertificateAuthority",
         blank=True,
@@ -756,251 +644,15 @@ class CertificateBase(Model):
         verbose_name=_("Signing Certificate Authority"),
         on_delete=models.CASCADE
     )
-    cert_chain = models.BooleanField(
-        default=False,
-    )
-
-    def get_certificate(self):
-        certificate = None
-        try:
-            if self.cert_certificate:
-                certificate = crypto.load_certificate(
-                    crypto.FILETYPE_PEM,
-                    self.cert_certificate
-                )
-        except:
-            pass
-        return certificate
-
-    def get_fingerprint(self):
-        cert = self.get_certificate()
-        return cert.digest("sha1").decode()
-
-    def get_certificate_chain(self):
-        regex = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
-
-        certificates = []
-        try:
-            matches = regex.findall(self.cert_certificate)
-            for m in matches:
-                certificate = crypto.load_certificate(crypto.FILETYPE_PEM, m)
-                certificates.append(certificate)
-        except:
-            pass
-
-        return certificates
-
-    def get_privatekey(self):
-        privatekey = None
-        if self.cert_privatekey:
-            privatekey = crypto.load_privatekey(
-                crypto.FILETYPE_PEM,
-                self.cert_privatekey
-            )
-        return privatekey
-
-    def get_CSR(self):
-        CSR = None
-        if self.cert_CSR:
-            CSR = crypto.load_certificate_request(
-                crypto.FILETYPE_PEM,
-                self.cert_CSR
-            )
-        return CSR
-
-    def get_certificate_path(self):
-        return "%s/%s.crt" % (self.cert_root_path, self.cert_name)
-
-    def get_privatekey_path(self):
-        return "%s/%s.key" % (self.cert_root_path, self.cert_name)
-
-    def get_CSR_path(self):
-        return "%s/%s.csr" % (self.cert_root_path, self.cert_name)
-
-    def __load_certificate(self):
-        if self.cert_certificate is not None and self.__certificate is None:
-            self.__certificate = self.get_certificate()
-
-    def __load_CSR(self):
-        if self.cert_CSR is not None and self.__CSR is None:
-            self.__CSR = self.get_CSR()
-
-    def __load_thingy(self):
-        if self.cert_type == CERT_TYPE_CSR:
-            self.__load_CSR()
-        else:
-            self.__load_certificate()
-
-    def __get_thingy(self):
-        thingy = self.__certificate
-        if self.cert_type == CERT_TYPE_CSR:
-            thingy = self.__CSR
-
-        return thingy
-
-    def __init__(self, *args, **kwargs):
-        super(CertificateBase, self).__init__(*args, **kwargs)
-
-        self.__certificate = None
-        self.__CSR = None
-        self.__load_thingy()
-
-        if not os.path.exists(self.cert_root_path):
-            os.mkdir(self.cert_root_path, 0o755)
 
     def __str__(self):
         return self.cert_name
-
-    @property
-    def cert_certificate_path(self):
-        return "%s/%s.crt" % (self.cert_root_path, self.cert_name)
-
-    @property
-    def cert_privatekey_path(self):
-        return "%s/%s.key" % (self.cert_root_path, self.cert_name)
-
-    @property
-    def cert_CSR_path(self):
-        return "%s/%s.csr" % (self.cert_root_path, self.cert_name)
-
-    @property
-    def cert_internal(self):
-        internal = "YES"
-
-        if self.cert_type == CA_TYPE_EXISTING:
-            internal = "NO"
-        elif self.cert_type == CERT_TYPE_EXISTING:
-            internal = "NO"
-
-        return internal
-
-    @property
-    def cert_issuer(self):
-        issuer = None
-
-        if self.cert_type in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING):
-            issuer = "external"
-        elif self.cert_type == CA_TYPE_INTERNAL:
-            issuer = "self-signed"
-        elif self.cert_type in (CERT_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE):
-            issuer = self.cert_signedby
-        elif self.cert_type == CERT_TYPE_CSR:
-            issuer = "external - signature pending"
-
-        return issuer
-
-    @property
-    def cert_ncertificates(self):
-        count = 0
-        certs = Certificate.objects.all()
-        for cert in certs:
-            try:
-                if self.cert_name == cert.cert_signedby.cert_name:
-                    count += 1
-            except:
-                pass
-        return count
-
-    @property
-    def cert_DN(self):
-        self.__load_thingy()
-
-        parts = []
-        for c in self.__get_thingy().get_subject().get_components():
-            parts.append("%s=%s" % (c[0].decode(), c[1].decode('utf8')))
-        DN = "/%s" % '/'.join(parts)
-        return DN
-
-    #
-    # Returns ASN1 GeneralizedTime - Need to parse it...
-    #
-    @property
-    def cert_from(self):
-        self.__load_thingy()
-
-        thingy = self.__get_thingy()
-        try:
-            before = thingy.get_notBefore()
-            t1 = dtparser.parse(before)
-            t2 = t1.astimezone(dateutil.tz.tzutc())
-            before = t2.ctime()
-        except Exception:
-            before = None
-
-        return before
-
-    #
-    # Returns ASN1 GeneralizedTime - Need to parse it...
-    #
-    @property
-    def cert_until(self):
-        self.__load_thingy()
-
-        thingy = self.__get_thingy()
-        try:
-            after = thingy.get_notAfter()
-            t1 = dtparser.parse(after)
-            t2 = t1.astimezone(dateutil.tz.tzutc())
-            after = t2.ctime()
-        except Exception:
-            after = None
-
-        return after
-
-    @property
-    def cert_type_existing(self):
-        ret = False
-        if self.cert_type & CERT_TYPE_EXISTING:
-            ret = True
-        return ret
-
-    @property
-    def cert_type_internal(self):
-        ret = False
-        if self.cert_type & CERT_TYPE_INTERNAL:
-            ret = True
-        return ret
-
-    @property
-    def cert_type_CSR(self):
-        ret = False
-        if self.cert_type & CERT_TYPE_CSR:
-            ret = True
-        return ret
-
-    @property
-    def CA_type_existing(self):
-        ret = False
-        if self.cert_type & CA_TYPE_EXISTING:
-            ret = True
-        return ret
-
-    @property
-    def CA_type_internal(self):
-        ret = False
-        if self.cert_type & CA_TYPE_INTERNAL:
-            ret = True
-        return ret
-
-    @property
-    def CA_type_intermediate(self):
-        ret = False
-        if self.cert_type & CA_TYPE_INTERMEDIATE:
-            ret = True
-        return ret
 
     class Meta:
         abstract = True
 
 
 class CertificateAuthority(CertificateBase):
-
-    def __init__(self, *args, **kwargs):
-        super(CertificateAuthority, self).__init__(*args, **kwargs)
-
-        self.cert_root_path = "%s/CA" % self.cert_root_path
-        if not os.path.exists(self.cert_root_path):
-            os.mkdir(self.cert_root_path, 0o755)
 
     class Meta:
         verbose_name = _("CA")
@@ -1327,3 +979,39 @@ class SSHCredentialsKeychainCredential(KeychainCredential):
             "type",
             "attributes",
         )
+
+
+class Reporting(Model):
+    class Meta:
+        verbose_name = _("Reporting")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = "SystemDatasetIcon"
+        icon_object = "SystemDatasetIcon"
+        icon_view = "SystemDatasetIcon"
+        icon_add = "SystemDatasetIcon"
+
+    cpu_in_percentage = models.BooleanField(
+        default=False,
+        verbose_name=_("Report CPU usage in percent"),
+        help_text=_("When set, report CPU usage in percent instead of jiffies."),
+    )
+    graphite = models.CharField(
+        max_length=120,
+        default="",
+        blank=True,
+        verbose_name=_("Graphite Server"),
+        help_text=_("Destination hostname or IP for collectd data sent by the Graphite plugin.")
+    )
+    graph_age = models.IntegerField(
+        default=12,
+        verbose_name=_("Graph Age"),
+        help_text=_("Maximum age of graph stored, in months."),
+    )
+    graph_points = models.IntegerField(
+        default=1200,
+        verbose_name=_("Graph Points Count"),
+        help_text=_("Number of points for each hourly, daily, weekly, monthly, yearly graph. Set this to no less than "
+                    "the width of your graphs in pixels."),
+    )

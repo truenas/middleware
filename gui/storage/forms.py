@@ -30,9 +30,7 @@ import base64
 import logging
 import os
 import re
-import ssl
 import tempfile
-import uuid
 
 from formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
@@ -61,12 +59,9 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.util import JobAborted, JobFailed, upload_job_and_wait
-from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import dedup_enabled
-from pyVim import connect, task as VimTask
-from pyVmomi import vim
 
 
 attrs_dict = {'class': 'required', 'maxHeight': 200}
@@ -387,16 +382,13 @@ class ZFSVolumeWizardForm(Form):
     def _populate_disk_choices(self):
 
         disks = []
-        _n = notifier()
-
-        # Grab disk list
-        # Root device already ruled out
-        for disk, info in list(_n.get_disks().items()):
-            serial = info.get('ident', '')
-            with client as c:
-                if not c.call("system.is_freenas"):
+        with client as c:
+            unused = c.call('disk.get_unused')
+            for d in unused:
+                serial = d.get('serial', '')
+                if not c.call('system.is_freenas'):
                     try:
-                        enclosure = c.call("enclosure.find_disk_enclosure", info['devname'])
+                        enclosure = c.call('enclosure.find_disk_enclosure', d['devname'])
                     except Exception:
                         pass
                     else:
@@ -404,22 +396,11 @@ class ZFSVolumeWizardForm(Form):
                             '%s ' if serial else '',
                             enclosure,
                         )
-            disks.append(Disk(
-                info['devname'],
-                info['capacity'],
-                serial=serial,
-            ))
-
-        # Exclude what's already added
-        used_disks = []
-        for v in models.Volume.objects.all():
-            used_disks.extend(v.get_disks())
-
-        qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
-        used_disks.extend([i.get_device()[5:] for i in qs])
-        for d in list(disks):
-            if d.dev in used_disks:
-                disks.remove(d)
+                disks.append(Disk(
+                    d['devname'],
+                    d['size'],
+                    serial=serial,
+                ))
 
         choices = sorted(disks)
         choices = [tuple(d) for d in choices]
@@ -520,8 +501,11 @@ class ZFSVolumeWizardForm(Form):
                 if gtype == 'none':
                     continue
                 disk = zpoolfields.search(i).group(1)
-                # if this is a log vdev we need to mirror it for safety
-                if gtype in topology:
+
+                if gtype == 'spare':
+                    topology['spares'].append(disk)
+                elif gtype in topology:
+                    # if this is a log vdev we need to mirror it for safety
                     if gtype == 'log':
                         topology[gtype][0]['type'] = 'MIRROR'
                     topology[gtype][0]['disks'].append(disk)
@@ -590,28 +574,11 @@ class VolumeImportForm(Form):
             ]
 
     def _populate_disk_choices(self):
-
-        used_disks = []
-        for v in models.Volume.objects.all():
-            used_disks.extend(v.get_disks())
-
-        qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
-        diskids = [i[0] for i in qs.values_list('iscsi_target_extent_path')]
-        used_disks.extend([d.disk_name for d in models.Disk.objects.filter(
-            disk_identifier__in=diskids)])
-
-        n = notifier()
-        # Grab partition list
-        # NOTE: This approach may fail if device nodes are not accessible.
-        _parts = n.get_partitions()
-        for name, part in list(_parts.items()):
-            for i in used_disks:
-                if re.search(r'^%s([ps]|$)' % i, part['devname']) is not None:
-                    _parts.pop(name, None)
-
         parts = []
-        for name, part in list(_parts.items()):
-            parts.append(Disk(part['devname'], part['capacity']))
+        with client as c:
+            for disk in c.call('disk.get_unused', True):
+                for part in disk['partitions']:
+                    parts.append(Disk(part['path'].replace('/dev/', ''), part['capacity']))
 
         choices = sorted(parts)
         choices = [tuple(p) for p in choices]
@@ -697,7 +664,6 @@ class AutoImportWizard(SessionWizardView):
 
         arg = {
             'guid': vol['guid'],
-            'devices': enc_disks,
         }
         if passphrase:
             arg['passphrase'] = passphrase
@@ -1682,13 +1648,12 @@ class MountPointAccessForm(Form):
         if self.cleaned_data.get('mp_group_en'):
             kwargs['group'] = self.cleaned_data['mp_group']
 
-        if self.cleaned_data.get('mp_mode_en'):
-            kwargs['mode'] = str(self.cleaned_data['mp_mode'])
-
         if self.cleaned_data.get('mp_user_en'):
             kwargs['user'] = self.cleaned_data['mp_user']
 
         kwargs['acl'] = self.cleaned_data['mp_acl'].upper()
+        if kwargs['acl'] != 'WINDOWS' and self.cleaned_data.get('mp_mode_en'):
+            kwargs['mode'] = str(self.cleaned_data['mp_mode'])
 
         kwargs['recursive'] = self.cleaned_data['mp_recursive']
 
@@ -1868,8 +1833,9 @@ class ManualSnapshotForm(Form):
         super(ManualSnapshotForm, self).__init__(*args, **kwargs)
         self.fields['ms_name'].initial = datetime.today().strftime(
             'manual-%Y%m%d')
-        if not models.VMWarePlugin.objects.filter(filesystem=self._fs).exists():
-            self.fields.pop('vmwaresync')
+        with client as c:
+            if not c.call("vmware.dataset_has_vms", self._fs, True):
+                self.fields.pop('vmwaresync')
 
     def clean_ms_name(self):
         regex = re.compile('^[-a-zA-Z0-9_. ]+$')
@@ -1878,56 +1844,22 @@ class ManualSnapshotForm(Form):
             raise forms.ValidationError(
                 _("Only [-a-zA-Z0-9_. ] permitted as snapshot name")
             )
-        snaps = notifier().zfs_snapshot_list(path=f'{self._fs}@{name}')
-        if snaps:
-            raise forms.ValidationError(
-                _('Snapshot with this name already exists')
-            )
+        with client as c:
+            snaps = c.call('zfs.snapshot.query', [['name', '=', f'{self._fs}@{name}']], {'select': ['name']})
+            if snaps:
+                raise forms.ValidationError(
+                    _('Snapshot with this name already exists')
+                )
         return name
 
     def commit(self, fs):
-        vmsnapname = str(uuid.uuid4())
-        vmsnapdescription = str(datetime.now()).split('.')[0] + " FreeNAS Created Snapshot"
-        snapvms = []
-        if self.cleaned_data.get('vmwaresync'):
-            for obj in models.VMWarePlugin.objects.filter(filesystem=self._fs):
-                try:
-                    ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-                    ssl_context.verify_mode = ssl.CERT_NONE
-
-                    si = connect.SmartConnect(host=obj.hostname, user=obj.username, pwd=obj.get_password(), sslContext=ssl_context)
-                except Exception:
-                    continue
-                content = si.RetrieveContent()
-                vm_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
-                for vm in vm_view.view:
-                    if vm.summary.runtime.powerState != 'poweredOn':
-                        continue
-                    for i in vm.datastore:
-                        if i.info.name == obj.datastore:
-                            VimTask.WaitForTask(vm.CreateSnapshot_Task(
-                                name=vmsnapname,
-                                description=vmsnapdescription,
-                                memory=False, quiesce=False,
-                            ))
-                            snapvms.append(vm)
-                            break
-        try:
-            notifier().zfs_mksnap(
-                fs,
-                str(self.cleaned_data['ms_name']),
-                self.cleaned_data['ms_recursively'],
-                len(snapvms))
-        finally:
-            for vm in snapvms:
-                tree = vm.snapshot.rootSnapshotList
-                while tree[0].childSnapshotList is not None:
-                    snap = tree[0]
-                    if snap.name == vmsnapname:
-                        VimTask.WaitForTask(snap.snapshot.RemoveSnapshot_Task(True))
-                    if len(tree[0].childSnapshotList) < 1:
-                        break
-                    tree = tree[0].childSnapshotList
+        with client as c:
+            c.call("zfs.snapshot.create", {
+                "dataset": fs,
+                "name": str(self.cleaned_data['ms_name']),
+                "recursive": self.cleaned_data['ms_recursively'],
+                "vmware_sync": self.cleaned_data.get('vmwaresync', False),
+            })
 
 
 class CloneSnapshotForm(Form):
@@ -1980,10 +1912,15 @@ class CloneSnapshotForm(Form):
 
     def commit(self):
         snapshot = self.cleaned_data['cs_snapshot'].__str__()
-        retval = notifier().zfs_clonesnap(
-            snapshot,
-            str(self.cleaned_data['cs_name']))
-        return retval
+        with client as c:
+            try:
+                c.call('zfs.snapshot.clone', {
+                    'snapshot': snapshot,
+                    'dataset_dst': str(self.cleaned_data['cs_name']),
+                })
+            except Exception as e:
+                return str(e)
+        return ''
 
 
 class ZFSDiskReplacementForm(Form):
@@ -2409,8 +2346,8 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
             'dom': data.pop('schedule_daymonth'),
             'month': data.pop('schedule_month'),
             'dow': data.pop('schedule_dayweek'),
-            'begin': data.pop('schedule_begin'),
-            'end': data.pop('schedule_end'),
+            'begin': data.pop('schedule_begin') or '00:00',
+            'end': data.pop('schedule_end') or '23:45',
         }
         if not (data.pop("enable_schedule") and data["auto"]):
             data["schedule"] = None
@@ -2421,8 +2358,8 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
             'dom': data.pop('restrict_schedule_daymonth'),
             'month': data.pop('restrict_schedule_month'),
             'dow': data.pop('restrict_schedule_dayweek'),
-            'begin': data.pop('restrict_schedule_begin'),
-            'end': data.pop('restrict_schedule_end'),
+            'begin': data.pop('restrict_schedule_begin') or '00:00',
+            'end': data.pop('restrict_schedule_end') or '23:45',
         }
         if not (data.pop("enable_restrict_schedule")):
             data["restrict_schedule"] = None
@@ -2445,11 +2382,13 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
         if data["speed_limit"] is not None:
             data["speed_limit"] = data["speed_limit"] * 1024
 
+        data["logging_level"] = data["logging_level"] or None
+
         return data
 
 
-key_order(ReplicationForm, 13, 'repl_enable_schedule')
-key_order(ReplicationForm, 21, 'repl_enable_restrict_schedule')
+key_order(ReplicationForm, 15, 'repl_enable_schedule')
+key_order(ReplicationForm, 23, 'repl_enable_restrict_schedule')
 
 
 class VolumeExport(Form):
@@ -2481,13 +2420,30 @@ class VolumeExport(Form):
         super().done(request, events, **kwargs)
 
 
-class Dataset_Destroy(Form):
+class CommonDatasetDestroy:
+
+    def done(self):
+        super().done()
+        try:
+            with client as c:
+                return c.call('pool.dataset.delete', self.fs, {
+                    'recursive': self.cleaned_data.get('cascade') or False,
+                })
+        except ClientException as e:
+            self._errors['__all__'] = self.error_class([str(e)])
+            return False
+
+
+class Dataset_Destroy(CommonDatasetDestroy, Form):
     def __init__(self, *args, **kwargs):
         self.fs = kwargs.pop('fs')
         self.datasets = kwargs.pop('datasets', [])
         super(Dataset_Destroy, self).__init__(*args, **kwargs)
         with client as c:
-            snaps = c.call("zfs.snapshot.query", [["dataset", "=", self.fs]])
+            snaps = list(filter(
+                lambda x: f'{self.fs}@' in x['name'] or f'{self.fs}/' in x['name'],
+                c.call("zfs.snapshot.query", [], {"select": ["name"]}),
+            ))
         if len(snaps) > 0:
             label = ungettext(
                 "I'm aware this will destroy snapshots within this dataset",
@@ -2500,7 +2456,7 @@ class Dataset_Destroy(Form):
                 label=label)
 
 
-class ZvolDestroyForm(Form):
+class ZvolDestroyForm(Form, CommonDatasetDestroy):
     def __init__(self, *args, **kwargs):
         self.fs = kwargs.pop('fs')
         super(ZvolDestroyForm, self).__init__(*args, **kwargs)

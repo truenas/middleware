@@ -644,6 +644,31 @@ class TaskFAdmin(BaseFreeAdmin):
 
         return columns
 
+    def get_actions(self):
+        actions = super().get_actions()
+        actions['RunNow'] = {
+            'button_name': _('Run Now'),
+            'on_select_after': """function(evt, actionName, action) {
+  for(var i=0;i < evt.rows.length;i++) {
+    var row = evt.rows[i];
+    if(!row.data.task_enabled) {
+      query(".grid" + actionName).forEach(function(item, idx) {
+        domStyle.set(item, "display", "none");
+      });
+      break;
+    }
+  }
+}""",
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('%s', data._run_url, [mybtn,]);
+                }
+            }""" % (escapejs(_('Run Now')), ),
+        }
+        return actions
+
 
 class LegacyTaskFAdmin(BaseFreeAdmin):
 
@@ -715,6 +740,31 @@ class ReplicationFAdmin(BaseFreeAdmin):
         })
 
         return columns
+
+    def get_actions(self):
+        actions = super().get_actions()
+        actions['RunNow'] = {
+            'button_name': _('Run Now'),
+            'on_select_after': """function(evt, actionName, action) {
+  for(var i=0;i < evt.rows.length;i++) {
+    var row = evt.rows[i];
+    if(!row.data.repl_enabled) {
+      query(".grid" + actionName).forEach(function(item, idx) {
+        domStyle.set(item, "display", "none");
+      });
+      break;
+    }
+  }
+}""",
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('%s', data._run_url, [mybtn,]);
+                }
+            }""" % (escapejs(_('Run Now')), ),
+        }
+        return actions
 
 
 class LegacyReplicationFAdmin(BaseFreeAdmin):

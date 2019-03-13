@@ -43,6 +43,13 @@ class CIFS_Share(Model):
         verbose_name=_('Use as home share'),
         default=False,
     )
+    cifs_timemachine = models.BooleanField(
+        verbose_name=_('Time Machine'),
+        help_text=_(
+            'Enable Time Machine backups on this share.'
+        ),
+        default=False,
+    )
     cifs_name = models.CharField(
         max_length=120,
         verbose_name=_("Name")
@@ -52,7 +59,6 @@ class CIFS_Share(Model):
         verbose_name=_("Comment"),
         blank=True,
     )
-
     cifs_ro = models.BooleanField(
         verbose_name=_('Export Read Only'),
         default=False,
@@ -126,6 +132,12 @@ class CIFS_Share(Model):
         on_delete=models.SET_NULL,
         blank=True,
         null=True
+    )
+    cifs_vuid = models.CharField(
+        max_length=36,
+        verbose_name=_('vuid for Time Machine'),
+        blank=True,
+        editable=False,
     )
     cifs_auxsmbconf = models.TextField(
         verbose_name=_("Auxiliary Parameters"),

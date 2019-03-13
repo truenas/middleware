@@ -1884,9 +1884,21 @@ class StaticRouteService(CRUDService):
         return await self._get_instance(id)
 
     @accepts(Int('id'))
-    async def do_delete(self, id):
-        return await self.middleware.call(
-            'datastore.delete', self._config.datastore, id)
+    def do_delete(self, id):
+        staticroute = self.middleware.call_sync('staticroute._get_instance', id)
+        rv = self.middleware.call_sync('datastore.delete', self._config.datastore, id)
+        try:
+            ip_interface = ipaddress.ip_interface(staticroute['destination'])
+            rt = netif.RoutingTable()
+            rt.delete(netif.Route(
+                str(ip_interface.ip), str(ip_interface.netmask), gateway=staticroute['gateway']
+            ))
+        except Exception as e:
+            self.logger.warn(
+                'Failed to delete static route %s: %s', staticroute['destination'], e,
+            )
+
+        return rv
 
     @private
     async def lower(self, data):
@@ -2048,3 +2060,11 @@ async def setup(middleware):
 
     # Listen to IFNET events so we can sync on interface attach
     middleware.event_subscribe('devd.ifnet', _event_ifnet)
+
+    # Only run DNS sync in the first run. This avoids calling the routine again
+    # on middlewared restart.
+    if not await middleware.call('system.ready'):
+        try:
+            await middleware.call('dns.sync')
+        except Exception:
+            middleware.logger.error('Failed to setup DNS', exc_info=True)

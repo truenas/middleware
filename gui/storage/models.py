@@ -114,9 +114,6 @@ class Volume(Model):
             hierarchical=hierarchical,
             include_root=include_root)
 
-    def get_zvols(self):
-        return notifier().list_zfs_vols(self.vol_name)
-
     def _get_status(self):
         try:
             # Make sure do not compute it twice
@@ -437,12 +434,6 @@ class Disk(Model):
         editable=False
     )
 
-    def identifier_to_device(self):
-        """
-        Get the corresponding device name from disk_identifier field
-        """
-        return notifier().identifier_to_device(self.disk_identifier)
-
     @property
     def devname(self):
         if self.disk_multipath_name:
@@ -757,6 +748,20 @@ class Replication(Model):
     repl_retries = models.PositiveIntegerField(
         default=5,
         verbose_name=_("Number of retries for failed replications"),
+    )
+    repl_logging_level = models.CharField(
+        null=True,
+        blank=True,
+        max_length=120,
+        choices=[
+            ("", "Default"),
+            ("DEBUG", "Debug"),
+            ("INFO", "Info"),
+            ("WARNING", "Warning"),
+            ("ERROR", "Error"),
+        ],
+        default=None,
+        verbose_name=_("Logging Level"),
     )
     repl_enabled = models.BooleanField(
         default=True,

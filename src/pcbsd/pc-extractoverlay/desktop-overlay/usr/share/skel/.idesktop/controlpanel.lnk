@@ -1,7 +1,0 @@
-table Icon
- Caption: Control Panel
- Command: pc-controlpanel
- Icon: /usr/local/share/pcbsd/pc-controlpanel/icons/pc-controlpanel64x64.png
- X: 22
- Y: 13
-end

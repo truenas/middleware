@@ -3,6 +3,7 @@ import logging
 import multiprocessing
 import os
 import pytz
+import setproctitle
 import signal
 import threading
 import time
@@ -12,19 +13,22 @@ from zettarepl.dataset.list import list_datasets
 from zettarepl.definition.definition import Definition
 from zettarepl.observer import (
     PeriodicSnapshotTaskStart, PeriodicSnapshotTaskSuccess, PeriodicSnapshotTaskError,
-    ReplicationTaskStart, ReplicationTaskSnapshotSuccess, ReplicationTaskSuccess, ReplicationTaskError
+    ReplicationTaskStart, ReplicationTaskSnapshotProgress, ReplicationTaskSnapshotSuccess, ReplicationTaskSuccess,
+    ReplicationTaskError
 )
 from zettarepl.scheduler.clock import Clock
 from zettarepl.scheduler.scheduler import Scheduler
 from zettarepl.scheduler.tz_clock import TzClock
 from zettarepl.transport.create import create_transport
 from zettarepl.transport.local import LocalShell
+from zettarepl.utils.logging import LongStringsFilter
 from zettarepl.zettarepl import Zettarepl
 
 from middlewared.client import Client
 from middlewared.logger import setup_logging
 from middlewared.service import CallError, Service
 from middlewared.utils import start_daemon_thread
+from middlewared.worker import watch_parent
 
 SCAN_THREADS = {}
 
@@ -76,6 +80,8 @@ class ZettareplProcess:
         self.vmware_contexts = {}
 
     def __call__(self):
+        setproctitle.setproctitle('middlewared (zettarepl)')
+        start_daemon_thread(target=watch_parent)
         if logging.getLevelName(self.debug_level) == logging.TRACE:
             # If we want TRACE then we want all debug from zettarepl
             debug_level = "DEBUG"
@@ -84,7 +90,9 @@ class ZettareplProcess:
             debug_level = "INFO"
         else:
             debug_level = self.debug_level
-        setup_logging("zettarepl", debug_level, self.log_handler)
+        setup_logging("", debug_level, self.log_handler)
+        for handler in logging.getLogger().handlers:
+            handler.addFilter(LongStringsFilter())
 
         definition = Definition.from_data(self.definition)
 
@@ -132,18 +140,29 @@ class ZettareplProcess:
                     context = self.vmware_contexts.pop(task_id, None)
                     if context:
                         with Client(py_exceptions=True) as c:
-                            c.call("vmware.periodic_snapshot_task_end", task_id, context)
+                            c.call("vmware.periodic_snapshot_task_end", context)
 
         except Exception:
             logger.error("Unhandled exception in ZettareplProcess._observer", exc_info=True)
 
     def _process_command_queue(self):
+        logger = logging.getLogger("middlewared.plugins.zettarepl")
+
         while self.zettarepl is not None:
             command, args = self.command_queue.get()
             if command == "timezone":
                 self.zettarepl.scheduler.tz_clock.timezone = pytz.timezone(args)
             if command == "tasks":
                 self.zettarepl.set_tasks(Definition.from_data(args).tasks)
+            if command == "run_task":
+                class_name, task_id = args
+                for task in self.zettarepl.tasks:
+                    if task.__class__.__name__ == class_name and task.id == task_id:
+                        logger.debug("Running task %r", task)
+                        self.zettarepl.scheduler.interrupt([task])
+                        break
+                else:
+                    logger.warning("Task %s(%r) not found", class_name, task_id)
 
 
 class ZettareplService(Service):
@@ -227,6 +246,12 @@ class ZettareplService(Service):
             self.middleware.call_sync("zettarepl.start")
             self.queue.put(("tasks", definition))
 
+    async def run_periodic_snapshot_task(self, id):
+        self.queue.put(("run_task", ("PeriodicSnapshotTask", f"task_{id}")))
+
+    async def run_replication_task(self, id):
+        self.queue.put(("run_task", ("ReplicationTask", f"task_{id}")))
+
     async def list_datasets(self, transport, ssh_credentials=None):
         try:
             return list_datasets(await self._get_zettarepl_shell(transport, ssh_credentials))
@@ -306,6 +331,7 @@ class ZettareplService(Service):
                 "embed": replication_task["embed"],
                 "compressed": replication_task["compressed"],
                 "retries": replication_task["retries"],
+                "logging-level": (replication_task["logging_level"] or "NOTSET").lower(),
             }
 
             if replication_task["naming_schema"]:
@@ -422,6 +448,17 @@ class ZettareplService(Service):
                     self.state[f"replication_{message.task_id}"] = {
                         "state": "RUNNING",
                         "datetime": datetime.utcnow(),
+                    }
+                if isinstance(message, ReplicationTaskSnapshotProgress):
+                    self.state[f"replication_{message.task_id}"] = {
+                        "state": "RUNNING",
+                        "datetime": datetime.utcnow(),
+                        "progress": {
+                            "dataset": message.dataset,
+                            "snapshot": message.snapshot,
+                            "current": message.current,
+                            "total": message.total,
+                        }
                     }
                 if isinstance(message, ReplicationTaskSnapshotSuccess):
                     self.last_snapshot[f"replication_{message.task_id}"] = f"{message.dataset}@{message.snapshot}"

@@ -41,6 +41,7 @@ urlpatterns = [
     url(r'^partition/$', generic_graphs, {'names': ['df']}, name="reporting_partition"),
     url(r'^system/$', generic_graphs, {'names': ['processes', 'uptime']}, name="reporting_system"),
     url(r'^target/$', generic_graphs, {'names': ['ctl']}, name="reporting_target"),
+    url(r'^ups/$', generic_graphs, {'names': ['upsbatterycharge', 'upsremainingbattery']}, name="reporting_ups_stats"),
     url(r'^zfs/$', generic_graphs, {'names': ['arcsize', 'arcratio', 'arcresult']}, name="reporting_zfs"),
     url(r'^generate/$', generate, name="reporting_generate"),
 ]

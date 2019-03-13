@@ -130,7 +130,7 @@ __AD_get_SRV_host()
 
 __AD_tc()
 {
-	local timeout=$1
+	local timeout=${1:-0}
 	shift
 	local args="$*"
 
@@ -1138,7 +1138,7 @@ __SQL__
 		local var="$(echo ${line}|cut -f1 -d=|sed -Ee 's#^[[:space:]]+##' -e 's#[[:space:]]+$##')"
 		local val="$(echo ${line}|cut -f2- -d=|sed -Ee 's#^[[:space:]]+##' -e 's#[[:space:]]+$##')"
 
-		AD_set "${var}" "$(/usr/local/bin/midclt call notifier.pwenc_decrypt ${val})"
+		AD_set "${var}" "$(/usr/local/bin/midclt call pwenc.decrypt ${val})"
 	done
 	exec 0<&3
 	rm "${tmpfile}"

@@ -44,6 +44,9 @@ class NFSService(SystemServiceService):
         update=True
     ))
     async def do_update(self, data):
+        if data.get("v4") is False:
+            data.setdefault("v4_v3owner", False)
+
         old = await self.config()
 
         new = old.copy()
@@ -206,12 +209,12 @@ class SharingNFSService(CRUDService):
             elif not data[f"{k}_user"] and data[f"{k}_group"]:
                 verrors.add(f"{schema_name}.{k}_user", "This field is required when map group is specified")
             else:
-                user = await self.middleware.call("user.query", [("username", "=", data[f"{k}_user"])])
+                user = await self.middleware.call("notifier.get_user_object", data[f"{k}_user"])
                 if not user:
                     verrors.add(f"{schema_name}.{k}_user", "User not found")
 
                 if data[f"{k}_group"]:
-                    group = await self.middleware.call("group.query", [("group", "=", data[f"{k}_group"])])
+                    group = await self.middleware.call("notifier.get_group_object", data[f"{k}_group"])
                     if not group:
                         verrors.add(f"{schema_name}.{k}_group", "Group not found")
 
@@ -365,3 +368,18 @@ class SharingNFSService(CRUDService):
         data["hosts"] = " ".join(data["hosts"])
         data["security"] = [s.lower() for s in data["security"]]
         return data
+
+
+async def pool_post_import(middleware, pool):
+    """
+    Makes sure to reload NFS if a pool is imported and there are shares configured for it.
+    """
+    path = f'/mnt/{pool["name"]}'
+    for share in await middleware.call('sharing.nfs.query'):
+        if any(filter(lambda x: x == path or x.startswith(f'{path}/'), share['paths'])):
+            asyncio.ensure_future(middleware.call('service.reload', 'nfs'))
+            break
+
+
+async def setup(middleware):
+    middleware.register_hook('pool.post_import_pool', pool_post_import, sync=True)

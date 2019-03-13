@@ -353,17 +353,6 @@ require([
         });
     }
 
-    addStorageJailChange = function(box) {
-      var destination = registry.byId("id_destination");
-      var jail = registry.byId("id_jail");
-      var jc_path = registry.byId("id_mpjc_path");
-      new_root = jc_path.get("value") + "/" + jail.get("value");
-      destination.set("root", new_root);
-      destination.tree.model.query = {root: new_root};
-      destination.tree.model.rootLabel = new_root;
-      destination.tree.reload();
-    }
-
     remoteCipherConfirm = function(value) {
       cipher = this;
       if(value == 'disabled') {
@@ -389,68 +378,6 @@ require([
       } else {
         this.set('oldvalue', value);
       }
-    }
-
-    togglePluginService = function(from, name, id) {
-
-        var td = from.parentNode;
-        var _status = domAttr.get(from, "status");
-        var action;
-        var n = domConstruct.create("div", {}, td);
-        domClass.add(n, "dijitIconLoading");
-        domStyle.set(n, "height", "25px");
-        domStyle.set(n, "float", "left");
-
-        if(_status == "on") {
-            action = "stop";
-        } else {
-            action = "start";
-        }
-
-        var checkStatus = function(name, id) {
-
-            xhr.get("/plugins/"+name+"/"+id+"/_s/status", {
-                handleAs: "json"
-                }).then(function(data) {
-                    if(data.status == 'RUNNING') {
-                        from.src = '/legacy/static/images/ui/buttons/on.png';
-                        domAttr.set(from, "status", "on");
-                    } else if(data.status == 'STOPPED') {
-                        from.src = '/legacy/static/images/ui/buttons/off.png';
-                        domAttr.set(from, "status", "off");
-                    } else {
-                        setTimeout('checkStatus(name, id);', 1000);
-                        return;
-                    }
-                    if(data.error) {
-                        setMessage(data.message, "error");
-                    }
-                    domConstruct.destroy(n);
-                },
-                function(evt) {
-                    setMessage(gettext("Some error occurred"), "error");
-                    domConstruct.destroy(n);
-                });
-
-        }
-
-        var deferred = xhr.get("/plugins/" + name + "/" + id + "/_s/" + action, {
-            handleAs: "text"
-            }).then(function(data) {
-                try {
-                    var json = JSON.parse(data);
-                    if(json && json.error == true) {
-                        setMessage(json.message, 'error');
-                    }
-                } catch(e) {}
-                setTimeout(function() { checkStatus(name, id); }, 1000);
-            },
-            function(evt) {
-                domConstruct.destroy(n);
-                setMessage(gettext("Some error occurred"), "error");
-            });
-        return deferred;
-
     }
 
     var canceled = false;
@@ -582,428 +509,6 @@ require([
 
     }
 
-    jail_is_linuxjail = function() {
-        var type = registry.byId("id_jail_type");
-        if (!type) {
-            return false;
-        }
-
-        var jail_type = type.get("value");
-        if (!jail_type) {
-            return false;
-        }
-
-        var is_linuxjail = false;
-        xhr.get('/legacy/jails/template/info/' + jail_type + '/', {
-            sync: true
-        }).then(function(data) {
-            jt = JSON.parse(data);
-            if (jt.jt_os == 'Linux') {
-                is_linuxjail = true;  
-            }
-        });
-
-        return is_linuxjail;
-    }
-
-    jail_is_x86 = function() {
-        var type = registry.byId("id_jail_type");
-        if (!type) {
-            return false;
-        }
-
-        var jail_type = type.get("value");
-        if (!jail_type) {
-            return false;
-        }
-
-        var is_x86 = false;
-        xhr.get('/legacy/jails/template/info/' + jail_type + '/', {
-            sync: true
-        }).then(function(data) {
-            jt = JSON.parse(data);
-            if (jt.jt_arch == 'x86') {
-                is_x86 = true;  
-            }
-        });
-
-        return is_x86;
-    }
-
-    jail_type_toggle = function() {
-        var type = registry.byId("id_jail_type");
-        var vnet = registry.byId("id_jail_vnet");
-        var arch = registry.byId("id_jail_32bit");
-
-        var jail_type = type.get("value");
-        var jail_vnet = vnet.get("value");
-
-        if (jail_is_linuxjail()) {
-            vnet.set("checked", false);
-            vnet.set("readOnly", true);
-
-        } else if (jail_is_x86()) {
-            vnet.set("checked", false);
-            vnet.set("readOnly", true);
-
-        } else {
-            vnet.set("checked", true);
-            vnet.set("readOnly", false);
-        }
-    }
-
-    jail_vnet_toggle = function() {
-        var vnet = registry.byId("id_jail_vnet");
-        var nat = registry.byId("id_jail_nat");
-        var mac = registry.byId("id_jail_mac");
-        var iface = registry.byId("id_jail_iface"); 
-
-        var jail_vnet = vnet.get("value");
-        var jail_nat = nat.get("value");
-        var jail_mac = mac.get("value");
-
-        var defaultrouter_ipv4 = registry.byId("id_jail_defaultrouter_ipv4");
-        var defaultrouter_ipv6 = registry.byId("id_jail_defaultrouter_ipv6");
-        var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
-        var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
-        var bridge_ipv4_netmask = registry.byId("id_jail_bridge_ipv4_netmask");
-        var bridge_ipv6_prefix = registry.byId("id_jail_bridge_ipv6_prefix");
-
-        if (jail_vnet != 'on') {
-            defaultrouter_ipv4.set("value", "");
-            defaultrouter_ipv6.set("value", "");
-            bridge_ipv4.set("value", "");
-            bridge_ipv6.set("value", "");
-            bridge_ipv4_netmask.set("value", "");
-            bridge_ipv6_prefix.set("value", "");
-            mac.set("value", "");
-            nat.set("checked", false);
-
-            nat.set("disabled", true);
-            defaultrouter_ipv4.set("disabled", true);
-            defaultrouter_ipv6.set("disabled", true);
-            bridge_ipv4.set("disabled", true);
-            bridge_ipv6.set("disabled", true);
-            bridge_ipv4_netmask.set("disabled", true);
-            bridge_ipv6_prefix.set("disabled", true);
-            mac.set("disabled", true);
-            iface.set("disabled", false);
-
-        } else {
-
-            defaultrouter_ipv4.set("disabled", false);
-            defaultrouter_ipv6.set("disabled", false);
-            bridge_ipv4.set("disabled", false);
-            bridge_ipv6.set("disabled", false);
-            bridge_ipv4_netmask.set("disabled", false);
-            bridge_ipv6_prefix.set("disabled", false);
-            nat.set("disabled", false);
-            mac.set("disabled", false);
-            iface.set("disabled", true);
-        }
-
-        if (jail_is_linuxjail() || jail_is_x86()) {
-            vnet.set("readOnly", true);  
-        } else {
-            vnet.set("readOnly", false);  
-        }
-    }
-
-    jail_nat_toggle = function() {
-        var nat = registry.byId("id_jail_nat");
-        var defaultrouter_ipv4 = registry.byId("id_jail_defaultrouter_ipv4");
-        var defaultrouter_ipv6 = registry.byId("id_jail_defaultrouter_ipv6");
-        var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
-        var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
-        var bridge_ipv4_netmask = registry.byId("id_jail_bridge_ipv4_netmask");
-        var bridge_ipv6_prefix = registry.byId("id_jail_bridge_ipv6_prefix");
-        var vnet = registry.byId("id_jail_vnet");
-
-        var jail_vnet = vnet.get("value");
-        var jail_nat = nat.get("value");
-
-        if (jail_nat == 'on' && jail_vnet == 'on') {
-            defaultrouter_ipv4.set("disabled", true);
-            defaultrouter_ipv6.set("disabled", true);
-            bridge_ipv4.set("disabled", false);
-            bridge_ipv6.set("disabled", false);
-            bridge_ipv4_netmask.set("disabled", false);
-            bridge_ipv6_prefix.set("disabled", false);
-
-        } else if (jail_nat == 'on' && !jail_vnet) {
-            defaultrouter_ipv4.set("disabled", false);
-            defaultrouter_ipv6.set("disabled", false);
-            bridge_ipv4.set("disabled", true);
-            bridge_ipv6.set("disabled", true);
-            bridge_ipv4_netmask.set("disabled", true);
-            bridge_ipv6_prefix.set("disabled", true);
-            nat.set("readOnly", true);
-
-        } else if (!jail_nat && jail_vnet == 'on') {
-            defaultrouter_ipv4.set("disabled", false);
-            defaultrouter_ipv6.set("disabled", false);
-            bridge_ipv4.set("disabled", false);
-            bridge_ipv6.set("disabled", false);
-            bridge_ipv4_netmask.set("disabled", false);
-            bridge_ipv6_prefix.set("disabled", false);
-
-        } else if (!jail_nat && !jail_vnet) {
-            defaultrouter_ipv4.set("disabled", true);
-            defaultrouter_ipv6.set("disabled", true);
-            bridge_ipv4.set("disabled", true);
-            bridge_ipv6.set("disabled", true);
-            bridge_ipv4_netmask.set("disabled", true);
-            bridge_ipv6_prefix.set("disabled", true);
-        }
-    }
-
-    jail_ipv4_dhcp_toggle = function() {
-        var ipv4_dhcp = registry.byId("id_jail_ipv4_dhcp");
-        var ipv6_autoconf = registry.byId("id_jail_ipv6_autoconf");
-        var ipv4 = registry.byId("id_jail_ipv4");
-        var ipv4_alias = registry.byId("id_jail_alias_ipv4");
-        var ipv4_netmask = registry.byId("id_jail_ipv4_netmask");
-        var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
-        var bridge_ipv4_alias = registry.byId("id_jail_alias_bridge_ipv4");
-        var bridge_ipv4_netmask = registry.byId("id_jail_bridge_ipv4_netmask");
-        var defaultrouter_ipv4 = registry.byId("id_jail_defaultrouter_ipv4");
-        var vnet = registry.byId("id_jail_vnet");
-        var nat = registry.byId("id_jail_nat");
-
-        var jail_ipv4_dhcp = ipv4_dhcp.get("value");
-        var jail_ipv6_autoconf = ipv6_autoconf.get("value");
-
-        if (jail_ipv4_dhcp == "on") {
-            ipv4.set("value", "DHCP");
-            vnet.set("checked", true);
-
-            ipv4.set("readOnly", true);
-            ipv4_netmask.set("disabled", true);
-            bridge_ipv4.set("disabled", true);
-            bridge_ipv4_netmask.set("disabled", true);
-
-            if (ipv4_alias) {
-                ipv4_alias.set("disabled", true);
-            }
-            if (bridge_ipv4_alias) {
-                bridge_ipv4_alias.set("disabled", true);
-            }
-
-            defaultrouter_ipv4.set("disabled", true);
-            vnet.set("readOnly", true);
-            nat.set("readOnly", true);
-
-        } else {
-            ipv4.set("readOnly", false);
-            ipv4_netmask.set("disabled", false);
-            bridge_ipv4.set("disabled", false);
-            bridge_ipv4_netmask.set("disabled", false);
-
-            if (ipv4_alias) {
-                ipv4_alias.set("disabled", false);
-            }
-            if (bridge_ipv4_alias) {
-                bridge_ipv4_alias.set("disabled", false);
-            }
-
-            defaultrouter_ipv4.set("disabled", false);
-
-            if (!jail_ipv6_autoconf) {
-                vnet.set("readOnly", false);
-                nat.set("readOnly", false);
-            }
-        }
-    }
-
-    jail_ipv6_autoconf_toggle = function() {
-        var ipv4_dhcp = registry.byId("id_jail_ipv4_dhcp");
-        var ipv6_autoconf = registry.byId("id_jail_ipv6_autoconf");
-        var ipv6 = registry.byId("id_jail_ipv6");
-        var ipv6_alias = registry.byId("id_jail_alias_ipv6");
-        var ipv6_prefix = registry.byId("id_jail_ipv6_prefix");
-        var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
-        var bridge_ipv6_alias = registry.byId("id_jail_alias_bridge_ipv6");
-        var bridge_ipv6_prefix = registry.byId("id_jail_bridge_ipv6_prefix");
-        var defaultrouter_ipv6 = registry.byId("id_jail_defaultrouter_ipv6");
-        var vnet = registry.byId("id_jail_vnet");
-        var nat = registry.byId("id_jail_nat");
-
-        var jail_ipv4_dhcp = ipv4_dhcp.get("value");
-        var jail_ipv6_autoconf = ipv6_autoconf.get("value");
-
-        if (jail_ipv6_autoconf == "on") {
-            ipv6.set("value", "AUTOCONF");
-            vnet.set("checked", true);
-
-            ipv6.set("readOnly", true);
-            ipv6_prefix.set("disabled", true);
-            bridge_ipv6.set("disabled", true);
-            bridge_ipv6_prefix.set("disabled", true);
-
-            if (ipv6_alias) {
-                ipv6_alias.set("disabled", true);
-            }
-            if (bridge_ipv6_alias) {
-                bridge_ipv6_alias.set("disabled", true);
-            }
-
-            defaultrouter_ipv6.set("disabled", true);
-            vnet.set("readOnly", true);
-            nat.set("readOnly", true);
-
-        } else {
-            ipv6.set("readOnly", false);
-            ipv6_prefix.set("disabled", false);
-            bridge_ipv6.set("disabled", false);
-            bridge_ipv6_prefix.set("disabled", false);
-
-            if (ipv6_alias) {
-                ipv6_alias.set("disabled", false);
-            }
-            if (bridge_ipv6_alias) {
-                bridge_ipv6_alias.set("disabled", false);
-            }
-
-            defaultrouter_ipv6.set("disabled", false);
-
-            if (!jail_ipv4_dhcp) {
-                vnet.set("readOnly", false);
-                nat.set("readOnly", false);
-            }
-        }
-    }
-
-    get_jail_info = function(id) {
-        jail_info = null;
-
-        if (id == null) {
-            return null;
-        } 
-
-        xhr.get('/legacy/jails/jail/info/' + id + '/', {
-            sync: true
-        }).then(function(data) {
-            jail_info = JSON.parse(data);
-        });
-
-        return jail_info;
-    }
-
-    get_jc_info = function() {
-        jc_info = null;
-
-        xhr.get('/legacy/jails/jailsconfiguration/info/', {
-            sync: true
-        }).then(function(data) {
-            jc_info = JSON.parse(data);
-        });
-
-        return jc_info;
-    }
-
-    get_jc_network_info = function()  {
-        jc_network_info = null;
-
-        xhr.get('/legacy/jails/jailsconfiguration/network/info/', {
-            sync: true
-        }).then(function(data) {
-            jc_network_info = JSON.parse(data);
-        });
-
-        return jc_network_info;
-    }
-
-    jc_ipv4_dhcp_toggle = function() {
-        var ipv4_dhcp = registry.byId("id_jc_ipv4_dhcp");
-        var ipv4_network = registry.byId("id_jc_ipv4_network");
-        var ipv4_network_start = registry.byId("id_jc_ipv4_network_start");
-        var ipv4_network_end = registry.byId("id_jc_ipv4_network_end");
-
-        var jc_ipv4_dhcp = ipv4_dhcp.get("value");
-        if (jc_ipv4_dhcp == "on") {
-            ipv4_network.set("disabled", true);
-            ipv4_network_start.set("disabled", true);
-            ipv4_network_end.set("disabled", true);
-
-        } else {
-            ipv4_network.set("disabled", false);
-            ipv4_network_start.set("disabled", false);
-            ipv4_network_end.set("disabled", false);
-
-            jc_network_info = get_jc_info();
-            if (!jc_network_info) {
-                jc_network_info =  get_jc_network_info();
-            }
-
-            if (jc_network_info) {
-                if (jc_network_info.jc_ipv4_network) {
-                    ipv4_network.set("value", jc_network_info.jc_ipv4_network);
-                }
-                if (jc_network_info.jc_ipv4_network_start) {
-                    ipv4_network_start.set("value", jc_network_info.jc_ipv4_network_start);
-                }
-                if (jc_network_info.jc_ipv4_network_end) {
-                    ipv4_network_end.set("value", jc_network_info.jc_ipv4_network_end);
-                }
-            } 
-        }
-    }
-
-    jc_ipv6_autoconf_toggle = function() {
-        var ipv6_autoconf = registry.byId("id_jc_ipv6_autoconf");
-        var ipv6_network = registry.byId("id_jc_ipv6_network");
-        var ipv6_network_start = registry.byId("id_jc_ipv6_network_start");
-        var ipv6_network_end = registry.byId("id_jc_ipv6_network_end");
-
-        var jc_ipv6_autoconf = ipv6_autoconf.get("value");
-        if (jc_ipv6_autoconf == "on") {
-            ipv6_network.set("disabled", true);
-            ipv6_network_start.set("disabled", true);
-            ipv6_network_end.set("disabled", true);
-
-        } else {
-            ipv6_network.set("disabled", false);
-            ipv6_network_start.set("disabled", false);
-            ipv6_network_end.set("disabled", false);
-
-            jc_network_info = get_jc_info();
-            if (!jc_network_info) {
-                jc_network_info =  get_jc_network_info();
-            }
-
-            if (jc_network_info) {
-                if (jc_network_info.jc_ipv6_network) {
-                    ipv6_network.set("value", jc_network_info.jc_ipv6_network);
-                }
-                if (jc_network_info.jc_ipv6_network_start) {
-                    ipv6_network_start.set("value", jc_network_info.jc_ipv6_network_start);
-                }
-                if (jc_network_info.jc_ipv6_network_end) {
-                    ipv6_network_end.set("value", jc_network_info.jc_ipv6_network_end);
-                }
-            } 
-        }
-    }
-
-    get_jail_type = function() {
-        var type = registry.byId("id_jail_type");
-        var jail_type = type.get("value");
-        return (jail_type);
-    }
-
-    jailtemplate_os = function() {
-      var os = registry.byId("id_jt_os").get("value");
-      var arch = registry.byId("id_jt_arch");
-      if(os == 'Linux') {
-        arch.set("value", "x86");
-        arch.set("readOnly", true);
-        domClass.add(arch.domNode, ['dijitDisabled', 'dijitSelectDisabled']);
-      } else {
-        arch.set("readOnly", false);
-        domClass.remove(arch.domNode, ['dijitDisabled', 'dijitSelectDisabled']);
-      }
-    }
-
     cifs_storage_task_toggle = function() {
         var home = registry.byId("id_cifs_home");
         var cifs_home = home.get("value");
@@ -1093,9 +598,27 @@ require([
             cert_organization.set("value", certinfo.cert_organization);
         }
 
+        cert_organizational_unit = registry.byId("id_cert_organizational_unit");
+        if (certinfo.cert_organizational_unit) {
+            cert_organizational_unit.set("value", certinfo.cert_organizational_unit);
+        }
+
         cert_email = registry.byId("id_cert_email");
         if (certinfo.cert_email) {
             cert_email.set("value", certinfo.cert_email);
+        }
+    }
+
+    Cert_EC_key = function() {
+        var key_type = registry.byId("id_cert_key_type").get("value");
+        cert_ec_curve = registry.byId("id_cert_ec_curve");
+        cert_key_length =registry.byId("id_cert_key_length");
+        if (key_type == "EC"){
+            cert_key_length.set("disabled", true);
+            cert_ec_curve.set("disabled", false);
+        } else {
+          cert_key_length.set("disabled", false);
+          cert_ec_curve.set("disabled", true);
         }
     }
 
@@ -1764,7 +1287,11 @@ require([
                 var property = credentialsSchemas[provider][credentialsSchemas[provider].length - 1 - i];
 
                 var id = "id_attributes_" + property.property;
-                attributes[property.property] = document.getElementById(id).value;
+                if (property.schema.type.indexOf("boolean") != -1) {
+                    attributes[property.property] = document.getElementById(id).checked;
+                } else {
+                    attributes[property.property] = document.getElementById(id).value;
+                }
             }
 
             attributesInput.value = JSON.stringify(attributes);
@@ -1785,15 +1312,23 @@ require([
             var property = credentialsSchemas[provider][credentialsSchemas[provider].length - 1 - i];
 
             var id = "id_attributes_" + property.property;
-            var input = "<input type='text' id='" + id + "'>";
-            if (property.schema.enum)
+            var input;
+            if (property.schema.type.indexOf("boolean") != -1)
             {
-                input = "<select id='" + id + "'>";
-                for (var j = 0; j < property.schema.enum.length; j++)
+                input = '<input type="checkbox" id="' + id + '" value="1">';
+            }
+            else
+            {
+                input = "<input type='text' id='" + id + "'>";
+                if (property.schema.enum)
                 {
-                    input += '<option>' + property.schema.enum[j] + '</option>';
+                    input = "<select id='" + id + "'>";
+                    for (var j = 0; j < property.schema.enum.length; j++)
+                    {
+                        input += '<option>' + property.schema.enum[j] + '</option>';
+                    }
+                    input += '</select>';
                 }
-                input += '</select>';
             }
             if (property.property == "service_account_credentials")
             {
@@ -1808,7 +1343,14 @@ require([
 
             if (attributes[property.property])
             {
-                document.getElementById(id).value = attributes[property.property];
+                if (property.schema.type.indexOf("boolean") != -1)
+                {
+                    document.getElementById(id).checked = attributes[property.property];
+                }
+                else
+                {
+                    document.getElementById(id).value = attributes[property.property];
+                }
             }
 
             if (property.property == "service_account_credentials")
@@ -2303,32 +1845,6 @@ require([
 
     }
 
-    checkJailProgress = function(pbar, pdisplay, pdiv, url, uuid, iter) {
-        if(!iter) iter = 0;
-        xhr.get(url, {
-            headers: {"X-Progress-ID": uuid}
-            }).then(function(data) {
-                var obj = JSON.parse(data);
-                if (obj.size > 0) {
-                    pdisplay.set('value', obj.data);
-                    pdisplay.domNode.scrollTop = pdisplay.domNode.scrollHeight;
-                }
-
-                if (obj.percent == 0 || obj.percent == 100) {
-                    pbar.update({'indeterminate': true});
-                } else {
-                    pbar.update({maximum: 100, progress: obj.percent, indeterminate: false});
-                }
-
-                if (obj.state != 'done') {
-                    setTimeout(function() {
-                        checkJailProgress(pbar, pdisplay, pdiv, url, uuid, iter + 1);
-                        }, 1000);
-                }
-                pdiv.set("content", obj.eta + " ETA");
-            });
-    };
-
     checkProgressBar = function(pbar, url, uuid, iter) {
         var progress_url;
         if(typeof(url) == 'string') {
@@ -2523,36 +2039,6 @@ require([
             rnode._size();
             rnode._position();
 
-        } else if (attrs.progresstype == 'jail') {
-            pbar = ProgressBar({
-                id: "jail_progress",
-                style: "width:600px",
-                indeterminate: true
-                });
-
-            pdisplay = new SimpleTextarea({
-                id: "jail_display",
-                title: "progress",
-                rows: "5",
-                cols: "80",
-                style: "width:600px;",
-                readOnly: true
-                });
-
-            pdiv = new ContentPane({
-                id: "jail_eta",
-                border: "1",
-                style: "width:600px;"
-                });
-
-            attrs.form.domNode.parentNode.appendChild(pbar.domNode);
-            attrs.form.domNode.parentNode.appendChild(pdisplay.domNode);
-            attrs.form.domNode.parentNode.appendChild(pdiv.domNode);
-
-            //domStyle.set(attrs.form.domNode, "display", "none");
-
-            rnode._size();
-            rnode._position();
         }
 
         if( multipart ) {
@@ -2638,9 +2124,6 @@ require([
         if (attrs.progressbar != undefined) {
             pbar.update(uuid);
 
-        } else if(attrs.progresstype == 'jail' &&
-            attrs.progressurl != undefined) {
-            checkJailProgress(pbar, pdisplay, pdiv, attrs.progressurl, uuid);
         }
     }
 
@@ -2674,6 +2157,16 @@ require([
             domStyle.set(wk, "display", "");
         }
 
+    }
+
+    checked_zfs_extra_option = function(disk, radio_type) {
+        // Returns whether the radio button is checked
+        let radio_input = query("input[name=zpool_" + disk + "]:input[value=" + radio_type + "]");
+        if (radio_input.length > 0) {
+            return [radio_input[0].checked, true];
+        } else {
+            return [false, false];
+        }
     }
 
     zfswizardcheckings = function(vol_change, first_load) {
@@ -2712,7 +2205,6 @@ require([
             if(unselected.length > 0) {
 
                 var tab = dom.byId("disks_unselected");
-                query("#disks_unselected tbody tr").orphan();
                 var txt = "";
                 var toappend = [];
                 for(var i=0;i<unselected.length;i++) {
@@ -2720,32 +2212,48 @@ require([
                     var td = domConstruct.create("td", {innerHTML: unselected[i]});
                     tr.appendChild(td);
 
+                    let radio_name = "zpool_" + unselected[i];
+                    let checked = checked_zfs_extra_option(unselected[i], "none");
+
+                    if (checked[1] == false) {
+                        // if none does not exist, we would like to make sure that checked is true for none
+                        checked[0] = true;
+                    }
                     var td = domConstruct.create("td");
-                    var rad = new RadioButton({ checked: true, value: "none", name: "zpool_"+unselected[i]});
+                    var rad = new RadioButton({ checked: checked[0], value: "none", name: radio_name});
+                    on(rad, 'click', function() {checkNumLog(unselected);});
+                    on(rad, 'change', function() {zfsextrawizardcheckings(this);});
+                    td.appendChild(rad.domNode);
+                    tr.appendChild(td);
+
+                    checked = checked_zfs_extra_option(unselected[i], "log");
+
+                    var td = domConstruct.create("td");
+                    var rad = new RadioButton({ checked: checked[0], value: "log", name: radio_name});
                     on(rad, 'click', function() {checkNumLog(unselected);});
                     td.appendChild(rad.domNode);
                     tr.appendChild(td);
 
+                    checked = checked_zfs_extra_option(unselected[i], "cache");
+
                     var td = domConstruct.create("td");
-                    var rad = new RadioButton({ value: "log", name: "zpool_"+unselected[i]});
+                    var rad = new RadioButton({ checked: checked[0], value: "cache", name: radio_name});
                     on(rad, 'click', function() {checkNumLog(unselected);});
                     td.appendChild(rad.domNode);
                     tr.appendChild(td);
 
-                    var td = domConstruct.create("td");
-                    var rad = new RadioButton({ value: "cache", name: "zpool_"+unselected[i]});
-                    on(rad, 'click', function() {checkNumLog(unselected);});
-                    td.appendChild(rad.domNode);
-                    tr.appendChild(td);
+                    checked = checked_zfs_extra_option(unselected[i], "spare");
 
                     var td = domConstruct.create("td");
-                    var rad = new RadioButton({ value: "spare", name: "zpool_"+unselected[i]});
+                    var rad = new RadioButton({ checked: checked[0], value: "spare", name: radio_name});
                     on(rad, 'click', function() {checkNumLog(unselected);});
                     td.appendChild(rad.domNode);
                     tr.appendChild(td);
 
                     toappend.push(tr);
                 }
+
+                query("#disks_unselected tbody tr").orphan();
 
                 for(var i=0;i<toappend.length;i++) {
                     dojo.place(toappend[i], query("#disks_unselected tbody")[0]);
@@ -2793,6 +2301,23 @@ require([
             domStyle.set("grpraidz3", "display", "none");
         }
 
+    }
+
+    zfsextrawizardcheckings = function(selected_radio_disk) {
+        let name = selected_radio_disk.name.replace("zpool_", "");
+        let disk_option = query("option[value=" + name + "]");
+
+        if (disk_option.length > 0) {
+            disk_option = disk_option[0];
+            if(selected_radio_disk.checked) {
+                // add this option to disks
+                domStyle.set(disk_option, "display", "");
+
+            } else {
+                // remove this option from disks
+                domStyle.set(disk_option, "display", "none");
+            }
+        }
     }
 
     wizardcheckings = function(vol_change, first_load) {
@@ -2888,12 +2413,6 @@ require([
             });
 
         }
-    }
-
-    refreshPlugins = function() {
-        var par = query("#plugins_settings").parents(".objrefresh").first()[0];
-        var cp = registry.getEnclosingWidget(par);
-        if(cp) cp.refresh();
     }
 
     __stack = [];
@@ -3024,6 +2543,14 @@ require([
             p.addChild(pane);
             p.selectChild(pane);
         }
+    }
+
+    confirmRrdDestroyHide = function() {
+        domStyle.set(registry.byId("id_confirm_rrd_destroy").domNode.parentNode.parentNode, "display", "none");
+    }
+
+    confirmRrdDestroyShow = function() {
+        domStyle.set(registry.byId("id_confirm_rrd_destroy").domNode.parentNode.parentNode, "display", "");
     }
 
     disclosureToggle = function(element) {

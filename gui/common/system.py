@@ -24,13 +24,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import glob
 import json
 import logging
 import os
 import re
 import requests
-import shutil
 import sqlite3
 import subprocess
 import time
@@ -166,119 +164,6 @@ def send_mail(
     except Exception as e:
         return True, str(e)
     return False, ''
-
-
-def get_fstype(path):
-    assert path
-
-    if not os.access(path, os.F_OK):
-        return None
-
-    lines = subprocess.check_output(['/bin/df', '-T', path], encoding='utf8').splitlines()
-
-    out = (lines[len(lines) - 1]).split()
-
-    return (out[1].upper())
-
-
-def get_mounted_filesystems():
-    """Return a list of dict with info of mounted file systems
-
-    Each dict is composed of:
-        - fs_spec (src)
-        - fs_file (dest)
-        - fs_vfstype
-    """
-    mounted = []
-
-    lines = subprocess.check_output(['/sbin/mount'], encoding='utf8').splitlines()
-
-    for line in lines:
-        reg = RE_MOUNT.search(line)
-        if not reg:
-            continue
-        mounted.append(reg.groupdict())
-
-    return mounted
-
-
-def is_mounted(**kwargs):
-
-    mounted = get_mounted_filesystems()
-    for mountpt in mounted:
-        ret = False
-        if 'device' in kwargs:
-            ret = True if mountpt['fs_spec'] == kwargs['device'] else False
-        if 'path' in kwargs:
-            ret = True if mountpt['fs_file'] == kwargs['path'] else False
-        if ret:
-            break
-
-    return ret
-
-
-def mount(dev, path, mntopts=None, fstype=None):
-    mount_cmd = ['/sbin/mount']
-
-    if isinstance(dev, str):
-        dev = dev.encode('utf-8')
-
-    if isinstance(path, str):
-        path = path.encode('utf-8')
-
-    if mntopts:
-        opts = ['-o', mntopts]
-    else:
-        opts = []
-
-    if fstype == 'ntfs':
-        mount_cmd = ['/usr/local/bin/ntfs-3g']
-        fstype = []
-    else:
-        fstype = ['-t', fstype] if fstype else []
-
-    proc = subprocess.Popen(
-        mount_cmd + opts + fstype + [dev, path],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        encoding='utf8',
-    )
-    output = proc.communicate()
-
-    if proc.returncode != 0:
-        log.debug("Mount failed (%s): %s", proc.returncode, output)
-        raise ValueError(_("Mount failed {0} -> {1}, {2}" .format(
-            proc.returncode,
-            output[0],
-            output[1]
-        )))
-    else:
-        return True
-
-
-def umount(path, force=False):
-
-    if force:
-        cmdlst = ['/sbin/umount', '-f', path]
-    else:
-        cmdlst = ['/sbin/umount', path]
-    proc = subprocess.Popen(
-        cmdlst,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        encoding='utf8',
-    )
-    output = proc.communicate()
-
-    if proc.returncode != 0:
-        log.debug("Umount failed (%s): %s", proc.returncode, output)
-        raise ValueError(_("Unmount Failed {0} -> {1} {2}".format(
-            proc.returncode,
-            output[0],
-            output[1]
-        )))
-    else:
-        return True
 
 
 def service_enabled(name):
@@ -418,25 +303,6 @@ def domaincontroller_enabled():
     return service_enabled('domaincontroller')
 
 
-def domaincontroller_objects():
-    h = sqlite3.connect(FREENAS_DATABASE)
-    h.row_factory = sqlite3.Row
-    c = h.cursor()
-
-    results = c.execute("SELECT * FROM services_domaincontroller ORDER BY -id")
-
-    objects = []
-    for row in results:
-        obj = {}
-        for key in list(row.keys()):
-            obj[key] = row[key]
-        objects.append(obj)
-
-    c.close()
-    h.close()
-    return objects
-
-
 def nis_enabled():
     from freenasUI.directoryservice.models import NIS
 
@@ -455,18 +321,6 @@ def nis_objects():
     from freenasUI.directoryservice.models import NIS
 
     return NIS.objects.all()
-
-
-def kerberosrealm_objects():
-    from freenasUI.directoryservice.models import KerberosRealm
-
-    return KerberosRealm.objects.all()
-
-
-def kerberoskeytab_objects():
-    from freenasUI.directoryservice.models import KerberosKeytab
-
-    return KerberosKeytab.objects.all()
 
 
 def exclude_path(path, exclude):
@@ -502,66 +356,6 @@ def exclude_path(path, exclude):
         return apply_paths
     else:
         return [path]
-
-
-def backup_database():
-    from freenasUI.middleware.client import client
-
-    with client as c:
-        systemdataset = c.call('systemdataset.config')
-    if not systemdataset or not systemdataset['path']:
-        return
-
-    # Legacy format
-    files = glob.glob(f'{systemdataset["path"]}/*.db')
-    reg = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
-    files = [y for y in files if reg.match(y)]
-    for f in files:
-        try:
-            os.unlink(f)
-        except OSError:
-            pass
-
-    today = datetime.now().strftime("%Y%m%d")
-
-    newfile = os.path.join(
-        systemdataset["path"],
-        f'configs-{systemdataset["uuid"]}',
-        get_sw_version(),
-        f'{today}.db',
-    )
-
-    dirname = os.path.dirname(newfile)
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-
-    shutil.copy('/data/freenas-v1.db', newfile)
-
-
-def get_dc_hostname():
-    from freenasUI.network.models import GlobalConfiguration
-    from freenasUI.common.pipesubr import pipeopen
-
-    gc_hostname = gc_domain = hostname = None
-    try:
-        gc = GlobalConfiguration.objects.all()[0]
-        gc_hostname = gc.get_hostname()
-        gc_domain = gc.gc_domain
-
-    except Exception:
-        pass
-
-    if gc_hostname and gc_domain:
-        hostname = "%s.%s" % (gc_hostname, gc_domain)
-    elif gc_hostname:
-        hostname = gc_hostname
-    else:
-        p = pipeopen("/bin/hostname", allowfork=True)
-        out = p.communicate()
-        if p.returncode == 0:
-            hostname = out[0].strip()
-
-    return hostname
 
 
 def get_hostname():

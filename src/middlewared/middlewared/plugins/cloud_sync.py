@@ -66,7 +66,7 @@ class RcloneConfig:
             config.update(dict(self.cloud_sync["attributes"], **self.provider.get_task_extra(self.cloud_sync)))
 
             remote_path = "remote:" + "/".join([self.cloud_sync["attributes"].get("bucket", ""),
-                                                self.cloud_sync["attributes"].get("folder", "")]).strip("/")
+                                                self.cloud_sync["attributes"].get("folder", "")]).rstrip("/")
 
             if self.cloud_sync["encryption"]:
                 self.tmp_file.write("[encrypted]\n")
@@ -121,6 +121,9 @@ async def rclone(middleware, job, cloud_sync):
 
         if cloud_sync["attributes"].get("fast_list"):
             args.append("--fast-list")
+
+        if cloud_sync["follow_symlinks"]:
+            args.extend(["-L"])
 
         if cloud_sync["transfers"]:
             args.extend(["--transfers", str(cloud_sync["transfers"])])
@@ -430,9 +433,11 @@ class CloudSyncService(CRUDService):
         cloud_sync["credentials"] = cloud_sync.pop("credential")
 
         cloud_sync["encryption_password"] = await self.middleware.call(
-            "notifier.pwenc_decrypt", cloud_sync["encryption_password"])
+            "pwenc.decrypt", cloud_sync["encryption_password"]
+        )
         cloud_sync["encryption_salt"] = await self.middleware.call(
-            "notifier.pwenc_decrypt", cloud_sync["encryption_salt"])
+            "pwenc.decrypt", cloud_sync["encryption_salt"]
+        )
 
         Cron.convert_db_format_to_schedule(cloud_sync)
 
@@ -443,11 +448,15 @@ class CloudSyncService(CRUDService):
         cloud_sync["credential"] = cloud_sync.pop("credentials")
 
         cloud_sync["encryption_password"] = await self.middleware.call(
-            "notifier.pwenc_encrypt", cloud_sync["encryption_password"])
+            "pwenc.encrypt", cloud_sync["encryption_password"]
+        )
         cloud_sync["encryption_salt"] = await self.middleware.call(
-            "notifier.pwenc_encrypt", cloud_sync["encryption_salt"])
+            "pwenc.encrypt", cloud_sync["encryption_salt"]
+        )
 
         Cron.convert_schedule_to_db_format(cloud_sync)
+
+        cloud_sync.pop('job', None)
 
         return cloud_sync
 
@@ -512,11 +521,12 @@ class CloudSyncService(CRUDService):
     @private
     async def _validate_folder(self, verrors, name, data):
         if data["direction"] == "PULL":
-            if data["attributes"]["folder"].strip("/"):
-                folder_parent = os.path.normpath(os.path.join(data["attributes"]["folder"].strip("/"), ".."))
+            folder = data["attributes"]["folder"].rstrip("/")
+            if folder:
+                folder_parent = os.path.normpath(os.path.join(folder, ".."))
                 if folder_parent == ".":
                     folder_parent = ""
-                folder_basename = os.path.basename(data["attributes"]["folder"].strip("/"))
+                folder_basename = os.path.basename(folder)
                 ls = await self.list_directory(dict(
                     credentials=data["credentials"],
                     encryption=data["encryption"],
@@ -554,6 +564,7 @@ class CloudSyncService(CRUDService):
         Str("encryption_password", default=""),
         Str("encryption_salt", default=""),
         Cron("schedule", required=True),
+        Bool("follow_symlinks", default=False),
         Int("transfers", null=True, default=None, validators=[Range(min=1)]),
         List("bwlimit", default=[], items=[Dict("cloud_sync_bwlimit",
                                                 Str("time", validators=[Time()]),

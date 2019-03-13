@@ -1,3 +1,5 @@
+import asyncio
+
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str, ValidationErrors
 from middlewared.service import CRUDService, SystemServiceService, private
@@ -171,13 +173,30 @@ class WebDAVService(SystemServiceService):
                     f"{schema_name}.certssl",
                     'WebDAV SSL protocol specified without choosing a certificate'
                 )
-            elif not (await self.middleware.call('certificate.query', [['id', '=', cert_ssl]])):
-                verrors.add(
-                    f"{schema_name}.certssl",
-                    'Please provide a valid certificate id'
-                )
+            else:
+                verrors.extend((await self.middleware.call(
+                    'certificate.cert_services_validation', cert_ssl, f'{schema_name}.certssl', False
+                )))
 
         if verrors:
             raise verrors
 
         return data
+
+
+async def pool_post_import(middleware, pool):
+    """
+    Makes sure to reload WebDAV if a pool is imported and there are shares configured for it.
+    """
+    path = f'/mnt/{pool["name"]}'
+    if await middleware.call('sharing.webdav.query', [
+        ('OR', [
+            ('path', '=', path),
+            ('path', '^', f'{path}/'),
+        ])
+    ]):
+        asyncio.ensure_future(middleware.call('service.reload', 'webdav'))
+
+
+async def setup(middleware):
+    middleware.register_hook('pool.post_import_pool', pool_post_import, sync=True)

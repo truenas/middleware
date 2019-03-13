@@ -1,7 +1,10 @@
 import asyncio
+import ctypes
+import ctypes.util
 import imp
 import inspect
 import os
+import pwd
 import re
 import sys
 import subprocess
@@ -82,13 +85,40 @@ async def run(*args, **kwargs):
     stdout, stderr = await proc.communicate()
     if "encoding" in kwargs:
         if stdout is not None:
-            stdout = stdout.decode(kwargs["encoding"])
+            stdout = stdout.decode(kwargs["encoding"], kwargs.get("errors") or "strict")
         if stderr is not None:
-            stderr = stderr.decode(kwargs["encoding"])
+            stderr = stderr.decode(kwargs["encoding"], kwargs.get("errors") or "strict")
     cp = subprocess.CompletedProcess(args, proc.returncode, stdout=stdout, stderr=stderr)
     if check:
         cp.check_returncode()
     return cp
+
+
+def setusercontext(user):
+    libc = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
+    libutil = ctypes.cdll.LoadLibrary(ctypes.util.find_library('util'))
+    libc.getpwnam.restype = ctypes.POINTER(ctypes.c_void_p)
+    pwnam = libc.getpwnam(user)
+    passwd = pwd.getpwnam(user)
+
+    libutil.login_getpwclass.restype = ctypes.POINTER(ctypes.c_void_p)
+    lc = libutil.login_getpwclass(pwnam)
+    os.setgid(passwd.pw_gid)
+    if lc and lc[0]:
+        libutil.setusercontext(
+            lc, pwnam, passwd.pw_uid, ctypes.c_uint(0x07ff)  # 0x07ff LOGIN_SETALL
+        )
+        libutil.login_close(lc)
+    else:
+        os.setgid(passwd.pw_gid)
+        libc.setlogin(user)
+        libc.initgroups(user, passwd.pw_gid)
+        os.setuid(passwd.pw_uid)
+
+    try:
+        os.chdir(passwd.pw_dir)
+    except Exception:
+        os.chdir('/')
 
 
 def partition(s):
@@ -142,7 +172,9 @@ def filter_list(_list, filters=None, options=None):
         'rin': lambda x, y: x is not None and y in x,
         'rnin': lambda x, y: x is not None and y not in x,
         '^': lambda x, y: x.startswith(y),
+        '!^': lambda x, y: not x.startswith(y),
         '$': lambda x, y: x.endswith(y),
+        '!$': lambda x, y: not x.endswith(y),
     }
 
     if filters is None:
@@ -322,8 +354,7 @@ class cache_with_autorefresh(object):
 
 
 def load_modules(directory):
-    modules = []
-    for f in os.listdir(directory):
+    for f in sorted(os.listdir(directory)):
         if not f.endswith('.py'):
             continue
         f = f[:-3]
@@ -334,12 +365,10 @@ def load_modules(directory):
         )
         fp, pathname, description = imp.find_module(f, [directory])
         try:
-            modules.append(imp.load_module(name, fp, pathname, description))
+            yield imp.load_module(name, fp, pathname, description)
         finally:
             if fp:
                 fp.close()
-
-    return modules
 
 
 def load_classes(module, base, blacklist):

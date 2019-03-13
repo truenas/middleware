@@ -1,5 +1,0 @@
-# who is allowed to mount volumes from fixed drives and claim file ownership
-
-[Policy]
-Allow=uid:__all__
-Deny=

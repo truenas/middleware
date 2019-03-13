@@ -44,7 +44,6 @@ from freenasUI.common.freenasldap import (
 )
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.pipesubr import run
-from freenasUI.common.ssl import get_certificateauthority_path
 from freenasUI.common.system import (
     validate_netbios_name,
     compare_netbios_names
@@ -453,9 +452,12 @@ class ActiveDirectoryForm(ModelForm):
         if not netbiosname:
             return netbiosname
         if netbiosname_a and netbiosname_a == netbiosname:
-            raise forms.ValidationError(_(
-                'NetBIOS cannot be the same as the first.'
-            ))
+            with client as c:
+                system_dataset = c.call('systemdataset.config')
+            if system_dataset['path'] == "freenas-boot":
+                raise forms.ValidationError(_(
+                    'When the system dataset is located on the boot device, the same NetBIOS name cannot be used on both controllers.'
+                ))
         try:
             validate_netbios_name(netbiosname)
         except Exception as e:
@@ -486,7 +488,13 @@ class ActiveDirectoryForm(ModelForm):
         workgroup = None
 
         if certificate:
-            certificate = certificate.get_certificate_path()
+            with client as c:
+                certificate = c.call(
+                    'certificate.query',
+                    [['id', '=', certificate.id]],
+                    {'get': True}
+                )
+            certificate = certificate['certificate_path']
 
         args = {
             'domain': domain,
@@ -829,11 +837,19 @@ class LDAPForm(ModelForm):
         basedn = cdata.get("ldap_basedn")
         hostname = cdata.get("ldap_hostname")
 
+        # TODO: Usage of this function has been commented, should it be removed ?
         certfile = None
         ssl = cdata.get("ldap_ssl")
         if ssl in ('start_tls', 'on'):
             certificate = cdata["ldap_certificate"]
-            certfile = get_certificateauthority_path(certificate)
+            if certificate:
+                with client as c:
+                    certificate = c.call(
+                        'certificate.query',
+                        [['id', '=', certificate.id]],
+                        {'get': True}
+                    )
+            certfile = certificate['certificate_path'] if certificate else None
 
         fl = FreeNAS_LDAP(
             host=hostname,
@@ -899,7 +915,13 @@ class LDAPForm(ModelForm):
                 raise forms.ValidationError(
                     "SSL/TLS specified without certificate")
             else:
-                certfile = get_certificateauthority_path(certificate)
+                with client as c:
+                    certificate = c.call(
+                        'certificate.query',
+                        [['id', '=', certificate.id]],
+                        {'get': True}
+                    )
+                certfile = certificate['certificate_path']
 
         port = 389
         if ssl == "on":

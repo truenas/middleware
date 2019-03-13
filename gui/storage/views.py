@@ -51,7 +51,6 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.util import JobAborted, JobFailed, wait_job
 from freenasUI.system.models import Advanced
 from freenasUI.services.exceptions import ServiceFailed
-from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
 
 DISK_WIPE_JOB_ID = None
@@ -143,8 +142,7 @@ def volumemanager(request):
     _n = notifier()
     disks = []
     # Grab disk list
-    # Root device already ruled out
-    for disk, info in list(_n.get_disks().items()):
+    for disk, info in list(_n.get_disks(unused=True).items()):
         disks.append(forms.Disk(
             info['devname'],
             info['capacity'],
@@ -152,18 +150,8 @@ def volumemanager(request):
         ))
     disks = sorted(disks, key=cmp_to_key(_diskcmp))
 
-    # Exclude what's already added
-    used_disks = []
-    for v in models.Volume.objects.all():
-        used_disks.extend(v.get_disks())
-
-    qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
-    used_disks.extend([i.get_device()[5:] for i in qs])
-
     bysize = dict()
     for d in list(disks):
-        if d.dev in used_disks:
-            continue
         hsize = forms.humanize_number_si(d.size)
         if hsize not in bysize:
             bysize[hsize] = []
@@ -262,17 +250,20 @@ def volumemanager_zfs(request):
                 (zpoolfields.search(i).group(1), i, request.POST.get(i))
                 for i in list(request.POST.keys()) if zpoolfields.match(i)
             ]
+            zfsextradisks = [v[0] for v in zfsextra if v[2] != 'none']
 
     else:
         form = forms.ZFSVolumeWizardForm()
         disks = []
         zfsextra = None
+        zfsextradisks = []
     # dedup = forms._dedup_enabled()
     dedup = True
     return render(request, 'storage/zfswizard.html', {
         'form': form,
         'disks': disks,
         'zfsextra': zfsextra,
+        'zfsextradisks': zfsextradisks,
         'dedup': dedup,
     })
 
@@ -438,19 +429,11 @@ def zvol_delete(request, name):
 
     if request.method == 'POST':
         form = forms.ZvolDestroyForm(request.POST, fs=name)
-        if form.is_valid():
-            with client as c:
-                try:
-                    c.call('pool.dataset.delete', name)
-                except ClientException as e:
-                    return JsonResp(
-                        request,
-                        error=True,
-                        message=e.error)
-
-            return JsonResp(
-                request,
-                message=_("ZFS Volume successfully destroyed."))
+        if not form.is_valid() or form.done() is False:
+            return JsonResp(request, form=form)
+        return JsonResp(
+            request,
+            message=_("ZFS Volume successfully destroyed."))
     else:
         form = forms.ZvolDestroyForm(fs=name)
     return render(request, 'storage/zvol_confirm_delete.html', {
@@ -498,15 +481,11 @@ def dataset_delete(request, name):
         datasets = c.call("pool.dataset.query", [["name", "=", name]], {"get": True})["children"]
     if request.method == 'POST':
         form = forms.Dataset_Destroy(request.POST, fs=name, datasets=datasets)
-        if form.is_valid():
-            with client as c:
-                try:
-                    c.call("pool.dataset.delete", name, {'recursive': True})
-                    return JsonResp(
-                        request,
-                        message=_("Dataset successfully destroyed."))
-                except ClientException as e:
-                    return JsonResp(request, error=True, message=e.error)
+        if not form.is_valid() or form.done() is False:
+            return JsonResp(request, form=form)
+        return JsonResp(
+            request,
+            message=_("Dataset successfully destroyed."))
     else:
         form = forms.Dataset_Destroy(fs=name, datasets=datasets)
     return render(request, 'storage/dataset_confirm_delete.html', {
@@ -519,13 +498,15 @@ def dataset_delete(request, name):
 def snapshot_delete(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
     if request.method == 'POST':
-        retval = notifier().destroy_zfs_dataset(path=str(snapshot))
-        if retval == '':
+        try:
+            with client as c:
+                c.call('zfs.snapshot.delete', str(snapshot))
+        except ClientException as e:
+            return JsonResp(request, error=True, message=str(e))
+        else:
             return JsonResp(
                 request,
                 message=_("Snapshot successfully deleted."))
-        else:
-            return JsonResp(request, error=True, message=retval)
     else:
         return render(request, 'storage/snapshot_confirm_delete.html', {
             'snapname': snapname,
@@ -539,10 +520,11 @@ def snapshot_delete_bulk(request):
     delete = request.POST.get("delete", None)
     if snaps and delete == "true":
         snap_list = snaps.split('|')
-        for snapshot in snap_list:
-            retval = notifier().destroy_zfs_dataset(path=str(snapshot))
-            if retval != '':
-                return JsonResp(request, error=True, message=retval)
+        try:
+            with client as c:
+                c.call('core.bulk', 'zfs.snapshot.delete', [[i] for i in snap_list], job=True)
+        except ClientException as e:
+            return JsonResp(request, error=True, message=str(e))
         return JsonResp(request, message=_("Snapshots successfully deleted."))
 
     return render(request, 'storage/snapshot_confirm_delete_bulk.html', {
@@ -553,11 +535,13 @@ def snapshot_delete_bulk(request):
 def snapshot_rollback(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
     if request.method == "POST":
-        ret = notifier().rollback_zfs_snapshot(snapshot=snapshot.__str__())
-        if ret == '':
-            return JsonResp(request, message=_("Rollback successful."))
+        try:
+            with client as c:
+                c.call('zfs.snapshot.rollback', snapshot)
+        except ClientException as e:
+            return JsonResp(request, error=True, message=str(e))
         else:
-            return JsonResp(request, error=True, message=ret)
+            return JsonResp(request, message=_("Rollback successful."))
     else:
         return render(request, 'storage/snapshot_confirm_rollback.html', {
             'snapname': snapname,
@@ -784,33 +768,26 @@ def multipath_status(request):
 
 
 def multipath_status_json(request):
+    with client as c:
+        multipaths = c.call('multipath.query')
 
-    multipaths = notifier().multipath_all()
     _id = 1
     items = []
     for mp in multipaths:
         children = []
-        for cn in mp.consumers:
-            actions = {}
-            items.append({
-                'id': str(_id),
-                'name': cn.devname,
-                'status': cn.status,
-                'lunid': cn.lunid,
-                'type': 'consumer',
-                'actions': json.dumps(actions),
-            })
+        for cn in mp['children']:
+            cn['id'] = str(_id)
+            cn['lunid'] = cn.pop('lun_id')
+            cn['actions'] = '{}'
+            items.append(cn)
             children.append({'_reference': str(_id)})
             _id += 1
-        data = {
-            'id': str(_id),
-            'name': mp.devname,
-            'status': mp.status,
-            'type': 'root',
-            'children': children,
-        }
-        items.append(data)
+
+        mp['id'] = str(_id)
+        mp['children'] = children
+        items.append(mp)
         _id += 1
+
     return HttpResponse(json.dumps({
         'identifier': 'id',
         'label': 'name',
@@ -986,7 +963,6 @@ def volume_unlock(request, object_id):
                 id=volume.vol_guid
             )
             if zimport and volume.is_decrypted:
-                notifier().sync_encrypted(volume=volume)
                 return JsonResp(
                     request,
                     message=_("Volume unlocked"))
@@ -1311,3 +1287,21 @@ def tasks_recursive_json(request, dataset=None):
 
 def tasks_all_recursive_json(request):
     return tasks_recursive_json(request)
+
+
+def snapshot_run(request, oid):
+    if request.method == "POST":
+        with client as c:
+            c.call("pool.snapshottask.run", oid)
+        return JsonResp(request, message=_("Periodic snapshot task has been scheduled"))
+
+    return render(request, 'storage/snapshot_run.html')
+
+
+def replication_run(request, oid):
+    if request.method == "POST":
+        with client as c:
+            c.call("replication.run", oid)
+        return JsonResp(request, message=_("Replication process has been scheduled"))
+
+    return render(request, 'storage/replication_run.html')

@@ -1,35 +1,40 @@
 import asyncio
 from datetime import datetime, date
 from middlewared.event import EventSource
+from middlewared.i18n import set_language
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
 from middlewared.service import CallError, ConfigService, no_auth_required, job, private, Service, ValidationErrors
-from middlewared.utils import Popen, start_daemon_thread, sw_buildtime, sw_version
+from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version
 from middlewared.validators import Range
 
 import csv
+import io
 import os
 import psutil
 import re
+import requests
+import shutil
 import socket
 import struct
 import subprocess
 import sys
 import sysctl
 import syslog
+import tarfile
 import time
 
 from licenselib.license import ContractType, Features
 
-# FIXME: Temporary imports until debug lives in middlewared
+# FIXME: Temporary imports until license lives in middlewared
 if '/usr/local/www' not in sys.path:
     sys.path.append('/usr/local/www')
 from freenasUI.support.utils import get_license
-from freenasUI.system.utils import debug_get_settings, debug_run
 
 # Flag telling whether the system completed boot and is ready to use
 SYSTEM_READY = False
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
+FIRST_INSTALL_SENTINEL = '/data/first-boot'
 
 
 class SytemAdvancedService(ConfigService):
@@ -49,14 +54,17 @@ class SytemAdvancedService(ConfigService):
             not await self.middleware.call('system.is_freenas') and
             await self.middleware.call('failover.hardware') == 'ECHOSTREAM'
         ):
-            ports = ['0x3f8']
+            ports = {'0x3f8': '0x3f8'}
         else:
             pipe = await Popen("/usr/sbin/devinfo -u | grep -A 99999 '^I/O ports:' | "
                                "sed -En 's/ *([0-9a-fA-Fx]+).*\(uart[0-9]+\)/\\1/p'", stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, shell=True)
-            ports = [y for y in (await pipe.communicate())[0].decode().strip().strip('\n').split('\n') if y]
-            if not ports:
-                ports = ['0x2f8']
+            ports = {y: y for y in (await pipe.communicate())[0].decode().strip().strip('\n').split('\n') if y}
+
+        if not ports or (await self.config())['serialport'] == '0x2f8':
+            # We should always add 0x2f8 if ports is false or current value is the default one in db
+            # i.e 0x2f8
+            ports['0x2f8'] = '0x2f8'
 
         return ports
 
@@ -116,10 +124,8 @@ class SytemAdvancedService(ConfigService):
             Int('boot_scrub', validators=[Range(min=1)]),
             Bool('consolemenu'),
             Bool('consolemsg'),
-            Bool('cpu_in_percentage'),
             Bool('debugkernel'),
             Bool('fqdn_syslog'),
-            Str('graphite'),
             Str('motd'),
             Str('periodic_notifyuser'),
             Bool('powerdaemon'),
@@ -131,7 +137,7 @@ class SytemAdvancedService(ConfigService):
             Bool('uploadcrash'),
             Bool('anonstats'),
             Str('sed_user', enum=['USER', 'MASTER']),
-            Str('sed_passwd', password=True),
+            Str('sed_passwd', private=True),
             update=True
         )
     )
@@ -186,12 +192,12 @@ class SytemAdvancedService(ConfigService):
                     await self.middleware.call('service.reload', 'loader', {'onetime': False})
                     loader_reloaded = True
 
-            if (
-                original_data['autotune'] != config_data['autotune'] and
-                not loader_reloaded
-            ):
-                await self.middleware.call('service.reload', 'loader', {'onetime': False})
-                loader_reloaded = True
+            if original_data['autotune'] != config_data['autotune']:
+                if not loader_reloaded:
+                    await self.middleware.call('service.reload', 'loader', {'onetime': False})
+                    loader_reloaded = True
+                await self.middleware.call('system.advanced.autotune', 'loader')
+                await self.middleware.call('system.advanced.autotune', 'sysctl')
 
             if (
                 original_data['debugkernel'] != config_data['debugkernel'] and
@@ -202,16 +208,26 @@ class SytemAdvancedService(ConfigService):
             if original_data['periodic_notifyuser'] != config_data['periodic_notifyuser']:
                 await self.middleware.call('service.start', 'ix-periodic', {'onetime': False})
 
-            if (
-                original_data['cpu_in_percentage'] != config_data['cpu_in_percentage'] or
-                original_data['graphite'] != config_data['graphite']
-            ):
-                await self.middleware.call('service.restart', 'collectd', {'onetime': False})
-
             if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
                 await self.middleware.call('service.restart', 'syslogd', {'onetime': False})
 
         return await self.config()
+
+    @private
+    def autotune(self, conf='loader'):
+        if self.middleware.call_sync('system.is_freenas'):
+            kernel_reserved = 1073741824
+            userland_reserved = 2417483648
+        else:
+            kernel_reserved = 6442450944
+            userland_reserved = 4831838208
+        cp = subprocess.run(
+            [
+                'autotune', '-o', f'--kernel-reserved={kernel_reserved}',
+                f'--userland-reserved={userland_reserved}', '--conf', conf
+            ], capture_output=True
+        )
+        return cp.returncode
 
 
 class SystemService(Service):
@@ -225,6 +241,9 @@ class SystemService(Service):
         # This is a stub calling notifier until we have all infrastructure
         # to implement in middlewared
         return await self.middleware.call('notifier.is_freenas')
+
+    async def product_name(self):
+        return "FreeNAS" if await self.middleware.call("system.is_freenas") else "TrueNAS"
 
     @accepts()
     def version(self):
@@ -348,9 +367,9 @@ class SystemService(Service):
 
         delay = options.get('delay')
         if delay:
-            time.sleep(delay)
+            await asyncio.sleep(delay)
 
-        await Popen(["/sbin/reboot"])
+        await Popen(['/sbin/shutdown', '-r', 'now'])
 
     @accepts(Dict('system-shutdown', Int('delay', required=False), required=False))
     @job()
@@ -369,17 +388,129 @@ class SystemService(Service):
 
         delay = options.get('delay')
         if delay:
-            time.sleep(delay)
+            await asyncio.sleep(delay)
 
-        await Popen(["/sbin/poweroff"])
+        await Popen(['/sbin/poweroff'])
 
     @accepts()
     @job(lock='systemdebug')
     def debug(self, job):
-        # FIXME: move the implementation from freenasUI
-        mntpt, direc, dump = debug_get_settings()
-        debug_run(direc)
+        """
+        Generate system debug file.
+
+        Result value will be the absolute path of the file.
+        """
+        system_dataset_path = self.middleware.call_sync('systemdataset.config')['path']
+        if system_dataset_path is not None:
+            direc = os.path.join(system_dataset_path, 'ixdiagnose')
+        else:
+            direc = '/var/tmp/ixdiagnose'
+        dump = os.path.join(direc, 'ixdiagnose.tgz')
+
+        # Be extra safe in case we have left over from previous run
+        if os.path.exists(direc):
+            shutil.rmtree(direc)
+
+        cp = subprocess.Popen(
+            ['ixdiagnose', '-d', direc, '-s', '-F', '-p'],
+            text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            bufsize=1
+        )
+
+        for line in iter(cp.stdout.readline, ''):
+            line = line.rstrip()
+
+            if line.startswith('**'):
+                percent, help = line.split(':')
+                job.set_progress(
+                    int(percent.split()[-1].strip('%')),
+                    help.lstrip()
+                )
+        cp.communicate()
+
+        if cp.returncode != 0:
+            raise CallError(f'Failed to generate debug file: {cp.stderr}')
+
+        job.set_progress(100, 'Debug generation finished')
+
         return dump
+
+    @accepts()
+    @job(lock='systemdebugdownload', pipes=['output'])
+    def debug_download(self, job):
+        """
+        Job to stream debug file.
+
+        This method is meant to be used in conjuntion with `core.download` to get the debug
+        downloaded via HTTP.
+        """
+        job.set_progress(0, 'Generating debug file')
+        debug_job = self.middleware.call_sync('system.debug')
+
+        standby_debug = None
+        is_freenas = self.middleware.call_sync('system.is_freenas')
+        if not is_freenas and self.middleware.call_sync('failover.licensed'):
+            try:
+                standby_debug = self.middleware.call_sync(
+                    'failover.call_remote', 'system.debug', [], {'job': True}
+                )
+            except Exception:
+                self.logger.warn('Failed to get debug from standby node', exc_info=True)
+            else:
+                remote_ip = self.middleware.call_sync('failover.remote_ip')
+                url = self.middleware.call_sync(
+                    'failover.call_remote', 'core.download', ['filesystem.get', [standby_debug], 'debug.txz'],
+                )[1]
+
+                url = f'http://{remote_ip}:6000{url}'
+                standby_debug = io.BytesIO()
+                with requests.get(url, stream=True) as r:
+                    for i in r.iter_content(chunk_size=1048576):
+                        if standby_debug.tell() > 20971520:
+                            raise CallError(f'Standby debug file is bigger than 20MiB.')
+                        standby_debug.write(i)
+
+        debug_job.wait_sync()
+        if debug_job.error:
+            raise CallError(debug_job.error)
+
+        job.set_progress(90, 'Preparing debug file for streaming')
+
+        if standby_debug:
+            # Debug file cannot be big on HA because we put both debugs in memory
+            # so they can be downloaded at once.
+            try:
+                if os.stat(debug_job.result).st_size > 20971520:
+                    raise CallError(f'Debug file is bigger than 20MiB.')
+            except FileNotFoundError:
+                raise CallError('Debug file was not found, try again.')
+
+            network = self.middleware.call_sync('network.configuration.config')
+            node = self.middleware.call_sync('failover.node')
+
+            tario = io.BytesIO()
+            with tarfile.open(fileobj=tario, mode='w') as tar:
+
+                if node == 'A':
+                    my_hostname = network['hostname']
+                    remote_hostname = network['hostname_b']
+                else:
+                    my_hostname = network['hostname_b']
+                    remote_hostname = network['hostname']
+
+                tar.add(debug_job.result, f'{my_hostname}.txz')
+
+                tarinfo = tarfile.TarInfo(f'{remote_hostname}.txz')
+                tarinfo.size = standby_debug.tell()
+                standby_debug.seek(0)
+                tar.addfile(tarinfo, fileobj=standby_debug)
+
+            tario.seek(0)
+            shutil.copyfileobj(tario, job.pipes.output.w)
+        else:
+            with open(debug_job.result, 'rb') as f:
+                shutil.copyfileobj(f, job.pipes.output.w)
+        job.pipes.output.w.close()
 
 
 class SystemGeneralService(ConfigService):
@@ -650,7 +781,7 @@ class SystemGeneralService(ConfigService):
 
         syslog_server = data.get('syslogserver')
         if syslog_server:
-            match = re.match("^[\w\.\-]+(\:\d+)?$", syslog_server)
+            match = re.match(r"^[\w\.\-]+(\:\d+)?$", syslog_server)
             if not match:
                 verrors.add(
                     f'{schema}.syslogserver',
@@ -665,43 +796,41 @@ class SystemGeneralService(ConfigService):
                     )
 
         certificate_id = data.get('ui_certificate')
-        if not certificate_id:
+        cert = await self.middleware.call(
+            'certificate.query',
+            [["id", "=", certificate_id]]
+        )
+        if not cert:
             verrors.add(
                 f'{schema}.ui_certificate',
-                'Certificate is required'
+                'Please specify a valid certificate which exists in the system'
             )
         else:
-            cert = await self.middleware.call(
-                'certificate.query',
-                [
-                    ["id", "=", certificate_id],
-                    ["CSR", "=", None]
-                ]
+            cert = cert[0]
+            verrors.extend(
+                await self.middleware.call(
+                    'certificate.cert_services_validation', certificate_id, f'{schema}.ui_certificate', False
+                )
             )
-            if not cert:
-                verrors.add(
-                    f'{schema}.ui_certificate',
-                    'Please specify a valid certificate which exists on the FreeNAS system'
-                )
-            else:
-                # getting fingerprint for certificate
-                fingerprint = await self.middleware.call(
-                    'certificate.get_fingerprint_of_cert',
-                    certificate_id
-                )
-                if fingerprint:
-                    syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
-                    syslog.syslog(syslog.LOG_ERR, 'Fingerprint of the certificate used in UI : ' + fingerprint)
-                    syslog.closelog()
-                else:
-                    # One reason value is None - error while parsing the certificate for fingerprint
-                    verrors.add(
-                        f'{schema}.ui_certificate',
-                        'Please check if the certificate has been added to the system and it is a '
-                        'valid certificate'
-                    )
+
+            if cert['fingerprint']:
+                syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
+                syslog.syslog(syslog.LOG_ERR, 'Fingerprint of the certificate used in UI : ' + cert['fingerprint'])
+                syslog.closelog()
 
         return verrors
+
+    @accepts()
+    async def ui_certificate_choices(self):
+        """
+        Return choices of `ui_certificate` attribute for `system.general.update`.
+        """
+        return {
+            i['id']: i['name']
+            for i in await self.middleware.call('certificate.query', [
+                ('cert_type_CSR', '=', False)
+            ])
+        }
 
     @accepts(
         Dict(
@@ -758,6 +887,9 @@ class SystemGeneralService(ConfigService):
             await self.middleware.call('service.reload', 'timeservices')
             await self.middleware.call('service.restart', 'cron')
 
+        if config['language'] != new_config['language']:
+            await self.middleware.call('system.general.set_language')
+
         await self.middleware.call('service.start', 'ssl')
 
         return await self.config()
@@ -793,6 +925,11 @@ class SystemGeneralService(ConfigService):
                 errors.append(f'{host}: {e}')
 
         raise CallError('Unable to connect to any of the specified UI addresses:\n' + '\n'.join(errors))
+
+    @private
+    def set_language(self):
+        language = self.middleware.call_sync('system.general.config')['language']
+        set_language(language)
 
 
 async def _event_system_ready(middleware, event_type, args):
@@ -874,11 +1011,112 @@ class SystemHealthEventSource(EventSource):
             })
 
 
-def setup(middleware):
+async def firstboot(middleware):
+    if os.path.exists(FIRST_INSTALL_SENTINEL):
+        # Delete sentinel file before making clone as we
+        # we do not want the clone to have the file in it.
+        os.unlink(FIRST_INSTALL_SENTINEL)
+
+        # Creating pristine boot environment from the "default"
+        middleware.logger.info("Creating 'Initial-Install' boot environment...")
+        cp = await run('beadm', 'create', '-e', 'default', 'Initial-Install', check=False)
+        if cp.returncode != 0:
+            middleware.logger.error(
+                'Failed to create initial boot environment: %s', cp.stderr.decode()
+            )
+
+
+async def update_timeout_value(middleware, *args):
+    if not await middleware.call(
+        'tunable.query', [
+            ['var', '=', 'kern.init_shutdown_timeout'],
+            ['type', '=', 'SYSCTL'],
+            ['enabled', '=', True]
+        ]
+    ):
+        # Default 120 seconds is being added to scripts timeout to ensure other
+        # system related scripts can execute safely within the default timeout
+        timeout_value = 120 + sum(
+            list(
+                map(
+                    lambda i: i['timeout'],
+                    await middleware.call(
+                        'initshutdownscript.query', [
+                            ['enabled', '=', True],
+                            ['when', '=', 'SHUTDOWN']
+                        ]
+                    )
+                )
+            )
+        )
+
+        await middleware.run_in_thread(
+            lambda: setattr(
+                sysctl.filter('kern.init_shutdown_timeout')[0], 'value', timeout_value
+            )
+        )
+
+
+async def setup(middleware):
     global SYSTEM_READY
+
     if os.path.exists("/tmp/.bootready"):
         SYSTEM_READY = True
+    else:
+        autotune_rv = await middleware.call('system.advanced.autotune', 'loader')
+
+        await firstboot(middleware)
+
+        if autotune_rv == 2:
+            await run('shutdown', '-r', 'now', check=False)
+
+    settings = await middleware.call(
+        'system.general.config',
+    )
+    os.environ['TZ'] = settings['timezone']
+    time.tzset()
+
+    middleware.logger.debug(f'Timezone set to {settings["timezone"]}')
+
+    await middleware.call('system.general.set_language')
+
+    asyncio.ensure_future(middleware.call('system.advanced.autotune', 'sysctl'))
+
+    await update_timeout_value(middleware)
+
+    for srv in ['initshutdownscript', 'tunable']:
+        for event in ('create', 'update', 'delete'):
+            middleware.register_hook(
+                f'{srv}.post_{event}',
+                update_timeout_value
+            )
 
     middleware.event_subscribe('system', _event_system_ready)
     middleware.event_subscribe('devd.zfs', _event_zfs_status)
     middleware.register_event_source('system.health', SystemHealthEventSource)
+
+    # watchdog 38 = ~256 seconds or ~4 minutes, see sys/watchdog.h for explanation
+    for command in [
+        'ddb script "kdb.enter.break=watchdog 38; capture on"',
+        'ddb script "kdb.enter.sysctl=watchdog 38; capture on"',
+        'ddb script "kdb.enter.default=write cn_mute 1; watchdog 38; capture on; bt; '
+        'show allpcpu; ps; alltrace; write cn_mute 0; textdump dump; reset"',
+        'sysctl debug.ddb.textdump.pending=1',
+        'sysctl debug.debugger_on_panic=1',
+        'sysctl debug.ddb.capture.bufsize=4194304'
+    ]:
+        ret = await Popen(
+            command,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+
+        await ret.communicate()
+
+        if ret.returncode:
+            middleware.logger.debug(f'Failed to execute: {command}')
+
+    CRASH_DIR = '/data/crash'
+    os.makedirs(CRASH_DIR, exist_ok=True)
+    os.chmod(CRASH_DIR, 0o775)

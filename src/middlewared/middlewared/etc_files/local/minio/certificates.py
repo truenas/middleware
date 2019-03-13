@@ -3,22 +3,16 @@ import os
 import pwd
 
 
-async def render(service, middleware):
-    s3 = await middleware.call('datastore.query', 'services.s3')
-    if not s3:
-        return
-    s3 = s3[0]
-    if not s3:
-        return
+def render(service, middleware):
+    s3 = middleware.call_sync('s3.config')
 
-    cert = s3.get('s3_certificate')
+    cert = s3.get('certificate')
     if not cert:
         return
+    else:
+        middleware.call_sync('certificate.cert_services_validation', cert, 's3.certificate')
 
-    if (
-        'cert_certificate' in cert and len(cert['cert_certificate']) > 0 and
-        'cert_privatekey' in cert and len(cert['cert_privatekey']) > 0
-    ):
+        cert = middleware.call_sync('certificate._get_instance', cert)
 
         minio_path = "/usr/local/etc/minio"
 
@@ -36,11 +30,11 @@ async def render(service, middleware):
         os.chown(minio_path, minio_uid, minio_gid)
 
         with open(minio_certificate, 'w') as f:
-            f.write(cert['cert_certificate'])
+            f.write(cert['certificate'])
         os.chown(minio_certificate, minio_uid, minio_gid)
         os.chmod(minio_certificate, 0o644)
 
         with open(minio_privatekey, 'w') as f:
-            f.write(cert['cert_privatekey'])
+            f.write(cert['privatekey'])
         os.chown(minio_privatekey, minio_uid, minio_gid)
         os.chmod(minio_privatekey, 0o600)

@@ -23,9 +23,8 @@ from freenasUI.common.freenasldap import (
     FreeNAS_LDAP,
     FLAGS_DBINIT,
 )
-from freenasUI.common.freenasusers import FreeNAS_User
+from freenasUI.common.freenasusers import FreeNAS_User, FreeNAS_Group
 from freenasUI.common.samba import Samba4
-from freenasUI.common.warden import Warden
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.directoryservice.models import (
@@ -76,42 +75,6 @@ class NotifierService(Service):
         subsystem = getattr(fcommon, name)
         rv = getattr(subsystem, method)(*params)
         return rv
-
-    def pwenc_decrypt(self, encrypted=None):
-        """
-        Wrapper method to avoid traceback.
-        This is simply to keep old behavior in notifier.
-        """
-        try:
-            return notifier().pwenc_decrypt(encrypted)
-        except Exception as e:
-            logger.debug(
-                'notifier.pwenc_decrypt: Failed to decrypt the pass for {0}'.format(encrypted),
-                exc_info=True
-            )
-            return ''
-
-    def pwenc_encrypt(self, decrypted=None):
-        """
-        Wrapper method to avoid traceback.
-        This is simply to keep old behavior in notifier.
-        """
-        try:
-            return notifier().pwenc_encrypt(decrypted)
-        except Exception as e:
-            logger.debug(
-                'notifier.pwenc_encrypt: Failed to encrypt the pass for {0}'.format(decrypted),
-                exc_info=True
-            )
-            return ''
-
-    def warden(self, method, params=None, kwargs=None):
-        if params is None:
-            params = []
-        if kwargs is None:
-            kwargs = {}
-        method = getattr(Warden(), method)
-        return method(*params, **kwargs)
 
     def zpool_list(self, name=None):
         """Wrapper for zfs.zpool_list"""
@@ -164,13 +127,21 @@ class NotifierService(Service):
                 data[i] = getattr(ds, i)
         return data
 
-    async def get_user_object(self, username):
+    def get_user_object(self, username):
         user = False
         try:
             user = FreeNAS_User(username)
         except Exception:
             pass
         return user
+
+    def get_group_object(self, groupname):
+        group = False
+        try:
+            group = FreeNAS_Group(groupname)
+        except Exception:
+            pass
+        return group
 
     def ldap_status(self):
         ret = False

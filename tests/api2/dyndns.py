@@ -3,9 +3,8 @@
 
 import os
 import sys
-
 import pytest
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
@@ -85,6 +84,7 @@ def test_05_Starting_dyndns_service():
                    {'service': 'dynamicdns',
                     'service-control': {'onetime': True}})
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 @noip_test_cfg

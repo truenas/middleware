@@ -97,25 +97,6 @@ def popen(cmd):
     return p.communicate()[0]
 
 
-def get_interfaces(include_fake=False):
-
-    interfaces = popen('ifconfig -l')
-
-    fake_interfaces = (
-                       'ipfw',
-                       'lo',
-                       'pflog',
-                       'pfsync',
-                      )
-
-    interfaces = interfaces.split()
-
-    if include_fake:
-        return interfaces
-    return filter(lambda i: not re.match('^(%s)\d+$'
-                  % ('|'.join(fake_interfaces), ), i), interfaces)
-
-
 def sysctl(oid):
     """Quick and dirty means of doing sysctl -n"""
     return popen('sysctl -n %s' % (oid, ))
@@ -134,7 +115,7 @@ HW_PHYSMEM_GB = HW_PHYSMEM / GB
 # as a valid choice to the -c option.
 DEF_KNOBS = {
     'loader': {
-        'vm.kmem_size',
+        'vfs.zfs.dirty_data_max_max',
     },
     'sysctl': {
         'kern.ipc.maxsockbuf',
@@ -166,6 +147,13 @@ DEF_KNOBS = {
 }
 
 
+def guess_vfs_zfs_dirty_data_max_max():
+    if TRUENAS and hardware[0].startswith("M"):
+        return 12 * GB
+    else:
+        return None
+
+
 def guess_kern_ipc_maxsockbuf():
     """Maximum socket buffer.
 
@@ -186,30 +174,6 @@ def guess_kern_ipc_maxsockbuf():
         return 4 * MB
     else:
         return 2 * MB
-
-
-# kern.ipc.maxsockets
-
-# kern.ipc.somaxconn
-
-
-def guess_kern_maxfiles():
-    """Maximum number of files that can be opened on a system
-
-    - Samba sets this to 16k by default to meet a Windows minimum value.
-    """
-    # XXX: should be dynamically tuned based on the platform profile.
-    # Currently not used, and 10.x default value is way higher than this
-    return 65536
-
-
-def guess_kern_maxfilesperproc():
-    """Maximum number of files that can be opened per process
-
-    - FreeBSD defined ratio is 9:10, but that's with lower limits.
-    """
-    # Currently not used
-    return int(0.8 * guess_kern_maxfiles())
 
 
 def guess_kern_ipc_nmbclusters():
@@ -238,10 +202,6 @@ def guess_net_inet_tcp_sendbuf_max():
     See guess_kern_ipc_maxsockbuf().
     """
     return 16 * MB
-
-
-def guess_vm_kmem_size():
-    return int(1.25 * HW_PHYSMEM)
 
 
 def guess_vfs_zfs_arc_max():
@@ -368,7 +328,7 @@ def guess_vfs_zfs_metaslab_lba_weighting_enabled():
 
 
 def guess_vfs_zfs_zfetch_max_distance():
-    return 33554432
+    return 32 * MB
 
 
 def main(argv):

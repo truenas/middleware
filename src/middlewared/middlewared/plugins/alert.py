@@ -153,7 +153,10 @@ class AlertService(Service):
 
         alert_source = ALERT_SOURCES.get(source)
         if alert_source and isinstance(alert_source, DismissableAlertSource):
-            self.alerts[node][source] = await alert_source.dismiss(self.alerts[node][source])
+            self.alerts[node][source] = {
+                alert.key: alert
+                for alert in await alert_source.dismiss(self.alerts[node][source], key)
+            }
         elif alert_source and isinstance(alert_source, OneShotAlertSource):
             self.alerts[node][source].pop(key, None)
         else:
@@ -355,7 +358,7 @@ class AlertService(Service):
 
         alert.source = alert_source.name
         if existing_alert is None:
-            alert.datetime = datetime.utcnow()
+            alert.datetime = alert.datetime or datetime.utcnow()
         else:
             alert.datetime = existing_alert.datetime
         alert.level = alert.level or alert_source.level
@@ -417,7 +420,7 @@ class AlertService(Service):
         return sum([sum([list(vv.values()) for vv in v.values()], []) for v in self.alerts.values()], [])
 
     @private
-    @accepts(Str("source"), Any("args"))
+    @accepts(Str("source"), Any("args", null=True))
     @job(lock="process_alerts", transient=True)
     async def oneshot_create(self, job, source, args):
         try:
@@ -441,7 +444,7 @@ class AlertService(Service):
         await self.middleware.call("alert.send_alerts")
 
     @private
-    @accepts(Str("source"), Any("query"))
+    @accepts(Str("source"), Any("query", null=True))
     @job(lock="process_alerts", transient=True)
     async def oneshot_delete(self, job, source, query):
         try:

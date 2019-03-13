@@ -1,11 +1,15 @@
+from bsd import geom
 from middlewared.schema import accepts, Bool, Dict, Str
-from middlewared.service import job, CallError, Service
+from middlewared.service import job, private, CallError, Service
 
+import enum
 import errno
 import os
 import re
 import shutil
+import subprocess
 import sys
+import textwrap
 
 if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
@@ -20,6 +24,59 @@ from freenasOS.Exceptions import (
 from freenasOS.Update import (
     ApplyUpdate, CheckForUpdates, GetServiceDescription, ExtractFrozenUpdate,
 )
+
+UPLOAD_LOCATION = '/var/tmp/firmware'
+UPLOAD_LABEL = 'updatemdu'
+
+
+def parse_train_name(name):
+    split = name.split('-')
+    version = split[1].split('.')
+    branch = split[2]
+
+    return [int(v) if v.isdigit() else v for v in version] + [branch]
+
+
+class CompareTrainsResult(enum.Enum):
+    MAJOR_DOWNGRADE = "MAJOR_DOWNGRADE"
+    MAJOR_UPGRADE = "MAJOR_UPGRADE"
+    MINOR_DOWNGRADE = "MINOR_DOWNGRADE"
+    MINOR_UPGRADE = "MINOR_UPGRADE"
+    NIGHTLY_DOWNGRADE = "NIGHTLY_DOWNGRADE"
+    NIGHTLY_UPGRADE = "NIGHTLY_UPGRADE"
+
+
+def compare_trains(t1, t2):
+    v1 = parse_train_name(t1)
+    v2 = parse_train_name(t2)
+
+    if v1[0] != v2[0]:
+        if v1[0] > v2[0]:
+            return CompareTrainsResult.MAJOR_DOWNGRADE
+        else:
+            return CompareTrainsResult.MAJOR_UPGRADE
+
+    branch1 = v1[-1].lower().replace("-sdk", "")
+    branch2 = v2[-1].lower().replace("-sdk", "")
+    if branch1 != branch2:
+        if branch2 == "nightlies":
+            return CompareTrainsResult.NIGHTLY_UPGRADE
+        elif branch1 == "nightlies":
+            return CompareTrainsResult.NIGHTLY_DOWNGRADE
+
+    if (
+        # [11, "STABLE"] -> [11, 1, "STABLE"]
+        not isinstance(v1[1], int) and isinstance(v2[1], int) or
+        # [11, 1, "STABLE"] -> [11, 2, "STABLE"]
+        isinstance(v1[1], int) and isinstance(v2[1], int) and v1[1] < v2[1]
+    ):
+        return CompareTrainsResult.MINOR_UPGRADE
+
+    if (
+        isinstance(v1[1], int) and isinstance(v2[1], int) and v1[1] > v2[1] or
+        not isinstance(v2[1], int) and v1[1] > 0
+    ):
+        return CompareTrainsResult.MINOR_DOWNGRADE
 
 
 class CheckUpdateHandler(object):
@@ -198,7 +255,7 @@ class UpdateService(Service):
             if not selected and data['upd_train'] == train.Name():
                 selected = data['upd_train']
             trains[train.Name()] = {
-                'description': train.Description(),
+                'description': descr,
                 'sequence': train.LastSequence(),
             }
         if not data['upd_train'] or not selected:
@@ -288,7 +345,7 @@ class UpdateService(Service):
           }
         """
         if path is None:
-            path = await self.middleware.call('notifier.get_update_location')
+            path = await self.middleware.call('update.get_update_location')
         data = []
         try:
             changes = await self.middleware.run_in_thread(Update.PendingUpdatesChanges, path)
@@ -340,8 +397,42 @@ class UpdateService(Service):
         Downloads (if not already in cache) and apply an update.
         """
         attrs = attrs or {}
-        train = attrs.get('train') or (await self.middleware.call('update.get_trains'))['selected']
-        location = await self.middleware.call('notifier.get_update_location')
+
+        trains = await self.middleware.call('update.get_trains')
+        train = attrs.get('train') or trains['selected']
+        try:
+            result = compare_trains(trains['current'], train)
+        except Exception:
+            self.logger.warning("Failed to compare trains %r and %r", trains['current'], train, exc_info=True)
+        else:
+            errors = {
+                CompareTrainsResult.NIGHTLY_DOWNGRADE: textwrap.dedent("""\
+                    You're not allowed to change away from the nightly train, it is considered a downgrade.
+                    If you have an existing boot environment that uses that train, boot into it in order to upgrade
+                    that train.
+                """),
+                CompareTrainsResult.MINOR_DOWNGRADE: textwrap.dedent("""\
+                    Changing minor version is considered a downgrade, thus not a supported operation.
+                    If you have an existing boot environment that uses that train, boot into it in order to upgrade
+                    that train.
+                """),
+                CompareTrainsResult.MAJOR_DOWNGRADE: textwrap.dedent("""\
+                    Changing major version is considered a downgrade, thus not a supported operation.
+                    If you have an existing boot environment that uses that train, boot into it in order to upgrade
+                    that train.
+                """),
+            }
+            if result in errors:
+                raise CallError(errors[result])
+
+        location = await self.middleware.call('update.get_update_location')
+
+        if attrs.get('train'):
+            data = await self.middleware.call('datastore.config', 'system.update')
+            if data['upd_train'] != attrs['train']:
+                await self.middleware.call('datastore.update', 'system.update', data['id'], {
+                    'upd_train': attrs['train']
+                })
 
         job.set_progress(0, 'Retrieving update manifest')
 
@@ -373,7 +464,7 @@ class UpdateService(Service):
     @job(lock='updatedownload')
     def download(self, job):
         train = self.middleware.call_sync('update.get_trains')['selected']
-        location = self.middleware.call_sync('notifier.get_update_location')
+        location = self.middleware.call_sync('update.get_update_location')
 
         job.set_progress(0, 'Retrieving update manifest')
 
@@ -428,18 +519,31 @@ Changelog:
 
     @accepts(Str('path'))
     @job(lock='updatemanual', process=True)
-    async def manual(self, job, path):
+    def manual(self, job, path):
         """
         Apply manual update of file `path`.
         """
-        rv = await self.middleware.call('notifier.validate_update', path)
-        if not rv:
-            raise CallError('Invalid update file', errno.EINVAL)
-        await self.middleware.call('notifier.apply_update', path, timeout=None)
+        dest_extracted = os.path.join(os.path.dirname(path), '.update')
         try:
-            await self.middleware.call('notifier.destroy_upload_location')
-        except Exception:
-            self.logger.warn('Failed to destroy upload location', exc_info=True)
+            try:
+                job.set_progress(30, 'Extracting file')
+                ExtractFrozenUpdate(path, dest_extracted, verbose=True)
+                job.set_progress(50, 'Applying update')
+                ApplyUpdate(dest_extracted)
+            except Exception as e:
+                self.logger.debug('Applying manual update failed', exc_info=True)
+                raise CallError(str(e), errno.EFAULT)
+
+            job.set_progress(95, 'Cleaning up')
+        finally:
+            if os.path.exists(path):
+                os.unlink(path)
+
+            if os.path.exists(dest_extracted):
+                shutil.rmtree(dest_extracted, ignore_errors=True)
+
+        if path.startswith(UPLOAD_LOCATION):
+            self.middleware.call_sync('update.destroy_upload_location')
 
     @accepts(Dict(
         'updatefile',
@@ -457,7 +561,7 @@ Changelog:
 
         if not dest:
             try:
-                await self.middleware.call('notifier.create_upload_location')
+                await self.middleware.call('update.create_upload_location')
                 dest = '/var/tmp/firmware'
             except Exception as e:
                 raise CallError(str(e))
@@ -498,6 +602,77 @@ Changelog:
                 shutil.rmtree(dest_extracted, ignore_errors=True)
 
         if dest == '/var/tmp/firmware':
-            await self.middleware.call('notifier.destroy_upload_location')
+            await self.middleware.call('update.destroy_upload_location')
 
         job.set_progress(100, 'Update completed')
+
+    @private
+    async def get_update_location(self):
+        syspath = (await self.middleware.call('systemdataset.config'))['path']
+        if syspath:
+            return f'{syspath}/update'
+        return '/var/tmp/update'
+
+    @private
+    def create_upload_location(self):
+        geom.scan()
+        klass_label = geom.class_by_name('LABEL')
+        prov = klass_label.xml.find(
+            f'.//provider[name = "label/{UPLOAD_LABEL}"]/../consumer/provider'
+        )
+        if prov is None:
+            cp = subprocess.run(
+                ['mdconfig', '-a', '-t', 'swap', '-s', '2800m'],
+                text=True, capture_output=True, check=False,
+            )
+            if cp.returncode != 0:
+                raise CallError(f'Could not create memory device: {cp.stderr}')
+            mddev = cp.stdout.strip()
+
+            subprocess.run(['glabel', 'create', UPLOAD_LABEL, mddev], capture_output=True, check=False)
+
+            cp = subprocess.run(
+                ['newfs', f'/dev/label/{UPLOAD_LABEL}'],
+                text=True, capture_output=True, check=False,
+            )
+            if cp.returncode != 0:
+                raise CallError(f'Could not create temporary filesystem: {cp.stderr}')
+
+            shutil.rmtree(UPLOAD_LOCATION, ignore_errors=True)
+            os.makedirs(UPLOAD_LOCATION)
+
+            cp = subprocess.run(
+                ['mount', f'/dev/label/{UPLOAD_LABEL}', UPLOAD_LOCATION],
+                text=True, capture_output=True, check=False,
+            )
+            if cp.returncode != 0:
+                raise CallError(f'Could not mount temporary filesystem: {cp.stderr}')
+
+        shutil.chown(UPLOAD_LOCATION, 'www', 'www')
+        os.chmod(UPLOAD_LOCATION, 0o755)
+
+    @private
+    def destroy_upload_location(self):
+        geom.scan()
+        klass_label = geom.class_by_name('LABEL')
+        prov = klass_label.xml.find(
+            f'.//provider[name = "label/{UPLOAD_LABEL}"]/../consumer/provider'
+        )
+        if prov is None:
+            return
+        klass_md = geom.class_by_name('MD')
+        prov = klass_md.xml.find(f'.//provider[@id = "{prov.attrib["ref"]}"]/name')
+        if prov is None:
+            return
+
+        mddev = prov.text
+
+        subprocess.run(
+            ['umount', f'/dev/label/{UPLOAD_LABEL}'], capture_output=True, check=False,
+        )
+        cp = subprocess.run(
+            ['mdconfig', '-d', '-u', mddev],
+            text=True, capture_output=True, check=False,
+        )
+        if cp.returncode != 0:
+            raise CallError(f'Could not destroy memory device: {cp.stderr}')

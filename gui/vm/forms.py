@@ -11,8 +11,6 @@ from freenasUI.common.forms import ModelForm
 from freenasUI.freeadmin.forms import PathField
 from freenasUI.freeadmin.utils import key_order
 from freenasUI.middleware.client import client
-from freenasUI.middleware.notifier import notifier
-from freenasUI.storage.models import Volume
 from freenasUI.vm import models
 
 log = logging.getLogger('vm.forms')
@@ -249,15 +247,12 @@ class DeviceForm(ModelForm):
         )
 
         diskchoices = {}
-        _n = notifier()
-        used_zvol = []
-        for volume in Volume.objects.filter():
-            zvols = _n.list_zfs_vols(volume.vol_name, sort='name')
-            for zvol, attrs in zvols.items():
-                if "zvol/" + zvol not in used_zvol:
-                    diskchoices["zvol/" + zvol] = "%s (%s)" % (
-                        zvol,
-                        humanize_size(attrs['volsize']))
+        with client as c:
+            for zvol in c.call('pool.dataset.query', [('type', '=', 'VOLUME')]):
+                diskchoices[f'zvol/{zvol["name"]}'] = "%s (%s)" % (
+                    zvol['name'],
+                    humanize_size(zvol['volsize']['parsed'])
+                )
         self.fields['DISK_zvol'].choices = diskchoices.items()
 
         if self.instance.id:

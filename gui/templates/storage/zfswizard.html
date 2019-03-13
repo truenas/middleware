@@ -67,7 +67,7 @@
                     zfswizardcheckings(true);
                 </script>
                 {% for e in form.volume_disks.field.choices %}
-                <option value="{{ e.0 }}" {% if e.0 in disks %}selected="selected"{% endif %}>{{ e.1 }}</option>
+                    <option value="{{ e.0 }}" {% if e.0 in disks %}selected="selected"{% endif %} {% if e.0 in zfsextradisks %}style="display: none"{% endif %}>{{ e.1 }}</option>
                 {% empty %}
                 {% endfor %}
             </select>
@@ -134,7 +134,7 @@
                         {% for disk, name, val in zfsextra %}
                         <tr>
                             <td>{{ disk }}</td>
-                            <td><input data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: '{{ name }}', value: 'none'{% if val == "none" %}, checked: true{% endif %}"/></td>
+                            <td><input onchange="zfsextrawizardcheckings(this);" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: '{{ name }}', value: 'none'{% if val == "none" %}, checked: true{% endif %}"/></td>
                             <td><input data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: '{{ name }}', value: 'log'{% if val == "log" %}, checked: true{% endif %}"/></td>
                             <td><input data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: '{{ name }}', value: 'cache'{% if val == "cache" %}, checked: true{% endif %}"/></td>
                             <td><input data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: '{{ name }}', value: 'spare'{% if val == "spare" %}, checked: true{% endif %}"/></td>
@@ -143,6 +143,14 @@
                     {% endif %}
                     </tbody>
                 </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <b style="color: red">{% trans "WARNING" %}</b>
+            </td>
+            <td style="width:250px;">
+                {% trans "Please make sure that the disks are correctly setup by verifying the selected Member Disks field choices and ZFS Extra field choices before proceeding" %}
             </td>
         </tr>
     </table>

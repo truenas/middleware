@@ -7,6 +7,8 @@ from .restful import RESTfulAPI
 from .schema import Error as SchemaError, Schemas
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from .utils import start_daemon_thread, load_modules, load_classes
+from .utils.debug import get_threads_stacks
+from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from aiohttp import web
@@ -20,6 +22,7 @@ import argparse
 import asyncio
 import binascii
 import concurrent.futures
+import concurrent.futures.process
 import errno
 import functools
 import inspect
@@ -51,8 +54,10 @@ class Application(object):
         self.authenticated = False
         self.handshake = False
         self.logger = logger.Logger('application').getLogger()
-        self.sessionid = str(uuid.uuid4())
+        self.session_id = str(uuid.uuid4())
 
+        # Allow at most 10 concurrent calls and only queue up until 20
+        self._softhardsemaphore = SoftHardSemaphore(10, 20)
         self._py_exceptions = False
 
         """
@@ -159,7 +164,8 @@ class Application(object):
     async def call_method(self, message):
 
         try:
-            result = await self.middleware.call_method(self, message)
+            async with self._softhardsemaphore:
+                result = await self.middleware.call_method(self, message)
             if isinstance(result, Job):
                 result = result.id
             elif isinstance(result, types.GeneratorType):
@@ -171,6 +177,12 @@ class Application(object):
                 'msg': 'result',
                 'result': result,
             })
+        except SoftHardSemaphoreLimit as e:
+            self.send_error(
+                message,
+                errno.ETOOMANYREFS,
+                f'Maximum number of concurrent calls ({e.args[0]}) has exceeded.',
+            )
         except ValidationError as e:
             self.send_error(message, e.errno, str(e), sys.exc_info(), etype='VALIDATION', extra=[
                 (e.attribute, e.errmsg, e.errno),
@@ -311,7 +323,7 @@ class Application(object):
                 await asyncio.shield(self.middleware.call_hook('core.on_connect', app=self))
                 self._send({
                     'msg': 'connected',
-                    'session': self.sessionid,
+                    'session': self.session_id,
                 })
                 self.handshake = True
             return
@@ -381,7 +393,7 @@ class FileApplication(object):
             if not token:
                 denied = True
             else:
-                if (token['attributes'] or {}).get('job') != job_id:
+                if token['attributes'].get('job') != job_id:
                     denied = True
                 else:
                     filename = token['attributes'].get('filename')
@@ -554,6 +566,7 @@ class ShellWorkerThread(threading.Thread):
                 cmd = [
                     '/usr/local/bin/iocage',
                     'console',
+                    '-f',
                     self.jail
                 ]
             os.execve(cmd[0], cmd, {
@@ -635,7 +648,7 @@ class ShellApplication(object):
 
         try:
             await self.run(ws, request, conndata)
-        except Exception as e:
+        except Exception:
             if conndata.t_worker:
                 await self.worker_kill(conndata.t_worker)
         finally:
@@ -731,7 +744,7 @@ class Middleware(object):
 
     def __init__(
         self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None,
-        log_handler=None,
+        log_handler=None, startup_seq_path=None,
     ):
         self.logger = logger.Logger('middlewared', debug_level).getLogger()
         self.crash_reporting = logger.CrashReporting()
@@ -741,19 +754,18 @@ class Middleware(object):
         self.overlay_dirs = overlay_dirs or []
         self.debug_level = debug_level
         self.log_handler = log_handler
+        self.startup_seq = 0
+        self.startup_seq_path = startup_seq_path
         self.app = None
         self.__loop = None
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
         multiprocessing.set_start_method('spawn')
-        self.__procpool = concurrent.futures.ProcessPoolExecutor(
-            max_workers=2,
-            initializer=functools.partial(worker_init, debug_level, log_handler),
-        )
         self.__threadpool = concurrent.futures.ThreadPoolExecutor(
             initializer=lambda: set_thread_name('threadpool_ws'),
             max_workers=10,
         )
+        self.__init_procpool()
         self.jobs = JobsQueue(self)
         self.__schemas = Schemas()
         self.__services = {}
@@ -790,11 +802,21 @@ class Middleware(object):
                 raise ValueError(f'plugins dir not found: {plugins_dir}')
 
             for mod in load_modules(plugins_dir):
+                self._console_write(f'loaded plugin {mod.__name__}')
+                self.__incr_startup_seq()
+
                 for cls in load_classes(mod, Service, (ConfigService, CRUDService, SystemServiceService)):
                     self.add_service(cls(self))
 
                 if hasattr(mod, 'setup'):
-                    setup_funcs.append((mod.__name__.rsplit('.', 1)[-1], mod.setup))
+                    setup_plugin = mod.__name__.rsplit('.', 1)[-1]
+                    # TODO: Let's please remove this conditional when we have order defined for setup functions
+                    # We need to run system plugin setup's function first because when system boots, the right
+                    # timezone is not configured. See #72131
+                    if setup_plugin == 'system':
+                        setup_funcs.insert(0, (setup_plugin, mod.setup))
+                    else:
+                        setup_funcs.append((setup_plugin, mod.setup))
 
         self._console_write(f'resolving plugins schemas')
         # Now that all plugins have been loaded we can resolve all method params
@@ -812,6 +834,7 @@ class Middleware(object):
         for i, setup_func in enumerate(setup_funcs):
             name, f = setup_func
             self._console_write(f'setting up plugins ({name}) [{i + 1}/{setup_total}]')
+            self.__incr_startup_seq()
             call = f(self)
             # Allow setup to be a coroutine
             if asyncio.iscoroutinefunction(f):
@@ -867,6 +890,7 @@ class Middleware(object):
         giving user at least some basic feedback is fundamental.
         """
         # False means we are running in a terminal, no console needed
+        self.logger.trace('_console_write %r', text)
         if self.__console_io is False:
             return
         elif self.__console_io is None:
@@ -911,14 +935,25 @@ class Middleware(object):
         except Exception:
             pass
 
+    def __incr_startup_seq(self):
+        if self.startup_seq_path is None:
+            return
+
+        with open(self.startup_seq_path + ".tmp", "w") as f:
+            f.write(f"{self.startup_seq}")
+
+        os.rename(self.startup_seq_path + ".tmp", self.startup_seq_path)
+
+        self.startup_seq += 1
+
     def plugin_route_add(self, plugin_name, route, method):
         self.app.router.add_route('*', f'/_plugins/{plugin_name}/{route}', method)
 
     def register_wsclient(self, client):
-        self.__wsclients[client.sessionid] = client
+        self.__wsclients[client.session_id] = client
 
     def unregister_wsclient(self, client):
-        self.__wsclients.pop(client.sessionid)
+        self.__wsclients.pop(client.session_id)
 
     def register_hook(self, name, method, sync=True):
         """
@@ -996,8 +1031,21 @@ class Middleware(object):
         """
         return await self.run_in_executor(self.__threadpool, method, *args, **kwargs)
 
+    def __init_procpool(self):
+        self.__procpool = concurrent.futures.ProcessPoolExecutor(
+            max_workers=2,
+            initializer=functools.partial(worker_init, self.debug_level, self.log_handler),
+        )
+
     async def run_in_proc(self, method, *args, **kwargs):
-        return await self.run_in_executor(self.__procpool, method, *args, **kwargs)
+        retries = 2
+        for i in range(retries):
+            try:
+                return await self.run_in_executor(self.__procpool, method, *args, **kwargs)
+            except concurrent.futures.process.BrokenProcessPool:
+                if i == retries - 1:
+                    raise
+                self.__init_procpool()
 
     async def run_in_thread(self, method, *args, **kwargs):
         executor = concurrent.futures.ThreadPoolExecutor(
@@ -1122,11 +1170,14 @@ class Middleware(object):
         # Instead we launch a new thread just for that call (io_thread).
         return self.run_coroutine(self._call(name, serviceobj, methodobj, params, io_thread=True))
 
-    def run_coroutine(self, coro):
+    def run_coroutine(self, coro, wait=True):
         if threading.get_ident() == self.__thread_id:
             raise RuntimeError('You cannot call_sync or run_coroutine from main thread')
 
         fut = asyncio.run_coroutine_threadsafe(coro, self.__loop)
+        if not wait:
+            return fut
+
         event = threading.Event()
 
         def done(_):
@@ -1149,13 +1200,13 @@ class Middleware(object):
     def send_event(self, name, event_type, **kwargs):
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
 
-        self.logger.trace(f'Sending event "{event_type}":{kwargs}')
+        self.logger.trace(f'Sending event {name!r}:{event_type!r}:{kwargs!r}')
 
-        for sessionid, wsclient in list(self.__wsclients.items()):
+        for session_id, wsclient in list(self.__wsclients.items()):
             try:
                 wsclient.send_event(name, event_type, **kwargs)
             except Exception:
-                self.logger.warn('Failed to send event {} to {}'.format(name, sessionid), exc_info=True)
+                self.logger.warn('Failed to send event {} to {}'.format(name, session_id), exc_info=True)
 
         # Send event also for internally subscribed plugins
         for handler in self.__event_subs.get(name, []):
@@ -1164,6 +1215,10 @@ class Middleware(object):
     def pdb(self):
         import pdb
         pdb.set_trace()
+
+    def log_threads_stacks(self):
+        for thread_id, stack in get_threads_stacks().items():
+            self.logger.debug('Thread %d stack:\n%s', thread_id, ''.join(stack))
 
     async def ws_handler(self, request):
         ws = web.WebSocketResponse()
@@ -1237,6 +1292,7 @@ class Middleware(object):
         self.__loop.add_signal_handler(signal.SIGINT, self.terminate)
         self.__loop.add_signal_handler(signal.SIGTERM, self.terminate)
         self.__loop.add_signal_handler(signal.SIGUSR1, self.pdb)
+        self.__loop.add_signal_handler(signal.SIGUSR2, self.log_threads_stacks)
 
         app.router.add_route('GET', '/websocket', self.ws_handler)
 
@@ -1288,7 +1344,7 @@ class Middleware(object):
             if hasattr(service, "terminate"):
                 try:
                     await service.terminate()
-                except Exception as e:
+                except Exception:
                     self.logger.error('Failed to terminate %s', service_name, exc_info=True)
 
         for task in asyncio.all_tasks(loop=self.__loop):
@@ -1326,6 +1382,7 @@ def main():
     args = parser.parse_args()
 
     pidpath = '/var/run/middlewared.pid'
+    startup_seq_path = '/var/run/middlewared_startup.seq'
 
     if args.restart:
         if os.path.exists(pidpath):
@@ -1353,6 +1410,7 @@ def main():
         overlay_dirs=args.overlay_dirs,
         debug_level=args.debug_level,
         log_handler=args.log_handler,
+        startup_seq_path=startup_seq_path,
     ).run()
 
 

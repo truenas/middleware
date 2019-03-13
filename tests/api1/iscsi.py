@@ -7,7 +7,6 @@
 import pytest
 import sys
 import os
-
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -95,6 +94,7 @@ def test_07_Enable_iSCSI_service():
     payload = {"srv_enable": True}
     results = PUT("/services/services/iscsitarget/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_08_Verify_the_iSCSI_service_is_enabled():
@@ -260,6 +260,7 @@ def test_26_Disable_iSCSI_service():
     payload = {"srv_enable": False}
     results = PUT("/services/services/iscsitarget/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_27_Verify_the_iSCSI_service_is_Sdisabled():
@@ -277,6 +278,7 @@ def test_28_Delete_iSCSI_target():
 def test_29_Delete_iSCSI_extent():
     results = DELETE("/services/iscsi/extent/1/")
     assert results.status_code == 204, results.text
+
 
 # Remove iSCSI portal
 def test_29_Delete_iSCSI_extent():

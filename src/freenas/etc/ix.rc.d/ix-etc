@@ -19,6 +19,11 @@ copy_templates()
 		if [ $? -ne 0 ] ; then
 			echo "WARNING: Failed to copy template file $file -> $nfile"
 		fi
+
+		# Special handling for login.conf file that needs cap_mkdb run
+		if [ "$nfile" = "/etc/login.conf" ] ; then
+			cap_mkdb -f /etc/login.conf.db /etc/login.conf
+		fi
 	done
 }
 
@@ -26,7 +31,7 @@ generate_etc()
 {
 	copy_templates
 
-	[ -s /data/dhparam.pem ] || openssl dhparam -rand - 2048 > /data/dhparam.pem
+	[ -s /data/dhparam.pem ] || openssl dhparam -rand /dev/random 2048 > /data/dhparam.pem
 
 	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate_all > /dev/null
 }

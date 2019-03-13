@@ -1,4 +1,4 @@
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, Service, ValidationErrors
 from middlewared.schema import accepts, Any, Bool, Dict, List, Ref, Str
 from sqlite3 import OperationalError
 
@@ -201,6 +201,28 @@ class DatastoreService(Service):
         options['get'] = True
         return self.query(name, None, options)
 
+    def validate_data_keys(self, data, model, schema, prefix):
+        verrors = ValidationErrors()
+        fields = list(
+            map(
+                lambda f: f.name.replace(prefix or '', '', 1),
+                chain(model._meta.fields, model._meta.many_to_many)
+            )
+        )
+
+        # _id is a special condition in filter where the key in question can be a related descriptor in django
+        # i.e share_id - so we remove _id and check if the field is present in `fields` list
+        for key in filter(
+            lambda v: all(c not in fields for c in (v, v if not v.endswith('_id') else v[:-3])),
+            data
+        ):
+            verrors.add(
+                f'{schema}.{key}',
+                f'{key} field not recognized'
+            )
+
+        verrors.check()
+
     @accepts(Str('name'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', null=True)))
     def insert(self, name, data, options=None):
         """
@@ -211,9 +233,11 @@ class DatastoreService(Service):
         options = options or {}
         prefix = options.get('prefix')
         model = self.__get_model(name)
+        self.validate_data_keys(data, model, 'datastore_insert', prefix)
+
         for field in chain(model._meta.fields, model._meta.many_to_many):
             if prefix:
-                name = field.name.replace(prefix, '')
+                name = field.name.replace(prefix, '', 1)
             else:
                 name = field.name
             if name not in data:
@@ -246,10 +270,12 @@ class DatastoreService(Service):
         options = options or {}
         prefix = options.get('prefix')
         model = self.__get_model(name)
+        self.validate_data_keys(data, model, 'datastore_update', prefix)
+
         obj = model.objects.get(pk=id)
         for field in chain(model._meta.fields, model._meta.many_to_many):
             if prefix:
-                name = field.name.replace(prefix, '')
+                name = field.name.replace(prefix, '', 1)
             else:
                 name = field.name
             if name not in data:

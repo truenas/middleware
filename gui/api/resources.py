@@ -74,22 +74,14 @@ from freenasUI.common.system import (
     get_sw_name,
     get_sw_version,
 )
-from freenasUI.common.warden import Warden
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
-from freenasUI.jails.forms import (
-    JailsEditForm, JailTemplateCreateForm, JailTemplateEditForm
-)
-from freenasUI.jails.models import JailTemplate
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client, ValidationErrors
 from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-from freenasUI.middleware.util import run_alerts
 from freenasUI.network.forms import AliasForm
 from freenasUI.network.models import Alias, Interfaces
-from freenasUI.plugins.models import Plugins
-from freenasUI.plugins.utils import get_base_url, get_plugin_status
 from freenasUI.services.forms import iSCSITargetPortalIPForm
 from freenasUI.services.models import (
     iSCSITargetGlobalConfiguration,
@@ -103,6 +95,7 @@ from freenasUI.storage.forms import (
     ReKeyForm,
     CreatePassphraseForm,
     ChangePassphraseForm,
+    Dataset_Destroy,
     ManualSnapshotForm,
     LockPassphraseForm,
     UnlockPassphraseForm,
@@ -112,9 +105,10 @@ from freenasUI.storage.forms import (
     ZVol_CreateForm,
     ZVol_EditForm,
     ZFSDatasetCreateForm,
-    ZFSDatasetEditForm
+    ZFSDatasetEditForm,
+    ZvolDestroyForm,
 )
-from freenasUI.storage.models import Disk, VMWarePlugin
+from freenasUI.storage.models import Disk
 from freenasUI.system.forms import (
     BootEnvAddForm,
     BootEnvRenameForm,
@@ -131,10 +125,10 @@ from freenasUI.system.forms import (
     ManualUpdateWizard,
 )
 from freenasUI.system.models import Update as mUpdate
-from freenasUI.system.utils import BootEnv, debug_generate, factory_restore
+from freenasUI.system.utils import BootEnv, factory_restore
 from freenasUI.system.views import restart_httpd, restart_httpd_all
 from middlewared.client import ClientException
-from tastypie import fields, http
+from tastypie import fields
 from tastypie.http import (
     HttpAccepted, HttpCreated, HttpMethodNotAllowed, HttpMultipleChoices,
     HttpNotFound, HttpNoContent,
@@ -582,14 +576,19 @@ class DatasetResource(DojoResource):
             raise NotFound("Dataset not found.")
 
     def obj_delete(self, bundle, **kwargs):
+        deserialized = self._meta.serializer.deserialize(
+            bundle.request.body or '{}',
+            format='application/json',
+        )
+        deserialized.setdefault('cascade', True)
         if 'parent' in kwargs:
             path = f'{kwargs["parent"].vol_name}/{kwargs["pk"]}'
         else:
             path = kwargs['pk']
-        retval = notifier().destroy_zfs_dataset(path=path, recursive=True)
-        if retval:
+        form = Dataset_Destroy(deserialized, fs=path)
+        if not form.is_valid() or form.done() is False:
             raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, retval)
+                response=self.error_response(bundle.request, form.errors)
             )
         return HttpResponse(status=204)
 
@@ -709,13 +708,13 @@ class ZVolResource(DojoResource):
             bundle.request.body or '{}',
             format='application/json',
         )
-        retval = notifier().destroy_zfs_vol("%s/%s" % (
+        form = ZvolDestroyForm(deserialized, fs="%s/%s" % (
             kwargs.get('parent').vol_name,
             kwargs.get('pk'),
-        ), deserialized.get('cascade', False))
-        if retval:
+        ))
+        if not form.is_valid() or form.done() is False:
             raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, retval)
+                response=self.error_response(bundle.request, form.errors)
             )
         return HttpResponse(status=204)
 
@@ -739,109 +738,109 @@ class VolumeResourceMixin(NestedMixin):
     def prepend_urls(self):
         return [
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/datasets%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/datasets%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('datasets_list'),
                 name="api_volume_datasets"
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/datasets/"
-                "(?P<pk2>\w[\w/-]*)%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/datasets/"
+                "(?P<pk2>[a-zA-Z][\w/_\-\.]*)%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('datasets_detail'),
                 name="api_volume_datasets_detail"
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/zvols%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/zvols%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('zvols_list'),
                 name="api_volume_zvols"
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/zvols/"
-                "(?P<pk2>\w[\w/\-\._]*)%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/zvols/"
+                "(?P<pk2>[a-zA-Z][\w/_\-\.]*)%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('zvols_detail'),
                 name="api_volume_zvols_detail"
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/replace%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/replace%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('replace_disk')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/offline%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/offline%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('offline_disk')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/online%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/online%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('online_disk')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/detach%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/detach%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('detach_disk')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/remove%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/remove%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('remove_disk')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/scrub%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/scrub%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('scrub')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/status%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/status%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('status')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/unlock%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/unlock%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('unlock')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/lock%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/lock%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('lock')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/upgrade%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/upgrade%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('upgrade')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/recoverykey%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/recoverykey%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('recoverykey')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/rekey%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/rekey%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('rekey')
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/keypassphrase%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[a-zA-Z0-9][\w/_\-\.]*)/keypassphrase%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('keypassphrase')
@@ -1616,6 +1615,11 @@ class ReplicationResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super().dehydrate(bundle)
 
+        if self.is_webclient(bundle.request):
+            bundle.data['_run_url'] = reverse('replication_run', kwargs={
+                'oid': bundle.obj.id
+            })
+
         bundle.data['repl_ssh_credentials'] = \
             (self.__tasks[bundle.data['id']]['ssh_credentials'] or {}).get('name', '-')
 
@@ -1636,6 +1640,7 @@ class LegacyReplicationResourceMixin(object):
 
     class Meta:
         resource_name = 'storage/replication'
+        allowed_methods = ['get']
 
     def dispatch_list(self, request, **kwargs):
         with client as c:
@@ -1693,6 +1698,11 @@ class TaskResourceMixin(object):
         if not self.is_webclient(bundle.request):
             return bundle
 
+        if self.is_webclient(bundle.request):
+            bundle.data['_run_url'] = reverse('snapshot_run', kwargs={
+                'oid': bundle.obj.id
+            })
+
         bundle.data['keep_for'] = f'{bundle.obj.task_lifetime_value} {bundle.obj.task_lifetime_unit.lower()}'
 
         for k in ['legacy', 'vmware_sync']:
@@ -1705,6 +1715,7 @@ class LegacyTaskResourceMixin(object):
 
     class Meta:
         resource_name = 'storage/task'
+        allowed_methods = ['get']
 
     def dehydrate(self, bundle):
         bundle = super(LegacyTaskResourceMixin, self).dehydrate(bundle)
@@ -1774,6 +1785,8 @@ class NFSResourceMixin(object):
 
     def hydrate(self, bundle):
         bundle = super(NFSResourceMixin, self).hydrate(bundle)
+        if bundle.data.get("nfs_srv_v4") is False:
+            bundle.data.setdefault("nfs_srv_v4_v3owner", False)
         if 'nfs_srv_bindip' not in bundle.data and bundle.obj.id:
             bundle.data['nfs_srv_bindip'] = (
                 bundle.obj.nfs_srv_bindip
@@ -2136,7 +2149,8 @@ class RsyncResourceMixin(NestedMixin):
         self.method_check(request, allowed=['post'])
 
         bundle, obj = self._get_parent(request, kwargs)
-        obj.run()
+        with client as c:
+            c.call('rsynctask.run', obj.id)
         return HttpResponse('Rsync job started.', status=202)
 
     def dehydrate(self, bundle):
@@ -2503,255 +2517,6 @@ class BsdGroupResourceMixin(object):
         return bundle
 
 
-class JailMountPointResourceMixin(object):
-
-    def dehydrate(self, bundle):
-        bundle = super(JailMountPointResourceMixin, self).dehydrate(bundle)
-        bundle.data['mounted'] = bundle.obj.mounted
-        return bundle
-
-
-class JailsResourceMixin(NestedMixin):
-
-    class Meta:
-        validation = FormValidation(form_class=JailsEditForm)
-        put_validation = FormValidation(form_class=JailsEditForm)
-
-    def prepend_urls(self):
-        return [
-            url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/restart%s$" % (
-                    self._meta.resource_name, trailing_slash()
-                ),
-                self.wrap_view('jail_restart'),
-                name="api_jails_jails_restart"
-            ),
-            url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/start%s$" % (
-                    self._meta.resource_name, trailing_slash()
-                ),
-                self.wrap_view('jail_start'),
-                name="api_jails_jails_start"
-            ),
-            url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/stop%s$" % (
-                    self._meta.resource_name, trailing_slash()
-                ),
-                self.wrap_view('jail_stop'),
-                name="api_jails_jails_stop"
-            ),
-        ]
-
-    def jail_restart(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-
-        bundle, obj = self._get_parent(request, kwargs)
-
-        notifier().reload("http")
-        try:
-            Warden().stop(jail=obj.jail_host)
-            Warden().start(jail=obj.jail_host)
-        except Exception as e:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e,
-                })
-            )
-
-        return HttpResponse('Jail restarted.', status=202)
-
-    def jail_start(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-
-        bundle, obj = self._get_parent(request, kwargs)
-
-        # TODO: Duplicated code - jails.views.jail_start
-        notifier().reload("http")
-        try:
-            Warden().start(jail=obj.jail_host)
-        except Exception as e:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e,
-                })
-            )
-
-        return HttpResponse('Jail started.', status=202)
-
-    def jail_stop(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-
-        bundle, obj = self._get_parent(request, kwargs)
-
-        # TODO: Duplicated code - jails.views.jail_stop
-        notifier().reload("http")
-        try:
-            Warden().stop(jail=obj.jail_host)
-        except Exception as e:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e,
-                })
-            )
-
-        return HttpResponse('Jail stopped.', status=202)
-
-    def dispatch_list(self, request, **kwargs):
-        proc = subprocess.Popen(
-            ["/usr/sbin/jls"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8'
-        )
-        self.__jls = proc.communicate()[0]
-        return super(JailsResourceMixin, self).dispatch_list(request, **kwargs)
-
-    def post_list(self, request, **kwargs):
-        raise ImmediateHttpResponse(
-            response=self.error_response(request, {
-                'error': 'No longer possible to create jails using API 1.0',
-            })
-        )
-
-    def post_form_save_hook(self, bundle, form):
-        if form.errors:
-            raise ImmediateHttpResponse(response=self.error_response(
-                bundle.request,
-                form.errors,
-                response_class=http.HttpConflict,
-            ))
-
-    def dehydrate(self, bundle):
-        bundle = super(JailsResourceMixin, self).dehydrate(bundle)
-
-        if self.is_webclient(bundle.request):
-            try:
-                reg = re.search(
-                    r'\s*?(\d+).*?\b%s\b' % bundle.obj.jail_host,
-                    self.__jls,
-                )
-                bundle.data['jail_jid'] = int(reg.groups()[0])
-            except Exception:
-                bundle.data['jail_jid'] = None
-
-            bundle.data['jail_os'] = 'FreeBSD'
-            if bundle.obj.is_linux_jail():
-                bundle.data['jail_os'] = 'Linux'
-
-            bundle.data['jail_isplugin'] = False
-            plugin = Plugins.objects.filter(plugin_jail=bundle.obj.jail_host)
-            if plugin:
-                bundle.data['jail_isplugin'] = True
-
-        if self.is_webclient(bundle.request):
-            bundle.data['_edit_url'] = reverse('jail_edit', kwargs={
-                'id': bundle.obj.id
-            })
-            bundle.data['_jail_storage_add_url'] = reverse(
-                'jail_storage_add', kwargs={'jail_id': bundle.obj.id}
-            )
-            bundle.data['_jail_start_url'] = reverse('jail_start', kwargs={
-                'id': bundle.obj.id
-            })
-            bundle.data['_jail_stop_url'] = reverse('jail_stop', kwargs={
-                'id': bundle.obj.id
-            })
-            bundle.data['_jail_restart_url'] = reverse('jail_restart', kwargs={
-                'id': bundle.obj.id
-            })
-            bundle.data['_jail_delete_url'] = reverse('jail_delete', kwargs={
-                'id': bundle.obj.id
-            })
-            if bundle.obj.jail_ipv4:
-                bundle.data['jail_ipv4'] = bundle.obj.jail_ipv4.split('/')[0]
-
-        return bundle
-
-
-class JailTemplateResourceMixin(object):
-
-    class Meta:
-        queryset = JailTemplate.objects.exclude(jt_system=True)
-        post_validation = FormValidation(form_class=JailTemplateCreateForm)
-        put_validation = FormValidation(form_class=JailTemplateEditForm)
-
-    def dehydrate(self, bundle):
-        bundle = super(JailTemplateResourceMixin, self).dehydrate(bundle)
-        bundle.data['jt_instances'] = bundle.obj.jt_instances
-
-        if self.is_webclient(bundle.request):
-            bundle.data['_edit_url'] = reverse(
-                'jail_template_edit',
-                kwargs={'id': bundle.obj.id},
-            )
-            bundle.data['_delete_url'] = reverse(
-                'jail_template_delete',
-                kwargs={'id': bundle.obj.id},
-            )
-
-        return bundle
-
-
-class PluginsResourceMixin(NestedMixin):
-
-    def prepend_urls(self):
-        return [
-            url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/start%s$" % (
-                    self._meta.resource_name, trailing_slash()
-                ),
-                self.wrap_view('plugin_start'),
-                name="api_plugins_plugins_start"
-            ),
-            url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/stop%s$" % (
-                    self._meta.resource_name, trailing_slash()
-                ),
-                self.wrap_view('plugin_stop'),
-                name="api_plugin_plugins_stop"
-            ),
-        ]
-
-    def plugin_start(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-
-        bundle, obj = self._get_parent(request, kwargs)
-
-        try:
-            success, errmsg = obj.service_start(request)
-            if success is not True:
-                raise ValueError(errmsg)
-        except Exception as e:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e,
-                })
-            )
-
-        return HttpResponse('Plugin started.', status=202)
-
-    def plugin_stop(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-
-        bundle, obj = self._get_parent(request, kwargs)
-
-        try:
-            success, errmsg = obj.service_stop(request)
-            if success is not True:
-                raise ValueError(errmsg)
-        except Exception as e:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e,
-                })
-            )
-
-        return HttpResponse('Plugin stopped.', status=202)
-
-    def dehydrate(self, bundle):
-        host = get_base_url(bundle.request)
-        plugin, status, jstatus = get_plugin_status((bundle.obj, host, bundle.request))
-        bundle.data['plugin_status'] = status['status'] if status and 'status' in status else 'UNKNOWN'
-        return bundle
-
-
 class SnapshotResource(DojoResource):
 
     id = fields.CharField(attribute='fullname')
@@ -2823,10 +2588,14 @@ class SnapshotResource(DojoResource):
             request.body,
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
-        rv = notifier().rollback_zfs_snapshot(snapshot=kwargs['pk'], force=deserialized.get('force', False))
-        if rv != '':
+        try:
+            with client as c:
+                c.call('zfs.snapshot.rollback', kwargs['pk'], {
+                    'recursive': deserialized.get('force', False)
+                })
+        except ClientException as e:
             raise ImmediateHttpResponse(
-                response=self.error_response(request, rv)
+                response=self.error_response(request, str(e))
             )
 
         return HttpResponse('Snapshot rolled back.', status=202)
@@ -2953,11 +2722,12 @@ class SnapshotResource(DojoResource):
         snap = snap[0][0]
 
         try:
-            notifier().destroy_zfs_dataset(path=kwargs['pk'])
-        except MiddlewareError as e:
+            with client as c:
+                c.call('zfs.snapshot.delete', kwargs['pk'])
+        except ClientException as e:
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, {
-                    'error': e.value,
+                    'error': str(e),
                 })
             )
 
@@ -3109,9 +2879,11 @@ class DebugResource(DojoResource):
         resource_name = 'system/debug'
 
     def post_list(self, request, **kwargs):
-        debug_generate()
+        with client as c:
+            url = c.call('core.download', 'system.debug_download', [], 'debug.tar')[1]
+            url = base64.b64encode(url.encode()).decode()
         data = {
-            'url': reverse('system_debug_download'),
+            'url': reverse('system_debug_download') + f'?url=url',
         }
         return self.create_response(request, data)
 
@@ -3258,22 +3030,38 @@ class CertificateAuthorityResourceMixin(object):
             form.save()
         return HttpResponse('Certificate Authority created.', status=201)
 
+    def dispatch_list(self, request, **kwargs):
+        with client as c:
+            self.__certs = {cert['id']: cert for cert in c.call('certificateauthority.query')}
+
+        return super(CertificateAuthorityResourceMixin, self).dispatch_list(request, **kwargs)
+
     def dehydrate(self, bundle):
         bundle = super(CertificateAuthorityResourceMixin,
                        self).dehydrate(bundle)
 
         try:
-            bundle.data['cert_internal'] = bundle.obj.cert_internal
-            bundle.data['cert_issuer'] = bundle.obj.cert_issuer
-            bundle.data['cert_ncertificates'] = bundle.obj.cert_ncertificates
-            bundle.data['cert_DN'] = bundle.obj.cert_DN
-            bundle.data['cert_from'] = bundle.obj.cert_from
-            bundle.data['cert_until'] = bundle.obj.cert_until
+            data = self.__certs[bundle.obj.id]
+
+            if isinstance(data['issuer'], dict):
+                data['issuer'] = data['issuer']['name']
+
+            bundle.data['cert_ncertificates'] = data['signed_certificates']
             bundle.data['cert_privatekey'] = bundle.obj.cert_privatekey
 
-            bundle.data['CA_type_existing'] = bundle.obj.CA_type_existing
-            bundle.data['CA_type_internal'] = bundle.obj.CA_type_internal
-            bundle.data['CA_type_intermediate'] = bundle.obj.CA_type_intermediate
+            bundle.data['CA_type_existing'] = data['CA_type_existing']
+            bundle.data['CA_type_internal'] = data['CA_type_internal']
+            bundle.data['CA_type_intermediate'] = data['CA_type_intermediate']
+
+            # Keeping consistent with old api v1 fields
+            bundle.data.update({
+                f'cert_{k}': data.get(k)
+                for k in [
+                    'key_length', 'digest_algorithm', 'lifetime', 'country', 'state', 'city',
+                    'organization', 'organizational_unit', 'email', 'common', 'san', 'serial',
+                    'chain', 'until', 'from', 'DN', 'issuer', 'internal'
+                ]
+            })
 
             if self.is_webclient(bundle.request):
                 bundle.data['_sign_csr_url'] = reverse(
@@ -3302,13 +3090,9 @@ class CertificateAuthorityResourceMixin(object):
                 )
         except Exception as err:
             bundle.data['cert_DN'] = "ERROR: " + str(err)
-            # There was an error parsing this Certificate Authority object
-            # Creating a sentinel file for the alertmod to pick it up
-            with open('/tmp/alert_invalidCA_{0}'.format(bundle.obj.cert_name),
-                      'w') as fout:
-                fout.write('')
-
-            run_alerts()
+        else:
+            if not bundle.data.get('cert_DN'):
+                bundle.data['cert_DN'] = 'Failed to parse'
 
         return bundle
 
@@ -3476,23 +3260,40 @@ class CertificateResourceMixin(object):
             form.save()
         return HttpResponse('Certificate created.', status=201)
 
+    def dispatch_list(self, request, **kwargs):
+        with client as c:
+            self.__certs = {cert['id']: cert for cert in c.call('certificate.query')}
+
+        return super(CertificateResourceMixin, self).dispatch_list(request, **kwargs)
+
     def dehydrate(self, bundle):
         bundle = super(CertificateResourceMixin, self).dehydrate(bundle)
 
         try:
-            bundle.data['cert_issuer'] = bundle.obj.cert_issuer
-            bundle.data['cert_DN'] = bundle.obj.cert_DN
+            data = self.__certs[bundle.obj.id]
+
+            if isinstance(data['issuer'], dict):
+                data['issuer'] = data['issuer']['name']
+
             bundle.data['cert_CSR'] = bundle.obj.cert_CSR
-            bundle.data['cert_from'] = bundle.obj.cert_from
-            bundle.data['cert_until'] = bundle.obj.cert_until
             bundle.data['cert_privatekey'] = bundle.obj.cert_privatekey
 
-            bundle.data['cert_type_existing'] = bundle.obj.cert_type_existing
-            bundle.data['cert_type_internal'] = bundle.obj.cert_type_internal
-            bundle.data['cert_type_CSR'] = bundle.obj.cert_type_CSR
+            bundle.data['cert_type_existing'] = data['cert_type_existing']
+            bundle.data['cert_type_internal'] = data['cert_type_internal']
+            bundle.data['cert_type_CSR'] = data['cert_type_CSR']
+
+            # Keeping consistent with old api v1 fields
+            bundle.data.update({
+                f'cert_{k}': data.get(k)
+                for k in [
+                    'key_length', 'digest_algorithm', 'lifetime', 'country', 'state', 'city',
+                    'organization', 'organizational_unit', 'email', 'common', 'san', 'serial',
+                    'chain', 'until', 'from', 'DN', 'issuer'
+                ]
+            })
 
             if self.is_webclient(bundle.request):
-                if bundle.obj.cert_type_CSR:
+                if data['cert_type_CSR']:
                     bundle.data['_CSR_edit_url'] = reverse(
                         'CSR_edit',
                         kwargs={
@@ -3535,14 +3336,11 @@ class CertificateResourceMixin(object):
                         'id': bundle.obj.id
                     }
                 )
-        except Exception:
-            # There was an error parsing this Certificate object
-            # Creating a sentinel file for the alertmod to pick it up
-            with open('/tmp/alert_invalidcert_{0}'.format(bundle.obj.cert_name),
-                      'w') as fout:
-                fout.write('')
-
-            run_alerts()
+        except Exception as err:
+            bundle.data['cert_DN'] = "ERROR: " + str(err)
+        else:
+            if not bundle.data.get('cert_DN'):
+                bundle.data['cert_DN'] = 'Failed to parse'
 
         return bundle
 

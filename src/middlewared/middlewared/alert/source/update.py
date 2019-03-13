@@ -29,7 +29,7 @@ class HasUpdateAlertSource(ThreadedAlertSource):
                 "upd_train": "",
             })
 
-        path = self.middleware.call_sync("notifier.get_update_location")
+        path = self.middleware.call_sync("update.get_update_location")
         if not path:
             return
 

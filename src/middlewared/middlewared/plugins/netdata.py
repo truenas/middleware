@@ -10,6 +10,9 @@ from middlewared.validators import IpAddress, Port, Unique, UUID, validate_attri
 
 class NetDataService(SystemServiceService):
 
+    READ_HEALTH_DIRECTORY = '/usr/local/lib/netdata/conf.d/health.d/'
+    WRITE_HEALTH_DIRECTORY = '/usr/local/etc/netdata/health.d'
+
     class Config:
         service = 'netdata'
         service_model = 'netdataglobalsettings'
@@ -30,7 +33,8 @@ class NetDataService(SystemServiceService):
         data['alarms'] = alarms
         for alarm in data['alarms']:
             # Remove conf file paths
-            data['alarms'][alarm].pop('path', None)
+            data['alarms'][alarm].pop('read_path', None)
+            data['alarms'][alarm].pop('write_path', None)
         return data
 
     @private
@@ -47,17 +51,21 @@ class NetDataService(SystemServiceService):
 
     @private
     def _initialize_alarms(self):
-        path = '/usr/local/etc/netdata/health.d/'
         pattern = re.compile(r'alarm: +(.*)(?:[\s\S]*?os: +(.*)\n)?')
 
-        for file in [f for f in os.listdir(path) if 'sample' not in f]:
-            with open(path + file, 'r') as f:
+        for file in [f for f in os.listdir(self.READ_HEALTH_DIRECTORY) if 'sample' not in f]:
+            path = os.path.join(self.READ_HEALTH_DIRECTORY, file)
+            with open(path, 'r') as f:
                 for alarm in re.findall(pattern, f.read()):
                     # By default all alarms are enabled in netdata
                     # When we list alarms, alarms which have been configured by user to be disabled
                     # will show up as disabled only
                     if 'freebsd' in alarm[1] or not alarm[1]:
-                        self._alarms[alarm[0].strip()] = {'path': path + file, 'enabled': True}
+                        self._alarms[alarm[0].strip()] = {
+                            'read_path': path,
+                            'enabled': True,
+                            'write_path': os.path.join(self.WRITE_HEALTH_DIRECTORY, file)
+                        }
 
     @private
     async def validate_attrs(self, data):
@@ -166,7 +174,7 @@ class NetDataService(SystemServiceService):
                     else:
                         if ':' in dest:
                             try:
-                                port(dest.split(':')[1])
+                                port(int(dest.split(':')[1]))
                             except ValueError as e:
                                 verrors.add(
                                     'netdata_update.destination',

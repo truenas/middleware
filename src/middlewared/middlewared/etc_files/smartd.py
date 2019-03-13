@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 async def annotate_disk_for_smart(devices, disk):
-    if disk["disk_name"] is None or re.match(r"/dev/nvd", disk["disk_name"]):
+    if disk["disk_name"] is None or disk["disk_name"].startswith("nvd"):
         return
 
     device = devices.get(disk["disk_name"])
@@ -25,7 +25,7 @@ async def annotate_disk_for_smart(devices, disk):
 
 
 async def ensure_smart_enabled(args):
-    p = await run(["smartctl", "-i"] + args, stderr=subprocess.STDOUT, check=False, encoding="utf8")
+    p = await run(["smartctl", "-i"] + args, stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
     if not re.search("SMART.*abled", p.stdout):
         logger.debug("SMART is not supported on %r", args)
         return False
@@ -33,7 +33,7 @@ async def ensure_smart_enabled(args):
     if re.search("SMART.*Enabled", p.stdout):
         return True
 
-    p = await run(["smartctl", "-s", "on"] + args, stderr=subprocess.STDOUT, check=False, encoding="utf8")
+    p = await run(["smartctl", "-s", "on"] + args, stderr=subprocess.STDOUT, check=False)
     if p.returncode == 0:
         return True
     else:
@@ -92,8 +92,9 @@ def get_smartd_schedule_piece(value, min, max, enum=None):
             return "." * width
         values = [v for v in range(min, max + 1) if v % d == 0]
     else:
-        values = list(filter(None, map(lambda s: enum.get(s.lower(), int(s) if re.match("([0-9]+)$", s) else None),
-                                       value.split(","))))
+        values = list(filter(lambda v: v is not None,
+                             map(lambda s: enum.get(s.lower(), int(s) if re.match("([0-9]+)$", s) else None),
+                                 value.split(","))))
         if values == list(range(min, max + 1)):
             return "." * width
 

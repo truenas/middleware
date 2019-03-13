@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import errno
 import inspect
 import os
@@ -434,24 +435,30 @@ class ServiceService(CRUDService):
         await self._system("ulimit -n 1024 && /usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
     async def _restart_iscsitarget(self, **kwargs):
-        await self._service("ix-ctld", "start", force=True, **kwargs)
+        await self.middleware.call("etc.generate", "ctld")
         await self._service("ctld", "stop", force=True, **kwargs)
-        await self._service("ix-ctld", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "ctld")
         await self._service("ctld", "restart", **kwargs)
 
     async def _start_iscsitarget(self, **kwargs):
-        await self._service("ix-ctld", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "ctld")
         await self._service("ctld", "start", **kwargs)
 
     async def _stop_iscsitarget(self, **kwargs):
-        await self._service("ix-ctld", "stop", force=True, **kwargs)
+        with contextlib.suppress(IndexError):
+            sysctl.filter("kern.cam.ctl.ha_peer")[0].value = ""
+
         await self._service("ctld", "stop", force=True, **kwargs)
 
     async def _reload_iscsitarget(self, **kwargs):
-        await self._service("ix-ctld", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "ctld")
         await self._service("ctld", "reload", **kwargs)
 
     async def _start_collectd(self, **kwargs):
+        if not await self.started('rrdcached'):
+            # Let's ensure that before we start collectd, rrdcached is always running
+            await self.start('rrdcached')
+
         await self.middleware.call('etc.generate', 'collectd')
         await self._service("collectd", "restart", **kwargs)
 
@@ -459,68 +466,55 @@ class ServiceService(CRUDService):
         await self._service("collectd", "stop", **kwargs)
         await self._start_collectd(**kwargs)
 
-    async def _start_sysctl(self, **kwargs):
-        await self._service("ix-sysctl", "start", quiet=True, **kwargs)
+    async def _started_collectd(self, **kwargs):
+        if await self._service('collectd', 'status', quiet=True, **kwargs):
+            return False, []
+        else:
+            return True, []
+
+    async def _started_rrdcached(self, **kwargs):
+        if await self._service('rrdcached', 'status', quiet=True, **kwargs):
+            return False, []
+        else:
+            return True, []
+
+    async def _stop_rrdcached(self, **kwargs):
+        await self._service("collectd", "stop", **kwargs)
+        await self._service('rrdcached', 'stop', **kwargs)
+
+    async def _restart_rrdcached(self, **kwargs):
+        await self._stop_rrdcached(**kwargs)
+        await self.start('rrdcached')
+        await self.start('collectd')
 
     async def _reload_sysctl(self, **kwargs):
-        await self._service("ix-sysctl", "reload", **kwargs)
+        await self.middleware.call('etc.generate', 'sysctl')
 
     async def _start_network(self, **kwargs):
         await self.middleware.call('interface.sync')
         await self.middleware.call('route.sync')
-
-    async def _stop_jails(self, **kwargs):
-        for jail in await self.middleware.call('datastore.query', 'jails.jails'):
-            try:
-                await self.middleware.call('notifier.warden', 'stop', [], {'jail': jail['jail_host']})
-            except Exception as e:
-                self.logger.debug(f'Failed to stop jail {jail["jail_host"]}', exc_info=True)
-
-    async def _start_jails(self, **kwargs):
-        await self._service("ix-warden", "start", **kwargs)
-        for jail in await self.middleware.call('datastore.query', 'jails.jails'):
-            if jail['jail_autostart']:
-                try:
-                    await self.middleware.call('notifier.warden', 'start', [], {'jail': jail['jail_host']})
-                except Exception as e:
-                    self.logger.debug(f'Failed to start jail {jail["jail_host"]}', exc_info=True)
-        await self._service("ix-plugins", "start", **kwargs)
-        await self.reload("http", kwargs)
-
-    async def _restart_jails(self, **kwargs):
-        await self._stop_jails()
-        await self._start_jails()
-
-    async def _stop_pbid(self, **kwargs):
-        await self._service("pbid", "stop", **kwargs)
-
-    async def _start_pbid(self, **kwargs):
-        await self._service("pbid", "start", **kwargs)
-
-    async def _restart_pbid(self, **kwargs):
-        await self._service("pbid", "restart", **kwargs)
 
     async def _reload_named(self, **kwargs):
         await self._service("named", "reload", **kwargs)
 
     async def _reload_hostname(self, **kwargs):
         await self._system('/bin/hostname ""')
-        await self._service("ix-hostname", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'hostname')
         await self._service("hostname", "start", quiet=True, **kwargs)
         await self._service("mdnsd", "restart", quiet=True, **kwargs)
         await self._restart_collectd(**kwargs)
 
     async def _reload_resolvconf(self, **kwargs):
         await self._reload_hostname()
-        await self._service("ix-resolv", "start", quiet=True, **kwargs)
+        await self.middleware.call('dns.sync')
 
     async def _reload_networkgeneral(self, **kwargs):
         await self._reload_resolvconf()
         await self._service("routing", "restart", **kwargs)
 
     async def _reload_timeservices(self, **kwargs):
-        await self._service("ix-localtime", "start", quiet=True, **kwargs)
-        await self._service("ix-ntpd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'localtime')
+        await self.middleware.call('etc.generate', 'ntpd')
         await self._service("ntpd", "restart", **kwargs)
         settings = await self.middleware.call(
             'datastore.query',
@@ -530,6 +524,10 @@ class ServiceService(CRUDService):
         )
         os.environ['TZ'] = settings['stg_timezone']
         time.tzset()
+
+    async def _restart_ntpd(self, **kwargs):
+        await self.middleware.call('etc.generate', 'ntpd')
+        await self._service('ntpd', 'restart', **kwargs)
 
     async def _start_smartd(self, **kwargs):
         await self.middleware.call("etc.generate", "smartd")
@@ -545,25 +543,25 @@ class ServiceService(CRUDService):
         await self._service("smartd-daemon", "restart", **kwargs)
 
     async def _reload_ssh(self, **kwargs):
-        await self._service("ix-sshd", "start", quiet=True, **kwargs)
-        await self._service("ix_register", "reload", **kwargs)
+        await self.middleware.call('etc.generate', 'ssh')
+        await self.middleware.call('mdnsadvertise.restart')
         await self._service("openssh", "reload", **kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
     async def _start_ssh(self, **kwargs):
-        await self._service("ix-sshd", "start", quiet=True, **kwargs)
-        await self._service("ix_register", "reload", **kwargs)
+        await self.middleware.call('etc.generate', 'ssh')
+        await self.middleware.call('mdnsadvertise.restart')
         await self._service("openssh", "start", **kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
     async def _stop_ssh(self, **kwargs):
         await self._service("openssh", "stop", force=True, **kwargs)
-        await self._service("ix_register", "reload", **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
 
     async def _restart_ssh(self, **kwargs):
-        await self._service("ix-sshd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'ssh')
         await self._service("openssh", "stop", force=True, **kwargs)
-        await self._service("ix_register", "reload", **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
         await self._service("openssh", "restart", **kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
@@ -579,7 +577,7 @@ class ServiceService(CRUDService):
         await self._service("minio", "restart", quiet=True, stdout=None, stderr=None, **kwargs)
 
     async def _reload_rsync(self, **kwargs):
-        await self._service("ix-rsyncd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'rsync')
         await self._service("rsyncd", "restart", **kwargs)
 
     async def _restart_rsync(self, **kwargs):
@@ -587,7 +585,7 @@ class ServiceService(CRUDService):
         await self._start_rsync()
 
     async def _start_rsync(self, **kwargs):
-        await self._service("ix-rsyncd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'rsync')
         await self._service("rsyncd", "start", **kwargs)
 
     async def _stop_rsync(self, **kwargs):
@@ -713,31 +711,31 @@ class ServiceService(CRUDService):
         return res
 
     async def _restart_syslogd(self, **kwargs):
-        await self._service("ix-syslogd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "syslogd")
         await self._system("/etc/local/rc.d/syslog-ng restart")
 
     async def _start_syslogd(self, **kwargs):
-        await self._service("ix-syslogd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "syslogd")
         await self._system("/etc/local/rc.d/syslog-ng start")
 
     async def _stop_syslogd(self, **kwargs):
         await self._system("/etc/local/rc.d/syslog-ng stop")
 
     async def _reload_syslogd(self, **kwargs):
-        await self._service("ix-syslogd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "syslogd")
         await self._system("/etc/local/rc.d/syslog-ng reload")
 
     async def _start_tftp(self, **kwargs):
-        await self._service("ix-inetd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'inetd')
         await self._service("inetd", "start", **kwargs)
 
     async def _reload_tftp(self, **kwargs):
-        await self._service("ix-inetd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'inetd')
         await self._service("inetd", "stop", force=True, **kwargs)
         await self._service("inetd", "restart", **kwargs)
 
     async def _restart_tftp(self, **kwargs):
-        await self._service("ix-inetd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'inetd')
         await self._service("inetd", "stop", force=True, **kwargs)
         await self._service("inetd", "restart", **kwargs)
 
@@ -745,14 +743,14 @@ class ServiceService(CRUDService):
         await self._service("ix-crontab", "start", quiet=True, **kwargs)
 
     async def _start_motd(self, **kwargs):
-        await self._service("ix-motd", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'motd')
         await self._service("motd", "start", quiet=True, **kwargs)
 
     async def _start_ttys(self, **kwargs):
-        await self._service("ix-ttys", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'ttys')
 
     async def _reload_ftp(self, **kwargs):
-        await self._service("ix-proftpd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "ftp")
         await self._service("proftpd", "restart", **kwargs)
 
     async def _restart_ftp(self, **kwargs):
@@ -760,42 +758,43 @@ class ServiceService(CRUDService):
         await self._start_ftp()
 
     async def _start_ftp(self, **kwargs):
-        await self._service("ix-proftpd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "ftp")
         await self._service("proftpd", "start", **kwargs)
 
     async def _stop_ftp(self, **kwargs):
         await self._service("proftpd", "stop", force=True, **kwargs)
 
     async def _start_ups(self, **kwargs):
-        await self._service("ix-ups", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'ups')
         await self._service("nut", "start", **kwargs)
         await self._service("nut_upsmon", "start", **kwargs)
         await self._service("nut_upslog", "start", **kwargs)
+        if await self.started('collectd'):
+            asyncio.ensure_future(self.restart('collectd'))
 
     async def _stop_ups(self, **kwargs):
         await self._service("nut_upslog", "stop", force=True, **kwargs)
         await self._service("nut_upsmon", "stop", force=True, **kwargs)
         await self._service("nut", "stop", force=True, **kwargs)
+        if await self.started('collectd'):
+            asyncio.ensure_future(self.restart('collectd'))
 
     async def _restart_ups(self, **kwargs):
-        await self._service("ix-ups", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'ups')
         await self._service("nut", "stop", force=True, **kwargs)
         await self._service("nut_upsmon", "stop", force=True, **kwargs)
         await self._service("nut_upslog", "stop", force=True, **kwargs)
         await self._service("nut", "restart", **kwargs)
         await self._service("nut_upsmon", "restart", **kwargs)
         await self._service("nut_upslog", "restart", **kwargs)
+        if await self.started('collectd'):
+            asyncio.ensure_future(self.restart('collectd'))
 
     async def _started_ups(self, **kwargs):
-        mode = (await self.middleware.call('datastore.query', 'services.ups', [], {'order_by': ['-id'], 'get': True}))['ups_mode']
-        if mode == "master":
-            svc = "ups"
-        else:
-            svc = "upsmon"
-        return await self._started(svc)
+        return await self._started('upsmon')
 
     async def _start_afp(self, **kwargs):
-        await self._service("ix-afpd", "start", **kwargs)
+        await self.middleware.call("etc.generate", "afpd")
         await self._service("netatalk", "start", **kwargs)
 
     async def _stop_afp(self, **kwargs):
@@ -811,7 +810,7 @@ class ServiceService(CRUDService):
         await self._start_afp()
 
     async def _reload_afp(self, **kwargs):
-        await self._service("ix-afpd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "afpd")
         await self._system("killall -1 netatalk")
 
     async def _reload_nfs(self, **kwargs):
@@ -857,54 +856,25 @@ class ServiceService(CRUDService):
         await self._service("statd", "start", quiet=True, **kwargs)
         await self._service("lockd", "start", quiet=True, **kwargs)
 
-    async def _force_stop_jail(self, **kwargs):
-        await self._service("jail", "stop", force=True, **kwargs)
-
-    async def _start_plugins(self, jail=None, plugin=None, **kwargs):
-        if jail and plugin:
-            await self._system("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, plugin))
-        else:
-            await self._service("ix-plugins", "start", force=True, **kwargs)
-
-    async def _stop_plugins(self, jail=None, plugin=None, **kwargs):
-        if jail and plugin:
-            await self._system("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, plugin))
-        else:
-            await self._service("ix-plugins", "stop", force=True, **kwargs)
-
-    async def _restart_plugins(self, jail=None, plugin=None):
-        await self._stop_plugins(jail=jail, plugin=plugin)
-        await self._start_plugins(jail=jail, plugin=plugin)
-
-    async def _started_plugins(self, jail=None, plugin=None, **kwargs):
-        res = False
-        if jail and plugin:
-            if self._system("/usr/sbin/service ix-plugins status %s:%s" % (jail, plugin)) == 0:
-                res = True
-        else:
-            if await self._service("ix-plugins", "status", **kwargs) == 0:
-                res = True
-        return res, []
-
     async def _start_dynamicdns(self, **kwargs):
-        await self._service("ix-inadyn", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'inadyn')
         await self._service("inadyn", "start", **kwargs)
 
     async def _restart_dynamicdns(self, **kwargs):
-        await self._service("ix-inadyn", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'inadyn')
         await self._service("inadyn", "stop", force=True, **kwargs)
         await self._service("inadyn", "restart", **kwargs)
 
     async def _reload_dynamicdns(self, **kwargs):
-        await self._service("ix-inadyn", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'inadyn')
         await self._service("inadyn", "stop", force=True, **kwargs)
         await self._service("inadyn", "restart", **kwargs)
 
     async def _restart_system(self, **kwargs):
-        asyncio.ensure_future(self._system("/bin/sleep 3 && /sbin/shutdown -r now"))
+        asyncio.ensure_future(self.middleware.call('system.reboot', {'delay': 3}))
 
     async def _stop_system(self, **kwargs):
-        asyncio.ensure_future(self._system("/bin/sleep 3 && /sbin/shutdown -p now"))
+        asyncio.ensure_future(self.middleware.call('system.shutdown', {'delay': 3}))
 
     async def _reload_cifs(self, **kwargs):
         await self.middleware.call("etc.generate", "smb_share")
@@ -939,7 +909,7 @@ class ServiceService(CRUDService):
             return True, []
 
     async def _start_snmp(self, **kwargs):
-        await self._service("ix-snmpd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "snmpd")
         await self._service("snmpd", "start", quiet=True, **kwargs)
         await self._service("snmp-agent", "start", quiet=True, **kwargs)
 
@@ -950,50 +920,45 @@ class ServiceService(CRUDService):
     async def _restart_snmp(self, **kwargs):
         await self._service("snmp-agent", "stop", quiet=True, **kwargs)
         await self._service("snmpd", "stop", force=True, **kwargs)
-        await self._service("ix-snmpd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "snmpd")
         await self._service("snmpd", "start", quiet=True, **kwargs)
         await self._service("snmp-agent", "start", quiet=True, **kwargs)
 
     async def _reload_snmp(self, **kwargs):
         await self._service("snmp-agent", "stop", quiet=True, **kwargs)
         await self._service("snmpd", "stop", force=True, **kwargs)
-        await self._service("ix-snmpd", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "snmpd")
         await self._service("snmpd", "start", quiet=True, **kwargs)
         await self._service("snmp-agent", "start", quiet=True, **kwargs)
 
     async def _restart_http(self, **kwargs):
         await self.middleware.call("etc.generate", "nginx")
-        await self._service("ix_register", "reload", **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
         await self._service("nginx", "restart", **kwargs)
 
     async def _reload_http(self, **kwargs):
         await self.middleware.call("etc.generate", "nginx")
-        await self._service("ix_register", "reload", **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
         await self._service("nginx", "reload", **kwargs)
 
     async def _reload_loader(self, **kwargs):
-        await self._service("ix-loader", "reload", **kwargs)
-
-    async def _start_loader(self, **kwargs):
-        await self._service("ix-loader", "start", quiet=True, **kwargs)
+        await self.middleware.call("etc.generate", "loader")
 
     async def _restart_disk(self, **kwargs):
         await self._reload_disk(**kwargs)
 
     async def _reload_disk(self, **kwargs):
-        await self._service("ix-fstab", "start", quiet=True, **kwargs)
-        await self._service("ix-swap", "start", quiet=True, **kwargs)
-        await self._service("swap", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'fstab')
         await self._service("mountlate", "start", quiet=True, **kwargs)
-        # Restarting collectd may take a long time and there is no
-        # benefit in waiting for it since even if it fails it wont
+        # Restarting rrdcached can take a long time. There is no
+        # benefit in waiting for it, since even if it fails it will not
         # tell the user anything useful.
         asyncio.ensure_future(self.restart("collectd", kwargs))
 
     async def _reload_user(self, **kwargs):
         await self.middleware.call("etc.generate", "user")
-        await self._service("ix-aliases", "start", quiet=True, **kwargs)
-        await self._service("ix-sudoers", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'aliases')
+        await self.middleware.call('etc.generate', 'sudoers')
         await self.reload("cifs", kwargs)
 
     async def _restart_system_datasets(self, **kwargs):
@@ -1003,11 +968,12 @@ class ServiceService(CRUDService):
         if systemdataset['syslog']:
             await self.restart("syslogd", kwargs)
         await self.restart("cifs", kwargs)
-        if systemdataset['rrd']:
-            # Restarting collectd may take a long time and there is no
-            # benefit in waiting for it since even if it fails it wont
-            # tell the user anything useful.
-            asyncio.ensure_future(self.restart("collectd", kwargs))
+
+        # Restarting rrdcached can take a long time. There is no
+        # benefit in waiting for it, since even if it fails it will not
+        # tell the user anything useful.
+        # Restarting rrdcached will make sure that we start/restart collectd as well
+        asyncio.ensure_future(self.restart("rrdcached", kwargs))
 
     async def _start_netdata(self, **kwargs):
         await self.middleware.call('etc.generate', 'netdata')

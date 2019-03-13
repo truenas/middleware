@@ -1,2 +1,2 @@
 #!/bin/sh
-exec /usr/local/bin/sqlite3 -cmd ".timeout 2000" "$@"
+exec /usr/local/bin/sqlite3 -cmd ".timeout 60000" "$@"
