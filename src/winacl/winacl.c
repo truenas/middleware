@@ -314,9 +314,14 @@ set_windows_acls(struct windows_acl_info *w)
 	int options = 0;
 	char *paths[4];
 	int rval;
+	struct stat ftsroot_st;
 
 	if (w == NULL)
 		return (-1);
+
+	if (stat(w->path, &ftsroot_st) < 0) {
+		err(EX_OSERR, "%s: stat() failed", w->path);
+	}
 
 	paths[0] = w->path;
 	paths[1] = NULL;
@@ -338,6 +343,17 @@ set_windows_acls(struct windows_acl_info *w)
 				rval = set_windows_acl(w, entry);
 				break;
 			}
+		}
+
+		/*
+		 * Recursively set permissions for the target path.
+		 * In case FTS_XDEV is set, we still need to check st_dev to avoid
+		 * resetting permissions on subdatasets (FTS_XDEV will only prevent us
+		 * from recursing into directories inside the subdataset.
+		 */
+
+		if ( (options & FTS_XDEV) && (ftsroot_st.st_dev != entry->fts_statp->st_dev) ){
+			continue;
 		}
 
 		switch (entry->fts_info) {
@@ -421,17 +437,104 @@ make_acls(struct windows_acl_info *w)
 static void
 clone_acls(struct windows_acl_info *w)
 {
-	/* create a directory acl */
-	if ((w->dacl = acl_dup(w->source_acl)) == NULL)
-		err(EX_OSERR, "acl_dup() failed");
+	acl_t tmp_acl;
+	acl_entry_t entry, file_entry, dir_entry;
+	acl_permset_t permset;
+	acl_flagset_t flagset, file_flag, dir_flag;
+	int entry_id, f_entry_id, d_entry_id, must_set_facl, must_set_dacl;
+	entry_id = f_entry_id = d_entry_id = ACL_FIRST_ENTRY;
+	must_set_facl = must_set_dacl = true;
 
-	set_inherited_flag(&w->dacl);
+	/* initialize separate directory and file ACLs */
+	if ((w->dacl = acl_init(ACL_MAX_ENTRIES)) == NULL) {
+		err(EX_OSERR, "failed to initialize directory ACL");
+	}
+	if ((w->facl = acl_init(ACL_MAX_ENTRIES)) == NULL) {
+		err(EX_OSERR, "failed to initialize file ACL");
+	}
 
-	/* create a file acl */
-	if ((w->facl = acl_dup(w->source_acl)) == NULL)
+	tmp_acl = acl_dup(w->source_acl);
+
+	if (tmp_acl == NULL) {
 		err(EX_OSERR, "acl_dup() failed");
-	remove_inherit_flags(&w->facl);
-	set_inherited_flag(&w->facl);
+	}
+
+	while (acl_get_entry(tmp_acl, entry_id, &entry) == 1) {
+		entry_id = ACL_NEXT_ENTRY;
+		if (acl_get_permset(entry, &permset)) {
+			err(EX_OSERR, "acl_get_permset() failed");
+		}
+		if (acl_get_flagset_np(entry, &flagset)) {
+			err(EX_OSERR, "acl_get_flagset_np() failed");
+		}
+
+		/* Entry is not inheritable at all. Skip. */
+		if ((*flagset & (ACL_ENTRY_DIRECTORY_INHERIT|ACL_ENTRY_FILE_INHERIT)) == 0) {
+			continue;
+		}
+
+		/*
+		 * FIXME: for now we will bail if NO_PROPAGATE is set. Proper handling of this
+		 * inheritance bit will require a significant restructuring of winacl.
+		 */
+		if (*flagset & ACL_ENTRY_NO_PROPAGATE_INHERIT) {
+			continue;
+		} 
+
+		/* Skip if the ACE has NO_PROPAGATE flag set and does not have INHERIT_ONLY flag. */
+		if ((*flagset & ACL_ENTRY_NO_PROPAGATE_INHERIT) &&
+		    (*flagset & ACL_ENTRY_INHERIT_ONLY) == 0) {
+			continue;
+		}
+
+		/*
+		 * By the time we've gotten here, we're inheriting something somewhere.
+		 * Strip inherit only from the flagset and set ACL_ENTRY_INHERITED.
+		 */
+
+		*flagset |= ACL_ENTRY_INHERITED;
+		*flagset &= ~ACL_ENTRY_INHERIT_ONLY;
+
+		/*
+		 * Add the entries to the file ACL and directory ACL. Since files and directories
+		 * will require differnt flags to be set, we make separate callse to acl_get_flagset_np()
+		 * to modify the flagset of the new ACEs.
+		 */
+		if (must_set_facl) {
+			if (acl_create_entry_np(&w->facl, &file_entry, f_entry_id) == -1) {
+				err(EX_OSERR, "acl_create_entry() failed");
+			}
+			if (acl_copy_entry(file_entry, entry) == -1) {
+				err(EX_OSERR, "acl_create_entry() failed");
+			}
+			if (acl_get_flagset_np(file_entry, &file_flag)) {
+				err(EX_OSERR, "acl_get_flagset_np() failed");
+			}
+			*file_flag &= ~(ACL_ENTRY_DIRECTORY_INHERIT|ACL_ENTRY_FILE_INHERIT);
+			f_entry_id ++;
+		}
+		if (must_set_dacl) {
+			if (acl_create_entry_np(&w->dacl, &dir_entry, d_entry_id) == -1) {
+				err(EX_OSERR, "acl_create_entry() failed");
+			}
+			if (acl_copy_entry(dir_entry, entry) == -1) {
+				err(EX_OSERR, "acl_create_entry() failed");
+			}
+			if (acl_get_flagset_np(dir_entry, &dir_flag)) {
+				err(EX_OSERR, "acl_get_flagset_np() failed");
+			}
+			/*
+			 * If only FILE_INHERIT is set then turn on INHERIT_ONLY
+			 * on directories. This is to prevent ACE from applying to directories.
+			 */
+			if ((*flagset & ACL_ENTRY_DIRECTORY_INHERIT) == 0) {
+				*dir_flag |= ACL_ENTRY_INHERIT_ONLY;
+			}
+			d_entry_id ++;
+		}
+
+	}
+	acl_free(tmp_acl);
 }
 
 int
