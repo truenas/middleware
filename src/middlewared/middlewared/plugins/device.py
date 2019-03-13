@@ -66,9 +66,11 @@ async def devd_loop(middleware):
                 await asyncio.sleep(1)
                 continue
             await devd_listen(middleware)
+        except ConnectionRefusedError:
+            middleware.logger.warn('devd connection refused, retrying...')
         except OSError:
             middleware.logger.warn('devd pipe error, retrying...', exc_info=True)
-            await asyncio.sleep(1)
+        await asyncio.sleep(1)
 
 
 def parse_devd_message(msg):
