@@ -756,6 +756,15 @@ async def hook_pool_lock(middleware, pool=None):
         middleware.logger.warn('Failed to clear encryption key on standby node: %s', e)
 
 
+async def hook_pool_rekey(middleware, pool=None):
+    if not pool or not pool['encryptkey_path']:
+        return
+    try:
+        await middleware.call('failover.send_small_file', pool['encryptkey_path'])
+    except Exception as e:
+        middleware.logger.warn('Failed to send encryptkey to standby node: %s', e)
+
+
 async def service_remote(middleware, service, verb, options):
     """
     Most of service actions need to be replicated to the standby node so we don't lose
@@ -798,6 +807,7 @@ def setup(middleware):
     middleware.register_hook('pool.post_export', hook_pool_export, sync=True)
     middleware.register_hook('pool.post_import_pool', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_lock', hook_pool_lock, sync=True)
+    middleware.register_hook('pool.rekey_done', hook_pool_rekey, sync=True)
     middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.general.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('service.pre_action', service_remote, sync=False)
