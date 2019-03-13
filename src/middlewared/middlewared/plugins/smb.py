@@ -80,12 +80,12 @@ class SMBService(SystemServiceService):
         entries here can pose a significant security risk. The only default entry will
         have a RID value of "512" (Domain Admins).
         In LDAP environments, members of S-1-5-32-544 cannot be removed without impacting
-        entire LDAP environment because this alias exists on the remote LDAP server.
+        the entire LDAP environment because this alias exists on the remote LDAP server.
         """
         sid_is_present = False
         ldap = await self.middleware.call('datastore.config', 'directoryservice.ldap')
         if ldap['ldap_enable']:
-            self.logger.debug("LDAP is enabled. Not removing extra alias entries.")
+            self.logger.debug("As a safety precaution, extra alias entries for S-1-5-32-544 cannot be removed while LDAP is enabled. Skipping removal.")
             return True
         proc = await Popen(
             ['/usr/local/bin/net', 'groupmap', 'listmem', 'S-1-5-32-544'],
@@ -136,18 +136,18 @@ class SMBService(SystemServiceService):
     async def add_admin_group(self, admin_group=None, check_deferred=False):
         """
         Add a local or directory service group to BUILTIN\\Administrators (S-1-5-32-544)
-        Members of this group have elevated privileges to the samba server (ability to
-        take ownership of Files, override ACLs, view and modify user quotas, and administer
+        Members of this group have elevated privileges to the Samba server (ability to
+        take ownership of files, override ACLs, view and modify user quotas, and administer
         the server via the Computer Management MMC Snap-In. Unfortuntely, group membership
         must be managed via "net groupmap listmem|addmem|delmem", which requires that
-        winbind be running when the commands are executed. In this situation net command
+        winbind be running when the commands are executed. In this situation, net command
         will fail with WBC_ERR_WINBIND_NOT_AVAILABLE. If this error message is returned, then
         flag for a deferred command retry when service starts.
 
         @param-in (admin_group): This is the group to add to BUILTIN\\Administrators. If unset, then
             look up the value in the config db.
         @param-in (check_deferred): If this is True, then only perform the group mapping if this has
-            been flagged as in need of deferred setup (i.e. samba wasn't running when it was initially
+            been flagged as in need of deferred setup (i.e. Samba wasn't running when it was initially
             called). This is to avoid unecessarily calling during service start.
         """
 
@@ -155,7 +155,7 @@ class SMBService(SystemServiceService):
         if check_deferred:
             is_deferred = await self.middleware.call('cache.has_key', 'SMB_SET_ADMIN')
             if not is_deferred:
-                self.logger.debug("No delayed action to add admin_group detected.")
+                self.logger.debug("No cache entry indicating delayed action to add admin_group was found.")
                 return True
             else:
                 await self.middleware.call('cache.pop', 'SMB_SET_ADMIN')
