@@ -333,6 +333,27 @@ class Disk(Model):
         editable=False,
         blank=True,
     )
+    disk_type = models.CharField(
+        choices=(
+            ('SSD', 'SSD'),
+            ('HDD', 'HDD'),
+            ('UNKNOWN', 'UNKNOWN'),
+        ),
+        max_length=20,
+        editable=False,
+        default='UNKNOWN',
+    )
+    disk_rotationrate = models.IntegerField(
+        editable=False,
+        default=None,
+        null=True,
+    )
+    disk_model = models.CharField(
+        editable=False,
+        default=None,
+        max_length=200,
+        null=True,
+    )
     disk_multipath_name = models.CharField(
         max_length=30,
         verbose_name=_("Multipath name"),
