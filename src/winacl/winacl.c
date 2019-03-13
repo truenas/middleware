@@ -448,29 +448,24 @@ clone_acls(struct windows_acl_info *w)
 
 	/* initialize separate directory and file ACLs */
 	if ((w->dacl = acl_init(ACL_MAX_ENTRIES)) == NULL) {
-		return -1;
 		err(EX_OSERR, "failed to initialize directory ACL");
 	}
 	if ((w->facl = acl_init(ACL_MAX_ENTRIES)) == NULL) {
-		return -1;
 		err(EX_OSERR, "failed to initialize file ACL");
 	}
 
 	tmp_acl = acl_dup(w->source_acl);
 
 	if (tmp_acl == NULL) {
-		return -1;
 		err(EX_OSERR, "acl_dup() failed");
 	}
 
 	while (acl_get_entry(tmp_acl, entry_id, &entry) == 1) {
 		entry_id = ACL_NEXT_ENTRY;
 		if (acl_get_permset(entry, &permset)) {
-			return -1;
 			err(EX_OSERR, "acl_get_permset() failed");
 		}
 		if (acl_get_flagset_np(entry, &flagset)) {
-			return -1;
 			err(EX_OSERR, "acl_get_flagset_np() failed");
 		}
 
