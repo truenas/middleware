@@ -153,6 +153,13 @@ class EnclosureService(CRUDService):
                     if element:
                         element.device_slot_set("fault")
 
+            # We want spares to only identify slot for Z-series
+            # See #32706
+            if self.middleware.call_sync("truenas.get_chassis_hardware").startswith("TRUENAS-Z"):
+                spare_value = "identify"
+            else:
+                spare_value = "clear"
+
             for node in pool["groups"]["spare"]:
                 for vdev in node["children"]:
                     for dev in vdev["children"]:
@@ -172,8 +179,8 @@ class EnclosureService(CRUDService):
 
                         element = encs.find_device_slot(disk)
                         if element:
-                            self.logger.debug("Identifying bay slot for %r", disk)
-                            element.device_slot_set("identify")
+                            self.logger.debug(f"{spare_value}ing bay slot for %r", disk)
+                            element.device_slot_set(spare_value)
 
             """
             Go through all devs in the pool
