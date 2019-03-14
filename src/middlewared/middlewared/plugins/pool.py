@@ -3075,8 +3075,7 @@ class PoolScrubService(CRUDService):
         return response
 
 
-async def _event_zfs(middleware, event_type, args):
-    data = args['data']
+async def devd_zfs_hook(middleware, data):
     if data.get('subsystem') != 'ZFS':
         return
 
@@ -3090,5 +3089,5 @@ async def _event_zfs(middleware, event_type, args):
 
 
 def setup(middleware):
-    middleware.event_subscribe('devd.zfs', _event_zfs)
+    middleware.register_hook('devd.zfs', devd_zfs_hook)
     asyncio.ensure_future(middleware.call('pool.configure_resilver_priority'))

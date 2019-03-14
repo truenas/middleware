@@ -786,8 +786,7 @@ class ScanWatch(object):
         self._cancel.set()
 
 
-async def _handle_zfs_events(middleware, event_type, args):
-    data = args['data']
+async def devd_zfs_hook(middleware, data):
     if data.get('type') in ('misc.fs.zfs.resilver_start', 'misc.fs.zfs.scrub_start'):
         pool = data.get('pool_name')
         if not pool:
@@ -821,4 +820,4 @@ async def _handle_zfs_events(middleware, event_type, args):
 
 def setup(middleware):
     middleware.event_register('zfs.pool.scan', 'Progress of pool resilver/scrub.')
-    middleware.event_subscribe('devd.zfs', _handle_zfs_events)
+    middleware.register_hook('devd.zfs', devd_zfs_hook)

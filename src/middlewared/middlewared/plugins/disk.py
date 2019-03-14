@@ -1710,8 +1710,7 @@ async def dempdev_configure(name):
     return True
 
 
-async def _event_devfs(middleware, event_type, args):
-    data = args['data']
+async def devd_devfs_hook(middleware, data):
     if data.get('subsystem') != 'CDEV':
         return
 
@@ -1742,8 +1741,7 @@ async def _event_devfs(middleware, event_type, args):
             await middleware.call('disk.swaps_configure')
 
 
-async def _event_zfs(middleware, event_type, args):
-    data = args['data']
+async def devd_zfs_hook(middleware, data):
     # Swap must be configured only on disks being used by some pool,
     # for this reason we must react to certain types of ZFS events to keep
     # it in sync every time there is a change.
@@ -1766,8 +1764,8 @@ async def _event_system_ready(middleware, event_type, args):
 
 def setup(middleware):
     # Listen to DEVFS events so we can sync on disk attach/detach
-    middleware.event_subscribe('devd.devfs', _event_devfs)
+    middleware.register_hook('devd.devfs', devd_devfs_hook)
     # Listen to ZFS events to reconfigure swap on pool create/export/import
-    middleware.event_subscribe('devd.zfs', _event_zfs)
+    middleware.register_hook('devd.zfs', devd_zfs_hook)
     # Run disk tasks once system is ready (e.g. power management)
     middleware.event_subscribe('system', _event_system_ready)
