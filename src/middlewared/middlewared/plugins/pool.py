@@ -2379,6 +2379,14 @@ class PoolService(CRUDService):
                     'aclmode': {'value': 'restricted'},
                 }})
 
+        try:
+            # Now that pools have been imported we are ready to configure system dataset
+            # and collectd which may depend on them.
+            self.middleware.call('etc.generate', 'system_dataset')
+            self.middleware.call('etc.generate', 'collectd')
+        except Exception:
+            self.logger.warn('Failed to setup system dataset and/or collectd', exc_info=True)
+
         # Configure swaps after importing pools. devd events are not yet ready at this
         # stage of the boot process.
         self.middleware.run_coroutine(self.middleware.call('disk.swaps_configure'), wait=False)
