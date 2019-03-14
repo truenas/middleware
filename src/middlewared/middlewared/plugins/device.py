@@ -117,10 +117,8 @@ async def devd_listen(middleware):
         if parsed['system'] in ('CAM', 'ACPI'):
             continue
 
-        middleware.send_event(
-            f'devd.{parsed["system"]}'.lower(),
-            'ADDED',
-            data=parsed,
+        await middleware.call_hook(
+            f'devd.{parsed["system"]}'.lower(), data=parsed,
         )
 
 
