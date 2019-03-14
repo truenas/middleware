@@ -31,7 +31,6 @@ from freenasUI import choices
 from freenasUI.freeadmin.models import Model, UserField, GroupField, PathField
 from freenasUI.freeadmin.models.fields import MultiSelectField
 from freenasUI.middleware.notifier import notifier
-from freenasUI.storage.models import Task
 
 
 class CIFS_Share(Model):

@@ -33,7 +33,6 @@ from dojango import forms
 from freenasUI.common.forms import ModelForm
 from freenasUI.freeadmin.forms import SelectMultipleWidget
 from freenasUI.freeadmin.utils import key_order
-from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.services.models import services, NFS
