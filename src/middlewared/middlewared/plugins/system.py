@@ -21,6 +21,7 @@ import sys
 import sysctl
 import syslog
 import tarfile
+import textwrap
 import time
 
 from licenselib.license import ContractType, Features
@@ -1062,6 +1063,13 @@ async def update_timeout_value(middleware, *args):
 
 async def setup(middleware):
     global SYSTEM_READY
+
+    middleware.event_register('system', textwrap.dedent('''\
+        Sent on system state changes.
+
+        id=ready -- Finished boot process\n
+        id=reboot -- Started reboot process\n
+        id=shutdown -- Started shutdown process'''))
 
     if os.path.exists("/tmp/.bootready"):
         SYSTEM_READY = True
