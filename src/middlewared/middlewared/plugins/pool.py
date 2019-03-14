@@ -3047,6 +3047,7 @@ class PoolScrubService(CRUDService):
         if len(set(task_data.items()) ^ set(original_data.items())) > 0:
 
             task_data['volume'] = task_data.pop('pool')
+            task_data.pop('pool_name', None)
 
             await self.middleware.call(
                 'datastore.update',
@@ -3058,7 +3059,7 @@ class PoolScrubService(CRUDService):
 
             await self.middleware.call('service.restart', 'cron')
 
-        return await self.query(filters=[('id', '=', id)], options={'get': True})
+        return await self._get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
