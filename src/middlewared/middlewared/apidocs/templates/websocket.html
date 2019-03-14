@@ -154,6 +154,10 @@
                   <a href="#{{ service.name }}">{{ service.name }}</a>
                 </li>
                 {% endfor %}
+
+                <li class="sidebar-brand">
+                    <a href="#websocket_events">Websocket Events</a>
+                </li>
             </ul>
         </div>
         <!-- /#sidebar-wrapper -->
@@ -166,6 +170,7 @@
 
                <span id="websocket_protocol">
                {{ protocol|markdown|safe }}
+               </span>
 
                <hr />
 
@@ -208,6 +213,21 @@
                </table>
               {% endfor %}
              {% endfor %}
+               </span>
+
+               <span id="websocket_events">
+                <h2>Websocket Events</h2>
+
+                <hr />
+
+                {% for name, attrs in events.items() %}
+                <h3>{{ name }}</h3>
+                <hr />
+                {% if attrs.description %}
+                  {{ attrs.description|markdown|safe }}
+                {% endif %}
+                {% endfor %}
+               </span>
 
              </div>
            </div>
