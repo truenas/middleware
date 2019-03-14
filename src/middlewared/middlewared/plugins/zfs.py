@@ -820,4 +820,5 @@ async def _handle_zfs_events(middleware, event_type, args):
 
 
 def setup(middleware):
+    middleware.event_register('zfs.pool.scan', 'Progress of pool resilver/scrub.')
     middleware.event_subscribe('devd.zfs', _handle_zfs_events)

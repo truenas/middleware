@@ -1006,3 +1006,7 @@ class ServiceService(CRUDService):
     async def _restart_netdata(self, **kwargs):
         await self._service('netdata', 'stop')
         await self._start_netdata(**kwargs)
+
+
+def setup(middleware):
+    middleware.event_register('service.query', 'Sent on service changes.')
