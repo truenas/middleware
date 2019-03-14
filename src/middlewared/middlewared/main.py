@@ -1,6 +1,6 @@
 from .apidocs import app as apidocs_app
 from .client import ejson as json
-from .event import EventSource
+from .event import EventSource, Events
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
@@ -771,6 +771,7 @@ class Middleware(object):
         self.__services = {}
         self.__services_aliases = {}
         self.__wsclients = {}
+        self.__events = Events()
         self.__event_sources = {}
         self.__event_subs = defaultdict(list)
         self.__hooks = defaultdict(list)
@@ -1197,7 +1198,16 @@ class Middleware(object):
         """
         self.__event_subs[name].append(handler)
 
+    def event_register(self, name, description):
+        self.__events.register(name, description)
+
     def send_event(self, name, event_type, **kwargs):
+
+        if name not in self.__events:
+            # We should eventually deny events that are not registered to ensure every event is
+            # documented but for backward-compability and safety just log it for now.
+            self.logger.debug(f'Event {name} not registered.')
+
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
 
         self.logger.trace(f'Sending event {name!r}:{event_type!r}:{kwargs!r}')
