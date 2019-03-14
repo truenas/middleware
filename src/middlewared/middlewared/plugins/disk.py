@@ -1720,26 +1720,20 @@ async def _event_devfs(middleware, event_type, args):
         # Device notified about is not a disk
         if data['cdev'] not in disks:
             return
-        # TODO: hack so every disk is not synced independently during boot
-        # This is a performance issue
-        if os.path.exists('/tmp/.sync_disk_done'):
-            await middleware.call('disk.sync', data['cdev'])
-            await middleware.call('disk.sed_unlock', data['cdev'])
-            await middleware.call('disk.multipath_sync')
-            await middleware.call('alert.oneshot_delete', 'SMART', data['cdev'])
+        await middleware.call('disk.sync', data['cdev'])
+        await middleware.call('disk.sed_unlock', data['cdev'])
+        await middleware.call('disk.multipath_sync')
+        await middleware.call('alert.oneshot_delete', 'SMART', data['cdev'])
     elif data['type'] == 'DESTROY':
         # Device notified about is not a disk
         if not RE_ISDISK.match(data['cdev']):
             return
-        # TODO: hack so every disk is not synced independently during boot
-        # This is a performance issue
-        if os.path.exists('/tmp/.sync_disk_done'):
-            await (await middleware.call('disk.sync_all')).wait()
-            await middleware.call('disk.multipath_sync')
-            await middleware.call('alert.oneshot_delete', 'SMART', data['cdev'])
-            # If a disk dies we need to reconfigure swaps so we are not left
-            # with a single disk mirror swap, which may be a point of failure.
-            await middleware.call('disk.swaps_configure')
+        await (await middleware.call('disk.sync_all')).wait()
+        await middleware.call('disk.multipath_sync')
+        await middleware.call('alert.oneshot_delete', 'SMART', data['cdev'])
+        # If a disk dies we need to reconfigure swaps so we are not left
+        # with a single disk mirror swap, which may be a point of failure.
+        await middleware.call('disk.swaps_configure')
 
 
 async def _event_zfs(middleware, event_type, args):
