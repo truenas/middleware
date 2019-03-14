@@ -1213,7 +1213,7 @@ class Middleware(object):
         if name not in self.__events:
             # We should eventually deny events that are not registered to ensure every event is
             # documented but for backward-compability and safety just log it for now.
-            self.logger.debug(f'Event {name} not registered.')
+            self.logger.warn(f'Event {name!r} not registered.')
 
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
 
