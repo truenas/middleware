@@ -71,9 +71,7 @@ do-install:
 		${STAGEDIR}/boot/loader.rc.local \
 		${STAGEDIR}/etc/sysctl.conf \
 		${STAGEDIR}/etc/pf.conf.block \
-		${STAGEDIR}/etc/motd \
-		${STAGEDIR}/etc/ix.rc.d/ix_pf_early \
-		${STAGEDIR}/etc/ix.rc.d/ix_pf_late
+		${STAGEDIR}/etc/motd
 .endif
 	(cd ${STAGEDIR}; ${FIND} . \( -type f -o -type l \) \
 		| ${SED} -e 's,^\./,,g' \
