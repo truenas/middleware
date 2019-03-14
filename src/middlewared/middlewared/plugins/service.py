@@ -764,7 +764,7 @@ class ServiceService(CRUDService):
         await self._service("inetd", "restart", **kwargs)
 
     async def _restart_cron(self, **kwargs):
-        await self._service("ix-crontab", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'cron')
 
     async def _start_motd(self, **kwargs):
         await self.middleware.call('etc.generate', 'motd')
