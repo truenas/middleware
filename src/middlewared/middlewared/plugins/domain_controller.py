@@ -1,5 +1,6 @@
+import errno
+import os
 import socket
-import libzfs
 
 from middlewared.schema import accepts, Dict, Int, Str
 from middlewared.service import private, SystemServiceService
@@ -31,11 +32,21 @@ class DomainControllerService(SystemServiceService):
         Provisioning on top of an existing domain is a destructive process that
         must be avoided.
         """
-        provisioned = 'org.ix.activedirectory:provisioned'
         systemdataset = self.middleware.call_sync('systemdataset.config')
-        sysvol_path = f"{systemdataset['basename']}/samba4"
-        zfs = self.middleware.call_sync('zfs.dataset.query', [('id', '=', sysvol_path)])
-        if provisioned not in zfs[0]['properties']:
+        sysvol_dataset = f"{systemdataset['basename']}/samba4"
+        sysvol_path = f"{systemdataset['path']}/samba4"
+        zfs = self.middleware.call_sync('zfs.dataset.query', [('id', '=', sysvol_dataset)])
+        if not zfs:
+            raise CallError(f"sysvol dataset [{sysvol_dataset}] does not exist", errno.ENOENT)
+
+        if not os.path.exists('/var/db/samba4'):
+            try:
+                self.logger.debug(f're-creating symbolic link from {sysvol_path} to /var/db/samba4')
+                os.symlink(sysvol_path, '/var/db/samba4')
+            except Exception as e:
+                raise CallError(f'Failed to create symbolic link from {syvolpath} to var/db/samba4:({e})')
+
+        if 'org.ix.activedirectory:provisioned' not in zfs[0]['properties']:
             return False
 
         provision_status = zfs[0]['properties']['org.ix.activedirectory:provisioned']
