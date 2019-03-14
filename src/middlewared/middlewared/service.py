@@ -229,6 +229,11 @@ class ServiceChangeMixin:
             {'get': True}
         ))['state'].lower()
 
+        # For now its hard to keep track of which services change rc.conf.
+        # To be safe run this every time any service is updated.
+        # This adds up ~180ms so its seems a reasonable workaround for the time being.
+        await self.middleware.call('etc.generate', 'rc')
+
         if svc_state == 'running':
             started = await self.middleware.call(f'service.{verb}', service, {'onetime': True})
 

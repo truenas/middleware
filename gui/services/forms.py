@@ -26,7 +26,6 @@
 import logging
 import os
 
-from django.db.models import Q
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 from dojango import forms
@@ -39,7 +38,6 @@ from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.freeadmin.utils import key_order
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
-from freenasUI.network.models import Alias, Interfaces
 from freenasUI.services import models
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import fc_enabled
@@ -62,6 +60,11 @@ class servicesForm(ModelForm):
 
     def save(self, *args, **kwargs):
         obj = super(servicesForm, self).save(*args, **kwargs)
+
+        # Fix for API 1.0, rc.conf is no longer generated automatically
+        with client as c:
+            c.call('etc.generate', 'rc')
+
         _notifier = notifier()
 
         if obj.srv_service == 'cifs' and _notifier.started('domaincontroller'):
@@ -936,23 +939,15 @@ class iSCSITargetPortalIPForm(ModelForm):
         self.fields['iscsi_target_portalip_ip'] = forms.ChoiceField(
             label=self.fields['iscsi_target_portalip_ip'].label,
         )
-        ips = [('', '------'), ('0.0.0.0', '0.0.0.0')]
-        iface_ips = {
-            iface.int_vip: f'{iface.int_ipv4address}, {iface.int_ipv4address_b}'
-            for iface in Interfaces.objects.exclude(Q(int_vip=None) | Q(int_vip=''))
-        }
-        for alias in Alias.objects.exclude(Q(alias_vip=None) | Q(alias_vip='')):
-            iface_ips[alias.alias_vip] = f'{alias.alias_v4address}, {alias.alias_v4address_b}'
-        for k, v in choices.IPChoices():
-            if v in iface_ips:
-                v = iface_ips[v]
-            ips.append((k, v))
 
-        if self.instance.id and self.instance.iscsi_target_portalip_ip not in dict(ips):
-            ips.append((
-                self.instance.iscsi_target_portalip_ip, self.instance.iscsi_target_portalip_ip
-            ))
-        self.fields['iscsi_target_portalip_ip'].choices = ips
+        with client as c:
+            ips = c.call('iscsi.portal.listen_ip_choices')
+        ips[''] = '------'
+
+        if self.instance.id and self.instance.iscsi_target_portalip_ip not in ips:
+            ips[self.instance.iscsi_target_portalip_ip] = self.instance.iscsi_target_portalip_ip
+        self.fields['iscsi_target_portalip_ip'].choices = sorted(ips.items())
+
         if not self.instance.id and not self.data:
             if not(
                 self.parent and self.parent.instance.id and

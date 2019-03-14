@@ -6,13 +6,13 @@ import itertools
 import json
 import math
 import os
-import pandas
 import psutil
 import queue
 import re
 import select
 import shutil
 import socketserver
+import statistics
 import subprocess
 import sysctl
 import tarfile
@@ -75,6 +75,12 @@ class RRDBase(object, metaclass=RRDMeta):
     identifier_plugin = True
     rrd_types = None
     rrd_data_extra = None
+
+    AGG_MAP = {
+        'min': min,
+        'mean': statistics.mean,
+        'max': max,
+    }
 
     def __init__(self, middleware):
         self.middleware = middleware
@@ -208,10 +214,14 @@ class RRDBase(object, metaclass=RRDMeta):
         )
 
         if self.aggregations and aggregate:
-            df = pandas.DataFrame(data['data'])
+            # Transpose the data matrix and remove null values
+            transposed = [list(filter(None.__ne__, i)) for i in zip(*data['data'])]
             for agg in self.aggregations:
-                if agg in ('max', 'mean', 'min'):
-                    data['aggregations'][agg] = list(getattr(df, agg)())
+                if agg in self.AGG_MAP:
+                    data['aggregations'][agg] = [
+                        (self.AGG_MAP[agg](i) if i else None)
+                        for i in transposed
+                    ]
                 else:
                     raise RuntimeError(f'Aggregation {agg!r} is invalid.')
 

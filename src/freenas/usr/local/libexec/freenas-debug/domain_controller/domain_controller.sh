@@ -166,13 +166,6 @@ __EOF__
 	section_footer
 
 	#
-	#	Dump Domain Controller SSSD configuration
-	#
-	section_header "${SSSD_CONF}"
-	sc "${SSSD_CONF}" | grep -iv ldap_default_authtok
-	section_footer
-
-	#
 	#	Dump generated DC config file
 	#
 	#section_header "${AD_CONFIG_FILE}"

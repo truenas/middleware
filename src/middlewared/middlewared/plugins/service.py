@@ -169,7 +169,9 @@ class ServiceService(CRUDService):
                 raise CallError(f'Service {id_or_name} not found.', errno.ENOENT)
             id_or_name = svc[0]['id']
 
-        return await self.middleware.call('datastore.update', 'services.services', id_or_name, {'srv_enable': data['enable']})
+        rv = await self.middleware.call('datastore.update', 'services.services', id_or_name, {'srv_enable': data['enable']})
+        await self.middleware.call('etc.generate', 'rc')
+        return rv
 
     @accepts(
         Str('service'),
@@ -487,6 +489,13 @@ class ServiceService(CRUDService):
         await self.start('rrdcached')
         await self.start('collectd')
 
+    async def _reload_rc(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
+
+    async def _restart_powerd(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
+        await self._service('powerd', 'restart', **kwargs)
+
     async def _reload_sysctl(self, **kwargs):
         await self.middleware.call('etc.generate', 'sysctl')
 
@@ -497,9 +506,14 @@ class ServiceService(CRUDService):
     async def _reload_named(self, **kwargs):
         await self._service("named", "reload", **kwargs)
 
+    async def _restart_syscons(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
+        await self._service('syscons', 'restart', **kwargs)
+
     async def _reload_hostname(self, **kwargs):
         await self._system('/bin/hostname ""')
         await self.middleware.call('etc.generate', 'hostname')
+        await self.middleware.call('etc.generate', 'rc')
         await self._service("hostname", "start", quiet=True, **kwargs)
         await self._service("mdnsd", "restart", quiet=True, **kwargs)
         await self._restart_collectd(**kwargs)
@@ -511,6 +525,10 @@ class ServiceService(CRUDService):
     async def _reload_networkgeneral(self, **kwargs):
         await self._reload_resolvconf()
         await self._service("routing", "restart", **kwargs)
+
+    async def _start_routing(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
+        await self._service('routing', 'start', **kwargs)
 
     async def _reload_timeservices(self, **kwargs):
         await self.middleware.call('etc.generate', 'localtime')
@@ -598,18 +616,21 @@ class ServiceService(CRUDService):
         return res, []
 
     async def _start_nis(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
         res = False
         if not await self._system("/etc/directoryservice/NIS/ctl start"):
             res = True
         return res
 
     async def _restart_nis(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
         res = False
         if not await self._system("/etc/directoryservice/NIS/ctl restart"):
             res = True
         return res
 
     async def _stop_nis(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
         res = False
         if not await self._system("/etc/directoryservice/NIS/ctl stop"):
             res = True
@@ -621,18 +642,21 @@ class ServiceService(CRUDService):
         return await self.middleware.call('notifier.ldap_status'), []
 
     async def _start_ldap(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
         res = False
         if not await self._system("/etc/directoryservice/LDAP/ctl start"):
             res = True
         return res
 
     async def _stop_ldap(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
         res = False
         if not await self._system("/etc/directoryservice/LDAP/ctl stop"):
             res = True
         return res
 
     async def _restart_ldap(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
         res = False
         if not await self._system("/etc/directoryservice/LDAP/ctl restart"):
             res = True

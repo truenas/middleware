@@ -23,31 +23,6 @@ adctl_cmd()
 	return 0
 }
 
-sssd_running()
-{
-	${service} sssd onestatus >/dev/null 2>&1
-	return $?
-}
-
-sssd_start()
-{
-	adctl_cmd ${service} sssd onestart
-	return $?
-}
-
-sssd_stop()
-{
-	adctl_cmd ${service} sssd onestop
-	return $?
-}
-
-sssd_restart()
-{
-	adctl_cmd ${service} sssd onestop
-	adctl_cmd ${service} sssd onestart
-	return $?
-}
-
 cifs_enabled()
 {
 	srv_enabled cifs && return 0
@@ -123,17 +98,6 @@ adctl_start()
 		return 1
 	fi
 
-	if AD_has_unix_extensions && AD_has_keytab
-	then
-		adctl_cmd ${service} ix-sssd start
-		if sssd_running
-		then
-			sssd_restart
-		else
-			sssd_start
-		fi
-	fi
-
 	cifs_start
 
 	if ! adctl_cmd ${service} ix-activedirectory quietstart
@@ -178,12 +142,6 @@ adctl_stop()
 	then
 		cifs_started=1
 		cifs_stop
-	fi
-
-	if sssd_running
-	then
-		sssd_stop
-		adctl_cmd ${service} ix-sssd start
 	fi
 
 	if [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "0" ]

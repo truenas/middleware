@@ -158,6 +158,33 @@ class ISCSIPortalService(CRUDService):
         data['discovery_authgroup'] = data.pop('discoveryauthgroup')
         return data
 
+    @accepts()
+    async def listen_ip_choices(self):
+        """
+        Returns possible choices for `listen.ip` attribute of portal create and update.
+        """
+        choices = {'0.0.0.0': '0.0.0.0'}
+        alua = (await self.middleware.call('iscsi.global.config'))['alua']
+        if alua:
+            # If ALUA is enabled we actually want to show the user the IPs of each node
+            # instead of the VIP so its clear its not going to bind to the VIP even though
+            # thats the value used under the hoods.
+            for i in await self.middleware.call('datastore.query', 'network.Interfaces', [
+                ('int_vip', 'nin', [None, '']),
+            ]):
+                choices[i['int_vip']] = f'{i["int_ipv4address"]}/{i["int_ipv4address_b"]}'
+
+            for i in await self.middleware.call('datastore.query', 'network.Alias', [
+                ('alias_vip', 'nin', [None, '']),
+            ]):
+                choices[i['alias_vip']] = f'{i["alias_v4address"]}/{i["alias_v4address_b"]}'
+
+        else:
+            for i in await self.middleware.call('interface.query'):
+                for alias in i['aliases']:
+                    choices[alias['address']] = alias['address']
+        return choices
+
     async def __validate(self, verrors, data, schema, old=None):
         if not data['listen']:
             verrors.add(f'{schema}.listen', 'At least one listen entry is required.')
@@ -340,7 +367,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
     @accepts(Dict(
         'iscsi_auth_create',
-        Int('tag'),
+        Int('tag', required=True),
         Str('user', required=True),
         Str('secret', required=True),
         Str('peeruser'),
@@ -372,15 +399,13 @@ class iSCSITargetAuthCredentialService(CRUDService):
         )
     )
     async def do_update(self, id, data):
-        verrors = ValidationErrors()
         old = await self._get_instance(id)
 
         new = old.copy()
         new.update(data)
 
-        await self.validate(
-            new, 'iscsi_auth_update', verrors
-        )
+        verrors = ValidationErrors()
+        await self.validate(new, 'iscsi_auth_update', verrors, old)
 
         if verrors:
             raise verrors
@@ -401,7 +426,15 @@ class iSCSITargetAuthCredentialService(CRUDService):
         )
 
     @private
-    async def validate(self, data, schema_name, verrors):
+    async def validate(self, data, schema_name, verrors, old=None):
+
+        filters = [('tag', '=', data['tag'])]
+        if old:
+            filters.append(('id', '!=', old['id']))
+
+        if await self.middleware.call('iscsi.auth.query', filters):
+            verrors.add(f'{schema_name}.tag', f'Tag {data["tag"]!r} is already in use.')
+
         secret = data.get('secret')
         peer_secret = data.get('peersecret')
         peer_user = data.get('peeruser', '')
@@ -741,14 +774,8 @@ class iSCSITargetExtentService(CRUDService):
         allowing the user to keep the same item on update
         """
         diskchoices = {}
-        disk_query = await self.query([('type', '=', 'Disk')])
-
-        diskids = [i['path'] for i in disk_query]
-        used_disks = [d['name'] for d in await self.middleware.call(
-            'disk.query', [('identifier', 'in', diskids)])]
 
         zvol_query_filters = [('type', '=', 'ZVOL')]
-
         for e in exclude:
             if e:
                 zvol_query_filters.append(('path', '!=', e))
@@ -756,9 +783,6 @@ class iSCSITargetExtentService(CRUDService):
         zvol_query = await self.query(zvol_query_filters)
 
         used_zvols = [i['path'] for i in zvol_query]
-
-        async for pdisk in await self.middleware.call('pool.get_disks'):
-            used_disks.append(pdisk)
 
         zfs_snaps = await self.middleware.call(
             'zfs.snapshot.query', [], {'select': ['name'], 'order_by': ['name']}
@@ -782,13 +806,9 @@ class iSCSITargetExtentService(CRUDService):
             if ds_name in zvol_list:
                 diskchoices[f'zvol/{snap["name"]}'] = f'{snap["name"]} [ro]'
 
-        notifier_disks = await self.middleware.call('notifier.get_disks')
-        for name, disk in notifier_disks.items():
-            if name in used_disks:
-                continue
-            size = await self.middleware.call('notifier.humanize_size',
-                                              disk['capacity'])
-            diskchoices[name] = f'{name} ({size})'
+        for disk in await self.middleware.call('disk.get_unused'):
+            size = await self.middleware.call('notifier.humanize_size', disk['size'])
+            diskchoices[disk['name']] = f'{disk["name"]} ({size})'
 
         return diskchoices
 

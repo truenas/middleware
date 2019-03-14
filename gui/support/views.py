@@ -112,12 +112,15 @@ def license_update(request):
         if form.is_valid():
             with open(utils.LICENSE_FILE, 'wb+') as f:
                 f.write(form.cleaned_data.get('license').encode('ascii'))
+            with client as c:
+                c.call('etc.generate', 'rc')
             events = []
             try:
                 _n = notifier()
                 if not _n.is_freenas():
                     with client as c:
                         _n.sync_file_send(c, utils.LICENSE_FILE)
+                        c.call('failover.call_remote', 'etc.generate', ['rc'])
                 form.done(request, events)
             except Exception as e:
                 log.debug("Failed to sync license file: %s", e, exc_info=True)

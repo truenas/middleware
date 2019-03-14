@@ -160,7 +160,7 @@ class DiskService(CRUDService):
         Helper method to get all disks that are not in use, either by the boot
         pool or the user pools.
         """
-        disks = await self.query([('name', 'nin', await self.get_reserved())])
+        disks = await self.query([('devname', 'nin', await self.get_reserved())])
 
         if join_partitions:
             for disk in disks:
@@ -776,6 +776,33 @@ class DiskService(CRUDService):
         geom.scan()
         return geom.class_by_name('PART').xml.find(f'.//geom[name="{disk}"]') is None
 
+    async def __disk_data(self, disk, name):
+        g = geom.geom_by_name('DISK', name)
+        if g:
+            if g.provider.config['ident']:
+                disk['disk_serial'] = g.provider.config['ident']
+            if g.provider.mediasize:
+                disk['disk_size'] = g.provider.mediasize
+            try:
+                if g.provider.config['rotationrate'] == '0':
+                    disk['disk_rotationrate'] = None
+                    disk['disk_type'] == 'SSD'
+                else:
+                    disk['disk_rotationrate'] = int(g.provider.config['rotationrate'])
+                    disk['disk_type'] == 'HDD'
+            except ValueError:
+                disk['disk_type'] == 'UNKNOWN'
+                disk['disk_rotationrate'] = None
+            disk['disk_model'] = g.provider.config['descr'] or None
+
+        if not disk.get('disk_serial'):
+            disk['disk_serial'] = await self.serial_from_device(name) or ''
+        reg = RE_DSKNAME.search(name)
+        if reg:
+            disk['disk_subsystem'] = reg.group(1)
+            disk['disk_number'] = int(reg.group(2))
+        return g
+
     @private
     @accepts(Str('name'))
     async def sync(self, name):
@@ -814,18 +841,8 @@ class DiskService(CRUDService):
         disk.update({'disk_name': name, 'disk_expiretime': None})
 
         await self.middleware.run_in_thread(geom.scan)
-        g = geom.geom_by_name('DISK', name)
-        if g:
-            if g.provider.config['ident']:
-                disk['disk_serial'] = g.provider.config['ident']
-            if g.provider.mediasize:
-                disk['disk_size'] = g.provider.mediasize
-        if not disk.get('disk_serial'):
-            disk['disk_serial'] = await self.serial_from_device(name) or ''
-        reg = RE_DSKNAME.search(name)
-        if reg:
-            disk['disk_subsystem'] = reg.group(1)
-            disk['disk_number'] = int(reg.group(2))
+        await self.__disk_data(disk, name)
+
         if not new:
             await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
         else:
@@ -884,20 +901,10 @@ class DiskService(CRUDService):
                 disk['disk_expiretime'] = None
                 disk['disk_name'] = name
 
-            reg = RE_DSKNAME.search(name)
-            if reg:
-                disk['disk_subsystem'] = reg.group(1)
-                disk['disk_number'] = int(reg.group(2))
-            serial = ''
-            g = geom.geom_by_name('DISK', name)
+            g = await self.__disk_data(disk, name)
+            serial = disk.get('disk_serial') or ''
             if g:
-                if g.provider.config['ident']:
-                    serial = disk['disk_serial'] = g.provider.config['ident']
                 serial += g.provider.config.get('lunid') or ''
-                if g.provider.mediasize:
-                    disk['disk_size'] = g.provider.mediasize
-            if not disk.get('disk_serial'):
-                serial = disk['disk_serial'] = await self.serial_from_device(name) or ''
 
             if serial:
                 serials.append(serial)
