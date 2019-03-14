@@ -58,7 +58,7 @@ class DomainControllerService(SystemServiceService):
         systemdataset = self.middleware.call_sync('systemdataset.config')
         sysvol_path = f"{systemdataset['basename']}/samba4"
         ds = {'properties': {'org.ix.activedirectory:provisioned': {'value': 'yes' if value else 'no'}}}
-        self.middleware.call_sync('zfs.dataset.do_update', sysvol_path, ds)
+        self.middleware.call_sync('zfs.dataset.update', sysvol_path, ds)
         return True
 
     @private
