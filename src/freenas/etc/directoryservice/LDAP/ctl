@@ -127,7 +127,7 @@ ldapctl_start()
 
 	
 	ldapctl_cmd ${python} ${notifier} call etc.generate nss > /dev/null 
-	ldapctl_cmd ${service} ix-pam quietstart
+	ldapctl_cmd ${notifier} call etc.generate pam > /dev/null
 	if nslcd_running
 	then
 		nslcd_restart
@@ -149,7 +149,7 @@ ldapctl_start()
 		cifs_restart
 	fi
 
-	ldapctl_cmd ${service} ix-pam quietstart
+	ldapctl_cmd ${notifier} call etc.generate pam > /dev/null
 	ldapctl_cmd "${service} ix-cache quietstart &"
 	touch "${status_file}"
 
@@ -173,7 +173,7 @@ ldapctl_stop()
 
 	ldapctl_cmd ${service} ix-ldap forcestop
 	ldapctl_cmd ${python} ${notifier} call etc.generate nss > /dev/null 
-	ldapctl_cmd ${service} ix-pam quietstop
+	ldapctl_cmd ${notifier} call etc.generate pam > /dev/null
 	ldapctl_cmd "${service} ix-cache quietstop &"
 
 	ldap_set 0
