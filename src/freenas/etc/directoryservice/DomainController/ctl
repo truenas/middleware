@@ -129,7 +129,7 @@ dcctl_start()
 	dcctl_cmd ${service} ix-kerberos quietstart
 	dcctl_cmd ${python} ${notifier} call dns.sync
 	dcctl_cmd ${service} ix-nsswitch quietstart
-	dcctl_cmd ${service} ix-pam quietstart
+	dcctl_cmd ${notifier} call etc.generate pam > /dev/null
 
 	setup_homedirs
 	cifs_start
@@ -159,7 +159,7 @@ dcctl_stop()
 
 	dcctl_cmd ${service} ix-kerberos quietstop
 	dcctl_cmd ${service} ix-nsswitch quietstop
-	dcctl_cmd ${service} ix-pam quietstop
+	dcctl_cmd ${notifier} call etc.generate pam > /dev/null
 	dcctl_cmd "${service} ix-cache quietstop &"
 
 	if [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "0" ]
