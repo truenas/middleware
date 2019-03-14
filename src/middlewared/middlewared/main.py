@@ -1192,6 +1192,9 @@ class Middleware(object):
                 raise RuntimeError('Middleware is terminating')
         return fut.result()
 
+    def get_events(self):
+        return self.__events
+
     def event_subscribe(self, name, handler):
         """
         Internal way for middleware/plugins to subscribe to events.
@@ -1199,6 +1202,10 @@ class Middleware(object):
         self.__event_subs[name].append(handler)
 
     def event_register(self, name, description):
+        """
+        All events middleware can send should be registered so they are properly documented
+        and can be browsed in documentation page without source code inspection.
+        """
         self.__events.register(name, description)
 
     def send_event(self, name, event_type, **kwargs):

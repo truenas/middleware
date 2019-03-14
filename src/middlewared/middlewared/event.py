@@ -15,6 +15,10 @@ class Events(object):
     def __contains__(self, name):
         return name in self.__events
 
+    def __iter__(self):
+        for k, v in self.__events.items():
+            yield k, {'description': v}
+
 
 class EventSource(object):
 

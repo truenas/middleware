@@ -561,6 +561,18 @@ class CoreService(Service):
                 }
         return data
 
+    @accepts()
+    def get_events(self):
+        """
+        Returns metadata for every possible event emitted from websocket server.
+        """
+        events = {}
+        for name, attrs in self.middleware.get_events():
+            events[name] = {
+                'description': attrs['description'],
+            }
+        return events
+
     @private
     async def call_hook(self, name, args, kwargs=None):
         kwargs = kwargs or {}
