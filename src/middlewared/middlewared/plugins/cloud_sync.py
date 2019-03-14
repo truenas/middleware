@@ -11,11 +11,13 @@ import asyncio
 import base64
 import codecs
 from collections import namedtuple
+import configparser
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
 from datetime import datetime
 import json
+import logging
 import os
 import re
 import shlex
@@ -28,7 +30,11 @@ RE_TRANSF = re.compile(r"Transferred:\s*?(.+)$", re.S)
 
 REMOTES = {}
 
+OAUTH_URL = "https://freenas.org/oauth"
+
 RcloneConfigTuple = namedtuple("RcloneConfigTuple", ["config_path", "remote_path", "extra_args"])
+
+logger = logging.getLogger(__name__)
 
 
 class RcloneConfig:
@@ -187,6 +193,21 @@ async def rclone(middleware, job, cloud_sync):
             raise ValueError("rclone failed")
 
         await run_script(job, env, cloud_sync["post_script"], "Post-script")
+
+        if REMOTES[cloud_sync["credentials"]["provider"]].refresh_credentials:
+            credentials_attributes = cloud_sync["credentials"]["attributes"].copy()
+            updated = False
+            ini = configparser.ConfigParser()
+            ini.read(config.config_path)
+            for key, value in ini["remote"].items():
+                if key in credentials_attributes and credentials_attributes[key] != value:
+                    logger.debug("Updating credentials attributes key %r", key)
+                    credentials_attributes[key] = value
+                    updated = True
+            if updated:
+                await middleware.call("cloudsync.credentials.update", cloud_sync["credentials"]["id"], {
+                    "attributes": credentials_attributes
+                })
 
         return True
 
@@ -727,6 +748,7 @@ class CloudSyncService(CRUDService):
                         }
                         for field in provider.credentials_schema
                     ],
+                    "credentials_oauth": f"{OAUTH_URL}/{provider.name.lower()}" if provider.credentials_oauth else None,
                     "buckets": provider.buckets,
                     "bucket_title": provider.bucket_title,
                     "task_schema": [
