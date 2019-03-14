@@ -2918,8 +2918,9 @@ class PoolScrubService(CRUDService):
 
     @private
     async def pool_scrub_extend(self, data):
-        data['pool'] = data.pop('volume')
-        data['pool'] = data['pool']['id']
+        pool = data.pop('volume')
+        data['pool'] = pool['id']
+        data['pool_name'] = pool['vol_name']
         Cron.convert_db_format_to_schedule(data)
         return data
 
