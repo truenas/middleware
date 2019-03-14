@@ -71,6 +71,8 @@ class JobsQueue(object):
         # Shared lock (JobSharedLock) dict
         self.job_locks = {}
 
+        self.middleware.event_register('core.get_jobs', 'Updates on job changes.')
+
     def __getitem__(self, item):
         return self.deque[item]
 

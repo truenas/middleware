@@ -766,7 +766,6 @@ class Middleware(object):
             max_workers=10,
         )
         self.__init_procpool()
-        self.jobs = JobsQueue(self)
         self.__schemas = Schemas()
         self.__services = {}
         self.__services_aliases = {}
@@ -778,6 +777,7 @@ class Middleware(object):
         self.__server_threads = []
         self.__init_services()
         self.__console_io = False if os.path.exists(self.CONSOLE_ONCE_PATH) else None
+        self.jobs = JobsQueue(self)
 
     def __init_services(self):
         from middlewared.service import CoreService
