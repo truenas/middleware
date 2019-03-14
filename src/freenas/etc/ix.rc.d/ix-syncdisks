@@ -13,7 +13,7 @@ syncdisks()
 {
 	touch /tmp/.sync_disk_done
 	echo "Syncing disks..."
-	/usr/local/bin/midclt call --job true disk.sync_all > /dev/null
+	/usr/local/bin/midclt call --job --job-print description true disk.sync_all > /dev/null
 }
 
 name="ix-syncdisks"
