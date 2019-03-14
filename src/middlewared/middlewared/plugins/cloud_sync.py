@@ -26,7 +26,7 @@ RE_TRANSF = re.compile(r"Transferred:\s*?(.+)$", re.S)
 
 REMOTES = {}
 
-OAUTH_URL = "http://localhost:5000/oauth"
+OAUTH_URL = "https://freenas.org/oauth"
 
 RcloneConfigTuple = namedtuple("RcloneConfigTuple", ["config_path", "remote_path"])
 
