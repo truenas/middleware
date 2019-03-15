@@ -1060,7 +1060,7 @@ VM_BOOTLOADER = (
     # ('BHYVELOAD', _('Bhyve Load')),
     ('UEFI', _('UEFI')),
     ('UEFI_CSM', _('UEFI-CSM')),
-    # ('GRUB', _('Grub')),
+    ('GRUB', _('Grub')),
 )
 
 
