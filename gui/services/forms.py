@@ -67,31 +67,13 @@ class servicesForm(ModelForm):
 
         _notifier = notifier()
 
-        if obj.srv_service == 'cifs' and _notifier.started('domaincontroller'):
-            obj.srv_enable = True
-            obj.save()
-            started = True
-
-        elif obj.srv_service == 'domaincontroller':
-            if obj.srv_enable is True:
-                if _notifier.started('domaincontroller'):
-                    started = _notifier.restart("domaincontroller",
-                                                timeout=_fs().services.domaincontroller.timeout.restart)
-                else:
-                    started = _notifier.start("domaincontroller",
-                                              timeout=_fs().services.domaincontroller.timeout.start)
-            else:
-                started = _notifier.stop("domaincontroller",
-                                         timeout=_fs().services.domaincontroller.timeout.stop)
-
+        """
+        For now on, lets handle it properly for all services!
+        """
+        if obj.srv_enable:
+            started = _notifier.start(obj.srv_service)
         else:
-            """
-            For now on, lets handle it properly for all services!
-            """
-            if obj.srv_enable:
-                started = _notifier.start(obj.srv_service)
-            else:
-                started = _notifier.stop(obj.srv_service)
+            started = _notifier.stop(obj.srv_service)
 
         self.started = started
         if started is True:
@@ -1215,62 +1197,6 @@ class SMARTForm(MiddlewareModelForm, ModelForm):
         update["powermode"] = update["powermode"].upper()
         update["email"] = update["email"].split()
         return update
-
-
-class DomainControllerForm(MiddlewareModelForm, ModelForm):
-
-    middleware_attr_prefix = "dc_"
-    middleware_attr_schema = "domaincontroller"
-    middleware_exclude_fields = ['passwd2']
-    middleware_plugin = "domaincontroller"
-    is_singletone = True
-
-    dc_passwd2 = forms.CharField(
-        max_length=50,
-        label=_("Confirm Administrator Password"),
-        widget=forms.widgets.PasswordInput(),
-        required=False,
-    )
-
-    class Meta:
-        fields = [
-            'dc_realm',
-            'dc_domain',
-            'dc_role',
-            'dc_dns_forwarder',
-            'dc_forest_level',
-            'dc_passwd',
-            'dc_passwd2',
-            'dc_kerberos_realm'
-        ]
-        model = models.DomainController
-        widgets = {
-            'dc_passwd': forms.widgets.PasswordInput(render_value=False),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super(DomainControllerForm, self).__init__(*args, **kwargs)
-        if self.instance.dc_passwd:
-            self.fields['dc_passwd'].required = False
-        if self._api is True:
-            del self.fields['dc_passwd2']
-
-    def clean_dc_passwd2(self):
-        password1 = self.cleaned_data.get("dc_passwd")
-        password2 = self.cleaned_data.get("dc_passwd2")
-        if password1 != password2:
-            raise forms.ValidationError(_("The two password fields didn't match."))
-        return password2
-
-    def clean(self):
-        cdata = self.cleaned_data
-        if not cdata.get("dc_passwd"):
-            cdata['dc_passwd'] = self.instance.dc_passwd
-        return cdata
-
-    def middleware_clean(self, data):
-        data['role'] = data['role'].upper()
-        return data
 
 
 class WebDAVForm(MiddlewareModelForm, ModelForm):

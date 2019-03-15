@@ -710,30 +710,6 @@ class ServiceService(CRUDService):
         await self._service("samba_server", "stop", force=True, **kwargs)
         await self._service("samba_server", "start", quiet=True, **kwargs)
 
-    async def _started_domaincontroller(self, **kwargs):
-        res = False
-        if not await self._system("/etc/directoryservice/DomainController/ctl status"):
-            res = True
-        return res, []
-
-    async def _start_domaincontroller(self, **kwargs):
-        res = False
-        if not await self._system("/etc/directoryservice/DomainController/ctl start"):
-            res = True
-        return res
-
-    async def _stop_domaincontroller(self, **kwargs):
-        res = False
-        if not await self._system("/etc/directoryservice/DomainController/ctl stop"):
-            res = True
-        return res
-
-    async def _restart_domaincontroller(self, **kwargs):
-        res = False
-        if not await self._system("/etc/directoryservice/DomainController/ctl restart"):
-            res = True
-        return res
-
     async def _restart_syslogd(self, **kwargs):
         await self.middleware.call("etc.generate", "syslogd")
         await self._system("/etc/local/rc.d/syslog-ng restart")

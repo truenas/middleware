@@ -50,14 +50,7 @@ async def get_config(middleware):
             ('smbhash', '~', r'^.+:.+:[A-F0-9]{32}:.+$'),
         ]]
     ])
-    dc = await middleware.call('datastore.query', 'services.services',
-                               [('srv_service', '=', 'domaincontroller')],
-                               {'get': True})
-
-    if dc['srv_enable']:
-        conf['role'] = 'domain_controller'
-    else:
-        conf['role'] = 'file_server'
+    conf['role'] = 'file_server'
 
     parm_to_test = ['privatedir', 'state directory']
     for parm in parm_to_test:
@@ -189,10 +182,6 @@ async def set_system_SID(sidtype, SID):
 async def set_SID(middleware, config):
     get_sid_func = "getlocalsid"
     set_sid_func = "setlocalsid"
-
-    if config['role'] == "domain_controller":
-        get_sid_func = "getdomainsid"
-        set_sid_func = "setdomainsid"
 
     database_SID = config['cifs']['cifs_SID']
     system_SID = await get_system_SID(get_sid_func)

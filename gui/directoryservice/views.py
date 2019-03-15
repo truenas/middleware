@@ -176,10 +176,6 @@ def get_directoryservice_status():
     if nis and nis[0]:
         nis_enable = nis[0].nis_enable
 
-    svc = services.objects.get(srv_service='domaincontroller')
-    if svc:
-        dc_enable = svc.srv_enable
-
     data['ad_enable'] = ad_enable
     data['dc_enable'] = dc_enable
     data['ldap_enable'] = ldap_enable

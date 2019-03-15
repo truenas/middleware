@@ -73,13 +73,6 @@ def core(request):
     disabled = {}
     extra_services = {}
 
-    for key, val in get_directoryservice_status().items():
-        if val is True and key != 'dc_enable':
-            disabled['domaincontroller'] = {
-                'reason': _('A directory service is already enabled.'),
-            }
-            break
-
     try:
         afp = models.AFP.objects.order_by("-id")[0]
     except IndexError:
@@ -96,11 +89,6 @@ def core(request):
         cifs = models.CIFS.objects.order_by("-id")[0]
     except IndexError:
         cifs = models.CIFS.objects.create()
-
-    try:
-        domaincontroller = models.DomainController.objects.order_by("-id")[0]
-    except IndexError:
-        domaincontroller = models.DomainController.objects.create()
 
     try:
         dynamicdns = models.DynamicDNS.objects.order_by("-id")[0]
@@ -178,7 +166,6 @@ def core(request):
             'ssh': ssh.get_edit_url(),
             'smartd': smart.get_edit_url(),
             'webdav': webdav.get_edit_url(),
-            'domaincontroller': domaincontroller.get_edit_url(),
             'netdata': reverse('services_netdata'),
         }, **extra_services)),
         'disabled': json.dumps(disabled),

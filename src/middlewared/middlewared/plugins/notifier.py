@@ -24,7 +24,6 @@ from freenasUI.common.freenasldap import (
     FLAGS_DBINIT,
 )
 from freenasUI.common.freenasusers import FreeNAS_User, FreeNAS_Group
-from freenasUI.common.samba import Samba4
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.directoryservice.models import (
@@ -209,12 +208,6 @@ class NotifierService(Service):
             '/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py fill',
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=True
         )
-
-    def samba4(self, name, args=None):
-        """Temporary wrapper to use Samba4 over middlewared"""
-        if args is None:
-            args = []
-        return getattr(Samba4(), name)(*args)
 
     def choices(self, name, args=None):
         """Temporary wrapper to get to UI choices"""

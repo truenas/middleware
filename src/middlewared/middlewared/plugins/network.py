@@ -1944,27 +1944,17 @@ class DNSService(Service):
         domains = []
         nameservers = []
 
-        if await self.middleware.call('notifier.common', 'system', 'domaincontroller_enabled'):
-            cifs = await self.middleware.call('datastore.query', 'services.cifs', None, {'get': True})
-            dc = await self.middleware.call('datastore.query', 'services.DomainController', None, {'get': True})
-            domains.append(dc['dc_realm'])
-            if cifs['cifs_srv_bindip']:
-                for ip in cifs['cifs_srv_bindip']:
-                    nameservers.append(ip)
-            else:
-                nameservers.append('127.0.0.1')
-        else:
-            gc = await self.middleware.call('datastore.query', 'network.globalconfiguration', None, {'get': True})
-            if gc['gc_domain']:
-                domains.append(gc['gc_domain'])
-            if gc['gc_domains']:
-                domains += gc['gc_domains'].split()
-            if gc['gc_nameserver1']:
-                nameservers.append(gc['gc_nameserver1'])
-            if gc['gc_nameserver2']:
-                nameservers.append(gc['gc_nameserver2'])
-            if gc['gc_nameserver3']:
-                nameservers.append(gc['gc_nameserver3'])
+        gc = await self.middleware.call('datastore.query', 'network.globalconfiguration', None, {'get': True})
+        if gc['gc_domain']:
+            domains.append(gc['gc_domain'])
+        if gc['gc_domains']:
+            domains += gc['gc_domains'].split()
+        if gc['gc_nameserver1']:
+            nameservers.append(gc['gc_nameserver1'])
+        if gc['gc_nameserver2']:
+            nameservers.append(gc['gc_nameserver2'])
+        if gc['gc_nameserver3']:
+            nameservers.append(gc['gc_nameserver3'])
 
         resolvconf = ''
         if domains:
