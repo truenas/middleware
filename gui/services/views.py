@@ -73,13 +73,6 @@ def core(request):
     disabled = {}
     extra_services = {}
 
-    for key, val in get_directoryservice_status().items():
-        if val is True and key != 'dc_enable':
-            disabled['domaincontroller'] = {
-                'reason': _('A directory service is already enabled.'),
-            }
-            break
-
     try:
         afp = models.AFP.objects.order_by("-id")[0]
     except IndexError:

@@ -1998,68 +1998,6 @@ class RPCToken(Model):
         return instance
 
 
-class DomainController(Model):
-    dc_realm = models.CharField(
-        max_length=120,
-        verbose_name=_("Realm"),
-        help_text=_("Realm Name, eg EXAMPLE.ORG"),
-    )
-    dc_domain = models.CharField(
-        max_length=120,
-        verbose_name=_("Domain"),
-        help_text=_("Domain Name in old format, eg EXAMPLE"),
-    )
-    dc_role = models.CharField(
-        max_length=120,
-        verbose_name=_("Server Role"),
-        help_text=_("Server Role"),
-        choices=choices.SAMBA4_ROLE_CHOICES,
-        default='dc',
-    )
-    dc_dns_backend = models.CharField(
-        max_length=120,
-        verbose_name=_("DNS Backend"),
-        help_text=_("DNS Backend, eg SAMBA_INTERNAL"),
-        choices=choices.SAMBA4_DNS_BACKEND_CHOICES,
-        default='SAMBA_INTERNAL',
-    )
-    dc_dns_forwarder = models.CharField(
-        max_length=120,
-        verbose_name=_("DNS Forwarder"),
-        help_text=_("DNS Forwarder IP Address"),
-    )
-    dc_forest_level = models.CharField(
-        max_length=120,
-        verbose_name=_("Domain Forest Level"),
-        help_text=_("Domain and Forest Level, eg 2003"),
-        choices=choices.SAMBA4_FOREST_LEVEL_CHOICES,
-        default='2003',
-    )
-    dc_passwd = models.CharField(
-        max_length=120,
-        verbose_name=_("Administrator Password"),
-        help_text=_("Administrator Password"),
-    )
-    dc_kerberos_realm = models.ForeignKey(
-        KerberosRealm,
-        verbose_name=_("Kerberos Realm"),
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-    )
-
-    def __init__(self, *args, **kwargs):
-        super(DomainController, self).__init__(*args, **kwargs)
-
-    class Meta:
-        verbose_name = _("Domain Controller")
-        verbose_name_plural = _("Domain Controller")
-
-    class FreeAdmin:
-        deletable = False
-        icon_model = "DomainControllerIcon"
-
-
 class WebDAV(Model):
     webdav_protocol = models.CharField(
         max_length=120,
