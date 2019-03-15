@@ -1,14 +1,16 @@
 import binascii
 import bsd
+from bsd import acl
 import errno
 import grp
 import os
 import pwd
 import select
 import shutil
+import subprocess
 
 from middlewared.main import EventSource
-from middlewared.schema import Bool, Dict, Int, Ref, Str, accepts
+from middlewared.schema import Bool, Dict, Int, Ref, List, Str, accepts
 from middlewared.service import private, CallError, Service, job
 from middlewared.utils import filter_list
 
@@ -226,6 +228,262 @@ class FilesystemService(Service):
             'free_bytes': statfs.free_blocks * statfs.blocksize,
             'avail_bytes': statfs.avail_blocks * statfs.blocksize,
         }
+
+    def __convert_to_basic_permset(self, permset):
+        """
+        Convert "advanced" ACL permset format to basic format using
+        bitwise operation and constants defined in py-bsd/bsd/acl.pyx,
+        py-bsd/defs.pxd and acl.h.
+
+        If the advanced ACL can't be converted without losing
+        information, we return 'OTHER'.
+
+        Reverse process converts the constant's value to a dictionary
+        using a bitwise operation.
+        """
+        perm = 0
+        for k, v, in permset.items():
+            if v:
+                perm |= acl.NFS4Perm[k]
+
+        try:
+            SimplePerm = (acl.NFS4BasicPermset(perm)).name
+        except Exception:
+            SimplePerm = 'OTHER'
+
+        return SimplePerm
+
+    def __convert_to_basic_flagset(self, flagset):
+        flags = 0
+        for k, v, in flagset.items():
+            if k == "INHERITED":
+                continue
+            if v:
+                flags |= acl.NFS4Flag[k]
+
+        try:
+            SimpleFlag = (acl.NFS4BasicFlagset(flags)).name
+        except Exception:
+            SimpleFlag = 'OTHER'
+
+        return SimpleFlag
+
+    def __convert_to_adv_permset(self, basic_perm):
+        permset = {}
+        perm_mask = acl.NFS4BasicPermset[basic_perm].value
+        for name, member in acl.NFS4Perm.__members__.items():
+            if perm_mask & member.value:
+                permset.update({name: True})
+            else:
+                permset.update({name: False})
+
+        return permset
+
+    def __convert_to_adv_flagset(self, basic_flag):
+        flagset = {}
+        flag_mask = acl.NFS4BasicFlagset[basic_flag].value
+        for name, member in acl.NFS4Flag.__members__.items():
+            if flag_mask & member.value:
+                flagset.update({name: True})
+            else:
+                flagset.update({name: False})
+
+        return flagset
+
+    @accepts(Str('path'))
+    def acl_is_trivial(self, path):
+        """
+        ACL is trivial if it can be fully expressed as a file mode without losing
+        any access rules. This is intended to be used as a check before allowing
+        users to chmod() through the webui
+        """
+        if not os.path.exists(path):
+            raise CallError('Path not found.', errno.ENOENT)
+        a = acl.ACL(file=path)
+        return a.is_trivial
+
+    @accepts(
+        Str('path'),
+        Bool('simplified', default=True),
+    )
+    def getacl(self, path, simplified=True):
+        """
+        Return ACL of a given path.
+        Simplified returns a shortened form of the ACL permset and flags
+        - TRAVERSE = sufficient rights to traverse a directory, but not read contents.
+        - READ = sufficient rights to traverse a directory, and read file contents.
+        - MODIFIY = sufficient rights to traverse, read, write, and modify a file. Equivalent to modify_set.
+        - FULL_CONTROL = all permissions.
+        - OTHER = does not fit into any of the above categories without losing information.
+
+        In all cases we replace USER_OBJ, GROUP_OBJ, and EVERYONE with owner@, group@, everyone@ for
+        consistency with getfacl and setfacl. If one of aforementioned special tags is used, 'id' must
+        be set to None.
+
+        An inheriting empty everyone@ ACE is appended to non-trivial ACLs in order to enforce Windows
+        expectations regarding permissions inheritance. This entry is removed from NT ACL returned
+        to SMB clients when 'ixnas' samba VFS module is enabled. We also remove it here to avoid confusion.
+        """
+        if not os.path.exists(path):
+            raise CallError('Path not found.', errno.ENOENT)
+
+        a = acl.ACL(file=path)
+        fs_acl = a.__getstate__()
+
+        if not simplified:
+            advanced_acl = []
+            for entry in fs_acl:
+                ace = {
+                    'tag': (acl.ACLWho[entry['tag']]).value,
+                    'id': entry['id'],
+                    'type': entry['type'],
+                    'perms': entry['perms'],
+                    'flags': entry['flags'],
+                }
+                if ace['tag'] == 'everyone@' and self.__convert_to_basic_permset(ace['perms']) == 'NOPERMS':
+                    self.logger.debug('detected hidden ace')
+                    continue
+                advanced_acl.append(ace)
+            return advanced_acl
+
+        if simplified:
+            simple_acl = []
+            for entry in fs_acl:
+                ace = {
+                    'tag': (acl.ACLWho[entry['tag']]).value,
+                    'id': entry['id'],
+                    'type': entry['type'],
+                    'perms': {'BASIC': self.__convert_to_basic_permset(entry['perms'])},
+                    'flags': {'BASIC': self.__convert_to_basic_flagset(entry['flags'])},
+                }
+                if ace['tag'] == 'everyone@' and ace['perms']['BASIC'] == 'NOPERMS':
+                    continue
+                simple_acl.append(ace)
+
+            return simple_acl
+
+    @accepts(
+        Str('path'),
+        List(
+            'dacl',
+            items=[
+                Dict(
+                    'aclentry',
+                    Str('tag', enum=['owner@', 'group@', 'everyone@', 'USER', 'GROUP']),
+                    Int('id', null=True),
+                    Str('type', enum=['ALLOW', 'DENY']),
+                    Dict(
+                        'perms',
+                        Bool('READ_DATA'),
+                        Bool('WRITE_DATA'),
+                        Bool('APPEND_DATA'),
+                        Bool('READ_NAMED_ATTRS'),
+                        Bool('WRITE_NAMED_ATTRS'),
+                        Bool('EXECUTE'),
+                        Bool('DELETE_CHILD'),
+                        Bool('READ_ATTRIBUTES'),
+                        Bool('WRITE_ATTRIBUTES'),
+                        Bool('DELETE'),
+                        Bool('READ_ACL'),
+                        Bool('WRITE_ACL'),
+                        Bool('WRITE_OWNER'),
+                        Bool('SYNCHRONIZE'),
+                        Str('BASIC', enum=['FULL_CONTROL', 'MODIFY', 'READ', 'OTHER']),
+                    ),
+                    Dict(
+                        'flags',
+                        Bool('FILE_INHERIT'),
+                        Bool('DIRECTORY_INHERIT'),
+                        Bool('NO_PROPAGATE_INHERIT'),
+                        Bool('INHERIT_ONLY'),
+                        Bool('INHERITED'),
+                        Str('BASIC', enum=['INHERIT', 'NOINHERIT', 'OTHER']),
+                    ),
+                )
+            ],
+            default=[]
+        ),
+        Dict(
+            'options',
+            Bool('stripacl', default=False),
+            Bool('recursive', default=False),
+            Bool('traverse', default=False),
+        )
+    )
+    @job(lock=lambda args: f'setacl:{args[0]}')
+    def setacl(self, job, path, dacl, options):
+        """
+        Set ACL of a given path. Takes the following parameters:
+        :path: realpath or relative path. We make a subsequent realpath call to resolve it.
+        :dacl: Accept a "simplified" ACL here or a full ACL. If the simplified ACL
+        contains ACE perms or flags that are "SPECIAL", then raise a validation error.
+        :recursive: apply the ACL recursively
+        :traverse: traverse filestem boundaries (ZFS datasets)
+        :strip: convert ACL to trivial. ACL is trivial if it can be expressed as a file mode without
+        losing any access rules.
+
+        In all cases we replace USER_OBJ, GROUP_OBJ, and EVERYONE with owner@, group@, everyone@ for
+        consistency with getfacl and setfacl. If one of aforementioned special tags is used, 'id' must
+        be set to None.
+
+        An inheriting empty everyone@ ACE is appended to non-trivial ACLs in order to enforce Windows
+        expectations regarding permissions inheritance. This entry is removed from NT ACL returned
+        to SMB clients when 'ixnas' samba VFS module is enabled.
+        """
+        if not os.path.exists(path):
+            raise CallError('Path not found.', errno.ENOENT)
+
+        if dacl and options['stripacl']:
+            raise CallError('Setting ACL and stripping ACL are not permitted simultaneously.', errno.EINVAL)
+
+        if options['stripacl']:
+            a = acl.ACL(file=path)
+            a.strip()
+            a.apply(path)
+        else:
+            cleaned_acl = []
+            lockace_is_present = False
+            for entry in dacl:
+                if entry['perms'].get('BASIC') == 'OTHER' or entry['flags'].get('BASIC') == 'OTHER':
+                    raise CallError('Unable to apply simplified ACL due to OTHER entry. Use full ACL.', errno.EINVAL)
+                ace = {
+                    'tag': (acl.ACLWho(entry['tag'])).name,
+                    'id': entry['id'],
+                    'type': entry['type'],
+                    'perms': self.__convert_to_adv_permset(entry['perms']['BASIC']) if 'BASIC' in entry['perms'] else entry['perms'],
+                    'flags': self.__convert_to_adv_flagset(entry['flags']['BASIC']) if 'BASIC' in entry['perms'] else entry['flags'],
+                }
+                if ace['tag'] == 'EVERYONE' and self.__convert_to_basic_permset(ace['perms']) == 'NOPERMS':
+                    lockace_is_present = True
+                cleaned_acl.append(ace)
+            if not lockace_is_present:
+                locking_ace = {
+                    'tag': 'EVERYONE',
+                    'id': None,
+                    'type': 'ALLOW',
+                    'perms': self.__convert_to_adv_permset('NOPERMS'),
+                    'flags': self.__convert_to_adv_flagset('INHERIT')
+                }
+                cleaned_acl.append(locking_ace)
+
+            a = acl.ACL()
+            a.__setstate__(cleaned_acl)
+            a.apply(path)
+
+        if not options['recursive']:
+            self.logger.debug('exiting early on non-recursive task')
+            return True
+
+        winacl = subprocess.run([
+            '/usr/local/bin/winacl',
+            '-a', 'clone',
+            f"{'-rx' if options['traverse'] else '-r'}",
+            '-p', path], check=False
+        )
+        if winacl.returncode != 0:
+            raise CallError(f"Failed to recursively apply ACL: {winacl.stderr.decode()}")
+
+        return True
 
 
 class FileFollowTailEventSource(EventSource):

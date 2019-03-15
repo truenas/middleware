@@ -3,7 +3,6 @@
         def __init__(self, **kwargs):
             self.middleware = kwargs.get('middleware')
             self.pam_mkhomedir = "/usr/local/lib/pam_mkhomedir.so"
-            self.pam_sss = "/usr/local/lib/pam_sss.so"
             self.pam_ldap = "/usr/local/lib/pam_ldap.so"
             self.pam_winbind = "/usr/local/lib/pam_winbind.so"
 
@@ -78,29 +77,18 @@
         def enabled(self):
             return self.safe_call('notifier.common', 'system', 'ldap_enabled')
 
-        def __anonymous_bind(self):
-            return self.safe_call('notifier.common', 'system', 'ldap_anonymous_bind')
-
         def pam_auth(self):
-            module = self.pam_sss
-            args = ["ignore_authinfo_unavail", "quiet"]
-
-            if self.__anonymous_bind():
-                module = self.pam_ldap
-                args = ["try_first_pass", "ignore_unknown_user",
-                    "ignore_authinfo_unavail", "no_warn"]
+            module = self.pam_ldap
+            args = ["try_first_pass", "ignore_unknown_user",
+                "ignore_authinfo_unavail", "no_warn"]
 
             module_args = " ".join(args)
 
             return f"auth\t\tsufficient\t{module}\t{module_args}"
 
         def pam_account(self):
-            module = self.pam_sss
-            args = ["ignore_authinfo_unavail", "quiet"]
-
-            if self.__anonymous_bind():
-                module = self.pam_ldap
-                args = ["ignore_unknown_user", "ignore_authinfo_unavail", "no_warn"]
+            module = self.pam_ldap
+            args = ["ignore_unknown_user", "ignore_authinfo_unavail", "no_warn"]
 
             module_args = " ".join(args)
 
@@ -110,13 +98,9 @@
             return f"session\t\trequired\t{self.pam_mkhomedir}"
 
         def pam_password(self):
-            module = self.pam_sss
-            args = ["use_authtok", "quiet"]
-
-            if self.__anonymous_bind():
-                module = self.pam_ldap
-                args = ["use_authtok", "ignore_unknown_user",
-                    "ignore_authinfo_unavail", "no_warn"]
+            module = self.pam_ldap
+            args = ["use_authtok", "ignore_unknown_user",
+                "ignore_authinfo_unavail", "no_warn"]
 
             module_args = " ".join(args)
 

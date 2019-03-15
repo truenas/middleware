@@ -38,6 +38,15 @@ class NetworkConfigurationService(ConfigService):
 
     @private
     def network_config_extend(self, data):
+        if self.middleware.call_sync('system.is_freenas'):
+            data.pop('hostname_b')
+            data.pop('hostname_virtual')
+        else:
+            node = self.middleware.call_sync('failover.node')
+            data['hostname_a'] = data['hostname']
+            if node == 'B':
+                data['hostname_a'] = data['hostname']
+                data['hostname'] = data['hostname_b']
         data['domains'] = data['domains'].split()
         data['netwait_ip'] = data['netwait_ip'].split()
         return data
@@ -2016,8 +2025,7 @@ async def configure_http_proxy(middleware, *args, **kwargs):
     urllib.request.install_opener(None)
 
 
-async def _event_ifnet(middleware, event_type, args):
-    data = args['data']
+async def devd_ifnet_hook(middleware, data):
     if data.get('system') != 'IFNET' or data.get('type') != 'ATTACH':
         return
 
@@ -2049,7 +2057,7 @@ async def setup(middleware):
     middleware.event_subscribe('network.config', configure_http_proxy)
 
     # Listen to IFNET events so we can sync on interface attach
-    middleware.event_subscribe('devd.ifnet', _event_ifnet)
+    middleware.register_hook('devd.ifnet', devd_ifnet_hook)
 
     # Only run DNS sync in the first run. This avoids calling the routine again
     # on middlewared restart.

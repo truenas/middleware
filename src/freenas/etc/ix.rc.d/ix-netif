@@ -8,16 +8,229 @@
 
 . /etc/rc.freenas
 
+
+_interface_config()
+{
+	local failover_status="" failover_licensed=0
+	if ! is_freenas; then
+		if [ "$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/failover/licensed.py 2> /dev/null)" = "True" ]; then
+			failover_licensed=1
+		fi
+		failover_status="$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status 2> /dev/null)"
+	fi
+
+	local saved_ifs="${IFS}"
+	local IFS=\|
+	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options
+	local lagg_id laggproto lagg_physnic
+	local vlan_vint vlan_pint vlan_tag vlan_pcp
+
+	if [ `${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(id) FROM network_interfaces"` = 0 ]; then
+		IFS="${saved_ifs}"
+		for interface in $(ifconfig -l)
+		do
+			if echo "${interface}"|egrep -q '^(bridge|epair|ipfw|lo)[0-9]+'
+			then
+				continue
+			fi
+			if echo "${interface}"|grep -q ':'
+			then
+				continue
+			fi
+			echo "ifconfig_${interface}=\"DHCP\""
+		done
+	fi
+
+	local node
+	local carp1_addr="169.254.10.20/32" carp2_addr="169.254.10.80/32"
+	local carp1_skew carp2_skew
+	local internal_ip internal_iface
+	local configure_ifaces=1
+	if ! is_freenas; then
+
+		if [ "$(ha_mode)" = "MANUAL" ]; then
+			if [ ${failover_licensed} -eq 1 ]; then
+				configure_ifaces=0
+				echo "# Unable to determine HA hardware and node, skipping interfaces configuration" | tee /dev/console
+			fi
+		else
+			node=$(ha_node)
+		fi
+
+		if [ "${node}" = "A" ]; then
+			carp1_skew="20"
+			carp2_skew="80"
+			internal_ip="169.254.10.1"
+		elif [ "${node}" = "B" ]; then
+			carp1_skew="80"
+			carp2_skew="20"
+			internal_ip="169.254.10.2"
+		else
+			echo "# Could not determine system node"
+		fi
+
+		if [ -n "${carp1_skew}" ]; then
+			if [ "$(ha_hardware)" = "ECHOSTREAM" ]; then
+				internal_iface=$(pciconf -lv | grep 'card=0xa01f8086 chip=0x10d38086' | awk -F@ '{print $1}')
+                                if [ "${internal_iface}" = "" ]; then
+                                        internal_iface=$(ifconfig -l | tr -s " " "\n" | grep "^em" | sort -r | head -1)
+                                fi
+			elif [ "$(ha_hardware)" = "SBB" ]; then
+				internal_iface="ix0"
+			elif [ "$(ha_hardware)" = "ECHOWARP" -o "$(ha_hardware)" = "PUMA" ]; then
+				internal_iface="ntb0"
+				if [ "${node}" = "A" ]; then
+					ether="02:8c:97:2e:a5:01"
+				else
+					ether="02:8c:97:2e:a5:02"
+				fi
+			elif [ "$(ha_hardware)" = "ULTIMATE" ]; then
+				internal_iface="igb1"
+			elif [ "$(ha_hardware)" = "BHYVE" ]; then
+				internal_iface="em0"
+			fi
+			local a=0
+			if [ -n "${ether}" ]; then
+				echo "ifconfig_${internal_iface}=\"ether ${ether}\""
+				echo "ifconfig_${internal_iface}_alias${a}=\"inet ${internal_ip}/24 descr Interlink\""
+				a=$(( $a + 1 ))
+			else
+				echo "ifconfig_${internal_iface}=\"inet ${internal_ip}/24 descr Interlink\""
+			fi
+			echo "ifconfig_${internal_iface}_alias${a}=\"inet vhid 10 advskew ${carp1_skew} alias ${carp1_addr}\""
+			a=$(( $a + 1 ))
+			echo "ifconfig_${internal_iface}_alias${a}=\"inet vhid 20 advskew ${carp2_skew} alias ${carp2_addr}\""
+			a=$(( $a + 1 ))
+		fi
+	fi
+
+	local IFS=\|
+	# Note: ipv4/ipv6 are supposed in ip/masklen format.
+
+	# Traverse the network interface table and generate rc.conf style
+	# configuration.
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv4address_b, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_v6netmaskbit, int_vip, int_vhid, int_pass, int_critical, int_group, int_options FROM network_interfaces ORDER BY id" | \
+	while read interface_id interface dodhcp ipv4addr ipv4addr_b ipv4netmask doipv6auto ipv6addr ipv6netmask int_vip int_vhid int_pass critical group options; do
+		if [ ${configure_ifaces} -ne 1 ]; then
+			continue;
+		fi
+		if [ "$(ha_node)" = "B" ]; then
+			ipv4addr=${ipv4addr_b}
+		fi
+		echo -n ifconfig_${interface}=\"
+		if [ "${dodhcp}" = "1" ]; then
+			echo -n "DHCP"
+		elif [ -n "${ipv4addr}" ]; then
+			echo -n "inet ${ipv4addr}/${ipv4netmask} "
+		fi
+		# Hook to support lagg(4) interfaces
+		lagg_id=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM network_lagginterface WHERE lagg_interface_id = ${interface_id}"`
+		if [ -n "${lagg_id}" ]; then
+			laggproto=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_protocol FROM network_lagginterface WHERE lagg_interface_id = ${interface_id}"`
+			echo -n " laggproto ${laggproto}"
+			${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_physnic FROM network_lagginterfacemembers WHERE lagg_interfacegroup_id=${lagg_id} ORDER BY lagg_ordernum" | \
+			while read lagg_physnic; do
+				echo -n " laggport ${lagg_physnic}"
+			done
+		fi
+		if [ -n "${options}" ]; then
+			echo -n " ${options}"
+		fi
+		echo \"
+
+		if [ "${int_vip}" != "" ]; then
+			if [ -n "${int_pass}" ]; then
+				int_passopt=" pass ${int_pass}"
+			else
+				int_passopt=""
+			fi
+			if [ "${failover_status}" = "MASTER" ]; then
+				carp1_skew="1"
+			fi
+			echo -n "ifconfig_${interface}_alias0=\"inet vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${int_vip}/32"
+			if [ -n "${critical}" ]; then
+				echo -n " descr CriticalGroup${group}"
+			fi
+			echo \"
+			eval counter_${interface}=1
+
+		fi
+
+		local aliases has_ipv6
+		aliases=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, alias_vip, alias_v4address, alias_v4address_b, alias_v4netmaskbit, alias_v6address, alias_v6address_b, alias_v6netmaskbit FROM network_alias WHERE alias_interface_id = ${interface_id} ORDER BY id" | \
+		while read alias_id v4vip v4addr v4addr_b v4netmask v6addr v6addr_b v6netmask; do
+			eval counter=\${counter_${interface}:-0}
+			if [ "$(ha_node)" = "B" ]; then
+				v4addr=${v4addr_b}
+				v6addr=${v6addr_b}
+			fi
+			if [ -n "${int_vhid}" -a -n "${v4vip}" ]; then
+				echo "ifconfig_${interface}_alias${counter}=\"inet vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${v4vip}/32\""
+				counter=$((counter+1))
+			fi
+			if [ -n "${v4addr}" ]; then
+				echo "ifconfig_${interface}_alias${counter}=\"inet ${v4addr}/${v4netmask}\""
+				counter=$((counter+1))
+			fi
+			if [ -n "${v6addr}" ]; then
+				echo "ifconfig_${interface}_alias${counter}=\"inet6 ${v6addr}/${v6netmask}\""
+				counter=$((counter+1))
+			fi
+			eval "counter_${interface}=\${counter}"
+		done)
+		echo ${aliases}
+		has_ipv6=$(echo ${aliases}|grep -c inet6)
+
+		if [ "$doipv6auto" = "1" ]; then
+			echo ifconfig_${interface}_ipv6=\"inet6 accept_rtadv auto_linklocal\"
+                        echo rtsold_enable=\"YES\"
+		else
+			if [ -n "${ipv6addr}" ]; then
+				echo ifconfig_${interface}_ipv6=\"inet6 ${ipv6addr}/${ipv6netmask} auto_linklocal\"
+                        elif [ ${has_ipv6} -gt 0 ]; then
+                                echo ifconfig_${interface}_ipv6=\"inet6 auto_linklocal\"
+                        fi
+		fi
+		if [ -n "${lagg_id}" ]; then
+			cloned_interfaces="${cloned_interfaces} ${interface}"
+			echo "cloned_interfaces=\"${cloned_interfaces}\""
+		fi
+	done
+
+
+	#
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_physnic, lagg_interfacegroup_id FROM network_lagginterfacemembers ORDER BY lagg_ordernum" | \
+	while read lagg_physnic lagg_gid; do
+		lagg_intoptions=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_options FROM network_interfaces INNER JOIN network_lagginterface ON network_interfaces.id=network_lagginterface.lagg_interface_id WHERE network_lagginterface.id=${lagg_gid}")
+		echo "ifconfig_${lagg_physnic}=\"\${ifconfig_${lagg_physnic}} ${lagg_intoptions}\""
+	done
+
+	# Hook to support vlan interfaces
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT DISTINCT vlan_pint from network_vlan" | \
+	while read vlan_pint; do
+		echo -n vlans_${vlan_pint}=\"
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint from network_vlan WHERE vlan_pint = \"${vlan_pint}\"" | xargs echo -n
+		echo \"
+	done
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint, vlan_tag, vlan_pcp from network_vlan" | \
+	while read vlan_vint vlan_tag vlan_pcp; do
+		echo -n create_args_${vlan_vint}=\"vlan\ ${vlan_tag}
+		if [ -n "${vlan_pcp}" ]; then
+			echo -n " vlanpcp ${vlan_pcp}"
+		fi
+		echo \"
+	done
+}
+
 netif_start()
 {
 	echo "Starting interfaces..."
 	# If middlewared failed to start for some reason or the call failed
 	# we need to fallback to configuring interfaces using rc.d/netif for debugging.
-	# Sentinel file checked in rc.conf.local
 	if ! /usr/local/bin/midclt -t 120 call interfaces.sync true > /dev/null 2>&1; then
-		touch ${FREENAS_MW_IFACES_FAILED}
-		# Removing file makes sure rc.conf cache is regenerated on next rc.d call
-		rm -rf ${FREENAS_CONFIG_MD5}
+		_interface_config > /etc/rc.conf.network
+		killall -ALRM sh
 	fi
 
 }

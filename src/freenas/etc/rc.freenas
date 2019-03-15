@@ -31,13 +31,8 @@
 #	FreeNAS settings	
 #
 : ${FREENAS_CONFIG:="/data/freenas-v1.db"}
-: ${FREENAS_CONFIG_MD5:="/var/tmp/freenas_config.md5"}
 : ${FREENAS_SQLITE_CMD:="/usr/local/bin/sqlite3fn"}
-: ${FREENAS_RC:="/var/tmp/rc.conf.freenas"}
 : ${FREENAS_VERSIONFILE:="/etc/version"}
-: ${FREENAS_SYSTEMDATASET:="/var/db/system"}
-
-: ${FREENAS_MW_IFACES_FAILED:="/tmp/.middleware_interface_failed"}
 
 #
 #	Updater specific variables.
@@ -60,16 +55,9 @@
 #
 #	LDAP settings
 #
-: ${SSSD_CONF:="/usr/local/etc/sssd/sssd.conf"}
 : ${LDAP_CONF:="/usr/local/etc/openldap/ldap.conf"}
 : ${CERT_FILE:="/usr/local/etc/certs/cacert.crt"}
 : ${LDAP_TIMEOUT:="0"}
-
-#
-#	PAM settings
-#
-: ${PAM_TEMPLATE_DIR:="/etc/ix/templates/pam.d"}
-: ${PAM_DIR:="/etc/pam.d"}
 
 #
 #	NSS settings
@@ -333,11 +321,6 @@ is_freenas()
 
 }
 
-
-system_dataset_enabled()
-{
-	test -n "$(find "${FREENAS_SYSTEMDATASET}" -prune -type d ! -empty 2>/dev/null)"
-}
 
 ha_mode()
 {

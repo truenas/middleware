@@ -587,7 +587,7 @@ def main():
                             def callback(job):
                                 nonlocal lastdesc
                                 desc = job['progress']['description']
-                                if desc != lastdesc:
+                                if desc is not None and desc != lastdesc:
                                     print(desc, file=sys.stderr)
                                 lastdesc = desc
 

@@ -179,7 +179,7 @@ class ZFSPoolService(CRUDService):
                 if g:
                     name = g.consumer.provider.geom.name
 
-            if name and geom.geom_by_name('DISK', name):
+            if name and (name.startswith('multipath/') or geom.geom_by_name('DISK', name)):
                 yield name
             else:
                 self.logger.debug(f'Could not find disk for {dev}')
@@ -281,6 +281,9 @@ class ZFSPoolService(CRUDService):
 
                 newvdev = libzfs.ZFSVdev(zfs, 'disk')
                 newvdev.path = f'/dev/{dev}'
+                # FIXME: Replace using old path is not working for some reason
+                # Lets use guid for now.
+                target.path = str(target.guid)
                 target.replace(newvdev)
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
@@ -706,6 +709,9 @@ class ZFSSnapshot(CRUDService):
             with libzfs.ZFS() as zfs:
                 snp = zfs.get_snapshot(snapshot)
                 snp.clone(dataset_dst)
+                dataset = zfs.get_dataset(dataset_dst)
+                if dataset.type.name == 'FILESYSTEM':
+                    dataset.mount_recursive()
             self.logger.info("Cloned snapshot {0} to dataset {1}".format(snapshot, dataset_dst))
             return True
         except libzfs.ZFSException as err:
@@ -780,8 +786,7 @@ class ScanWatch(object):
         self._cancel.set()
 
 
-async def _handle_zfs_events(middleware, event_type, args):
-    data = args['data']
+async def devd_zfs_hook(middleware, data):
     if data.get('type') in ('misc.fs.zfs.resilver_start', 'misc.fs.zfs.scrub_start'):
         pool = data.get('pool_name')
         if not pool:
@@ -814,4 +819,5 @@ async def _handle_zfs_events(middleware, event_type, args):
 
 
 def setup(middleware):
-    middleware.event_subscribe('devd.zfs', _handle_zfs_events)
+    middleware.event_register('zfs.pool.scan', 'Progress of pool resilver/scrub.')
+    middleware.register_hook('devd.zfs', devd_zfs_hook)

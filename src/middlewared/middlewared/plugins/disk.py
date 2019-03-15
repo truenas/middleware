@@ -160,7 +160,7 @@ class DiskService(CRUDService):
         Helper method to get all disks that are not in use, either by the boot
         pool or the user pools.
         """
-        disks = await self.query([('name', 'nin', await self.get_reserved())])
+        disks = await self.query([('devname', 'nin', await self.get_reserved())])
 
         if join_partitions:
             for disk in disks:
@@ -776,6 +776,33 @@ class DiskService(CRUDService):
         geom.scan()
         return geom.class_by_name('PART').xml.find(f'.//geom[name="{disk}"]') is None
 
+    async def __disk_data(self, disk, name):
+        g = geom.geom_by_name('DISK', name)
+        if g:
+            if g.provider.config['ident']:
+                disk['disk_serial'] = g.provider.config['ident']
+            if g.provider.mediasize:
+                disk['disk_size'] = g.provider.mediasize
+            try:
+                if g.provider.config['rotationrate'] == '0':
+                    disk['disk_rotationrate'] = None
+                    disk['disk_type'] == 'SSD'
+                else:
+                    disk['disk_rotationrate'] = int(g.provider.config['rotationrate'])
+                    disk['disk_type'] == 'HDD'
+            except ValueError:
+                disk['disk_type'] == 'UNKNOWN'
+                disk['disk_rotationrate'] = None
+            disk['disk_model'] = g.provider.config['descr'] or None
+
+        if not disk.get('disk_serial'):
+            disk['disk_serial'] = await self.serial_from_device(name) or ''
+        reg = RE_DSKNAME.search(name)
+        if reg:
+            disk['disk_subsystem'] = reg.group(1)
+            disk['disk_number'] = int(reg.group(2))
+        return g
+
     @private
     @accepts(Str('name'))
     async def sync(self, name):
@@ -814,18 +841,8 @@ class DiskService(CRUDService):
         disk.update({'disk_name': name, 'disk_expiretime': None})
 
         await self.middleware.run_in_thread(geom.scan)
-        g = geom.geom_by_name('DISK', name)
-        if g:
-            if g.provider.config['ident']:
-                disk['disk_serial'] = g.provider.config['ident']
-            if g.provider.mediasize:
-                disk['disk_size'] = g.provider.mediasize
-        if not disk.get('disk_serial'):
-            disk['disk_serial'] = await self.serial_from_device(name) or ''
-        reg = RE_DSKNAME.search(name)
-        if reg:
-            disk['disk_subsystem'] = reg.group(1)
-            disk['disk_number'] = int(reg.group(2))
+        await self.__disk_data(disk, name)
+
         if not new:
             await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
         else:
@@ -884,20 +901,10 @@ class DiskService(CRUDService):
                 disk['disk_expiretime'] = None
                 disk['disk_name'] = name
 
-            reg = RE_DSKNAME.search(name)
-            if reg:
-                disk['disk_subsystem'] = reg.group(1)
-                disk['disk_number'] = int(reg.group(2))
-            serial = ''
-            g = geom.geom_by_name('DISK', name)
+            g = await self.__disk_data(disk, name)
+            serial = disk.get('disk_serial') or ''
             if g:
-                if g.provider.config['ident']:
-                    serial = disk['disk_serial'] = g.provider.config['ident']
                 serial += g.provider.config.get('lunid') or ''
-                if g.provider.mediasize:
-                    disk['disk_size'] = g.provider.mediasize
-            if not disk.get('disk_serial'):
-                serial = disk['disk_serial'] = await self.serial_from_device(name) or ''
 
             if serial:
                 serials.append(serial)
@@ -1703,8 +1710,7 @@ async def dempdev_configure(name):
     return True
 
 
-async def _event_devfs(middleware, event_type, args):
-    data = args['data']
+async def devd_devfs_hook(middleware, data):
     if data.get('subsystem') != 'CDEV':
         return
 
@@ -1713,30 +1719,23 @@ async def _event_devfs(middleware, event_type, args):
         # Device notified about is not a disk
         if data['cdev'] not in disks:
             return
-        # TODO: hack so every disk is not synced independently during boot
-        # This is a performance issue
-        if os.path.exists('/tmp/.sync_disk_done'):
-            await middleware.call('disk.sync', data['cdev'])
-            await middleware.call('disk.sed_unlock', data['cdev'])
-            await middleware.call('disk.multipath_sync')
-            await middleware.call('alert.oneshot_delete', 'SMART', data['cdev'])
+        await middleware.call('disk.sync', data['cdev'])
+        await middleware.call('disk.sed_unlock', data['cdev'])
+        await middleware.call('disk.multipath_sync')
+        await middleware.call('alert.oneshot_delete', 'SMART', data['cdev'])
     elif data['type'] == 'DESTROY':
         # Device notified about is not a disk
         if not RE_ISDISK.match(data['cdev']):
             return
-        # TODO: hack so every disk is not synced independently during boot
-        # This is a performance issue
-        if os.path.exists('/tmp/.sync_disk_done'):
-            await (await middleware.call('disk.sync_all')).wait()
-            await middleware.call('disk.multipath_sync')
-            await middleware.call('alert.oneshot_delete', 'SMART', data['cdev'])
-            # If a disk dies we need to reconfigure swaps so we are not left
-            # with a single disk mirror swap, which may be a point of failure.
-            await middleware.call('disk.swaps_configure')
+        await (await middleware.call('disk.sync_all')).wait()
+        await middleware.call('disk.multipath_sync')
+        await middleware.call('alert.oneshot_delete', 'SMART', data['cdev'])
+        # If a disk dies we need to reconfigure swaps so we are not left
+        # with a single disk mirror swap, which may be a point of failure.
+        await middleware.call('disk.swaps_configure')
 
 
-async def _event_zfs(middleware, event_type, args):
-    data = args['data']
+async def devd_zfs_hook(middleware, data):
     # Swap must be configured only on disks being used by some pool,
     # for this reason we must react to certain types of ZFS events to keep
     # it in sync every time there is a change.
@@ -1759,8 +1758,8 @@ async def _event_system_ready(middleware, event_type, args):
 
 def setup(middleware):
     # Listen to DEVFS events so we can sync on disk attach/detach
-    middleware.event_subscribe('devd.devfs', _event_devfs)
+    middleware.register_hook('devd.devfs', devd_devfs_hook)
     # Listen to ZFS events to reconfigure swap on pool create/export/import
-    middleware.event_subscribe('devd.zfs', _event_zfs)
+    middleware.register_hook('devd.zfs', devd_zfs_hook)
     # Run disk tasks once system is ready (e.g. power management)
     middleware.event_subscribe('system', _event_system_ready)

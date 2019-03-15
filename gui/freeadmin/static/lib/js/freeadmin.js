@@ -1258,6 +1258,7 @@ require([
 
         var provider = registry.byId(provider_id).get('value');
         var credentialsSchemas = JSON.parse(registry.byId("id_credentials_schemas").get('value'));
+        var credentialsOauths = JSON.parse(registry.byId("id_credentials_oauths").get('value'));
 
         var attributesInput = dom.byId("id_attributes");
         var attributes = JSON.parse(attributesInput.value) || {};
@@ -1355,9 +1356,41 @@ require([
 
             document.getElementById(id).onchange = updateAttributes;
         }
+        if (credentialsOauths[provider])
+        {
+            var newNode = document.createElement("tr");
+            newNode.className = "cloud-credentials-attribute";
+            newNode.innerHTML = "<th>&nbsp;</th><td><a href='#' onclick='cloudSyncAutomaticConfig(" + JSON.stringify(credentialsOauths[provider]) + "); return false;'>Automatic config</a></td>";
+
+            attributesInput.parentNode.insertBefore(newNode, attributesInput.nextSibling);
+        }
 
         updateAttributes();
     }
+
+    cloudSyncAutomaticConfig = function(url) {
+        window.open(url + "?origin=" + encodeURIComponent(window.location.toString()), "_blank", "width=640,height=480");
+    }
+
+    window.addEventListener("message", function(message) {
+        if (message.data.oauth_portal)
+        {
+            if (message.data.error)
+            {
+                alert(message.data.error);
+            }
+            else
+            {
+                for (k in message.data.result)
+                {
+                    if (document.getElementById("id_attributes_" + k))
+                    {
+                        document.getElementById("id_attributes_" + k).value = message.data.result[k];
+                    }
+                }
+            }
+        }
+    }, false);
 
     cloudSyncDirectionToggle = function() {
 

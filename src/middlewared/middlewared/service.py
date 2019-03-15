@@ -229,6 +229,11 @@ class ServiceChangeMixin:
             {'get': True}
         ))['state'].lower()
 
+        # For now its hard to keep track of which services change rc.conf.
+        # To be safe run this every time any service is updated.
+        # This adds up ~180ms so its seems a reasonable workaround for the time being.
+        await self.middleware.call('etc.generate', 'rc')
+
         if svc_state == 'running':
             started = await self.middleware.call(f'service.{verb}', service, {'onetime': True})
 
@@ -555,6 +560,18 @@ class CoreService(Service):
                     'job': hasattr(method, '_job'),
                 }
         return data
+
+    @accepts()
+    def get_events(self):
+        """
+        Returns metadata for every possible event emitted from websocket server.
+        """
+        events = {}
+        for name, attrs in self.middleware.get_events():
+            events[name] = {
+                'description': attrs['description'],
+            }
+        return events
 
     @private
     async def call_hook(self, name, args, kwargs=None):
