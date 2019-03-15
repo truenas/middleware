@@ -41,13 +41,8 @@ class VMForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(VMForm, self).__init__(*args, **kwargs)
         if self.instance.id:
-            for i in ('vm_type', 'root_password', 'path', 'size'):
+            for i in ('root_password', 'path', 'size'):
                 del self.fields[i]
-            if self.instance.vm_type != 'Bhyve':
-                del self.fields['bootloader']
-        else:
-            self.fields['vm_type'].widget.attrs['onChange'] = ("vmTypeToggle();")
-            key_order(self, 0, 'vm_type', instance=True)
 
     def clean_name(self):
         name = self.cleaned_data.get('name')
@@ -55,62 +50,14 @@ class VMForm(ModelForm):
             name = name.replace(' ', '')
         return name
 
-    def clean_root_password(self):
-        vm_type = self.cleaned_data.get('vm_type')
-        root_password = self.cleaned_data.get('root_password')
-        if vm_type != 'Bhyve' and not root_password:
-            raise forms.ValidationError(_('This field is required.'))
-        return root_password
-
-    def clean_path(self):
-        vm_type = self.cleaned_data.get('vm_type')
-        path = self.cleaned_data.get('path')
-        if vm_type != 'Bhyve':
-            if path and os.path.exists(path):
-                raise forms.ValidationError(_('File must not exist.'))
-            elif not path:
-                raise forms.ValidationError(_('File path is required.'))
-        return path
-
-    def clean_size(self):
-        vm_type = self.cleaned_data.get('vm_type')
-        size = self.cleaned_data.get('size')
-        if vm_type != 'Bhyve' and not size:
-            raise forms.ValidationError(_('This field is required.'))
-        return size
-
     def save(self, **kwargs):
         with client as c:
             cdata = self.cleaned_data
 
-            # Container boot load is GRUB
-            if self.instance.vm_type == 'Container Provider':
-                cdata['bootloader'] = 'GRUB'
-
             if self.instance.id:
                 c.call('vm.update', self.instance.id, cdata)
             else:
-                if cdata['vm_type'] == 'Container Provider':
-                    cdata['devices'] = [
-                        {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
-                        {'dtype': 'RAW', 'attributes': {
-                            'path': cdata.pop('path'),
-                            'type': 'AHCI',
-                            'sectorsize': 0,
-                            'size': cdata.pop('size'),
-                            'exists': False,
-                        }},
-                    ]
-                    cdata.pop('vm_type')
-                    cdata.pop('bootloader')
-                    cdata['type'] = 'RancherOS'
-                    return c.call('vm.create_container', cdata)
-
-                cdata.pop('root_password')
-                cdata.pop('path')
-                cdata.pop('size')
-
-                if cdata['bootloader'] == 'UEFI' and cdata['vm_type'] == 'Bhyve':
+                if cdata['bootloader'] == 'UEFI':
                     cdata['devices'] = [
                         {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
                         {'dtype': 'VNC', 'attributes': {'wait': False, 'vnc_web': False}},
@@ -267,14 +214,11 @@ class DeviceForm(ModelForm):
                 self.fields['DISK_mode'].initial = self.instance.attributes.get('type')
                 self.fields['DISK_sectorsize'].initial = self.instance.attributes.get('sectorsize', 0)
 
-                if self.instance.vm.vm_type == 'Container Provider':
-                    self.fields['DISK_raw_boot'].widget = forms.CheckboxInput()
-                    self.fields['DISK_raw_size'].widget = forms.TextInput()
-                    self.fields['ROOT_password'].widget = forms.PasswordInput(render_value=True,)
+                self.fields['DISK_raw_boot'].widget = forms.CheckboxInput()
+                self.fields['DISK_raw_size'].widget = forms.TextInput()
 
                 self.fields['DISK_raw_boot'].initial = self.instance.attributes.get('boot', False)
                 self.fields['DISK_raw_size'].initial = self.instance.attributes.get('size', '')
-                self.fields['ROOT_password'].initial = self.instance.attributes.get('rootpwd', '')
             elif self.instance.dtype == 'NIC':
                 self.fields['NIC_type'].initial = self.instance.attributes.get('type')
                 self.fields['NIC_mac'].initial = self.instance.attributes.get('mac')
@@ -307,12 +251,6 @@ class DeviceForm(ModelForm):
             self.cleaned_data['VNC_port'] = str(new_vnc_port)
 
         return self.cleaned_data
-
-    def is_container(self, vm_type):
-        if vm_type == 'Container Provider':
-            return True
-        else:
-            return False
 
     def save(self, *args, **kwargs):
         vm = self.cleaned_data.get('vm')
@@ -349,7 +287,7 @@ class DeviceForm(ModelForm):
                 'nic_attach': self.cleaned_data['NIC_attach'],
             }
         elif self.cleaned_data['dtype'] == 'VNC':
-            if vm.bootloader == 'UEFI' and self.is_container(vm.vm_type) is False:
+            if vm.bootloader == 'UEFI':
                 obj.attributes = {
                     'wait': self.cleaned_data['VNC_wait'],
                     'vnc_port': self.cleaned_data['VNC_port'],
