@@ -309,9 +309,6 @@ class AlertResource(DojoResource):
 
         return HttpResponse(status=202)
 
-    def dehydrate(self, bundle):
-        return bundle
-
 
 class SettingsResourceMixin(object):
 
@@ -1774,10 +1771,6 @@ class CIFSResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super().dehydrate(bundle)
-        if bundle.obj.cifs_storage_task:
-            bundle.data['cifs_storage_task'] = bundle.obj.cifs_storage_task.id
-        else:
-            bundle.data['cifs_storage_task'] = None
         return bundle
 
 
