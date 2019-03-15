@@ -309,9 +309,6 @@ class AlertResource(DojoResource):
 
         return HttpResponse(status=202)
 
-    def dehydrate(self, bundle):
-        return bundle
-
 
 class SettingsResourceMixin(object):
 

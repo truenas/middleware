@@ -98,6 +98,7 @@ Create resource
                 "cifs_path": "/mnt/tank/MyShare",
                 "cifs_ro": false,
                 "cifs_guestonly": true,
+                "cifs_shadowcopy": false,
                 "id": 1,
         }
 
@@ -107,10 +108,11 @@ Create resource
    :json string cifs_comment: user comment
    :json string cifs_hostsallow: explictly allowed hosts
    :json string cifs_hostsdeny: explicitly denied hosts
-   :json string cifs_auxsmbconf: auxiliar parameters to append to smb.conf
+   :json string cifs_auxsmbconf: auxiliary parameters to append to smb.conf
    :json string cifs_default_permissions: recursively set sane default windows permissions on share
    :json boolean cifs_guestok: allow guests
    :json boolean cifs_guestonly: only guests are allowed
+   :json boolean cifs_shadowcopy: export ZFS snapshots as shadow copies
    :json boolean cifs_showhiddenfiles: show hidden files
    :json boolean cifs_recyclebin: enable recycle bin
    :json boolean cifs_ro: readonly share
@@ -159,6 +161,7 @@ Update resource
                 "cifs_path": "/mnt/tank/MyShare",
                 "cifs_ro": false,
                 "cifs_guestonly": true,
+                "cifs_shadowcopy": false,
                 "id": 1,
         }
 
@@ -168,10 +171,11 @@ Update resource
    :json string cifs_comment: user comment
    :json string cifs_hostsallow: explictly allowed hosts
    :json string cifs_hostsdeny: explicitly denied hosts
-   :json string cifs_auxsmbconf: auxiliar parameters to append to smb.conf
+   :json string cifs_auxsmbconf: auxiliary parameters to append to smb.conf
    :json string cifs_default_permissions: recursively set sane default windows permissions on share
    :json boolean cifs_guestok: allow guests
    :json boolean cifs_guestonly: only guests are allowed
+   :json boolean cifs_shadowcopy: export ZFS snapshots as shadow copies
    :json boolean cifs_showhiddenfiles: show hidden files
    :json boolean cifs_recyclebin: enable recycle bin
    :json boolean cifs_ro: readonly share

@@ -23,4 +23,8 @@ class Migration(migrations.Migration):
         migrations.RunPython(
             migrate_shadowcopies
         ),
+        migrations.RemoveField(
+            model_name='cifs_share',
+            name='cifs_storage_task_id',
+        ),
     ]
