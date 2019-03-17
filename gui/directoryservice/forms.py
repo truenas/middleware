@@ -51,6 +51,7 @@ from freenasUI.common.system import (
 from freenasUI.directoryservice import models, utils
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import CIFS, ServiceMonitor
 
@@ -712,48 +713,53 @@ class ActiveDirectoryForm(ModelForm):
         return obj
 
 
-class NISForm(ModelForm):
+class NISForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'nis_'
+    middleware_attr_schema = 'nis'
+    middleware_plugin = 'nis'
+    is_singletone = True
+
     class Meta:
         fields = '__all__'
         model = models.NIS
 
     def __init__(self, *args, **kwargs):
         super(NISForm, self).__init__(*args, **kwargs)
+        self.original_instance = dict(self.instance.__dict__)
         self.fields["nis_enable"].widget.attrs["onChange"] = (
             "nis_mutex_toggle();"
         )
 
     def save(self):
         enable = self.cleaned_data.get("nis_enable")
-
-        # XXX: We need to have a method to test server connection.
-        try:
-            started = notifier().started("nis")
-        except Exception:
-            raise MiddlewareError(_("Failed to check NIS status."))
-        finally:
-            super(NISForm, self).save()
-
+        with client as c:
+            state = c.call('nis.get_state')
         if enable:
-            if started is True:
+            if state == 'DISABLED':
                 try:
-                    started = notifier().restart("nis")
-                    log.debug("Try to restart: %s", started)
-                except Exception:
-                    raise MiddlewareError(_("NIS failed to restart."))
-            if started is False:
+                    with client as c:
+                        started = c.call('service.start', 'nis')
+                except Exception as e:
+                    raise MiddlewareError(e)
+            else:
                 try:
-                    started = notifier().start("nis")
-                    log.debug("Try to start: %s", started)
-                except Exception:
-                    raise MiddlewareError(_("NIS failed to start."))
+                    with client as c:
+                        started = c.call('service.restart', 'nis')
+                        log.debug("Try to restart: %s", started)
+                except Exception as e:
+                    raise MiddlewareError(e)
+
             if started is False:
-                self.instance.ad_enable = False
+                self.instance.nis_enable = False
                 super(NISForm, self).save()
-                raise MiddlewareError(_("NIS failed to reload."))
+
         else:
-            if started is True:
-                started = notifier().stop("nis")
+            try:
+                with client as c:
+                    started = c.call('service.stop', 'nis')
+            except Exception as e:
+                raise MiddlewareError('Failed to stop NIS service: (%s)' % e)
 
 
 class LDAPForm(ModelForm):
