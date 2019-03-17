@@ -2990,10 +2990,7 @@ class VMWarePluginForm(ModelForm):
                         'username': cdata.get('username'),
                         'password': cdata.get('password'),
                     })
-                datastores = []
-                for i in ds.values():
-                    datastores += i.keys()
-                if cdata.get('datastore') not in datastores:
+                if cdata.get('datastore') not in ds:
                     self._errors['datastore'] = self.error_class([_(
                         'Datastore not found in the server.'
                     )])
