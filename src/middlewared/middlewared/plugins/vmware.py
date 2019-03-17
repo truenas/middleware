@@ -46,10 +46,7 @@ class VMWareService(CRUDService):
                 }
             )
 
-            datastores = []
-            for i in ds.values():
-                datastores += i.keys()
-            if data.get('datastore') not in datastores:
+            if data.get('datastore') not in ds:
                 verrors.add(
                     f'{schema_name}.datastore',
                     f'Datastore "{datastore}" not found on the server'
