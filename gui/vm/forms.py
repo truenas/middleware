@@ -18,31 +18,9 @@ log = logging.getLogger('vm.forms')
 
 class VMForm(ModelForm):
 
-    root_password = forms.CharField(
-        label=_("Root Password"),
-        widget=forms.PasswordInput(render_value=True),
-        required=False,
-    )
-    path = PathField(
-        label=_("Docker Disk File"),
-        dirsonly=False,
-        filesonly=False,
-    )
-    size = forms.IntegerField(
-        label=_("Size of Docker Disk File (GiB)"),
-        initial=20,
-        required=False,
-    )
-
     class Meta:
         fields = '__all__'
         model = models.VM
-
-    def __init__(self, *args, **kwargs):
-        super(VMForm, self).__init__(*args, **kwargs)
-        if self.instance.id:
-            for i in ('root_password', 'path', 'size'):
-                del self.fields[i]
 
     def clean_name(self):
         name = self.cleaned_data.get('name')
@@ -101,13 +79,6 @@ class DeviceForm(ModelForm):
         widget=forms.widgets.HiddenInput(),
         required=False,
         initial=False,
-    )
-    ROOT_password = forms.CharField(
-        label=_('Password'),
-        max_length=50,
-        widget=forms.widgets.HiddenInput(),
-        required=False,
-        help_text=_("Set the password for the rancher user."),
     )
     DISK_sectorsize = forms.IntegerField(
         label=_('Disk sectorsize'),

@@ -72,6 +72,7 @@ class VM(Model):
         verbose_name=_('Grub Config'),
         help_text=_('Grub.cfg file to be used on boot.'),
         null=True,
+        blank=True,
     )
     autostart = models.BooleanField(
         verbose_name=_('Autostart'),
