@@ -2,8 +2,7 @@ from collections import deque
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Error, Int, Str, Dict, List, Bool, Patch, Ref
 from middlewared.service import (
-    item_method, pass_app, private, CRUDService, CallError,
-    ValidationError, ValidationErrors,
+    item_method, pass_app, private, CRUDService, CallError, ValidationErrors,
 )
 from middlewared.utils import Nid, Popen
 
@@ -787,17 +786,22 @@ class VMService(CRUDService):
         'vm_create',
         Str('name', required=True),
         Str('description'),
-        Int('vcpus'),
+        Int('vcpus', default=1),
         Int('memory', required=True),
         Str('bootloader', enum=['UEFI', 'UEFI_CSM', 'GRUB']),
         Str('grubconfig', null=True),
         List('devices', default=[], items=[Ref('vmdevice_create')]),
-        Bool('autostart'),
+        Bool('autostart', default=True),
         Str('time', enum=['LOCAL', 'UTC'], default='LOCAL'),
         register=True,
     ))
     async def do_create(self, data):
-        """Create a VM."""
+        """
+        Create a Virual Machine (VM).
+
+        `grubconfig` may either be a path for the grub.cfg file or the actual content
+        of the file to be used with GRUB bootloader.
+        """
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, 'vm_create', data)
@@ -1072,6 +1076,12 @@ class VMService(CRUDService):
     @item_method
     @accepts(Int('id'), Str('name', default=None))
     async def clone(self, id, name):
+        """
+        Clone the VM `id`.
+
+        `name` is an optional parameter for the cloned VM.
+        If not provided it will append the next number available to the VM name.
+        """
         vm = await self._get_instance(id)
 
         origin_name = vm['name']
@@ -1239,17 +1249,16 @@ class VMDeviceService(CRUDService):
         Dict(
             'vmdevice_create',
             Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'VNC', 'RAW'], required=True),
-            Int('vm'),
+            Int('vm', required=True),
             Dict('attributes', additional_attrs=True, default=None),
             Int('order', default=None, null=True),
             register=True,
         ),
     )
     async def do_create(self, data):
-
-        if not data.get('vm'):
-            raise ValidationError('vmdevice_create.vm', 'This field is required.')
-
+        """
+        Create a new device for the VM of id `vm`.
+        """
         data = await self.validate_device(data)
         id = await self.middleware.call('datastore.insert', self._config.datastore, data)
         await self.__reorder_devices(id, data['vm'], data['order'])
@@ -1262,6 +1271,9 @@ class VMDeviceService(CRUDService):
         ('attr', {'update': True}),
     ))
     async def do_update(self, id, data):
+        """
+        Update a VM device of `id`.
+        """
         device = await self._get_instance(id)
         new = device.copy()
         new.update(data)
@@ -1274,7 +1286,10 @@ class VMDeviceService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        await self.middleware.call('datastore.delete', self._config.datastore, id)
+        """
+        Delete a VM device of `id`.
+        """
+        return await self.middleware.call('datastore.delete', self._config.datastore, id)
 
     async def __reorder_devices(self, id, vm_id, order):
         if order is None:
