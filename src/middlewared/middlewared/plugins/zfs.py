@@ -394,6 +394,8 @@ class ZFSPoolService(CRUDService):
             with libzfs.ZFS() as zfs:
                 pool = zfs.get(name)
                 vdev = find_vdev(pool, vname)
+                if not vdev:
+                    raise CallError(f'{vname} not found in {name}', errno.ENOENT)
                 return vdev.__getstate__()
         except libzfs.ZFSException as e:
             raise CallError(str(e))
