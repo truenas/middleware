@@ -1333,6 +1333,28 @@ class InterfaceService(CRUDService):
         })
         return choices
 
+    @accepts(Str('id', null=True, default=None))
+    async def lag_ports_choices(self, id):
+        """
+        Return available interface choices for `lag_ports` attribute.
+
+        `id` is the name of the LAG interface we want to update or null in case its a new
+        LAG interface.
+        """
+        include = []
+        lag = await self.middleware.call('interface.query', [
+            ('type', '=', 'LINK_AGGREGATION'), ('id', '=', id)
+        ])
+        if lag:
+            include += lag[0]['lag_ports']
+        choices = await self.middleware.call('interface.choices', {
+            'bridge_members': False,
+            'lag_ports': False,
+            'exclude': ['epair', 'tap', 'vnet', 'lagg', 'bridge'],
+            'include': include,
+        })
+        return choices
+
     @accepts()
     async def vlan_parent_interface_choices(self):
         """
