@@ -806,15 +806,6 @@ class ReportingService(ConfigService):
 
     @private
     def setup(self):
-        is_freenas = self.middleware.call_sync('system.is_freenas')
-        # If not is_freenas, remove the rc.conf cache. rc.conf.local runs again with the correct collectd_enable.
-        # See issue #5019
-        if not is_freenas:
-            try:
-                os.remove('/var/tmp/freenas_config.md5')
-            except FileNotFoundError:
-                pass
-
         systemdatasetconfig = self.middleware.call_sync('systemdataset.config')
         if not systemdatasetconfig['path']:
             self.middleware.logger.error(f'System dataset is not mounted')
