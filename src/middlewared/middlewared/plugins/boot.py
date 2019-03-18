@@ -47,11 +47,23 @@ class BootService(Service):
             return 'BIOS'
         return 'EFI'
 
+    @private
+    def get_swap_size(self, disk):
+        geom.scan()
+        labelclass = geom.class_by_name('PART')
+        length = labelclass.xml.find(
+            f".//geom[name='{disk}']/provider/config[type='freebsd-swap']/length"
+        )
+        if length is None:
+            return None
+        return int(length.text)
+
     @accepts(
         Str('dev'),
         Dict(
             'options',
             Int('size'),
+            Int('swap_size'),
         )
     )
     @private
@@ -62,8 +74,8 @@ class BootService(Service):
 
         job = await self.middleware.call('disk.wipe', dev, 'QUICK')
         await job.wait()
-
-        boottype = await self.get_boot_type()
+        if job.error:
+            raise CallError(job.error)
 
         commands = []
         partitions = []
@@ -79,6 +91,12 @@ class BootService(Service):
             partitions.append(("freebsd-boot", 512 * 1024))
 
             commands.append(['gpart', 'set', '-a', 'active', dev])
+
+        if options.get('swap_size'):
+            commands.append([
+                'gpart', 'add', '-t', 'freebsd-swap', '-i', '3',
+                '-s', str(options['swapsize']) + 'B', dev
+            ])
 
         commands.append(
             ['gpart', 'add', '-t', 'freebsd-zfs', '-i', '2', '-a', '4k'] + (
@@ -167,6 +185,9 @@ class BootService(Service):
                 format_opts['size'] = int(e.find('./length').text)
                 break
 
+        swap_size = await self.middleware.call('boot.get_swap_size', disks[0])
+        if swap_size:
+            format_opts['swap_size'] = swap_size
         boottype = await self.format(dev, format_opts)
 
         pool = await self.middleware.call("zfs.pool.query", [["name", "=", "freenas-boot"]], {"get": True})
@@ -192,7 +213,12 @@ class BootService(Service):
         """
         Replace device `label` on boot pool with `dev`.
         """
-        boottype = await self.format(dev)
+        format_opts = {}
+        disks = list(await self.get_disks())
+        swap_size = await self.middleware.call('boot.get_swap_size', disks[0])
+        if swap_size:
+            format_opts['swap_size'] = swap_size
+        boottype = await self.format(dev, format_opts)
         await self.middleware.call('zfs.pool.replace', 'freenas-boot', label, f'{dev}p2')
         await self.install_loader(boottype, dev)
 
