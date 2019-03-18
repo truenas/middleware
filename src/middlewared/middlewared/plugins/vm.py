@@ -269,7 +269,7 @@ class VMSupervisor(object):
                 except OSError:
                     pass
                 await self.destroy_vm()
-                raise CallError('grub-bhyve timed out, check')
+                raise CallError('grub-bhyve timed out, please check your grub config.')
 
         args.append(str(self.vm['id']) + '_' + self.vm['name'])
 
