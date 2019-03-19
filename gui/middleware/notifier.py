@@ -1421,7 +1421,7 @@ class notifier(metaclass=HookMetaclass):
     def change_upload_location(self, path):
         vardir = "/var/tmp/firmware"
 
-        self._system("/bin/rm -rf %s" % vardir)
+        self._system("/bin/rm -rfx %s" % vardir)
         self._system("/bin/mkdir -p %s/.freenas" % path)
         self._system("/usr/sbin/chown www:www %s/.freenas" % path)
         self._system("/bin/chmod 755 %s/.freenas" % path)
