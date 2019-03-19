@@ -2257,7 +2257,7 @@ class PoolService(CRUDService):
 
         if (
             not self.middleware.call_sync('system.is_freenas') and
-            self.middleware.call('failover.licensed')
+            self.middleware.call_sync('failover.licensed')
         ):
             return
 
