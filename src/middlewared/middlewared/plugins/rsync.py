@@ -36,6 +36,7 @@ import syslog
 
 from multiprocessing import Process, Queue, Value
 
+from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch
 from middlewared.validators import Range, Match
 from middlewared.service import (
@@ -74,31 +75,57 @@ class RsyncModService(CRUDService):
     class Config:
         datastore = 'services.rsyncmod'
         datastore_prefix = 'rsyncmod_'
+        datastore_extend = 'rsyncmod.rsync_mod_extend'
+
+    @private
+    async def rsync_mod_extend(self, data):
+        data['hostsallow'] = data['hostsallow'].split()
+        data['hostsdeny'] = data['hostsdeny'].split()
+        data['mode'] = data['mode'].upper()
+        return data
+
+    @private
+    async def common_validation(self, data, schema_name):
+        verrors = ValidationErrors()
+
+        await check_path_resides_within_volume(verrors, self.middleware, f'{schema_name}.path', data.get('path'))
+
+        for entity in ('user', 'group'):
+            value = data.get(entity)
+            if value not in map(
+                    lambda e: e[entity if entity == 'group' else 'username'],
+                    await self.middleware.call(f'{entity}.query')
+            ):
+                verrors.add(
+                    f'{schema_name}.{entity}',
+                    f'Please specify a valid {entity}'
+                )
+
+        verrors.check()
+
+        data['hostsallow'] = ' '.join(data['hostsallow'])
+        data['hostsdeny'] = ' '.join(data['hostsdeny'])
+        data['mode'] = data['mode'].lower()
+
+        return data
 
     @accepts(Dict(
         'rsyncmod_create',
         Str('name', validators=[Match(r'[^/\]]')]),
         Str('comment'),
-        Str('path'),
-        Str('mode'),
+        Str('path', required=True),
+        Str('mode', enum=['RO', 'RW', 'WO']),
         Int('maxconn'),
-        Str('user'),
-        Str('group'),
+        Str('user', default='nobody'),
+        Str('group', default='nobody'),
         List('hostsallow', items=[Str('hostsallow')], default=[]),
         List('hostsdeny', items=[Str('hostdeny')], default=[]),
         Str('auxiliary'),
         register=True,
     ))
     async def do_create(self, data):
-        if data.get("hostsallow"):
-            data["hostsallow"] = " ".join(data["hostsallow"])
-        else:
-            data["hostsallow"] = ""
 
-        if data.get("hostsdeny"):
-            data["hostsdeny"] = " ".join(data["hostsdeny"])
-        else:
-            data["hostsdeny"] = ""
+        data = await self.common_validation(data, 'rsyncmod_create')
 
         data['id'] = await self.middleware.call(
             'datastore.insert',
@@ -106,32 +133,29 @@ class RsyncModService(CRUDService):
             data,
             {'prefix': self._config.datastore_prefix}
         )
+
         await self._service_change('rsync', 'reload')
-        return data
+
+        return await self._get_instance(data['id'])
 
     @accepts(Int('id'), Patch('rsyncmod_create', 'rsyncmod_update', ('attr', {'update': True})))
     async def do_update(self, id, data):
-        module = await self.middleware.call(
-            'datastore.query',
-            self._config.datastore,
-            [('id', '=', id)],
-            {'prefix': self._config.datastore_prefix, 'get': True}
-        )
+        module = await self._get_instance(id)
         module.update(data)
 
-        module["hostsallow"] = " ".join(module["hostsallow"])
-        module["hostsdeny"] = " ".join(module["hostsdeny"])
+        module = await self.common_validation(module, 'rsyncmod_update')
 
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
             id,
-            data,
+            module,
             {'prefix': self._config.datastore_prefix}
         )
+
         await self._service_change('rsync', 'reload')
 
-        return module
+        return await self._get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
@@ -412,8 +436,10 @@ class RsyncTaskService(CRUDService):
         Helper method to generate the rsync command avoiding code duplication.
         """
         rsync = await self._get_instance(id)
+        path = shlex.quote(rsync['path'])
+
         line = [
-            '/usr/bin/lockf', '-s', '-t', '0', '-k', rsync["path"], '/usr/local/bin/rsync'
+            '/usr/bin/lockf', '-s', '-t', '0', '-k', path, '/usr/local/bin/rsync'
         ]
         for name, flag in (
             ('archive', '-a'),
@@ -438,7 +464,7 @@ class RsyncTaskService(CRUDService):
             remote = f'"{rsync["user"]}"@{rsync["remotehost"]}'
 
         if rsync['mode'] == 'module':
-            module_args = [rsync["path"], f'{remote}::"{rsync["remotemodule"]}"']
+            module_args = [path, f'{remote}::"{rsync["remotemodule"]}"']
             if rsync['direction'] != 'push':
                 module_args.reverse()
             line += module_args
@@ -447,14 +473,15 @@ class RsyncTaskService(CRUDService):
                 '-e',
                 f'ssh -p {rsync["remoteport"]} -o BatchMode=yes -o StrictHostKeyChecking=yes'
             ]
-            path_args = [rsync["path"], f'{remote}:{rsync["remotepath"]}']
+            path_args = [path, f'{remote}:{shlex.quote(rsync["remotepath"])}']
             if rsync['direction'] != 'push':
                 path_args.reverse()
             line += path_args
 
         if rsync['quiet']:
             line += ['>', '/dev/null', '2>&1']
-        return ' '.join([shlex.quote(arg) for arg in line])
+
+        return ' '.join(line)
 
     @item_method
     @accepts(Int('id'))
