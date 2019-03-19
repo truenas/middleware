@@ -15,10 +15,12 @@ def get_context(middleware):
     context = {
         'is_freenas': middleware.call_sync('system.is_freenas'),
         'failover_licensed': False,
+        'failover_status': 'SINGLE',
     }
 
     if not context['is_freenas']:
         context['failover_licensed'] = middleware.call_sync('failover.licensed')
+        context['failover_status'] = middleware.call_sync('failover.status')
 
     return context
 
