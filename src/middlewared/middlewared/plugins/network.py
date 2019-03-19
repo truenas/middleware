@@ -1333,6 +1333,18 @@ class InterfaceService(CRUDService):
         })
         return choices
 
+    @accepts()
+    async def vlan_parent_interface_choices(self):
+        """
+        Return available interface choices for `vlan_parent_interface` attribute.
+        """
+        return await self.middleware.call('interface.choices', {
+            'bridge_members': True,
+            'lag_ports': True,
+            'vlan_parent': True,
+            'exclude': ['epair', 'tap', 'vnet', 'vlan'],
+        })
+
     @private
     async def sync(self, wait_dhcp=False):
         """
