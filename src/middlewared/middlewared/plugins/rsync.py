@@ -288,7 +288,7 @@ class RsyncTaskService(CRUDService):
                             known_hosts=None
                     ), timeout=5)) as conn:
 
-                        await conn.run(f'test -d {remote_path}', check=True)
+                        await conn.run(f'test -d {shlex.quote(remote_path)}', check=True)
 
                 except asyncio.TimeoutError:
 
@@ -473,7 +473,7 @@ class RsyncTaskService(CRUDService):
                 '-e',
                 f'ssh -p {rsync["remoteport"]} -o BatchMode=yes -o StrictHostKeyChecking=yes'
             ]
-            path_args = [path, f'{remote}:{shlex.quote(rsync["remotepath"])}']
+            path_args = [path, f'{remote}:"{shlex.quote(rsync["remotepath"])}"']
             if rsync['direction'] != 'push':
                 path_args.reverse()
             line += path_args
