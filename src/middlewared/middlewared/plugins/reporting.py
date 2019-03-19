@@ -796,7 +796,7 @@ class ReportingService(ConfigService):
         if destroy_database:
             await self.middleware.call('service.stop', 'collectd')
             await self.middleware.call('service.stop', 'rrdcached')
-            await run('sh', '-c', 'rm -rf /var/db/collectd/rrd/*', check=False)
+            await run('sh', '-c', 'rm -rfx /var/db/collectd/rrd/*', check=False)
             await self.middleware.call('reporting.setup')
             await self.middleware.call('service.start', 'rrdcached')
 
@@ -861,7 +861,7 @@ class ReportingService(ConfigService):
             if not d.startswith('localhost') and os.path.isdir(os.path.join(pwd, d))
         ]
         for r_dir in to_remove_dirs:
-            subprocess.run(['rm', '-rf', r_dir])
+            subprocess.run(['rm', '-rfx', r_dir])
 
         # Remove all symlinks (that are stale if hostname was changed).
         to_remove_symlinks = [
