@@ -731,35 +731,9 @@ class NISForm(MiddlewareModelForm, ModelForm):
             "nis_mutex_toggle();"
         )
 
-    def save(self):
-        enable = self.cleaned_data.get("nis_enable")
-        with client as c:
-            state = c.call('nis.get_state')
-        if enable:
-            if state == 'DISABLED':
-                try:
-                    with client as c:
-                        started = c.call('service.start', 'nis')
-                except Exception as e:
-                    raise MiddlewareError(e)
-            else:
-                try:
-                    with client as c:
-                        started = c.call('service.restart', 'nis')
-                        log.debug("Try to restart: %s", started)
-                except Exception as e:
-                    raise MiddlewareError(e)
-
-            if started is False:
-                self.instance.nis_enable = False
-                super(NISForm, self).save()
-
-        else:
-            try:
-                with client as c:
-                    started = c.call('service.stop', 'nis')
-            except Exception as e:
-                raise MiddlewareError('Failed to stop NIS service: (%s)' % e)
+    def middleware_clean(self, data):
+        data['servers'] = data['servers'].split(',')
+        return data
 
 
 class LDAPForm(ModelForm):
