@@ -106,9 +106,6 @@ class CIFS_ShareForm(MiddlewareModelForm, ModelForm):
         data['hostsallow'] = data['hostsallow'].split()
         data['hostsdeny'] = data['hostsdeny'].split()
 
-        if not data['storage_task']:
-            data.pop('storage_task')
-
         return data
 
     def done(self, request, events):
