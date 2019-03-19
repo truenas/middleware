@@ -1316,7 +1316,7 @@ class InterfaceService(CRUDService):
         """
         Return available interface choices for `bridge_members` attribute.
 
-        `id` is the name of the bridge interface we want to update or null in case its a new
+        `id` is the name of the bridge interface to update or null for a new
         bridge interface.
         """
         include = []
@@ -1338,7 +1338,7 @@ class InterfaceService(CRUDService):
         """
         Return available interface choices for `lag_ports` attribute.
 
-        `id` is the name of the LAG interface we want to update or null in case its a new
+        `id` is the name of the LAG interface to update or null for a new
         LAG interface.
         """
         include = []
