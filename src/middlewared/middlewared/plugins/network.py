@@ -1268,36 +1268,69 @@ class InterfaceService(CRUDService):
 
     @accepts(Dict(
         'options',
+        Bool('bridge_members', default=False),
         Bool('lag_ports', default=False),
         Bool('vlan_parent', default=True),
         List('exclude', default=['epair', 'tap', 'vnet']),
+        List('include', default=[]),
     ))
     def choices(self, options):
         """
         Choices of available network interfaces.
 
+        `bridge_members` will include BRIDGE members.
         `lag_ports` will include LINK_AGGREGATION ports.
         `vlan_parent` will include VLAN parent interface.
         `exclude` is a list of interfaces prefix to remove.
+        `include` is a list of interfaces that should not be removed.
         """
         interfaces = self.middleware.call_sync('interface.query')
-        choices = {i['name']: i['description'] for i in interfaces}
+        choices = {i['name']: i['description'] or i['name'] for i in interfaces}
         for interface in interfaces:
             for exclude in options['exclude']:
                 if interface['name'].startswith(exclude):
                     choices.pop(interface['name'], None)
                     continue
-            if interface['description'] != interface['name']:
+            if interface['description'] and interface['description'] != interface['name']:
                 choices[interface['name']] = f'{interface["name"]}: {interface["description"]}'
             if not options['lag_ports']:
                 if interface['type'] == 'LINK_AGGREGATION':
                     for port in interface['lag_ports']:
-                        choices.pop(port, None)
-                        continue
+                        if port not in options['include']:
+                            choices.pop(port, None)
+                            continue
+            if not options['bridge_members']:
+                if interface['type'] == 'BRIDGE':
+                    for member in interface['bridge_members']:
+                        if member not in options['include']:
+                            choices.pop(member, None)
+                            continue
             if not options['vlan_parent']:
                 if interface['type'] == 'VLAN':
                     choices.pop(interface['vlan_parent_interface'], None)
                     continue
+        return choices
+
+    @accepts(Str('id', null=True, default=None))
+    async def bridge_members_choices(self, id):
+        """
+        Return available interface choices for `bridge_members` attribute.
+
+        `id` is the name of the bridge interface we want to update or null in case its a new
+        bridge interface.
+        """
+        include = []
+        bridge = await self.middleware.call('interface.query', [
+            ('type', '=', 'BRIDGE'), ('id', '=', id)
+        ])
+        if bridge:
+            include += bridge[0]['bridge_members']
+        choices = await self.middleware.call('interface.choices', {
+            'bridge_members': False,
+            'lag_ports': False,
+            'exclude': ['epair', 'tap', 'vnet', 'bridge'],
+            'include': include,
+        })
         return choices
 
     @private
