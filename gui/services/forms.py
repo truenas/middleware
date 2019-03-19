@@ -429,6 +429,7 @@ class RsyncModForm(MiddlewareModelForm, ModelForm):
     def middleware_clean(self, update):
         update['hostsallow'] = update["hostsallow"].split()
         update['hostsdeny'] = update["hostsdeny"].split()
+        update['mode'] = update['mode'].upper()
         return update
 
 
