@@ -6,6 +6,7 @@
 # without the express permission of iXsystems.
 
 from lockfile import LockFile, AlreadyLocked
+from middlewared.client import Client
 
 import atexit
 import json
@@ -104,6 +105,13 @@ def run_async(cmd):
     return
 
 
+def run_call(client, method, *args):
+    try:
+        client.call(method, *args)
+    except Exception as e:
+        log.error('Failed to run %s:%r: %s', method, args, e)
+
+
 def main(subsystem, event):
 
     if '@' not in subsystem:
@@ -163,7 +171,6 @@ def main(subsystem, event):
                 log.warn("Failover disabled.  Assuming backup.")
                 sys.exit()
             else:
-                from middlewared.client import Client
                 try:
                     with Client() as c:
                         status = c.call('failover.call_remote', 'failover.status')
@@ -461,6 +468,11 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             conn = sqlite3.connect(FREENAS_DB)
             c = conn.cursor()
 
+            midclt = Client()
+
+            run_call(midclt, 'etc.generate', 'rc')
+            run_call(midclt, 'etc.generate', 'system_dataset')
+
             # TODO: This needs investigation.  Why is part of the LDAP
             # stack restarted?  Maybe homedir handling that
             # requires the volume to be imported?
@@ -474,19 +486,12 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "nfs"')
             ret = c.fetchone()
             if ret and ret[0] == 1:
-                run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python '
-                    '/usr/local/www/freenasUI/middleware/notifier.py '
-                    'nfsv4link')
-                run('/usr/sbin/service ix-nfsd quietstart')
-                run('/usr/sbin/service mountd reload')
-                run('/usr/sbin/service nfsd restart')
+                run_call(midclt, 'service.restart', 'nfs', {'sync': False})
 
             # 0 for Active node
             run('/sbin/sysctl kern.cam.ctl.ha_role=0')
 
-            # TODO: Why is this being restarted?
-            run('/usr/sbin/service ix-ssl quietstart')
-            run('/usr/sbin/service ix-system quietstart')
+            run_call(midclt, 'etc.generate', 'ssl')  # TODO: Why is this being restarted?
 
             c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "cifs"')
             ret = c.fetchone()
@@ -498,16 +503,12 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                     os.unlink(AD_ALERT_FILE)
                 except:
                     pass
-                run('/usr/local/libexec/nas/generate_smb4_conf.py')
-                run('/usr/sbin/service samba_server forcestop')
-                run('/usr/sbin/service samba_server quietstart')
+                run_call(midclt, 'service.restart', 'cifs', {'sync': False})
 
             c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "afp"')
             ret = c.fetchone()
             if ret and ret[0] == 1:
-                run('/usr/sbin/service ix-afpd quietstart')
-                run('/usr/sbin/service netatalk forcestop')
-                run('/usr/sbin/service netatalk quietstart')
+                run_call(midclt, 'service.restart', 'afp', {'sync': False})
 
             log.warn('Service restarts complete.')
 
@@ -528,28 +529,25 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             except:
                 pass
 
-            run('/usr/sbin/service ix-crontab quietstart')
+            run_call(midclt, 'etc.generate', 'cron')
 
             # sync disks is disabled on passive node
-            run('/usr/sbin/service ix-syncdisks quietstart')
+            run_call(midclt, 'disk.sync_all')
 
             log.warn('Syncing enclosure')
-            run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call enclosure.sync_zpool')
+            run_call(midclt, 'enclosure.sync_zpool')
 
-            run('/usr/sbin/service ix-collectd quietstart')
-            run('/usr/sbin/service collectd quietrestart')
-            run('/usr/sbin/service ix-syslogd quietstart')
-            run('/usr/sbin/service syslog-ng quietrestart')
-            run('/usr/sbin/service ix-smartd quietstart')
-            # we restart smartd-daemon because of ticket 35545
-            run('/usr/sbin/service smartd-daemon quietrestart')
-            run('/usr/sbin/service netdata forcestop')
-            run('/usr/sbin/service netdata quietstart')
+            run_call(midclt, 'service.restart', 'collectd', {'sync': False})
+            run_call(midclt, 'service.restart', 'syslogd', {'sync': False})
+            run_call(midclt, 'service.restart', 'smartd', {'sync': False})
+            run_call(midclt, 'service.restart', 'netdata', {'sync': False})
+
+            midclt.close()
 
             c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "asigra"')
             ret = c.fetchone()
             if ret and ret[0] == 1:
-                run('/usr/local/bin/midclt call service.start asigra \'{"onetime": true}\'')
+                run_call(midclt, 'service.restart', 'asigra', {'sync': False})
 
             conn.close()
 
@@ -709,17 +707,20 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
             except EnvironmentError:
                 pass
 
+            midclt = Client()
+
+            # syslogd needs to restart on BACKUP to configure remote logging to ACTIVE
+            run_call(midclt, 'service.restart', 'syslogd', {'sync': False})
+
             if volumes:
                 run('/usr/sbin/service watchdogd quietstart')
-                run('/usr/sbin/service ix-syslogd quietstart')
-                run('/usr/sbin/service syslog-ng quietrestart')
-                run('/usr/sbin/service ix-crontab quietstart')
-                run('/usr/sbin/service ix-collectd quietstart')
-                # we are stopping smartd-daemon because of ticket 35545
-                run('/usr/sbin/service smartd-daemon forcestop')
-                run('/usr/sbin/service netdata forcestop')
-                run('/usr/sbin/service collectd forcestop')
+                run_call(midclt, 'etc.generate', 'cron')
+                run_call(midclt, 'service.stop', 'smartd', {'sync': False})
+                run_call(midclt, 'service.stop', 'netdata', {'sync': False})
+                run_call(midclt, 'service.stop', 'collectd', {'sync': False})
                 run_async('echo "$(date), $(hostname), assume backup" | mail -s "Failover" root')
+
+            midclt.close()
 
             run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper detachall')
 
