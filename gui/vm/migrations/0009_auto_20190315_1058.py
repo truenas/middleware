@@ -11,9 +11,13 @@ def migrate_rancher_to_grub(apps, schemaeditor):
     VM = apps.get_model('vm', 'vm')
     Volume = apps.get_model('storage', 'volume')
 
+    volumes = Volume.objects.order_by('id')
+    if not volumes:
+        return
+
     # Getting the first volume is a compromise to ease the migration.
     # It wont work if the user has multiple pools and VM does not live in first one.
-    volume = Volume.objects.order_by('id')[0]
+    volume = volumes[0]
 
     for vm in VM.objects.filter(vm_type='Container Provider'):
         password = 'docker'
