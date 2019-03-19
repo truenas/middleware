@@ -79,7 +79,7 @@ smart_func()
 
 	section_header "smartctl -a"
 	if [ -f /tmp/smart.out ]; then
-		rm -rf /tmp/smart.out
+		rm -f /tmp/smart.out
 	fi
 	for i in `sysctl -n kern.disks`
 	do

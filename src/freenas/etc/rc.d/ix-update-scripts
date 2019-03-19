@@ -34,7 +34,7 @@ update_scripts() {
 		sh -x ${name}
 	    done
 	fi
-	rm -rf /update-scripts
+	rm -rfx /update-scripts
 	reboot
     fi
     return 0
