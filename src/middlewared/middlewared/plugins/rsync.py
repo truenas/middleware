@@ -436,8 +436,10 @@ class RsyncTaskService(CRUDService):
         Helper method to generate the rsync command avoiding code duplication.
         """
         rsync = await self._get_instance(id)
+        path = shlex.quote(rsync['path'])
+
         line = [
-            '/usr/bin/lockf', '-s', '-t', '0', '-k', rsync["path"], '/usr/local/bin/rsync'
+            '/usr/bin/lockf', '-s', '-t', '0', '-k', path, '/usr/local/bin/rsync'
         ]
         for name, flag in (
             ('archive', '-a'),
@@ -462,7 +464,7 @@ class RsyncTaskService(CRUDService):
             remote = f'"{rsync["user"]}"@{rsync["remotehost"]}'
 
         if rsync['mode'] == 'module':
-            module_args = [rsync["path"], f'{remote}::"{rsync["remotemodule"]}"']
+            module_args = [path, f'{remote}::"{rsync["remotemodule"]}"']
             if rsync['direction'] != 'push':
                 module_args.reverse()
             line += module_args
@@ -471,14 +473,15 @@ class RsyncTaskService(CRUDService):
                 '-e',
                 f'ssh -p {rsync["remoteport"]} -o BatchMode=yes -o StrictHostKeyChecking=yes'
             ]
-            path_args = [rsync["path"], f'{remote}:{rsync["remotepath"]}']
+            path_args = [path, f'{remote}:{shlex.quote(rsync["remotepath"])}']
             if rsync['direction'] != 'push':
                 path_args.reverse()
             line += path_args
 
         if rsync['quiet']:
             line += ['>', '/dev/null', '2>&1']
-        return ' '.join([shlex.quote(arg) for arg in line])
+
+        return ' '.join(line)
 
     @item_method
     @accepts(Int('id'))
