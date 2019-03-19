@@ -261,7 +261,7 @@ main()
 	OPTIND=1
 	if [ -d "${FREENAS_DEBUG_DIRECTORY}" ]
 	then
-		rm -rf "${FREENAS_DEBUG_DIRECTORY}"
+		rm -rfx "${FREENAS_DEBUG_DIRECTORY}"
 	fi
 
 	if $zap ; then
