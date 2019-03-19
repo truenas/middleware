@@ -1457,7 +1457,7 @@ class notifier(metaclass=HookMetaclass):
             if proc.returncode != 0:
                 raise MiddlewareError("Could not create temporary filesystem: %s" % err)
 
-            self._system("/bin/rm -rf /var/tmp/firmware")
+            self._system("/bin/rm -rfx /var/tmp/firmware")
             self._system("/bin/mkdir -p /var/tmp/firmware")
             proc = self._pipeopen("mount /dev/label/%s /var/tmp/firmware" % (label, ))
             err = proc.communicate()[1]
@@ -1515,7 +1515,7 @@ class notifier(metaclass=HookMetaclass):
         os.chdir(os.path.dirname(path))
 
         # XXX: ugly
-        self._system("rm -rf */")
+        self._system("rm -rfx */")
 
         percent = 0
         with open('/tmp/.extract_progress', 'w') as fp:

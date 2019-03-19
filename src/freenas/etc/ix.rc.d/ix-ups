@@ -176,7 +176,7 @@ generate_ups_conf()
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 
 	local mode
-	rm -rf ${UPS_CONFPATH}
+	rm -rfx ${UPS_CONFPATH}
 	mkdir -p ${UPS_CONFPATH}
 	mkdir -p ${UPS_VARPATH}
 	chown root:uucp ${UPS_VARPATH}
