@@ -74,6 +74,13 @@ class RsyncModService(CRUDService):
     class Config:
         datastore = 'services.rsyncmod'
         datastore_prefix = 'rsyncmod_'
+        datastore_extend = 'rsyncmod.rsync_mod_extend'
+
+    @private
+    async def rsync_mod_extend(self, data):
+        data['hostsallow'] = data['hostsallow'].split()
+        data['hostsdeny'] = data['hostsdeny'].split()
+        return data
 
     @accepts(Dict(
         'rsyncmod_create',
