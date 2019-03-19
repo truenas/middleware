@@ -104,7 +104,7 @@ generate_collectd()
                 then
                     cp -a "${datadir}" "${datadir}.$(date +'%Y%m%d%H%M%S')"
                     umount "${datadir}"
-                    rm -rf "${datadir}"
+                    rm -rfx "${datadir}"
                 else
                     mv "${datadir}" "${datadir}.$(date +'%Y%m%d%H%M%S')"
                 fi
@@ -140,7 +140,7 @@ generate_collectd()
         if tar -tf "${rrdfile}" | egrep -q '^collectd/rrd/$'; then
             tar -jxf "${rrdfile}"
             mv collectd/rrd/* .
-            rm -rf collectd
+            rm -rfx collectd
         fi
         if use_rrd_dataset; then
             rm "${rrdfile}"
@@ -154,7 +154,7 @@ generate_collectd()
     if [ "${hostname}" != "localhost" ] && [ -d "${hostname}" ] && [ ! -L "${hostname}" ]; then
         if [ -e "localhost" ]; then
             if [ -L "localhost" ]; then
-                rm -rf "localhost"
+                rm -rfx "localhost"
             else
                 # This should not happen, but just in case
                 mv "localhost" "localhost.bak.$(date +'%Y%m%d%H%M%S')"
@@ -164,9 +164,9 @@ generate_collectd()
     fi
     # Remove all directories except "localhost" and it's backups (that
     # may be erroneously created by running collectd before this script)
-    find . -maxdepth 1 -type d \! -name . -a \! -name localhost -a \! -name 'localhost.bak.*' -exec rm -rf '{}' \;
+    find . -maxdepth 1 -type d \! -name . -a \! -name localhost -a \! -name 'localhost.bak.*' -exec rm -rfx '{}' \;
     # Remove all symlinks (that are be stale if hostname was changed).
-    find . -maxdepth 1 -type l -exec rm -rf '{}' \;
+    find . -maxdepth 1 -type l -exec rm -rfx '{}' \;
     # Create "localhost" directory if it does not exist
     mkdir -p "localhost"
     # Create "${hostname}" -> "localhost" symlink if necessary
