@@ -1155,6 +1155,13 @@ class InterfaceService(CRUDService):
             else:
                 interface_attrs, aliases = self.__convert_aliases_to_datastore(new)
                 config = config[0]
+                if config['int_interface'] != new['name']:
+                    await self.middleware.call(
+                        'datastore.update',
+                        'network.interfaces',
+                        config['id'],
+                        {'int_interface': new['name']},
+                    )
 
             if iface['type'] == 'BRIDGE':
                 if 'bridge_members' in data:
@@ -1242,7 +1249,7 @@ class InterfaceService(CRUDService):
                     )
             raise
 
-        return await self._get_instance(oid)
+        return await self._get_instance(new['name'])
 
     @accepts(Str('id'))
     async def do_delete(self, oid):
