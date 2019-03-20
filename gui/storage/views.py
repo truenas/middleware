@@ -1177,14 +1177,11 @@ def vmwareplugin_datastores(request):
         else:
             password = ''
         with client as c:
-            ds = c.call('vmware.get_datastores', {
+            data['value'] = c.call('vmware.get_datastores', {
                 'hostname': request.POST.get('hostname'),
                 'username': request.POST.get('username'),
                 'password': password,
             })
-        data['value'] = []
-        for i in ds.values():
-            data['value'] += i.keys()
     except Exception as e:
         data['error'] = True
         data['errmsg'] = str(e)
