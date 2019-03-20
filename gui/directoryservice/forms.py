@@ -726,7 +726,6 @@ class NISForm(MiddlewareModelForm, ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(NISForm, self).__init__(*args, **kwargs)
-        self.original_instance = dict(self.instance.__dict__)
         self.fields["nis_enable"].widget.attrs["onChange"] = (
             "nis_mutex_toggle();"
         )

@@ -132,7 +132,7 @@ class NISService(ConfigService):
 
         await self.__set_state(DSStatus['HEALTHY'])
         self.logger.debug(f'NIS service successfully started. Setting state to HEALTHY.')
-        await self.middleware.call('nis.cache_fill')
+        await self.middleware.call('nis.cache', 'fill')
         return True
 
     @private
@@ -192,20 +192,20 @@ class NISService(ConfigService):
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'nss')
-        await self.middleware.call('nis.cache_fill')
-        self.logger.debug(f'NIS service successfully started. Setting state to DISABLED.')
+        await self.middleware.call('nis.cache', 'expire')
+        self.logger.debug(f'NIS service successfully stopped. Setting state to DISABLED.')
         return True
 
     @private
-    @job(lock=lambda args: 'nis_cache_fill')
-    def cache_fill(self, job):
+    @job(lock=lambda args: 'nis_cache')
+    def cache(self, job, action):
         cachetool = subprocess.Popen(
-            ['/usr/local/www/freenasUI/tools/cachetool.py', 'fill'],
+            ['/usr/local/www/freenasUI/tools/cachetool.py', action],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False
         )
         output = cachetool.communicate()
         if cachetool.returncode != 0:
-            self.logger.debug(f'Failed to fill cache: {output[1].decode()}')
+            self.logger.debug(f'Cache action [{action}] failed: {output[1].decode()}')
             return False
 
         return True
