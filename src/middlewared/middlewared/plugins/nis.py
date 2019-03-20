@@ -96,15 +96,50 @@ class NISService(ConfigService):
             try:
                 return (await self.middleware.call('cache.get', 'NIS_State'))
             except KeyError:
-                await self.started. Setting state to HEALTHY.')
+                await self.started()
+                return (await self.middleware.call('cache.get', 'NIS_State'))
+
+    @private
+    async def start(self):
+        """
+        Refuse to start service if the service is alreading in process of starting or stopping.
+        If state is 'HEALTHY' or 'FAULTED', then stop the service first before restarting it to ensure
+        that the service begins in a clean state.
+        """
+        state = await self.get_state()
+        nis = await self.config()
+        if state in ['FAULTED', 'HEALTHY']:
+            await self.stop()
+
+        if state in ['EXITING', 'JOINING']:
+            raise CallError(f'Current state of NIS service is: [{state}]. Wait until operation completes.', errno.EBUSY)
+
+        await self.__set_state(DSStatus['JOINING'])
+        await self.middleware.call('datastore.update', 'directoryservice.nis', nis['id'], {'nis_enable': True})
+        await self.middleware.call('etc.generate', 'rc')
+        await self.middleware.call('etc.generate', 'pam')
+        await self.middleware.call('etc.generate', 'hostname')
+        await self.middleware.call('etc.generate', 'nss')
+        setnisdomain = await run(['/bin/domainname', nis['domain']], check=False)
+        if setnisdomain.returncode != 0:
+            await self.__set_state(DSStatus['FAULTED'])
+            raise CallError(f'Failed to set NIS Domain to [{nis["domain"]}]: {setnisdomain.stderr.decode()}')
+
+        ypbind = await run(['/usr/sbin/service', 'ypbind', 'onestart'], check=False)
+        if ypbind.returncode != 0:
+            await self.__set_state(DSStatus['FAULTED'])
+            raise CallError(f'ypbind failed: {ypbind.stderr.decode()}')
+
+        await self.__set_state(DSStatus['HEALTHY'])
+        self.logger.debug(f'NIS service successfully started. Setting state to HEALTHY.')
         await self.middleware.call('nis.cache_fill')
         return True
 
     @private
     async def __ypwhich(self):
         """
-        The return code from ypwhich is not a reliable health indicator. For example, RPC failure
-        will return 0. There are edge cases where ypwhich can hang when NIS is misconfigured.
+        The return code from ypwhich is not a reliable health indicator. For example, RPC failure will return 0.
+        There are edge cases where ypwhich can hang when NIS is misconfigured.
         """
         nis = await self.config()
         ypwhich = await run(['/usr/bin/ypwhich'], check=False)
