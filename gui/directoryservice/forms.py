@@ -51,6 +51,7 @@ from freenasUI.common.system import (
 from freenasUI.directoryservice import models, utils
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import CIFS, ServiceMonitor
 
@@ -712,7 +713,13 @@ class ActiveDirectoryForm(ModelForm):
         return obj
 
 
-class NISForm(ModelForm):
+class NISForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'nis_'
+    middleware_attr_schema = 'nis'
+    middleware_plugin = 'nis'
+    is_singletone = True
+
     class Meta:
         fields = '__all__'
         model = models.NIS
@@ -723,37 +730,9 @@ class NISForm(ModelForm):
             "nis_mutex_toggle();"
         )
 
-    def save(self):
-        enable = self.cleaned_data.get("nis_enable")
-
-        # XXX: We need to have a method to test server connection.
-        try:
-            started = notifier().started("nis")
-        except Exception:
-            raise MiddlewareError(_("Failed to check NIS status."))
-        finally:
-            super(NISForm, self).save()
-
-        if enable:
-            if started is True:
-                try:
-                    started = notifier().restart("nis")
-                    log.debug("Try to restart: %s", started)
-                except Exception:
-                    raise MiddlewareError(_("NIS failed to restart."))
-            if started is False:
-                try:
-                    started = notifier().start("nis")
-                    log.debug("Try to start: %s", started)
-                except Exception:
-                    raise MiddlewareError(_("NIS failed to start."))
-            if started is False:
-                self.instance.ad_enable = False
-                super(NISForm, self).save()
-                raise MiddlewareError(_("NIS failed to reload."))
-        else:
-            if started is True:
-                started = notifier().stop("nis")
+    def middleware_clean(self, data):
+        data['servers'] = data['servers'].split(',')
+        return data
 
 
 class LDAPForm(ModelForm):

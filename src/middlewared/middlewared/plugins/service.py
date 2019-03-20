@@ -610,31 +610,17 @@ class ServiceService(CRUDService):
         await self._service("rsyncd", "stop", force=True, **kwargs)
 
     async def _started_nis(self, **kwargs):
-        res = False
-        if not await self._system("/etc/directoryservice/NIS/ctl status"):
-            res = True
-        return res, []
+        return (await self.middleware.call('nis.started')), []
 
     async def _start_nis(self, **kwargs):
-        await self.middleware.call('etc.generate', 'rc')
-        res = False
-        if not await self._system("/etc/directoryservice/NIS/ctl start"):
-            res = True
-        return res
+        return (await self.middleware.call('nis.start')), []
 
     async def _restart_nis(self, **kwargs):
-        await self.middleware.call('etc.generate', 'rc')
-        res = False
-        if not await self._system("/etc/directoryservice/NIS/ctl restart"):
-            res = True
-        return res
+        await self.middleware.call('nis.stop')
+        return (await self.middleware.call('nis.start')), []
 
     async def _stop_nis(self, **kwargs):
-        await self.middleware.call('etc.generate', 'rc')
-        res = False
-        if not await self._system("/etc/directoryservice/NIS/ctl stop"):
-            res = True
-        return res
+        return (await self.middleware.call('nis.stop')), []
 
     async def _started_ldap(self, **kwargs):
         if (await self._system('/usr/sbin/service ix-ldap status') != 0):
@@ -680,8 +666,8 @@ class ServiceService(CRUDService):
         # detect problems with AD join. The default winbind timeout is 60 seconds (as of Samba 4.7).
         # This can be controlled by the smb4.conf parameter "winbind request timeout = "
         if await self._system('/usr/local/bin/wbinfo -t') != 0:
-                self.logger.debug('AD monitor: wbinfo -t failed')
-                return False, []
+            self.logger.debug('AD status check: wbinfo -t failed')
+            return False, []
         return True, []
 
     async def _start_activedirectory(self, **kwargs):
