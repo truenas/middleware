@@ -486,6 +486,10 @@ class EncryptedDisk(Model):
 
 
 class Replication(Model):
+    repl_name = models.CharField(
+        max_length=120,
+        verbose_name=_("Name")
+    )
     repl_direction = models.CharField(
         max_length=120,
         choices=[("PUSH", "Push"), ("PULL", "Pull")],
@@ -797,11 +801,7 @@ class Replication(Model):
         verbose_name_plural = _("Replication Tasks")
 
     def __str__(self):
-        return '%s -> %s:%s' % (
-            ', '.join(self.repl_source_datasets),
-            self.repl_ssh_credentials.name if self.repl_ssh_credentials else '-',
-            self.repl_target_dataset
-        )
+        return self.repl_name
 
 
 class LegacyReplicationManager(models.Manager):
