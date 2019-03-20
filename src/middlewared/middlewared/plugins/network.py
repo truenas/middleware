@@ -399,6 +399,8 @@ class InterfaceService(CRUDService):
             if bridge:
                 bridge = bridge[0]
                 iface.update({'bridge_members': bridge['members']})
+            else:
+                iface.update({'bridge_members': []})
         elif iface['name'].startswith('lagg'):
             lag = self.middleware.call_sync(
                 'datastore.query',
@@ -416,6 +418,8 @@ class InterfaceService(CRUDService):
                     {'prefix': 'lagg_'}
                 ):
                     iface['lag_ports'].append(port['physnic'])
+            else:
+                iface['lag_ports'] = []
         if iface['name'].startswith('vlan'):
             vlan = self.middleware.call_sync(
                 'datastore.query',
@@ -429,6 +433,12 @@ class InterfaceService(CRUDService):
                     'vlan_parent_interface': vlan['pint'],
                     'vlan_tag': vlan['tag'],
                     'vlan_pcp': vlan['pcp'],
+                })
+            else:
+                iface.update({
+                    'vlan_parent_interface': None,
+                    'vlan_tag': None,
+                    'vlan_pcp': None,
                 })
 
         if not config['int_dhcp']:
