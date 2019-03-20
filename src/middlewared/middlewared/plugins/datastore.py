@@ -272,7 +272,13 @@ class DatastoreService(Service):
         model = self.__get_model(name)
         self.validate_data_keys(data, model, 'datastore_update', prefix)
 
-        obj = model.objects.get(pk=id)
+        if isinstance(id, (list, tuple)):
+            obj = model.objects.filter(*self._filters_to_queryset(id))
+            if obj.count() != 1:
+                raise CallError(f'{obj.count()} found, expecting one.')
+            obj = obj[0]
+        else:
+            obj = model.objects.get(pk=id)
         for field in chain(model._meta.fields, model._meta.many_to_many):
             if prefix:
                 name = field.name.replace(prefix, '', 1)
