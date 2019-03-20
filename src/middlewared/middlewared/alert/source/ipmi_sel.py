@@ -5,7 +5,7 @@ from datetime import timedelta
 import logging
 import os
 
-from middlewared.alert.base import Alert, AlertLevel, AlertSource, DismissableAlertSource
+from middlewared.alert.base import AlertClass, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import run
 
@@ -56,10 +56,31 @@ def parse_sel_information(output):
     }
 
 
-class IPMISELAlertSource(AlertSource, DismissableAlertSource):
+class IPMISELAlertClass(AlertClass, DismissableAlertClass):
+    category = AlertCategory.HARDWARE
     level = AlertLevel.WARNING
     title = "IPMI System Event"
 
+    @classmethod
+    def format(cls, args):
+        text = "%(sensor)s %(direction)s %(event)s"
+        if args["verbose"] is not None:
+            text += ": %(verbose)s"
+
+        return text % args
+
+    async def dismiss(self, alerts, alert):
+        datetimes = [a.datetime for a in alerts if a.datetime <= alert.datetime]
+        if await self.middleware.call("keyvalue.has_key", IPMISELAlertSource.dismissed_datetime_kv_key):
+            d = await self.middleware.call("keyvalue.get", IPMISELAlertSource.dismissed_datetime_kv_key)
+            d = d.replace(tzinfo=None)
+            datetimes.append(d)
+
+        await self.middleware.call("keyvalue.set", IPMISELAlertSource.dismissed_datetime_kv_key, max(datetimes))
+        return [a for a in alerts if a.datetime > alert.datetime]
+
+
+class IPMISELAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=5))
 
     dismissed_datetime_kv_key = "alert:ipmi_sel:dismissed_datetime"
@@ -70,16 +91,6 @@ class IPMISELAlertSource(AlertSource, DismissableAlertSource):
 
         return await self._produce_alerts_for_ipmitool_output(
             (await run(["ipmitool", "-c", "sel", "elist"], encoding="utf8")).stdout)
-
-    async def dismiss(self, alerts, key):
-        datetimes = [alert.datetime for alert in alerts.values() if alert.datetime <= alerts[key].datetime]
-        if await self.middleware.call("keyvalue.has_key", self.dismissed_datetime_kv_key):
-            datetimes.append(
-                (await self.middleware.call("keyvalue.get", self.dismissed_datetime_kv_key)).replace(tzinfo=None)
-            )
-
-        await self.middleware.call("keyvalue.set", self.dismissed_datetime_kv_key, max(datetimes))
-        return [alert for alert in alerts.values() if alert.datetime > alerts[key].datetime]
 
     async def _produce_alerts_for_ipmitool_output(self, output):
         alerts = []
@@ -100,28 +111,28 @@ class IPMISELAlertSource(AlertSource, DismissableAlertSource):
                 if record.datetime <= dismissed_datetime:
                     continue
 
-                title = "%(sensor)s %(direction)s %(event)s"
-                if record.verbose is not None:
-                    title += ": %(verbose)s"
-
                 args = dict(record._asdict())
                 args.pop("id")
                 args.pop("datetime")
 
                 alerts.append(Alert(
-                    title=title,
-                    args=args,
-                    key=[title, args, record.datetime.isoformat()],
+                    IPMISELAlertClass,
+                    args,
+                    key=[args, record.datetime.isoformat()],
                     datetime=record.datetime,
                 ))
 
         return alerts
 
 
-class IPMISELSpaceLeftAlertSource(AlertSource):
+class IPMISELSpaceLeftAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
     level = AlertLevel.WARNING
     title = "IPMI SEL Low Space Left"
+    text = "IPMI SEL Low Space Left: %(free)s (used %(used)s)"
 
+
+class IPMISELSpaceLeftAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=5))
 
     async def check(self):
@@ -135,8 +146,8 @@ class IPMISELSpaceLeftAlertSource(AlertSource):
         sel_information = parse_sel_information(output)
         if int(sel_information["Percent Used"].rstrip("%")) > 90:
             return Alert(
-                title="IPMI SEL Low Space Left: %(free)s (used %(used)s)",
-                args={
+                IPMISELSpaceLeftAlertClass,
+                {
                     "free": sel_information["Free Space"],
                     "used": sel_information["Percent Used"],
                 },

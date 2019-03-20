@@ -1,12 +1,16 @@
-from middlewared.alert.base import Alert, AlertLevel, AlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 
 
-class BootVolumeStatusAlertSource(AlertSource):
+class BootVolumeStatusAlertClass(AlertClass):
+    category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
-    title = "The boot volume state is not HEALTHY"
+    title = "The boot volume status is not HEALTHY"
+    text = "The boot volume status is %(state)s: %(status)s"
 
     hardware = True
 
+
+class BootVolumeStatusAlertSource(AlertSource):
     async def check(self):
         pool = await self.middleware.call("zfs.pool.query", [["id", "=", "freenas-boot"]])
         if not pool:
@@ -14,7 +18,7 @@ class BootVolumeStatusAlertSource(AlertSource):
         pool = pool[0]
         if not pool["healthy"]:
             return Alert(
-                "The boot volume state is %(state)s: %(status)s",
+                BootVolumeStatusAlertClass,
                 {
                     "state": pool["status"],
                     "status": pool["status_detail"],

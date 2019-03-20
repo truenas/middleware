@@ -2,29 +2,33 @@ import pickle as pickle
 
 from lockfile import LockFile
 
-from middlewared.alert.base import Alert, AlertLevel, OneShotAlertSource, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, OneShotAlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
 VMWARE_FAILS = "/var/tmp/.vmwaresnap_fails"
 VMWARESNAPDELETE_FAILS = "/var/tmp/.vmwaresnapdelete_fails"
 
 
-class VMWareSnapshotCreateFailedAlertSource(OneShotAlertSource):
+class VMWareSnapshotCreateFailedAlertClass(AlertClass, OneShotAlertClass):
+    category = AlertCategory.TASKS
     level = AlertLevel.WARNING
-    title = "VMWare snapshot failed"
+    title = "Creating VMWare snapshot failed"
+    text = "Creating VMWare snapshot %(snapshot)s of VM %(vm)s at %(hostname)s failed: %(error)s"
 
     async def create(self, args):
-        return Alert("Creating VMWare snapshot %(snapshot)s of VM %(vm)s at %(hostname)s failed: %(error)s", args)
+        return Alert(VMWareSnapshotCreateFailedAlertClass, args)
 
     async def delete(self, alerts, query):
         pass
 
 
-class VMWareSnapshotDeleteFailedAlertSource(OneShotAlertSource):
+class VMWareSnapshotDeleteFailedAlertClass(AlertClass, OneShotAlertClass):
+    category = AlertCategory.TASKS
     level = AlertLevel.WARNING
-    title = "VMWare snapshot delete failed"
+    title = "Deleting VMWare snapshot failed"
+    text = "Deleting VMWare snapshot %(snapshot)s of VM %(vm)s at %(hostname)s failed: %(error)s"
 
     async def create(self, args):
-        return Alert("Deleting VMWare snapshot %(snapshot)s of VM %(vm)s at %(hostname)s failed: %(error)s", args)
+        return Alert(VMWareSnapshotDeleteFailedAlertClass, args)
 
     async def delete(self, alerts, query):
         pass
@@ -44,13 +48,16 @@ class LegacyVMWareSnapshotFailedAlertSource(ThreadedAlertSource):
 
         alerts = []
         for snapname, vms in list(fails.items()):
-            alerts.append(Alert(
-                "VMWare snapshot %(snap)s failed for the following VMs: %(vms)s",
-                 {
-                     "snap": snapname,
-                     "vms": ", ".join(vms),
-                 }
-            ))
+            for vm in vms:
+                alerts.append(Alert(
+                    VMWareSnapshotCreateFailedAlertClass,
+                    {
+                        "snapshot": snapname,
+                        "vm": vm,
+                        "hostname": "<hostname>",
+                        "error": "Error",
+                    }
+                ))
         return alerts
 
 
@@ -68,11 +75,15 @@ class LegacyVMWareSnapshotDeleteFailAlertSource(ThreadedAlertSource):
 
         alerts = []
         for snapname, vms in list(fails.items()):
-            alerts.append(Alert(
-                "VMWare snapshot deletion %(snap)s failed for the following VMs: %(vms)s",
-                 {
-                     "snap": snapname,
-                     "vms": ", ".join(vms),
-                 }
-            ))
+            for vm in vms:
+                alerts.append(Alert(
+                    VMWareSnapshotDeleteFailedAlertClass,
+                    {
+                        "snapshot": snapname,
+                        "vm": vm,
+                        "hostname": "<hostname>",
+                        "error": "Error",
+                    }
+                ))
+
         return alerts

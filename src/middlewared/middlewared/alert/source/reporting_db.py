@@ -1,13 +1,17 @@
 import humanfriendly
 import psutil
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource, UnavailableException
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource, UnavailableException
+
+
+class ReportingDbAlertClass(AlertClass):
+    category = AlertCategory.REPORTING
+    level = AlertLevel.WARNING
+    title = 'Reporting database size is above 1 GiB'
+    text = 'Reporting database size (%s) is above 1 GiB'
 
 
 class ReportingDbAlertSource(ThreadedAlertSource):
-    level = AlertLevel.WARNING
-    title = 'Reporting database size is above specified threshold value'
-
     def check_sync(self):
         rrd_size_alert_threshold = 1073741824
 
@@ -17,5 +21,6 @@ class ReportingDbAlertSource(ThreadedAlertSource):
             raise UnavailableException()
 
         if used > rrd_size_alert_threshold:
-            return Alert('Reporting database size (%s) is above 1 GiB',
-                         args=[humanfriendly.format_size(used)])
+            return Alert(ReportingDbAlertClass,
+                         args=humanfriendly.format_size(used),
+                         key=None)

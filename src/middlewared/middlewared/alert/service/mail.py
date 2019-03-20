@@ -18,8 +18,11 @@ class MailAlertService(AlertService):
             self.logger.trace("E-Mail address for root not configured, not sending e-mail")
             return
 
+        text = await self._format_alerts(alerts, gone_alerts, new_alerts)
+
         await self.middleware.call("mail.send", {
             "subject": "Alerts",
-            "text": await self._format_alerts(alerts, gone_alerts, new_alerts),
+            "text": text,
+            "html": text.replace("\n", "<br>"),
             "to": [email],
         })

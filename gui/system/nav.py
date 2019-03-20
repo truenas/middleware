@@ -93,7 +93,7 @@ class TunableView(TreeNode):
     append_to = 'system.Tunable'
 
 
-class AlertDefaultSettingsView(TreeNode):
+class AlertClassesView(TreeNode):
 
     gname = 'View'
     type = 'opensystem'

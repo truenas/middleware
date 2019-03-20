@@ -1,12 +1,23 @@
 from datetime import datetime
 
-from middlewared.alert.base import Alert, AlertLevel, AlertSource, OneShotAlertSource
+from middlewared.alert.base import AlertClass, OneShotAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+
+
+class CertificateIsExpiringAlertClass(AlertClass):
+    category = AlertCategory.CERTIFICATES
+    level = AlertLevel.NOTICE
+    title = "Certificate is expiring"
+    text = "Certificate %(name)r is expiring within %(days)d days"
+
+
+class CertificateIsExpiringSoonAlertClass(AlertClass):
+    category = AlertCategory.CERTIFICATES
+    level = AlertLevel.WARNING
+    title = "Certificate is expiring soon"
+    text = "Certificate %(name)r is expiring within %(days)d days"
 
 
 class CertRenewalAlertSource(AlertSource):
-    title = 'Certificate expiring'
-    level = AlertLevel.INFO
-
     async def check(self):
         alerts = []
 
@@ -19,19 +30,26 @@ class CertRenewalAlertSource(AlertSource):
                 if diff < 10:
                     alerts.append(
                         Alert(
-                            title=f'{cert["name"]} expiring within {diff} days',
-                            level=AlertLevel.CRITICAL if diff < 2 else AlertLevel.INFO,
-                            key=[cert['name'], diff < 2]
+                            CertificateIsExpiringSoonAlertClass if diff <= 2 else CertificateIsExpiringAlertClass,
+                            {
+                                "name": cert["name"],
+                                "days": diff,
+                            },
+                            key=[cert["name"]],
                         )
                     )
 
         return alerts
 
 
-class CertificateParsingFailedAlertSource(AlertSource):
-    title = 'Certificate Invalid'
+class CertificateParsingFailedAlertClass(AlertClass):
+    category = AlertCategory.CERTIFICATES
     level = AlertLevel.WARNING
+    title = "Certificate parsing failed"
+    text = "Failed to parse %(type)s %(name)r"
 
+
+class CertificateParsingFailedAlertSource(AlertSource):
     async def check(self):
         alerts = []
 
@@ -42,22 +60,24 @@ class CertificateParsingFailedAlertSource(AlertSource):
             if not cert['parsed']:
                 alerts.append(
                     Alert(
-                        title=f'Failed to parse {cert["name"]} {cert["cert_type"].capitalize()}. This cannot be used '
-                              'with any service and this alert will remain here until this is deleted',
-                        level=AlertLevel.WARNING,
-                        key=[cert['name'], cert['cert_type']]
+                        CertificateParsingFailedAlertClass,
+                        {
+                            "type": cert["cert_type"].capitalize(),
+                            "name": cert["name"],
+                        },
                     )
                 )
 
         return alerts
 
 
-class NginxCertificateSetupFailedAlertSource(OneShotAlertSource):
-    title = 'Nginx Certificate Setup Failed'
+class WebUiCertificateSetupFailedAlertClass(AlertClass, OneShotAlertClass):
+    category = AlertCategory.CERTIFICATES
     level = AlertLevel.CRITICAL
+    title = "Web UI HTTPS certificate setup failed"
 
     async def create(self, args):
-        return Alert('Certificate setup failing for HTTPS to be enabled in nginx', key=None)
+        return Alert(WebUiCertificateSetupFailedAlertClass)
 
     async def delete(self, alerts, query):
         return []

@@ -3,15 +3,23 @@ import re
 
 from freenasUI.common.pipesubr import pipeopen
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
 logger = logging.getLogger("FreeNASBMCAlert")
 
 
-class FreeNASBMCAlertSource(ThreadedAlertSource):
+class FreeNASBMCAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
     title = "FreeNAS Mini Critical IPMI Firmware Update Available"
+    text = (
+        "Your FreeNAS Mini has an available IPMI firmware update, please click "
+        "<a href=\"https://support.ixsystems.com/index.php?/Knowledgebase/Article/View/287\" target=\"_blank\">"
+        "here</a> for installation instructions",
+    )
 
+
+class FreeNASBMCAlertSource(ThreadedAlertSource):
     def check_sync(self):
         systemname = pipeopen("/usr/local/sbin/dmidecode -s system-product-name").communicate()[0].strip()
         boardname = pipeopen("/usr/local/sbin/dmidecode -s baseboard-product-name").communicate()[0].strip()
@@ -30,11 +38,4 @@ class FreeNASBMCAlertSource(ThreadedAlertSource):
             if len(fwver) < 2 or not(fwver[0] == 0 and fwver[1] < 30):
                 return
 
-            return Alert(
-                "FreeNAS Mini Critical IPMI Firmware Update - Your "
-                "Mini has an available IPMI firmware update, please "
-                "click <a href=\"%s\" target=\"_blank\">here</a> for "
-                "installation instructions",
-
-                "https://support.ixsystems.com/index.php?/Knowledgebase/Article/View/287"
-            )
+            return Alert(FreeNASBMCAlertClass)

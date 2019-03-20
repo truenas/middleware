@@ -1,6 +1,13 @@
 import subprocess
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+
+
+class SyslogNgAlertClass(AlertClass):
+    category = AlertCategory.REPORTING
+    level = AlertLevel.WARNING
+    title = "syslog-ng is not running"
+    text = "%s"
 
 
 class SyslogNgAlertSource(ThreadedAlertSource):
@@ -12,4 +19,4 @@ class SyslogNgAlertSource(ThreadedAlertSource):
                               stderr=subprocess.STDOUT, encoding="utf8")
         status = p1.communicate()[0]
         if p1.returncode == 1:
-            return Alert(status)
+            return Alert(SyslogNgAlertClass, status)

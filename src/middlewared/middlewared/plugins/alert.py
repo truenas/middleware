@@ -1,22 +1,25 @@
 from collections import defaultdict
-import copy
 from datetime import datetime
 import os
 import traceback
+import uuid
 
 from freenasUI.support.utils import get_license
 from licenselib.license import ContractType
 
 from middlewared.alert.base import (
+    AlertCategory,
+    alert_category_names,
+    AlertClass,
+    OneShotAlertClass,
+    DismissableAlertClass,
     AlertLevel,
     Alert,
     AlertSource,
     FilePresenceAlertSource,
-    OneShotAlertSource,
     ThreadedAlertSource,
     ThreadedAlertService,
     ProThreadedAlertService,
-    DismissableAlertSource,
 )
 from middlewared.alert.base import UnavailableException, AlertService as _AlertService
 from middlewared.schema import Any, Bool, Dict, Int, Str, accepts, Patch
@@ -25,7 +28,7 @@ from middlewared.service import (
     job, periodic, private,
 )
 from middlewared.service_exception import CallError
-from middlewared.utils import load_modules, load_classes
+from middlewared.utils import bisect, load_modules, load_classes
 
 POLICIES = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]
 DEFAULT_POLICY = "IMMEDIATELY"
@@ -34,29 +37,46 @@ ALERT_SOURCES = {}
 ALERT_SERVICES_FACTORIES = {}
 
 
+class AlertSourceRunFailedAlertClass(AlertClass):
+    category = AlertCategory.SYSTEM
+    level = AlertLevel.CRITICAL
+    title = "Failed to check for alert"
+    text = "Failed to check for alert %(source_name)s:\n%(traceback)s"
+
+
+class AlertSourceRunFailedOnBackupNodeAlertClass(AlertClass):
+    category = AlertCategory.SYSTEM
+    level = AlertLevel.CRITICAL
+    title = "Failed to check for alert on backup node"
+    text = "Failed to check for alert %(source_name)s on backup node:\n%(traceback)s"
+
+
+class TestAlertClass(AlertClass):
+    category = AlertCategory.SYSTEM
+    level = AlertLevel.CRITICAL
+    title = "Test alert"
+
+    exclude_from_list = True
+
+
 class AlertPolicy:
     def __init__(self, key=lambda now: now):
         self.key = key
 
         self.last_key_value = None
-        self.last_key_value_alerts = defaultdict(lambda: defaultdict(dict))
+        self.last_key_value_alerts = {}
 
     def receive_alerts(self, now, alerts):
+        alerts = {alert.uuid: alert for alert in alerts}
         gone_alerts = []
         new_alerts = []
         key = self.key(now)
         if key != self.last_key_value:
-            for node in set(alerts.keys()) | set(self.last_key_value_alerts.keys()):
-                for alert_source_name in set(alerts[node].keys()) | set(self.last_key_value_alerts[node].keys()):
-                    for gone_alert in (set(self.last_key_value_alerts[node][alert_source_name].keys()) -
-                                       set(alerts[node][alert_source_name].keys())):
-                        gone_alerts.append(self.last_key_value_alerts[node][alert_source_name][gone_alert])
-                    for new_alert in (set(alerts[node][alert_source_name].keys()) -
-                                      set(self.last_key_value_alerts[node][alert_source_name].keys())):
-                        new_alerts.append(alerts[node][alert_source_name][new_alert])
+            gone_alerts = [alert for alert in self.last_key_value_alerts.values() if alert.uuid not in alerts]
+            new_alerts = [alert for alert in alerts.values() if alert.uuid not in self.last_key_value_alerts]
 
             self.last_key_value = key
-            self.last_key_value_alerts = copy.deepcopy(alerts)
+            self.last_key_value_alerts = alerts
 
         return gone_alerts, new_alerts
 
@@ -67,7 +87,7 @@ class AlertService(Service):
 
         self.node = "A"
 
-        self.alerts = defaultdict(lambda: defaultdict(dict))
+        self.alerts = []
 
         self.alert_source_last_run = defaultdict(lambda: datetime.min)
 
@@ -84,24 +104,12 @@ class AlertService(Service):
             if await self.middleware.call("failover.node") == "B":
                 self.node = "B"
 
-        for alert in await self.middleware.call("datastore.query", "system.alert"):
-            del alert["id"]
-            alert["level"] = AlertLevel(alert["level"])
-
-            alert = Alert(**alert)
-
-            self.alerts[alert.node][alert.source][alert.key] = alert
-
-        for policy in self.policies.values():
-            policy.receive_alerts(datetime.utcnow(), self.alerts)
-
         main_sources_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir, "alert", "source")
         sources_dirs = [os.path.join(overlay_dir, "alert", "source") for overlay_dir in self.middleware.overlay_dirs]
         sources_dirs.insert(0, main_sources_dir)
         for sources_dir in sources_dirs:
             for module in load_modules(sources_dir):
-                for cls in load_classes(module, AlertSource, (FilePresenceAlertSource, ThreadedAlertSource,
-                                                              OneShotAlertSource)):
+                for cls in load_classes(module, AlertSource, (FilePresenceAlertSource, ThreadedAlertSource)):
                     source = cls(self.middleware)
                     ALERT_SOURCES[source.name] = source
 
@@ -114,6 +122,27 @@ class AlertService(Service):
                 for cls in load_classes(module, _AlertService, (ThreadedAlertService, ProThreadedAlertService)):
                     ALERT_SERVICES_FACTORIES[cls.name()] = cls
 
+        for alert in await self.middleware.call("datastore.query", "system.alert"):
+            del alert["id"]
+
+            try:
+                alert["klass"] = AlertClass.class_by_name[alert["klass"]]
+            except KeyError:
+                self.logger.info("Alert class %r is no longer present", alert["klass"])
+                continue
+
+            alert["_uuid"] = alert.pop("uuid")
+            alert["_source"] = alert.pop("source")
+            alert["_key"] = alert.pop("key")
+            alert["_text"] = alert.pop("text")
+
+            alert = Alert(**alert)
+
+            self.alerts.append(alert)
+
+        for policy in self.policies.values():
+            policy.receive_alerts(datetime.utcnow(), self.alerts)
+
     @private
     async def terminate(self):
         await self.flush_alerts()
@@ -123,52 +152,81 @@ class AlertService(Service):
         return POLICIES
 
     @accepts()
-    async def list_sources(self):
+    async def list_categories(self):
         return [
             {
-                "name": source.name,
-                "title": source.title,
+                "id": alert_category.name,
+                "title": alert_category_names[alert_category],
+                "classes": sorted(
+                    [
+                        {
+                            "id": alert_class.name,
+                            "title": alert_class.title,
+                        }
+                        for alert_class in AlertClass.classes
+                        if alert_class.category == alert_category
+                    ],
+                    key=lambda klass: klass["title"]
+                )
             }
-            for source in sorted(ALERT_SOURCES.values(), key=lambda source: source.title.lower())
+            for alert_category in AlertCategory
+        ]
+
+    @private
+    async def list_sources(self):
+        # TODO: this is a deprecated method for backward compatibility
+        return [
+            {
+                "name": klass["id"],
+                "title": klass["title"],
+            }
+            for klass in sum([v["classes"] for v in await self.list_categories()], [])
         ]
 
     @accepts()
-    def list(self):
+    async def list(self):
+        classes = (await self.middleware.call("alertclasses.config"))["classes"]
+
         return [
             dict(alert.__dict__,
-                 id=f"{alert.node};{alert.source};{alert.key}",
-                 level=alert.level.name,
+                 id=alert.uuid,
+                 klass=alert.klass.name,
+                 level=classes.get(alert.klass.name, {}).get("level", alert.klass.level.name),
                  formatted=alert.formatted,
-                 one_shot=isinstance(ALERT_SOURCES.get(alert.source, None), OneShotAlertSource))
-            for alert in sorted(self.__get_all_alerts(), key=lambda alert: alert.title)
+                 one_shot=issubclass(alert.klass, OneShotAlertClass))
+            for alert in sorted(self.alerts, key=lambda alert: (alert.klass.title, alert.datetime))
         ]
 
-    @accepts(Str("id"))
-    async def dismiss(self, id):
-        node, source, key = id.split(";", 2)
+    def __alert_by_uuid(self, uuid):
         try:
-            alert = self.alerts[node][source][key]
-        except KeyError:
+            return [a for a in self.alerts if a.uuid == uuid][0]
+        except IndexError:
+            return None
+
+    @accepts(Str("uuid"))
+    async def dismiss(self, uuid):
+        alert = self.__alert_by_uuid(uuid)
+        if alert is None:
             return
 
-        alert_source = ALERT_SOURCES.get(source)
-        if alert_source and isinstance(alert_source, DismissableAlertSource):
-            self.alerts[node][source] = {
-                alert.key: alert
-                for alert in await alert_source.dismiss(self.alerts[node][source], key)
-            }
-        elif alert_source and isinstance(alert_source, OneShotAlertSource):
-            self.alerts[node][source].pop(key, None)
+        if issubclass(alert.klass, DismissableAlertClass):
+            related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.klass) == (alert.node, alert.klass),
+                                                      self.alerts)
+            self.alerts = (
+                unrelated_alerts +
+                await alert.klass(self.middleware).dismiss(related_alerts, alert)
+            )
+        elif issubclass(alert.klass, OneShotAlertClass):
+            self.alerts = [a for a in self.alerts if a.uuid != uuid]
         else:
             alert.dismissed = True
 
-    @accepts(Str("id"))
-    def restore(self, id):
-        node, source, key = id.split(";", 2)
-        try:
-            alert = self.alerts[node][source][key]
-        except KeyError:
+    @accepts(Str("uuid"))
+    def restore(self, uuid):
+        alert = self.__alert_by_uuid(uuid)
+        if alert is None:
             return
+
         alert.dismissed = False
 
     @periodic(60)
@@ -191,21 +249,31 @@ class AlertService(Service):
     @private
     @job(lock="process_alerts", transient=True)
     async def send_alerts(self, job):
-        default_settings = (await self.middleware.call("alertdefaultsettings.config"))["settings"]
-
-        all_alerts = self.__get_all_alerts()
+        classes = (await self.middleware.call("alertclasses.config"))["classes"]
 
         now = datetime.now()
         for policy_name, policy in self.policies.items():
             gone_alerts, new_alerts = policy.receive_alerts(now, self.alerts)
 
             for alert_service_desc in await self.middleware.call("datastore.query", "system.alertservice"):
-                service_settings = dict(default_settings, **alert_service_desc["settings"])
+                service_gone_alerts = [
+                    alert for alert in gone_alerts
+                    if (
+                        AlertLevel[classes.get(alert.klass.name, {}).get("level", alert.klass.level.name)].value >=
+                        AlertLevel[alert_service_desc["level"]].value and
 
-                service_gone_alerts = [alert for alert in gone_alerts
-                                       if service_settings.get(alert.source, DEFAULT_POLICY) == policy_name]
-                service_new_alerts = [alert for alert in new_alerts
-                                      if service_settings.get(alert.source, DEFAULT_POLICY) == policy_name]
+                        classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY) == policy_name
+                    )
+                ]
+                service_new_alerts = [
+                    alert for alert in new_alerts
+                    if (
+                        AlertLevel[classes.get(alert.klass.name, {}).get("level", alert.klass.level.name)].value >=
+                        AlertLevel[alert_service_desc["level"]].value and
+
+                        classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY) == policy_name
+                    )
+                ]
 
                 if not service_gone_alerts and not service_new_alerts:
                     continue
@@ -222,9 +290,9 @@ class AlertService(Service):
                                       alert_service_desc["type"], alert_service_desc["attributes"], exc_info=True)
                     continue
 
-                if all_alerts or service_gone_alerts or service_new_alerts:
+                if self.alerts or service_gone_alerts or service_new_alerts:
                     try:
-                        await alert_service.send(all_alerts, service_gone_alerts, service_new_alerts)
+                        await alert_service.send(self.alerts, service_gone_alerts, service_new_alerts)
                     except Exception:
                         self.logger.error("Error in alert service %r", alert_service_desc["type"], exc_info=True)
 
@@ -234,7 +302,7 @@ class AlertService(Service):
                         await self.middleware.call("mail.send", alert.mail)
 
                 if not await self.middleware.call("system.is_freenas"):
-                    new_hardware_alerts = [alert for alert in new_alerts if ALERT_SOURCES[alert.source].hardware]
+                    new_hardware_alerts = [alert for alert in new_alerts if alert.klass.hardware]
                     if new_hardware_alerts:
                         license = get_license()
                         if license and license.contract_type in [ContractType.silver.value, ContractType.gold.value]:
@@ -281,6 +349,9 @@ class AlertService(Service):
                                 except Exception:
                                     self.logger.error(f"Failed to create a support ticket", exc_info=True)
 
+    def __uuid(self):
+        return str(uuid.uuid4())
+
     async def __run_alerts(self):
         master_node = "A"
         backup_node = "B"
@@ -301,9 +372,6 @@ class AlertService(Service):
                             run_on_backup_node = True
 
         for alert_source in ALERT_SOURCES.values():
-            if isinstance(alert_source, OneShotAlertSource):
-                continue
-
             if not alert_source.schedule.should_run(datetime.utcnow(), self.alert_source_last_run[alert_source.name]):
                 continue
 
@@ -314,7 +382,9 @@ class AlertService(Service):
             try:
                 alerts_a = await self.__run_source(alert_source.name)
             except UnavailableException:
-                alerts_a = list(self.alerts["A"][alert_source.name].values())
+                alerts_a = [alert
+                            for alert in self.alerts
+                            if alert.node == master_node and alert.source == alert_source.name]
             for alert in alerts_a:
                 alert.node = master_node
 
@@ -326,43 +396,57 @@ class AlertService(Service):
                                                               [alert_source.name])
                     except CallError as e:
                         if e.errno == CallError.EALERTCHECKERUNAVAILABLE:
-                            alerts_b = list(self.alerts["B"][alert_source.name].values())
+                            alerts_b = [alert
+                                        for alert in self.alerts
+                                        if alert.node == backup_node and alert.source == alert_source.name]
                         else:
                             raise
                     else:
                         alerts_b = [Alert(**dict(alert,
-                                                 level=(AlertLevel(alert["level"]) if alert["level"] is not None
-                                                        else alert["level"])))
+                                                 klass=AlertClass.class_by_name[alert["klass"]],
+                                                 _uuid=alert.pop("id"),
+                                                 _source=alert.pop("source"),
+                                                 _key=alert.pop("key"),
+                                                 _text=alert.pop("text")))
                                     for alert in alerts_b]
                 except Exception:
                     alerts_b = [
-                        Alert(title="Unable to run alert source %(source_name)r on backup node\n%(traceback)s",
+                        Alert(AlertSourceRunFailedOnBackupNodeAlertClass,
                               args={
                                   "source_name": alert_source.name,
                                   "traceback": traceback.format_exc(),
                               },
-                              key="__remote_call_exception__",
-                              level=AlertLevel.CRITICAL)
+                              _source=alert_source.name)
                     ]
             for alert in alerts_b:
                 alert.node = backup_node
 
             for alert in alerts_a + alerts_b:
-                self.__handle_alert(alert_source, alert)
+                self.__handle_alert(alert)
 
-            self.alerts["A"][alert_source.name] = {alert.key: alert for alert in alerts_a}
-            self.alerts["B"][alert_source.name] = {alert.key: alert for alert in alerts_b}
+            self.alerts = (
+                [a for a in self.alerts if a.source != alert_source.name] +
+                alerts_a +
+                alerts_b
+            )
 
-    def __handle_alert(self, alert_source, alert):
-        existing_alert = self.alerts[alert.node][alert_source.name].get(alert.key)
+    def __handle_alert(self, alert):
+        try:
+            existing_alert = [
+                a for a in self.alerts
+                if (a.node, a.source, a.klass, a.key) == (alert.node, alert.source, alert.klass, alert.key)
+            ][0]
+        except IndexError:
+            existing_alert = None
 
-        alert.source = alert_source.name
+        if existing_alert is None:
+            alert.uuid = self.__uuid()
+        else:
+            alert.uuid = existing_alert.uuid
         if existing_alert is None:
             alert.datetime = alert.datetime or datetime.utcnow()
         else:
             alert.datetime = existing_alert.datetime
-        alert.level = alert.level or alert_source.level
-        alert.title = alert.title or alert_source.title
         if existing_alert is None:
             alert.dismissed = False
         else:
@@ -371,7 +455,7 @@ class AlertService(Service):
     @private
     async def run_source(self, source_name):
         try:
-            return [dict(alert.__dict__, level=alert.level.value if alert.level is not None else alert.level)
+            return [dict(alert.__dict__, klass=alert.klass.name)
                     for alert in await self.__run_source(source_name)]
         except UnavailableException:
             raise CallError("This alert checker is unavailable", CallError.EALERTCHECKERUNAVAILABLE)
@@ -385,17 +469,18 @@ class AlertService(Service):
             raise
         except Exception:
             alerts = [
-                Alert(title="Unable to run alert source %(source_name)r\n%(traceback)s",
+                Alert(AlertSourceRunFailedAlertClass,
                       args={
                           "source_name": alert_source.name,
                           "traceback": traceback.format_exc(),
-                      },
-                      key="__unhandled_exception__",
-                      level=AlertLevel.CRITICAL)
+                      })
             ]
         else:
             if not isinstance(alerts, list):
                 alerts = [alerts]
+
+        for alert in alerts:
+            alert.source = source_name
 
         return alerts
 
@@ -410,56 +495,57 @@ class AlertService(Service):
 
         await self.middleware.call("datastore.delete", "system.alert", [])
 
-        for alert in self.__get_all_alerts():
+        for alert in self.alerts:
             d = alert.__dict__.copy()
-            d["level"] = d["level"].value
+            d["klass"] = d["klass"].name
             del d["mail"]
             await self.middleware.call("datastore.insert", "system.alert", d)
 
-    def __get_all_alerts(self):
-        return sum([sum([list(vv.values()) for vv in v.values()], []) for v in self.alerts.values()], [])
-
     @private
-    @accepts(Str("source"), Any("args", null=True))
+    @accepts(Str("klass"), Any("args", null=True))
     @job(lock="process_alerts", transient=True)
-    async def oneshot_create(self, job, source, args):
+    async def oneshot_create(self, job, klass, args):
         try:
-            alert_source = ALERT_SOURCES[source]
+            klass = AlertClass.class_by_name[klass]
         except KeyError:
-            raise CallError(f"Invalid alert source: {source!r}")
+            raise CallError(f"Invalid alert source: {klass!r}")
 
-        if not isinstance(alert_source, OneShotAlertSource):
-            raise CallError(f"Alert source {source!r} is not a one-shot alert source")
+        if not issubclass(klass, OneShotAlertClass):
+            raise CallError(f"Alert class {klass!r} is not a one-shot alert source")
 
-        alert = await alert_source.create(args)
+        alert = await klass(self.middleware).create(args)
         if alert is None:
             return
 
+        alert.source = ""
+        alert.klass = alert.klass
+
         alert.node = self.node
 
-        self.__handle_alert(alert_source, alert)
+        self.__handle_alert(alert)
 
-        self.alerts[alert.node][alert_source.name][alert.key] = alert
+        self.alerts = [a for a in self.alerts if a.uuid != alert.uuid] + [alert]
 
         await self.middleware.call("alert.send_alerts")
 
     @private
-    @accepts(Str("source"), Any("query", null=True))
+    @accepts(Str("klass"), Any("query", null=True))
     @job(lock="process_alerts", transient=True)
-    async def oneshot_delete(self, job, source, query):
+    async def oneshot_delete(self, job, klass, query):
         try:
-            alert_source = ALERT_SOURCES[source]
+            klass = AlertClass.class_by_name[klass]
         except KeyError:
-            raise CallError(f"Invalid alert source: {source!r}")
+            raise CallError(f"Invalid alert source: {klass!r}")
 
-        if not isinstance(alert_source, OneShotAlertSource):
-            raise CallError(f"Alert source {source!r} is not a one-shot alert source")
+        if not issubclass(klass, OneShotAlertClass):
+            raise CallError(f"Alert class {klass!r} is not a one-shot alert source")
 
-        alerts = set(alert.key
-                     for alert in await alert_source.delete(self.alerts[self.node][alert_source.name].values(), query))
-        for k in list(self.alerts[self.node][alert_source.name].keys()):
-            if k not in alerts:
-                self.alerts[self.node][alert_source.name].pop(k, None)
+        related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.klass) == (self.node, klass),
+                                                  self.alerts)
+        self.alerts = (
+            unrelated_alerts +
+            await klass(self.middleware).delete(related_alerts, query)
+        )
 
         await self.middleware.call("alert.send_alerts")
 
@@ -507,8 +593,6 @@ class AlertServiceService(CRUDService):
         except ValidationErrors as e:
             verrors.add_child(f"{schema_name}.attributes", e)
 
-        validate_settings(verrors, f"{schema_name}.settings", service["settings"])
-
         if verrors:
             raise verrors
 
@@ -517,8 +601,8 @@ class AlertServiceService(CRUDService):
         Str("name"),
         Str("type"),
         Dict("attributes", additional_attrs=True),
+        Str("level", enum=list(AlertLevel.__members__)),
         Bool("enabled"),
-        Dict("settings", additional_attrs=True),
         register=True,
     ))
     async def do_create(self, data):
@@ -578,10 +662,9 @@ class AlertServiceService(CRUDService):
             return False
 
         test_alert = Alert(
-            title="Test alert",
+            TestAlertClass,
             node="A",
             datetime=datetime.utcnow(),
-            level=AlertLevel.INFO,
         )
 
         try:
@@ -593,22 +676,13 @@ class AlertServiceService(CRUDService):
         return True
 
 
-class AlertDefaultSettingsService(ConfigService):
+class AlertClassesService(ConfigService):
     class Config:
-        datastore = "system.alertdefaultsettings"
-
-    @private
-    async def _validate(self, settings, schema_name):
-        verrors = ValidationErrors()
-
-        validate_settings(verrors, f"{schema_name}.settings", settings["settings"])
-
-        if verrors:
-            raise verrors
+        datastore = "system.alertclasses"
 
     @accepts(Dict(
-        "alert_default_settings_update",
-        Dict("settings", additional_attrs=True),
+        "alert_classes_update",
+        Dict("classes", additional_attrs=True),
     ))
     async def do_update(self, data):
         old = await self.config()
@@ -616,21 +690,58 @@ class AlertDefaultSettingsService(ConfigService):
         new = old.copy()
         new.update(data)
 
-        await self._validate(data, "alert_default_settings_update")
+        verrors = ValidationErrors()
+
+        for k, v in new["classes"].items():
+            if k not in AlertClass.class_by_name:
+                verrors.add(f"alert_class_update.classes.{k}", "This alert class does not exist")
+
+            if not isinstance(v, dict):
+                verrors.add(f"alert_class_update.classes.{k}", "Not a dictionary")
+
+            if "level" in v:
+                if v["level"] not in AlertLevel.__members__:
+                    verrors.add(f"alert_class_update.classes.{k}.level", "This alert level does not exist")
+
+            if "policy" in v:
+                if v["policy"] not in POLICIES:
+                    verrors.add(f"alert_class_update.classes.{k}.policy", "This alert policy does not exist")
+
+        if verrors:
+            raise verrors
 
         await self.middleware.call("datastore.update", self._config.datastore, old["id"], new)
 
         return new
 
 
+class AlertDefaultSettingsService(Service):
+    class Config:
+        private = True
+
+    async def config(self):
+        return {
+            "settings": {
+                k: v["policy"]
+                for k, v in (await self.middleware.call("alertclasses.config"))["classes"].items()
+                if "policy" in v
+            },
+        }
+
+    @accepts(Dict(
+        "alert_default_settings_update",
+        Dict("settings", additional_attrs=True),
+    ))
+    async def update(self, data):
+        await self.middleware.call("alertclasses.update", {
+            "classes": {
+                k: {"policy": v}
+                for k, v in data["settings"].items()
+            },
+        })
+
+        return await self.config()
+
+
 async def setup(middleware):
     await middleware.call("alert.initialize")
-
-
-def validate_settings(verrors, schema_name, settings):
-    for k, v in settings.items():
-        if k not in ALERT_SOURCES:
-            verrors.add(f"{schema_name}.{k}", "This alert source does not exist")
-
-        if v not in POLICIES:
-            verrors.add(f"{schema_name}.{k}", "This alert policy does not exist")

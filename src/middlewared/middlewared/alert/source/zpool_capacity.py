@@ -1,14 +1,31 @@
 from datetime import timedelta
 import subprocess
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
 
-class ZpoolCapacityAlertSource(ThreadedAlertSource):
+class ZpoolCapacityWarningAlertClass(AlertClass):
+    category = AlertCategory.STORAGE
     level = AlertLevel.WARNING
-    title = "The capacity for the volume is above recommended value"
+    title = "The capacity for the volume is above 80%"
+    text = (
+        "The capacity for the volume \"%(volume)s\" is currently at "
+        "%(capacity)d%%, while the recommended value is below 80%%."
+    )
 
+
+class ZpoolCapacityCriticalAlertClass(AlertClass):
+    category = AlertCategory.STORAGE
+    level = AlertLevel.CRITICAL
+    title = "The capacity for the volume is above 90%"
+    text = (
+        "The capacity for the volume \"%(volume)s\" is currently at "
+        "%(capacity)d%%, while the recommended value is below 80%%."
+    )
+
+
+class ZpoolCapacityAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(timedelta(minutes=5))
 
     def check_sync(self):
@@ -33,25 +50,20 @@ class ZpoolCapacityAlertSource(ThreadedAlertSource):
             except ValueError:
                 continue
 
-            msg = (
-                "The capacity for the volume \"%(volume)s\" is currently at "
-                "%(capacity)d%%, while the recommended value is below 80%%."
-            )
-            level = None
+            klass = None
             if cap >= 90:
-                level = AlertLevel.CRITICAL
+                klass = ZpoolCapacityWarningAlertClass
             elif cap >= 80:
-                level = AlertLevel.WARNING
-            if level:
+                klass = ZpoolCapacityCriticalAlertClass
+            if klass:
                 alerts.append(
                     Alert(
-                        msg,
+                        klass,
                         {
                             "volume": pool,
                             "capacity": cap,
                         },
-                        key=[pool, level.name],
-                        level=level,
+                        key=[pool],
                     )
                 )
 

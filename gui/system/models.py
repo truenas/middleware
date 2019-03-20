@@ -468,23 +468,24 @@ class Tunable(Model):
 
 
 class Alert(Model):
+    uuid = models.TextField()
     node = models.CharField(default='A', max_length=100)
     source = models.TextField()
+    klass = models.TextField()
+    args = DictField()
     key = models.TextField()
     datetime = models.DateTimeField()
-    level = models.IntegerField()
-    title = models.TextField()
-    args = DictField()
     dismissed = models.BooleanField()
+    text = models.TextField()
 
     class Meta:
         unique_together = (
-            ('node', 'source', 'key'),
+            ('node', 'klass', 'key'),
         )
 
 
-class AlertDefaultSettings(Model):
-    settings = DictField(
+class AlertClasses(Model):
+    classes = DictField(
         blank=True,
     )
 
@@ -515,13 +516,14 @@ class AlertService(Model):
         editable=False,
         verbose_name=_("Attributes"),
     )
+    level = models.CharField(
+        verbose_name=_("Level"),
+        max_length=20,
+        default='WARNING',
+    )
     enabled = models.BooleanField(
         verbose_name=_("Enabled"),
         default=True,
-    )
-    settings = DictField(
-        blank=True,
-        verbose_name=_("Settings"),
     )
 
     class Meta:
