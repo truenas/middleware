@@ -37,6 +37,17 @@ class SSL(enum.Enum):
     USETLS = 'start_tls'
 
 
+class SRV(enum.Enum):
+    DOMAINCONTROLLER = '_ldap._tcp.dc._msdcs.'
+    FORESTGLOBALCATALOG = '_ldap._tcp.gc._msdcs.'
+    GLOBALCATALOG = '_gc._tcp.'
+    KERBEROS = '_kerberos._tcp.'
+    KERBEROSDOMAINCONTROLLER = '_kerberos._tcp.dc._msdcs.'
+    KPASSWD = '_kpasswd._tcp.'
+    LDAP = '_ldap._tcp.'
+    PDC = '_ldap._tcp.pdc._msdcs.'
+
+
 class ActiveDirectory_DNS(object):
     def __init__(self, **kwargs):
         super(ActiveDirectory_DNS, self).__init__()
@@ -134,6 +145,57 @@ class ActiveDirectory_DNS(object):
             if self.port_is_listening(host, port, timeout=1):
                 return (host, port)
 
+    def _get_servers(self, srv_prefix):
+        """
+        We will first try fo find servers based on our AD site. If we don't find
+        a server in our site, then we populate list for whole domain. Ticket #27584
+        Domain Controllers, Forest Global Catalog Servers, and Kerberos Domain Controllers
+        need the site information placed before the 'msdcs' component of the host entry.t
+        """
+        servers = []
+        if not self.ad['domainname']:
+            return servers 
+
+        if self.ad['site']:
+            if 'msdcs' in srv_prefix.value: 
+                parts = srv_prefix.value.split('.')
+                srv = '.'.join(parts[0],parts[1])
+                msdcs = '.'.join(parts[2], parts[3])
+                host = f"{srv}.{self.ad['site']}._sites.{msdcs}.{self.ad['domainname']}"
+            else:
+                host = f"{srv_prefix.value}{self.ad['site']}._sites.{self.ad['domainname']}"
+        else:
+            host = f"{srv_prefix.value}{self.ad['domainname']}"
+
+        servers = self._get_SRV_records(host, self.ad['dns_timeout'])
+
+        if not servers and self.ad['site']:
+            host = f"{srv_prefix.value}{self.ad['domainname']}"
+            dcs = self._get_SRV_records(host, self.ad['dns_timeout'])
+
+        if SSL(self.ad['ssl']) == SSL.USESSL:
+            for server in servers:
+                if server.port == 389:
+                    server.port = 636
+
+        return servers
+        
+    def get_n_working_servers(self, srv=SRV['DOMAINCONTROLLER'], number=1):
+        servers = self._get_servers(srv)
+        found_servers = []
+        for server in servers:
+            if len(found_servers) == number:
+                continue
+
+            host = server.target.to_text(True)
+            port = int(server.port)
+            if self.port_is_listening(host, port, timeout=1):
+                server_info = (host, port)
+                found_servers.append(server_info)
+
+        self.logger.debug(f'Request for [{number}] of server type [{srv.name}] returned: {found_servers}')
+        return found_servers
+
 
 class ActiveDirectory_LDAP(object):
     """
@@ -175,7 +237,7 @@ class ActiveDirectory_LDAP(object):
             proto = "ldap"
             port = 389
 
-        return f"{proto}://{host}:{port}"
+        return f"{proto}://{host[0]}:{port}"
 
     def validate_credentials(self):
         """
@@ -454,6 +516,7 @@ class ActiveDirectoryService(ConfigService):
         dcs.append(dc[0])
         with ActiveDirectory_LDAP(conf = ad, logger = self.logger, hosts = dcs) as AD_LDAP:
             ret = AD_LDAP.validate_credentials() 
+        
         return ret
 
     @private
@@ -465,17 +528,16 @@ class ActiveDirectoryService(ConfigService):
         The only way to reliably get this is to query the LDAP server. This method
         queries and sets it.
         """
+
         ret = False
-        dcs = []
         ad = self.middleware.call_sync('activedirectory.config')
         smb = self.middleware.call_sync('smb.config')
-        with ActiveDirectory_DNS(conf = ad) as AD_DNS:
-            dc = AD_DNS.get_working_domain_controller() 
+        with ActiveDirectory_DNS(conf = ad, logger=self.logger) as AD_DNS:
+            dc = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 1) 
         if not dc:
             raise CallError('Failed to open LDAP socket to any DC in domain.')
 
-        dcs.append(dc[0])
-        with ActiveDirectory_LDAP(conf = ad, logger = self.logger, hosts = dcs) as AD_LDAP:
+        with ActiveDirectory_LDAP(conf=ad, logger=self.logger, hosts = dc) as AD_LDAP:
             ret = AD_LDAP.get_netbios_name()
 
         if ret and smb['workgroup'] != ret:
