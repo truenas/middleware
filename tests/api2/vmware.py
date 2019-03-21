@@ -37,4 +37,4 @@ def test_02_create_vmware(data):
     }
     results = POST('/vmware/get_datastores/', payload)
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict) is True, results.text
+    assert isinstance(results.json(), list) is True, results.text
