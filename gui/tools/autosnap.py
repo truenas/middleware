@@ -256,7 +256,7 @@ for task in TaskObjects:
 
     vol_name = task.task_filesystem.split('/')[0]
     if isMatchingTime(task, snaptime):
-        proc = pipeopen(f'/sbin/zpool list {vol_name}')
+        proc = pipeopen(f'zpool list {vol_name}')
         proc.communicate()
         if proc.returncode != 0:
             log.warn(f'Volume {vol_name} not imported, skipping snapshot task #{task.id}')
@@ -286,7 +286,7 @@ if len(mp_to_task_map) > 0:
     snapshots_pending_delete = []
     previous_prefix = '/'
     # Use -s name because its faster. See #18428
-    zfsproc = pipeopen("/sbin/zfs list -t snapshot -H -o name -s name", debug, logger=log)
+    zfsproc = pipeopen("zfs list -t snapshot -H -o name -s name", debug, logger=log)
     lines = zfsproc.communicate()[0].split('\n')
     # Sort it in python to behave the same way as without "-s name"
     lines = sorted(lines, key=lambda x: x.split('@'))
@@ -529,7 +529,7 @@ Hello,
 
         # Take the ZFS snapshot
         MNTLOCK.lock()
-        snapcmd = '/sbin/zfs snapshot%s %s"%s"' % (rflag, vmflag, snapname)
+        snapcmd = 'zfs snapshot%s %s"%s"' % (rflag, vmflag, snapname)
         proc = pipeopen(snapcmd, logger=log)
         err = proc.communicate()[1]
         MNTLOCK.unlock()
@@ -608,7 +608,7 @@ Hello,
     if not autorepl_running():
         for snapshot in snapshots_pending_delete:
             # snapshots with clones will have destruction deferred
-            snapcmd = '/sbin/zfs destroy -r -d "%s"' % (snapshot)
+            snapcmd = 'zfs destroy -r -d "%s"' % (snapshot)
             proc = pipeopen(snapcmd, logger=log)
             err = proc.communicate()[1]
             if proc.returncode != 0:

@@ -915,7 +915,7 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
     mountpoints
     """
     args = [
-        "/sbin/zfs",
+        "zfs",
         "get",
         "-p",
         "-H",
