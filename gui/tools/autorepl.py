@@ -103,7 +103,7 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, followdelete, throttle
     global templog
 
     progressfile = '/tmp/.repl_progress_%d' % replication.id
-    cmd = ['/sbin/zfs', 'send', '-V']
+    cmd = ['zfs', 'send', '-V']
 
     # -p switch will send properties for whole dataset, including snapshots
     # which will result in stale snapshots being delete as well
@@ -122,7 +122,7 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, followdelete, throttle
         os.close(readfd)
         os.dup2(writefd, 1)
         os.close(writefd)
-        os.execv('/sbin/zfs', cmd)
+        os.execvp('zfs', cmd)
         # NOTREACHED
     else:
         with open(progressfile, 'w') as f2:
@@ -130,7 +130,7 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, followdelete, throttle
         os.close(writefd)
 
     compress, decompress = compress_pipecmds(compression)
-    replcmd = '%s%s/usr/local/bin/pipewatcher $$ | %s "%s/sbin/zfs receive -F -d \'%s\' && echo Succeeded"' % (compress, throttle, sshcmd, decompress, remotefs)
+    replcmd = '%s%s/usr/local/bin/pipewatcher $$ | %s "%szfs receive -F -d \'%s\' && echo Succeeded"' % (compress, throttle, sshcmd, decompress, remotefs)
     log.debug('Sending zfs snapshot: %s | %s', ' '.join(cmd), replcmd)
     with open(templog, 'w+') as f:
         readobj = os.fdopen(readfd, 'rb', 0)
@@ -342,9 +342,9 @@ for replication in replication_tasks:
 
     # Grab map from local system.
     if recursive:
-        zfsproc = pipeopen('/sbin/zfs list -H -t snapshot -p -o name,creation -r "%s"' % (localfs), debug)
+        zfsproc = pipeopen('zfs list -H -t snapshot -p -o name,creation -r "%s"' % (localfs), debug)
     else:
-        zfsproc = pipeopen('/sbin/zfs list -H -t snapshot -p -o name,creation -r -d 1 "%s"' % (localfs), debug)
+        zfsproc = pipeopen('zfs list -H -t snapshot -p -o name,creation -r -d 1 "%s"' % (localfs), debug)
 
     output, error = zfsproc.communicate()
     if zfsproc.returncode:
