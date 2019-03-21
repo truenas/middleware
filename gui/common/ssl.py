@@ -49,7 +49,7 @@ def export_certificate_chain(buf):
         certificate = crypto.load_certificate(crypto.FILETYPE_PEM, m)
         certificates.append(crypto.dump_certificate(crypto.FILETYPE_PEM, certificate))
 
-    return ''.join(certificates).strip()
+    return b''.join(certificates).strip()
 
 
 def export_certificate(buf):
