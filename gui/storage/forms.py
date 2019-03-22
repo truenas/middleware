@@ -2680,6 +2680,7 @@ class ChangePassphraseForm(Form):
     )
 
     def __init__(self, *args, **kwargs):
+        self.volume = kwargs.pop('volume')
         super(ChangePassphraseForm, self).__init__(*args, **kwargs)
         self.fields['remove'].widget.attrs['onClick'] = (
             'toggleGeneric("id_remove", ["id_passphrase", '
@@ -2715,6 +2716,16 @@ class ChangePassphraseForm(Form):
         if cdata.get("remove"):
             self._errors.pop('passphrase', None)
             self._errors.pop('passphrase2', None)
+        else:
+            with client as c:
+                sys_dataset = c.call('systemdataset.config')
+
+            if self.volume.vol_name == sys_dataset['pool']:
+                self._errors['__all__'] = self.error_class([
+                    _('An encrypted pool containing the system dataset must not have a passphrase. '
+                      'An existing passphrase on that pool can only be removed."')
+                ])
+
         return cdata
 
     def done(self, volume):
