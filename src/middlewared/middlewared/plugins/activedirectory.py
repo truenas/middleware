@@ -570,9 +570,37 @@ class ActiveDirectoryService(ConfigService):
         return await self.config()
 
     @private
+    async def _set_state(self, state):
+        await self.middleware.call('cache.put', 'AD_State', state.name)
+
+    @private
+    async def get_state(self):
+        """
+        Check the state of the AD Directory Service.
+        See DSStatus for definitions of return values.
+        :DISABLED: Service is not enabled.
+        If for some reason, the cache entry indicating Directory Service state
+        does not exist, re-run a status check to generate a key, then return it.
+        """
+        ad = await self.config()
+        if not ad['enable']:
+            return 'DISABLED'
+        else:
+            try:
+                return (await self.middleware.call('cache.get', 'AD_State'))
+            except KeyError:
+                await self.started()
+                return (await self.middleware.call('cache.get', 'AD_State'))
+
+    @private
     async def start(self):
-        ad = await self.middleware.call('activedirectory.config')
+        ad = await self.config()
         smb = await self.middleware.call('smb.config')
+        state = await self.get_state()
+        if state in [DSStatus['JOINING'], DSStatus['LEAVING']]:
+            raise CallError(f'Active Directory Service has status of [{state.value}]. Wait until operation completes.', errno.EBUSY)
+
+        await self._set_state(DSStatus['JOINING'])
         await self.middleware.call('datastore.update', 'directoryservice.activedirectory', ad['id'], {'ad_enable': True})
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'rc')
@@ -587,18 +615,32 @@ class ActiveDirectoryService(ConfigService):
                 {'krb_realm': ad['domainname'].upper()},
             )
 
-        await self.middleware.call('etc.generate', 'kerberos')
+        await self.middleware.call('kerberos.start')
         await self.middleware.call('etc.generate', 'smb')
-        #ret = await self.__net_ads('testjoin')
-        ret = await self.__net_ads('join')
+        ret = await self._net_ads('testjoin')
         if not ret:
             self.logger.debug(f"Test join to {ad['domainname']} failed. Performing domain join.")
-            await self.__net_ads('join')
+            await self._net_ads('join')
 
-        await self.middleware.call('service.restart', 'smb')
+        await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'nss')
+        await self._set_state(DSStatus['HEALTHY'])
         return True
+
+    @private
+    async def stop(self):
+        ad = await self.config()
+        await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_enable': False})
+        await self._set_state(DSStatus['LEAVING'])
+        await self.middleware.call('etc.generate', 'hostname')
+        await self.middleware.call('etc.generate', 'rc')
+        await self.middleware.call('kerberos.stop')
+        await self.middleware.call('etc.generate', 'smb')
+        await self.middleware.call('service.restart', 'cifs')
+        await self.middleware.call('etc.generate', 'pam')
+        await self.middleware.call('etc.generate', 'nss')
+        await self.middleware.call('cache.pop', 'AD_State') 
 
     @private
     def validate_credentials(self):
@@ -615,33 +657,57 @@ class ActiveDirectoryService(ConfigService):
         return ret
 
     @private
-    async def get_cached_srv_records(self, srv=SRV['DOMAINCONTROLLER']):
+    async def _get_cached_srv_records(self, srv=SRV['DOMAINCONTROLLER']):
         """
         Avoid unecessary DNS lookups. These can potentially be expensive if DNS
         is flaky. Try site-specific results first, then try domain-wide ones.
         """
         servers = []
-        if self.middleware.call('cache.key_exists', f'SRVCACHE_{srv.name}_SITE'):
-            servers = self.middleware.call('cache.get', f'SRVCACHE_{srv.name}_SITE') 
+        if await self.middleware.call('cache.has_key', f'SRVCACHE_{srv.name}_SITE'):
+            servers = await self.middleware.call('cache.get', f'SRVCACHE_{srv.name}_SITE') 
 
-        if not servers and self.middleware.call('cache.key_exists', f'SRVCACHE_{srv.name}'):
-            servers = self.middleware.call('cache.get', f'SRVCACHE_{srv.name}') 
+        if not servers and await self.middleware.call('cache.has_key', f'SRVCACHE_{srv.name}'):
+            servers = await self.middleware.call('cache.get', f'SRVCACHE_{srv.name}') 
 
         return servers
 
     @private
-    async def net_ads(self, command):
+    async def _set_cached_srv_records(self, srv=None, site=None, results=[]):
+        """
+        Cache srv record lookups for 24 hours
+        """
+        if not srv:
+            raise CallError('srv record type not specified', errno.EINVAL)
+        
+        if site:
+            self.middleware.call('cache.put', f'SRVCACHE_{srv.name}_SITE', results, 86400) 
+        else:
+            self.middleware.call('cache.put', f'SRVCACHE_{srv.name}', results, 86400) 
+        return True
+
+    @private
+    async def started(self):
+        ad = await self.config()
+        netlogon_ping = await run(['wbinfo', '-P'], check=False)
+        if netlogon_ping.returncode != 0:
+            await self._set_state(DSStatus['FAULTED'])
+            return False
+        await self._set_state(DSStatus['HEALTHY'])
+        return True
+
+    @private
+    async def _net_ads(self, command):
         ad = await self.config()
         netads = await run([
-            'net', '-k', '-U', 'AD01\administrator', '-d', '10', 
-            'ads', command, 
-            ad['domainname'], 
-            '-S', 'DC01.AD01.LAB.IXSYSTEMS.COM'],
+            'net', '-k', '-U', f'{ad["bindname"]}@{ad["domainname"]}',
+            '-d', '5', 'ads', command, ad['domainname'], 
+            ],
             check = False
         ) 
         if netads.returncode != 0:
             self.logger.debug(f"command net -k ads failed with error: [{netads.stderr.decode().strip()}]")
             if command == 'join':
+                await self._set_state(DSStatus['FAULTED'])
                 raise CallError(f'Failed to join [{ad["domainname"]}]: [{netads.stdout.decode().strip()}]')
             return False
 
@@ -678,15 +744,23 @@ class ActiveDirectoryService(ConfigService):
     async def get_site(self):
         """
         First, use DNS to identify domain controllers
-        Then, find a domain controller that is listening for LDAP connection
+        Then, find a domain controller that is listening for LDAP connection if this information is not cached.
         Then, perform an LDAP query to determine our AD site 
         """
         ad = await self.middleware.call('activedirectory.config')
         i = await self.middleware.call('interfaces.query')
-        with ActiveDirectory_DNS(conf = ad, logger=self.logger) as AD_DNS:
-            dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3) 
+        dcs = await self._get_cached_srv_records(SRV['DOMAINCONTROLLER'])
+        self.logger.debug(dcs)
+        set_new_cache = True if not dcs else False
+
+        if not dcs:
+            with ActiveDirectory_DNS(conf = ad, logger=self.logger) as AD_DNS:
+                dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3) 
         if not dcs:
             raise CallError('Failed to open LDAP socket to any DC in domain.')
+
+        if set_new_cache:
+            await self._set_cached_srv_records(SRV['DOMAINCONTROLLER'], site=ad['site'], results=dcs) 
 
         with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts = dcs, interfaces = i) as AD_LDAP:
             ret = AD_LDAP.locate_site()

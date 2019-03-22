@@ -15,6 +15,12 @@ class KerberosRealmService(CRUDService):
     due to AD site discovery. Kerberos has no concept of Active Directory
     sites. This means that middleware performs the site discovery and
     sets the kerberos configuration based on the AD site.
+
+    :start:   generate kerberos config file and perform kinit.
+    :stop:    perform a kdestroy
+    :renew:   check to see if we are within 15 minutes of ticket 
+              expiring and kinit -R if needed. 
+    :status:  perform kinit -t to check if there is a ticket or if it has expired.
     """
 
     class Config:
@@ -68,7 +74,11 @@ class KerberosRealmService(CRUDService):
 
     @accepts(
         Int('id', required=True),
-        Patch('periodic_snapshot_create', 'periodic_snapshot_update', ('attr', {'update': True}))
+        Patch(
+            'sharingsmb_create',
+            'sharingsmb_update',
+            ('attr', {'update': True})
+        )
     )
     async def do_update(self, id, data):
         old = await self._get_instance(id)
@@ -119,7 +129,7 @@ class KerberosRealmService(CRUDService):
         return verrors
 
     @private
-    async def _klist(self):
+    async def _klist_test(self):
         klist = await run(['/usr/bin/klist', '-t'], check = False)
         if klist.returncode != 0:
             return False
@@ -189,6 +199,15 @@ class KerberosRealmService(CRUDService):
         ldap = await self.middleware.call('datastore.config', 'directoryservice.ldap')
         ad_TGT = []
         ldap_TGT = []
+
+        if not ad['enable'] and not ldap['ldap_enable']:
+            return {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT} 
+        if not ad['enable'] and not ldap['ldap_kerberos_realm']:
+            return {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT} 
+
+        if not await self.status():
+            await self.start()
+
         try:
             klist = await asyncio.wait_for(
                 run(['/usr/bin/klist'], check = False, stdout=subprocess.PIPE), 
@@ -213,7 +232,6 @@ class KerberosRealmService(CRUDService):
         await self.middleware.call('cache.put', 'KRB_TGT_INFO', {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT})
         return {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT} 
         
-
     @private
     async def renew(self):
         """
@@ -222,7 +240,7 @@ class KerberosRealmService(CRUDService):
         """
         tgt_info = await self._get_cached_TGT()
         ret = True
-        self.logger.debug(tgt_info)
+
         must_renew = False
         must_reinit = False
         if tgt_info['ad_TGT']:
@@ -257,16 +275,15 @@ class KerberosRealmService(CRUDService):
                 if kinit.returncode != 0:
                     raise CallError(f'kinit -R failed with error: {kinit.stderr.decode()}')
                 self.logger.debug(f'Successfully renewed kerberos TGT')
-                self.middleware.call('cache.pop', 'KRB_TGT_INFO')
+                await self.middleware.call('cache.pop', 'KRB_TGT_INFO')
             except asyncio.TimeoutError:
                 self.logger.debug('Attempt to renew kerberos TGT failed after 15 seconds.')
             
         if must_reinit:
             ret = self.start()
-            self.middleware.call('cache.pop', 'KRB_TGT_INFO')
+            await self.middleware.call('cache.pop', 'KRB_TGT_INFO')
 
         return ret
-
 
     @private
     async def status(self):
@@ -274,14 +291,23 @@ class KerberosRealmService(CRUDService):
         Experience in production environments has indicated that klist can hang
         indefinitely. Fail if we hang for more than 10 seconds. This should force
         a kdestroy and new attempt to kinit (depending on why we are checking status).
-        _klist will return false if there is not a TGT or if the TGT has expired.
+        _klist_test will return false if there is not a TGT or if the TGT has expired.
         """
         try:
-            ret = await asyncio.wait_for(self._klist(), timeout=10.0) 
+            ret = await asyncio.wait_for(self._klist_test(), timeout=10.0) 
             return ret
         except asyncio.TimeoutError:
             self.logger.debug('kerberos ticket status check timed out after 10 seconds.')
             return False
+
+    @private
+    async def stop(self):
+        kdestroy = await run(['/usr/bin/kdestroy'], check=False)
+        await self.middleware.call('cache.pop', 'KRB_TGT_INFO')
+        if kdestroy.returncode != 0:
+            raise CallError(f'kdestroy failed with error: {kdestroy.stderr.decode()}')
+        
+        return True
 
     @private
     async def start(self, realm=None, kinit_timeout = 30):
@@ -289,6 +315,7 @@ class KerberosRealmService(CRUDService):
         kinit can hang because it depends on DNS. If it has not returned within
         30 seconds, it is safe to say that it has failed.
         """
+        await self.middleware.call('etc.generate', 'kerberos')
         try:
             ret = await asyncio.wait_for(self._kinit(), timeout=kinit_timeout)
         except asyncio.TimeoutError:
