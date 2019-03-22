@@ -21,6 +21,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}boto3>0:www/py-boto3@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}netif>0:net/py-netif@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}bsd>0:freenas/py-bsd@${FLAVOR} \
+		${PYTHON_PKGNAMEPREFIX}cam>0:devel/py-cam@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}raven>0:devel/py-raven@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}markdown>0:textproc/py-markdown@${FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}mako>0:textproc/py-mako@${FLAVOR} \
