@@ -1,6 +1,7 @@
 import asyncio
 import enum
 import errno
+import ipaddr
 import ldap
 import ldap.sasl
 import socket
@@ -49,6 +50,11 @@ class SRV(enum.Enum):
 
 
 class ActiveDirectory_DNS(object):
+    """
+    :get_n_working_servers: often only a few working servers are needed and not the whole
+    list available on the domain. This takes the SRV record type and number of servers to get
+    as arguments.
+    """
     def __init__(self, **kwargs):
         super(ActiveDirectory_DNS, self).__init__()
         self.ad = kwargs.get('conf') 
@@ -89,32 +95,6 @@ class ActiveDirectory_DNS(object):
 
         return srv_records
 
-    def get_domain_controllers(self):
-        """
-        We will first try fo find DCs based on our AD site. If we don't find
-        a DC in our site, then we populate list for whole domain. Ticket #27584
-        """
-        dcs = []
-        if not self.ad['domainname']:
-            return dcs
-
-        if self.ad['site']:
-            host = f"_ldap._tcp.{self.ad['site']}._sites.dc._msdcs.{self.ad['domainname']}"
-        else:
-            host = f"_ldap._tcp.dc._msdcs.{self.ad['domainname']}"
-
-        dcs = self._get_SRV_records(host, self.ad['dns_timeout'])
-
-        if not dcs:
-            host = f"_ldap._tcp.dc._msdcs.{self.ad['domainname']}"
-            dcs = self._get_SRV_records(host, self.ad['dns_timeout'])
-
-        if SSL(self.ad['ssl']) == SSL.USESSL:
-            for dc in dcs:
-                dc.port = 636
-
-        return dcs
-
     def port_is_listening(self, host, port, timeout=1):
         ret = False
 
@@ -133,18 +113,6 @@ class ActiveDirectory_DNS(object):
         s.close()
         return ret
 
-    def get_working_domain_controller(self):
-        """
-        In most situations, the best DC is not required. We only need one that is
-        listening.
-        """
-        dcs = self.get_domain_controllers()
-        for dc in dcs:
-            host = dc.target.to_text(True)
-            port = int(dc.port)
-            if self.port_is_listening(host, port, timeout=1):
-                return (host, port)
-
     def _get_servers(self, srv_prefix):
         """
         We will first try fo find servers based on our AD site. If we don't find
@@ -159,8 +127,8 @@ class ActiveDirectory_DNS(object):
         if self.ad['site']:
             if 'msdcs' in srv_prefix.value: 
                 parts = srv_prefix.value.split('.')
-                srv = '.'.join(parts[0],parts[1])
-                msdcs = '.'.join(parts[2], parts[3])
+                srv = '.'.join([parts[0],parts[1]])
+                msdcs = '.'.join([parts[2], parts[3]])
                 host = f"{srv}.{self.ad['site']}._sites.{msdcs}.{self.ad['domainname']}"
             else:
                 host = f"{srv_prefix.value}{self.ad['site']}._sites.{self.ad['domainname']}"
@@ -190,10 +158,11 @@ class ActiveDirectory_DNS(object):
             host = server.target.to_text(True)
             port = int(server.port)
             if self.port_is_listening(host, port, timeout=1):
-                server_info = (host, port)
+                server_info = {'host': host, 'port': port}
                 found_servers.append(server_info)
 
-        self.logger.debug(f'Request for [{number}] of server type [{srv.name}] returned: {found_servers}')
+        if self.ad['verbose_logging']:
+            self.logger.debug(f'Request for [{number}] of server type [{srv.name}] returned: {found_servers}')
         return found_servers
 
 
@@ -214,12 +183,18 @@ class ActiveDirectory_LDAP(object):
     """
     def __init__(self, **kwargs):
         super(ActiveDirectory_LDAP, self).__init__()
-        self.ad = kwargs.get('conf')
+        self.ad = kwargs.get('ad_conf')
         self.hosts = kwargs.get('hosts')
+        self.interfaces = kwargs.get('interfaces')
         self.logger = kwargs.get('logger')
         self.pagesize = 1024
         self._isopen = False
         self._handle = None
+        self._rootDSE = None
+        self._rootDomainNamingContext = None
+        self._configurationNamingContext = None
+        self._defaultNamingContext = None
+        
         return
 
     def __enter__(self):
@@ -228,16 +203,6 @@ class ActiveDirectory_LDAP(object):
     def __exit__(self, typ, value, traceback):
         if typ is not None:
             raise
-
-    def _get_uri(self, host):
-        if SSL(self.ad['ssl']) == SSL.USESSL:
-            proto = "ldaps"
-            port = 636
-        else:
-            proto = "ldap"
-            port = 389
-
-        return f"{proto}://{host[0]}:{port}"
 
     def validate_credentials(self):
         """
@@ -254,47 +219,57 @@ class ActiveDirectory_LDAP(object):
         we iterate through a list of hosts until we get one that
         works and then use that to set our LDAP handle.
         """
+        res = None 
         if self._isopen:
             return True
 
         if self.hosts:
-            for host in self.hosts:
-                uri = self._get_uri(host)
-                self.logger.debug(f'URI is {uri}')
-                self._handle = ldap.initialize(uri)
-                continue
-
-        if self._handle:
-            res = None
-            ldap.protocol_version = ldap.VERSION3
-            ldap.set_option(ldap.OPT_REFERRALS, 0)
-            ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, 10.0)
-
-            if SSL(self.ad['ssl']) != SSL.NOSSL:
-                ldap.set_option(ldap.OPT_X_TLS_ALLOW, 1)
-                if self.certfile:
-                    ldap.set_option(
-                        ldap.OPT_X_TLS_CACERTFILE,
-                        self.certfile
-                    )
-                ldap.set_option(
-                    ldap.OPT_X_TLS_REQUIRE_CERT,
-                    ldap.OPT_X_TLS_ALLOW
-                )
-
-            if SSL(self.ad['ssl']) == SSL.USESSL:
+            for server in self.hosts:
+                proto = 'ldaps' if SSL(self.ad['ssl']) == SSL.USESSL else 'ldap' 
+                uri = f"{proto}://{server['host']}:{server['port']}" 
                 try:
-                    self._handle.start_tls_s()
-                    if DS_DEBUG:
-                        log.debug("FreeNAS_LDAP_Directory.open: started TLS")
+                    self._handle = ldap.initialize(uri)
+                except Exception as e:
+                    self.logger.debug(f'Failed to initialize ldap connection to [{uri}]. Moving to next server.') 
+                    continue
 
-                except ldap.LDAPError as e:
-                    raise CallError(e)
-            bindname = f"{self.ad['bindname']}@{self.ad['domainname']}"
-            try:
-                res = self._handle.simple_bind_s(bindname, self.ad['bindpw'])
-            except Exception as e:
-                raise CallError(e)
+                if self.ad['verbose_logging']:
+                    self.logger.debug(f'Successfully initialized LDAP server: [{uri}]')
+
+                res = None
+                ldap.protocol_version = ldap.VERSION3
+                ldap.set_option(ldap.OPT_REFERRALS, 0)
+                ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, 10.0)
+
+                if SSL(self.ad['ssl']) != SSL.NOSSL:
+                    ldap.set_option(ldap.OPT_X_TLS_ALLOW, 1)
+                    if self.certfile:
+                        ldap.set_option(
+                            ldap.OPT_X_TLS_CACERTFILE,
+                            self.certfile
+                        )
+                    ldap.set_option(
+                        ldap.OPT_X_TLS_REQUIRE_CERT,
+                        ldap.OPT_X_TLS_ALLOW
+                    )
+
+                if SSL(self.ad['ssl']) == SSL.USESSL:
+                    try:
+                        self._handle.start_tls_s()
+
+                    except ldap.LDAPError as e:
+                        raise CallError(e)
+                        continue
+                bindname = f"{self.ad['bindname']}@{self.ad['domainname']}"
+                try:
+                    res = self._handle.simple_bind_s(bindname, self.ad['bindpw'])
+                    if self.ad['verbose_logging']:
+                        self.logger.debug(f'Successfully bound to [{uri}] using [{bindname}]')
+                    break 
+                except Exception as e:
+                    self.logger.debug(f'Failed to bind to [{uri}] using [{bindname}]')
+                    continue
+
 
             if res:
                 self._isopen = True
@@ -321,7 +296,6 @@ class ActiveDirectory_LDAP(object):
             size=self.pagesize,
             cookie=''
         )
-        self.logger.debug(f'basedn: {basedn}, filter: {filter}')
         paged_ctrls = { SimplePagedResultsControl.controlType: SimplePagedResultsControl }
 
         if self.pagesize > 0:
@@ -392,45 +366,88 @@ class ActiveDirectory_LDAP(object):
 
         return result 
 
-    def _get_rootDSE(self):
-        results = self._search('', ldap.SCOPE_BASE, "(objectclass=*)")
-        return results
+    def _get_sites(self, distinguishedname):
+        sites = []
+        basedn = f'CN=Sites,{self._configurationNamingContext}'
+        filter = f'(&(objectClass=site)(distinguishedname={distinguishedname}))'
+        results = self._search(basedn, ldap.SCOPE_SUBTREE, filter)
+        if results:
+            for r in results:
+                if r[0]:
+                    sites.append(r)
+        return sites
 
-    def _get_rootDN(self):
-        results = self._get_rootDSE()
+    def _get_subnets(self):
+        subnets = []
+        ipv4_subnet_info_lst = []
+        ipv6_subnet_info_lst = []
+        baseDN = f'CN=Subnets,CN=Sites,{self._configurationNamingContext}'
+        results = self._search(baseDN, ldap.SCOPE_SUBTREE, '(objectClass=subnet)')
+        if results:
+            for r in results:
+                if r[0]:
+                    subnets.append(r)
+
+        for s in subnets:
+            if not s or len(s) < 2:
+                continue
+
+            network = site_dn = None
+            if 'cn' in s[1]:
+                network = s[1]['cn'][0]
+                if isinstance(network, bytes):
+                    network = network.decode('utf-8')
+                
+            else:
+                # if the network is None no point calculating
+                # anything more so ....
+                continue
+            if 'siteObject' in s[1]:
+                site_dn = s[1]['siteObject'][0]
+                if isinstance(site_dn, bytes):
+                    site_dn = site_dn.decode('utf-8')
+            
+            # Note should/can we do the same skip as done for `network`
+            # the site_dn none too?
+            st = ipaddr.IPNetwork(network)
+                
+            if st.version == 4:
+                ipv4_subnet_info_lst.append({'site_dn': site_dn, 'network': st})
+            elif st.version == 6:
+                ipv4_subnet_info_lst.append({'site_dn': site_dn, 'network': st})
+
+        if self.ad['verbose_logging']:
+            self.logger.debug(f'ipv4_subnet_info: {ipv4_subnet_info_lst}') 
+            self.logger.debug(f'ipv6_subnet_info: {ipv6_subnet_info_lst}') 
+        return {'ipv4_subnet_info': ipv4_subnet_info_lst, 'ipv6_subnet_info': ipv6_subnet_info_lst}
+    
+    def _initialize_naming_context(self):
+        self._rootDSE = self._search('', ldap.SCOPE_BASE, "(objectclass=*)")
         try:
-            results = results[0][1]['rootDomainNamingContext'][0].decode()
+            self._rootDomainNamingContext = self._rootDSE[0][1]['rootDomainNamingContext'][0].decode()
         except Exception as e:
             self.logger.debug(f'Failed to get rootDN: [{e}]')
-            results = None
-        return results
 
-    def _get_baseDN(self):
-        results = self._get_rootDSE()
         try:
-            results = results[0][1]['defaultNamingContext'][0].decode()
+            self._defaultNamingContext = self._rootDSE[0][1]['defaultNamingContext'][0].decode()
         except Exception as e:
             self.logger.debug(f'Failed to get baseDN: [{e}]')
-            results = None
-        return results
 
-    def _get_configurationNamingContext(self):
-        results = self._get_rootDSE()
         try:
-            results = results[0][1]['configurationNamingContext'][0].decode()
+            self._configurationNamingContext = self._rootDSE[0][1]['configurationNamingContext'][0].decode()
         except Exception as e:
             self.logger.debug(f'Failed to get configrationNamingContext: [{e}]')
-            results = None
-        return results
+
+        if self.ad['verbose_logging']:
+            self.logger.debug(f'initialized naming context: rootDN:[{self._rootDomainNamingContext}]')
+            self.logger.debug(f'baseDN:[{self._defaultNamingContext}], config:[{self._configurationNamingContext}]') 
 
     def get_netbios_name(self):
         if not self._handle:
             self._open()
-        basedn = self._get_baseDN()
-        config = self._get_configurationNamingContext()
-        self.logger.debug(f'basedn: {basedn}')
-        filter = f'(&(objectcategory=crossref)(nCName={basedn}))'
-        results = self._search(config, ldap.SCOPE_SUBTREE, filter)
+        self._initialize_naming_context() 
+        filter = f'(&(objectcategory=crossref)(nCName={self._defaultNamingContext}))'
+        results = self._search(self._configurationNamingContext, ldap.SCOPE_SUBTREE, filter)
         try:
             netbios_name = results[0][1]['nETBIOSName'][0].decode()
 
@@ -439,8 +456,57 @@ class ActiveDirectory_LDAP(object):
             self.logger.debug(f'Failed to discover short form of domain name: [{e}] res: [{results}]')
             netbios_name = None
 
+        self._close()
+        if self.ad['verbose_logging']:
+            self.logger.debug(f'Query for nETBIOSName from LDAP returned: [{netbios_name}]')
         return netbios_name
 
+    def locate_site(self):
+        """
+        In Windows environment, this is discovered via CLDAP query for closest DC. We
+        can't do this, and so we have to rely on comparing our network configuration with
+        site and subnet information obtained through LDAP queries. 
+        """
+        if not self._handle:
+            self._open()
+        ipv4_site = None
+        ipv6_site = None
+        self._initialize_naming_context() 
+        subnets = self._get_subnets()
+        for nic in self.interfaces:
+            for alias in nic['aliases']:
+                if alias['type'] == 'INET':
+                    if ipv4_site is not None:
+                        continue
+                    ipv4_addr_obj = ipaddr.IPAddress(alias['address'], version=4)
+                    for subnet in subnets['ipv4_subnet_info']:
+                        if ipv4_addr_obj in subnet['network']:
+                            sinfo = self._get_sites(distinguishedname=subnet['site_dn'])[0]
+                            if sinfo and len(sinfo) > 1:
+                                ipv4_site = sinfo[1]['cn'][0].decode()
+                                break
+                        
+                if alias['type'] == 'INET6':
+                    if ipv6_site is not None:
+                        continue
+                    ipv6_addr_obj = ipaddr.IPAddress(alias['address'], version=6)
+                    for subnet in subnets['ipv6_subnet_info']:
+                        if ipv6_addr_obj in subnet['network']:
+                            sinfo = self._get_sites(distinguishedname=subnet['site_dn'])[0]
+                            if sinfo and len(sinfo) > 1:
+                                ipv6_site = sinfo[1]['cn'][0].decode()
+                                break
+                        
+        if ipv4_site and ipv6_site and ipv4_site == ipv6_site:
+            return ipv4_site
+
+        if ipv4_site:
+            return ipv4_site
+
+        if not ipv4_site and ipv6_site:
+            return ipv6_site
+
+        return None 
 
 class ActiveDirectoryService(ConfigService):
     class Config:
@@ -504,23 +570,85 @@ class ActiveDirectoryService(ConfigService):
         return await self.config()
 
     @private
+    async def start(self):
+        ad = await self.middleware.call('activedirectory.config')
+        smb = await self.middleware.call('smb.config')
+        await self.middleware.call('datastore.update', 'directoryservice.activedirectory', ad['id'], {'ad_enable': True})
+        await self.middleware.call('etc.generate', 'hostname')
+        await self.middleware.call('etc.generate', 'rc')
+        if not ad['site']:
+            asyncio.wait_for(await self.get_site(), 10)
+        if smb['workgroup'] == 'WORKGROUP':
+            asyncio.wait_for(await self.get_workgroup(), 10)
+        if not ad['kerberos_realm']:
+            await self.middleware.call(
+                'datastore.insert',
+                'directoryservice.kerberosrealm',
+                {'krb_realm': ad['domainname'].upper()},
+            )
+
+        await self.middleware.call('etc.generate', 'kerberos')
+        await self.middleware.call('etc.generate', 'smb')
+        #ret = await self.__net_ads('testjoin')
+        ret = await self.__net_ads('join')
+        if not ret:
+            self.logger.debug(f"Test join to {ad['domainname']} failed. Performing domain join.")
+            await self.__net_ads('join')
+
+        await self.middleware.call('service.restart', 'smb')
+        await self.middleware.call('etc.generate', 'pam')
+        await self.middleware.call('etc.generate', 'nss')
+        return True
+
+    @private
     def validate_credentials(self):
         ret = False
-        dcs = []
         ad = self.middleware.call_sync('activedirectory.config')
-        with ActiveDirectory_DNS(conf = ad) as AD_DNS:
-            dc = AD_DNS.get_working_domain_controller() 
+        with ActiveDirectory_DNS(conf = ad, logger = self.logger) as AD_DNS:
+            dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3) 
         if not dc:
             raise CallError('Failed to open LDAP socket to any DC in domain.')
 
-        dcs.append(dc[0])
-        with ActiveDirectory_LDAP(conf = ad, logger = self.logger, hosts = dcs) as AD_LDAP:
+        with ActiveDirectory_LDAP(ad_conf = ad, logger = self.logger, hosts = dcs) as AD_LDAP:
             ret = AD_LDAP.validate_credentials() 
         
         return ret
 
     @private
-    def get_workgroup(self):
+    async def get_cached_srv_records(self, srv=SRV['DOMAINCONTROLLER']):
+        """
+        Avoid unecessary DNS lookups. These can potentially be expensive if DNS
+        is flaky. Try site-specific results first, then try domain-wide ones.
+        """
+        servers = []
+        if self.middleware.call('cache.key_exists', f'SRVCACHE_{srv.name}_SITE'):
+            servers = self.middleware.call('cache.get', f'SRVCACHE_{srv.name}_SITE') 
+
+        if not servers and self.middleware.call('cache.key_exists', f'SRVCACHE_{srv.name}'):
+            servers = self.middleware.call('cache.get', f'SRVCACHE_{srv.name}') 
+
+        return servers
+
+    @private
+    async def net_ads(self, command):
+        ad = await self.config()
+        netads = await run([
+            'net', '-k', '-U', 'AD01\administrator', '-d', '10', 
+            'ads', command, 
+            ad['domainname'], 
+            '-S', 'DC01.AD01.LAB.IXSYSTEMS.COM'],
+            check = False
+        ) 
+        if netads.returncode != 0:
+            self.logger.debug(f"command net -k ads failed with error: [{netads.stderr.decode().strip()}]")
+            if command == 'join':
+                raise CallError(f'Failed to join [{ad["domainname"]}]: [{netads.stdout.decode().strip()}]')
+            return False
+
+        return True
+
+    @private
+    async def get_workgroup(self):
         """
         The 'workgroup' parameter must be set correctly in order for AD join to
         succeed. This is based on the short form of the domain name, which was defined
@@ -530,36 +658,45 @@ class ActiveDirectoryService(ConfigService):
         """
 
         ret = False
-        ad = self.middleware.call_sync('activedirectory.config')
-        smb = self.middleware.call_sync('smb.config')
+        ad = await self.middleware.call('activedirectory.config')
+        smb = await self.middleware.call('smb.config')
         with ActiveDirectory_DNS(conf = ad, logger=self.logger) as AD_DNS:
-            dc = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 1) 
-        if not dc:
+            dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3) 
+        if not dcs:
             raise CallError('Failed to open LDAP socket to any DC in domain.')
 
-        with ActiveDirectory_LDAP(conf=ad, logger=self.logger, hosts = dc) as AD_LDAP:
+        with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts = dcs) as AD_LDAP:
             ret = AD_LDAP.get_netbios_name()
 
         if ret and smb['workgroup'] != ret:
             self.logger.debug(f'Updating SMB workgroup to match the short form of the AD domain [{ret}]')
-            self.middleware.call_sync('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_workgroup': ret})
+            await self.middleware.call('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_workgroup': ret})
             
         return True 
 
     @private
-    def get_site(self):
+    async def get_site(self):
         """
         First, use DNS to identify domain controllers
         Then, find a domain controller that is listening for LDAP connection
         Then, perform an LDAP query to determine our AD site 
         """
-        ad = self.middleware.call_sync('activedirectory.config')
-        with ActiveDirectory_DNS(conf = ad) as AD_DNS:
-            dc = AD_DNS.get_working_domain_controller() 
-
-        if not dc:
+        ad = await self.middleware.call('activedirectory.config')
+        i = await self.middleware.call('interfaces.query')
+        with ActiveDirectory_DNS(conf = ad, logger=self.logger) as AD_DNS:
+            dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3) 
+        if not dcs:
             raise CallError('Failed to open LDAP socket to any DC in domain.')
 
-        self.logger.debug(dc)
+        with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts = dcs, interfaces = i) as AD_LDAP:
+            ret = AD_LDAP.locate_site()
 
-        return str(dc)
+        if ret and not ad['site']:
+            await self.middleware.call(
+                'datastore.update',
+                'directoryservice.activedirectory', 
+                ad['id'], 
+                {'ad_site': ret}
+        )
+
+        return True 
