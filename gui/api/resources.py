@@ -959,6 +959,19 @@ class VolumeResourceMixin(NestedMixin):
                 response=self.error_response(request, _('Volume is not encrypted.'))
             )
 
+        with client as c:
+            sys_dataset = c.call('systemdataset.config')
+
+        if obj.vol_name == sys_dataset['pool']:
+            raise ImmediateHttpResponse(
+                response=self.error_response(
+                    request,_(
+                        'Pool contains the system dataset and cannot be locked. Please select a different pool or '
+                        'configure the system dataset to be on a different pool.'
+                    )
+                )
+            )
+
         _n = notifier()
         _n.volume_detach(obj)
 

@@ -987,6 +987,19 @@ def volume_lock(request, object_id):
                 log.warn('Failed to clear key on standby node, is it down?', exc_info=True)
         notifier().restart("system_datasets")
         return JsonResp(request, message=_("Volume locked"))
+
+    with client as c:
+        sys_dataset = c.call('systemdataset.config')
+
+    if volume.vol_name == sys_dataset['pool']:
+        return render(
+            request,
+            'freeadmin/generic_model_dialog.html', {
+                'msg': 'Pool contains the system dataset and cannot be locked. Please select a different pool '
+                       'or configure the system dataset to be on a different pool.'
+            }
+        )
+
     return render(request, "storage/lock.html")
 
 
