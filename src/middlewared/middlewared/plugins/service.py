@@ -3,6 +3,7 @@ import contextlib
 import errno
 import inspect
 import os
+import psutil
 import signal
 import sysctl
 import threading
@@ -551,14 +552,70 @@ class ServiceService(CRUDService):
         await self.middleware.call("etc.generate", "smartd")
         await self._service("smartd-daemon", "start", **kwargs)
 
+    def _initializing_smartd_pid(self):
+        """
+        smartd initialization can take a long time if lots of disks are present
+        It only writes pidfile at the end of the initialization but forks immediately
+        This method returns PID of smartd process that is still initializing and has not written pidfile yet
+        """
+        if os.path.exists(self.SERVICE_DEFS["smartd"].pidfile):
+            # Already started, no need for special handling
+            return
+
+        for process in psutil.process_iter(attrs=["cmdline", "create_time"]):
+            if process.info["cmdline"][:1] == ["/usr/local/sbin/smartd"]:
+                break
+        else:
+            # No smartd process present
+            return
+
+        lifetime = time.time() - process.info["create_time"]
+        if lifetime < 300:
+            # Looks like just the process we need
+            return process.pid
+
+        self.logger.warning("Got an orphan smartd process: pid=%r, lifetime=%r", process.pid, lifetime)
+
+    async def _started_smartd(self, **kwargs):
+        result = await self._started("smartd")
+        if result[0]:
+            return result
+
+        if await self.middleware.run_in_thread(self._initializing_smartd_pid) is not None:
+            return True, []
+
+        return False, []
+
     async def _reload_smartd(self, **kwargs):
         await self.middleware.call("etc.generate", "smartd")
-        await self._service("smartd-daemon", "reload", **kwargs)
+
+        pid = await self.middleware.run_in_thread(self._initializing_smartd_pid)
+        if pid is None:
+            await self._service("smartd-daemon", "reload", **kwargs)
+            return
+
+        os.kill(pid, signal.SIGKILL)
+        await self._service("smartd-daemon", "start", **kwargs)
 
     async def _restart_smartd(self, **kwargs):
         await self.middleware.call("etc.generate", "smartd")
-        await self._service("smartd-daemon", "stop", force=True, **kwargs)
-        await self._service("smartd-daemon", "restart", **kwargs)
+
+        pid = await self.middleware.run_in_thread(self._initializing_smartd_pid)
+        if pid is None:
+            await self._service("smartd-daemon", "stop", force=True, **kwargs)
+            await self._service("smartd-daemon", "restart", **kwargs)
+            return
+
+        os.kill(pid, signal.SIGKILL)
+        await self._service("smartd-daemon", "start", **kwargs)
+
+    async def _stop_smartd(self, **kwargs):
+        pid = await self.middleware.run_in_thread(self._initializing_smartd_pid)
+        if pid is None:
+            await self._service("smartd-daemon", "stop", force=True, **kwargs)
+            return
+
+        os.kill(pid, signal.SIGKILL)
 
     async def _reload_ssh(self, **kwargs):
         await self.middleware.call('etc.generate', 'ssh')

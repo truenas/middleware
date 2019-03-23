@@ -12,16 +12,16 @@ logger = logging.getLogger(__name__)
 
 
 async def annotate_disk_for_smart(devices, disk):
-    if disk["disk_name"] is None or disk["disk_name"].startswith("nvd"):
+    if disk is None or "nvd" in disk:
         return
 
-    device = devices.get(disk["disk_name"])
+    device = devices.get(disk)
     if device:
-        args = await get_smartctl_args(disk["disk_name"], device)
+        args = await get_smartctl_args(disk, device)
         if args:
             if await ensure_smart_enabled(args):
                 args.extend(["-d", "removable"])
-                return dict(disk, smartctl_args=args)
+                return disk, dict(smartctl_args=args)
 
 
 async def ensure_smart_enabled(args):
@@ -115,10 +115,13 @@ async def render(service, middleware):
     disks = [dict(disk, **smart_config) for disk in disks]
 
     devices = await camcontrol_list()
-    disks = await asyncio_map(functools.partial(annotate_disk_for_smart, devices), disks, 16)
+    annotated = dict(filter(None, await asyncio_map(functools.partial(annotate_disk_for_smart, devices),
+                                                    {disk["disk_name"] for disk in disks},
+                                                    16)))
+    disks = [dict(disk, **annotated[disk["disk_name"]]) for disk in disks if disk["disk_name"] in annotated]
 
     config = ""
-    for disk in filter(None, disks):
+    for disk in disks:
         config += get_smartd_config(disk) + "\n"
 
     with open("/usr/local/etc/smartd.conf", "w") as f:
