@@ -5,14 +5,14 @@ from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
 
 class smartdAlertSource(ThreadedAlertSource):
     level = AlertLevel.WARNING
-    title = "smartd not running"
+    title = "smartd is not running"
 
     def check_sync(self):
         if self.middleware.call_sync("datastore.query", "services.services", [("srv_service", "=", "smartd"),
                                                                               ("srv_enable", "=", True)]):
             # sysctl kern.vm_guest will return a hypervisor name, or the string "none"
             # if FreeNAS is running on bare iron.
-            p0 = subprocess.Popen(["/sbin/sysctl",  "-n",  "kern.vm_guest"], stdin=subprocess.PIPE,
+            p0 = subprocess.Popen(["/sbin/sysctl", "-n", "kern.vm_guest"], stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE, encoding="utf8")
             status = p0.communicate()[0].strip()
             # This really isn"t confused with python None
@@ -20,11 +20,10 @@ class smartdAlertSource(ThreadedAlertSource):
                 # We got something other than "none", maybe "vmware", "xen", "vbox".  Regardless, smartd not running
                 # in these environments isn"t a huge deal.  So we"ll skip alerting.
                 return
+
             if not self.middleware.call_sync("system.is_freenas"):
                 if self.middleware.call_sync("notifier.failover_status") != "MASTER":
                     return
-            p1 = subprocess.Popen(["/usr/sbin/service", "smartd-daemon", "status"], stdin=subprocess.PIPE,
-                                  stdout=subprocess.PIPE, encoding="utf8")
-            status = p1.communicate()[0]
-            if p1.returncode == 1:
-                return Alert(status)
+
+            if not self.middleware.call_sync("service.started", "smartd"):
+                return Alert("smartd is not running")
