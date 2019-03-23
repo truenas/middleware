@@ -7,8 +7,8 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 class ReportingDbAlertClass(AlertClass):
     category = AlertCategory.REPORTING
     level = AlertLevel.WARNING
-    title = 'Reporting database size is above 1 GiB'
-    text = 'Reporting database size (%s) is above 1 GiB'
+    title = 'Reporting Database Size Is Larger than 1 GiB'
+    text = 'Reporting database size (%s) is larger than 1 GiB.'
 
 
 class ReportingDbAlertSource(ThreadedAlertSource):

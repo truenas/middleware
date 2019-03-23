@@ -6,7 +6,7 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 class SmartdAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.WARNING
-    title = "smartd is not running"
+    title = "smartd Is Not Running"
     text = "%s"
 
 

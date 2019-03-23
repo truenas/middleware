@@ -6,14 +6,11 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 class SyslogNgAlertClass(AlertClass):
     category = AlertCategory.REPORTING
     level = AlertLevel.WARNING
-    title = "syslog-ng is not running"
+    title = "syslog-ng Is Not Running"
     text = "%s"
 
 
 class SyslogNgAlertSource(ThreadedAlertSource):
-    level = AlertLevel.WARNING
-    title = "syslog-ng is not running"
-
     def check_sync(self):
         p1 = subprocess.Popen(["/usr/sbin/service", "syslog-ng", "status"], stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT, encoding="utf8")

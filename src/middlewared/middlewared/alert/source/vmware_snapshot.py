@@ -11,8 +11,8 @@ VMWARESNAPDELETE_FAILS = "/var/tmp/.vmwaresnapdelete_fails"
 class VMWareSnapshotCreateFailedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.WARNING
-    title = "Creating VMWare snapshot failed"
-    text = "Creating VMWare snapshot %(snapshot)s of VM %(vm)s at %(hostname)s failed: %(error)s"
+    title = "Creating VMWare Snapshot Failed"
+    text = "Creating VMWare snapshot %(snapshot)s of VM %(vm)s at %(hostname)s failed: %(error)s."
 
     async def create(self, args):
         return Alert(VMWareSnapshotCreateFailedAlertClass, args)
@@ -24,8 +24,8 @@ class VMWareSnapshotCreateFailedAlertClass(AlertClass, OneShotAlertClass):
 class VMWareSnapshotDeleteFailedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.WARNING
-    title = "Deleting VMWare snapshot failed"
-    text = "Deleting VMWare snapshot %(snapshot)s of VM %(vm)s at %(hostname)s failed: %(error)s"
+    title = "VMWare Snapshot Deletion Failed"
+    text = "Deletion of VMWare snapshot %(snapshot)s of VM %(vm)s on %(hostname)s failed: %(error)s."
 
     async def create(self, args):
         return Alert(VMWareSnapshotDeleteFailedAlertClass, args)
@@ -35,9 +35,6 @@ class VMWareSnapshotDeleteFailedAlertClass(AlertClass, OneShotAlertClass):
 
 
 class LegacyVMWareSnapshotFailedAlertSource(ThreadedAlertSource):
-    level = AlertLevel.WARNING
-    title = "VMWare snapshot failed (legacy replication)"
-
     def check_sync(self):
         try:
             with LockFile(VMWARE_FAILS):
@@ -62,9 +59,6 @@ class LegacyVMWareSnapshotFailedAlertSource(ThreadedAlertSource):
 
 
 class LegacyVMWareSnapshotDeleteFailAlertSource(ThreadedAlertSource):
-    level = AlertLevel.WARNING
-    title = "VMWare snapshot delete failed (legacy replication)"
-
     def check_sync(self):
         try:
             with LockFile(VMWARESNAPDELETE_FAILS):

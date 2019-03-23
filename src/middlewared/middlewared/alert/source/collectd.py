@@ -10,7 +10,7 @@ COLLECTD_FILE = "/tmp/.collectdalert"
 class CollectdWarningAlertClass(AlertClass):
     category = AlertCategory.REPORTING
     level = AlertLevel.WARNING
-    title = "Collectd warning"
+    title = "Collectd Warning"
 
     def format(cls, args):
         return args
@@ -19,7 +19,7 @@ class CollectdWarningAlertClass(AlertClass):
 class CollectdCriticalAlertClass(AlertClass):
     category = AlertCategory.REPORTING
     level = AlertLevel.CRITICAL
-    title = "Collectd critical alert"
+    title = "Collectd Critical Alert"
 
     def format(cls, args):
         return args
@@ -49,15 +49,15 @@ class CollectdAlertSource(ThreadedAlertSource):
         alerts = []
         for k, v in list(data.items()):
             if k == "ctl-ha/disk_octets":
-                title = "CTL HA link is actively used, check initiators connectivity"
+                text = "CTL HA link is actively used, check initiators connectivity."
             else:
-                title = k
+                text = k
 
             if v["Severity"] == "WARNING":
                 klass = CollectdWarningAlertClass
             else:
                 klass = CollectdCriticalAlertClass
 
-            alerts.append(Alert(klass, title))
+            alerts.append(Alert(klass, text))
 
         return alerts

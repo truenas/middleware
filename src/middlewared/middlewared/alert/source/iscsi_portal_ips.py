@@ -8,8 +8,8 @@ PORTAL_IP_FILE = "/var/tmp/iscsi_portal_ip"
 class ISCSIPortalIPAlertClass(AlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
-    title = "IPs bound to iSCSI Portal were not found in the system"
-    text = "The following IPs are bind to iSCSI Portal but were not found in the system: %s"
+    title = "IP Addresses Bound to an iSCSI Portal Were Not Found in the System"
+    text = "These IP addresses are bound to an iSCSI Portal but not found in the system: %s."
 
 
 class ISCSIPortalIPAlertSource(AlertSource):

@@ -7,8 +7,8 @@ from middlewared.alert.schedule import CrontabSchedule
 class ScrubPausedAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.WARNING
-    title = "Scrub is paused"
-    text = "Scrub for pool %r is paused"
+    title = "Scrub Is Paused"
+    text = "Scrub for pool %r is paused."
 
 
 class ScrubPausedAlertSource(ThreadedAlertSource):

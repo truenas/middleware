@@ -16,15 +16,15 @@ logger = logging.getLogger(__name__)
 class QuotaWarningAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.WARNING
-    title = "Quota exceed on dataset"
-    text = "%(name)s exceed on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s)"
+    title = "Quota Exceed on Dataset"
+    text = "%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s)."
 
 
 class CriticalQuotaAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.CRITICAL
-    title = "Critical quota exceeded on dataset"
-    text = "%(name)s exceed on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s)"
+    title = "Critical Quota Exceeded on Dataset"
+    text = "%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s)."
 
 
 class QuotaAlertSource(ThreadedAlertSource):
@@ -114,7 +114,7 @@ class QuotaAlertSource(ThreadedAlertSource):
                     if to is not None:
                         mail = {
                             "to": [to],
-                            "subject": f"{hostname}: {quota_name} exceed on dataset {dataset['name']}",
+                            "subject": f"{hostname}: {quota_name} exceeded on dataset {dataset['name']}",
                             "text": klass.text % args
                         }
 

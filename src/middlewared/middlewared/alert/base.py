@@ -142,7 +142,7 @@ class Alert:
             return self.klass.format(self.args)
         except Exception:
             logger.debug("Alert class %r was unable to format args %r, falling back to default formatter",
-                         exc_info=True)
+                         self.klass, self.args, exc_info=True)
 
             if self.args:
                 try:

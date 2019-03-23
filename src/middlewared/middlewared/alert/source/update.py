@@ -17,8 +17,8 @@ log = logging.getLogger("update_check_alertmod")
 class HasUpdateAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.INFO
-    title = "There is a new update available"
-    text = "There is a new update available! Apply it in System -> Update tab"
+    title = "New Update Available"
+    text = "A new update is available. Apply it with System -> Update."
 
 
 class HasUpdateAlertSource(ThreadedAlertSource):
@@ -49,7 +49,7 @@ class HasUpdateAlertSource(ThreadedAlertSource):
 class UpdateNotAppliedAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
-    title = "Update not applied"
+    title = "Update Not Applied"
     text = "%s"
 
 
@@ -78,8 +78,8 @@ class UpdateNotAppliedAlertSource(ThreadedAlertSource):
 class UpdateFailedAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
-    title = "Update failed"
-    text = "Update failed. Check /data/update.failed for further details"
+    title = "Update Failed"
+    text = "Update failed. See /data/update.failed for details."
 
 
 class UpdateFailedAlertSource(FilePresenceAlertSource):

@@ -8,7 +8,7 @@ from middlewared.alert.schedule import IntervalSchedule
 class VolumeVersionAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.WARNING
-    title = "New feature flags are available for volume"
+    title = "New Feature Flags Are Available for Pool."
     text = (
         "New feature flags are available for volume %s. Refer "
         "to the \"Upgrading a ZFS Pool\" subsection in the "
@@ -20,10 +20,11 @@ class VolumeVersionAlertClass(AlertClass):
 class ZfsVersionOutOfDateAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.WARNING
-    title = "ZFS filesystem version is out of date"
+    title = "ZFS Filesystem Version Is Out of Date"
     text = (
-        "ZFS filesystem version is out of date. Consider upgrading "
-        "using \"zfs upgrade\" command line."
+        "ZFS filesystem version is out of date. Please consider upgrading it. See <a href=\""
+        "https://www.ixsystems.com/documentation/freenas/11.2/install.html#upgrading-a-zfs-pool\">"
+        "Upgrading a ZFS Pool</a> for details."
     )
 
 

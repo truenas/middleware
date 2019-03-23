@@ -8,20 +8,20 @@ from middlewared.alert.schedule import IntervalSchedule
 class ZpoolCapacityWarningAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.WARNING
-    title = "The capacity for the volume is above 80%"
+    title = "Pool Space Usage Is Above 80%"
     text = (
-        "The capacity for the volume \"%(volume)s\" is currently at "
-        "%(capacity)d%%, while the recommended value is below 80%%."
+        "Space usage for pool \"%(volume)s\" is %(capacity)d%%. "
+        "Keeping space usage below 80%% is recommended for performance."
     )
 
 
 class ZpoolCapacityCriticalAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.CRITICAL
-    title = "The capacity for the volume is above 90%"
+    title = "Pool Space Usage Is Above 90%"
     text = (
-        "The capacity for the volume \"%(volume)s\" is currently at "
-        "%(capacity)d%%, while the recommended value is below 80%%."
+        "Space usage for pool \"%(volume)s\" is %(capacity)d%%. "
+        "Keeping space usage below 80%% is recommended for performance."
     )
 
 

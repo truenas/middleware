@@ -6,18 +6,18 @@ from middlewared.alert.base import AlertClass, OneShotAlertClass, AlertCategory,
 class CertificateIsExpiringAlertClass(AlertClass):
     category = AlertCategory.CERTIFICATES
     level = AlertLevel.NOTICE
-    title = "Certificate is expiring"
-    text = "Certificate %(name)r is expiring within %(days)d days"
+    title = "Certificate is Expiring"
+    text = "Certificate %(name)r is expiring within %(days)d days."
 
 
 class CertificateIsExpiringSoonAlertClass(AlertClass):
     category = AlertCategory.CERTIFICATES
     level = AlertLevel.WARNING
-    title = "Certificate is expiring soon"
-    text = "Certificate %(name)r is expiring within %(days)d days"
+    title = "Certificate is Expiring Soon"
+    text = "Certificate %(name)r is expiring within %(days)d days."
 
 
-class CertRenewalAlertSource(AlertSource):
+class CertificateIsExpiringAlertSource(AlertSource):
     async def check(self):
         alerts = []
 
@@ -45,8 +45,8 @@ class CertRenewalAlertSource(AlertSource):
 class CertificateParsingFailedAlertClass(AlertClass):
     category = AlertCategory.CERTIFICATES
     level = AlertLevel.WARNING
-    title = "Certificate parsing failed"
-    text = "Failed to parse %(type)s %(name)r"
+    title = "Certificate Parsing Failed"
+    text = "Failed to parse %(type)s %(name)r."
 
 
 class CertificateParsingFailedAlertSource(AlertSource):
@@ -74,7 +74,8 @@ class CertificateParsingFailedAlertSource(AlertSource):
 class WebUiCertificateSetupFailedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.CERTIFICATES
     level = AlertLevel.CRITICAL
-    title = "Web UI HTTPS certificate setup failed"
+    title = "Web UI HTTPS Certificate Setup Failed"
+    text = "Web UI HTTPS certificate setup failed."
 
     async def create(self, args):
         return Alert(WebUiCertificateSetupFailedAlertClass)

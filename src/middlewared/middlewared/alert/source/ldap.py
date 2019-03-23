@@ -4,7 +4,7 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, FilePr
 class LDAPAlertClass(AlertClass):
     category = AlertCategory.DIRECTORY_SERVICE
     level = AlertLevel.WARNING
-    title = "LDAP did not bind to the domain"
+    title = "LDAP Did Not Bind to the Domain"
 
 
 class LDAPAlertSource(FilePresenceAlertSource):

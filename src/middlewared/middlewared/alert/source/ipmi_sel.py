@@ -65,7 +65,9 @@ class IPMISELAlertClass(AlertClass, DismissableAlertClass):
     def format(cls, args):
         text = "%(sensor)s %(direction)s %(event)s"
         if args["verbose"] is not None:
-            text += ": %(verbose)s"
+            text += ": %(verbose)s."
+        else:
+            text += "."
 
         return text % args
 
@@ -129,7 +131,7 @@ class IPMISELSpaceLeftAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.WARNING
     title = "IPMI SEL Low Space Left"
-    text = "IPMI SEL Low Space Left: %(free)s (used %(used)s)"
+    text = "IPMI SEL Low Space Left: %(free)s (used %(used)s)."
 
 
 class IPMISELSpaceLeftAlertSource(AlertSource):

@@ -8,15 +8,15 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 class LAGGInactivePortsAlertClass(AlertClass):
     category = AlertCategory.NETWORK
     level = AlertLevel.CRITICAL
-    title = "Ports are not ACTIVE on LAGG interface"
-    text = "These ports are not ACTIVE on LAGG interface %(name)s: %(ports)s. Please check cabling and switch"
+    title = "Ports are Not ACTIVE on LAGG Interface"
+    text = "These ports are not ACTIVE on LAGG interface %(name)s: %(ports)s. Please check cabling and switch."
 
 
 class LAGGNoActivePortsAlertClass(AlertClass):
     category = AlertCategory.NETWORK
     level = AlertLevel.CRITICAL
-    title = "There are no ACTIVE ports on LAGG interface"
-    text = "There are no ACTIVE ports on LAGG interface %(name)s. Please check cabling and switch"
+    title = "There are No ACTIVE Ports on LAGG Interface"
+    text = "There are no ACTIVE ports on LAGG interface %(name)s. Please check cabling and switch."
 
 
 class LAGGStatus(ThreadedAlertSource):

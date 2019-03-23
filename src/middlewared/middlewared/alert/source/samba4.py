@@ -6,19 +6,19 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 class NoSystemPoolConfiguredAlertClass(AlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
-    title = "No system dataset pool configured"
-    text = "No system pool configured. Please configure one in Settings -> System Dataset -> Pool"
+    title = "No System Dataset Pool Configured"
+    text = "The system dataset has not been configured. Please set it in Settings -> System Dataset -> Pool."
 
 
 class SambaDatasetAutoMigrationCantBeDoneAlertClass(AlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
-    title = "Samba auto-migration to system dataset failed"
+    title = "Samba Auto-Bigration to System Dataset Failed"
     text = (
-        "Multiple legacy samba4 datasets detected. Auto-migration "
+        "Multiple legacy Samba4 datasets detected. Auto-migration "
         "to /mnt/%s/.system/samba4 cannot be done. Please perform "
         "this step manually and then delete the now-obsolete "
-        "samba4 datasets and /var/db/samba4/.alert_cant_migrate"
+        "Samba4 datasets and the file /var/db/samba4/.alert_cant_migrate."
     )
 
 

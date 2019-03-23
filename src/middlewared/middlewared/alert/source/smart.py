@@ -4,8 +4,8 @@ from middlewared.alert.base import AlertClass, OneShotAlertClass, AlertCategory,
 class SMARTAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
-    title = "S.M.A.R.T. error"
-    text = "%(message)s"
+    title = "S.M.A.R.T. Error"
+    text = "%(message)s."
 
     hardware = True
 

@@ -4,8 +4,8 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 class VolumeStatusAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.CRITICAL
-    title = "The volume status is not HEALTHY"
-    text = "The volume %(volume)s state is %(state)s: %(status)s"
+    title = "Pool Status Is Not Healthy"
+    text = "Pool %(volume)s state is %(state)s: %(status)s."
 
     hardware = True
 

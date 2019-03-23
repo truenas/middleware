@@ -13,9 +13,9 @@ class FreeNASBMCAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "FreeNAS Mini Critical IPMI Firmware Update Available"
     text = (
-        "Your FreeNAS Mini has an available IPMI firmware update, please click "
+        "A critical IPMI firmware update is available for this FreeNAS Mini. Please see "
         "<a href=\"https://support.ixsystems.com/index.php?/Knowledgebase/Article/View/287\" target=\"_blank\">"
-        "here</a> for installation instructions",
+        "ASRock Rack C2750D4I BMC Watchdog Issue</a> for details.",
     )
 
 

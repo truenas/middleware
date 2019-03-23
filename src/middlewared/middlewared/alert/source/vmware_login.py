@@ -10,8 +10,8 @@ VMWARELOGIN_FAILS = "/var/tmp/.vmwarelogin_fails"
 class VMWareLoginFailedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.WARNING
-    title = "VMWare login failed"
-    text = "VMWare login to %(hostname)s failed: %(error)s"
+    title = "VMWare Login Failed"
+    text = "VMWare login to %(hostname)s failed: %(error)s."
 
     async def create(self, args):
         return Alert(VMWareLoginFailedAlertClass, args)

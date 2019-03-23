@@ -6,8 +6,8 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 class ServiceMonitorAlertClass(AlertClass):
     category = AlertCategory.DIRECTORY_SERVICE
     level = AlertLevel.WARNING
-    title = "Service is not running"
-    text = "%s"
+    title = "Domain Controller Service Is Not Running"
+    text = "%s."
 
 
 class ServiceMonitorAlertSource(AlertSource):

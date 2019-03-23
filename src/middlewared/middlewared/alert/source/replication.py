@@ -4,15 +4,15 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 class ReplicationSuccessAlertClass(AlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.INFO
-    title = "Replication succeeded"
-    text = "Replication \"%(name)s\" succeeded"
+    title = "Replication Succeeded"
+    text = "Replication \"%(name)s\" succeeded."
 
 
 class ReplicationFailedAlertClass(AlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.CRITICAL
-    title = "Replication failed"
-    text = "Replication \"%(name)s\" failed: %(message)s"
+    title = "Replication Failed"
+    text = "Replication \"%(name)s\" failed: %(message)s."
 
 
 class ReplicationAlertSource(AlertSource):
