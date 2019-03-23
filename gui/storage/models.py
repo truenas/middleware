@@ -613,7 +613,7 @@ class Replication(Model):
         null=True,
     )
     repl_schedule_end = models.TimeField(
-        default=time(hour=23, minute=59),
+        default=time(hour=23, minute=45),
         verbose_name=_("End"),
         help_text=_("Do not start replication after"),
         null=True,
@@ -665,7 +665,7 @@ class Replication(Model):
         null=True,
     )
     repl_restrict_schedule_end = models.TimeField(
-        default=time(hour=23, minute=59),
+        default=time(hour=23, minute=45),
         verbose_name=_("End"),
         help_text=_("Do not start replication after"),
         null=True,
