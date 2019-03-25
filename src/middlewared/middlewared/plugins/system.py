@@ -544,6 +544,11 @@ class SystemGeneralService(ConfigService):
                 [['id', '=', data['ui_certificate']['id']]],
                 {'get': True}
             )
+
+        data['crash_reporting_is_set'] = data['crash_reporting'] is not None
+        if data['crash_reporting'] is None:
+            data['crash_reporting'] = await self.middleware.call("system.is_freenas")
+
         return data
 
     @accepts()
@@ -856,6 +861,8 @@ class SystemGeneralService(ConfigService):
     async def do_update(self, data):
         config = await self.config()
         config['ui_certificate'] = config['ui_certificate']['id'] if config['ui_certificate'] else None
+        if not config.pop('crash_reporting_is_set'):
+            config['crash_reporting'] = None
         new_config = config.copy()
         new_config.update(data)
 
@@ -942,8 +949,7 @@ class SystemGeneralService(ConfigService):
 
     @private
     def set_crash_reporting(self):
-        crash_reporting = self.middleware.call_sync('system.general.config')['crash_reporting']
-        CrashReporting.enabled_in_settings = bool(crash_reporting)
+        CrashReporting.enabled_in_settings = self.middleware.call_sync('system.general.config')['crash_reporting']
 
 
 async def _event_system_ready(middleware, event_type, args):
