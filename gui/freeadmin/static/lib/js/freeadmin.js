@@ -1757,6 +1757,7 @@ require([
                     if (document.getElementById("id_attributes_" + k))
                     {
                         document.getElementById("id_attributes_" + k).value = message.data.result[k];
+                        document.getElementById("id_attributes_" + k).onchange();
                     }
                 }
             }
