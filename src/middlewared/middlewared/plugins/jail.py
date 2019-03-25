@@ -435,20 +435,20 @@ class JailService(CRUDService):
                 else:
                     job.set_progress(None, msg)
             else:
+                if post_install:
+                    for split_msg in msg.split('\n'):
+                        fetch_output['install_notes'].append(split_msg)
+
                 if '  These pkgs will be installed:' in msg:
                     job.set_progress(50, msg)
                 elif 'Installing plugin packages:' in msg:
                     job.set_progress(75, msg)
-                elif 'Command output:' in msg:
+                elif 'Running post_install.sh' in msg:
                     job.set_progress(90, msg)
                     # Sets each message going forward as important to the user
                     post_install = True
                 else:
                     job.set_progress(None, msg)
-
-                if post_install:
-                    for split_msg in msg.split('\n'):
-                        fetch_output['install_notes'].append(split_msg)
 
         self.check_dataset_existence()  # Make sure our datasets exist.
         start_msg = f'{release} being fetched'
