@@ -1,6 +1,6 @@
 from .apidocs import app as apidocs_app
 from .client import ejson as json
-from .event import EventSource
+from .event import EventSource, Events
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
@@ -559,7 +559,7 @@ class ShellWorkerThread(threading.Thread):
                     pass
             os.chdir('/root')
             cmd = [
-                '/usr/local/bin/bash'
+                '/usr/bin/login', '-fp', 'root',
             ]
 
             if self.jail is not None:
@@ -766,17 +766,18 @@ class Middleware(object):
             max_workers=10,
         )
         self.__init_procpool()
-        self.jobs = JobsQueue(self)
         self.__schemas = Schemas()
         self.__services = {}
         self.__services_aliases = {}
         self.__wsclients = {}
+        self.__events = Events()
         self.__event_sources = {}
         self.__event_subs = defaultdict(list)
         self.__hooks = defaultdict(list)
         self.__server_threads = []
         self.__init_services()
         self.__console_io = False if os.path.exists(self.CONSOLE_ONCE_PATH) else None
+        self.jobs = JobsQueue(self)
 
     def __init_services(self):
         from middlewared.service import CoreService
@@ -1191,13 +1192,29 @@ class Middleware(object):
                 raise RuntimeError('Middleware is terminating')
         return fut.result()
 
+    def get_events(self):
+        return self.__events
+
     def event_subscribe(self, name, handler):
         """
         Internal way for middleware/plugins to subscribe to events.
         """
         self.__event_subs[name].append(handler)
 
+    def event_register(self, name, description):
+        """
+        All events middleware can send should be registered so they are properly documented
+        and can be browsed in documentation page without source code inspection.
+        """
+        self.__events.register(name, description)
+
     def send_event(self, name, event_type, **kwargs):
+
+        if name not in self.__events:
+            # We should eventually deny events that are not registered to ensure every event is
+            # documented but for backward-compability and safety just log it for now.
+            self.logger.warn(f'Event {name!r} not registered.')
+
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
 
         self.logger.trace(f'Sending event {name!r}:{event_type!r}:{kwargs!r}')

@@ -1,10 +1,10 @@
 from mako import exceptions
 from mako.lookup import TemplateLookup
 from middlewared.service import Service
+from middlewared.utils.io import write_if_changed
 
 import asyncio
 import grp
-import hashlib
 import imp
 import os
 import pwd
@@ -77,6 +77,9 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'libmap.conf'},
             {'type': 'mako', 'path': 'local/pam.d/dssystem'},
         ],
+        'cron': [
+            {'type': 'mako', 'path': 'crontab'},
+        ],
         'ctld': [
             {'type': 'py', 'path': 'ctld'},
         ],
@@ -111,6 +114,9 @@ class EtcService(Service):
         'ftp': [
             {'type': 'mako', 'path': 'local/proftpd.conf'},
             {'type': 'py', 'path': 'local/proftpd'},
+        ],
+        'rc': [
+            {'type': 'py', 'path': 'rc.conf'},
         ],
         'sysctl': [
             {'type': 'py', 'path': 'sysctl_config'}
@@ -209,7 +215,7 @@ class EtcService(Service):
         ]
     }
 
-    SKIP_LIST = ['system_dataset', 'collectd', 'syslogd', 'fstab']
+    SKIP_LIST = ['system_dataset', 'collectd', 'syslogd']
 
     class Config:
         private = True
@@ -246,24 +252,7 @@ class EtcService(Service):
                 continue
 
             outfile = '/etc/{0}'.format(entry['path'])
-            changes = False
-
-            # Check hash of generated and existing file
-            # Do not rewrite if they are the same
-            if os.path.exists(outfile):
-                with open(outfile, 'rb') as f:
-                    existing_hash = hashlib.sha256(f.read()).hexdigest()
-
-                new_hash = hashlib.sha256(rendered.encode('utf-8')).hexdigest()
-                if existing_hash != new_hash:
-                    with open(outfile, 'w') as f:
-                        f.write(rendered)
-                        changes = True
-
-            if not os.path.exists(outfile):
-                with open(outfile, 'w') as f:
-                    f.write(rendered)
-                changes = True
+            changes = write_if_changed(outfile, rendered)
 
             # If ownership or permissions are specified, see if
             # they need to be changed.

@@ -36,7 +36,7 @@ class ZpoolCapacityAlertSource(ThreadedAlertSource):
         ] + ["freenas-boot"]
         for pool in pools:
             proc = subprocess.Popen([
-                "/sbin/zpool",
+                "zpool",
                 "list",
                 "-H",
                 "-o", "cap",

@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str, ValidationErrors
@@ -40,6 +41,9 @@ class WebDAVSharingService(CRUDService):
 
         if verrors:
             raise verrors
+
+        if not os.path.exists(path):
+            os.makedirs(path)
 
     @accepts(
         Dict(

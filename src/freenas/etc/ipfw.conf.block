@@ -1,4 +1,0 @@
-/sbin/ipfw -q -f flush
-/sbin/ipfw -q add 00100 allow all from any to any via lo0
-/sbin/ipfw -q add 00501 deny tcp from any to any dst-port 111,548,2049,137,138,139,860,3260
-/sbin/ipfw -q add 00502 deny udp from any to any dst-port 111,548,860,2049

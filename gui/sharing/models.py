@@ -31,7 +31,6 @@ from freenasUI import choices
 from freenasUI.freeadmin.models import Model, UserField, GroupField, PathField
 from freenasUI.freeadmin.models.fields import MultiSelectField
 from freenasUI.middleware.notifier import notifier
-from freenasUI.storage.models import Task
 
 
 class CIFS_Share(Model):
@@ -74,6 +73,13 @@ class CIFS_Share(Model):
     cifs_showhiddenfiles = models.BooleanField(
         verbose_name=_('Show Hidden Files'),
         default=False,
+    )
+    cifs_shadowcopy = models.BooleanField(
+        verbose_name=_('Enable Shadow Copies'),
+        help_text=_(
+            'Export ZFS snapshots as Shadow Copies for VSS clients.'
+        ),
+        default=False
     )
     cifs_guestok = models.BooleanField(
         verbose_name=_('Allow Guest Access'),
@@ -125,13 +131,6 @@ class CIFS_Share(Model):
         blank=True,
         default='zfs_space,zfsacl,streams_xattr',
         choices=list(choices.CIFS_VFS_OBJECTS())
-    )
-    cifs_storage_task = models.ForeignKey(
-        Task,
-        verbose_name=_("Periodic Snapshot Task"),
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True
     )
     cifs_vuid = models.CharField(
         max_length=36,

@@ -502,7 +502,7 @@ class notifier(metaclass=HookMetaclass):
     def change_upload_location(self, path):
         vardir = "/var/tmp/firmware"
 
-        self._system("/bin/rm -rf %s" % vardir)
+        self._system("/bin/rm -rfx %s" % vardir)
         self._system("/bin/mkdir -p %s/.freenas" % path)
         self._system("/usr/sbin/chown www:www %s/.freenas" % path)
         self._system("/bin/chmod 755 %s/.freenas" % path)
@@ -653,15 +653,15 @@ class notifier(metaclass=HookMetaclass):
             with client as c:
                 basename = c.call('systemdataset.config')['basename']
 
-        zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name %s -H" % sort)
+        zfsproc = self._pipeopen("zfs list -t volume -o name %s -H" % sort)
         zvols = set([y for y in zfsproc.communicate()[0].split('\n') if y != ''])
         volnames = set([o.vol_name for o in Volume.objects.all()])
 
         fieldsflag = '-o name,used,available,referenced,mountpoint,freenas:vmsynced'
         if path:
-            zfsproc = self._pipeopen("/sbin/zfs list -p -r -t snapshot %s -H -S creation '%s'" % (fieldsflag, path))
+            zfsproc = self._pipeopen("zfs list -p -r -t snapshot %s -H -S creation '%s'" % (fieldsflag, path))
         else:
-            zfsproc = self._pipeopen("/sbin/zfs list -p -t snapshot -H -S creation %s" % (fieldsflag))
+            zfsproc = self._pipeopen("zfs list -p -t snapshot -H -S creation %s" % (fieldsflag))
         lines = zfsproc.communicate()[0].split('\n')
         for line in lines:
             if line != '':
@@ -709,7 +709,7 @@ class notifier(metaclass=HookMetaclass):
         if zfstype is None:
             zfstype = 'filesystem,volume'
 
-        zfsproc = self._pipeopen("/sbin/zfs get %s -H -o name,property,value,source -t %s %s %s" % (
+        zfsproc = self._pipeopen("zfs get %s -H -o name,property,value,source -t %s %s %s" % (
             '-r' if recursive else '',
             zfstype,
             props,
@@ -755,9 +755,9 @@ class notifier(metaclass=HookMetaclass):
         # Escape single quotes because of shell call
         value = value.replace("'", "'\"'\"'")
         if recursive:
-            zfsproc = self._pipeopen("/sbin/zfs set -r '%s'='%s' '%s'" % (item, value, name))
+            zfsproc = self._pipeopen("zfs set -r '%s'='%s' '%s'" % (item, value, name))
         else:
-            zfsproc = self._pipeopen("/sbin/zfs set '%s'='%s' '%s'" % (item, value, name))
+            zfsproc = self._pipeopen("zfs set '%s'='%s' '%s'" % (item, value, name))
         err = zfsproc.communicate()[1]
         if zfsproc.returncode == 0:
             return True, None

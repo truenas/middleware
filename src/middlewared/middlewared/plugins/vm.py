@@ -2,12 +2,9 @@ from collections import deque
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Error, Int, Str, Dict, List, Bool, Patch, Ref
 from middlewared.service import (
-    item_method, job, pass_app, private, CRUDService, CallError,
-    ValidationError, ValidationErrors,
+    item_method, pass_app, private, CRUDService, CallError, ValidationErrors,
 )
 from middlewared.utils import Nid, Popen
-from urllib.request import urlretrieve
-from pipes import quote
 
 import middlewared.logger
 import asyncio
@@ -23,20 +20,12 @@ import re
 import stat
 import subprocess
 import sysctl
-import gzip
-import hashlib
 import shutil
 import signal
+import tempfile
 
 logger = middlewared.logger.Logger('vm').getLogger()
 
-CONTAINER_IMAGES = {
-    'RancherOS': {
-        'URL': 'http://download.freenas.org/bhyve-templates/rancheros-bhyve-v1.4.2/rancheros-bhyve-v1.4.2.img.gz',
-        'GZIPFILE': 'rancheros-bhyve-v1.4.2.img.gz',
-        'SHA256': '9913e05287fc79407b4949c095419d2369491c4d833f9887a1a88d853701bb87',
-    }
-}
 BUFSIZE = 65536
 ZFS_ARC_MAX_INITIAL = None
 
@@ -55,9 +44,9 @@ class VMManager(object):
         vid = vm['id']
         self._vm[vid] = VMSupervisor(self, vm)
         coro = self._vm[vid].run()
-        # If run() has not returned in about 3 seconds we assume
+        # If run() has not returned in about 4 seconds we assume
         # bhyve process started successfully.
-        done = (await asyncio.wait([coro], timeout=3))[0]
+        done = (await asyncio.wait([coro], timeout=4))[0]
         if done:
             list(done)[0].result()
 
@@ -103,7 +92,6 @@ class VMSupervisor(object):
         self.web_proc = None
         self.taps = []
         self.bhyve_error = None
-        self.vmutils = VMUtils
 
     async def run(self):
         vnc_web = None  # We need to initialize before line 200
@@ -128,15 +116,17 @@ class VMSupervisor(object):
             args += ['-u']
 
         nid = Nid(3)
-        device_map_file = None
-        grub_dir = None
-        grub_boot_device = False
+        grub_devices = []
         block_devices = {
             'ahci': [],
             'virtio-blk': [],
         }
         for device in sorted(self.vm['devices'], key=lambda x: (x['order'], x['id'])):
             if device['dtype'] in ('CDROM', 'DISK', 'RAW'):
+
+                # Get grub devices to be used in grub-bhyve
+                if device['dtype'] == 'RAW' and device['attributes'].get('boot'):
+                    grub_devices.append(device['attributes']['path'])
 
                 disk_sector_size = int(device['attributes'].get('sectorsize') or 0)
                 if disk_sector_size > 0:
@@ -167,15 +157,6 @@ class VMSupervisor(object):
                     }
                     block_devices[block_name].append(block)
                 block['disks'].append(f'{suffix}{device["attributes"]["path"]}{sectorsize_args}')
-
-                if device['dtype'] != 'CDROM' and self.vmutils.is_container(self.vm) and \
-                    device['attributes'].get('boot', False) is True and \
-                        grub_boot_device is False:
-                    shared_fs = await self.middleware.call('vm.get_sharefs')
-                    device_map_file = self.vmutils.ctn_device_map(shared_fs, self.vm['id'], self.vm['name'], device)
-                    grub_dir = self.vmutils.ctn_grub(shared_fs, self.vm['id'], self.vm['name'], device, device['attributes'].get('rootpwd', None), None)
-                    grub_boot_device = True
-                    self.logger.debug('==> Boot Disk: {0}'.format(device))
 
             elif device['dtype'] == 'NIC':
                 attach_iface = device['attributes'].get('nic_attach')
@@ -242,27 +223,53 @@ class VMSupervisor(object):
                     ])
                     args += ['-s', f'{pcislot["slot"]}:{pcifunc},{pciemu},{conf}']
 
-        # grub-bhyve support for containers
-        if self.vmutils.is_container(self.vm):
+        # grub-bhyve support
+        device_map_file = tempfile.NamedTemporaryFile()
+        grub_dir = None
+        if self.vm['bootloader'] == 'GRUB':
+
+            if not grub_devices:
+                raise CallError(f'There is no boot disk for vm: {self.vm["name"]}')
+
+            for i, device in enumerate(grub_devices):
+                device_map_file.write(f'(hd{i}) {device}\n'.encode())
+            device_map_file.flush()
+
+            if (
+                self.vm['grubconfig'] and
+                self.vm['grubconfig'].startswith('/mnt/') and
+                os.path.exists(self.vm['grubconfig'])
+            ):
+                grub_dir = os.path.dirname(self.vm['grubconfig'])
+            else:
+                grub_dir = f'/tmp/grub/{self.vm["id"]}_{self.vm["name"]}'
+                os.makedirs(grub_dir, exist_ok=True)
+                grub_file = os.path.join(grub_dir, 'grub.cfg')
+                with open(grub_file, 'w') as f:
+                    f.write(self.vm['grubconfig'])
+
             grub_bhyve_args = [
-                'grub-bhyve', '-m', device_map_file,
+                'grub-bhyve', '-m', device_map_file.name,
                 '-r', 'host',
                 '-M', str(self.vm['memory']),
                 '-d', grub_dir,
                 str(self.vm['id']) + '_' + self.vm['name'],
             ]
 
-            #  If container has no boot device, we should stop.
-            if grub_boot_device is False:
-                raise CallError(f'There is no boot disk for vm: {self.vm["name"]}')
+            self.logger.debug(f'Starting grub-bhyve: {" ".join(grub_bhyve_args)}')
+            self.grub_proc = await Popen(
+                grub_bhyve_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            )
 
-            self.logger.debug('Starting grub-bhyve: {}'.format(' '.join(grub_bhyve_args)))
-            self.grub_proc = await Popen(grub_bhyve_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-
-            while True:
-                line = await self.grub_proc.stdout.readline()
-                if line == b'':
-                    break
+            try:
+                await asyncio.wait_for(self.grub_proc.communicate(), 2)
+            except asyncio.TimeoutError:
+                try:
+                    os.kill(self.grub_proc.pid, signal.SIGKILL)
+                except OSError:
+                    pass
+                await self.destroy_vm()
+                raise CallError('grub-bhyve timed out, please check your grub config.')
 
         args.append(str(self.vm['id']) + '_' + self.vm['name'])
 
@@ -290,6 +297,12 @@ class VMSupervisor(object):
             line = line.decode().rstrip()
             self.logger.debug('{}: {}'.format(self.vm['name'], line))
             output.append(line)
+
+        # Clean up grub files
+        if device_map_file:
+            device_map_file.close()
+        if grub_dir and not (self.vm['grubconfig'] or '').startswith(grub_dir):
+            shutil.rmtree(grub_dir)
 
         # bhyve returns the following status code:
         # 0 - VM has been reset
@@ -370,7 +383,7 @@ class VMSupervisor(object):
             try:
                 attach_iface = netif.RoutingTable().default_route_ipv4.interface
                 attach_iface_info = netif.get_interface(attach_iface)
-            except:
+            except Exception:
                 return
         else:
             attach_iface_info = netif.get_interface(attach_iface)
@@ -456,117 +469,6 @@ class VMSupervisor(object):
             return False
 
 
-class VMUtils(object):
-
-    def is_container(data):
-        if data:
-            if data.get('vm_type', None) == 'Container Provider':
-                return True
-        else:
-            return False
-
-    def is_gzip(file_path):
-        """Check if it is a gzip file and not empty"""
-        with gzip.open(file_path, 'rb') as gfile:
-            try:
-                gf_content = gfile.read(1)
-                if len(gf_content) > 0:
-                    return True
-            except:
-                return False
-
-    @staticmethod
-    def __mkdirs(path):
-        if not os.path.exists(os.path.dirname(path)):
-            try:
-                os.makedirs(path)
-                return True
-            except OSError as err:
-                if err.errno != errno.EEXIST:
-                    raise
-
-    def do_dirtree_container(sharefs_path):
-        iso_path = sharefs_path + '/iso_files/'
-        cnt_config_path = sharefs_path + '/configs/'
-
-        VMUtils.__mkdirs(iso_path)
-        VMUtils.__mkdirs(cnt_config_path)
-
-    def ctn_device_map(sharefs_path, vm_id, vm_name, disk):
-        vm_private_dir = sharefs_path + '/configs/' + str(vm_id) + '_' + vm_name + '/'
-        config_file = vm_private_dir + 'device.map'
-
-        VMUtils.__mkdirs(vm_private_dir)
-
-        with open(config_file, 'w') as dmap:
-            if disk['attributes']['boot'] is True:
-                dmap.write('(hd0) {0}'.format(disk['attributes']['path']))
-
-        return config_file
-
-    def ctn_grub(sharefs_path, vm_id, vm_name, disk, password, vmOS=None):
-        if vmOS is None:
-            vmOS = 'RancherOS'
-
-        grub_default_args = [
-            'set timeout=0',
-            'set default={}'.format(vmOS),
-            'menuentry "bhyve-image" --id %s {' % (vmOS),
-            'set root=(hd0,msdos1)',
-        ]
-
-        grub_additional_args = {
-            'RancherOS': ['linux /boot/vmlinuz-4.14.73-rancher rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.resize_device=/dev/sda'.format(quote(password)),
-                          'initrd /boot/initrd-v1.4.2']
-        }
-
-        vm_private_dir = sharefs_path + '/configs/' + str(vm_id) + '_' + vm_name + '/' + 'grub/'
-        grub_file = vm_private_dir + 'grub.cfg'
-
-        VMUtils.__mkdirs(vm_private_dir)
-
-        if not os.path.exists(grub_file):
-            with open(grub_file, 'w') as grubcfg:
-                for line in grub_default_args:
-                    grubcfg.write(line)
-                    grubcfg.write('\n')
-                for line in grub_additional_args[vmOS]:
-                    grubcfg.write(line)
-                    grubcfg.write('\n')
-                grubcfg.write('}')
-        else:
-            grub_password = 'rancher.password={0}'.format(quote(password))
-
-            with open(grub_file, 'r') as cfg_src:
-                cfg_src_data = cfg_src.read()
-                src_data = cfg_src_data.split(' ')
-                for index, data in enumerate(src_data):
-                    if data.startswith('rancher.password'):
-                        if src_data[index] == grub_password:
-                            return vm_private_dir
-                        src_data[index] = 'rancher.password={0}'.format(quote(password))
-                        break
-
-            with open(grub_file, 'w') as cfg_dst:
-                cfg_dst.write(' '.join(src_data))
-
-        return vm_private_dir
-
-    def check_sha256(file_path, digest_sha256):
-        sha256 = hashlib.sha256()
-        with open(file_path, 'rb') as f:
-            while True:
-                data = f.read(BUFSIZE)
-                if not data:
-                    break
-                sha256.update(data)
-
-        if sha256.hexdigest() == digest_sha256:
-            return True
-        else:
-            return False
-
-
 class VMService(CRUDService):
 
     class Config:
@@ -577,7 +479,6 @@ class VMService(CRUDService):
     def __init__(self, *args, **kwargs):
         super(VMService, self).__init__(*args, **kwargs)
         self._manager = VMManager(self)
-        self.vmutils = VMUtils
 
     @accepts()
     def flags(self):
@@ -757,7 +658,7 @@ class VMService(CRUDService):
         """
         try:
             guest_status = await self.status(id)
-        except:
+        except Exception:
             guest_status = None
 
         if guest_status and guest_status['state'] == 'RUNNING':
@@ -765,61 +666,6 @@ class VMService(CRUDService):
             if stat.S_ISCHR(os.stat(device).st_mode) is True:
                     return device
 
-        return False
-
-    @private
-    def __activate_sharefs(self, dataset):
-        new_fs = f'{dataset}/.bhyve_containers'
-
-        if not self.middleware.call_sync('zfs.dataset.query', [('id', '=', new_fs)]):
-            try:
-                self.logger.debug('===> Trying to create: {0}'.format(new_fs))
-                self.middleware.call_sync('zfs.dataset.create', {
-                    'name': new_fs,
-                    'type': 'FILESYSTEM',
-                    'properties': {'sparse': False},
-                })
-            except Exception as e:
-                self.logger.error('Failed to create dataset', exc_info=True)
-                raise e
-            self.middleware.call_sync('zfs.dataset.mount', new_fs)
-            mountpoint = self.middleware.call_sync('zfs.dataset.query', [('id', '=', new_fs)])[0]['mountpoint']
-            self.vmutils.do_dirtree_container(mountpoint)
-            return True
-        else:
-            return False
-
-    @accepts(Str('pool_name', default=None, null=True))
-    def activate_sharefs(self, pool_name):
-        """
-        Create a pool for pre built containers images.
-        """
-
-        if pool_name:
-            return self.__activate_sharefs(pool_name)
-        else:
-            # Only to keep compatibility with the OLD GUI
-            blocked_pools = ['freenas-boot']
-            pool_name = None
-
-            # We get the first available pool.
-            for pool in self.middleware.call_sync('zfs.pool.query'):
-                if pool['name'] not in blocked_pools:
-                    pool_name = pool['name']
-                    break
-            if pool_name:
-                return self.__activate_sharefs(pool_name)
-            else:
-                raise CallError('There is no pool available to activate VM filesystem.')
-
-    @accepts()
-    async def get_sharefs(self):
-        """
-        Return the shared pool for containers images.
-        """
-        for dataset in await self.middleware.call('zfs.dataset.query'):
-            if '.bhyve_containers' in dataset['name']:
-                return dataset['mountpoint']
         return False
 
     @accepts()
@@ -926,19 +772,6 @@ class VMService(CRUDService):
         else:
             raise CallError('bhyve process is running, we won\'t allocate memory')
 
-    @accepts(Int('id'))
-    async def rm_container_conf(self, id):
-        vm_data = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
-        if vm_data:
-            sharefs = await self.middleware.call('vm.get_sharefs')
-            if sharefs:
-                cnt_conf_name = str(vm_data[0].get('id')) + '_' + vm_data[0].get('name')
-                full_path = sharefs + '/configs/' + cnt_conf_name
-                if os.path.exists(full_path):
-                    shutil.rmtree(full_path)
-                    return True
-        return False
-
     @accepts()
     def random_mac(self):
         """ Create a random mac address.
@@ -953,22 +786,26 @@ class VMService(CRUDService):
         'vm_create',
         Str('name', required=True),
         Str('description'),
-        Int('vcpus'),
+        Int('vcpus', default=1),
         Int('memory', required=True),
-        Str('bootloader'),
+        Str('bootloader', enum=['UEFI', 'UEFI_CSM', 'GRUB']),
+        Str('grubconfig', null=True),
         List('devices', default=[], items=[Ref('vmdevice_create')]),
-        Str('vm_type', default='Bhyve'),
-        Bool('autostart'),
+        Bool('autostart', default=True),
         Str('time', enum=['LOCAL', 'UTC'], default='LOCAL'),
         register=True,
     ))
     async def do_create(self, data):
-        """Create a VM."""
+        """
+        Create a Virual Machine (VM).
+
+        `grubconfig` may either be a path for the grub.cfg file or the actual content
+        of the file to be used with GRUB bootloader.
+        """
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, 'vm_create', data)
-        if verrors:
-            raise verrors
+        verrors.check()
 
         devices = data.pop('devices')
         vm_id = None
@@ -1022,12 +859,6 @@ class VMService(CRUDService):
 
     async def __common_validation(self, verrors, schema_name, data, old=None):
 
-        bootloader = data.get('bootloader')
-        if bootloader and bootloader != 'GRUB' and data.get('vm_type') == 'Container Provider':
-            verrors.add(
-                f'{schema_name}.bootloader', 'Only GRUB bootloader allowed for container.'
-            )
-
         vcpus = data.get('vcpus')
         if vcpus:
             flags = await self.middleware.call('vm.flags')
@@ -1048,10 +879,6 @@ class VMService(CRUDService):
                     schema_name,
                     'This system does not support virtualization.'
                 )
-
-        memory = data.get('memory')
-        if memory and memory < 1024 and data.get('type') == 'Container Provider':
-            verrors.add(f'{schema_name}.memory', 'Minimum container memory is 2048MiB.')
 
         if 'name' in data:
             filters = [('name', '=', data['name'])]
@@ -1123,14 +950,7 @@ class VMService(CRUDService):
         if isinstance(status, dict):
             if status.get('state') == 'RUNNING':
                 await self.stop(id)
-        try:
-            vm_data = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
-            if self.vmutils.is_container(vm_data[0]):
-                await self.middleware.call('vm.rm_container_conf', id)
-            return await self.middleware.call('datastore.delete', 'vm.vm', id)
-        except Exception as err:
-            self.logger.error('===> {0}'.format(err))
-            return False
+        return await self.middleware.call('datastore.delete', 'vm.vm', id)
 
     @item_method
     @accepts(Int('id'), Dict('options', Bool('overcommit')))
@@ -1187,155 +1007,6 @@ class VMService(CRUDService):
             - pid, process id if RUNNING
         """
         return await self._manager.status(id)
-
-    @accepts(Dict(
-        'vmcreate_container',
-        Str('type', required=True),
-        Str('name', required=True),
-        Str('description'),
-        Int('vcpus', default=1),
-        Int('memory', required=True),
-        Str('root_password', private=True, required=True),
-        Bool('autostart', default=True),
-        List('devices', items=[Ref('vmdevice_create')], required=True),
-    ))
-    @job(lock='container')
-    async def create_container(self, job, data):
-
-        verrors = ValidationErrors()
-
-        await self.__common_validation(verrors, 'vmcreate_container', data)
-
-        dest = None
-        size = None
-        raw = None
-        for i, device in enumerate(data['devices']):
-            if device['dtype'] == 'RAW':
-                raw = device
-                if dest:
-                    verrors.add(
-                        f'vmcreate_container.devices.{i}.dtype',
-                        'Only one disk is allowed.',
-                    )
-                    break
-                dest = device['attributes'].get('path')
-                size = device['attributes'].get('size')
-                device['attributes']['boot'] = True
-                device['attributes']['rootpwd'] = data['root_password']
-                if not size:
-                    verrors.add(
-                        f'vmcreate_container.devices.{i}.attributes.size',
-                        'Size is required.',
-                    )
-
-        if not raw:
-            verrors.add(
-                'vmcreate_container.devices',
-                'A disk device of type RAW is required.',
-            )
-
-        container_image = CONTAINER_IMAGES.get(data['type'])
-        if container_image is None:
-            verrors.add('vmcreate_container.type', 'Invalid container type.')
-
-        if verrors:
-            raise verrors
-
-        sharefs = await self.middleware.call('vm.get_sharefs')
-        if not sharefs:
-            await self.middleware.call('vm.activate_sharefs')
-            sharefs = await self.middleware.call('vm.get_sharefs')
-            if not sharefs:
-                raise CallError(
-                    'Failed to configure shared dataset for VMs. '
-                    'Make sure there is a pool available.'
-                )
-
-        self.vmutils.do_dirtree_container(sharefs)
-
-        await self.middleware.run_in_thread(
-            self.__fetch_and_decompress, container_image, sharefs, dest, str(size), job,
-        )
-        job.set_progress(80, 'Creating Docker VM')
-
-        try:
-            vmdata = data.copy()
-            vmdata['vm_type'] = 'Container Provider'
-            vmdata['bootloader'] = 'GRUB'
-            vmdata.pop('type')
-            vmdata.pop('root_password')
-            vm = await self.middleware.call('vm.create', vmdata)
-        except Exception as e:
-            raise CallError(f'Failed to create VM: {e}')
-        return vm
-
-    def __fetch_and_decompress(self, container_image, sharefs, dest, size, job):
-
-        file_path = os.path.join(sharefs, 'iso_files', container_image['GZIPFILE'])
-        for retry in range(3):
-            try:
-                self.__fetch_image(container_image['URL'], file_path, job)
-                break
-            except Exception:
-                pass
-        else:
-            raise CallError(f'Failed to download {container_image["URL"]} (retries={retry + 1})')
-
-        job.set_progress(60, 'Verifying integrity of the image')
-
-        if os.path.exists(file_path) and not self.vmutils.check_sha256(
-            file_path, container_image['SHA256']
-        ):
-            self.logger.debug(f'Checksum failed, removing file: {file_path}')
-            os.remove(file_path)
-
-        job.set_progress(70, 'Decompressing the image')
-        self.__decompress_gzip(file_path, dest)
-        self.__raw_resize(dest, size)
-
-    def __fetch_image(self, url, path, job):
-
-        def fetch_hookreport(blocknum, blocksize, totalsize):
-            """Hook to report the download progress."""
-            if totalsize > 0:
-                readchunk = blocknum * blocksize
-                percent = readchunk * 1e2 / totalsize
-                # Download is ~50% of the entire process
-                job.set_progress(
-                    int(percent / 2),
-                    'Downloading',
-                    {'downloaded': readchunk, 'total': totalsize}
-                )
-
-        if not os.path.exists(path):
-            urlretrieve(url, path, fetch_hookreport)
-
-    def __decompress_gzip(self, src, dst):
-        if os.path.exists(dst):
-            raise CallError(f'{dst} file already exists.')
-
-        if not self.vmutils.is_gzip(src):
-            raise CallError(f'{src} file is not a compressed file (gzip).')
-
-        with gzip.open(src, 'rb') as src_file, open(dst, 'wb') as dst_file:
-            shutil.copyfileobj(src_file, dst_file)
-
-    def __raw_resize(self, raw_path, size):
-        unit_size = ('M', 'G', 'T')
-        expand_size = size if len(size) > 0 and size[-1:] in unit_size else size + 'G'
-        self.logger.debug(f'Resizing {raw_path} to {expand_size}')
-        cp = subprocess.run(
-            ['truncate', '-s', expand_size, raw_path],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=False,
-        )
-        if cp.returncode:
-            self.logger.debug(f'Failed to resize: {cp.stderr.decode()}')
-
-    @accepts()
-    async def list_images(self):
-        return CONTAINER_IMAGES
 
     async def __next_clone_name(self, name):
         vm_names = [
@@ -1405,6 +1076,12 @@ class VMService(CRUDService):
     @item_method
     @accepts(Int('id'), Str('name', default=None))
     async def clone(self, id, name):
+        """
+        Clone the VM `id`.
+
+        `name` is an optional parameter for the cloned VM.
+        If not provided it will append the next number available to the VM name.
+        """
         vm = await self._get_instance(id)
 
         origin_name = vm['name']
@@ -1509,7 +1186,6 @@ class VMDeviceService(CRUDService):
             Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
             Bool('exists', default=True),
             Bool('boot', default=False),
-            Str('rootpwd', private=True),
             Int('size', default=0),
             Int('sectorsize', enum=[0, 512, 4096], default=0),
         ),
@@ -1573,17 +1249,16 @@ class VMDeviceService(CRUDService):
         Dict(
             'vmdevice_create',
             Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'VNC', 'RAW'], required=True),
-            Int('vm'),
+            Int('vm', required=True),
             Dict('attributes', additional_attrs=True, default=None),
             Int('order', default=None, null=True),
             register=True,
         ),
     )
     async def do_create(self, data):
-
-        if not data.get('vm'):
-            raise ValidationError('vmdevice_create.vm', 'This field is required.')
-
+        """
+        Create a new device for the VM of id `vm`.
+        """
         data = await self.validate_device(data)
         id = await self.middleware.call('datastore.insert', self._config.datastore, data)
         await self.__reorder_devices(id, data['vm'], data['order'])
@@ -1596,6 +1271,9 @@ class VMDeviceService(CRUDService):
         ('attr', {'update': True}),
     ))
     async def do_update(self, id, data):
+        """
+        Update a VM device of `id`.
+        """
         device = await self._get_instance(id)
         new = device.copy()
         new.update(data)
@@ -1608,7 +1286,10 @@ class VMDeviceService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        await self.middleware.call('datastore.delete', self._config.datastore, id)
+        """
+        Delete a VM device of `id`.
+        """
+        return await self.middleware.call('datastore.delete', self._config.datastore, id)
 
     async def __reorder_devices(self, id, vm_id, order):
         if order is None:

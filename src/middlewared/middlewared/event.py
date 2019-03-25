@@ -2,6 +2,24 @@ import asyncio
 import threading
 
 
+class Events(object):
+
+    def __init__(self):
+        self.__events = {}
+
+    def register(self, name, description):
+        if name in self.__events:
+            raise ValueError(f'Event {name!r} already registered.')
+        self.__events[name] = description
+
+    def __contains__(self, name):
+        return name in self.__events
+
+    def __iter__(self):
+        for k, v in self.__events.items():
+            yield k, {'description': v}
+
+
 class EventSource(object):
 
     def __init__(self, middleware, app, ident, name, arg):

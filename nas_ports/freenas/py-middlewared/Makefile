@@ -22,6 +22,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}boto3>0:www/py-boto3@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}netif>0:net/py-netif@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}bsd>0:freenas/py-bsd@${PY_FLAVOR} \
+		${PYTHON_PKGNAMEPREFIX}cam>0:devel/py-cam@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}raven>0:devel/py-raven@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}markdown>0:textproc/py-markdown@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}mako>0:textproc/py-mako@${PY_FLAVOR} \
@@ -42,7 +43,6 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}certbot-dns-google>0:security/py-certbot-dns-google@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}certbot-dns-ovh>0:security/py-certbot-dns-ovh@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}zettarepl>0:sysutils/py-zettarepl@${PY_FLAVOR} \
-		${PYTHON_PKGNAMEPREFIX}pandas>0:math/py-pandas@${PY_FLAVOR} \
 		rclone>0:net/rclone \
 		ifstat>0:net/ifstat \
 		swagger-ui>0:freenas/swagger-ui

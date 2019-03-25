@@ -2257,7 +2257,7 @@ class PoolService(CRUDService):
 
         if (
             not self.middleware.call_sync('system.is_freenas') and
-            self.middleware.call('failover.licensed')
+            self.middleware.call_sync('failover.licensed')
         ):
             return
 
@@ -2378,6 +2378,27 @@ class PoolService(CRUDService):
                 self.middleware.call_sync('zfs.dataset.update', dataset, {'properties': {
                     'aclmode': {'value': 'restricted'},
                 }})
+
+        # Now that pools have been imported we are ready to configure system dataset,
+        # collectd and syslogd which may depend on them.
+        try:
+            self.middleware.call_sync('etc.generate', 'system_dataset')
+        except Exception:
+            self.logger.warn('Failed to setup system dataset', exc_info=True)
+
+        try:
+            self.middleware.call_sync('etc.generate', 'collectd')
+        except Exception:
+            self.logger.warn('Failed to configure collectd', exc_info=True)
+
+        try:
+            self.middleware.call_sync('etc.generate', 'syslogd')
+        except Exception:
+            self.logger.warn('Failed to configure syslogd', exc_info=True)
+
+        # Configure swaps after importing pools. devd events are not yet ready at this
+        # stage of the boot process.
+        self.middleware.run_coroutine(self.middleware.call('disk.swaps_configure'), wait=False)
 
         job.set_progress(100, 'Pools import completed')
 
@@ -2914,8 +2935,9 @@ class PoolScrubService(CRUDService):
 
     @private
     async def pool_scrub_extend(self, data):
-        data['pool'] = data.pop('volume')
-        data['pool'] = data['pool']['id']
+        pool = data.pop('volume')
+        data['pool'] = pool['id']
+        data['pool_name'] = pool['vol_name']
         Cron.convert_db_format_to_schedule(data)
         return data
 
@@ -3034,6 +3056,7 @@ class PoolScrubService(CRUDService):
         if len(set(task_data.items()) ^ set(original_data.items())) > 0:
 
             task_data['volume'] = task_data.pop('pool')
+            task_data.pop('pool_name', None)
 
             await self.middleware.call(
                 'datastore.update',
@@ -3045,7 +3068,7 @@ class PoolScrubService(CRUDService):
 
             await self.middleware.call('service.restart', 'cron')
 
-        return await self.query(filters=[('id', '=', id)], options={'get': True})
+        return await self._get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
@@ -3062,8 +3085,7 @@ class PoolScrubService(CRUDService):
         return response
 
 
-async def _event_zfs(middleware, event_type, args):
-    data = args['data']
+async def devd_zfs_hook(middleware, data):
     if data.get('subsystem') != 'ZFS':
         return
 
@@ -3077,5 +3099,5 @@ async def _event_zfs(middleware, event_type, args):
 
 
 def setup(middleware):
-    middleware.event_subscribe('devd.zfs', _event_zfs)
+    middleware.register_hook('devd.zfs', devd_zfs_hook)
     asyncio.ensure_future(middleware.call('pool.configure_resilver_priority'))

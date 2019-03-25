@@ -3,6 +3,7 @@ import contextlib
 import errno
 import inspect
 import os
+import psutil
 import signal
 import sysctl
 import threading
@@ -169,7 +170,9 @@ class ServiceService(CRUDService):
                 raise CallError(f'Service {id_or_name} not found.', errno.ENOENT)
             id_or_name = svc[0]['id']
 
-        return await self.middleware.call('datastore.update', 'services.services', id_or_name, {'srv_enable': data['enable']})
+        rv = await self.middleware.call('datastore.update', 'services.services', id_or_name, {'srv_enable': data['enable']})
+        await self.middleware.call('etc.generate', 'rc')
+        return rv
 
     @accepts(
         Str('service'),
@@ -487,6 +490,13 @@ class ServiceService(CRUDService):
         await self.start('rrdcached')
         await self.start('collectd')
 
+    async def _reload_rc(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
+
+    async def _restart_powerd(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
+        await self._service('powerd', 'restart', **kwargs)
+
     async def _reload_sysctl(self, **kwargs):
         await self.middleware.call('etc.generate', 'sysctl')
 
@@ -497,9 +507,14 @@ class ServiceService(CRUDService):
     async def _reload_named(self, **kwargs):
         await self._service("named", "reload", **kwargs)
 
+    async def _restart_syscons(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
+        await self._service('syscons', 'restart', **kwargs)
+
     async def _reload_hostname(self, **kwargs):
         await self._system('/bin/hostname ""')
         await self.middleware.call('etc.generate', 'hostname')
+        await self.middleware.call('etc.generate', 'rc')
         await self._service("hostname", "start", quiet=True, **kwargs)
         await self._service("mdnsd", "restart", quiet=True, **kwargs)
         await self._restart_collectd(**kwargs)
@@ -511,6 +526,10 @@ class ServiceService(CRUDService):
     async def _reload_networkgeneral(self, **kwargs):
         await self._reload_resolvconf()
         await self._service("routing", "restart", **kwargs)
+
+    async def _start_routing(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
+        await self._service('routing', 'start', **kwargs)
 
     async def _reload_timeservices(self, **kwargs):
         await self.middleware.call('etc.generate', 'localtime')
@@ -533,14 +552,70 @@ class ServiceService(CRUDService):
         await self.middleware.call("etc.generate", "smartd")
         await self._service("smartd-daemon", "start", **kwargs)
 
+    def _initializing_smartd_pid(self):
+        """
+        smartd initialization can take a long time if lots of disks are present
+        It only writes pidfile at the end of the initialization but forks immediately
+        This method returns PID of smartd process that is still initializing and has not written pidfile yet
+        """
+        if os.path.exists(self.SERVICE_DEFS["smartd"].pidfile):
+            # Already started, no need for special handling
+            return
+
+        for process in psutil.process_iter(attrs=["cmdline", "create_time"]):
+            if process.info["cmdline"][:1] == ["/usr/local/sbin/smartd"]:
+                break
+        else:
+            # No smartd process present
+            return
+
+        lifetime = time.time() - process.info["create_time"]
+        if lifetime < 300:
+            # Looks like just the process we need
+            return process.pid
+
+        self.logger.warning("Got an orphan smartd process: pid=%r, lifetime=%r", process.pid, lifetime)
+
+    async def _started_smartd(self, **kwargs):
+        result = await self._started("smartd")
+        if result[0]:
+            return result
+
+        if await self.middleware.run_in_thread(self._initializing_smartd_pid) is not None:
+            return True, []
+
+        return False, []
+
     async def _reload_smartd(self, **kwargs):
         await self.middleware.call("etc.generate", "smartd")
-        await self._service("smartd-daemon", "reload", **kwargs)
+
+        pid = await self.middleware.run_in_thread(self._initializing_smartd_pid)
+        if pid is None:
+            await self._service("smartd-daemon", "reload", **kwargs)
+            return
+
+        os.kill(pid, signal.SIGKILL)
+        await self._service("smartd-daemon", "start", **kwargs)
 
     async def _restart_smartd(self, **kwargs):
         await self.middleware.call("etc.generate", "smartd")
-        await self._service("smartd-daemon", "stop", force=True, **kwargs)
-        await self._service("smartd-daemon", "restart", **kwargs)
+
+        pid = await self.middleware.run_in_thread(self._initializing_smartd_pid)
+        if pid is None:
+            await self._service("smartd-daemon", "stop", force=True, **kwargs)
+            await self._service("smartd-daemon", "restart", **kwargs)
+            return
+
+        os.kill(pid, signal.SIGKILL)
+        await self._service("smartd-daemon", "start", **kwargs)
+
+    async def _stop_smartd(self, **kwargs):
+        pid = await self.middleware.run_in_thread(self._initializing_smartd_pid)
+        if pid is None:
+            await self._service("smartd-daemon", "stop", force=True, **kwargs)
+            return
+
+        os.kill(pid, signal.SIGKILL)
 
     async def _reload_ssh(self, **kwargs):
         await self.middleware.call('etc.generate', 'ssh')
@@ -592,28 +667,17 @@ class ServiceService(CRUDService):
         await self._service("rsyncd", "stop", force=True, **kwargs)
 
     async def _started_nis(self, **kwargs):
-        res = False
-        if not await self._system("/etc/directoryservice/NIS/ctl status"):
-            res = True
-        return res, []
+        return (await self.middleware.call('nis.started')), []
 
     async def _start_nis(self, **kwargs):
-        res = False
-        if not await self._system("/etc/directoryservice/NIS/ctl start"):
-            res = True
-        return res
+        return (await self.middleware.call('nis.start')), []
 
     async def _restart_nis(self, **kwargs):
-        res = False
-        if not await self._system("/etc/directoryservice/NIS/ctl restart"):
-            res = True
-        return res
+        await self.middleware.call('nis.stop')
+        return (await self.middleware.call('nis.start')), []
 
     async def _stop_nis(self, **kwargs):
-        res = False
-        if not await self._system("/etc/directoryservice/NIS/ctl stop"):
-            res = True
-        return res
+        return (await self.middleware.call('nis.stop')), []
 
     async def _started_ldap(self, **kwargs):
         if (await self._system('/usr/sbin/service ix-ldap status') != 0):
@@ -621,18 +685,21 @@ class ServiceService(CRUDService):
         return await self.middleware.call('notifier.ldap_status'), []
 
     async def _start_ldap(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
         res = False
         if not await self._system("/etc/directoryservice/LDAP/ctl start"):
             res = True
         return res
 
     async def _stop_ldap(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
         res = False
         if not await self._system("/etc/directoryservice/LDAP/ctl stop"):
             res = True
         return res
 
     async def _restart_ldap(self, **kwargs):
+        await self.middleware.call('etc.generate', 'rc')
         res = False
         if not await self._system("/etc/directoryservice/LDAP/ctl restart"):
             res = True
@@ -656,8 +723,8 @@ class ServiceService(CRUDService):
         # detect problems with AD join. The default winbind timeout is 60 seconds (as of Samba 4.7).
         # This can be controlled by the smb4.conf parameter "winbind request timeout = "
         if await self._system('/usr/local/bin/wbinfo -t') != 0:
-                self.logger.debug('AD monitor: wbinfo -t failed')
-                return False, []
+            self.logger.debug('AD status check: wbinfo -t failed')
+            return False, []
         return True, []
 
     async def _start_activedirectory(self, **kwargs):
@@ -685,30 +752,6 @@ class ServiceService(CRUDService):
         # gencache (net cache flush) was not required to do this.
         await self._service("samba_server", "stop", force=True, **kwargs)
         await self._service("samba_server", "start", quiet=True, **kwargs)
-
-    async def _started_domaincontroller(self, **kwargs):
-        res = False
-        if not await self._system("/etc/directoryservice/DomainController/ctl status"):
-            res = True
-        return res, []
-
-    async def _start_domaincontroller(self, **kwargs):
-        res = False
-        if not await self._system("/etc/directoryservice/DomainController/ctl start"):
-            res = True
-        return res
-
-    async def _stop_domaincontroller(self, **kwargs):
-        res = False
-        if not await self._system("/etc/directoryservice/DomainController/ctl stop"):
-            res = True
-        return res
-
-    async def _restart_domaincontroller(self, **kwargs):
-        res = False
-        if not await self._system("/etc/directoryservice/DomainController/ctl restart"):
-            res = True
-        return res
 
     async def _restart_syslogd(self, **kwargs):
         await self.middleware.call("etc.generate", "syslogd")
@@ -740,7 +783,7 @@ class ServiceService(CRUDService):
         await self._service("inetd", "restart", **kwargs)
 
     async def _restart_cron(self, **kwargs):
-        await self._service("ix-crontab", "start", quiet=True, **kwargs)
+        await self.middleware.call('etc.generate', 'cron')
 
     async def _start_motd(self, **kwargs):
         await self.middleware.call('etc.generate', 'motd')
@@ -982,3 +1025,7 @@ class ServiceService(CRUDService):
     async def _restart_netdata(self, **kwargs):
         await self._service('netdata', 'stop')
         await self._start_netdata(**kwargs)
+
+
+def setup(middleware):
+    middleware.event_register('service.query', 'Sent on service changes.')

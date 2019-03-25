@@ -1,5 +1,6 @@
 from collections import defaultdict
 from datetime import datetime
+import errno
 import os
 import traceback
 import uuid
@@ -548,6 +549,14 @@ class AlertService(Service):
         )
 
         await self.middleware.call("alert.send_alerts")
+
+    @private
+    def alert_source_clear_run(self, name):
+        alert_source = ALERT_SOURCES.get(name)
+        if not alert_source:
+            raise CallError("Alert source {name!r} not found.", errno.ENOENT)
+
+        self.alert_source_last_run[alert_source.name] = datetime.min
 
 
 class AlertServiceService(CRUDService):

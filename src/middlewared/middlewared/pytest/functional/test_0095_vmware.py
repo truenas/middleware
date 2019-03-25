@@ -31,5 +31,5 @@ def test_vmware_get_datastores(conn, creds):
     })
     assert req.status_code == 200
     datastores = req.json()
-    assert isinstance(datastores, dict) is True
+    assert isinstance(datastores, list) is True
     assert len(datastores) > 0

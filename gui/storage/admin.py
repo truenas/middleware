@@ -724,8 +724,8 @@ class ReplicationFAdmin(BaseFreeAdmin):
 
     def get_datagrid_columns(self):
         columns = super(ReplicationFAdmin, self).get_datagrid_columns()
-        columns[5]['label'] = _('Recursive')
-        columns[6]['label'] = _('Auto')
+        columns[6]['label'] = _('Recursive')
+        columns[7]['label'] = _('Auto')
 
         columns.append({
             'name': 'state',

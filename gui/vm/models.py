@@ -68,14 +68,11 @@ class VM(Model):
         choices=choices.VM_BOOTLOADER,
         default='UEFI',
     )
-    vm_type = models.CharField(
-        verbose_name=_('VM Type'),
-        max_length=50,
-        choices=(
-            ('Bhyve', _('Virtual Machine')),
-            ('Container Provider', _('Docker VM')),
-        ),
-        default='Bhyve',
+    grubconfig = models.TextField(
+        verbose_name=_('Grub Config'),
+        help_text=_('Grub.cfg file to be used on boot.'),
+        null=True,
+        blank=True,
     )
     autostart = models.BooleanField(
         verbose_name=_('Autostart'),

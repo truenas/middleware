@@ -120,7 +120,7 @@ fi
 
 # Remove the temp directory on exit if dont_delete is false
 if ! $dont_delete ; then
-	trap "rm -rf $topdir" EXIT
+	trap "rm -rfx $topdir" EXIT
 fi
 
 dir=$topdir/ixdiagnose

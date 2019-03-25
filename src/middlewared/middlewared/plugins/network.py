@@ -38,6 +38,15 @@ class NetworkConfigurationService(ConfigService):
 
     @private
     def network_config_extend(self, data):
+        if self.middleware.call_sync('system.is_freenas'):
+            data.pop('hostname_b')
+            data.pop('hostname_virtual')
+        else:
+            node = self.middleware.call_sync('failover.node')
+            data['hostname_a'] = data['hostname']
+            if node == 'B':
+                data['hostname_a'] = data['hostname']
+                data['hostname'] = data['hostname_b']
         data['domains'] = data['domains'].split()
         data['netwait_ip'] = data['netwait_ip'].split()
         return data
@@ -390,6 +399,8 @@ class InterfaceService(CRUDService):
             if bridge:
                 bridge = bridge[0]
                 iface.update({'bridge_members': bridge['members']})
+            else:
+                iface.update({'bridge_members': []})
         elif iface['name'].startswith('lagg'):
             lag = self.middleware.call_sync(
                 'datastore.query',
@@ -407,6 +418,8 @@ class InterfaceService(CRUDService):
                     {'prefix': 'lagg_'}
                 ):
                     iface['lag_ports'].append(port['physnic'])
+            else:
+                iface['lag_ports'] = []
         if iface['name'].startswith('vlan'):
             vlan = self.middleware.call_sync(
                 'datastore.query',
@@ -420,6 +433,12 @@ class InterfaceService(CRUDService):
                     'vlan_parent_interface': vlan['pint'],
                     'vlan_tag': vlan['tag'],
                     'vlan_pcp': vlan['pcp'],
+                })
+            else:
+                iface.update({
+                    'vlan_parent_interface': None,
+                    'vlan_tag': None,
+                    'vlan_pcp': None,
                 })
 
         if not config['int_dhcp']:
@@ -693,54 +712,7 @@ class InterfaceService(CRUDService):
                     'network.lagginterface',
                     {'lagg_interface': interface_id, 'lagg_protocol': data['lag_protocol'].lower()},
                 )
-                for idx, i in enumerate(data['lag_ports']):
-                    lagports_ids.append(
-                        await self.middleware.call(
-                            'datastore.insert',
-                            'network.lagginterfacemembers',
-                            {'interfacegroup': lag_id, 'ordernum': idx, 'physnic': i},
-                            {'prefix': 'lagg_'},
-                        )
-                    )
-
-                    """
-                    If the link aggregation member was configured we need to reset it,
-                    including removing all its IP addresses.
-                    """
-                    portinterface = await self.middleware.call(
-                        'datastore.query',
-                        'network.interfaces',
-                        [('interface', '=', i)],
-                        {'prefix': 'int_'},
-                    )
-                    if portinterface:
-                        portinterface = portinterface[0]
-                        portinterface.update({
-                            'dhcp': False,
-                            'ipv4address': '',
-                            'ipv4address_b': '',
-                            'v4netmaskbit': '',
-                            'ipv6auto': False,
-                            'ipv6address': '',
-                            'v6netmaskbit': '',
-                            'vip': '',
-                            'vhid': None,
-                            'critical': False,
-                            'group': None,
-                            'mtu': None,
-                        })
-                        await self.middleware.call(
-                            'datastore.update',
-                            'network.interfaces',
-                            portinterface['id'],
-                            portinterface,
-                            {'prefix': 'int_'},
-                        )
-                        await self.middleware.call(
-                            'datastore.delete',
-                            'network.alias',
-                            [('alias_interface', '=', portinterface['id'])],
-                        )
+                lagports_ids += await self.__set_lag_ports(lag_id, data['lag_ports'])
             except Exception:
                 for lagport_id in lagports_ids:
                     with contextlib.suppress(Exception):
@@ -1101,6 +1073,58 @@ class InterfaceService(CRUDService):
                     aliases[cidr][netfield] = ipaddr.network.prefixlen
         return iface, aliases
 
+    async def __set_lag_ports(self, lag_id, lag_ports):
+        lagports_ids = []
+        for idx, i in enumerate(lag_ports):
+            lagports_ids.append(
+                await self.middleware.call(
+                    'datastore.insert',
+                    'network.lagginterfacemembers',
+                    {'interfacegroup': lag_id, 'ordernum': idx, 'physnic': i},
+                    {'prefix': 'lagg_'},
+                )
+            )
+
+            """
+            If the link aggregation member was configured we need to reset it,
+            including removing all its IP addresses.
+            """
+            portinterface = await self.middleware.call(
+                'datastore.query',
+                'network.interfaces',
+                [('interface', '=', i)],
+                {'prefix': 'int_'},
+            )
+            if portinterface:
+                portinterface = portinterface[0]
+                portinterface.update({
+                    'dhcp': False,
+                    'ipv4address': '',
+                    'ipv4address_b': '',
+                    'v4netmaskbit': '',
+                    'ipv6auto': False,
+                    'ipv6address': '',
+                    'v6netmaskbit': '',
+                    'vip': '',
+                    'vhid': None,
+                    'critical': False,
+                    'group': None,
+                    'mtu': None,
+                })
+                await self.middleware.call(
+                    'datastore.update',
+                    'network.interfaces',
+                    portinterface['id'],
+                    portinterface,
+                    {'prefix': 'int_'},
+                )
+                await self.middleware.call(
+                    'datastore.delete',
+                    'network.alias',
+                    [('alias_interface', '=', portinterface['id'])],
+                )
+        return lagports_ids
+
     @accepts(
         Str('id'),
         Patch(
@@ -1135,9 +1159,57 @@ class InterfaceService(CRUDService):
                     'interface': iface['name'],
                 }):
                     interface_id = i
+                config = (await self.middleware.call(
+                    'datastore.query', 'network.interfaces', [('id', '=', interface_id)]
+                ))[0]
             else:
                 interface_attrs, aliases = self.__convert_aliases_to_datastore(new)
                 config = config[0]
+                if config['int_interface'] != new['name']:
+                    await self.middleware.call(
+                        'datastore.update',
+                        'network.interfaces',
+                        config['id'],
+                        {'int_interface': new['name']},
+                    )
+
+            if iface['type'] == 'BRIDGE':
+                if 'bridge_members' in data:
+                    await self.middleware.call(
+                        'datastore.update',
+                        'network.bridge',
+                        [('interface', '=', config['id'])],
+                        {'members': data['bridge_members']},
+                    )
+            elif iface['type'] == 'LINK_AGGREGATION':
+                lag_id = await self.middleware.call(
+                    'datastore.update',
+                    'network.lagginterface',
+                    [('lagg_interface', '=', config['id'])],
+                    {'lagg_protocol': new['lag_protocol'].lower()},
+                )
+                if 'lag_ports' in data:
+                    await self.middleware.call(
+                        'datastore.delete',
+                        'network.lagginterfacemembers',
+                        [('lagg_interfacegroup', '=', lag_id)],
+                    )
+                    await self.__set_lag_ports(lag_id, data['lag_ports'])
+            elif iface['type'] == 'VLAN':
+                await self.middleware.call(
+                    'datastore.update',
+                    'network.vlan',
+                    [('vlan_vint', '=', iface['name'])],
+                    {
+                        'vint': new['name'],
+                        'pint': new['vlan_parent_interface'],
+                        'tag': new['vlan_tag'],
+                        'pcp': new['vlan_pcp'],
+                    },
+                    {'prefix': 'vlan_'},
+                )
+
+            if not interface_id:
                 await self.middleware.call(
                     'datastore.update', 'network.interfaces', config['id'], dict(
                         **(await self.__convert_interface_datastore(new)), **interface_attrs
@@ -1187,7 +1259,7 @@ class InterfaceService(CRUDService):
                     )
             raise
 
-        return await self._get_instance(oid)
+        return await self._get_instance(new['name'])
 
     @accepts(Str('id'))
     async def do_delete(self, oid):
@@ -1259,37 +1331,104 @@ class InterfaceService(CRUDService):
 
     @accepts(Dict(
         'options',
+        Bool('bridge_members', default=False),
         Bool('lag_ports', default=False),
         Bool('vlan_parent', default=True),
         List('exclude', default=['epair', 'tap', 'vnet']),
+        List('include', default=[]),
     ))
     def choices(self, options):
         """
         Choices of available network interfaces.
 
+        `bridge_members` will include BRIDGE members.
         `lag_ports` will include LINK_AGGREGATION ports.
         `vlan_parent` will include VLAN parent interface.
         `exclude` is a list of interfaces prefix to remove.
+        `include` is a list of interfaces that should not be removed.
         """
         interfaces = self.middleware.call_sync('interface.query')
-        choices = {i['name']: i['description'] for i in interfaces}
+        choices = {i['name']: i['description'] or i['name'] for i in interfaces}
         for interface in interfaces:
             for exclude in options['exclude']:
                 if interface['name'].startswith(exclude):
                     choices.pop(interface['name'], None)
                     continue
-            if interface['description'] != interface['name']:
+            if interface['description'] and interface['description'] != interface['name']:
                 choices[interface['name']] = f'{interface["name"]}: {interface["description"]}'
             if not options['lag_ports']:
                 if interface['type'] == 'LINK_AGGREGATION':
                     for port in interface['lag_ports']:
-                        choices.pop(port, None)
-                        continue
+                        if port not in options['include']:
+                            choices.pop(port, None)
+                            continue
+            if not options['bridge_members']:
+                if interface['type'] == 'BRIDGE':
+                    for member in interface['bridge_members']:
+                        if member not in options['include']:
+                            choices.pop(member, None)
+                            continue
             if not options['vlan_parent']:
                 if interface['type'] == 'VLAN':
                     choices.pop(interface['vlan_parent_interface'], None)
                     continue
         return choices
+
+    @accepts(Str('id', null=True, default=None))
+    async def bridge_members_choices(self, id):
+        """
+        Return available interface choices for `bridge_members` attribute.
+
+        `id` is the name of the bridge interface to update or null for a new
+        bridge interface.
+        """
+        include = []
+        bridge = await self.middleware.call('interface.query', [
+            ('type', '=', 'BRIDGE'), ('id', '=', id)
+        ])
+        if bridge:
+            include += bridge[0]['bridge_members']
+        choices = await self.middleware.call('interface.choices', {
+            'bridge_members': False,
+            'lag_ports': False,
+            'exclude': ['epair', 'tap', 'vnet', 'bridge'],
+            'include': include,
+        })
+        return choices
+
+    @accepts(Str('id', null=True, default=None))
+    async def lag_ports_choices(self, id):
+        """
+        Return available interface choices for `lag_ports` attribute.
+
+        `id` is the name of the LAG interface to update or null for a new
+        LAG interface.
+        """
+        include = []
+        lag = await self.middleware.call('interface.query', [
+            ('type', '=', 'LINK_AGGREGATION'), ('id', '=', id)
+        ])
+        if lag:
+            include += lag[0]['lag_ports']
+        choices = await self.middleware.call('interface.choices', {
+            'bridge_members': False,
+            'lag_ports': False,
+            'exclude': ['epair', 'tap', 'vnet', 'lagg', 'bridge'],
+            'include': include,
+        })
+        return choices
+
+    @accepts()
+    async def vlan_parent_interface_choices(self):
+        """
+        Return available interface choices for `vlan_parent_interface` attribute.
+        """
+        return await self.middleware.call('interface.choices', {
+            'bridge_members': True,
+            'lag_ports': True,
+            'vlan_parent': True,
+            'exclude': ['epair', 'tap', 'vnet', 'vlan'],
+        })
 
     @private
     async def sync(self, wait_dhcp=False):
@@ -1935,27 +2074,17 @@ class DNSService(Service):
         domains = []
         nameservers = []
 
-        if await self.middleware.call('notifier.common', 'system', 'domaincontroller_enabled'):
-            cifs = await self.middleware.call('datastore.query', 'services.cifs', None, {'get': True})
-            dc = await self.middleware.call('datastore.query', 'services.DomainController', None, {'get': True})
-            domains.append(dc['dc_realm'])
-            if cifs['cifs_srv_bindip']:
-                for ip in cifs['cifs_srv_bindip']:
-                    nameservers.append(ip)
-            else:
-                nameservers.append('127.0.0.1')
-        else:
-            gc = await self.middleware.call('datastore.query', 'network.globalconfiguration', None, {'get': True})
-            if gc['gc_domain']:
-                domains.append(gc['gc_domain'])
-            if gc['gc_domains']:
-                domains += gc['gc_domains'].split()
-            if gc['gc_nameserver1']:
-                nameservers.append(gc['gc_nameserver1'])
-            if gc['gc_nameserver2']:
-                nameservers.append(gc['gc_nameserver2'])
-            if gc['gc_nameserver3']:
-                nameservers.append(gc['gc_nameserver3'])
+        gc = await self.middleware.call('datastore.query', 'network.globalconfiguration', None, {'get': True})
+        if gc['gc_domain']:
+            domains.append(gc['gc_domain'])
+        if gc['gc_domains']:
+            domains += gc['gc_domains'].split()
+        if gc['gc_nameserver1']:
+            nameservers.append(gc['gc_nameserver1'])
+        if gc['gc_nameserver2']:
+            nameservers.append(gc['gc_nameserver2'])
+        if gc['gc_nameserver3']:
+            nameservers.append(gc['gc_nameserver3'])
 
         resolvconf = ''
         if domains:
@@ -2026,8 +2155,7 @@ async def configure_http_proxy(middleware, *args, **kwargs):
     urllib.request.install_opener(None)
 
 
-async def _event_ifnet(middleware, event_type, args):
-    data = args['data']
+async def devd_ifnet_hook(middleware, data):
     if data.get('system') != 'IFNET' or data.get('type') != 'ATTACH':
         return
 
@@ -2059,7 +2187,7 @@ async def setup(middleware):
     middleware.event_subscribe('network.config', configure_http_proxy)
 
     # Listen to IFNET events so we can sync on interface attach
-    middleware.event_subscribe('devd.ifnet', _event_ifnet)
+    middleware.register_hook('devd.ifnet', devd_ifnet_hook)
 
     # Only run DNS sync in the first run. This avoids calling the routine again
     # on middlewared restart.

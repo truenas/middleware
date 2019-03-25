@@ -478,44 +478,9 @@ class UpdateService(Service):
         )
         update = Update.CheckForUpdates(train=train, cache_dir=location)
 
-        if not update:
-            return False
+        self.middleware.call_sync('alert.alert_source_clear_run', 'HasUpdate')
 
-        notified = False
-        try:
-            if self.middleware.call_sync('cache.has_key', 'update.notified'):
-                notified = self.middleware.call_sync('cache.get', 'update.notified')
-        except Exception:
-            pass
-
-        if not notified:
-            self.middleware.call_sync('cache.put', 'update.notified', True)
-            conf = Configuration.Configuration()
-            sys_mani = conf.SystemManifest()
-            if sys_mani:
-                sequence = sys_mani.Sequence()
-            else:
-                sequence = ''
-
-            changelog = get_changelog(train, start=sequence, end=update.Sequence())
-
-            try:
-                # FIXME: Translation
-                self.middleware.call_sync('mail.send', {
-                    'subject': 'Update Available',
-                    'text': '''A new update is available for the %(train)s train.
-Version: %(version)s
-Changelog:
-%(changelog)s
-''' % {
-                        'train': train,
-                        'version': update.Version(),
-                        'changelog': changelog,
-                    },
-                }).wait_sync()
-            except Exception:
-                self.logger.warn('Failed to send email about new update', exc_info=True)
-        return True
+        return bool(update)
 
     @accepts(Str('path'))
     @job(lock='updatemanual', process=True)

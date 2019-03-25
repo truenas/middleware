@@ -223,7 +223,7 @@ ldap_start()
 		then
 			touch $LDAP_STATUS_ALERT
 		else
-			rm -rf $LDAP_STATUS_ALERT
+			rm -f $LDAP_STATUS_ALERT
 		fi
 	fi
 }

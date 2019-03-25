@@ -75,18 +75,26 @@ DEDUP_WARNING = _(
     "performance impact and overhead.<br />")
 
 RE_HOUR = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})')
+RE_HOUR2 = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2})')
 
 
-def fix_time_fields(data, names):
+def fix_time_fields(data, names, seconds=True):
     for name in names:
         if name not in data:
             continue
-        search = RE_HOUR.search(data[name])
-        data[name] = time(
-            hour=int(search.group("hour")),
-            minute=int(search.group("min")),
-            second=int(search.group("sec")),
-        )
+        if seconds:
+            search = RE_HOUR.search(data[name])
+            data[name] = time(
+                hour=int(search.group("hour")),
+                minute=int(search.group("min")),
+                second=int(search.group("sec")),
+            )
+        else:
+            search = RE_HOUR2.search(data[name])
+            data[name] = time(
+                hour=int(search.group("hour")),
+                minute=int(search.group("min")),
+            )
 
 
 class Disk(object):
@@ -2086,10 +2094,10 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
                 choices=choices.MONTHS_CHOICES
             ),
             'repl_schedule_begin': forms.widgets.TimeInput(attrs={
-                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
+                'constraints': mark_safe("{timePattern:'HH:mm',}"),
             }),
             'repl_schedule_end': forms.widgets.TimeInput(attrs={
-                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
+                'constraints': mark_safe("{timePattern:'HH:mm',}"),
             }),
 
             'repl_restrict_schedule_minute': CronMultiple(
@@ -2110,10 +2118,10 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
                 choices=choices.MONTHS_CHOICES
             ),
             'repl_restrict_schedule_begin': forms.widgets.TimeInput(attrs={
-                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
+                'constraints': mark_safe("{timePattern:'HH:mm',}"),
             }),
             'repl_restrict_schedule_end': forms.widgets.TimeInput(attrs={
-                'constraints': mark_safe("{timePattern:'HH:mm:ss',}"),
+                'constraints': mark_safe("{timePattern:'HH:mm',}"),
             }),
         }
 
@@ -2121,7 +2129,7 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
         if len(args) > 0 and isinstance(args[0], QueryDict):
             new = args[0].copy()
             fix_time_fields(new, ['repl_schedule_begin', 'repl_schedule_end',
-                                  'repl_restrict_schedule_begin', 'repl_restrict_schedule_end'])
+                                  'repl_restrict_schedule_begin', 'repl_restrict_schedule_end'], False)
             args = (new,) + args[1:]
 
         if "instance" in kwargs and kwargs["instance"].id:
@@ -2148,6 +2156,15 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
                 kwargs["initial"]["repl_enable_schedule"] = True
             if kwargs["instance"].repl_restrict_schedule_minute is not None:
                 kwargs["initial"]["repl_enable_restrict_schedule"] = True
+
+            if kwargs["instance"].repl_schedule_begin is None:
+                kwargs["initial"]["repl_schedule_begin"] = time(0, 0)
+            if kwargs["instance"].repl_schedule_end is None:
+                kwargs["initial"]["repl_schedule_end"] = time(23, 45)
+            if kwargs["instance"].repl_restrict_schedule_begin is None:
+                kwargs["initial"]["repl_restrict_schedule_begin"] = time(0, 0)
+            if kwargs["instance"].repl_restrict_schedule_end is None:
+                kwargs["initial"]["repl_restrict_schedule_end"] = time(23, 45)
 
             if kwargs["instance"].repl_speed_limit:
                 kwargs["initial"]["repl_speed_limit"] = int(kwargs["instance"].repl_speed_limit / 1024)
@@ -2253,26 +2270,6 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
             return '*'
         w = ','.join(w)
         return w
-
-    def clean_repl_schedule_begin(self):
-        begin = self.cleaned_data.get('repl_schedule_begin')
-        if begin:
-            return begin.strftime('%H:%M')
-
-    def clean_repl_schedule_end(self):
-        end = self.cleaned_data.get('repl_schedule_end')
-        if end:
-            return end.strftime('%H:%M')
-
-    def clean_repl_restrict_schedule_begin(self):
-        begin = self.cleaned_data.get('repl_restrict_schedule_begin')
-        if begin:
-            return begin.strftime('%H:%M')
-
-    def clean_repl_restrict_schedule_end(self):
-        end = self.cleaned_data.get('repl_restrict_schedule_end')
-        if end:
-            return end.strftime('%H:%M')
 
     def clean_repl_retention_policy(self):
         return self.cleaned_data.get('repl_retention_policy') or 'NONE'
@@ -2387,8 +2384,8 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
         return data
 
 
-key_order(ReplicationForm, 15, 'repl_enable_schedule')
-key_order(ReplicationForm, 23, 'repl_enable_restrict_schedule')
+key_order(ReplicationForm, 16, 'repl_enable_schedule')
+key_order(ReplicationForm, 24, 'repl_enable_restrict_schedule')
 
 
 class VolumeExport(Form):

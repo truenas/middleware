@@ -333,6 +333,27 @@ class Disk(Model):
         editable=False,
         blank=True,
     )
+    disk_type = models.CharField(
+        choices=(
+            ('SSD', 'SSD'),
+            ('HDD', 'HDD'),
+            ('UNKNOWN', 'UNKNOWN'),
+        ),
+        max_length=20,
+        editable=False,
+        default='UNKNOWN',
+    )
+    disk_rotationrate = models.IntegerField(
+        editable=False,
+        default=None,
+        null=True,
+    )
+    disk_model = models.CharField(
+        editable=False,
+        default=None,
+        max_length=200,
+        null=True,
+    )
     disk_multipath_name = models.CharField(
         max_length=30,
         verbose_name=_("Multipath name"),
@@ -465,6 +486,10 @@ class EncryptedDisk(Model):
 
 
 class Replication(Model):
+    repl_name = models.CharField(
+        max_length=120,
+        verbose_name=_("Name")
+    )
     repl_direction = models.CharField(
         max_length=120,
         choices=[("PUSH", "Push"), ("PULL", "Pull")],
@@ -588,7 +613,7 @@ class Replication(Model):
         null=True,
     )
     repl_schedule_end = models.TimeField(
-        default=time(hour=23, minute=59),
+        default=time(hour=23, minute=45),
         verbose_name=_("End"),
         help_text=_("Do not start replication after"),
         null=True,
@@ -640,7 +665,7 @@ class Replication(Model):
         null=True,
     )
     repl_restrict_schedule_end = models.TimeField(
-        default=time(hour=23, minute=59),
+        default=time(hour=23, minute=45),
         verbose_name=_("End"),
         help_text=_("Do not start replication after"),
         null=True,
@@ -776,11 +801,7 @@ class Replication(Model):
         verbose_name_plural = _("Replication Tasks")
 
     def __str__(self):
-        return '%s -> %s:%s' % (
-            ', '.join(self.repl_source_datasets),
-            self.repl_ssh_credentials.name if self.repl_ssh_credentials else '-',
-            self.repl_target_dataset
-        )
+        return self.repl_name
 
 
 class LegacyReplicationManager(models.Manager):

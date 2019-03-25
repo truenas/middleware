@@ -33,7 +33,6 @@ from dojango import forms
 from freenasUI.common.forms import ModelForm
 from freenasUI.freeadmin.forms import SelectMultipleWidget
 from freenasUI.freeadmin.utils import key_order
-from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.services.models import services, NFS
@@ -78,25 +77,6 @@ class CIFS_ShareForm(MiddlewareModelForm, ModelForm):
         elif self.instance.cifs_guestok is False:
             self.fields['cifs_guestonly'].widget.attrs['disabled'] = 'disabled'
         self.fields['cifs_name'].required = False
-        self.fields['cifs_home'].widget.attrs['onChange'] = (
-            "cifs_storage_task_toggle();"
-        )
-
-        if self.instance:
-            task_dict = {}
-            if self.instance.cifs_path:
-                with client as c:
-                    task_dict = c.call('sharing.smb.get_storage_tasks',
-                                       self.instance.cifs_path)
-
-            if task_dict:
-                choices = [('', '-----')]
-                for task_id, msg in task_dict.items():
-                    choices.append((task_id, msg))
-                self.fields['cifs_storage_task'].choices = choices
-
-            else:
-                self.fields['cifs_storage_task'].choices = (('', '-----'),)
 
     class Meta:
         fields = '__all__'
@@ -105,9 +85,6 @@ class CIFS_ShareForm(MiddlewareModelForm, ModelForm):
     def middleware_clean(self, data):
         data['hostsallow'] = data['hostsallow'].split()
         data['hostsdeny'] = data['hostsdeny'].split()
-
-        if not data['storage_task']:
-            data.pop('storage_task')
 
         return data
 

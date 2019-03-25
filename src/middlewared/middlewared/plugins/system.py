@@ -21,6 +21,7 @@ import sys
 import sysctl
 import syslog
 import tarfile
+import textwrap
 import time
 
 from licenselib.license import ContractType, Features
@@ -882,6 +883,9 @@ class SystemGeneralService(ConfigService):
         ):
             await self.middleware.call('service.restart', 'syslogd')
 
+        if config['kbdmap'] != new_config['kbdmap']:
+            await self.middleware.call('service.restart', 'syscons')
+
         if config['timezone'] != new_config['timezone']:
             await self.middleware.call('zettarepl.update_timezone', new_config['timezone'])
             await self.middleware.call('service.reload', 'timeservices')
@@ -942,12 +946,11 @@ async def _event_system_ready(middleware, event_type, args):
         SYSTEM_READY = True
 
 
-async def _event_zfs_status(middleware, event_type, args):
+async def devd_zfs_hook(middleware, data):
     """
     This is so we can invalidate the CACHE_POOLS_STATUSES cache
     when pool status changes
     """
-    data = args['data']
     if data.get('type') == 'misc.fs.zfs.vdev_statechange':
         await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
 
@@ -1060,6 +1063,13 @@ async def update_timeout_value(middleware, *args):
 async def setup(middleware):
     global SYSTEM_READY
 
+    middleware.event_register('system', textwrap.dedent('''\
+        Sent on system state changes.
+
+        id=ready -- Finished boot process\n
+        id=reboot -- Started reboot process\n
+        id=shutdown -- Started shutdown process'''))
+
     if os.path.exists("/tmp/.bootready"):
         SYSTEM_READY = True
     else:
@@ -1092,7 +1102,7 @@ async def setup(middleware):
             )
 
     middleware.event_subscribe('system', _event_system_ready)
-    middleware.event_subscribe('devd.zfs', _event_zfs_status)
+    middleware.register_hook('devd.zfs', devd_zfs_hook)
     middleware.register_event_source('system.health', SystemHealthEventSource)
 
     # watchdog 38 = ~256 seconds or ~4 minutes, see sys/watchdog.h for explanation

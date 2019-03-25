@@ -41,7 +41,6 @@ define([
 
     var NAME_MAP = {
       'afp': gettext('AFP'),
-      'domaincontroller': gettext('Domain Controller'),
       'dynamicdns': gettext('Dynamic DNS'),
       'ftp': gettext('FTP'),
       'iscsitarget': gettext('iSCSI'),

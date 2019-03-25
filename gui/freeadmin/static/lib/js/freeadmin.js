@@ -509,64 +509,6 @@ require([
 
     }
 
-    cifs_storage_task_toggle = function() {
-        var home = registry.byId("id_cifs_home");
-        var cifs_home = home.get("value");
-        var path = registry.byId("id_cifs_path");
-        var cifs_path = path.get("value");
-        var storage_task = registry.byId("id_cifs_storage_task");
-
-        if (cifs_home == "on" && !cifs_path) {
-            console.log("XXX: cifs_home is on and no cifs_path");
-
-            xhr.get('/legacy/storage/tasks/recursive/json/', {
-                sync: true
-            }).then(function(data) {
-                var tasks = JSON.parse(data); 
-
-                var options = [];
-                for (var i = 0;i < tasks.length;i++) {
-                    var option = {
-                        value: tasks[i].id,
-                        label: tasks[i].str,
-                        selected:false
-                    };
-
-                    options[i] = option;
-                }
-
-                storage_task.addOption(options);
-            });
-        } else {
-            storage_task.removeOption(storage_task.getOptions());
-            storage_task._setDisplay("");
-            storage_task.addOption([{ value: "", label: "-----" }]);
-
-            if (cifs_path) {
-                var url = '/legacy/storage/tasks/json/' + cifs_path.replace("/mnt/", "") + '/';
-                xhr.get(url, {
-                    sync: true
-                }).then(function(data) {
-                    var tasks = JSON.parse(data); 
-
-                    var options = [];
-                    for (var i = 0;i < tasks.length;i++) {
-                        var option = {
-                            value: tasks[i].id,
-                            label: tasks[i].str,
-                            selected:false
-                        };
-
-                        options[i] = option;
-                    }
-
-                    storage_task.addOption(options);
-                });
-
-            }
-        }
-    }
-
     generic_certificate_autopopulate = function(url) {
         var certinfo = null;
         xhr.get(url, {
@@ -710,23 +652,6 @@ require([
             dialog.startup();
             dialog.show();
         }
-    }
-
-    domaincontroller_mutex_toggle = function() {
-        var node = query("#domaincontroller_table");
-        xhr.get('/legacy/directoryservice/status/', {
-            sync: true
-        }).then(function(data) {
-            s = JSON.parse(data);
-            set = get_directoryservice_set('dc_enable');
-            for (index in set) {
-                key = set[index];
-                if (s[key] == true) {
-                    node.onclick = null;
-                    break;
-                }
-            }
-        });
     }
 
     ldap_mutex_toggle = function() {
@@ -1092,26 +1017,6 @@ require([
 
     }
 
-    vmTypeToggle = function() {
-        var vm_type = registry.byId("id_vm_type");
-        var bootloader = registry.byId("id_bootloader").domNode.parentNode.parentNode;
-        var pwd = registry.byId("id_root_password").domNode.parentNode.parentNode;
-        var path = registry.byId("id_path").domNode.parentNode.parentNode;
-        var size = registry.byId("id_size").domNode.parentNode.parentNode;
-
-        if (vm_type.get('value') == 'Container Provider') {
-            domStyle.set(bootloader, "display", "none");
-            domStyle.set(pwd, "display", "");
-            domStyle.set(path, "display", "");
-            domStyle.set(size, "display", "");
-        } else if (vm_type.get('value') == 'Bhyve') {
-            domStyle.set(bootloader, "display", "");
-            domStyle.set(pwd, "display", "none");
-            domStyle.set(path, "display", "none");
-            domStyle.set(size, "display", "none");
-        }
-    }
-
     alertServiceTypeToggle = function() {
 
         var type = registry.byId("id_type");
@@ -1275,6 +1180,7 @@ require([
 
         var provider = registry.byId(provider_id).get('value');
         var credentialsSchemas = JSON.parse(registry.byId("id_credentials_schemas").get('value'));
+        var credentialsOauths = JSON.parse(registry.byId("id_credentials_oauths").get('value'));
 
         var attributesInput = dom.byId("id_attributes");
         var attributes = JSON.parse(attributesInput.value) || {};
@@ -1372,9 +1278,41 @@ require([
 
             document.getElementById(id).onchange = updateAttributes;
         }
+        if (credentialsOauths[provider])
+        {
+            var newNode = document.createElement("tr");
+            newNode.className = "cloud-credentials-attribute";
+            newNode.innerHTML = "<th>&nbsp;</th><td><a href='#' onclick='cloudSyncAutomaticConfig(" + JSON.stringify(credentialsOauths[provider]) + "); return false;'>Automatic config</a></td>";
+
+            attributesInput.parentNode.insertBefore(newNode, attributesInput.nextSibling);
+        }
 
         updateAttributes();
     }
+
+    cloudSyncAutomaticConfig = function(url) {
+        window.open(url + "?origin=" + encodeURIComponent(window.location.toString()), "_blank", "width=640,height=480");
+    }
+
+    window.addEventListener("message", function(message) {
+        if (message.data.oauth_portal)
+        {
+            if (message.data.error)
+            {
+                alert(message.data.error);
+            }
+            else
+            {
+                for (k in message.data.result)
+                {
+                    if (document.getElementById("id_attributes_" + k))
+                    {
+                        document.getElementById("id_attributes_" + k).value = message.data.result[k];
+                    }
+                }
+            }
+        }
+    }, false);
 
     cloudSyncDirectionToggle = function() {
 

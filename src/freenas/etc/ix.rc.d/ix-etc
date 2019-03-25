@@ -34,6 +34,9 @@ generate_etc()
 	[ -s /data/dhparam.pem ] || openssl dhparam -rand /dev/random 2048 > /data/dhparam.pem
 
 	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate_all > /dev/null
+
+	# etc rc plugin will generate rc.conf.freenas which needs to be re-read by /etc/rc script
+	killall -ALRM sh
 }
 
 name="ix-etc"

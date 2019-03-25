@@ -3,7 +3,7 @@ from middlewared.service import (SystemServiceService, ValidationErrors,
                                  accepts, private, CRUDService)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
-from middlewared.utils import Popen
+from middlewared.utils import Popen, run
 
 import asyncio
 import codecs
@@ -99,6 +99,23 @@ class SMBService(SystemServiceService):
                 encodings.add(cp)
 
         return encodings
+
+    @private
+    async def store_ldap_admin_password(self):
+        """
+        This is required if the LDAP directory service is enabled. The ldap admin dn and
+        password are stored in private/secrets.tdb file.
+        """
+        ldap = await self.middleware.call('datastore.config', 'directoryservice.ldap')
+        if not ldap['ldap_enable']:
+            return True
+
+        set_pass = await run(['usr/local/bin/smbpasswd', '-w', ldap['ldap_bindpw']], check=False)
+        if set_pass.returncode != 0:
+            self.logger.debug(f"Failed to set set ldap bindpw in secrets.tdb: {set_pass.stdout.decode()}")
+            return False
+
+        return True
 
     @accepts(Dict(
         'smb_update',
@@ -211,7 +228,7 @@ class SharingSMBService(CRUDService):
         List('hostsallow', default=[]),
         List('hostsdeny', default=[]),
         List('vfsobjects', default=['zfs_space', 'zfsacl', 'streams_xattr']),
-        Int('storage_task', null=True),
+        Bool('shadowcopy', default=False),
         Str('auxsmbconf'),
         Bool('default_permissions'),
         register=True
@@ -235,7 +252,6 @@ class SharingSMBService(CRUDService):
                 raise CallError(f'Failed to create {path}: {e}')
 
         await self.compress(data)
-        await self.set_storage_tasks(data)
         vuid = await self.generate_vuid(data['timemachine'])
         data.update({'vuid': vuid})
         data['id'] = await self.middleware.call(
@@ -284,7 +300,6 @@ class SharingSMBService(CRUDService):
                 raise CallError(f'Failed to create {path}: {e}')
 
         await self.compress(new)
-        await self.set_storage_tasks(new)
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
@@ -412,53 +427,6 @@ class SharingSMBService(CRUDService):
             vuid = str(uuid.uuid4())
 
         return vuid
-
-    @accepts(Str('path', required=True))
-    async def get_storage_tasks(self, path):
-        zfs_datasets = await self.middleware.call('zfs.dataset.query', [('type', '=', 'FILESYSTEM')])
-        task_list = []
-        task_dict = {}
-
-        for ds in zfs_datasets:
-            tasks = []
-            name = ds['name']
-            mountpoint = ds['properties']['mountpoint']['parsed']
-
-            if path == mountpoint:
-                tasks = await self.middleware.call('pool.snapshottask.query', [['dataset', '=', name]])
-            elif path.startswith(f'{mountpoint}/'):
-                tasks = await self.middleware.call('pool.snapshottask.query', [['dataset', '=', name],
-                                                                               ['recursive', '=', True]])
-
-            task_list.extend(tasks)
-
-        for task in task_list:
-            task_id = task['id']
-
-            msg = (f'{task["dataset"]} - {task["naming_schema"]} - '
-                   f'{task["lifetime_value"]}{task["lifetime_unit"].lower()[0]}')
-
-            task_dict[task_id] = msg
-
-        return task_dict
-
-    @private
-    async def set_storage_tasks(self, data):
-        task = data.get('storage_task', None)
-        home = data['home']
-        path = data['path']
-        task_list = []
-
-        if not task:
-            if path:
-                task_list = await self.get_storage_tasks(path=path)
-            elif home:
-                task_list = await self.get_storage_tasks(home=home)
-
-        if task_list:
-            data['storage_task'] = list(task_list.keys())[0]
-
-        return data
 
     @accepts()
     def vfsobjects_choices(self):

@@ -299,10 +299,6 @@ def activedirectory_objects():
     return ActiveDirectory.objects.all()
 
 
-def domaincontroller_enabled():
-    return service_enabled('domaincontroller')
-
-
 def nis_enabled():
     from freenasUI.directoryservice.models import NIS
 

@@ -95,7 +95,7 @@ def main(argv):
     args = parser.parse_args(argv)
 
     pipe = subprocess.Popen([
-        "/sbin/zfs",
+        "zfs",
         "list",
         "-Hr",
     ],

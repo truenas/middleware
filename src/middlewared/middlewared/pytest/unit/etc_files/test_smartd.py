@@ -1,8 +1,8 @@
 import asyncio
 import subprocess
 import textwrap
+from unittest.mock import call, Mock, patch
 
-from mock import call, Mock, patch
 import pytest
 
 from middlewared.etc_files.smartd import (
@@ -41,8 +41,9 @@ async def test__ensure_smart_enabled__smart_was_disabled():
         assert await ensure_smart_enabled(["/dev/ada0"])
 
         assert run.call_args_list == [
-            call(["smartctl", "-i", "/dev/ada0"], check=False, stderr=subprocess.STDOUT, encoding="utf8"),
-            call(["smartctl", "-s", "on", "/dev/ada0"], check=False, stderr=subprocess.STDOUT, encoding="utf8"),
+            call(["smartctl", "-i", "/dev/ada0"], check=False, stderr=subprocess.STDOUT,
+                 encoding="utf8", errors="ignore"),
+            call(["smartctl", "-s", "on", "/dev/ada0"], check=False, stderr=subprocess.STDOUT),
         ]
 
 
@@ -64,18 +65,19 @@ async def test__ensure_smart_enabled__handled_args_properly():
         assert await ensure_smart_enabled(["/dev/ada0", "-d", "sat"])
 
         run.assert_called_once_with(
-            ["smartctl", "-i", "/dev/ada0", "-d", "sat"], check=False, stderr=subprocess.STDOUT, encoding="utf8",
+            ["smartctl", "-i", "/dev/ada0", "-d", "sat"], check=False, stderr=subprocess.STDOUT,
+            encoding="utf8", errors="ignore",
         )
 
 
 @pytest.mark.asyncio
 async def test__annotate_disk_for_smart__skips_nvd():
-    assert await annotate_disk_for_smart({}, {"disk_name": "/dev/nvd0"}) is None
+    assert await annotate_disk_for_smart({}, "/dev/nvd0") is None
 
 
 @pytest.mark.asyncio
 async def test__annotate_disk_for_smart__skips_unknown_device():
-    assert await annotate_disk_for_smart({"/dev/ada0": {}}, {"disk_name": "/dev/ada1"}) is None
+    assert await annotate_disk_for_smart({"/dev/ada0": {}}, "/dev/ada1") is None
 
 
 @pytest.mark.asyncio
@@ -83,7 +85,7 @@ async def test__annotate_disk_for_smart__skips_device_without_args():
     with patch("middlewared.etc_files.smartd.get_smartctl_args") as get_smartctl_args:
         get_smartctl_args.return_value = asyncio.Future()
         get_smartctl_args.return_value.set_result(None)
-        assert await annotate_disk_for_smart({"/dev/ada1": {"driver": "ata"}}, {"disk_name": "/dev/ada1"}) is None
+        assert await annotate_disk_for_smart({"/dev/ada1": {"driver": "ata"}}, "/dev/ada1") is None
 
 
 @pytest.mark.asyncio
@@ -94,8 +96,7 @@ async def test__annotate_disk_for_smart__skips_device_with_unavailable_smart():
         with patch("middlewared.etc_files.smartd.ensure_smart_enabled") as ensure_smart_enabled:
             ensure_smart_enabled.return_value = asyncio.Future()
             ensure_smart_enabled.return_value.set_result(False)
-            assert await annotate_disk_for_smart({"/dev/ada1": {"driver": "ata"}}, {"disk_name": "/dev/ada1"}) is \
-                None
+            assert await annotate_disk_for_smart({"/dev/ada1": {"driver": "ata"}}, "/dev/ada1") is None
 
 
 @pytest.mark.asyncio
@@ -106,10 +107,10 @@ async def test__annotate_disk_for_smart():
         with patch("middlewared.etc_files.smartd.ensure_smart_enabled") as ensure_smart_enabled:
             ensure_smart_enabled.return_value = asyncio.Future()
             ensure_smart_enabled.return_value.set_result(True)
-            assert await annotate_disk_for_smart({"/dev/ada1": {"driver": "ata"}}, {"disk_name": "/dev/ada1"}) == {
-                "disk_name": "/dev/ada1",
-                "smartctl_args": ["/dev/ada1", "-d", "sat", "-d", "removable"],
-            }
+            assert await annotate_disk_for_smart({"/dev/ada1": {"driver": "ata"}}, "/dev/ada1") == (
+                "/dev/ada1",
+                {"smartctl_args": ["/dev/ada1", "-d", "sat", "-d", "removable"]},
+            )
 
 
 def test__get_smartd_schedule__need_mapping():

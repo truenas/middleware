@@ -1279,7 +1279,7 @@ class LDAP(DirectoryServiceBase):
     ldap_auxiliary_parameters = models.TextField(
         verbose_name=_("Auxiliary Parameters"),
         blank=True,
-        help_text=_("These parameters are added to sssd.conf")
+        help_text=_("These parameters are added to nslcd.conf")
     )
     ldap_schema = models.CharField(
         verbose_name=("Schema"),

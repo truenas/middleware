@@ -29,7 +29,6 @@ import pwd
 
 from freenasUI.common.system import (
     activedirectory_enabled,
-    domaincontroller_enabled,
     ldap_enabled,
     nis_enabled
 )
@@ -52,13 +51,6 @@ from freenasUI.common.freenasnis import (
     FreeNAS_NIS_Users
 )
 
-from freenasUI.common.freenasdc import (
-    FreeNAS_DomainController_Group,
-    FreeNAS_DomainController_User,
-    FreeNAS_DomainController_Groups,
-    FreeNAS_DomainController_Users
-)
-
 log = logging.getLogger("common.freenasusers")
 
 
@@ -77,8 +69,6 @@ def _get_dflags():
         dflags |= U_NIS_ENABLED
     elif ldap_enabled():
         dflags |= U_LDAP_ENABLED
-    elif domaincontroller_enabled():
-        dflags |= U_DC_ENABLED
 
     return dflags
 
@@ -169,8 +159,6 @@ class FreeNAS_Group(object):
                 obj = FreeNAS_NIS_Group(group, **kwargs)
             elif dflags & U_LDAP_ENABLED:
                 obj = FreeNAS_LDAP_Group(group, **kwargs)
-            elif dflags & U_DC_ENABLED:
-                obj = FreeNAS_DomainController_Group(group, **kwargs)
         except:
             log.debug('Failed to get group from directory service, falling back to local', exc_info=True)
 
@@ -206,8 +194,6 @@ class FreeNAS_Groups(object):
             dir = FreeNAS_NIS_Groups
         elif dflags & U_LDAP_ENABLED:
             dir = FreeNAS_LDAP_Groups
-        elif dflags & U_DC_ENABLED:
-            dir = FreeNAS_DomainController_Groups
 
         if dir is not None:
             try:
@@ -288,8 +274,6 @@ class FreeNAS_User(object):
                 obj = FreeNAS_NIS_User(user, **kwargs)
             elif dflags & U_LDAP_ENABLED:
                 obj = FreeNAS_LDAP_User(user, **kwargs)
-            elif dflags & U_DC_ENABLED:
-                obj = FreeNAS_DomainController_User(user, **kwargs)
         except:
             log.debug('Failed to get user from directory service, falling back to local', exc_info=True)
 
@@ -324,8 +308,6 @@ class FreeNAS_Users(object):
             dir = FreeNAS_NIS_Users
         elif dflags & U_LDAP_ENABLED:
             dir = FreeNAS_LDAP_Users
-        elif dflags & U_DC_ENABLED:
-            dir = FreeNAS_DomainController_Users
 
         if dir is not None:
             try:

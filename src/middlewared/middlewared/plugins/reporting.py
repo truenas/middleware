@@ -6,13 +6,13 @@ import itertools
 import json
 import math
 import os
-import pandas
 import psutil
 import queue
 import re
 import select
 import shutil
 import socketserver
+import statistics
 import subprocess
 import sysctl
 import tarfile
@@ -75,6 +75,12 @@ class RRDBase(object, metaclass=RRDMeta):
     identifier_plugin = True
     rrd_types = None
     rrd_data_extra = None
+
+    AGG_MAP = {
+        'min': min,
+        'mean': statistics.mean,
+        'max': max,
+    }
 
     def __init__(self, middleware):
         self.middleware = middleware
@@ -208,10 +214,14 @@ class RRDBase(object, metaclass=RRDMeta):
         )
 
         if self.aggregations and aggregate:
-            df = pandas.DataFrame(data['data'])
+            # Transpose the data matrix and remove null values
+            transposed = [list(filter(None.__ne__, i)) for i in zip(*data['data'])]
             for agg in self.aggregations:
-                if agg in ('max', 'mean', 'min'):
-                    data['aggregations'][agg] = list(getattr(df, agg)())
+                if agg in self.AGG_MAP:
+                    data['aggregations'][agg] = [
+                        (self.AGG_MAP[agg](i) if i else None)
+                        for i in transposed
+                    ]
                 else:
                     raise RuntimeError(f'Aggregation {agg!r} is invalid.')
 
@@ -786,7 +796,7 @@ class ReportingService(ConfigService):
         if destroy_database:
             await self.middleware.call('service.stop', 'collectd')
             await self.middleware.call('service.stop', 'rrdcached')
-            await run('sh', '-c', 'rm -rf /var/db/collectd/rrd/*', check=False)
+            await run('sh', '-c', 'rm -rfx /var/db/collectd/rrd/*', check=False)
             await self.middleware.call('reporting.setup')
             await self.middleware.call('service.start', 'rrdcached')
 
@@ -796,15 +806,6 @@ class ReportingService(ConfigService):
 
     @private
     def setup(self):
-        is_freenas = self.middleware.call_sync('system.is_freenas')
-        # If not is_freenas, remove the rc.conf cache. rc.conf.local runs again with the correct collectd_enable.
-        # See issue #5019
-        if not is_freenas:
-            try:
-                os.remove('/var/tmp/freenas_config.md5')
-            except FileNotFoundError:
-                pass
-
         systemdatasetconfig = self.middleware.call_sync('systemdataset.config')
         if not systemdatasetconfig['path']:
             self.middleware.logger.error(f'System dataset is not mounted')
@@ -860,7 +861,7 @@ class ReportingService(ConfigService):
             if not d.startswith('localhost') and os.path.isdir(os.path.join(pwd, d))
         ]
         for r_dir in to_remove_dirs:
-            subprocess.run(['rm', '-rf', r_dir])
+            subprocess.run(['rm', '-rfx', r_dir])
 
         # Remove all symlinks (that are stale if hostname was changed).
         to_remove_symlinks = [
