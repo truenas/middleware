@@ -28,7 +28,7 @@ def produce_nvdimm_alerts(i, critical_health, nvdimm_health, es_health):
     nvdimm_health = parse_sysctl(nvdimm_health)
     es_health = parse_sysctl(es_health)
 
-    if critical_health["Critical Health Info"] != "0x0":
+    if int(critical_health["Critical Health Info"].split(":")[0], 16) & ~0x4:
         alerts.append(Alert(title="NVDIMM %(i)d Critical Health Info is %(value)s",
                             args={"i": i, "value": critical_health["Critical Health Info"]}))
 

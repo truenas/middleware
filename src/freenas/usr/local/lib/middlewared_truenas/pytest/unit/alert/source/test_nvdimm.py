@@ -28,6 +28,31 @@ def test__produce_nvdimm_alerts__ok():
     assert alerts == []
 
 
+def test__produce_nvdimm_alerts__PERSISTENCY_RESTORED():
+    alerts = produce_nvdimm_alerts(
+        0,
+        textwrap.dedent("""\
+            Critical Health Info: 0x4<PERSISTENCY_RESTORED>
+        """),
+        textwrap.dedent("""\
+            Module Health: 0x0
+            Module Current Temperature: 34 C
+            Error Threshold Status: 0x0
+            Warning Threshold Status: 0x0
+            NVM Lifetime: 100%
+            Count of DRAM Uncorrectable ECC Errors: 0
+            Count of DRAM Correctable ECC Error Above Threshold Events: 0
+        """),
+        textwrap.dedent("""\
+            ES Lifetime Percentage: 99%
+            ES Current Temperature: 23 C
+            Total Runtime: 65535
+        """),
+    )
+
+    assert alerts == []
+
+
 def test__produce_nvdimm_alerts__everything_is_broken():
     alerts = produce_nvdimm_alerts(
         0,
