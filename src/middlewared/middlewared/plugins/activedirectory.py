@@ -32,10 +32,10 @@ class DSStatus(enum.Enum):
     HEALTHY = 4
 
 
-class SSL(enum.Enum):
-    NOSSL = 'off'
-    USESSL = 'on'
-    USETLS = 'start_tls'
+class neterr(enum.Enum):
+    JOINED = 'Join is OK' 
+    NOTJOINED = '0xfffffff6'    
+    FAULTED = -1
 
 
 class SRV(enum.Enum):
@@ -47,6 +47,12 @@ class SRV(enum.Enum):
     KPASSWD = '_kpasswd._tcp.'
     LDAP = '_ldap._tcp.'
     PDC = '_ldap._tcp.pdc._msdcs.'
+
+
+class SSL(enum.Enum):
+    NOSSL = 'off'
+    USESSL = 'on'
+    USETLS = 'start_tls'
 
 
 class ActiveDirectory_DNS(object):
@@ -171,9 +177,9 @@ class ActiveDirectory_LDAP(object):
     :validate_credentials: simple check to determine whether we can establish
     an ldap session with the credentials that are in the configuration.
 
-    :get_workgroup: returns the short form of the AD domain name. Confusingly
+    :get_netbios_domain_name: returns the short form of the AD domain name. Confusingly
     titled 'nETBIOSName'. Must not be confused with the netbios hostname of the
-    server. For this reason, API calls it 'workgroup'.
+    server. For this reason, API calls it 'netbios_domain_name'.
 
     :get_site: returns the AD site that the NAS is a member of. AD sites are used
     to break up large domains into managable chunks typically based on physical location.
@@ -524,7 +530,7 @@ class ActiveDirectoryService(ConfigService):
         return ad 
 
     @accepts(Dict(
-        'nis_update',
+        'activedirectory_update',
         Str('domainname'),
         Str('bindname'),
         Str('bindpw'),
@@ -594,6 +600,16 @@ class ActiveDirectoryService(ConfigService):
 
     @private
     async def start(self):
+        """
+        Start AD service.
+        1) Query AD site if it has not been set.
+        2) Query netbios domain name if it has not been set.
+        3) kinit and generate smb4.conf file.
+        4) Perform 'net -k ads testjoin' to determine whether server has already joined the domain.
+        5) if (3) fails, then perform 'net -k ads join' to join AD domain.
+        6) restart samba
+        7) copy newly-generated samba keytab to keytabs in freenas-v1.db if needed.
+        """
         ad = await self.config()
         smb = await self.middleware.call('smb.config')
         state = await self.get_state()
@@ -607,7 +623,7 @@ class ActiveDirectoryService(ConfigService):
         if not ad['site']:
             asyncio.wait_for(await self.get_site(), 10)
         if smb['workgroup'] == 'WORKGROUP':
-            asyncio.wait_for(await self.get_workgroup(), 10)
+            asyncio.wait_for(await self.get_netbios_domain_name(), 10)
         if not ad['kerberos_realm']:
             await self.middleware.call(
                 'datastore.insert',
@@ -617,16 +633,20 @@ class ActiveDirectoryService(ConfigService):
 
         await self.middleware.call('kerberos.start')
         await self.middleware.call('etc.generate', 'smb')
-        ret = await self._net_ads('testjoin')
-        if not ret:
+        ret = await self._net_ads_testjoin()
+        if ret == neterr.NOTJOINED:
             self.logger.debug(f"Test join to {ad['domainname']} failed. Performing domain join.")
-            await self._net_ads('join')
+            await self._net_ads_join
+            await self.middleware.call('kerberos.keytab.store_samba_keytab')
+            ret = neterr.JOINED
 
         await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'nss')
-        await self._set_state(DSStatus['HEALTHY'])
-        return True
+        if ret == neterr.JOINED:
+            await self._set_state(DSStatus['HEALTHY'])
+        else:
+            await self._set_state(DSStatus['FAULTED'])
 
     @private
     async def stop(self):
@@ -696,25 +716,57 @@ class ActiveDirectoryService(ConfigService):
         return True
 
     @private
-    async def _net_ads(self, command):
+    async def _net_ads_join(self, command):
         ad = await self.config()
-        netads = await run([
-            'net', '-k', '-U', f'{ad["bindname"]}@{ad["domainname"]}',
-            '-d', '5', 'ads', command, ad['domainname'], 
-            ],
-            check = False
-        ) 
-        if netads.returncode != 0:
-            self.logger.debug(f"command net -k ads failed with error: [{netads.stderr.decode().strip()}]")
-            if command == 'join':
-                await self._set_state(DSStatus['FAULTED'])
-                raise CallError(f'Failed to join [{ad["domainname"]}]: [{netads.stdout.decode().strip()}]')
-            return False
+        if ad['principal']:
+            netads = await run([
+                'net', '-k', '-U', ad['kerberos_principal'],
+                '-d', '5', 'ads', 'join', ad['domainname'], 
+                ],
+                check = False
+            ) 
+        else:
+            netads = await run([
+                'net', '-k', '-U', f'{ad["bindname"]}@{ad["domainname"]}',
+                '-d', '5', 'ads', 'join', ad['domainname'], 
+                ],
+                check = False
+            ) 
 
-        return True
+        if netads.returncode != 0:
+            await self._set_state(DSStatus['FAULTED'])
+            raise CallError(f'Failed to join [{ad["domainname"]}]: [{netads.stdout.decode().strip()}]')
 
     @private
-    async def get_workgroup(self):
+    async def _net_ads_testjoin(self):
+        ad = await self.config()
+        if ad['kerberos_principal']:
+            netads = await run([
+                'net', '-k', '-U', ad['kerberos_principal'],
+                '-d', '5', 'ads', 'testjoin', ad['domainname'], 
+                ],
+                check = False
+            )
+        else:
+            netads = await run([
+                'net', '-k', '-U', f'{ad["bindname"]}@{ad["domainname"]}',
+                '-d', '5', 'ads', 'testjoin', ad['domainname'], 
+                ],
+                check = False
+            ) 
+        if netads.returncode != 0:
+             errout = netads.stdout.decode().strip()
+             self.logger.debug(f'net ads testjoin failed with error: [{erroout}]') 
+             net_err = list(filter(lambda x: x.value in errout, neterr.items()))
+             if net_err:
+                 return neterr[0]
+             else:
+                 return neterr.FAULT
+
+        return neterr.JOINED
+
+    @private
+    async def get_netbios_domain_name(self):
         """
         The 'workgroup' parameter must be set correctly in order for AD join to
         succeed. This is based on the short form of the domain name, which was defined

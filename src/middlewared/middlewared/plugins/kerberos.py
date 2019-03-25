@@ -1,10 +1,17 @@
 import asyncio
+import base64
 import datetime
+import enum
+import os
 import subprocess
 import time
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
+from middlewared.schema import accepts, Any, Bool, Cron, Dict, Int, List, Patch, Path, Str
 from middlewared.service import CallError, CRUDService, Service, item_method, private, ValidationErrors
 from middlewared.utils import run, Popen
+
+class keytab(enum.Enum):
+    SYSTEM = '/etc/krb5.keytab'
+    SAMBA = '/var/db/samba4/private/samba.keytab'
 
 class KerberosService(Service):
     """
@@ -28,7 +35,7 @@ class KerberosService(Service):
         There are two ways of performing the kinit:
         1) username / password combination. In this case, password must be written
            to file or recieved via STDIN
-        2) kerberos keytab
+        2) kerberos keytab.
 
         For now we only check for kerberos realms explicitly configured in AD and LDAP. 
         """
@@ -37,7 +44,6 @@ class KerberosService(Service):
         ldap = await self.middleware.call('datastore.config', 'directoryservice.ldap')
         if ad['enable']:
             if ad['kerberos_principal']:
-                keytab_file = f"/etc/kerberos/{ad['kerberos_principal']['principal_name']}"
                 ad_kinit = await run([ '/usr/bin/kinit', '--renewable', '-t', keytab_file], check=False)
                 if ad_kinit.returncode != 0:
                     raise CallError(f"kinit for domain [{ad['domainname']}] with keytab [{keytab_file}] failed: {kinit.stderr.decode()}") 
@@ -97,7 +103,7 @@ class KerberosService(Service):
 
         try:
             klist = await asyncio.wait_for(
-                run(['/usr/bin/klist', '-f'], check = False, stdout=subprocess.PIPE), 
+                run(['/usr/bin/klist'], check = False, stdout=subprocess.PIPE), 
                 timeout=10.0
             )
             if klist.returncode != 0:
@@ -110,12 +116,11 @@ class KerberosService(Service):
             for line in klist_output.splitlines():
                 if ad['enable'] and ad['kerberos_realm']:
                     fields = line.split('  ')
-                    if len(fields) == 4 and ad['kerberos_realm']['krb_realm'] in fields[3]:
+                    if len(fields) == 3 and ad['kerberos_realm']['krb_realm'] in fields[2]:
                         ad_TGT.append({
                             'issued': time.strptime(fields[0], '%b %d %H:%M:%S %Y'),
                             'expires': time.strptime(fields[1], '%b %d %H:%M:%S %Y'),
-                            'flags': fields[2],
-                            'spn': fields[3]
+                            'spn': fields[2]
                         })
 
         if ad_TGT or ldap_TGT:
@@ -270,10 +275,13 @@ class KerberosRealmService(CRUDService):
 
     @accepts(
         Int('id', required=True),
-        Patch(
-            'sharingsmb_create',
-            'sharingsmb_update',
-            ('attr', {'update': True})
+        Dict(
+            'kerberos_realm_update',
+            Str('realm', required=True),
+            List('kdc', default=[]),
+            List('admin_server', default=[]),
+            List('kpasswd_server', default=[]),
+            register=True
         )
     )
     async def do_update(self, id, data):
@@ -304,6 +312,7 @@ class KerberosRealmService(CRUDService):
         """
         Delete a kerberos realm by ID.
         """
+        await self.middleware.call("datastore.delete", self._config.datastore, id)
         await self.middleware.call('etc.generate', 'kerberos')
         await self.middleware.call('kerberos.start')
         return response
@@ -323,3 +332,205 @@ class KerberosRealmService(CRUDService):
         """
         verrors = ValidationErrors()
         return verrors
+
+
+class KerberosKeytabService(CRUDService):
+    class Config:
+        datastore = 'directoryservice.kerberoskeytab'
+        datastore_prefix = 'keytab_'
+        namespace = 'kerberos.keytab'
+
+
+    @accepts(
+        Dict(
+            'kerberos_keytab_create',
+            Any('file'),
+            Str('name'),
+            register=True
+        )
+    )
+    async def do_create(self, data):
+        """
+        :file: b64encoded kerberos keytab
+        """
+        verrors = ValidationErrors()
+
+        verrors.add_child('kerberos_principal_create', await self._validate(data))
+
+        if verrors:
+            raise verrors
+
+        data["id"] = await self.middleware.call(
+            "datastore.insert", self._config.datastore, data,
+            {
+                "prefix": self._config.datastore_prefix
+            },
+        )
+        await self.middleware.call('etc.generate', 'kerberos')
+
+        return await self._get_instance(data['id'])
+
+    @accepts(
+        Int('id', required=True),
+        Dict(
+            'kerberos_keytab_update',
+            Any('file'),
+            Str('name'),
+            register=True
+        )
+    )
+    async def do_update(self, id, data):
+        old = await self._get_instance(id)
+        new = old.copy()
+        new.update(data)
+
+        verrors = ValidationErrors()
+
+        verrors.add_child('kerberos_principal_update', await self._validate(new))
+
+        if verrors:
+            raise verrors
+
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            id,
+            new,
+            {'prefix': self._config.datastore_prefix}
+        )
+        await self.middleware.call('etc.generate', 'kerberos')
+
+        return await self._get_instance(id)
+
+    @accepts(Int('id'))
+    async def do_delete(self, id):
+        await self.middleware.call("datastore.delete", self._config.datastore, id)
+        await self.middleware.call('etc.generate', 'kerberos')
+        await self.middleware.call('kerberos.stop')
+        await self.middleware.call('kerberos.start')
+
+    @accepts(Int("id"))
+    async def run(self, id):
+        data = await self._get_instance(id)
+        await self.middleware.call('etc.generate', 'kerberos')
+        await self.middleware.call('kerberos.start')
+
+    @private
+    async def _validate(self, data):
+        """
+        For now validation is limited to checking if we can resolve the hostnames
+        configured for the kdc, admin_server, and kpasswd_server can be resolved
+        by DNS, and if the realm can be resolved by DNS.
+        """
+        verrors = ValidationErrors()
+        try:
+            base64.b64decode(data['file']) 
+        except Exception as e:
+            verrors.add("kerberos.keytab_create", f"Keytab is a not a properly base64-encoded string: [{e}]") 
+        return verrors
+
+    @private
+    async def _ktutil_list(self, keytab_file=keytab['SYSTEM'].value):
+        keytab_entries = []
+        kt_list =  await run(['/usr/sbin/ktutil', '-k', keytab_file, '-v', 'list'], check=False)
+        if kt_list.returncode != 0:
+            raise CallError(f'ktutil list for keytab [{keytab_file}] failed with error: {kt_list.stderr.decode()}')
+        kt_list_output = kt_list.stdout.decode()
+        if kt_list_output:
+            for line in kt_list_output.splitlines():
+                fields = line.split()
+                if len(fields) >= 4 and fields[0] != 'Vno':
+                    keytab_entries.append({
+                        'kvno': fields[0],
+                        'type': fields[1], 
+                        'principal': fields[2],
+                        'date': time.strptime(fields[3], '%Y-%m-%d'), 
+                        'aliases': fields[4].split() if len(fields)==5 else []
+                    })
+
+        return keytab_entries
+
+    @private
+    async def _get_nonsamba_principals(self, keytab_list):
+        smb = await self.middleware.call('smb.config')
+        pruned_list = []
+        for i in keytab_list:
+            if smb['netbiosname'].upper() not in i['principal'].upper():
+                pruned_list.append(i)
+
+        return pruned_list
+
+    @private
+    async def _generate_tmp_keytab(self):
+         """
+         ktutil copy returns 1 even if copy succeeds.
+         """
+         if os.path.exists(keytab['SAMBA'].value):
+             os.remove(keytab['SAMBA'].value)
+         kt_copy = await run([
+             '/usr/sbin/ktutil', 'copy', 
+             keytab['SYSTEM'].value, 
+             keytab['SAMBA'].value], 
+             check=False
+         ) 
+         if kt_copy.stderr.decode():
+            raise CallError(f"failed to generate [{keytab['SAMBA'].value}]: {kt_copy.stderr.decode()}")
+
+    @private
+    async def _prune_keytab_principals(self, to_delete=[]):
+        for i in to_delete:
+            self.logger.debug(i)
+            ktutil_remove = await run([
+                 '/usr/sbin/ktutil', 
+                 '-k', keytab['SAMBA'].value,
+                 'remove',
+                 '-p', i['principal'], 
+                 '-e', i['type']
+                 ], check=False
+            )
+            if ktutil_remove.stderr.decode():
+                raise CallError(f"Failed to remove keytab entry from [{keytab['SAMBA'].value}]: {ktutil_remove.stderr.decode()}")
+    @private
+    async def get_kerberos_principals(self):
+        keytab_list = await self._ktutil_list()
+        kerberos_principals = []
+        for entry in keytab_list:
+            if '/' not in entry['principal'] and entry['principal'] not in kerberos_principals:
+                kerberos_principals.append(entry['principal'])
+
+        return kerberos_principals
+
+    @private
+    async def store_samba_keytab(self):
+        """
+        Samba will automatically generate system keytab entries for the AD machine account
+        (netbios name with '$' appended), and maintain them through machine account password changes.
+        Copy the system keytab, parse it, and update the corresponding keytab entry in the freenas configuration
+        database.
+        """
+        if not os.path.exists(keytab['SYSTEM'].value):
+            return False
+
+        encoded_keytab = None
+        keytab_list = await self._ktutil_list()
+        items_to_remove = await self._get_nonsamba_principals(keytab_list)
+        await self._generate_tmp_keytab()
+        await self._prune_keytab_principals(items_to_remove)
+        with open(keytab['SAMBA'].value, 'rb') as f:
+            encoded_keytab = base64.b64encode(f.read())
+
+        if not encoded_keytab:
+            self.logger.debug(f"Failed to generate b64encoded version of {keytab['SAMBA'].name}") 
+
+        self.logger.debug(encoded_keytab)
+  
+        keytabs = await self.query()
+        entry = list(filter(lambda x: x['name'] == 'AD_MACHINE_ACCOUNT', keytabs))
+        if not entry:
+            await self.create({'name': 'AD_MACHINE_ACCOUNT', 'file': encoded_keytab})
+        else:
+            id = entry[0]['id']
+            updated_entry = {'name': 'AD_MACHINE_ACCOUNT', 'file': encoded_keytab}
+            await self.update(id, updated_entry)
+
+        return True
