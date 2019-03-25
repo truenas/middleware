@@ -10,7 +10,7 @@ import time
 
 from middlewared.pipe import Pipes
 from middlewared.schema import Bool, Dict, Int, Str, accepts
-from middlewared.service import CallError, Service, job
+from middlewared.service import CallError, ConfigService, job, ValidationErrors
 from middlewared.utils import Popen
 
 # FIXME: Remove when we can generate debug and move license to middleware
@@ -28,7 +28,71 @@ from freenasUI.support.utils import get_license
 ADDRESS = 'support-proxy.ixsystems.com'
 
 
-class SupportService(Service):
+class SupportService(ConfigService):
+
+    class Config:
+        datastore = 'system.support'
+
+    @accepts(Dict(
+        'support_update',
+        Bool('enabled', null=True),
+        Str('name'),
+        Str('title'),
+        Str('email'),
+        Str('phone'),
+        Str('secondary_name'),
+        Str('secondary_title'),
+        Str('secondary_email'),
+        Str('secondary_phone'),
+        update=True
+    ))
+    async def do_update(self, data):
+        config_data = await self.config()
+        config_data.update(data)
+
+        verrors = ValidationErrors()
+        if config_data['enabled']:
+            for key in ['name', 'title', 'email', 'phone']:
+                for prefix in ['', 'secondary_']:
+                    field = prefix + key
+                    if not config_data[field]:
+                        verrors.add(f'support_update.{field}', 'This field is required')
+        if verrors:
+            raise verrors
+
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            config_data['id'],
+            config_data,
+        )
+
+        return await self.config()
+
+    async def is_available(self):
+        if await self.middleware.call('system.is_freenas'):
+            return False
+
+        license = (await self.middleware.call('system.info'))['license']
+        if license is None:
+            return False
+
+        return license['contract_type'] in ['SILVER', 'GOLD']
+
+    async def is_available_and_enabled(self):
+        return await self.is_available() and (await self.config())['enabled']
+
+    async def fields(self):
+        return (
+            ("name", "Contact Name"),
+            ("title", "Contact Title"),
+            ("email", "Contact E-mail"),
+            ("phone", "Contact Phone"),
+            ("secondary_name", "Secondary Contact Name"),
+            ("secondary_title", "Secondary Contact Title"),
+            ("secondary_email", "Secondary Contact E-mail"),
+            ("secondary_phone", "Secondary Contact Phone"),
+        )
 
     @accepts(
         Str('username'),

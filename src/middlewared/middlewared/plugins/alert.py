@@ -5,9 +5,6 @@ import errno
 import os
 import traceback
 
-from freenasUI.support.utils import get_license
-from licenselib.license import ContractType
-
 from middlewared.alert.base import (
     AlertLevel,
     Alert,
@@ -237,50 +234,31 @@ class AlertService(Service):
                 if not await self.middleware.call("system.is_freenas"):
                     new_hardware_alerts = [alert for alert in new_alerts if ALERT_SOURCES[alert.source].hardware]
                     if new_hardware_alerts:
-                        license = get_license()
-                        if license and license.contract_type in [ContractType.silver.value, ContractType.gold.value]:
+                        if await self.middleware.call("support.is_available_and_enabled"):
+                            support = await self.middleware.call("support.config")
+                            msg = [f"* {alert.formatted}" for alert in new_hardware_alerts]
+
+                            serial = (await self.middleware.call("system.info"))["system_serial"]
+
+                            for name, verbose_name in await self.middleware.call("support.fields"):
+                                value = support[name]
+                                if value:
+                                    msg += ["", "{}: {}".format(verbose_name, value)]
+
                             try:
-                                support = await self.middleware.call("datastore.query", "system.support", None,
-                                                                     {"get": True})
-                            except IndexError:
-                                await self.middleware.call("datastore.insert", "system.support", {})
-
-                                support = await self.middleware.call("datastore.query", "system.support", None,
-                                                                     {"get": True})
-
-                            if support["enabled"]:
-                                msg = [f"* {alert.formatted}" for alert in new_hardware_alerts]
-
-                                serial = (await self.middleware.call("system.info"))["system_serial"]
-
-                                for name, verbose_name in (
-                                    ("name", "Contact Name"),
-                                    ("title", "Contact Title"),
-                                    ("email", "Contact E-mail"),
-                                    ("phone", "Contact Phone"),
-                                    ("secondary_name", "Secondary Contact Name"),
-                                    ("secondary_title", "Secondary Contact Title"),
-                                    ("secondary_email", "Secondary Contact E-mail"),
-                                    ("secondary_phone", "Secondary Contact Phone"),
-                                ):
-                                    value = getattr(support, name)
-                                    if value:
-                                        msg += ["", "{}: {}".format(verbose_name, value)]
-
-                                try:
-                                    await self.middleware.call("support.new_ticket", {
-                                        "title": "Automatic alert (%s)" % serial,
-                                        "body": "\n".join(msg),
-                                        "attach_debug": False,
-                                        "category": "Hardware",
-                                        "criticality": "Loss of Functionality",
-                                        "environment": "Production",
-                                        "name": "Automatic Alert",
-                                        "email": "auto-support@ixsystems.com",
-                                        "phone": "-",
-                                    })
-                                except Exception:
-                                    self.logger.error(f"Failed to create a support ticket", exc_info=True)
+                                await self.middleware.call("support.new_ticket", {
+                                    "title": "Automatic alert (%s)" % serial,
+                                    "body": "\n".join(msg),
+                                    "attach_debug": False,
+                                    "category": "Hardware",
+                                    "criticality": "Loss of Functionality",
+                                    "environment": "Production",
+                                    "name": "Automatic Alert",
+                                    "email": "auto-support@ixsystems.com",
+                                    "phone": "-",
+                                })
+                            except Exception:
+                                self.logger.error(f"Failed to create a support ticket", exc_info=True)
 
     async def __run_alerts(self):
         master_node = "A"
