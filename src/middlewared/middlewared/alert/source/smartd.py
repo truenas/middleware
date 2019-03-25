@@ -7,7 +7,7 @@ class SmartdAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.WARNING
     title = "smartd Is Not Running"
-    text = "%s"
+    text = "smartd is not running."
 
 
 class SmartdAlertSource(ThreadedAlertSource):
@@ -24,11 +24,10 @@ class SmartdAlertSource(ThreadedAlertSource):
                 # We got something other than "none", maybe "vmware", "xen", "vbox".  Regardless, smartd not running
                 # in these environments isn"t a huge deal.  So we"ll skip alerting.
                 return
+
             if not self.middleware.call_sync("system.is_freenas"):
                 if self.middleware.call_sync("failover.status") != "MASTER":
                     return
-            p1 = subprocess.Popen(["/usr/sbin/service", "smartd-daemon", "status"], stdin=subprocess.PIPE,
-                                  stdout=subprocess.PIPE, encoding="utf8")
-            status = p1.communicate()[0]
-            if p1.returncode == 1:
-                return Alert(SmartdAlertClass, status)
+
+            if not self.middleware.call_sync("service.started", "smartd"):
+                return Alert(SmartdAlertClass)
