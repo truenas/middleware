@@ -206,32 +206,20 @@ class NetworkConfigurationService(ConfigService):
                 services_to_reload.append('networkgeneral')
                 await self.middleware.call('route.sync')
 
+            restart_nfs = False
             if (
                     'hostname_virtual' in new_config.keys() and
-                    new_config['hostname_virtual'] != config['hostname_virtual']
+                    (
+                        new_config['hostname_virtual'] != config['hostname_virtual'] or
+                        new_config['domain'] != config['domain']
+                    )
             ):
-                srv_service_obj = await self.middleware.call(
-                    'datastore.query',
-                    'service.service',
-                    [('srv_service', '=', 'nfs')]
-                )
-                nfs_object = await self.middleware.call(
-                    'datastore.query',
-                    'services.nfs',
-                )
-                if len(srv_service_obj) > 0 and len(nfs_object) > 0:
-                    srv_service_obj = srv_service_obj[0]
-                    nfs_object = nfs_object[0]
-
-                    if (
-                            (srv_service_obj and srv_service_obj.srv_enable) and
-                            (nfs_object and (nfs_object.nfs_srv_v4 and nfs_object.nfs_srv_v4_krb))
-                    ):
-                        await self.middleware.call("etc.generate", "nfsd")
-                        services_to_reload.append('mountd')
+                restart_nfs = True
 
             for service_to_reload in services_to_reload:
                 await self.middleware.call('service.reload', service_to_reload, {'onetime': False})
+            if restart_nfs:
+                await self._service_change('nfs', 'restart')
 
             if new_config['httpproxy'] != config['httpproxy']:
                 await self.middleware.call(

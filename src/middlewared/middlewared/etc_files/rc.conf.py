@@ -237,6 +237,11 @@ def nfs_config(middleware, context):
     gssd = 'NO'
     if nfs['v4_krb'] or middleware.call_sync('datastore.query', 'directoryservice.kerberoskeytab'):
         gssd = 'YES'
+
+        gc = middleware.call_sync("datastore.config", "network.globalconfiguration")
+        if gc["gc_hostname_virtual"] and gc["gc_domain"]:
+            yield f'nfs_server_vhost="{gc["gc_hostname_virtual"]}.{gc["gc_domain"]}"'
+
     yield f'gssd_enable="{gssd}"'
 
 
