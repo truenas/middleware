@@ -3636,7 +3636,12 @@ class BackupForm(Form):
         return pwd2
 
 
-class SupportForm(ModelForm):
+class SupportForm(ModelForm, MiddlewareModelForm):
+
+    middleware_attr_prefix = ""
+    middleware_attr_schema = "support"
+    middleware_plugin = "support"
+    is_singletone = True
 
     class Meta:
         model = models.Support
