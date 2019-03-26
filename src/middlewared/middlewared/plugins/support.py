@@ -47,6 +47,10 @@ class SupportService(ConfigService):
         update=True
     ))
     async def do_update(self, data):
+        """
+        Update Proactive Support settings.
+        """
+
         config_data = await self.config()
         config_data.update(data)
 
@@ -69,7 +73,12 @@ class SupportService(ConfigService):
 
         return await self.config()
 
+    @accepts()
     async def is_available(self):
+        """
+        Returns whether Proactive Support is available for this product type and current license.
+        """
+
         if await self.middleware.call('system.is_freenas'):
             return False
 
@@ -79,10 +88,20 @@ class SupportService(ConfigService):
 
         return license['contract_type'] in ['SILVER', 'GOLD']
 
+    @accepts()
     async def is_available_and_enabled(self):
+        """
+        Returns whether Proactive Support is available and enabled.
+        """
+
         return await self.is_available() and (await self.config())['enabled']
 
+    @accepts()
     async def fields(self):
+        """
+        Returns list of pairs of field names and field titles for Proactive Support.
+        """
+
         return (
             ("name", "Contact Name"),
             ("title", "Contact Title"),
