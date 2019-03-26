@@ -35,6 +35,8 @@ logging.Logger.trace = trace
 
 
 class CrashReporting(object):
+    enabled_in_settings = False
+
     """
     Pseudo-Class for remote crash reporting
     """
@@ -73,6 +75,9 @@ class CrashReporting(object):
         # Allow report to be disabled via sentinel file or environment var,
         # if FreeNAS current train is STABLE, the sentinel file path will be /tmp/,
         # otherwise it's path will be /data/ and can be persistent.
+
+        if not self.enabled_in_settings:
+            return True
 
         if os.path.exists(self.sentinel_file_path) or 'CRASHREPORTING_DISABLED' in os.environ:
             return True
