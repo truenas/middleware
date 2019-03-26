@@ -5,7 +5,7 @@ from django.db import migrations, models
 def migrate_shadowcopies(apps, schema_editor):
     SMB_Share = apps.get_model('sharing', 'cifs_share')
     for row in SMB_Share.objects.all():
-        row.cifs_shadowcopy = True if row.cifs_storage_task_id else ''
+        row.cifs_shadowcopy = True if row.cifs_storage_task_id else False
         row.save()
 
 class Migration(migrations.Migration):
