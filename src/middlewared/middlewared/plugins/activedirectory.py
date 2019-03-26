@@ -9,7 +9,7 @@ import subprocess
 
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService
 from middlewared.service_exception import CallError
 from middlewared.utils import run
@@ -33,9 +33,9 @@ class DSStatus(enum.Enum):
 
 
 class neterr(enum.Enum):
-    JOINED = 'Join is OK' 
-    NOTJOINED = '0xfffffff6'    
-    FAULTED = -1
+    JOINED = 1 
+    NOTJOINED = 2    
+    FAULT = 3 
 
 
 class SRV(enum.Enum):
@@ -224,6 +224,10 @@ class ActiveDirectory_LDAP(object):
         We can only intialize a single host. In this case,
         we iterate through a list of hosts until we get one that
         works and then use that to set our LDAP handle.
+
+        SASL GSSAPI bind only succeeds when DNS reverse lookup zone
+        is correctly populated. Fall through to simple bind if this
+        fails.
         """
         res = None 
         if self._isopen:
@@ -266,6 +270,16 @@ class ActiveDirectory_LDAP(object):
                     except ldap.LDAPError as e:
                         raise CallError(e)
                         continue
+
+                if self.ad['kerberos_principal']:
+                    try:
+                        res = self._handle.sasl_gssapi_bind_s()
+                        if self.ad['verbose_logging']:
+                            self.logger.debug(f'Successfully bound to [{uri}] using SASL GSSAPI.') 
+                        break
+                    except Exception as e:
+                        self.logger.debug(f'SASL GSSAPI bind failed: {e}. Attempting simple bind')
+
                 bindname = f"{self.ad['bindname']}@{self.ad['domainname']}"
                 try:
                     res = self._handle.simple_bind_s(bindname, self.ad['bindpw'])
@@ -527,6 +541,9 @@ class ActiveDirectoryService(ConfigService):
 
     @private
     async def ad_compress(self, ad):
+        if ad['kerberos_realm']:
+            ad['kerberos_realm'] = ad['kerberos_realm']['id']
+
         return ad 
 
     @accepts(Dict(
@@ -534,23 +551,15 @@ class ActiveDirectoryService(ConfigService):
         Str('domainname'),
         Str('bindname'),
         Str('bindpw'),
-        Int('monitor_frequency'),
-        Int('recover_retry'),
-        Bool('enable_monitor'),
         Str('ssl'),
         Dict('certificate'),
         Bool('verbose_logging'),
         Bool('unix_extensions'),
         Bool('use_default_domain'),
         Bool('disable_freenas_cache'),
-        Str('userdn'),
-        Str('groupdn'),
-        Str('groupdn'),
         Str('site'),
-        Str('dcname'),
-        Str('gcname'),
         Dict('kerberos_realm'),
-        Dict('kerberos_principal'),
+        Str('kerberos_principal'),
         Int('timeout'),
         Int('dns_timeout'),
         Str('idmap_backend'),
@@ -560,11 +569,10 @@ class ActiveDirectoryService(ConfigService):
         update=True
     ))
     async def do_update(self, data):
-        must_reload = False
         old = await self.config()
         new = old.copy()
         new.update(data)
-        await self.ad_compress(new)
+        new = await self.ad_compress(new)
         await self.middleware.call(
             'datastore.update',
             'directoryservice.activedirectory',
@@ -602,13 +610,6 @@ class ActiveDirectoryService(ConfigService):
     async def start(self):
         """
         Start AD service.
-        1) Query AD site if it has not been set.
-        2) Query netbios domain name if it has not been set.
-        3) kinit and generate smb4.conf file.
-        4) Perform 'net -k ads testjoin' to determine whether server has already joined the domain.
-        5) if (3) fails, then perform 'net -k ads join' to join AD domain.
-        6) restart samba
-        7) copy newly-generated samba keytab to keytabs in freenas-v1.db if needed.
         """
         ad = await self.config()
         smb = await self.middleware.call('smb.config')
@@ -617,27 +618,32 @@ class ActiveDirectoryService(ConfigService):
             raise CallError(f'Active Directory Service has status of [{state.value}]. Wait until operation completes.', errno.EBUSY)
 
         await self._set_state(DSStatus['JOINING'])
-        await self.middleware.call('datastore.update', 'directoryservice.activedirectory', ad['id'], {'ad_enable': True})
+        await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_enable': True})
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'rc')
-        if not ad['site']:
-            asyncio.wait_for(await self.get_site(), 10)
-        if smb['workgroup'] == 'WORKGROUP':
-            asyncio.wait_for(await self.get_netbios_domain_name(), 10)
+
         if not ad['kerberos_realm']:
             await self.middleware.call(
                 'datastore.insert',
                 'directoryservice.kerberosrealm',
                 {'krb_realm': ad['domainname'].upper()},
             )
-
         await self.middleware.call('kerberos.start')
+
+        if not ad['site']:
+            await asyncio.wait_for(self.get_site(), 10)
+        if smb['workgroup'] == 'WORKGROUP':
+            smb['workgroup'] = await asyncio.wait_for(self.get_netbios_domain_name(), 10)
+
         await self.middleware.call('etc.generate', 'smb')
-        ret = await self._net_ads_testjoin()
+        ret = await self._net_ads_testjoin(smb['workgroup'])
         if ret == neterr.NOTJOINED:
             self.logger.debug(f"Test join to {ad['domainname']} failed. Performing domain join.")
-            await self._net_ads_join
-            await self.middleware.call('kerberos.keytab.store_samba_keytab')
+            await self._net_ads_join(smb['workgroup'])
+            kt_set = await self.middleware.call('kerberos.keytab.store_samba_keytab')
+            if kt_set:
+                self.logger.debug('Successfully generated keytab for computer account. Clearing bind credentials')
+                await self.update({'bindpw': '', 'kerberos_principal': f'{smb["netbiosname"]}$@{ad["domainname"]}'})
             ret = neterr.JOINED
 
         await self.middleware.call('service.restart', 'cifs')
@@ -668,7 +674,7 @@ class ActiveDirectoryService(ConfigService):
         ad = self.middleware.call_sync('activedirectory.config')
         with ActiveDirectory_DNS(conf = ad, logger = self.logger) as AD_DNS:
             dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3) 
-        if not dc:
+        if not dcs:
             raise CallError('Failed to open LDAP socket to any DC in domain.')
 
         with ActiveDirectory_LDAP(ad_conf = ad, logger = self.logger, hosts = dcs) as AD_LDAP:
@@ -700,9 +706,9 @@ class ActiveDirectoryService(ConfigService):
             raise CallError('srv record type not specified', errno.EINVAL)
         
         if site:
-            self.middleware.call('cache.put', f'SRVCACHE_{srv.name}_SITE', results, 86400) 
+            await self.middleware.call('cache.put', f'SRVCACHE_{srv.name}_SITE', results, 86400) 
         else:
-            self.middleware.call('cache.put', f'SRVCACHE_{srv.name}', results, 86400) 
+            await self.middleware.call('cache.put', f'SRVCACHE_{srv.name}', results, 86400) 
         return True
 
     @private
@@ -716,50 +722,41 @@ class ActiveDirectoryService(ConfigService):
         return True
 
     @private
-    async def _net_ads_join(self, command):
+    async def _net_ads_join(self, workgroup):
         ad = await self.config()
-        if ad['principal']:
-            netads = await run([
-                'net', '-k', '-U', ad['kerberos_principal'],
-                '-d', '5', 'ads', 'join', ad['domainname'], 
-                ],
-                check = False
-            ) 
-        else:
-            netads = await run([
-                'net', '-k', '-U', f'{ad["bindname"]}@{ad["domainname"]}',
-                '-d', '5', 'ads', 'join', ad['domainname'], 
-                ],
-                check = False
-            ) 
+        netads = await run([
+            'net', '-k', '-U', ad['bindname'],
+            '-d', '5', 'ads', 'join', ad['domainname'], 
+            ],
+            check = False
+        ) 
 
         if netads.returncode != 0:
             await self._set_state(DSStatus['FAULTED'])
             raise CallError(f'Failed to join [{ad["domainname"]}]: [{netads.stdout.decode().strip()}]')
 
     @private
-    async def _net_ads_testjoin(self):
+    async def _net_ads_testjoin(self, workgroup):
         ad = await self.config()
         if ad['kerberos_principal']:
             netads = await run([
-                'net', '-k', '-U', ad['kerberos_principal'],
+                'net', '-k', '-w', workgroup,
                 '-d', '5', 'ads', 'testjoin', ad['domainname'], 
                 ],
                 check = False
             )
         else:
             netads = await run([
-                'net', '-k', '-U', f'{ad["bindname"]}@{ad["domainname"]}',
+                'net', '-k', '-w', workgroup,
                 '-d', '5', 'ads', 'testjoin', ad['domainname'], 
                 ],
                 check = False
             ) 
         if netads.returncode != 0:
-             errout = netads.stdout.decode().strip()
-             self.logger.debug(f'net ads testjoin failed with error: [{erroout}]') 
-             net_err = list(filter(lambda x: x.value in errout, neterr.items()))
-             if net_err:
-                 return neterr[0]
+             errout = netads.stderr.decode().strip()
+             self.logger.debug(f'net ads testjoin failed with error: [{errout}]') 
+             if '0xfffffff6' in errout: 
+                 return neterr.NOTJOINED
              else:
                  return neterr.FAULT
 
@@ -790,7 +787,7 @@ class ActiveDirectoryService(ConfigService):
             self.logger.debug(f'Updating SMB workgroup to match the short form of the AD domain [{ret}]')
             await self.middleware.call('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_workgroup': ret})
             
-        return True 
+        return ret 
 
     @private
     async def get_site(self):
@@ -825,4 +822,4 @@ class ActiveDirectoryService(ConfigService):
                 {'ad_site': ret}
         )
 
-        return True 
+        return ret 

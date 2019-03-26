@@ -181,6 +181,11 @@ def UNIXCHARSET_CHOICES():
         choices.sort()
         return choices
 
+def KERBEROS_PRINCIPAL_CHOICES():
+    with client as c:
+        principals = c.call('kerberos.keytab.get_kerberos_principals')
+        principals.sort()
+        return [(principal, principal) for principal in principals]
 
 LOGLEVEL_CHOICES = (
     ('0', _('None')),

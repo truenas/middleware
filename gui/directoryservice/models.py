@@ -801,41 +801,10 @@ class KerberosKeytab(Model):
     )
 
     def delete(self):
-        KerberosPrincipal.objects.filter(
-            principal_keytab=self
-        ).delete()
         super(KerberosKeytab, self).delete()
 
     def __str__(self):
         return self.keytab_name
-
-
-class KerberosPrincipal(Model):
-    principal_keytab = models.ForeignKey(
-        KerberosKeytab,
-        verbose_name=_("Keytab"),
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True
-    )
-    principal_version = models.IntegerField(
-        verbose_name=_("Version number"),
-        default=-1
-    )
-    principal_encryption = models.CharField(
-        verbose_name=_("Encryption algorithm"),
-        max_length=120
-    )
-    principal_name = models.CharField(
-        verbose_name=_("Principal name"),
-        max_length=120
-    )
-    principal_timestamp = models.DateTimeField(
-        verbose_name=_("Date")
-    )
-
-    def __str__(self):
-        return self.principal_name
 
 
 class KerberosSettings(Model):
@@ -881,27 +850,6 @@ class ActiveDirectory(DirectoryServiceBase):
         max_length=120,
         help_text=_("Domain Account password."),
         blank=True
-    )
-    ad_monitor_frequency = models.IntegerField(
-        verbose_name=_("AD check connectivity frequency (seconds)"),
-        default=60,
-        validators=[MaxValueValidator(3600), MinValueValidator(30)],
-        help_text=_("How often to verify that AD servers are active."),
-        blank=False
-    )
-    ad_recover_retry = models.IntegerField(
-        verbose_name=_("How many recovery attempts"),
-        default=10,
-        validators=[MaxValueValidator(500), MinValueValidator(0)],
-        help_text=_(
-            "Number of times to attempt to recover the connection with AD "
-            "server. If the value is 0, try forever."),
-        blank=False
-    )
-    ad_enable_monitor = models.BooleanField(
-        verbose_name=_("Enable Monitoring"),
-        help_text=_("Restart AD automatically if the service is disconnected."),
-        default=False
     )
     ad_ssl = models.CharField(
         verbose_name=_("Encryption Mode"),
@@ -956,38 +904,10 @@ class ActiveDirectory(DirectoryServiceBase):
             "users and groups."),
         default=False
     )
-    ad_userdn = models.CharField(
-        verbose_name=_("User Base"),
-        max_length=1024,
-        help_text=_("DN of the user container in AD."),
-        blank=True,
-        null=True
-    )
-    ad_groupdn = models.CharField(
-        verbose_name=_("Group Base"),
-        max_length=1024,
-        help_text=_("DN of the group container in AD."),
-        blank=True,
-        null=True
-    )
     ad_site = models.CharField(
         verbose_name=_("Site Name"),
         max_length=120,
         help_text=_("Name of site to use."),
-        blank=True,
-        null=True
-    )
-    ad_dcname = models.CharField(
-        verbose_name=_("Domain Controller"),
-        max_length=120,
-        help_text=_("FQDN of the domain controller to use."),
-        blank=True,
-        null=True
-    )
-    ad_gcname = models.CharField(
-        verbose_name=_("Global Catalog Server"),
-        max_length=120,
-        help_text=_("FQDN of the global catalog server to use."),
         blank=True,
         null=True
     )
@@ -998,12 +918,23 @@ class ActiveDirectory(DirectoryServiceBase):
         blank=True,
         null=True
     )
-    ad_kerberos_principal = models.ForeignKey(
-        KerberosPrincipal,
-        verbose_name=_("Kerberos Principal"),
-        on_delete=models.SET_NULL,
+    ad_kerberos_principal = models.CharField(
+        verbose_name=_("Kerberos Princpal"),
+        max_length=255,
+        blank=True
+    )
+    ad_createcomputer = models.CharField(
         blank=True,
-        null=True
+        max_length=255,
+        verbose_name=_('Computer Account OU'),
+        help_text=(
+            'If blank, then the default OU is used during computer account creation. '
+            'Precreate the computer account in a specific OU. The OU string '
+            'read from top to bottom without RDNs and delimited by a "/". '
+            'E.g. "Computers/Servers/Unix" A backslash "\" is used as escape at '
+            'multiple levels and may need to be doubled or even quadrupled. '
+            'It is not used as a separator.'
+        )
     )
     ad_timeout = models.IntegerField(
         verbose_name=_("AD timeout"),
@@ -1230,12 +1161,10 @@ class LDAP(DirectoryServiceBase):
         blank=True,
         null=True
     )
-    ldap_kerberos_principal = models.ForeignKey(
-        KerberosPrincipal,
-        verbose_name=_("Kerberos Principal"),
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True
+    ldap_kerberos_principal = models.CharField(
+        verbose_name=_("Kerberos Princpal"),
+        max_length=255,
+        blank=True
     )
     ldap_ssl = models.CharField(
         verbose_name=_("Encryption Mode"),

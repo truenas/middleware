@@ -6,21 +6,49 @@ import os
 import subprocess
 import time
 from middlewared.schema import accepts, Any, Bool, Cron, Dict, Int, List, Patch, Path, Str
-from middlewared.service import CallError, CRUDService, Service, item_method, private, ValidationErrors
+from middlewared.service import CallError, ConfigService, CRUDService, Service, item_method, private, ValidationErrors
 from middlewared.utils import run, Popen
 
 class keytab(enum.Enum):
     SYSTEM = '/etc/krb5.keytab'
     SAMBA = '/var/db/samba4/private/samba.keytab'
 
-class KerberosService(Service):
+class KerberosService(ConfigService):
     """
     :start:  - configures kerberos and performs kinit if needed
     :stop:   - performs kdestroy and clears cached klist output
     :status: - returns false if there is no kerberos tgt or if it is expired 'klist -t'
     :renew:  - compares current time with expiration timestamp in tgt. Issues 'kinit -R' if needed.
                uses cached klist output if available. 
+    :update: - this modifies the krb5.conf. There is a rudamentary parser for the auxiliary
+               parameters.
     """
+    class Config:
+        service = "kerberos"
+        datastore = 'directoryservice.kerberossettings'
+        datastore_prefix = "ks_"
+
+    @accepts(Dict(
+        'kerberos_settings_update',
+        Str('appdefaults_aux'),
+        Str('libdefaults_aux'),
+        update=True
+    ))
+    async def do_update(self, data):
+        old = await self.config()
+        new = old.copy()
+        new.update(data)
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            old['id'],
+            new,
+            {'prefix': 'ks_'}
+        )
+
+        await self.middleware.call('etc.generate', 'kerberos')
+        return await self.config()
+
 
     @private
     async def _klist_test(self):
@@ -39,14 +67,13 @@ class KerberosService(Service):
 
         For now we only check for kerberos realms explicitly configured in AD and LDAP. 
         """
-        ret = False
         ad = await self.middleware.call('activedirectory.config')
         ldap = await self.middleware.call('datastore.config', 'directoryservice.ldap')
         if ad['enable']:
             if ad['kerberos_principal']:
-                ad_kinit = await run([ '/usr/bin/kinit', '--renewable', '-t', keytab_file], check=False)
+                ad_kinit = await run([ '/usr/bin/kinit', '--renewable', '-k', ad['kerberos_principal']], check=False)
                 if ad_kinit.returncode != 0:
-                    raise CallError(f"kinit for domain [{ad['domainname']}] with keytab [{keytab_file}] failed: {kinit.stderr.decode()}") 
+                    raise CallError(f"kinit for domain [{ad['domainname']}] with principal [{ad['kerberos_principal']}] failed: {ad_kinit.stderr.decode()}") 
                 ret = True
             else:
                 principal = f'{ad["bindname"]}@{ad["domainname"]}'
@@ -57,15 +84,11 @@ class KerberosService(Service):
                 output = await ad_kinit.communicate(input=ad['bindpw'].encode())
                 if ad_kinit.returncode != 0:
                     raise CallError(f"kinit for domain [{ad['domainname']}] with password failed: {output[1].decode()}") 
-                ret = True
-
         if ldap['ldap_enable'] and ldap['ldap_realm']:
             if ldap['kerberos_principal']:
-                keytab_file = f"/etc/kerberos/{ldap['kerberos_principal']['principal_name']}"
-                ad_kinit = await run([ '/usr/bin/kinit', '--renewable', '-t', keytab_file], check=False)
+                ad_kinit = await run([ '/usr/bin/kinit', '--renewable', '-k', ldap['kerberos_principal']], check=False)
                 if ad_kinit.returncode != 0:
-                    raise CallError(f"kinit for realm {ldap['realm']} with keytab [{keytab_file}] failed: {kinit.stderr.decode()}") 
-                ret = True
+                    raise CallError(f"kinit for realm {ldap['realm']} with keytab [{keytab_file}] failed: {ad_kinit.stderr.decode()}") 
             else:
                 principal = f'{ldap["bindn"]}'
                 self.logger.debug(principal)
@@ -76,9 +99,6 @@ class KerberosService(Service):
                 output = await ad_kinit.communicate(input=ldap['bindpw'].encode())
                 if ad_kinit.returncode != 0:
                     raise CallError(f"kinit for realm{ldap['realm']} with password failed: {output[1].decode()}") 
-                ret = True
-
-        return ret
 
     @private
     async def _get_cached_klist(self):
@@ -212,7 +232,7 @@ class KerberosService(Service):
         """
         await self.middleware.call('etc.generate', 'kerberos')
         try:
-            ret = await asyncio.wait_for(self._kinit(), timeout=kinit_timeout)
+            await asyncio.wait_for(self._kinit(), timeout=kinit_timeout)
         except asyncio.TimeoutError:
             raise CallError(f'Timed out hung kinit after [{kinit_timeout}] seconds')
 
@@ -269,25 +289,30 @@ class KerberosRealmService(CRUDService):
         if verrors:
             raise verrors
 
+        data = await self.kerberos_compress(data)
+        data["id"] = await self.middleware.call(
+            "datastore.insert", self._config.datastore, data,
+            {
+                "prefix": self._config.datastore_prefix
+            },
+        )
         await self.middleware.call('etc.generate', 'kerberos')
         await self.middleware.call('service.restart', 'cron')
         return await self._get_instance(data['id'])
 
     @accepts(
         Int('id', required=True),
-        Dict(
-            'kerberos_realm_update',
-            Str('realm', required=True),
-            List('kdc', default=[]),
-            List('admin_server', default=[]),
-            List('kpasswd_server', default=[]),
-            register=True
+        Patch(
+            "kerberos_realm_create",
+            "kerberos_realm_update",
+            ("attr", {"update": True})
         )
     )
     async def do_update(self, id, data):
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
+        self.logger.debug(f'old: {old}, new: {new}')
 
         verrors = ValidationErrors()
 
@@ -296,6 +321,7 @@ class KerberosRealmService(CRUDService):
         if verrors:
             raise verrors
 
+        data = await self.kerberos_compress(new)
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
@@ -315,7 +341,6 @@ class KerberosRealmService(CRUDService):
         await self.middleware.call("datastore.delete", self._config.datastore, id)
         await self.middleware.call('etc.generate', 'kerberos')
         await self.middleware.call('kerberos.start')
-        return response
 
     @accepts(Int("id"))
     async def run(self, id):
@@ -489,13 +514,14 @@ class KerberosKeytabService(CRUDService):
                  ], check=False
             )
             if ktutil_remove.stderr.decode():
-                raise CallError(f"Failed to remove keytab entry from [{keytab['SAMBA'].value}]: {ktutil_remove.stderr.decode()}")
+                raise CallError(f"ktutil_remove [{keytab['SAMBA'].value}]: {ktutil_remove.stderr.decode()}")
+
     @private
     async def get_kerberos_principals(self):
         keytab_list = await self._ktutil_list()
         kerberos_principals = []
         for entry in keytab_list:
-            if '/' not in entry['principal'] and entry['principal'] not in kerberos_principals:
+            if entry['principal'] not in kerberos_principals:
                 kerberos_principals.append(entry['principal'])
 
         return kerberos_principals
@@ -521,9 +547,8 @@ class KerberosKeytabService(CRUDService):
 
         if not encoded_keytab:
             self.logger.debug(f"Failed to generate b64encoded version of {keytab['SAMBA'].name}") 
+            return False
 
-        self.logger.debug(encoded_keytab)
-  
         keytabs = await self.query()
         entry = list(filter(lambda x: x['name'] == 'AD_MACHINE_ACCOUNT', keytabs))
         if not entry:
