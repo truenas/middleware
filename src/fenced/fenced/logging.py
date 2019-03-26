@@ -1,0 +1,52 @@
+import logging
+import logging.config
+import logging.handlers
+
+
+class FaultSysLogHandler(logging.handlers.SysLogHandler):
+    """
+    If for some reason syslogd is not running we do not want tracebacks.
+    """
+    def emit(self, *args, **kwargs):
+        try:
+            super().emit(*args, **kwargs)
+        except Exception:
+            pass
+
+    def handleError(self, record):
+        if self.sock:
+            self.sock.close()
+            self.sock = None
+
+
+def setup_logging(foreground):
+    logging.config.dictConfig({
+        'version': 1,
+        'formatters': {
+            'simple': {
+                'format': '[%(name)s:%(lineno)s] %(message)s',
+            },
+        },
+        'handlers': {
+            'syslog': {
+                'class': 'fenced.logging.FaultSysLogHandler',
+                'address': '/var/run/log',
+                'formatter': 'simple',
+                'level': 'DEBUG',
+            },
+            'console': {
+                'class': 'logging.StreamHandler',
+                'formatter': 'simple',
+                'level': 'DEBUG' if foreground else 'INFO',
+                'stream': 'ext://sys.stdout',
+            },
+        },
+        'loggers': {
+            '': {
+                'handlers': ['console', 'syslog'],
+                'level': 'DEBUG',
+                'propagate': True,
+            },
+        },
+    })
+
