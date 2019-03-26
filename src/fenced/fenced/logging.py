@@ -22,6 +22,7 @@ class FaultSysLogHandler(logging.handlers.SysLogHandler):
 def setup_logging(foreground):
     logging.config.dictConfig({
         'version': 1,
+        'disable_existing_loggers': False,
         'formatters': {
             'simple': {
                 'format': '[%(name)s:%(lineno)s] %(message)s',
