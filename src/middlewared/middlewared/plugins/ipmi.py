@@ -15,6 +15,9 @@ class IPMIService(CRUDService):
 
     @accepts()
     async def is_loaded(self):
+        """
+        Returns a boolean true value indicating if ipmi device is loaded.
+        """
         return os.path.exists('/dev/ipmi0')
 
     @accepts()
@@ -26,6 +29,9 @@ class IPMIService(CRUDService):
 
     @filterable
     async def query(self, filters=None, options=None):
+        """
+        Query all IPMI Channels with `query-filters` and `query-options`.
+        """
         result = []
         for channel in await self.channels():
             try:
@@ -72,6 +78,15 @@ class IPMIService(CRUDService):
         Int('vlan'),
     ))
     async def do_update(self, id, data):
+        """
+        Update `id` IPMI Configuration.
+
+        `ipaddress` is a valid ip which will be used to connect to the IPMI interface.
+
+        `netmask` is the subnet mask associated with `ipaddress`.
+
+        `dhcp` is a boolean value which if unset means that `ipaddress`, `netmask` and `gateway` must be set.
+        """
 
         if not await self.is_loaded():
             raise CallError('The ipmi device could not be found')
