@@ -81,7 +81,7 @@ class FailoverService(ConfigService):
         await self.middleware.call('datastore.update', 'failover.failover', new['id'], new)
 
         if await self.middleware.call('pool.query', [('status', '!=', 'OFFLINE')]):
-            await run('fenced', 'force')
+            await run('fenced', '--force')
 
         try:
             await self.middleware.call('failover.call_remote', 'datastore.sql', [
@@ -264,7 +264,7 @@ class FailoverService(ConfigService):
         """
         Force this controller to become MASTER.
         """
-        cp = subprocess.run(['fenced', 'force'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+        cp = subprocess.run(['fenced', '--force'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
         if cp.returncode != 0:
             return False
         for i in self.middleware.call_sync('interface.query', [('failover_critical', '!=', None)]):
