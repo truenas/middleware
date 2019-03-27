@@ -356,6 +356,9 @@ class ReplicationService(CRUDService):
             id
         )
 
+        await self.middleware.call("service.restart", "cron")
+        await self.middleware.call("zettarepl.update_tasks")
+
         return response
 
     @item_method
