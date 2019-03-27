@@ -50,7 +50,7 @@ class SytemAdvancedService(ConfigService):
     @accepts()
     async def serial_port_choices(self):
         """
-        Get available choices for `serialport` attribute in `system.advanced.update`.
+        Get available choices for `serialport`.
         """
         if(
             not await self.middleware.call('system.is_freenas') and
@@ -144,6 +144,17 @@ class SytemAdvancedService(ConfigService):
         )
     )
     async def do_update(self, data):
+        """
+        Update System Advanced Service Configuration.
+
+        `consolemenu` should be disabled if the menu at console is not desired. It will default to standard login
+        in the console if disabled.
+
+        `periodic_notifyuser` is the user which will receive all security output emails.
+
+        `autotune` when enabled executes autotune script which attempts to optimize the system based on the installed
+        hardware.
+        """
         config_data = await self.config()
         original_data = config_data.copy()
         config_data.update(data)
@@ -249,6 +260,9 @@ class SystemService(Service):
 
     @accepts()
     def version(self):
+        """
+        Returns software version of the system.
+        """
         return sw_version()
 
     @accepts()
@@ -553,6 +567,9 @@ class SystemGeneralService(ConfigService):
 
     @accepts()
     def language_choices(self):
+        """
+        Returns language choices.
+        """
         return self._language_choices
 
     @private
@@ -663,12 +680,18 @@ class SystemGeneralService(ConfigService):
 
     @accepts()
     async def timezone_choices(self):
+        """
+        Returns time zone choices.
+        """
         if not self._timezone_choices:
             await self._initialize_timezone_choices()
         return self._timezone_choices
 
     @accepts()
     async def country_choices(self):
+        """
+        Returns country choices.
+        """
         if not self._country_choices:
             await self._initialize_country_choices()
         return self._country_choices
@@ -721,6 +744,9 @@ class SystemGeneralService(ConfigService):
 
     @accepts()
     async def kbdmap_choices(self):
+        """
+        Returns kbdmap choices.
+        """
         if not self._kbdmap_choices:
             await self._initialize_kbdmap_choices()
         return self._kbdmap_choices
@@ -830,7 +856,7 @@ class SystemGeneralService(ConfigService):
     @accepts()
     async def ui_certificate_choices(self):
         """
-        Return choices of `ui_certificate` attribute for `system.general.update`.
+        Return choices of certificates which can be used for `ui_certificate`.
         """
         return {
             i['id']: i['name']
@@ -859,6 +885,20 @@ class SystemGeneralService(ConfigService):
         )
     )
     async def do_update(self, data):
+        """
+        Update System General Service Configuration.
+
+        `ui_certificate` is used to enable HTTPS access to the system. If `ui_certificate` is not configured on boot,
+        it is automatically created by the system.
+
+        `ui_httpsredirect` when set, makes sure that all HTTP requests are converted to HTTPS requests to better
+        enhance security.
+
+        `ui_address` and `ui_v6address` are a list of valid ipv4/ipv6 addresses respectively which the system will
+        listen on.
+
+        When `syslogserver` is defined, `sysloglevel` makes sure that logs matching the specified level are sent.
+        """
         config = await self.config()
         config['ui_certificate'] = config['ui_certificate']['id'] if config['ui_certificate'] else None
         if not config.pop('crash_reporting_is_set'):
@@ -912,6 +952,9 @@ class SystemGeneralService(ConfigService):
 
     @accepts()
     async def local_url(self):
+        """
+        Returns configured local url in the format of protocol://host:port
+        """
         config = await self.middleware.call('system.general.config')
 
         if config['ui_certificate']:
