@@ -620,7 +620,6 @@ class ActiveDirectoryService(ConfigService):
         await self._set_state(DSStatus['JOINING'])
         await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_enable': True})
         await self.middleware.call('etc.generate', 'hostname')
-        await self.middleware.call('etc.generate', 'rc')
 
         if not ad['kerberos_realm']:
             await self.middleware.call(
@@ -660,7 +659,6 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_enable': False})
         await self._set_state(DSStatus['LEAVING'])
         await self.middleware.call('etc.generate', 'hostname')
-        await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('kerberos.stop')
         await self.middleware.call('etc.generate', 'smb')
         await self.middleware.call('service.restart', 'cifs')

@@ -363,8 +363,19 @@ class KerberosKeytabService(CRUDService):
     class Config:
         datastore = 'directoryservice.kerberoskeytab'
         datastore_prefix = 'keytab_'
+        datastore_extend = 'kerberos.keytab.kerberos_keytab_extend'
         namespace = 'kerberos.keytab'
 
+
+    @private
+    async def kerberos_keytab_extend(self, data):
+        data['file'] = await self.middleware.call('pwenc.decrypt', data['file'])
+        return data 
+
+    @private
+    async def kerberos_keytab_compress(self, data):
+        data['file'] = await self.middleware.call('pwenc.encrypt', data['file'])
+        return data 
 
     @accepts(
         Dict(
@@ -385,6 +396,7 @@ class KerberosKeytabService(CRUDService):
         if verrors:
             raise verrors
 
+        data = await self.kerberos_keytab_compress(data)
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -416,6 +428,7 @@ class KerberosKeytabService(CRUDService):
         if verrors:
             raise verrors
 
+        data = await self.kerberos_keytab_compress(data)
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
