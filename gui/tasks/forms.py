@@ -411,6 +411,8 @@ class RsyncForm(MiddlewareModelForm, ModelForm):
         update['month'] = self.cleaned_data.get("rsync_month")
         update['dayweek'] = self.cleaned_data.get("rsync_dayweek")
         update['extra'] = update["extra"].split()
+        update['mode'] = update['mode'].upper()
+        update['direction'] = update['direction'].upper()
         update['schedule'] = {
             'minute': update.pop('minute'),
             'hour': update.pop('hour'),

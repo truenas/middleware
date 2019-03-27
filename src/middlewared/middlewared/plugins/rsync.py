@@ -199,6 +199,8 @@ class RsyncTaskService(CRUDService):
     @private
     async def rsync_task_extend(self, data):
         data['extra'] = list(filter(None, re.split(r"\s+", data["extra"])))
+        for field in ('mode', 'direction'):
+            data[field] = data[field].upper()
         Cron.convert_db_format_to_schedule(data)
         return data
 
@@ -236,10 +238,10 @@ class RsyncTaskService(CRUDService):
             verrors.add(f'{schema}.mode', 'This field is required')
 
         remote_module = data.get('remotemodule')
-        if mode == 'module' and not remote_module:
+        if mode == 'MODULE' and not remote_module:
             verrors.add(f'{schema}.remotemodule', 'This field is required')
 
-        if mode == 'ssh':
+        if mode == 'SSH':
             remote_port = data.get('remoteport')
             if not remote_port:
                 verrors.add(f'{schema}.remoteport', 'This field is required')
@@ -352,19 +354,23 @@ class RsyncTaskService(CRUDService):
 
         data.pop('validate_rpath', None)
 
+        # Keeping compatibility with legacy UI
+        for field in ('mode', 'direction'):
+            data[field] = data[field].lower()
+
         return verrors, data
 
     @accepts(Dict(
         'rsync_task_create',
-        Str('path'),
+        Str('path', required=True),
         Str('user', required=True),
         Str('remotehost'),
         Int('remoteport'),
-        Str('mode'),
+        Str('mode', enum=['MODULE', 'SSH'], default='MODULE'),
         Str('remotemodule'),
         Str('remotepath'),
         Bool('validate_rpath'),
-        Str('direction'),
+        Str('direction', enum=['PULL', 'PUSH'], default='PUSH'),
         Str('desc'),
         Cron('schedule'),
         Bool('recursive'),
@@ -395,7 +401,7 @@ class RsyncTaskService(CRUDService):
         )
         await self.middleware.call('service.restart', 'cron')
 
-        return data
+        return await self._get_instance(data['id'])
 
     @accepts(
         Int('id', validators=[Range(min=1)]),
@@ -463,9 +469,9 @@ class RsyncTaskService(CRUDService):
         else:
             remote = f'"{rsync["user"]}"@{rsync["remotehost"]}'
 
-        if rsync['mode'] == 'module':
+        if rsync['mode'] == 'MODULE':
             module_args = [path, f'{remote}::"{rsync["remotemodule"]}"']
-            if rsync['direction'] != 'push':
+            if rsync['direction'] != 'PUSH':
                 module_args.reverse()
             line += module_args
         else:
@@ -474,7 +480,7 @@ class RsyncTaskService(CRUDService):
                 f'ssh -p {rsync["remoteport"]} -o BatchMode=yes -o StrictHostKeyChecking=yes'
             ]
             path_args = [path, f'{remote}:"{shlex.quote(rsync["remotepath"])}"']
-            if rsync['direction'] != 'push':
+            if rsync['direction'] != 'PUSH':
                 path_args.reverse()
             line += path_args
 
