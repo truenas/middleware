@@ -50,6 +50,9 @@ class JailService(CRUDService):
         Dict('query-options', additional_attrs=True),
     )
     def query(self, filters=None, options=None):
+        """
+        Query all jails with `query-filters` and `query-options`.
+        """
         options = options or {}
         jail_identifier = None
         jails = []
