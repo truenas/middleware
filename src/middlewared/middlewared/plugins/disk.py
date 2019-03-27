@@ -95,6 +95,22 @@ class DiskService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update disk of `id`.
+
+        If extra options need to be passed to SMART which we don't already support, they can be passed by
+        `smartoptions`.
+
+        `critical`, `informational` and `difference` are integer values on which alerts for SMART are configured
+        if the disk temperature crosses the assigned threshold for each respective attribute.
+        If they are set to null, then SMARTD config values are used as defaults.
+
+        Email of log level LOG_CRIT is issued when disk temperature crosses `critical`.
+
+        Email of log level LOG_INFO is issued when disk temperature crosses `informational`.
+
+        If temperature of a disk changes by `difference` degree Celsius since the last report, SMART reports this.
+        """
 
         old = await self.middleware.call(
             'datastore.query',
