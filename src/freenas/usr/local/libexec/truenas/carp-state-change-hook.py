@@ -366,10 +366,10 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             log.warn('Aquired failover master lock')
             log.warn('Starting fenced')
             if not user_override and not fasttrack and not forcetakeover:
-                error, output = run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python /usr/local/sbin/fenced')
+                error, output = run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/fenced')
             else:
                 error, output = run(
-                    'LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python /usr/local/sbin/fenced force'
+                    'LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/fenced --force'
                 )
 
             if error:
