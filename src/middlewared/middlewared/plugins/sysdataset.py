@@ -69,6 +69,14 @@ class SystemDatasetService(ConfigService):
     ))
     @job(lock='sysdataset_update')
     async def do_update(self, job, data):
+        """
+        Update System Dataset Service Configuration.
+
+        `pool` is the name of a valid pool configured in the system which will be used to host the system dataset.
+
+        `pool_exclude` can be specified to make sure that we don't place the system dataset on that pool if `pool`
+        is not provided.
+        """
         config = await self.config()
 
         new = config.copy()
@@ -316,6 +324,7 @@ class SystemDatasetService(ConfigService):
             open(path, 'w').close()
         os.symlink(path, item)
 
+    @private
     async def migrate(self, _from, _to):
 
         config = await self.config()
