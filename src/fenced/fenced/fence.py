@@ -14,10 +14,10 @@ LICENSE_FILE = '/data/license'
 
 class Fence(object):
 
-    def __init__(self, interval, force):
+    def __init__(self, interval):
         self._interval = interval
-        self._force = force
         self._disks = Disks(self)
+        self._reload = False
         self.hostid = None
 
     def get_hostid(self):
@@ -57,7 +57,10 @@ class Fence(object):
 
         return remote_keys
 
-    def init(self):
+    def sighup_handler(self, signum, intr_stack_frame):
+        self._reload = True
+
+    def init(self, force):
         self.hostid = self.get_hostid()
         logger.info('Host ID: 0x%x.', self.hostid)
 
@@ -66,7 +69,7 @@ class Fence(object):
             logger.error('No disks available, exiting.')
             sys.exit(1)
 
-        if not self._force:
+        if not force:
             wait_interval = 2 * self._interval + 1
             logger.info('Waiting %d seconds to verify remote keys.', wait_interval)
             time.sleep(wait_interval)
@@ -101,6 +104,12 @@ class Fence(object):
     def loop(self, key):
         firstkey = key
         while True:
+
+            if self._reload:
+                logger.warning('SIGHUP received, reloading.')
+                key = self.init(True)
+                self._reload = False
+
             oldkey = key
             if key > 0xffffffff:
                 key = 2

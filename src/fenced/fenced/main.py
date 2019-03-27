@@ -3,6 +3,7 @@ import argparse
 import fcntl
 import logging
 import os
+import signal
 import struct
 import subprocess
 import sys
@@ -84,8 +85,8 @@ def main():
         logger.error('fenced already running.')
         sys.exit(1)
 
-    fence = Fence(args.interval, args.force)
-    newkey = fence.init()
+    fence = Fence(args.interval)
+    newkey = fence.init(args.force)
 
     if not args.foreground:
         logger.info('Entering in daemon mode.')
@@ -96,6 +97,8 @@ def main():
         os.closerange(0, 3)
     else:
         logger.info('Running in foreground mode.')
+
+    signal.signal(signal.SIGHUP, fence.sighup_handler)
 
     try:
         fence.loop(newkey)
