@@ -148,6 +148,22 @@ class NetworkConfigurationService(ConfigService):
         )
     )
     async def do_update(self, data):
+        """
+        Update Network Configuration Service configuration.
+
+        `ipv4gateway` if set is used instead of the default gateway provided by DHCP.
+
+        `nameserver1` is primary DNS server.
+
+        `nameserver2` is secondary DNS server.
+
+        `nameserver3` is tertiary DNS server.
+
+        `httpproxy` attribute must be provided if a proxy is to be used for network operations.
+
+        `netwait_enabled` is a boolean attribute which when set indicates that network services will not start at
+        boot unless they are able to ping the addresses listed in `netwait_ip` list.
+        """
         config = await self.config()
         new_config = config.copy()
 
@@ -290,6 +306,9 @@ class InterfaceService(CRUDService):
 
     @filterable
     def query(self, filters, options):
+        """
+        Query Interfaces with `query-filters` and `query-options`
+        """
         data = {}
         configs = {
             i['int_interface']: i
@@ -1123,6 +1142,9 @@ class InterfaceService(CRUDService):
         )
     )
     async def do_update(self, oid, data):
+        """
+        Update Interface of `id`.
+        """
         iface = await self._get_instance(oid)
 
         new = iface.copy()
@@ -1251,6 +1273,11 @@ class InterfaceService(CRUDService):
 
     @accepts(Str('id'))
     async def do_delete(self, oid):
+        """
+        Delete Interface of `id`.
+
+        It should be noted that only virtual interfaces can be deleted.
+        """
         iface = await self._get_instance(oid)
 
         if iface['type'] == 'PHYSICAL':
@@ -1281,7 +1308,7 @@ class InterfaceService(CRUDService):
     @pass_app
     async def websocket_local_ip(self, app):
         """
-        Returns the interface this websocket is connected to.
+        Returns the ip this websocket is connected to.
         """
         if app is None:
             return
@@ -1311,6 +1338,9 @@ class InterfaceService(CRUDService):
     @accepts()
     @pass_app
     async def websocket_interface(self, app):
+        """
+        Returns the interface this websocket is connected to.
+        """
         local_ip = await self.middleware.call('interface.websocket_local_ip', app=app)
         for iface in await self.middleware.call('interface.query'):
             for alias in iface['aliases']:
@@ -1974,6 +2004,13 @@ class StaticRouteService(CRUDService):
         register=True
     ))
     async def do_create(self, data):
+        """
+        Create a Static Route.
+
+        Address families of `gateway` and `destination` should match when creating a static route.
+
+        `description` is an optional attribute for any notes regarding the static route.
+        """
         self._validate('staticroute_create', data)
 
         await self.lower(data)
@@ -1995,6 +2032,9 @@ class StaticRouteService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update Static Route of `id`.
+        """
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
@@ -2012,6 +2052,9 @@ class StaticRouteService(CRUDService):
 
     @accepts(Int('id'))
     def do_delete(self, id):
+        """
+        Delete Static Route of `id`.
+        """
         staticroute = self.middleware.call_sync('staticroute._get_instance', id)
         rv = self.middleware.call_sync('datastore.delete', self._config.datastore, id)
         try:
@@ -2051,6 +2094,9 @@ class DNSService(Service):
 
     @filterable
     async def query(self, filters, options):
+        """
+        Query Name Servers with `query-filters` and `query-options`.
+        """
         data = []
         resolvconf = (await run('resolvconf', '-l')).stdout.decode()
         for nameserver in RE_NAMESERVER.findall(resolvconf):
@@ -2097,6 +2143,30 @@ class NetworkGeneralService(Service):
 
     @accepts()
     async def summary(self):
+        """
+        Retrieve general information for current Network.
+
+        Returns a dictionary. For example:
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "ips": {
+                    "vtnet0": {
+                        "IPV4": [
+                            "192.168.0.15/24"
+                        ]
+                    }
+                },
+                "default_routes": [
+                    "192.168.0.1"
+                ],
+                "nameservers": [
+                    "192.168.0.1"
+                ]
+            }
+        """
         ips = defaultdict(lambda: defaultdict(list))
         for iface in await self.middleware.call('interface.query'):
             for alias in iface['state']['aliases']:
