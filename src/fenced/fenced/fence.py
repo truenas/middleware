@@ -1,3 +1,4 @@
+import enum
 import hashlib
 import logging
 import os
@@ -10,6 +11,13 @@ from fenced.exceptions import PanicExit
 
 logger = logging.getLogger(__name__)
 LICENSE_FILE = '/data/license'
+
+
+class ExitCode(enum.IntEnum):
+    REGISTER_ERROR = 1
+    REMOTE_RUNNING = 2
+    RESERVE_ERROR = 3
+    UNKNOWN = 5
 
 
 class Fence(object):
@@ -67,7 +75,7 @@ class Fence(object):
         remote_keys = self.load_disks()
         if not self._disks:
             logger.error('No disks available, exiting.')
-            sys.exit(1)
+            sys.exit(ExitCode.REGISTER_ERROR.value)
 
         if not force:
             wait_interval = 2 * self._interval + 1
@@ -76,7 +84,7 @@ class Fence(object):
             new_remote_keys = self._disks.get_keys()[1]
             if not new_remote_keys.issubset(remote_keys):
                 logger.error('Remote keys have changed, exiting.')
-                sys.exit(1)
+                sys.exit(ExitCode.REMOTE_RUNNING.value)
             else:
                 logger.info('Remote keys unchanged.')
 
@@ -85,8 +93,8 @@ class Fence(object):
         if failed_disks:
             rate = int((len(failed_disks) / len(self._disks)) * 100)
             if rate > 10:
-                logger.error('%d% of the disks failed to reset SCSI reervations, exiting.', rate)
-                sys.exit(1)
+                logger.error('%d% of the disks failed to reset SCSI reservations, exiting.', rate)
+                sys.exit(ExitCode.RESERVE_ERROR.value)
             for disk in failed_disks:
                 self._disks.remove(disk)
 
@@ -96,7 +104,7 @@ class Fence(object):
                 'Failed to set SCSI reservation on %s',
                 ' '.join([d.name for d in failed_disks]),
             )
-            sys.exit(1)
+            sys.exit(ExitCode.RESERVE_ERROR.value)
         logger.info('SCSI reservation set on %d disks.', len(self._disks))
 
         return newkey
