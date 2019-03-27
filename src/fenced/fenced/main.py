@@ -24,6 +24,7 @@ def is_running():
         fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
         return True
+    os.write(lock_fd, str(os.getpid()).encode())
     return False
 
 
@@ -54,7 +55,19 @@ def main():
         sys.exit(1)
 
     fence = Fence(args.interval, args.force)
-    fence.run()
+    newkey = fence.init()
+
+    if not args.foreground:
+        logger.info('Entering in daemon mode.')
+        if os.fork() != 0:
+            sys.exit(0)
+        if os.fork() != 0:
+            sys.exit(0)
+        os.closerange(0, 3)
+    else:
+        logger.info('Running in foreground mode.')
+
+    fence.loop(newkey)
 
 
 if __name__ == '__main__':
