@@ -15,6 +15,46 @@ class DynDNSService(SystemServiceService):
         dyndns["domain"] = dyndns["domain"].replace(',', ' ').replace(';', ' ').split()
         return dyndns
 
+    @accepts()
+    async def provider_choices(self):
+        """
+        List supported Dynamic DNS Service Providers.
+        """
+        return {
+            'default@changeip.com': 'changeip.com',
+            'default@cloudxns.net': 'cloudxns.net',
+            'default@ddnss.de': 'ddnss.de',
+            'default@dhis.org': 'dhis.org',
+            'default@dnsexit.com': 'dnsexit.com',
+            'default@dnsomatic.com': 'dnsomatic.com',
+            'default@dnspod.cn': 'dnspod.cn',
+            'default@domains.google.com': 'domains.google.com',
+            'default@dtdns.com': 'dtdns.com',
+            'default@duckdns.org': 'duckdns.org',
+            'default@duiadns.net': 'duiadns.net',
+            'default@dyndns.org': 'dyndns.org',
+            'default@dynsip.org': 'dynsip.org',
+            'default@dynv6.com': 'dynv6.com',
+            'default@easydns.com': 'easydns.com',
+            'default@freedns.afraid.org': 'freedns.afraid.org',
+            'default@freemyip.com': 'freemyip.com',
+            'default@gira.de': 'gira.de',
+            'default@ipv4.dynv6.com': 'ipv4.dynv6.com',
+            'default@loopia.com': 'loopia.com',
+            'default@no-ip.com': 'no-ip.com',
+            'default@ovh.com': 'ovh.com',
+            'default@sitelutions.com': 'sitelutions.com',
+            'default@spdyn.de': 'spdyn.de',
+            'default@strato.com': 'strato.com',
+            'default@tunnelbroker.net': 'tunnelbroker.net',
+            'default@tzo.com': 'tzo.com',
+            'default@zerigo.com': 'zerigo.com',
+            'default@zoneedit.com': 'zoneedit.com',
+            'dyndns@3322.org': '3322.org',
+            'ipv4@nsupdate.info': 'nsupdate.info',
+            'ipv6tb@he.net': 'he.net'
+        }
+
     @accepts(Dict(
         'dyndns_update',
         Str('provider'),
