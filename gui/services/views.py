@@ -25,7 +25,6 @@
 #####################################################################
 import json
 import logging
-import sysctl
 
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
@@ -36,9 +35,9 @@ from freenasUI.directoryservice.models import (
     idmap_tdb,
     DS_TYPE_CIFS
 )
-from freenasUI.directoryservice.views import get_directoryservice_status
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.notifier import notifier
@@ -48,7 +47,6 @@ from freenasUI.services.forms import (
     CIFSForm,
     S3Form
 )
-from freenasUI.system.models import Tunable
 from freenasUI.support.utils import fc_enabled
 from middlewared.client import ValidationErrors
 
@@ -86,9 +84,9 @@ def core(request):
         extra_services['asigra'] = asigra.get_edit_url()
 
     try:
-        cifs = models.CIFS.objects.order_by("-id")[0]
+        models.CIFS.objects.order_by("-id")[0]
     except IndexError:
-        cifs = models.CIFS.objects.create()
+        models.CIFS.objects.create()
 
     try:
         dynamicdns = models.DynamicDNS.objects.order_by("-id")[0]
@@ -121,9 +119,9 @@ def core(request):
         rsyncd = models.Rsyncd.objects.create()
 
     try:
-        s3 = models.S3.objects.order_by("-id")[0]
+        models.S3.objects.order_by("-id")[0]
     except IndexError:
-        s3 = models.S3.objects.create()
+        models.S3.objects.create()
 
     try:
         smart = models.SMART.objects.order_by("-id")[0]
@@ -253,8 +251,6 @@ def services_cifs(request):
 def fibrechanneltotarget(request):
 
     i = 0
-    sysctl_set = {}
-    loader = False
     while True:
 
         fc_port = request.POST.get('fcport-%d-port' % i)
@@ -263,88 +259,20 @@ def fibrechanneltotarget(request):
         if fc_port is None:
             break
 
-        port = fc_port.replace('isp', '').replace('/', ',')
-        if ',' in port:
-            port_number, vport = port.split(',', 1)
-            mibname = '%s.chan%s' % (port_number, vport)
-        else:
-            port_number = port
-            vport = None
-            mibname = port
-
-        role = sysctl.filter('dev.isp.%s.role' % mibname)
-        if role:
-            role = role[0]
-        tun_var = 'hint.isp.%s.role' % mibname
-
-        qs = models.FibreChannelToTarget.objects.filter(fc_port=fc_port)
-        if qs.exists():
-            fctt = qs[0]
-        else:
-            fctt = models.FibreChannelToTarget()
-            fctt.fc_port = fc_port
-        # Initiator mode
         if fc_target in ('false', False):
-            if role:
-                # From disabled to initiator, just set sysctl
-                if role.value == 0:
-                    role.value = 2
-                # From target to initiator, reload ctld then set to 2
-                elif role.value == 1:
-                    sysctl_set[mibname] = 2
-            fctt.fc_target = None
-            fctt.save()
-            qs = Tunable.objects.filter(tun_var=tun_var)
-            if qs.exists():
-                tun = qs[0]
-                if tun.tun_value != '2':
-                    tun.tun_value = '2'
-                    loader = True
-                tun.save()
-            else:
-                tun = Tunable()
-                tun.tun_var = tun_var
-                tun.tun_value = '2'
-                tun.save()
-                loader = True
-        # Disabled
+            mode = 'INITIATOR'
+            fc_target = None
         elif fc_target is None:
-            if role:
-                # From initiator to disabled, just set sysctl
-                if role.value == 2:
-                    role.value = 0
-            if fctt.id:
-                fctt.delete()
-            qs = Tunable.objects.filter(tun_var=tun_var)
-            if qs.exists():
-                loader = True
-                qs.delete()
-        # Target mode
+            mode = 'DISABLED'
+            fc_target = None
         else:
-            if role:
-                # From initiator to target, first set sysctl
-                if role.value == 2:
-                    role.value = 0
-            fctt.fc_target = models.iSCSITarget.objects.get(id=fc_target)
-            fctt.save()
-            qs = Tunable.objects.filter(tun_var=tun_var)
-            if qs.exists():
-                loader = True
-                qs.delete()
+            mode = 'TARGET'
+            fc_target = int(fc_target)
+
+        with client as c:
+            c.call("fcport.update", fc_port, {"mode": mode, "target": fc_target})
 
         i += 1
-
-    if i > 0:
-        notifier().reload("iscsitarget")
-
-    for mibname, val in list(sysctl_set.items()):
-        role = sysctl.filter('dev.isp.%s.role' % mibname)
-        if role:
-            role = role[0]
-            role.value = val
-
-    if loader:
-        notifier().reload('loader')
 
     return JsonResp(
         request,
