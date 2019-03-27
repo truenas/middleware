@@ -3,20 +3,25 @@ import argparse
 import fcntl
 import logging
 import os
+import struct
+import subprocess
 import sys
+import time
 
+from fenced.exceptions import PanicExit
 from fenced.fence import Fence
 from fenced.logging import setup_logging
 
 logger = logging.getLogger(__name__)
+ALERT_FILE = '/data/sentinels/.fenced-alert'
 LOCK_FILE = '/tmp/.fenced-lock'
 
 
 def is_running():
     """
-	Use lock file to prevent duplicate fenced's from starting
-	because fenced can and will panic the box when this happens.
-	Ticket #48031
+    Use lock file to prevent duplicate fenced's from starting
+    because fenced can and will panic the box when this happens.
+    Ticket #48031
     """
 
     lock_fd = os.open(LOCK_FILE, os.O_RDWR | os.O_CREAT)
@@ -26,6 +31,31 @@ def is_running():
         return True
     os.write(lock_fd, str(os.getpid()).encode())
     return False
+
+
+def panic(reason):
+    """
+    An unclean reboot is going to occur.
+    Try to create this file and write epoch time to it. After we panic,
+    middlewared will check for this file, read the epoch time in the file
+    and will send an appropriate email and then remove it.
+    Ticket #39114
+    """
+    try:
+        with open(ALERT_FILE, 'wb') as f:
+            epoch = int(time.time())
+            b = struct.pack('@i', epoch)
+            f.write(b)
+            f.sync()
+            os.fsync(f.fileno())  # Be extra sure
+    except EnvironmentError as e:
+        logger.debug('Failed to write alert file: %s', e)
+
+    logger.error('FATAL: %s', reason)
+    logger.error('FATAL: issuing an immediate panic.')
+    subprocess.run(['watchdog', '-t', '1'], check=False)
+    subprocess.run(['sysctl', 'debug.kdb.panic=1'], check=False)
+    subprocess.run(['shutdown', '-p', 'now'], check=False)
 
 
 def main():
@@ -67,7 +97,10 @@ def main():
     else:
         logger.info('Running in foreground mode.')
 
-    fence.loop(newkey)
+    try:
+        fence.loop(newkey)
+    except PanicExit as e:
+        panic(e)
 
 
 if __name__ == '__main__':

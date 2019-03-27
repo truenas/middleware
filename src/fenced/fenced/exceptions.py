@@ -1,0 +1,2 @@
+class PanicExit(SystemExit):
+    pass

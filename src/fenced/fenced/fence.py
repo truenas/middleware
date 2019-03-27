@@ -6,6 +6,7 @@ import sysctl
 import time
 
 from fenced.disks import Disk, Disks
+from fenced.exceptions import PanicExit
 
 logger = logging.getLogger(__name__)
 LICENSE_FILE = '/data/license'
@@ -114,7 +115,7 @@ class Fence(object):
             failed_disks = self._disks.set_keys(key)
             if failed_disks:
                 if len(failed_disks) / len(self._disks) > 0.1:
-                    sys.exit(1)
+                    raise PanicExit(f'More than 10% of the disks failed to update reservation.')
                 for d in failed_disks:
                     self._disks.remove(d)
 
