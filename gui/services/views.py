@@ -84,9 +84,9 @@ def core(request):
         extra_services['asigra'] = asigra.get_edit_url()
 
     try:
-        cifs = models.CIFS.objects.order_by("-id")[0]
+        models.CIFS.objects.order_by("-id")[0]
     except IndexError:
-        cifs = models.CIFS.objects.create()
+        models.CIFS.objects.create()
 
     try:
         dynamicdns = models.DynamicDNS.objects.order_by("-id")[0]
@@ -119,9 +119,9 @@ def core(request):
         rsyncd = models.Rsyncd.objects.create()
 
     try:
-        s3 = models.S3.objects.order_by("-id")[0]
+        models.S3.objects.order_by("-id")[0]
     except IndexError:
-        s3 = models.S3.objects.create()
+        models.S3.objects.create()
 
     try:
         smart = models.SMART.objects.order_by("-id")[0]

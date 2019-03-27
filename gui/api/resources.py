@@ -29,10 +29,7 @@ import errno
 import json
 import logging
 import os
-import re
-import subprocess
 import urllib.parse
-import sysctl
 
 from collections import OrderedDict
 from croniter import croniter
@@ -85,7 +82,7 @@ from freenasUI.network.models import Alias, Interfaces
 from freenasUI.services.forms import iSCSITargetPortalIPForm
 from freenasUI.services.models import (
     iSCSITargetGlobalConfiguration,
-    iSCSITargetPortal, iSCSITargetPortalIP, FibreChannelToTarget
+    iSCSITargetPortal, iSCSITargetPortalIP,
 )
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
 from freenasUI.sharing.forms import NFS_SharePathForm
