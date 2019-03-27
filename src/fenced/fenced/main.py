@@ -92,6 +92,7 @@ def main():
         logger.info('Entering in daemon mode.')
         if os.fork() != 0:
             sys.exit(0)
+        os.setsid()
         if os.fork() != 0:
             sys.exit(0)
         os.closerange(0, 3)
