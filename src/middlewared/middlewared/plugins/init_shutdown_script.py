@@ -25,6 +25,23 @@ class InitShutdownScriptService(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
+        """
+        Create an initshutdown script task.
+
+        `type` indicates if a command or script should be executed at `when`.
+
+        There are three choices for `when`:
+
+        1) PREINIT - This is early in the boot process before all the services / rc scripts have started
+        2) POSTINIT - This is late in the boot process when most of the services / rc scripts have started
+        3) SHUTDOWN - This is on shutdown
+
+        `timeout` is an integer value which indicates time in seconds which the system should wait for the execution
+        of script/command. It should be noted that a hard limit for a timeout is configured by the base OS, so when
+        a script/command is set to execute on SHUTDOWN, the hard limit configured by the base OS is changed adding
+        the timeout specified by script/command so it can be ensured that it executes as desired and is not interrupted
+        by the base OS's limit.
+        """
         await self.validate(data, 'init_shutdown_script_create')
 
         await self.init_shutdown_script_compress(data)
@@ -44,6 +61,9 @@ class InitShutdownScriptService(CRUDService):
         ('attr', {'update': True}),
     ))
     async def do_update(self, id, data):
+        """
+        Update initshutdown script task of `id`.
+        """
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
@@ -64,6 +84,9 @@ class InitShutdownScriptService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        """
+        Delete init/shutdown task of `id`.
+        """
         return await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
