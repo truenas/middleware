@@ -45,7 +45,7 @@ class Fence(object):
                 continue
             try:
                 disk = Disk(self, i)
-                remote_keys.union(disk.get_keys()[1])
+                remote_keys.update(disk.get_keys()[1])
             except (OSError, RuntimeError):
                 logger.debug('Disk %s does not support reservations.', disk)
                 unsupported.append(i)
