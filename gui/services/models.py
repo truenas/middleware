@@ -1065,8 +1065,8 @@ class FibreChannelToTarget(Model):
 class DynamicDNS(Model):
     ddns_provider = models.CharField(
         max_length=120,
-        choices=choices.DYNDNSPROVIDER_CHOICES,
-        default=choices.DYNDNSPROVIDER_CHOICES[0][0],
+        default='dyndns@3322.org',
+        choices=choices.DYNDNSPROVIDER_CHOICES(),
         blank=True,
         verbose_name=_("Provider"),
     )
