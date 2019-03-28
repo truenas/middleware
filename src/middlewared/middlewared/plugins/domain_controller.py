@@ -1,7 +1,11 @@
+import errno
+import os
 import socket
 
 from middlewared.schema import accepts, Dict, Int, Str
 from middlewared.service import private, SystemServiceService
+from middlewared.service_exception import CallError
+from middlewared.utils import run
 
 
 class DomainControllerService(SystemServiceService):
@@ -20,6 +24,73 @@ class DomainControllerService(SystemServiceService):
     async def domaincontroller_compress(self, domaincontroller):
         domaincontroller['role'] = domaincontroller['role'].lower()
         return domaincontroller
+
+    @private
+    def is_provisioned(self):
+        """
+        Presumption that the domain is provisioned is to fail safe.
+        Provisioning on top of an existing domain is a destructive process that
+        must be avoided.
+        """
+        systemdataset = self.middleware.call_sync('systemdataset.config')
+        sysvol_dataset = f"{systemdataset['basename']}/samba4"
+        sysvol_path = f"{systemdataset['path']}/samba4"
+        zfs = self.middleware.call_sync('zfs.dataset.query', [('id', '=', sysvol_dataset)])
+        if not zfs:
+            raise CallError(f"sysvol dataset [{sysvol_dataset}] does not exist", errno.ENOENT)
+
+        if not os.path.exists('/var/db/samba4'):
+            try:
+                self.logger.debug(f're-creating symbolic link from {sysvol_path} to /var/db/samba4')
+                os.symlink(sysvol_path, '/var/db/samba4')
+            except Exception as e:
+                raise CallError(f'Failed to create symbolic link from {syvolpath} to var/db/samba4:({e})')
+
+        if 'org.ix.activedirectory:provisioned' not in zfs[0]['properties']:
+            return False
+
+        provision_status = zfs[0]['properties']['org.ix.activedirectory:provisioned']
+
+        return False if provision_status['value'] == 'no' else True
+
+    @private
+    def set_provisioned(self, value=True):
+        systemdataset = self.middleware.call_sync('systemdataset.config')
+        sysvol_path = f"{systemdataset['basename']}/samba4"
+        ds = {'properties': {'org.ix.activedirectory:provisioned': {'value': 'yes' if value else 'no'}}}
+        self.middleware.call_sync('zfs.dataset.update', sysvol_path, ds)
+        return True
+
+    @private
+    async def provision(self, force=False):
+        """
+        Determine provisioning status based on custom ZFS User Property.
+        Re-provisioning on top of an existing domain can have catastrophic results.
+        """
+        is_already_provisioned = await self.middleware.call('domaincontroller.is_provisioned')
+        if is_already_provisioned and not force:
+            self.logger.debug("Domain is already provisioned and command does not have 'force' flag. Bypassing.")
+            return False
+
+        dc = await self.middleware.call('domaincontroller.config')
+        prov = await run([
+            "/usr/local/bin/samba-tool",
+            'domain', 'provision',
+            "--realm", dc['realm'],
+            "--domain", dc['domain'],
+            "--dns-backend", dc['dns_backend'],
+            "--server-role", dc['role'].lower(),
+            "--function-level", dc['forest_level'],
+            "--option", "vfs objects=dfs_samba4 zfsacl",
+            "--use-rfc2307"],
+            check=False
+        )
+        if prov.returncode != 0:
+            raise CallError(f"Failed to provision domain: {prov.stderr.decode()}")
+        else:
+            self.logger.debug(f"Successfully provisioned domain [{dc['domain']}]")
+            await self.middleware.call('domaincontroller.set_provisioned', True)
+            return True
 
     @accepts(Dict(
         'domaincontroller_update',
@@ -63,7 +134,7 @@ class DomainControllerService(SystemServiceService):
                                                                    new_realm)
 
         if any(new[k] != old[k] for k in ["realm", "domain"]):
-            await self.middleware.call("notifier.samba4", "domain_sentinel_file_remove")
+            await self.middleware.call('domaincontroller.set_provisioned', False)
 
         await self.domaincontroller_compress(new)
 
