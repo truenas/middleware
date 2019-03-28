@@ -556,7 +556,7 @@ class ShellWorkerThread(threading.Thread):
                     pass
             os.chdir('/root')
             cmd = [
-                '/usr/local/bin/bash'
+                '/usr/bin/login', '-fp', 'root',
             ]
 
             if self.jail is not None:
