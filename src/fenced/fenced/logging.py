@@ -34,6 +34,7 @@ def setup_logging(foreground):
                 'address': '/var/run/log',
                 'formatter': 'simple',
                 'level': 'DEBUG',
+                'facility': 'daemon',
             },
             'console': {
                 'class': 'logging.StreamHandler',
