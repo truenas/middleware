@@ -23,6 +23,14 @@ class TFTPService(SystemServiceService):
         update=True
     ))
     async def do_update(self, data):
+        """
+        Update TFTP Service Configuration.
+
+        `newfiles` when set enables network devices to send files to the system.
+
+        `username` sets the user account which will be used to access `directory`. It should be ensured `username`
+        has access to `directory`.
+        """
         old = await self.config()
 
         new = old.copy()
