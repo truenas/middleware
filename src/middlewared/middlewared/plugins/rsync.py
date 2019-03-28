@@ -37,7 +37,9 @@ import glob
 import asyncio
 
 from collections import defaultdict
-from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, Ref, List, Patch
+
+from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch
 from middlewared.validators import Range, Match
 from middlewared.service import (
     Service, job, CallError, CRUDService, private, SystemServiceService, ValidationErrors
@@ -286,31 +288,58 @@ class RsyncModService(CRUDService):
     class Config:
         datastore = 'services.rsyncmod'
         datastore_prefix = 'rsyncmod_'
+        datastore_extend = 'rsyncmod.rsync_mod_extend'
+
+    @private
+    async def rsync_mod_extend(self, data):
+        data['hostsallow'] = data['hostsallow'].split()
+        data['hostsdeny'] = data['hostsdeny'].split()
+        data['mode'] = data['mode'].upper()
+        return data
+
+    @private
+    async def common_validation(self, data, schema_name):
+        verrors = ValidationErrors()
+
+        await check_path_resides_within_volume(verrors, self.middleware, f'{schema_name}.path', data.get('path'))
+
+        for entity in ('user', 'group'):
+            value = data.get(entity)
+            if value not in map(
+                    lambda e: e[entity if entity == 'group' else 'username'],
+                    await self.middleware.call(f'{entity}.query')
+            ):
+                verrors.add(
+                    f'{schema_name}.{entity}',
+                    f'Please specify a valid {entity}'
+                )
+
+        if verrors:
+            raise verrors
+
+        data['hostsallow'] = ' '.join(data['hostsallow'])
+        data['hostsdeny'] = ' '.join(data['hostsdeny'])
+        data['mode'] = data['mode'].lower()
+
+        return data
 
     @accepts(Dict(
-        'rsyncmod',
+        'rsyncmod_create',
         Str('name', validators=[Match(r'[^/\]]')]),
         Str('comment'),
-        Str('path'),
-        Str('mode'),
+        Str('path', required=True),
+        Str('mode', enum=['RO', 'RW', 'WO']),
         Int('maxconn'),
-        Str('user'),
-        Str('group'),
-        List('hostsallow', items=[Str('hostsallow')]),
-        List('hostsdeny', items=[Str('hostdeny')]),
+        Str('user', default='nobody'),
+        Str('group', default='nobody'),
+        List('hostsallow', items=[Str('hostsallow')], default=[]),
+        List('hostsdeny', items=[Str('hostdeny')], default=[]),
         Str('auxiliary'),
         register=True,
     ))
     async def do_create(self, data):
-        if data.get("hostsallow"):
-            data["hostsallow"] = " ".join(data["hostsallow"])
-        else:
-            data["hostsallow"] = ""
 
-        if data.get("hostsdeny"):
-            data["hostsdeny"] = " ".join(data["hostsdeny"])
-        else:
-            data["hostsdeny"] = ""
+        data = await self.common_validation(data, 'rsyncmod_create')
 
         data['id'] = await self.middleware.call(
             'datastore.insert',
@@ -318,32 +347,28 @@ class RsyncModService(CRUDService):
             data,
             {'prefix': self._config.datastore_prefix}
         )
-        await self.middleware.call('service.reload', 'rsync')
-        return data
 
-    @accepts(Int('id'), Ref('rsyncmod'))
+        await self.middleware.call('service.reload', 'rsync')
+
+        return await self._get_instance(data['id'])
+
+    @accepts(Int('id'), Patch('rsyncmod_create', 'rsyncmod_update', ('attr', {'update': True})))
     async def do_update(self, id, data):
-        module = await self.middleware.call(
-            'datastore.query',
-            self._config.datastore,
-            [('id', '=', id)],
-            {'prefix': self._config.datastore_prefix, 'get': True}
-        )
+        module = await self._get_instance(id)
         module.update(data)
 
-        module["hostsallow"] = " ".join(module["hostsallow"])
-        module["hostsdeny"] = " ".join(module["hostsdeny"])
+        module = await self.common_validation(module, 'rsyncmod_update')
 
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
             id,
-            data,
+            module,
             {'prefix': self._config.datastore_prefix}
         )
         await self.middleware.call('service.reload', 'rsync')
 
-        return module
+        return await self._get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
