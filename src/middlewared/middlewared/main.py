@@ -6,7 +6,7 @@ from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
 from .schema import ResolverError, Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
-from .utils import start_daemon_thread, load_modules, load_classes, LoadPluginsMixin
+from .utils import start_daemon_thread, LoadPluginsMixin
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .webui_auth import WebUIAuth
 from .worker import ProcessPoolExecutor, main_worker
