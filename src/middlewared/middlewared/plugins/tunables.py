@@ -22,6 +22,16 @@ class TunableService(CRUDService):
         register=True
     ))
     async def do_create(self, data):
+        """
+        Create a Tunable.
+
+        `var` represents name of the sysctl/loader/rc variable.
+
+        `type` should be one of the following:
+        1) LOADER     -     Configure `var` for loader(8)
+        2) RC         -     Configure `var` for rc(8)
+        3) SYSCTL     -     Configure `var` for sysctl(8)
+        """
         await self.clean(data, 'tunable_create')
         await self.validate(data, 'tunable_create')
         await self.lower(data)
@@ -46,6 +56,9 @@ class TunableService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update Tunable of `id`.
+        """
         old = await self._get_instance(id)
 
         new = old.copy()
@@ -70,6 +83,9 @@ class TunableService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        """
+        Delete Tunable of `id`.
+        """
         tunable = await self._get_instance(id)
 
         response = await self.middleware.call(
