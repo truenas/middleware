@@ -959,6 +959,19 @@ class VolumeResourceMixin(NestedMixin):
                 response=self.error_response(request, _('Volume is not encrypted.'))
             )
 
+        with client as c:
+            sys_dataset = c.call('systemdataset.config')
+
+        if obj.vol_name == sys_dataset['pool']:
+            raise ImmediateHttpResponse(
+                response=self.error_response(
+                    request,_(
+                        'Pool contains the system dataset and cannot be locked. Please select a different pool or '
+                        'configure the system dataset to be on a different pool.'
+                    )
+                )
+            )
+
         _n = notifier()
         _n.volume_detach(obj)
 
@@ -1031,7 +1044,29 @@ class VolumeResourceMixin(NestedMixin):
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
 
+        if obj.vol_encrypt == 0:
+            raise ImmediateHttpResponse(
+                response=self.error_response(
+                    request, _(
+                        'The pool is not encrypted.'
+                    )
+                )
+            )
+
         if request.method == 'POST':
+
+            with client as c:
+                sys_dataset = c.call('systemdataset.config')
+
+            if obj.vol_name == sys_dataset['pool']:
+                raise ImmediateHttpResponse(
+                    response=self.error_response(
+                        request, _(
+                            'An encrypted pool containing the system dataset must not have a passphrase. '
+                            'An existing passphrase on that pool can only be removed.'
+                        )
+                    )
+                )
 
             form = CreatePassphraseForm(deserialized)
             if not form.is_valid():
@@ -1046,7 +1081,7 @@ class VolumeResourceMixin(NestedMixin):
             if 'passphrase2' not in deserialized:
                 deserialized['passphrase2'] = deserialized.get('passphrase')
 
-            form = ChangePassphraseForm(deserialized)
+            form = ChangePassphraseForm(data=deserialized, volume=obj)
             if not form.is_valid():
                 raise ImmediateHttpResponse(
                     response=self.error_response(request, form.errors)

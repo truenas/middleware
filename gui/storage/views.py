@@ -929,26 +929,37 @@ def volume_create_passphrase(request, object_id):
             return JsonResp(
                 request,
                 message=_("Passphrase created"))
+
+    with client as c:
+        sys_dataset = c.call('systemdataset.config')
+
+    if volume.vol_name == sys_dataset['pool']:
+        return render(
+            request,
+            'freeadmin/generic_model_dialog.html', {
+                'msg': 'An encrypted pool containing the system dataset must not have a passphrase. '
+                       'An existing passphrase on that pool can only be removed.'
+            }
+        )
     else:
-        form = forms.CreatePassphraseForm()
-    return render(request, "storage/create_passphrase.html", {
-        'volume': volume,
-        'form': form,
-    })
+        return render(request, "storage/create_passphrase.html", {
+            'volume': volume,
+            'form': forms.CreatePassphraseForm(),
+        })
 
 
 def volume_change_passphrase(request, object_id):
 
     volume = models.Volume.objects.get(id=object_id)
     if request.method == "POST":
-        form = forms.ChangePassphraseForm(request.POST)
+        form = forms.ChangePassphraseForm(request.POST, volume=volume)
         if form.is_valid():
             form.done(volume=volume)
             return JsonResp(
                 request,
                 message=_("Passphrase updated"))
     else:
-        form = forms.ChangePassphraseForm()
+        form = forms.ChangePassphraseForm(volume=volume)
     return render(request, "storage/change_passphrase.html", {
         'volume': volume,
         'form': form,
@@ -987,6 +998,19 @@ def volume_lock(request, object_id):
                 log.warn('Failed to clear key on standby node, is it down?', exc_info=True)
         notifier().restart("system_datasets")
         return JsonResp(request, message=_("Volume locked"))
+
+    with client as c:
+        sys_dataset = c.call('systemdataset.config')
+
+    if volume.vol_name == sys_dataset['pool']:
+        return render(
+            request,
+            'freeadmin/generic_model_dialog.html', {
+                'msg': 'Pool contains the system dataset and cannot be locked. Please select a different pool '
+                       'or configure the system dataset to be on a different pool.'
+            }
+        )
+
     return render(request, "storage/lock.html")
 
 
