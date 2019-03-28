@@ -364,6 +364,9 @@ class ReplicationService(CRUDService):
     @item_method
     @accepts(Int("id"))
     async def run(self, id):
+        """
+        Run Replication Task of `id`.
+        """
         task = await self._get_instance(id)
 
         if not task["enabled"]:
