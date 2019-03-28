@@ -42,6 +42,9 @@ class UPSService(SystemServiceService):
 
     @accepts()
     def driver_choices(self):
+        """
+        Returns choices of UPS drivers supported by the system.
+        """
         ups_choices = {}
         if os.path.exists("/conf/base/etc/local/nut/driver.list"):
             with open('/conf/base/etc/local/nut/driver.list', 'rb') as f:
@@ -157,6 +160,23 @@ class UPSService(SystemServiceService):
         )
     )
     async def do_update(self, data):
+        """
+        Update UPS Service Configuration.
+
+        `emailnotify` when enabled, sends out notifications of different UPS events via email.
+
+        `powerdown` when enabled, sets UPS to power off after shutting down the system.
+
+        `nocommwarntime` is a value in seconds which makes UPS Service wait the specified seconds before alerting that
+        the Service cannot reach configured UPS.
+
+        `shutdowntimer` is a value in seconds which tells the Service to wait specified seconds for the UPS before
+        initiating a shutdown. This only applies when `shutdown` is set to "BATT".
+
+        `shutdowncmd` is the command which is executed to initiate a shutdown. It defaults to "poweroff".
+
+        `toemail` is a list of valid email id's on which notification emails are sent.
+        """
         config = await self.config()
         old_config = config.copy()
         config.update(data)
