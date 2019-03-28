@@ -281,9 +281,9 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
     @accepts(Dict(
         'iscsi_auth_create',
-        Int('tag'),
-        Str('user'),
-        Str('secret'),
+        Int('tag', required=True),
+        Str('user', required=True),
+        Str('secret', required=True),
         Str('peeruser'),
         Str('peersecret'),
         register=True
@@ -312,15 +312,13 @@ class iSCSITargetAuthCredentialService(CRUDService):
         )
     )
     async def do_update(self, id, data):
-        verrors = ValidationErrors()
         old = await self._get_instance(id)
 
         new = old.copy()
         new.update(data)
 
-        await self.validate(
-            new, 'iscsi_auth_update', verrors
-        )
+        verrors = ValidationErrors()
+        await self.validate(new, 'iscsi_auth_update', verrors, old)
 
         if verrors:
             raise verrors
@@ -340,7 +338,15 @@ class iSCSITargetAuthCredentialService(CRUDService):
         )
 
     @private
-    async def validate(self, data, schema_name, verrors):
+    async def validate(self, data, schema_name, verrors, old=None):
+
+        filters = [('tag', '=', data['tag'])]
+        if old:
+            filters.append(('id', '!=', old['id']))
+
+        if await self.middleware.call('iscsi.auth.query', filters):
+            verrors.add(f'{schema_name}.tag', f'Tag {data["tag"]!r} is already in use.')
+
         secret = data.get('secret') or ''  # In case None is provided for secret or peer secret
         peer_secret = data.get('peersecret') or ''
         peer_user = data.get('peeruser', '')
