@@ -85,7 +85,7 @@ class ZFSPoolService(Service):
                 if g:
                     name = g.consumer.provider.geom.name
 
-            if name and geom.geom_by_name('DISK', name):
+            if name and (name.startswith('multipath/') or geom.geom_by_name('DISK', name)):
                 yield name
             else:
                 self.logger.debug(f'Could not find disk for {dev}')

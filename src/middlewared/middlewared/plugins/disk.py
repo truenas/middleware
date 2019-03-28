@@ -16,7 +16,7 @@ from bsd import geom, getswapinfo
 from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import get_smartctl_args
 from middlewared.schema import accepts, Bool, Dict, List, Str
-from middlewared.service import filterable, job, private, CallError, CRUDService
+from middlewared.service import job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
 
@@ -48,17 +48,7 @@ class DiskService(CRUDService):
         datastore = 'storage.disk'
         datastore_prefix = 'disk_'
         datastore_extend = 'disk.disk_extend'
-
-    @filterable
-    async def query(self, filters=None, options=None):
-        if filters is None:
-            filters = []
-        if options is None:
-            options = {}
-        options['prefix'] = 'disk_'
-        filters.append(('expiretime', '=', None))
-        options['extend'] = 'disk.disk_extend'
-        return await self.middleware.call('datastore.query', 'storage.disk', filters, options)
+        datastore_filters = [('expiretime', '=', None)]
 
     @private
     async def disk_extend(self, disk):
@@ -158,7 +148,7 @@ class DiskService(CRUDService):
         Helper method to get all disks that are not in use, either by the boot
         pool or the user pools.
         """
-        disks = await self.query([('name', 'nin', await self.get_reserved())])
+        disks = await self.query([('devname', 'nin', await self.get_reserved())])
 
         if join_partitions:
             for disk in disks:
