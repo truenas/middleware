@@ -343,3 +343,82 @@ def load_classes(module, base, blacklist):
                     classes.append(attr)
 
     return classes
+
+
+class LoadPluginsMixin(object):
+
+    def __init__(self, overlay_dirs):
+        self.overlay_dirs = overlay_dirs or []
+        self._schemas = {}
+        self._services = {}
+        self._services_aliases = {}
+
+    def _load_plugins(self, on_module_begin=None, on_module_end=None, on_modules_loaded=None):
+        from middlewared.service import Service, CRUDService, ConfigService, SystemServiceService
+
+        main_plugins_dir = os.path.realpath(os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            '..',
+            'plugins',
+        ))
+        plugins_dirs = [os.path.join(overlay_dir, 'plugins') for overlay_dir in self.overlay_dirs]
+        plugins_dirs.insert(0, main_plugins_dir)
+        for plugins_dir in plugins_dirs:
+
+            if not os.path.exists(plugins_dir):
+                raise ValueError(f'plugins dir not found: {plugins_dir}')
+
+            for mod in load_modules(plugins_dir):
+                if on_module_begin:
+                    on_module_begin(mod)
+
+                for cls in load_classes(mod, Service, (
+                    ConfigService, CRUDService, SystemServiceService)
+                ):
+                    self.add_service(cls(self))
+
+                if on_module_end:
+                    on_module_end(mod)
+
+        if on_modules_loaded:
+            on_modules_loaded()
+
+        # Now that all plugins have been loaded we can resolve all method params
+        # to make sure every schema is patched and references match
+        from middlewared.schema import resolver  # Lazy import so namespace match
+        to_resolve = []
+        for service in list(self.__services.values()):
+            for attr in dir(service):
+                to_resolve.append(getattr(service, attr))
+        while len(to_resolve) > 0:
+            resolved = 0
+            for method in list(to_resolve):
+                try:
+                    resolver(self, method)
+                except ResolverError:
+                    pass
+                else:
+                    to_resolve.remove(method)
+                    resolved += 1
+            if resolved == 0:
+                raise ValueError(f'Not all schemas could be resolved: {to_resolve}')
+
+
+    def add_service(self, service):
+        self._services[service._config.namespace] = service
+
+    def get_service(self, name):
+        return self._services[name]
+
+    def get_services(self):
+        return self._services
+
+    def add_schema(self, schema):
+        if schema.name in self._schemas:
+            raise ValueError('Schema "{0}" is already registered'.format(
+                schema.name
+            ))
+        self._schemas[schema.name] = schema
+
+    def get_schema(self, name):
+        return self._schemas.get(name)

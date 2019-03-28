@@ -6,7 +6,7 @@ from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
 from .schema import ResolverError, Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
-from .utils import start_daemon_thread, load_modules, load_classes
+from .utils import start_daemon_thread, load_modules, load_classes, LoadPluginsMixin
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .webui_auth import WebUIAuth
 from .worker import ProcessPoolExecutor, main_worker
@@ -735,7 +735,7 @@ class ShellApplication(object):
         await self.middleware.run_in_thread(t_worker.join)
 
 
-class Middleware(object):
+class Middleware(LoadPluginsMixin):
 
     CONSOLE_ONCE_PATH = '/tmp/.middlewared-console-once'
 
@@ -743,12 +743,14 @@ class Middleware(object):
         self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None,
         log_handler=None, startup_seq_path=None,
     ):
+        super().__init__(overlay_dirs)
         self.logger = logger.Logger('middlewared', debug_level).getLogger()
         self.crash_reporting = logger.CrashReporting()
         self.crash_reporting_semaphore = asyncio.Semaphore(value=2)
         self.loop_debug = loop_debug
         self.loop_monitor = loop_monitor
-        self.overlay_dirs = overlay_dirs or []
+        self.debug_level = debug_level
+        self.log_handler = log_handler
         self.startup_seq = 0
         self.startup_seq_path = startup_seq_path
         self.app = None
@@ -759,8 +761,6 @@ class Middleware(object):
         self.__threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
         self.__init_procpool()
         self.jobs = JobsQueue(self)
-        self.__schemas = {}
-        self.__services = {}
         self.__wsclients = {}
         self.__event_sources = {}
         self.__event_subs = defaultdict(list)
@@ -774,54 +774,25 @@ class Middleware(object):
         self.add_service(CoreService(self))
 
     async def __plugins_load(self):
-        from middlewared.service import Service, CRUDService, ConfigService, SystemServiceService
-
-        main_plugins_dir = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            'plugins',
-        )
-        plugins_dirs = [os.path.join(overlay_dir, 'plugins') for overlay_dir in self.overlay_dirs]
-        plugins_dirs.insert(0, main_plugins_dir)
-
-        self.logger.debug('Loading plugins from {0}'.format(','.join(plugins_dirs)))
-        self._console_write(f'loading plugins')
 
         setup_funcs = []
-        for plugins_dir in plugins_dirs:
 
-            if not os.path.exists(plugins_dir):
-                raise ValueError(f'plugins dir not found: {plugins_dir}')
+        def on_module_begin(mod):
+            self._console_write(f'loaded plugin {mod.__name__}')
+            self.__incr_startup_seq()
 
-            for mod in load_modules(plugins_dir):
-                self._console_write(f'loaded plugin {mod.__name__}')
-                self.__incr_startup_seq()
+        def on_module_end(mod):
+            if hasattr(mod, 'setup'):
+                setup_funcs.append((mod.__name__.rsplit('.', 1)[-1], mod.setup))
 
-                for cls in load_classes(mod, Service, (ConfigService, CRUDService, SystemServiceService)):
-                    self.add_service(cls(self))
+        def on_modules_loaded():
+            self._console_write(f'resolving plugins schemas')
 
-                if hasattr(mod, 'setup'):
-                    setup_funcs.append((mod.__name__.rsplit('.', 1)[-1], mod.setup))
-
-        self._console_write(f'resolving plugins schemas')
-        # Now that all plugins have been loaded we can resolve all method params
-        # to make sure every schema is patched and references match
-        from middlewared.schema import resolver  # Lazy import so namespace match
-        to_resolve = []
-        for service in list(self.__services.values()):
-            for attr in dir(service):
-                to_resolve.append(getattr(service, attr))
-        while len(to_resolve) > 0:
-            resolved = 0
-            for method in list(to_resolve):
-                try:
-                    resolver(self, method)
-                except ResolverError:
-                    pass
-                else:
-                    to_resolve.remove(method)
-                    resolved += 1
-            if resolved == 0:
-                raise ValueError(f'Not all schemas could be resolved: {to_resolve}')
+        self._load_plugins(
+            on_module_begin=on_module_begin,
+            on_module_end=on_module_end,
+            on_modules_loaded=on_modules_loaded,
+        )
 
         # Only call setup after all schemas have been resolved because
         # they can call methods with schemas defined.
@@ -838,7 +809,7 @@ class Middleware(object):
         self.logger.debug('All plugins loaded')
 
     def __setup_periodic_tasks(self):
-        for service_name, service_obj in self.__services.items():
+        for service_name, service_obj in self.get_services().items():
             for task_name in dir(service_obj):
                 method = getattr(service_obj, task_name)
                 if callable(method) and hasattr(method, "_periodic"):
@@ -990,25 +961,6 @@ class Middleware(object):
     def get_event_source(self, name):
         return self.__event_sources.get(name)
 
-    def add_service(self, service):
-        self.__services[service._config.namespace] = service
-
-    def get_service(self, name):
-        return self.__services[name]
-
-    def get_services(self):
-        return self.__services
-
-    def add_schema(self, schema):
-        if schema.name in self.__schemas:
-            raise ValueError('Schema "{0}" is already registered'.format(
-                schema.name
-            ))
-        self.__schemas[schema.name] = schema
-
-    def get_schema(self, name):
-        return self.__schemas.get(name)
-
     async def run_in_executor(self, pool, method, *args, **kwargs):
         """
         Runs method in a native thread using concurrent.futures.Pool.
@@ -1033,7 +985,8 @@ class Middleware(object):
 
     def __init_procpool(self):
         self.__procpool = ProcessPoolExecutor(
-            max_workers=2, debug_level=debug_level, log_handler=log_handler
+            max_workers=5, overlay_dirs=self.overlay_dirs, debug_level=self.debug_level,
+            log_handler=self.log_handler,
         )
 
     async def run_in_proc(self, method, *args, **kwargs):
@@ -1086,7 +1039,7 @@ class Middleware(object):
 
             # Currently its only a boolean
             if serviceobj._config.process_pool is True:
-                return await self._call_worker(serviceobj, name, *args)
+                return await self._call_worker(name, *args)
 
             if asyncio.iscoroutinefunction(methodobj):
                 return await methodobj(*args)
@@ -1105,16 +1058,8 @@ class Middleware(object):
                 run_method = self._run_in_conn_threadpool
             return await run_method(methodobj, *args)
 
-    async def _call_worker(self, serviceobj, name, *args, job=None):
-        return await self.run_in_proc(
-            main_worker,
-            # For now only plugins in middlewared.plugins are supported
-            f'middlewared.plugins.{serviceobj.__class__.__module__}',
-            serviceobj.__class__.__name__,
-            name.rsplit('.', 1)[-1],
-            args,
-            job,
-        )
+    async def _call_worker(self, name, *args, job=None):
+        return await self.run_in_proc(main_worker, name, args, job)
 
     def _method_lookup(self, name):
         if '.' not in name:
@@ -1321,7 +1266,7 @@ class Middleware(object):
         self.__loop.create_task(self.__terminate())
 
     async def __terminate(self):
-        for service_name, service in self.__services.items():
+        for service_name, service in self.get_services().items():
             # We're using this instead of having no-op `terminate`
             # in base class to reduce number of awaits
             if hasattr(service, "terminate"):
