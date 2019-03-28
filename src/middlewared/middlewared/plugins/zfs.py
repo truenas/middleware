@@ -15,7 +15,7 @@ from middlewared.service import (
     CallError, CRUDService, Service, ValidationError, ValidationErrors,
     filterable, job, periodic,
 )
-from middlewared.utils import filter_list, start_daemon_thread
+from middlewared.utils import filter_list, filter_getattrs, start_daemon_thread
 
 SCAN_THREADS = {}
 
@@ -215,15 +215,34 @@ class ZFSDatasetService(CRUDService):
 
     @filterable
     def query(self, filters, options):
-        with libzfs.ZFS() as zfs:
-            # Handle `id` filter specially to avoiding getting all datasets
-            if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
-                try:
-                    datasets = [zfs.get_dataset(filters[0][2]).__getstate__()]
-                except libzfs.ZFSException:
-                    datasets = []
-            else:
-                datasets = [i.__getstate__() for i in zfs.datasets]
+        # If we are only filtering by name, pool and type we can use
+        # zfs(8) which is much faster than py-libzfs
+        if (
+            options and set(options['select']).issubset({'name', 'pool', 'type'}) and
+            filter_getattrs(filters).issubset({'name', 'pool', 'type'})
+        ):
+            cp = subprocess.run([
+                'zfs', 'list', '-H', '-o', 'name,type', '-t', 'filesystem,volume',
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
+            datasets = []
+            for i in cp.stdout.strip().split('\n'):
+                name, type_ = i.split('\t')
+                pool = name.split('/', 1)[0]
+                datasets.append({
+                    'name': name,
+                    'pool': pool,
+                    'type': type_.upper(),
+                })
+        else:
+            with libzfs.ZFS() as zfs:
+                # Handle `id` filter specially to avoiding getting all datasets
+                if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
+                    try:
+                        datasets = [zfs.get_dataset(filters[0][2]).__getstate__()]
+                    except libzfs.ZFSException:
+                        datasets = []
+                else:
+                    datasets = [i.__getstate__() for i in zfs.datasets]
         return filter_list(datasets, filters, options)
 
     @accepts(Dict(
