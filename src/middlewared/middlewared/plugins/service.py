@@ -986,6 +986,11 @@ class ServiceService(CRUDService):
     async def _start_cifs(self, **kwargs):
         await self._service("ix-pre-samba", "start", quiet=True, **kwargs)
         await self._service("samba_server", "start", quiet=True, **kwargs)
+        try:
+            await self.middleware.call("smb.add_admin_group", "", True)
+        except Exception as e:
+            raise CallError(e)
+
         await self._service("ix-post-samba", "start", quiet=True, **kwargs)
 
     async def _stop_cifs(self, **kwargs):

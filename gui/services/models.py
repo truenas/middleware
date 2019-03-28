@@ -157,6 +157,18 @@ class CIFS(Model):
             "user root cannot be used as guest account."
         ),
     )
+    cifs_srv_admin_group = GroupField(
+        max_length=120,
+        default="",
+        blank=True,
+        verbose_name=_("Administrators Group"),
+        help_text=_(
+            'Members of this group are local admins and automatically '
+            'have privileges to take ownership of any file in an SMB '
+            'share, reset permissions, and administer the SMB server '
+            'through the Computer Management MMC snap-in.'
+        ),
+    )
     cifs_srv_filemask = models.CharField(
         max_length=120,
         verbose_name=_("File mask"),
