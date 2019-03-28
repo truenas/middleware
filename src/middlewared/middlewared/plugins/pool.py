@@ -2429,7 +2429,7 @@ class PoolDatasetService(CRUDService):
 
     @filterable
     def query(self, filters=None, options=None):
-        # Otimization for cases in which they can be filtered at zfs.dataset.query
+        # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
         for f in filters or []:
             if len(f) == 3:
