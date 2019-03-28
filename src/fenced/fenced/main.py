@@ -47,7 +47,7 @@ def panic(reason):
             epoch = int(time.time())
             b = struct.pack('@i', epoch)
             f.write(b)
-            f.sync()
+            f.flush()
             os.fsync(f.fileno())  # Be extra sure
     except EnvironmentError as e:
         logger.debug('Failed to write alert file: %s', e)
