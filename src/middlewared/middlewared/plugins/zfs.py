@@ -66,6 +66,7 @@ class ZFSPoolService(CRUDService):
     class Config:
         namespace = 'zfs.pool'
         private = True
+        process_pool = True
 
     @filterable
     def query(self, filters, options):
@@ -406,6 +407,7 @@ class ZFSDatasetService(CRUDService):
     class Config:
         namespace = 'zfs.dataset'
         private = True
+        process_pool = True
 
     @filterable
     def query(self, filters=None, options=None):
@@ -587,6 +589,7 @@ class ZFSSnapshot(CRUDService):
 
     class Config:
         namespace = 'zfs.snapshot'
+        process_pool = True
 
     @filterable
     def query(self, filters=None, options=None):
