@@ -218,6 +218,17 @@ def nfs_config(middleware, context):
 
     if nfs['v4']:
         yield 'nfsv4_server_enable="YES"'
+
+        gssd = 'NO'
+        if nfs['v4_krb'] and middleware.call_sync('datastore.query', 'directoryservice.kerberoskeytab'):
+            gssd = 'YES'
+
+            gc = middleware.call_sync("datastore.config", "network.globalconfiguration")
+            if gc["gc_hostname_virtual"] and gc["gc_domain"]:
+                yield f'nfs_server_vhost="{gc["gc_hostname_virtual"]}.{gc["gc_domain"]}"'
+
+        yield f'gssd_enable="{gssd}"'
+
         if nfs['v4_v3owner']:
             yield 'nfsuserd_enable="NO"'
             # Per RFC7530, sending NFSv3 style UID/GIDs across the wire is now allowed
@@ -233,16 +244,6 @@ def nfs_config(middleware, context):
         if nfs['userd_manage_gids']:
             yield 'nfsuserd_enable="YES"'
             yield 'nfsuserd_flags="-manage-gids"'
-
-    gssd = 'NO'
-    if nfs['v4_krb'] or middleware.call_sync('datastore.query', 'directoryservice.kerberoskeytab'):
-        gssd = 'YES'
-
-        gc = middleware.call_sync("datastore.config", "network.globalconfiguration")
-        if gc["gc_hostname_virtual"] and gc["gc_domain"]:
-            yield f'nfs_server_vhost="{gc["gc_hostname_virtual"]}.{gc["gc_domain"]}"'
-
-    yield f'gssd_enable="{gssd}"'
 
 
 def nis_config(middleware, context):
