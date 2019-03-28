@@ -23,6 +23,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import cam
 import concurrent.futures
 import re
 import subprocess
@@ -159,6 +160,11 @@ class DiskTemp(object):
                     collectd.info(traceback.format_exc())
 
     def get_temperature(self, disk):
+        if disk.startswith('da'):
+            try:
+                return cam.CamDevice(disk).get_temperature()
+            except Exception:
+                pass
         cp = subprocess.run(['/usr/local/sbin/smartctl', '-a', '-n', 'standby', f'/dev/{disk}'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if cp.returncode != 0:
             collectd.info(f'Failed to run smartctl for {disk}: {cp.stdout.decode("utf8", "ignore")}')
