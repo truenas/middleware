@@ -593,6 +593,9 @@ class ZFSSnapshot(CRUDService):
 
     @filterable
     def query(self, filters=None, options=None):
+        """
+        Query all ZFS Snapshots with `query-filters` and `query-options`.
+        """
         # Special case for faster listing of snapshot names (#53149)
         if options and options.get('select') == ['name']:
             # Using zfs list -o name is dozens of times faster than py-libzfs
