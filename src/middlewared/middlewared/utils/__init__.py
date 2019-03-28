@@ -260,6 +260,26 @@ def filter_list(_list, filters=None, options=None):
     return rv
 
 
+def filter_getattrs(filters):
+    """
+    Get a set of attributes in a filter list.
+    """
+    attrs = set()
+    if not filters:
+        return attrs
+
+    f = filters.copy()
+    while f:
+        filter_ = f.pop()
+        if len(filter_) == 2:
+            f.append(filter_[1])
+        elif len(filter_) == 3:
+            attrs.add(filter_[2])
+        else:
+            raise ValueError('Invalid filter.')
+    return attrs
+
+
 def sw_buildtime():
     # Lazy import to avoid freenasOS configure logging for us
     from freenasOS import Configuration
