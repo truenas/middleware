@@ -117,6 +117,9 @@ class SystemDatasetService(ConfigService):
     @accepts(Bool('mount', default=True))
     @private
     async def setup(self, mount):
+        # We default kern.corefile value
+        await run('sysctl', "kern.corefile='/var/tmp/%N.core'")
+
         config = await self.config()
 
         if not await self.middleware.call('system.is_freenas'):
