@@ -7,11 +7,13 @@ import os
 import subprocess
 import sys
 import threading
+import time
 
 import libzfs
 import netsnmpagent
 import pysnmp.hlapi  # noqa
 import pysnmp.smi
+import sysctl
 
 sys.path.append("/usr/local/www")
 from freenasUI.tools.arc_summary import get_Kstat, get_arc_efficiency
@@ -44,11 +46,14 @@ mib_builder = pysnmp.smi.builder.MibBuilder()
 mib_sources = mib_builder.getMibSources() + (pysnmp.smi.builder.DirMibSource("/usr/local/share/pysnmp/mibs"),)
 mib_builder.setMibSources(*mib_sources)
 mib_builder.loadModules("FREENAS-MIB")
+mib_builder.loadModules("LM-SENSORS-MIB")
 zpool_health_type = mib_builder.importSymbols("FREENAS-MIB", "ZPoolHealthType")[0]
 
 agent = netsnmpagent.netsnmpAgent(
     AgentName="FreeNASAgent",
-    MIBFiles=["/usr/local/share/snmp/mibs/FREENAS-MIB.txt"],
+    MIBFiles=[
+        "/usr/local/share/snmp/mibs/FREENAS-MIB.txt", "/usr/local/share/snmp/mibs/LM-SENSORS-MIB.txt"
+    ],
 )
 
 zpool_table = agent.Table(
@@ -100,6 +105,17 @@ zvol_table = agent.Table(
         (5, agent.Integer32()),
         (6, agent.Integer32()),
     ],
+)
+
+temp_sensors_table = agent.Table(
+    oidstr="LM-SENSORS-MIB::lmTempSensorsTable",
+    indexes=[
+        agent.Integer32(),
+    ],
+    columns=[
+        (2, agent.DisplayString()),
+        (3, agent.Unsigned32()),
+    ]
 )
 
 zfs_arc_size = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcSize")
@@ -207,6 +223,40 @@ class ZilstatThread(threading.Thread):
             self.value = value
 
 
+class CpuTempThread(threading.Thread):
+    def __init__(self, interval):
+        super().__init__()
+
+        self.daemon = True
+
+        self.interval = interval
+        self.temperatures = []
+
+        self.numcpu = 0
+        try:
+            self.numcpu = int(sysctl.filter("hw.ncpu")[0].value)
+        except Exception as e:
+            print(f"Failed to get CPU count: {e!r}")
+
+    def run(self):
+        if not self.numcpu:
+            return 0
+
+        while True:
+            temperatures = []
+            try:
+                for i in range(self.numcpu):
+                    raw_temperature = int(sysctl.filter(f"dev.cpu.{i}.temperature")[0].value)
+                    temperatures.append((raw_temperature - 2732) * 100)
+            except Exception as e:
+                print(f"Failed to get CPU temperature: {e!r}")
+                temperatures = []
+
+            self.temperatures = temperatures
+
+            time.sleep(self.interval)
+
+
 if __name__ == "__main__":
     zfs = libzfs.ZFS()
 
@@ -221,6 +271,9 @@ if __name__ == "__main__":
 
     zilstat_10_thread = ZilstatThread(10)
     zilstat_10_thread.start()
+
+    cpu_temp_thread = CpuTempThread(10)
+    cpu_temp_thread.start()
 
     agent.start()
 
@@ -303,6 +356,12 @@ if __name__ == "__main__":
                 row.setRowCell(4, agent.Integer32(volsize))
                 row.setRowCell(5, agent.Integer32(used))
                 row.setRowCell(6, agent.Integer32(available))
+
+            temp_sensors_table.clear()
+            for i, temp in enumerate(cpu_temp_thread.temperatures.copy()):
+                row = temp_sensors_table.addRow([agent.Integer32(i + 1)])
+                row.setRowCell(2, agent.DisplayString(f"CPU{i}"))
+                row.setRowCell(3, agent.Unsigned32(temp))
 
             last_update_at = datetime.utcnow()
 
