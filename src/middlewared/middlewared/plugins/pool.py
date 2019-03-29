@@ -611,7 +611,6 @@ class PoolService(CRUDService):
 
         fsoptions = {
             'compression': 'lz4',
-            'aclmode': 'passthrough',
             'aclinherit': 'passthrough',
             'mountpoint': f'/{data["name"]}',
         }
@@ -1874,7 +1873,6 @@ class PoolService(CRUDService):
 
             await self.middleware.call('zfs.dataset.update', pool_name, {
                 'properties': {
-                    'aclmode': {'value': 'passthrough'},
                     'aclinherit': {'value': 'passthrough'},
                 },
             })

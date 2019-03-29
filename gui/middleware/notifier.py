@@ -471,7 +471,6 @@ class notifier(metaclass=HookMetaclass):
                 # Reset all mountpoints in the zpool
                 self.zfs_inherit_option(name, 'mountpoint', True)
                 # These should probably be options that are configurable from the GUI
-                self._system("zfs set aclmode=passthrough '%s'" % name)
                 self._system("zfs set aclinherit=passthrough '%s'" % name)
             return True
         else:
