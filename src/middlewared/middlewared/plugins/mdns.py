@@ -160,7 +160,8 @@ class mDNSDaemonMonitor(object):
         alive = False
         t = 0
 
-        self.wait_for_system_dns()
+        if not self.middleware.call_sync('system.ready'):
+            self.wait_for_system_dns()
 
         if self.is_alive():
             return True
