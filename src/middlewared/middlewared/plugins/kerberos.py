@@ -340,7 +340,6 @@ class KerberosRealmService(CRUDService):
         """
         await self.middleware.call("datastore.delete", self._config.datastore, id)
         await self.middleware.call('etc.generate', 'kerberos')
-        await self.middleware.call('kerberos.start')
 
     @accepts(Int("id"))
     async def run(self, id):
@@ -530,7 +529,7 @@ class KerberosKeytabService(CRUDService):
                 raise CallError(f"ktutil_remove [{keytab['SAMBA'].value}]: {ktutil_remove.stderr.decode()}")
 
     @private
-    async def get_kerberos_principals(self):
+    async def kerberos_principal_choices(self):
         keytab_list = await self._ktutil_list()
         kerberos_principals = []
         for entry in keytab_list:

@@ -49,7 +49,7 @@ from freenasUI.common.system import (
     validate_netbios_name,
     compare_netbios_names
 )
-from freenasUI.directoryservice import models, utils
+from freenasUI.directoryservice import models
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
@@ -64,18 +64,7 @@ class idmap_ad_Form(ModelForm):
         fields = '__all__'
         model = models.idmap_ad
         exclude = [
-            'idmap_ds_type',
-            'idmap_ds_id'
-        ]
-
-
-class idmap_adex_Form(ModelForm):
-    class Meta:
-        fields = '__all__'
-        model = models.idmap_adex
-        exclude = [
-            'idmap_ds_type',
-            'idmap_ds_id'
+            'idmap_ad_domain',
         ]
 
 
@@ -84,8 +73,7 @@ class idmap_autorid_Form(ModelForm):
         fields = '__all__'
         model = models.idmap_autorid
         exclude = [
-            'idmap_ds_type',
-            'idmap_ds_id'
+            'idmap_autorid_domain',
         ]
 
 
@@ -94,18 +82,7 @@ class idmap_fruit_Form(ModelForm):
         fields = '__all__'
         model = models.idmap_fruit
         exclude = [
-            'idmap_ds_type',
-            'idmap_ds_id'
-        ]
-
-
-class idmap_hash_Form(ModelForm):
-    class Meta:
-        fields = '__all__'
-        model = models.idmap_hash
-        exclude = [
-            'idmap_ds_type',
-            'idmap_ds_id'
+            'idmap_fruit_domain',
         ]
 
 
@@ -114,8 +91,7 @@ class idmap_ldap_Form(ModelForm):
         fields = '__all__'
         model = models.idmap_ldap
         exclude = [
-            'idmap_ds_type',
-            'idmap_ds_id'
+            'idmap_ldap_domain',
         ]
 
 
@@ -124,8 +100,7 @@ class idmap_nss_Form(ModelForm):
         fields = '__all__'
         model = models.idmap_nss
         exclude = [
-            'idmap_ds_type',
-            'idmap_ds_id'
+            'idmap_nss_domain',
         ]
 
 
@@ -161,8 +136,7 @@ class idmap_rfc2307_Form(ModelForm):
                 forms.widgets.PasswordInput(render_value=False)
         }
         exclude = [
-            'idmap_ds_type',
-            'idmap_ds_id'
+            'idmap_rfc2307_domain',
         ]
 
     def __init__(self, *args, **kwargs):
@@ -194,8 +168,7 @@ class idmap_rid_Form(ModelForm):
         fields = '__all__'
         model = models.idmap_rid
         exclude = [
-            'idmap_ds_type',
-            'idmap_ds_id'
+            'idmap_rid_domain'
         ]
 
 
@@ -204,8 +177,7 @@ class idmap_tdb_Form(ModelForm):
         fields = '__all__'
         model = models.idmap_tdb
         exclude = [
-            'idmap_ds_type',
-            'idmap_ds_id'
+            'idmap_tdb_domain',
         ]
 
 
@@ -214,8 +186,7 @@ class idmap_tdb2_Form(ModelForm):
         fields = '__all__'
         model = models.idmap_tdb2
         exclude = [
-            'idmap_ds_type',
-            'idmap_ds_id'
+            'idmap_tdb2_domain',
         ]
 
 
@@ -224,8 +195,7 @@ class idmap_script_Form(ModelForm):
         fields = '__all__'
         model = models.idmap_script
         exclude = [
-            'idmap_ds_type',
-            'idmap_ds_id'
+            'idmap_script_domain',
         ]
 
 
@@ -440,33 +410,10 @@ class ActiveDirectoryForm(ModelForm):
             if not bindpw:
                 raise forms.ValidationError("No domain account password specified")
 
-            try:
-                FreeNAS_ActiveDirectory.validate_credentials(
-                    domain,
-                    site=site,
-                    ssl=ssl,
-                    certfile=certificate,
-                    binddn=binddn,
-                    bindpw=bindpw
-                )
-
-            except LDAPError as e:
-                log.debug("LDAPError: type = %s", type(e))
-
-                error = []
-                try:
-                    error.append(e.args[0]['info'])
-                    error.append(e.args[0]['desc'])
-                    error = ', '.join(error)
-
-                except Exception as e:
-                    error = str(e)
-
-                raise forms.ValidationError("{0}".format(error))
-
-            except Exception as e:
-                log.debug("Exception: type = %s", type(e))
-                raise forms.ValidationError('{0}.'.format(str(e)))
+            with client as c:
+                ret = c.call('activedirectory.validate_credentials')
+                if not ret:
+                    raise forms.ValidationError("Failed to validate credentials")
 
             args['binddn'] = binddn
             args['bindpw'] = bindpw
@@ -493,14 +440,6 @@ class ActiveDirectoryForm(ModelForm):
             timeout=_fs().directoryservice.activedirectory.timeout.started
         )
         obj = super(ActiveDirectoryForm, self).save()
-
-        try:
-            utils.get_idmap_object(obj.ds_type, obj.id, obj.ad_idmap_backend)
-        except ObjectDoesNotExist:
-            log.debug(
-                'IDMAP backend {} entry does not exist, creating one.'.format(obj.ad_idmap_backend)
-            )
-            utils.get_idmap(obj.ds_type, obj.id, obj.ad_idmap_backend)
 
         self.cifs.cifs_srv_netbiosname = self.cleaned_data.get("ad_netbiosname_a")
         self.cifs.cifs_srv_netbiosname_b = self.cleaned_data.get("ad_netbiosname_b")
@@ -891,12 +830,19 @@ class KerberosKeytabEditForm(ModelForm):
         notifier().start("ix-kerberos")
 
 
-class KerberosSettingsForm(ModelForm):
+class KerberosSettingsForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'ks_'
+    middleware_attr_schema = 'kerberos_settings'
+    middleware_plugin = 'kerberos'
+    is_singletone = True 
 
     class Meta:
         fields = '__all__'
         model = models.KerberosSettings
 
-    def save(self):
-        super(KerberosSettingsForm, self).save()
-        notifier().start("ix-kerberos")
+    def __init__(self, *args, **kwargs):
+        super(KerberosSettingsForm, self).__init__(*args, **kwargs)
+
+    def middleware_clean(self, data):
+        return data 

@@ -558,7 +558,7 @@ class ActiveDirectoryService(ConfigService):
         Bool('use_default_domain'),
         Bool('disable_freenas_cache'),
         Str('site'),
-        Dict('kerberos_realm'),
+        Any('kerberos_realm'),
         Str('kerberos_principal'),
         Int('timeout'),
         Int('dns_timeout'),
@@ -621,13 +621,28 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_enable': True})
         await self.middleware.call('etc.generate', 'hostname')
 
+        """
+        Kerberos realm field must be populated so that we can perform a kinit
+        and use the kerberos ticket to execute 'net ads' commands.
+        """
+
         if not ad['kerberos_realm']:
-            await self.middleware.call(
-                'datastore.insert',
-                'directoryservice.kerberosrealm',
-                {'krb_realm': ad['domainname'].upper()},
-            )
+            krb_realms = await self.middleware.call('kerberos.realm.query')
+            realm = list(filter(lambda x: x['realm'] == ad['domainname'].upper(), krb_realms))
+
+            if realm:
+                await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_kerberos_realm': realm[0]['id']})
+            else:
+                await self.middleware.call( 'datastore.insert', 'directoryservice.kerberosrealm', {'krb_realm': ad['domainname'].upper()}, )
+
         await self.middleware.call('kerberos.start')
+
+        """
+        'workgroup' is the 'pre-Windows 2000 domain name'. It must be set to the nETBIOSName value in Active Directory.
+        This must be properly configured in order for Samba to work correctly as an AD member server.
+        'site' is the ad site of which the NAS is a member. This is not required, and in many cases will not be populated
+        because the domain administrator has not conifgured Sites and Subnets in the AD environment. 
+        """
 
         if not ad['site']:
             await asyncio.wait_for(self.get_site(), 10)
@@ -635,6 +650,14 @@ class ActiveDirectoryService(ConfigService):
             smb['workgroup'] = await asyncio.wait_for(self.get_netbios_domain_name(), 10)
 
         await self.middleware.call('etc.generate', 'smb')
+
+        """
+        Check response of 'net ads testjoin' to determine whether the server needs to be joined to Active Directory.
+        Only perform the domain join if we receive the exact error code indicating that the server is not joined to
+        Active Directory. 'testjoin' will fail if the NAS boots before the domain controllers in the environment.
+        In this case, samba should be started, but the directory service reported in a FAULTED state. 
+        """
+
         ret = await self._net_ads_testjoin(smb['workgroup'])
         if ret == neterr.NOTJOINED:
             self.logger.debug(f"Test join to {ad['domainname']} failed. Performing domain join.")
