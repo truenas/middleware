@@ -419,8 +419,6 @@ class notifier(metaclass=HookMetaclass):
         winacl = os.path.join(path, ACL_WINDOWS_FILE)
         macacl = os.path.join(path, ACL_MAC_FILE)
         winexists = os.path.exists(winacl)
-        with libzfs.ZFS() as zfs:
-            zfs_dataset_name = zfs.get_dataset_by_path(path).name
 
         if acl == 'windows':
             if not winexists:
