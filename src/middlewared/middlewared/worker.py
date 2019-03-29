@@ -5,6 +5,7 @@ import asyncio
 import concurrent.futures
 from concurrent.futures.process import _process_worker
 import functools
+import inspect
 import logging
 import multiprocessing
 import os
@@ -130,6 +131,10 @@ def main_worker(*call_args):
         res = loop.run_until_complete(coro)
     except SystemExit:
         raise RuntimeError('Worker call raised SystemExit exception')
+    # TODO: python cant pickle generator for obvious reasons, we should implement
+    # it using Pipe.
+    if inspect.isgenerator(res):
+        res = list(res)
     return res
 
 
