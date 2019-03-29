@@ -590,7 +590,6 @@ class PoolService(CRUDService):
 
         fsoptions = {
             'compression': 'lz4',
-            'aclmode': 'passthrough',
             'aclinherit': 'passthrough',
             'mountpoint': f'/{data["name"]}',
         }
@@ -1819,7 +1818,6 @@ class PoolService(CRUDService):
 
             await self.middleware.call('zfs.dataset.update', pool_name, {
                 'properties': {
-                    'aclmode': {'value': 'passthrough'},
                     'aclinherit': {'value': 'passthrough'},
                 },
             })
@@ -2371,19 +2369,21 @@ class PoolService(CRUDService):
 
         # Use subprocess instead of zfs plugin for speed reasons
         cp = subprocess.run(
-            'zfs list -t filesystem -H -o name,aclmode,mountpoint | '
-            'awk \'$2 != "restricted" {print $0}\'',
+            'zfs list -t filesystem -H -o name,acltype,mountpoint | '
+            'awk \'$2 != "nfs4acl" {print $0}\'',
             shell=True, capture_output=True, text=True, check=False,
         )
         for line in cp.stdout.strip().split('\n'):
             line = line.strip()
             if not line:
                 continue
-            dataset, aclmode, mountpoint = line.split('\t')
+            dataset, acltype, mountpoint = line.split('\t')
             if os.path.exists(f'{mountpoint}/.windows'):
-                self.middleware.call_sync('zfs.dataset.update', dataset, {'properties': {
-                    'aclmode': {'value': 'restricted'},
-                }})
+                pass
+                # nfs4acl does not exist yet
+                #self.middleware.call_sync('zfs.dataset.update', dataset, {'properties': {
+                #    'acltype': {'value': 'nfs4acl'},
+                #}})
 
         # Now that pools have been imported we are ready to configure system dataset,
         # collectd and syslogd which may depend on them.
