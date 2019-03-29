@@ -225,12 +225,12 @@ class SystemDatasetService(ConfigService):
                 os.unlink(SYSDATASET_PATH)
             os.mkdir(SYSDATASET_PATH)
 
-        aclmode = await self.middleware.call('zfs.dataset.query', [('id', '=', config['basename'])])
-        if aclmode and aclmode[0]['properties']['aclmode']['value'] == 'restricted':
+        acltype = await self.middleware.call('zfs.dataset.query', [('id', '=', config['basename'])])
+        if acltype and acltype[0]['properties']['acltype']['value'] == 'off':
             await self.middleware.call(
                 'zfs.dataset.update',
                 config['basename'],
-                {'properties': {'aclmode': {'value': 'passthrough'}}},
+                {'properties': {'acltype': {'value': 'off'}}},
             )
 
         if mount:
