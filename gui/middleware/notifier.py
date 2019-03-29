@@ -441,7 +441,6 @@ class notifier(metaclass=HookMetaclass):
                 os.unlink(macacl)
 
         if winexists:
-            self.zfs_set_option(zfs_dataset_name, "aclmode", "restricted", recursive)
             script = "/usr/local/bin/winacl"
             args = ''
             if user is not None:
@@ -463,7 +462,6 @@ class notifier(metaclass=HookMetaclass):
                 self._system(cmd)
 
         else:
-            self.zfs_set_option(zfs_dataset_name, "aclmode", "passthrough", recursive)
             if recursive:
                 apply_paths = exclude_path(path, exclude)
                 apply_paths = [(y, '-R') for y in apply_paths]
@@ -615,7 +613,6 @@ class notifier(metaclass=HookMetaclass):
                 # Reset all mountpoints in the zpool
                 self.zfs_inherit_option(name, 'mountpoint', True)
                 # These should probably be options that are configurable from the GUI
-                self._system("zfs set aclmode=passthrough '%s'" % name)
                 self._system("zfs set aclinherit=passthrough '%s'" % name)
             return True
         else:
@@ -967,14 +964,9 @@ class notifier(metaclass=HookMetaclass):
 
         if changeto == "windows":
             self.dataset_init_windows_meta_file(dataset)
-            self.zfs_set_option(dataset, "aclmode", "restricted")
 
         elif changeto == "mac":
             self.dataset_init_apple_meta_file(dataset)
-            self.zfs_set_option(dataset, "aclmode", "passthrough")
-
-        else:
-            self.zfs_set_option(dataset, "aclmode", "passthrough")
 
         path = None
         if share_type == "mac" and changeto != "mac":
