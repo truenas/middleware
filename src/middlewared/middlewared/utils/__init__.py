@@ -11,6 +11,8 @@ from itertools import chain
 from functools import wraps
 from threading import Lock
 
+from middlewared.schema import ResolverError
+
 
 # For freenasOS
 if '/usr/local/lib' not in sys.path:
@@ -387,7 +389,7 @@ class LoadPluginsMixin(object):
         # to make sure every schema is patched and references match
         from middlewared.schema import resolver  # Lazy import so namespace match
         to_resolve = []
-        for service in list(self.__services.values()):
+        for service in list(self._services.values()):
             for attr in dir(service):
                 to_resolve.append(getattr(service, attr))
         while len(to_resolve) > 0:

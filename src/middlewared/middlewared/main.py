@@ -4,7 +4,7 @@ from .event import EventSource
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
-from .schema import ResolverError, Error as SchemaError
+from .schema import Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from .utils import start_daemon_thread, LoadPluginsMixin
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
