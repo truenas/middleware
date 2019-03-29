@@ -4,6 +4,7 @@ from middlewared.client import Client
 import asyncio
 import concurrent.futures
 import functools
+import inspect
 import os
 import select
 import setproctitle
@@ -102,6 +103,10 @@ def main_worker(*call_args):
         res = loop.run_until_complete(coro)
     except SystemExit:
         raise RuntimeError('Worker call raised SystemExit exception')
+    # TODO: python cant pickle generator for obvious reasons, we should implement
+    # it using Pipe.
+    if inspect.isgenerator(res):
+        res = list(res)
     return res
 
 
