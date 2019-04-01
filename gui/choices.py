@@ -383,6 +383,7 @@ class NICChoices(object):
         # Remove internal interfaces for failover
         try:
             if (
+                os.environ.get('MIDDLEWARED_LOADING') != 'True' and
                 hasattr(notifier, 'failover_status') and
                 notifier().failover_licensed()
             ):
@@ -535,7 +536,10 @@ class IPChoices(NICChoices):
         carp = False
         if not _n.is_freenas():
             try:
-                if _n.failover_status() not in ('SINGLE', 'ERROR'):
+                if (
+                    os.environ.get('MIDDLEWARED_LOADING') != 'True' and
+                    _n.failover_status() not in ('SINGLE', 'ERROR')
+                ):
                     carp = True
             except (sqlite3.OperationalError, ConnectionRefusedError, FileNotFoundError):
                 pass
