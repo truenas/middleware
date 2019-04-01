@@ -375,19 +375,20 @@ class JailService(CRUDService):
 
     @accepts(
         Dict(
-            "options",
-            Str("release"),
-            Str("server", default="download.freebsd.org"),
-            Str("user", default="anonymous"),
-            Str("password", default="anonymous@"),
-            Str("name", default=None, null=True),
-            Bool("accept", default=True),
-            List("props", default=[]),
+            'options',
+            Str('release'),
+            Str('server', default='download.freebsd.org'),
+            Str('user', default='anonymous'),
+            Str('password', default='anonymous@'),
+            Str('name', default=None, null=True),
+            Bool('accept', default=True),
+            Bool('https', default=True),
+            List('props', default=[]),
             List(
-                "files",
-                default=["MANIFEST", "base.txz", "lib32.txz", "doc.txz"]
+                'files',
+                default=['MANIFEST', 'base.txz', 'lib32.txz', 'doc.txz']
             ),
-            Str("branch", default=None, null=True)
+            Str('branch', default=None, null=True)
         )
     )
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
@@ -395,6 +396,7 @@ class JailService(CRUDService):
         """Fetches a release or plugin."""
         fetch_output = {'install_notes': []}
         release = options.get('release', None)
+        https = options.pop('https', False)
 
         post_install = False
 
@@ -472,6 +474,9 @@ class JailService(CRUDService):
             options["plugin_file"] = True
             start_msg = 'Starting plugin install'
             final_msg = f"Plugin: {options['name']} installed"
+        elif options['name'] is None and https:
+            if 'https' not in options['server']:
+                options['server'] = f'https://{options["server"]}'
 
         options["accept"] = True
 
