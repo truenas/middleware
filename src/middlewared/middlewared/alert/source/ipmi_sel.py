@@ -131,7 +131,7 @@ class IPMISELSpaceLeftAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.WARNING
     title = "IPMI SEL Low Space Left"
-    text = "IPMI SEL Low Space Left: %(free)s (used %(used)s)."
+    text = "IPMI SEL low space left: %(free)s (%(used)s used)."
 
 
 class IPMISELSpaceLeftAlertSource(AlertSource):

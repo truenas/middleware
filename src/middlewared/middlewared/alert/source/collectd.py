@@ -49,7 +49,10 @@ class CollectdAlertSource(ThreadedAlertSource):
         alerts = []
         for k, v in list(data.items()):
             if k == "ctl-ha/disk_octets":
-                text = "CTL HA link is actively used, check initiators connectivity."
+                text = (
+                    "CTL HA link is actively used. Please check that all your iSCSI and FC initiators support ALUA and "
+                    "are able to connect to the active node."
+                )
             else:
                 text = k
 
