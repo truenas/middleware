@@ -170,7 +170,9 @@ def watch_parent():
 def init(overlay_dirs, debug_level, log_handler):
     global MIDDLEWARE
     MIDDLEWARE = FakeMiddleware(overlay_dirs)
+    os.environ['MIDDLEWARED_LOADING'] = 'True'
     MIDDLEWARE._load_plugins()
+    os.environ['MIDDLEWARED_LOADING'] = 'False'
     setproctitle.setproctitle('middlewared (worker)')
     threading.Thread(target=watch_parent, daemon=True).start()
     logger.setup_logging('worker', debug_level, log_handler)
