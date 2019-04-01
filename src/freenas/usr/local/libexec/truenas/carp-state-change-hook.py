@@ -539,8 +539,11 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
 
             run_call(midclt, 'service.restart', 'collectd', {'sync': False})
             run_call(midclt, 'service.restart', 'syslogd', {'sync': False})
-            run_call(midclt, 'service.restart', 'smartd', {'sync': False})
-            run_call(midclt, 'service.restart', 'netdata', {'sync': False})
+            c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "smartd"')
+            ret = c.fetchone()
+            if ret and ret[0] == 1:
+                run_call(midclt, 'service.restart', 'smartd', {'sync': False})
+            run_call(midclt, 'service.restart', 'netdata', {'sync': False, 'onetime': False})
 
             midclt.close()
 
