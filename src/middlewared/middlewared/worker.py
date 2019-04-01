@@ -5,7 +5,7 @@ import asyncio
 import concurrent.futures
 from concurrent.futures.process import _process_worker
 import functools
-import importlib
+import inspect
 import logging
 import multiprocessing
 import os
@@ -13,22 +13,24 @@ import select
 import setproctitle
 import threading
 from . import logger
+from .utils import LoadPluginsMixin
 
 MIDDLEWARE = None
 
 
-def _process_worker_wrapper(debug_level, log_handler, *args, **kwargs):
+def _process_worker_wrapper(overlay_dirs, debug_level, log_handler, *args, **kwargs):
     """
     We need to define a wrapper to initialize the process
     as soon as it is started to load everything we need
     or the first call will take too long.
     """
-    init(debug_level, log_handler)
+    init(overlay_dirs, debug_level, log_handler)
     return _process_worker(*args, **kwargs)
 
 
 class ProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
-    def __init__(self, *args, debug_level=None, log_handler=None, **kwargs):
+    def __init__(self, *args, overlay_dirs=None, debug_level=None, log_handler=None, **kwargs):
+        self.__overlay_dirs = overlay_dirs
         self.__debug_level = debug_level
         self.__log_handler = log_handler
         super().__init__(*args, **kwargs)
@@ -41,18 +43,19 @@ class ProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
         for _ in range(len(self._processes), self._max_workers):
             p = multiprocessing.Process(
                 target=_process_worker_wrapper,
-                args=(self.__debug_level, self.__log_handler, self._call_queue,
+                args=(self.__overlay_dirs, self.__debug_level, self.__log_handler, self._call_queue,
                       self._result_queue))
             p.start()
             self._processes[p.pid] = p
 
 
-class FakeMiddleware(object):
+class FakeMiddleware(LoadPluginsMixin):
     """
     Implements same API from real middleware
     """
 
-    def __init__(self):
+    def __init__(self, overlay_dirs):
+        super().__init__(overlay_dirs)
         self.client = None
         self.logger = logging.getLogger('worker')
 
@@ -81,11 +84,11 @@ class FakeMiddleware(object):
                 return methodobj(*params)
         self.client = None
 
-    async def _run(self, service_mod, service_name, method, args, job=None):
-        module = importlib.import_module(service_mod)
-        serviceobj = getattr(module, service_name)(self)
+    async def _run(self, name, args, job=None):
+        service, method = name.rsplit('.', 1)
+        serviceobj = self.get_service(service)
         methodobj = getattr(serviceobj, method)
-        return await self._call(f'{service_name}.{method}', serviceobj, methodobj, params=args, job=job)
+        return await self._call(name, serviceobj, methodobj, params=args, job=job)
 
     async def call(self, method, *params, timeout=None, **kwargs):
         """
@@ -128,6 +131,10 @@ def main_worker(*call_args):
         res = loop.run_until_complete(coro)
     except SystemExit:
         raise RuntimeError('Worker call raised SystemExit exception')
+    # TODO: python cant pickle generator for obvious reasons, we should implement
+    # it using Pipe.
+    if inspect.isgenerator(res):
+        res = list(res)
     return res
 
 
@@ -160,9 +167,12 @@ def watch_parent():
     os._exit(1)
 
 
-def init(debug_level, log_handler):
+def init(overlay_dirs, debug_level, log_handler):
     global MIDDLEWARE
-    MIDDLEWARE = FakeMiddleware()
+    MIDDLEWARE = FakeMiddleware(overlay_dirs)
+    os.environ['MIDDLEWARED_LOADING'] = 'True'
+    MIDDLEWARE._load_plugins()
+    os.environ['MIDDLEWARED_LOADING'] = 'False'
     setproctitle.setproctitle('middlewared (worker)')
     threading.Thread(target=watch_parent, daemon=True).start()
     logger.setup_logging('worker', debug_level, log_handler)
