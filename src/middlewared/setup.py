@@ -10,17 +10,6 @@ from setuptools.command.install import install
 from babel.messages import frontend as babel
 
 
-install_requires = [
-    'ws4py',
-    'python-dateutil',
-    'aiohttp_wsgi',
-    'markdown',
-    'Flask',
-    'setproctitle',
-    'psutil',
-]
-
-
 def get_assets(name):
     """
     Recursive get dirs from middlewared/{name}
@@ -66,7 +55,6 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
     ],
-    install_requires=install_requires,
     entry_points={
         'console_scripts': [
             'middlewared = middlewared.main:main',
